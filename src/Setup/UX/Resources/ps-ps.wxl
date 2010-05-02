@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<WixLocalization Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="WixUIBurn" Overridable="yes">[Þùrñ ÅÇÉ]</String>
+  <String Id="WixUITOS" Overridable="yes">[Tèrms òf Úsé ÅÇÉ ÅÇ]</String>
+  <String Id="WixUIInstall" Overridable="yes">[Ìñståll ÅÇÉ ]</String>
+  <String Id="WixUIRepair" Overridable="yes">[Rêpªïr ÅÇÉ]</String>
+  <String Id="WixUIUninstall" Overridable="yes">[Ûñìñställ ÅÇÉ Å]</String>
+  <String Id="WixUIClose" Overridable="yes">[Çlòsë ÅÇÉ]</String>
+  <String Id="WixUIOK" Overridable="yes">[ÔK ÅÇ]</String>
+  <String Id="WixUICancel" Overridable="yes">[Çæñ¢èl ÅÇÉ]</String>
+  <String Id="WixUIRetry" Overridable="yes">[Rétrÿ ÅÇÉ]</String>
+  <String Id="WixUIAbort" Overridable="yes">[Äþòrt ÅÇÉ]</String>
+  <String Id="WixUIIgnore" Overridable="yes">[Ìgñórè ÅÇÉ]</String>
+  <String Id="WixUIYes" Overridable="yes">[Ýês ÅÇ]</String>
+  <String Id="WixUINo" Overridable="yes">[Ñö ÅÇ]</String>
+  <String Id="WixUIProgress" Overridable="yes">[Prõgréss ÅÇÉ ]</String>
+  <String Id="WixUIInitializing" Overridable="yes">[Ìñîtìálízîñg... ÅÇÉ ÅÇÉ]</String>
+</WixLocalization>

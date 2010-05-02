@@ -1,0 +1,13 @@
+;-------------------------------------------------------------------------------------------------
+; <copyright file="wixux.def" company="Microsoft">
+;    Copyright (c) Microsoft Corporation.  All rights reserved.
+; </copyright>
+; 
+; <summary>
+;    WiX UX DLL entry points.
+; </summary>
+;-------------------------------------------------------------------------------------------------
+
+EXPORTS
+    SetupUXCreate
+    SetupUXDestroy

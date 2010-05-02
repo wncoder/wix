@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    The table definitions for the Windows Installer XML Toolset Bux Extension.
+-->
+<tableDefinitions xmlns="http://schemas.microsoft.com/wix/2006/tables">
+    <tableDefinition name="WixBuxCondition" uxManifest="yes">
+        <columnDefinition name="Condition" type="string" length="255" primaryKey="yes" localizable="yes"
+                category="condition" description="Expression which must evaluate to TRUE in order for install to commence."/>
+        <columnDefinition name="Message" type="localized" length="255" escapeIdtCharacters="yes"
+                category="formatted" description="Localizable text to display when condition fails and install must abort."/>
+    </tableDefinition>
+</tableDefinitions>

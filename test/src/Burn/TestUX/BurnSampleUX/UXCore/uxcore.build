@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project name="uxcore" default="uxcore.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    UXCore.build - Builds the UX uxcore.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- Uxcore-specific properties -->
+  <property name="uxcore.file.lib.target" value="${dir.target.wix}\uxcore.lib" readonly="true" />
+  <property name="uxcore.file.lib.targetpdb" value="${dir.target.wix}\uxcore.pdb" readonly="true" />
+  <property name="uxcore.file.lib.targetres" value="${dir.target.wix}\uxcore.res" readonly="true" />
+  <property name="uxcore.additionalIncludes" value="/I &quot;${dir.build.project}&quot; /I &quot;${dir.inc.burn}&quot;"/>
+  <property name="dir.ux" value="${dir.build.project}\UX" readonly="true" />
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="uxcore.build" description="Peforms a full rebuild (clean then build)" depends="uxcore.clean, uxcore.inc" />
+
+  <!-- Clean -->
+  <target name="uxcore.clean" description="Cleans the build">
+    <delete file="${uxcore.file.lib.target}" failonerror="false" if="${file::exists(uxcore.file.lib.target)}" />
+    <delete file="${uxcore.file.lib.targetpdb}" failonerror="false" if="${file::exists(uxcore.file.lib.targetpdb)}" />
+    <delete file="${uxcore.file.lib.targetres}" failonerror="false" if="${file::exists(uxcore.file.lib.targetres)}" />
+    <delete dir="${dir.ux}" failonerror="false" if="${directory::exists(dir.ux)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="uxcore.inc" description="Performs an incremental build" depends="makeDirs, uxcoreinc.lib" />
+
+  <!-- uxcoreinc.lib -->
+  <target name="uxcoreinc.lib" description="Performs an incremental build of uxcore.lib">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.root}\test\src\Burn\TestUX\BurnSampleUX\UXCore">   
+      <include name="UXCore.cpp" />
+      <include name="StartUp.cpp" />
+    </fileset>
+    <property name="compileCpp.dir.build" value="${dir.ux}" />
+    <property name="compileCpp.file.precomp.h" value="${dir.root}\test\src\Burn\TestUX\BurnSampleUX\UXCore\precomp.h" />
+    <property name="compileCpp.additionalIncludes" value="${uxcore.additionalIncludes}" />
+    <property name="compileCpp.additionalOptions" value="-WX- -GR -EHsc -DUNICODE -D_UNICODE" />
+    <property name="makeNativeLib.file.target" value="${uxcore.file.lib.target}" />
+
+    <!-- Make Uxcore.lib -->
+    <call target="makeNativeLib" />
+  </target>
+
+</project>

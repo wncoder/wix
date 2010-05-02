@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Root>
+  <Child></Child>
+  <Child></Child>
+  <Config key="abc">test config</Config>
+  <Config key="ghi" value="CN=Users"/>
+</Root>

@@ -1,0 +1,131 @@
+Executing pre build scripts  ********************
+Performing prebuild steps...
+'h:\dd\DTG_a\src\tools\prebuild.cmd '
+1>
+1>h:\dd\DTG_a\src\deploy\wix\sconce>nmake /nologo  /f h:\dd\DTG_a\src\tools\prebuild.mak TARGET_FRAMEWORK_VERSION= prebuild 
+1>h:\dd\DTG_a\src\Tools\i386mk.inc(1) - Overriding FPO default with NTNOFPO
+1>PUBLISH: logging to publish.log
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp10.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp10.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp10.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp11.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp11.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp11.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp40.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp40.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp40.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h, Current, 2009/03/11-12:40:28
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc, Current, 2009/03/11-12:40:28
+1>*** COMPUTING ASMMETA BUILD RULES ***
+1>	cscript //nologo //job:genPrebuildRules h:\dd\DTG_a\src\tools\prebuild.wsf /out:C:\Users\milenl\AppData\Local\Temp\prebuild1918.inc h:\dd\DTG_a\src\tools\prebuild.xml & REM C:\Users\milenl\AppData\Local\Temp\prebuild1918.inc
+1>h:\dd\DTG_a\src\Tools\i386mk.inc(1) - Overriding FPO default with NTNOFPO
+1>
+1>Stop.
+Executing pre build scripts again with -v35 argument for NetFx 3.5  ********************
+'h:\dd\DTG_a\src\tools\prebuild.cmd  -v35'
+1>
+1>h:\dd\DTG_a\src\deploy\wix\sconce>nmake /nologo  /f h:\dd\DTG_a\src\tools\prebuild.mak TARGET_FRAMEWORK_VERSION=v3.5 prebuild 
+1>h:\dd\DTG_a\src\Tools\i386mk.inc(1) - Overriding FPO default with NTNOFPO
+1>PUBLISH: logging to publish.log
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\versions.inc, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp10.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp10.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp10.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp10.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp10.versions.inc, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp11.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp11.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp11.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp11.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp11.versions.inc, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\ndp20.versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp20.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp20.versions.inc, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp40.versions.h=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp40.versions.h h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp40.versions.h, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.h, Current, 2009/03/11-12:40:29
+1>PUBLISH: NextSpec = {h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc=h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc}
+1>PUBLISH: pcopy.exe h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc
+1>PUBLISHLOG: h:\dd\DTG_a\src\deploy\wix\sconce, h:\dd\DTG_a\src\objr\i386\ndp40.versions.inc, h:\dd\DTG_a\src\public\internal\VSCommon\inc\full\ndp40.versions.inc, Current, 2009/03/11-12:40:29
+1>*** COMPUTING ASMMETA BUILD RULES ***
+1>	cscript //nologo //job:genPrebuildRules h:\dd\DTG_a\src\tools\prebuild.wsf /out:C:\Users\milenl\AppData\Local\Temp\prebuild1918_v35.inc h:\dd\DTG_a\src\tools\prebuild_v35.xml & REM C:\Users\milenl\AppData\Local\Temp\prebuild1918_v35.inc
+1>h:\dd\DTG_a\src\Tools\i386mk.inc(1) - Overriding FPO default with NTNOFPO
+1>
+1>Stop.
+'h:\dd\DTG_a\src\tools\x86\managed\v4.0\MSBuild.exe /clp:ShowCommandLine /m:2 /p:MSBuildPrebuildAndEditPublics=false /p:BuildInParallel=true'
+Microsoft (R) Build Engine Version 4.0.11006.0
+[Microsoft .NET Framework, Version 4.0.11031.0]
+Copyright (C) Microsoft Corporation 2007. All rights reserved.
+
+Build started 3/11/2009 12:40:31 PM.
+     1>Project "h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj" on node 0 (default targets).
+         h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj is in the default phase.
+     1>Project "h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj" (1) is building "h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj" (1:2) on node 1 (Build target(s)).
+         MSBuild is Building sconce.csproj 
+     1>CompareProjectFileTimestamp:
+       Skipping target "CompareProjectFileTimestamp" because all output files are up-to-date with respect to the input files.
+       Preprocess:
+         Skipping task because its outputs are up-to-date.
+       CoreResGen:
+         No resources are out of date with respect to their source files. Skipping resource generation.
+       GenerateLCE:
+       Skipping target "GenerateLCE" because all output files are up-to-date with respect to the input files.
+       CoreCompile:
+         h:\dd\DTG_a\src\tools\x86\oacr\OACRCSC.EXE /noconfig /checked- /nowarn:1699,1570,1572,1573,1591,1701,1702 /fullpaths /nostdlib+ /warn:4 /baseaddress:0x10000000 /define:CODE_ANALYSIS_BASELINE;TRACE;DEV10;RETAIL;WIN32 /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\EnvDTE.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\EnvDTE80.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\EnvDTE90.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.Build.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.Build.Framework.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.Build.Utilities.v3.5.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.CommonIDE.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Designer.Interfaces.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.OLE.Interop.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.ProjectAggregator.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.10.0.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.Design.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.Interop.10.0.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.Interop.8.0.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.Interop.9.0.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.Shell.Interop.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.TextManager.Interop.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\Microsoft.VisualStudio.VSHelp.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\mscorlib.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.Core.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.Design.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.Drawing.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.Windows.Forms.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\System.XML.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\VsLangProj.dll /reference:h:\dd\DTG_a\src\public\sdk\ref\v4.0\VsLangProj80.dll /debug+ /debug:pdbonly /nologo /optimize- /out:h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.dll /resource:h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.Microsoft.VisualStudio.Package.Project.resources,Microsoft.VisualStudio.Package.Project.resources /resource:h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\Microsoft.VisualStudio.Package.SecurityWarningDialog.resources /resource:h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\Microsoft.VisualStudio.Package.DontShowAgainDialog.resources /resource:.\imagelis.bmp,Resources.imagelis.bmp /target:library /warnaserror+ .\ConnectionPointContainer.cs .\ExternDll.cs .\NativeMethods.cs .\UnsafeNativeMethods.cs .\AssemblyReferenceNode.cs .\Attributes.cs .\OAFileItem.cs .\OAFolderItem.cs .\OANestedProjectItem.cs .\OANullProperty.cs .\OAProject.cs .\OAProjectItem.cs .\OAProjectItems.cs .\OAProperties.cs .\OAProperty.cs .\OANavigableProjectItems.cs .\OAReferenceFolderItem.cs .\OAReferenceItem.cs .\OASolutionFolder.cs .\OAAssemblyReference.cs .\OABuildManager.cs .\OAComReference.cs .\OAProjectReference.cs .\OAReferenceBase.cs .\OAReferences.cs .\OAVSProject.cs .\OAVSProjectItem.cs .\BuildDependency.cs .\BuildPropertyPage.cs .\ComReferenceNode.cs .\ConfigProvider.cs .\ConfigurationProperties.cs .\DataObject.cs .\DesignPropertyDescriptor.cs .\DocumentManager.cs .\EnumDependencies.cs .\FileChangeManager.cs .\FileDocumentManager.cs .\FileNode.cs .\DependentFileNode.cs .\FolderNode.cs .\GlobalSuppressions.cs .\HierarchyNode.cs .\ImageHandler.cs .\Interfaces.cs .\IDEBuildLogger.cs .\LocalizableProperties.cs .\Microsoft.VisualStudio.Package.Project.cs .\NestedProjectBuildDependency.cs .\NestedProjectNode.cs .\NodeProperties.cs .\OleServiceProvider.cs .\Output.cs .\OutputGroup.cs .\ProjectConfig.cs .\ProjectContainerNode.cs .\ProjectDesignerDocumentManager.cs .\ProjectElement.cs .\ProjectFactory.cs .\ProjectFileConstants.cs .\ProjectNode.cs .\ProjectNode.CopyPaste.cs .\ProjectNode.Events.cs .\ProjectOptions.cs .\ProjectPackage.cs .\ProjectReferenceNode.cs .\PropertiesEditorLauncher.cs .\ReferenceContainerNode.cs .\ReferenceNode.cs .\RegisteredProjectType.cs .\SettingsPage.cs .\SingleFileGenerator.cs .\SingleFileGeneratorFactory.cs .\SolutionListener.cs .\SolutionListenerForBuildDependencyUpdate.cs .\SolutionListenerForProjectEvents.cs .\SolutionListenerForProjectOpen.cs .\SolutionListenerForProjectReferenceUpdate.cs .\StructuresEnums.cs .\SuspendFileChanges.cs .\Tracing.cs .\TokenProcessor.cs .\TrackDocumentsHelper.cs .\TypeConverters.cs .\Url.cs .\Utilities.cs .\VsCommands.cs .\VSMDCodeDomProvider.cs .\VSShellUtilities.cs .\SelectionListener.cs .\ProjectDocumentsListener.cs .\DontShowAgainDialog.cs .\DontShowAgainDialog.Designer.cs .\GlobalPropertyHandler.cs .\ProjectSecurityChecker.cs .\SecurityWarningDialog.cs .\SecurityWarningDialog.Designer.cs .\UpdateSolutionEventsListener.cs .\UserProjectSecurityChecker.cs h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\AssemblyAttributes.cs /warnaserror-:1058
+       PostLinkOptimize:
+         NO PROFILE DATA sconce2010.zip FOUND IN SUBDIRECTORIES OF h:\dd\DTG_a\src\OptimizationData\x86
+       CopyFilesToOutputDirectory:
+         Copying file from "h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.dll" to "H:\dd\DTG_a\binaries\x86ret\bin\i386\sconce2010.dll".
+         copy /y "h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.dll" "H:\dd\DTG_a\binaries\x86ret\bin\i386\sconce2010.dll"
+         sconce -> H:\dd\DTG_a\binaries\x86ret\bin\i386\sconce2010.dll
+         Copying file from "h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.pdb" to "H:\dd\DTG_a\binaries\x86ret\bin\i386\sconce2010.pdb".
+         copy /y "h:\dd\DTG_a\src\deploy\wix\sconce\objr\i386\sconce2010.pdb" "H:\dd\DTG_a\binaries\x86ret\bin\i386\sconce2010.pdb"
+       UpdateResourceVersionForInternalSxS:
+       Skipping target "UpdateResourceVersionForInternalSxS" because it has no inputs.
+     1>Done Building Project "h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj" (Build target(s)).
+     1>Done Building Project "h:\dd\DTG_a\src\deploy\wix\sconce\sconce.csproj" (default targets).
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.37
+Executing post build scripts  ********************
+Checkout Public Changes
+'h:\dd\DTG_a\src\tools\edit_public.cmd '
+Skipping edit_public on TFS for non-official build machine.

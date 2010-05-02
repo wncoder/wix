@@ -1,0 +1,73 @@
+﻿<project schemaVersion="1.4.0.0">
+<!--
+    These assemblies are passed on the command-line now so that the path can be controlled by
+    environment variables instead of hard coded relative path like this.
+
+    <assemblies>
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.Cab.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.Cab.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.Zip.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Compression.Zip.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Resources.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.Resources.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.Package.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.Package.xml" commentsOnly="False" />
+        <assembly assemblyPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.Linq.dll" xmlCommentsPath="..\..\..\..\build\ship\x86\Microsoft.Deployment.WindowsInstaller.Linq.xml" commentsOnly="False" />
+    </assemblies>
+ -->
+    <namespaceSummaries>
+        <namespaceSummaryItem name="" isDocumented="False" />
+        <namespaceSummaryItem name="Microsoft.Deployment.Compression" isDocumented="True">Framework for archive packing and unpacking.</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.Compression.Cab" isDocumented="True">Implements cabinet archive packing and unpacking.</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.Compression.Zip" isDocumented="True">Implements zip archive packing and unpacking.</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.Resources" isDocumented="True">Classes for reading and writing resource data in executable files.</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.WindowsInstaller" isDocumented="True">Complete class library for the Windows Installer APIs.</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.WindowsInstaller.Linq" isDocumented="True">LINQ extensions for querying Windows Installer databases (experimental).</namespaceSummaryItem>
+        <namespaceSummaryItem name="Microsoft.Deployment.WindowsInstaller.Linq.Entities" isDocumented="False" />
+        <namespaceSummaryItem name="Microsoft.Deployment.WindowsInstaller.Package" isDocumented="True">Extended classes for working with Windows Installer installation and patch packages.</namespaceSummaryItem>
+    </namespaceSummaries>
+    <additionalContent>
+        <contentItem sourcePath=".\WindowsInstaller1.png" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\WindowsInstaller2.png" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\WindowsInstaller3.png" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\WindowsInstaller.htm" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\Compression.htm" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\Compression1.png" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\Compression2.png" destPath="" excludeItems="False" />
+        <contentItem sourcePath=".\helplink.js" destPath="" excludeItems="False" />
+    </additionalContent>
+    <dependencies>
+        <dependencyItem depPath="GAC:System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+        <dependencyItem depPath="GAC:System.Configuration, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    </dependencies>
+    <ProjectSummary />
+    <MissingTags>None</MissingTags>
+    <VisibleItems>InheritedMembers, InheritedFrameworkMembers, Protected, ProtectedInternalAsProtected, SealedProtected</VisibleItems>
+    <HtmlHelp1xCompilerPath path="" />
+    <HtmlHelp2xCompilerPath path="" />
+    <OutputPath>.\</OutputPath>
+    <SandcastlePath path="" />
+    <WorkingPath path=".\obj\" />
+    <CleanIntermediates>True</CleanIntermediates>
+    <HelpFileFormat>HtmlHelp1x</HelpFileFormat>
+    <PurgeDuplicateTopics>True</PurgeDuplicateTopics>
+    <CppCommentsFixup>False</CppCommentsFixup>
+    <FrameworkVersion>2.0.50727</FrameworkVersion>
+    <BinaryTOC>True</BinaryTOC>
+    <IncludeFavorites>False</IncludeFavorites>
+    <Preliminary>False</Preliminary>
+    <RootNamespaceContainer>False</RootNamespaceContainer>
+    <RootNamespaceTitle>Deployment Tools Foundation Namespaces</RootNamespaceTitle>
+    <HelpTitle>Deployment Tools Foundation</HelpTitle>
+    <HtmlHelpName>DTFAPI</HtmlHelpName>
+    <Language>en-US</Language>
+    <CopyrightHref />
+    <CopyrightText />
+    <FeedbackEMailAddress>wix-users@lists.sourceforge.net</FeedbackEMailAddress>
+    <HeaderText />
+    <FooterText>&lt;script src="helplink.js"&gt;&lt;/script&gt;</FooterText>
+    <ProjectLinkType>Local</ProjectLinkType>
+    <SdkLinkType>Msdn</SdkLinkType>
+    <PresentationStyle>Prototype</PresentationStyle>
+    <NamingMethod>MemberName</NamingMethod>
+    <SyntaxFilters>Standard</SyntaxFilters>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
+</project>

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+
+  <?define TestDataDirectory="$(env.WIX)\test\data\Integration\BuildingPackages\Bundle\Files"?>
+
+  <Bundle>
+
+    <UX Name="Setup.exe" SourceFile="$(var.TestDataDirectory)\Bootstrapper.exe"/>
+
+    <Chain>
+      <MsiPackage SourceFile="$(var.TestDataDirectory)\Packages\MsiPackage.msi"/>
+    </Chain>
+
+    <util:DirectorySearch Id="DirectorySearch1" Variable="AdminToolsFolder" Path="%windir%\System"/>
+
+
+  </Bundle>
+</Wix>

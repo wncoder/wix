@@ -1,0 +1,1014 @@
+RobMen: WiX v3.5
+
+RobMen: Basic .exe support in burn. Not really useful without detection
+        support that is coming soon.
+
+MiCarls: Add support for NetFX 4.0 & VS2010 (in NetFXExtension & VSEXtension).
+
+RobMen: wixux.dll - Start of Burn UX DLL for WiX toolset install itself.
+
+WixBuild: Version 3.5.0529.0
+
+JBae: Reduced memory footprint of Preprocessor and added capability to
+      hook up event handler on preprocessed stream.
+
+RobMen: Implemented more of the elevation handling in burn. Also fixed thread
+        messaging bug causing WixUX to hang on initialization occasionally.
+
+KDimov: Switching Patch/@Classification from enumeration to any string.
+
+WixBuild: Version 3.5.0605.0
+
+SBonev: Two fixes for the -usf light.exe switch:
+        1) Filter out symbols in the entry section.
+        2) Find the unreferenced symbols based on the sections being linked,
+           not the sections in the linked Output object.
+
+SBonev: Add a FinalizePreprocess method to the PreprocessorExtension base 
+        class.
+        Call the new FinalizePreprocess method for each registered preprocessor
+        extension after the preprocessing is done.
+
+MiCarls: Install-time performance improvement for CABs with duplicate files
+         also deprecate light's "-O1" and "-O2" switches
+
+RobMen: burn - change UX to return int's instead of BOOL's to provide a bit
+               wider array of responses from UX.
+        burn - child process now sends all messages to parent process, parent
+               doesn't quite understand them all yet.
+        dutil - fix a few build warnings
+
+SBonev: Add a preprocessor event that is raised when an ifdef/ifndef directive
+        is processed.
+
+WixBuild: Version 3.5.0619.0
+
+MiCarls: Smart cabbing now catches ALL duplicate files, not just ones from the
+         same source path (based on file hashes).
+         Also, fix two regressions from last week's cab change: don't leave
+         any temp files behind, and properly store duplicates in the CAB again
+
+WixBuild: Version 3.5.0626.0
+
+MikeHo: Remove assert in CAQuietExec64
+
+MikeHo: Add call to save Metabase data during WriteMetabaseChanges
+
+SBonev: Temporary files clean up in WixUnit.
+
+WixBuild: Version 3.5.0704.0
+
+MiCarls: eliminate duplicate periods (.) in certain toolset error messages
+
+APaloma: SFBUG:2803776 - Add new file in Solution Explorer causes overflow
+
+WixBuild: Version 3.5.0710.0
+
+BobArnso: - Add WIXAPI calling convention to WcaUtil functions missing it
+          - Add XsdGen.exe build tool to binaries .zip and setup
+
+APaloma: SFBUG:2803086 - TargetPath variable is not displayed correctly
+
+APaloma: SFBUG:2801987, 2803061, 2803077, 2803082, 2803106, 2803108, 2803776,
+         2812667 - Ported several changes from a newer version of MPF and
+         fixed these bugs in the process.
+
+WixBuild: Version 3.5.0724.0
+
+PMarcu: Adding resume download support to burn.
+
+RobMen: Update execution to be "Detect, Plan, Apply" instead of "Prepare,
+        Cache, Execute"
+        Start adding support for Burn ARP registration
+        Clean up incorrect " = { 0 }" syntax
+
+RobMen: fix Votive 2010 build to correctly build based on VSIP2010 presence.
+
+APaloma: SFBUG:2803077,2826801 - Fixed renaming folders
+
+APaloma: SFBUG:2803062 - TemplateItemIcon and TemplateProjectIcon don't match
+
+WixBuild: Version 3.5.0731.0
+
+APaloma: SFBUG:2829077 - Fixed votive not installing on VS 2010
+
+HSeiler;MikeHo: Add support for IIS 7 to IIsExtension
+
+MiCarls: SFBUG:2805534 (Improve error validating UTF-8 SummaryCodepage)
+         SFBUG:2813961 (NonNullable attribute parsed incorrectly)
+         SFBUG:2810217 (Missing RemoveRegistryValues in InstallExecuteSequence)
+
+HeathS: Support only WinSDK 6.1 installed to build WiX 3.5.
+
+Pmarcu: Finishing support for download resume and more robust unit test.
+
+HeathS: SFBUG:2800797 - Error trying to create a language transform
+
+APaloma: SFBUG:2803071 - Copy+Paste for project item does not change the
+                         file name
+         SFBUG:2826111 - Build fails when adding a wix project to a VSI
+                         project
+         SFBUG:2803106 - Rename a file of WiX project in SE will get error
+
+JBae: SFBUG:2833962 - fix for exception thrown if there are duplicate
+                      directory Ids.
+
+MiCarls: - Remove a number of needless reallocations / over-allocations
+         - Fix build-time perf issue that occurs with extremely large (1000+)
+           numbers of fragments
+
+MiCarls: SFBUG:2803146 - fix build-time performance issue in cabbing code by
+         using O(1) hash lookup when checking if a file has already been added
+
+WixBuild: Version 3.5.0814.0
+
+MiCarls: Basic burn logging fixes (move log initialization to stub)
+
+APaloma: Fixed a couple cases where Votive would not refresh file icons for
+         files that were previously unavailable. Fixed build error when a WiX
+         project referenced another WiX project. Fixed Cut/Copy/Paste for
+         non-member items. Fixed copy and pasting folder to same directory as
+         source. Fixed Votive showing yellow exclamation point for VC++
+         references. Fixes SourceForge bugs: 2603047, 2803058, 2803066, 2803099
+
+FGrohn: Burn MSI features & properties. Plus some bug fixes.
+
+FGrohn: Remove dead setup.h from Burn.
+
+MiCarls: SFBUG:2833976 - wixcop no longer silently ignores missing files
+         SFBUG:2833968 - IISExtension no longer adds unnecessary CA's
+         SFBUG:2833966 - torch message for invalid commandline came before help
+         SFBUG:2786317 - Wrong assembly version in MsiAssemblyName table
+
+MiCarls: Allow star guids to be used in the same MSI as Registry* elements with
+         property substitutions (as long as they aren't the keypath of a
+         star-guidded component)
+
+MiCarls: Move burn unittest log initialization into ModelTestShim
+         Also various other log-related fixes
+
+MiCarls: Fix double-free in stub introduced by the first logging fix,
+         integrate wixux.dll into the main build process,
+         and convert stub to accept wide character commandline parameters
+
+RobMen: Pass full plan (with properties) to elevated process.
+        Fix up more Add/Remove Programs registration code (not done yet).
+        Minor bug fixes in dutil.
+
+MiCarls: Fix a memory leak and improve general code quality in burn
+
+WixBuild: Version 3.5.0821.0
+
+HSeiler: SFBUG:2840715 - WriteIIS7ConfigChanges leaking MSI handles
+         Actually leak was in ConfigureIIs7, fix was to assure handles
+         released.
+
+APaloma: Fixed ICE property fields not disabled for library projects. Fixed
+         solution explorer not showing correct icon for deleted extensions.
+         Fixed toggling "Show All Files" causing a change in the project.
+         Fixes SFBUGs 2837411, 283405, 2837401.
+
+MiCarls: Allow * guids with property-substituted registry locations, and:
+         SFBUG:2837350 - attributes which can't be empty shouldn't be able to
+                         be purely whitespace, either
+         SFBUG:2837364 - Improve error message related to -ext switch in dark
+         SFBUG:2837394 - Improve error message with wrong input file extension
+                         in dark
+
+MiCarls: Burn now logs in UTF-8 - also further improve quality of logging
+         infrastructure code
+
+MiCarls: Burn now works when running from a unicode filename / filepath
+
+WixBuild: Version 3.5.0828.0
+
+FGrohn: Support for InstallCondition for packages in Burn.
+        DetectCondition now an attribute on package ExePackage element in
+        Burn.
+        Fix for burn.exe packaging default for CAB files extracted from MSI
+        Media table.
+        Fixes for potential memory leaks in pathutil, and some clean-up.
+
+BobArnso: Add new tests/cleanup to WixCop. The primary use case is to help
+          clean up and simplify the authoring generated by Dark.exe.
+          - DefaultOptionalAttribute: Tests for the use of optional attributes
+            that get identical default values from other attributes, such as 
+            how the defaults for File/@Id and File/@Name default from
+            File/@Source.
+          - ExplicitGeneratedAttribute: Tests whether attributes that WiX
+            generates, such as Registry/@Id, are specified. It's almost never
+            necessary to specify these values, except where you want to 
+            explicitly generate identical rows for component rule adherence.
+
+MiCarls: Add some missing .h files from dutil to sdk\inc directory
+
+BriaRo: SFBUG: 2835801 - Removed duplicate directory fragments that are created
+                         when using -cg switch.
+        SFBUG: 2835799 - Throw correct error message when a file specifed for
+                         the FileHarvester does not exist.
+        - Supressing ICE47 as it is no longer valid past Win9x.
+
+WixBuild: Version 3.5.0904.0
+
+FGrohn: Built-in property support in Burn.
+
+APaloma: SFBUG:2837403 - Added drag and drop support to Votive for items
+         within the solution explorer.
+
+WixBuild: Version 3.5.0914.0
+
+HeathS: SFBUG:2837398 - Added alternate support for -out as -o to torch.exe.
+
+FGrohn: Fix for Burn searches.
+
+RobMen: Support resuming Burn when a package requires reboot.
+
+MiCarls: Fix a bunch of little burn issues
+
+MikeHo: Fix error messages, remove unnecessary memory allocation in IIs
+        Extension.
+
+VaraBall: Implemented .msu install support in Burn.  
+
+HeathS: Output messages to an attached debugger for easy debugging.
+
+MiCarls: SFBug:2820888 - Fix custom action projects to work again in WiX 3.5
+
+WixBuild: Version 3.5.0925.0
+
+APaloma: Votive now loads in VS2010 Beta 2 as well as Beta 1.
+         Prep work for allowing async builds in Votive (not yet implemented)
+
+APaloma: Added asynchronous builds.
+         Changed MSBuild targets to compile all source files together.
+         Fixed automatic linking to files outside of the project
+         base directory.
+
+JasonGin: SFBUG:2808590 - Fix handling of file map passed to MakeSfxCA
+          SFBUG:2801640 - Fix Overflow exception in Installer.Provide*()
+          Fix Record delete-after-fetch failure related to FormatString
+
+MiCarls: SFBug:2843617 - Light now supports -cabcache set to the output path
+         (was previously unsupported when using external cabs)
+
+WixBuild: Version 3.5.1002.0
+
+CAraman: - fix type returned by IIS7ConfigChanges to match type of actual
+           return value, remove unnecessary calling convention
+         - fix annotations for static code analysis
+         - fix compilation at /WX /W4
+         - fix compilation with the Windows 7 SDK
+         - fix some potential integer overflows found by static code analysis
+         - constness fixes
+
+HeathS: SFBUG:2805220 - Support specifying a separate summary info code page.
+
+APaloma: Fixed some missing strings.
+         SFBUG:2803119 - Fixed upgrading projects from VS 2008 to VS 2010.
+         SFBUG:2816157 - Fixed upgrading projects from WiX 3.0.
+         SFBUG:2864550 - Fixed MSI not being deleted on clean.
+         SFBUG:2864641 - Fixed files losing focus in the solution explorer 
+                         after being renamed.
+
+PMarcu: SFBUG:2795960 - Removing warning for removing a non-keypath file from
+                        a component as long as there is a matching entry in the
+                        RemoveFile table for that component.
+        SFBUG:2809309 - Fixing assert when an immediate circular reference
+                        exists in grouping constructs.
+        SFBUG:2837384 - Adding -out switch to melt to match other tools.
+
+APaloma: Added ability to rename WiX project references.
+         Fixed an issue where Votive could not build projects that had
+         references to projects that had a different configuration.
+         SFBUG:2874708 - Fixed references to extensions with periods in their
+                         name not being named correctly.
+         SFBUG:2855937,2837385 - Fixed problems with project reference names.
+
+MikeHo: Fix issues with custom actions that use WcaErrorMessage, which
+        don't handle silent install properly.
+
+HSeiler: SFBUG:2879415 - Fixed: ConfigureIIs7: Debug Assert Failed 
+
+PMarcu: SFBUG:2871129 - Allowing empty AppId/@DllSurrogate.
+
+WixBuild: Version 3.5.1023.0
+
+MiCarls: Add support in WiXVSExtension for detecting VS2010 Express SKUs
+
+SBonev: Update all tools app.config files to support NETFX 4.0.
+
+BriaRo: SFBUG:2831431 - Added Uri decoding step for directory names in the
+                        VSProjectHarvester.
+
+WixBuild: Version 3.5.1030.0
+
+APaloma: Fixed some Votive type identity problems.
+
+APaloma: SFBUG:2886669 - Fixed Project* project reference preprocessor
+                         variables.
+
+PMarcu: SFBUG:2891433 - lit produces .wix not .wixlib 
+        SFBUG:2833370 - ServiceControl Wait Column Incorrectly Decompiled
+        SFBUG:2801542 - Give a better error for 64-bit MSIs with invalid page
+                        count
+
+MikeHo: Add progress text entries for ConfigureIIsExec/ConfigureIIs7
+
+MiCarls: Lots of little CA code cleanups / improve logging / tiny fixes
+
+FGrohn: RI changes from newburn branch.
+        - MC log messages for Burn.
+        - CrypUtil added to DUtil.
+        - Line timestamps and critical section added to DUtil logging.
+        - New integer parsing functions added to DUtil.
+        - New parsing functions in XmlUtil to get an attribute as a DUtil
+          string and parse yes/no as a bool.
+
+AaronSte: Adding notes to documentation for items that have been added in
+          WiX v3.5.
+
+AOdle: Add Profile attribute to WixFirewallException and support for the
+       Windows Firewall with Advanced Security in Windows Vista and later.
+
+APaloma: SFBUG:2890605 - Fixed case of "Value does not fall within the
+                         expected range." exception dialog.
+
+HanShi: Add support for Windows 7's IGameExplorer2 to WixGamingExtension.
+
+KDimov: Create Bundle schema in wix.xsd and tables definitions in tables.xml
+
+KDimov: First compiler and linker code for Bundle
+
+WixBuild: Version 3.5.1120.0
+
+APaloma: Added ability for extensions to provide a custom binder for light
+         to use.
+
+APaloma: Fixed C++ project properties not displaying when a WiX project is
+         in the same solution. This problem could also prevent the C++
+         project from being built.
+
+APaloma: MSBuild hookups for Bundle and custom binders for light. Added tests
+         for custom binder.
+
+KDimov: Fix Bundle schema. Add Bundle compiler and schema tests.
+
+MiCarls: Added insignia.exe command-line tool (related MSbuild tasks to come)
+
+SBonev: Make WiX build with Windows SDK for Windows 7 and .NET Framework 3.5 SP1
+
+MikeHo: SFBUG:2896315 - Fix XmlLoadDocumentFromFileEx to not load DTD 
+                        or resolve externals.
+
+SBonev: Establish a relationship between the WixFile and the File tables.
+
+HeathS: SFBUG:2879574 - Added targets for HeatFile and HeatDirectory tasks
+        SFBUG:2880263 - Remove generated source files from harvesting targets
+                        during the Clean build target
+
+WixBuild: Version 3.5.1204.0
+
+CAraman: - fixes for compiling at /W4
+         - annotations for static analysis
+         - constness fixes
+         - include guards
+
+SBonev: Add support for wix variables to the -var switch of heat.exe.
+
+BriaRo: Fixed bug where heat.exe would fail when sub directories in output
+        file path do not exist.
+
+HeathS: SFBUG:2893684 - Do not set resource as key path when KeyPath="no"
+                        is explicit.
+PMarcu: SFBUG:2912362 - Showing a warning when you have a folder in your merge
+                        module that starts with the same name as a standard
+                        folder in windows installer.
+
+APaloma: Project references in WiX projects will now call Heat to automatically
+         generate component authoring. Added support in Heat to generate layouts
+         for project output groups.
+
+MiCarls: Insignia: add MSBuild hookups to allow easy use of insignia
+         - Also fix MSBuild to be aware of external cabs (for purposes of
+           clean builds, and for project outputs)
+
+MiCarls: Fix previous Insignia fix to not break bundles in MSBuild
+
+WixBuild: Version 3.5.1309.0
+
+BobArnso: Default Component/@Guid to "*" and @Id to keypath resource id
+
+BobArnso: Add MajorUpgrade element to simplify Upgrade table authoring
+
+PMarcu: Fixing the mismatch on NoDependencies in the NetfxExtension decompiler.
+
+FGrohn: New Burn code.
+
+FGrohn: Adding TDD unit tests for Burn.
+
+FGrohn: Burn MSI searches, property engine renamed variable engine, and new
+        unit test project.
+
+FGrohn: New Burn sprint 1 check-in.
+
+AndySt: Fix sporadic unit test failures.
+        1. If file in the source cache was read-only, it was not getting deleted
+           during uninstall.
+        2. If Uninstall reg key did not exist, it would not get created.
+        3. Added the unit tests Arp and Source Caching
+
+FGrohn: Burn TDD unit test companion files and failing tests.
+
+OngChees: Fix broken unit tests.
+
+OngChees: Fix the 1 minute delay in Unit test.
+
+OngChees: Remove InCorpNet from Burn.
+
+OngChees: Remove DW20 from Burn.
+
+VaraBall: Updating StdUX and WixUX to use new Burn interface.
+
+PhilipOt: Batch file and small changes to make a Burn demo folder using the
+          StdUx with either a "local" or "web" SKU Go to the demo subfolder and
+          type makedemo for help on usage.
+
+AndySt: Removing WU source file dependency from Burn.
+
+PhilipOt: Code clean-up.
+
+FGrohn: Remove SHA256 lib from Burn.
+
+FGrohn: Variable, condition and search hook-in to Burn.
+
+FGrohn: Implemented entrypoints in IBurncore in Burn to set variables, evaluate
+        conditions and format strings.
+
+RaviR: Fixes a hang in the Burn BITS download manager.
+
+VaraBall: Supporting Detect and Plan phases in Burn.
+
+BriaRo: Initial check-in of Frost, the Burn mock engine.
+
+VaraBall: Refactoring CompositePerformer to support execution of elevated
+          actions.
+
+PhilipOt: Embedded UX payloads.
+
+VaraBall: Burn Fixing makedemo.bat, Setup.exe  when /q /uninstall is passed in.
+
+FGrohn: Registration logic update in Burn.
+
+VaraBall: Implementing OnExecutePackageBegin and OnExecutePackageComplete
+          methods.
+
+VaraBall: Intergrate of BurnController.h and BurnView.h.
+
+VaraBall: Added IBurnCore.Suspend() and IBurnCore.Reboot() and associated
+          engine controls.
+
+RaviR: Burn multi-volume support.
+
+FGrohn & VaraBall: Pipe based elevation and wire-in of registration in Burn.
+
+VaraBall: Wiring in system reboot call when reboot is pending.
+
+VaraBall: Fixing throw of CObjectNotInitializedException when REQUEST_STATE_NONE
+          is passed in.
+
+FGrohn: Connect IBurnCore->Log() to ILogger log in Burn.
+
+FGrohn: BVariantUninitialize() changed to clear struct in Burn.
+
+FGrohn: Rename Property to Variable in Burn manifest.
+        Parsing only Resource element when parsing payloads.
+
+VaraBall: Wiring up IBurnUserExperience->OnError() for MSI engine.
+
+AndySt & VaraBall: Payload caching implementation.
+                   Added IBurnUserExeperience->OnCachePackage () methods.
+
+RaviR: Fix bug in multi-volume support in Burn.
+
+VaraBall: Wiring up IBurnUserExperience->OnError() for UAC cancel and download
+          errors.
+
+FGrohn: OnExecuteMsiMessage and OnExecuteMsiFilesInUse implementation in Burn
+
+FGrohn: Fix for Cache attribute in burn.exe.
+
+AndySt: Burn - Fix crashing unit tests.
+
+VaraBall: Fix for UAC prompt accept after user cancels.
+
+MiCarls: Add "EseUtil" to dutil, a set of JetBlue database utility functions
+
+JaredR: Add Windows SDK v7.0 to list of acceptable SDKs.
+        Change TrustMSBuildTargetsFiles to only write to HKLM when needed.
+
+WixBuild: Version 3.5.1315.0
+
+APaloma: Fixed project macros not working in pre-build and post-build steps
+         when added by Votive under VS 2010.
+
+APaloma: Fixed light sometimes thowing an exception when notidy is specified.
+
+MiCarls: Fix MSBuild to be aware of loose files (for purposes of clean builds,
+          and for project outputs)
+
+APaloma: Added ContainerRef support for Bundle and added support for heat to
+         harvest into containers.
+
+MiCarls: SFBug:2849248 - Fix IIS6 custom action to be more resilient to
+         components which aren't being installed
+
+HeathS: SFBUG:2901551 - Make sure the file sequence in a patch does not
+        overlap with the file sequences of any baseline.
+
+BMurri: Added implementation of LayoutDirectories
+
+MiCarls: Add wildcard queries to EseUtil
+
+BMurri: Add preprocessor pragmas.
+
+APaloma: Added support to automatically generate a file that references
+         ComponentGroups that were created by heat when generating authoring
+         for project references. Changed the project template to take advantage
+         of this. Creating an installer for a C#/VB app is now as simple as
+         creating a new WiX project and referencing the C#/VB project.
+         Added heat command line switch -directoryid to override generated
+         directory element IDs.
+         Changed heat's -layout and -container switches to -generate <type>
+         where type is either components, container, or layout.
+         Deprecated using colons with heat's -t:, -template:, and -pog:
+         switches. It's preferred to use spaces instead of colons.
+         Fixed heat not working on VS 2010 projects.
+         Fixed Votive not loading on post-Beta 2 builds of VS 2010.
+         Fixed incorrect pdbout directory when building with multiple cultures.
+
+JasonGin: SFBUG:2810897 - Correctly save numeric-named Win32 resources in DTF
+
+v-dahark: Fix for Smoke logging wrong message when files with unsupported
+          extensions are passed in.
+          Adding unit test for Smoke.
+
+APaloma: Fixed possible corrupted text on installer when missing a certain
+         combination of Votive dependencies.
+
+FGrohn: Fix in dutil FileVersionFromStringEx() function.
+
+FGrohn: Fix for unterminated string in BuffReadString() in dutil.
+
+FGrohn: Bug where Burn fails to launch if /passive is passed on the command
+        line.
+
+VaraBall: Fix two html logs being generated when we have PerUser and
+          PerMachine item(s).
+
+AndySt: Burn bug: core\cachemanager.h(103) : warning C4715:
+        'IronMan::CacheManager::MoveFileToCached' : not all control paths
+        return a value
+
+PhilipOt: Fix where should be no elevation prompt thrown by burn in Quiet
+          or Passive Mode
+
+FGrohn: Fix for two unused LExit warnings in Burn.
+
+FGrohn: Introducing Burn built-in variables "CompatibilityMode" and
+        "Privileged".
+
+WixBuild: Version 3.5.1322.0
+
+JaredR: Added UX/Payload/PayloadGroup to Bundle language schema.
+        Added Parsing for Payload/PayloadGroup(Ref) to Compiler.
+        Added flattening of UX payloads to Linker.
+        Added binding of UX payloads into output in Binder
+        Added "just enough" of burnexe into Binder to start generation of
+        bundle output (stub exe with attached UX container).
+
+JaredR: Created BurnWriter to replace SectionWriter and handle PE re-writing
+        in safe code. Modified Binder to use BurnWriter for creating Bundles.
+        Removed SectionWriter. Removed "Allow unsafe code" from Wix.csproj
+
+JaredR: Changed Bundle to require one UX element.
+        Added simple Chain/MsiPackage/ExePackage to Bundle language schema.
+        Updated Binder bundle code to generate chain/package information
+        in Burn manifest and ParameterInfo to create a basic chainer.
+
+APaloma: Changed heat to use the new MSBuild API when harvesting VS 2010
+         projects.
+         Fixed WiX projects being detected as non-MSBuildable in VS 2010.
+         Fixed discrepancies between what projects were referenced in the new
+         generated file and which ones heat actually generated authoring for.
+         Fixed problems with missing or wrong project information being defined
+         in project reference variables for VS 2010.
+         Fixed build action not being changable on the property grid in VS 2010.
+         Fixed heat generating Directory/@Name attributes containing "..".
+
+JaredR: Changed Bundle Chain to require one package element, and updated
+        a failing unit test to include the now-required element.
+        Refactored Binder.ChainPackageInfo.PackageType to
+        Compiler.ChainPackageType so that hard-coded in order to remove some
+        hard-coded strings.
+        Changed Payload and *Package ID generation to use deterministic
+        CompilerCore.GenerateIdentifier() method.
+        Added end-to-end support for Variables in Bundles.
+
+CAraman: fixes for /W4 and static analysis
+
+APaloma: Added ability for heat to harvest projects to PayloadGroups.
+         Added better error messages for when heat is unable to build targets
+         in an MSBuild project when harvesting projects.
+         Fixed heat generating Ids with invalid characters when project names
+         contain characters that aren't valid for identifiers.
+
+APaloma: Added enforcing of valid identifer characters on ComponentGroup and
+         ComponentGroupRef.
+
+MikeHo: Fix issue with DoesShareExist code, fix static analysis errors in IIS7
+        CAs
+
+APaloma: Added property for project references in Votive to completely disable
+         automatic harvesting for a reference.
+
+APaloma: SFBUG:2940161 - Fixed heat generating ComponentGroups with duplicate
+         Ids when using the -cg switch.
+
+MiCarls: Fix some issues found by static analysis
+
+MiCarls: Fix a scenario related to website locators, broken from previous fix
+
+RobMen: introduce buxutil.lib, Burn User Experience Utility library.
+
+MiCarls: Fix memory leaks in burnstub
+
+WixBuild: Version 3.5.1329.0
+
+RobMen: dutil - logutil is ANSI based again
+        dutil - dirutil can now get/set current directory
+
+APaloma: SFBUG:2936767 - Fixed automatic code generation breaking when a
+                         referenced project has a different configuration.
+         Fixed exception being thrown when reusing Binder instances.
+         Added two missing strings in Votive 2005/2008.
+
+APaloma: Fixed not being able to rename files that have dependent files.
+         Added new Common class to WixTasks to help clean up some stuff.
+         Added three lines of matching lengths to this history.txt file.
+
+HeathS: Do not create delta patch if file row is unmodified.
+
+APaloma: SFBUG:2803079 - Fixed project template to not include invalid unicode
+                         characters from the project name when creating new
+                         projects.
+
+MikeHo: Fix warnings in Server CA code
+
+WixBuild: Version 3.5.1405.0
+
+BobArnso: Fix sfbug:2942098 by fixing href urls
+
+MiCarls: Fix some minor bugs in cabcutil
+
+BobArnso: Add Lux declarative unit-testing framework and toolset
+
+JaredR: Added "expansion variables" functionality to DocCompiler to allow
+        auto-version stamping in HTML help files. Updated "current-Wix-
+        version-referencing" files (there were only 3!) to use new expansion
+        insertion instead. Tweaked chm CSS to fix a couple of errors, raise
+        consistency between HTML and XSD-generated topics, and improve
+        readability.
+
+JaredR: Added WixSearch tables to the Util extension. Changed Bundle parsing
+        to handle extension elements. Added Util parsing for DirectorySearch
+        and FileSearch elements. Added Util Binder extension to detect
+        circular references and re-order searches. Updated core Binder to use
+        WixSearch tables to generate Burn manifest and ParameterInfo search
+        elements. Refactored WixGroup flattening code in Linker. Added support
+        for 'attributeGroup' in XsdGen. Added end-to-end 'InstallCondition'
+        support on MsiPackage and ExePackage Bundle elements.
+
+JaredR: Fix for built-in Burn variables not getting initialized.
+
+FGrohn: Fixes for some regressions in Burn.
+
+MiCarls: Fix memory leaks in burnstub
+
+BriaRo: Added 's', making it MSIOptions, to MSIOption when creating burn
+        manifest.
+
+MiCarls: Extract UX DLLs to a per-process unique subdirectory, so that running
+         two instances of the same burn bundle allows us to get to the UX
+
+MiCarls: Minor fix to strutil's StrReplaceString() function to return a better
+         startindex
+
+RobMen: Remove deprecated burn.exe and Burn MSBuild Task.
+
+HeathS: Added managed host and adapter for Burn UX.
+
+HeathS: SFBUG:2948663 - Properly document default RegistrySearch/@Win64 value.
+
+HeathS: Added the managed UX (mux) to the full build
+
+APaloma: SFBUG:2944377 - Fixed Votive sometimes not displaying context menus
+                         and throwing an exception on multi-monitor systems.
+
+APaloma: SFBUG:2950626 - Fixed GetLooseFileList throwing an exception when
+                         building uncompressed packages that include files with
+                         long file names.
+
+HeathS: Updated BurnCore to handle versions and string buffers correctly.
+
+VaraBall: Fix - Progress getting stuck at 50% by reading in
+          EstimatedInstallTime.
+
+MiCarls: Fix some issues found by static analysis
+
+APaloma: SFBUG:2952369 - Fixed Product.Generated.wxs file always being
+                         regenerated and causing compile/link to always execute
+                         when building a wixproj.
+
+APaloma: Added WixCop for ComponentGroup/ComponentGroupRef identifiers.
+
+WixBuild: Version 3.5.1419.0
+
+MikeHo: Fix warnings in Server CA code, enable warnings as errors for most 
+        projects that use C++/C code, comment out assert in aclutil.cpp
+        
+APaloma: Deprecated being able to use invalid identifier characters in
+         ComponentGroup/ComponentGroupRef identifiers instead of generating an
+         error message.
+
+JaredR: Added new WixOrdering table and WixGroupingOrdering class to
+        encapsulate management of groups and ordering information. Switched
+        old UX/Payload(Group) flattening in Linker to use the new
+        WixGroupingOrdering class, and added inferred ordering to UX/Payload/
+        PayloadGroup(Ref) to ensure that the first Payload item is kept as the
+        UX entry point for the Burn engine. Added PackageGroup(Ref)s for
+        fragmenting of packages under Bundle/Chain. Added @After to packages
+        for explicitly authored ordering dependencies. Changed Bundle Binder
+        to using the ordered group for Burn manifest output.
+
+MiCarls: OnProgress no longer ignores return value from UX, and OnRegister and
+         OnUnregister weren't wired into engine (but are now)
+
+AndySt: Change so all burn cached files, bundle and packages are under one root
+        folder
+
+VaraBall: Sending individual progress and overall progress for payload download
+          & package execution to via IBurnUserExperience::OnProgress().
+
+VaraBall: Checking in fix for building TDD test for above change.
+
+AndySt: Fix - Installing an MSP targetting multiple products applies to 1
+        product.
+
+WixBuild: Version 3.5.1426.0
+
+MiCarls: Unify extraction log with main log, and add logging messages for
+         searches and variables
+
+APaloma: Fixed burn initiating a rollback on specific success cases including
+         when a reboot is required. Fixed burn getting stuck in a loop trying
+         to elevate if elevation is retried once but fails thereafter.
+
+HeathS: Complete managed UX framework and default native UX host.
+
+HeathS: Made additional methods to IBurnUserExperience use consistent style.
+
+HeathS: Initialize the BURN_COMMAND to empty for debug builds.
+
+HSeiler: Allow most IIS elements to be formatted properties
+
+HSeiler: Fix issue where Vdirs were created as applications
+
+HeathS: Changed MUX activation to use documented APIs instead of reflection.
+
+HeathS: Do not change the database code page when the WXL specifies -1.
+
+WixBuild: Version 3.5.1519.0
+
+HeathS: Enable building WiX 3.5 with only VS 2010 installed.
+
+JaredR: Added MspPackage and MsuPackage to Bundle.
+        Migrated recent burnexe changes to Bundle/candle/light.
+
+FGrohn: Moving Burn UI thread creation to UX.
+
+APaloma: Added OnDownloadPayloadBegin, OnDownloadPayloadComplete,
+         OnDownloadProgress, and OnExecuteProgress functions to
+         IBurnUserExperience. All Burn user experiences must now implement these
+         functions. The burn downloader will now ask the user to resolve the
+         path to a failed download when a download fails because the network
+         path was not found.
+
+AndySt: Implementing Burn Service Burn feature.
+
+APaloma: Fixed binders not parsing single character command line arguments.
+         Fixed -suid heat argument. Refactored Layout processing to allow
+         custom binders to use it. Minor Votive design changes to support
+         future work.
+
+ZhenyaS: Added initial managed UX business logic sample
+         Added initial WPF view sample
+
+HeathS: Synchronized changes to native IBurn* interfaces to managed equivalents.
+        Changed event handlers based on updated guidance on MSDN.
+
+BobArnso: Fix sfbug:2973922 by making declarations and definitions consistent.
+
+MiCarls: Expose method on CompilerCore to allow extensions to autogenerate
+         GUIDs
+
+CAraman: Annotations for static analysis.
+
+JaredR: Extended XsdGen to auto-generate parsing code for enums. Updated
+        Compiler to use the generated code instead of hard-coded strings for
+        parsing.
+
+HSeiler: Fix sfbug: 2961215 by not appending trailing '/' for default vDir
+
+JaredR: Add LayoutDirectory/File support to Bundle binder.
+
+VaraBall: Removing the requirement of additional dll for Burn Service Burn
+          feature.
+
+BobArnso: Fix sfbug:2965405 by providing the file id instead of the placeholder
+          component id when generating the hashed short filename. NOTE THAT 
+          THIS IS A POTENTIALLY BREAKING CHANGE FOR PATCH GENERATION. 
+          Components without @Id attribute values and with files whose names 
+          aren't valid 8.3 short filenames now generate different short 
+          filenames. See http://www.joyofsetup.com/2010/03/20/serial-monogamy-with-your-development-tools/
+          for more information.
+
+HeathS: SFBUG:2968377 - Add the publicKeyToken binder variable even if
+        "neutral".
+
+JaredR: Added Registry-, Component-, and ProductSearch to WixUtilExtension.
+
+WixBuild: Version 3.5.1526.0
+
+JaredR: Fixed saving "@Vital" attribute value into "vital" variable, instead
+        of overwriting "cache" variable.
+
+JaredR: Fixed ChainPackageType saved for MSP and MSU packages in Bundle.
+
+BobArnso: Fix sfbug:2977288: Set NoPrefix attribute.
+          Fix sfbug:2973087: Make WixUI actions overridable.
+
+BobArnso: Fix sfbug:2972975 by ensuring InstallFiles is scheduled when 
+          DuplicateFiles is scheduled.
+
+BobArnso: Added "test mutations" to Lux. For details, see 
+          http://www.joyofsetup.com/2010/03/30/lux-unit-testing-now-with-extra-mutations/.
+
+v-glmart: Fix sfbug:2939526 Supress PDB output not working. Now works from 
+          command line as well as from within Visual Studio.
+
+JaredR: Add "@DownloadUrl" to Chain packages and Payloads, with Binder support
+        for the burn engine's package/payload @Packaging attribute.
+        Refactored Chain packages to use Payload rows to track the package
+        files, rather than duplicating the columns in ChainPackages.
+
+BriaRo: Stopped the defaulting to 1 thread for cabbing and allowed for -ct to be
+        used as designed.
+
+AaronSte: Adding detection properties and custom actions to WixVSExtension for the
+          VS 2010 Express Edition for Windows Phone. Added some detail to the docs
+          for RegistrySearch.
+
+SBonev: Update the rc.exe MSBuild task to take preprocessor definition inputs and
+        update the WiX build to produce debug binaries with the VS_FF_PRERELEASE
+        flag in their version resource.
+
+WixBuild: Version 3.5.1602.0
+
+HeathS: Made common preproc definitions consistent with our baselines.
+
+BobArnso: Fix sfbug:2980667 - Add explicit error message for 
+          msmErrorPlatformMismatch during merging.
+
+BobArnso: Fix sfbug:2886588 by overriding default folder when unprivileged user 
+          installs.
+
+BobArnso: Fix sfbug:2965403 by making KeyPath optional when using "*" GUID.
+
+BobArnso: Set the default Package/@InstallerVersion attribute value to 200 for 
+          64-bit packages, as Windows Installer 2.0 was the first version to 
+          support them.
+
+BobArnso: Skip pedantic error for ambiguous keypaths when using component 
+          authoring compatible with generated component GUIDs.
+
+RobMen: Add ux.manifest load function to buxutil.
+        Publish buxutil headers.
+
+JaredR: Added MsiProperty elements inside MsiPackage for setting MSI properties
+        based on engine variables/expressions.
+
+HeathS: Renamed managed APIs to remove "Burn" and other related name changes.
+
+JaredR: Added support for Payload/PayloadGroupRef inside of *Package elements.
+        Updated Grouping/Ordering code to handle collecting Payloads in both
+        the UX element (group) and per-package.
+        Updated Binder to write BurnManifest/ParameterInfo for per-Package
+        payloads.
+
+JaredR: Added UX Manifest support: optional 'uxManifest' attribute for table
+        definitions, additional extension points for packages, and Binder code
+        to generate a 'UxManifest.xml' file and include it in the UX data.
+        Updated DocCompiler to include 'any' element and 'anyAttribute'
+        documentation annotations in the generated docs.
+
+JaredR: SFBUG:2981298 - Fixed crash when package is missing @SourceFile.
+        SFBUG:2980338 - Fixed crash when Payload is missing @SourceFile.
+        SFBUG:2980332 - Added filename validation for Payload/@Name.
+        SFBUG:2980324 - Disallow PackageGroup under Bundle.
+        SFBUG:2980321 - Disallow PayloadGroup under Bundle.
+        Added identifier validation for @Id on PayloadGroupRef, *Package, and
+        PackageGroupRef elements.
+
+APaloma: SFBUG:2803091, 2803093: Fixed pressing F1 on the WiX property pages
+         and the pre/post build event dialog.
+
+RobMen: Add JSON support to dutil.lib.
+
+BobArnso: Fix sfbug:2987094 - Check for illegal combo of unmanaged and shared 
+          component.
+
+WixBuild: Version 3.5.1616.0
+
+JaredR: SFBUG:2987993 - Fixed bug in embedding packages in attached container.
+        Fixed external-cab detection/collision code in Binder to allow hand-
+        authoring of external cab location for MSIs.
+        Added support for relative file names in Payload and *Package elements.
+
+HeathS: Marshal the engine as a free-threaded object for MUX.
+
+ZhenyaS: Update MUX interface and Visual Studio project configurations.
+
+FGrohn: Burn containers and engines.
+
+JaredR: Added default WixPackageProperties UX manifest table, populated from
+        chain package file details at build time.
+
+PMarcu: SFBUG:2987095 Ensuring subfolder in the output path is created to
+                      prevent exception from being thrown.
+        SFBUG:2795959 Fixing linker error when SetProperty element used
+                      @Before or @After referring to an action that wasn't
+                      referenced by anything else.
+
+JaredR: SFBUG:2980339 - Change documentation from 'Id' to 'Name'.
+        Added CompilerCore.CreateValueList() method to assist in generating
+        messages with lists of legal/illegal values.
+        Added CompilerCore.GetAttributeBundleVariableValue() method that
+        validates value is *not* on of the builtin engine variables.
+        SFBUG:2980330 - Added detection/validation for <Variable> elements to
+        ensure they don't specify the name of a builtin engine variable.
+        SFBUG:2980329 - Added detection/validation for <util:*Search> elements
+        to ensure they don't specify the name of a builtin engine variable.
+        Refactored common search attribute parsing code in Util extension.
+
+APaloma: SFBUG:2837409 - Fixed property page panel not being resizable.
+
+MikeHo: Fix for building Burn stub with VS2010.
+
+EricStJ: IIS : Fix ERROR_INVALID_DATA when setting time properties to values 
+               greater than int.max
+         IIS : Fix ERROR_INSUFFICIENT_BUFFER when setting app name > 32 chars
+         WOW : Only attempt to disable FS redirection when running in WOW
+         Adding version logging to custom actions
+
+EricStJ: SFBUG:2990115 - Set RunAsSeparateProcess parameter for Heat tasks
+
+EricStJ: SFBUG:2990556 - Use formatted for WebVirtualDir alias
+
+WixBuild: Version 3.5.1623.0
+
+RobMen: SFBUG:2878666 - fix typo in German .wxl file.
+
+RobMen: SFBUG:2956171 - correctly install MSMQ extension
+        SFBUG:2963817 - correclty install COM+ extension
+
+RobMen: SFBUG:1520745 - allow the SqlDatabase/@User to be a property.
+
+BobArnso: Remove x64 WiX .msi; for details, see
+          http://www.joyofsetup.com/2010/03/27/wix-msbuild-v2-0-and-x64-systems/.
+
+RobMen: SFBUG:2837367 - verify database names do not go over 128 characters.
+
+RobMen: SFBUG:2994398 - support spaces in build path.
+
+RobMen: SFBUG:2896938 - CustomAction/@Id is required, ensure it is.
+
+RobMen: SFBUG:2949663 - add resource dll for icons for advertised shortcuts.
+
+EricStJ: SFBUG:2979773,2966134,2889139 Can not call MsiFormatRecord from
+         deferred custom action.
+
+MiCarls: SFBug:2971082 - Fix bad formatting when printing Eula
+         SFBug:2932076 - Make util:User custom action more robust
+
+WixBuild: Version 3.5.1630.0
+

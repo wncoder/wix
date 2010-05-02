@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="adapter" default="adapter.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    adapter.build - Builds the managed MUX adapter.
+  </description>
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- Properties -->
+  <property name="file.target.mux" value="${dir.target.wix}\mux.dll" readonly="true" />
+
+  <!-- adapter target hand off to MSBuild -->
+  <target name="adapter" depends="adapter.inc" />
+  
+  <target name="adapter.build" description="Rebuild mux">
+    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Rebuild" />
+      <arg file="${dir.src.burn.mux}\adapter\adapter.csproj" />
+    </exec>
+  </target>
+
+  <target name="adapter.clean" description="Cleans the mux build">
+    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Clean" />
+      <arg file="${dir.src.burn.mux}\adapter\adapter.csproj" />
+    </exec>
+  </target>
+
+  <target name="adapter.inc" description="Incremental mux build">
+    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Build" />
+      <arg file="${dir.src.burn.mux}\adapter\adapter.csproj" />
+    </exec>
+  </target>
+</project>

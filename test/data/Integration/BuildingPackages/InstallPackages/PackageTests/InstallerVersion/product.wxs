@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Wix Test Product" Language="1033" Version="1.0.0.0" Manufacturer="Microsoft Corporation" UpgradeCode="{5EFDEC39-A2E0-4834-BC8B-DEFC406DEEF2}">
+    <Package Description="This package is used for testing purposes" InstallerVersion="$(var.InstallerVersion)" />
+    <Media Id="1" />
+  </Product>
+</Wix>

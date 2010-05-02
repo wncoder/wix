@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    The messages for the Windows Installer XML Toolset Bux Extension.
+-->
+<Messages Namespace="Microsoft.Tools.WindowsInstallerXml.Extensions" Resources="Data.Messages" xmlns="http://schemas.microsoft.com/genmsgs/2004/07/messages">
+    <Class Name="BuxErrors" ContainerName="BuxErrorEventArgs" BaseContainerName="WixErrorEventArgs">
+    </Class>
+</Messages>

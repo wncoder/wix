@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Root New="hello"><Child></Child>
+  <Child></Child>
+  <Config key="abc"></Config>
+  <Config key="ghi"/>
+</Root>

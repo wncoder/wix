@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+
+  <?define TestDataDirectory="$(env.WIX)\test\data\Integration\BuildingPackages\Bundle\Files"?>
+
+  <Bundle>
+
+    <UX Name="Setup.exe" SourceFile="$(var.TestDataDirectory)\Bootstrapper.exe"/>
+
+    <Chain>
+      <MsiPackage Id="MsiPackage" SourceFile="$(var.TestDataDirectory)\Packages\MsiPackage.msi" After="MspPackage"/>
+      <MspPackage Id="MspPackage" SourceFile="$(var.TestDataDirectory)\Packages\MspPackage.msp" After="MsuPackage"/>
+      <MsuPackage Id="MsuPackage" SourceFile="$(var.TestDataDirectory)\Packages\MsuPackage.msu" After="ExePackage"/>
+      <ExePackage Id="ExePackage" SourceFile="$(var.TestDataDirectory)\Packages\ExePackage.exe" After="MsiPackage"/>
+    </Chain>
+
+  </Bundle>
+</Wix>

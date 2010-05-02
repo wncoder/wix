@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="core" default="burncore.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+    core.build - Builds the Burn core.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- core-specific properties -->
+  <property name="burncore.file.lib.target" value="${dir.target.wix}\core.lib" readonly="true" />
+  <property name="burncore.file.lib.targetpdb" value="${dir.target.wix}\core.pdb" readonly="true" />
+  <property name="burncore.file.lib.targetres" value="${dir.target.wix}\core.res" readonly="true" />
+  <property name="burncore.additionalIncludes" value="/I &quot;${dir.src.burn.core}\inc&quot; /I &quot;${dir.src.burn}\inc&quot;"/>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="burncore.build" description="Peforms a full rebuild (clean then build)" depends="burncore.clean, burncore.inc" />
+
+  <!-- Clean -->
+  <target name="burncore.clean" description="Cleans the build">
+    <delete dir="${dir.build.burn.core}" failonerror="false" if="${directory::exists(dir.build.burn.core)}" />
+    <delete file="${burncore.file.lib.target}" failonerror="false" if="${file::exists(burncore.file.lib.target)}" />
+    <delete file="${burncore.file.lib.targetpdb}" failonerror="false" if="${file::exists(burncore.file.lib.targetpdb)}" />
+    <delete file="${burncore.file.lib.targetres}" failonerror="false" if="${file::exists(burncore.file.lib.targetres)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="burncore.inc" description="Performs an incremental build" depends="makeDirs, burncoreinc.mc, burncoreinc.lib" />
+
+  <!-- burncoreinc.lib -->
+  <target name="burncoreinc.lib" description="Performs an incremental build of core.lib">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.core}">
+      <include name="BurnPayload.cpp" />
+      <include name="cache.cpp" />
+      <include name="cabextract.cpp" />
+      <include name="condition.cpp" />
+      <include name="container.cpp" />
+      <include name="core.cpp" />
+      <include name="elevation.cpp" />
+      <include name="exeengine.cpp" />
+      <include name="manifest.cpp" />
+      <include name="msiengine.cpp" />
+      <include name="msuengine.cpp" />
+      <include name="package.cpp" />
+      <include name="payload.cpp" />
+      <include name="payloads.cpp" />
+      <include name="platform.cpp" />
+      <include name="PriorVariables.cpp" />
+      <include name="registration.cpp" />
+      <include name="run.cpp" />
+      <include name="search.cpp" />
+      <include name="userexperience.cpp" />
+      <include name="variable.cpp" />
+      <include name="variant.cpp" />
+      <include name="pipe.cpp" />
+    </fileset>
+    <property name="compileCpp.dir.build" value="${dir.build.burn.core}" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.core}\precomp.h" />
+    <property name="compileCpp.additionalIncludes" value="${burncore.additionalIncludes} /I &quot;$(dir.externalroot)\MsiSdk\v4.5\INCLUDE&quot;" />
+    <property name="compileCpp.additionalOptions" value="-WX- -GR -EHsc -DUNICODE -D_UNICODE" />
+    <property name="makeNativeLib.file.target" value="${burncore.file.lib.target}" />
+
+    <!-- Make core.lib -->
+    <call target="makeNativeLib" />
+  </target>
+
+  <!-- burncoreinc.mc -->
+  <target name="burncoreinc.mc" description="Performs an incremental build of core.lib">
+    <mc mcfile="${dir.src.burn.core}\core.mc" headerpath="${dir.build.burn.core}" rcpath="${dir.build.burn.core}" options="-A -c -z core.messages"/>
+    <rc rcfile="${dir.build.burn.core}\core.messages.rc" output="${burncore.file.lib.targetres}" />
+  </target>
+</project>

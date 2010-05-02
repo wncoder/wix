@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Bundle>
+    <UX SourceFile="..\Resources\UXEntryPoint.dll">
+      <Payload SourceFile="..\Resources\DHtmlHeader.html" Name="DHtmlHeader.html" />
+      <!--<Payload SourceFile="..\Resources\en-us.wxl" Name="en-us.wxl" />
+      <Payload SourceFile="..\Resources\ps-ps.wxl" Name="ps-ps.wxl" />-->
+      <Payload SourceFile="..\Resources\1033\ItemMapping.xml" Name="1033\ItemMapping.xml" />
+      <!--<Payload SourceFile="..\Resources\stdux.png" Name="stdux.png" />
+      <Payload SourceFile="..\Resources\thm.xml" Name="thm.xml" />
+      <Payload SourceFile="..\Resources\tou.htm" Name="tou.htm" />-->
+      <Payload SourceFile="..\Resources\ManagedUX.dll" Name="ManagedUX.dll" />
+      <Payload SourceFile="..\Resources\UXManagedProxy.dll" Name="UXManagedProxy.dll" />
+    </UX>
+    <Chain>
+      <MsiPackage Id='Id.xispatch.msi' Vital='no' SourceFile='..\Resources\xispatch.msi' DownloadUrl='http://download.microsoft.com/download/6/1/c/61c3c8f1-f8bf-434c-8897-8093cd7cfcc4/xispatch.msi' Name="xispatch.msi"/>
+        <MsiPackage Id='MsiWithCab_msi' Vital='no' SourceFile='..\Resources\MsiWithCab_local.msi' Name="MsiWithCab.msi">
+            <Payload SourceFile="..\Resources\MsiWithCab_local.cab" Name="MsiWithCab.cab" />
+        </MsiPackage>
+    </Chain>
+  </Bundle>
+</Wix>

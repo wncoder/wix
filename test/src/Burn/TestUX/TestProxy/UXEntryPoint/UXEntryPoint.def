@@ -1,0 +1,21 @@
+LIBRARY	"TestProxyEntryPoint"
+
+EXPORTS
+    SetupUXCreate
+    GetVariableNumeric
+    GetVariableString
+    GetVariableVersion
+    SetVariableNumeric
+    SetVariableString
+    SetVariableVersion
+    FormatString
+    EscapeString
+    EvaluateCondition
+    Log
+    Elevate
+    Detect
+    Plan
+    Apply
+    Suspend
+    Reboot
+    SetSource

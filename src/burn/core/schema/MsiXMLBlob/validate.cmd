@@ -1,0 +1,1 @@
+cscript validate.js SampleMsiXMLBlob.xml MSIPatchApplicability.xsd

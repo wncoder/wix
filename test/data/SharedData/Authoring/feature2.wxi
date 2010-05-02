@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Defines a feature that is shared across several tests-->
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?include $(env.WIX)\test\data\SharedData\Authoring\component2.wxi?>
+
+  <Feature Id="Feature2" Level="1">
+    <ComponentRef Id="Component2" />
+  </Feature>
+
+</Include>

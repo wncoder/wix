@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="wixux" default="wixux.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+    wixux.build - Builds the WiX Burn User Experience.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <property name="dir.src.wixux" value="${dir.wixroot.src}\setup\ux" readonly="true" />
+  <property name="dir.build.wixux" value="${dir.build.wix}\wixux" readonly="true" />
+
+  <!-- wixux-specific properties -->
+  <property name="wixux.file.dll.target" value="${dir.target.wix}\wixux.dll" readonly="true" />
+  <property name="wixux.file.dll.targetpdb" value="${dir.target.wix}\wixux.pdb" readonly="true" />
+
+  <property name="wixux.additionalOptions" value="/DUNICODE /D_UNICODE /I &quot;${dir.inc.burn}&quot; /I &quot;${dir.inc.buxutil}&quot;"/>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="wixux.build" description="Peforms a full rebuild (clean then build)" depends="wixux.clean, wixux.inc" />
+  
+  <!-- Clean -->
+  <target name="wixux.clean" description="Cleans the build">
+    <delete dir="${dir.build.wixux}" failonerror="false" if="${directory::exists(dir.build.wixux)}" />
+    <delete file="${wixux.file.dll.target}" failonerror="false" if="${file::exists(wixux.file.dll.target)}" />
+    <delete file="${wixux.file.dll.targetpdb}" failonerror="false" if="${file::exists(wixux.file.dll.targetpdb)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="wixux.inc" description="Performs an incremental build" depends="makeDirs, wixux.inc.dll" />
+
+  <!-- wixux.inc.dll -->
+  <target name="wixux.inc.dll" description="Performs an incremental build of wixux.dll">
+    <copy todir="${dir.target.wix}">
+      <fileset basedir="${dir.src.wixux}\Resources">
+        <include name="thm.xml" />
+        <include name="wixux.jpg" />
+        <include name="License.rtf" />
+        <include name="ps-ps.wxl" />
+        <include name="en-us.wxl" />
+      </fileset>
+    </copy>
+
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.wixux}">
+      <include name="wixux.cpp" />
+      <include name="WixUserExperience.cpp" />
+    </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.wixux}\dll" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.wixux}\precomp.h" />
+    <property name="compileCpp.file.rc" value="${dir.src.wixux}\wixux.rc" />
+    <property name="compileCpp.additionalOptions" value="${wixux.additionalOptions}"/>
+    <property name="makeNativeDll.file.target" value="${wixux.file.dll.target}" />
+    <property name="makeNativeDll.file.def" value="${dir.src.wixux}\wixux.def" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil}&quot; &quot;${file.target.buxutil}&quot; &quot;${dir.platformsdk.lib}\comctl32.lib&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\gdiplus.lib&quot; &quot;${dir.platformsdk.lib}\gdi32.lib&quot;" dynamic="true" />
+    <!-- Make wixux.dll -->
+    <call target="makeNativeDll" />
+  </target>
+
+</project>

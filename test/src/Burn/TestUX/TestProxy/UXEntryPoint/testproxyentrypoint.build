@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project name="testproxyentrypoint" default="testproxyentrypoint.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    testproxyentrypoint.build - Builds the testproxyentrypoint.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- TestProxyEntryPoint-specific properties --> 
+  <property name="testproxyentrypoint.file.target.x86" value="${dir.target.wix.x86}\testproxyentrypoint.dll" dynamic="true" readonly="true" />
+  <property name="testproxyentrypoint.file.targetpdb.x86" value="${dir.target.wix.x86}\testproxyentrypoint.pdb" dynamic="true" readonly="true" />
+  <property name="testproxyentrypoint.additionalIncludes" value="/I &quot;${dir.target.wix.x86}&quot; /I &quot;${dir.src.burn}\inc&quot; /I &quot;${dir.root}\test\src\Burn\TestUX\TestProxy\UXCore&quot;"/>
+  <property name="dir.ux" value="${dir.build.project}\TestProxy" readonly="true" />
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="testproxyentrypoint.build" description="Peforms a full rebuild (clean then build)" depends="testproxyentrypoint.clean, testproxyentrypoint.inc" />
+
+  <!-- Clean -->
+  <target name="testproxyentrypoint.clean" description="Cleans the build">
+    <delete file="${testproxyentrypoint.file.target.x86}" failonerror="false" if="${file::exists(testproxyentrypoint.file.target.x86)}" />
+    <delete file="${testproxyentrypoint.file.targetpdb.x86}" failonerror="false" if="${file::exists(testproxyentrypoint.file.targetpdb.x86)}" />
+    <delete dir="${dir.ux}" failonerror="false" if="${directory::exists(dir.ux)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="testproxyentrypoint.inc" description="Performs an incremental build" depends="makeDirs, testproxyentrypointinc.dll" />
+
+  <!-- uxcoreinc.lib -->
+  <target name="testproxyentrypointinc.dll" description="Performs an incremental build of testproxyentrypoint.dll">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.root}\test\src\Burn\TestUX\TestProxy\UXEntryPoint">
+      <include name="dllmain.cpp" />
+      <include name="InstallChainerUX.cpp" />
+    </fileset>
+    <property name="compileCpp.dir.build" value="${dir.ux}" />
+    <property name="compileCpp.file.precomp.h" value="${dir.root}\test\src\Burn\TestUX\TestProxy\UXEntryPoint\precomp.h" />
+    <property name="compileCpp.additionalIncludes" value="${testproxyentrypoint.additionalIncludes}" />
+    <property name="compileCpp.additionalOptions" value="-WX- -GR -EHsc -DUNICODE -D_UNICODE" />
+    <property name="makeNativeDll.file.target" value="${testproxyentrypoint.file.target.x86}" dynamic="true" />
+    <property name="makeNativeDll.file.def" value="${dir.root}\test\src\Burn\TestUX\TestProxy\UXEntryPoint\UXEntryPoint.def" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil.x86}&quot; &quot;${dir.platformsdk.lib}\comctl32.lib&quot; &quot;${dir.platformsdk.lib}\gdiplus.lib&quot; &quot;${dir.platformsdk.lib}\mscoree.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\Shlwapi.lib&quot;
+      &quot;${dir.platformsdk.lib}\Comdlg32.lib&quot; &quot;${dir.target.wix.x86}\UXCore.lib&quot; &quot;${dir.platformsdk.lib}\user32.lib&quot;"
+              dynamic="true" />
+    <property name="makeNativeDll.platform" value="x86" />
+
+    <!-- Make core.lib -->
+    <call target="makeNativeDll" />
+  </target>
+
+</project>

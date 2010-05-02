@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define TestDataDirectory="$(env.WIX)\test\data\Integration\BuildingPackages\Bundle\Files"?>
+
+  <Bundle>
+
+    <UX Name="Setup.exe" SourceFile="$(var.TestDataDirectory)\Bootstrapper.exe">
+    </UX>
+
+    <Chain>
+      <MsiPackage SourceFile="$(var.TestDataDirectory)\Packages\MsiPackage.msi"/>
+    </Chain>
+
+    <Variable Name="Variable Name has  spaces" Value="Value1" />    
+    <Variable Name="VARIABLENAMEISALLCAPS" Value="Value1" />    
+    <Variable Name="VariableNamehas_.(){}[]$@#!~.:,;?+=-*|" Value="Value2" />    
+    <Variable Name="1234567890" Value="Value3" />    
+
+  </Bundle>
+</Wix>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DefineSolutionProperties>false</DefineSolutionProperties>
+    <BaseInputPaths>$(MSBuildProjectDirectory)\..\packages\;$(MSBuildProjectDirectory)\..\packages\bin\debug\</BaseInputPaths>
+    <OutDir>$(MSBuildProjectDirectory)\..\..\..\..\test\src\Bootstrapper\UnitTest\data\</OutDir>
+    <VerboseOutput>true</VerboseOutput>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <BurnManifest Include="setup_default_logging.manifest.xml" />
+  </ItemGroup>
+  
+  <Import Project="..\..\msbuild\burn.targets" />
+</Project>

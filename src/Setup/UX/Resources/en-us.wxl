@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<WixLocalization Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="WixUX" Overridable="yes">Windows Installer XML Toolset 3.5 Setup</String>
+  <String Id="WixUIAccept" Overridable="yes">I accept the terms in the License Agreement</String>
+  <String Id="WixUIPrint" Overridable="yes">Print</String>
+  <String Id="WixUIAdvanced" Overridable="yes">Advanced</String>
+  <String Id="WixUIInstall" Overridable="yes">Install</String>
+  <String Id="WixUIRepair" Overridable="yes">Repair</String>
+  <String Id="WixUIUninstall" Overridable="yes">Uninstall</String>
+  <String Id="WixUIClose" Overridable="yes">Close</String>
+  <String Id="WixUICancel" Overridable="yes">Cancel</String>
+  <String Id="WixUIProgress" Overridable="yes">Progress</String>
+  <String Id="WixUIMessage" Overridable="yes">Installing...</String>
+</WixLocalization>

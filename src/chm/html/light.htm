@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Linker (light)</title>
+</head>
+
+<body>
+  <h1>Linker (light)</h1>
+
+  <p>The Windows Installer XML linker is exposed by light.exe. Light is responsible for processing one or more .wixobj files, retrieving metadata from various external files and creating a Windows Installer database (MSI or MSM). When necessary, light will also create cabinets and embed streams in the created Windows Installer database.</p>
+
+  <p>The linker begins by searching the set of object files provided on the command line to find the entry section. If more than one entry section is found, light fails with an error. This failure is necessary because the entry section defines what type of Windows Installer database is being created, a MSI or MSM. It is not possible to create two databases from a single link operation.</p>
+
+  <p>While the linker was determining the entry section, the symbols defined in each object file are stored in a symbol table. After the entry section is found, the linker attempts to resolve all of the references in the section by finding symbols in the symbol table. When a symbol is found in a different section, the linker recursively attempts to resolve references in the new section. This process of gathering the sections necessary to resolve all of the references continues until all references are satisfied. If a symbol cannot be found in any of the provided object files, the linker aborts processing with an error indicating the undefined symbol.</p>
+
+  <p>After all of the sections have been found, complex and reverse references are processed. This processing is where Components and Merge Modules are hooked to their parent Features or, in the case of Merge Modules, Components are added to the ModuleComponents table. The reverse reference processing adds the appropriate Feature identifier to the necessary fields for elements like, Shortcut, Class, and TypeLib.</p>
+
+  <p>Once all of the references are resolved, the linker processes all of the rows retrieving the language, version, and hash for referenced files, calculating the media layout, and including the necessary standard actions to ensure a successful installation sequence. This part of the processing typically ends up generating additional rows that get added associated with the entry section to ensure they are included in the final Windows Installer database.</p>
+
+  <p>Finally, light works through the mechanics of generating IDT files and importing them into the Windows Installer database. After the database is fully created, the final post processing is done to merge in any Merge Modules and create a cabinet if necessary. The result is a fully functional Windows Installer database.</p>
+
+  <h2>Binder Variables</h2>
+
+  <h3>Standard Binder Variables</h3>
+
+  <p>Some properties are not available until the linker is about to generate, or bind, the final output. These variables are called binder variables and supported binder variables are listed below.</p>
+
+  <h4>All Versioned Files</h4>
+
+  <p>The following standard binder variables are available for all versioned binaries.</p>
+
+  <table border="1" cellspacing="0" cellpadding="2">
+    <tr>
+      <td>
+        <p><b>Variable name</b></p>
+      </td>
+
+      <td>
+        <p><b>Example usage</b></p>
+      </td>
+
+      <td>
+        <p><b>Example value</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.fileLanguage.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.fileLanguage.MyFile)</p>
+      </td>
+
+      <td>
+        <p>1033</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.fileVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.fileVersion.MyFile)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+  </table>
+
+  <h4>Assemblies</h4>
+
+  <p>The following standard binder variables are available for all managed and native assemblies (except where noted), where the File/@Assembly attribute is set to ".net" or "win32".</p>
+
+  <table border="1" cellspacing="0" cellpadding="2">
+    <tr>
+      <td>
+        <p><b>Variable name</b></p>
+      </td>
+
+      <td>
+        <p><b>Example usage</b></p>
+      </td>
+
+      <td>
+        <p><b>Example value</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyCulture.<i>FileID</i><br />
+        <i>(managed only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyCulture.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>neutral</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyFileVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyFileVersion.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyFullName.<i>FileID</i><br />
+        <i>(managed only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyName.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MyAssembly, version=1.0.0.0, culture=neutral, publicKeyToken=0123456789abcdef, processorArchitecture=MSIL</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyName.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyName.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MyAssembly</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyProcessorArchitecture.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyProcessorArchitecture.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MSIL</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyPublicKeyToken.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyPublicKeyToken.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>0123456789abcdef</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyType.<i>FileID</i><br />
+        <i>(native only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyType.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>win32</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyVersion.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+  </table>
+
+  <h3>Localization Variables</h3>
+
+  <p>Variables can be passed in before binding the output file from a WiX localization file, or .wxl file. This process allows the developer to link one or more .wixobj files together with diferent .wxl files to produce different localized packages.</p>
+
+  <p>Localization variables are in the following format:</p>
+  <pre>
+!(loc.<i>VariableName</i>)
+</pre>
+
+  <h3>Custom Binder Variables</h3>
+
+  <p>You can create your own binder variables using the <a href="wix_xsd_wixvariable.htm">WixVariable</a> element or by simply typing your own variable name in the following format:</p>
+  <pre>
+!(bind.<i>VariableName</i>)
+</pre>
+
+  <p>Custom binder variables allow you to use the same .wixobj files but specify different values when linking, similar to how localization variables are used. You might use binder variables for different builds, like varying the target processor architecture.</p>
+</body>
+</html>

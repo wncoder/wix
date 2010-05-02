@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <BobsBinPath>$(MSBuildProjectDirectory)\..\..\..\..\build\debug\x86\</BobsBinPath>
+    
+    <DefineSolutionProperties>false</DefineSolutionProperties>
+    <DefaultCompressionLevel>mszip</DefaultCompressionLevel>
+    <OutDir>$(MSBuildProjectDirectory)\..\..\..\..\test\src\Bootstrapper\UnitTest\data\</OutDir>
+    <OutputName>$(MSBuildProjectName)</OutputName>
+    <VerboseOutput>true</VerboseOutput>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <UX Include="
+        $(BobsBinPath)stdux.dll;
+        $(BobsBinPath)thm.xml;
+        $(BobsBinPath)en-us.wxl;
+        $(BobsBinPath)stdux.png;
+        $(BobsBinPath)tou.htm;
+        ">
+        <Packaging>external</Packaging>
+    </UX>
+        
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package1.msi">
+        <LogLevel>verbose</LogLevel>
+        <LogMode>overwrite</LogMode>
+        <LogPath>%TEMP%\foo\pkg1v.log</LogPath>
+        <Properties>TARGETDIR=PACKAGE1TARGETDIR</Properties>
+    </Chain>
+    
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package2.msi">
+        <LogLevel>normal</LogLevel>
+        <LogMode>unique</LogMode>
+        <Properties>TARGETDIR=PACKAGE2TARGETDIR</Properties>
+    </Chain>
+    
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package3.msi">
+        <LogLevel>debug</LogLevel>
+        <LogMode>overwrite</LogMode>
+        <LogPath>%TEMP%\foo\pkg3d.log</LogPath>
+        <Properties>TARGETDIR=PACKAGE3TARGETDIR</Properties>
+    </Chain>
+  </ItemGroup>
+  
+  <Import Project="..\..\msbuild\burn.targets" />
+</Project>

@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DefineSolutionProperties>false</DefineSolutionProperties>
+    <LogMode>overwrite</LogMode>
+    <LogPath>%TEMP%\foo\chain_defaultlog</LogPath>
+    <OutDir>$(MSBuildProjectDirectory)\..\..\..\..\test\src\Bootstrapper\UnitTest\data\</OutDir>
+    <OutputName>$(MSBuildProjectName)</OutputName>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package1.msi">
+        <Id>Package1</Id>
+        <Properties>TARGETDIR=PACKAGE1TARGETDIR;ROCKIN=BOB</Properties>
+    </Chain>
+    
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package2.msi">
+        <Id>Package2</Id>
+        <Properties>TARGETDIR=PACKAGE2TARGETDIR;ROCKIN=BOB;</Properties>
+    </Chain>
+    
+    <Chain Include="$(MSBuildProjectDirectory)\..\packages\bin\$(Configuration)\Package3.msi">
+        <Id>Package3</Id>
+        <Properties>TARGETDIR=PACKAGE3TARGETDIR;ROCKIN=BOB;WHOSYOUR=DADDY</Properties>
+    </Chain>
+  </ItemGroup>
+  
+  <Import Project="..\..\msbuild\burn.targets" />
+</Project>

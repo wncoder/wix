@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- The list of files to copy -->
+  <ItemGroup>
+    <AllDemoResourceFiles Include="$(OutputPath_x86)UXEntryPoint.dll;
+      $(OutputPath_x86)UXEntryPoint.pdb;
+      $(OutputPath_x86)UXManagedProxy.dll;
+      $(OutputPath_x86)UXManagedProxy.pdb;
+      $(OutputPath_x86)ManagedUX.dll;
+      $(OutputPath_x86)ManagedUX.pdb;
+      $(OutputPath_x86)stdux.dll;
+      $(OutputPath_x86)stdux.pdb;
+      $(OutputPath_x86)stdux.png;
+      $(OutputPath_x86)DHtmlHeader.html;
+      $(WIX_ROOT)src\burn\stdux\Resources\*.*"
+      />
+    <AllDemo1033ResourceFiles Include="$(OutputPath_x86)1033\ItemMapping.xml" />
+  </ItemGroup>
+
+
+  <!--
+  ================================================================================================
+  BuildCopyCommonDemoFilesList
+
+    Creates item groups with the files to actually copy. Leaves out files that do not exist.
+  ================================================================================================
+  -->
+  <Target Name="BuildCopyCommonDemoFilesList">
+    <!-- Build up the list of files to actually copy -->
+    <CreateItem Include="@(AllDemoResourceFiles)"
+      Condition="Exists('%(FullPath)')">
+      <Output TaskParameter="Include" ItemName="DemoResourceFiles" />
+    </CreateItem>
+    <CreateItem Include="@(AllDemo1033ResourceFiles)" Condition="Exists('%(FullPath)')" >
+      <Output TaskParameter="Include" ItemName="Demo1033ResourceFiles" />
+    </CreateItem>
+  </Target>
+
+  <!--
+  ================================================================================================
+  DoCopyCommonDemoFiles
+
+    Copies files to the Resources folder and causes a build to occur if any files are replaced.
+  ================================================================================================
+  -->
+  <Target Name="DoCopyCommonDemoFiles"
+    Inputs="@(DemoResourceFiles);@(Demo1033ResourceFiles)"
+    Outputs="@(DemoResourceFiles -> '$(SolutionDir)Resources\%(Filename)%(Extension)');@(Demo1033ResourceFiles -> '$(SolutionDir)Resources\1033\%(Filename)%(Extension)')" >
+
+    <Message Importance="High" Text="Copying common files to Resources folder." />
+
+    <!-- Do not touch any generated files since that will cause the task that generates the code to be skipped. -->
+    <ItemGroup>
+        <TouchFilesToCauseBuild Include="@(Compile)" Condition=" '%(Compile.GenerateComponentGroups)' == '' " />
+    </ItemGroup>
+
+    <!-- Set ContinueOnError to true to display any copy errors as warnings. -->
+    <Copy
+      SourceFiles="@(DemoResourceFiles)"
+      DestinationFolder="$(SolutionDir)Resources"
+      ContinueOnError="true"
+      />
+    <Copy
+      SourceFiles="@(Demo1033ResourceFiles)"
+      DestinationFolder="$(SolutionDir)Resources\1033"
+      ContinueOnError="true"
+      />
+
+    <!-- Touch source files so that compile/link occurs when any resource files have changed. -->
+    <Touch Files="@(TouchFilesToCauseBuild)" ContinueOnError="true" />
+  </Target>
+
+  <!--
+  ================================================================================================
+  CopyCommonDemoFiles
+
+    Copies files to the Resources folder and causes a build to occur if any files are replaced.
+  ================================================================================================
+  -->
+  <Target Name="CopyCommonDemoFiles"
+    DependsOnTargets="BuildCopyCommonDemoFilesList;DoCopyCommonDemoFiles">
+  </Target>
+
+</Project>

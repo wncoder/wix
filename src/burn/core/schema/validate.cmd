@@ -1,0 +1,1 @@
+cscript %~dp0validate.js %~dp0ParameterInfo.xml %~dp0Setup.xsd

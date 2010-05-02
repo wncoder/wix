@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define TestDataDirectory="$(env.WIX)\test\data\Integration\BuildingPackages\Bundle\Files"?>
+
+  <Bundle>
+
+    <UX Name="Setup.exe" SourceFile="$(var.TestDataDirectory)\Bootstrapper.exe">
+      <Payload Name="PayloadFile1.txt" SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile1.txt" />
+      <Payload Name="PayloadFile1.txt" SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile1.txt" />
+    </UX>
+
+    <Chain>
+      <MsiPackage SourceFile="$(var.TestDataDirectory)\Packages\MsiPackage.msi"/>
+    </Chain>
+    
+  </Bundle>
+</Wix>

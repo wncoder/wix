@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="wpfview" default="wpfview.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    wpfview.build - Builds sample WPF setup user experience
+  </description>
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- Properties -->
+  <property name="file.target.wpfview" value="${dir.target.wix}\wpfview.dll" readonly="true" />
+
+  <!-- wpfview target hand off to MSBuild -->
+  <target name="wpfview" depends="wpfview.inc" />
+
+  <!-- Build -->
+  <target name="wpfview.build" description="Rebuild wpfview">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Rebuild" />
+      <arg file="${dir.src.burn.mux}\wpfview\wpfview.csproj" />
+    </exec>
+  </target>
+
+  <!-- Clean -->
+  <target name="wpfview.clean" description="Cleans the wpfview build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Clean" />
+      <arg file="${dir.src.burn.mux}\wpfview\wpfview.csproj" />
+    </exec>
+  </target>
+
+  <!-- Inc -->
+  <target name="wpfview.inc" description="Incremental wpfview build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Build" />
+      <arg file="${dir.src.burn.mux}\wpfview\wpfview.csproj" />
+    </exec>
+  </target>
+
+</project>

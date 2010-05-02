@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define TestDataDirectory="$(env.WIX)\test\data\Integration\BuildingPackages\Bundle\Files"?>
+
+  <Bundle>
+
+    <UX Name="Setup.exe" SourceFile="$(var.TestDataDirectory)\Bootstrapper.exe"/>
+
+    <Chain>
+      <MsiPackage Name="MsiPackage.msi" SourceFile="$(var.TestDataDirectory)\Packages\MsiPackage.msi">
+         <PayloadGroupRef Id="PayloadGroup1"/>	
+      </MsiPackage>
+    </Chain>
+    
+  </Bundle>
+  
+  <Fragment>
+    <PayloadGroup Id="PayloadGroup1">
+      <Payload SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile1.txt" DownloadUrl="http://go.microsoft.com/fwlink/?linkid=164202"/>
+      <Payload SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile2.txt" DownloadUrl="http://localhost/testPayload"/>
+      <Payload SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile3.txt" DownloadUrl="ftp://192.168.0.1/testPayload.exe"/>
+      <Payload SourceFile="$(var.TestDataDirectory)\UXPayload\PayloadFile4.txt" DownloadUrl="\\wixbuild\releases\wix\"/>
+    </PayloadGroup>
+  </Fragment>
+</Wix>
+

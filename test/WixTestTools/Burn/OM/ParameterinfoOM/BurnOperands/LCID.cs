@@ -1,0 +1,23 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="LCID.cs" company="Microsoft">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+// <summary>LCID element OM</summary>
+//-----------------------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ParameterInfoOM.ElementAttribute;
+
+namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ParameterInfoOM.BurnOperands
+{
+    /// <summary>
+    /// Return the LCID the package is using.  For example 1033
+    /// </summary>
+    [BurnXmlElement("LCID")]
+    public class LCID : Operands
+    {
+    }
+}

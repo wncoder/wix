@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserExperienceManifest xmlns="http://schemas.microsoft.com/Setup/2010/01/Burn/UserExperience" Version="1.0">
+
+    <!-- TODO: add localization support -->
+    
+    <Settings>
+        <ProductName>Burn Sample Suite</ProductName>
+        <Company>Microsoft</Company>
+        <Description>A suite of sample msis</Description>
+        <DefaultInstallPath MsiVariable="TARGETDIR">%programfiles%\Burn Sample Suite</DefaultInstallPath>
+    </Settings>
+    
+    <Options>
+        <Option 
+            Id="Id.MsiWithCab" 
+            Name="Msi with cab" 
+            Description="Msi that contains an external cab file">
+            <Dependencies>
+                <Dependency Id="Id.Some"/>
+                <Dependency Id="Id.Xispatch"/>
+            </Dependencies>
+            <Packages>
+                <Package Id="Id.MsiWithCab.msi"/>
+            </Packages>
+        </Option>
+        <Option
+            Id="Id.Some"
+            Name="Some Msi"
+            Description="Some msi">
+            <Packages>
+                <Package Id="Id.some.msi"/>
+            </Packages>
+        </Option>
+        <Option
+            Id="Id.Xispatch"
+            Name="XISPatch"
+            Description="XIS patch">
+            <Packages>
+                <Package Id="Id.xispatch.msi"/>
+            </Packages>
+        </Option>
+    </Options>
+</UserExperienceManifest>

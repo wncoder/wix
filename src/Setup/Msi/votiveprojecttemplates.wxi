@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+  VotiveProjectTemplates.wxi - WiX source for the project templates used
+                               by the Votive Visual Studio package.
+-->
+
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+<?ifdef ZipSuffix?>
+
+    <File Id="WixLibrary$(var.VsVersion).zip" Name="WixLibrary.zip" Source="WixLibrary$(var.ZipSuffix).zip" Vital="yes" />
+    <File Id="WixMergeModule$(var.VsVersion).zip" Name="WixMergeModule.zip" Source="WixMergeModule$(var.ZipSuffix).zip" Vital="yes" />
+    <File Id="WixBundleProject$(var.VsVersion).zip" Name="WixBundleProject.zip" Source="WixBundleProject$(var.ZipSuffix).zip" Vital="yes" />
+    <File Id="WixProject$(var.VsVersion).zip" Name="WixProject.zip" Source="WixProject$(var.ZipSuffix).zip" KeyPath="yes" Vital="yes" />
+
+<?else?>
+
+    <File Id="WixLibrary$(var.VsVersion).zip" Source="WixLibrary.zip" Vital="yes" />
+    <File Id="WixMergeModule$(var.VsVersion).zip" Source="WixMergeModule.zip" Vital="yes" />
+    <File Id="WixBundleProject$(var.VsVersion).zip" Source="WixBundleProject.zip" Vital="yes" />
+    <File Id="WixProject$(var.VsVersion).zip" Source="WixProject.zip" KeyPath="yes" Vital="yes" />
+
+<?endif?>
+
+</Include>

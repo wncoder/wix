@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project name="vux" default="vux.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    vux.build - Builds the Verification UX.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Includes
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <include buildfile="UXCore\uxcore.build" />
+  <include buildfile="UXEntryPoint\uxentrypoint.build" />
+  <include buildfile="ManagedUX\UXManagedProxy\uxmanagedproxy.build" />
+  <include buildfile="ManagedUX\BurnSampleWPFUI\BurnSampleWPFUI\burnsamplewpfui.build" />
+
+  <target name="vux.build" depends="uxcore.build, uxentrypoint.build, uxmanagedproxy.build, burnsamplewpfui.build" />
+  <target name="vux.clean" depends="uxcore.clean, uxentrypoint.clean, uxmanagedproxy.clean, burnsamplewpfui.clean" />
+  
+</project>

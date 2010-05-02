@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Bundle>
+    <UX SourceFile="..\Resources\UXEntryPoint.dll">
+      <Payload SourceFile="..\Resources\DHtmlHeader.html" Name="DHtmlHeader.html" />
+      <Payload SourceFile="..\Resources\en-us.wxl" Name="en-us.wxl" />
+      <Payload SourceFile="..\Resources\ps-ps.wxl" Name="ps-ps.wxl" />
+      <Payload SourceFile="..\Resources\1033\ItemMapping.xml" Name="1033\ItemMapping.xml" />
+      <Payload SourceFile="..\Resources\stdux.png" Name="stdux.png" />
+      <Payload SourceFile="..\Resources\thm.xml" Name="thm.xml" />
+      <Payload SourceFile="..\Resources\tou.htm" Name="tou.htm" />
+      <Payload SourceFile="..\Resources\ManagedUX.dll" Name="ManagedUX.dll" />
+      <Payload SourceFile="..\Resources\UXManagedProxy.dll" Name="UXManagedProxy.dll" />
+    </UX>
+    <Chain>
+      <MsiPackage Id='EmbeddedPackage' Vital='no' SourceFile='some_local.msi' Name="some.msi"/>
+    </Chain>
+  </Bundle>
+</Wix>

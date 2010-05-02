@@ -1,0 +1,433 @@
+﻿//-------------------------------------------------------------------------------------------------
+// <copyright file="WixBinder.cs" company="Microsoft">
+//    Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
+// </copyright>
+// 
+// <summary>
+// Common binder core of the Windows Installer Xml toolset.
+// </summary>
+//-------------------------------------------------------------------------------------------------
+
+namespace Microsoft.Tools.WindowsInstallerXml
+{
+    using System;
+    using System.CodeDom.Compiler;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Collections.Specialized;
+    using System.IO;
+    using System.Text;
+
+    /// <summary>
+    /// Common binder core of the Windows Installer Xml toolset.
+    /// </summary>
+    public abstract class WixBinder : IDisposable
+    {
+        protected BinderCore core;
+        protected List<BinderExtension> extensions;
+        private BinderFileManager fileManager;
+
+        private Localizer localizer;
+        protected TempFileCollection tempFiles;
+        private WixVariableResolver wixVariableResolver;
+
+        private string outputFile;
+
+        /// <summary>
+        /// Creates a binder.
+        /// </summary>
+        public WixBinder()
+        {
+            this.extensions = new List<BinderExtension>();
+            this.fileManager = new BinderFileManager();
+            this.fileManager.TempFilesLocation = this.TempFilesLocation;
+        }
+
+        /// <summary>
+        /// Event for messages.
+        /// </summary>
+        public event MessageEventHandler Message;
+
+        /// <summary>
+        /// Gets or sets the binder file manager class.
+        /// </summary>
+        /// <value>The binder file manager class.</value>
+        public BinderFileManager FileManager
+        {
+            get { return this.fileManager; }
+            set
+            {
+                this.fileManager = value;
+                if (null != value)
+                {
+                    value.TempFilesLocation = this.TempFilesLocation;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the localizer.
+        /// </summary>
+        /// <value>The localizer.</value>
+        public Localizer Localizer
+        {
+            get { return this.localizer; }
+            set { this.localizer = value; }
+        }
+
+        /// <summary>
+        /// Gets the MessageEventHandler.
+        /// </summary>
+        /// <value>The MessageEventHandler.</value>
+        public MessageEventHandler MessageHandler
+        {
+            get
+            {
+                return this.Message;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the output file.
+        /// </summary>
+        /// <value>The output file.</value>
+        public string OutputFile
+        {
+            get { return this.outputFile; }
+            set { this.outputFile = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the temporary path for the Binder.  If left null, the binder
+        /// will use %TEMP% environment variable.
+        /// </summary>
+        /// <value>Path to temp files.</value>
+        public string TempFilesLocation
+        {
+            get
+            {
+                // if we don't have the temporary files object yet, get one
+                if (null == this.tempFiles)
+                {
+                    this.tempFiles = new TempFileCollection();
+
+                    // ensure the base path exists
+                    Directory.CreateDirectory(this.tempFiles.BasePath);
+                    this.fileManager.TempFilesLocation = this.tempFiles.BasePath;
+                }
+
+                return this.tempFiles.BasePath;
+            }
+
+            set
+            {
+                this.DeleteTempFiles();
+
+                if (null == value)
+                {
+                    this.tempFiles = new TempFileCollection();
+                }
+                else
+                {
+                    this.tempFiles = new TempFileCollection(value);
+                }
+
+                // ensure the base path exists
+                Directory.CreateDirectory(this.tempFiles.BasePath);
+                this.fileManager.TempFilesLocation = this.tempFiles.BasePath;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the Wix variable resolver.
+        /// </summary>
+        /// <value>The Wix variable resolver.</value>
+        public WixVariableResolver WixVariableResolver
+        {
+            get { return this.wixVariableResolver; }
+            set { this.wixVariableResolver = value; }
+        }
+
+        /// <summary>
+        /// Binds an output.
+        /// </summary>
+        /// <param name="output">The output to bind.</param>
+        /// <param name="file">The Windows Installer file to create.</param>
+        /// <remarks>The Binder.DeleteTempFiles method should be called after calling this method.</remarks>
+        /// <returns>true if binding completed successfully; false otherwise</returns>
+        public abstract bool Bind(Output output, string file);
+
+        /// <summary>
+        /// Does any housekeeping after Bind.
+        /// </summary>
+        /// <param name="tidy">Whether or not any actual tidying should be done.</param>
+        public abstract void Cleanup(bool tidy);
+
+        /// <summary>
+        /// Gets help for all the command line arguments.
+        /// </summary>
+        /// <returns>A string to be added to light's help string.</returns>
+        public abstract string GetCommandLineArgumentsHelpString();
+
+        /// <summary>
+        /// Parse the commandline arguments.
+        /// </summary>
+        /// <param name="args">Commandline arguments.</param>
+        /// <param name="consoleMessageHandler">The console message handler.</param>
+        public abstract StringCollection ParseCommandLine(string[] args, ConsoleMessageHandler consoleMessageHandler);
+
+        /// <summary>
+        /// Do any setting up needed after all command line parsing.
+        /// </summary>
+        public abstract void PostParseCommandLine();
+
+        /// <summary>
+        /// Process a list of loaded extensions.
+        /// </summary>
+        /// <param name="loadedExtensionList">The list of loaded extensions.</param>
+        public abstract void ProcessExtensions(WixExtension[] loadedExtensionList);
+
+        /// <summary>
+        /// Cleans up the temp files used by the Binder.
+        /// </summary>
+        /// <returns>True if all files were deleted, false otherwise.</returns>
+        public virtual bool DeleteTempFiles()
+        {
+            if (null == this.tempFiles)
+            {
+                return true; // no work to do
+            }
+            else
+            {
+                bool deleted = Common.DeleteTempFiles(this.TempFilesLocation, this.core);
+
+                if (deleted)
+                {
+                    ((IDisposable)this.tempFiles).Dispose();
+                    this.tempFiles = null; // temp files have been deleted, no need to remember this now
+                }
+
+                return deleted;
+            }
+        }
+
+        /// <summary>
+        /// Cleans up the temp files used by the Binder.
+        /// </summary>
+        public void Dispose()
+        {
+            this.DeleteTempFiles();
+        }
+
+        /// <summary>
+        /// Adds an extension.
+        /// </summary>
+        /// <param name="extension">The extension to add.</param>
+        public void AddExtension(WixExtension extension)
+        {
+            if (null == extension)
+            {
+                throw new ArgumentNullException("extension");
+            }
+
+            if (null != extension.BinderExtension)
+            {
+                this.extensions.Add(extension.BinderExtension);
+            }
+        }
+
+        /// <summary>
+        /// Adds an event handler.
+        /// </summary>
+        /// <param name="newHandler">The event handler to add.</param>
+        public virtual void AddMessageEventHandler(MessageEventHandler newHandler)
+        {
+            this.Message += newHandler;
+        }
+
+        /// <summary>
+        /// Final step in binding that transfers (moves/copies) all files generated into the appropriate
+        /// location in the source image
+        /// </summary>
+        /// <param name="fileTransfers">Array of files to transfer.</param>
+        /// <param name="suppressAclReset">Suppress removing ACLs added during file transfer process.</param>
+        protected void LayoutMedia(ArrayList fileTransfers, bool suppressAclReset)
+        {
+            if (this.core.EncounteredError)
+            {
+                return;
+            }
+            ArrayList destinationFiles = new ArrayList();
+
+            for (int i = 0; i < fileTransfers.Count; ++i)
+            {
+                FileTransfer fileTransfer = (FileTransfer)fileTransfers[i];
+
+                // If the source and destination are identical, then there's nothing to do here
+                if (0 == String.Compare(fileTransfer.Source, fileTransfer.Destination, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                bool retry = false;
+                do
+                {
+                    try
+                    {
+                        if (fileTransfer.Move)
+                        {
+                            this.core.OnMessage(WixVerboses.MoveFile(fileTransfer.Source, fileTransfer.Destination));
+                            this.FileManager.MoveFile(fileTransfer.Source, fileTransfer.Destination);
+                            retry = false;
+                        }
+                        else
+                        {
+                            this.core.OnMessage(WixVerboses.CopyFile(fileTransfer.Source, fileTransfer.Destination));
+                            this.FileManager.CopyFile(fileTransfer.Source, fileTransfer.Destination, true);
+                            retry = false;
+                        }
+
+                        destinationFiles.Add(fileTransfer.Destination);
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        throw new WixFileNotFoundException(e.FileName);
+                    }
+                    catch (DirectoryNotFoundException)
+                    {
+                        // if we already retried, give up
+                        if (retry)
+                        {
+                            throw;
+                        }
+
+                        string directory = Path.GetDirectoryName(fileTransfer.Destination);
+                        this.core.OnMessage(WixVerboses.CreateDirectory(directory));
+                        Directory.CreateDirectory(directory);
+                        retry = true;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        // if we already retried, give up
+                        if (retry)
+                        {
+                            throw;
+                        }
+
+                        if (File.Exists(fileTransfer.Destination))
+                        {
+                            this.core.OnMessage(WixVerboses.RemoveDestinationFile(fileTransfer.Destination));
+
+                            // try to ensure the file is not read-only
+                            FileAttributes attributes = File.GetAttributes(fileTransfer.Destination);
+                            try
+                            {
+                                File.SetAttributes(fileTransfer.Destination, attributes & ~FileAttributes.ReadOnly);
+                            }
+                            catch (ArgumentException) // thrown for unauthorized access errors
+                            {
+                                throw new WixException(WixErrors.UnauthorizedAccess(fileTransfer.Destination));
+                            }
+
+                            // try to delete the file
+                            try
+                            {
+                                File.Delete(fileTransfer.Destination);
+                            }
+                            catch (IOException)
+                            {
+                                throw new WixException(WixErrors.FileInUse(null, fileTransfer.Destination));
+                            }
+                            retry = true;
+                        }
+                        else // no idea what just happened, bail
+                        {
+                            throw;
+                        }
+                    }
+                    catch (IOException)
+                    {
+                        // if we already retried, give up
+                        if (retry)
+                        {
+                            throw;
+                        }
+
+                        if (File.Exists(fileTransfer.Destination))
+                        {
+                            this.core.OnMessage(WixVerboses.RemoveDestinationFile(fileTransfer.Destination));
+
+                            // ensure the file is not read-only, then delete it
+                            FileAttributes attributes = File.GetAttributes(fileTransfer.Destination);
+                            File.SetAttributes(fileTransfer.Destination, attributes & ~FileAttributes.ReadOnly);
+                            try
+                            {
+                                File.Delete(fileTransfer.Destination);
+                            }
+                            catch (IOException)
+                            {
+                                throw new WixException(WixErrors.FileInUse(null, fileTransfer.Destination));
+                            }
+                            retry = true;
+                        }
+                        else // no idea what just happened, bail
+                        {
+                            throw;
+                        }
+                    }
+                }
+                while (retry);
+            }
+
+            // finally, if there were any files remove the ACL that may have been added to
+            // during the file transfer process
+            if (0 < destinationFiles.Count && !suppressAclReset)
+            {
+                try
+                {
+                    Microsoft.Tools.WindowsInstallerXml.Cab.Interop.NativeMethods.ResetAcls((string[])destinationFiles.ToArray(typeof(string)), (uint)destinationFiles.Count);
+                }
+                catch
+                {
+                    this.core.OnMessage(WixWarnings.UnableToResetAcls());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Structure used for all file transfer information.
+        /// </summary>
+        protected struct FileTransfer
+        {
+            /// <summary>Source path to file.</summary>
+            public string Source;
+
+            /// <summary>Destination path for file.</summary>
+            public string Destination;
+
+            /// <summary>Flag if file should be moved (optimal).</summary>
+            public bool Move;
+
+            /// <summary>
+            /// Basic constructor for struct
+            /// </summary>
+            /// <param name="source">Source path to file.</param>
+            /// <param name="destination">Destination path for file.</param>
+            /// <param name="move">File if file should be moved (optimal).</param>
+            public FileTransfer(string source, string destination, bool move)
+            {
+                this.Source = source;
+                this.Destination = destination;
+                this.Move = move;
+            }
+        }
+    }
+}

@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project name="burnsamplewpfui" default="burnsamplewpfui.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    burnsamplewpfui.build - Builds the BurnSampleWPFUI.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <property name="managedux.build.manageduxdll" value="{dir.target.wix.x86}\ManagedUX.dll" readonly="true" />
+  <property name="managedux.build.manageduxpdb" value="{dir.target.wix.x86}\ManagedUX.pdb" readonly="true" />
+
+  <!-- Rebuild -->
+  <target name="burnsamplewpfui.build" description="Rebuild BurnSampleWPFUI">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Rebuild" />
+      <arg file="${dir.root}\test\src\Burn\TestUX\BurnSampleUX\ManagedUX\BurnSampleWPFUI\BurnSampleWPFUI\BurnSampleWPFUI.csproj" />
+    </exec>
+  </target>
+
+  <!-- Clean -->
+  <target name="burnsamplewpfui.clean" description="Cleans the BurnSampleWPFUI build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Clean" />
+      <arg file="${dir.root}\test\src\Burn\TestUX\BurnSampleUX\ManagedUX\BurnSampleWPFUI\BurnSampleWPFUI\BurnSampleWPFUI.csproj" />
+    </exec>
+    <delete dir="${managedux.build.manageduxdll}" failonerror="false" if="${directory::exists(managedux.build.manageduxdll)}" />
+    <delete dir="${managedux.build.manageduxpdb}" failonerror="false" if="${directory::exists(managedux.build.manageduxpdb)}" />
+  </target>
+
+  <!-- Build -->
+  <target name="burnsamplewpfui.inc" description="Incremental BurnSampleWPFUI build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/target:Build" />
+      <arg file="${dir.root}\test\src\Burn\TestUX\BurnSampleUX\ManagedUX\BurnSampleWPFUI\BurnSampleWPFUI\BurnSampleWPFUI.csproj" />
+    </exec>
+  </target>
+</project>

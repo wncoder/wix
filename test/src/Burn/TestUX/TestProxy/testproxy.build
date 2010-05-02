@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project name="testproxy" default="testproxy.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    testproxy.build - Builds the TestProxy UX.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Includes
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <include buildfile="UXCore\uxcore.build" />
+  <include buildfile="UXEntryPoint\testproxyentrypoint.build" />
+  <include buildfile="ManagedUX\UXManagedProxy\uxmanagedproxy.build" />
+
+  <target name="testproxy.build" depends="uxcore.build, testproxyentrypoint.build, uxmanagedproxy.build" />
+  <target name="testproxy.clean" depends="uxcore.clean, testproxyentrypoint.clean, uxmanagedproxy.clean" />
+
+</project>

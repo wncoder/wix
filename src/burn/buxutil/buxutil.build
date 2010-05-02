@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="buxutil" default="buxutil.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+    buxutil.build - Builds the Burn UX Utility.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- buxutil-specific properties -->
+  <property name="dir.src.buxutil" value="${dir.src.burn}\buxutil" readonly="true" />
+  <property name="dir.build.buxutil.x86" value="${dir.build.wix.x86}\buxutil" readonly="true" />
+  <property name="dir.build.buxutil.x64" value="${dir.build.wix.x64}\buxutil" readonly="true" />
+  <property name="dir.build.buxutil.x86.vc8" value="${dir.build.buxutil.x86}\vc8" readonly="true" />
+  <property name="dir.build.buxutil.x64.vc8" value="${dir.build.buxutil.x64}\vc8" readonly="true" />
+
+  <property name="buxutil.additionalOptions" value="/I &quot;${dir.inc.burn}&quot; /I &quot;${dir.inc.buxutil}&quot;"/>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="buxutil.build" description="Peforms a full rebuild (clean then build)" depends="buxutil.clean, buxutil.inc" />
+
+  <!-- Clean -->
+  <target name="buxutil.clean" description="Cleans the build">
+    <delete dir="${dir.build.buxutil.x86}" failonerror="false" if="${directory::exists(dir.build.buxutil.x86)}" />
+    <delete dir="${dir.build.buxutil.x64}" failonerror="false" if="${directory::exists(dir.build.buxutil.x64)}" />
+    <delete file="${file.target.buxutil.x86}" failonerror="false" if="${file::exists(file.target.buxutil.x86)}" />
+    <delete file="${file.target.buxutil.x64}" failonerror="false" if="${file::exists(file.target.buxutil.x64)}" />
+
+    <delete dir="${dir.build.buxutil.x86.vc8}" failonerror="false" if="${directory::exists(dir.build.buxutil.x86.vc8)}" />
+    <delete dir="${dir.build.buxutil.x64.vc8}" failonerror="false" if="${directory::exists(dir.build.buxutil.x64.vc8)}" />
+    <delete file="${file.target.buxutil.x86.vc8}" failonerror="false" if="${file::exists(file.target.buxutil.x86.vc8)}" />
+    <delete file="${file.target.buxutil.x64.vc8}" failonerror="false" if="${file::exists(file.target.buxutil.x64.vc8)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="buxutil.inc" description="Performs an incremental build" depends="makeDirs">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.buxutil}">
+      <include name="buxutil.cpp" />
+      <include name="buxcondition.cpp" />
+    </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <!-- Make x86 buxutil.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x64}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x64" />
+    <!-- Make x64 buxutil.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x86.vc8}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions} -WX-" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x86.vc8}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="8" />
+    <!-- Make VS2005 x86 buxutil.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x64.vc8}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions} -WX-" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x64.vc8}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x64" />
+    <property name="makeNativeLib.vctoolsversion" value="8" />
+    <!-- Make VS2005 x64 buxutil.lib -->
+    <call target="makeNativeLib" />
+  </target>
+
+</project>

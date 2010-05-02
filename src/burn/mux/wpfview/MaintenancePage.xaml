@@ -1,0 +1,34 @@
+﻿<w:PageBase x:Class="Microsoft.Tools.WindowsInstallerXml.Bootstrapper.MaintenancePage"
+   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:w="clr-namespace:Microsoft.Tools.WindowsInstallerXml.Bootstrapper"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="385" d:DesignWidth="700">
+    <w:PageBase.Resources>
+        <ResourceDictionary Source="Styles.xaml"/>
+    </w:PageBase.Resources>
+    <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label x:Name="Title" Grid.Row="0" Style="{StaticResource TitleStyle}">Maintenance</Label>
+        <Grid x:Name="PageContent" Grid.Row="1">
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <Button Style="{StaticResource MaintenanceButtonStyle}" Click="Change_Click" Content="Change" />
+                <Button Style="{StaticResource MaintenanceButtonStyle}" Click="Repair_Click" Content="Repair" />
+                <Button Style="{StaticResource MaintenanceButtonStyle}" Click="Uninstall_Click" Content="Remove"/>
+            </StackPanel>
+        </Grid>        
+        <Grid x:Name="NavigationControl" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" Style="{StaticResource NavigationButtonStyle}" Command="w:SetupWizard.Cancel">Cancel</Button>
+        </Grid>
+    </Grid>
+</w:PageBase>

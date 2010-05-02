@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="834bd917-0dae-419b-a8fc-2065eb47481a" Name="TestBurn1" Language="1033" Version="1.1.2.3" Manufacturer="Microsoft Corporation" UpgradeCode="{A4D70718-3619-493F-8BFF-407C0E7AA4CD}">
+        <Package InstallScope="perMachine" Description="Test Burn #1" InstallerVersion="200" Compressed="yes" />
+        <Media Id="1" Cabinet="pkg1.cab" />
+        <InstallExecuteSequence>
+            <Custom Action="WixFailWhenDeferred" Before="InstallFinalize">
+                FAIL=1
+            </Custom>
+        </InstallExecuteSequence>
+        <Feature Id="Test1" Title="Test1" Level="1">
+            <ComponentRef Id="MyComp" />
+        </Feature>
+    </Product>
+
+    <Fragment>
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="MyFolder" Name="~WiX Burn Test" FileSource="$(sys.SOURCEFILEDIR)">
+                    <Component Id="MyComp" Guid="1568EFCC-367E-476D-8983-96C6EFD00D01">
+                        <File Id="MyFile" Name="Package1.wxs" KeyPath="yes" />
+                        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\WiX_Burn">
+                            <RegistryValue Name="Test1" Value="true" Type="string" />
+                        </RegistryKey>
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+    </Fragment>
+</Wix>
