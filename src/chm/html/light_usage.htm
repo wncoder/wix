@@ -1,0 +1,423 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Light usage</title>
+</head>
+
+<body>
+  <h1>Light usage</h1>
+
+  <p>Light usage:</p>
+  <pre>
+light.exe [-?] [-b basePath] [-nologo] [-out outputFile] objectFile [objectFile ...]
+</pre>
+
+  <p>Light supports the following command line parameters:</p>
+
+  <table border="1" cellspacing="0" cellpadding="2" class="style1">
+    <tr>
+      <td valign="top">
+        <p><b>Switch</b></p>
+      </td>
+
+      <td valign="top">
+        <p><b>Meaning</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ai</p>
+      </td>
+
+      <td>
+        <p>Allow identical rows; identical rows will be treated as a warning</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-au</p>
+      </td>
+
+      <td>
+        <p>Allow unresolved references; this will cause invalid output to be created</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-b</p>
+      </td>
+
+      <td>
+        <p>Specify a base path to locate all files; the default value is the current working directory</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-bf</p>
+      </td>
+
+      <td>
+        <p>Bind files into a wixout; this switch is only valid when also providing the -xo option</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cc</p>
+      </td>
+
+      <td>
+        <p>Specify a path to cache built cabinet files; the path will not be deleted after linking</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ct &lt;N&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify the number of threads to use when creating cabinets; the default is the %NUMBER_OF_PROCESSORS% environment variable</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cultures:&lt;cultures&gt;</p>
+      </td>
+
+      <td>
+        <p>Specifies a semicolon or comma delimited list of localized string cultures to load from .wxl files and libraries.  Precedence of cultures is from left to right.  For more information see <a href="specifying_cultures_to_build.htm">Specifying cultures to build</a>.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cub</p>
+      </td>
+
+      <td>
+        <p>Provide a .cub file containing additional internal consistency evaluators (ICEs) to run</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-d&lt;name&gt;=&lt;value&gt;</p>
+      </td>
+
+      <td>
+        <p>Define a WiX variable</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ext</p>
+      </td>
+
+      <td>
+        <p>Specify an extension assembly</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-fv</p>
+      </td>
+
+      <td>
+        <p>Add a FileVersion attribute to each assembly in the MsiAssemblyName table (rarely needed)</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-loc &lt;loc.wxl&gt;</p>
+      </td>
+
+      <td>
+        <p>Provide a .wxl file to read localization strings from</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-nologo</p>
+      </td>
+
+      <td>
+        <p>Skip printing Light logo information</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-notidy</p>
+      </td>
+
+      <td>
+        <p>Prevent Light from deleting temporary files after linking is complete (useful for debugging)</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-out</p>
+      </td>
+
+      <td>
+        <p>Specify an output file; by default, Light will write to the current working directory</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-pedantic</p>
+      </td>
+
+      <td>
+        <p>Display pedantic output messages</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-reusecab</p>
+      </td>
+
+      <td>
+        <p>Reuse cabinets from the cabinet cache instead of rebuilding cabinets</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sa</p>
+      </td>
+
+      <td>
+        <p>Suppress assemblies: do not get assembly name information for assemblies</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sacl</p>
+      </td>
+
+      <td>
+        <p>Suppress resetting ACLs (useful when laying out an image to a network share)</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sadmin</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default Admin sequence actions</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sadv</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default Advt sequence actions</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sdut</p>
+      </td>
+
+      <td>
+        <p>Suppress dropping unreal tables to the output image; this switch is set by default when the -xo switch is provided</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sice:&lt;ICE&gt;</p>
+      </td>
+
+      <td>
+        <p>Suppress running internal consistency evaluators (ICEs) with specific IDs</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sma</p>
+      </td>
+
+      <td>
+        <p>Suppress processing the data in the MsiAssembly table</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sf</p>
+      </td>
+
+      <td>
+        <p>Suppress files: do not get any file information; this switch is equivalent to the combination of the -sa and -sh switches</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sh</p>
+      </td>
+
+      <td>
+        <p>Suppress file information: do not get hash, version, language and other file properties</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sl</p>
+      </td>
+
+      <td>
+        <p>Suppress layout creation</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ss</p>
+      </td>
+
+      <td>
+        <p>Suppress schema validation for documents; this switch provides a performance boost during linking</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sui</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default UI sequence actions</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sv</p>
+      </td>
+
+      <td>
+        <p>Suppress intermediate file version mismatch checking</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sval</p>
+      </td>
+
+      <td>
+        <p>Suppress MSI/MSM validation</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sw&lt;N&gt;</p>
+      </td>
+
+      <td>
+        <p>Suppress warnings with specific message IDs</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ts</p>
+      </td>
+
+      <td>
+        <p>Tag sectionId attribute on rows; this switch is set by default when the -xo switch is provided</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-tsa</p>
+      </td>
+
+      <td>
+        <p>Tag sectionId attribute on rows and generate the rows when null; this switch is set by default when the -xo switch is provided</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-usf &lt;output.xml&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify an unreferenced symbols file</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-v</p>
+      </td>
+
+      <td>
+        <p>Generate verbose output</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-wx</p>
+      </td>
+
+      <td>
+        <p>Treat warnings as errors</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-xo</p>
+      </td>
+
+      <td>
+        <p>Generate XML output instead of an MSI</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-?</p>
+      </td>
+
+      <td>
+        <p>Display Light help information</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

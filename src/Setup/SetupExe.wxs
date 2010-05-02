@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="BinDir">
+            <Component Id="BootstrapperBinaries" Guid="04867F11-D8F5-4B08-84D3-7B154BF2D4C2" Win64="no">
+                <File Source="setup.exe" KeyPath="yes" Vital="yes" />
+            </Component>
+            <Component Id="SetupBuilderBinaries" Guid="ABC668D9-EBC2-42F2-93D9-B9B8235C5F9F" Win64="no">
+                <File Source="SetupBuilder.dll" KeyPath="yes" Vital="yes" />
+            </Component>
+            <Component Id="SetupBldBinaries" Guid="AB1CE8C4-B249-44BD-892E-518009755431" Win64="no">
+                <File Source="setupbld.exe" KeyPath="yes" Vital="yes" />
+            </Component>
+        </DirectoryRef>
+
+        <!-- Features -->
+        <ComponentGroup Id="SetupExeComponents" >
+            <ComponentRef Id="BootstrapperBinaries" />
+            <ComponentRef Id="SetupBuilderBinaries" />
+            <ComponentRef Id="SetupBldBinaries" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>

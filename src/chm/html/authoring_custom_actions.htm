@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Adding Custom Actions</title>
+</head>
+
+<body>
+  <h1>Adding Custom Actions</h1>
+
+  <p>Now that you&rsquo;re comfortable with the basics for creating Windows Installer packages, let&rsquo;s take it to the next level and add a CustomAction. This example will show how to author a binary CustomAction called "FooAction". A common sample people use is a dll customaction that launches notepad.exe or some other application as part of their install. Before you start, you will need a sample dll that has an entrypoint called "FooEntryPoint".</p>
+
+  <p>Rather than put the CustomAction definition in the same source file as our product definition, let's exercise a little modularity and create a new source file to define the CustomActions called "ca.wxs".</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+<b>   &lt;Fragment&gt;
+      &lt;CustomAction Id='FooAction' BinaryKey='FooBinary' DllEntry='FooEntryPoint' Execute='immediate'
+                    Return='check'/&gt;
+ 
+      &lt;Binary Id='FooBinary' SourceFile='foo.dll'/&gt;
+   &lt;/Fragment&gt;</b>
+&lt;/Wix&gt;
+</pre>
+
+  <p>Okay, that's it. We're done with editing the "ca.wxs" source file. That little bit of code should compile but it will not link. Remember linking requires that you have an entry section. A &lt;Fragment/&gt; alone is not an entry section. We would need to link this source file along with a source file that contained &lt;Product/&gt; or &lt;Module/&gt; to successfully complete.</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+   &lt;Product Id='PUT-GUID-HERE' Name='Test Package' Language='1033' 
+            Version='1.0.0.0' Manufacturer='Microsoft Corporation'&gt;
+      &lt;Package Description='My first Windows Installer package'
+            Comments='This is my first attempt at creating a Windows Installer database' 
+            Manufacturer='Microsoft Corporation' InstallerVersion='200' Compressed='yes' /&gt;
+ 
+      &lt;Media Id='1' Cabinet='product.cab' EmbedCab='yes' /&gt;
+ 
+      &lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;
+         &lt;Directory Id='ProgramFilesFolder' Name='PFiles'&gt;
+            &lt;Directory Id='MyDir' Name='Test Program'&gt;
+               &lt;Component Id='MyComponent' Guid='PUT-GUID-HERE'&gt;
+                  &lt;File Id='readme' Name='readme.txt' DiskId='1' Source='readme.txt' /&gt;
+               &lt;/Component&gt;
+ 
+               &lt;Merge Id='MyModule' Language='1033' SourceFile='module.msm' DiskId='1' /&gt;
+            &lt;/Directory&gt;
+         &lt;/Directory&gt;
+      &lt;/Directory&gt;
+ 
+      &lt;Feature Id='MyFeature' Title='My 1st Feature' Level='1'&gt;
+         &lt;ComponentRef Id='MyComponent' /&gt;
+         &lt;MergeRef Id='MyModule' /&gt;
+      &lt;/Feature&gt;
+<b>
+      &lt;InstallExecuteSequence&gt;
+         &lt;Custom Action='FooAction' After='InstallFiles'/&gt;
+      &lt;/InstallExecuteSequence&gt;</b>
+   &lt;/Product&gt;
+&lt;/Wix&gt;
+</pre>
+
+  <p>Those three lines are all you need to add to your Windows Installer package source file to call the "FooAction" CustomAction. Now that we have two files to link together our call to light.exe gets a little more complicated. Here are the compile, link, and installation steps.</p>
+  <pre>
+C:\test&gt; <b>candle product.wxs ca.wxs</b>
+ 
+C:\test&gt; <b>light product.wixobj ca.wixobj &ndash;out product.msi</b>
+ 
+C:\test&gt; <b>msiexec /i product.msi</b>
+</pre>
+
+  <p>Now as part of your installation, whatever "FooAction" is supposed to perform, you should see happen after the InstallFiles action.</p>
+</body>
+</html>

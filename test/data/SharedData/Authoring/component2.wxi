@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Defines a component that is shared across several tests-->
+<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?include $(env.WIX)\test\data\SharedData\Authoring\directories.wxi?>
+  
+  <DirectoryRef Id="WixTestFolder">
+    <Component Id="Component2" Guid="*">
+      <?include $(env.WIX)\test\data\SharedData\Authoring\file2.wxi?>
+    </Component>
+  </DirectoryRef>
+
+</Include>

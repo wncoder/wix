@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DocCompiler xmlns="http://schemas.microsoft.com/wix/2005/DocCompiler">
+    <TableOfContents>
+      <Topic Title="Windows Installer XML (WiX) Help" SourceFile="html\main.htm">
+        <Topic Title="Introduction" SourceFile="html\wix_index.htm"/>
+        
+        <Topic Title="About WiX" SourceFile="html\overview.htm">
+            <Topic Title="File Types" SourceFile="html\files.htm" />
+            <Topic Title="Tools and Concepts" SourceFile="html\tools.htm">
+                <Topic Title="List of Tools" SourceFile="html\AllTools.htm"/>
+                <Topic Title="Preprocessor" SourceFile="html\preprocessor.htm">
+                    <Index Title="Variables"/>
+                </Topic>
+                <Topic Title="Compiler (Candle)" SourceFile="html\candle.htm"/>
+                <Topic Title="Linker (Light)" SourceFile="html\light.htm"/>
+                <Topic Title="Library Tool (Lit)" SourceFile="html\lit.htm" />
+                <Topic Title="Decompiler (Dark)" SourceFile="html\dark.htm"/>
+                <Topic Title="Harvester (Heat)" SourceFile="html\heat.htm"/>
+                <Topic Title="WixCop" SourceFile="html\wixcop.htm"/>
+                <Topic Title="Heat" SourceFile="html\heat.htm"/>
+            </Topic>
+        </Topic>
+        <Topic Title="Using WiX on the Command Line" SourceFile="html\authoring_getting_started.htm">
+            <Topic Title="Authoring Your First .wxs File" SourceFile="html\authoring_first_file.htm"/>
+            <Topic Title="Creating Merge Modules" SourceFile="html\authoring_merge_modules.htm"/>
+            <Topic Title="Mapping MSI Tables to WiX Schema" SourceFile="html\msitowix.htm"/>
+        </Topic>
+        <Topic Title="Using WiX in Visual Studio" SourceFile="html\votive.htm">
+            <Topic Title="WiX Project Types" SourceFile="html\votive_project_templates.htm"/>
+            <Topic Title="WiX Item Templates" SourceFile="html\votive_item_templates.htm"/>
+            <Topic Title="WiX Project Property Pages" SourceFile="html\votive_property_pages.htm"/>
+            <Topic Title="Creating a Simple Setup" SourceFile="html\authoring_first_votive_project.htm"/>
+            <Topic Title="Adding Project References" SourceFile="html\votive_project_references.htm">
+                <Index Title="Variables"/>
+            </Topic>
+            <Topic Title="Adding WiX References" SourceFile="html\votive_wix_references.htm"/>
+        </Topic>
+        <Topic Title="Using WiX with MSBuild" SourceFile="html\msbuild.htm">
+            <Topic Title="Creating a .wixproj File" SourceFile="html\authoring_first_msbuild_project.htm"/>
+            <Topic Title="Integrating WiX Projects Into Daily Builds" SourceFile="html\daily_builds.htm"/>
+            <Topic Title="Building WiX Projects In Team Foundation Build" SourceFile="html\wix_with_team_build.htm"/>
+            <Topic Title="WiX MSBuild Task Reference" SourceFile="html\msbuild_task_reference_toc.htm">
+                <Topic Title="Candle Task" SourceFile="html\msbuild_task_reference_candle.htm"/>
+                <Topic Title="Light Task" SourceFile="html\msbuild_task_reference_light.htm"/>
+                <Topic Title="Lit Task" SourceFile="html\msbuild_task_reference_lit.htm"/>
+            </Topic>
+        </Topic>
+        <Topic Title="Using WiX with NAnt" SourceFile="html\nant.htm">
+            <Topic Title="WiX NAnt Task Reference" SourceFile="html\nant_task_reference_toc.htm">
+                <Topic Title="Candle Task" SourceFile="html\nant_task_reference_candle.htm"/>
+                <Topic Title="Light Task" SourceFile="html\nant_task_reference_light.htm"/>
+                <Topic Title="Lit Task" SourceFile="html\nant_task_reference_lit.htm"/>
+            </Topic>
+        </Topic>
+        <Topic Title="How To Guides" SourceFile="html\howtos\toc.htm">
+          <Topic Title="Files, Shortcuts, and Registry" SourceFile="html\howtos\files_and_registry_toc.htm">
+            <Topic Title="How To: Add a file to your installer" SourceFile="html\howtos\add_a_file.htm"/>
+            <Topic Title="How To: Check the version number of a file during installation" SourceFile="html\howtos\check_the_version_number.htm"/>
+            <Topic Title="How To: Write a registry entry during installation" SourceFile="html\howtos\write_a_registry_entry.htm"/>
+            <Topic Title="How To: Read a registry entry during installation" SourceFile="html\howtos\read_a_registry_entry.htm"/>
+            <Topic Title="How To: Create a shortcut on the Start Menu" SourceFile="html\howtos\create_start_menu_shortcut.htm"/>
+            <Topic Title="How To: Create a shortcut to a web page" SourceFile="html\howtos\create_internet_shortcut.htm"/>
+            <Topic Title="How To: Create an uninstall shortcut" SourceFile="html\howtos\create_an_uninstall_shortcut.htm"/>
+            <Topic Title="How To: NGen managed assemblies during installation" SourceFile="html\howtos\ngen_managed_assemblies.htm"/>
+            <Topic Title="How To: Reference another DirectorySearch element" SourceFile="html\howtos\directorysearchref.htm"/>
+            <Topic Title="How To: Get the parent directory of a file search" SourceFile="html\howtos\parentdirectorysearch.htm"/>
+          </Topic>
+          <Topic Title="Redistributables and Install Checks" SourceFile="html\howtos\redistributables_and_install_checks_toc.htm">
+            <Topic Title="How To: Check for .NET Framework versions" SourceFile="html\howtos\check_for_dotnet.htm"/>
+            <Topic Title="How To: Install the .NET Framework using a bootstrapper" SourceFile="html\howtos\install_dotnet.htm"/>
+            <Topic Title="How To: Install DirectX 9.0 with your installer" SourceFile="html\howtos\install_directx9.htm"/>
+            <Topic Title="How To: Install the Visual C++ Redistributable with your installer" SourceFile="html\howtos\install_vcredist.htm"/>
+            <Topic Title="How To: Block installation based on OS version" SourceFile="html\howtos\block_install_on_os.htm"/>           
+          </Topic>
+          <Topic Title="User Interface and Localization" SourceFile="html\howtos\ui_and_localization_toc.htm">
+            <Topic Title="How To: Build a localized version of your installer" SourceFile="html\howtos\build_a_localized_version.htm"/>
+            <Topic Title="How To: Make your installer localizable" SourceFile="html\howtos\make_installer_localizable.htm"/>
+            <Topic Title="How To: Run the installed application after setup" SourceFile="html\howtos\run_program_after_install.htm"/>
+            <Topic Title="How To: Set your installer's icon in Add/Remove Programs" SourceFile="html\howtos\configure_arp_appearance.htm"/>
+          </Topic>
+          <Topic Title="Updates" SourceFile="html\howtos\updates_toc.htm">
+            <Topic Title="How To: Implement a major upgrade in your installer" SourceFile="html\howtos\major_upgrade.htm"/>
+          </Topic>
+          <Topic Title="General How Tos" SourceFile="html\howtos\general_toc.htm">
+            <Topic Title="How To: Get a log of your installation for debugging" SourceFile="html\howtos\get_a_log.htm"/>
+            <Topic Title="How To: Look inside your MSI with Orca" SourceFile="html\howtos\look_inside_msi.htm"/>
+            <Topic Title="How To: Generate a GUID" SourceFile="html\howtos\generate_guids.htm"/>            
+          </Topic>
+        </Topic>
+        <Topic Title="WiX Schema References" SourceFile="html\schema_index.htm">
+            <XmlSchema SourceFile="..\wix\Xsd\wix.xsd" Main="yes"/>
+            <XmlSchema SourceFile="..\wix\Xsd\wixloc.xsd" Main="yes"/>
+            <XmlSchema SourceFile="..\ext\ComPlusExtension\wixext\Xsd\complus.xsd"/>
+            <XmlSchema SourceFile="..\ext\DifxAppExtension\wixext\Xsd\difxapp.xsd"/>
+            <XmlSchema SourceFile="..\ext\FirewallExtension\wixext\Xsd\firewall.xsd"/>
+            <XmlSchema SourceFile="..\ext\GamingExtension\wixext\Xsd\gaming.xsd"/>
+            <XmlSchema SourceFile="..\ext\IIsExtension\wixext\Xsd\iis.xsd"/>
+            <XmlSchema SourceFile="..\ext\IsolatedAppExtension\wixext\Xsd\IsolatedApp.xsd"/>
+            <XmlSchema SourceFile="..\ext\MsmqExtension\wixext\Xsd\msmq.xsd"/>
+            <XmlSchema SourceFile="..\ext\NetFxExtension\wixext\Xsd\netfx.xsd"/>
+            <XmlSchema SourceFile="..\ext\OfficeExtension\wixext\Xsd\OfficeAddin.xsd"/>
+            <XmlSchema SourceFile="..\ext\PSExtension\wixext\Xsd\ps.xsd"/>
+            <XmlSchema SourceFile="..\ext\SqlExtension\wixext\Xsd\sql.xsd"/>
+            <XmlSchema SourceFile="..\ext\UtilExtension\wixext\Xsd\util.xsd"/>
+            <XmlSchema SourceFile="..\ext\VSExtension\wixext\Xsd\vs.xsd"/>
+        </Topic>
+        <Topic Title="Advanced WiX Topics" SourceFile="html\advanced_wix_topics_index.htm">
+            <Topic Title="Specifying cultures to build" SourceFile="html\specifying_cultures_to_build.htm"/>
+            <Topic Title="Specifying source files" SourceFile="html\specifying_source_files.htm"/>
+            <Topic Title="Optimizing builds" SourceFile="html\optimizing_builds.htm"/>
+            <Topic Title="Adding Custom Actions" SourceFile="html\authoring_custom_actions.htm"/>
+            <Topic Title="Standard Custom Actions" SourceFile="html\standard_customactions.htm">
+                <Topic Title="Using Standard Custom Actions" SourceFile="html\using_standard_customactions.htm"/>
+                <Topic Title="OSInfo Custom Actions" SourceFile="html\osinfo.htm"/>
+                <Topic Title="Performance Counter Custom Action" SourceFile="html\perfmon.htm"/>
+                <Topic Title="Quiet Execution Custom Action" SourceFile="html\qtexec.htm"/>
+                <Topic Title="ShellExecute Custom Action" SourceFile="html\shellexec.htm"/>
+                <Topic Title="WixDirectXExtension" SourceFile="html\wixdirectxextension.htm"/>
+                <Topic Title="WixExitEarlyWithSuccess" SourceFile="html\wixexitearlywithsuccess.htm"/>
+                <Topic Title="WixFailWhenDeferred" SourceFile="html\wixfailwhendeferred.htm"/>
+                <Topic Title="WixGamingExtension" SourceFile="html\wixgamingextension.htm"/>
+                <Topic Title="WixNetfxExtension" SourceFile="html\wixnetfxextension.htm"/>
+                <Topic Title="WixVSExtension" SourceFile="html\wixvsextension.htm"/>
+            </Topic>
+            <Topic Title="WixUI Dialog Library" SourceFile="html\WixUI_index.htm">
+                <Topic Title="Using Built-in WixUI Dialog Sets" SourceFile="html\WixUI_dialog_library.htm"/>
+                <Topic Title="Customizing Built-in WixUI Dialog Sets" SourceFile="html\WixUI_customizations.htm"/>
+                <Topic Title="Using Localized Versions of WixUI" SourceFile="html\WixUI_localization.htm"/>
+                <Topic Title="WixUI Dialog Reference" SourceFile="html\WixUI_dialog_reference_toc.htm">
+                    <Topic Title="WixUI_Advanced Dialog Set" SourceFile="html\WixUI_advanced.htm"/>
+                    <Topic Title="WixUI_FeatureTree Dialog Set" SourceFile="html\WixUI_featuretree.htm"/>
+                    <Topic Title="WixUI_InstallDir Dialog Set" SourceFile="html\WixUI_installdir.htm"/>
+                    <Topic Title="WixUI_Minimal Dialog Set" SourceFile="html\WixUI_minimal.htm"/>
+                    <Topic Title="WixUI_Mondo Dialog Set" SourceFile="html\WixUI_mondo.htm"/>
+                    <Topic Title="WixUI Dialogs" SourceFile="html\WixUI_dialogs.htm"/>
+                </Topic>
+            </Topic>
+            <Topic Title="Extensions" SourceFile="html\extensions.htm">
+                <Topic Title="Using WiX Extensions" SourceFile="html\extension_usage_introduction.htm"/>
+                <Topic Title="Localized Extensions" SourceFile="html\localized_extensions.htm"/>
+            </Topic>
+            <Topic Title="Patch Building" SourceFile="html\patching.htm">
+                <Topic Title="Using Patch Creation Properties" SourceFile="html\patch_building.htm">
+                    <Index Title="Patch Building Using Patch Creation Properties"/>
+                </Topic>
+                <Topic Title="Using Purely WiX" SourceFile="html\wix_patching.htm">
+                    <Index Title="Patch Building Using Purely WiX"/>
+                </Topic>
+                <Topic Title="Restrictions for Patches" SourceFile="html\patch_restrictions.htm"/>
+            </Topic>
+            <Topic Title="Code Pages" SourceFile="html\codepage.htm"/>
+        </Topic>
+        <Topic Title="Developing for WiX" SourceFile="html\wixdev.htm">
+            <Topic Title="How to be a Windows Installer XML Developer" SourceFile="html\wixdev_getting_started.htm"/>
+            <Topic Title="Building WiX" SourceFile="html\building_wix.htm"/>
+            <Topic Title="NAnt Conventions" SourceFile="html\nant_conventions.htm"/>
+            <Topic Title="Developing WiX Extensions" SourceFile="html\extension_development.htm">
+              <Topic Title="Introduction" SourceFile="html\extension_development_intro.htm"/>
+              <Topic Title="Creating a Simple Extension" SourceFile="html\extension_development_simple_example.htm"/>
+              <Topic Title="Creating a Preprocessor Extension" SourceFile="html\extension_development_preprocessor.htm"/>
+            </Topic>
+            <Topic Title="Developing for Votive" SourceFile="html\votive_development.htm"/>
+            <Topic Title="Adding to the WiX Documentation" SourceFile="html\help_development.htm"/>
+            <Topic Title="Testing WiX" SourceFile="html\tests_testingwix.htm">
+              <Topic Title="Running Tests" SourceFile="html\tests_runningtests.htm"/>
+              <Topic Title="Writing Tests" SourceFile="html\tests_writingtests.htm"/>
+            </Topic>
+          </Topic>
+        <Topic Title="Additional Resources" SourceFile="html\resources.htm">
+          <Topic Title="Getting Started Learning WiX" SourceFile="html\wix_learning.htm"/>
+          <Topic Title="Useful Windows Installer Information" SourceFile="html\msi_useful_links.htm"/>
+          <Topic Title="Getting Help" SourceFile="html\help.htm"/>
+        </Topic>
+      </Topic>
+    </TableOfContents>
+    <CopyDirectory Source="imgs" Destination="imgs"/>
+    <CopyFile Source="html\style.css" Destination="html\style.css"/>
+</DocCompiler>

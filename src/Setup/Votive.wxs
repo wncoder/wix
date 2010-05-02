@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+  Votive.wxs - WiX source for the Votive Visual Studio package setup.
+-->
+
+<?include WixVer.wxi ?>
+
+<!-- Preprocessor definitions -->
+<?define VsVersion2005 = "2005"?>
+<?define VsRegPath2005 = "SOFTWARE\Microsoft\VisualStudio\8.0" ?>
+<?define VsVersion2008 = "2008"?>
+<?define VsRegPath2008 = "SOFTWARE\Microsoft\VisualStudio\9.0" ?>
+<?define VsVersion = "dummy"?>
+<?define VsRegPath = "dummy"?>
+
+<?define WixVsPackageGuid       = "{E0EE8E7D-F498-459E-9E90-2B3D73124AD5}" ?>
+<?define WixVsProjectGuid       = "{930C7802-8A8C-48F9-8165-68863BCCD9DD}" ?>
+<?define XmlEditorGuid          = "{FA3CD31E-987B-443A-9B81-186104E8DAC1}" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <PropertyRef Id="VS2005_ITEMTEMPLATES_DIR" />
+        <PropertyRef Id="VS2005_PROJECTTEMPLATES_DIR" />
+        <PropertyRef Id="VS2005_SCHEMAS_DIR" />
+
+        <PropertyRef Id="VS90_ITEMTEMPLATES_DIR" />
+        <PropertyRef Id="VS90_PROJECTTEMPLATES_DIR" />
+        <PropertyRef Id="VS90_SCHEMAS_DIR" />
+
+        <!-- Directories -->
+        <DirectoryRef Id="TARGETDIR">
+                <Directory Id="VisualStudio2005Folder" Name="Visual Studio 8">
+                    <Directory Id="Common7Vs2005" Name="Common7">
+                        <Directory Id="IDEVs2005" Name="IDE">
+                            <Directory Id="VS2005_ITEMTEMPLATES_DIR">
+                                <Directory Id="VsItemTemplatesWixDir$(var.VsVersion2005)" Name="WiX" />
+                            </Directory>
+                                <Directory Id="VS2005_PROJECTTEMPLATES_DIR">
+                                    <Directory Id="VsProjectTemplatesWixDir$(var.VsVersion2005)" Name="WiX" />
+                            </Directory>
+                        </Directory>
+                    </Directory>
+                </Directory>
+                <Directory Id="VisualStudio2008Folder" Name="Visual Studio 9.0">
+                    <Directory Id="Common7Vs2008" Name="Common7">
+                        <Directory Id="IDEVs2008" Name="IDE">
+                            <Directory Id="VS90_ITEMTEMPLATES_DIR">
+                                <Directory Id="VsItemTemplatesWixDir$(var.VsVersion2008)" Name="WiX" />
+                            </Directory>
+                                <Directory Id="VS90_PROJECTTEMPLATES_DIR">
+                                    <Directory Id="VsProjectTemplatesWixDir$(var.VsVersion2008)" Name="WiX" />
+                            </Directory>
+                        </Directory>
+                    </Directory>
+                </Directory>
+        </DirectoryRef>
+
+        <!-- Components -->
+        <DirectoryRef Id="BinDir">
+            <Component Id="VisualStudioPackageCommon" Guid="3C58CD34-FBD9-460B-A43D-C3A542CA7318" Win64="no">
+                <!-- Icons to use for WiX file types -->
+                <File Source="ProjectFile.ico" KeyPath="yes" />
+                <File Source="ProductFile.ico" />
+                <File Source="IncludeFile.ico" />
+                <File Source="LocalizationFile.ico" />
+                <File Source="WixLibraryFile.ico" />
+
+                <!-- File extension registration -->
+                <!-- Note that we're keeping the versioned progid the same -->
+                <!-- The properties are used here so that if a user installs Votive -->
+                <!-- on a system with both VS 2005 and VS 2008 installed, the file  -->
+                <!-- associations will be directed to the latest version of VS.     -->
+                <ProgId Id="WindowsInstallerXml.wixprojfile.3.0" Description="WiX Project File" Icon="ProjectFile.ico">
+                    <Extension Id="wixproj" ContentType="text/plain">
+                        <Verb Id="Open" Command="[LATEST_DEVENV_EXE_COMMAND]" TargetProperty="LATEST_DEVENV_EXE" Argument="&quot;%1&quot;" />
+                    </Extension>
+                </ProgId>
+                <ProgId Id="WindowsInstallerXml.wxsfile.3.0" Description="WiX Source File" Icon="ProductFile.ico">
+                    <Extension Id="wxs" ContentType="text/xml">
+                        <Verb Id="Open" Command="[LATEST_DEVENV_EXE_COMMAND]" TargetProperty="LATEST_DEVENV_EXE" Argument="&quot;%1&quot;" />
+                    </Extension>
+                </ProgId>
+                <ProgId Id="WindowsInstallerXml.wxifile.3.0" Description="WiX Include File" Icon="IncludeFile.ico">
+                    <Extension Id="wxi" ContentType="text/xml">
+                        <Verb Id="Open" Command="[LATEST_DEVENV_EXE_COMMAND]" TargetProperty="LATEST_DEVENV_EXE" Argument="&quot;%1&quot;" />
+                    </Extension>
+                </ProgId>
+                <ProgId Id="WindowsInstallerXml.wxlfile.3.0" Description="WiX Localization File" Icon="LocalizationFile.ico">
+                    <Extension Id="wxl" ContentType="text/xml">
+                        <Verb Id="Open" Command="[LATEST_DEVENV_EXE_COMMAND]" TargetProperty="LATEST_DEVENV_EXE" Argument="&quot;%1&quot;" />
+                    </Extension>
+                </ProgId>
+                <ProgId Id="WindowsInstallerXml.wixlibfile.3.0" Description="WiX Library File" Icon="WixLibraryFile.ico">
+                    <Extension Id="wixlib" ContentType="text/xml" />
+                </ProgId>
+            </Component>
+
+            <Component Id="VisualStudioPackageSconce2005" Guid="7FB8DF74-9448-46AF-97D6-CEEDCD6AF731" Win64="no">
+                <File Source="sconce2005.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+            </Component>
+
+            <Component Id="VisualStudioPackageSconce2008" Guid="1CAF6D5D-3A8C-413A-881C-69CA93661B74" Win64="no">
+                <File Source="sconce2008.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+            </Component>
+
+            <Component Id="VisualStudioPackage2005" Guid="E1195461-0D02-443B-BCF8-888ECE01E017" Win64="no">
+                <File Source="votive2005.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+
+                <!-- Add the VS 2005 property page registration component -->
+                <?undef VsRegPath?>
+                <?undef VsVersion?>
+                <?define VsRegPath = $(var.VsRegPath2005) ?>
+                <?define VsVersion = $(var.VsVersion2005) ?>
+                <?include VotivePropertyPages.wxi ?>
+            </Component>
+
+            <Component Id="VisualStudioPackage2008" Guid="AD022E4C-71A5-4C1D-8F61-E09B3C2BFC2F" Win64="no">
+                <File Source="votive2008.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+
+                <!-- Add the VS 2008 property page registration component -->
+                <?undef VsRegPath?>
+                <?undef VsVersion?>
+                <?define VsRegPath = $(var.VsRegPath2008) ?>
+                <?define VsVersion = $(var.VsVersion2008) ?>
+                <?include VotivePropertyPages.wxi ?>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="VsItemTemplatesWixDir$(var.VsVersion2005)">
+            <Component Id="VsProjectItems2005" Guid="7C9FC36D-F037-4311-B58D-4906CC1440EE" Win64="no">
+                <?undef VsVersion?>
+                <?define VsVersion = $(var.VsVersion2005) ?>
+                <?include VotiveItemTemplates.wxi ?>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="VsProjectTemplatesWixDir$(var.VsVersion2005)">
+            <Component Id="VsProjects2005" Guid="B717AF39-94A3-41AC-A038-00C42485F1BA" Win64="no">
+                <?undef VsVersion?>
+                <?define VsVersion = $(var.VsVersion2005) ?>
+                <?include VotiveProjectTemplates.wxi ?>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="VsItemTemplatesWixDir$(var.VsVersion2008)">
+            <Component Id="VsProjectItems2008" Guid="4BBC4C91-DA19-4AE2-8968-C9D8ECC1E748" Win64="no">
+                <?undef VsVersion?>
+                <?define VsVersion = $(var.VsVersion2008) ?>
+                <?include VotiveItemTemplates.wxi ?>
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="VsProjectTemplatesWixDir$(var.VsVersion2008)">
+            <Component Id="VsProjects2008" Guid="EB67DA36-2D25-42B9-A59E-F9E19700B430" Win64="no">
+                <?undef VsVersion?>
+                <?define VsVersion = $(var.VsVersion2008) ?>
+                <?include VotiveProjectTemplates.wxi ?>
+            </Component>
+        </DirectoryRef>
+
+        <ComponentGroup Id="VotiveCommon">
+            <ComponentRef Id="VisualStudioPackageCommon" />
+            <ComponentRef Id="WixMSBuildBinaries" />
+            <ComponentGroupRef Id="Extensions" />
+        </ComponentGroup>
+
+        <ComponentGroup Id="VotiveVS2005">
+            <ComponentRef Id="VisualStudioPackage2005" />
+            <ComponentRef Id="VisualStudioPackageSconce2005" />
+            <ComponentRef Id="VsProjectItems2005" />
+            <ComponentRef Id="VsProjects2005" />
+            <ComponentRef Id="VSSchema2005" />
+        </ComponentGroup>
+
+        <ComponentGroup Id="VotiveVS2008">
+            <ComponentRef Id="VisualStudioPackage2008" />
+            <ComponentRef Id="VisualStudioPackageSconce2008" />
+            <ComponentRef Id="VsProjectItems2008" />
+            <ComponentRef Id="VsProjects2008" />
+            <ComponentRef Id="VSSchema2008" />
+        </ComponentGroup>
+
+    </Fragment>
+</Wix>

@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Binder Variables</title>
+</head>
+
+<body>
+  <h1>Binder Variables</h1>
+
+  <h2>Standard Binder Variables</h2>
+
+  <p>Some properties are not available until the linker is about to generate, or bind, the final output. These variables are called binder variables and supported binder variables are listed below.</p>
+
+  <h3>All Versioned Files</h3>
+
+  <p>The following standard binder variables are available for all versioned binaries.</p>
+
+  <table border="1" cellspacing="0" cellpadding="2">
+    <tr>
+      <td>
+        <p><b>Variable name</b></p>
+      </td>
+
+      <td>
+        <p><b>Example usage</b></p>
+      </td>
+
+      <td>
+        <p><b>Example value</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.fileLanguage.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.fileLanguage.MyFile</p>
+      </td>
+
+      <td>
+        <p>1033</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.fileVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.fileVersion.MyFile)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+  </table>
+
+  <h3>Assemblies</h3>
+
+  <p>The following standard binder variables are available for all managed and native assemblies (except where noted), where the File/@Assembly attribute is set to ".net" or "win32".</p>
+
+  <table border="1" cellspacing="0" cellpadding="2">
+    <tr>
+      <td>
+        <p><b>Variable name</b></p>
+      </td>
+
+      <td>
+        <p><b>Example usage</b></p>
+      </td>
+
+      <td>
+        <p><b>Example value</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyCulture.<i>FileID</i><br />
+        <i>(managed only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyCulture.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>neutral</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyFileVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyFileVersion.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyFullName.<i>FileID</i><br />
+        <i>(managed only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyName.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MyAssembly, version=1.0.0.0, culture=neutral, publicKeyToken=0123456789abcdef, processorArchitecture=MSIL</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyName.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyName.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MyAssembly</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyProcessorArchitecture.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyProcessorArchitecture.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>MSIL</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyPublicKeyToken.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyPublicKeyToken.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>0123456789abcdef</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyType.<i>FileID</i><br />
+        <i>(native only)</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyType.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>win32</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.assemblyVersion.<i>FileID</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.assemblyVersion.MyAssembly)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+  </table>
+
+  <h2>Localization Variables</h2>
+
+  <p>Variables can be passed in before binding the output file from a <a href="wxl.htm">WiX localization file</a>, or .wxl file. This process allows the developer to link one or more .wixobj files together with diferent .wxl files to produce different localized packages.</p>
+
+  <p>Localization variables are in the following format:</p>
+  <pre>
+!(loc.<i>VariableName</i>)
+</pre>
+
+  <p>Read more about <a href="localization.htm">localization</a> for how to create and link .wxl files.</p>
+
+  <h2>Custom Binder Variables</h2>
+
+  <p>You can create your own binder variables using the <a href="wix_xsd_wixvariable.htm">WixVariable</a> element or by simply typing your own variable name in the following format:</p>
+  <pre>
+!(bind.<i>VariableName</i>)
+</pre>
+
+  <p>Custom binder variables allow you to use the same .wixobj files but specify different values when linking, similar to how localization variables are used. You might use binder variables for different builds, like varying the target processor architecture.</p>
+</body>
+</html>

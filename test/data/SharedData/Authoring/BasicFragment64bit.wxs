@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLLOCATION" Name="SampleWixProject">
+          <Component Id="ProductComponent" Guid="071bca15-373b-4d4b-b351-fae084160084">
+            <File Id="Test_txt1" Name="TextFile1.txt" DiskId="1" KeyPath="yes" Source="$(env.WIX)\test\data\SharedData\Files\TextFile1.txt" />
+          </Component>
+        </Directory>
+      </Directory>
+    </Directory>
+  </Fragment>
+</Wix>
+

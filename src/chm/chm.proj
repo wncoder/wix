@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+      <ProjectGuid>{031476EE-1432-4A17-A902-C5BB4B82C967}</ProjectGuid>
+      <HelpDirectory>$(MSBuildProjectDirectory)</HelpDirectory>
+      <HelpCompiler>$(ProgramFiles)\HTML Help Workshop\hhc.exe</HelpCompiler>
+  </PropertyGroup>
+  <Import Project="..\..\WixBuild.Common.targets" />
+  <PropertyGroup>
+    <HelpTableOfContents>toc.xml</HelpTableOfContents>
+    <HelpFileName>wix.chm</HelpFileName>
+    <HelpFile>$(OutputPath)$(HelpFileName)</HelpFile>
+    <IntermediateHelpFile>$(IntermediateOutputPath)$(HelpFileName)</IntermediateHelpFile>
+  </PropertyGroup>
+  
+  <!-- Core help files-->
+  <ItemGroup>
+    <HelpSourceFile Include="html\advanced_wix_topics_index.htm"/>
+    <HelpSourceFile Include="html\alltools.htm"/>
+    <HelpSourceFile Include="html\authoring.htm"/>
+    <HelpSourceFile Include="html\authoring_custom_actions.htm"/>
+    <HelpSourceFile Include="html\authoring_first_file.htm"/>
+    <HelpSourceFile Include="html\authoring_first_msbuild_project.htm"/>
+    <HelpSourceFile Include="html\authoring_first_votive_project.htm"/>
+    <HelpSourceFile Include="html\authoring_getting_started.htm"/>
+    <HelpSourceFile Include="html\authoring_merge_modules.htm"/>
+    <HelpSourceFile Include="html\authoring_tutorials.htm"/>
+    <HelpSourceFile Include="html\bind_variables.htm"/>
+    <HelpSourceFile Include="html\building_wix.htm"/>
+    <HelpSourceFile Include="html\candle.htm"/>
+    <HelpSourceFile Include="html\codepage.htm"/>
+    <HelpSourceFile Include="html\daily_builds.htm"/>
+    <HelpSourceFile Include="html\dark.htm"/>
+    <HelpSourceFile Include="html\extensions.htm"/>
+    <HelpSourceFile Include="html\extension_development.htm"/>
+    <HelpSourceFile Include="html\extension_development_intro.htm"/>
+    <HelpSourceFile Include="html\extension_development_preprocessor.htm"/>
+    <HelpSourceFile Include="html\extension_development_simple_example.htm"/>
+    <HelpSourceFile Include="html\extension_usage_introduction.htm"/>
+    <HelpSourceFile Include="html\files.htm"/>
+    <HelpSourceFile Include="html\heat.htm"/>
+    <HelpSourceFile Include="html\help.htm"/>
+    <HelpSourceFile Include="html\help_development.htm"/>
+    <HelpSourceFile Include="html\light.htm"/>
+    <HelpSourceFile Include="html\light_usage.htm"/>
+    <HelpSourceFile Include="html\lit.htm"/>
+    <HelpSourceFile Include="html\lit_usage.htm"/>
+    <HelpSourceFile Include="html\localized_extensions.htm"/>
+    <HelpSourceFile Include="html\main.htm"/>
+    <HelpSourceFile Include="html\msi.htm"/>
+    <HelpSourceFile Include="html\msbuild.htm"/>
+    <HelpSourceFile Include="html\msbuild_task_reference_toc.htm"/>
+    <HelpSourceFile Include="html\msbuild_task_reference_candle.htm"/>
+    <HelpSourceFile Include="html\msbuild_task_reference_light.htm"/>
+    <HelpSourceFile Include="html\msbuild_task_reference_lit.htm"/>
+    <HelpSourceFile Include="html\nant.htm"/>
+    <HelpSourceFile Include="html\nant_task_reference_toc.htm"/>
+    <HelpSourceFile Include="html\nant_task_reference_candle.htm"/>
+    <HelpSourceFile Include="html\nant_task_reference_light.htm"/>
+    <HelpSourceFile Include="html\nant_task_reference_lit.htm"/>
+    <HelpSourceFile Include="html\msm.htm"/>
+    <HelpSourceFile Include="html\nant_conventions.htm"/>
+    <HelpSourceFile Include="html\online_tutorial.htm"/>
+    <HelpSourceFile Include="html\operators.htm"/>
+    <HelpSourceFile Include="html\optimizing_builds.htm"/>
+    <HelpSourceFile Include="html\osinfo.htm"/>
+    <HelpSourceFile Include="html\overview.htm"/>
+    <HelpSourceFile Include="html\patching.htm"/>
+    <HelpSourceFile Include="html\patch_building.htm"/>
+    <HelpSourceFile Include="html\patch_restrictions.htm"/>
+    <HelpSourceFile Include="html\perfmon.htm"/>
+    <HelpSourceFile Include="html\preprocessor.htm"/>
+    <HelpSourceFile Include="html\qtexec.htm"/>
+    <HelpSourceFile Include="html\resources.htm"/>
+    <HelpSourceFile Include="html\schema_index.htm"/>
+    <HelpSourceFile Include="html\shellexec.htm"/>
+    <HelpSourceFile Include="html\specifying_cultures_to_build.htm"/>
+    <HelpSourceFile Include="html\specifying_source_files.htm"/>
+    <HelpSourceFile Include="html\standard_customactions.htm"/>
+    <HelpSourceFile Include="html\standard_msi_properties.htm"/>
+    <HelpSourceFile Include="html\style.css"/>
+    <HelpSourceFile Include="html\tests_runningtests.htm"/>
+    <HelpSourceFile Include="html\tests_testingwix.htm"/>
+    <HelpSourceFile Include="html\tests_writingtests.htm"/>
+    <HelpSourceFile Include="html\tools.htm"/>
+    <HelpSourceFile Include="html\using_standard_customactions.htm"/>
+    <HelpSourceFile Include="html\votive.htm"/>
+    <HelpSourceFile Include="html\votive_development.htm"/>
+    <HelpSourceFile Include="html\votive_item_templates.htm"/>
+    <HelpSourceFile Include="html\votive_project_references.htm"/>
+    <HelpSourceFile Include="html\votive_project_templates.htm"/>
+    <HelpSourceFile Include="html\votive_property_pages.htm"/>
+    <HelpSourceFile Include="html\votive_wix_references.htm"/>
+    <HelpSourceFile Include="html\wix_with_team_build.htm"/>
+    <HelpSourceFile Include="html\wixcop.htm"/>
+    <HelpSourceFile Include="html\wixdev.htm"/>
+    <HelpSourceFile Include="html\wixdev_getting_started.htm"/>
+    <HelpSourceFile Include="html\wixdirectxextension.htm"/>
+    <HelpSourceFile Include="html\wixexitearlywithsuccess.htm"/>
+    <HelpSourceFile Include="html\wixfailwhendeferred.htm"/>
+    <HelpSourceFile Include="html\wixgamingextension.htm"/>
+    <HelpSourceFile Include="html\wixnetfxextension.htm"/>
+    <HelpSourceFile Include="html\wixobj.htm"/>
+    <HelpSourceFile Include="html\WixUI_advanced.htm"/>
+    <HelpSourceFile Include="html\WixUI_customizations.htm"/>
+    <HelpSourceFile Include="html\WixUI_dialogs.htm"/>
+    <HelpSourceFile Include="html\WixUI_dialog_library.htm"/>
+    <HelpSourceFile Include="html\WixUI_dialog_reference_toc.htm"/>
+    <HelpSourceFile Include="html\WixUI_featuretree.htm"/>
+    <HelpSourceFile Include="html\WixUI_index.htm"/>
+    <HelpSourceFile Include="html\WixUI_installdir.htm"/>
+    <HelpSourceFile Include="html\WixUI_localization.htm"/>
+    <HelpSourceFile Include="html\WixUI_Minimal.htm"/>
+    <HelpSourceFile Include="html\WixUI_Mondo.htm"/>
+    <HelpSourceFile Include="html\wixvsextension.htm"/>
+    <HelpSourceFile Include="html\wix_index.htm"/>
+    <HelpSourceFile Include="html\wix_learning.htm"/>
+    <HelpSourceFile Include="html\wix_patching.htm"/>
+    <HelpSourceFile Include="html\wxi.htm"/>
+    <HelpSourceFile Include="html\wxl.htm"/>
+    <HelpSourceFile Include="html\wxs.htm"/>
+    <HelpSourceFile Include="html\xml_files.htm"/>
+  </ItemGroup>
+  
+  <!-- How Tos -->
+  <ItemGroup>
+    <HelpSourceFile Include="html\howtos\add_a_file.htm"/>
+    <HelpSourceFile Include="html\howtos\block_install_on_os.htm"/>
+    <HelpSourceFile Include="html\howtos\build_a_localized_version.htm"/>
+    <HelpSourceFile Include="html\howtos\check_the_version_number.htm"/>
+    <HelpSourceFile Include="html\howtos\check_for_dotnet.htm"/>
+    <HelpSourceFile Include="html\howtos\configure_arp_appearance.htm"/>
+    <HelpSourceFile Include="html\howtos\create_internet_shortcut.htm"/>
+    <HelpSourceFile Include="html\howtos\create_start_menu_shortcut.htm"/>
+    <HelpSourceFile Include="html\howtos\create_an_uninstall_shortcut.htm"/>
+    <HelpSourceFile Include="html\howtos\directorysearchref.htm"/>
+    <HelpSourceFile Include="html\howtos\files_and_registry_toc.htm"/>
+    <HelpSourceFile Include="html\howtos\general_toc.htm"/>
+    <HelpSourceFile Include="html\howtos\generate_guids.htm"/>
+    <HelpSourceFile Include="html\howtos\get_a_log.htm"/>
+    <HelpSourceFile Include="html\howtos\install_directx9.htm"/>
+    <HelpSourceFile Include="html\howtos\install_dotnet.htm"/>
+    <HelpSourceFile Include="html\howtos\install_vcredist.htm"/>
+    <HelpSourceFile Include="html\howtos\look_inside_msi.htm"/>
+    <HelpSourceFile Include="html\howtos\major_upgrade.htm"/>
+    <HelpSourceFile Include="html\howtos\make_installer_localizable.htm"/>
+    <HelpSourceFile Include="html\howtos\ngen_managed_assemblies.htm"/>
+    <HelpSourceFile Include="html\howtos\parentdirectorysearch.htm"/>
+    <HelpSourceFile Include="html\howtos\read_a_registry_entry.htm"/>
+    <HelpSourceFile Include="html\howtos\redistributables_and_install_checks_toc.htm"/>
+    <HelpSourceFile Include="html\howtos\run_program_after_install.htm"/>
+    <HelpSourceFile Include="html\howtos\toc.htm"/>
+    <HelpSourceFile Include="html\howtos\ui_and_localization_toc.htm"/>
+    <HelpSourceFile Include="html\howtos\updates_toc.htm"/>
+    <HelpSourceFile Include="html\howtos\write_a_registry_entry.htm"/>    
+  </ItemGroup>
+  
+  <!-- Supporting Images -->
+  <ItemGroup>
+    <HelpSourceFile Include="imgs\build_a_localized_version_votive_culture_fallback.jpg"/>
+    <HelpSourceFile Include="imgs\first_votive_project_add_wix_library_reference.jpg"/>
+    <HelpSourceFile Include="imgs\first_votive_project_new_project_dlg.jpg"/>
+    <HelpSourceFile Include="imgs\first_votive_project_new_winforms_app_dlg.jpg"/>
+    <HelpSourceFile Include="imgs\tests_writingtests_directorytree1.jpg"/>
+    <HelpSourceFile Include="imgs\tests_writingtests_directorytree2.jpg"/>
+    <HelpSourceFile Include="imgs\WiX_Toolset_Diagram.png"/>
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <CleanDependsOn></CleanDependsOn>
+    <RebuildDependsOn>Clean;Build</RebuildDependsOn>
+  </PropertyGroup>
+  <Target Name="Clean">
+    <RemoveDir Directories="$(IntermediateOutputPath)" />
+    <Delete Files="$(HelpFile)"
+      TreatErrorsAsWarnings="true" />
+  </Target>
+  <Target Name="Build"
+    DependsOnTargets="$(BuildDependsOn)"
+    Inputs="@(HelpSourceFile);$(MSBuildProjectFile)"
+    Outputs="$(HelpFile)">
+    <Error Text="$(HelpCompiler) does not exist." Condition="!Exists('$(HelpCompiler)')" />
+    <DocCompiler
+      ToolPath="$(WixToolPath)"
+      WorkingDirectory="$(HelpDirectory)"
+      HelpCompiler="$(HelpCompiler)"
+      HelpFile="$(IntermediateHelpFile)"
+      TableOfContents="$(HelpTableOfContents)" />
+    <Copy SourceFiles="$(IntermediateHelpFile)"
+      DestinationFiles="$(HelpFile)" />
+  </Target>
+  <Target Name="Rebuild"
+    DependsOnTargets="$(RebuildDependsOn)" />
+</Project>

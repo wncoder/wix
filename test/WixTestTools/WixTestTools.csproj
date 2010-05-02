@@ -1,0 +1,63 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{55CB1042-647B-4347-9876-3EA607AF8DCE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.Tools.WindowsInstallerXml.Test</RootNamespace>
+    <AssemblyName>WixTestTools</AssemblyName>
+    <FxCopEnabled>false</FxCopEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(OutputPath)Microsoft.Deployment.WindowsInstaller.dll" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="$(OutputPath)wix.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Builder.cs" />
+    <Compile Include="Candle.cs" />
+    <Compile Include="CandleArguments.cs" />
+    <Compile Include="Dark.cs" />
+    <Compile Include="DarkArguments.cs" />
+    <Compile Include="Light.cs" />
+    <Compile Include="LightArguments.cs" />
+    <Compile Include="Lit.cs" />
+    <Compile Include="LitArguments.cs" />
+    <Compile Include="MSBuild.cs" />
+    <Compile Include="MSBuildArguments.cs" />
+    <Compile Include="Pyro.cs" />
+    <Compile Include="PyroArguments.cs" />
+    <Compile Include="Result.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="Smoke.cs" />
+    <Compile Include="SmokeArguments.cs" />
+    <Compile Include="TestException.cs" />
+    <Compile Include="TestTool.cs" />
+    <Compile Include="Tool.cs" />
+    <Compile Include="TorchArguments.cs" />
+    <Compile Include="Verifier.cs" />
+    <Compile Include="MSIVersions.cs" />
+    <Compile Include="WixMessage.cs" />
+    <Compile Include="WixprojMSBuild.cs" />
+    <Compile Include="WixTool.cs" />
+    <Compile Include="Torch.cs" />
+    <Compile Include="WixToolArguments.cs" />
+    <Compile Include="WixTools.cs" />
+    <Compile Include="WixUnit.cs" />
+    <Compile Include="WixUnitArguments.cs" />
+  </ItemGroup>
+  <Import Project="..\..\WixBuild.Common.targets" />
+</Project>

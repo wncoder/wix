@@ -1,0 +1,1 @@
+ %WIX_ROOT%\test\data\Tools\Lit\Localization\LocalizationTests\Shared\en-US.wxl

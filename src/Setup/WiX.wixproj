@@ -1,0 +1,51 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProductVersion>3.0</ProductVersion>
+    <ProjectGuid>{63b65ca2-0cba-4d8d-a7ef-f2235a534e3d}</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>WiX3</OutputName>
+    <OutputType>Package</OutputType>
+    <Pedantic>True</Pedantic>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ClickThrough.wxs" />
+    <Compile Include="DTF.wxs" />
+    <Compile Include="Extensions.wxs" />
+    <Compile Include="Product.wxs" />
+    <Compile Include="SetupExe.wxs" />
+    <Compile Include="Toolset.wxs" />
+    <Compile Include="Votive.wxs" />
+    <Compile Include="VStudio.wxs" />
+  </ItemGroup>
+  <Import Project="..\..\WixBuild.Common.targets" />
+  <PropertyGroup>
+    <Cultures>en-us</Cultures>
+    <DefineConstants>$(DefineConstants);VotiveRoot=$(ROOT)src\Votive;BuildIA64=$(BuildIA64);Build2005=$(Build2005)</DefineConstants>
+    <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
+    <BaseInputPaths>$(OutputPath_x86);$(OutputPath_x64);$(OutputPath_ia64);$(MSBuildProjectDirectory);$(WIX_ROOT)src;$(WIX_ROOT)bin;$(BaseInputPaths)</BaseInputPaths>
+  </PropertyGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUIExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixUIExtension.dll</HintPath>
+    </WixExtension>
+    <WixExtension Include="WixVSExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixVSExtension.dll</HintPath>
+    </WixExtension>
+  </ItemGroup>
+  <Target Name="Clean">
+    <!-- Provide a default Clean target if $(WixTargetsPath) doesn't exist -->
+  </Target>
+  <Import Project="$(WixTargetsPath)" Condition="Exists('$(WixTargetsPath)')" />
+</Project>

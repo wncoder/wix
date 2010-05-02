@@ -1,0 +1,148 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{31FCC013-485E-487D-89D8-6C19EDCDD9A3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Tests</RootNamespace>
+    <AssemblyName>WixTests</AssemblyName>
+    <WarningLevel>4</WarningLevel>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OldToolsVersion>3.5</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(OutputPath)Microsoft.Deployment.WindowsInstaller.dll" />
+    <Reference Include="$(OutputPath)Microsoft.Deployment.WindowsInstaller.Package.dll" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.TeamSystem.Data.UnitTesting, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Examples\ExampleTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Authoring.FragmentTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Authoring.GroupTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Authoring.ReferenceTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.ComponentTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.CreateFolderTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.EnvironmentTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.IsolateComponentTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.RefAndGroupTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.RemoveFolderTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.ReserveCostTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.ServiceControlTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.ServiceInstallTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.SFPCatalogTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Features.FeatureTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Features.RefAndGroupTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Files.CopyFileTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Files.FileTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Files.RemoveFileTests.cs" />
+    <Compile Include="Integration\BuildingPackages\InstallPackages.PackageTests.cs" />
+    <Compile Include="Integration\BuildingPackages\InstallPackages.ProductTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Shortcuts.ShortcutTests.cs" />
+    <Compile Include="WixTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WixTestTools\WixTestTools.csproj">
+      <Project>{55CB1042-647B-4347-9876-3EA607AF8DCE}</Project>
+      <Name>WixTestTools</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Extensions\SqlExtension\SqlExtension.RegressionTests.cs" />
+    <Compile Include="Extensions\UtilExtension\UtilExtension.RegressionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Authoring.IdentifierTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Binaries.BinaryTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Cabinets.CabinetTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Components.COMRegistrationTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Conditions.ComponentConditionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Conditions.ControlConditionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Conditions.FeatureConditionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\CustomActions.CustomActionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\CustomTables.CustomTableTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Directories.DirectoryTests.cs" />
+    <Compile Include="Integration\BuildingPackages\InstanceTransforms.InstanceTransformTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Media.MediaTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Registry.RegistryTests.cs" />
+    <Compile Include="Integration\BuildingPackages\RegressionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Sequencing.InstallExecuteSequenceTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Sequencing.SequencingTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Shortcuts.ShortcutPropertyTests.cs" />
+    <Compile Include="Integration\BuildingPackages\SmokeTests.cs" />
+    <Compile Include="Integration\BuildingPackages\SymbolPaths.SymbolPathTests.cs" />
+    <Compile Include="Integration\BuildingPackages\UI.UITests.cs" />
+    <Compile Include="QTests\AutoGeneratedQTests.cs" />
+    <Compile Include="QTests\QTests.cs" />
+    <Compile Include="Tools\Candle\HelpTests.cs" />
+    <Compile Include="Tools\Candle\Input.FileSystemTests.cs" />
+    <Compile Include="Tools\Candle\Input.InputTests.cs" />
+    <Compile Include="Tools\Candle\LogoTests.cs" />
+    <Compile Include="Tools\Candle\MultipleInputSwitchesTests.cs" />
+    <Compile Include="Tools\Candle\Output.FileSystemTests.cs" />
+    <Compile Include="Tools\Candle\Output.OutputTests.cs" />
+    <Compile Include="Tools\Candle\PedanticTests.cs" />
+    <Compile Include="Tools\Candle\PreProcessor.ErrorsAndWarningsTests.cs" />
+    <Compile Include="Tools\Candle\PreProcessor.IncludeFileTests.cs" />
+    <Compile Include="Tools\Candle\PreProcessor.StatementsTests.cs" />
+    <Compile Include="Tools\Candle\PreProcessor.VariableTests.cs" />
+    <Compile Include="Tools\Candle\RegressionTests.cs" />
+    <Compile Include="Tools\Candle\SuppressSchemaValidationTests.cs" />
+    <Compile Include="Tools\Candle\SuppressWarningsTests.cs" />
+    <Compile Include="Tools\Candle\TraceTests.cs" />
+    <Compile Include="Tools\Candle\TreatWarningsAsErrorsTests.cs" />
+    <Compile Include="Tools\Candle\VerboseOutputTests.cs" />
+    <Compile Include="Tools\Common\Logo.LogoTests.cs" />
+    <Compile Include="Tools\Dark\BinaryPath.BinaryPathTests.cs" />
+    <Compile Include="Tools\Dark\Extensions.ExtensionTests.cs" />
+    <Compile Include="Tools\Dark\Help.HelpTests.cs" />
+    <Compile Include="Tools\Dark\Output.FileSystemTests.cs" />
+    <Compile Include="Tools\Dark\RegressionTests.cs" />
+    <Compile Include="Tools\Light\BasePaths.BasePathTests.cs" />
+    <Compile Include="Tools\Light\BindFiles.BindFilesTests.cs" />
+    <Compile Include="Tools\Light\Cabs.CabCachingTests.cs" />
+    <Compile Include="Tools\Light\Cabs.ReuseCabTests.cs" />
+    <Compile Include="Tools\Light\Cultures.CultureTests.cs" />
+    <Compile Include="Tools\Light\Help.HelpTests.cs" />
+    <Compile Include="Tools\Light\ICEs.ICEsTests.cs" />
+    <Compile Include="Tools\Light\ICEs.SuppressICEsTests.cs" />
+    <Compile Include="Tools\Light\Input.WixlibTests.cs" />
+    <Compile Include="Tools\Light\Input.WixobjTests.cs" />
+    <Compile Include="Tools\Light\Localization.LocalizationTests.cs" />
+    <Compile Include="Tools\Light\Messages.PedanticTests.cs" />
+    <Compile Include="Tools\Light\Messages.VerboseTests.cs" />
+    <Compile Include="Tools\Light\Output.OutputTests.cs" />
+    <Compile Include="Tools\Light\RegressionTests.cs" />
+    <Compile Include="Integration\BuildingPackages\Conditions.LaunchConditionTests.cs" />
+    <Compile Include="Tools\Light\Warnings.SuppressWarningsTests.cs" />
+    <Compile Include="Tools\Light\Warnings.WarningsAsErrorsTests.cs" />
+    <Compile Include="Tools\Lit\BasePaths.BasePathTests.cs" />
+    <Compile Include="Tools\Lit\BindFiles.BindFilesTests.cs" />
+    <Compile Include="Tools\Lit\Localization.LocalizationTests.cs" />
+    <Compile Include="Tools\Lit\Help.HelpTests.cs" />
+    <Compile Include="Tools\Lit\Input.FileSystemTests.cs" />
+    <Compile Include="Tools\Lit\Input.InputTests.cs" />
+    <Compile Include="Tools\Lit\MultipleSwitches.MultipleSwitchesTests.cs" />
+    <Compile Include="Tools\Lit\Output.FileSystemTests.cs" />
+    <Compile Include="Tools\Lit\Output.OutputTests.cs" />
+    <Compile Include="Tools\Lit\Warnings.SuppressWarningsTests.cs" />
+    <Compile Include="Tools\Lit\Warnings.TreatWarningsAsErrorsTests.cs" />
+    <Compile Include="Wixproj\WixprojTests.cs" />
+    <Compile Include="Wixproj\WixTaskTests.cs" />
+    <None Include="Tools\Light\Input.InputTests.mtx" />
+    <None Include="Tools\Light\Output.OutputTests.mtx" />
+  </ItemGroup>
+  <Import Project="..\..\WixBuild.Common.targets" />
+</Project>

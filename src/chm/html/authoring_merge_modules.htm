@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Creating Merge Modules</title>
+</head>
+
+<body>
+  <h1>Creating Merge Modules</h1>
+
+  <p>Creating a Merge Module is very much like creating a Windows Installer package. So, let's create a new text file called "module.wxs" and put the standard skeleton in it:</p>
+  <pre>
+<b>&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+&lt;/Wix&gt;
+</b>
+</pre>
+
+  <p>To create a Merge Module, we add the &lt;Module/&gt; element and add the required attributes:</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+   <b>&lt;Module Id='TestModule' Language='1033' Version='1.0.0.0'&gt;
+      &lt;Package Id='PUT-GUID-HERE' Description='My first Merge Module'
+                Comments='This is my first attempt at creating a Windows Installer Merge Module'
+                Manufacturer='Microsoft Corporation' InstallerVersion='200' /&gt;
+
+   &lt;/Module&gt;</b>
+&lt;/Wix&gt;
+</pre>
+
+  <p>You can, if you wish, compile and link that code. You will get a very small and not very interesting .msm file from the output of light.exe. So, let's add a text file to this Merge Module as we did to the Windows Installer package. First, create a text file called readme2.txt and put a different message than the message in readme1.txt to yourself in there. Then, update the source code to include the new file:</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+   &lt;Module Id='TestModule' Language='1033' Version='1.0.0.0'&gt;
+      &lt;Package Id='PUT-GUID-HERE' Description='My first Merge Module'
+                Comments='This is my first attempt at creating a Windows Installer Merge Module'
+                Manufacturer='Microsoft Corporation' InstallerVersion='200' /&gt;
+ 
+      <b>&lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;
+         &lt;Directory Id='MyModuleDirectory' Name='.'&gt;
+            &lt;Component Id='MyModuleComponent' Guid='PUT-GUID-HERE'&gt;
+               &lt;File Id='readme2' Name='readme2.txt' Source='readme2.txt' /&gt;
+            &lt;/Component&gt;
+         &lt;/Directory&gt;
+      &lt;/Directory&gt;</b>
+   &lt;/Module&gt;
+&lt;/Wix&gt;
+</pre>
+
+  <p>That's it! You now have a Merge Module that can be shared with other teams to install your "readme2.txt" file. Now that we have a Merge Module, let's actually use it in a Windows Installer package.</p>
+
+  <h2>Incorporating a Merge Module into a .wxs File</h2>
+
+  <p>Merge Modules can only be merged into Windows Installer packages. Fortunately, we have a .wxs file that creates a Windows Installer package from our first experiments with WiX. So, let's add the two lines (yes, only two lines are necessary) to merge your new Module. Open your "product.wxs" source file again, and add:</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+   &lt;Product Id='PUT-GUID-HERE' Name='Test Package' Language='1033'
+             Version='1.0.0.0' Manufacturer='Microsoft Corporation'&gt;
+      &lt;Package Description='My first Windows Installer package'
+               Comments='This is my first attempt at creating a Windows Installer database'
+               Manufacturer='Microsoft Corporation' InstallerVersion='200' Compressed='yes' /&gt;
+ 
+      &lt;Media Id='1' Cabinet='product.cab' EmbedCab='yes' /&gt;
+ 
+      &lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;
+         &lt;Directory Id='ProgramFilesFolder' Name='PFiles'&gt;
+            &lt;Directory Id='MyDir' Name='Test Program'&gt;
+               &lt;Component Id='MyComponent' Guid='PUT-GUID-HERE'&gt;
+                  &lt;File Id='readme' Name='readme.txt' DiskId='1' Source='readme.txt' /&gt;
+               &lt;/Component&gt;
+ 
+               <b>&lt;Merge Id='MyModule' Language='1033' SourceFile='module.msm' DiskId='1' /&gt;</b>
+            &lt;/Directory&gt;
+         &lt;/Directory&gt;
+      &lt;/Directory&gt;
+ 
+      &lt;Feature Id='MyFeature' Title='My 1st Feature' Level='1'&gt;
+         &lt;ComponentRef Id='MyComponent' /&gt;
+         <b>&lt;MergeRef Id='MyModule' /&gt;</b>
+      &lt;/Feature&gt;
+   &lt;/Product&gt;
+&lt;/Wix&gt;
+</pre>
+
+  <p>Now when you compile your Windows Installer package source file, it will include the installation logic and files from the Merge Module. The next time you install the "product.msi", you should see two text files in the "Test Program" directory instead of one.</p>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Creating a simple setup</title>
+</head>
+
+<body>
+  <h1>Creating a simple setup</h1>
+
+  <p>To get started using WiX in Visual Studio, you can create a new WiX project in the Visual Studio IDE by using the following steps:</p>
+
+  <ol>
+    <li>Click <b>File</b>, then click <b>New</b>, then click <b>Project...</b></li>
+
+    <li>Choose the <b>WiX</b> node in the <b>Project types</b> tree, then select <b>WiX Project</b>, and name your project "MySetup" as depicted in Figure 1.<br />
+    <img src="../imgs/first_votive_project_new_project_dlg.jpg" /><br />
+    <b>Figure 1. Create a new WiX project</b></li>
+  </ol>
+
+  <p>This will create a new solution with the MySetup project and a MySetup.wxs file. The MySetup.wxs file requires some additional information before it will compile successfully. So let's take a moment to look at the MySetup.wxs file and discuss what needs to be done to it in order to be able to build an MSI.</p>
+
+  <h2>A First Look at the Default MySetup.wxs File</h2>
+
+  <p>The MySetup.wxs file contains the beginning of the setup code for the project. Everything needed to create an MSI can be added to this file. To begin with, let's look at the default contents provided in MySetup.wxs.</p>
+
+  <p><b>Note</b>: If you are not familiar with Windows Installer setup packages, you are strongly encouraged to review the MSDN documentation about the <a href="http://msdn2.microsoft.com/library/Aa369294.aspx" target="_blank">Installation Package</a> before continuing. It will provide a lot of valuable context as we dig into the details of a Windows Installer setup package.</p>
+  <pre>
+    &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+    &lt;Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"&gt;
+      &lt;Product Id="677a7ac3-6e9b-4531-8a61-c31acc301d27" Name="MySetup" Language="1033"
+               Version="1.0.0.0" Manufacturer="MySetup" UpgradeCode="ae949a2b-1fcd-4abe-bf47-1eb923575de1"&gt;
+    
+        &lt;Package InstallerVersion="200" Compressed="yes" /&gt;
+    
+        &lt;Media Id="1" Cabinet="MySetup.cab" EmbedCab="yes" /&gt;
+    
+        &lt;Directory Id="TARGETDIR" Name="SourceDir"&gt;
+          &lt;Directory Id="ProgramFilesFolder"&gt;
+            &lt;Directory Id="INSTALLLOCATION" Name="MySetup"&gt;
+                &lt;!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. --&gt;
+                &lt;!-- &lt;Component Id="ProductComponent" Guid="78576f70-ac55-4d9c-b9e8-a96d81889ada"&gt; --&gt;
+                        &lt;!-- TODO: Insert files, registry keys, and other resources here. --&gt;
+                &lt;!-- &lt;/Component&gt; --&gt;
+            &lt;/Directory&gt;
+          &lt;/Directory&gt;
+        &lt;/Directory&gt;
+    <br />        &lt;Feature Id="ProductFeature" Title="PUT-FEATURE-TITLE-HERE" Level="1"&gt;
+          &lt;ComponentRef Id="ProductComponent" /&gt;
+        &lt;/Feature&gt;
+      &lt;/Product&gt;
+    &lt;/Wix&gt;
+    
+</pre>
+
+  <p>If you are familiar with the Windows Installer, the structure of the MySetup.wxs file should be familiar. First, the Wix element exists purely to wrap the rest of the content in the file. The Wix element also specifies the namespace, the xmlns attribute that enables validation during compile and auto-complete in Visual Studio via IntelliSense. Next, the Product element defines the required Windows Installer properties used to identify the product, such as the <a href="http://msdn2.microsoft.com/library/Aa370854.aspx" target="_blank">ProductCode</a>, <a href="http://msdn2.microsoft.com/library/Aa370857.aspx" target="_blank">ProductName</a>, <a href="http://msdn2.microsoft.com/library/Aa370856.aspx" target="_blank">ProductLanguage</a>, and <a href="http://msdn2.microsoft.com/library/Aa370859.aspx" target="_blank">ProductVersion</a>. Third, the Package element contains the attributes for the <a href="http://msdn2.microsoft.com/library/Aa372045.aspx" target="_blank">Summary Information Stream</a> that provides information about the setup package itself. The rest of the elements, except the ComponentRef element, map to Windows Installer tables by the same name, for example the <a href="http://msdn2.microsoft.com/library/Aa369801.aspx" target="_blank">Media table</a>, <a href="http://msdn2.microsoft.com/library/Aa368295.aspx" target="_blank">Directory table</a>, <a href="http://msdn2.microsoft.com/library/Aa368007.aspx" target="_blank">Component table</a>, and <a href="http://msdn2.microsoft.com/library/Aa368585.aspx" target="_blank">Feature table</a>. The ComponentRef element is used to tie the Features to their Components which maps to the entries in the <a href="http://msdn2.microsoft.com/library/Aa368579.aspx" target="_blank">FeatureComponents table</a>.</p>
+
+  <h2>Building the MySetup.wxs File</h2>
+
+  <p>The default MySetup.wxs that is generated when you create a new WiX project will generates a build warning. In the Output window, you may see this warning:</p>
+
+  <p>The cabinet 'InstallPackage.cab' does not contain any files. If this installation contains no files, this warning can likely be safely ignored. Otherwise, please add files to the cabinet or remove it.</p>
+
+  <p>Because the WiX project does not yet reference an application, there is nothing to install. Nevertheless, an installation package named InstallPackage.msi was built in the bin/Debug folder, together with a file that is named InstallPackage.wixpdb, which contains debugging information. Running the InstallPackage.msi at this point does almost nothing.</p>
+
+  <h2>Doing Something Useful with MySetup.wxs</h2>
+
+  <p>Now let's do something useful and add an application to our solution. For this example, we will create a C# Windows Forms Application, but you can use whatever programming language you prefer.</p>
+
+  <ol>
+    <li>Click <b>File</b>, then select <b>New</b>, then select <b>Project</b>.</li>
+
+    <li>Choose the <b>Visual C#</b> node in the <b>Project Types</b> tree, then select <b>Windows Forms Application</b>.</li>
+
+    <li>Name your application "MyApplication".</li>
+
+    <li>Be sure to choose the <b>Add to Solution</b> option in the <b>Solution</b> drop-down as depicted in Figure 2.<br />
+    <img src="../imgs/first_votive_project_new_winforms_app_dlg.jpg" /><br />
+    <b>Figure 2. Creating MyApplication project in the solution</b></li>
+  </ol>
+
+  <p>We need to make sure that the MyApplication project is built before the MySetup project because we will use the output from the MyApplication project build as an input into the setup build. For the purposes of this example, it does not matter what the application does, so we will not change the generated application code. No matter what the application does, we need to get it to install via setup, so let&rsquo;s return to the MySetup project and the MySetup.wxs file to add this new application. While we are there, let's add a shortcut to the application to the installer. To create the appropriate project dependencies, right-click on the <b>References</b> node under the <b>MySetup</b> project and choose <b>Add Reference...</b>. In that dialog, choose the <b>Projects</b> tab, click on the <b>MyApplication</b> project, and click the <b>Add</b> button as depicted in Figure 3.</p>
+
+  <p><img src="../imgs/first_votive_project_add_wix_library_reference.jpg" /><br />
+  <b>Figure 3. MySetup project references the output of the MyApplication project</b></p>
+
+  <p>Now we need to get this application to install via setup, so let&rsquo;s return to the MySetup project and the MySetup.wxs file to add this new application.</p>
+
+  <p>Open MySetup.wxs and you will see a comment that says:</p>
+  <pre>
+    &lt;!-- TODO: Insert your files, registry keys, and other resources here. --&gt;
+    
+</pre>
+
+  <p>Delete this line and replace it with the following lines of code:</p>
+  <pre>
+    &lt;File Id="MyApplicationFile" Name="$(var.MyApplication.TargetFileName)" Source="$(var.MyApplication.TargetPath)"
+          DiskId="1" KeyPath="yes" /&gt;
+    
+</pre>
+
+  <p><b>Note</b>: If you type that code into the editor (instead of copying and pasting from this example) you will notice that IntelliSense picks up the valid elements and attributes. IntelliSense with WiX in Visual Studio can save you significant amounts of typing and time when searching for the name of the elements or attributes as you become more comfortable with the WiX language.</p>
+
+  <p>That line of code instructs the WiX toolset to add a file resource to the setup package using "MyApplicationFile" as its package identifier. The Name attribute specifies the name for your file when it is installed and the Source attribute specifies where to find the file for packaging during the build. Rather than hard-code values for these attributes into our source code, we use the WiX preprocessor variables that are passed to the WiX compiler. More information about using preprocessor variables, including a table of all supported values, can be found in the <a href='votive_project_references.htm'>Adding Project References topic</a>.</p>
+
+  <p>The DiskId attribute instructs the WiX toolset to add this file to the Media element with matching Id attribute. In this example, the MyApplication executable is added to the MySetup.cab cabinet and that cabinet is embedded in the setup package. The KeyPath attribute instructs the WiX toolset to use this file as the key path for the component that contains the file.</p>
+
+  <p>Before building the solution again, we need to make sure that the MyApplication project is built before the MySetup project because the output from the MyApplication project build is an input into the setup build. To create the appropriate project dependencies, right-click on the <b>References</b> node under the <b>MySetup</b> project and choose <b>Add Reference...</b>. In that dialog, choose the <b>Projects</b> tab, click on the <b>MyApplication</b> project, click the <b>Add</b> button, and click <b>Ok</b>.</p>
+
+  <p>Rebuilding with these changes will create a setup package that can install and uninstall your application.</p>
+</body>
+</html>

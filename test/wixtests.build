@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="WixTests" default="wixtests.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+    wixtests.build - Builds the tests solution
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- Check if VS Test is installed -->
+  <readregistry property="vsdb.9.0" key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS\VSDB\ProductDir" hive="LocalMachine" failonerror="false" />
+  <readregistry property="vspro.9.0" key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS\Pro\ProductDir" hive="LocalMachine" failonerror="false" />
+  <readregistry property="vstd.9.0" key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS\VSTD\ProductDir" hive="LocalMachine" failonerror="false" />
+  <readregistry property="vsts.9.0" key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS\VSTS\ProductDir" hive="LocalMachine" failonerror="false" />
+  <readregistry property="vstt.9.0" key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VS\VSTT\ProductDir" hive="LocalMachine" failonerror="false" />
+
+  <if test="${property::exists('vsdb.9.0') or property::exists('vspro.9.0') or property::exists('vstd.9.0') or property::exists('vstt.9.0') or property::exists('vsts.9.0')}">
+    <property name="vstesttools.installed" value="installed" />
+    <echo level="Info" message="VS Test Tools are installed. The Tests will be built." />
+  </if>
+
+  <if test="${not property::exists('vstesttools.installed')}">
+    <echo level="Info" message="VS Test Tools are not installed. The Tests will not be built." />
+  </if>
+
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+
+  <!-- Wix test targets -->
+  <target name="wixtests" depends="core, dtf, migrateQTests.inc, wixtests.inc, copyforcoverage" />
+
+  <!-- Build -->
+  <target name="copyforcoverage" description="Copy the binaries to a coverage directory" >
+    <copy todir="${dir.root}build\${flavor}.coverage" overwrite="true">
+      <fileset basedir="${dir.root}build\${flavor}">
+        <include name="**"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="migrateQTests.build" depends="migrateQTests.clean, migrateQTests.inc" description="Peforms a full rebuild (clean then build)">
+  </target>
+
+  <target name="wixtests.build" depends="wixtests.clean, wixtests.inc" description="Peforms a full rebuild (clean then build)">
+  </target>
+
+  <!-- Clean -->
+  <target name="copyforcoverage.clean" description="Cleans the coverage directory" >
+    <delete dir="${dir.root}build\${flavor}.coverage" />
+  </target>
+
+  <target name="migrateQTests.clean" description="Cleans the build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:OutputPath=${dir.root}build\${flavor}\x86" />
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=Any CPU" />
+      <arg value="/target:Clean" />
+      <arg file="${dir.wixroot.test}\MigrateQTests\MigrateQTests.csproj" />
+    </exec>
+  </target>
+
+  <target name="wixtests.clean" depends="migrateQTests.clean, copyforcoverage.clean" description="Cleans the build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=Any CPU" />
+      <arg value="/target:Clean" />
+      <arg file="${dir.wixroot.test}\wixtests.sln" />
+    </exec>
+  </target>
+
+  <!-- Inc -->
+  <target name="migrateQTests.inc" depends="initbuildenv" description="Performs an incremental build">
+    <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+      <arg value="/property:OutputPath=${dir.root}build\${flavor}\x86" />
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=Any CPU" />
+      <arg value="/target:Build" />
+      <arg file="${dir.wixroot.test}\MigrateQTests\MigrateQTests.csproj" />
+    </exec>
+    <exec program="migrateQTests.exe" basedir="${dir.target.project.x86}" failonerror="true">
+      <arg file="${dir.wixroot}\examples\test\tests.xml" />
+      <arg file="${dir.wixroot.test}\src\QTests\AutoGeneratedQTests.cs" />
+    </exec>
+  </target>
+
+  <target name="wixtests.inc" depends="initbuildenv" description="Performs an incremental build">
+    <if test="${property::exists('vstesttools.installed')}">
+      <exec program="msbuild.exe" basedir="${framework::get-framework-directory('net-3.5')}" failonerror="true">
+        <arg value="/property:Configuration=Debug" if="${debug}" />
+        <arg value="/property:Configuration=Release" if="${ship}" />
+        <arg value="/property:Platform=Any CPU" />
+        <arg value="/target:Build" />
+        <arg file="${dir.wixroot.test}\wixtests.sln" />
+      </exec>
+    </if>
+  </target>
+
+</project>
