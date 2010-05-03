@@ -16,8 +16,6 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="..\..\core\core.build" />
-  <include buildfile="..\adapter\adapter.build" />
 
   <!-- Properties -->
   <property name="file.target.muxhost" value="${dir.target.wix}\muxhost.dll" readonly="true" />

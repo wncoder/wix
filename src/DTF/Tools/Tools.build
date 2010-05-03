@@ -8,7 +8,6 @@
 
   <!-- Includes -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="${dir.src.dtf.libraries}\Libraries.build" />
   <include buildfile="${dir.src.dtf.tools}\SfxCA\SfxCA.build" />
 
   <!-- Properties -->

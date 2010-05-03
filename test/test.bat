@@ -95,10 +95,11 @@ if not "%TESTLIST%" == "" (
   if not exist %TESTLIST% ( goto :NoTESTLIST )
   
   REM -- Open the file and read the tests --
-  for /F %%i in (%TESTLIST%) do ( 
+  for /F "usebackq" %%i in (%TESTLIST%) do ( 
     set TESTS=!TESTS! /test:%%i 
   )
 )
+
 
 REM -- Set Details --
 if %VERBOSE% == true (

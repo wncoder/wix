@@ -1012,3 +1012,4 @@ MiCarls: SFBug:2971082 - Fix bad formatting when printing Eula
 
 WixBuild: Version 3.5.1630.0
 
+RobMen: Move build to NAnt 0.9 Beta 1.

@@ -22,7 +22,6 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="${dir.src.dutil}\dutil.build" />
 
   <!-- sfxca-specific properties -->
   <property name="dir.src.dtf.sfxca" value="${dir.wixroot.src}\dtf\tools\sfxca" readonly="true" />

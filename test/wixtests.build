@@ -160,7 +160,7 @@
   <property name="testarea" value="*" />
   <property name="enableruntimetests" value="false" />
   <property name="measurecodecoverage" value="false" />
-  <property name="runbvts" value="${ship}" />
+  <property name="runbvts" value="${ship and property::exists('vstesttools.installed')}" />
   
   <!-- Build -->
   <target name="runtests" depends="wixtests" description="Run Wix tests">

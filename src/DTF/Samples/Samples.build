@@ -8,7 +8,6 @@
 
   <!-- Includes -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="${dir.src.dtf.libraries}\Libraries.build" />
 
   <!-- Properties -->
   <property name="dir.src.dtf.samples.ddiff" value="${dir.src.dtf.samples}\ddiff" readonly="true" />

@@ -17,7 +17,7 @@
 ::
 :: In order to fully build WiX, you must have the following Frameworks and
 :: SDKs installed:
-::    * NAnt version 0.86 beta nightly (2008-02-10-0.86 or later)
+::    * NAnt version 0.9 Beta 1
 ::    * .NET Framework 2.0, 3.0, and 3.5
 ::    * Windows SDK for Windows Server 2008 and .NET Framework 3.5
 ::    * Visual C++ 2008 Express or any edition of Visual Studio 2008 with 
