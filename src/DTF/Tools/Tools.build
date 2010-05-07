@@ -8,7 +8,8 @@
 
   <!-- Includes -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="${dir.src.dtf.tools}\SfxCA\SfxCA.build" />
+  <include buildfile="${dir.src.dtf.libraries}\Libraries.build" unless="${property::exists('dtflibraries.properties.defined')}" />
+  <include buildfile="${dir.src.dtf.tools}\SfxCA\SfxCA.build" unless="${property::exists('sfxca.properties.defined')}" />
 
   <!-- Properties -->
   <property name="dir.src.dtf.tools.makesfxca" value="${dir.src.dtf.tools}\makesfxca" readonly="true" />
@@ -57,5 +58,8 @@
     </exec>
   </target>
   <!-- End MakeSfxCA -->
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="dtftools.properties.defined" value="true" readonly="true" />
 
 </project>

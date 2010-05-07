@@ -20,14 +20,12 @@
 
     <File Id="WixLibrary$(var.VsVersion).zip" Name="WixLibrary.zip" Source="WixLibrary$(var.ZipSuffix).zip" Vital="yes" />
     <File Id="WixMergeModule$(var.VsVersion).zip" Name="WixMergeModule.zip" Source="WixMergeModule$(var.ZipSuffix).zip" Vital="yes" />
-    <File Id="WixBundleProject$(var.VsVersion).zip" Name="WixBundleProject.zip" Source="WixBundleProject$(var.ZipSuffix).zip" Vital="yes" />
     <File Id="WixProject$(var.VsVersion).zip" Name="WixProject.zip" Source="WixProject$(var.ZipSuffix).zip" KeyPath="yes" Vital="yes" />
 
 <?else?>
 
     <File Id="WixLibrary$(var.VsVersion).zip" Source="WixLibrary.zip" Vital="yes" />
     <File Id="WixMergeModule$(var.VsVersion).zip" Source="WixMergeModule.zip" Vital="yes" />
-    <File Id="WixBundleProject$(var.VsVersion).zip" Source="WixBundleProject.zip" Vital="yes" />
     <File Id="WixProject$(var.VsVersion).zip" Source="WixProject.zip" KeyPath="yes" Vital="yes" />
 
 <?endif?>

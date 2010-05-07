@@ -44,7 +44,7 @@
   <include buildfile="${dir.src.ambient}\appsynup\appsynup.build" />
   <include buildfile="${dir.src.burn}\burn.build" />
   <include buildfile="${dir.wixroot.src}\DTF\dtf.build" />
-  <include buildfile="${dir.src.dutil}\dutil.build" />
+  <include buildfile="${dir.src.dutil}\dutil.build" unless="${property::exists('dutil.properties.defined')}" />
   <include buildfile="${dir.src.ext}\ext.build" />
   <include buildfile="${dir.src.ca.serverca}\serverca.build" />
   <include buildfile="${dir.wixroot.src}\setup\setup.build" />

@@ -41,4 +41,8 @@
       <arg file="${dir.src.burn.mux}\adapter\adapter.csproj" />
     </exec>
   </target>
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="muxadapter.properties.defined" value="true" readonly="true" />
+
 </project>

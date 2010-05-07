@@ -92,16 +92,6 @@
       </fileset>
     </zip>
 
-    <zip zipfile="${dir.target.wix}\wixBundleProject2010.zip">
-      <fileset basedir="${dir.src.votive}\votive2010\templates\projects\WixBundleProject\">
-          <include name="WixBundle.vstemplate"/>
-          <include name="BundleProject.wixproj"/>
-          <include name="WixBundle.ico"/>
-          <include name="Bundle.wxs"/>
-          <include name="Bundle.Generated.wxs"/>
-      </fileset>
-    </zip>
-    
     <copy todir="${dir.target.wix}">
       <fileset basedir="${dir.src.votive}\Icons">
         <include name="ProjectFile.ico" />

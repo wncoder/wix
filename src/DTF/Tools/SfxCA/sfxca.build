@@ -22,8 +22,9 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+  <include buildfile="${dir.src.dutil}\dutil.build" unless="${property::exists('dutil.properties.defined')}" />
 
-  <!-- sfxca-specific properties -->
+    <!-- sfxca-specific properties -->
   <property name="dir.src.dtf.sfxca" value="${dir.wixroot.src}\dtf\tools\sfxca" readonly="true" />
   <property name="dir.build.dtf.sfxca.x86" value="${dir.build.wix.x86}\dtf\sfxca\x86" readonly="true" />
   <property name="sfxca.file.target.x86" value="${dir.target.wix.x86}\sfxca.dll" dynamic="true" readonly="true" />
@@ -84,5 +85,8 @@
     <property name="makeNativeDll.platform" value="x64" />
     <call target="makeNativeDll" />
   </target>
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="sfxca.properties.defined" value="true" readonly="true" />
 
 </project>

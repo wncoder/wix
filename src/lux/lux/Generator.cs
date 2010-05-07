@@ -35,7 +35,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
     {
         private StringCollection extensionList = new StringCollection();
         private List<string> inputFiles = new List<string>();
-        private List<string> inputFilesWithUnitTests;
+        private List<string> inputFragments;
         private string outputFile;
 
         /// <summary>
@@ -73,11 +73,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         /// <summary>
         /// Gets the subset of InputFiles that contain unit tests and should be included in a test package.
         /// </summary>
-        public List<string> InputFilesWithUnitTests
+        public List<string> InputFragments
         {
             get
             {
-                return this.inputFilesWithUnitTests;
+                return this.inputFragments;
             }
         }
 
@@ -99,9 +99,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         /// <param name="inputFiles">The WiX object and library files to scan for unit tests.</param>
         /// <param name="outputFile">The optional generated test package source file.</param>
         /// <param name="message">Message handler.</param>
-        /// <param name="inputFilesWithUnitTests">The subset of InputFiles that contain unit tests and should be included in a test package.</param>
+        /// <param name="inputFragments">The subset of InputFiles that are fragments (i.e., are not entry sections like Product) and should be included in a test package.</param>
         /// <returns>True if successful or False if there were no unit tests in the input files or a test package couldn't be created.</returns>
-        public static bool Generate(StringCollection extensions, List<string> inputFiles, string outputFile, MessageEventHandler message, out List<string> inputFilesWithUnitTests)
+        public static bool Generate(StringCollection extensions, List<string> inputFiles, string outputFile, MessageEventHandler message, out List<string> inputFragments)
         {
             Generator generator = new Generator();
             generator.Extensions = extensions;
@@ -110,7 +110,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
             generator.Message += message;
 
             bool success = generator.Generate();
-            inputFilesWithUnitTests = generator.InputFilesWithUnitTests;
+            inputFragments = generator.InputFragments;
             return success;
         }
 
@@ -163,7 +163,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         {
             // get the primary keys for every row from every WixUnitTest table in our sections:
             // voila, we have our unit test ids
-            this.inputFilesWithUnitTests = new List<string>();
+            this.inputFragments = new List<string>();
             List<string> unitTestIds = new List<string>();
             Dictionary<Section, string> sections = this.LoadSections();
 
@@ -171,18 +171,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
             {
                 foreach (Section section in sections.Keys)
                 {
-                    string file = sections[section];
-                    Table unitTestTable = section.Tables["WixUnitTest"];
-                    if (null != unitTestTable)
+                    if (SectionType.Fragment == section.Type)
                     {
-                        if (!this.inputFilesWithUnitTests.Contains(file))
+                        string file = sections[section];
+                        if (!this.inputFragments.Contains(file))
                         {
-                            this.inputFilesWithUnitTests.Add(file);
+                            this.inputFragments.Add(file);
                         }
 
-                        foreach (Row row in unitTestTable.Rows)
+                        Table unitTestTable = section.Tables["WixUnitTest"];
+                        if (null != unitTestTable)
                         {
-                            unitTestIds.Add(row.GetPrimaryKey('/'));
+                            foreach (Row row in unitTestTable.Rows)
+                            {
+                                unitTestIds.Add(row.GetPrimaryKey('/'));
+                            }
                         }
                     }
                 }

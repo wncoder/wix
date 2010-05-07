@@ -469,23 +469,6 @@
     </ZipProject>
   </ItemGroup>
   <ItemGroup>
-    <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.wxs">
-      <Visible>true</Visible>
-    </ZipProject>
-    <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.Generated.wxs">
-      <Visible>true</Visible>
-    </ZipProject>
-    <ZipProject Include="Templates\Projects\WixBundleProject\WixBundle.ico">
-      <Visible>true</Visible>
-    </ZipProject>
-    <ZipProject Include="Templates\Projects\WixBundleProject\WixBundle.vstemplate">
-      <Visible>true</Visible>
-    </ZipProject>
-    <ZipProject Include="Templates\Projects\WixBundleProject\BundleProject.wixproj">
-      <Visible>true</Visible>
-    </ZipProject>
-  </ItemGroup>
-  <ItemGroup>
     <CodeAnalysisDictionary Include="CustomDictionary.xml">
       <Visible>true</Visible>
     </CodeAnalysisDictionary>

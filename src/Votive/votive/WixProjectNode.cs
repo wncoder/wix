@@ -255,9 +255,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             {
                 switch (this.OutputType)
                 {
-                    case WixOutputType.Bundle:
-                        this.nodeIcon = new Icon(WixStrings.WixBundleProjectIcon, new Size(16, 16));
-                        break;
                     case WixOutputType.Library:
                         this.nodeIcon = new Icon(WixStrings.WixLibraryProjectIcon, new Size(16, 16));
                         break;

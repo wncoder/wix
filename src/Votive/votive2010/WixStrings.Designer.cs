@@ -340,15 +340,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio {
             }
         }
         
-	/// <summary>
-        ///   Looks up a localized string similar to Bundle (.exe).
-        /// </summary>
-        internal static string OutputTypeBundleDisplayName {
-            get {
-                return ResourceManager.GetString("OutputTypeBundleDisplayName", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to Library (.wixlib).
         /// </summary>
@@ -612,13 +603,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio {
             }
         }
         
-	internal static System.Drawing.Icon WixBundleProjectIcon {
-            get {
-                object obj = ResourceManager.GetObject("WixBundleProjectIcon", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to Paths.
         /// </summary>

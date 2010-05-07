@@ -510,10 +510,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     {
                         outputFileName = Path.ChangeExtension(outputFileName, ".wixlib");
                     }
-                    else if (String.Equals(outputType, WixOutputType.Bundle.ToString(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        outputFileName = Path.ChangeExtension(outputFileName, ".exe");
-                    }
                 }
 
                 return outputFileName;
@@ -536,10 +532,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 else if (String.Equals(outputExtension, ".wixlib", StringComparison.OrdinalIgnoreCase))
                 {
                     this.OutputType = WixOutputType.Library.ToString();
-                }
-                else if (String.Equals(outputExtension, ".exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    this.OutputType = WixOutputType.Bundle.ToString();
                 }
             }
         }

@@ -35,11 +35,6 @@
         </DirectoryRef>
 
         <DirectoryRef Id="BinDir">
-<!-- Burn is disabled in WiX v3.5
-            <Component Id="BurnBinaries" Guid="ABC4BC34-2A57-4B7D-2897-E999A2452345" Win64="no">
-                 <File Source="burnstub.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
-            </Component>
--->
             <Component Id="CandleBinaries" Guid="FBD4BCFB-F1B7-4B6D-B07C-E999A24521CF" Win64="no">
                 <File Source="candle.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
@@ -109,11 +104,6 @@
             <Component Id="SmokeConfig" Guid="24F0A281-B01F-4CD1-960B-7DE7EFA07470" Win64="no">
                 <File Source="smoke.exe.config" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
-<!-- Burn is disabled in WiX v3.5
-            <Component Id="STDUXBinaries" Guid="25A05614-D524-874A-9345-2AD0062FBC4A" Win64="no">
-                <File Source="stdux.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
-            </Component>
--->
             <Component Id="TorchBinaries" Guid="D9496C8B-825A-4464-92C7-8B8E258CA364" Win64="no">
                 <File Source="torch.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
@@ -294,9 +284,6 @@
         </DirectoryRef>
 
         <ComponentGroup Id="Toolset">
-<!-- Burn is disabled in WiX v3.5
-            <ComponentRef Id="BurnBinaries" />
--->
             <ComponentRef Id="CandleBinaries" />
             <ComponentRef Id="CandleConfig" />
             <ComponentRef Id="DarIceCube" />
@@ -320,9 +307,6 @@
             <ComponentRef Id="PyroConfig" />
             <ComponentRef Id="SmokeBinaries" />
             <ComponentRef Id="SmokeConfig" />
-<!-- Burn is disabled in WiX v3.5
-            <ComponentRef Id="STDUXBinaries" />
--->
             <ComponentRef Id="TorchBinaries" />
             <ComponentRef Id="TorchConfig" />
             <ComponentRef Id="WConsoleBinaries" />

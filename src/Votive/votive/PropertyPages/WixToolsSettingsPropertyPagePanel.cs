@@ -63,8 +63,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.linkerLibrarianLabel.Text = (projectType == WixOutputType.Library ? WixStrings.Librarian : WixStrings.Linker);
             this.linkerTextBox.Visible = (projectType != WixOutputType.Library);
             this.librarianTextBox.Visible = (projectType == WixOutputType.Library);
-            this.suppressIceCheckbox.Enabled = (projectType != WixOutputType.Library && projectType != WixOutputType.Bundle);
-            this.specificIceTextBox.Enabled = (projectType != WixOutputType.Library && projectType != WixOutputType.Bundle);
+            this.suppressIceCheckbox.Enabled = (projectType != WixOutputType.Library);
+            this.specificIceTextBox.Enabled = (projectType != WixOutputType.Library);
         }
     }
 }

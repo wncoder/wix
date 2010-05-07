@@ -90,4 +90,8 @@
     <mc mcfile="${dir.src.burn.core}\core.mc" headerpath="${dir.build.burn.core}" rcpath="${dir.build.burn.core}" options="-A -c -z core.messages"/>
     <rc rcfile="${dir.build.burn.core}\core.messages.rc" output="${burncore.file.lib.targetres}" />
   </target>
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="burncore.properties.defined" value="true" readonly="true" />
+
 </project>

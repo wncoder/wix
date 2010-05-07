@@ -56,8 +56,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.comboOutputType.Items.AddRange(new object[] {
             resources.GetString("comboOutputType.Items"),
             resources.GetString("comboOutputType.Items1"),
-            resources.GetString("comboOutputType.Items2"),
-            resources.GetString("comboOutputType.Items3")});
+            resources.GetString("comboOutputType.Items2")});
             resources.ApplyResources(this.comboOutputType, "comboOutputType");
             this.comboOutputType.Name = "comboOutputType";
             // 

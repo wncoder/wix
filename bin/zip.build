@@ -149,7 +149,6 @@
         <include name="WixLibrary.zip" />
         <include name="WixMergeModule.zip" />
         <include name="WixProject.zip" />
-        <include name="WixBundleProject.zip" />
         <include name="CustomActionCS.zip" />
         <include name="CustomActionVB.zip" />
         <include name="CustomActionCPP_2005.zip" />

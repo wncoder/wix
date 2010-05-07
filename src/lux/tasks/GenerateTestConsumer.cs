@@ -33,7 +33,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
     {
         private ITaskItem[] extensions;
         private ITaskItem[] inputFiles;
-        private ITaskItem[] inputFilesWithUnitTests;
+        private ITaskItem[] inputFragments;
         private ITaskItem outputFile;
 
         /// <summary>
@@ -68,11 +68,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         /// Gets the subset of InputFiles that contain unit tests and should be included in a test package.
         /// </summary>
         [Output]
-        public ITaskItem[] InputFilesWithUnitTests
+        public ITaskItem[] InputFragments
         {
             get
             {
-                return this.inputFilesWithUnitTests;
+                return this.inputFragments;
             }
         }
 
@@ -102,7 +102,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
             generator.Message += new MessageEventHandler(this.MessageHandler);
 
             bool success = generator.Generate();
-            this.inputFilesWithUnitTests = GenerateTestConsumer.ToITaskItemArray(generator.InputFilesWithUnitTests);
+            this.inputFragments = GenerateTestConsumer.ToITaskItemArray(generator.InputFragments);
             return success;
         }
 

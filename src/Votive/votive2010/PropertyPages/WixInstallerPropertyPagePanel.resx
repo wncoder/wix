@@ -189,9 +189,6 @@
   <data name="comboOutputType.Items2" xml:space="preserve">
     <value>WiX Library (.wixlib)</value>
   </data>
-  <data name="comboOutputType.Items3" xml:space="preserve">
-    <value>Executable Package (.exe)</value>
-  </data>
   <data name="comboOutputType.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 72</value>
   </data>

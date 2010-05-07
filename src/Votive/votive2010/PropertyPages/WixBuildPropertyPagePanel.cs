@@ -82,7 +82,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
 
             WixOutputType projectType = this.ParentPropertyPage.ProjectMgr.OutputType;
             this.defineVariablesTextBox.Enabled = (projectType != WixOutputType.Library);
-            this.culturesTextBox.Enabled = (projectType != WixOutputType.Library && projectType != WixOutputType.Bundle);
+            this.culturesTextBox.Enabled = (projectType != WixOutputType.Library);
             this.leaveTempFilesCheckBox.Enabled = (projectType != WixOutputType.Library);
             this.suppressWixPdbCheckBox.Enabled = (projectType != WixOutputType.Library);
             this.bindFilesCheckBox.Enabled = (projectType == WixOutputType.Library);

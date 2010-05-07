@@ -18,9 +18,6 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="BinDir">
-            <Component Id="BuxExt" Guid="A162D437-543F-268E-A1C9-87ADCA0F5950" Win64="no">
-               <File Source="WixBuxExtension.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
-            </Component>
             <Component Id="ComPlusExt" Guid="AE46D16E-35EA-48F4-B539-7DFE27A75099" Win64="no">
                 <File Source="WixComPlusExtension.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
             </Component>
@@ -79,7 +76,6 @@
 
         <DirectoryRef Id="DocDir">
             <Component Id="ExtensionXsds" Guid="D6176999-AE97-49FE-ADB5-2DF354A4AC5E" Win64="no">
-                <File Source="ext\BuxExtension\wixext\Xsd\bux.xsd" />
                 <File Source="ext\ComPlusExtension\wixext\Xsd\complus.xsd" />
                 <File Source="ext\DifxAppExtension\wixext\Xsd\difxapp.xsd" />
                 <File Source="ext\FirewallExtension\wixext\Xsd\firewall.xsd" />
@@ -95,7 +91,6 @@
         </DirectoryRef>
 
         <ComponentGroup Id="Extensions">
-            <ComponentRef Id="BuxExt" />
             <ComponentRef Id="ComPlusExt" />
             <ComponentRef Id="DifxAppExt" />
             <ComponentRef Id="DirectXExt" />

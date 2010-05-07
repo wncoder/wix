@@ -40,10 +40,5 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// Wix project that builds a wixlib file.
         /// </summary>
         Library,
-
-        /// <summary>
-        /// Wix project that builds a exe file.
-        /// </summary>
-        Bundle,
     }
 }

@@ -268,4 +268,7 @@
   </target>
   <!-- End WindowsInstaller.Package -->
 
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="dtflibraries.properties.defined" value="true" readonly="true" />
+
 </project>
