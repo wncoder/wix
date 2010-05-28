@@ -310,6 +310,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // add the product code back into the database
                         if (null != productCode)
                         {
+                            // some CUBs erroneously have a ProductCode property, so delete it if we just picked one up
+                            using (View dropProductCodeView = database.OpenExecuteView("DELETE FROM `Property` WHERE `Property` = 'ProductCode'"))
+                            {
+                            }
+
                             using (View view = database.OpenExecuteView(String.Format(CultureInfo.InvariantCulture, "INSERT INTO `Property` (`Property`, `Value`) VALUES ('ProductCode', '{0}')", productCode)))
                             {
                             }
@@ -354,6 +359,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // no final output since the error occured; during smoke
                         // they should know the path passed into smoke
                         this.OnMessage(WixErrors.ValidationFailedToOpenDatabase());
+                    }
+                    else if (0x64D == e.NativeErrorCode)
+                    {
+                        this.OnMessage(WixErrors.ValidationFailedDueToLowMsiEngine());
                     }
                     else if (0x654 == e.NativeErrorCode)
                     {

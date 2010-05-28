@@ -165,10 +165,6 @@ HRESULT ScaWebsRead7(
         hr = WcaGetRecordFormattedString(hRec, wqPort, &pwzData);
         ExitOnFailure(hr, "Failed to get Web Address port");
         psw->swaBinding.iPort = wcstol(pwzData, NULL, 10);
-        if (0 == psw->swaBinding.iPort)
-        {
-            ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "invalid port provided for web site: %S", psw->wzDescription);
-        }
 
         hr = WcaGetRecordFormattedString(hRec, wqHeader, &pwzData);
         ExitOnFailure(hr, "Failed to get Header for Web");
@@ -565,7 +561,7 @@ static HRESULT ScaWebWrite7(
 
     hr = ScaWriteConfigInteger(psw->iConnectionTimeout);            //limits/connectionTimeout
     ExitOnFailure(hr, "Failed write site timeout");
-
+    
     //create default application
     hr = ScaWriteConfigID(IIS_APPLICATION);
     ExitOnFailure(hr, "Failed write app ID");
@@ -574,11 +570,10 @@ static HRESULT ScaWebWrite7(
     hr = ScaWriteConfigString(psw->wzDescription);      //site name key
     ExitOnFailure(hr, "Failed write app desc");
     hr = ScaWriteConfigString(L"/");                    //  App Path (default)
-    ExitOnFailure(hr, "Failed write app def path /");
-
-    hr = ScaWriteConfigString(L"");                     //  App Pool (default)
+    ExitOnFailure(hr, "Failed write app def path /"); 
+    hr = ScaWriteConfigString(psw->fHasApplication ? psw->swapp.wzAppPool : L"");
     ExitOnFailure(hr, "Failed write app appPool");
-
+    
     //create vdir for default application
     hr = ScaWriteConfigID(IIS_VDIR);
     ExitOnFailure(hr, "Failed write vdir ID");

@@ -34,6 +34,7 @@
     </None>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="MakeSfxCA.cs" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Libraries\Compression.Cab\Compression.Cab.csproj">

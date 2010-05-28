@@ -1407,20 +1407,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             // make sure the code page is an int and not a web name or null
                             string codepage = (string)summaryInformationRow[1];
 
-                            // Disable validation if the SummaryCodepage is 65001, because ICE will fail to open the database
-                            if ("65001" == codepage)
-                            {
-                                this.validator = null;
-                                this.core.OnMessage(WixWarnings.ICEValidationUnsupported(summaryInformationRow.SourceLineNumbers));
-                            }
-
                             if (null == codepage)
                             {
                                 codepage = "0";
                             }
                             else
                             {
-                                summaryInformationRow[1] = Common.GetValidCodePage(codepage).ToString(CultureInfo.InvariantCulture);
+                                summaryInformationRow[1] = Common.GetValidCodePage(codepage, false, true, summaryInformationRow.SourceLineNumbers).ToString(CultureInfo.InvariantCulture);
                             }
                             break;
                         case 9: // PID_REVNUMBER

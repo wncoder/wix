@@ -905,7 +905,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             return IllegalInteger;
         }
 
-        /// <summary>
+                /// <summary>
         /// Get a valid code page by web name or number from a string attribute.
         /// </summary>
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
@@ -913,6 +913,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>A valid code page integer value or variable expression.</returns>
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeLocalizableCodePageValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute)
+        {
+            return this.GetAttributeLocalizableCodePageValue(sourceLineNumbers, attribute, false);
+        }
+
+        /// <summary>
+        /// Get a valid code page by web name or number from a string attribute.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <param name="onlyAscii">Whether to allow Unicode (UCS) or UTF code pages.</param>
+        /// <returns>A valid code page integer value or variable expression.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        public string GetAttributeLocalizableCodePageValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, bool onlyAnsi)
         {
             if (null == attribute)
             {
@@ -929,13 +942,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             try
             {
-                int codePage = Common.GetValidCodePage(value);
+                int codePage = Common.GetValidCodePage(value, false, onlyAnsi, sourceLineNumbers);
                 return codePage.ToString(CultureInfo.InvariantCulture);
             }
             catch (NotSupportedException)
             {
                 // not a valid windows code page
                 this.OnMessage(WixErrors.IllegalCodepageAttribute(sourceLineNumbers, value, attribute.OwnerElement.Name, attribute.Name));
+            }
+            catch (WixException e)
+            {
+                this.OnMessage(e.Error);
             }
 
             return null;

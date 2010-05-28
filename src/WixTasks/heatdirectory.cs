@@ -101,7 +101,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             WixCommandLineBuilder commandLineBuilder = new WixCommandLineBuilder();
 
             commandLineBuilder.AppendSwitch(this.OperationName);
-            commandLineBuilder.AppendSwitch(this.Directory);
+            commandLineBuilder.AppendFileNameIfNotNull(this.Directory);
 
             commandLineBuilder.AppendSwitchIfNotNull("-cg ", this.ComponentGroupName);
             commandLineBuilder.AppendSwitchIfNotNull("-dr ", this.DirectoryRefId);

@@ -60,6 +60,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     public sealed class Compiler
     {
         public const string UpgradeDetectedProperty = "WIX_UPGRADE_DETECTED";
+        public const string UpgradePreventedCondition = "NOT WIX_UPGRADE_DETECTED";
         public const string DowngradeDetectedProperty = "WIX_DOWNGRADE_DETECTED";
         public const string DowngradePreventedCondition = "NOT WIX_DOWNGRADE_DETECTED";
         public const string DefaultComponentIdPlaceholder = "OfficialWixComponentIdPlaceholder";
@@ -2329,6 +2330,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (String.IsNullOrEmpty(guid) && MsiInterop.MsidbComponentAttributesShared == (bits & MsiInterop.MsidbComponentAttributesShared))
             {
                 this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name, "Shared", "yes", "Guid", ""));
+            }
+
+            if (String.IsNullOrEmpty(guid) && MsiInterop.MsidbComponentAttributesPermanent == (bits & MsiInterop.MsidbComponentAttributesPermanent))
+            {
+                this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name, "Permanent", "yes", "Guid", ""));
             }
 
             if (null != feature)
@@ -7460,7 +7466,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             int options = MsiInterop.MsidbUpgradeAttributesMigrateFeatures;
             bool allowDowngrades = false;
+            bool blockUpgrades = false;
             string downgradeErrorMessage = null;
+            string disallowUpgradeErrorMessage = null;
             string removeFeatures = null;
             string schedule = null;
 
@@ -7485,8 +7493,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "AllowDowngrades":
                             allowDowngrades = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
+                        case "Disallow":
+                            blockUpgrades = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
                         case "DowngradeErrorMessage":
                             downgradeErrorMessage = this.core.GetAttributeValue(sourceLineNumbers, attrib, false);
+                            break;
+                        case "DisallowUpgradeErrorMessage":
+                            disallowUpgradeErrorMessage = this.core.GetAttributeValue(sourceLineNumbers, attrib, false);
                             break;
                         case "MigrateFeatures":
                             if (YesNoType.No == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
@@ -7543,6 +7557,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "DowngradeErrorMessage", "AllowDowngrades", "yes"));
             }
 
+            if (blockUpgrades && String.IsNullOrEmpty(disallowUpgradeErrorMessage))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "DisallowUpgradeErrorMessage", "Disallow", "yes", true));
+            }
+
+            if (!blockUpgrades && !String.IsNullOrEmpty(disallowUpgradeErrorMessage))
+            {
+                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "DisallowUpgradeErrorMessage", "Disallow", "yes"));
+            }
+
             if (!this.core.EncounteredError)
             {
                 // create the row that performs the upgrade (or downgrade)
@@ -7565,6 +7589,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 row[5] = removeFeatures;
                 row[6] = Compiler.UpgradeDetectedProperty;
+
+                // Add launch condition that blocks upgrades
+                if (blockUpgrades)
+                {
+                    row = this.core.CreateRow(sourceLineNumbers, "LaunchCondition");
+                    row[0] = Compiler.UpgradePreventedCondition;
+                    row[1] = disallowUpgradeErrorMessage;
+                }
 
                 // now create the Upgrade row and launch conditions to prevent downgrades (unless explicitly permitted)
                 if (!allowDowngrades)
@@ -11458,11 +11490,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             break;
                         case "SummaryCodepage":
-                            codepage = this.core.GetAttributeLocalizableCodePageValue(sourceLineNumbers, attrib);
-                            if ("65001" == codepage.Trim())
-                            {
-                                this.core.OnMessage(WixWarnings.ICEValidationUnsupported(sourceLineNumbers));
-                            }
+                            codepage = this.core.GetAttributeLocalizableCodePageValue(sourceLineNumbers, attrib, true);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);

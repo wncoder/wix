@@ -1576,7 +1576,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     $(HarvestDirectory.SuppressRegistry) - Suppress registry harvesting.
 
     [OUT]
-    $(IntermediateOutputPath)_%(HarvestDirectory.Filename)_dir.wxs
+    $(IntermediateOutputPath)_%(HarvestDirectory.ComponentGroupName)_dir.wxs
         - The generated .wxs files which are added to the @(Compile) item list.
   ================================================================================================
   -->
@@ -1595,12 +1595,22 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   </ItemDefinitionGroup>
 
   <PropertyGroup>
-    <HarvestDirectoryDependsOn></HarvestDirectoryDependsOn>
+    <HarvestDirectoryDependsOn>
+      GetHarvestDirectoryContent
+    </HarvestDirectoryDependsOn>
   </PropertyGroup>
+
+  <!-- Creates items to include content since wildcards will not work in Target/@Inputs. -->
+  <Target Name="GetHarvestDirectoryContent">
+    <CreateItem Include="@(HarvestDirectory->'%(FullPath)\**\*')">
+      <Output TaskParameter="Include" ItemName="_HarvestDirectoryContent" />
+    </CreateItem>
+  </Target>
+
   <Target Name="HarvestDirectory"
     DependsOnTargets="$(HarvestDirectoryDependsOn)"
-    Inputs="@(HarvestDirectory);%(HarvestDirectory.Transforms)"
-    Outputs="$(IntermediateOutputPath)_%(HarvestDirectory.Filename)_dir.wxs"
+    Inputs="@(_HarvestDirectoryContent);%(HarvestDirectory.Transforms)"
+    Outputs="$(IntermediateOutputPath)_%(HarvestDirectory.ComponentGroupName)_dir.wxs"
     Condition=" '@(HarvestDirectory)' != '' ">
 
     <HeatDirectory
@@ -1613,7 +1623,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       VerboseOutput="$(HarvestDirectoryVerboseOutput)"
       AutogenerateGuids="$(HarvestDirectoryAutogenerateGuids)"
       GenerateGuidsNow="$(HarvestDirectoryGenerateGuidsNow)"
-      OutputFile="$(IntermediateOutputPath)_%(HarvestDirectory.Filename)_dir.wxs"
+      OutputFile="$(IntermediateOutputPath)_%(HarvestDirectory.ComponentGroupName)_dir.wxs"
       SuppressFragments="$(HarvestDirectorySuppressFragments)"
       SuppressUniqueIds="$(HarvestDirectorySuppressUniqueIds)"
       Transforms="%(HarvestDirectory.Transforms)"

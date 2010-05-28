@@ -43,10 +43,13 @@
       <fileset basedir="${dir.target.wix}">
         <include name="CustomActionCPP_2005.zip" />
         <include name="CustomActionCPP_2008.zip" />
+        <include name="CustomActionCPP_2010.zip" />
         <include name="CustomActionCS_2005.zip" />
         <include name="CustomActionCS_2008.zip" />
+        <include name="CustomActionCS_2010.zip" />
         <include name="CustomActionVB_2005.zip" />
         <include name="CustomActionVB_2008.zip" />
+        <include name="CustomActionVB_2010.zip" />
         <include name="wix.ca.targets" />
       </fileset>
     </delete>
@@ -69,6 +72,14 @@
     <copy file="${dir.src.dtf.templates}\Projects\CustomActionCS\CustomAction_2008.cs" tofile="${dir.build.dtf.templates}\2008\CustomAction.cs" />
     <copy file="${dir.src.dtf.templates}\Projects\CustomActionVB\CustomActionVB_2008.vstemplate" tofile="${dir.build.dtf.templates}\2008\CustomActionVB.vstemplate" />
     <copy file="${dir.src.dtf.templates}\Projects\CustomActionVB\CustomAction_2008.vbproj" tofile="${dir.build.dtf.templates}\2008\CustomAction.vbproj" />
+
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionCPP\CustomActionCPP_2010.vstemplate" tofile="${dir.build.dtf.templates}\2010\CustomActionCPP.vstemplate" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionCPP\CustomAction_2010.vcproj" tofile="${dir.build.dtf.templates}\2010\CustomAction.vcproj" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionCS\CustomActionCS_2010.vstemplate" tofile="${dir.build.dtf.templates}\2010\CustomActionCS.vstemplate" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionCS\CustomAction_2010.csproj" tofile="${dir.build.dtf.templates}\2010\CustomAction.csproj" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionCS\CustomAction_2010.cs" tofile="${dir.build.dtf.templates}\2010\CustomAction.cs" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionVB\CustomActionVB_2010.vstemplate" tofile="${dir.build.dtf.templates}\2010\CustomActionVB.vstemplate" />
+    <copy file="${dir.src.dtf.templates}\Projects\CustomActionVB\CustomAction_2010.vbproj" tofile="${dir.build.dtf.templates}\2010\CustomAction.vbproj" />
 
     <zip zipfile="${dir.target.wix}\CustomActionCPP_2005.zip">
       <fileset basedir="${dir.build.dtf.templates}\2005">
@@ -96,6 +107,19 @@
         <include name="targetver.h" />
       </fileset>
     </zip>
+    <zip zipfile="${dir.target.wix}\CustomActionCPP_2010.zip">
+      <fileset basedir="${dir.build.dtf.templates}\2010">
+        <include name="CustomActionCPP.vstemplate" />
+        <include name="CustomAction.vcproj" />
+      </fileset>
+      <fileset basedir="${dir.src.dtf.templates}\Projects\CustomActionCPP">
+        <include name="CustomAction.cpp" />
+        <include name="CustomAction.def" />
+        <include name="stdafx.cpp" />
+        <include name="stdafx.h" />
+        <include name="targetver.h" />
+      </fileset>
+    </zip>
 
     <zip zipfile="${dir.target.wix}\CustomActionCS_2005.zip">
       <fileset basedir="${dir.build.dtf.templates}\2005">
@@ -110,9 +134,21 @@
         <include name="CustomAction.config" />
       </fileset>
     </zip>
-
     <zip zipfile="${dir.target.wix}\CustomActionCS_2008.zip">
       <fileset basedir="${dir.build.dtf.templates}\2008">
+        <include name="CustomActionCS.vstemplate" />
+        <include name="CustomAction.csproj" />
+        <include name="CustomAction.cs" />
+      </fileset>
+      <fileset basedir="${dir.src.dtf.templates}\Projects\CustomActionCS">
+        <include name="AssemblyInfo.cs" />
+      </fileset>
+      <fileset basedir="${dir.src.dtf.templates}\Projects">
+        <include name="CustomAction.config" />
+      </fileset>
+    </zip>
+    <zip zipfile="${dir.target.wix}\CustomActionCS_2010.zip">
+      <fileset basedir="${dir.build.dtf.templates}\2010">
         <include name="CustomActionCS.vstemplate" />
         <include name="CustomAction.csproj" />
         <include name="CustomAction.cs" />
@@ -138,7 +174,6 @@
         <include name="CustomAction.config" />
       </fileset>
     </zip>
-
     <zip zipfile="${dir.target.wix}\CustomActionVB_2008.zip">
       <fileset basedir="${dir.build.dtf.templates}\2008">
         <include name="CustomActionVB.vstemplate" />
@@ -152,6 +187,20 @@
         <include name="CustomAction.config" />
       </fileset>
     </zip>
+    <zip zipfile="${dir.target.wix}\CustomActionVB_2010.zip">
+      <fileset basedir="${dir.build.dtf.templates}\2010">
+        <include name="CustomActionVB.vstemplate" />
+        <include name="CustomAction.vbproj" />
+      </fileset>
+      <fileset basedir="${dir.src.dtf.templates}\Projects\CustomActionVB">
+        <include name="CustomAction.vb" />
+        <include name="AssemblyInfo.vb" />
+      </fileset>
+      <fileset basedir="${dir.src.dtf.templates}\Projects">
+        <include name="CustomAction.config" />
+      </fileset>
+    </zip>
+    
 
     <copy file="${dir.src.dtf.templates}\Projects\wix.ca.targets" todir="${dir.target.wix}" />
   </target>

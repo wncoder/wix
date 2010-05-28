@@ -1706,7 +1706,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 subCode = CompilerCore.IllegalInteger;
             }
 
-            if (null != file && null != url)
+            if (String.IsNullOrEmpty(file) && String.IsNullOrEmpty(url))
             {
                 this.Core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "File", "URL"));
             }

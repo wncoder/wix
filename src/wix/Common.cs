@@ -122,7 +122,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <exception cref="ArgumentOutOfRangeException">The value is an integer less than 0 or greater than 65535.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
         /// <exception cref="NotSupportedException">The value doesn't not represent a valid code page name or integer value.</exception>
+        /// <exception cref="WixException">The code page is invalid for summary information.</exception>
         internal static int GetValidCodePage(string value, bool allowNoChange)
+        {
+            return GetValidCodePage(value, allowNoChange, false, null);
+        }
+
+        /// <summary>
+        /// Gets a valid code page from the given web name or integer value.
+        /// </summary>
+        /// <param name="value">A code page web name or integer value as a string.</param>
+        /// <param name="allowNoChange">Whether to allow -1 which does not change the database code pages. This may be the case with wxl files.</param>
+        /// <param name="onlyAnsi">Whether to allow Unicode (UCS) or UTF code pages.</param>
+        /// <param name="sourceLineNumbers">Source line information for the current authoring.</param>
+        /// <returns>A valid code page number.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">The value is an integer less than 0 or greater than 65535.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
+        /// <exception cref="NotSupportedException">The value doesn't not represent a valid code page name or integer value.</exception>
+        /// <exception cref="WixException">The code page is invalid for summary information.</exception>
+        internal static int GetValidCodePage(string value, bool allowNoChange, bool onlyAnsi, SourceLineNumberCollection sourceLineNumbers)
         {
             int codePage;
             Encoding enc;
@@ -153,6 +171,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 else
                 {
                     enc = Encoding.GetEncoding(value);
+                }
+
+                // Windows Installer parses some code page references
+                // as unsigned shorts which fail to open the database.
+                if (onlyAnsi)
+                {
+                    codePage = enc.CodePage;
+                    if (0 > codePage || short.MaxValue < codePage)
+                    {
+                        throw new WixException(WixErrors.InvalidSummaryInfoCodePage(sourceLineNumbers, codePage));
+                    }
                 }
 
                 return enc.CodePage;

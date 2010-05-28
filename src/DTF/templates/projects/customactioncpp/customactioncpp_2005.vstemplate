@@ -7,7 +7,7 @@
     <ProjectType>WiX</ProjectType>
     <TemplateID>Microsoft.Deployment.WindowsInstaller.CustomActionCPP</TemplateID>
     <RequiredFrameworkVersion>2.0</RequiredFrameworkVersion>
-    <SortOrder>60</SortOrder>
+    <SortOrder>80</SortOrder>
     <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
     <CreateNewFolder>true</CreateNewFolder>
     <DefaultName>CustomAction</DefaultName>

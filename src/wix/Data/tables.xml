@@ -962,7 +962,7 @@
                 category="formatted" description="Arguments to include in every start of the service, passed to WinMain"/>
         <columnDefinition name="Component_" type="string" length="72" modularize="column"
                 keyTable="Component" keyColumn="1" category="identifier" description="Required foreign key into the Component Table that controls the startup of the service"/>
-        <columnDefinition name="Description" type="localized" length="255" nullable="yes" escapeIdtCharacters="yes"
+        <columnDefinition name="Description" type="localized" length="255" nullable="yes" escapeIdtCharacters="yes" modularize="property"
                 category="text" description="Description of service."/>
     </tableDefinition>
     <tableDefinition name="MsiServiceConfig">

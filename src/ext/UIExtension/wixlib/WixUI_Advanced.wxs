@@ -32,6 +32,7 @@ Todo:
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
+        <WixVariable Id="WixUICostingPopupOptOut" Value="1" Overridable="yes" />
         <WixVariable Id="WixUISupportPerUser" Value="1" Overridable="yes" />
         <WixVariable Id="WixUISupportPerMachine" Value="1" Overridable="yes" />
 

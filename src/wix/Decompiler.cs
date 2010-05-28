@@ -2775,6 +2775,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Table launchConditionTable = tables["LaunchCondition"];
             Table upgradeTable = tables["Upgrade"];
             string downgradeErrorMessage = null;
+            string disallowUpgradeErrorMessage = null;
             Wix.MajorUpgrade majorUpgrade = new Wix.MajorUpgrade();
 
             // find the DowngradePreventedCondition launch condition message
@@ -2785,7 +2786,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if (Compiler.DowngradePreventedCondition == (string)launchRow[0])
                     {
                         downgradeErrorMessage = (string)launchRow[1];
-                        break;
+                    }
+                    else if (Compiler.UpgradePreventedCondition == (string)launchRow[0])
+                    {
+                        disallowUpgradeErrorMessage = (string)launchRow[1];
                     }
                 }
             }
@@ -2831,6 +2835,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if (String.IsNullOrEmpty(downgradeErrorMessage))
                     {
                         majorUpgrade.AllowDowngrades = Wix.YesNoType.yes;
+                    }
+
+                    if (!String.IsNullOrEmpty(disallowUpgradeErrorMessage))
+                    {
+                        majorUpgrade.Disallow = Wix.YesNoType.yes;
+                        majorUpgrade.DisallowUpgradeErrorMessage = disallowUpgradeErrorMessage;
                     }
 
                     majorUpgrade.Schedule = DetermineMajorUpgradeScheduling(tables);
@@ -6107,7 +6117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if (Compiler.DowngradePreventedCondition == (string)row[0])
+                if (Compiler.DowngradePreventedCondition == (string)row[0] || Compiler.UpgradePreventedCondition == (string)row[0])
                 {
                     continue; // MajorUpgrade rows processed in FinalizeUpgradeTable
                 }

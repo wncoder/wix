@@ -2647,6 +2647,17 @@
                 <Parameter Type="System.String" Name="illegalValueList" />
             </Instance>
         </Message>
+        <Message Id="InvalidSummaryInfoCodePage" Number="349">
+            <Instance>
+                The code page '{0}' is invalid for summary information. You must specify an ANSI code page.
+                <Parameter Type="System.Int32" Name="codePage" />
+            </Instance>
+        </Message>
+        <Message Id="ValidationFailedDueToLowMsiEngine" Number="350" SourceLineNumbers="no">
+            <Instance>
+                The package being validated requires a higher version of Windows Installer than is installed on this machine. Validation cannot continue.
+            </Instance>
+        </Message>
     </Class>
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
         <Message Id="IdentifierCannotBeModularized" Number="1000">
@@ -3285,11 +3296,6 @@
                 The primary key '{0}' is duplicated in table '{1}' and will be ignored. Please remove one of the entries or rename a part of the primary key to avoid the collision.
                 <Parameter Type="System.String" Name="primaryKey" />
                 <Parameter Type="System.String" Name="tableName" />
-            </Instance>
-        </Message>
-        <Message Id="ICEValidationUnsupported" Number="1120">
-            <Instance>
-                Package/@SummaryCodepage is set to 65001 (UTF-8), which is unsupported by ICE validation. ICE validation will be automatically disabled.
             </Instance>
         </Message>
         <Message Id="RequiresMsi200for64bitPackage" Number="1121">

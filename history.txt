@@ -1020,3 +1020,52 @@ BobArnso: Update Lux test generator to consider all source files that are
           between unit-test projects and functional-test projects or other
           "real" installers.
 
+WixBuild: Version 3.5.1710.0
+
+HeathS: SFBUG:2991056 - Do not allow large code page values for summary info.
+
+EricStJ: SFBUG:2993823 - WriteIIS7ConfigChanges fails when virtual dir exists
+
+EricStJ: SFBUG:2997246 - Do not validate port when we might not be using it
+
+EricStJ: SFBUG:2990584 - Fix WebApplication under Website to correctly set
+                         App pool of the default application
+
+WixBuild: Version 3.5.1714.0
+
+MikeHo: Add Disallow to MajorUpgrade to prevent upgrades
+
+BobArnso: Add and enable WixUICostingPopupOptOut WiX variable to turn off the
+          modal dialog shown when MSI hasn't yet completed costing. There is an
+          intermittent bug that prevents it from setting the CostingComplete 
+          property so the modal dialog is shown forever. This setting is 
+          enabled by default for now to verify the problem can be worked around 
+          by not checking for CostingComplete. If successful, it will become an
+          opt-in behavior. For now, to return to the previous behavior, add
+              <WixVariable Id="WixUICostingPopupOptOut" Value="0" />
+          to your authoring.
+
+BobArnso: Fix sfbug:2987553: Guid="" and Permanent="yes" doesn't make sense and
+          is illegal per ICE92.
+
+BobArnso: Fix sfbug:2990011 by adding specific error message when package being
+          validated requires a higher version of MSI than is present.
+
+RobMen: ServiceInstall/@Description should be modularized as a property.
+
+EricStJ: SFBUG:3002703 - Install fails when multiple defaultDocument Files or
+                         windowsAuthentication Providers are added.
+         IIS extension was failing to set integer attributes correctly.
+         IIS extension was failing when redifining a mimeMap for an extension
+         IIS extension compiler was not failing when specifying an error with
+         no file or URL
+
+HeathS: SFBUG:2996221 - Support incremental builds for Harvest tasks.
+
+EricStJ: SFBUG:3002633 - Uninstall always deletes the first element in a
+         collection.
+
+WixBuild: Version 3.5.1721.0
+
+BobArnso: sfbug:2796124 - Update to the latest shipped darice.cub and 
+          mergemod.dll.

@@ -180,10 +180,6 @@ HRESULT ScaWebsRead(
         hr = WcaGetRecordString(hRec, wqPort, &pwzData);
         ExitOnFailure(hr, "Failed to get Web Address port");
         psw->swaKey.iPort = wcstol(pwzData, NULL, 10);
-        if (0 == psw->swaKey.iPort)
-        {
-            ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "invalid port provided for web site: %S", psw->wzDescription);
-        }
 
         hr = WcaGetRecordString(hRec, wqHeader, &pwzData);
         ExitOnFailure(hr, "Failed to get Header for Web");
