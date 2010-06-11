@@ -134,7 +134,7 @@
                 category="identifier" description="Primary key, non-localized token"/>
         <columnDefinition name="Web_" type="string" length="72" modularize="column"
                 keyTable="IIsWebSite" keyColumn="1" category="identifier" description="Foreign key referencing Web that uses the address."/>
-        <columnDefinition name="IP" type="string" length="255" nullable="yes"
+        <columnDefinition name="IP" type="string" length="255" nullable="yes" modularize="property"
                 category="text" description="String representing IP address (#.#.#.#) or NT machine name (fooserver)"/>
         <columnDefinition name="Port" type="string" length="72" modularize="property"
                 category="formatted" description="Port web site listens on"/>

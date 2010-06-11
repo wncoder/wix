@@ -180,9 +180,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         // TODO: warn about expected value in row 5
                     }
                 }
-                else if (null != row[6])
+                else if (null != row[7])
                 {
-                    certificate.CertificatePath = (string)row[6];
+                    certificate.CertificatePath = (string)row[7];
                 }
 
                 if (0x4 == (attribute & 0x4))
@@ -190,9 +190,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     certificate.Overwrite = IIs.YesNoType.yes;
                 }
 
-                if (null != row[7])
+                if (null != row[8])
                 {
-                    certificate.PFXPassword = (string)row[7];
+                    certificate.PFXPassword = (string)row[8];
                 }
 
                 Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", (string)row[1]);

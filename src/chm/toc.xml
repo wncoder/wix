@@ -12,6 +12,7 @@
       <Topic Title="Preprocessor" SourceFile="html\preprocessor.htm" />
       <Topic Title="Compiler (Candle)" SourceFile="html\candle.htm"/>
       <Topic Title="Linker (Light)" SourceFile="html\light.htm"/>
+      <Topic Title="Librarian (Lit)" SourceFile="html\lit.htm"/>
       <Topic Title="Inscriber (Insignia)" SourceFile="html\insignia.htm" />
       <Topic Title="WixCop" SourceFile="html\wixcop.htm"/>
       <Topic Title="MSI Tables to WiX Schema" SourceFile="html\msitowix.htm"/>

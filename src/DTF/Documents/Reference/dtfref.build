@@ -35,7 +35,8 @@
 
   <!-- dtfref-specific properties -->
   <property name="dir.src.dtfref" value="${dir.wixroot.src}\dtf\Documents\Reference" readonly="true" />
-  <property name="dir.build.dtfref" value="${dir.build.wix}\dtfref" readonly="true" />
+  <property name="dir.target.dtfref" value="${dir.target.project}\dtfref" readonly="true" />
+  <property name="dir.build.dtfref" value="${dir.build.project}\dtfref" readonly="true" />
   
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +51,7 @@
   <!-- Clean -->
   <target name="dtfref.clean" description="Cleans the build">
     <delete dir="${dir.build.dtfref}" />
+    <delete dir="${dir.target.dtfref}" />
     <delete file="${dir.target.wix}\DTFAPI.chm" />
   </target>
 
@@ -68,20 +70,20 @@
       <echo message="Skipping DTF reference CHM build because Sandcastle Builder was not found at '${dir.sandcastlebuilder}'." />
     </if>
     <if test="${ship and hhw-found and sandcastle-found and sandcastlebuilder-found}">
-      <exec program="${dir.sandcastlebuilder}\SandcastleBuilderConsole.exe" failonerror="true">
-        <arg file="${dir.src.dtfref}\dtfref.shfb" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.Compression.dll" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.Compression.Cab.dll" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.Resources.dll" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.WindowsInstaller.dll" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.WindowsInstaller.Package.dll" />
-        <arg value="-assembly=${dir.target.wix}\Microsoft.Deployment.WindowsInstaller.Linq.dll" />
-        <arg value="-SandcastlePath=${dir.sandcastle}" />
-        <arg value="-HtmlHelp1xCompilerPath=${dir.hhw}" />
-        <arg value="-WorkingPath=${dir.build.dtfref}\build" />
-        <arg value="-OutputPath=${dir.build.dtfref}" />
+      <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
+        <arg value="/property:Configuration=Debug" if="${debug}" />
+        <arg value="/property:Configuration=Release" if="${ship}" />
+        <arg value="/property:SHFBROOT=${dir.sandcastlebuilder}" />
+        <arg value="/property:OutputPath=${dir.target.dtfref}" />
+        <arg value="/property:WorkingPath=${dir.build.dtfref}" />
+        <arg value="/property:SandcastlePath=${dir.sandcastle}" />
+        <arg value="/property:HtmlHelp1xCompilerPath=${dir.hhw}" />
+        <arg value="/property:DirTargetWix=${dir.target.wix}" />
+        <arg value="/verbosity:${msbuildverbosity}" />
+        <arg value="/target:Rebuild" />
+        <arg file="${dir.src.dtfref}\dtfref.shfbproj" />
       </exec>
-      <copy file="${dir.build.dtfref}\DTFAPI.chm" todir="${dir.target.wix}" />
+      <copy file="${dir.target.dtfref}\DTFAPI.chm" todir="${dir.target.wix}" />
     </if>
   </target>
 </project>

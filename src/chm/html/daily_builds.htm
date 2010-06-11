@@ -31,7 +31,7 @@
     <li>Add and check in the files from steps 3 through 5.</li>
   </ol>
 
-  <p>The actual file locations in steps 3 through 5 will vary depending on where you installed WiX. On 64-bit operating systems, the files will be located under <strong>c:\Program Files (x86) by default.</strong></p>
+  <p>The actual file locations in steps 3 through 5 will vary depending on where you installed WiX. On 64-bit operating systems, the files will be located under <strong>c:\Program Files (x86)</strong> by default.</p>
 
   <h2>Step 2: Modify Your .wixproj File</h2>
 
@@ -48,5 +48,6 @@
   
   <p>You can also use a relative path to the directory (such as <strong>..\..\tools\</strong>), but note that the WixTargetsPath property value must be relative to the .wixproj project file that uses it. The WixTasksPath property is used inside wix.targets to load WixTasks.dll; its value, if a relative path, must be relative to the wix.targets file. Those two files usually live together, so the value would be WixTasks.dll with no extra path information.</p>
 
+  <p><strong>Note that WixToolPath must end in a backslash.</strong></p>
 </body>
 </html>

@@ -47,7 +47,7 @@ HRESULT DAPI FreeCryptProvFromCert(
     );
 
 HRESULT DAPI GetProvSecurityDesc(
-      __in HCRYPTPROV hProv, 
+      __in HCRYPTPROV hProv,
       __deref_out SECURITY_DESCRIPTOR** pSecurity
       );
 
@@ -56,6 +56,16 @@ HRESULT DAPI SetProvSecurityDesc(
     __in SECURITY_DESCRIPTOR* pSecurity
     );
 
+BOOL DAPI CertHasPrivateKey(
+    __in PCCERT_CONTEXT pCertContext,
+    __out_opt DWORD* pdwKeySpec
+    );
+
+HRESULT DAPI CertInstallSingleCertificate(
+    __in HCERTSTORE hStore,
+    __in PCCERT_CONTEXT pCertContext,
+    __in LPCWSTR wzName
+    );
 #ifdef __cplusplus
 }
 #endif

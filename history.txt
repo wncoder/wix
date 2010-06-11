@@ -1069,3 +1069,40 @@ WixBuild: Version 3.5.1721.0
 
 BobArnso: sfbug:2796124 - Update to the latest shipped darice.cub and 
           mergemod.dll.
+
+WixBuild: Version 3.5.1728.0
+
+AaronSte: SFBUG:2897016 - Remove VS 2008 SP level detection properties due
+          to unreliability of the registry values used for detection.
+
+BobArnso: Serialize validation to prevent ICE code from failing on multiproc/
+          multicore machines.
+
+APaloma: Fixed wix targets defining erroneous debug symbols for the
+         DebugSymbolsProjectOutputGroup target.
+
+BobArnso: sfbug:2971503 - Clarify that WixToolPath must end in a backslash.
+
+CAraman: Fix annotations.  Add localization annotations for WixUI_en-us.wxl.
+
+EricStJ: SFBUG:2993316 IIS7 CA does not associate ssl certificate with website
+         IIS Decompiler does not correctly handle Certificate table.
+
+EricStJ: SFBUG:3007484 WebAddress/@IP now supports Modularization
+
+WixBuild: Version 3.5.1804.0
+
+HeathS: SFBUG:2990231 - Build ProjectReferences by default.
+
+BobArnso: Update DTF API help build to use latest Sandcastle (v2.4.10520 from 
+          http://sandcastle.codeplex.com/releases/view/13873) and Sandcastle 
+          Help File Builder (Sandcastle Help File Builder to v1.8.0.3 from 
+          http://shfb.codeplex.com/releases/view/29710).
+
+BobArnso: SFBug:3013077 - Update "Building WiX" topic for above Sandcastle
+          (and other) changes.
+
+EricStJ: SFBUG:2860926 - Support PFX with multiple Certs.
+
+WixBuild: Version 3.5.1811.0
+

@@ -130,6 +130,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <OutputPath Condition=" '$(OutputPath)' != '' and !HasTrailingSlash('$(OutputPath)') ">$(OutputPath)\</OutputPath>
     <_OriginalOutputType>$(OutputType)</_OriginalOutputType>
     <OutputType Condition=" '$(OutputType)' == '' ">Package</OutputType>
+    <BuildProjectReferences Condition="'$(BuildProjectReferences)' == ''">true</BuildProjectReferences>
   </PropertyGroup>
 
   <!-- Properties for the intermediate object output -->
@@ -930,9 +931,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     -->
     <MSBuild
       Projects="@(_MSBuildProjectReferenceExistent)"
-      Targets="GetTargetPath"
+      Targets="%(_MSBuildProjectReferenceExistent.Targets);GetTargetPath"
       Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
-      Condition="('$(BuildingSolutionFile)' == 'true' or '$(BuildingInsideVisualStudio)' == 'true') and '@(_MSBuildProjectReferenceExistent)' != '' "
+      Condition="('$(BuildingSolutionFile)' == 'true' or '$(BuildingInsideVisualStudio)' == 'true' or '$(BuildProjectReferences)' != 'true') and '@(_MSBuildProjectReferenceExistent)' != '' "
       ContinueOnError="!$(BuildingProject)">
 
       <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
@@ -949,7 +950,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <MSBuild
       Projects="@(_MSBuildProjectReferenceExistent)"
       Targets="$(ProjectReferenceBuildTargets)"
-      Condition=" '$(BuildingInsideVisualStudio)' != 'true' and '$(BuildingSolutionFile)' != 'true' and '@(_MSBuildProjectReferenceExistent)' != '' ">
+      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
+      Condition=" '$(BuildingInsideVisualStudio)' != 'true' and '$(BuildingSolutionFile)' != 'true' and '$(BuildProjectReferences)' == 'true' and '@(_MSBuildProjectReferenceExistent)' != '' ">
 
       <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
       <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
@@ -2509,12 +2511,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <PropertyGroup>
     <DebugSymbolsProjectOutputGroupDependsOn>AssignCultures</DebugSymbolsProjectOutputGroupDependsOn>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(_DebugSymbolsProduced)' != 'false' ">
-    <DebugSymbolsProjectOutputGroupOutput Include="@(_IntermediateOutputPathItem->'%(FullPath)$(TargetName).pdb')">
-      <FinalOutputPath>@(_OutputPathItem->'%(FullPath)$(TargetName).pdb')</FinalOutputPath>
-      <TargetPath>$(TargetName).pdb</TargetPath>
-    </DebugSymbolsProjectOutputGroupOutput>
-  </ItemGroup>
   <Target
     Name="DebugSymbolsProjectOutputGroup"
     Outputs="@(DebugSymbolsProjectOutputGroupOutput)"
@@ -2522,7 +2518,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <!-- Include build output pdb(s).  Different than predefined itemgroup since AssignCultures target may change -->
     <CreateItem
-      Include="$(TargetPdbPath)">
+      Include="$(TargetPdbPath)"
+      Condition=" '$(SuppressPdbOutput)' != 'true' ">
       <Output TaskParameter="Include" ItemName="DebugSymbolsProjectOutputGroupOutput" />
     </CreateItem>
   </Target>

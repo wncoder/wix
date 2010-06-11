@@ -27,6 +27,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
+    using System.Threading;
     using Microsoft.Tools.WindowsInstallerXml.Msi;
     using Microsoft.Tools.WindowsInstallerXml.Msi.Interop;
 
@@ -189,8 +190,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             FileAttributes attributes = File.GetAttributes(tempDatabaseFile);
             File.SetAttributes(tempDatabaseFile, attributes & ~FileAttributes.ReadOnly);
 
+            Mutex mutex = new Mutex(false, "WixValidator");
             try
             {
+                if (!mutex.WaitOne(0))
+                {
+                    this.OnMessage(WixVerboses.ValidationSerialized());
+                    mutex.WaitOne();
+                }
+
                 using (Database database = new Database(tempDatabaseFile, OpenDatabase.Direct))
                 {
                     bool propertyTableExists = database.TableExists("Property");
@@ -396,6 +404,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.validationSessionComplete = false; // no validation session at this point, so reset the completion flag.
 
+                mutex.ReleaseMutex();
                 this.cubeFiles.Clear();
                 this.extension.FinalizeValidator();
             }

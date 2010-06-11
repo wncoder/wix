@@ -636,14 +636,6 @@
         </Property>
     </Fragment>
 
-    <!-- Indicates the service pack level for Visual Studio 2008 standard edition -->
-    <!-- and higher.                                                              -->
-    <Fragment>
-        <Property Id="VS90_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVS90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\9.0" Name="SP" Type="raw" />
-        </Property>
-    </Fragment>
-
     <!-- Indicates whether the Visual Studio 2008 SP1 version of devenv.exe is    -->
     <!-- installed on the system.                                                 -->
     <Fragment>
@@ -653,13 +645,6 @@
                     <FileSearch Id="VS90DevEnvFileVersionSearch" Name="devenv.exe" MinVersion="9.0.30729.0"/>
                 </DirectorySearch>      
             </RegistrySearch>      
-        </Property>
-    </Fragment>
-
-    <!-- Indicates the service pack level for Visual Basic 2008 Express Edition.  -->
-    <Fragment>
-        <Property Id="VB90EXPRESS_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVBExp90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VB\Servicing\9.0" Name="SP" Type="raw" />
         </Property>
     </Fragment>
 
@@ -673,13 +658,6 @@
         </Property>
     </Fragment>
 
-    <!-- Indicates the service pack level for Visual C++ 2008 Express Edition.    -->
-    <Fragment>
-        <Property Id="VC90EXPRESS_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVCExp90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VC\Servicing\9.0" Name="SP" Type="raw" />
-        </Property>
-    </Fragment>
-
     <!-- Indicates whether the Visual Studio 2008 SP1 version of vcexpress.exe is -->
     <!-- installed on the system.                                                 -->
     <Fragment>
@@ -687,13 +665,6 @@
             <ComponentSearch Id="SearchForVcExpressIde90Component" Guid="147EB31D-8042-4E8F-A3EC-D32C04ED652A" Type="file">
                 <FileSearch Id="VC90ExpressFileVersionSearch" Name="vcexpress.exe" MinVersion="9.0.30729.0"/>
             </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Indicates the service pack level for Visual C# 2008 Express Edition.     -->
-    <Fragment>
-        <Property Id="VCSHARP90EXPRESS_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVCSharpExp90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VCS\Servicing\9.0" Name="SP" Type="raw" />
         </Property>
     </Fragment>
 
@@ -707,14 +678,6 @@
         </Property>
     </Fragment>
 
-    <!-- Indicates the service pack level for Visual Web Developer 2008 Express   -->
-    <!-- Edition.                                                                 -->
-    <Fragment>
-        <Property Id="VWD90EXPRESS_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVWDExp90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VNS\Servicing\9.0" Name="SP" Type="raw" />
-        </Property>
-    </Fragment>
-
     <!-- Indicates whether the Visual Studio 2008 SP1 version of vcsexpress.exe is -->
     <!-- installed on the system.                                                  -->
     <Fragment>
@@ -722,13 +685,6 @@
             <ComponentSearch Id="SearchForVwdExpressIde90Component" Guid="C7F516CB-CB5C-41B7-9CB4-33927C4DD206" Type="file">
                 <FileSearch Id="VWD90ExpressFileVersionSearch" Name="vwdexpress.exe" MinVersion="9.0.30729.0"/>
             </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Indicates the service pack level for Visual Studio 2008 Team Foundation. -->
-    <Fragment>
-        <Property Id="VSTF90_SP_LEVEL" Secure="yes">
-            <RegistrySearch Id="SearchForVSTF90SP1" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VSTF\Servicing\9.0" Name="SP" Type="raw" />
         </Property>
     </Fragment>
 

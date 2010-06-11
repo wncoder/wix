@@ -528,6 +528,7 @@ static HRESULT ScaWebWrite7(
     UINT ui = 0;
     WCHAR wzIP[64];
     WCHAR wzBinding[1024];
+    WCHAR wzAppPoolName[MAX_PATH];
 
     //create a site
     hr = ScaWriteConfigID(IIS_SITE);
@@ -561,7 +562,7 @@ static HRESULT ScaWebWrite7(
 
     hr = ScaWriteConfigInteger(psw->iConnectionTimeout);            //limits/connectionTimeout
     ExitOnFailure(hr, "Failed write site timeout");
-    
+
     //create default application
     hr = ScaWriteConfigID(IIS_APPLICATION);
     ExitOnFailure(hr, "Failed write app ID");
@@ -570,10 +571,17 @@ static HRESULT ScaWebWrite7(
     hr = ScaWriteConfigString(psw->wzDescription);      //site name key
     ExitOnFailure(hr, "Failed write app desc");
     hr = ScaWriteConfigString(L"/");                    //  App Path (default)
-    ExitOnFailure(hr, "Failed write app def path /"); 
-    hr = ScaWriteConfigString(psw->fHasApplication ? psw->swapp.wzAppPool : L"");
+    ExitOnFailure(hr, "Failed write app def path /");
+
+    if (psw->fHasApplication)
+    {
+        hr = ScaFindAppPool7(psw->swapp.wzAppPool, wzAppPoolName, countof(wzAppPoolName), psapList);
+        ExitOnFailure(hr, "Failed to read app pool from application");
+    }
+
+    hr = ScaWriteConfigString(psw->fHasApplication ? wzAppPoolName : L"");
     ExitOnFailure(hr, "Failed write app appPool");
-    
+
     //create vdir for default application
     hr = ScaWriteConfigID(IIS_VDIR);
     ExitOnFailure(hr, "Failed write vdir ID");
@@ -684,7 +692,7 @@ static HRESULT ScaWebWrite7(
     // write the SSL certificate information
     if (psw->pswscList)
     {
-        hr = ScaSslCertificateWrite7(psw->wzWebBase, psw->pswscList);
+        hr = ScaSslCertificateWrite7(psw->wzDescription, psw->pswscList);
         ExitOnFailure1(hr, "Failed to write SSL certificates for Web site: %S", psw->wzKey);
     }
 

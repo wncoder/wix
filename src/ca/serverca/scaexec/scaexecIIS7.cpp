@@ -117,6 +117,8 @@
 #define IIS_CONFIG_LIMITS                   L"limits"
 #define IIS_CONFIG_ALLOWDEBUG               L"appAllowDebugging"
 #define IIS_CONFIG_ALLOWCLIENTDEBUG         L"appAllowClientDebug"
+#define IIS_CONFIG_CERTIFICATEHASH          L"certificateHash"
+#define IIS_CONFIG_CERTIFICATESTORENAME     L"certificateStoreName"
 
 
 //local CAData action functions
@@ -189,6 +191,10 @@ HRESULT IIS7AspProperty(
     __inout  LPWSTR *ppwzCustomActionData,
     __in     IAppHostWritableAdminManager *pAdminMgr
     );
+HRESULT IIS7SslBinding(
+    __inout  LPWSTR *ppwzCustomActionData,
+    __in     IAppHostWritableAdminManager *pAdminMgr
+    );
 //local helper functions
 static HRESULT PutPropertyValue(IAppHostElement *pElement,LPCWSTR wszPropName, VARIANT vtPut);
 static HRESULT PutPropertyValue(IAppHostElement *pElement,LPCWSTR wszPropName, DWORD dWord);
@@ -208,6 +214,9 @@ static HRESULT DeleteVdir( IAppHostElement *pAppElement, LPCWSTR pwzVDirPath );
 
 static HRESULT CreateBinding( IAppHostElement *pSiteElem, LPCWSTR pwzProtocol, LPCWSTR pwzInfo );
 static HRESULT DeleteBinding( IAppHostElement *pSiteElem, LPCWSTR pwzProtocol, LPCWSTR pwzInfo );
+
+static HRESULT CreateSslBinding( IAppHostElement *pSiteElem, LPCWSTR pwzStoreName, LPCWSTR pwzEncodedCertificateHash );
+static HRESULT DeleteSslBinding( IAppHostElement *pSiteElem, LPCWSTR pwzStoreName, LPCWSTR pwzEncodedCertificateHash );
 
 static HRESULT CreateSite( IAppHostElementCollection *pAdminMgr, LPCWSTR swSiteName, IAppHostElement **pSiteElement);
 
@@ -289,6 +298,27 @@ public:
     }
 };
 
+static BOOL IsMatchingAppHostMethod( __in IAppHostMethod *pMethod,
+                                      __in LPCWSTR pwzMethodName)
+{
+    HRESULT hr = S_OK;
+    BOOL fResult = FALSE;
+    BSTR bstrName = NULL;
+    
+    hr = pMethod->get_Name(&bstrName);
+    ExitOnFailure(hr, "Failed to get name of element");
+    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pwzMethodName, -1, bstrName, -1))
+    {
+        fResult = TRUE;
+    }
+LExit:
+    if (bstrName)
+    {
+        ::SysFreeString(bstrName);
+    }
+
+    return fResult;
+}
 static BOOL IsMatchingAppHostElement( __in IAppHostElement *pElement,
                                       __in LPCWSTR pwzElementName,
                                       __in LPCWSTR pwzAttributeName,
@@ -333,6 +363,60 @@ LExit:
 
     ReleaseNullObject(pProperty);
     return fResult;
+}
+
+static HRESULT FindAppHostMethod( __in IAppHostMethodCollection *pCollection,
+                                   __in LPCWSTR pwzMethodName,
+                                   __out IAppHostMethod** ppMethod,
+                                   __out DWORD* pdwIndex)
+{  
+    HRESULT hr = S_OK;
+    IAppHostMethod *pMethod = NULL;
+    DWORD dwMethods = 0;
+
+    VARIANT vtIndex;
+    VariantInit(&vtIndex);
+    
+    if (NULL != ppMethod)
+    {
+        *ppMethod = NULL;
+    }
+    if (NULL != pdwIndex)
+    {
+        *pdwIndex = MAXDWORD;
+    }
+
+    hr = pCollection->get_Count(&dwMethods);
+    ExitOnFailure(hr, "Failed get application IAppHostMethodCollection count");
+    
+    vtIndex.vt = VT_UI4;
+    for( DWORD i = 0; i < dwMethods; i++ )
+    {
+        vtIndex.ulVal = i;
+        hr = pCollection->get_Item(vtIndex , &pMethod);
+        ExitOnFailure(hr, "Failed get IAppHostMethod element");
+        
+        if (IsMatchingAppHostMethod(pMethod, pwzMethodName))
+        {
+            if (NULL != ppMethod)
+            {
+                *ppMethod = pMethod;
+                pMethod = NULL;
+            }
+            if (NULL != pdwIndex)
+            {
+                *pdwIndex = i;
+            }
+            break;
+        }
+
+        ReleaseNullObject(pMethod);
+    }
+LExit:
+    ReleaseNullObject(pMethod);
+    VariantClear(&vtIndex);
+
+    return hr;
 }
 
 static HRESULT FindAppHostElement( __in IAppHostElementCollection *pCollection,
@@ -546,6 +630,12 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
                 ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
                 break;
             }
+        case IIS_SSL_BINDING:
+#pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
+                hr = IIS7SslBinding(&pwz, pAdminMgr);
+                ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
+                break;
+
         default:
             ExitOnFailure1(hr = E_UNEXPECTED, "IIS7ConfigChanges: Unexpected IIS Config action specified: %d", iAction);
             break;
@@ -2907,6 +2997,82 @@ LExit:
 }
 
 //-------------------------------------------------------------------------------------------------
+// IIS7SslBinding
+//  ProcessesVdir Properties  CA Data
+//
+//
+//-------------------------------------------------------------------------------------------------
+HRESULT IIS7SslBinding(
+    __inout  LPWSTR *ppwzCustomActionData,
+    __in     IAppHostWritableAdminManager *pAdminMgr
+    )
+{
+    HRESULT hr = S_OK;
+
+    int iAction = -1;
+    int iData   =  0;
+    BOOL fSiteFound = FALSE;
+    
+    LPWSTR pwzSiteName = NULL;
+    LPWSTR pwzStoreName = NULL;
+    LPWSTR pwzEncodedCertificateHash = NULL;
+
+    IAppHostElement *pSiteElem = NULL;
+
+    // Get Application action
+    hr = WcaReadIntegerFromCaData( ppwzCustomActionData, &iAction);
+    ExitOnFailure(hr, "Failed to read binding action");
+
+    //get site key name
+    hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzSiteName);
+    ExitOnFailure(hr, "Failed to read binding site name key");
+
+    //get binding protocol
+    hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzStoreName);
+    ExitOnFailure(hr, "Failed to read binding protocol");
+
+    //get binding info
+    hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzEncodedCertificateHash);
+    ExitOnFailure(hr, "Failed to read binding info");
+
+    //Get site if it exists
+    hr = GetSiteElement(pAdminMgr, pwzSiteName, &pSiteElem, &fSiteFound);
+    ExitOnFailure(hr, "Failed to read sites from config");
+
+    if (IIS_CREATE == iAction)
+    {
+        if( fSiteFound )
+        {
+            //add SSL cert to binding
+            hr = CreateSslBinding(pSiteElem, pwzStoreName, pwzEncodedCertificateHash);
+            ExitOnFailure(hr, "Failed to create site binding");
+        }
+        else
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+            ExitOnFailure(hr, "Site not found for create binding");
+        }
+    }
+    else if(IIS_DELETE == iAction)
+    {
+        if( fSiteFound )
+        {
+            //delete binding
+            hr = DeleteSslBinding(pSiteElem, pwzStoreName, pwzEncodedCertificateHash);
+            ExitOnFailure(hr, "Failed to delete binding");
+        }
+    }
+
+ LExit:
+    ReleaseStr(pwzSiteName);
+    ReleaseStr(pwzStoreName);
+    ReleaseStr(pwzEncodedCertificateHash);
+    ReleaseNullObject(pSiteElem);
+
+    return hr;
+}
+
+//-------------------------------------------------------------------------------------------------
 // Helper Functions
 //
 //
@@ -3299,10 +3465,120 @@ static HRESULT DeleteBinding( IAppHostElement *pSiteElem,
 {
     HRESULT hr = S_OK;
     //
-    //this is not needed by current IIS schema for WiX Extension
+    //this isn't supported right now, we should support this for the SiteSearch scenario
     return hr;
 }
 
+static HRESULT AddSslCertificateToBinding(IAppHostElement *pBindingElement, LPCWSTR pwzStoreName, LPCWSTR pwzEncodedCertificateHash )
+{
+    HRESULT hr = S_OK;
+    IAppHostMethodCollection *pAppHostMethodCollection = NULL;
+    IAppHostMethod *pAddSslMethod = NULL;
+    IAppHostMethodInstance *pAddSslMethodInstance = NULL;
+    IAppHostElement *pAddSslInput = NULL;
+
+    hr = pBindingElement->get_Methods(&pAppHostMethodCollection);
+    ExitOnFailure(hr, "failed to get binding method collection");
+
+    hr = FindAppHostMethod(pAppHostMethodCollection, L"AddSslCertificate", &pAddSslMethod, NULL);
+    if (FAILED(hr))
+    {
+        WcaLog(LOGMSG_STANDARD, "The AddSslCertificate method is not supported by the binding element, SSL certificate will not be associated with the website");
+        ExitFunction();
+    }
+
+    pAddSslMethod->CreateInstance(&pAddSslMethodInstance);
+    ExitOnFailure(hr, "failed to create an instance of AddSslCertificate method");
+
+    pAddSslMethodInstance->get_Input(&pAddSslInput);
+    ExitOnFailure(hr, "failed to get input element of AddSslCertificate method");
+    
+    PutPropertyValue(pAddSslInput, IIS_CONFIG_CERTIFICATESTORENAME, pwzStoreName);
+    ExitOnFailure(hr, "failed to set certificateStoreName input parameter of AddSslCertificate method");
+
+    PutPropertyValue(pAddSslInput, IIS_CONFIG_CERTIFICATEHASH, pwzEncodedCertificateHash);
+    ExitOnFailure(hr, "failed to set certificateHash input parameter of AddSslCertificate method");
+
+    hr = pAddSslMethodInstance->Execute();
+    ExitOnFailure(hr, "failed to execute AddSslCertificate method");
+LExit:
+    ReleaseNullObject(pAppHostMethodCollection);
+    ReleaseNullObject(pAddSslMethod);
+    ReleaseNullObject(pAddSslMethodInstance);
+    ReleaseNullObject(pAddSslInput);
+    return hr;
+}
+
+
+static HRESULT CreateSslBinding( IAppHostElement *pSiteElem, LPCWSTR pwzStoreName, LPCWSTR pwzEncodedCertificateHash )
+{
+    HRESULT hr = S_OK;
+    DWORD dwElements = 0;
+    IAppHostChildElementCollection *pChildElems = NULL;
+    IAppHostElement *pBindingsElement = NULL;
+    IAppHostElementCollection *pBindingsCollection = NULL;
+    IAppHostElement *pBindingElement = NULL;
+
+    VARIANT vtProp;
+    VARIANT vtIndex;
+    VariantInit(&vtIndex);
+    VariantInit(&vtProp);
+
+    hr = pSiteElem->get_ChildElements(&pChildElems);
+    ExitOnFailure(hr, "Failed get site child elements collection");
+
+    vtProp.vt = VT_BSTR;
+    vtProp.bstrVal = ::SysAllocString(IIS_CONFIG_BINDINGS);
+    hr = pChildElems->get_Item(vtProp, &pBindingsElement);
+    ExitOnFailure(hr, "Failed get bindings element");
+    VariantClear(&vtProp);
+
+    hr = pBindingsElement->get_Collection(&pBindingsCollection);
+    ExitOnFailure(hr, "Failed get bindings collection");
+
+    // Our current IISWebSiteCertificates schema does not allow specification of the website binding
+    // to associate the certificate with.  For now just associate it with all secure bindings.
+
+    // Loop over all bindings    
+    hr = pBindingsCollection->get_Count(&dwElements);
+    ExitOnFailure(hr, "Failed get site bindings collection count");
+
+    vtIndex.vt = VT_UI4;
+    for( DWORD i = 0; i < dwElements; i++ )
+    {
+        vtIndex.ulVal = i;
+        hr = pBindingsCollection->get_Item(vtIndex , &pBindingElement);
+        ExitOnFailure(hr, "Failed get binding element");
+
+        if (IsMatchingAppHostElement(pBindingElement, IIS_CONFIG_BINDING, IIS_CONFIG_PROTOCOL, L"https"))
+        {
+            //Secure binding
+            hr = AddSslCertificateToBinding(pBindingElement, pwzStoreName, pwzEncodedCertificateHash );
+            ExitOnFailure(hr, "Failed to associate ssl certificate with binding");
+        }
+
+        ReleaseNullObject(pBindingElement);
+    }
+
+
+LExit:
+    VariantClear(&vtProp);
+    VariantClear(&vtIndex);
+
+    ReleaseNullObject(pChildElems);
+    ReleaseNullObject(pBindingsElement);
+    ReleaseNullObject(pBindingsCollection);
+    ReleaseNullObject(pBindingElement);
+
+    return hr;
+}
+static HRESULT DeleteSslBinding( IAppHostElement *pSiteElem, LPCWSTR pwzStoreName, LPCWSTR pwzEncodedCertificateHash )
+{
+    HRESULT hr = S_OK;
+    //
+    //this isn't supported right now, we should support this for the SiteSearch scenario
+    return hr;
+}
 static HRESULT DeleteAppPool( IAppHostWritableAdminManager *pAdminMgr,
                             LPCWSTR swAppPoolName)
 {

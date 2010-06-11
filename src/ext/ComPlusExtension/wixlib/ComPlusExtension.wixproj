@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="ComPlusExtension.wxs" />
     <EmbeddedResource Include="en-us.wxl" />
+    <EmbeddedResource Include="es-es.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
 </Project>

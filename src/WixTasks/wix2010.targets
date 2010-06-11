@@ -152,6 +152,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <Platform Condition=" '$(Platform)'=='' ">AnyCPU</Platform>
     <_OriginalOutputType>$(OutputType)</_OriginalOutputType>
     <OutputType Condition=" '$(OutputType)' == '' ">Package</OutputType>
+    <BuildProjectReferences Condition="'$(BuildProjectReferences)' == ''">true</BuildProjectReferences>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(OutputPath)' == '' ">
@@ -2554,12 +2555,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <PropertyGroup>
     <DebugSymbolsProjectOutputGroupDependsOn>AssignCultures</DebugSymbolsProjectOutputGroupDependsOn>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(_DebugSymbolsProduced)' != 'false' ">
-    <DebugSymbolsProjectOutputGroupOutput Include="@(_IntermediateOutputPathItem->'%(FullPath)$(TargetName).pdb')">
-      <FinalOutputPath>@(_OutputPathItem->'%(FullPath)$(TargetName).pdb')</FinalOutputPath>
-      <TargetPath>$(TargetName).pdb</TargetPath>
-    </DebugSymbolsProjectOutputGroupOutput>
-  </ItemGroup>
   <Target
     Name="DebugSymbolsProjectOutputGroup"
     Outputs="@(DebugSymbolsProjectOutputGroupOutput)"
@@ -2567,7 +2562,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <!-- Include build output pdb(s).  Different than predefined itemgroup since AssignCultures target may change -->
     <CreateItem
-      Include="$(TargetPdbPath)">
+      Include="$(TargetPdbPath)"
+      Condition=" '$(SuppressPdbOutput)' != 'true' ">
       <Output TaskParameter="Include" ItemName="DebugSymbolsProjectOutputGroupOutput" />
     </CreateItem>
   </Target>

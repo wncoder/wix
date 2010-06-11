@@ -950,3 +950,53 @@ extern "C" HRESULT DAPI AclFreeSecurityDescriptor(
     MemFree(psd);
     return hr;
 }
+
+
+/********************************************************************
+AclAddAdminToSecurityDescriptor - Adds the Administrators group to a security descriptor
+
+********************************************************************/
+extern "C" HRESULT DAPI AclAddAdminToSecurityDescriptor(
+    __in SECURITY_DESCRIPTOR* pSecurity,
+    __out SECURITY_DESCRIPTOR** ppSecurityNew
+    )
+{
+    HRESULT hr = S_OK;
+    PACL pAcl = NULL;
+    PACL pAclNew = NULL;
+    BOOL fValid, fDaclDefaulted;
+    ACL_ACE ace[1];
+    SECURITY_DESCRIPTOR* pSecurityNew;
+    
+    if (!::GetSecurityDescriptorDacl(pSecurity, &fValid, &pAcl, &fDaclDefaulted) || !fValid)
+    {
+        ExitOnLastError(hr, "Failed to get acl from security descriptor");
+    }
+    
+    hr = AclGetWellKnownSid(WinBuiltinAdministratorsSid, &ace[0].psid);
+    ExitOnFailure(hr, "failed to get sid for Administrators group");
+
+    ace[0].dwFlags = NO_PROPAGATE_INHERIT_ACE;
+    ace[0].dwMask = GENERIC_ALL;
+
+    hr = AclAddToDacl(pAcl, NULL, 0, ace, 1, &pAclNew);
+    ExitOnFailure(hr, "failed to add Administrators ACE to ACL");
+
+    hr = AclCreateSecurityDescriptorFromDacl(pAclNew, &pSecurityNew);
+    ExitOnLastError(hr, "Failed to create new security descriptor");
+
+    // The DACL is referenced by, not copied into, the security descriptor.  Make sure not to free it.
+    pAclNew = NULL;
+
+    *ppSecurityNew = pSecurityNew;
+LExit:
+    if (pAclNew)
+    {
+        AclFreeDacl(pAclNew);
+    }
+    if (ace[0].psid)
+    {
+        AclFreeSid(ace[0].psid);
+    }
+    return hr;
+}

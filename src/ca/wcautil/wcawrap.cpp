@@ -830,7 +830,7 @@ HideNulls() - internal helper function to escape [~] in formatted strings
 
 ********************************************************************/
 static void HideNulls(
-    __in LPWSTR wzData
+    __inout_z LPWSTR wzData
     )
 {
     LPWSTR pwz = wzData;
@@ -855,7 +855,7 @@ RevealNulls() - internal helper function to unescape !$! in formatted strings
 
 ********************************************************************/
 static void RevealNulls(
-    __in LPWSTR wzData
+    __inout_z LPWSTR wzData
     )
 {
     LPWSTR pwz = wzData;

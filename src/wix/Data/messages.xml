@@ -3514,5 +3514,10 @@
                 <Parameter Type="System.String" Name="threads" />
             </Instance>
         </Message>
+        <Message Id="ValidationSerialized" Number="9031" SourceLineNumbers="no">
+            <Instance>
+                Multiple packages cannot reliably be validated simultaneously. This validation will resume when the other package being validated has completed.
+            </Instance>
+        </Message>
     </Class>
 </Messages>

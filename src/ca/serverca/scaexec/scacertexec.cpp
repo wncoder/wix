@@ -33,7 +33,7 @@ static HRESULT ReadCertificateFile(
     __out DWORD* pcbData
     );
 
-static HRESULT InstallCertificate(
+static HRESULT InstallCertificatePackage(
     __in HCERTSTORE hStore,
     __in BOOL fUserCertificateStore,
     __in LPCWSTR wzName,
@@ -42,7 +42,7 @@ static HRESULT InstallCertificate(
     __in_opt LPCWSTR wzPFXPassword
     );
 
-static HRESULT UninstallCertificate(
+static HRESULT UninstallCertificatePackage(
     __in HCERTSTORE hStore,
     __in BOOL fUserCertificateStore,
     __in LPCWSTR wzName
@@ -196,14 +196,14 @@ static HRESULT ExecuteCertificateOperation(
 
     if (SCA_ACTION_INSTALL == saAction) // install operations need more data
     {
-        hr = InstallCertificate(hCertStore, fUserStoreLocation, pwzName, pbData, cbData, pwzPFXPassword);
+        hr = InstallCertificatePackage(hCertStore, fUserStoreLocation, pwzName, pbData, cbData, pwzPFXPassword);
         ExitOnFailure(hr, "Failed to install certificate.");
     }
     else
     {
         Assert(SCA_ACTION_UNINSTALL == saAction);
 
-        hr = UninstallCertificate(hCertStore, fUserStoreLocation, pwzName);
+        hr = UninstallCertificatePackage(hCertStore, fUserStoreLocation, pwzName);
         ExitOnFailure(hr, "Failed to uninstall certificate.");
     }
 
@@ -227,52 +227,8 @@ LExit:
     return hr;
 }
 
-static HRESULT AddAdminToSecurityDescriptor(
-    __in SECURITY_DESCRIPTOR* pSecurity,
-    __out SECURITY_DESCRIPTOR** ppSecurityNew
-    )
-{
-    HRESULT hr = S_OK;
-    PACL pAcl = NULL;
-    PACL pAclNew = NULL;
-    BOOL fValid, fDaclDefaulted;
-    ACL_ACE ace[1];
-    SECURITY_DESCRIPTOR* pSecurityNew;
-    
-    if (!::GetSecurityDescriptorDacl(pSecurity, &fValid, &pAcl, &fDaclDefaulted) || !fValid)
-    {
-        ExitOnLastError(hr, "Failed to get acl from security descriptor");
-    }
-    
-    hr = AclGetWellKnownSid(WinBuiltinAdministratorsSid, &ace[0].psid);
-    ExitOnFailure(hr, "failed to get sid for Administrators group");
 
-    ace[0].dwFlags = NO_PROPAGATE_INHERIT_ACE;
-    ace[0].dwMask = GENERIC_ALL;
-
-    hr = AclAddToDacl(pAcl, NULL, 0, ace, 1, &pAclNew);
-    ExitOnFailure(hr, "failed to add Administrators ACE to ACL");
-
-    hr = AclCreateSecurityDescriptorFromDacl(pAclNew, &pSecurityNew);
-    ExitOnLastError(hr, "Failed to create new security descriptor");
-
-    // The DACL is referenced by, not copied into, the security descriptor.  Make sure not to free it.
-    pAclNew = NULL;
-
-    *ppSecurityNew = pSecurityNew;
-LExit:
-    if (pAclNew)
-    {
-        AclFreeDacl(pAclNew);
-    }
-    if (ace[0].psid)
-    {
-        AclFreeSid(ace[0].psid);
-    }
-    return hr;
-}
-
-static HRESULT InstallCertificate(
+static HRESULT InstallCertificatePackage(
     __in HCERTSTORE hStore,
     __in BOOL fUserCertificateStore,
     __in LPCWSTR wzName,
@@ -290,14 +246,8 @@ static HRESULT InstallCertificate(
     DWORD dwEncodingType;
     DWORD dwContentType;
     DWORD dwFormatType;
-    DWORD dwKeySpec = 0;
-    HCRYPTPROV hCsp = NULL;
-    LPWSTR pwszTmpContainer = NULL;
-    LPWSTR pwszProviderName = NULL;
-    DWORD dwProviderType = 0;
-    BOOL fAcquired = TRUE;
-    SECURITY_DESCRIPTOR* pSecurity = NULL;
-    SECURITY_DESCRIPTOR* pSecurityNew = NULL;
+    LPWSTR pwzUniqueName = NULL;
+    int iUniqueId = 0;
 
     // Figure out what type of blob (certificate or PFX) we're dealing with here.
     blob.pbData = rgbData;
@@ -307,6 +257,9 @@ static HRESULT InstallCertificate(
     {
         ExitWithLastError1(hr, "Failed to parse the certificate blob: %S", wzName);
     }
+
+    hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, iUniqueId++);
+    ExitOnFailure(hr, "Failed to format unique name");
 
     if (!pCertContext)
     {
@@ -323,28 +276,18 @@ static HRESULT InstallCertificate(
             }
             ExitOnNullWithLastError(hPfxCertStore, hr, "Failed to open PFX file.");
 
-            // There should be at least one certificate in the PFX.
-            for(pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext); 
+            // Install all certificates in the PFX
+            for(pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext);
                 pCertContext;
                 pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext))
             {
-                HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hPrivateKey = NULL;
+                WcaLog(LOGMSG_STANDARD, "Adding certificate: %S", pwzUniqueName);
+                hr = CertInstallSingleCertificate(hStore, pCertContext, pwzUniqueName);
+                MessageExitOnFailure(hr, msierrCERTFailedAdd, "Failed to add certificate to the store.");
 
-                if (::CryptAcquireCertificatePrivateKey(
-                            pCertContext,
-                            CRYPT_ACQUIRE_SILENT_FLAG | CRYPT_ACQUIRE_CACHE_FLAG,
-                            0,      //pvReserved
-                            &hPrivateKey,
-                            &dwKeySpec,
-                            NULL
-                            ))
-                {
-                    // TODO: We should handle PFXs with multiple certs, we need to determine what is best to do here 
-                    //       rather than just breaking on the first cert
-                    break;
-                }
+                hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, iUniqueId++);
+                ExitOnFailure(hr, "Failed to format unique name");
             }
-            ExitOnNull(pCertContext, hr, CRYPT_E_NOT_FOUND, "Could not locate key pair from PFX file.");
         }
         else
         {
@@ -352,62 +295,18 @@ static HRESULT InstallCertificate(
             ExitOnFailure(hr, "Unexpected certificate type processed.");
         }
     }
-
-    // Update the friendly name of the certificate to be configured.
-    blob.pbData = (BYTE*)wzName;
-    blob.cbData = (lstrlenW(wzName) + 1) * sizeof(WCHAR); // including terminating null
-
-    if (!::CertSetCertificateContextProperty(pCertContext, CERT_FRIENDLY_NAME_PROP_ID, 0, &blob))
+    else
     {
-        ExitWithLastError1(hr, "Failed to set the friendly name of the certificate: %S", wzName);
-    }
-
-    WcaLog(LOGMSG_STANDARD, "Adding certificate: %S", wzName);
-    if (!::CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL))
-    {
-        MessageExitOnLastError(hr, msierrCERTFailedAdd, "Failed to add certificate to the store.");
-    }
-
-    if (AT_KEYEXCHANGE == dwKeySpec || AT_SIGNATURE == dwKeySpec)
-    {
-        // We added a CSP key
-        hr = GetCryptProvFromCert(NULL, pCertContext, &hCsp, &dwKeySpec, &fAcquired, &pwszTmpContainer, &pwszProviderName, &dwProviderType);
-        ExitOnFailure(hr, "Failed to get handle to CSP");
-        
-        hr = GetProvSecurityDesc(hCsp, &pSecurity);
-        ExitOnFailure(hr, "Failed to get security descriptor of CSP");
-        
-        hr = AddAdminToSecurityDescriptor(pSecurity, &pSecurityNew);
-        ExitOnFailure(hr, "Failed to create new security descriptor");
-
-        hr = SetProvSecurityDesc(hCsp, pSecurityNew);
-        ExitOnFailure(hr, "Failed to set Admin ACL on CSP");
-    }
-
-    if (CERT_NCRYPT_KEY_SPEC == dwKeySpec)
-    {
-        // We added a CNG key
-        // TODO change ACL on CNG key
+        WcaLog(LOGMSG_STANDARD, "Adding certificate: %S", pwzUniqueName);
+        hr = CertInstallSingleCertificate(hStore, pCertContext, pwzUniqueName);
+        MessageExitOnFailure(hr, msierrCERTFailedAdd, "Failed to add certificate to the store.");
     }
 
     hr = WcaProgressMessage(COST_CERT_ADD, FALSE);
     ExitOnFailure(hr, "Failed to send install progress message.");
 
 LExit:
-    if (hCsp)
-    {
-        FreeCryptProvFromCert(fAcquired, hCsp, NULL, dwProviderType, NULL);
-    }
-
-    if (pSecurity)
-    {
-        MemFree(pSecurity);
-    }
-
-    if (pSecurityNew)
-    {
-        AclFreeSecurityDescriptor(pSecurityNew);
-    }
+    ReleaseStr(pwzUniqueName);
 
     if (pCertContext)
     {
@@ -424,7 +323,7 @@ LExit:
 }
 
 
-static HRESULT UninstallCertificate(
+static HRESULT UninstallCertificatePackage(
     __in HCERTSTORE hStore,
     __in BOOL fUserCertificateStore,
     __in LPCWSTR wzName
@@ -435,17 +334,24 @@ static HRESULT UninstallCertificate(
     PCCERT_CONTEXT pCertContext = NULL;
     CRYPT_KEY_PROV_INFO* pPrivateKeyInfo = NULL;
     DWORD cbPrivateKeyInfo = 0;
+    LPWSTR pwzUniquePrefix = NULL;
+    int ccUniquePrefix = 0;
 
-    WcaLog(LOGMSG_STANDARD, "Deleting certificate with friendly name: %S", wzName);
+    hr = StrAllocFormatted(&pwzUniquePrefix, L"%s_wixCert_", wzName);
+    ExitOnFailure(hr, "Failed to format unique name");
+    ccUniquePrefix = ::lstrlenW(pwzUniquePrefix);
 
-    // Loop through all certificates in the store, deleting the ones that match our friendly name.
+    WcaLog(LOGMSG_STANDARD, "Deleting certificate that begin with friendly name: %S", pwzUniquePrefix);
+
+    // Loop through all certificates in the store, deleting the ones that begin with our prefix.
     while (pCertContext = ::CertFindCertificateInStore(hStore, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, pCertContext))
     {
         WCHAR wzFriendlyName[256] = { 0 };
         DWORD cbFriendlyName = sizeof(wzFriendlyName);
 
         if (::CertGetCertificateContextProperty(pCertContext, CERT_FRIENDLY_NAME_PROP_ID, reinterpret_cast<BYTE*>(wzFriendlyName), &cbFriendlyName) &&
-            CSTR_EQUAL == ::CompareStringW(LOCALE_SYSTEM_DEFAULT, 0, wzName, -1, wzFriendlyName, -1))
+            lstrlenW(wzFriendlyName) >= ccUniquePrefix &&
+            CSTR_EQUAL == ::CompareStringW(LOCALE_SYSTEM_DEFAULT, 0, pwzUniquePrefix, ccUniquePrefix, wzFriendlyName, ccUniquePrefix))
         {
             PCCERT_CONTEXT pCertContextDelete = ::CertDuplicateCertificateContext(pCertContext); // duplicate the context so we can delete it with out disrupting the looping
             if(pCertContextDelete)
@@ -493,6 +399,7 @@ static HRESULT UninstallCertificate(
     ExitOnFailure(hr, "Failed to send uninstall progress message.");
 
 LExit:
+    ReleaseStr(pwzUniquePrefix);
     ReleaseMem(pPrivateKeyInfo);
     if(pCertContext)
     {

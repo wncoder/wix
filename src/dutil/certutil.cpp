@@ -79,9 +79,9 @@ extern "C" HRESULT DAPI GetCryptProvFromCert(
 
     if (!pGetCryptProvFromCert(hwnd,
                                pCert,
-                               phCryptProv, 
-                               pdwKeySpec, 
-                               pfDidCryptAcquire, 
+                               phCryptProv,
+                               pdwKeySpec,
+                               pfDidCryptAcquire,
                                ppwszTmpContainer,
                                ppwszProviderName,
                                pdwProviderType))
@@ -118,8 +118,8 @@ LExit:
 }
 
 extern "C" HRESULT DAPI GetProvSecurityDesc(
-    __in HCRYPTPROV hProv, 
-    __deref_out SECURITY_DESCRIPTOR** ppSecurity) 
+    __in HCRYPTPROV hProv,
+    __deref_out SECURITY_DESCRIPTOR** ppSecurity)
 {
     HRESULT hr = S_OK;
     ULONG ulSize = 0;
@@ -174,5 +174,102 @@ extern "C" HRESULT DAPI SetProvSecurityDesc(
         ExitWithLastError(hr, "Error setting security descriptor for CSP.");
     }
 LExit:
+    return hr;
+}
+
+extern "C" BOOL DAPI CertHasPrivateKey(
+    __in PCCERT_CONTEXT pCertContext,
+    __out_opt DWORD* pdwKeySpec)
+{
+    HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hPrivateKey = NULL;
+    DWORD dwKeySpec = 0;
+    // set CRYPT_ACQUIRE_CACHE_FLAG so that we don't have to release the private key handle
+    BOOL fResult = ::CryptAcquireCertificatePrivateKey(
+                            pCertContext,
+                            CRYPT_ACQUIRE_SILENT_FLAG | CRYPT_ACQUIRE_CACHE_FLAG,
+                            0,      //pvReserved
+                            &hPrivateKey,
+                            &dwKeySpec,
+                            NULL
+                            );
+    if (pdwKeySpec)
+    {
+        *pdwKeySpec = dwKeySpec;
+    }
+    return fResult;
+}
+
+
+extern "C" HRESULT DAPI CertInstallSingleCertificate(
+    __in HCERTSTORE hStore,
+    __in PCCERT_CONTEXT pCertContext,
+    __in LPCWSTR wzName
+    )
+{
+    HRESULT hr = S_OK;
+    CERT_BLOB blob = { };
+
+    DWORD dwKeySpec = 0;
+
+    HCRYPTPROV hCsp = NULL;
+    LPWSTR pwszTmpContainer = NULL;
+    LPWSTR pwszProviderName = NULL;
+    DWORD dwProviderType = 0;
+    BOOL fAcquired = TRUE;
+
+    SECURITY_DESCRIPTOR* pSecurity = NULL;
+    SECURITY_DESCRIPTOR* pSecurityNew = NULL;
+
+    // Update the friendly name of the certificate to be configured.
+    blob.pbData = (BYTE*)wzName;
+    blob.cbData = (lstrlenW(wzName) + 1) * sizeof(WCHAR); // including terminating null
+
+    if (!::CertSetCertificateContextProperty(pCertContext, CERT_FRIENDLY_NAME_PROP_ID, 0, &blob))
+    {
+        ExitWithLastError1(hr, "Failed to set the friendly name of the certificate: %S", wzName);
+    }
+
+    if (!::CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL))
+    {
+        ExitWithLastError(hr, "Failed to add certificate to the store.");
+    }
+
+    // if the certificate has a private key, grant Administrators access
+    if (CertHasPrivateKey(pCertContext, &dwKeySpec))
+    {
+        if (AT_KEYEXCHANGE == dwKeySpec || AT_SIGNATURE == dwKeySpec)
+        {
+            // We added a CSP key
+            hr = GetCryptProvFromCert(NULL, pCertContext, &hCsp, &dwKeySpec, &fAcquired, &pwszTmpContainer, &pwszProviderName, &dwProviderType);
+            ExitOnFailure(hr, "Failed to get handle to CSP");
+
+            hr = GetProvSecurityDesc(hCsp, &pSecurity);
+            ExitOnFailure(hr, "Failed to get security descriptor of CSP");
+
+            hr = AclAddAdminToSecurityDescriptor(pSecurity, &pSecurityNew);
+            ExitOnFailure(hr, "Failed to create new security descriptor");
+
+            hr = SetProvSecurityDesc(hCsp, pSecurityNew);
+            ExitOnFailure(hr, "Failed to set Admin ACL on CSP");
+        }
+
+        if (CERT_NCRYPT_KEY_SPEC == dwKeySpec)
+        {
+            // We added a CNG key
+            // TODO change ACL on CNG key
+        }
+    }
+LExit:
+    if (hCsp)
+    {
+        FreeCryptProvFromCert(fAcquired, hCsp, NULL, dwProviderType, NULL);
+    }
+
+    ReleaseMem(pSecurity);
+
+    if (pSecurityNew)
+    {
+        AclFreeSecurityDescriptor(pSecurityNew);
+    }
     return hr;
 }

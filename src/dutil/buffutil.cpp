@@ -300,7 +300,7 @@ static HRESULT EnsureBufferSize(
     )
 {
     HRESULT hr = S_OK;
-    SIZE_T cbTarget = ((cbSize % BUFFER_INCREMENT) + 1) * BUFFER_INCREMENT;
+    SIZE_T cbTarget = ((cbSize / BUFFER_INCREMENT) + 1) * BUFFER_INCREMENT;
 
     if (*ppbBuffer)
     {

@@ -36,6 +36,7 @@
         <HelpSourceFile Include="html\help_development.htm"/>
         <HelpSourceFile Include="html\insignia.htm"/>
         <HelpSourceFile Include="html\light.htm"/>
+        <HelpSourceFile Include="html\lit.htm"/>
         <HelpSourceFile Include="html\localized_extensions.htm"/>
         <HelpSourceFile Include="html\lux.htm"/>
         <HelpSourceFile Include="html\main.htm"/>

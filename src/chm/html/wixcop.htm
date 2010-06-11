@@ -35,6 +35,61 @@ WixCop.exe [options] sourceFile [sourceFile ...]
 
     <li>2, when WixCop violations occur.</li>
   </ul>
+    <p>The following table describes the switches that WixCop supports.</p>
+
+  <table cellspacing="0" cellpadding="4" border="1">
+    <thead>
+      <tr>
+        <td><strong>WixCop switch</strong></td>
+
+        <td><strong>Description</strong></td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>-?</td>
+
+        <td>Show help.</td>
+      </tr>
+
+      <tr>
+        <td>-nologo</td>
+
+        <td>Don't show the WixCop banner.</td>
+      </tr>
+
+      <tr>
+        <td>-f</td>
+
+        <td>Fix errors encountered in source files. This switch takes effect only for source files that are writable.</td>
+      </tr>
+
+      <tr>
+        <td>-s</td>
+
+        <td>Look for source files in subdirectories.</td>
+      </tr>
+
+      <tr>
+        <td>-indent:<em>n</em></td>
+
+        <td>Overrides the default number of spaces per indentation level (4) to the number <em>n</em> you specify.</td>
+      </tr>
+
+      <tr>
+        <td>-set1<em>filename</em></td>
+
+        <td>Loads a primary settings file (see below). Note that there are no characters separating <em>-set1</em> and the settings file name.</td>
+      </tr>
+
+      <tr>
+        <td>-set2<em>filename</em></td>
+
+        <td>Loads an alternate settings file that overrides some or all of the settings in the primary settings file. Note that there are no characters separating <em>-set2</em> and the settings file name.</td>
+      </tr>
+    </tbody>
+  </table>
 
   <h3>WixCop settings files</h3>
 

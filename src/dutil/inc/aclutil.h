@@ -135,6 +135,10 @@ HRESULT DAPI AclFreeSecurityDescriptor(
     __in SECURITY_DESCRIPTOR* psd
     );
 
+HRESULT DAPI AclAddAdminToSecurityDescriptor(
+    __in SECURITY_DESCRIPTOR* pSecurity,
+    __out SECURITY_DESCRIPTOR** ppSecurityNew
+    );
 #ifdef __cplusplus
 }
 #endif

@@ -23,6 +23,533 @@
 
   <p>Finally, light works through the mechanics of generating IDT files and importing them into the Windows Installer database. After the database is fully created, the final post processing is done to merge in any Merge Modules and create a cabinet if necessary. The result is a fully functional Windows Installer database.</p>
 
+    <h2>Usage Information</h2>
+  <pre>
+light.exe [-?] [-b basePath] [-nologo] [-out outputFile] objectFile [objectFile ...] [@responseFile]
+</pre>
+
+  <p>Light supports the following command line parameters:</p>
+
+  <table border="1" cellspacing="0" cellpadding="2" class="style1">
+    <tr>
+      <td valign="top">
+        <p><b>Switch</b></p>
+      </td>
+
+      <td valign="top">
+        <p><b>Meaning</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ai</p>
+      </td>
+
+      <td>
+        <p>Allow identical rows; identical rows will be treated as a warning.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-au</p>
+      </td>
+
+      <td>
+        <p>Allow unresolved references; this will cause invalid output to be created.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-b &lt;path&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify a base path to locate all files; the default value is the current working directory.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-bcgg</p>
+      </td>
+
+      <td>
+        <p>Use backwards compatible guid generation algorithm (rarely needed). </p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-bf</p>
+      </td>
+
+      <td>
+        <p>Bind files into a wixout; this switch is only valid when also providing the -xo option.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-binder &lt;classname&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify a specific custom binder to use provided by an extension.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cc</p>
+      </td>
+
+      <td>
+        <p>Specify a path to cache built cabinet files; the path will not be deleted after linking.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ct &lt;N&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify the number of threads to use when creating cabinets; the default is the %NUMBER_OF_PROCESSORS% environment variable.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cultures:&lt;cultures&gt;</p>
+      </td>
+
+      <td>
+        <p>Specifies a semicolon or comma delimited list of localized string cultures to load from .wxl files and libraries.  Precedence of cultures is from left to right.  For more information see <a href="specifying_cultures_to_build.htm">Specifying cultures to build</a>.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-cub</p>
+      </td>
+
+      <td>
+        <p>Provide a .cub file containing additional internal consistency evaluators (ICEs) to run.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-d&lt;name&gt;=&lt;value&gt;</p>
+      </td>
+
+      <td>
+        <p>Define a WiX variable.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-dcl:level</p>
+      </td>
+
+      <td>
+        <p>Set the default cabinet compression level. Possible values are low, medium, high, 
+            none, and mszip (default).</p>
+      </td>
+      </tr>
+      <tr>
+      <td valign="top">
+        <p>-dut</p>
+      </td>
+
+      <td>
+        <p>Drop unreal tables from the output image.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-eav</p>
+      </td>
+
+      <td>
+        <p>Exact assembly versions. If this option is not specified, the assembly version is padded with zeros
+           in certain cases to work around a bug that exists in the initial release of the .NET Framework 1.1.
+           This bug was subsequently fixed in the .NET Framework 1.1 SP1. Use this option if you require non-padded
+           assembly versions in the MsiAssemblyName table (or in relevant bind variables), and do not mind if your
+           MSI is incompatible with the initial release of the .NET Framework 1.1. For more information, see
+           <A href="http://blogs.msdn.com/astebner/archive/2005/02/12/371646.aspx" target="_blank">this blog post</A>.
+           <BR/><BR/>Note that when using this option, your setup will still be compatible with the .NET Framework 1.0 RTM,
+           .NET Framework 1.1 SP1, .NET Framework 2.0, and later versions of the .NET Framework.
+           <BR/><BR/>This property is available starting with WiX v3.5.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ext</p>
+      </td>
+
+      <td>
+        <p>Specify an extension assembly.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-fv</p>
+      </td>
+
+      <td>
+        <p>Add a FileVersion attribute to each assembly in the MsiAssemblyName table (rarely needed).</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-ice: &lt;ICE&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify a specific internal consistency evaluator (ICE) to run.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-loc &lt;loc.wxl&gt;</p>
+      </td>
+
+      <td>
+        <p>Provide a .wxl file to read localization strings from.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-nologo</p>
+      </td>
+
+      <td>
+        <p>Skip printing Light logo information.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-notidy</p>
+      </td>
+
+      <td>
+        <p>Prevent Light from deleting temporary files after linking is complete (useful for debugging).</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-O1</p>
+      </td>
+
+      <td>
+        <p>Optimize smart cabbing for smallest cabinets (deprecated).</p>
+      </td>
+      </tr>
+      <tr>
+      <td valign="top">
+        <p>-O2</p>
+      </td>
+
+      <td>
+        <p>Optimize smart cabbing for faster install time (deprecated).</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-out</p>
+      </td>
+
+      <td>
+        <p>Specify an output file; by default, Light will write to the current working directory.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-pdbout &lt;output.wixpdb&gt;</p>
+      </td>
+
+      <td>
+        <p>Save the wixpdb to a specific file. The default is the same name as the output 
+            with the wixpdb extension.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-pedantic</p>
+      </td>
+
+      <td>
+        <p>Display pedantic output messages.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-reusecab</p>
+      </td>
+
+      <td>
+        <p>Reuse cabinets from the cabinet cache instead of rebuilding cabinets.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sa</p>
+      </td>
+
+      <td>
+        <p>Suppress assemblies: do not get assembly name information for assemblies.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sacl</p>
+      </td>
+
+      <td>
+        <p>Suppress resetting ACLs (useful when laying out an image to a network share).</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sadmin</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default Admin sequence actions.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sadv</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default Advt sequence actions.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-sloc</p>
+      </td>
+
+      <td>
+        <p>Suppress localization.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sice:&lt;ICE&gt;</p>
+      </td>
+
+      <td>
+        <p>Suppress running internal consistency evaluators (ICEs) with specific IDs.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sma</p>
+      </td>
+
+      <td>
+        <p>Suppress processing the data in the MsiAssembly table.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sf</p>
+      </td>
+
+      <td>
+        <p>Suppress files: do not get any file information; this switch is equivalent to the combination of the -sa and -sh switches.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sh</p>
+      </td>
+
+      <td>
+        <p>Suppress file information: do not get hash, version, language and other file properties.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sl</p>
+      </td>
+
+      <td>
+        <p>Suppress layout creation.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-spdb</p>
+      </td>
+
+      <td>
+        <p>Suppress outputting the wixpdb.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-ss</p>
+      </td>
+
+      <td>
+        <p>Suppress schema validation for documents; this switch provides a performance boost during linking.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-sts</p>
+      </td>
+
+      <td>
+        <p>Suppress tagging sectionId attribute on rows.</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sui</p>
+      </td>
+
+      <td>
+        <p>Suppress adding default UI sequence actions.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sv</p>
+      </td>
+
+      <td>
+        <p>Suppress intermediate file version mismatch checking.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sval</p>
+      </td>
+
+      <td>
+        <p>Suppress MSI/MSM validation.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-sw&lt;N&gt;</p>
+      </td>
+
+      <td>
+        <p>Suppress warnings with specific message IDs.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-swall</p>
+      </td>
+
+      <td>
+        <p>Suppress all warnings (deprecated).</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-usf &lt;output.xml&gt;</p>
+      </td>
+
+      <td>
+        <p>Specify an unreferenced symbols file.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-v</p>
+      </td>
+
+      <td>
+        <p>Generate verbose output.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-wx &lt;N&gt;</p>
+      </td>
+
+      <td>
+        <p>Treat warnings as errors.</p>
+      </td>
+    </tr>
+
+      <tr>
+      <td valign="top">
+        <p>-wxall</p>
+      </td>
+
+      <td>
+        <p>Treat all warnings as errors (deprecated).</p>
+      </td>
+      </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-xo</p>
+      </td>
+
+      <td>
+        <p>Generate XML output instead of an MSI.</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p>-?</p>
+      </td>
+
+      <td>
+        <p>Display Light help information.</p>
+      </td>
+    </tr>
+  </table>
+
   <h2>Binder Variables</h2>
 
   <h3>Standard Binder Variables</h3>

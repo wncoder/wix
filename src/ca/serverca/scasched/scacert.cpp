@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Certificate functions for CustomActions
 // </summary>
@@ -254,11 +254,11 @@ static HRESULT ConfigureCertificates(
         hr = WcaGetRecordFormattedString(hRecCertificate, cqPFXPassword, &pwzPFXPassword);
         ExitOnFailure(hr, "failed to get Certificate.PFXPassword");
 
-        // Write the common data (for both install and uninstall) to the CustomActionData 
+        // Write the common data (for both install and uninstall) to the CustomActionData
         // to pass data to the deferred CustomAction.
         hr = StrAllocString(&pwzCaData, pwzName, 0);
         ExitOnFailure(hr, "Failed to pass Certificate.Certificate to deferred CustomAction.");
-        hr = WcaWriteStringToCaData(pwzStoreName, &pwzCaData); 
+        hr = WcaWriteStringToCaData(pwzStoreName, &pwzCaData);
         ExitOnFailure(hr, "Failed to pass Certificate.StoreName to deferred CustomAction.");
         hr = WcaWriteIntegerToCaData(SCA_CERT_ATTRIBUTE_BINARYDATA, &pwzCaData);
         ExitOnFailure(hr, "Failed to pass Certificate.Attributes to deferred CustomAction.");
@@ -408,7 +408,7 @@ static HRESULT ResolveCertificate(
         //{
         //    // try to overwrite with the patch to a cert file
         //    WcaLog(LOGMSG_VERBOSE, "ConfigureCertificates - Overwrite with SSLCERTIFICATE");
-        //    hr = ScaGetCertificateByPath(pwzName, fIsInstalling, fIsUninstalling, 
+        //    hr = ScaGetCertificateByPath(pwzName, fIsInstalling, fIsUninstalling,
         //        iStore, iStoreLocation, pwzData, wzPFXPassword, pbstrCertificate, pcbCertificate, pbaHashBuffer);
         //}
         //if (hr != S_OK)
@@ -600,6 +600,7 @@ static HRESULT CertificateToHash(
 
     HCERTSTORE hPfxCertStore = NULL;
     PCCERT_CONTEXT pCertContext = NULL;
+    PCCERT_CONTEXT pCertContextEnum = NULL;
     CRYPT_DATA_BLOB blob = { 0 };
     CRYPT_KEY_PROV_INFO* pPfxInfo = NULL;
     DWORD dwKeyset = (CERT_SYSTEM_STORE_CURRENT_USER == dwStoreLocation) ? CRYPT_USER_KEYSET : CRYPT_MACHINE_KEYSET;
@@ -628,8 +629,19 @@ static HRESULT CertificateToHash(
             }
             ExitOnNullWithLastError(hPfxCertStore, hr, "Failed to open PFX file.");
 
-            // There should be at least one certificate in the PFX.
-            pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, NULL);
+            // Find the first cert with a private key, or just use the last one
+            for(pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum);
+                pCertContextEnum;
+                pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum))
+            {
+                pCertContext = pCertContextEnum;
+
+                if (pCertContext && CertHasPrivateKey(pCertContext, NULL))
+                {
+                    break;
+                }
+            }
+
             ExitOnNullWithLastError(pCertContext, hr, "Failed to read first certificate out of PFX file.");
 
             // Ignore failures, the worst that happens is some parts of the PFX get left behind.
@@ -1229,9 +1241,9 @@ HRESULT ScaInstallCertificateByContext(LPCWSTR pwzName, INT iStore, INT iStoreLo
         &blob);
 
     if (!CertAddCertificateContextToStore(
-        hCertStore, 
-        pCertContext, 
-        CERT_STORE_ADD_REPLACE_EXISTING, 
+        hCertStore,
+        pCertContext,
+        CERT_STORE_ADD_REPLACE_EXISTING,
         NULL))
     {
         hr = E_FAIL;
@@ -1414,9 +1426,9 @@ HRESULT ScaInstallCertificateByBinaryData(BOOL fAddCert, INT iStore, INT iStoreL
         // Add
         WcaLog(LOGMSG_STANDARD, "Adding certificate: binary name, %S", wzName);
         if (!CertAddCertificateContextToStore(
-            hCertStore, 
-            pCertCtx, 
-            CERT_STORE_ADD_REPLACE_EXISTING, 
+            hCertStore,
+            pCertCtx,
+            CERT_STORE_ADD_REPLACE_EXISTING,
             NULL))
         {
             hr = E_FAIL;
