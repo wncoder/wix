@@ -38,6 +38,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     [CLSCompliant(false)]
     public class WixProjectReferenceNode : ProjectReferenceNode
     {
+        private string setDoNotHarvest;
         private string setRefProjectOutputGroups;
         private string setRefTargetDir;
 
@@ -66,6 +67,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         public WixProjectReferenceNode(WixProjectNode root, string referencedProjectName, string projectPath, string projectReference)
             : base(root, referencedProjectName, projectPath, projectReference)
         {
+            this.setDoNotHarvest = "True"; // do not harvest references by default
             this.setRefProjectOutputGroups = "Binaries;Content;Satellites";
             this.setRefTargetDir = "INSTALLLOCATION";
         }
@@ -225,6 +227,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         protected override void BindReferenceData()
         {
             base.BindReferenceData();
+
+            if (!String.IsNullOrEmpty(this.setDoNotHarvest) && String.IsNullOrEmpty(this.ItemNode.GetMetadata(WixProjectFileConstants.DoNotHarvest)))
+            {
+                this.ItemNode.SetMetadata(WixProjectFileConstants.DoNotHarvest, this.setDoNotHarvest);
+                this.setDoNotHarvest = null;
+            }
 
             if (!String.IsNullOrEmpty(this.setRefProjectOutputGroups) && String.IsNullOrEmpty(this.ItemNode.GetMetadata("RefProjectOutputGroups")))
             {

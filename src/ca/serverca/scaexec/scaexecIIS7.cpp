@@ -2502,6 +2502,7 @@ HRESULT IIS7AppExtension(
    IAppHostProperty *pProperty = NULL;
    IAppHostElementCollection *pCollection = NULL;
 
+   BOOL fFound = FALSE;
    DWORD cHandlers = 1000;
 
     //get web name
@@ -2544,22 +2545,30 @@ HRESULT IIS7AppExtension(
 
     while (IIS_APPEXT_END != iAction)
     {
+        fFound = FALSE;
+
         //Process property action
         switch (iAction)
         {
             case IIS_APPEXT :
             {
-                //create new handler element
-                hr = pCollection->CreateNewElement(ScopeBSTR(IIS_CONFIG_ADD), &pElement);
-                ExitOnFailure(hr, "Failed get create handler element for appext");
-                //create new unique name for handler
-                //this set of names is unique to this location tag
-                cHandlers = cHandlers + 1;
-
-                hr = StrAllocFormatted(&pwzHandlerName, L"MsiCustom-%d", cHandlers);
+                // These IDs aren't really stable but this is stable enough to support repair since the MSI won't change
+                hr = StrAllocFormatted(&pwzHandlerName, L"MsiCustom-%u", ++cHandlers);
                 ExitOnFailure(hr, "Failed increment handler name");
-                hr = PutPropertyValue(pElement, IIS_CONFIG_NAME, pwzHandlerName);
-                ExitOnFailure(hr, "Failed set appext name property");
+
+                hr = FindAppHostElement(pCollection, IIS_CONFIG_ADD, IIS_CONFIG_NAME, pwzHandlerName, &pElement, NULL);
+                ExitOnFailure(hr, "Failed to find mimemap extension");
+
+                fFound = (NULL != pElement);
+                if (!fFound)
+                {
+                    //create new handler element
+                    hr = pCollection->CreateNewElement(ScopeBSTR(IIS_CONFIG_ADD), &pElement);
+                    ExitOnFailure(hr, "Failed get create handler element for appext");
+
+                    hr = PutPropertyValue(pElement, IIS_CONFIG_NAME, pwzHandlerName);
+                    ExitOnFailure(hr, "Failed set appext name property");
+                }
 
                 //BUGBUG: For compat we are assuming these are all ISAPI MODULES so we are
                 //setting the modules property to IsapiModule.
@@ -2598,9 +2607,13 @@ HRESULT IIS7AppExtension(
                 break;
             }
         }
-        //  put handler element at beginning of list
-        hr = pCollection->AddElement(pElement, 0);
-        ExitOnFailure(hr, "Failed add handler element for appext");
+
+        if (!fFound)
+        {
+            //  put handler element at beginning of list
+            hr = pCollection->AddElement(pElement, 0);
+            ExitOnFailure(hr, "Failed add handler element for appext");
+        }
 
         // Get AppExt action
         hr = WcaReadIntegerFromCaData(ppwzCustomActionData, &iAction);

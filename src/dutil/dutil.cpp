@@ -20,7 +20,6 @@
 
 
 // Asserts & Tracing
-#ifdef DEBUG
 
 const int DUTIL_STRING_BUFFER = 1024;
 static HMODULE Dutil_hAssertModule = NULL;
@@ -390,7 +389,6 @@ extern "C" void DAPI Dutil_TraceError(
     }
 }
 
-#endif // DEBUG
 
 
 /*******************************************************************

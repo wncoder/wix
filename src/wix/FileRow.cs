@@ -630,6 +630,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.processorArchitecture = src.processorArchitecture;
             this.source = src.source;
             this.PreviousSource = src.PreviousSource;
+            this.Operation = src.Operation;
             this.symbols = src.symbols;
             this.PreviousSymbols = src.PreviousSymbols;
             this.patchAttributes = src.patchAttributes;

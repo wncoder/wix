@@ -1106,3 +1106,26 @@ EricStJ: SFBUG:2860926 - Support PFX with multiple Certs.
 
 WixBuild: Version 3.5.1811.0
 
+BobArnso: SFBug:3013255 - Update list of standard actions to MSI 5.0 level.
+
+MHegazy: Disabled reference harvesting by default in Votive 
+
+BobArnso: Add MajorUpgrade/@AllowSameVersionUpgrades attribute to allow 
+          version-inclusive major upgrades. (Also useful for product versions
+          that change only in the fourth field.)
+
+WixBuild: Version 3.5.1823.0
+
+HeathS: SFBUG:3013129 - Support PatchFiles action in AdminExecuteSequence table
+        Fixed delta patching supported
+
+AaronSte: SFBUG:2835501 - Clarify the documentation of WiX behavior regarding
+          automatic key path selection.
+
+BobArnso: Allow loc identifiers in Media/@Cabinet.
+
+EricStj: SFBUG:3012387 - IIS: Need to handle rewriting app ext handler
+
+WixBuild: Version 3.5.1828.0
+
+BobArnso: Expose Dutil tracing to both ship and debug builds.

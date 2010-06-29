@@ -48,7 +48,7 @@
     <action name="LaunchConditions" sequence="100" AdminExecuteSequence="yes" AdminUISequence="yes" InstallExecuteSequence="yes" InstallUISequence="yes" />
     <action name="MigrateFeatureStates" sequence="1200" InstallExecuteSequence="yes" InstallUISequence="yes" />
     <action name="MoveFiles" sequence="3800" InstallExecuteSequence="yes" />
-    <action name="PatchFiles" sequence="4090" InstallExecuteSequence="yes" />
+    <action name="PatchFiles" sequence="4090" AdminExecuteSequence="yes" InstallExecuteSequence="yes" />
     <action name="ProcessComponents" sequence="1600" InstallExecuteSequence="yes" />
     <action name="RegisterComPlus" sequence="5700" InstallExecuteSequence="yes" />
     <action name="RegisterFonts" sequence="5300" InstallExecuteSequence="yes" />

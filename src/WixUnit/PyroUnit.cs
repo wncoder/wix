@@ -76,7 +76,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
 
             string toolFile = Path.Combine(toolsDirectory, "pyro.exe");
             StringBuilder commandLine = new StringBuilder(arguments);
-            commandLine.AppendFormat("\"{0}\" -out \"{1}\"", inputFile, outputFile);
+            commandLine.AppendFormat(" \"{0}\" -out \"{1}\"", inputFile, outputFile);
             previousUnitResults.OutputFiles.Add(outputFile);
 
             // handle wixunit arguments

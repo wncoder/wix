@@ -2034,6 +2034,72 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Adds the PatchFiles action to the sequence table if it does not already exist.
+        /// </summary>
+        /// <param name="table">The sequence table to check or modify.</param>
+        /// <param name="mainTransform">The primary authoring transform.</param>
+        /// <param name="pairedTransform">The secondary patch transform.</param>
+        /// <param name="mainFileRow">The file row that contains information about the patched file.</param>
+        private void AddPatchFilesActionToSequenceTable(SequenceTable table, Output mainTransform, Output pairedTransform, Row mainFileRow)
+        {
+            // Find/add PatchFiles action (also determine sequence for it).
+            // Search mainTransform first, then pairedTransform (pairedTransform overrides).
+            bool hasPatchFilesAction = false;
+            int seqInstallFiles = 0;
+            int seqDuplicateFiles = 0;
+            string tableName = table.ToString();
+
+            TestSequenceTableForPatchFilesAction(
+                    mainTransform.Tables[tableName],
+                    ref hasPatchFilesAction,
+                    ref seqInstallFiles,
+                    ref seqDuplicateFiles);
+            TestSequenceTableForPatchFilesAction(
+                    pairedTransform.Tables[tableName],
+                    ref hasPatchFilesAction,
+                    ref seqInstallFiles,
+                    ref seqDuplicateFiles);
+            if (!hasPatchFilesAction)
+            {
+                Table iesTable = pairedTransform.EnsureTable(this.core.TableDefinitions[tableName]);
+                if (0 == iesTable.Rows.Count)
+                {
+                    iesTable.Operation = TableOperation.Add;
+                }
+                Row patchAction = iesTable.CreateRow(null);
+                WixActionRow wixPatchAction = Installer.GetStandardActions()[table, "PatchFiles"];
+                int sequence = wixPatchAction.Sequence;
+                // Test for default sequence value's appropriateness
+                if (seqInstallFiles >= sequence || (0 != seqDuplicateFiles && seqDuplicateFiles <= sequence))
+                {
+                    if (0 != seqDuplicateFiles)
+                    {
+                        if (seqDuplicateFiles < seqInstallFiles)
+                        {
+                            throw new WixException(WixErrors.InsertInvalidSequenceActionOrder(mainFileRow.SourceLineNumbers, iesTable.Name, "InstallFiles", "DuplicateFiles", wixPatchAction.Action));
+                        }
+                        else
+                        {
+                            sequence = (seqDuplicateFiles + seqInstallFiles) / 2;
+                            if (seqInstallFiles == sequence || seqDuplicateFiles == sequence)
+                            {
+                                throw new WixException(WixErrors.InsertSequenceNoSpace(mainFileRow.SourceLineNumbers, iesTable.Name, "InstallFiles", "DuplicateFiles", wixPatchAction.Action));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        sequence = seqInstallFiles + 1;
+                    }
+                }
+                patchAction[0] = wixPatchAction.Action;
+                patchAction[1] = wixPatchAction.Condition;
+                patchAction[2] = sequence;
+                patchAction.Operation = RowOperation.Add;
+            }
+        }
+
+        /// <summary>
         /// Copy file data between transform substorages and the patch output object
         /// </summary>
         /// <param name="output">The output to bind.</param>
@@ -2359,59 +2425,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     // Add patch header for this file
                                     if (null != patchFileRow.Patch)
                                     {
-                                        // Find/add PatchFiles action (also determine sequence for it).
-                                        // Search mainTransform first, then pairedTransform (pairedTransform overrides).
-                                        bool hasPatchFilesAction = false;
-                                        int seqInstallFiles = 0;
-                                        int seqDuplicateFiles = 0;
-                                        TestSequenceTableForPatchFilesAction(
-                                                mainTransform.Tables["InstallExecuteSequence"],
-                                                ref hasPatchFilesAction,
-                                                ref seqInstallFiles,
-                                                ref seqDuplicateFiles);
-                                        TestSequenceTableForPatchFilesAction(
-                                                pairedTransform.Tables["InstallExecuteSequence"],
-                                                ref hasPatchFilesAction,
-                                                ref seqInstallFiles,
-                                                ref seqDuplicateFiles);
-                                        if (!hasPatchFilesAction)
-                                        {
-                                            Table iesTable = pairedTransform.EnsureTable(this.core.TableDefinitions["InstallExecuteSequence"]);
-                                            if (0 == iesTable.Rows.Count)
-                                            {
-                                                iesTable.Operation = TableOperation.Add;
-                                            }
-                                            Row patchAction = iesTable.CreateRow(null);
-                                            WixActionRow wixPatchAction = Installer.GetStandardActions()[SequenceTable.InstallExecuteSequence, "PatchFiles"];
-                                            int sequence = wixPatchAction.Sequence;
-                                            // Test for default sequence value's appropriateness
-                                            if (seqInstallFiles >= sequence || (0 != seqDuplicateFiles && seqDuplicateFiles <= sequence))
-                                            {
-                                                if (0 != seqDuplicateFiles)
-                                                {
-                                                    if (seqDuplicateFiles < seqInstallFiles)
-                                                    {
-                                                        throw new WixException(WixErrors.InsertInvalidSequenceActionOrder(mainFileRow.SourceLineNumbers, iesTable.Name, "InstallFiles", "DuplicateFiles", wixPatchAction.Action));
-                                                    }
-                                                    else
-                                                    {
-                                                        sequence = (seqDuplicateFiles + seqInstallFiles) / 2;
-                                                        if (seqInstallFiles == sequence || seqDuplicateFiles == sequence)
-                                                        {
-                                                            throw new WixException(WixErrors.InsertSequenceNoSpace(mainFileRow.SourceLineNumbers, iesTable.Name, "InstallFiles", "DuplicateFiles", wixPatchAction.Action));
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    sequence = seqInstallFiles + 1;
-                                                }
-                                            }
-                                            patchAction[0] = wixPatchAction.Action;
-                                            patchAction[1] = wixPatchAction.Condition;
-                                            patchAction[2] = sequence;
-                                            patchAction.Operation = RowOperation.Add;
-                                        }
+                                        // Add the PatchFiles action automatically to the AdminExecuteSequence and InstallExecuteSequence tables.
+                                        AddPatchFilesActionToSequenceTable(SequenceTable.AdminExecuteSequence, mainTransform, pairedTransform, mainFileRow);
+                                        AddPatchFilesActionToSequenceTable(SequenceTable.InstallExecuteSequence, mainTransform, pairedTransform, mainFileRow);
 
                                         // Add to Patch table
                                         Table patchTable = pairedTransform.EnsureTable(this.core.TableDefinitions["Patch"]);

@@ -7466,6 +7466,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             int options = MsiInterop.MsidbUpgradeAttributesMigrateFeatures;
             bool allowDowngrades = false;
+            bool allowSameVersionUpgrades = false;
             bool blockUpgrades = false;
             string downgradeErrorMessage = null;
             string disallowUpgradeErrorMessage = null;
@@ -7492,6 +7493,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         case "AllowDowngrades":
                             allowDowngrades = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "AllowSameVersionUpgrades":
+                            allowSameVersionUpgrades = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "Disallow":
                             blockUpgrades = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -7557,6 +7561,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "DowngradeErrorMessage", "AllowDowngrades", "yes"));
             }
 
+            if (allowDowngrades && allowSameVersionUpgrades)
+            {
+                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "AllowSameVersionUpgrades", "AllowDowngrades", "yes"));
+            }
+
             if (blockUpgrades && String.IsNullOrEmpty(disallowUpgradeErrorMessage))
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "DisallowUpgradeErrorMessage", "Disallow", "yes", true));
@@ -7584,7 +7593,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // row[1] = minimum version; skip it so we detect all prior versions.
                     row[2] = productVersion;
                     // row[3] = language
-                    row[4] = options;
+                    row[4] = allowSameVersionUpgrades ? (options | MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) : options;
                 }
 
                 row[5] = removeFeatures;
@@ -7680,7 +7689,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             id = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 1, short.MaxValue);
                             break;
                         case "Cabinet":
-                            cabinet = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            cabinet = this.core.GetAttributeValue(sourceLineNumbers, attrib, false);
                             break;
                         case "CompressionLevel":
                             compressionLevel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -7750,13 +7759,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             this.core.OnMessage(WixErrors.MediaEmbeddedCabinetNameTooLong(sourceLineNumbers, node.Name, "Cabinet", cabinet, cabinet.Length));
                         }
-                        cabinet = String.Concat("#", cabinet);
+                    cabinet = String.Concat("#", cabinet);
                     }
                 }
                 else // external cabinet file
                 {
                     // external cabinet files must use 8.3 filenames
-                    if (!String.IsNullOrEmpty(cabinet) && !CompilerCore.IsValidShortFilename(cabinet, false))
+                    if (!String.IsNullOrEmpty(cabinet) && !CompilerCore.IsValidShortFilename(cabinet, false) && !CompilerCore.IsValidLocIdentifier(cabinet))
                     {
                         this.core.OnMessage(WixWarnings.MediaExternalCabinetFilenameIllegal(sourceLineNumbers, node.Name, "Cabinet", cabinet));
                     }

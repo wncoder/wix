@@ -263,9 +263,11 @@
         <include name="${dir.inc.dutil}\cabutil.h" />
         <include name="${dir.inc.dutil}\certutil.h" />
         <include name="${dir.inc.dutil}\conutil.h" />
+        <include name="${dir.inc.dutil}\cryputil.h" />
         <include name="${dir.inc.dutil}\dictutil.h" />
         <include name="${dir.inc.dutil}\dirutil.h" />
         <include name="${dir.inc.dutil}\dutil.h" />
+        <include name="${dir.inc.dutil}\eseutil.h" />
         <include name="${dir.inc.dutil}\fileutil.h" />
         <include name="${dir.inc.dutil}\gdiputil.h" />
         <include name="${dir.inc.dutil}\inetutil.h" />
@@ -278,6 +280,7 @@
         <include name="${dir.inc.dutil}\pathutil.h" />
         <include name="${dir.inc.dutil}\perfutil.h" />
         <include name="${dir.inc.dutil}\procutil.h" />
+        <include name="${dir.inc.dutil}\regutil.h" />
         <include name="${dir.inc.dutil}\resrutil.h" />
         <include name="${dir.inc.dutil}\reswutil.h" />
         <include name="${dir.inc.dutil}\rexutil.h" />
@@ -290,7 +293,6 @@
         <include name="${dir.inc.dutil}\uriutil.h" />
         <include name="${dir.inc.dutil}\userutil.h" />
         <include name="${dir.inc.dutil}\wiutil.h" />
-        <include name="${dir.inc.dutil}\xmlutil.h" />
         <include name="${dir.inc.dutil}\xmlutil.h" />
         <include name="${dir.src.wcautil}\wcautil.h" />
         <include name="${dir.src.wcautil}\wcawow64.h" />

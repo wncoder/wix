@@ -2808,6 +2808,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         int attr = upgradeRow.Attributes;
                         string removeFeatures = upgradeRow.Remove;
 
+                        if (MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive == (attr & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive))
+                        {
+                            majorUpgrade.AllowSameVersionUpgrades = Wix.YesNoType.yes;
+                        }
+
                         if (MsiInterop.MsidbUpgradeAttributesMigrateFeatures != (attr & MsiInterop.MsidbUpgradeAttributesMigrateFeatures))
                         {
                             majorUpgrade.MigrateFeatures = Wix.YesNoType.no;
