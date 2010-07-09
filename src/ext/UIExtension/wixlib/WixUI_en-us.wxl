@@ -1,16 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- 
-    Copyright (c) Microsoft Corporation.  All rights reserved.
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="en-US" Codepage="1252" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+    <!-- _locID@Culture="en-US" _locComment="American English" -->
+    <!-- _locID@Codepage="1252" _locComment="Windows-1252" -->
+    <!--
+        Copyright (c) Microsoft Corporation.  All rights reserved.
 
-    The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
-    which can be found in the file CPL.TXT at the root of this distribution.
-    By using this software in any fashion, you are agreeing to be bound by
-    the terms of this license.
+        The use and distribution terms for this software are covered by the
+        Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+        which can be found in the file CPL.TXT at the root of this distribution.
+        By using this software in any fashion, you are agreeing to be bound by
+        the terms of this license.
+    
+        You must not remove this notice, or any other, from this software.
+    -->
 
-    You must not remove this notice, or any other, from this software.
--->
-<WixLocalization Culture="en-us" xmlns="http://schemas.microsoft.com/wix/2006/localization">
     <String Id="WixUIBack" Overridable="yes"><!-- _locID_text="WixUIBack" _locComment="WixUIBack" -->&amp;Back</String>
     <String Id="WixUINext" Overridable="yes"><!-- _locID_text="WixUINext" _locComment="WixUINext" -->&amp;Next</String>
     <String Id="WixUICancel" Overridable="yes"><!-- _locID_text="WixUICancel" _locComment="WixUICancel" -->Cancel</String>
@@ -196,6 +199,8 @@
     <String Id="ProgressDlgTitleRepairing" Overridable="yes"><!-- _locID_text="ProgressDlgTitleRepairing" _locComment="ProgressDlgTitleRepairing" -->{\WixUI_Font_Title}Repairing [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes"><!-- _locID_text="ProgressDlgTextRemoving" _locComment="ProgressDlgTextRemoving" -->Please wait while the Setup Wizard removes [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes"><!-- _locID_text="ProgressDlgTitleRemoving" _locComment="ProgressDlgTitleRemoving" -->{\WixUI_Font_Title}Removing [ProductName]</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes"><!-- _locID_text="ProgressDlgTextUpdating" _locComment="ProgressDlgTextUpdating" -->Please wait while the Setup Wizard updates [ProductName].</String>
+    <String Id="ProgressDlgTitleUpdating" Overridable="yes"><!-- _locID_text="ProgressDlgTitleUpdating" _locComment="ProgressDlgTitleUpdating" -->{\WixUI_Font_Title}Updating [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes"><!-- _locID_text="ProgressDlgProgressBar" _locComment="ProgressDlgProgressBar" -->Progress done</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes"><!-- _locID_text="ProgressDlgStatusLabel" _locComment="ProgressDlgStatusLabel" -->Status:</String>
 
@@ -239,6 +244,9 @@
     <String Id="VerifyReadyDlgRemove" Overridable="yes"><!-- _locID_text="VerifyReadyDlgRemove" _locComment="VerifyReadyDlgRemove" -->&amp;Remove</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes"><!-- _locID_text="VerifyReadyDlgRemoveText" _locComment="VerifyReadyDlgRemoveText" -->Click Remove to remove [ProductName] from your computer. Click Back to review or change any of your installation settings. Click Cancel to exit the wizard.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes"><!-- _locID_text="VerifyReadyDlgRemoveTitle" _locComment="VerifyReadyDlgRemoveTitle" -->{\WixUI_Font_Title}Ready to remove [ProductName]</String>
+    <String Id="VerifyReadyDlgUpdate" Overridable="yes"><!-- _locID_text="VerifyReadyDlgUpdate" _locComment="VerifyReadyDlgUpdate" -->&amp;Update</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes"><!-- _locID_text="VerifyReadyDlgUpdateText" _locComment="VerifyReadyDlgUpdateText" -->Click Update to update [ProductName] from your computer. Click Back to review or change any of your installation settings. Click Cancel to exit the wizard.</String>
+    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes"><!-- _locID_text="VerifyReadyDlgUpdateTitle" _locComment="VerifyReadyDlgUpdateTitle" -->{\WixUI_Font_Title}Ready to update [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes"><!-- _locID_text="WaitForCostingDlg_Title" _locComment="WaitForCostingDlg_Title" -->[ProductName] Setup</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes"><!-- _locID_text="WaitForCostingDlgReturn" _locComment="WaitForCostingDlgReturn" -->&amp;Return</String>
@@ -249,12 +257,14 @@
     <String Id="WelcomeDlg_Title" Overridable="yes"><!-- _locID_text="WelcomeDlg_Title" _locComment="WelcomeDlg_Title" -->[ProductName] Setup</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes"><!-- _locID_text="WelcomeDlgBitmap" _locComment="WelcomeDlgBitmap" -->WixUI_Bmp_Dialog</String>
     <String Id="WelcomeDlgDescription" Overridable="yes"><!-- _locID_text="WelcomeDlgDescription" _locComment="WelcomeDlgDescription" -->The Setup Wizard will install [ProductName] on your computer. Click Next to continue or Cancel to exit the Setup Wizard.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes"><!-- _locID_text="WelcomeUpdateDlgDescriptionUpdate" _locComment="WelcomeUpdateDlgDescriptionUpdate" -->The Setup Wizard will update [ProductName] on your computer. Click Next to continue or Cancel to exit the Setup Wizard.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes"><!-- _locID_text="WelcomeDlgTitle" _locComment="WelcomeDlgTitle" -->{\WixUI_Font_Bigger}Welcome to the [ProductName] Setup Wizard</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes"><!-- _locID_text="WelcomeEulaDlg_Title" _locComment="WelcomeEulaDlg_Title" -->[ProductName] Setup</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes"><!-- _locID_text="WelcomeEulaDlgBitmap" _locComment="WelcomeEulaDlgBitmap" -->WixUI_Bmp_Dialog</String>
     <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes"><!-- _locID_text="WelcomeEulaDlgLicenseAcceptedCheckBox" _locComment="WelcomeEulaDlgLicenseAcceptedCheckBox" -->I &amp;accept the terms in the License Agreement</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes"><!-- _locID_text="WelcomeEulaDlgInstall" _locComment="WelcomeEulaDlgInstall" -->&amp;Install</String>
+    <String Id="WelcomeEulaDlgUpdate" Overridable="yes"><!-- _locID_text="WelcomeEulaDlgUpdate" _locComment="WelcomeEulaDlgUpdate" -->&amp;Update</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes"><!-- _locID_text="WelcomeEulaDlgTitle" _locComment="WelcomeEulaDlgTitle" -->{\WixUI_Font_Title}Please read the [ProductName] License Agreement</String>
 
     <String Id="ProgressTextInstallValidate" Overridable="yes"><!-- _locID_text="ProgressTextInstallValidate" _locComment="ProgressTextInstallValidate" -->Validating install</String>

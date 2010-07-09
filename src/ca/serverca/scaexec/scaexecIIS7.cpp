@@ -34,6 +34,7 @@
 #define IIS_CONFIG_DESC                     L"description"
 #define IIS_CONFIG_EXECUTABLE               L"scriptProcessor"
 #define IIS_CONFIG_ENABLED                  L"enabled"
+#define IIS_CONFIG_ENABLE32                 L"enable32BitAppOnWin64"
 #define IIS_CONFIG_FILEEXT                  L"fileExtension"
 #define IIS_CONFIG_FILTER                   L"filter"
 #define IIS_CONFIG_GROUPID                  L"groupId"
@@ -3924,6 +3925,13 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
                 }
                 ExitOnFailure(hr, "Failed to set AppPool cpu action value");
                 ReleaseNullObject(pElement);
+                break;
+            }
+            case IIS_APPPOOL_32BIT:
+            {
+                //  enable32BitAppOnWin64
+                hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_ENABLE32, TRUE);
+                ExitOnFailure(hr, "Failed to set AppPool enable32BitAppOnWin64 value");
                 break;
             }
 

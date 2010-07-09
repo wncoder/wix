@@ -12,11 +12,17 @@
     You must not remove this notice, or any other, from this software.
 -->
 <!--
-First-time install dialog sequence:      Maintenance dialog sequence:
- - WixUI_WelcomeEulaDlg                 - WixUI_MaintenanceWelcomeDlg
-                                          - WixUI_MaintenanceTypeDlg
-                                            - WixUI_CustomizeDlg
-                                            - WixUI_VerifyReadyDlg
+First-time install dialog sequence:
+ - WixUI_WelcomeEulaDlg
+
+Maintenance dialog sequence:
+ WixUI_MaintenanceWelcomeDlg
+ - WixUI_MaintenanceTypeDlg
+ - WixUI_VerifyReadyDlg
+
+Patch dialog sequence:
+ - WixUI_WelcomeDlg
+ - WixUI_VerifyReadyDlg
 -->
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
@@ -39,6 +45,7 @@ First-time install dialog sequence:      Maintenance dialog sequence:
             <DialogRef Id="ProgressDlg" />
             <DialogRef Id="ResumeDlg" />
             <DialogRef Id="UserExit" />
+            <DialogRef Id="WelcomeDlg" />
             <DialogRef Id="WelcomeEulaDlg" />
 
             <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
@@ -50,6 +57,14 @@ First-time install dialog sequence:      Maintenance dialog sequence:
             <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
             <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
             <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">Installed AND PATCH</Publish>
+
+            <InstallUISequence>
+                <Show Dialog="WelcomeDlg" Before="WelcomeEulaDlg">Installed AND PATCH</Show>
+                <Show Dialog="WelcomeEulaDlg" Before="ProgressDlg">NOT Installed</Show>
+            </InstallUISequence>
 
             <Property Id="ARPNOMODIFY" Value="1" />
         </UI>

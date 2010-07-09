@@ -47,6 +47,12 @@
                 <Control Id="TitleRemoving" Type="Text" X="20" Y="15" Width="330" Height="15" Transparent="yes" NoPrefix="yes" Hidden="yes" Text="!(loc.ProgressDlgTitleRemoving)">
                     <Condition Action="show">WixUI_InstallMode = "Remove"</Condition>
                 </Control>
+                <Control Id="TextUpdating" Type="Text" X="20" Y="65" Width="330" Height="35" Hidden="yes" NoPrefix="yes" Text="!(loc.ProgressDlgTextUpdating)">
+                    <Condition Action="show">WixUI_InstallMode = "Update"</Condition>
+                </Control>
+                <Control Id="TitleUpdating" Type="Text" X="20" Y="15" Width="330" Height="15" Transparent="yes" NoPrefix="yes" Hidden="yes" Text="!(loc.ProgressDlgTitleUpdating)">
+                    <Condition Action="show">WixUI_InstallMode = "Update"</Condition>
+                </Control>
                 <Control Id="ActionText" Type="Text" X="70" Y="100" Width="285" Height="10">
                     <Subscribe Event="ActionText" Attribute="Text" />
                 </Control>

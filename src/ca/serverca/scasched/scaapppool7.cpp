@@ -43,8 +43,9 @@ Action are 1 (Shutdown) and 0 (No Action).
 
 ------------------------------------------------------------------*/
 // sql queries
-LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc` FROM `IIsAppPool`";
-enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc };
+LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `IIsAppPool`.`Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `Component`.`Attributes` FROM `IIsAppPool`, `Component` WHERE `Component_`=`Component`";
+
+enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqComponentAttr};
 
 
 // prototypes
@@ -174,6 +175,9 @@ HRESULT ScaAppPoolRead7(
 
         hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iMaxProcesses);
         ExitOnFailure(hr, "failed to get AppPool.MaxProc");
+
+        hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iCompAttributes);
+        ExitOnFailure(hr, "failed to get Component.Attributes");
     }
 
     if (E_NOMOREITEMS == hr)
@@ -425,6 +429,13 @@ HRESULT ScaWriteAppPool7(
         hr = ScaWriteConfigInteger(psap->iMaxProcesses);
         ExitOnFailure(hr, "failed to set web garden maximum worker processes");
     }
+
+    if (!(psap->iCompAttributes & msidbComponentAttributes64bit))
+    {
+        hr = ScaWriteConfigID(IIS_APPPOOL_32BIT);
+        ExitOnFailure(hr, "Failed to write 32 bit app pool config ID");
+    }
+
     //
     // Set the AppPool Identity tab
     //

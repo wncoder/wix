@@ -1129,3 +1129,27 @@ EricStj: SFBUG:3012387 - IIS: Need to handle rewriting app ext handler
 WixBuild: Version 3.5.1828.0
 
 BobArnso: Expose Dutil tracing to both ship and debug builds.
+
+OCSLE: Added WXLs for 28+ languages
+
+MikeHo: Added support for patches in the WixUI library
+
+EricStJ: SFBUG:3011463 - Allow 32-bit handlers when installing AppPool from 
+         32-bit component
+
+APaloma: Fixed project harvesting failing if two project references to the same
+         project exist.
+
+WixBuild: Version 3.5.1902.0
+
+BobArnso: Add detection of running devenv.exe processes to WiX setup.
+
+CAraman: Add annotations for static code analysis. Ensure .WXLs are well-formed
+         XML, and all cultures are documented.
+
+HeathS: Fixed bad condition in WiX setup authoring.
+
+PMarcu: SFBUG:3023336 Allow Assembly Versions to be updated in patches.
+
+WixBuild: Version 3.5.1909.0
+

@@ -50,6 +50,8 @@ struct SCA_APPPOOL
     WCHAR wzCpuMon[MAX_DARWIN_KEY + 1];
     INT iMaxProcesses;
 
+    int iCompAttributes;
+
     SCA_APPPOOL *psapNext;
 };
 

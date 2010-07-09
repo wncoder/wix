@@ -35,6 +35,10 @@
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixUIExtension.dll</HintPath>
     </WixExtension>
+    <WixExtension Include="WixUtilExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>
+    </WixExtension>
     <WixExtension Include="WixVSExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixVSExtension.dll</HintPath>

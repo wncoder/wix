@@ -188,6 +188,7 @@
 
         <UI>
             <DialogRef Id="PrerequisitesDlg" />
+            <DialogRef Id="DevenvRunningDlg" />
             <UIRef Id="WixUI_Advanced" />
             <UIRef Id="WixUI_ErrorProgressText" />
 

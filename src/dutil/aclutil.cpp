@@ -27,7 +27,7 @@ if hToken is not NULL the token must be an impersonation token
 ********************************************************************/
 extern "C" HRESULT DAPI AclCheckAccess(
     __in HANDLE hToken, 
-    ACL_ACCESS* paa
+    __in ACL_ACCESS* paa
     )
 {
     HRESULT hr = S_OK;
@@ -118,7 +118,7 @@ AclGetWellKnownSid - returns a SID for the specified account
 ********************************************************************/
 extern "C" HRESULT DAPI AclGetWellKnownSid(
     __in WELL_KNOWN_SID_TYPE wkst,
-    __out PSID* ppsid
+    __deref_out PSID* ppsid
     )
 {
     Assert(ppsid);
@@ -214,8 +214,8 @@ AclGetAccountSid - returns a SID for the specified account
 ********************************************************************/
 extern "C" HRESULT DAPI AclGetAccountSid(
     __in_opt LPCWSTR wzSystem,
-    __in LPCWSTR wzAccount,
-    __out PSID* ppsid
+    __in_z LPCWSTR wzAccount,
+    __deref_out PSID* ppsid
     )
 {
     Assert(wzAccount && *wzAccount && ppsid);
@@ -288,9 +288,9 @@ AclGetAccountSidString - gets a string version of the user's SID
 NOTE: ppwzSid should be freed with StrFree()
 ********************************************************************/
 extern "C" HRESULT DAPI AclGetAccountSidString(
-    __in LPCWSTR wzSystem,
-    __in LPCWSTR wzAccount,
-    __out LPWSTR* ppwzSid
+    __in_z LPCWSTR wzSystem,
+    __in_z LPCWSTR wzAccount,
+    __deref_out_z LPWSTR* ppwzSid
     )
 {
     Assert(ppwzSid);
@@ -340,7 +340,7 @@ extern "C" HRESULT DAPI AclCreateDacl(
     __in DWORD cDeny,
     __in_ecount(cAllow) ACL_ACE rgaaAllow[],
     __in DWORD cAllow,
-    __out ACL** ppAcl
+    __deref_out ACL** ppAcl
     )
 {
     Assert(ppAcl);
@@ -420,7 +420,7 @@ extern "C" HRESULT DAPI AclAddToDacl(
     __in DWORD cDeny,
     __in_ecount_opt(cAllow) const ACL_ACE rgaaAllow[],
     __in DWORD cAllow,
-    __out ACL** ppAclNew
+    __deref_out ACL** ppAclNew
     )
 {
     Assert(pAcl && ::IsValidAcl(pAcl) && ppAclNew);
@@ -529,7 +529,7 @@ AclMergeDacls - creates a new DACL from two existing ACLs
 extern "C" HRESULT DAPI AclMergeDacls(
     __in const ACL* pAcl1,
     __in const ACL* pAcl2,
-    __out ACL** ppAclNew
+    __deref_out ACL** ppAclNew
     )
 {
     HRESULT hr = E_NOTIMPL;
@@ -551,7 +551,7 @@ AclCreateDaclOld - creates a DACL from an ACL_ACCESS structure
 extern "C" HRESULT DAPI AclCreateDaclOld(
     __in_ecount(cAclAccesses) ACL_ACCESS* paa,
     __in DWORD cAclAccesses,
-    __out ACL** ppACL
+    __deref_out ACL** ppACL
     )
 {
     Assert(ppACL);
@@ -678,7 +678,7 @@ descriptor from an existing DACL
 ********************************************************************/
 extern "C" HRESULT DAPI AclCreateSecurityDescriptorFromDacl(
     __in ACL* pACL,
-    __out SECURITY_DESCRIPTOR** ppsd
+    __deref_out SECURITY_DESCRIPTOR** ppsd
     )
 {
     HRESULT hr = S_OK;
@@ -737,7 +737,7 @@ NOTE: ppsd should be freed with AclFreeSecurityDescriptor()
 extern "C" HRESULT DAPI AclCreateSecurityDescriptor(
     __in_ecount(cAclAccesses) ACL_ACCESS* paa,
     __in DWORD cAclAccesses,
-    __out SECURITY_DESCRIPTOR** ppsd
+    __deref_out SECURITY_DESCRIPTOR** ppsd
     )
 {
     Assert(ppsd);
@@ -770,8 +770,8 @@ descriptor from an SDDL string
 NOTE: ppsd should be freed with AclFreeSecurityDescriptor()
 ********************************************************************/
 extern "C" HRESULT DAPI AclCreateSecurityDescriptorFromString(
-    __out SECURITY_DESCRIPTOR** ppsd,
-    __in LPCWSTR wzSddlFormat,
+    __deref_out SECURITY_DESCRIPTOR** ppsd,
+    __in_z __format_string LPCWSTR wzSddlFormat,
     ...
     )
 {
@@ -825,7 +825,7 @@ NOTE: passed in security descriptor must be in self-relative format
 ********************************************************************/
 extern "C" HRESULT DAPI AclDuplicateSecurityDescriptor(
     __in SECURITY_DESCRIPTOR* psd,
-    __out SECURITY_DESCRIPTOR** ppsd
+    __deref_out SECURITY_DESCRIPTOR** ppsd
     )
 {
     HRESULT hr = S_OK;
@@ -861,9 +861,9 @@ AclGetSecurityDescriptor - returns self-relative security descriptor for named o
 NOTE: free ppsd with AclFreeSecurityDescriptor()
 ********************************************************************/
 extern "C" HRESULT DAPI AclGetSecurityDescriptor(
-    __in LPCWSTR wzObject,
+    __in_z LPCWSTR wzObject,
     __in SE_OBJECT_TYPE sot,
-    __out SECURITY_DESCRIPTOR** ppsd
+    __deref_out SECURITY_DESCRIPTOR** ppsd
     )
 {
     HRESULT hr = S_OK;
@@ -958,7 +958,7 @@ AclAddAdminToSecurityDescriptor - Adds the Administrators group to a security de
 ********************************************************************/
 extern "C" HRESULT DAPI AclAddAdminToSecurityDescriptor(
     __in SECURITY_DESCRIPTOR* pSecurity,
-    __out SECURITY_DESCRIPTOR** ppSecurityNew
+    __deref_out SECURITY_DESCRIPTOR** ppSecurityNew
     )
 {
     HRESULT hr = S_OK;

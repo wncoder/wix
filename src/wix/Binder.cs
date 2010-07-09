@@ -2410,15 +2410,29 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         Table mainAssemblyNameTable = mainTransform.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
                                         foreach (Row patchAssemblyNameRow in patchAssemblyNameRows)
                                         {
-                                            Row mainAssemblyNameRow = mainAssemblyNameTable.CreateRow(mainFileRow.SourceLineNumbers);
-                                            for (int i = 0; i < patchAssemblyNameRow.Fields.Length; i++)
+                                            // Copy if there isn't an identical modified row already in the transform.
+                                            bool foundMatchingModifiedRow = false;
+                                            foreach (Row mainAssemblyNameRow in mainAssemblyNameTable.Rows)
                                             {
-                                                mainAssemblyNameRow[i] = patchAssemblyNameRow[i];
+                                                if (mainAssemblyNameRow.IsIdentical(patchAssemblyNameRow) && RowOperation.None != mainAssemblyNameRow.Operation)
+                                                {
+                                                    foundMatchingModifiedRow = true;
+                                                    break;
+                                                }
                                             }
 
-                                            // assume value field has been modified
-                                            mainAssemblyNameRow.Fields[2].Modified = true;
-                                            mainAssemblyNameRow.Operation = mainFileRow.Operation;
+                                            if (!foundMatchingModifiedRow)
+                                            {
+                                                Row mainAssemblyNameRow = mainAssemblyNameTable.CreateRow(mainFileRow.SourceLineNumbers);
+                                                for (int i = 0; i < patchAssemblyNameRow.Fields.Length; i++)
+                                                {
+                                                    mainAssemblyNameRow[i] = patchAssemblyNameRow[i];
+                                                }
+
+                                                // assume value field has been modified
+                                                mainAssemblyNameRow.Fields[2].Modified = true;
+                                                mainAssemblyNameRow.Operation = mainFileRow.Operation;
+                                            }
                                         }
                                     }
 

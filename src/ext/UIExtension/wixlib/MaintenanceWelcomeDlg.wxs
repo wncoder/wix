@@ -28,7 +28,7 @@
             </Dialog>
 
             <InstallUISequence>
-                <Show Dialog="MaintenanceWelcomeDlg" Before="ProgressDlg" Overridable="yes">Installed AND NOT RESUME AND NOT Preselected</Show>
+                <Show Dialog="MaintenanceWelcomeDlg" Before="ProgressDlg" Overridable="yes">Installed AND NOT RESUME AND NOT Preselected AND NOT PATCH</Show>
             </InstallUISequence>
         </UI>
     </Fragment>

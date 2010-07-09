@@ -1525,7 +1525,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       SuppressFragments="$(HarvestProjectsSuppressFragments)"
       SuppressUniqueIds="$(HarvestProjectsSuppressUniqueIds)"
       Transforms="%(_AllHeatProjects.Transforms)"
-      Project="@(_AllHeatProjects)"
+      Project="%(_AllHeatProjects.FullPath)"
       ProjectOutputGroups="%(_AllHeatProjects.ProjectOutputGroups)"
       GenerateType="%(_AllHeatProjects.GenerateType)"
       DirectoryIds="%(_AllHeatProjects.DirectoryIds)"
