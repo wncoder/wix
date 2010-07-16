@@ -712,7 +712,7 @@
             </xs:attribute>
             <xs:attribute name="ScriptTimeout" type="xs:integer">
                 <xs:annotation>
-                    <xs:documentation>Sets the timeout value for executing ASP scripts.</xs:documentation>
+                    <xs:documentation>Sets the timeout value in seconds for executing ASP scripts.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="ServerDebugging" type="YesNoDefaultType">

@@ -1153,3 +1153,12 @@ PMarcu: SFBUG:3023336 Allow Assembly Versions to be updated in patches.
 
 WixBuild: Version 3.5.1909.0
 
+EricStJ: IIS extension fails to handle app pools without components
+
+EricStJ: SFBUG:3024500 - VDirs are not installed under the proper applications
+
+EricStJ: SFBUG:3028842 - Units are wrong when setting appPool idleTimeout and
+         session timeout
+
+WixBuild: Version 3.5.1916.0
+

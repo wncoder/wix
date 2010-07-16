@@ -589,8 +589,6 @@ static HRESULT ScaWebWrite7(
     ExitOnFailure(hr, "Failed write vdir action");
     hr = ScaWriteConfigString(psw->wzDescription);      //site name key
     ExitOnFailure(hr, "Failed write vdir desc");
-    hr = ScaWriteConfigString(L"/");                    //app path key
-    ExitOnFailure(hr, "Failed write vdir app path");
     hr = ScaWriteConfigString(L"/");                    //vdir path (default)
     ExitOnFailure(hr, "Failed write vdir app");
     hr = ScaWriteConfigString(psw->wzDirectory);         //physical dir

@@ -213,16 +213,13 @@ HRESULT ScaVirtualDirsInstall7(
 {
     HRESULT hr = S_OK;
     SCA_VDIR7* psvd = psvdList;
-    WCHAR wzAppPath[MAX_PATH];
+    LPWSTR wzPath = NULL;
     WCHAR wzAppPoolName[MAX_PATH];
     while (psvd)
     {
         if (WcaIsInstalling(psvd->isInstalled, psvd->isAction))
         {
-            //init path        
-            hr = ::StringCchCopyW(wzAppPath, countof(wzAppPath), L"/");
-            ExitOnFailure(hr, "Failed to copy app path '/' ");
-                
+            // First write all applications, this is necessary since vdirs must be nested under the applications.
             if( psvd->fHasApplication )
             {
                 //create the application for this vdir application
@@ -233,13 +230,9 @@ HRESULT ScaVirtualDirsInstall7(
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
                 hr = ScaWriteConfigString(psvd->wzWebName);           //site name key
                 ExitOnFailure(hr, "Failed to write app web key");
-
-                hr = ::StringCchCopyW(wzAppPath, countof(wzAppPath), L"/");
-                ExitOnFailure(hr, "Failed to copy app path '/' ");
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ::StringCchCatW(wzAppPath, countof(wzAppPath), psvd->wzVDirRoot);
-                ExitOnFailure(hr, "Failed to copy app path root ");
-                hr = ScaWriteConfigString(wzAppPath);                 //  App Path
+                hr = StrAllocFormatted(&wzPath, L"/%s", psvd->wzVDirRoot);
+                ExitOnFailure(hr, "Failed to create app path");
+                hr = ScaWriteConfigString(wzPath);                    //  App Path
                 ExitOnFailure(hr, "Failed to write app path root ");
 
                 if (!*psvd->swapp.wzAppPool)
@@ -257,43 +250,33 @@ HRESULT ScaVirtualDirsInstall7(
                     ExitOnFailure(hr, "Failed to write appPool for vdir");
 
                 }
-                //create the vdir in the application
-                hr = ScaWriteConfigID(IIS_VDIR);
-                ExitOnFailure(hr, "Failed write VirDir ID")
-                hr = ScaWriteConfigID(IIS_CREATE);
-                ExitOnFailure(hr, "Failed write VirDir action")
-                hr = ScaWriteConfigString(psvd->wzWebName);         //site name key
-                ExitOnFailure(hr, "Failed write VirDir web name")
-                hr = ScaWriteConfigString(wzAppPath);              //app path key
-                ExitOnFailure(hr, "Failed write VirDir app path")
-                hr = ScaWriteConfigString(L"/");                    //vdir path
-                ExitOnFailure(hr, "Failed write VirDir path")
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ScaWriteConfigString(psvd->wzDirectory);         //physical dir
-                ExitOnFailure(hr, "Failed write VirDir dir")                
             }
-            else
-            {
-                //create the Vdir in the default application
-                hr = ScaWriteConfigID(IIS_VDIR);
-                ExitOnFailure(hr, "Failed write VirDir ID")
-                hr = ScaWriteConfigID(IIS_CREATE);
-                ExitOnFailure(hr, "Failed write VirDir action")
+        }
+
+        psvd = psvd->psvdNext;
+    }
+
+    // Reset our linked list and write all the VDirs
+    psvd = psvdList;
+    while (psvd)
+    {
+        if (WcaIsInstalling(psvd->isInstalled, psvd->isAction))
+        {
+            //create the Vdir
+            hr = ScaWriteConfigID(IIS_VDIR);
+            ExitOnFailure(hr, "Failed write VirDir ID")
+            hr = ScaWriteConfigID(IIS_CREATE);
+            ExitOnFailure(hr, "Failed write VirDir action")
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ScaWriteConfigString(psvd->wzWebName);         //site name key
-                ExitOnFailure(hr, "Failed write VirDir web name")
-                hr = ScaWriteConfigString(L"/" );                   //app path key
-                ExitOnFailure(hr, "Failed write VirDir app path")
+            hr = ScaWriteConfigString(psvd->wzWebName);         //site name key
+            ExitOnFailure(hr, "Failed write VirDir web name");
+            hr = StrAllocFormatted(&wzPath, L"/%s", psvd->wzVDirRoot);
+            ExitOnFailure(hr, "Failed to create vdir path");
+            hr = ScaWriteConfigString(wzPath);                  //vdir path
+            ExitOnFailure(hr, "Failed write VirDir path")
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ::StringCchCatW(wzAppPath, countof(wzAppPath), psvd->wzVDirRoot);
-                ExitOnFailure(hr, "Failed to copy app path root");
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ScaWriteConfigString(wzAppPath);                //vdir path
-                ExitOnFailure(hr, "Failed write VirDir path")
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ScaWriteConfigString(psvd->wzDirectory);         //physical dir
-                ExitOnFailure(hr, "Failed write VirDir dir")
-            }
+            hr = ScaWriteConfigString(psvd->wzDirectory);       //physical dir
+            ExitOnFailure(hr, "Failed write VirDir dir");
 
             if (psvd->fHasProperties)
             {
@@ -330,6 +313,7 @@ HRESULT ScaVirtualDirsInstall7(
     }
 
 LExit:
+    ReleaseStr(wzPath);
     return hr;
 }
 
@@ -341,12 +325,16 @@ HRESULT ScaVirtualDirsUninstall7(
 
     HRESULT hr = S_OK;
     SCA_VDIR7* psvd = psvdList;
-    WCHAR wzAppPath[MAX_PATH];
+    LPWSTR wzPath = NULL;
 
     while (psvd)
     {
         if (WcaIsUninstalling(psvd->isInstalled, psvd->isAction))
         {
+            //init path        
+            hr = StrAllocFormatted(&wzPath, L"/%s", psvd->wzVDirRoot);
+            ExitOnFailure(hr, "Failed to create vdir path");
+
             if( psvd->fHasApplication )
             {        
                 //delete Application
@@ -357,13 +345,8 @@ HRESULT ScaVirtualDirsUninstall7(
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
                 hr = ScaWriteConfigString(psvd->wzWebName);        //site name key
                 ExitOnFailure(hr, "Failed to write App site Name");
-                hr = ::StringCchCopyW(wzAppPath, countof(wzAppPath), L"/");
-                ExitOnFailure(hr, "Failed to copy app path '/' ");
-                psvd->wzVDirRoot[countof(psvd->wzVDirRoot)-1] = '\0';
-                hr = ::StringCchCatW(wzAppPath, countof(wzAppPath), psvd->wzVDirRoot);
-                ExitOnFailure(hr, "Failed to copy app path root ");
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-                hr = ScaWriteConfigString(wzAppPath);              //  App Path
+                hr = ScaWriteConfigString(wzPath);                 //  App Path
                 ExitOnFailure(hr, "Failed to write app path root ");
                 hr = ScaWriteConfigString(L"NOP");                 //  App pool
                 ExitOnFailure(hr, "Failed to write app path app pool ");
@@ -377,14 +360,7 @@ HRESULT ScaVirtualDirsUninstall7(
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
                 hr = ScaWriteConfigString(psvd->wzWebName);        //site name key
                 ExitOnFailure(hr, "Failed to write App site Name");
-                hr = ::StringCchCopyW(wzAppPath, countof(wzAppPath), L"/");
-                ExitOnFailure(hr, "Failed to copy app path '/' ");
-                psvd->wzVDirRoot[countof(psvd->wzVDirRoot)-1] = '\0';
-                hr = ::StringCchCatW(wzAppPath, countof(wzAppPath), psvd->wzVDirRoot);
-                ExitOnFailure(hr, "Failed to copy app path root ");
-                hr = ScaWriteConfigString(L"/" );                  //  App Path
-                ExitOnFailure(hr, "Failed to write app path root ");
-                hr = ScaWriteConfigString(wzAppPath);              //  Vdir Path
+                hr = ScaWriteConfigString(wzPath);                 //  Vdir Path
                 ExitOnFailure(hr, "Failed to write app vdir ");
                 hr = ScaWriteConfigString(L"NOP");                 //  Phy Path
                 ExitOnFailure(hr, "Failed to write vdir path");
@@ -397,6 +373,7 @@ HRESULT ScaVirtualDirsUninstall7(
     }
 
 LExit:
+    ReleaseStr(wzPath);
     return hr;
 }
 

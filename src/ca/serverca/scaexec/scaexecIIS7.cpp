@@ -205,6 +205,7 @@ static HRESULT PutPropertyBoolValue(IAppHostElement *pElement, LPCWSTR wszPropNa
 static HRESULT GetNextAvailableSiteId( IAppHostWritableAdminManager *pAdminMgr, DWORD *plSiteId);
 static HRESULT GetSiteElement( IAppHostWritableAdminManager *pAdminMgr, LPCWSTR swSiteName, IAppHostElement **pSiteElement, BOOL* fFound);
 static HRESULT GetApplicationElement( IAppHostElement *pSiteElement, LPCWSTR swAppPath,  IAppHostElement **pAppElement, BOOL* fFound);
+static HRESULT GetApplicationElementForVDir( IAppHostElement *pSiteElement, LPCWSTR swVDirPath,  IAppHostElement **ppAppElement, LPCWSTR *ppwzVDirSubPath, BOOL* fFound);
 
 static HRESULT CreateApplication( IAppHostElement *pSiteElement, LPCWSTR swAppPath, IAppHostElement **pAppElement);
 static HRESULT DeleteApplication( IAppHostElement *pSiteElement, LPCWSTR swAppPath);
@@ -746,7 +747,7 @@ HRESULT IIS7AspProperty(
                 hr = pSection->GetElementByName(ScopeBSTR(IIS_CONFIG_SESSION), &pElement);
                 ExitOnFailure(hr, "Failed to get asp session timeout");
                 *wcTime = '\0';
-                ConvSecToHMS(iData, wcTime, countof( wcTime));
+                ConvSecToHMS(iData * 60, wcTime, countof( wcTime));
                 hr = PutPropertyValue( pElement, IIS_CONFIG_TIMEOUT, wcTime);
                 ExitOnFailure(hr, "Failed to put asp timeout value");
                 ReleaseNullObject(pElement);
@@ -2209,9 +2210,9 @@ HRESULT IIS7VDir(
     BOOL fAppFound = FALSE;
     
     LPWSTR pwzSiteName = NULL;
-    LPWSTR pwzAppPath = NULL;
     LPWSTR pwzVDirPath = NULL;
     LPWSTR pwzVDirPhyDir = NULL;
+    LPCWSTR pwzVDirSubPath = NULL;
 
     IAppHostElement *pSiteElem = NULL;
     IAppHostElement *pAppElement = NULL;
@@ -2225,9 +2226,6 @@ HRESULT IIS7VDir(
     //get site key name
     hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzSiteName);
     ExitOnFailure(hr, "Failed to read site key");
-    //get application key path
-    hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzAppPath);
-    ExitOnFailure(hr, "Failed to read appPath key");
     //get VDir path
     hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzVDirPath);
     ExitOnFailure(hr, "Failed to read VDir key");
@@ -2243,11 +2241,12 @@ HRESULT IIS7VDir(
     {
         if(fSiteFound)
         {
-            //have site get application collection
-            hr = GetApplicationElement( pSiteElem,
-                                        pwzAppPath,
-                                        &pAppElement,
-                                        &fAppFound);
+            //have site get application
+            hr = GetApplicationElementForVDir( pSiteElem,
+                                               pwzVDirPath,
+                                               &pAppElement,
+                                               &pwzVDirSubPath,
+                                               &fAppFound);
             ExitOnFailure(hr, "Error reading application element from config");
 
             if (!fAppFound)
@@ -2259,7 +2258,7 @@ HRESULT IIS7VDir(
             //
             // create the virDir
             //
-            hr = CreateVdir( pAppElement, pwzVDirPath, pwzVDirPhyDir );
+            hr = CreateVdir( pAppElement, pwzVDirSubPath, pwzVDirPhyDir );
             ExitOnFailure(hr, "Failed to create vdir for application");
         }
         else
@@ -2272,16 +2271,17 @@ HRESULT IIS7VDir(
     {
         if( fSiteFound )
         {
-            //have site get application collection
-            hr = GetApplicationElement( pSiteElem,
-                                        pwzAppPath,
-                                        &pAppElement,
-                                        &fAppFound);
+            //have site get application
+            hr = GetApplicationElementForVDir( pSiteElem,
+                                               pwzVDirPath,
+                                               &pAppElement,
+                                               &pwzVDirSubPath,
+                                               &fAppFound);
             ExitOnFailure(hr, "Error reading application from config")
             if ( fAppFound )
             {
                 //delete vdir
-                hr = DeleteVdir( pAppElement, pwzVDirPath );
+                hr = DeleteVdir( pAppElement, pwzVDirSubPath );
                 ExitOnFailure(hr, "Unable to delete vdir for application");
             }
         }
@@ -2289,7 +2289,6 @@ HRESULT IIS7VDir(
 
  LExit:
     ReleaseStr(pwzSiteName);
-    ReleaseStr(pwzAppPath);
     ReleaseStr(pwzVDirPath);
     ReleaseStr(pwzVDirPhyDir);
     ReleaseNullObject(pSiteElem);
@@ -3184,7 +3183,6 @@ static HRESULT GetApplicationElement( IAppHostElement *pSiteElement,
                                       BOOL* fFound)
 {
    HRESULT hr = S_OK;
-   IAppHostElement *pElement = NULL;
    IAppHostElementCollection *pCollection = NULL;
 
    *fFound = FALSE;
@@ -3198,8 +3196,64 @@ static HRESULT GetApplicationElement( IAppHostElement *pSiteElement,
     *fFound = ppAppElement != NULL && *ppAppElement != NULL;
 
 LExit:
-    ReleaseNullObject(pElement);
     ReleaseNullObject(pCollection);
+
+    return hr;
+}
+
+static HRESULT GetApplicationElementForVDir( IAppHostElement *pSiteElement,
+                                             LPCWSTR pwzVDirPath,
+                                             IAppHostElement **ppAppElement, 
+                                             LPCWSTR *ppwzVDirSubPath, 
+                                             BOOL* fFound)
+{
+    HRESULT hr = S_OK;
+    IAppHostElementCollection *pCollection = NULL;
+    LPWSTR pwzAppPath = NULL;
+    *fFound = FALSE;
+    *ppwzVDirSubPath = NULL;
+
+    hr = pSiteElement->get_Collection( &pCollection);
+    ExitOnFailure(hr, "Failed get site app collection");
+
+    // Start with full path
+    int iLastPathIndex = lstrlenW(pwzVDirPath) - 1;
+    hr = StrAllocString(&pwzAppPath, pwzVDirPath, 0);
+    ExitOnFailure(hr, "Failed allocate application path");
+
+    for(int iSubPathIndex = iLastPathIndex; (iSubPathIndex >= 0) && (!*fFound); iSubPathIndex--)
+    {
+        // We are looking at the full path, or at a directory boundary, or at the root
+        if (iSubPathIndex == iLastPathIndex ||
+            '/' == pwzAppPath[iSubPathIndex] || 
+            0 == iSubPathIndex)
+        {
+            // break the path if needed
+            if ('/' == pwzAppPath[iSubPathIndex])
+            {
+                pwzAppPath[iSubPathIndex] = '\0';
+            }
+
+            // Special case for root path, need an empty app path
+            LPCWSTR pwzAppSearchPath = 0 == iSubPathIndex ? L"/" : pwzAppPath;
+
+            // Try to find an app with the specified path
+            hr = FindAppHostElement(pCollection, IIS_CONFIG_APPLICATION, IIS_CONFIG_PATH, pwzAppSearchPath, ppAppElement, NULL);
+            ExitOnFailure1(hr, "Failed to search for app %S", pwzAppSearchPath);    
+            *fFound = ppAppElement != NULL && *ppAppElement != NULL;
+
+            if (*fFound)
+            {
+                // set return value for sub path
+                // special case for app path == vdir path, need an empty subpath.
+                *ppwzVDirSubPath = (iSubPathIndex == iLastPathIndex) ? L"/" : pwzVDirPath + iSubPathIndex;
+            }
+        }
+    }
+
+LExit:
+    ReleaseNullObject(pCollection);
+    ReleaseStr(pwzAppPath);
 
     return hr;
 }
@@ -3798,7 +3852,7 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
                 hr = pAppPoolElement->GetElementByName(ScopeBSTR(IIS_CONFIG_PROCESSMODEL), &pElement);
                 ExitOnFailure(hr, "Failed to get AppPool processModel element");
                 *wcTime = '\0';
-                ConvSecToHMS(iData, wcTime, countof(wcTime));
+                ConvSecToHMS(iData * 60, wcTime, countof(wcTime));
                 hr = PutPropertyValue(pElement, IIS_CONFIG_IDLETIMEOUT, wcTime);
                 ExitOnFailure(hr, "Failed to set AppPool processModel idle timeout value");
                 ReleaseNullObject(pElement);

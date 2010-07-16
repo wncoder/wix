@@ -43,10 +43,11 @@ Action are 1 (Shutdown) and 0 (No Action).
 
 ------------------------------------------------------------------*/
 // sql queries
-LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `IIsAppPool`.`Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `Component`.`Attributes` FROM `IIsAppPool`, `Component` WHERE `Component_`=`Component`";
+LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc` FROM `IIsAppPool`";
+enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc};
 
-enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqComponentAttr};
-
+LPCWSTR vcsComponentAttrQuery = L"SELECT `Attributes` FROM `Component` WHERE `Component`=?";
+enum eComponentAttrQuery { caqAttributes = 1 };
 
 // prototypes
 static HRESULT AppPoolExists(
@@ -83,7 +84,7 @@ HRESULT ScaAppPoolRead7(
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
 
-    PMSIHANDLE hView, hRec;
+    PMSIHANDLE hView, hRec, hViewComp, hRecComp, hRecAttr;
     LPWSTR pwzData = NULL;
     INSTALLSTATE isInstalled = INSTALLSTATE_UNKNOWN;
     INSTALLSTATE isAction = INSTALLSTATE_UNKNOWN;
@@ -95,6 +96,10 @@ HRESULT ScaAppPoolRead7(
         WcaLog(LOGMSG_VERBOSE, "Skipping ScaAppPoolRead7() - because IIsAppPool table not present");
         ExitFunction1(hr = S_FALSE);
     }
+
+    // open a view on the component table
+    hr = WcaOpenView(vcsComponentAttrQuery, &hViewComp);
+    ExitOnFailure(hr, "Failed to open view on Component table for ScaAppPoolRead7");
 
     // loop through all the AppPools
     hr = WcaOpenExecuteView(vcsAppPoolQuery7, &hView);
@@ -122,6 +127,19 @@ HRESULT ScaAppPoolRead7(
             er = ::MsiGetComponentStateW(WcaGetInstallHandle(), psap->wzComponent, &psap->isInstalled, &psap->isAction);
             hr = HRESULT_FROM_WIN32(er);
             ExitOnFailure(hr, "Failed to get appPool Component state");
+
+            // Determine component attributes, this needs to be a seperate query since not all app pools have components
+            hRecComp = ::MsiCreateRecord(1);
+            hr = WcaSetRecordString(hRecComp, 1, psap->wzComponent);
+            ExitOnFailure(hr, "Failed to look up component attributes");
+
+            hr = WcaExecuteView(hViewComp, hRecComp);
+            ExitOnFailure1(hr, "Failed to open Component.Attributes for Component '%S'", psap->wzComponent);
+            hr = WcaFetchSingleRecord(hViewComp, &hRecAttr);
+            ExitOnFailure1(hr, "Failed to fetch Component.Attributes for Component '%S'", psap->wzComponent);
+
+            hr = WcaGetRecordInteger(hRecAttr, caqAttributes, &psap->iCompAttributes);
+            ExitOnFailure(hr, "failed to get Component.Attributes");
         }
         //
         //get apppool properties
@@ -175,9 +193,6 @@ HRESULT ScaAppPoolRead7(
 
         hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iMaxProcesses);
         ExitOnFailure(hr, "failed to get AppPool.MaxProc");
-
-        hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iCompAttributes);
-        ExitOnFailure(hr, "failed to get Component.Attributes");
     }
 
     if (E_NOMOREITEMS == hr)
