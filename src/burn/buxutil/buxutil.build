@@ -24,12 +24,6 @@
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
   <!-- buxutil-specific properties -->
-  <property name="dir.src.buxutil" value="${dir.src.burn}\buxutil" readonly="true" />
-  <property name="dir.build.buxutil.x86" value="${dir.build.wix.x86}\buxutil" readonly="true" />
-  <property name="dir.build.buxutil.x64" value="${dir.build.wix.x64}\buxutil" readonly="true" />
-  <property name="dir.build.buxutil.x86.vc8" value="${dir.build.buxutil.x86}\vc8" readonly="true" />
-  <property name="dir.build.buxutil.x64.vc8" value="${dir.build.buxutil.x64}\vc8" readonly="true" />
-
   <property name="buxutil.additionalOptions" value="/I &quot;${dir.inc.burn}&quot; /I &quot;${dir.inc.buxutil}&quot;"/>
 
   <!--
@@ -43,53 +37,75 @@
 
   <!-- Clean -->
   <target name="buxutil.clean" description="Cleans the build">
-    <delete dir="${dir.build.buxutil.x86}" failonerror="false" if="${directory::exists(dir.build.buxutil.x86)}" />
-    <delete dir="${dir.build.buxutil.x64}" failonerror="false" if="${directory::exists(dir.build.buxutil.x64)}" />
-    <delete file="${file.target.buxutil.x86}" failonerror="false" if="${file::exists(file.target.buxutil.x86)}" />
-    <delete file="${file.target.buxutil.x64}" failonerror="false" if="${file::exists(file.target.buxutil.x64)}" />
+    <delete dir="${dir.build.burn.buxutil.x86}" failonerror="false" if="${directory::exists(dir.build.burn.buxutil.x86)}" />
+    <delete dir="${dir.build.burn.buxutil.x64}" failonerror="false" if="${directory::exists(dir.build.burn.buxutil.x64)}" />
 
-    <delete dir="${dir.build.buxutil.x86.vc8}" failonerror="false" if="${directory::exists(dir.build.buxutil.x86.vc8)}" />
-    <delete dir="${dir.build.buxutil.x64.vc8}" failonerror="false" if="${directory::exists(dir.build.buxutil.x64.vc8)}" />
-    <delete file="${file.target.buxutil.x86.vc8}" failonerror="false" if="${file::exists(file.target.buxutil.x86.vc8)}" />
-    <delete file="${file.target.buxutil.x64.vc8}" failonerror="false" if="${file::exists(file.target.buxutil.x64.vc8)}" />
+    <delete file="${file.target.buxutil.vs2005.x86}" failonerror="false" if="${file::exists(file.target.buxutil.vs2005.x86)}" />
+    <delete file="${file.target.buxutil.vs2005.x64}" failonerror="false" if="${file::exists(file.target.buxutil.vs2005.x64)}" />
+
+    <delete file="${file.target.buxutil.vs2008.x86}" failonerror="false" if="${file::exists(file.target.buxutil.vs2008.x86)}" />
+    <delete file="${file.target.buxutil.vs2008.x64}" failonerror="false" if="${file::exists(file.target.buxutil.vs2008.x64)}" />
+
+    <delete file="${file.target.buxutil.vs2010.x86}" failonerror="false" if="${file::exists(file.target.buxutil.vs2010.x86)}" />
+    <delete file="${file.target.buxutil.vs2010.x64}" failonerror="false" if="${file::exists(file.target.buxutil.vs2010.x64)}" />
   </target>
 
   <!-- Inc -->
   <target name="buxutil.inc" description="Performs an incremental build" depends="makeDirs">
-    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.buxutil}">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.buxutil}">
       <include name="buxutil.cpp" />
       <include name="buxcondition.cpp" />
     </fileset>
 
-    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x86}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2010.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
-    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x86}" dynamic="true" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2010.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
-    <!-- Make x86 buxutil.lib -->
+    <property name="makeNativeLib.vctoolsversion" value="10" />
+    <!-- Make x86 buxutil.lib for VS2010 -->
     <call target="makeNativeLib" />
 
-    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x64}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2010.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
-    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x64}" dynamic="true" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2010.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />
-    <!-- Make x64 buxutil.lib -->
+    <property name="makeNativeLib.vctoolsversion" value="10" />
+    <!-- Make x64 buxutil.lib for VS2010 -->
     <call target="makeNativeLib" />
 
-    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x86.vc8}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2008.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2008.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="9" />
+    <!-- Make x86 buxutil.lib for VS2008 -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2008.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2008.x64}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x64" />
+    <property name="makeNativeLib.vctoolsversion" value="9" />
+    <!-- Make x64 buxutil.lib for VS2008 -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2005.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions} -WX-" />
-    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x86.vc8}" dynamic="true" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2005.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
     <property name="makeNativeLib.vctoolsversion" value="8" />
     <!-- Make VS2005 x86 buxutil.lib -->
     <call target="makeNativeLib" />
 
-    <property name="compileCpp.dir.build" value="${dir.build.buxutil.x64.vc8}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.buxutil}\precomp.h" />
+    <property name="compileCpp.dir.build" value="${dir.build.burn.buxutil.vs2005.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.buxutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${buxutil.additionalOptions} -WX-" />
-    <property name="makeNativeLib.file.target" value="${file.target.buxutil.x64.vc8}" dynamic="true" />
+    <property name="makeNativeLib.file.target" value="${file.target.buxutil.vs2005.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />
     <property name="makeNativeLib.vctoolsversion" value="8" />
     <!-- Make VS2005 x64 buxutil.lib -->

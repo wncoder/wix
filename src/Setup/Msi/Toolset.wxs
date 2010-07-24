@@ -248,40 +248,49 @@
             </Component>
         </DirectoryRef>
 
-        <DirectoryRef Id="SdkLibDir">
-            <Component Id="SdkLibs" Guid="086102E7-C6C5-46E7-B3A0-043FE3A2AEBC" Win64="no">
-                <File Source="dutil.lib" KeyPath="yes" />
-<?if $(var.Build2005)=true ?>
-                <File Source="dutil_2005.lib" />
-<?endif?>
+        <ComponentGroup Id="SdkLibs">
+            <?if $(var.Build2005)=true ?>
+            <ComponentRef Id="Dutil_2005_x86" />
+            <ComponentRef Id="Dutil_2005_x64" />
 
-                <File Source="dutil_x64.lib" />
-<?if $(var.Build2005)=true ?>
-                <File Source="dutil_2005_x64.lib" />
-<?endif ?>
-<?if $(var.BuildIA64)=true ?>
-                <File Source="dutil_ia64.lib" />
-<?if $(var.Build2005)=true ?>
-                <File Source="dutil_2005_ia64.lib" />
-<?endif ?>
-<?endif ?>
-                <File Source="wcautil.lib" />
-<?if $(var.Build2005)=true ?>
-                <File Source="wcautil_2005.lib" />
-<?endif ?>
+            <ComponentRef Id="Wcautil_2005_x86" />
+            <ComponentRef Id="Wcautil_2005_x64" />
 
-                <File Source="wcautil_x64.lib" />
-<?if $(var.Build2005)=true ?>
-                <File Source="wcautil_2005_x64.lib" />
-<?endif ?>
-<?if $(var.BuildIA64)=true ?>
-                <File Source="wcautil_ia64.lib" />
-<?if $(var.Build2005)=true ?>
-                <File Source="wcautil_2005_ia64.lib" />
-<?endif ?>
-<?endif ?>
-            </Component>
-        </DirectoryRef>
+            <?if $(var.BuildIA64)=true ?>
+            <ComponentRef Id="Dutil_2005_ia64" />
+            <ComponentRef Id="Wcautil_2005_ia64" />
+            <?endif ?>
+            <?endif ?>
+
+            <?if $(var.Build2008)=true ?>
+            <ComponentRef Id="Dutil_2008_x86" />
+            <ComponentRef Id="Dutil_2008_x64" />
+
+            <ComponentRef Id="Wcautil_2008_x86" />
+            <ComponentRef Id="Wcautil_2008_x64" />
+
+            <?if $(var.BuildIA64)=true ?>
+            <ComponentRef Id="Wcautil_2008_ia64" />
+            <ComponentRef Id="Dutil_2008_ia64" />
+            <?endif ?>
+
+            <?endif ?>
+
+
+            <?if $(var.Build2010)=true ?>
+            <ComponentRef Id="Dutil_2010_x86" />
+            <ComponentRef Id="Dutil_2010_x64" />
+
+            <ComponentRef Id="Wcautil_2010_x86" />
+            <ComponentRef Id="Wcautil_2010_x64" />
+
+            <?if $(var.BuildIA64)=true ?>
+            <ComponentRef Id="Dutil_2010_ia64" />
+            <ComponentRef Id="Wcautil_2010_ia64" />
+            <?endif ?>
+            <?endif ?>
+
+        </ComponentGroup>
 
         <ComponentGroup Id="Toolset">
             <ComponentRef Id="CandleBinaries" />

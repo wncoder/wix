@@ -2359,7 +2359,7 @@
         </Message>
         <Message Id="InvalidRemoveComponent" Number="305">
             <Instance>
-                Removing component '{0}' from feature '{1}' is not supported.
+                Removing component '{0}' from feature '{1}' is not supported. Either the component was removed or the guid changed. Add the component back, undo the change to the component guid, or remove the entire feature.
                 <Parameter Type="System.String" Name="component" />
                 <Parameter Type="System.String" Name="feature" />
             </Instance>

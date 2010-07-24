@@ -73,6 +73,14 @@
   <!-- Build directories for the main wix projects -->
   <property name="dir.build.ambient" value="${dir.build.wix}\ambient" readonly="true" />
   <property name="dir.build.burn" value="${dir.build.wix}\burn" readonly="true" />
+  <property name="dir.build.burn.buxutil.x86" value="${dir.build.wix.x86}\buxutil" readonly="true" />
+  <property name="dir.build.burn.buxutil.x64" value="${dir.build.wix.x64}\buxutil" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2005.x86" value="${dir.build.burn.buxutil.x86}\2005" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2005.x64" value="${dir.build.burn.buxutil.x64}\2005" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2008.x86" value="${dir.build.burn.buxutil.x86}\2008" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2008.x64" value="${dir.build.burn.buxutil.x64}\2008" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2010.x86" value="${dir.build.burn.buxutil.x86}\2010" readonly="true" />
+  <property name="dir.build.burn.buxutil.vs2010.x64" value="${dir.build.burn.buxutil.x64}\2010" readonly="true" />
   <property name="dir.build.burn.core" value="${dir.build.burn}\core" readonly="true" />
   <property name="dir.build.burn.mux" value="${dir.build.burn}\mux" readonly="true" />
   <property name="dir.build.burn.mux.adapter" value="${dir.build.wix}\adapter" readonly="true" />
@@ -124,15 +132,24 @@
   <property name="dir.build.dutil.x86" value="${dir.build.wix.x86}\dutil" readonly="true" />
   <property name="dir.build.dutil.x64" value="${dir.build.wix.x64}\dutil" readonly="true" />
   <property name="dir.build.dutil.ia64" value="${dir.build.wix.ia64}\dutil" readonly="true" />
-  <property name="dir.build.dutil.x86.vc8" value="${dir.build.dutil.x86}\vc8" readonly="true" />
-  <property name="dir.build.dutil.x64.vc8" value="${dir.build.dutil.x64}\vc8" readonly="true" />
-  <property name="dir.build.dutil.ia64.vc8" value="${dir.build.dutil.ia64}\vc8" readonly="true" />
-  <property name="dir.build.wcautil.x86" value="${dir.build.wix.x86}\ca\wcautil" dynamic="true" readonly="true" />
-  <property name="dir.build.wcautil.x64" value="${dir.build.wix.x64}\ca\wcautil" dynamic="true" readonly="true" />
-  <property name="dir.build.wcautil.ia64" value="${dir.build.wix.ia64}\ca\wcautil" dynamic="true" readonly="true" />
-  <property name="dir.build.wcautil.x86.vc8" value="${dir.build.wix.x86}\ca\wcautil" dynamic="true" readonly="true" />
-  <property name="dir.build.wcautil.x64.vc8" value="${dir.build.wix.x64}\ca\wcautil" dynamic="true" readonly="true" />
-  <property name="dir.build.wcautil.ia64.vc8" value="${dir.build.wix.ia64}\ca\wcautil" dynamic="true" readonly="true" />
+  <property name="dir.build.dutil.vs2010.x86" value="${dir.build.dutil.x86}\2010" readonly="true" />
+  <property name="dir.build.dutil.vs2010.x64" value="${dir.build.dutil.x64}\2010" readonly="true" />
+  <property name="dir.build.dutil.vs2010.ia64" value="${dir.build.dutil.ia64}\2010" readonly="true" />
+  <property name="dir.build.dutil.vs2008.x86" value="${dir.build.dutil.x86}\2008" readonly="true" />
+  <property name="dir.build.dutil.vs2008.x64" value="${dir.build.dutil.x64}\2008" readonly="true" />
+  <property name="dir.build.dutil.vs2008.ia64" value="${dir.build.dutil.ia64}\2008" readonly="true" />
+  <property name="dir.build.dutil.vs2005.x86" value="${dir.build.dutil.x86}\2005" readonly="true" />
+  <property name="dir.build.dutil.vs2005.x64" value="${dir.build.dutil.x64}\2005" readonly="true" />
+  <property name="dir.build.dutil.vs2005.ia64" value="${dir.build.dutil.ia64}\2005" readonly="true" />
+  <property name="dir.build.wcautil.vs2010.x86" value="${dir.build.wix.x86}\ca\wcautil_2010" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2010.x64" value="${dir.build.wix.x64}\ca\wcautil_2010" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2010.ia64" value="${dir.build.wix.ia64}\ca\wcautil_2010" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2008.x86" value="${dir.build.wix.x86}\ca\wcautil_2008" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2008.x64" value="${dir.build.wix.x64}\ca\wcautil_2008" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2008.ia64" value="${dir.build.wix.ia64}\ca\wcautil_2008" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2005.x86" value="${dir.build.wix.x86}\ca\wcautil_2005" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2005.x64" value="${dir.build.wix.x64}\ca\wcautil_2005" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2005.ia64" value="${dir.build.wix.ia64}\ca\wcautil_2005" dynamic="true" readonly="true" />
   <property name="dir.build.wixca.x86" value="${dir.build.wix.x86}\ca\wixca" dynamic="true" readonly="true" />
   <property name="dir.build.wixca.x64" value="${dir.build.wix.x64}\ca\wixca" dynamic="true" readonly="true" />
   <property name="dir.build.wixca.ia64" value="${dir.build.wix.ia64}\ca\wixca" dynamic="true" readonly="true" />
@@ -148,6 +165,7 @@
   <property name="dir.src.burn.mux.host" value="${dir.src.burn.mux}\host" readonly="true" />
   <property name="dir.src.burn.mux.model" value="${dir.src.burn.mux}\model" readonly="true" />
   <property name="dir.src.burn.mux.wpfview" value="${dir.src.burn.mux}\wpfview" readonly="true" />
+  <property name="dir.src.burn.buxutil" value="${dir.src.burn}\buxutil" readonly="true" />
   <property name="dir.src.ca" value="${dir.wixroot.src}\ca" readonly="true" />
   <property name="dir.src.ca.serverca" value="${dir.wixroot.src}\ca\serverca" readonly="true" />
   <property name="dir.src.ca.wcautil" value="${dir.wixroot.src}\ca\wcautil" readonly="true" />
@@ -198,33 +216,47 @@
   <property name="file.target.wixdll" value="${dir.target.wix}\wix.dll" readonly="true" />
 
   <!-- Non-dynamic files which specify a particular platform -->
-  <property name="file.target.wcautil.x86" value="${dir.target.wix.x86}\wcautil.lib" readonly="true" />
-  <property name="file.target.wcautil.x64" value="${dir.target.wix.x64}\wcautil_x64.lib" readonly="true" />
-  <property name="file.target.wcautil.ia64" value="${dir.target.wix.ia64}\wcautil_ia64.lib" readonly="true" />
-  <property name="file.target.wcautil" value="${file.target.wcautil.x86}" readonly="true" />
+  <property name="file.target.wcautil.vs2010.x86" value="${dir.target.wix.x86}\wcautil_2010.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2010.x64" value="${dir.target.wix.x64}\wcautil_2010_x64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2010.ia64" value="${dir.target.wix.ia64}\wcautil_2010_ia64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2010" value="${file.target.wcautil.vs2010.x86}" readonly="true" />
 
-  <property name="file.target.wcautil.x86.vc8" value="${dir.target.wix.x86}\wcautil_2005.lib" readonly="true" />
-  <property name="file.target.wcautil.x64.vc8" value="${dir.target.wix.x64}\wcautil_2005_x64.lib" readonly="true" />
-  <property name="file.target.wcautil.ia64.vc8" value="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" readonly="true" />
-  <property name="file.target.wcautil.vc8" value="${file.target.wcautil.x86.vc8}" readonly="true" />
+  <property name="file.target.wcautil.vs2008.x86" value="${dir.target.wix.x86}\wcautil_2008.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2008.x64" value="${dir.target.wix.x64}\wcautil_2008_x64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2008.ia64" value="${dir.target.wix.ia64}\wcautil_2008_ia64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2008" value="${file.target.wcautil.vs2008.x86}" readonly="true" />
 
-  <property name="file.target.dutil.x86" value="${dir.target.wix.x86}\dutil.lib" readonly="true" />
-  <property name="file.target.dutil.x64" value="${dir.target.wix.x64}\dutil_x64.lib" readonly="true" />
-  <property name="file.target.dutil.ia64" value="${dir.target.wix.ia64}\dutil_ia64.lib" readonly="true" />
-  <property name="file.target.dutil" value="${file.target.dutil.x86}" readonly="true" />
+  <property name="file.target.wcautil.vs2005.x86" value="${dir.target.wix.x86}\wcautil_2005.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2005.x64" value="${dir.target.wix.x64}\wcautil_2005_x64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2005.ia64" value="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2005" value="${file.target.wcautil.vs2005.x86}" readonly="true" />
 
-  <property name="file.target.dutil.x86.vc8" value="${dir.target.wix.x86}\dutil_2005.lib" readonly="true" />
-  <property name="file.target.dutil.x64.vc8" value="${dir.target.wix.x64}\dutil_2005_x64.lib" readonly="true" />
-  <property name="file.target.dutil.ia64.vc8" value="${dir.target.wix.ia64}\dutil_2005_ia64.lib" readonly="true" />
-  <property name="file.target.dutil.vc8" value="${file.target.dutil.x86}" readonly="true" />
+  <property name="file.target.dutil.vs2010.x86" value="${dir.target.wix.x86}\dutil_2010.lib" readonly="true" />
+  <property name="file.target.dutil.vs2010.x64" value="${dir.target.wix.x64}\dutil_2010_x64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2010.ia64" value="${dir.target.wix.ia64}\dutil_2010_ia64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2010" value="${file.target.dutil.vs2010.x86}" readonly="true" />
 
-  <property name="file.target.buxutil.x86" value="${dir.target.wix.x86}\buxutil.lib" readonly="true" />
-  <property name="file.target.buxutil.x64" value="${dir.target.wix.x64}\buxutil_x64.lib" readonly="true" />
-  <property name="file.target.buxutil" value="${file.target.buxutil.x86}" readonly="true" />
+  <property name="file.target.dutil.vs2008.x86" value="${dir.target.wix.x86}\dutil_2008.lib" readonly="true" />
+  <property name="file.target.dutil.vs2008.x64" value="${dir.target.wix.x64}\dutil_2008_x64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2008.ia64" value="${dir.target.wix.ia64}\dutil_2008_ia64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2008" value="${file.target.dutil.vs2008.x86}" readonly="true" />
 
-  <property name="file.target.buxutil.x86.vc8" value="${dir.target.wix.x86}\buxutil_2005.lib" readonly="true" />
-  <property name="file.target.buxutil.x64.vc8" value="${dir.target.wix.x64}\buxutil_2005_x64.lib" readonly="true" />
-  <property name="file.target.buxutil.vc8" value="${file.target.buxutil.x86.vc8}" readonly="true" />
+  <property name="file.target.dutil.vs2005.x86" value="${dir.target.wix.x86}\dutil_2005.lib" readonly="true" />
+  <property name="file.target.dutil.vs2005.x64" value="${dir.target.wix.x64}\dutil_2005_x64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2005.ia64" value="${dir.target.wix.ia64}\dutil_2005_ia64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2005" value="${file.target.dutil.vs2005.x86}" readonly="true" />
+
+  <property name="file.target.buxutil.vs2010.x86" value="${dir.target.wix.x86}\buxutil_2010.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2010.x64" value="${dir.target.wix.x64}\buxutil_2010_x64.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2010" value="${file.target.buxutil.vs2010.x86}" readonly="true" />
+
+  <property name="file.target.buxutil.vs2008.x86" value="${dir.target.wix.x86}\buxutil_2008.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2008.x64" value="${dir.target.wix.x64}\buxutil_2008_x64.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2008" value="${file.target.buxutil.vs2008.x86}" readonly="true" />
+
+  <property name="file.target.buxutil.vs2005.x86" value="${dir.target.wix.x86}\buxutil_2005.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2005.x64" value="${dir.target.wix.x64}\buxutil_2005_x64.lib" readonly="true" />
+  <property name="file.target.buxutil.vs2005" value="${file.target.buxutil.vs2005.x86}" readonly="true" />
 
   <!-- Files -->
   <property name="file.nanttasks" value="${dir.target.wix}\Microsoft.Tools.WindowsInstallerXml.NAntTasks.dll" readonly="true" />

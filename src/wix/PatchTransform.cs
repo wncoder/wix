@@ -109,6 +109,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else if (RowOperation.Modify == row.Operation)
                 {
+                    if (row.Fields[1].Modified)
+                    {
+                        // Changing the guid of a component is equal to deleting the old one and adding a new one.
+                        deletedComponent.Add(id, row);
+                    }
+
                     // If the keypath is modified its an error
                     if (row.Fields[5].Modified)
                     {

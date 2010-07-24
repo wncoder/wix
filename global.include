@@ -205,7 +205,7 @@
     </if>
 
     <!-- Start "are we building for this platform?" condition -->
-    <if test="${((compileCpp.platform == 'x86' and (property::exists('x86') and x86)) or (compileCpp.platform == 'x64' and (property::exists('x64') and x64)) or (compileCpp.platform == 'ia64' and (property::exists('ia64') and ia64))) and (compileCpp.vctoolsversion == setPlatform.originalvctoolsversion or BuildVC8)}">
+    <if test="${((compileCpp.platform == 'x86' and (property::exists('x86') and x86)) or (compileCpp.platform == 'x64' and (property::exists('x64') and x64)) or (compileCpp.platform == 'ia64' and (property::exists('ia64') and ia64))) and ((compileCpp.vctoolsversion == '8' and BuildVC8) or (compileCpp.vctoolsversion == '9' and BuildVC9) or (compileCpp.vctoolsversion == '10' and BuildVC10))}">
 
       <!--If necessary, create temp variable to store the original state of the "platform" property
           and switch to the requested platform -->
@@ -320,7 +320,7 @@
     </if>
 
     <!-- Start "are we building for this platform?" condition -->
-    <if test="${((makeNativeLib.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeLib.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeLib.platform == 'ia64' and (property::exists('ia64') and ia64))) and (makeNativeLib.vctoolsversion == setPlatform.originalvctoolsversion or BuildVC8)}">
+    <if test="${((makeNativeLib.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeLib.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeLib.platform == 'ia64' and (property::exists('ia64') and ia64))) and ((makeNativeLib.vctoolsversion == '8' and BuildVC8) or (makeNativeLib.vctoolsversion == '9' and BuildVC9) or (makeNativeLib.vctoolsversion == '10' and BuildVC10))}">
 
       <!--If necessary, create temp variable to store the original state of the "platform" property
           and switch to the requested platform -->
@@ -417,7 +417,7 @@
     </if>
 
     <!-- Start "are we building for this platform?" condition -->
-    <if test="${((makeNativeDll.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeDll.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeDll.platform == 'ia64' and (property::exists('ia64') and ia64))) and (makeNativeDll.vctoolsversion == setPlatform.originalvctoolsversion or BuildVC8)}">
+    <if test="${((makeNativeDll.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeDll.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeDll.platform == 'ia64' and (property::exists('ia64') and ia64))) and ((makeNativeDll.vctoolsversion == '8' and BuildVC8) or (makeNativeDll.vctoolsversion == '9' and BuildVC9) or (makeNativeDll.vctoolsversion == '10' and BuildVC10))}">
       
       <!--If necessary, create temp variable to store the original state of the "platform" property
           and switch to the requested platform -->
@@ -500,7 +500,7 @@
     </if>
 
     <!-- Start "are we building for this platform?" condition -->
-    <if test="${((makeNativeExe.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeExe.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeExe.platform == 'ia64' and (property::exists('ia64') and ia64))) and (makeNativeExe.vctoolsversion == setPlatform.originalvctoolsversion or BuildVC8)}">
+    <if test="${((makeNativeExe.platform == 'x86' and (property::exists('x86') and x86)) or (makeNativeExe.platform == 'x64' and (property::exists('x64') and x64)) or (makeNativeExe.platform == 'ia64' and (property::exists('ia64') and ia64))) and ((makeNativeExe.vctoolsversion == '8' and BuildVC8) or (makeNativeExe.vctoolsversion == '9' and BuildVC9) or (makeNativeExe.vctoolsversion == '10' and BuildVC10))}">
 
       <!--If necessary, create temp variable to store the original state of the "platform" property
           and switch to the requested platform -->
@@ -683,15 +683,15 @@
     </if>
 
     <!-- set VC2005 LIB properties -->
-    <property name="dir.vc8.bin.x86" value="${string::to-lower(path::combine(VC80Dir, 'bin'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.bin.x64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_amd64'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.bin.ia64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_ia64'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'lib\'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'lib\amd64'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'lib\ia64'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC8}" />
-    <property name="dir.vc8.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.bin.x86" value="${string::to-lower(path::combine(VC80Dir, 'bin'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.bin.x64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_amd64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.bin.ia64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_ia64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'lib\'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'lib\amd64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'lib\ia64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC8}" />
+    <property name="dir.vs2005.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC8}" />
     <!-- override unversioned VC directories if VC2005 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC80Dir, 'bin'))}" if="${BuildVC8}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_amd64'))}" if="${BuildVC8}" />
@@ -704,15 +704,15 @@
     <property name="dir.vc.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC8}" />
     
     <!-- set VC2010 LIB properties -->
-    <property name="dir.vc10.bin.x86" value="${string::to-lower(path::combine(VC100Dir, 'bin'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.bin.x64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_amd64'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.bin.ia64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_ia64'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'lib\'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'lib\amd64'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'lib\ia64'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC10}" />
-    <property name="dir.vc10.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.bin.x86" value="${string::to-lower(path::combine(VC100Dir, 'bin'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.bin.x64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_amd64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.bin.ia64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_ia64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'lib\'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'lib\amd64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'lib\ia64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC10}" />
+    <property name="dir.vs2010.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC10}" />
     <!-- override unversioned VC directories if VC2010 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC100Dir, 'bin'))}" if="${BuildVC10}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_amd64'))}" if="${BuildVC10}" />
@@ -725,15 +725,15 @@
     <property name="dir.vc.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC10}" />
     
     <!-- set VC2008 LIB properties -->
-    <property name="dir.vc9.bin.x86" value="${string::to-lower(path::combine(VC90Dir, 'bin'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.bin.x64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_amd64'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.bin.ia64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_ia64'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'lib\'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'lib\amd64'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'lib\ia64'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC9}" />
-    <property name="dir.vc9.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.bin.x86" value="${string::to-lower(path::combine(VC90Dir, 'bin'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.bin.x64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_amd64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.bin.ia64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_ia64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'lib\'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'lib\amd64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'lib\ia64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC9}" />
+    <property name="dir.vs2008.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC9}" />
     <!-- override unversioned VC directories if VC2008 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC90Dir, 'bin'))}" if="${BuildVC9}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_amd64'))}" if="${BuildVC9}" />
@@ -759,21 +759,24 @@
       <fail message="Some x64 components necessary for compilation were not found. Ensure you have installed the x64 components in the Windows Server 2008 and .NET Framework 3.5 SDK or Visual Studio 2008." />
     </if>
 
-    <if test="${BuildVC8 and (not directory::exists(dir.vc8.bin.x64) or not directory::exists(dir.vc8.lib.x64)
-              or not file::exists(path::combine(dir.vc8.bin.x64, 'cl.exe')))}">
+    <if test="${BuildVC8 and (not directory::exists(dir.vs2005.bin.x64) or not directory::exists(dir.vs2005.lib.x64)
+              or not file::exists(path::combine(dir.vs2005.bin.x64, 'cl.exe')))}">
       <echo message="The x64 components necessary for compilation were found in Visual Studio 2008, but not Visual Studio 2005. Visual Studio 2005-specific portions of the build will be excluded from the build." />
       <property name="BuildVC8" value=""/>
     </if>
 
-    <if test="${ia64 and not directory::exists(dir.vc.bin.ia64) or not directory::exists(dir.vc.lib.ia64)
+    <if test="${ia64 and
+              ((BuildVC8 and (not directory::exists(dir.vs2005.bin.ia64) or not directory::exists(dir.vs2005.lib.ia64) or not file::exists(path::combine(dir.vs2005.bin.ia64, 'cl.exe')))) or
+              (BuildVC9 and (not directory::exists(dir.vs2008.bin.ia64) or not directory::exists(dir.vs2008.lib.ia64) or not file::exists(path::combine(dir.vs2008.bin.ia64, 'cl.exe')))) or
+              (BuildVC10 and (not directory::exists(dir.vs2010.bin.ia64) or not directory::exists(dir.vs2010.lib.ia64) or not file::exists(path::combine(dir.vs2010.bin.ia64, 'cl.exe')))))
               or not directory::exists(dir.platformsdk.lib.ia64) or not directory::exists(dir.netfxsdk2.lib.ia64)
               or not file::exists(path::combine(dir.vc.bin.ia64, 'cl.exe'))}">
       <echo message="Some IA-64 components necessary for compilation were not found. IA-64 portions of the build will be skipped. Ensure you have installed the IA-64 components in the Windows Server 2008 and .NET Framework 3.5 SDK or Visual Studio 2008." />
       <property name="ia64" value="false" />
     </if>
 
-    <if test="${BuildVC8 and (ia64 and not directory::exists(dir.vc8.bin.ia64) or not directory::exists(dir.vc8.lib.ia64)
-              or not file::exists(path::combine(dir.vc8.bin.ia64, 'cl.exe')))}">
+    <if test="${BuildVC8 and (ia64 and not directory::exists(dir.vs2005.bin.ia64) or not directory::exists(dir.vs2005.lib.ia64)
+              or not file::exists(path::combine(dir.vs2005.bin.ia64, 'cl.exe')))}">
       <echo message="Visual Studio 2005 portions of the build are enabled, and although the VS2008 IA-64 components are installed, the VS2005 IA-64 components necessary for compilation were not found. IA-64 portions of the build (for both VS2005 and VS2008) will be excluded from the build. Ensure you have installed the IA-64 components in Visual Studio 2005." />
       <property name="ia64" value="false" />
     </if>
@@ -832,8 +835,58 @@
 
     <!-- set platform initially to x86 -->
     <property name="platform" value="x86" />
-    <property name="vctoolsversion" value="9" />
-    <property name="setPlatform.originalvctoolsversion" value="9" />
+    <property if="${BuildVC10}" name="vctoolsversion" value="10" />
+    <property if="${not property::exists('vctoolsversion')}" name="vctoolsversion" value="9" />
+    <property name="setPlatform.originalvctoolsversion" value="${vctoolsversion}" />
+
+    <if test="${BuildVC10}">
+      <property name="file.target.dutil" value="${file.target.dutil.vs2010}" />
+      <property name="file.target.dutil.x86"  value="${file.target.dutil.vs2010.x86}" />
+      <property name="file.target.dutil.x64"  value="${file.target.dutil.vs2010.x64}" />
+      <property name="file.target.dutil.ia64" value="${file.target.dutil.vs2010.ia64}" />
+
+      <property name="file.target.wcautil" value="${file.target.wcautil.vs2010}" />
+      <property name="file.target.wcautil.x86"  value="${file.target.wcautil.vs2010.x86}" />
+      <property name="file.target.wcautil.x64"  value="${file.target.wcautil.vs2010.x64}" />
+      <property name="file.target.wcautil.ia64" value="${file.target.wcautil.vs2010.ia64}" />
+
+      <property name="file.target.buxutil" value="${file.target.buxutil.vs2010}" />
+      <property name="file.target.buxutil.x86"  value="${file.target.buxutil.vs2010.x86}" />
+      <property name="file.target.buxutil.x64"  value="${file.target.buxutil.vs2010.x64}" />
+    </if>
+
+    <if test="${BuildVC9 and not property::exists('file.target.dutil')}">
+      <property name="file.target.dutil" value="${file.target.dutil.vs2008}" />
+      <property name="file.target.dutil.x86"  value="${file.target.dutil.vs2008.x86}"  />
+      <property name="file.target.dutil.x64"  value="${file.target.dutil.vs2008.x64}"  />
+      <property name="file.target.dutil.ia64" value="${file.target.dutil.vs2008.ia64}" />
+
+      <property name="file.target.wcautil" value="${file.target.wcautil.vs2008}" />
+      <property name="file.target.wcautil.x86"  value="${file.target.wcautil.vs2008.x86}" />
+      <property name="file.target.wcautil.x64"  value="${file.target.wcautil.vs2008.x64}" />
+      <property name="file.target.wcautil.ia64" value="${file.target.wcautil.vs2008.ia64}" />
+
+      <property name="file.target.buxutil" value="${file.target.buxutil.vs2008}" />
+      <property name="file.target.buxutil.x86"  value="${file.target.buxutil.vs2008.x86}" />
+      <property name="file.target.buxutil.x64"  value="${file.target.buxutil.vs2008.x64}" />
+    </if>
+
+    <if test="${BuildVC8 and not property::exists('file.target.dutil')}">
+      <property name="file.target.dutil" value="${file.target.dutil.vs2005}" />
+      <property name="file.target.dutil.x86"  value="${file.target.dutil.vs2005.x86}"  />
+      <property name="file.target.dutil.x64"  value="${file.target.dutil.vs2005.x64}"  />
+      <property name="file.target.dutil.ia64" value="${file.target.dutil.vs2005.ia64}" />
+
+      <property name="file.target.wcautil" value="${file.target.wcautil.vs2005}" />
+      <property name="file.target.wcautil.x86"  value="${file.target.wcautil.vs2005.x86}" />
+      <property name="file.target.wcautil.x64"  value="${file.target.wcautil.vs2005.x64}" />
+      <property name="file.target.wcautil.ia64" value="${file.target.wcautil.vs2005.ia64}" />
+
+      <property name="file.target.buxutil" value="${file.target.buxutil.vs2005}" />
+      <property name="file.target.buxutil.x86"  value="${file.target.buxutil.vs2005.x86}" />
+      <property name="file.target.buxutil.x64"  value="${file.target.buxutil.vs2005.x64}" />
+    </if>
+
     <call target="setPlatform" />
   </target>
 
@@ -842,7 +895,7 @@
   -->
   <target name="setPlatform" description="Sets the current build architecture based on the 'platform' property">
     <fail unless="${platform == 'x86' or platform == 'x64' or platform == 'ia64'}" message="Build was switched to an unsupported platform: '${platform}'"/>
-    <fail unless="${(vctoolsversion == '8' and BuildVC8) or vctoolsversion == '9'}" message="Build was switched to an unsupported vctoolsversion: '${vctoolsversion}'"/>
+    <fail unless="${(vctoolsversion == '8' and BuildVC8) or (vctoolsversion == '9' and BuildVC9) or (vctoolsversion == '10' and BuildVC10)}" message="Build was switched to an unsupported vctoolsversion: '${vctoolsversion}'"/>
 
     <if test="${platform == 'x86'}">
       <!-- set LIB properties -->
@@ -857,7 +910,9 @@
       <property name="link.exe" value="${link.exe.x86}" />
 
       <property name="newPath" value="${setPlatform.OriginalPath}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,dir.vc8.bin.x86)}" if="${vctoolsversion == '8'}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,dir.vs2005.bin.x86)}" if="${vctoolsversion == '8'}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,dir.vs2008.bin.x86)}" if="${vctoolsversion == '9'}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,dir.vs2010.bin.x86)}" if="${vctoolsversion == '10'}" />
 
       <setenv name="OACRPROJECT" value="wix:${flavor}" />
       <setenv name="PATH" value="${newPath}" />
@@ -874,15 +929,18 @@
       <property name="link.dll" value="${link.dll.x64}" />
       <property name="link.exe" value="${link.exe.x64}" />
 
-      <property name="newBin" value="${dir.vc.bin.x64}" />
-      <property name="newBin" value="${dir.vc8.bin.x64}" if="${vctoolsversion == '8'}" />
+      <property name="newBin" value="${dir.vs2005.bin.x64}" if="${vctoolsversion == '8'}" />
+      <property name="newBin" value="${dir.vs2008.bin.x64}" if="${vctoolsversion == '9'}" />
+      <property name="newBin" value="${dir.vs2010.bin.x64}" if="${vctoolsversion == '10'}" />
 
       <property name="newPath" value="${setPlatform.OriginalPath}" />
       <property name="newPath" value="${string::replace(newPath,dir.OACR.x86,dir.OACR.x64)}" if="${string::get-length(dir.OACR.x86) != 0}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc8.bin.x86,newBin)}" if="${BuildVC8}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc8.bin.ia64,newBin)}" if="${BuildVC8}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,newBin)}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.ia64,newBin)}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2005.bin.x86,newBin)}" if="${BuildVC8}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2005.bin.ia64,newBin)}" if="${BuildVC8}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2008.bin.x86,newBin)}" if="${BuildVC9}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2008.bin.ia64,newBin)}" if="${BuildVC9}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2010.bin.x86,newBin)}" if="${BuildVC10}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2010.bin.ia64,newBin)}" if="${BuildVC10}" />
 
       <setenv name="OACRPROJECT" value="wix:${flavor}_${platform}" />
       <setenv name="PATH" value="${newPath}" />
@@ -899,15 +957,18 @@
       <property name="link.dll" value="${link.dll.ia64}" />
       <property name="link.exe" value="${link.exe.ia64}" />
 
-      <property name="newBin" value="${dir.vc.bin.ia64}" />
-      <property name="newBin" value="${dir.vc8.bin.ia64}" if="${vctoolsversion == '8'}" />
+      <property name="newBin" value="${dir.vs2005.bin.ia64}" if="${vctoolsversion == '8'}" />
+      <property name="newBin" value="${dir.vs2008.bin.ia64}" if="${vctoolsversion == '9'}" />
+      <property name="newBin" value="${dir.vs2010.bin.ia64}" if="${vctoolsversion == '10'}" />
 
       <property name="newPath" value="${setPlatform.OriginalPath}" />
       <property name="newPath" value="${string::replace(newPath,dir.OACR.x86,'')}" if="${string::get-length(dir.OACR.x86) != 0}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc8.bin.x86,newBin)}" if="${BuildVC8}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc8.bin.x64,newBin)}" if="${BuildVC8}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x86,newBin)}" />
-      <property name="newPath" value="${string::replace(newPath,dir.vc.bin.x64,newBin)}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2005.bin.x86,newBin)}" if="${BuildVC8}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2005.bin.x64,newBin)}" if="${BuildVC8}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2008.bin.x86,newBin)}" if="${BuildVC9}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2008.bin.x64,newBin)}" if="${BuildVC9}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2010.bin.x86,newBin)}" if="${BuildVC10}" />
+      <property name="newPath" value="${string::replace(newPath,dir.vs2010.bin.x64,newBin)}" if="${BuildVC10}" />
 
       <setenv name="OACRPROJECT" value="" />
       <setenv name="PATH" value="${newPath}" />

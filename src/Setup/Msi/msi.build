@@ -41,6 +41,8 @@
       <arg value="/property:Platform=x86" />
       <arg value="/property:BuildIA64=${ia64}" />
       <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
       <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Rebuild" />
       <arg file="${dir.src.setup.msi}\WiX.wixproj" />
@@ -55,6 +57,8 @@
       <arg value="/property:Platform=x86" />
       <arg value="/property:BuildIA64=${ia64}" />
       <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
       <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Clean" />
       <arg file="${dir.src.setup.msi}\WiX.wixproj" />
@@ -69,6 +73,8 @@
       <arg value="/property:Platform=x86" />
       <arg value="/property:BuildIA64=${ia64}" />
       <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
       <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Build" />
       <arg file="${dir.src.setup.msi}\WiX.wixproj" />

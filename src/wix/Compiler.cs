@@ -12740,6 +12740,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.VersionIndependentProgIdsCannotHaveIcons(sourceLineNumbers));
             }
 
+            YesNoType firstProgIdForNestedClass = YesNoType.Yes;
             foreach (XmlNode child in node.ChildNodes)
             {
                 if (XmlNodeType.Element == child.NodeType)
@@ -12758,14 +12759,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 {
                                     if (YesNoType.Yes == advertise)
                                     {
-                                        this.ParseProgIdElement(child, componentId, advertise, null, description, progId, ref foundExtension, firstProgIdForClass);
+                                        this.ParseProgIdElement(child, componentId, advertise, null, description, progId, ref foundExtension, firstProgIdForNestedClass);
                                     }
                                     else if (YesNoType.No == advertise)
                                     {
-                                        this.ParseProgIdElement(child, componentId, advertise, classId, description, progId, ref foundExtension, firstProgIdForClass);
+                                        this.ParseProgIdElement(child, componentId, advertise, classId, description, progId, ref foundExtension, firstProgIdForNestedClass);
                                     }
 
-                                    firstProgIdForClass = YesNoType.No; // any ProgId after this one is definitely not the first.
+                                    firstProgIdForNestedClass = YesNoType.No; // any ProgId after this one is definitely not the first.
                                 }
                                 else
                                 {
@@ -12825,7 +12826,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        if (null == parent)
+                        if (YesNoType.Yes == firstProgIdForClass)
                         {
                             this.core.CreateRegistryRow(sourceLineNumbers, MsiInterop.MsidbRegistryRootClassesRoot, String.Concat("CLSID\\", classId, "\\ProgID"), String.Empty, progId, componentId);
                         }
@@ -15818,7 +15819,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", sequence, beforeAction);
+                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", beforeAction);
                         }
                     }
 
@@ -15830,7 +15831,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", sequence, afterAction);
+                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", afterAction);
                         }
                     }
                 }

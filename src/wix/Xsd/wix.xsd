@@ -6802,7 +6802,7 @@
                         <xs:annotation><xs:documentation>The installer sets the REMOVE property to features specified in this column.  The features to be removed can be determined at run time.  The Formatted string entered in this field must evaluate to a comma-delimited list of feature names.  For example: [Feature1],[Feature2],[Feature3].  No features are removed if the field contains formatted text that evaluates to an empty string.  The installer sets REMOVE=ALL only if the Remove field is empty.</xs:documentation></xs:annotation>
                     </xs:attribute>
                     <xs:attribute name="Property" type="xs:string" use="required">
-                        <xs:annotation><xs:documentation>When the FindRelatedProducts action detects a related product installed on the system, it appends the product code to the property specified in this field.  Windows Installer documentation for the <html:a href="http://msdn2.microsoft.com/library/aa372379.aspx" target="_blank">Upgrade table</html:a> states that the property specified in this field must be a public property and must be added to the <html:a href="http://msdn2.microsoft.com/library/aa371571.aspx" target="_blank">SecureCustomProperties</html:a> property.  WiX automatically appends the property specified in this field to the SecureCustomProperties property when creating an MSI.  Each UpgradeVersion must have a unique Property value.  After the FindRelatedProducts action is run, the value of this property is a list product codes, separated by semicolons (;), detected on the system.</xs:documentation></xs:annotation>
+                        <xs:annotation><xs:documentation>When the FindRelatedProducts action detects a related product installed on the system, it appends the product code to the property specified in this field.  Windows Installer documentation for the <html:a href="http://msdn2.microsoft.com/library/aa372379.aspx" target="_blank">Upgrade table</html:a> states that the property specified in this field must be a public property and must be added to the <html:a href="http://msdn2.microsoft.com/library/aa371571.aspx" target="_blank">SecureCustomProperties</html:a> property.  WiX automatically appends the property specified in this field to the SecureCustomProperties property when creating an MSI.  Each UpgradeVersion must have a unique Property value.  After the FindRelatedProducts action is run, the value of this property is a list of product codes, separated by semicolons (;), detected on the system.</xs:documentation></xs:annotation>
                     </xs:attribute>
                     <xs:attribute name="MigrateFeatures" type="YesNoType">
                         <xs:annotation><xs:documentation>Set to "yes" to migrate feature states from upgraded products by enabling the logic in the MigrateFeatureStates action.</xs:documentation></xs:annotation>
@@ -10398,6 +10398,11 @@
                 Simplifies authoring for major upgrades, including support for preventing downgrades.
 
                 The parent Product element must have valid UpgradeCode and Version attributes.
+
+                When the FindRelatedProducts action detects a related product installed on the system, 
+                it appends the product code to the property named WIX_UPGRADE_DETECTED. After the 
+                FindRelatedProducts action is run, the value of the WIX_UPGRADE_DETECTED property is a 
+                list of product codes, separated by semicolons (;), detected on the system.
             </xs:documentation>
       <xs:appinfo>
         <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Product" />

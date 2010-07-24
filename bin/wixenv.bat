@@ -179,8 +179,8 @@ goto INITVCVARS
 :INITVCVARS
 set _VCVARS=
 
-if "%_VCVARS%" == "" call :INITVC9VARS 2> nul
 if "%_VCVARS%" == "" call :INITVC10VARS 2> nul
+if "%_VCVARS%" == "" call :INITVC9VARS 2> nul
 call :CLEANPATH
 
 rem VC was not initialized. Currently we require VS to build Burn, which has a dependency on ATL that does not ship in the standalone SDK.

@@ -1162,3 +1162,23 @@ EricStJ: SFBUG:3028842 - Units are wrong when setting appPool idleTimeout and
 
 WixBuild: Version 3.5.1916.0
 
+PMarcu: SFBUG:3026506 Changing a components guid without in a patch breaks the
+        patch.
+
+AaronSte: Add breadcrumbs back to the main documentation page. Add the
+          property name to the MajorUpgrade documentation.
+
+RobMen: SFBUG:3031280 - fix references to custom actions in SetProperty.
+
+PMarcu: Updating error message for removing components in a patch to be
+        clearer.
+
+MiCarls: SFBUG:2898675 - Build Dutil/WcaUtil for VS2005, 2008, & 2010
+
+SBonev: SFBUG:2927773 Advertised Class with multiple ProgId elements fails
+        compile.
+
+EricStJ: SFBUG:3010044 - Cannot call UI thread from logging thread, porting fix
+
+WixBuild: Version 3.5.1923.0
+

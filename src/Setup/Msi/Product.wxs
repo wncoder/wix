@@ -50,15 +50,12 @@
 
       <!-- Directories -->
         <Directory Id="TARGETDIR" Name="SourceDir">
-            <Directory Id="ProgramFilesFolder" />
-            <?if $(var.Platform)=x64 ?>
-            <Directory Id="ProgramFiles64Folder" />
-            <?endif?>
+            <Directory Id="ProgramFilesFolder" >
+                <Directory Id="APPLICATIONFOLDER" Name="$(var.ProductDirectoryName)" />
 
-            <Directory Id="APPLICATIONFOLDER" Name="$(var.ProductDirectoryName)" />
-
-            <Directory Id="ProgramMenuFolder" Name="ProgMenu">
-                <Directory Id="WixShortcutFolder" Name="$(var.ProductName)" />
+                <Directory Id="ProgramMenuFolder" Name="ProgMenu">
+                    <Directory Id="WixShortcutFolder" Name="$(var.ProductName)" />
+                </Directory>
             </Directory>
         </Directory>
 
@@ -143,7 +140,7 @@
             <ComponentRef Id="MsgGen" />
             <ComponentRef Id="XsdGen" />
             <ComponentRef Id="XsdStitch" />
-            <ComponentRef Id="SdkLibs" />
+            <ComponentGroupRef Id="SdkLibs" />
             <ComponentRef Id="SdkHeaders" />
             <ComponentGroupRef Id="DtfComponents" />
             <ComponentGroupRef Id="DtfCATemplates" />
