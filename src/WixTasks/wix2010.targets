@@ -58,14 +58,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
   <!-- These properties can be overridden to support non-default installations. -->
   <PropertyGroup>
-    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
-    <WixTasksPath Condition=" '$(WixTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\WixTasks.dll</WixTasksPath>
-    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
-    <WixTasksPath Condition=" '$(WixTasksPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\WixTasks.dll</WixTasksPath>
-    <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Lux.targets</LuxTargetsPath>
-    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\LuxTasks.dll</LuxTasksPath>
-    <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Lux.targets</LuxTargetsPath>
-    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\LuxTasks.dll</LuxTasksPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTasksPath Condition=" '$(WixTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\WixTasks.dll</WixTasksPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTasksPath Condition=" '$(WixTasksPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\WixTasks.dll</WixTasksPath>
+    <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Lux.targets</LuxTargetsPath>
+    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\LuxTasks.dll</LuxTasksPath>
+    <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Lux.targets</LuxTargetsPath>
+    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\LuxTasks.dll</LuxTasksPath>
   </PropertyGroup>
 
   <!-- This makes the project files a dependency of all targets so that things rebuild if they change -->
@@ -330,6 +330,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <HarvestProjectsSuppressFragments Condition=" '$(HarvestProjectsSuppressFragments)' == '' ">$(HarvestSuppressFragments)</HarvestProjectsSuppressFragments>
     <HarvestProjectsSuppressUniqueIds Condition=" '$(HarvestProjectsSuppressUniqueIds)' == '' ">$(HarvestSuppressUniqueIds)</HarvestProjectsSuppressUniqueIds>
     <HarvestProjectsTransforms Condition=" '$(HarvestProjectsTransforms)' == '' ">$(HarvestTransforms)</HarvestProjectsTransforms>
+    <HarvestProjectsGeneratedFile Condition=" '$(HarvestProjectsGeneratedFile)' == '' and '$(OutputType)' != 'Bundle' ">$(IntermediateOutputPath)Product.Generated.wxs</HarvestProjectsGeneratedFile>
+    <HarvestProjectsGeneratedFile Condition=" '$(HarvestProjectsGeneratedFile)' == '' and '$(OutputType)' == 'Bundle' ">$(IntermediateOutputPath)Bundle.Generated.wxs</HarvestProjectsGeneratedFile>
   </PropertyGroup>
 
   <!-- Default HarvestDirectory properties -->
@@ -874,13 +876,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Name="AssignProjectConfiguration"
     Condition=" '@(ProjectReference)' != '' ">
 
-    <!-- Set VC project references to get both native target path and the regular target path. Only one will have a value. -->
-    <ItemGroup>
-      <ProjectReference>
-        <Targets Condition="'%(Extension)' == '.vcxproj'">GetNativeTargetPath;%(ProjectReference.Targets)</Targets>
-      </ProjectReference>
-    </ItemGroup>
-
     <!-- Assign a project configuration to each project reference if we're building a solution file. -->
     <AssignProjectConfiguration
       ProjectReferences="@(ProjectReference)"
@@ -979,7 +974,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     -->
     <MSBuild
       Projects="@(_MSBuildProjectReferenceExistent)"
-      Targets="%(_MSBuildProjectReferenceExistent.Targets);GetTargetPath"
+      Targets="GetTargetPath"
       Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
       Condition="'@(_ProjectReferenceWithConfiguration)'!='' and ('$(BuildingInsideVisualStudio)' == 'true' or '$(BuildProjectReferences)' != 'true') and '@(_MSBuildProjectReferenceExistent)' != ''"
       ContinueOnError="!$(BuildingProject)">
@@ -1005,6 +1000,21 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
     </MSBuild>
 
+    <!-- 
+    VC project references must build GetNativeTargetPath because neither GetTargetPath nor the return of the default build
+    target return the output for a native C++ project. 
+    This will not produce duplicate paths because GetNativeTargetPath is mutually exclusive with GetTargetPath & Build TargetOutputs. 
+    -->
+    <MSBuild
+      Projects="@(_MSBuildProjectReferenceExistent)"
+      Targets="GetNativeTargetPath"
+      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
+      Condition="'@(_ProjectReferenceWithConfiguration)'!='' and '%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj'">
+
+      <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
+      <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
+    </MSBuild>
+    
     <!-- Issue a warning for each non-existent project. -->
     <Warning
       Text="The referenced project '%(_MSBuildProjectReferenceNonexistent.Identity)' does not exist."
@@ -1412,21 +1422,27 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   -->
   <Target
     Name="ConvertReferences"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' )">
+    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' ) ">
 
     <ItemGroup>
-        <_HeatProjectReference Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' ">
-            <DirectoryIds>%(_MSBuildProjectReferenceExistent.RefTargetDir)</DirectoryIds>
-            <ProjectOutputGroups>Binaries;Symbols;Sources;Content;Satellites;Documents</ProjectOutputGroups>
-            <ProjectName>%(_MSBuildProjectReferenceExistent.Name)</ProjectName>
-            <HeatOutput>$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs</HeatOutput>
-        </_HeatProjectReference>
-        <GeneratedFiles Include="@(Compile)" Condition=" '%(Compile.GenerateComponentGroups)' != '' " />
+      <_HeatProjectReference Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' ">
+        <DirectoryIds>%(_MSBuildProjectReferenceExistent.RefTargetDir)</DirectoryIds>
+        <ProjectOutputGroups>Binaries;Symbols;Sources;Content;Satellites;Documents</ProjectOutputGroups>
+        <ProjectName>%(_MSBuildProjectReferenceExistent.Name)</ProjectName>
+        <HeatOutput>$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs</HeatOutput>
+      </_HeatProjectReference>
+      <HeatProject Include="@(_HeatProjectReference)" />
     </ItemGroup>
 
-    <CreateItem Include="@(_HeatProjectReference)">
-      <Output TaskParameter="Include" ItemName="HeatProject" />
-    </CreateItem>
+    <Error
+      Text="The following files are deprecated and should be removed from your project(s): @(Compile->'%(Identity)', ', ')"
+      Condition=" '%(Compile.GenerateComponentGroups)' != '' " />
+
+    <ItemGroup>
+      <!-- Unconditionally generate Compile items so they are always linked in. -->
+      <Compile Include="$(HarvestProjectsGeneratedFile)" />
+      <_GeneratedFiles Include="$(HarvestProjectsGeneratedFile)" />
+    </ItemGroup>
 
   </Target>
 
@@ -1441,14 +1457,24 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Name="ConvertBundleReferences"
     Condition=" ('$(OutputType)' == 'Bundle')">
 
-    <CreateItem Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' " AdditionalMetadata="ProjectOutputGroups=Binaries%3BSymbols%3BSources%3BContent%3BSatellites%3BDocuments;GenerateType=payloadgroup;HeatOutput=$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs">
-      <Output TaskParameter="Include" ItemName="HeatProject" />
-      <Output TaskParameter="Include" ItemName="_HeatProjectReference" />
-    </CreateItem>
+    <ItemGroup>
+      <_HeatProjectReference Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' ">
+        <ProjectOutputGroups>Binaries;Symbols;Sources;Content;Satellites;Documents</ProjectOutputGroups>
+        <GenerateType>payloadgroup</GenerateType>
+        <HeatOutput>$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs</HeatOutput>
+      </_HeatProjectReference>
+      <HeatProject Include="@(_HeatProjectReference)" />
+    </ItemGroup>
 
-    <CreateItem Include="@(Compile)" Condition=" '%(Compile.GenerateComponentGroups)' != '' ">
-        <Output TaskParameter="Include" ItemName="GeneratedFiles" />
-    </CreateItem>
+    <Error
+      Text="The following files are deprecated and should be removed from your project(s): @(Compile->'%(Identity)', ', ')"
+      Condition=" '%(Compile.GenerateComponentGroups)' != '' " />
+
+    <ItemGroup>
+      <!-- Unconditionally generate Compile items so they are always linked in. -->
+      <Compile Include="$(HarvestProjectsGeneratedFile)" />
+      <_GeneratedFiles Include="$(HarvestProjectsGeneratedFile)" />
+    </ItemGroup>
 
   </Target>
 
@@ -1729,7 +1755,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     @(_MSBuildResolvedProjectReferencePaths) - The list of MSBuildable project references.
 
     [OUT]
-    @(GeneratedFiles) - The generated source file.
+    @(_GeneratedFiles) - The generated source file.
   ================================================================================================
   -->
   <PropertyGroup>
@@ -1738,11 +1764,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target Name="RefreshGeneratedFile"
     DependsOnTargets="$(RefreshGeneratedFileDependsOn)"
     Inputs="@(_MSBuildResolvedProjectReferencePaths);@(Compile);$(ProjectPath)"
-    Outputs="@(GeneratedFiles)"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') and '@(GeneratedFiles)' != '' ">
+    Outputs="@(_GeneratedFiles)"
+    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') and '@(_GeneratedFiles)' != '' ">
 
     <RefreshGeneratedFile
-      GeneratedFiles="@(GeneratedFiles)"
+      GeneratedFiles="@(_GeneratedFiles)"
       ProjectReferencePaths="@(_MSBuildResolvedProjectReferencePaths)" />
 
   </Target>
@@ -1757,7 +1783,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     @(_MSBuildResolvedProjectReferencePaths) - The list of MSBuildable project references.
 
     [OUT]
-    @(GeneratedFiles) - The generated source file.
+    @(_GeneratedFiles) - The generated source file.
   ================================================================================================
   -->
   <PropertyGroup>
@@ -1766,11 +1792,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target Name="RefreshBundleGeneratedFile"
     DependsOnTargets="$(RefreshBundleGeneratedFileDependsOn)"
     Inputs="@(_MSBuildResolvedProjectReferencePaths);@(Compile);$(ProjectPath)"
-    Outputs="@(GeneratedFiles)"
-    Condition=" '$(OutputType)' == 'Bundle' and '@(GeneratedFiles)' != '' ">
+    Outputs="@(_GeneratedFiles)"
+    Condition=" '$(OutputType)' == 'Bundle' and '@(_GeneratedFiles)' != '' ">
 
     <RefreshBundleGeneratedFile
-      GeneratedFiles="@(GeneratedFiles)"
+      GeneratedFiles="@(_GeneratedFiles)"
       ProjectReferencePaths="@(_MSBuildResolvedProjectReferencePaths)" />
 
   </Target>

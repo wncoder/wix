@@ -16,9 +16,6 @@
     <Reference Include="Microsoft.Build.Utilities" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.Deployment.WindowsInstaller">
-      <HintPath>$(TargetDir)</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\wconsole\CommandLineResponseFile.cs">
@@ -62,11 +59,19 @@
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
-  <!-- Include this before the CopyTargetsFiles target -->
   <Import Project="..\..\WixBuild.Common.targets" />
+  <ItemGroup>
+    <Reference Include="Microsoft.Deployment.WindowsInstaller">
+      <HintPath>$(TargetDir)Microsoft.Deployment.WindowsInstaller.dll</HintPath>
+    </Reference>
+    <ProjectReference Include="..\Wix\Wix.csproj">
+      <Name>Wix</Name>
+      <Project>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath);$(OutDir)wix.targets" DestinationFolder="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\" SkipUnchangedFiles="true" ContinueOnError="true" />
-    <CreateItem Include="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\$(TargetFileName);$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\wix.targets">
+    <Copy SourceFiles="$(TargetPath);$(OutDir)wix.targets" DestinationFolder="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <CreateItem Include="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\$(TargetFileName);$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\wix.targets">
       <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
   </Target>

@@ -1182,3 +1182,25 @@ EricStJ: SFBUG:3010044 - Cannot call UI thread from logging thread, porting fix
 
 WixBuild: Version 3.5.1923.0
 
+EricStJ: SFBUG:3029559 - VCXProj project reference preprocessor variables
+         are not set when building from MSBUILD.
+
+HeathS: SFBUG:2990345 - Deprecated Product.Generated.wxs from project
+        templates.
+
+WixBuild: Version 3.5.1930.0
+
+PMarcu: SFBUG:3029621 Fix modularization of special properties.
+
+MiCarls: SFBUG:3038440 - Make Print EULA support really long EULAs.
+
+MiCarls: Fix WiX 3.5 setup to move to "3.x" directory, to reduce upgrade churn
+         in the future for users moving from 3.5 to some future 3.* version.
+
+MiCarls: SFBUG:3030385 - Fix crash in CAQuietExec when program being run
+         outputs percent characters
+
+HeathS: SFBUG:3038805 - Write PublicKeyToken as "null" instead of "neutral".
+
+WixBuild: Version 3.5.2006.0
+

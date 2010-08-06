@@ -7,8 +7,8 @@
 		<SchemaVersion>2.0</SchemaVersion>
 		<OutputName>$safeprojectname$</OutputName>
 		<OutputType>Package</OutputType>
-		<WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
-		<WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix.targets</WixTargetsPath>
+		<WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+		<WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
 		<OutputPath>bin\$(Configuration)\</OutputPath>
@@ -21,10 +21,6 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<Compile Include="Product.wxs" />
-		<Compile Include="Product.Generated.wxs">
-			<DependentUpon>Product.wxs</DependentUpon>
-			<GenerateComponentGroups>True</GenerateComponentGroups>
-		</Compile>
 	</ItemGroup>
 	<Import Project="$(WixTargetsPath)" />
 	<!--

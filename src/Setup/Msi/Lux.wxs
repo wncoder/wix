@@ -24,7 +24,7 @@
             </Component>
             <Component Id="nit.exe" Guid="{1F16AE42-84D9-4484-8BEB-85B159291621}" Win64="no">
                 <File Source="nit.exe" KeyPath="yes" />
-                <CopyFile Id="DupDtf" FileId="Microsoft.Deployment.WindowsInstaller.dll" DestinationDirectory="Dir_MSBuildMSWix35" />
+                <CopyFile Id="DupDtf" FileId="Microsoft.Deployment.WindowsInstaller.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
             </Component>
             <Component Id="nit.exe.config" Guid="{DBAF8230-218D-44BB-B34B-7B26FD144454}" Win64="no">
                 <File Source="nit.exe.config" KeyPath="yes" />
@@ -40,14 +40,14 @@
             </Component>
         </DirectoryRef>
         
-        <DirectoryRef Id="Dir_MSBuildMSWix35">
+        <DirectoryRef Id="Dir_MSBuildMSWix3x">
             <Component Id="lux.targets" Guid="{169EDC0F-DBC3-414E-9A4C-C218646B8C78}" Win64="no">
                 <File Source="lux.targets" KeyPath="yes" />
             </Component>
             <Component Id="LuxTasks.dll" Guid="{46FFEA5D-8EB5-46E2-BED5-72BAA654B739}" Win64="no">
                 <File Source="LuxTasks.dll" KeyPath="yes" />
-                <CopyFile Id="DupWixDll" FileId="wix.dll" DestinationDirectory="Dir_MSBuildMSWix35" />
-                <CopyFile Id="DupWixLuxExtension" FileId="WixLuxExtension.dll" DestinationDirectory="Dir_MSBuildMSWix35" />
+                <CopyFile Id="DupWixDll" FileId="wix.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
+                <CopyFile Id="DupWixLuxExtension" FileId="WixLuxExtension.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
             </Component>
         </DirectoryRef>
 

@@ -51,8 +51,8 @@
   <!-- Include this before the CopyTargetsFiles target -->
   <Import Project="..\..\..\WixBuild.Common.targets" />
   <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath);$(OutDir)lux.targets" DestinationFolder="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\" SkipUnchangedFiles="true" ContinueOnError="true" />
-    <CreateItem Include="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\$(TargetFileName);$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\lux.targets">
+    <Copy SourceFiles="$(TargetPath);$(OutDir)lux.targets" DestinationFolder="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\" SkipUnchangedFiles="true" ContinueOnError="true" />
+    <CreateItem Include="$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\$(TargetFileName);$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\lux.targets">
       <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
   </Target>

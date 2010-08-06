@@ -122,10 +122,10 @@
     <!-- Mark wix.targets as a safe MSBuild targets file -->
     <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\MSBuild\SafeImports -->
     <RegistryKey Root="HKLM" Key="$(var.VsRegPath)\MSBuild\SafeImports">
-        <RegistryValue Name="wix.targets.3.5" Value="[Dir_MSBuildMSWix35]wix.targets" Type="string" />
-        <RegistryValue Name="wix2010.targets.3.5" Value="[Dir_MSBuildMSWix35]wix2010.targets" Type="string" />
-        <RegistryValue Name="wix.ca.targets.3.5" Value="[Dir_MSBuildMSWix35]wix.ca.targets" Type="string" />
-        <RegistryValue Name="burn.targets.3.5" Value="[Dir_MSBuildMSWix35]burn.targets" Type="string" />
+        <RegistryValue Name="wix.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix.targets" Type="string" />
+        <RegistryValue Name="wix2010.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix2010.targets" Type="string" />
+        <RegistryValue Name="wix.ca.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix.ca.targets" Type="string" />
+        <RegistryValue Name="burn.targets.3.5" Value="[Dir_MSBuildMSWix3x]burn.targets" Type="string" />
     </RegistryKey>
 
 </Include>

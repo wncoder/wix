@@ -79,20 +79,23 @@ extern "C" UINT __stdcall PrintEula(MSIHANDLE hInstall)
 
         // Have to load Rich Edit since we'll be creating a Rich Edit control in the window
         hRichEdit = ::LoadLibraryW(L"Riched20.dll");
-        if (NULL == hRichEdit)
-            ExitOnLastError(hr, "failed to load rich edit 2.0 library");
+        ExitOnNullWithLastError(hRichEdit, hr, "failed to load rich edit 2.0 library");
 
         hr = CreateRichTextWindow(&hWndMain);
         ExitOnFailure(hr, "failed to create rich text window for printing");
 
         hr = PrintRichText(hWndMain);
         if (FAILED(hr)) // Since we've already shown the print dialog, we better show them a dialog explaining why it didn't print
+        {
             ShowErrorMessage(hr);
+        }
     }
 
 LExit:
     if (NULL != hRichEdit)
+    {
         ::FreeLibrary(hRichEdit);
+    }
 
     ReleaseStr(vpszEulaText);
 
@@ -150,7 +153,9 @@ HRESULT CreateRichTextWindow(
 
     ::ShowWindow(hWndMain, SW_HIDE);
     if (!::UpdateWindow(hWndMain))
-        ExitOnLastError(hr, "failed to update window");
+    {
+        ExitWithLastError(hr, "failed to update window");
+    }
 
     *phWndMain = hWndMain;
 
@@ -261,7 +266,7 @@ DWORD CALLBACK ReadStreamCallback(
     )
 {
     static LPCSTR pszTextBuf = NULL;
-    DWORD er = 0;
+    DWORD er = ERROR_SUCCESS;
 
     // If it's null set it to the beginning of the EULA buffer
     if (pszTextBuf == NULL)
@@ -304,6 +309,9 @@ void LoadEulaText(
     HRESULT hr = S_OK;
 
     ExitOnNull(hWnd, hr, ERROR_INVALID_HANDLE, "Invalid Handle passed to LoadEulaText");
+
+    // Docs say this doesn't return any value
+    ::SendMessageW(hWnd, EM_LIMITTEXT, static_cast<WPARAM>(lstrlen(vpszEulaText)), 0);
 
     EDITSTREAM es;
     ::ZeroMemory(&es, sizeof(es));
@@ -392,7 +400,6 @@ void Print(
     __in_opt HWND hRtfWnd
     )
 {
-
     HRESULT hr = S_OK;
     FORMATRANGE fRange;
     RECT rcPage;
@@ -407,6 +414,7 @@ void Print(
     LONG_PTR lTextPrinted = 0; // Amount of document printed.
     DOCINFOW dInfo;
     LPDEVNAMES pDevnames;
+    LPWSTR sczProductName = NULL;
     BOOL fStartedDoc = FALSE;
     BOOL fPrintedSomething = FALSE;
 
@@ -434,7 +442,17 @@ void Print(
     // Set up the print job (standard printing stuff here).
     ::ZeroMemory(&dInfo, sizeof(dInfo));
     dInfo.cbSize = sizeof(DOCINFO);
-    dInfo.lpszDocName = L"";
+    hr = WcaGetProperty(L"ProductName", &sczProductName);
+    if (FAILED(hr))
+    {
+        // If we fail to get the product name, don't fail, just leave it blank;
+        dInfo.lpszDocName = L"";
+        hr = S_OK;
+    }
+    else
+    {
+        dInfo.lpszDocName = sczProductName;
+    }
 
     pDevnames = (LPDEVNAMES)::GlobalLock(vPrintDlg.hDevNames);
     ExitOnNullWithLastError(pDevnames, hr, "failed to get global lock");
@@ -455,7 +473,7 @@ void Print(
     fStartedDoc = TRUE;
 
     ::ZeroMemory(&gTxex, sizeof(gTxex));
-    gTxex.flags = GTL_NUMCHARS;
+    gTxex.flags = GTL_NUMCHARS | GTL_PRECISE;
     lTextLength = ::SendMessageW(hRtfWnd, EM_GETTEXTLENGTHEX, (LONG_PTR)&gTxex, 0);
 
     while (lTextPrinted < lTextLength)
@@ -506,6 +524,8 @@ LExit:
     {
         ::EndDoc(hPrinterDC);
     }
+
+    ReleaseStr(sczProductName);
 
     vhr = hr;
 }

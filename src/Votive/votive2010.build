@@ -70,7 +70,6 @@
           <include name="SetupProject.wixproj"/>
           <include name="WixProject.ico"/>
           <include name="Product.wxs"/>
-          <include name="Product.Generated.wxs"/>
       </fileset>
     </zip>
 

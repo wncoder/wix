@@ -42,6 +42,8 @@
 
 #include <ahadmin.h>    // IIS 7 config
 
+#include <errno.h>
+
 #include "wixstrsafe.h"
 #include "wcautil.h"
 #include "wcawrapquery.h"

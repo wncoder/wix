@@ -14,7 +14,6 @@
   <TemplateContent>
     <Project File="SetupProject.wixproj" TargetFileName="$safeprojectname$.wixproj" ReplaceParameters="true">
       <ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="Product.wxs">Product.wxs</ProjectItem>
-      <ProjectItem ReplaceParameters="false" OpenInEditor="false" TargetFileName="Product.Generated.wxs">Product.Generated.wxs</ProjectItem>
     </Project>
     <CustomParameters>
       <CustomParameter _locID="$loc_WXS_TODO1$" Name="$loc_WXS_TODO1$" Value="TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer." />

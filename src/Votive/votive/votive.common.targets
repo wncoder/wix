@@ -455,9 +455,6 @@
     <ZipProject Include="Templates\Projects\WixProject\Product.wxs">
       <Visible>true</Visible>
     </ZipProject>
-    <ZipProject Include="Templates\Projects\WixProject\Product.Generated.wxs">
-      <Visible>true</Visible>
-    </ZipProject>
     <ZipProject Include="Templates\Projects\WixProject\WixProject.ico">
       <Visible>true</Visible>
     </ZipProject>

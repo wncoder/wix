@@ -156,7 +156,7 @@
             <Directory Id="Dir_MSBuild" Name="MSBuild">
                 <Directory Id="Dir_MSBuildMS" Name="Microsoft">
                     <Directory Id="Dir_MSBuildMSWix" Name="WiX">
-                        <Directory Id="Dir_MSBuildMSWix35" Name="v3.5">
+                        <Directory Id="Dir_MSBuildMSWix3x" Name="v3.x">
                             <Component Id="Microsoft.Deployment.WindowsInstaller.MSBuild35" Guid="317E2430-33B4-4E90-BBB9-91E80550E1A1" Win64="no">
                               <File Id="Microsoft.Deployment.WindowsInstaller.dll_MSBuild" Source="Microsoft.Deployment.WindowsInstaller.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
                             </Component>
@@ -177,7 +177,7 @@
             <Directory Id="Dir_MSBuild_64" Name="MSBuild" SourceName="MSBuild64">
                 <Directory Id="Dir_MSBuildMS_64" Name="Microsoft">
                     <Directory Id="Dir_MSBuildMSWix_64" Name="WiX">
-                        <Directory Id="Dir_MSBuildMSWix35_64" Name="v3.5">
+                        <Directory Id="Dir_MSBuildMSWix3x_64" Name="v3.x">
                             <Component Id="Microsoft.Deployment.WindowsInstaller.MSBuild35_64" Guid="2556C414-F9F2-47EB-BADE-A58CE04E018F" Win64="yes">
                                 <File Id="Microsoft.Deployment.WindowsInstaller.dll_MSBuild_64" Source="Microsoft.Deployment.WindowsInstaller.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
                             </Component>

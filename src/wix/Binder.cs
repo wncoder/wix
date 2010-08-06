@@ -1552,6 +1552,57 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     table.Modularize(modularizationGuid, suppressModularizationIdentifiers);
                 }
+
+                // Reset the special property lists after modularization. The linker creates these properties before modularization
+                // so we have to reconstruct them for merge modules after modularization in the binder.
+                Table wixPropertyTable = output.Tables["WixProperty"];
+                if (null != wixPropertyTable)
+                {
+                    // Create lists of the properties that contribute to the special lists of properties.
+                    SortedList adminProperties = new SortedList();
+                    SortedList secureProperties = new SortedList();
+                    SortedList hiddenProperties = new SortedList();
+
+                    foreach (WixPropertyRow wixPropertyRow in wixPropertyTable.Rows)
+                    {
+                        if (wixPropertyRow.Admin)
+                        {
+                            adminProperties[wixPropertyRow.Id] = null;
+                        }
+
+                        if (wixPropertyRow.Hidden)
+                        {
+                            hiddenProperties[wixPropertyRow.Id] = null;
+                        }
+
+                        if (wixPropertyRow.Secure)
+                        {
+                            secureProperties[wixPropertyRow.Id] = null;
+                        }
+                    }
+
+                    if (0 < adminProperties.Count || 0 < hiddenProperties.Count || 0 < secureProperties.Count)
+                    {
+                        Table table = output.Tables["Property"];
+                        foreach (Row propertyRow in table.Rows)
+                        {
+                            if ("AdminProperties" == (string)propertyRow[0])
+                            {
+                                propertyRow[1] = GetPropertyListString(adminProperties);
+                            }
+
+                            if ("MsiHiddenProperties" == (string)propertyRow[0])
+                            {
+                                propertyRow[1] = GetPropertyListString(hiddenProperties);
+                            }
+
+                            if ("SecureCustomProperties" == (string)propertyRow[0])
+                            {
+                                propertyRow[1] = GetPropertyListString(secureProperties);
+                            }
+                        }
+                    }
+                }
             }
 
             // merge unreal table data into the real tables
@@ -1849,6 +1900,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.LayoutMedia(fileTransfers, this.suppressAclReset);
 
             return !this.core.EncounteredError;
+        }
+
+        /// <summary>
+        /// Get a sorted property list as a semicolon-delimited string.
+        /// </summary>
+        /// <param name="properties">SortedList of the properties.</param>
+        /// <returns>Semicolon-delimited string representing the property list.</returns>
+        private static string GetPropertyListString(SortedList properties)
+        {
+            bool first = true;
+            StringBuilder propertiesString = new StringBuilder();
+
+            foreach (string propertyName in properties.Keys)
+            {
+                if (first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    propertiesString.Append(';');
+                }
+                propertiesString.Append(propertyName);
+            }
+
+            return propertiesString.ToString();
         }
 
         /// <summary>
@@ -4502,6 +4579,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 if (!String.Equals(publicKeyToken, "neutral", StringComparison.OrdinalIgnoreCase))
                                 {
                                     publicKeyToken = publicKeyToken.ToUpperInvariant();
+                                }
+                                else
+                                {
+                                    // Managed code expects "null" instead of "neutral", and
+                                    // this won't be installed to the GAC since it's not signed anyway.
+                                    publicKeyToken = "null";
                                 }
 
                                 assemblyNameValues.Add("PublicKeyToken", publicKeyToken);

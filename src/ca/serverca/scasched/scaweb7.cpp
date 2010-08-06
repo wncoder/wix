@@ -71,6 +71,7 @@ HRESULT ScaWebsRead7(
     )
 {
     Assert(ppswList);
+    WcaLog(LOGMSG_VERBOSE, "Entering ScaWebsRead7()");
 
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
@@ -87,6 +88,7 @@ HRESULT ScaWebsRead7(
     LPWSTR pwzData = NULL;
 
     DWORD dwLen = 0;
+    errno_t error = EINVAL;
 
     // check to see what tables are available
     fIIsWebSiteTable = (S_OK == WcaTableExists(L"IIsWebSite"));
@@ -97,6 +99,10 @@ HRESULT ScaWebsRead7(
     {
         WcaLog(LOGMSG_VERBOSE, "Skipping ScaWebsRead7() - because IIsWebSite/IIsWebAddress table not present.");
         ExitFunction1(hr = S_FALSE);
+    }
+    else
+    {
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Confirmed minimum required tables exist");
     }
 
     // open the view on webs' addresses
@@ -110,9 +116,13 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to open view on IIsWebApplication table");
     }
 
+    WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Opened views for IIsWebAddress table & IIsWebApplicationTable");
+
     // loop through all the webs
     hr = WcaOpenExecuteView(vcsWebQueryIIS7, &hView);
     ExitOnFailure(hr, "Failed to execute view on IIsWebSite table");
+    WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Opened and executed view for IIsWebSite");
+    
     while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
     {
         psw = NewWeb7();
@@ -121,6 +131,7 @@ HRESULT ScaWebsRead7(
             hr = E_OUTOFMEMORY;
             break;
         }
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Fetched record from IIsWebSite table");
 
         // get the darwin information
         hr = WcaGetRecordString(hRec, wqWeb, &pwzData);
@@ -178,9 +189,11 @@ HRESULT ScaWebsRead7(
             psw->swaBinding.fSecure = FALSE;
         }
 
+        WcaLog(LOGMSG_VERBOSE, "Entering ScaWebFindBase7()");
         // look to see if site exists
         dwLen = METADATA_MAX_NAME_LEN;
         hr = ScaWebFindBase7(*ppswList, psw->wzDescription);
+        WcaLog(LOGMSG_VERBOSE, "Exiting ScaWebFindBase7()");
 
         // If we didn't find a web in memory, ignore it - during execute CA
         // if the site truly does not exist then there will be an error.
@@ -201,8 +214,10 @@ HRESULT ScaWebsRead7(
         // get any extra web addresses
         hr = WcaExecuteView(hViewAddresses, hRec);
         ExitOnFailure(hr, "Failed to execute view on extra IIsWebAddress table");
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Executing view on Address table");
         while (S_OK == (hr = WcaFetchRecord(hViewAddresses, &hRecAddresses)))
         {
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Fetched record from IIsWebAddress table");
             if (MAX_ADDRESSES_PER_WEB <= psw->cExtraAddresses)
             {
                 hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
@@ -223,6 +238,15 @@ HRESULT ScaWebsRead7(
             hr = WcaGetRecordFormattedString(hRecAddresses, waqPort, &pwzData);
             ExitOnFailure(hr, "Failed to get port for extra web IP");
             psw->swaExtraAddresses[psw->cExtraAddresses].iPort= wcstol(pwzData, NULL, 10);
+
+            // errno is set to ERANGE if overflow or underflow occurs
+            _get_errno(&error);
+
+            if (ERANGE == error)
+            {
+                hr = E_INVALIDARG;
+                ExitOnFailure(hr, "Failed to convert web Port address");
+            }
 
             hr = WcaGetRecordFormattedString(hRecAddresses, waqHeader, &pwzData);
             ExitOnFailure(hr, "Failed to get header for extra web IP");
@@ -297,8 +321,10 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get directory properties for Web");
         if (*pwzData)
         {
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties7");
             hr = ScaGetWebDirProperties7(pwzData, &psw->swp);
             ExitOnFailure(hr, "Failed to get directory properties for Web");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties7");
 
             psw->fHasProperties = TRUE;
         }
@@ -308,28 +334,36 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get application identifier for Web");
         if (*pwzData)
         {
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebApplication7");
             hr = ScaGetWebApplication7(NULL, pwzData, &psw->swapp);
             ExitOnFailure(hr, "Failed to get application for Web");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebApplication7");
 
             psw->fHasApplication = TRUE;
         }
 
         // get the SSL certificates
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaSslCertificateRead7");
         hr = ScaSslCertificateRead7(psw->wzKey, &(psw->pswscList));
         ExitOnFailure(hr, "Failed to get SSL Certificates.");
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaSslCertificateRead7");
 
         // get the custom headers
         if (*ppshhList)
         {
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetHttpHeader7");
             hr = ScaGetHttpHeader7(hhptWeb, psw->wzKey, ppshhList, &(psw->pshhList));
             ExitOnFailure(hr, "Failed to get Custom HTTP Headers");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetHttpHeader7");
         }
 
         // get the errors
         if (*ppsweList)
         {
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebError7");
             hr = ScaGetWebError7(weptWeb, psw->wzKey, ppsweList, &(psw->psweList));
             ExitOnFailure(hr, "Failed to get Custom Errors");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebError7");
         }
 
         // get the log information for this web
@@ -356,6 +390,7 @@ LExit:
     ScaWebsFreeList7(psw);
 
     ReleaseStr(pwzData);
+    WcaLog(LOGMSG_VERBOSE, "Exiting ScaWebsRead7()");
 
     return hr;
 }

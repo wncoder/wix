@@ -158,7 +158,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                                 if (propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.0\\"))
                                 {
                                     targetsPathUpdated = true;
-                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Microsoft\\WiX\\v3.0\\", "\\Microsoft\\WiX\\v3.5\\");
+                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Microsoft\\WiX\\v3.0\\", "\\Microsoft\\WiX\\v3.x\\");
+                                }
+                                else if (propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.5\\"))
+                                {
+                                    targetsPathUpdated = true;
+                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Microsoft\\WiX\\v3.5\\", "\\Microsoft\\WiX\\v3.x\\");
                                 }
                             }
                         }
@@ -210,7 +215,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     {
                         if (WixProjectFileConstants.WixTargetsPath == propertyNode.Name)
                         {
-                            if (propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.0\\"))
+                            if (propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.0\\") || propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.5\\"))
                             {
                                 upgradeRequired = 1;
                             }

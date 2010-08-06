@@ -107,6 +107,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
             commandLine.AppendFormat(" /property:WixExtDir=\"{0}\\\"", toolsDirectory);
             commandLine.AppendFormat(" /property:WixTargetsPath=\"{0}\"", Path.Combine(toolsDirectory, "wix.targets"));
             commandLine.AppendFormat(" /property:WixTasksPath=\"{0}\"", Path.Combine(toolsDirectory, "WixTasks.dll"));
+            commandLine.AppendFormat(" /property:BaseIntermediateOutputPath=\"{0}\\\\\"", Path.Combine(tempDirectory, "obj"));
 
             // handle extensions
             string[] suppressedExtensionArray = suppressExtensions.Split(';');
@@ -128,8 +129,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
 
             // handle the source file
             string sourceFile = element.GetAttribute("SourceFile").Trim();
-            string wixobjFile = Path.Combine(tempDirectory, Path.GetFileNameWithoutExtension(sourceFile) + ".wixobj");
-            previousUnitResults.OutputFiles.Add(Path.Combine(tempDirectory, wixobjFile));
 
             // handle the expected result output file
             string outputFile;
@@ -144,12 +143,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
 
             if (!noOutputName)
             {
-                commandLine.AppendFormat(@" /property:OutputName=""{0}""", Path.GetFileNameWithoutExtension(outputFile));
+                commandLine.AppendFormat(" /property:OutputName=\"{0}\"", Path.GetFileNameWithoutExtension(outputFile));
             }
 
             if (!noOutputPath)
             {
-                commandLine.AppendFormat(@" /property:OutputPath=""{0}\\"" /property:BaseOutputPath=""{1}\\""", Path.GetDirectoryName(outputFile), Path.GetDirectoryName(wixobjFile));
+                commandLine.AppendFormat(" /property:OutputPath=\"{0}\\\\\"", Path.GetDirectoryName(outputFile));
             }
             previousUnitResults.OutputFiles.Add(outputFile);
 

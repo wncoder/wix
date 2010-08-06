@@ -122,6 +122,7 @@ static HRESULT LogOutput(
     LPWSTR szTemp = NULL;
     LPWSTR pEnd = NULL;
     LPWSTR pNext = NULL;
+    LPWSTR sczEscaped = NULL;
     LPSTR szWrite = NULL;
     DWORD dwBytes = OUTPUT_BUFFER;
     BOOL bFirst = TRUE;
@@ -186,7 +187,13 @@ static HRESULT LogOutput(
             }
 
             // Log output
-            hr = StrAnsiAllocString(&szWrite, pNext, 0, CP_OEMCP);
+            hr = StrAllocString(&sczEscaped, pNext, 0);
+            ExitOnFailure(hr, "Failed to allocate copy of string");
+
+            hr = StrReplaceStringAll(&sczEscaped, L"%", L"%%");
+            ExitOnFailure(hr, "Failed to escape percent signs in string");
+
+            hr = StrAnsiAllocString(&szWrite, sczEscaped, 0, CP_OEMCP);
             ExitOnFailure(hr, "failed to convert output to ANSI");
             WcaLog(LOGMSG_STANDARD, szWrite);
 
@@ -209,8 +216,12 @@ static HRESULT LogOutput(
     // Print any text that didn't end with a new line
     if (szLog && *szLog)
     {
+        hr = StrReplaceStringAll(&szLog, L"%", L"%%");
+        ExitOnFailure(hr, "Failed to escape percent signs in string");
+
         hr = StrAnsiAllocString(&szWrite, szLog, 0, CP_OEMCP);
         ExitOnFailure(hr, "failed to convert output to ANSI");
+
         WcaLog(LOGMSG_VERBOSE, szWrite);
     }
 
@@ -220,6 +231,7 @@ LExit:
     ReleaseStr(szLog);
     ReleaseStr(szTemp);
     ReleaseStr(szWrite);
+    ReleaseStr(sczEscaped);
 
     return hr;
 }

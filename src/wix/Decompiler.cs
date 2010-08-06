@@ -7565,7 +7565,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         foreach (string propertyId in value.Split(';'))
                         {
-                            Wix.Property specialProperty = this.EnsureProperty(propertyId);
+                            string property = propertyId;
+                            bool suppressModulularization = false;
+                            if (OutputType.Module == this.outputType)
+                            {
+                                if (propertyId.EndsWith(this.modularizationGuid.Substring(1, 36).Replace('-', '_'), StringComparison.Ordinal))
+                                {
+                                    property = propertyId.Substring(0, propertyId.Length - this.modularizationGuid.Length + 1);
+                                }
+                                else
+                                {
+                                    suppressModulularization = true;
+                                }
+                            }
+
+                            Wix.Property specialProperty = this.EnsureProperty(property);
+                            if (suppressModulularization)
+                            {
+                                specialProperty.SuppressModularization = Wix.YesNoType.yes;
+                            }
 
                             switch (id)
                             {
