@@ -45,6 +45,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     new HeatCommandLineOption("dir", "harvest a directory"),
                     new HeatCommandLineOption("file", "harvest a file"),
                     new HeatCommandLineOption("perf", "harvest performance counters"),
+                    new HeatCommandLineOption("reg", "harvest a .reg file"),
                     new HeatCommandLineOption("-ag", "autogenerate component guids at compile time"),
                     new HeatCommandLineOption("-cg <ComponentGroupName>", "component group name (cannot contain spaces e.g -cg MyComponentGroup)"),
                     new HeatCommandLineOption("-dr <DirectoryName>", "directory reference to root directories (cannot contains spaces e.g. -dr MyAppDirRef)"),
@@ -93,6 +94,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     break;
                 case "perf":
                     harvesterExtension = new PerformanceCategoryHarvester();
+                    active = true;
+                    break;
+                case "reg":
+                    harvesterExtension = new RegFileHarvester();
                     active = true;
                     break;
             }

@@ -1204,3 +1204,4 @@ HeathS: SFBUG:3038805 - Write PublicKeyToken as "null" instead of "neutral".
 
 WixBuild: Version 3.5.2006.0
 
+NSleigh: heat support for .reg files.
