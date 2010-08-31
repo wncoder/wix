@@ -221,7 +221,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 webAppPool.Name = (string)row[1];
 
-                switch ((int)row[3])
+                switch ((int)row[3] & 0xF)
                 {
                     case 1:
                         webAppPool.Identity = IIs.WebAppPool.IdentityType.networkService;
@@ -238,6 +238,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     default:
                         // TODO: warn
                         break;
+                }
+
+                if (0 != ((int)row[3] & 0x10))
+                {
+                    webAppPool.ManagedPipelineMode = IIs.WebAppPool.ManagedPipelineModeType.integrated;
                 }
 
                 if (null != row[4])
@@ -328,6 +333,25 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 if (null != row[13])
                 {
                     webAppPool.PrivateMemory = (int)row[13];
+                }
+
+                if (null != row[14])
+                {
+                    switch ((string)row[14])
+                    {
+                        case "v1.1":
+                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v11;
+                            break;
+                        case "v2.0":
+                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v20;
+                            break;
+                        case "v4.0":
+                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v40;
+                            break;
+                        default:
+                            // TODO: warn
+                            break;
+                    }
                 }
 
                 if (null != row[2])

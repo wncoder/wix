@@ -168,10 +168,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                                     propertyNode.InnerText = propertyNode.InnerText.Replace("\\Microsoft\\WiX\\v3.5\\", "\\Microsoft\\WiX\\v3.x\\");
                                 }
 
-                                if (propertyNode.InnerText.Contains("\\Wix.targets"))
+                                if (propertyNode.InnerText.Contains("\\Wix2010.targets"))
                                 {
                                     targetsPathUpdated = true;
-                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Wix.targets", "\\Wix2010.targets");
+                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Wix2010.targets", "\\Wix.targets");
                                 }
                             }
                         }
@@ -261,7 +261,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                                 upgradeRequired = 1;
                             }
 
-                            if (propertyNode.InnerText.Contains("\\Wix.targets"))
+                            if (propertyNode.InnerText.Contains("\\Wix2010.targets"))
                             {
                                 upgradeRequired = 1;
                             }

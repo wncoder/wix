@@ -35,18 +35,18 @@ enum REPORT_LEVEL
 };
 
 // asserts and traces
-typedef BOOL (DAPI *DUTIL_ASSERTDISPLAYFUNCTION)(LPCSTR sz);
+typedef BOOL (DAPI *DUTIL_ASSERTDISPLAYFUNCTION)(__in_z LPCSTR sz);
 
 extern "C" void DAPI Dutil_SetAssertModule(__in HMODULE hAssertModule);
 extern "C" void DAPI Dutil_SetAssertDisplayFunction(__in DUTIL_ASSERTDISPLAYFUNCTION pfn);
-extern "C" void DAPI Dutil_Assert(const CHAR* szFile, int iLine);
-extern "C" void DAPI Dutil_AssertSz(const CHAR* szFile, int iLine, const CHAR *szMsg);
+extern "C" void DAPI Dutil_Assert(__in_z LPCSTR szFile, __in int iLine);
+extern "C" void DAPI Dutil_AssertSz(__in_z LPCSTR szFile, __in int iLine, __in_z LPCSTR szMsg);
 
 extern "C" void DAPI Dutil_TraceSetLevel(__in REPORT_LEVEL ll, __in BOOL fTraceFilenames);
 extern "C" REPORT_LEVEL DAPI Dutil_TraceGetLevel();
-extern "C" void __cdecl Dutil_Trace(__in LPCSTR szFile, __in int iLine, __in REPORT_LEVEL rl, __in LPCSTR szMessage, ...);
-extern "C" void __cdecl Dutil_TraceError(__in LPCSTR szFile, __in int iLine, __in REPORT_LEVEL rl, __in HRESULT hr, __in LPCSTR szMessage, ...);
-extern "C" void DAPI Dutil_RootFailure(__in LPCSTR szFile, __in int iLine, __in HRESULT hrError);
+extern "C" void __cdecl Dutil_Trace(__in_z LPCSTR szFile, __in int iLine, __in REPORT_LEVEL rl, __in_z __format_string LPCSTR szMessage, ...);
+extern "C" void __cdecl Dutil_TraceError(__in_z LPCSTR szFile, __in int iLine, __in REPORT_LEVEL rl, __in HRESULT hr, __in_z __format_string LPCSTR szMessage, ...);
+extern "C" void DAPI Dutil_RootFailure(__in_z LPCSTR szFile, __in int iLine, __in HRESULT hrError);
 
 #ifdef DEBUG
 

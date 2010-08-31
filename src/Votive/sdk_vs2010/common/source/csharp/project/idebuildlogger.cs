@@ -10,65 +10,85 @@ PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 ***************************************************************************/
 
 using System;
+using System.Windows.Forms.Design;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
-using System.CodeDom.Compiler;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Windows.Threading;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.Win32;
 using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 
 namespace Microsoft.VisualStudio.Package
 {
-
     /// <summary>
     /// This class implements an MSBuild logger that output events to VS outputwindow and tasklist.
     /// </summary>
-    [ComVisible(true)]
-    internal sealed class IDEBuildLogger : Logger
+    [SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "IDE")]
+    internal class IDEBuildLogger : Logger
     {
         #region fields
+
         // TODO: Remove these constants when we have a version that suppoerts getting the verbosity using automation.
         private string buildVerbosityRegistryRoot = @"Software\Microsoft\VisualStudio\10.0";
         private const string buildVerbosityRegistrySubKey = @"General";
         private const string buildVerbosityRegistryKey = "MSBuildLoggerVerbosity";
-        // TODO: Re-enable this constants when we have a version that suppoerts getting the verbosity using automation.
-        //private const string EnvironmentCategory = "Environment";
-        //private const string ProjectsAndSolutionSubCategory = "ProjectsAndSolution";
-        //private const string BuildAndRunPage = "BuildAndRun";
 
         private int currentIndent;
         private IVsOutputWindowPane outputWindowPane;
         private string errorString = SR.GetString(SR.Error, CultureInfo.CurrentUICulture);
         private string warningString = SR.GetString(SR.Warning, CultureInfo.CurrentUICulture);
-        private bool isLogTaskDone;
         private TaskProvider taskProvider;
         private IVsHierarchy hierarchy;
         private IServiceProvider serviceProvider;
+        private Dispatcher dispatcher;
+        private bool haveCachedVerbosity = false;
+
+        // Queues to manage Tasks and Error output plus message logging
+        private ConcurrentQueue<Func<ErrorTask>> taskQueue;
+        private ConcurrentQueue<string> outputQueue;
 
         #endregion
 
         #region properties
+
+        public IServiceProvider ServiceProvider
+        {
+            get { return this.serviceProvider; }
+        }
+
         public string WarningString
         {
             get { return this.warningString; }
             set { this.warningString = value; }
         }
+
         public string ErrorString
         {
             get { return this.errorString; }
             set { this.errorString = value; }
         }
-        public bool IsLogTaskDone
+
+        /// <summary>
+        /// When the build is not a "design time" (background or secondary) build this is True
+        /// </summary>
+        /// <remarks>
+        /// The only known way to detect an interactive build is to check this.outputWindowPane for null.
+        /// </remarks>
+        protected bool InteractiveBuild
         {
-            get { return this.isLogTaskDone; }
-            set { this.isLogTaskDone = value; }
+            get { return this.outputWindowPane != null; }
         }
+
         /// <summary>
         /// When building from within VS, setting this will
         /// enable the logger to retrive the verbosity from
@@ -76,9 +96,13 @@ namespace Microsoft.VisualStudio.Package
         /// </summary>
         internal string BuildVerbosityRegistryRoot
         {
-            get { return buildVerbosityRegistryRoot; }
-            set { buildVerbosityRegistryRoot = value; }
+            get { return this.buildVerbosityRegistryRoot; }
+            set 
+            {
+                this.buildVerbosityRegistryRoot = value;
+            }
         }
+
         /// <summary>
         /// Set to null to avoid writing to the output window
         /// </summary>
@@ -87,9 +111,11 @@ namespace Microsoft.VisualStudio.Package
             get { return this.outputWindowPane; }
             set { this.outputWindowPane = value; }
         }
+
         #endregion
 
         #region ctors
+
         /// <summary>
         /// Constructor.  Inititialize member data.
         /// </summary>
@@ -100,16 +126,22 @@ namespace Microsoft.VisualStudio.Package
             if (hierarchy == null)
                 throw new ArgumentNullException("hierarchy");
 
+            Trace.WriteLineIf(Thread.CurrentThread.GetApartmentState() != ApartmentState.STA, "WARNING: IDEBuildLogger constructor running on the wrong thread.");
+
+            IOleServiceProvider site;
+            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(hierarchy.GetSite(out site));
+
             this.taskProvider = taskProvider;
             this.outputWindowPane = output;
             this.hierarchy = hierarchy;
-            IOleServiceProvider site;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(hierarchy.GetSite(out site));
             this.serviceProvider = new ServiceProvider(site);
+            this.dispatcher = Dispatcher.CurrentDispatcher;
         }
+
         #endregion
 
         #region overridden methods
+
         /// <summary>
         /// Overridden from the Logger class.
         /// </summary>
@@ -119,6 +151,10 @@ namespace Microsoft.VisualStudio.Package
             {
                 throw new ArgumentNullException("eventSource");
             }
+
+            this.taskQueue = new ConcurrentQueue<Func<ErrorTask>>();
+            this.outputQueue = new ConcurrentQueue<string>();
+
             eventSource.BuildStarted += new BuildStartedEventHandler(BuildStartedHandler);
             eventSource.BuildFinished += new BuildFinishedEventHandler(BuildFinishedHandler);
             eventSource.ProjectStarted += new ProjectStartedEventHandler(ProjectStartedHandler);
@@ -133,184 +169,21 @@ namespace Microsoft.VisualStudio.Package
             eventSource.MessageRaised += new BuildMessageEventHandler(MessageHandler);
         }
 
-
         #endregion
 
         #region event delegates
-        /// <summary>
-        /// This is the delegate for error events.
-        /// </summary>
-        private void ErrorHandler(object sender, BuildErrorEventArgs errorEvent)
-        {
-            AddToErrorList(
-                errorEvent,
-                errorEvent.Code,
-                errorEvent.File,
-                errorEvent.LineNumber,
-                errorEvent.ColumnNumber);
-        }
-
-        /// <summary>
-        /// This is the delegate for warning events.
-        /// </summary>
-        private void WarningHandler(object sender, BuildWarningEventArgs errorEvent)
-        {
-            AddToErrorList(
-                errorEvent,
-                errorEvent.Code,
-                errorEvent.File,
-                errorEvent.LineNumber,
-                errorEvent.ColumnNumber);
-        }
-
-        private void Output(string s)
-        {
-            // Various events can call SetOutputLogger(null), which will null out "this.OutputWindowPane".  
-            // So we capture a reference to it.  At some point in the future, after this build finishes, 
-            // the pane reference we have will no longer accept input from us.
-            // But here there is no race, because
-            //  - we only log user-invoked builds to the Output window
-            //  - user-invoked buils always run MSBuild ASYNC
-            //  - in an ASYNC build, the BuildCoda uses UIThread.Run() to schedule itself to be run on the UI thread
-            //  - UIThread.Run() protects against re-entrancy and thus always preserves the queuing order of its actions
-            //  - the pane is good until at least the point when BuildCoda runs and we declare to MSBuild that we are finished with this build
-            var pane = this.OutputWindowPane;  // copy to capture in delegate
-            UIThread.Run(delegate()
-            {
-                try
-                {
-                    pane.OutputStringThreadSafe(s);
-                }
-                catch (Exception e)
-                {
-                    Debug.Assert(false, "Brian would like to know if this happens; exception in IDEBuildLogger.Output(): " + e.ToString());
-                    // Don't crash process due to random exception, just swallow it
-                }
-            });
-        }
-
-        /// <summary>
-        /// Add the error/warning to the error list and potentially to the output window.
-        /// </summary>
-        private void AddToErrorList(
-            BuildEventArgs errorEvent,
-            string errorCode,
-            string file,
-            int line,
-            int column)
-        {
-            bool isWarning = (errorEvent is BuildWarningEventArgs);
-            TaskPriority priority = isWarning ? TaskPriority.Normal : TaskPriority.High;
-            if (OutputWindowPane != null
-                && (this.Verbosity != LoggerVerbosity.Quiet || errorEvent is BuildErrorEventArgs))
-            {
-                // Format error and output it to the output window
-                string message = this.FormatMessage(errorEvent.Message);
-                CompilerError e = new CompilerError(file,
-                                                    line,
-                                                    column,
-                                                    errorCode,
-                                                    message);
-                e.IsWarning = isWarning;
-
-                Output(GetFormattedErrorMessage(e));
-            }
-        }
-
-
-        /// <summary>
-        /// This is the delegate for Message event types
-        /// </summary>		
-        private void MessageHandler(object sender, BuildMessageEventArgs messageEvent)
-        {
-            try
-            {
-                if (LogAtImportance(messageEvent.Importance))
-                {
-                    LogEvent(sender, messageEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging message event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
-        }
-
-        private void NavigateTo(object sender, EventArgs arguments)
-        {
-            try
-            {
-                Microsoft.VisualStudio.Shell.Task task = sender as Microsoft.VisualStudio.Shell.Task;
-                if (task == null)
-                    throw new ArgumentException("sender");
-
-                // Get the doc data for the task's document
-                if (String.IsNullOrEmpty(task.Document))
-                    return;
-
-                IVsUIShellOpenDocument openDoc = serviceProvider.GetService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-                if (openDoc == null)
-                    return;
-
-                IVsWindowFrame frame;
-                IOleServiceProvider sp;
-                IVsUIHierarchy hier;
-                uint itemid;
-                Guid logicalView = VSConstants.LOGVIEWID_Code;
-
-                if (Microsoft.VisualStudio.ErrorHandler.Failed(openDoc.OpenDocumentViaProject(task.Document, ref logicalView, out sp, out hier, out itemid, out frame)) || frame == null)
-                    return;
-
-                object docData;
-                frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
-
-                // Get the VsTextBuffer
-                VsTextBuffer buffer = docData as VsTextBuffer;
-                if (buffer == null)
-                {
-                    IVsTextBufferProvider bufferProvider = docData as IVsTextBufferProvider;
-                    if (bufferProvider != null)
-                    {
-                        IVsTextLines lines;
-                        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(bufferProvider.GetTextBuffer(out lines));
-                        buffer = lines as VsTextBuffer;
-                        Debug.Assert(buffer != null, "IVsTextLines does not implement IVsTextBuffer");
-                        if (buffer == null)
-                            return;
-                    }
-                }
-
-                // Finally, perform the navigation.
-                IVsTextManager mgr = serviceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
-                if (mgr == null)
-                    return;
-
-                mgr.NavigateToLineAndColumn(buffer, ref logicalView, task.Line, task.Column, task.Line, task.Column);
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.Assert(false, "Error thrown from NavigateTo. " + e.ToString());
-            }
-        }
 
         /// <summary>
         /// This is the delegate for BuildStartedHandler events.
         /// </summary>
-        private void BuildStartedHandler(object sender, BuildStartedEventArgs buildEvent)
+        protected virtual void BuildStartedHandler(object sender, BuildStartedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(MessageImportance.Low))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging buildstarted event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            ClearCachedVerbosity();
+            ClearQueuedOutput();
+            ClearQueuedTasks();
+
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
         }
 
         /// <summary>
@@ -318,174 +191,285 @@ namespace Microsoft.VisualStudio.Package
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="buildEvent"></param>
-        private void BuildFinishedHandler(object sender, BuildFinishedEventArgs buildEvent)
+        protected virtual void BuildFinishedHandler(object sender, BuildFinishedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(buildEvent.Succeeded ? MessageImportance.Low :
-                                                           MessageImportance.High))
-                {
-                    if (this.outputWindowPane != null)
-                        Output(Environment.NewLine);
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging buildfinished event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
-        }
+            // NOTE: This may run on a background thread!
+            MessageImportance importance = buildEvent.Succeeded ? MessageImportance.Low : MessageImportance.High;
+            QueueOutputText(importance, Environment.NewLine);
+            QueueOutputEvent(importance, buildEvent);
 
+            // flush output and error queues
+            ReportQueuedOutput();
+            ReportQueuedTasks();
+        }
 
         /// <summary>
         /// This is the delegate for ProjectStartedHandler events.
         /// </summary>
-        private void ProjectStartedHandler(object sender, ProjectStartedEventArgs buildEvent)
+        protected virtual void ProjectStartedHandler(object sender, ProjectStartedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(MessageImportance.Low))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging projectstarted event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
         }
 
         /// <summary>
         /// This is the delegate for ProjectFinishedHandler events.
         /// </summary>
-        private void ProjectFinishedHandler(object sender, ProjectFinishedEventArgs buildEvent)
+        protected virtual void ProjectFinishedHandler(object sender, ProjectFinishedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(buildEvent.Succeeded ? MessageImportance.Low
-                                                         : MessageImportance.High))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging projectfinished event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(buildEvent.Succeeded ? MessageImportance.Low : MessageImportance.High, buildEvent);
         }
 
         /// <summary>
         /// This is the delegate for TargetStartedHandler events.
         /// </summary>
-        private void TargetStartedHandler(object sender, TargetStartedEventArgs buildEvent)
+        protected virtual void TargetStartedHandler(object sender, TargetStartedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(MessageImportance.Normal))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-                ++this.currentIndent;
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging targetstarted event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
+            IndentOutput();
         }
-
 
         /// <summary>
         /// This is the delegate for TargetFinishedHandler events.
         /// </summary>
-        private void TargetFinishedHandler(object sender, TargetFinishedEventArgs buildEvent)
+        protected virtual void TargetFinishedHandler(object sender, TargetFinishedEventArgs buildEvent)
         {
-            try
-            {
-                --this.currentIndent;
-                if ((isLogTaskDone) &&
-                    LogAtImportance(buildEvent.Succeeded ? MessageImportance.Low
-                                                         : MessageImportance.High))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging targetfinished event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            UnindentOutput();
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
         }
-
 
         /// <summary>
         /// This is the delegate for TaskStartedHandler events.
         /// </summary>
-        private void TaskStartedHandler(object sender, TaskStartedEventArgs buildEvent)
+        protected virtual void TaskStartedHandler(object sender, TaskStartedEventArgs buildEvent)
         {
-            try
-            {
-                if (LogAtImportance(MessageImportance.Normal))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-                ++this.currentIndent;
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging taskstarted event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
+            IndentOutput();
         }
-
 
         /// <summary>
         /// This is the delegate for TaskFinishedHandler events.
         /// </summary>
-        private void TaskFinishedHandler(object sender, TaskFinishedEventArgs buildEvent)
+        protected virtual void TaskFinishedHandler(object sender, TaskFinishedEventArgs buildEvent)
         {
-            try
-            {
-                --this.currentIndent;
-                if ((isLogTaskDone) &&
-                    LogAtImportance(buildEvent.Succeeded ? MessageImportance.Normal
-                                                         : MessageImportance.High))
-                {
-                    LogEvent(sender, buildEvent);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging taskfinished event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            UnindentOutput();
+            QueueOutputEvent(MessageImportance.Low, buildEvent);
         }
-
 
         /// <summary>
         /// This is the delegate for CustomHandler events.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="buildEvent"></param>
-        private void CustomHandler(object sender, CustomBuildEventArgs buildEvent)
+        protected virtual void CustomHandler(object sender, CustomBuildEventArgs buildEvent)
         {
-            try
-            {
-                LogEvent(sender, buildEvent);
-            }
-            catch (Exception e)
-            {
-                Debug.Assert(false, "Problem logging custom event: " + e.Message + " at " + e.TargetSite);
-                // swallow the exception
-            }
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(MessageImportance.High, buildEvent);
+        }
+
+        /// <summary>
+        /// This is the delegate for error events.
+        /// </summary>
+        protected virtual void ErrorHandler(object sender, BuildErrorEventArgs errorEvent)
+        {
+            // NOTE: This may run on a background thread!
+            QueueOutputText(GetFormattedErrorMessage(errorEvent.File, errorEvent.LineNumber, errorEvent.ColumnNumber, false, errorEvent.Code, errorEvent.Message));
+            QueueTaskEvent(errorEvent);
+        }
+
+        /// <summary>
+        /// This is the delegate for warning events.
+        /// </summary>
+        protected virtual void WarningHandler(object sender, BuildWarningEventArgs warningEvent)
+        {
+            // NOTE: This may run on a background thread!
+            QueueOutputText(MessageImportance.High, GetFormattedErrorMessage(warningEvent.File, warningEvent.LineNumber, warningEvent.ColumnNumber, true, warningEvent.Code, warningEvent.Message));
+            QueueTaskEvent(warningEvent);
+        }
+
+        /// <summary>
+        /// This is the delegate for Message event types
+        /// </summary>		
+        protected virtual void MessageHandler(object sender, BuildMessageEventArgs messageEvent)
+        {
+            // NOTE: This may run on a background thread!
+            QueueOutputEvent(messageEvent.Importance, messageEvent);
         }
 
         #endregion
 
+        #region output queue
+
+        protected void QueueOutputEvent(MessageImportance importance, BuildEventArgs buildEvent)
+        {
+            // NOTE: This may run on a background thread!
+            if (LogAtImportance(importance) && !string.IsNullOrEmpty(buildEvent.Message))
+            {
+                StringBuilder message = new StringBuilder(this.currentIndent + buildEvent.Message.Length);
+                if (this.currentIndent > 0)
+                {
+                    message.Append('\t', this.currentIndent);
+                }
+                message.AppendLine(buildEvent.Message);
+
+                QueueOutputText(message.ToString());
+            }
+        }
+
+        protected void QueueOutputText(MessageImportance importance, string text)
+        {
+            // NOTE: This may run on a background thread!
+            if (LogAtImportance(importance))
+            {
+                QueueOutputText(text);
+            }
+        }
+
+        protected void QueueOutputText(string text)
+        {
+            // NOTE: This may run on a background thread!
+            if (this.OutputWindowPane != null)
+            {
+                // Enqueue the output text
+                this.outputQueue.Enqueue(text);
+
+                // We want to interactively report the output. But we dont want to dispatch
+                // more than one at a time, otherwise we might overflow the main thread's
+                // message queue. So, we only report the output if the queue was empty.
+                if (this.outputQueue.Count == 1)
+                {
+                    ReportQueuedOutput();
+                }
+            }
+        }
+
+        private void IndentOutput()
+        {
+            // NOTE: This may run on a background thread!
+            this.currentIndent++;
+        }
+
+        private void UnindentOutput()
+        {
+            // NOTE: This may run on a background thread!
+            this.currentIndent--;
+        }
+
+        private void ReportQueuedOutput()
+        {
+            // NOTE: This may run on a background thread!
+            // We need to output this on the main thread. We must use BeginInvoke because the main thread may not be pumping events yet.
+            BeginInvokeWithErrorMessage(this.serviceProvider, this.dispatcher, () =>
+            {
+                if (this.OutputWindowPane != null)
+                {
+                    string outputString;
+
+                    while (this.outputQueue.TryDequeue(out outputString))
+                    {
+                        Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(this.OutputWindowPane.OutputString(outputString));
+                    }
+                }
+            });
+        }
+
+        private void ClearQueuedOutput()
+        {
+            // NOTE: This may run on a background thread!
+            this.outputQueue = new ConcurrentQueue<string>();
+        }
+
+        #endregion output queue
+
+        #region task queue
+
+        protected void QueueTaskEvent(BuildEventArgs errorEvent)
+        {
+            this.taskQueue.Enqueue(() =>
+            {
+                ErrorTask task = new ErrorTask();
+
+                if (errorEvent is BuildErrorEventArgs)
+                {
+                    BuildErrorEventArgs errorArgs = (BuildErrorEventArgs)errorEvent;
+                    task.Document = errorArgs.File;
+                    task.ErrorCategory = TaskErrorCategory.Error;
+                    task.Line = errorArgs.LineNumber - 1; // The task list does +1 before showing this number.
+                    task.Column = errorArgs.ColumnNumber;
+                    task.Priority = TaskPriority.High;
+                }
+                else if (errorEvent is BuildWarningEventArgs)
+                {
+                    BuildWarningEventArgs warningArgs = (BuildWarningEventArgs)errorEvent;
+                    task.Document = warningArgs.File;
+                    task.ErrorCategory = TaskErrorCategory.Warning;
+                    task.Line = warningArgs.LineNumber - 1; // The task list does +1 before showing this number.
+                    task.Column = warningArgs.ColumnNumber;
+                    task.Priority = TaskPriority.Normal;
+                }
+
+                task.Text = errorEvent.Message;
+                task.Category = TaskCategory.BuildCompile;
+                task.HierarchyItem = hierarchy;
+
+                return task;
+            });
+
+            // NOTE: Unlike output we dont want to interactively report the tasks. So we never queue
+            // call ReportQueuedTasks here. We do this when the build finishes.
+        }
+
+        private void ReportQueuedTasks()
+        {
+            // NOTE: This may run on a background thread!
+            // We need to output this on the main thread. We must use BeginInvoke because the main thread may not be pumping events yet.
+            BeginInvokeWithErrorMessage(this.serviceProvider, this.dispatcher, () =>
+            {
+                this.taskProvider.SuspendRefresh();
+                try
+                {
+                    Func<ErrorTask> taskFunc;
+
+                    while (this.taskQueue.TryDequeue(out taskFunc))
+                    {
+                        // Create the error task
+                        ErrorTask task = taskFunc();
+
+                        // Log the task
+                        this.taskProvider.Tasks.Add(task);
+                    }
+                }
+                finally
+                {
+                    this.taskProvider.ResumeRefresh();
+                }
+            });
+        }
+
+        private void ClearQueuedTasks()
+        {
+            // NOTE: This may run on a background thread!
+            this.taskQueue = new ConcurrentQueue<Func<ErrorTask>>();
+
+            if (this.InteractiveBuild)
+            {
+                // We need to clear this on the main thread. We must use BeginInvoke because the main thread may not be pumping events yet.
+                BeginInvokeWithErrorMessage(this.serviceProvider, this.dispatcher, () =>
+                {
+                    this.taskProvider.Tasks.Clear();
+                });
+            }
+        }
+
+        #endregion task queue
+
         #region helpers
+
         /// <summary>
         /// This method takes a MessageImportance and returns true if messages
         /// at importance i should be loggeed.  Otherwise return false.
@@ -522,88 +506,27 @@ namespace Microsoft.VisualStudio.Package
         }
 
         /// <summary>
-        /// This is the method that does the main work of logging an event
-        /// when one is sent to this logger.
-        /// </summary>
-        private void LogEvent(object sender, BuildEventArgs buildEvent)
-        {
-            try
-            {
-                // Fill in the Message text
-                if (OutputWindowPane != null && !String.IsNullOrEmpty(buildEvent.Message))
-                {
-                    StringBuilder msg = new StringBuilder(this.currentIndent + buildEvent.Message.Length + 1);
-                    if (this.currentIndent > 0)
-                    {
-                        msg.Append('\t', this.currentIndent);
-                    }
-                    msg.AppendLine(buildEvent.Message);
-                    Output(msg.ToString());
-                }
-            }
-            catch (Exception e)
-            {
-                try
-                {
-                    System.Diagnostics.Debug.Assert(false, "Error thrown from IDEBuildLogger::LogEvent");
-                    System.Diagnostics.Debug.Assert(false, e.ToString());
-                    // For retail, also try to show in the output window.
-                    Output(e.ToString());
-                }
-                catch
-                {
-                    // We're going to throw the original exception anyway
-                }
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// This is called when the build complete.
-        /// </summary>
-        private void ShutdownLogger()
-        {
-        }
-
-
-        /// <summary>
         /// Format error messages for the task list
         /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
-        private string GetFormattedErrorMessage(CompilerError e)
+        private string GetFormattedErrorMessage(
+            string fileName,
+            int line,
+            int column,
+            bool isWarning,
+            string errorNumber,
+            string errorText)
         {
-            if (e == null) return String.Empty;
+            string errorCode = isWarning ? this.WarningString : this.ErrorString;
 
-            string errCode = (e.IsWarning) ? this.warningString : this.errorString;
-            StringBuilder fileRef = new StringBuilder();
-
-            if (!String.IsNullOrEmpty(e.FileName))
+            StringBuilder message = new StringBuilder();
+            if (!string.IsNullOrEmpty(fileName))
             {
-                fileRef.AppendFormat(CultureInfo.CurrentUICulture, "{0}({1},{2}):",
-                                        e.FileName, e.Line, e.Column);
+                message.AppendFormat(CultureInfo.CurrentCulture, "{0}({1},{2}):", fileName, line, column);
             }
-            fileRef.AppendFormat(CultureInfo.CurrentUICulture, " {0} {1}: {2}", errCode, e.ErrorNumber, e.ErrorText);
+            message.AppendFormat(CultureInfo.CurrentCulture, " {0} {1}: {2}", errorCode, errorNumber, errorText);
+            message.AppendLine();
 
-            return fileRef.ToString();
-        }
-
-        /// <summary>
-        /// Formats the message that is to be output.
-        /// </summary>
-        /// <param name="message">The message string.</param>
-        /// <returns>The new message</returns>
-        private string FormatMessage(string message)
-        {
-            if (String.IsNullOrEmpty(message))
-            {
-                return Environment.NewLine;
-            }
-
-            StringBuilder sb = new StringBuilder(message.Length + Environment.NewLine.Length);
-
-            sb.AppendLine(message);
-            return sb.ToString();
+            return message.ToString();
         }
 
         /// <summary>
@@ -612,25 +535,84 @@ namespace Microsoft.VisualStudio.Package
         private void SetVerbosity()
         {
             // TODO: This should be replaced when we have a version that supports automation.
-
-            string verbosityKey = String.Format(CultureInfo.InvariantCulture, @"{0}\{1}", BuildVerbosityRegistryRoot, buildVerbosityRegistrySubKey);
-            using (RegistryKey subKey = Registry.CurrentUser.OpenSubKey(verbosityKey))
+            if (!this.haveCachedVerbosity)
             {
-                if (subKey != null)
+                string verbosityKey = String.Format(CultureInfo.InvariantCulture, @"{0}\{1}", BuildVerbosityRegistryRoot, buildVerbosityRegistrySubKey);
+                using (RegistryKey subKey = Registry.CurrentUser.OpenSubKey(verbosityKey))
                 {
-                    object valueAsObject = subKey.GetValue(buildVerbosityRegistryKey);
-                    if (valueAsObject != null)
+                    if (subKey != null)
                     {
-                        this.Verbosity = (LoggerVerbosity)((int)valueAsObject);
+                        object valueAsObject = subKey.GetValue(buildVerbosityRegistryKey);
+                        if (valueAsObject != null)
+                        {
+                            this.Verbosity = (LoggerVerbosity)((int)valueAsObject);
+                        }
                     }
                 }
+
+                this.haveCachedVerbosity = true;
             }
-
-            // TODO: Continue this code to get the Verbosity when we have a version that supports automation to get the Verbosity.
-            //EnvDTE.DTE dte = this.serviceProvider.GetService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
-            //EnvDTE.Properties properties = dte.get_Properties(EnvironmentCategory, ProjectsAndSolutionSubCategory);
         }
-        #endregion
-    }
 
+        /// <summary>
+        /// Clear the cached verbosity, so that it will be re-evaluated from the build verbosity registry key.
+        /// </summary>
+        private void ClearCachedVerbosity()
+        {
+            this.haveCachedVerbosity = false;
+        }
+
+        #endregion helpers
+
+        #region exception handling helpers
+
+        /// <summary>
+        /// Call Dispatcher.BeginInvoke, showing an error message if there was a non-critical exception.
+        /// </summary>
+        /// <param name="serviceProvider">service provider</param>
+        /// <param name="dispatcher">dispatcher</param>
+        /// <param name="action">action to invoke</param>
+        private static void BeginInvokeWithErrorMessage(IServiceProvider serviceProvider, Dispatcher dispatcher, Action action)
+        {
+            dispatcher.BeginInvoke(new Action(() => CallWithErrorMessage(serviceProvider, action)));
+        }
+
+        /// <summary>
+        /// Show error message if exception is caught when invoking a method
+        /// </summary>
+        /// <param name="serviceProvider">service provider</param>
+        /// <param name="action">action to invoke</param>
+        private static void CallWithErrorMessage(IServiceProvider serviceProvider, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                if (Microsoft.VisualStudio.ErrorHandler.IsCriticalException(ex))
+                {
+                    throw;
+                }
+
+                ShowErrorMessage(serviceProvider, ex);
+            }
+        }
+
+        /// <summary>
+        /// Show error window about the exception
+        /// </summary>
+        /// <param name="serviceProvider">service provider</param>
+        /// <param name="exception">exception</param>
+        private static void ShowErrorMessage(IServiceProvider serviceProvider, Exception exception)
+        {
+            IUIService UIservice = (IUIService)serviceProvider.GetService(typeof(IUIService));
+            if (UIservice != null && exception != null)
+            {
+                UIservice.ShowError(exception);
+            }
+        }
+
+        #endregion exception handling helpers
+    }
 }

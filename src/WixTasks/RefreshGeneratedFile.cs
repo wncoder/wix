@@ -19,7 +19,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
 {
     using System;
-    using System.Collections.Generic;
+    using System.Collections;
     using System.Globalization;
     using System.IO;
     using System.Text.RegularExpressions;
@@ -27,14 +27,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
     using Microsoft.Build.Framework;
     using Microsoft.Build.Utilities;
 
-    using Wix = Microsoft.Tools.WindowsInstallerXml.Serialize;
-
     /// <summary>
     /// This task refreshes the generated file that contains ComponentGroupRefs
     /// to harvested output.
     /// </summary>
     public class RefreshGeneratedFile : Task
     {
+        private static readonly Regex AddPrefix = new Regex(@"^[^a-zA-Z_]", RegexOptions.Compiled);
+        private static readonly Regex IllegalIdentifierCharacters = new Regex(@"[^A-Za-z0-9_\.]|\.{2,}", RegexOptions.Compiled); // non 'words' and assorted valid characters
+
         private ITaskItem[] generatedFiles;
         private ITaskItem[] projectReferencePaths;
 
@@ -64,7 +65,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         /// <returns>True upon completion of the task execution.</returns>
         public override bool Execute()
         {
-            List<string> componentGroupRefs = new List<string>();
+            ArrayList componentGroupRefs = new ArrayList();
             for (int i = 0; i < this.ProjectReferencePaths.Length; i++)
             {
                 ITaskItem item = this.ProjectReferencePaths[i];
@@ -88,42 +89,37 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
                 }
             }
 
-            // Create Wix root element and 'xml' processing instruction.
-            Wix.Wix wixElement = new Wix.Wix();
+            XmlDocument doc = new XmlDocument();
 
-            // Create a fragment.
-            Wix.Fragment fragmentElement = new Wix.Fragment();
-            wixElement.AddChild(fragmentElement);
+            XmlProcessingInstruction head = doc.CreateProcessingInstruction("xml", "version='1.0' encoding='UTF-8'");
+            doc.AppendChild(head);
 
-            // Create the main ComponentGroup to be referenced in authoring.
-            Wix.ComponentGroup componentGroupElement = new Wix.ComponentGroup();
-            fragmentElement.AddChild(componentGroupElement);
+            XmlElement rootElement = doc.CreateElement("Wix");
+            rootElement.SetAttribute("xmlns", "http://schemas.microsoft.com/wix/2006/wi");
+            doc.AppendChild(rootElement);
 
-            // Add each harvested project output group to the main ComponentGroup.
+            XmlElement fragment = doc.CreateElement("Fragment");
+            rootElement.AppendChild(fragment);
+
+            XmlElement componentGroup = doc.CreateElement("ComponentGroup");
+            componentGroup.SetAttribute("Id", "Product.Generated");
+            fragment.AppendChild(componentGroup);
+
             foreach (string componentGroupRef in componentGroupRefs)
             {
-                Wix.ComponentGroupRef componentGroupRefElement = new Wix.ComponentGroupRef();
-                componentGroupRefElement.Id = componentGroupRef;
-                componentGroupElement.AddChild(componentGroupRefElement);
+                XmlElement componentGroupRefElement = doc.CreateElement("ComponentGroupRef");
+                componentGroupRefElement.SetAttribute("Id", componentGroupRef);
+                componentGroup.AppendChild(componentGroupRefElement);
             }
-
-            // Set up the XmlWriter to save the documents.
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.CloseOutput = true;
-            settings.Indent = true;
 
             foreach (ITaskItem item in this.GeneratedFiles)
             {
-                // Get just the file name of the output file to use as the main ComponentGroup Id.
                 string fullPath = item.GetMetadata("FullPath");
-                componentGroupElement.Id = Path.GetFileNameWithoutExtension(fullPath);
 
+                componentGroup.SetAttribute("Id", Path.GetFileNameWithoutExtension(fullPath));
                 try
                 {
-                    using (XmlWriter writer = XmlWriter.Create(fullPath, settings))
-                    {
-                        wixElement.OutputXml(writer);
-                    }
+                    doc.Save(fullPath);
                 }
                 catch (Exception e)
                 {

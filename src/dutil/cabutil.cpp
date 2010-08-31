@@ -343,7 +343,7 @@ static __callback INT_PTR FAR DIAMONDAPI CabExtractOpen(__in_z PSTR pszFile, __i
     INT_PTR pFile = -1;
     LPWSTR sczCabFile = NULL;
 
-    // if FDI asks for some crazy mode (in low memory situation it could ask for a scratch file) fail
+    // if FDI asks for some unusual mode (in low memory situation it could ask for a scratch file) fail
     if ((oflag != (/*_O_BINARY*/ 0x8000 | /*_O_RDONLY*/ 0x0000)) || (pmode != (_S_IREAD | _S_IWRITE)))
     {
         hr = E_OUTOFMEMORY;

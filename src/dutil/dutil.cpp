@@ -58,7 +58,7 @@ Dutil_AssertMsg
 
 *******************************************************************/
 extern "C" void DAPI Dutil_AssertMsg(
-    __in LPCSTR szMessage
+    __in_z LPCSTR szMessage
     )
 {
     static BOOL fInAssert = FALSE; // TODO: make this thread safe (this is a cheap hack to prevent re-entrant Asserts)
@@ -158,7 +158,7 @@ Dutil_Assert
 
 *******************************************************************/
 extern "C" void DAPI Dutil_Assert(
-    __in LPCSTR szFile, 
+    __in_z LPCSTR szFile, 
     __in int iLine
     )
 {
@@ -181,9 +181,9 @@ Dutil_AssertSz
 
 *******************************************************************/
 extern "C" void DAPI Dutil_AssertSz(
-    __in LPCSTR szFile, 
+    __in_z LPCSTR szFile, 
     __in int iLine, 
-    __in LPCSTR szMsg
+    __in_z __format_string LPCSTR szMsg
     )
 {
     HRESULT hr = S_OK;
@@ -230,10 +230,10 @@ Dutil_Trace
 
 *******************************************************************/
 extern "C" void DAPI Dutil_Trace(
-    __in LPCSTR szFile, 
+    __in_z LPCSTR szFile, 
     __in int iLine, 
     __in REPORT_LEVEL rl, 
-    __in LPCSTR szFormat, 
+    __in_z __format_string LPCSTR szFormat, 
     ...
     )
 {
@@ -305,11 +305,11 @@ Dutil_TraceError
 
 *******************************************************************/
 extern "C" void DAPI Dutil_TraceError(
-    __in LPCSTR szFile, 
+    __in_z LPCSTR szFile, 
     __in int iLine, 
     __in REPORT_LEVEL rl, 
     __in HRESULT hrError, 
-    __in LPCSTR szFormat, 
+    __in_z __format_string LPCSTR szFormat, 
     ...
     )
 {
@@ -396,7 +396,7 @@ Dutil_RootFailure
 
 *******************************************************************/
 extern "C" void DAPI Dutil_RootFailure(
-    __in LPCSTR szFile,
+    __in_z LPCSTR szFile,
     __in int iLine,
     __in HRESULT hrError
     )

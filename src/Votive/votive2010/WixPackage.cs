@@ -36,7 +36,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// environment.
     /// </summary>
     [DefaultRegistryRoot(@"Software\\Microsoft\\VisualStudio\\8.0Exp")]
-    [InstalledProductRegistration(true, "WiX", null, null)]
+    [InstalledProductRegistration("WiX", null, null)]
     [Guid("E0EE8E7D-F498-459e-9E90-2B3D73124AD5")]
     [PackageRegistration(RegisterUsing = RegistrationMethod.CodeBase, UseManagedResourcesOnly = true)]
     [ProvideLoadKey("Standard", "3.0", "Votive", "Microsoft", WixPackage.PackageLoadKeyResourceId)]

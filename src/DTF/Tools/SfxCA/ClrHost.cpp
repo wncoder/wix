@@ -81,7 +81,9 @@ bool LoadCLR(MSIHANDLE hSession, const wchar_t* szVersion, const wchar_t* szConf
 		{
 			Log(hSession, L"Failed to get requested CLR info. Error code 0x%x", hr);
 			Log(hSession, L"Ensure that the proper version of the .NET Framework is installed, or "
-				L"that there is a matching supportedRuntime element in CustomAction.config.");
+				L"that there is a matching supportedRuntime element in CustomAction.config. "
+				L"If you are binding to .NET 4 or greater add "
+				L"useLegacyV2RuntimeActivationPolicy=true to the <startup> element.");
 			FreeLibrary(hmodMscoree);
 			return false;
 		}

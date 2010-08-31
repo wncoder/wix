@@ -205,11 +205,11 @@ static __callback INT_PTR FAR DIAMONDAPI RexOpen(__in_z char FAR *pszFile, int o
     HANDLE hFile = INVALID_HANDLE_VALUE;
     int i = 0;
 
-    // if FDI asks for some crazy mode (__in low memory situation it could ask for a scratch file) fail
+    // if FDI asks for some unusual mode (__in low memory situation it could ask for a scratch file) fail
     if ((oflag != (/*_O_BINARY*/ 0x8000 | /*_O_RDONLY*/ 0x0000)) || (pmode != (_S_IREAD | _S_IWRITE)))
     {
         hr = E_OUTOFMEMORY;
-        ExitOnFailure(hr, "FDI asked for to create a scratch file, which is crazy madness");
+        ExitOnFailure(hr, "FDI asked for to create a scratch file, which is unusual");
     }
 
     // find an empty spot in the fake file table

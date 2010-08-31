@@ -21,19 +21,20 @@
 /*------------------------------------------------------------------
 AppPool table:
 
-Column           Type   Nullable     Example Value
-AppPool          s72    No           TestPool
-Name             s72    No           "TestPool"
-Component_       s72    No           ComponentName
-Attributes       i2     No           8 (APATTR_OTHERUSER)
-User_            s72    Yes          UserKey
-RecycleMinutes   i2     Yes          500
-RecycleRequests  i2     Yes          5000
-RecycleTimes     s72    Yes          "1:45,13:30,22:00"
-IdleTimeout      i2     Yes          15
-QueueLimit       i2     Yes          500
-CPUMon           s72    Yes          "65,500,1" (65% CPU usage, 500 minutes, Shutdown Action)
-MaxProc          i2     Yes          5
+Column                Type   Nullable     Example Value
+AppPool               s72    No           TestPool
+Name                  s72    No           "TestPool"
+Component_            s72    No           ComponentName
+Attributes            i2     No           8 (APATTR_OTHERUSER)
+User_                 s72    Yes          UserKey
+RecycleMinutes        i2     Yes          500
+RecycleRequests       i2     Yes          5000
+RecycleTimes          s72    Yes          "1:45,13:30,22:00"
+IdleTimeout           i2     Yes          15
+QueueLimit            i2     Yes          500
+CPUMon                s72    Yes          "65,500,1" (65% CPU usage, 500 minutes, Shutdown Action)
+MaxProc               i2     Yes          5
+ManagedRuntimeVersion s72    Yes          "v2.0"
 
 Notes:
 RecycleTimes is a comma delimeted list of times.  CPUMon is a
@@ -43,8 +44,8 @@ Action are 1 (Shutdown) and 0 (No Action).
 
 ------------------------------------------------------------------*/
 // sql queries
-LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc` FROM `IIsAppPool`";
-enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc};
+LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `ManagedRuntimeVersion` FROM `IIsAppPool`";
+enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqManagedRuntimeVersion};
 
 LPCWSTR vcsComponentAttrQuery = L"SELECT `Attributes` FROM `Component` WHERE `Component`=?";
 enum eComponentAttrQuery { caqAttributes = 1 };
@@ -193,6 +194,11 @@ HRESULT ScaAppPoolRead7(
 
         hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iMaxProcesses);
         ExitOnFailure(hr, "failed to get AppPool.MaxProc");
+        
+        hr = WcaGetRecordString(hRec, apqManagedRuntimeVersion, &pwzData);
+        ExitOnFailure(hr, "failed to get AppPool.ManagedRuntimeVersion");
+        hr = ::StringCchCopyW(psap->wzManagedRuntimeVersion, countof(psap->wzManagedRuntimeVersion), pwzData);
+        ExitOnFailure1(hr, "failed to copy ManagedRuntimeVersion value: %S", pwzData);
     }
 
     if (E_NOMOREITEMS == hr)
@@ -543,6 +549,21 @@ HRESULT ScaWriteAppPool7(
             ExitOnFailure(hr, "failed to set app pool identity password");
         }
     }
+
+    if (psap->iAttributes & APATTR_INTEGRATED)
+    {
+        hr = ScaWriteConfigID(IIS_APPPOOL_INTEGRATED);
+        ExitOnFailure(hr, "failed to set app pool integrated mode");
+    }
+
+    if(*psap->wzManagedRuntimeVersion)
+    {
+        hr = ScaWriteConfigID(IIS_APPPOOL_MANAGED_RUNTIME_VERSION);
+        ExitOnFailure(hr, "failed to set app pool managed runtime version mode");
+        hr = ScaWriteConfigString(psap->wzManagedRuntimeVersion);
+        ExitOnFailure(hr, "failed to set app pool managed runtime version value");
+    }
+
     //
     //The number of properties above is variable so we put an end tag in so the
     //execute CA will know when to stop looking for AppPool properties

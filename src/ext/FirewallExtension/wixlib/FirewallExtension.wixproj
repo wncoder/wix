@@ -19,6 +19,7 @@
   <ItemGroup>
     <Compile Include="FirewallExtension.wxs" />
     <EmbeddedResource Include="en-us.wxl" />
+    <EmbeddedResource Include="ja-jp.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
 </Project>

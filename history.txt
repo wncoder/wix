@@ -1204,4 +1204,43 @@ HeathS: SFBUG:3038805 - Write PublicKeyToken as "null" instead of "neutral".
 
 WixBuild: Version 3.5.2006.0
 
+BobArnso: Fix SFBUG:3034857 - GetCabList task in Link target fails when using 
+          BindFiles. XML outputs don't do layout, so skip GetCabList and 
+          GetLooseFileList tasks when linking XML outputs.
+
+MiCarls: SFBUG:3043073 - Fix DTF templates per latest 3.x and dutil changes,
+         and add version.lib to CPP templates as needed
+
+WixBuild: Version 3.5.2013.0
+
+BobArnso: Fix SFBUG:3047665 - fix wix.ca.targets to point to 3.x
+
+PMarcu: SFBug:3027614 Adding more slots for SfxCA custom actions.
+        SFBug:2957993 Adding more to the error message for SFXCA to react to
+                      the new default activation policy in .NET 4.
+
+HeathS: SFBUG:3037918 - Fixed DLL resolution when building solutions in MSBuild.
+
+EricStJ: SFBUG:3034909 - Added support for AppPool managedPipelineMode and
+         managedRuntimeVersion.
+
+EricStJ: SFBUG:3026594 - MSBuild crashes when run as x64 and WixToolsPath is
+         overridden.
+
+WixBuild: Version 3.5.2020.0
+
+HeathS: SFBUG:3049176 - Updated correct GUID for VWDExpress 2010 RTM.
+
+CAraman: Fix annotations.  Resolve PoliCheck issues.
+
+EricStJ: SFBUG: 3033224 - Build fails when building 2010 project with
+         MSBuild 3.5
+         SFBUG: 3040451,3011605 - VS prompts to save unchanged projects
+         SFBUG: 3050105 - Build errors do not appear in error window
+
+RobMen: SFBUG:3041334 - ja-jp localization for extensions.
+
 NSleigh: heat support for .reg files.
+
+WixBuild: Version 3.5.2030.0
+

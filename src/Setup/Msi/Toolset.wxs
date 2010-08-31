@@ -163,6 +163,7 @@
                             <Component Id="WixMSBuildBinaries35" Guid="2CB1EA5F-2542-4AFF-A05B-FAF576265F89" Win64="no">
                                 <File Source="WixTasks.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
                                 <File Source="wix.targets" Vital="yes" />
+                                <File Source="wix200x.targets" Vital="yes" />
                                 <File Source="wix2010.targets" Vital="yes" />
                                 <File Source="wix.ca.targets" Vital="yes" />
                             </Component>

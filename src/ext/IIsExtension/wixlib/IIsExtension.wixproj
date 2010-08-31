@@ -20,6 +20,7 @@
   <ItemGroup>
     <Compile Include="IIsExtension.wxs" />
     <EmbeddedResource Include="en-us.wxl" />
+    <EmbeddedResource Include="ja-jp.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
 </Project>

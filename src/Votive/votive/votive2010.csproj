@@ -41,12 +41,19 @@
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.Interop.9.0.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.Shell.Interop.10.0">
+      <SpecificVersion>True</SpecificVersion>
+      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.Interop.10.0.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.CommonIDE">
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.CommonIDE.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.9.0">
-      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.9.0.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.Shell.10.0">
+      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.10.0.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0">
+      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.Immutable.10.0</HintPath>
     </Reference>
     <Reference Include="Microsoft.Internal.VisualStudio.Shell.Interop.9.0">
       <SpecificVersion>True</SpecificVersion>

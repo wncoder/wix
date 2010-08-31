@@ -334,6 +334,11 @@ namespace Microsoft.VisualStudio.Package
 		/// The RunCodeAnalysisOnce property
 		/// </summary>
 		RunCodeAnalysisOnce,
+
+        /// <summary>
+        /// The VisualStudioStyleErrors property
+        /// </summary>
+        VisualStudioStyleErrors,
 	}
 
 	#endregion

@@ -74,6 +74,8 @@
                 description="Amount of virtual memory (in KB) that a worker process can use before the worker process recycles. The maximum value supported for this field is 4,294,967 KB."/>
         <columnDefinition name="PrivateMemory" type="number" length="4" nullable="yes"
                 description="Amount of private memory (in KB) that a worker process can use before the worker process recycles. The maximum value supported for this field is 4,294,967 KB."/>
+        <columnDefinition name="ManagedRuntimeVersion" type="string" length="72" nullable="yes"
+                description="Specifies the .NET Framework version to be used by the application pool."/>
     </tableDefinition>
     <tableDefinition name="IIsMimeMap">
         <columnDefinition name="MimeMap" type="string" length="72" primaryKey="yes" modularize="column"

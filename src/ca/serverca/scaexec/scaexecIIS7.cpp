@@ -47,6 +47,7 @@
 #define IIS_CONFIG_LOG_UTF8                 L"logInUTF8"
 #define IIS_CONFIG_LIMITS                   L"limits"
 #define IIS_CONFIG_PIPELINEMODE             L"managedPipelineMode"
+#define IIS_CONFIG_MANAGEDRUNTIMEVERSION    L"managedRuntimeVersion"
 #define IIS_CONFIG_WEBLOG                   L"logFile"
 #define IIS_CONFIG_LOGFORMAT                L"logFormat"
 #define IIS_CONFIG_MIMEMAP                  L"mimeMap"
@@ -3712,12 +3713,12 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
     hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_NAME, swAppPoolName);
     ExitOnFailure(hr, "Failed set AppPool name property");
 
-    //For WiX II6 /ABO compat we will be hardcoding managedPipelineMode="Classic"
+    //For WiX II6 /ABO compat we will default managedPipelineMode="Classic"
     hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_PIPELINEMODE, L"Classic");
-    ExitOnFailure(hr, "Failed set AppPool name property");
+    ExitOnFailure(hr, "Failed set AppPool managedPipelineMode property");
     //For WiX II6 /ABO compat we will be hardcoding autostart="true"
     hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_APPPOOL_AUTO, L"true");
-    ExitOnFailure(hr, "Failed set AppPool name property");
+    ExitOnFailure(hr, "Failed set AppPool autoStart property");
 
     if (!fFound)
     {
@@ -3986,6 +3987,22 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
                 //  enable32BitAppOnWin64
                 hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_ENABLE32, TRUE);
                 ExitOnFailure(hr, "Failed to set AppPool enable32BitAppOnWin64 value");
+                break;
+            }
+            case IIS_APPPOOL_INTEGRATED:
+            {
+                // Override managedPipelineMode="Integrated"
+                hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_PIPELINEMODE, L"Integrated");
+                ExitOnFailure(hr, "Failed set AppPool managedPipelineMode property");
+                break;
+            }
+            case IIS_APPPOOL_MANAGED_RUNTIME_VERSION:
+            {
+                // managedRuntimeVersion
+                hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzData);
+                ExitOnFailure(hr, "Failed to read AppPool managedRuntimeVersion");
+                hr = PutPropertyValue(pAppPoolElement, IIS_CONFIG_MANAGEDRUNTIMEVERSION, pwzData);
+                ExitOnFailure(hr, "Failed set AppPool managedRuntimeVersion property");
                 break;
             }
 

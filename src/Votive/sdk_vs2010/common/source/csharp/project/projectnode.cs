@@ -255,58 +255,6 @@ namespace Microsoft.VisualStudio.Package
         }
     }
 
-    internal class ProjectBuildStatus
-    {
-        private static BuildKind? currentBuild;
-
-        public static bool StartBuild(BuildKind kind)
-        {
-            if (!currentBuild.HasValue)
-            {
-                currentBuild = kind;
-                return true;
-            }
-            var currentBuildKind = currentBuild.Value;
-            switch(currentBuild)
-            {
-                case BuildKind.SYNC: 
-                        // Attempt to start a build during sync build indicate reentrancy
-                        Debug.Fail("Message pumping during sync build");
-                        return false;
-                case BuildKind.ASYNC:
-                        if (kind == BuildKind.SYNC)
-                        {
-                            // if we need to do a sync build during async build, there is not much we can do:
-                            // - the async build is user-invoked build
-                            // - during that build UI thread is by design not blocked and messages are being pumped
-                            // - therefore it is legitimate for other code to call Project System APIs and query for stuff
-                            // In that case we just fail gracefully
-                            return false;
-                        }
-                        else
-                        {
-                            // Somebody attempted to start a build while build is in progress, perhaps an Addin via
-                            // the API. Inform them of an error in their ways.
-                            throw new BuildInProgressException();
-                        }
-                default:
-                        Debug.Fail("Unreachable");
-                        return false;
-            }
-        }
-
-        public static void EndBuild()
-        {
-            Debug.Assert(IsInProgress, "Attempt to end a build that is not started");
-            currentBuild = null;
-        }
-
-        public static bool IsInProgress
-        {
-            get { return currentBuild.HasValue;  }
-        }
-    }
-
     public struct BuildResult
     {
         private MSBuildResult buildResult;
@@ -625,14 +573,7 @@ namespace Microsoft.VisualStudio.Package
         /// type mapping to the same CATID if we choose to.
         /// </summary>
         private Dictionary<Type, Guid> catidMapping = new Dictionary<Type, Guid>();
-
-#if !VS2005
-        /// <summary>
-        /// The globalProperty handler object in charge of maintaining global properties for this project.
-        /// </summary>
-        private GlobalPropertyHandler globalPropertyHandler;
-#endif
-
+        
         /// <summary>
         /// The internal package implementation.
         /// </summary>
@@ -1121,10 +1062,8 @@ namespace Microsoft.VisualStudio.Package
         /// </summary>
         public bool BuildInProgress
         {
-            get
-            {
-                return ProjectBuildStatus.IsInProgress;
-            }
+            get;
+            private set;
         }
 
         /// <summary>
@@ -1350,24 +1289,6 @@ namespace Microsoft.VisualStudio.Package
                 this.buildEngine = value;
             }
         }
-
-#if !VS2005
-        /// <summary>
-        /// The object in charge of maintaining global properties for this project.
-        /// </summary>
-        internal GlobalPropertyHandler GlobalPropertyHandler
-        {
-            get
-            {
-                return this.globalPropertyHandler;
-            }
-
-            set
-            {
-                this.globalPropertyHandler = value;
-            }
-        }
-#endif
 
         /// <summary>
         /// The internal package implementation.
@@ -1707,14 +1628,6 @@ namespace Microsoft.VisualStudio.Package
                     {
                         try
                         {
-#if !VS2005
-                            if (this.globalPropertyHandler != null)
-                            {
-                                this.globalPropertyHandler.ActiveConfigurationChanged -= new EventHandler<ActiveConfigurationChangedEventArgs>(this.OnHandleConfigurationRelatedGlobalProperties);
-
-                                this.globalPropertyHandler.Dispose();
-                            }
-#endif
 
                             if (this.projectEventsProvider != null)
                             {
@@ -2175,13 +2088,6 @@ namespace Microsoft.VisualStudio.Package
                 // This is almost a No op if the engine has already been instantiated in the factory.
                 this.buildEngine = Utilities.InitializeMsBuildEngine(this.buildEngine, this.Site);
 
-#if !VS2005
-                Debug.Assert(this.globalPropertyHandler != null, "The global property handler should have been initialized at this point");
-
-                // Now register with the configuration change event.
-                this.globalPropertyHandler.ActiveConfigurationChanged += new EventHandler<ActiveConfigurationChangedEventArgs>(this.OnHandleConfigurationRelatedGlobalProperties);
-#endif
-
                 // based on the passed in flags, this either reloads/loads a project, or tries to create a new one
                 // now we create a new project... we do that by loading the template and then saving under a new name
                 // we also need to copy all the associated files with it.                   
@@ -2423,18 +2329,7 @@ namespace Microsoft.VisualStudio.Package
             }
             return engineLogOnlyCritical;
         }
-
-        // Helper for sharing common code between Build() and BuildAsync()
-        private void BuildCoda(IVsOutputWindowPane output, bool engineLogOnlyCritical)
-        {
-            // Unless someone specifically request to use an output window pane, we should not output to it
-            if (null != output)
-            {
-                this.SetOutputLogger(null);
-                BuildEngine.OnlyLogCriticalEvents = engineLogOnlyCritical;
-            }
-        }
-
+        
         /// <summary>
         /// Do the build asynchronously.
         /// </summary>
@@ -2448,7 +2343,6 @@ namespace Microsoft.VisualStudio.Package
             bool engineLogOnlyCritical = BuildPrelude(output);
             MSBuildCoda fullCoda = (res, instance) =>
             {
-                BuildCoda(output, engineLogOnlyCritical);
                 coda(res, instance);
             };
             try
@@ -2475,15 +2369,8 @@ namespace Microsoft.VisualStudio.Package
                 bool engineLogOnlyCritical = BuildPrelude(output);
                 BuildResult result = BuildResult.FAILED;
 
-                try
-                {
-                    this.SetBuildConfigurationProperties(configCanonicalName);
-                    result = this.InvokeMsBuild(target);
-                }
-                finally
-                {
-                    BuildCoda(output, engineLogOnlyCritical);
-                }
+                this.SetBuildConfigurationProperties(configCanonicalName);
+                result = this.InvokeMsBuild(target);
 
                 return result;
             }
@@ -3408,92 +3295,6 @@ namespace Microsoft.VisualStudio.Package
             }
         }
 
-        private class BuildAccessorAccess
-        {
-            private readonly BuildKind buildKind;
-            private readonly bool uiThreadClaimed;
-            private readonly bool designTimeBuildStarted;
-            private readonly bool handleOldWay;
-            private readonly BuildManagerAdapter accessor;
-
-            public BuildAccessorAccess(BuildKind buildKind, BuildManagerAdapter accessor)
-            {
-                this.buildKind = buildKind;
-                this.accessor = accessor;
-
-                if (accessor.HasClaimUIThreadForBuild())
-                {
-                    if (buildKind == BuildKind.SYNC)
-                    {
-                        int claimResult = accessor.ClaimUIThreadForBuild();
-                        if (ErrorHandler.Failed(claimResult))
-                        {
-                            return;
-                        }
-
-                        this.uiThreadClaimed = true;
-                        int designTimeStartResult = accessor.BeginDesignTimeBuild();
-                        if (ErrorHandler.Failed(designTimeStartResult))
-                        {
-                            return;
-                        }
-
-                        this.designTimeBuildStarted = true;
-                    }
-                }
-                else
-                {
-                    // Handle this VS 2010 Beta 2 style
-                    this.handleOldWay = true;
-                    this.uiThreadClaimed = true;
-                    if (accessor.IsBuildInProgress() == VSConstants.S_FALSE)
-                    {
-                        int designTimeStartResult = accessor.BeginOneOffBuild();
-                        if (!ErrorHandler.Failed(designTimeStartResult))
-                        {
-                            this.designTimeBuildStarted = true;
-                        }
-                    }
-                }
-            }
-
-            public bool IsOk
-            {
-                get
-                {
-                    return (this.buildKind != BuildKind.SYNC) || (this.uiThreadClaimed && this.designTimeBuildStarted);
-                }
-            }
-
-            public BuildManagerAdapter Accessor
-            {
-                get { return this.accessor; }
-            }
-
-            public void Dispose()
-            {
-                if (this.handleOldWay)
-                {
-                    if (this.designTimeBuildStarted)
-                    {
-                        accessor.EndOneOffBuild();
-                    }
-                }
-                else
-                {
-                    if (this.designTimeBuildStarted)
-                    {
-                        accessor.EndDesignTimeBuild();
-                    }
-
-                    if (this.uiThreadClaimed)
-                    {
-                        accessor.ReleaseUIThreadForBuild();
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// Start MSBuild build submission
         /// </summary>
@@ -3507,209 +3308,82 @@ namespace Microsoft.VisualStudio.Package
         internal virtual BuildSubmission DoMSBuildSubmission(BuildKind buildKind, string target, ref ProjectInstance projectInstance, MSBuildCoda uiThreadCallback)
         {
             UIThread.MustBeCalledFromUIThread();
-
+            bool designTime = BuildKind.SYNC == buildKind;
             //projectInstance = null;
 
-            if (!ProjectBuildStatus.StartBuild(buildKind))
+            var accessor = (IVsBuildManagerAccessor)this.Site.GetService(typeof(SVsBuildManagerAccessor));
+            if (!TryBeginBuild(designTime))
             {
-                if (uiThreadCallback != null) uiThreadCallback(MSBuildResult.Failed, projectInstance);
+                if (null != uiThreadCallback)
+                {
+                    uiThreadCallback(MSBuildResult.Failed, projectInstance);
+                }
+
                 return null;
             }
 
-            //var accessor = (IVsBuildManagerAccessor)this.Site.GetService(typeof(SVsBuildManagerAccessor));
-            var accessor = new BuildManagerAdapter();
-            BuildAccessorAccess buildAccessorAccess = null;
-            BuildSubmission submission = null;
-            
-            //var loggerList = new List<Microsoft.Build.Framework.ILogger>(this.buildEngine.Loggers);
-            PropertyInfo getLoggers = this.buildEngine.GetType().GetProperty("Loggers");
-            IEnumerable<Microsoft.Build.Framework.ILogger> loggers = (IEnumerable<Microsoft.Build.Framework.ILogger>)getLoggers.GetValue(this.buildEngine, null);
-            var loggerList = new List<Microsoft.Build.Framework.ILogger>(loggers);
-
-            try
+            string[] targetsToBuild = new string[target != null ? 1 : 0];
+            if (target != null)
             {
-                accessor.GetAccessor(this.Site);
-
-                // Do the actual Build
-                if (this.useProvidedLogger && this.buildLogger != null)
-                {
-                    loggerList.Add(buildLogger);
-                }
-
-                var ba = new BuildAccessorAccess(buildKind, accessor);
-                if (!ba.IsOk)
-                {
-                    ba.Dispose();
-                    ProjectBuildStatus.EndBuild();
-                    if (uiThreadCallback != null) uiThreadCallback(MSBuildResult.Failed, projectInstance);
-                    return null;
-                }
-
-                buildAccessorAccess = ba;
-
-                string[] targetsToBuild = new string[target != null ? 1 : 0];
-                if (target != null)
-                {
-                    targetsToBuild[0] = target;
-                }
-
-                if (projectInstance == null)
-                {
-                    projectInstance = BuildProject.CreateProjectInstance();
-                }
-
-                //this.BuildProject.ProjectCollection.HostServices.SetNodeAffinity(projectInstance.FullPath, NodeAffinity.InProc);
-                object hostServices = null;
-                Type projectType = null, projectCollectionType = null, hostServicesType = null,
-                    nodeAffinityType = null, buildRequestDataType = null;
-
-                try
-                {
-                    Assembly evaluationAssembly = Assembly.Load("Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
-                    projectType = evaluationAssembly.GetType("Microsoft.Build.Evaluation.Project");
-                    projectCollectionType = evaluationAssembly.GetType("Microsoft.Build.Evaluation.ProjectCollection");
-                    hostServicesType = evaluationAssembly.GetType("Microsoft.Build.Execution.HostServices");
-                    nodeAffinityType = evaluationAssembly.GetType("Microsoft.Build.Execution.NodeAffinity");
-                    buildRequestDataType = evaluationAssembly.GetType("Microsoft.Build.Execution.BuildRequestData");
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine("An exception was thrown when trying to load types from Microsoft.Build:\n" + e.Message);
-                }
-
-                if (projectType != null && projectCollectionType != null && hostServicesType != null && nodeAffinityType != null && buildRequestDataType != null)
-                {
-                    PropertyInfo projectCollectionProperty = projectType.GetProperty("ProjectCollection");
-                    PropertyInfo hostServicesProperty = projectCollectionType.GetProperty("HostServices");
-                    MethodInfo setNodeAffinityMethod = hostServicesType.GetMethod("SetNodeAffinity", new Type[] { typeof(string), nodeAffinityType });
-
-                    if (projectCollectionProperty != null && hostServicesProperty != null && setNodeAffinityMethod != null)
-                    {
-                        try
-                        {
-                            object projectCollection = projectCollectionProperty.GetValue(this.BuildProject, null);
-                            hostServices = hostServicesProperty.GetValue(projectCollection, null);
-                            setNodeAffinityMethod.Invoke(hostServices, new object[] { projectInstance.FullPath, NodeAffinity.InProc });
-                        }
-                        catch (Exception e)
-                        {
-                            Trace.WriteLine("An exception was thrown when trying to set node affinity:\n" + e.Message);
-                        }
-                    }
-                    else
-                    {
-                        Trace.WriteLine("One of the properties or methods were null:\n" +
-                            "ProjectCollection: " + (projectCollectionProperty == null ? "null\n" : "not null\n") +
-                            "HostServices: " + (hostServicesProperty == null ? "null\n" : "not null\n") +
-                            "SetNodeAffinity: " + (setNodeAffinityMethod == null ? "null\n" : "not null\n"));
-                    }
-                }
-                else
-                {
-                    Trace.WriteLine("One of the types were null:\n" +
-                        "Microsoft.Build.Evaluation.Project: " + (projectType == null ? "null\n" : "not null\n") +
-                        "Microsoft.Build.Evaluation.ProjectCollection: " + (projectCollectionType == null ? "null\n" : "not null\n") +
-                        "Microsoft.Build.Execution.HostServices: " + (hostServicesType == null ? "null\n" : "not null\n") +
-                        "Microsoft.Build.Execution.NodeAffinity: " + (nodeAffinityType == null ? "null\n" : "not null\n") +
-                        "Microsoft.Build.Execution.BuildRequestData: " + (buildRequestDataType == null ? "null\n" : "not null\n"));
-                }
-
-                bool handled = false;
-                //BuildRequestData requestData = new BuildRequestData(projectInstance, targetsToBuild, (HostServices)hostServices, BuildRequestDataFlags.ReplaceExistingProjectInstance);
-                BuildRequestData requestData = null;
-                ConstructorInfo buildRequestDataCtor = buildRequestDataType.GetConstructor(new Type[] { typeof(ProjectInstance), typeof(string[]), hostServicesType, typeof(BuildRequestDataFlags) });
-                if (buildRequestDataCtor != null)
-                {
-                    try
-                    {
-                        requestData = (BuildRequestData)buildRequestDataCtor.Invoke(new object[] { projectInstance, targetsToBuild, hostServices, BuildRequestDataFlags.ReplaceExistingProjectInstance });
-                        handled = true;
-                    }
-                    catch (Exception e)
-                    {
-                        Trace.WriteLine("An exception was thrown when trying to construct a new instance of BuildRequestData:\n" + e.Message);
-                    }
-                }
-                else
-                {
-                    Trace.WriteLine("BuildRequestData ctor was null.\n");
-                }
-
-                if (!handled)
-                {
-                    requestData = new BuildRequestData(projectInstance, targetsToBuild);
-                }
-
-                submission = BuildManager.DefaultBuildManager.PendBuildRequest(requestData);
-            }
-            catch (Exception)
-            {
-                ProjectBuildStatus.EndBuild();
-                if (buildAccessorAccess != null)
-                {
-                    buildAccessorAccess.Dispose();
-                }
-
-                throw;
+                targetsToBuild[0] = target;
             }
 
+            if (null == projectInstance)
+            {
+                projectInstance = BuildProject.CreateProjectInstance();
+            }
+
+            projectInstance.SetProperty(GlobalProperty.VisualStudioStyleErrors.ToString(), "true");
+            projectInstance.SetProperty("UTFOutput", "true");
+            projectInstance.SetProperty(GlobalProperty.BuildingInsideVisualStudio.ToString(), "true");
+
+            this.BuildProject.ProjectCollection.HostServices.SetNodeAffinity(projectInstance.FullPath, NodeAffinity.InProc);
+            BuildRequestData requestData = new BuildRequestData(projectInstance, targetsToBuild, this.BuildProject.ProjectCollection.HostServices, BuildRequestDataFlags.ReplaceExistingProjectInstance);
+            BuildSubmission submission = BuildManager.DefaultBuildManager.PendBuildRequest(requestData);
             try
             {
-                foreach (var logger in loggerList)
+                if (useProvidedLogger && buildLogger != null)
                 {
-                    accessor.RegisterLogger(submission.SubmissionId, logger);
+                    ErrorHandler.ThrowOnFailure(accessor.RegisterLogger(submission.SubmissionId, buildLogger));
                 }
 
-                ProjectInstance tempProjectInstance = projectInstance;
                 if (buildKind == BuildKind.ASYNC)
                 {
+                    ProjectInstance projectInstanceCopy = projectInstance;
                     submission.ExecuteAsync(sub =>
                     {
                         UIThread.Run(() =>
                         {
-                            FinishSubmission(sub, buildAccessorAccess);
-                            uiThreadCallback((sub.BuildResult.OverallResult == BuildResultCode.Success) ? MSBuildResult.Successful : MSBuildResult.Failed, tempProjectInstance);
+                            this.FlushBuildLoggerContent();
+                            EndBuild(sub, designTime);
+                            uiThreadCallback((sub.BuildResult.OverallResult == BuildResultCode.Success) ? MSBuildResult.Successful : MSBuildResult.Failed, projectInstanceCopy);
                         });
                     }, null);
                 }
                 else
                 {
                     submission.Execute();
-
+                    EndBuild(submission, designTime);
+                    MSBuildResult msbuildResult = (submission.BuildResult.OverallResult == BuildResultCode.Success) ? MSBuildResult.Successful : MSBuildResult.Failed;
+                    if (uiThreadCallback != null)
+                    {
+                        uiThreadCallback(msbuildResult, projectInstance);
+                    }
                 }
             }
             catch (Exception e)
             {
                 Debug.Fail(e.ToString());
-                // our callback may not have been registered, but must always do coda
-                FinishSubmission(submission, buildAccessorAccess);
+                EndBuild(submission, designTime);
                 if (uiThreadCallback != null)
+                {
                     uiThreadCallback(MSBuildResult.Failed, projectInstance);
+                }
+
                 throw;
             }
 
-            if (buildKind == BuildKind.SYNC)
-            {
-                FinishSubmission(submission, buildAccessorAccess);
-                var msbuildResult = (submission.BuildResult.OverallResult == BuildResultCode.Success) ? MSBuildResult.Successful : MSBuildResult.Failed;
-                if (uiThreadCallback != null) uiThreadCallback(msbuildResult, projectInstance);
-            }
             return submission;
-        }
-
-        private void FinishSubmission(BuildSubmission submission, BuildAccessorAccess buildAccessorAccess)
-        {
-            UIThread.MustBeCalledFromUIThread();
-            Debug.Assert(submission.IsCompleted, "MSBuild submission was not completed");
-            try
-            {
-                buildAccessorAccess.Accessor.UnregisterLoggers(submission.SubmissionId);
-            }
-            finally
-            {
-                ProjectBuildStatus.EndBuild();
-                buildAccessorAccess.Dispose();
-            }
         }
 
         /// <summary>
@@ -4416,6 +4090,14 @@ namespace Microsoft.VisualStudio.Package
             MSBuildProject.SetGlobalProperty(this.buildProject, GlobalProperty.Platform.ToString(), configCanonicalName.MSBuildPlatform);
         }
 
+        /// <summary>
+        /// Flush any remaining content from build logger.
+        /// This method is called as part of the callback method passed to the buildsubmission during async build
+        /// so that results can be printed the the build is fisinshed.
+        /// </summary>
+        protected virtual void FlushBuildLoggerContent()
+        {
+        }
         #endregion
 
         #region non-virtual methods
@@ -5938,6 +5620,167 @@ namespace Microsoft.VisualStudio.Package
             return hr;
         }
 
+        /// <summary>
+        /// Attempts to lock in the privilege of running a build in Visual Studio.
+        /// </summary>
+        /// <param name="designTime"><c>false</c> if this build was called for by the Solution Build Manager; <c>true</c> otherwise.</param>
+        /// <param name="requiresUIThread">
+        /// Need to claim the UI thread for build under the following conditions:
+        /// 1. The build must use a resource that uses the UI thread, such as
+        /// - you set HostServices and you have a host object which requires (even indirectly) the UI thread (VB and C# compilers do this for instance.)
+        /// or,
+        /// 2. The build requires the in-proc node AND waits on the UI thread for the build to complete, such as:
+        /// - you use a ProjectInstance to build, or
+        /// - you have specified a host object, whether or not it requires the UI thread, or
+        /// - you set HostServices and you have specified a node affinity.
+        /// - In addition to the above you also call submission.Execute(), or you call submission.ExecuteAsync() and then also submission.WaitHandle.Wait*().
+        /// </param>
+        /// <returns>A value indicating whether a build may proceed.</returns>
+        /// <remarks>
+        /// This method must be called on the UI thread.
+        /// </remarks>
+        private bool TryBeginBuild(bool designTime, bool requiresUIThread = false)
+        {
+            IVsBuildManagerAccessor accessor = null;
+
+            if (this.Site != null)
+            {
+                accessor = this.Site.GetService(typeof(SVsBuildManagerAccessor)) as IVsBuildManagerAccessor;
+            }
+
+            bool releaseUIThread = false;
+
+            try
+            {
+                // If the SVsBuildManagerAccessor service is absent, we're not running within Visual Studio.
+                if (accessor != null)
+                {
+                    if (requiresUIThread)
+                    {
+                        int result = accessor.ClaimUIThreadForBuild();
+                        if (result < 0)
+                        {
+                            // Not allowed to claim the UI thread right now. Try again later.
+                            return false;
+                        }
+
+                        releaseUIThread = true; // assume we need to release this immediately until we get through the whole gauntlet.
+                    }
+
+                    if (designTime)
+                    {
+                        int result = accessor.BeginDesignTimeBuild();
+                        if (result < 0)
+                        {
+                            // Not allowed to begin a design-time build at this time. Try again later.
+                            return false;
+                        }
+                    }
+
+                    // We obtained all the resources we need.  So don't release the UI thread until after the build is finished.
+                    releaseUIThread = false;
+                }
+                else
+                {
+                    BuildParameters buildParameters = new BuildParameters(this.buildEngine ?? Microsoft.Build.Evaluation.ProjectCollection.GlobalProjectCollection);
+                    BuildManager.DefaultBuildManager.BeginBuild(buildParameters);
+                }
+
+                this.BuildInProgress = true;
+                return true;
+            }
+            finally
+            {
+                // If we were denied the privilege of starting a design-time build,
+                // we need to release the UI thread.
+                if (releaseUIThread)
+                {
+                    Debug.Assert(accessor != null, "We think we need to release the UI thread for an accessor we don't have!");
+                    Marshal.ThrowExceptionForHR(accessor.ReleaseUIThreadForBuild());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Lets Visual Studio know that we're done with our design-time build so others can use the build manager.
+        /// </summary>
+        /// <param name="submission">The build submission that built, if any.</param>
+        /// <param name="designTime">This must be the same value as the one passed to <see cref="TryBeginBuild"/>.</param>
+        /// <param name="requiresUIThread">This must be the same value as the one passed to <see cref="TryBeginBuild"/>.</param>
+        /// <remarks>
+        /// This method must be called on the UI thread.
+        /// </remarks>
+        private void EndBuild(BuildSubmission submission, bool designTime, bool requiresUIThread = false)
+        {
+            IVsBuildManagerAccessor accessor = null;
+
+            if (this.Site != null)
+            {
+                accessor = this.Site.GetService(typeof(SVsBuildManagerAccessor)) as IVsBuildManagerAccessor;
+            }
+
+            if (accessor != null)
+            {
+                // It's very important that we try executing all three end-build steps, even if errors occur partway through.
+                try
+                {
+                    if (submission != null)
+                    {
+                        Marshal.ThrowExceptionForHR(accessor.UnregisterLoggers(submission.SubmissionId));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorHandler.IsCriticalException(ex))
+                    {
+                        throw;
+                    }
+
+                    Trace.TraceError(ex.ToString());
+                }
+
+                try
+                {
+                    if (designTime)
+                    {
+                        Marshal.ThrowExceptionForHR(accessor.EndDesignTimeBuild());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorHandler.IsCriticalException(ex))
+                    {
+                        throw;
+                    }
+
+                    Trace.TraceError(ex.ToString());
+                }
+
+
+                try
+                {
+                    if (requiresUIThread)
+                    {
+                        Marshal.ThrowExceptionForHR(accessor.ReleaseUIThreadForBuild());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (ErrorHandler.IsCriticalException(ex))
+                    {
+                        throw;
+                    }
+
+                    Trace.TraceError(ex.ToString());
+                }
+            }
+            else
+            {
+                BuildManager.DefaultBuildManager.EndBuild();
+            }
+
+            this.BuildInProgress = false;
+        }
         /// <summary>
         /// This method helps converting any non member node into the member one.
         /// </summary>

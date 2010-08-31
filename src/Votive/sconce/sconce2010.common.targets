@@ -43,8 +43,8 @@
       <SpecificVersion>True</SpecificVersion>
       <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.CommonIDE.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.9.0">
-      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.9.0.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.Shell.10.0">
+      <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Shell.10.0.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Designer.Interfaces" >
       <HintPath>$(VSIP10Dir)\Microsoft.VisualStudio.Designer.Interfaces.dll</HintPath>
@@ -79,6 +79,7 @@
       <HintPath>VSLangProj100.dll</HintPath>
       <SpecificVersion>True</SpecificVersion>
     </Reference>
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
@@ -203,10 +204,6 @@
     </Compile>
     <Compile Include="$(ProjectBasePath)\BuildDependency.cs">
       <Link>ProjectBase\BuildDependency.cs</Link>
-      <Visible>true</Visible>
-    </Compile>
-    <Compile Include="$(ProjectBasePath)\BuildManagerAdapter.cs">
-      <Link>ProjectBase\BuildManagerAdapter.cs</Link>
       <Visible>true</Visible>
     </Compile>
     <Compile Include="$(ProjectBasePath)\BuildPropertyPage.cs">

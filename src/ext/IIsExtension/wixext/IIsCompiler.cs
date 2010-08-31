@@ -929,6 +929,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             int idleTimeout = CompilerCore.IntegerNotSet;
             int maxCpuUsage = 0;
             int maxWorkerProcs = CompilerCore.IntegerNotSet;
+            string managedRuntimeVersion = null;
             string name = null;
             int privateMemory = CompilerCore.IntegerNotSet;
             int queueLimit = CompilerCore.IntegerNotSet;
@@ -983,16 +984,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                                 switch (identityValue)
                                 {
                                     case "networkService":
-                                        attributes = 1;
+                                        attributes |= 1;
                                         break;
                                     case "localService":
-                                        attributes = 2;
+                                        attributes |= 2;
                                         break;
                                     case "localSystem":
-                                        attributes = 4;
+                                        attributes |= 4;
                                         break;
                                     case "other":
-                                        attributes = 8;
+                                        attributes |= 8;
                                         break;
                                     default:
                                         this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, identityValue, "networkService", "localService", "localSystem", "other"));
@@ -1007,6 +1008,50 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             }
 
                             idleTimeout = this.Core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
+                            break;
+                        case "ManagedPipelineMode":
+                            if (null == componentId)
+                            {
+                                this.Core.OnMessage(IIsErrors.IllegalAttributeWithoutComponent(sourceLineNumbers, node.Name, attrib.Name));
+                            }
+
+                            string managedPipelineModeValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            if (0 < managedPipelineModeValue.Length)
+                            {
+                                switch (managedPipelineModeValue)
+                                {
+                                    case "classic":
+                                        // default
+                                        break;
+                                    case "integrated":
+                                        attributes |= 0x10;
+                                        break;
+                                    default:
+                                        this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, managedPipelineModeValue, "classic", "integrated"));
+                                        break;
+                                }
+                            }
+                            break;
+                        case "ManagedRuntimeVersion":
+                            if (null == componentId)
+                            {
+                                this.Core.OnMessage(IIsErrors.IllegalAttributeWithoutComponent(sourceLineNumbers, node.Name, attrib.Name));
+                            }
+
+                            managedRuntimeVersion = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            if (0 < managedRuntimeVersion.Length)
+                            {
+                                switch (managedRuntimeVersion)
+                                {
+                                    case "v1.1":
+                                    case "v2.0":
+                                    case "v4.0":
+                                        break;
+                                    default:
+                                        this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, managedRuntimeVersion, "v1.1", "v2.0", "v4.0"));
+                                        break;
+                                }
+                            }
                             break;
                         case "MaxCpuUsage":
                             if (null == componentId)
@@ -1209,6 +1254,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 {
                     row[13] = privateMemory;
                 }
+                row[14] = managedRuntimeVersion;
             }
         }
 

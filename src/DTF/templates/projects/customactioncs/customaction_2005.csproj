@@ -11,7 +11,7 @@
 		<AssemblyName>$safeprojectname$</AssemblyName>
 		<FileAlignment>512</FileAlignment>
 		<AppDesignerFolder>Properties</AppDesignerFolder>
-		<WixCATargetsPath Condition=" '$(WixCATargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.5\Wix.CA.targets</WixCATargetsPath>
+		<WixCATargetsPath Condition=" '$(WixCATargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.CA.targets</WixCATargetsPath>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
 		<DebugSymbols>true</DebugSymbols>

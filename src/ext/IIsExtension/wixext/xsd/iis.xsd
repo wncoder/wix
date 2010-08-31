@@ -407,6 +407,29 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
+          <xs:attribute name="ManagedPipelineMode">
+            <xs:annotation>
+              <xs:documentation>Specifies the request-processing mode that is used to process requests for managed content.  Only available on IIS7, ignored on IIS6.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="classic"/>
+                <xs:enumeration value="integrated"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="ManagedRuntimeVersion">
+            <xs:annotation>
+              <xs:documentation>Specifies the .NET Framework version to be used by the application pool.  Only available on IIS7, ignored on IIS6.</xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="v1.1"/>
+                <xs:enumeration value="v2.0"/>
+                <xs:enumeration value="v4.0"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
         </xs:complexType>
     </xs:element>
 
