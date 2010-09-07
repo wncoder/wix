@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+    <?ifdef WixKeyRoot?>
+        <?error WixKeyRoot variable is already defined?>
+    <?endif?>
+    <?define WixKeyRoot = "SOFTWARE\Microsoft\Windows Installer XML"?>
+</Include>

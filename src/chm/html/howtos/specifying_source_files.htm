@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<title>Specifying source files</title>
+</head>
+<body>
+<h1>Specifying source files</h1>
+<p>WiX provides two ways of identifying a setup package's payload - the files
+that are included in the setup and installed on the user's machine.</p>
+<ul>
+<li>By file name and directory tree.</li>
+<li>By explicit source file.</li>
+</ul>
+<h2>Compiling, linking, and binding</h2>
+<p>The WiX toolset models a typical C/C++ compiler is how authored is built,
+with a compiler that parses the WiX source authoring to object files and a
+linker that combines the object files into an output. For WiX, the output is an
+.msi package, .msm merge module, or .wixlib library, which have a third phase:
+binding payload files into the output. Light.exe includes both the linker and
+binder.</p>
+<p>Though WiX source authoring refers to payload files, the compiler never
+looks at them; instead, only the binder does, when it creates cabinets
+containing them or copies them to an uncompressed layout.</p>
+<p>You can provide the binder with one or more <em>base input paths</em> it
+uses to look for files. It also looks for files relative to the current working
+directory. Light.exe's -b switch and the BaseInputPaths .wixproj property let
+you specify one or more base input paths.</p>
+<h2>Identifying files by name and directory tree</h2>
+<p>When you use the <a href=
+"http://wix.sourceforge.net/manual-wix3/wix_xsd_file.htm">File/@Name</a>
+attribute and don't use the File/@Source attribute, the compiler constructs an
+implicit path to the file based on the file's parent component directory plus
+the name you supply. So, for example, given the partial authoring</p>
+<blockquote>
+<p>&lt;Directory Id="TARGETDIR"&gt;<br />
+&lt;Directory Name="foo"&gt;<br />
+&lt;Directory Name="bar"&gt;<br />
+&lt;Component&gt;<br />
+&lt;File Name="baz.txt" /&gt;</p>
+</blockquote>
+<p>the binder looks for a file <em>foo\bar\baz.txt</em> in the base input
+paths.</p>
+<h4>Overriding implicit payload directories</h4>
+<p>The <a href=
+"http://wix.sourceforge.net/manual-wix3/wix_xsd_directoryref.htm">FileSource</a>
+attribute for the <a href=
+"http://wix.sourceforge.net/manual-wix3/wix_xsd_directory.htm">Directory</a>
+and <a href=
+"http://wix.sourceforge.net/manual-wix3/wix_xsd_directoryref.htm">DirectoryRef</a>
+elements sets a new directory for files in that directory or any child
+directories. For example, given the partial authoring</p>
+<blockquote>
+<p>&lt;Directory Id="TARGETDIR"&gt;<br />
+&lt;Directory Name="foo" FileSource="build\retail\x86"&gt;<br />
+&lt;Directory Name="bar"&gt;<br />
+&lt;Component&gt;<br />
+&lt;File Name="baz.txt" /&gt;</p>
+</blockquote>
+<p>the binder looks for a file <em>build\retail\x86\bar\baz.txt</em> in the
+base input paths.</p>
+<p>The <a href=
+"http://wix.sourceforge.net/manual-wix3/wix_xsd_directoryref.htm">FileSource</a>
+attribute can use preprocessor variables or environment variables. If the value
+is an absolute path, the binder's base input paths aren't used.</p>
+<h4>Preferred use</h4>
+<p>If the build tree serving as your payload source is almost identical to the
+tree of your installed image and you have a moderate-to-deep directory tree,
+using implicit paths will avoid repetition in your authoring.</p>
+<h4>Source directories</h4>
+<p>The Directory/@SourceName attribute controls both the name of the directory
+where Light.exe looks for files and the "source directory" in the .msi package.
+Unless you also want to control the source directory, just use FileSource.</p>
+<h2>Identifying payload by source files</h2>
+<p>The File/@Source attribute is a path to the payload file. It can be an
+absolute path or relative to any base input path. If File/@Source is present,
+it takes precedence over the implicit path created by Directory/@Name,
+Directory/@FileSource, and File/@Name.</p>
+<p>If you specify File/@Source, you can omit File/@Name because the compiler
+automatically sets it to the filename portion of the source path.</p>
+<h4>Preferred use</h4>
+<p>If the build tree serving as your payload source is different from the tree
+of your installed image, using File/@Source makes it easy to pick explicit
+paths than are different than the .msi package's directory tree. You can use
+multiple base input paths to shorten the File/@Source paths.</p>
+<p>For example, the WiX setup .wixproj project points to the output tree for
+the x86, x64, and ia64 platforms WiX supports and the WiX source tree. Unique
+filenames can be referred to with just their filenames; files with the same
+name across platforms use relative paths.</p>
+<p>See the WiX authoring in src\Setup\*.wxs for examples.</p>
+</body>
+</html>

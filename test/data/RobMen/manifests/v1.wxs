@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Version="0.1.0.0" UpgradeCode="{1be14da3-e26a-4c49-8d39-7b1017ffa071}">
+   <UX SourceFile="stdux.dll">
+       <Payload SourceFile="en-us.wxl" />
+       <Payload SourceFile="thm.xml" />
+   </UX>
+
+   <Chain>
+      <MsiPackage Vital='yes' SourceFile='Package1.msi' />
+      <MsiPackage Id='Package2' Vital='yes' SourceFile='Package2.msi' Name='Package2.msi'>
+         <MsiProperty Name="TARGETDIR" Value="[PACKAGE2TARGETDIR]" />
+      </MsiPackage>
+   </Chain>
+</Bundle>
+</Wix>

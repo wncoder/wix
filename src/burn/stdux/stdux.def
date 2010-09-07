@@ -1,0 +1,13 @@
+;-------------------------------------------------------------------------------------------------
+; <copyright file="stdux.def" company="Microsoft">
+;    Copyright (c) Microsoft Corporation.  All rights reserved.
+; </copyright>
+; 
+; <summary>
+;    Setup UX DLL entry points.
+; </summary>
+;-------------------------------------------------------------------------------------------------
+
+EXPORTS
+    BootstrapperApplicationCreate
+    BootstrapperApplicationDestroy

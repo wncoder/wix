@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+
+  Bundle.wixproj - builds the WiX Bundle.
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <ProductVersion>3.6</ProductVersion>
+    <ProjectGuid>{196d63b1-29d8-4b4d-9c9c-4f043099066b}</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>WiX36</OutputName>
+    <OutputType>Bundle</OutputType>
+    <Pedantic>True</Pedantic>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Bundle.wxs" />
+    <Compile Include="Mba.wxs" />
+    <Compile Include="Netfx.wxs" />
+    <None Include="License.rtf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Import Project="..\..\..\WixBuild.Common.targets" />
+
+  <PropertyGroup>
+    <Cultures>en-us</Cultures>
+    <DefineConstants>$(DefineConstants);BuildIA64=$(BuildIA64);</DefineConstants>
+    <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
+  </PropertyGroup>
+  <ItemGroup>
+    <WixExtension Include="WixBalExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
+    </WixExtension>
+    <BindInputPaths Include="$(WIX_ROOT)external\Netfx4\" />
+    <BindInputPaths Include="$(WIX_BUILDROOT)$(WixFlavor)" />
+    <BindInputPaths Include="$(OutputPath_x86)" />
+    <BindInputPaths Include="$(MSBuildProjectDirectory)" />
+    <BindInputPaths Include="$(BindInputPaths)" />
+    <WixExtension Include="WixUtilExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>
+    </WixExtension>
+  </ItemGroup>
+
+  <Target Name="Rebuild">
+    <!-- Provide a default Rebuild target when $(WixTargetsPath) doesn't exist like when cleaning the entire project -->
+  </Target>
+  <Target Name="Clean">
+    <!-- Provide a default Clean target if $(WixTargetsPath) doesn't exist like when cleaning the entire project -->
+  </Target>
+  <Import Project="$(WixTargetsPath)" Condition="Exists('$(WixTargetsPath)')" />
+</Project>

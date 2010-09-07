@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Author Bootstrapper Application for a Bundle</title>
+    <style type="text/css">
+        .style1
+        {
+            color: #0000FF;
+        }
+    </style>
+</head>
+
+<body>
+  <h1>Author Bootstrapper Application for a Bundle</h1>
+    <p>
+        The <a href="wix_xsd_ux.htm">&lt;UX&gt;</a> element is a required element inside <a href="wix_xsd_bundle.htm">&lt;Bundle&gt;</a> that references file(s) that act as the bootstrapper application. The following example references a file called ba.dll:</p>
+    <pre>    &lt;?xml version=&quot;1.0&quot;&gt;
+    &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+      &lt;Bundle&gt;
+        &lt;UX SourceFile=&quot;$(ProgramFiles)\src\UI\ba.dll&quot;/&gt;
+      &lt;/Bundle&gt;
+    &lt;/Wix&gt;</pre>
+    <p>
+        Inside <a href="wix_xsd_ux.htm">&lt;UX&gt;</a> , you may also add additional payload files such as resources 
+        files that are required by the dll as follows:</p>
+    <pre>    &lt;?xml version=&quot;1.0&quot;&gt;
+    &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+      &lt;Bundle&gt;
+        &lt;UX SourceFile=&quot;$(ProgramFiles)\src\UI\ba.dll&quot;&gt;
+<strong><span class="style1">        	&lt;Payload SourceFile=&quot;$(ProgramFiles)\src\UI\resources\resources.dll&quot;/&gt;</span>
+<span class="style1">        	&lt;PayloadGroupRef Id=&quot;ResourceGroupforJapanese&quot;/&gt;</span></strong>
+        &lt;/UX&gt;
+      &lt;/Bundle&gt;
+    &lt;/Wix&gt;</pre>
+    <p>
+        This example references a payload file that is on the local machine named 
+        resources.dll as well as a group of payload files that are defined in a 
+        PayloadGroup elsewhere inside a WiX Fragment.</p>
+</body>
+</html>

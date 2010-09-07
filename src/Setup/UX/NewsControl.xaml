@@ -1,0 +1,34 @@
+﻿<UserControl x:Class="Microsoft.Tools.WindowsInstallerXml.UX.NewsControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="200" d:DesignWidth="250">
+    <Control.Resources>
+        <ResourceDictionary Source="Styles.xaml" />
+    </Control.Resources>
+
+    <DockPanel Style="{StaticResource NewsPanelStyle}">
+        <TextBlock Style="{StaticResource NewsTitleTextStyle}" Text="{Binding Title}" DockPanel.Dock="Top"/>
+        <ItemsControl ItemsSource="{Binding Items}">
+            <ItemsControl.Template>
+                <ControlTemplate>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsPresenter/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </ItemsControl.Template>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap"><Hyperlink Command="{Binding DataContext.LaunchCommand,RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}}" CommandParameter="{Binding Url}"><Run Text="{Binding Title}"/></Hyperlink></TextBlock>
+                        <TextBlock Text="{Binding Author}"/>
+                        <TextBlock Text="{Binding Updated}"/>
+                        <TextBlock Text="{Binding Snippet}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DockPanel>
+</UserControl>

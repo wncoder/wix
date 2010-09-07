@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Using WiX on the command line</title>
+    <style type="text/css">
+        .style2
+        {
+            color: #000000;
+        }
+        .style3
+        {
+            color: #0000FF;
+        }
+    </style>
+</head>
+
+<body>
+  <h1>Using a Custom Action</h1>
+
+  <p>WiX provides a set of built-in custom actions that can be used in your installer 
+      package. In this example, we will create an installer that creates a shortcut to 
+      an URL. </p>
+  
+    <h2>
+        Step 1: Add the extension namespace 
+    </h2>
+    <p>
+        To build on top of the simple setup example, let&#39;s re-use the same source file 
+        and add the following:</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns=&#39;http://schemas.microsoft.com/wix/2006/wi&#39; <span class="style3"><strong>xmlns:util=&#39;http://schemas.microsoft.com/wix/UtilExtension&#39;</strong></span>&gt;
+   &lt;Product Id='PUT-GUID-HERE' Name='Test Package' Language='1033'
+             Version='1.0.0.0' Manufacturer='Microsoft Corporation'&gt;
+      &lt;Package Description='My first Windows Installer package'
+               Comments='This is my first attempt at creating a Windows Installer database'
+               Manufacturer='Microsoft Corporation' InstallerVersion='200' Compressed='yes' /&gt;
+ 
+      &lt;Media Id='1' Cabinet='product.cab' EmbedCab='yes' /&gt;
+ 
+      &lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;
+         &lt;Directory Id='ProgramFilesFolder' Name='PFiles'&gt;
+            &lt;Directory Id='MyDir' Name='Test Program'&gt;
+               &lt;Component Id='MyComponent' Guid='PUT-GUID-HERE'&gt;
+                  &lt;File Id='readme' Name='readme.txt' DiskId='1' Source='readme.txt' /&gt;
+             <span class="style2">  &lt;/Component&gt;</span>
+ 
+<span class="style2">               &lt;Merge Id='MyModule' Language='1033' SourceFile='module.msm' DiskId='1' /&gt;</span>
+<span class="style2">            &lt;/Directory&gt;</span>
+<span class="style2">         &lt;/Directory&gt;</span>
+<span class="style2">      &lt;/Directory&gt;</span>
+ 
+<span class="style2">      &lt;Feature Id='MyFeature' Title='My 1st Feature' Level='1'&gt;</span>
+<span class="style2">         &lt;ComponentRef Id='MyComponent' /&gt;</span>
+<span class="style2">         &lt;MergeRef Id='MyModule' /&gt;</span>
+<span class="style2">      &lt;/Feature&gt;</span>
+<span class="style2">   &lt;/Product&gt;</span>
+&lt;/Wix&gt;
+</pre>
+
+    <h2>
+       Step 2: Author the element to create the shortcut</h2>
+    <p>
+        Add the following to the source file::</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns=&#39;http://schemas.microsoft.com/wix/2006/wi&#39; <span class="style2">xmlns:util=&#39;http://schemas.microsoft.com/wix/UtilExtension</span><span 
+        class="style3"><strong>&#39;</strong></span>&gt;
+   &lt;Product Id='PUT-GUID-HERE' Name='Test Package' Language='1033'
+             Version='1.0.0.0' Manufacturer='Microsoft Corporation'&gt;
+      &lt;Package Description='My first Windows Installer package'
+               Comments='This is my first attempt at creating a Windows Installer database'
+               Manufacturer='Microsoft Corporation' InstallerVersion='200' Compressed='yes' /&gt;
+ 
+      &lt;Media Id='1' Cabinet='product.cab' EmbedCab='yes' /&gt;
+ 
+      &lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;
+         &lt;Directory Id='ProgramFilesFolder' Name='PFiles'&gt;
+            &lt;Directory Id='MyDir' Name='Test Program'&gt;
+               &lt;Component Id='MyComponent' Guid='PUT-GUID-HERE'&gt;
+                  &lt;File Id='readme' Name='readme.txt' DiskId='1' Source='readme.txt' /&gt;
+                  <span class="style3"><strong>&lt;util:InternetShortcut Id='Bing' Name='Bing' Target='http://www.bing.com'/&gt;</strong></span>
+             <span class="style2">  &lt;/Component&gt;</span>
+ 
+<span class="style2">               &lt;Merge Id='MyModule' Language='1033' SourceFile='module.msm' DiskId='1' /&gt;</span>
+<span class="style2">            &lt;/Directory&gt;</span>
+<span class="style2">         &lt;/Directory&gt;</span>
+<span class="style2">      &lt;/Directory&gt;</span>
+ 
+<span class="style2">      &lt;Feature Id='MyFeature' Title='My 1st Feature' Level='1'&gt;</span>
+<span class="style2">         &lt;ComponentRef Id='MyComponent' /&gt;</span>
+<span class="style2">         &lt;MergeRef Id='MyModule' /&gt;</span>
+<span class="style2">      &lt;/Feature&gt;</span>
+<span class="style2">   &lt;/Product&gt;</span>
+&lt;/Wix&gt;;;;;
+</pre>
+
+    <h2>
+        Step 3: Build the installer</h2>
+    <p>
+        To build the installer, you need to pass in the extension that the source file 
+        is referencing:</p>
+  <pre>
+C:\test&gt; <span class="style3"><strong>candle product.wxs -ext WixUtilExtension</strong></span>
+Microsoft (R) Windows Installer Xml Compiler version 1.0.1220.15022
+Copyright (C) Microsoft Corporation 2003. All rights reserved
+ 
+product.wxs
+ 
+C:\test&gt; <span class="style3"><strong>light product.wixobj -ext WixUtilExtension</strong></span>
+Microsoft (R) Windows Installer Xml Linker version 1.0.1220.15022
+Copyright (C) Microsoft Corporation 2003. All rights reserved</pre>
+    <p>
+        &nbsp;</p>
+</body>
+</html>

@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="engine" default="burnengine.build" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+    engine.build - Builds the Burn engine.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+
+  <!-- engine-specific properties -->
+  <property name="burnengine.file.lib.target" value="${dir.target.wix}\engine.lib" readonly="true" />
+  <property name="burnengine.file.lib.targetpdb" value="${dir.target.wix}\engine.pdb" readonly="true" />
+  <property name="burnengine.file.lib.targetres" value="${dir.target.wix}\engine.res" readonly="true" />
+  <property name="burnengine.additionalIncludes" value="/I &quot;${dir.src.burn.engine}\inc&quot; /I &quot;${dir.src.burn}\inc&quot;"/>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="burnengine.build" description="Peforms a full rebuild (clean then build)" depends="burnengine.clean, burnengine.inc" />
+
+  <!-- Clean -->
+  <target name="burnengine.clean" description="Cleans the build">
+    <delete dir="${dir.build.burn.engine}" failonerror="false" if="${directory::exists(dir.build.burn.engine)}" />
+    <delete file="${burnengine.file.lib.target}" failonerror="false" if="${file::exists(burnengine.file.lib.target)}" />
+    <delete file="${burnengine.file.lib.targetpdb}" failonerror="false" if="${file::exists(burnengine.file.lib.targetpdb)}" />
+    <delete file="${burnengine.file.lib.targetres}" failonerror="false" if="${file::exists(burnengine.file.lib.targetres)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="burnengine.inc" description="Performs an incremental build" depends="makeDirs, burnengineinc.mc, burnengineinc.lib" />
+
+  <!-- burnengineinc.lib -->
+  <target name="burnengineinc.lib" description="Performs an incremental build of engine.lib">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.engine}">
+      <include name="bitsengine.cpp" />
+      <include name="apply.cpp" />
+      <include name="cabextract.cpp" />
+      <include name="cache.cpp" />
+      <include name="condition.cpp" />
+      <include name="container.cpp" />
+      <include name="core.cpp" />
+      <include name="downloadengine.cpp" />
+      <include name="elevation.cpp" />
+      <include name="engine.cpp" />
+      <include name="EngineForApplication.cpp" />
+      <include name="exeengine.cpp" />
+      <include name="logging.cpp" />
+      <include name="manifest.cpp" />
+      <include name="msiengine.cpp" />
+      <include name="msuengine.cpp" />
+      <include name="package.cpp" />
+      <include name="payload.cpp" />
+      <include name="pipe.cpp" />
+      <include name="plan.cpp" />
+      <include name="platform.cpp" />
+      <include name="registration.cpp" />
+      <include name="search.cpp" />
+      <include name="userexperience.cpp" />
+      <include name="variable.cpp" />
+      <include name="variant.cpp" />
+    </fileset>
+    <property name="compileCpp.dir.build" value="${dir.build.burn.engine}" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.engine}\precomp.h" />
+    <property name="compileCpp.additionalIncludes" value="${burnengine.additionalIncludes} /I &quot;$(dir.externalroot)\MsiSdk\v4.5\INCLUDE&quot;" />
+    <property name="compileCpp.additionalOptions" value="-WX- -DUNICODE -D_UNICODE -DBURN_DEVELOPMENT_BUILD" />
+    <property name="makeNativeLib.file.target" value="${burnengine.file.lib.target}" />
+
+    <!-- Make engine.lib -->
+    <call target="makeNativeLib" />
+  </target>
+
+  <!-- burnengineinc.mc -->
+  <target name="burnengineinc.mc" description="Performs an incremental build of engine.lib">
+    <mc mcfile="${dir.src.burn.engine}\engine.mc" headerpath="${dir.build.burn.engine}" rcpath="${dir.build.burn.engine}" options="-A -c -z engine.messages"/>
+    <rc rcfile="${dir.build.burn.engine}\engine.messages.rc" output="${burnengine.file.lib.targetres}" />
+  </target>
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="burnengine.properties.defined" value="true" readonly="true" />
+
+</project>

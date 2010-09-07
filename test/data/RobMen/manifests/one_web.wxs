@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Version="0.1.0.0" Compressed="no">
+   <UX SourceFile="stdux.dll">
+       <Payload SourceFile="en-us.wxl" />
+       <Payload SourceFile="thm.xml" />
+   </UX>
+
+   <Chain>
+      <MsiPackage Id='Package3' Vital='yes' DownloadUrl='bits://localhost/burntest/one_web/data/{2}' SourceFile='Package3.msi'>
+         <MsiProperty Name="TARGETDIR" Value="[PACKAGE3TARGETDIR]" />
+      </MsiPackage>
+   </Chain>
+</Bundle>
+</Wix>

@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Chain Packages into a Bundle</title>
+    <style type="text/css">
+        .style1
+        {
+            color: #0000FF;
+        }
+    </style>
+</head>
+
+<body>
+  <h1>Chain Packages into a Bundle</h1>
+    <p>
+        To add a 
+        chained package, you can do so either by putting the package definition directly 
+        under the <a href="wix_xsd_chain.htm">&lt;Chain&gt;</a> element or by doing a <a href="wix_xsd_packagegroupref.htm">&lt;PackageGroupRef&gt;</a> inside <a href="wix_xsd_chain.htm">&lt;Chain&gt;</a> to 
+        reference a shared package definition. 
+       </p>
+    <p>
+        Here's an example of having the 
+        definition directly under <a href="wix_xsd_chain.htm">&lt;Chain&gt;</a>: </p>
+    <pre>
+    &lt;?xml version=&quot;1.0&quot;&gt;
+    &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+      &lt;Bundle&gt;
+        &lt;UX SourceFile=&quot;$(ProgramFiles)\src\UI\ux.dll&quot;&gt;
+        	&lt;Payload SourceFile=&quot;$(ProgramFiles)\src\UI\resources\resources.dll&quot;/&gt;
+        	&lt;PayloadGroupRef Id=&quot;ResourceGroupforJapanese&quot;/&gt;
+        &lt;/UX&gt;
+        <strong><span class="style1">&lt;Chain&gt;</span>
+<span class="style1">            &lt;ExePackage </span>
+<span class="style1">            SourceFile="[sources]\packages\shared\MyPackage.exe"</span>
+<span class="style1">            DownloadURL="http://mywebdomain.com/?mypackage.exe</span>
+<span class="style1">            InstallCommand="/q /ACTION=Install"</span>
+<span class="style1">            RepairCommand="/q ACTION=Repair /hideconsole&quot;/&gt;</span>
+<span class="style1">        &lt;/Chain&gt;</span></strong>
+      &lt;/Bundle&gt;
+    &lt;/Wix&gt;</pre>
+
+    <p>
+        Here's an example of referencing a shared package definition:</p>
+    <pre>
+    &lt;?xml version=&quot;1.0&quot;&gt;
+    &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
+      &lt;Bundle&gt;
+        &lt;UX SourceFile=&quot;$(ProgramFiles)\src\UI\ux.dll&quot;&gt;
+        	&lt;Payload SourceFile=&quot;$(ProgramFiles)\src\UI\resources\resources.dll&quot;/&gt;
+        	&lt;PayloadGroupRef Id=&quot;ResourceGroupforJapanese&quot;/&gt;
+        &lt;/UX&gt;
+        <strong><span class="style1">&lt;Chain&gt;</span>
+<span class="style1">            &lt;PackageGroupRef Id=&quot;MyPackage&quot; /&gt;</span>
+<span class="style1">        &lt;/Chain&gt;</span></strong>
+      &lt;/Bundle&gt;
+    &lt;/Wix&gt;</pre>
+    </body>
+</html>

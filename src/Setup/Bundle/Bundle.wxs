@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+     xmlns:bal='http://schemas.microsoft.com/wix/BalExtension'
+     xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'>
+
+    <!--
+      Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+      Bundle.wxs - WiX source for the WiX Bundle.
+    -->
+
+    <?include WixVer.wxi ?>
+    <Bundle Name='Wix36' Version='$(var.WixVersion)' UpgradeCode='65E893AD-EDD5-4E7D-80CA-F0F50F383532'>
+        <UX SourceFile='mbahost.dll'>
+          <PayloadGroupRef Id='Mba' />
+          <PayloadGroupRef Id='MbaPreq' />
+
+          <Payload SourceFile='WixUX.dll' />
+          <Payload Name='BootstrapperCore.config' SourceFile='WixUX.BootstrapperCore.config' />
+          <Payload SourceFile='License.rtf' />
+        </UX>
+
+        <bal:Condition Message='WiX requires Windows 2000 (or higher).'>VersionNT &gt; v5.0</bal:Condition>
+
+        <Chain DisableRollback='yes'>
+            <PackageGroupRef Id='Netfx4Full' />
+            <PackageGroupRef Id='ProjectAggregator' />
+
+            <MsiPackage Id='Wix' Compressed='no' Vital='yes'
+                        DownloadUrl='http://wix.sourceforge.net/releases/$(var.WixVersion)/{2}'
+                        Name='data\Wix36.msi' SourceFile='x86\data\Wix36.msi' />
+        </Chain>
+    </Bundle>
+
+    <Fragment>
+        <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\8.0' Value='InstallDir' Variable='VS2005InstallFolder' />
+
+        <PackageGroup Id='ProjectAggregator'>
+            <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' InstallCondition='VS2005InstallFolder'
+                        DownloadUrl='http://wix.sourceforge.net/releases/data/ProjectAggregator2.msi'
+                        SourceFile='x86\ProjectAggregator2.msi' />
+        </PackageGroup>
+    </Fragment>
+</Wix>

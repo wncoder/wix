@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <title>Creating Merge Modules</title>
+    <style type="text/css">
+        .style1
+        {
+            color: #0000FF;
+        }
+        .style2
+        {
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+  <h1>Creating a Merge Module</h1>
+
+  <p>Creating a Merge Module is very much like creating a Windows Installer package. </p>
+    <h2>Step 1: Create the WiX source file</h2>
+    <p>Create a new text file called "module.wxs" and put the standard skeleton in it:</p>
+  <pre>
+<b><span class="style1">&lt;?xml version='1.0'?&gt;</span>
+<span class="style1">&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;</span>
+<span class="style1">&lt;/Wix&gt;</span></b>
+</pre>
+
+    <h2>Step 2: Author the content of the package</h2>
+    <p>To create a Merge Module, we add the &lt;Module/&gt; element and add the required attributes:</p>
+    <pre>
+<span class="style2">&lt;?xml version='1.0'?&gt;</span>
+<span class="style2">&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;</span>
+<span class="style1">   </span><b><span class="style1">&lt;Module Id='TestModule' Language='1033' Version='1.0.0.0'&gt;</span>
+<span class="style1">      &lt;Package Id='PUT-GUID-HERE' Description='My first Merge Module'</span>
+<span class="style1">                Comments='This is my first attempt at creating a Windows Installer Merge Module'</span>
+<span class="style1">                Manufacturer='Microsoft Corporation' InstallerVersion='200' /&gt;</span>
+
+<span class="style1">   &lt;/Module&gt;</span></b>
+&lt;/Wix&gt;
+</pre>
+
+    <p>Replace PUT-GUID-HERE with a GUID value. </p>
+    <h2>Step 3: Adding a file to the package</h2>
+    <p>Then create a text file called readme2.txt and update the source code to include the new file:</p>
+  <pre>
+&lt;?xml version='1.0'?&gt;
+&lt;Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'&gt;
+   &lt;Module Id='TestModule' Language='1033' Version='1.0.0.0'&gt;
+      &lt;Package Id='PUT-GUID-HERE' Description='My first Merge Module'
+                Comments='This is my first attempt at creating a Windows Installer Merge Module'
+                Manufacturer='Microsoft Corporation' InstallerVersion='200' /&gt;
+ 
+<span class="style1">      </span><b><span class="style1">&lt;Directory Id='TARGETDIR' Name='SourceDir'&gt;</span>
+<span class="style1">         &lt;Directory Id='MyModuleDirectory' Name='.'&gt;</span>
+<span class="style1">            &lt;Component Id='MyModuleComponent' Guid='PUT-GUID-HERE'&gt;</span>
+<span class="style1">               &lt;File Id='readme2' Name='readme2.txt' Source='readme2.txt' /&gt;</span>
+<span class="style1">            &lt;/Component&gt;</span>
+<span class="style1">         &lt;/Directory&gt;</span>
+<span class="style1">      &lt;/Directory&gt;</span></b>
+   &lt;/Module&gt;
+&lt;/Wix&gt;
+</pre>
+
+  <p>Replace PUT-GUID-HERE with a GUID value. </p>
+
+    <h2>Step 4: Build the package</h2>
+    <p>Now let's build the package using the following instructions:</p>
+
+  <pre>
+C:\test&gt;<span class="style1"> <strong>candle module.wxs</strong></span>
+Microsoft (R) Windows Installer Xml Compiler version 1.0.1220.15022
+Copyright (C) Microsoft Corporation 2003. All rights reserved
+ 
+module.wxs
+ 
+C:\test&gt; <span class="style1"><strong>light module.wixobj</strong></span>
+Microsoft (R) Windows Installer Xml Linker version 1.0.1220.15022
+Copyright (C) Microsoft Corporation 2003. All rights reserved</pre>
+    <p>That's it! You now have a Merge Module that can be shared with other teams to install your "readme2.txt" file. Now that we have a Merge Module, let's actually use it in a Windows Installer package. 
+      See <a href="merging_msm_into_msi.htm">Incorporating a Merge Module</a></p>
+
+  </body>
+</html>

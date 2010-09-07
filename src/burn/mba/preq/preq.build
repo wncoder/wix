@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<project name="preq" default="preq.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
+  <description>
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+    preq.build - Builds the MBA prerequisite bootstrapper application.
+  </description>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Properties
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Include the global build properties -->
+  <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+  <include buildfile="${dir.src.burn.balutil}\balutil.build" unless="${property::exists('balutil.properties.defined')}" />
+
+  <!-- preq-specific properties -->
+  <property name="preq.file.dll.target" value="${dir.target.wix}\mbapreq.dll" readonly="true" />
+  <property name="preq.file.dll.targetpdb" value="${dir.target.wix}\mbapreq.pdb" readonly="true" />
+
+  <property name="preq.additionalOptions" value="/I &quot;${dir.inc.burn}&quot; /I &quot;${dir.inc.balutil}&quot;"/>
+
+  <!--
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Targets
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  -->
+
+  <!-- Build -->
+  <target name="mbapreq.build" description="Peforms a full rebuild (clean then build)" depends="mbapreq.clean, mbapreq.inc" />
+
+  <!-- Clean -->
+  <target name="mbapreq.clean" description="Cleans the build" depends="balutil.clean">
+    <delete dir="${dir.build.burn.mba.preq}" failonerror="false" if="${directory::exists(dir.build.burn.mba.preq)}" />
+    <delete file="${preq.file.dll.target}" failonerror="false" if="${file::exists(preq.file.dll.target)}" />
+    <delete file="${preq.file.dll.targetpdb}" failonerror="false" if="${file::exists(preq.file.dll.targetpdb)}" />
+  </target>
+
+  <!-- Inc -->
+  <target name="mbapreq.inc" description="Performs an incremental build" depends="makeDirs, mbapreq.inc.dll" />
+
+  <!-- preq.inc.dll -->
+  <target name="mbapreq.inc.dll" description="Performs an incremental build of mbapreq.dll" depends="balutil.inc">
+    <copy todir="${dir.target.wix}\MbaPreqResources">
+      <fileset basedir="${dir.src.burn.mba.preq}\Resources">
+        <include name="preq_en-us.wxl" />
+        <include name="netfxlogo.bmp" />
+        <include name="preqthm.xml" />
+      </fileset>
+    </copy>
+
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.mba.preq}">
+      <include name="preq.cpp" />
+      <include name="PreqUserExperience.cpp" />
+    </fileset>
+    <property name="compileCpp.dir.build" value="${dir.build.burn.mba.preq}\dll" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.mba.preq}\precomp.h" />
+    <property name="compileCpp.file.rc" value="${dir.src.burn.mba.preq}\preq.rc" />
+    <property name="compileCpp.additionalOptions" value="${preq.additionalOptions}"/>
+    <property name="makeNativeDll.file.target" value="${preq.file.dll.target}" />
+    <property name="makeNativeDll.file.def" value="${dir.src.burn.mba.preq}\preq.def" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil}&quot; &quot;${file.target.balutil}&quot; &quot;${dir.platformsdk.lib}\shlwapi.lib&quot; &quot;${dir.platformsdk.lib}\Comdlg32.lib&quot; &quot;${dir.platformsdk.lib}\comctl32.lib&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\gdiplus.lib&quot; &quot;${dir.platformsdk.lib}\gdi32.lib&quot;" dynamic="true" />
+
+    <!-- Make SetupBuilder.dll -->
+    <call target="makeNativeDll" />
+  </target>
+
+  <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
+  <property name="mbapreq.properties.defined" value="true" readonly="true" />
+
+</project>

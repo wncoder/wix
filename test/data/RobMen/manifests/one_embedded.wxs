@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Version="0.1.0.0">
+   <Log />
+   <UX SourceFile="stdux.dll">
+       <Payload SourceFile="en-us.wxl" />
+       <Payload SourceFile="thm.xml" />
+   </UX>
+
+   <Chain>
+      <MsuPackage DetectCondition='A > v0' KB="1234" Id="MsuPackage1" Vital="yes" Name="test\foo.msu" SourceFile='$(env.WIX_ROOT)\test\data\Integration\BuildingPackages\Bundle\Files\Packages\MsuPackage.msu'/>
+      <!-- MsiPackage Id='Package2' Vital='yes' SourceFile='Package2.msi' Name='Package2.msi'>
+         <MsiProperty Name="TARGETDIR" Value="[PACKAGE2TARGETDIR]" />
+      </MsiPackage-->
+   </Chain>
+</Bundle>
+</Wix>

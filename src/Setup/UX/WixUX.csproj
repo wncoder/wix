@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <ProjectGuid>{7C27518B-84AD-4679-8EF4-29DF552CF1AC}</ProjectGuid>
+    <AssemblyName>WixUX</AssemblyName>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Microsoft.Tools.WindowsInstallerXml.UX</RootNamespace>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApplicationBarControl.xaml.cs">
+      <DependentUpon>ApplicationBarControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ApplicationBarViewModel.cs" />
+    <Compile Include="InstallationCompleteControl.xaml.cs">
+      <DependentUpon>InstallationCompleteControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="InstallationDetectedControl.xaml.cs">
+      <DependentUpon>InstallationDetectedControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Hresult.cs" />
+    <Compile Include="InstallationApplyingControl.xaml.cs">
+      <DependentUpon>InstallationApplyingControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="InstallationStateToControlConverter.cs" />
+    <Compile Include="Model.cs" />
+    <Compile Include="NewsControl.xaml.cs">
+      <DependentUpon>NewsControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="NewsItem.cs" />
+    <Compile Include="NewsViewModel.cs" />
+    <Compile Include="RelayCommand.cs" />
+    <Compile Include="UpdateControl.xaml.cs">
+      <DependentUpon>UpdateControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="InstallationViewModel.cs" />
+    <Page Include="ApplicationBarControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="InstallationCompleteControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="InstallationDetectedControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="InstallationApplyingControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="NewsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Styles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UpdateControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RootView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="PropertyNotifyBase.cs" />
+    <Compile Include="RootView.xaml.cs">
+      <DependentUpon>RootView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RootViewModel.cs" />
+    <Compile Include="TitleControl.xaml.cs">
+      <DependentUpon>TitleControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UpdateViewModel.cs" />
+    <Compile Include="WixUX.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="WixUX.BootstrapperCore.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
+    <Page Include="TitleControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="PresentationCore">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.ServiceModel.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\appbar.basecircle.rest.png" />
+    <Resource Include="Resources\appbar.feature.search.rest.png" />
+    <Resource Include="Resources\appbar.questionmark.rest.png" />
+    <Resource Include="Resources\appbar.refresh.rest.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\burn\mba\core\core.csproj">
+      <Project>{015AA197-3CEC-4B06-B635-953B1A9619CF}</Project>
+      <Name>core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="..\..\..\WixBuild.Common.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

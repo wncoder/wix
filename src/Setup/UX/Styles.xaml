@@ -1,0 +1,105 @@
+﻿<!-- Copyright (c) Microsoft Corporation. All Rights Reserved. -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ux="clr-namespace:Microsoft.Tools.WindowsInstallerXml.UX">
+
+    <!-- Converters -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <ux:InstallationStateToControlConverter x:Key="InstallationStateToControlConverter" />
+
+    <!-- Root View Styles -->
+    <Style x:Key="RootViewBorderStyle" TargetType="Border">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+    <!-- Title Control Styles -->
+    <Style x:Key="TitleStyle" TargetType="Panel">
+        <Setter Property="Background" Value="DarkRed"/>
+        <Setter Property="Height" Value="50"/>
+    </Style>
+
+    <Style x:Key="TitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Margin" Value="2"/>
+    </Style>
+
+    <Style x:Key="TitleCloseButtonStyle" TargetType="Button">
+        <Setter Property="Content" Value="X"/>
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="Margin" Value="0,3,3,0"/>
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="VerticalAlignment" Value="Top"/>
+    </Style>
+
+    <!-- Installation Control Styles -->
+    <Style x:Key="InstallationPanelStyle" TargetType="Panel">
+        <Setter Property="MinHeight" Value="100"/>
+        <Setter Property="Width" Value="200"/>
+        <Setter Property="Margin" Value="1,1,0,0" />
+    </Style>
+
+    <Style x:Key="InstallationTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="InstallationProgressBarStyle" TargetType="ProgressBar">
+        <Setter Property="Height" Value="10" />
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+
+    <Style x:Key="InstallationProgressMessageStyle" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="InstallationButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="75"/>
+        <Setter Property="Margin" Value="5,0,0,0" />
+        <Setter Property="Visibility">
+            <Setter.Value>
+                <Binding Path="IsEnabled" RelativeSource="{RelativeSource Self}" Converter="{StaticResource BooleanToVisibilityConverter}"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- News Control Styles -->
+    <Style x:Key="NewsPanelStyle" TargetType="Panel">
+        <Setter Property="Margin" Value="2,1,0,0" />
+    </Style>
+
+    <Style x:Key="NewsTitleTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- ApplicationBar Control Styles -->
+    <Style x:Key="ApplicationBarStyle" TargetType="Panel">
+        <Setter Property="Background" Value="Black"/>
+        <Setter Property="Height" Value="50"/>
+    </Style>
+
+    <Style x:Key="ApplicationBarButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <ImageBrush ImageSource="Resources\appbar.basecircle.rest.png"/>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Width" Value="48"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Margin" Value="10,0,10,0"/>
+    </Style>
+</ResourceDictionary>

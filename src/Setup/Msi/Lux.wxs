@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+-->
+
+<?include WixVer.wxi ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="BinDir">
+            <Component Id="lux.exe" Guid="{7B7174CB-FCF3-47B8-9E05-B3F5EEB5DF26}" Win64="no">
+                <File Source="lux.exe" KeyPath="yes" />
+            </Component>
+            <Component Id="lux.exe.config" Guid="{6A9B5D60-EA71-4810-9917-60965E0876E9}" Win64="no">
+                <File Source="lux.exe.config" KeyPath="yes" />
+            </Component>
+            <Component Id="nit.exe" Guid="{1F16AE42-84D9-4484-8BEB-85B159291621}" Win64="no">
+                <File Source="nit.exe" KeyPath="yes" />
+                <CopyFile Id="DupDtf" FileId="Microsoft.Deployment.WindowsInstaller.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
+            </Component>
+            <Component Id="nit.exe.config" Guid="{DBAF8230-218D-44BB-B34B-7B26FD144454}" Win64="no">
+                <File Source="nit.exe.config" KeyPath="yes" />
+            </Component>
+            <Component Id="WixLuxExtension.dll" Guid="{341BD660-7249-42DD-9744-DBEF0776AD52}" Win64="no">
+                <File Source="WixLuxExtension.dll" KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+        
+        <DirectoryRef Id="DocDir">
+            <Component Id="lux.xsd" Guid="{FF25C132-1196-4B04-A176-29C22A8D30C6}" Win64="no">
+                <File Source="lux\wixext\Xsd\lux.xsd" KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+        
+        <DirectoryRef Id="Dir_MSBuildMSWix3x">
+            <Component Id="lux.targets" Guid="{169EDC0F-DBC3-414E-9A4C-C218646B8C78}" Win64="no">
+                <File Source="lux.targets" KeyPath="yes" />
+            </Component>
+            <Component Id="LuxTasks.dll" Guid="{46FFEA5D-8EB5-46E2-BED5-72BAA654B739}" Win64="no">
+                <File Source="LuxTasks.dll" KeyPath="yes" />
+                <CopyFile Id="DupWixDll" FileId="wix.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
+                <CopyFile Id="DupWixLuxExtension" FileId="WixLuxExtension.dll" DestinationDirectory="Dir_MSBuildMSWix3x" />
+            </Component>
+        </DirectoryRef>
+
+        <ComponentGroup Id="LuxComponentGroup">
+            <ComponentRef Id="lux.exe" />
+            <ComponentRef Id="lux.exe.config" />
+            <ComponentRef Id="lux.targets" />
+            <ComponentRef Id="lux.xsd" />
+            <ComponentRef Id="LuxTasks.dll" />
+            <ComponentRef Id="nit.exe" />
+            <ComponentRef Id="nit.exe.config" />
+            <ComponentRef Id="WixLuxExtension.dll" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>

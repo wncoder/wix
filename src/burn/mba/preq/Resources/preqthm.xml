@@ -1,0 +1,11 @@
+<t s="90080000" if="netfxlogo.bmp">
+  <a w="200" h="200" f="0">NETFX 4.0</a>
+  <f id="0" h="-12" w="700" f="0" b="ffffff">Segoe UI</f>
+  <t id="0" x="10" y="10" w="180" h="40" f="0" s="10000000">The .NET Framework 4.0 is required by [BundleName] to install.</t>
+  <t id="1" x="10" y="40" w="100" h="20" f="0" s="10000000">Click Install to accept the license.</t>
+  <l id="2" x="110" y="40" w="80" h="20" f="0" s="10000000">(view license)</l>
+  <t id="3" x="10" y="10" w="100" h="20" f="0" s="10000000">Progress...</t>
+  <t id="4" x="110" y="10" w="60" h="20" f="0" s="10000000">100%</t>
+  <b id="5" x="60" y="170" w="60" h="20" f="0" s="10000000">Install</b>
+  <b id="6" x="170" y="10" w="20" h="20" f="0" s="10000000">X</b>
+</t>

@@ -1,0 +1,33 @@
+﻿<Window x:Class="Microsoft.Tools.WindowsInstallerXml.UX.RootView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ux="clr-namespace:Microsoft.Tools.WindowsInstallerXml.UX"
+    Title="WiX Toolset" WindowStyle="None" AllowsTransparency="True"
+    Background="Black" BorderThickness="1" ResizeMode="CanResizeWithGrip"
+    Height="300" Width="450" MinHeight="300" MinWidth="450">
+
+    <Window.Resources>
+        <ResourceDictionary Source="Styles.xaml"/>
+    </Window.Resources>
+
+    <Border Style="{StaticResource RootViewBorderStyle}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ux:TitleControl MouseLeftButtonDown="TitleControl_MouseLeftButtonDown" Grid.ColumnSpan="2"/>
+            <ContentControl DataContext="{Binding InstallationViewModel}" Content="{Binding State, Converter={StaticResource InstallationStateToControlConverter}}" Grid.Row="1"/>
+            <ux:UpdateControl DataContext="{Binding UpdateViewModel}" Grid.Row="2"/>
+            <ux:NewsControl DataContext="{Binding NewsViewModel}" Grid.Row="1" Grid.RowSpan="2" Grid.Column="1"/>
+            <ux:ApplicationBarControl DataContext="{Binding ApplicationBarViewModel}" Grid.Row="3" Grid.ColumnSpan="2"/>
+        </Grid>
+    </Border>
+</Window>

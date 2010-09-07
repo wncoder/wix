@@ -1,0 +1,498 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>3.5</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.Tools.WindowsInstallerXml.VisualStudio</RootNamespace>
+    <UseDocumentationFile>true</UseDocumentationFile>
+    <StyleCopEnabled>false</StyleCopEnabled>
+    <CodeAnalysisRules>+!Microsoft.Naming#CA1725;+!Microsoft.Design#CA1012;-!Microsoft.Design#CA2210;+!Microsoft.Design#CA1040;+!Microsoft.Design#CA1005;+!Microsoft.Design#CA1020;+!Microsoft.Design#CA1021;+!Microsoft.Design#CA1010;+!Microsoft.Design#CA1011;+!Microsoft.Design#CA1009;+!Microsoft.Design#CA1050;+!Microsoft.Design#CA1026;+!Microsoft.Design#CA1019;+!Microsoft.Design#CA1031;+!Microsoft.Design#CA1047;+!Microsoft.Design#CA1000;+!Microsoft.Design#CA1048;+!Microsoft.Design#CA1051;+!Microsoft.Design#CA1002;+!Microsoft.Design#CA1061;+!Microsoft.Design#CA1006;+!Microsoft.Design#CA1046;+!Microsoft.Design#CA1045;+!Microsoft.Design#CA1038;+!Microsoft.Design#CA1008;+!Microsoft.Design#CA1028;+!Microsoft.Design#CA1004;+!Microsoft.Design#CA1035;+!Microsoft.Design#CA1063;+!Microsoft.Design#CA1032;+!Microsoft.Design#CA1023;+!Microsoft.Design#CA1033;+!Microsoft.Design#CA1039;+!Microsoft.Design#CA1016;+!Microsoft.Design#CA1014;+!Microsoft.Design#CA1017;+!Microsoft.Design#CA1018;+!Microsoft.Design#CA1027;+!Microsoft.Design#CA1059;+!Microsoft.Design#CA1060;+!Microsoft.Design#CA1034;+!Microsoft.Design#CA1013;+!Microsoft.Design#CA1036;+!Microsoft.Design#CA1044;+!Microsoft.Design#CA1041;+!Microsoft.Design#CA1025;+!Microsoft.Design#CA1052;+!Microsoft.Design#CA1053;+!Microsoft.Design#CA1057;+!Microsoft.Design#CA1058;+!Microsoft.Design#CA1001;+!Microsoft.Design#CA1049;+!Microsoft.Design#CA1054;+!Microsoft.Design#CA1056;+!Microsoft.Design#CA1055;+!Microsoft.Design#CA1030;+!Microsoft.Design#CA1003;+!Microsoft.Design#CA1007;+!Microsoft.Design#CA1043;+!Microsoft.Design#CA1024;+!Microsoft.Design#CA1062;+!Microsoft.Globalization#CA1301;+!Microsoft.Globalization#CA1302;+!Microsoft.Globalization#CA1303;+!Microsoft.Globalization#CA1306;+!Microsoft.Globalization#CA1304;+!Microsoft.Globalization#CA1305;+!Microsoft.Globalization#CA1300;+!Microsoft.Globalization#CA1307;+!Microsoft.Globalization#CA1308;+!Microsoft.Globalization#CA1309;+!Microsoft.Globalization#CA2101;+!Microsoft.Interoperability#CA1403;+!Microsoft.Interoperability#CA1406;+!Microsoft.Interoperability#CA1413;+!Microsoft.Interoperability#CA1402;+!Microsoft.Interoperability#CA1407;+!Microsoft.Interoperability#CA1404;+!Microsoft.Interoperability#CA1410;+!Microsoft.Interoperability#CA1411;+!Microsoft.Interoperability#CA1405;+!Microsoft.Interoperability#CA1409;+!Microsoft.Interoperability#CA1415;+!Microsoft.Interoperability#CA1408;+!Microsoft.Interoperability#CA1414;+!Microsoft.Interoperability#CA1412;+!Microsoft.Interoperability#CA1400;+!Microsoft.Interoperability#CA1401;+!Microsoft.Maintainability#CA1502;+!Microsoft.Maintainability#CA1501;+!Microsoft.Maintainability#CA1500;+!Microsoft.Mobility#CA1600;+!Microsoft.Mobility#CA1601;+!Microsoft.Naming#CA1718;+!Microsoft.Naming#CA1720;+!Microsoft.Naming#CA1700;+!Microsoft.Naming#CA1712;+!Microsoft.Naming#CA1713;+!Microsoft.Naming#CA1709;+!Microsoft.Naming#CA1708;+!Microsoft.Naming#CA1715;+!Microsoft.Naming#CA1710;+!Microsoft.Naming#CA1707;+!Microsoft.Naming#CA1722;+!Microsoft.Naming#CA1711;+!Microsoft.Naming#CA1716;+!Microsoft.Naming#CA1705;+!Microsoft.Naming#CA1719;+!Microsoft.Naming#CA1721;+!Microsoft.Naming#CA1706;+!Microsoft.Naming#CA1724;+!Microsoft.Naming#CA1726;+!Microsoft.Performance#CA1809;+!Microsoft.Performance#CA1811;+!Microsoft.Performance#CA1812;+!Microsoft.Performance#CA1807;+!Microsoft.Performance#CA1813;+!Microsoft.Performance#CA1823;+!Microsoft.Performance#CA1816;+!Microsoft.Performance#CA1817;+!Microsoft.Performance#CA1800;+!Microsoft.Performance#CA1818;+!Microsoft.Performance#CA1805;+!Microsoft.Performance#CA1810;+!Microsoft.Performance#CA1822;+!Microsoft.Performance#CA1815;+!Microsoft.Performance#CA1814;+!Microsoft.Performance#CA1819;+!Microsoft.Performance#CA1804;+!Microsoft.Performance#CA1820;+!Microsoft.Performance#CA1802;+!Microsoft.Portability#CA1901;+!Microsoft.Portability#CA1900;+!Microsoft.Reliability#CA2000;+!Microsoft.Reliability#CA2002;+!Microsoft.Reliability#CA2003;+!Microsoft.Reliability#CA2004;+!Microsoft.Reliability#CA2006;+!Microsoft.Security#CA2116;+!Microsoft.Security#CA2117;+!Microsoft.Security#CA2105;+!Microsoft.Security#CA2115;+!Microsoft.Security#CA2104;+!Microsoft.Security#CA2122;+!Microsoft.Security#CA2114;+!Microsoft.Security#CA2123;+!Microsoft.Security#CA2111;+!Microsoft.Security#CA2108;+!Microsoft.Security#CA2107;+!Microsoft.Security#CA2103;+!Microsoft.Security#CA2100;+!Microsoft.Security#CA2118;+!Microsoft.Security#CA2109;+!Microsoft.Security#CA2119;+!Microsoft.Security#CA2106;+!Microsoft.Security#CA2112;+!Microsoft.Security#CA2110;+!Microsoft.Security#CA2120;+!Microsoft.Security#CA2101;+!Microsoft.Security#CA2102;+!Microsoft.Security#CA2121;+!Microsoft.Security#CA2126;+!Microsoft.Security#CA2127;+!Microsoft.Security#CA2128;+!Microsoft.Security#CA2129;+!Microsoft.Security#CA2124;+!Microsoft.Usage#CA2209;+!Microsoft.Usage#CA2236;+!Microsoft.Usage#CA2227;+!Microsoft.Usage#CA2213;+!Microsoft.Usage#CA2216;+!Microsoft.Usage#CA2215;+!Microsoft.Usage#CA2214;+!Microsoft.Usage#CA2222;+!Microsoft.Usage#CA2202;+!Microsoft.Usage#CA1806;+!Microsoft.Usage#CA2217;+!Microsoft.Usage#CA2212;+!Microsoft.Usage#CA2219;+!Microsoft.Usage#CA2201;+!Microsoft.Usage#CA2228;+!Microsoft.Usage#CA2221;+!Microsoft.Usage#CA2220;+!Microsoft.Usage#CA2240;+!Microsoft.Usage#CA2229;+!Microsoft.Usage#CA2238;+!Microsoft.Usage#CA2207;+!Microsoft.Usage#CA2208;+!Microsoft.Usage#CA2235;+!Microsoft.Usage#CA2237;+!Microsoft.Usage#CA2232;+!Microsoft.Usage#CA2223;+!Microsoft.Usage#CA2211;+!Microsoft.Usage#CA2233;+!Microsoft.Usage#CA2225;+!Microsoft.Usage#CA2226;+!Microsoft.Usage#CA2231;+!Microsoft.Usage#CA2224;+!Microsoft.Usage#CA2218;+!Microsoft.Usage#CA2234;+!Microsoft.Usage#CA2241;+!Microsoft.Usage#CA2239;+!Microsoft.Usage#CA2200;+!Microsoft.Usage#CA1801;+!Microsoft.Usage#CA2205;+!Microsoft.Usage#CA2230</CodeAnalysisRules>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>DEBUG;TRACE;CCI_TRACING;Enable_CCIDiagnostics;Enable_CCIFileOutput</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DefineConstants>TRACE</DefineConstants>
+    <FxCopEnabled>true</FxCopEnabled>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Wix\Wix.csproj">
+      <Project>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</Project>
+      <Name>Wix</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Controls\FolderBrowserTextBox.cs">
+      <SubType>UserControl</SubType>
+      <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\FolderBrowserTextBox.Designer.cs">
+      <DependentUpon>FolderBrowserTextBox.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixBuildEventEditor.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixBuildEventEditor.Designer.cs">
+      <DependentUpon>WixBuildEventEditor.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixBuildEventTextBox.cs">
+      <SubType>Component</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixFoldersSelector.cs">
+      <Visible>true</Visible>
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\WixFoldersSelector.Designer.cs">
+      <DependentUpon>WixFoldersSelector.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixGroupBox.cs">
+      <SubType>Component</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Controls\WixGroupLabel.cs">
+      <SubType>Component</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Forms\WixBuildEventEditorForm.cs">
+      <SubType>Form</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Forms\WixBuildEventEditorForm.Designer.cs">
+      <DependentUpon>WixBuildEventEditorForm.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildEventsPropertyPage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildEventsPropertyPagePanel.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildEventsPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixBuildEventsPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixInstallerPropertyPage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="IProjectSourceNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixInstallerPropertyPagePanel.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixInstallerPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixInstallerPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildPropertyPage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildPropertyPagePanel.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixBuildPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixBuildPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPathsPropertyPage.cs" >
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPathsPropertyPagePanel.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPathsPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixPathsPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPropertyPage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPropertyPagePanel.cs">
+      <SubType>UserControl</SubType>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixToolsSettingsPropertyPage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyPages\WixToolsSettingsPropertyPagePanel.cs">
+      <Visible>true</Visible>
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="PropertyPages\WixToolsSettingsPropertyPagePanel.Designer.cs">
+      <DependentUpon>WixToolsSettingsPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="GlobalSuppressions.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="IsolatedDomain.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="OAWixProject.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="ProjectPropertyArgumentException.cs" >
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="ProjectProperty.cs" >
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="PropertyValidator.cs" >
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="..\..\WixTasks\FileSearchHelperMethods.cs">
+      <Visible>true</Visible>
+      <Link>FileSearchHelperMethods.cs</Link>
+    </Compile>
+    <Compile Include="RunPostBuildEvent.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixBuildMacroCollection.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixConfigProvider.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixDesignPropertyDescriptor.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFileNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFileNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLinkedFileNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFileNodeNonMemberProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixExtensionReferenceNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixExtensionReferenceNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixReferenceContainerNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixReferenceValidator.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFolderNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFolderNodeNonMemberProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixFolderNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLibraryReferenceNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLibraryReferenceNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLocalizedCategoryAttribute.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLocalizedControlTextAttribute.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLocalizedDescriptionAttribute.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixLocalizedDisplayNameAttribute.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixNonMemberDesignPropertyDescriptor.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixOutputType.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixPackageSettings.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectConfig.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectFileConstants.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectReferenceNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectReferenceNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixHelperMethods.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectMembers.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixProjectFactory.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixPackage.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixReferenceNode.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixReferenceNodeProperties.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixVsConstants.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixWarningLevel.cs">
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Include="WixStrings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>WixStrings.resx</DependentUpon>
+      <Visible>true</Visible>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="WixStrings.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>WixStrings.Designer.cs</LastGenOutput>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Controls\FolderBrowserTextBox.resx">
+      <DependentUpon>FolderBrowserTextBox.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\WixBuildEventEditor.resx">
+      <DependentUpon>WixBuildEventEditor.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\WixBuildEventEditorForm.resx">
+      <DependentUpon>WixBuildEventEditorForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixBuildEventsPropertyPagePanel.resx">
+      <DependentUpon>WixBuildEventsPropertyPagePanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixBuildPropertyPagePanel.resx">
+      <DependentUpon>WixBuildPropertyPagePanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\WixFoldersSelector.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixFoldersSelector.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixPropertyPagePanel.resx">
+      <DependentUpon>WixPropertyPagePanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\WixBuildEventTextBox.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixBuildEventTextBox.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\WixGroupBox.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixGroupBox.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\WixGroupLabel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixGroupLabel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixInstallerPropertyPagePanel.resx">
+      <DependentUpon>WixInstallerPropertyPagePanel.cs</DependentUpon>
+      <SubType>Designer</SubType>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixPathsPropertyPagePanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixPathsPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertyPages\WixToolsSettingsPropertyPagePanel.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>WixToolsSettingsPropertyPagePanel.cs</DependentUpon>
+      <Visible>true</Visible>
+    </EmbeddedResource>
+    <Content Include="..\Icons\ProjectFile.ico">
+      <Link>Resources\ProjectFile.ico</Link>
+      <Visible>true</Visible>
+    </Content>
+    <Content Include="Resources\Delete.png">
+      <Visible>true</Visible>
+    </Content>
+    <Content Include="Resources\DownArrow.png">
+      <Visible>true</Visible>
+    </Content>
+    <Content Include="Resources\Macro.ico">
+      <Visible>true</Visible>
+    </Content>
+    <Content Include="Resources\Splash.bmp">
+      <Visible>true</Visible>
+    </Content>
+    <Content Include="Resources\UpArrow.png">
+      <Visible>true</Visible>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipItem Include="Templates\ProjectItems\BlankFile\BlankFile.ico">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\BlankFile\BlankFile.vstemplate">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\BlankFile\BlankFile.wxs">
+      <Visible>true</Visible>
+    </ZipItem>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipItem Include="Templates\ProjectItems\IncludeFile\IncludeFile.ico">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\IncludeFile\IncludeFile.vstemplate">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\IncludeFile\IncludeFile.wxi">
+      <Visible>true</Visible>
+    </ZipItem>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipItem Include="Templates\ProjectItems\LocalizationFile\LocalizationFile.ico">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\LocalizationFile\LocalizationFile.vstemplate">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\LocalizationFile\LocalizationFile.wxl">
+      <Visible>true</Visible>
+    </ZipItem>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipItem Include="Templates\ProjectItems\TextFile\TextFile.ico">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\TextFile\TextFile.txt">
+      <Visible>true</Visible>
+    </ZipItem>
+    <ZipItem Include="Templates\ProjectItems\TextFile\TextFile.vstemplate">
+      <Visible>true</Visible>
+    </ZipItem>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipProject Include="Templates\Projects\WixLibrary\WixLibrary.ico">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixLibrary\WixLibrary.vstemplate">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixLibrary\SetupLibrary.wixproj">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixLibrary\Library.wxs">
+      <Visible>true</Visible>
+    </ZipProject>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipProject Include="Templates\Projects\WixMergeModule\WixMergeModule.ico">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixMergeModule\WixMergeModule.vstemplate">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixMergeModule\MergeModule.wixproj">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixMergeModule\MergeModule.wxs">
+      <Visible>true</Visible>
+    </ZipProject>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipProject Include="Templates\Projects\WixProject\Product.wxs">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixProject\WixProject.ico">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixProject\WixProject.vstemplate">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixProject\SetupProject.wixproj">
+      <Visible>true</Visible>
+    </ZipProject>
+  </ItemGroup>
+  <ItemGroup>
+    <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.wxs">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.Generated.wxs">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixBundleProject\WixBundle.ico">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixBundleProject\WixBundle.vstemplate">
+      <Visible>true</Visible>
+    </ZipProject>
+    <ZipProject Include="Templates\Projects\WixBundleProject\BundleProject.wixproj">
+      <Visible>true</Visible>
+    </ZipProject>
+  </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDictionary Include="CustomDictionary.xml">
+      <Visible>true</Visible>
+    </CodeAnalysisDictionary>
+  </ItemGroup>
+  <PropertyGroup>
+    <RegisterOutputPackage>false</RegisterOutputPackage>
+    <RegisterWithCodebase>true</RegisterWithCodebase>
+    <VsTemplateLanguage>WiX</VsTemplateLanguage>
+  </PropertyGroup>
+  <Target Name="AfterBuild" Inputs="@(IntermediateZipProject);@(IntermediateZipItem)" Outputs="@(IntermediateZipProject->'$(OutDir)%(Filename)%(Extension)');@(IntermediateZipItem->'$(OutDir)%(Filename)%(Extension)')" Condition=" '@(IntermediateZipProject)@(IntermediateZipItem)' != '' ">
+    <Copy SourceFiles="@(IntermediateZipProject);@(IntermediateZipItem)" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

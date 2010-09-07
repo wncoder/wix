@@ -1,0 +1,13 @@
+;-------------------------------------------------------------------------------------------------
+; <copyright file="prequx.def" company="Microsoft">
+;    Copyright (c) Microsoft Corporation.  All rights reserved.
+; </copyright>
+; 
+; <summary>
+;    PreqUX DLL entry points.
+; </summary>
+;-------------------------------------------------------------------------------------------------
+
+EXPORTS
+    BootstrapperApplicationCreate
+    BootstrapperApplicationDestroy

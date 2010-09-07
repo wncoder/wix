@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="Microsoft.Tools.WindowsInstallerXml.UX.InstallationDetectedControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:ux="clr-namespace:Microsoft.Tools.WindowsInstallerXml.UX"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="200">
+    <Control.Resources>
+        <ResourceDictionary Source="Styles.xaml" />
+    </Control.Resources>
+
+    <StackPanel Style="{StaticResource InstallationPanelStyle}">
+        <TextBlock Style="{StaticResource InstallationTitleTextStyle}" Text="{Binding Title}"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <TextBlock Visibility="{Binding LicenseEnabled, Converter={StaticResource BooleanToVisibilityConverter}}"><Hyperlink Command="{Binding LicenseCommand}">View License</Hyperlink></TextBlock>
+            <Button Command="{Binding InstallCommand}" Style="{StaticResource InstallationButtonStyle}">Install</Button>
+            <Button Command="{Binding RepairCommand}" Style="{StaticResource InstallationButtonStyle}">Repair</Button>
+            <Button Command="{Binding UninstallCommand}" Style="{StaticResource InstallationButtonStyle}">Uninstall</Button>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
