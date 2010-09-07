@@ -90,7 +90,6 @@
         <xs:annotation>
             <xs:documentation>Describes a component search.</xs:documentation>
             <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>
@@ -139,7 +138,6 @@
         <xs:annotation>
             <xs:documentation>Describes a directory search.</xs:documentation>
             <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>
@@ -277,7 +275,6 @@
         <xs:annotation>
             <xs:documentation>Describes a file search.</xs:documentation>
             <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>
@@ -803,7 +800,6 @@
         <xs:annotation>
             <xs:documentation>Describes a product search.</xs:documentation>
             <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>
@@ -852,7 +848,6 @@
         <xs:annotation>
             <xs:documentation>Describes a registry search.</xs:documentation>
             <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>

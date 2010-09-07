@@ -621,10 +621,10 @@ extern "C" UINT __stdcall ConfigureIIs7(
     SCA_WEBDIR7* pswdList = NULL;
     SCA_VDIR7* psvdList = NULL;
     SCA_FILTER* psfList = NULL;
-    SCA_APPPOOL *psapList = NULL;
+    SCA_APPPOOL* psapList = NULL;
     SCA_MIMEMAP* psmmList = NULL;
     SCA_HTTP_HEADER* pshhList = NULL;
-    SCA_PROPERTY *pspList = NULL;
+    SCA_PROPERTY* pspList = NULL;
     SCA_WEBSVCEXT* psWseList = NULL;
     SCA_WEB_ERROR* psweList = NULL;
 
@@ -638,7 +638,6 @@ extern "C" UINT __stdcall ConfigureIIs7(
         WcaLog(LOGMSG_VERBOSE, "skipping IIs CustomAction, no IIsWebSite table, no IIsFilter table, and no IIsWebServiceExtension table");
         ExitFunction1(hr = S_FALSE);
     }
-    
 
     //// make sure the operations below are wrapped in a "transaction"
     hr = ScaIIS7ConfigTransaction(L"ScaConfigureIIs");

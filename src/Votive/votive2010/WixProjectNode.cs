@@ -283,47 +283,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         {
             base.AddFileFromTemplate(source, target);
 
-            try
+            string extension = Path.GetExtension(source);
+            if (extension.Equals(".wxs", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".wxi", StringComparison.OrdinalIgnoreCase) ||
+                extension.Equals(".wxl", StringComparison.OrdinalIgnoreCase))
             {
-                string output = null;
-                using (StreamReader textStreamReader = new StreamReader(target))
+                try
                 {
-                    output = textStreamReader.ReadToEnd();
+                    string output = null;
+                    using (StreamReader textStreamReader = new StreamReader(target))
+                    {
+                        output = textStreamReader.ReadToEnd();
+                    }
+
+                    string projectName = Path.GetFileNameWithoutExtension(this.Url);
+                    string safeProjectName = Regex.Replace(projectName, @"[^A-Za-z0-9_\.]|\.{2,}", "_"); // replace illegal characters with "_".
+
+                    // MSI identifiers must begin with an alphabetic character or an
+                    // underscore. Prefix all other values with an underscore.
+                    if (Regex.IsMatch(safeProjectName, @"^[^a-zA-Z_]"))
+                    {
+                        safeProjectName = String.Concat("_", safeProjectName);
+                    }
+
+                    output = output.Replace("$wixsafeprojectname$", safeProjectName);
+
+                    using (StreamWriter writer = new StreamWriter(target))
+                    {
+                        writer.Write(output);
+                        writer.Close();
+                    }
                 }
-
-                string projectName = Path.GetFileNameWithoutExtension(this.Url);
-                string safeProjectName = Regex.Replace(projectName, @"[^A-Za-z0-9_\.]|\.{2,}", "_"); // replace illegal characters with "_".
-
-                // MSI identifiers must begin with an alphabetic character or an
-                // underscore. Prefix all other values with an underscore.
-                if (Regex.IsMatch(safeProjectName, @"^[^a-zA-Z_]"))
+                catch (IOException e)
                 {
-                    safeProjectName = String.Concat("_", safeProjectName);
+                    Trace.WriteLine("Exception : " + e.Message);
                 }
-
-                output = output.Replace("$wixsafeprojectname$", safeProjectName);
-
-                using (StreamWriter writer = new StreamWriter(target))
+                catch (UnauthorizedAccessException e)
                 {
-                    writer.Write(output);
-                    writer.Close();
+                    Trace.WriteLine("Exception : " + e.Message);
                 }
-            }
-            catch (IOException e)
-            {
-                Trace.WriteLine("Exception : " + e.Message);
-            }
-            catch (UnauthorizedAccessException e)
-            {
-                Trace.WriteLine("Exception : " + e.Message);
-            }
-            catch (ArgumentException e)
-            {
-                Trace.WriteLine("Exception : " + e.Message);
-            }
-            catch (NotSupportedException e)
-            {
-                Trace.WriteLine("Exception : " + e.Message);
+                catch (ArgumentException e)
+                {
+                    Trace.WriteLine("Exception : " + e.Message);
+                }
+                catch (NotSupportedException e)
+                {
+                    Trace.WriteLine("Exception : " + e.Message);
+                }
             }
         }
 

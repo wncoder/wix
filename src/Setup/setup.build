@@ -23,10 +23,8 @@
   <!-- Include the global build properties -->
   <include buildfile="..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
-  <include buildfile="ux\wixux.build" />
   <include buildfile="icons\setupicons.build" />
   <include buildfile="msi\msi.build" />
-  <include buildfile="bundle\bundle.build" />
 
   <!-- setup directories -->
   <property name="dir.src.setup" value="${dir.wixroot.src}\setup" readonly="true" />

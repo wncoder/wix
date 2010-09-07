@@ -42,7 +42,6 @@
 
   <!-- Wix toolset build files -->
   <include buildfile="${dir.src.ambient}\appsynup\appsynup.build" />
-  <include buildfile="${dir.src.burn}\burn.build" />
   <include buildfile="${dir.wixroot.src}\DTF\dtf.build" />
   <include buildfile="${dir.src.dutil}\dutil.build" unless="${property::exists('dutil.properties.defined')}" />
   <include buildfile="${dir.src.ext}\ext.build" />
@@ -175,7 +174,6 @@
   <target name="core" depends="winterop, trustmsbuildfiles, core.inc" />
   <target name="dtf" depends="trustmsbuildfiles, dtf.inc" />
   <target name="dutil" depends="dutil.inc" />
-  <target name="burn" depends="core, dutil, burn.inc" />
   <target name="ext" depends="serverca, setupbld.inc, setupexe.inc, ext.inc, core, ext.sln.inc" />
   <target name="serverca" depends="wcautil, wixca, serverca.inc" />
   <target name="setup" depends="chm, core, ext, votive, setup.inc" />

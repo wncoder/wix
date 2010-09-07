@@ -2659,7 +2659,8 @@ namespace Microsoft.VisualStudio.Package
             // we always start at the current node and go it's children down, so 
             //  if you want to scan the whole tree, better call 
             // the root
-            itemId = 0;
+            const uint notFound = (uint)VSConstants.VSITEMID.Nil;
+            itemId = notFound;
 
             // The default implemenation will check for case insensitive comparision.
             if (String.Compare(name, this.Url, StringComparison.OrdinalIgnoreCase) == 0)
@@ -2667,15 +2668,15 @@ namespace Microsoft.VisualStudio.Package
                 itemId = this.hierarchyId;
                 return VSConstants.S_OK;
             }
-            if (itemId == 0 && this.firstChild != null)
+            if (itemId == notFound && this.firstChild != null)
             {
-                ErrorHandler.ThrowOnFailure(this.firstChild.ParseCanonicalName(name, out itemId));
+                this.firstChild.ParseCanonicalName(name, out itemId);
             }
-            if (itemId == 0 && this.nextSibling != null)
+            if (itemId == notFound && this.nextSibling != null)
             {
-                ErrorHandler.ThrowOnFailure(this.nextSibling.ParseCanonicalName(name, out itemId));
+                this.nextSibling.ParseCanonicalName(name, out itemId);
             }
-            return VSConstants.S_OK;
+            return notFound == itemId ? VSConstants.E_FAIL : VSConstants.S_OK;
         }
 
 

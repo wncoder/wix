@@ -314,21 +314,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             Wix.IParentElement harvestParent;
 
-            if (this.GenerateType == GenerateType.Container)
-            {
-                Wix.Container container = new Wix.Container();
-                harvestParent = container;
-
-                container.Name = String.Format(CultureInfo.InvariantCulture, DirectoryIdFormat, sanitizedProjectName, pog.Name);
-            }
-            else if (this.GenerateType == GenerateType.PayloadGroup)
-            {
-                Wix.PayloadGroup container = new Wix.PayloadGroup();
-                harvestParent = container;
-
-                container.Id = String.Format(CultureInfo.InvariantCulture, DirectoryIdFormat, sanitizedProjectName, pog.Name);
-            }
-            else if (this.GenerateType == GenerateType.Layout)
+            if (this.GenerateType == GenerateType.Layout)
             {
                 Wix.LayoutDirectory layoutDirectory = new Wix.LayoutDirectory();
                 harvestParent = layoutDirectory;
@@ -378,25 +364,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             int harvestCount = this.HarvestProjectOutputGroupFiles(projectBaseDir, projectName, pog.Name, pog.FileSource, pogFiles, harvestParent);
 
-            if (this.GenerateType == GenerateType.Container)
-            {
-                // harvestParent must be a Container at this point
-                Wix.Container container = harvestParent as Wix.Container;
-
-                Wix.Fragment fragment = new Wix.Fragment();
-                fragment.AddChild(container);
-                fragmentList.Add(fragment);
-            }
-            else if (this.GenerateType == GenerateType.PayloadGroup)
-            {
-                // harvestParent must be a Container at this point
-                Wix.PayloadGroup payloadGroup = harvestParent as Wix.PayloadGroup;
-
-                Wix.Fragment fragment = new Wix.Fragment();
-                fragment.AddChild(payloadGroup);
-                fragmentList.Add(fragment);
-            }
-            else if (this.GenerateType == GenerateType.Layout)
+            if (this.GenerateType == GenerateType.Layout)
             {
                 // harvestParent must be a LayoutDirectory at this point
                 Wix.LayoutDirectory layoutDirectory = harvestParent as Wix.LayoutDirectory;
@@ -511,9 +479,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 Wix.IParentElement parentDir = parent;
-                // Ignore Containers and PayloadGroups because they do not have a nested structure.
-                if (baseDir != null && !String.Equals(Path.GetDirectoryName(baseDir), fileDir, StringComparison.OrdinalIgnoreCase)
-                    && this.GenerateType != GenerateType.Container && this.GenerateType != GenerateType.PayloadGroup)
+                if (baseDir != null && !String.Equals(Path.GetDirectoryName(baseDir), fileDir, StringComparison.OrdinalIgnoreCase))
                 {
                     Uri baseUri = new Uri(baseDir);
                     Uri relativeUri = baseUri.MakeRelativeUri(new Uri(fileDir));
@@ -535,13 +501,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     parentDirId = ((Wix.LayoutDirectory)parentDir).Id;
                 }
 
-                if (this.GenerateType == GenerateType.Container || this.GenerateType == GenerateType.PayloadGroup)
-                {
-                    Wix.Payload payload = new Wix.Payload();
-
-                    HarvestProjectOutputGroupPayloadFile(baseDir, projectName, pogName, pogFileSource, filePath, fileName, link, parentDir, payload, seenList);
-                }
-                else if (this.GenerateType == GenerateType.Layout)
+                if (this.GenerateType == GenerateType.Layout)
                 {
                     Wix.LayoutFile file = new Wix.LayoutFile();
 
@@ -657,37 +617,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         file.Id = HarvesterCore.GetIdentifierFromName(String.Format(CultureInfo.InvariantCulture, VSProjectHarvester.FileIdFormat, projectName, pogName, fileName));
                         component.Id = HarvesterCore.GetIdentifierFromName(String.Format(CultureInfo.InvariantCulture, VSProjectHarvester.ComponentIdFormat, projectName, pogName, fileName));
                     }
-                }
-            }
-        }
-
-        private void HarvestProjectOutputGroupPayloadFile(string baseDir, string projectName, string pogName, string pogFileSource, string filePath, string fileName, string link, Wix.IParentElement parentDir, Wix.Payload file, Dictionary<string, bool> seenList)
-        {
-            string varFormat = VariableFormat;
-            if (this.generateWixVars)
-            {
-                varFormat = WixVariableFormat;
-            }
-
-            if (pogName.Equals("Satellites", StringComparison.OrdinalIgnoreCase))
-            {
-                string locDirectoryName = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(filePath)));
-                file.SourceFile = String.Concat(String.Format(CultureInfo.InvariantCulture, varFormat, projectName, pogFileSource), "\\", locDirectoryName, "\\", Path.GetFileName(filePath));
-
-                if (!seenList.ContainsKey(file.SourceFile))
-                {
-                    parentDir.AddChild(file);
-                    seenList.Add(file.SourceFile, true);
-                }
-            }
-            else
-            {
-                file.SourceFile = GenerateSourceFilePath(baseDir, projectName, pogFileSource, filePath, link, varFormat);
-
-                if (!seenList.ContainsKey(file.SourceFile))
-                {
-                    parentDir.AddChild(file);
-                    seenList.Add(file.SourceFile, true);
                 }
             }
         }

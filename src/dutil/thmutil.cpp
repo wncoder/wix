@@ -425,15 +425,15 @@ extern "C" HRESULT DAPI ThemeLoadLocFromFile(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczFileFullPath = NULL;
     LOC_STRINGSET* pLocStringSet = NULL;
-    LPWSTR wzFileFullPath = NULL;
 
     ExitOnNull(pTheme, hr, S_FALSE, "Theme must be loaded first.");
 
-    hr = PathRelativeToModule(&wzFileFullPath, wzFileName, hModule);
+    hr = PathRelativeToModule(&sczFileFullPath, wzFileName, hModule);
     ExitOnFailure(hr, "Failed to create WXL file path.");
 
-    hr = LocLoadFromFile(wzFileFullPath, &pLocStringSet);
+    hr = LocLoadFromFile(sczFileFullPath, &pLocStringSet);
     ExitOnFailure(hr, "Failed to load WXL file.");
 
     hr = LocLocalizeString(pLocStringSet, &pTheme->wzCaption);
@@ -449,6 +449,7 @@ extern "C" HRESULT DAPI ThemeLoadLocFromFile(
 
 LExit:
     LocFree(pLocStringSet);
+    ReleaseStr(sczFileFullPath);
     return hr;
 }
 

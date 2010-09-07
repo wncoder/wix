@@ -1,4 +1,0 @@
-LIBRARY	"UXEntryPoint"
-
-EXPORTS
-    SetupUXCreate

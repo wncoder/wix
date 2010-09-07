@@ -18,7 +18,6 @@
     <Compile Include="BinderCore.cs" />
     <Compile Include="BinderExtension.cs" />
     <Compile Include="BinderFileManager.cs" />
-    <Compile Include="BurnWriter.cs" />
     <Compile Include="CabinetBuilder.cs" />
     <Compile Include="CabinetWorkItem.cs" />
     <Compile Include="Cab\CabinetFileInfo.cs" />

@@ -72,21 +72,6 @@
 
   <!-- Build directories for the main wix projects -->
   <property name="dir.build.ambient" value="${dir.build.wix}\ambient" readonly="true" />
-  <property name="dir.build.burn" value="${dir.build.wix}\burn" readonly="true" />
-  <property name="dir.build.burn.buxutil.x86" value="${dir.build.wix.x86}\buxutil" readonly="true" />
-  <property name="dir.build.burn.buxutil.x64" value="${dir.build.wix.x64}\buxutil" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2005.x86" value="${dir.build.burn.buxutil.x86}\2005" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2005.x64" value="${dir.build.burn.buxutil.x64}\2005" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2008.x86" value="${dir.build.burn.buxutil.x86}\2008" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2008.x64" value="${dir.build.burn.buxutil.x64}\2008" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2010.x86" value="${dir.build.burn.buxutil.x86}\2010" readonly="true" />
-  <property name="dir.build.burn.buxutil.vs2010.x64" value="${dir.build.burn.buxutil.x64}\2010" readonly="true" />
-  <property name="dir.build.burn.core" value="${dir.build.burn}\core" readonly="true" />
-  <property name="dir.build.burn.mux" value="${dir.build.burn}\mux" readonly="true" />
-  <property name="dir.build.burn.mux.adapter" value="${dir.build.wix}\adapter" readonly="true" />
-  <property name="dir.build.burn.mux.host" value="${dir.build.burn.mux}\host" readonly="true" />
-  <property name="dir.build.burn.mux.model" value="${dir.build.burn.mux}\model" readonly="true" />
-  <property name="dir.build.burn.mux.wpfview" value="${dir.build.burn.mux}\wpfview" readonly="true" />
   <property name="dir.build.chm" value="${dir.build.wix}\chm" readonly="true" />
   <property name="dir.build.ct" value="${dir.build.wix}\ct" readonly="true" />
   <property name="dir.build.ct.clickthrough" value="${dir.build.ct}\clickthrough" readonly="true" />
@@ -157,15 +142,6 @@
   <!-- Source directories for the main wix projects -->
   <property name="dir.src.ambient" value="${dir.wixroot.src}\ambient" readonly="true" />
   <property name="dir.src.ambient.inc" value="${dir.wixroot.src}\ambient\inc" readonly="true" />
-  <property name="dir.src.burn" value="${dir.wixroot.src}\burn" readonly="true" />
-  <property name="dir.src.burn.core" value="${dir.src.burn}\core" readonly="true" />
-  <property name="dir.src.burn.test" value="${dir.wixroot.test}\src\Bootstrapper" readonly="true" />
-  <property name="dir.src.burn.mux" value="${dir.src.burn}\mux" readonly="true" />
-  <property name="dir.src.burn.mux.adapter" value="${dir.src.burn.mux}\adapter" readonly="true" />
-  <property name="dir.src.burn.mux.host" value="${dir.src.burn.mux}\host" readonly="true" />
-  <property name="dir.src.burn.mux.model" value="${dir.src.burn.mux}\model" readonly="true" />
-  <property name="dir.src.burn.mux.wpfview" value="${dir.src.burn.mux}\wpfview" readonly="true" />
-  <property name="dir.src.burn.buxutil" value="${dir.src.burn}\buxutil" readonly="true" />
   <property name="dir.src.ca" value="${dir.wixroot.src}\ca" readonly="true" />
   <property name="dir.src.ca.serverca" value="${dir.wixroot.src}\ca\serverca" readonly="true" />
   <property name="dir.src.ca.wcautil" value="${dir.wixroot.src}\ca\wcautil" readonly="true" />
@@ -204,8 +180,6 @@
   <property name="dir.src.wixunit" value="${dir.wixroot.src}\wixunit" readonly="true" />
 
   <!-- Include directories for the shared wix projects -->
-  <property name="dir.inc.burn" value="${dir.src.burn}\inc" readonly="true" />
-  <property name="dir.inc.buxutil" value="${dir.src.burn}\buxutil\inc" readonly="true" />
   <property name="dir.inc.dutil" value="${dir.src.dutil}\inc" readonly="true" />
 
   <!-- Target files that are referenced between projects -->
@@ -312,11 +286,6 @@
 
     <!-- src directories -->
     <mkdir dir="${dir.build.ambient}" />
-    <mkdir dir="${dir.build.burn}" />
-    <mkdir dir="${dir.build.burn.core}" />
-    <mkdir dir="${dir.build.burn.mux}" />
-    <mkdir dir="${dir.build.burn.mux.adapter}" />
-    <mkdir dir="${dir.build.burn.mux.host}" />
     <mkdir dir="${dir.build.chm}" />
     <mkdir dir="${dir.build.ct}" />
     <mkdir dir="${dir.build.ct.clickthrough}" />

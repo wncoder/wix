@@ -583,13 +583,13 @@
     <readregistry key="SOFTWARE\Microsoft\VisualStudio\10.0\Setup\VC\ProductDir" hive="LocalMachine" property="VC100Dir" failonerror="false" />
     
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('VC100Dir') or VC100Dir == '' or not directory::exists(VC100Dir) or not directory::exists(path::combine(VC100Dir, 'atlmfc'))}">
+    <if test="${not property::exists('VC100Dir') or VC100Dir == '' or not directory::exists(VC100Dir)}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\VisualStudio\10.0\Setup\VC\ProductDir" hive="LocalMachine" property="VC100Dir" failonerror="false" />
     </if>
 
     <property name="BuildVC10" value="true" />
 
-    <if test="${not property::exists('VC100Dir') or VC100Dir == '' or not directory::exists(VC100Dir) or not directory::exists(path::combine(VC100Dir, 'atlmfc'))}">
+    <if test="${not property::exists('VC100Dir') or VC100Dir == '' or not directory::exists(VC100Dir)}">
       <echo message="Couldn't find the Visual Studio 2010 VC Directory." />
       <property name="BuildVC10" value="false" />
     </if>
@@ -604,13 +604,13 @@
     <readregistry key="SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VC\ProductDir" hive="LocalMachine" property="VC90Dir" failonerror="false" />
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('VC90Dir') or VC90Dir == '' or not directory::exists(VC90Dir) or not directory::exists(path::combine(VC90Dir, 'atlmfc'))}">
+    <if test="${not property::exists('VC90Dir') or VC90Dir == '' or not directory::exists(VC90Dir)}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\VisualStudio\9.0\Setup\VC\ProductDir" hive="LocalMachine" property="VC90Dir" failonerror="false" />
     </if>
 
     <property name="BuildVC9" value="true" />
 
-    <if test="${not property::exists('VC90Dir') or VC90Dir == '' or not directory::exists(VC90Dir) or not directory::exists(path::combine(VC90Dir, 'atlmfc'))}">
+    <if test="${not property::exists('VC90Dir') or VC90Dir == '' or not directory::exists(VC90Dir)}">
       <echo message="Couldn't find the Visual Studio 2008 VC Directory. VS2008-compatible versions of libraries will be excluded from the build." />
       <property name="BuildVC9" value="false" />
     </if>
@@ -625,6 +625,15 @@
       <fail message="Couldn't find VC Directory - please ensure the Windows Server 2008 and .NET Framework 3.5 SDK or Visual Studio 2008 or Visual Studio 2010 is installed" />
     </if>
     <echo message="Setting main VC directory to : ${VCDir}" />
+
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+      <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
+    </if>
+
+    <!-- If we failed, check again in the Wow6432Node just in case -->
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+      <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.1\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
+    </if>
 
     <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
       <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
@@ -689,9 +698,6 @@
     <property name="dir.vs2005.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'lib\'))}" if="${BuildVC8}" />
     <property name="dir.vs2005.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'lib\amd64'))}" if="${BuildVC8}" />
     <property name="dir.vs2005.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'lib\ia64'))}" if="${BuildVC8}" />
-    <property name="dir.vs2005.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\'))}" if="${BuildVC8}" />
-    <property name="dir.vs2005.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC8}" />
-    <property name="dir.vs2005.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC8}" />
     <!-- override unversioned VC directories if VC2005 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC80Dir, 'bin'))}" if="${BuildVC8}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC80Dir, 'bin\x86_amd64'))}" if="${BuildVC8}" />
@@ -699,10 +705,7 @@
     <property name="dir.vc.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'lib\'))}" if="${BuildVC8}" />
     <property name="dir.vc.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'lib\amd64'))}" if="${BuildVC8}" />
     <property name="dir.vc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'lib\ia64'))}" if="${BuildVC8}" />
-    <property name="dir.vc.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\'))}" if="${BuildVC8}" />
-    <property name="dir.vc.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC8}" />
-    <property name="dir.vc.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC80Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC8}" />
-    
+
     <!-- set VC2010 LIB properties -->
     <property name="dir.vs2010.bin.x86" value="${string::to-lower(path::combine(VC100Dir, 'bin'))}" if="${BuildVC10}" />
     <property name="dir.vs2010.bin.x64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_amd64'))}" if="${BuildVC10}" />
@@ -710,9 +713,6 @@
     <property name="dir.vs2010.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'lib\'))}" if="${BuildVC10}" />
     <property name="dir.vs2010.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'lib\amd64'))}" if="${BuildVC10}" />
     <property name="dir.vs2010.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'lib\ia64'))}" if="${BuildVC10}" />
-    <property name="dir.vs2010.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\'))}" if="${BuildVC10}" />
-    <property name="dir.vs2010.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC10}" />
-    <property name="dir.vs2010.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC10}" />
     <!-- override unversioned VC directories if VC2010 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC100Dir, 'bin'))}" if="${BuildVC10}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC100Dir, 'bin\x86_amd64'))}" if="${BuildVC10}" />
@@ -720,10 +720,7 @@
     <property name="dir.vc.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'lib\'))}" if="${BuildVC10}" />
     <property name="dir.vc.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'lib\amd64'))}" if="${BuildVC10}" />
     <property name="dir.vc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'lib\ia64'))}" if="${BuildVC10}" />
-    <property name="dir.vc.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\'))}" if="${BuildVC10}" />
-    <property name="dir.vc.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC10}" />
-    <property name="dir.vc.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC100Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC10}" />
-    
+
     <!-- set VC2008 LIB properties -->
     <property name="dir.vs2008.bin.x86" value="${string::to-lower(path::combine(VC90Dir, 'bin'))}" if="${BuildVC9}" />
     <property name="dir.vs2008.bin.x64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_amd64'))}" if="${BuildVC9}" />
@@ -731,9 +728,6 @@
     <property name="dir.vs2008.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'lib\'))}" if="${BuildVC9}" />
     <property name="dir.vs2008.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'lib\amd64'))}" if="${BuildVC9}" />
     <property name="dir.vs2008.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'lib\ia64'))}" if="${BuildVC9}" />
-    <property name="dir.vs2008.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\'))}" if="${BuildVC9}" />
-    <property name="dir.vs2008.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC9}" />
-    <property name="dir.vs2008.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC9}" />
     <!-- override unversioned VC directories if VC2008 is installed -->
     <property name="dir.vc.bin.x86" value="${string::to-lower(path::combine(VC90Dir, 'bin'))}" if="${BuildVC9}" />
     <property name="dir.vc.bin.x64" value="${string::to-lower(path::combine(VC90Dir, 'bin\x86_amd64'))}" if="${BuildVC9}" />
@@ -741,9 +735,6 @@
     <property name="dir.vc.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'lib\'))}" if="${BuildVC9}" />
     <property name="dir.vc.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'lib\amd64'))}" if="${BuildVC9}" />
     <property name="dir.vc.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'lib\ia64'))}" if="${BuildVC9}" />
-    <property name="dir.vc.atlmfc.lib.x86" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\'))}" if="${BuildVC9}" />
-    <property name="dir.vc.atlmfc.lib.x64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\amd64'))}" if="${BuildVC9}" />
-    <property name="dir.vc.atlmfc.lib.ia64" value="${string::to-lower(path::combine(VC90Dir, 'atlmfc\lib\ia64'))}" if="${BuildVC9}" />
 
     <!-- set LIB properties -->
     <property name="dir.platformsdk.lib.x86" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib'))}" />
@@ -792,7 +783,6 @@
 
     <!-- set INC properties -->
     <property name="dir.vc.inc" value="${string::to-lower(path::combine(VCDir, 'include'))}" />
-    <property name="dir.vc.atlmfc.inc" value="${string::to-lower(path::combine(VCDir, 'atlmfc\include'))}" />
     <property name="dir.platformsdk.inc" value="${string::to-lower(path::combine(PlatformSDKDir, 'include'))}" />
     <property name="dir.netfxsdk2.inc" value="${string::to-lower(path::combine(PlatformSDKDir, 'include'))}" />
 
@@ -805,7 +795,7 @@
       we'll just build a big string.
     -->
     <property name="cl.standardIncludes" value="" />
-    <foreach property="incDir" item="String" delim=";" in="${dir.platformsdk.inc};${dir.vc.inc};${dir.netfxsdk2.inc};${dir.inc.dutil};${dir.vc.atlmfc.inc}">
+    <foreach property="incDir" item="String" delim=";" in="${dir.platformsdk.inc};${dir.vc.inc};${dir.netfxsdk2.inc};${dir.inc.dutil}">
       <property name="cl.standardIncludes" value="${cl.standardIncludes} /I &quot;${incDir}&quot;"/>
     </foreach>
 

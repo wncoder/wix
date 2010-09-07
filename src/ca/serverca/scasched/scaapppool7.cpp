@@ -610,7 +610,7 @@ static HRESULT AddAppPoolToList(
     )
 {
     HRESULT hr = S_OK;
-    SCA_APPPOOL* psap = static_cast<SCA_APPPOOL*>(MemAlloc(sizeof(**ppsapList), TRUE));
+    SCA_APPPOOL* psap = static_cast<SCA_APPPOOL*>(MemAlloc(sizeof(SCA_APPPOOL), TRUE));
     ExitOnNull(psap, hr, E_OUTOFMEMORY, "failed to allocate memory for new element in app pool list");
 
     psap->psapNext = *ppsapList;

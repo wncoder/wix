@@ -126,7 +126,6 @@
         <RegistryValue Name="wix200x.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix200x.targets" Type="string" />
         <RegistryValue Name="wix2010.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix2010.targets" Type="string" />
         <RegistryValue Name="wix.ca.targets.3.5" Value="[Dir_MSBuildMSWix3x]wix.ca.targets" Type="string" />
-        <RegistryValue Name="burn.targets.3.5" Value="[Dir_MSBuildMSWix3x]burn.targets" Type="string" />
     </RegistryKey>
 
 </Include>

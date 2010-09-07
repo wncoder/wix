@@ -1,5 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Items>
-  <Item Id="1" Name="Hello World Sample Product 1" Icon="ProductIcon1.png" />
-  <Item Id="2" Name="Hello World Sample Product 2" Icon="ProductIcon2.png" />
-</Items>

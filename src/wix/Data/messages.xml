@@ -2569,24 +2569,6 @@
             Path contains one or more invalid characters.
           </Instance>
         </Message>
-        <Message Id="InvalidStubExe" Number="338" SourceLineNumbers="no">
-            <Instance>
-                Stub executable '{0}' is not a valid Win32 executable.
-                <Parameter Type="System.String" Name="filename" />
-            </Instance>
-        </Message>
-        <Message Id="StubMissingWixburnSection" Number="339" SourceLineNumbers="no">
-            <Instance>
-                Stub executable '{0}' does not contain a .wixburn data section.
-                <Parameter Type="System.String" Name="filename" />
-            </Instance>
-        </Message>
-        <Message Id="StubWixburnSectionTooSmall" Number="340" SourceLineNumbers="no">
-            <Instance>
-                Stub executable '{0}' .wixburn data section is too small to store the Burn container header.
-                <Parameter Type="System.String" Name="filename" />
-            </Instance>
-        </Message>
         <Message Id="MissingBundleInformation" Number="341" SourceLineNumbers="no">
             <Instance>
                 The Bundle is missing '{0}' data, and cannot continue.
@@ -3460,52 +3442,6 @@
             <Instance>
                 Validator temporary directory located at '{0}'.
                 <Parameter Type="System.String" Name="directory" />
-            </Instance>
-        </Message>
-        <Message Id="GeneratingBundle" Number="9023" SourceLineNumbers="no">
-            <Instance>
-                Generating Burn bundle '{0}' from stub '{1}'.
-                <Parameter Type="System.String" Name="bundleFile" />
-                <Parameter Type="System.String" Name="stubFile" />
-            </Instance>
-        </Message>
-        <Message Id="ResolvingManifest" Number="9024" SourceLineNumbers="no">
-            <Instance>
-                Generating resolved manifest '{0}'.
-                <Parameter Type="System.String" Name="manifestFile" />
-            </Instance>
-        </Message>
-        <Message Id="LoadingPayload" Number="9025" SourceLineNumbers="no">
-            <Instance>
-                Loading payload '{0}' into container.
-                <Parameter Type="System.String" Name="payload" />
-            </Instance>
-        </Message>
-        <Message Id="BundleGuid" Number="9026" SourceLineNumbers="no">
-            <Instance>
-                Assigning bundle GUID '{0}'.
-                <Parameter Type="System.String" Name="bundleGuid" />
-            </Instance>
-        </Message>
-        <Message Id="CopyingExternalPayload" Number="9027" SourceLineNumbers="no">
-            <Instance>
-                Copying external payload from '{0}' to '{1}'.
-                <Parameter Type="System.String" Name="payload" />
-                <Parameter Type="System.String" Name="outputDirectory" />
-            </Instance>
-        </Message>
-        <Message Id="EmbeddingContainer" Number="9028" SourceLineNumbers="no">
-            <Instance>
-                Embedding container '{0}' ({1} bytes) with '{2}' compression.
-                <Parameter Type="System.String" Name="container" />
-                <Parameter Type="System.Int64" Name="size" />
-                <Parameter Type="System.String" Name="compression" />
-            </Instance>
-        </Message>
-        <Message Id="SwitchingToPerUserPackage" Number="9029" SourceLineNumbers="no">
-            <Instance>
-                Bundle switching from per-machine to per-user due to addition of per-user package: '{0}'.
-                <Parameter Type="System.String" Name="path" />
             </Instance>
         </Message>
         <Message Id="SetCabbingThreadCount" Number="9030" SourceLineNumbers="no">

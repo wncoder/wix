@@ -154,13 +154,6 @@
         <include name="CustomActionCPP_2005.zip" />
         <include name="CustomActionCPP_2008.zip" />
 
-        <!-- Burn -->
-        <include name="burnstub.exe" />
-        <include name="stdux.dll" />
-        <include name="stdux.png" />
-        <include name="thm.xml" />
-        <include name="tou.htm" />
-
         <!-- Lux -->
         <include name="lux.exe" />
         <include name="lux.exe.config" />
@@ -253,8 +246,6 @@
       </fileset>
       
       <fileset prefix="sdk/inc" basedir="${dir.target.wix}">
-        <include name="${dir.inc.burn}\IBurnCore.h" />
-        <include name="${dir.inc.burn}\IBurnUserExperience.h" />
         <include name="${dir.inc.dutil}\aclutil.h" />
         <include name="${dir.inc.dutil}\apuputil.h" />
         <include name="${dir.inc.dutil}\atomutil.h" />
@@ -311,14 +302,6 @@
         <include name="${dir.target.wix.ia64}\dutil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
         <include name="${dir.target.wix.ia64}\dutil_2010_ia64.lib" if="${BuildVC10 and ia64}" />
 
-        <include name="buxutil_2005.lib" if="${BuildVC8}" />
-        <include name="buxutil_2008.lib" if="${BuildVC9}" />
-        <include name="buxutil_2010.lib" if="${BuildVC10}" />
-
-        <include name="${dir.target.wix.x64}\buxutil_2005_x64.lib" if="${BuildVC8}" />
-        <include name="${dir.target.wix.x64}\buxutil_2008_x64.lib" if="${BuildVC9}" />
-        <include name="${dir.target.wix.x64}\buxutil_2010_x64.lib" if="${BuildVC10}" />
-
         <include name="wcautil_2005.lib" if="${BuildVC8}" />
         <include name="wcautil_2008.lib" if="${BuildVC9}" />
         <include name="wcautil_2010.lib" if="${BuildVC10}" />
@@ -338,7 +321,6 @@
         <include name="**/*.bat" />
         <include name="**/*.bmp" />
         <include name="**/*.build" />
-        <include name="**/*.burnproj" />
         <include name="**/*.cd" />
         <include name="**/*.config" />
         <include name="**/*.cpp" />

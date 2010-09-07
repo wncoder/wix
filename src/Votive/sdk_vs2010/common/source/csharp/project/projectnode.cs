@@ -2272,9 +2272,11 @@ namespace Microsoft.VisualStudio.Package
                 // See if the parent node already exist in the hierarchy
                 uint parentItemID;
                 string path = Path.Combine(this.ProjectFolder, dependentOf);
-                ErrorHandler.ThrowOnFailure(this.ParseCanonicalName(path, out parentItemID));
-                if (parentItemID != 0)
+                this.ParseCanonicalName(path, out parentItemID);
+                if ((uint)VSConstants.VSITEMID.Nil != parentItemID)
+                {
                     parent = this.NodeFromItemId(parentItemID);
+                }
                 Debug.Assert(parent != null, "File dependent upon a non existing item or circular dependency. Ignoring the DependentUpon metadata");
             }
 
@@ -2826,8 +2828,8 @@ namespace Microsoft.VisualStudio.Package
             Url url = new Url(this.BaseURI, path);
             string strFullPath = url.AbsoluteUrl;
             // Folders end in our storage with a backslash, so add one...
-            ErrorHandler.ThrowOnFailure(this.ParseCanonicalName(strFullPath, out uiItemId));
-            if (uiItemId != 0)
+            this.ParseCanonicalName(strFullPath, out uiItemId);
+            if ((uint)VSConstants.VSITEMID.Nil != uiItemId)
             {
                 Debug.Assert(this.NodeFromItemId(uiItemId) is FolderNode, "Not a FolderNode");
                 folderNode = (FolderNode)this.NodeFromItemId(uiItemId);

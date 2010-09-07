@@ -1244,3 +1244,17 @@ NSleigh: heat support for .reg files.
 
 WixBuild: Version 3.5.2030.0
 
+RobMen: SFBUG:3039203 - set both VC2008 and VC2010 vars since we use both.
+        Add support for Windows 7 and .NET Framework 4.0 SDK
+        Remove ATL/MFC requirement since Burn doesn't need it now.
+
+RobMen: Remove Burn from WiX v3.5.
+
+EricStJ: SFBUG: 3007090, 3017579 - Error messages when Test project
+         is in same sollution as Wix Project
+
+EricStJ: SFBUG: 3057922 - Applying custom Wix template containing binaries
+         corrupts the files.
+
+WixBuild: Version 3.5.2103.0
+
