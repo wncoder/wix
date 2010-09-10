@@ -1258,3 +1258,10 @@ EricStJ: SFBUG: 3057922 - Applying custom Wix template containing binaries
 
 WixBuild: Version 3.5.2103.0
 
+MikeHo: Fix ScaVirtualDirsRead7 to prevent heap buffer overrun.
+
+EricStJ: SFBUG: 3062489 - Wix.targets doesn't work with MSBuild 2.0
+         SFBUG: 3062699 - Clean doesn't clean localized MSIs
+
+WixBuild: Version 3.5.2110.0
+

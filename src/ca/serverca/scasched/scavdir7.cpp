@@ -142,7 +142,7 @@ HRESULT __stdcall ScaVirtualDirsRead7(
         ExitOnFailure(hr, "Failed to get TargetPath for Directory for VirtualDir");
 
         // remove trailing backslash(es)
-        while (lstrlenW(wzTargetPath) > 0 && pwzData[lstrlenW(wzTargetPath)-1] == L'\\')
+        while (lstrlenW(wzTargetPath) > 0 && wzTargetPath[lstrlenW(wzTargetPath)-1] == L'\\')
         {
             wzTargetPath[lstrlenW(wzTargetPath)-1] = 0;
         }
