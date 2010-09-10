@@ -61,10 +61,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnDetectRelatedMsiPackage(
+            [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.LPWStr)] string wzProductCode,
             [MarshalAs(UnmanagedType.Bool)] bool fPerMachine,
             [MarshalAs(UnmanagedType.U8)] long dw64Version,
             [MarshalAs(UnmanagedType.U4)] RelatedOperation operation
+            );
+
+        [PreserveSig]
+        [return: MarshalAs(UnmanagedType.I4)]
+        Result OnDetectTargetMsiPackage(
+            [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
+            [MarshalAs(UnmanagedType.LPWStr)] string wzProductCode,
+            [MarshalAs(UnmanagedType.U4)] PackageState patchState
             );
 
         [PreserveSig]
@@ -102,6 +111,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnPlanPackageBegin(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
+            [MarshalAs(UnmanagedType.U4)] ref RequestState pRequestedState
+            );
+
+        [PreserveSig]
+        [return: MarshalAs(UnmanagedType.I4)]
+        Result OnPlanTargetMsiPackage(
+            [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
+            [MarshalAs(UnmanagedType.LPWStr)] string wzProductCode,
             [MarshalAs(UnmanagedType.U4)] ref RequestState pRequestedState
             );
 

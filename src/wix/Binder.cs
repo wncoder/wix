@@ -3310,6 +3310,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         writer.WriteAttributeString("ProductCode", package.ProductCode);
                         writer.WriteAttributeString("Version", package.Version);
                     }
+                    else if (Compiler.ChainPackageType.Msp == package.ChainPackageType)
+                    {
+                        writer.WriteAttributeString("PatchCode", package.PatchCode);
+                        writer.WriteAttributeString("PatchXml", package.PatchXml);
+                    }
                     else if (Compiler.ChainPackageType.Msu == package.ChainPackageType)
                     {
                         writer.WriteAttributeString("DetectCondition", package.DetectCondition);
@@ -6192,6 +6197,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public bool PerMachine { get; private set; }
             public string ProductCode { get; private set; }
             public string PatchCode { get; private set; }
+            public string PatchXml { get; private set; }
             public bool Register { get; private set; }
             public bool Cache { get; private set; }
             public string CacheId { get; private set; }
@@ -6387,6 +6393,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         this.PatchCode = sumInfo.RevisionNumber.Substring(0, 38);
                     }
+
+                    this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
                 }
                 catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
                 {

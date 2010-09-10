@@ -65,7 +65,7 @@ enum WM_STDUX
 class CStandardUserExperience : public IBootstrapperApplication
 {
 public: // IUnknown
-    virtual STDMETHODIMP QueryInterface( 
+    virtual STDMETHODIMP QueryInterface(
         __in REFIID riid,
         __out LPVOID *ppvObject
         )
@@ -187,14 +187,25 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
+        __in_z LPCWSTR wzPackageId,
         __in LPCWSTR wzProductCode,
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         ) 
     {
-        WriteEvent("OnDetectRelatedMsiPackage() - wzProductCode: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzProductCode, fPerMachine, dw64Version, operation);
+        WriteEvent("OnDetectRelatedMsiPackage() - wzPackageId: %ls, wzProductCode: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzPackageId, wzProductCode, fPerMachine, dw64Version, operation);
         return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
+    }
+
+    virtual STDMETHODIMP_(int) OnDetectTargetMsiPackage(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzProductCode,
+        __in BOOTSTRAPPER_PACKAGE_STATE patchState
+        )
+    {
+        WriteEvent("OnDetectTargetMsiPackage() - wzPackageId: %ls, wzProductCode: %ls, patchState: %u", wzPackageId, wzProductCode, patchState);
+        return IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectMsiFeature(
@@ -260,6 +271,17 @@ public: // IBootstrapperApplication
         // this is an opportunity to modify the REQUEST_STATE of this package
         // e.g. *pRequestedState = REQUEST_STATE_PRESENT;
         return IDOK;
+    }
+
+
+    virtual STDMETHODIMP_(int) OnPlanTargetMsiPackage(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzProductCode,
+        __inout BOOTSTRAPPER_REQUEST_STATE* pRequestedState
+        )
+    {
+        WriteEvent("OnPlanTargetMsiPackage() - wzPackageId: %ls, wzProductCode: %ls, pRequestState: %d", wzPackageId, wzProductCode, *pRequestedState);
+        return IDNOACTION;
     }
 
 

@@ -2229,17 +2229,12 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     </CreateItem>
 
     <!-- Record the link ouput(s) -->
-    <CreateItem Include="@(TargetOutput)" Condition="Exists('%(FullPath)')">
-      <Output TaskParameter="Include" ItemName="FileWrites" />
+    <!-- Stuff into an itemgroup -->
+    <CreateItem Include="$(TargetPath);$(TargetPdbPath)">
+      <Output TaskParameter="Include" ItemName="_TempTargetOutputs" />
     </CreateItem>
 
-    <!--Stuff into an itemgroup-->
-    <CreateItem Include="$(TargetPdbPath)">
-      <Output TaskParameter="Include" ItemName="_TempTargetPdbPath" />
-    </CreateItem>
-    
-    <!-- Record the wixpdb file(s) generated -->
-    <CreateItem Include="@(_TempTargetPdbPath)" Condition="Exists('%(FullPath)')">
+    <CreateItem Include="@(_TempTargetOutputs)" Condition="Exists('%(FullPath)')">
       <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
   </Target>

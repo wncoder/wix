@@ -219,8 +219,15 @@ HRESULT RssUpdateGetAppInfo(
 
     if (ppwzApplicationPath)
     {
-        hr = WiuGetComponentPath(wzApplicationId, wzApplicationId, ppwzApplicationPath);
+        INSTALLSTATE is = INSTALLSTATE_UNKNOWN;
+
+        hr = WiuGetComponentPath(wzApplicationId, wzApplicationId, &is, ppwzApplicationPath);
         ExitOnFailure(hr, "Failed to get application path.");
+
+        if (INSTALLSTATE_LOCAL != is)
+        {
+            hr = E_NOTFOUND;
+        }
     }
 
 LExit:

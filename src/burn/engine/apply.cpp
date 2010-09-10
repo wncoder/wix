@@ -125,6 +125,14 @@ static HRESULT ExecuteMsiPackage(
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
+static HRESULT ExecuteMspPackage(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BURN_EXECUTE_CONTEXT* pContext,
+    __in BOOL fRollback,
+    __out BOOL* pfSuspend,
+    __out BOOTSTRAPPER_APPLY_RESTART* pRestart
+    );
 static HRESULT ExecuteMsuPackage(
     __in BURN_ENGINE_STATE* pEngineState,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
@@ -139,8 +147,8 @@ static int GenericExecuteProgress(
     __in DWORD dwTotal
     );
 static int MsiExecuteMessageHandler(
-    __in LPVOID pvContext,
-    __in BURN_MSI_EXECUTE_MESSAGE* pMessage
+    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
+    __in_opt LPVOID pvContext
     );
 static HRESULT ReportOverallProgressTicks(
     __in BURN_USER_EXPERIENCE* pUX,
@@ -888,6 +896,11 @@ static HRESULT DoExecuteActions(
             ExitOnFailure(hr, "Failed to execute MSI package.");
             break;
 
+        case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
+            hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
+            ExitOnFailure(hr, "Failed to execute MSP package.");
+            break;
+
         case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
             hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
             ExitOnFailure(hr, "Failed to execute MSU package.");
@@ -964,6 +977,12 @@ static HRESULT DoRollbackActions(
             case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
                 hr = ExecuteMsiPackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSI package.");
+                hr = S_OK;
+                break;
+
+            case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
+                hr = ExecuteMspPackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
+                TraceError(hr, "Failed to rollback MSP package.");
                 hr = S_OK;
                 break;
 
@@ -1084,6 +1103,49 @@ LExit:
     return hr;
 }
 
+static HRESULT ExecuteMspPackage(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BURN_EXECUTE_CONTEXT* pContext,
+    __in BOOL fRollback,
+    __out BOOL* pfSuspend,
+    __out BOOTSTRAPPER_APPLY_RESTART* pRestart
+    )
+{
+    HRESULT hr = S_OK;
+    HRESULT hrExecute = S_OK;
+    int nResult = 0;
+
+    pContext->pExecutingPackage = pExecuteAction->mspTarget.pPackage;
+
+    // send package execute begin to UX
+    nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->mspTarget.pPackage->sczId, !fRollback);
+    hr = HRESULT_FROM_VIEW(nResult);
+    ExitOnRootFailure(hr, "UX aborted execute MSP package begin.");
+
+    // execute package
+    if (pExecuteAction->mspTarget.fPerMachineTarget)
+    {
+        hrExecute = ElevationExecuteMspPackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        ExitOnFailure(hrExecute, "Failed to configure per-machine MSP package.");
+    }
+    else
+    {
+        hrExecute = MspEngineExecutePackage(pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        ExitOnFailure(hrExecute, "Failed to configure per-user MSP package.");
+    }
+
+    pContext->cExecutedPackages += fRollback ? -1 : 1;
+    (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
+
+    hr = ReportOverallProgressTicks(&pEngineState->userExperience, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
+    ExitOnRootFailure(hr, "UX aborted MSP package execute progress.");
+
+LExit:
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, pRestart, pfSuspend);
+    return hr;
+}
+
 static HRESULT ExecuteMsuPackage(
     __in BURN_ENGINE_STATE* pEngineState,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
@@ -1148,27 +1210,27 @@ static int GenericExecuteProgress(
 }
 
 static int MsiExecuteMessageHandler(
-    __in LPVOID pvContext,
-    __in BURN_MSI_EXECUTE_MESSAGE* pMessage
+    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
+    __in_opt LPVOID pvContext
     )
 {
     BURN_EXECUTE_CONTEXT* pContext = (BURN_EXECUTE_CONTEXT*)pvContext;
 
     switch (pMessage->type)
     {
-    case BURN_MSI_EXECUTE_MESSAGE_PROGRESS:
+    case WIU_MSI_EXECUTE_MESSAGE_PROGRESS:
         {
         DWORD dwOverallProgress = ((pContext->cExecutedPackages * 100 + pMessage->progress.dwPercentage) * 100) / (pContext->cExecutePackagesTotal * 100);
         return pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
         }
 
-    case BURN_MSI_EXECUTE_MESSAGE_ERROR:
+    case WIU_MSI_EXECUTE_MESSAGE_ERROR:
         return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags);
 
-    case BURN_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
+    case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
         return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage);
 
-    case BURN_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
+    case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
         return pContext->pUX->pUserExperience->OnExecuteMsiFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
 
     default:

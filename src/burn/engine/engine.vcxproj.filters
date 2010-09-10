@@ -78,9 +78,6 @@
     <ClCompile Include="variant.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BurnCoreForUX.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="downloadengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -91,6 +88,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="bitsengine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineForApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mspengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -161,16 +164,7 @@
     <ClInclude Include="plan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BurnCoreForUX.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="downloadengine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\IBurnCore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inc\IBurnUserExperience.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="apply.h">
@@ -182,11 +176,23 @@
     <ClInclude Include="bitsengine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\inc\IBootstrapperEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\inc\IBootstrapperApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineForApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mspengine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="core.mc" />
+    <CustomBuild Include="engine.mc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="core.build" />
+    <None Include="engine.build" />
   </ItemGroup>
 </Project>

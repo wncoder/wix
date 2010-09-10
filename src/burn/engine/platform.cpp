@@ -22,17 +22,6 @@
 // variables
 
 PFN_INITIATESYSTEMSHUTDOWNEXW vpfnInitiateSystemShutdownExW;
-PFN_MSIENABLELOGW vpfnMsiEnableLogW;
-PFN_MSIGETCOMPONENTPATHW vpfnMsiGetComponentPathW;
-PFN_MSILOCATECOMPONENTW vpfnMsiLocateComponentW;
-PFN_MSIGETPRODUCTINFOEXW vpfnMsiGetProductInfoExW;
-PFN_MSIQUERYFEATURESTATEW vpfnMsiQueryFeatureStateW;
-PFN_MSIINSTALLPRODUCTW vpfnMsiInstallProductW;
-PFN_MSICONFIGUREPRODUCTEXW vpfnMsiConfigureProductExW;
-PFN_MSISETINTERNALUI vpfnMsiSetInternalUI;
-PFN_MSISETEXTERNALUIRECORD vpfnMsiSetExternalUIRecord;
-PFN_MSISETEXTERNALUIW vpfnMsiSetExternalUIW;
-PFN_MSIENUMRELATEDPRODUCTSW vpfnMsiEnumRelatedProductsW;
 PFN_SHELLEXECUTEEXW vpfnShellExecuteExW;
 
 
@@ -40,18 +29,6 @@ PFN_SHELLEXECUTEEXW vpfnShellExecuteExW;
 
 extern "C" void PlatformInitialize()
 {
-    HMODULE hMsi = ::GetModuleHandleW(L"msi");
     vpfnInitiateSystemShutdownExW = ::InitiateSystemShutdownExW;
-    vpfnMsiConfigureProductExW = ::MsiConfigureProductExW;
-    vpfnMsiEnableLogW = ::MsiEnableLogW;
-    vpfnMsiEnumRelatedProductsW = ::MsiEnumRelatedProductsW;
-    vpfnMsiGetComponentPathW = ::MsiGetComponentPathW;
-    vpfnMsiGetProductInfoExW = ::MsiGetProductInfoExW;
-    vpfnMsiInstallProductW = ::MsiInstallProductW;
-    vpfnMsiLocateComponentW = ::MsiLocateComponentW;
-    vpfnMsiQueryFeatureStateW = ::MsiQueryFeatureStateW;
-    vpfnMsiSetInternalUI = ::MsiSetInternalUI;
-    vpfnMsiSetExternalUIRecord = (PFN_MSISETEXTERNALUIRECORD)::GetProcAddress(hMsi, "MsiSetExternalUIRecord");
-    vpfnMsiSetExternalUIW = ::MsiSetExternalUIW;
     vpfnShellExecuteExW = ::ShellExecuteExW;
 }

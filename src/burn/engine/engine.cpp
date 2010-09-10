@@ -54,9 +54,10 @@ extern "C" HRESULT EngineRun(
 {
     HRESULT hr = S_OK;
     BOOL fComInitialized = FALSE;
-    BOOL fRegInitialized = FALSE;
-    BOOL fXmlInitialized = FALSE;
     BOOL fLogInitialized = FALSE;
+    BOOL fRegInitialized = FALSE;
+    BOOL fWiuInitialized = FALSE;
+    BOOL fXmlInitialized = FALSE;
     BURN_ENGINE_STATE engineState = { };
     BOOL fRestart = FALSE;
 
@@ -82,6 +83,11 @@ extern "C" HRESULT EngineRun(
     hr = RegInitialize();
     ExitOnFailure(hr, "Failed to initialize Regutil.");
     fRegInitialized = TRUE;
+
+    // initialize WI util
+    hr = WiuInitialize();
+    ExitOnFailure(hr, "Failed to initialize Wiutil.");
+    fWiuInitialized = TRUE;
 
     // initialize XML util
     hr = XmlInitialize();
@@ -135,14 +141,21 @@ LExit:
         LogUninitialize(FALSE);
     }
 
-    if (fRegInitialized)
-    {
-        RegUninitialize();
-    }
     if (fXmlInitialized)
     {
         XmlUninitialize();
     }
+
+    if (fWiuInitialized)
+    {
+        WiuUninitialize();
+    }
+
+    if (fRegInitialized)
+    {
+        RegUninitialize();
+    }
+
     if (fComInitialized)
     {
         ::CoUninitialize();

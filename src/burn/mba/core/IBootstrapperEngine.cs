@@ -195,6 +195,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         Absent,
         Cached,
         Present,
+        Superseded,
+        Obsolete,
     }
 
     /// <summary>

@@ -122,9 +122,11 @@ extern "C" HRESULT MsuEnginePlanPackage(
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
+
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             execute = fAllowUninstall ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
+
         default:
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         }
@@ -137,9 +139,7 @@ extern "C" HRESULT MsuEnginePlanPackage(
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            execute = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
+
         default:
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         }
@@ -156,13 +156,10 @@ extern "C" HRESULT MsuEnginePlanPackage(
     case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
         switch (pPackage->requested)
         {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
             break;
+
         default:
             rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
@@ -176,9 +173,7 @@ extern "C" HRESULT MsuEnginePlanPackage(
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             rollback = fAllowUninstall ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
+
         default:
             rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;

@@ -44,6 +44,7 @@ enum BURN_EXECUTE_ACTION_TYPE
     BURN_EXECUTE_ACTION_TYPE_WAIT,
     BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE,
+    BURN_EXECUTE_ACTION_TYPE_MSP_TARGET,
     BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_START,
@@ -111,6 +112,12 @@ typedef struct _BURN_CACHE_ACTION
     };
 } BURN_CACHE_ACTION;
 
+typedef struct _BURN_ORDERED_PATCHES
+{
+    DWORD dwOrder;
+    BURN_PACKAGE* pPackage;
+} BURN_ORDERED_PATCHES;
+
 typedef struct _BURN_EXECUTE_ACTION
 {
     BURN_EXECUTE_ACTION_TYPE type;
@@ -138,9 +145,20 @@ typedef struct _BURN_EXECUTE_ACTION
 
             BOOTSTRAPPER_FEATURE_ACTION* rgFeatures;
 
-            BURN_PACKAGE** rgpPatches;
+            BURN_ORDERED_PATCHES* rgOrderedPatches;
             DWORD cPatches;
         } msiPackage;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
+            LPWSTR sczTargetProductCode;
+            BOOL fPerMachineTarget;
+            LPWSTR sczLogPath;
+            BOOTSTRAPPER_ACTION_STATE action;
+
+            BURN_ORDERED_PATCHES* rgOrderedPatches;
+            DWORD cOrderedPatches;
+        } mspTarget;
         struct
         {
             BURN_PACKAGE* pPackage;

@@ -269,6 +269,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     [Serializable]
     public class DetectRelatedMsiPackageEventArgs : ResultEventArgs
     {
+        private string packageId;
         private string productCode;
         private bool perMachine;
         private Version version;
@@ -277,16 +278,26 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Creates a new instance of the <see cref="DetectRelatedMsiPackageEventArgs"/> class.
         /// </summary>
+        /// <param name="packageId">The identity of the package detecting.</param>
         /// <param name="productCode">The identity of the related package detected.</param>
         /// <param name="perMachine">Whether the detected package is per machine.</param>
         /// <param name="version">The version of the related package detected.</param>
         /// <param name="operation">The operation that will be taken on the detected package.</param>
-        public DetectRelatedMsiPackageEventArgs(string productCode, bool perMachine, long version, RelatedOperation operation)
+        public DetectRelatedMsiPackageEventArgs(string packageId, string productCode, bool perMachine, long version, RelatedOperation operation)
         {
+            this.packageId = packageId;
             this.productCode = productCode;
             this.perMachine = perMachine;
             this.version = new Version((int)(version >> 48 & 0xFFFF), (int)(version >> 32 & 0xFFFF), (int)(version >> 16 & 0xFFFF), (int)(version & 0xFFFF));
             this.operation = operation;
+        }
+
+        /// <summary>
+        /// Gets the identity of the product's package detected.
+        /// </summary>
+        public string PackageId
+        {
+            get { return this.packageId; }
         }
 
         /// <summary>
@@ -319,6 +330,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public RelatedOperation Operation
         {
             get { return this.operation; }
+        }
+    }
+
+    /// <summary>
+    /// Additional arguments used when a target MSI package has been detected.
+    /// </summary>
+    public class DetectTargetMsiPackageEventArgs : ResultEventArgs
+    {
+        private string packageId;
+        private string featureId;
+        private PackageState state;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="DetectMsiFeatureEventArgs"/> class.
+        /// </summary>
+        /// <param name="packageId">Detected package identifier.</param>
+        /// <param name="productCode">Detected product code.</param>
+        /// <param name="state">Package state detected.</param>
+        public DetectTargetMsiPackageEventArgs(string packageId, string productCode, PackageState state)
+        {
+            this.packageId = packageId;
+            this.featureId = productCode;
+            this.state = state;
+        }
+
+        /// <summary>
+        /// Gets the identity of the target's package detected.
+        /// </summary>
+        public string PackageId
+        {
+            get { return this.packageId; }
+        }
+
+        /// <summary>
+        /// Gets the product code of the target MSI detected.
+        /// </summary>
+        public string ProductCode
+        {
+            get { return this.ProductCode; }
+        }
+
+        /// <summary>
+        /// Gets the detected patch package state.
+        /// </summary>
+        public PackageState State
+        {
+            get { return this.state; }
         }
     }
 
@@ -517,6 +575,55 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         /// <summary>
         /// Gets or sets the requested state for the package.
+        /// </summary>
+        public RequestState State
+        {
+            get { return this.state; }
+            set { this.state = value; }
+        }
+    }
+
+    /// <summary>
+    /// Additional arguments used when engine is about to plan a MSP applied to a target MSI package.
+    /// </summary>
+    [Serializable]
+    public class PlanTargetMsiPackageEventArgs : ResultEventArgs
+    {
+        private string packageId;
+        private string productCode;
+        private RequestState state;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="PlanMsiFeatureEventArgs"/> class.
+        /// </summary>
+        /// <param name="packageId">Package identifier of the patch being planned.</param>
+        /// <param name="productCode">Product code identifier being planned.</param>
+        /// <param name="state">Package state of the patch being planned.</param>
+        public PlanTargetMsiPackageEventArgs(string packageId, string productCode, RequestState state)
+        {
+            this.packageId = packageId;
+            this.productCode = productCode;
+            this.state = state;
+        }
+
+        /// <summary>
+        /// Gets the identity of the feature's package to plan.
+        /// </summary>
+        public string PackageId
+        {
+            get { return this.packageId; }
+        }
+
+        /// <summary>
+        /// Gets the identity of the feature to plan.
+        /// </summary>
+        public string ProductCode
+        {
+            get { return this.productCode; }
+        }
+
+        /// <summary>
+        /// Gets or sets the state of the patch to use by planning.
         /// </summary>
         public RequestState State
         {

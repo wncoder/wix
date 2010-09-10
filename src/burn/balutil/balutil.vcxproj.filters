@@ -19,9 +19,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\balBaseUserExperience.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\balcondition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -29,6 +26,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="precomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\BalBaseBootstrapperApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

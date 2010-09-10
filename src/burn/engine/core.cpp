@@ -216,6 +216,15 @@ extern "C" HRESULT CoreDetect(
     hr = RegistrationDetectRelatedBundles(&pEngineState->userExperience, &pEngineState->registration);
     ExitOnFailure(hr, "Failed to detect bundles.");
 
+    // Detecting MSPs requires special initialization before processing each package but
+    // only do the detection if there are actually patch packages to detect because it
+    // can be expensive.
+    if (pEngineState->packages.cPatchInfo)
+    {
+        hr = MspEngineDetectInitialize(&pEngineState->packages);
+        ExitOnFailure(hr, "Failed to initialize MSP engine detection.");
+    }
+
     for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
     {
         pPackage = pEngineState->packages.rgPackages + i;
@@ -237,6 +246,10 @@ extern "C" HRESULT CoreDetect(
 
         case BURN_PACKAGE_TYPE_MSI:
             hr = MsiEngineDetectPackage(pPackage, &pEngineState->userExperience);
+            break;
+
+        case BURN_PACKAGE_TYPE_MSP:
+            hr = MspEngineDetectPackage(pPackage, &pEngineState->userExperience);
             break;
 
         case BURN_PACKAGE_TYPE_MSU:
@@ -372,9 +385,9 @@ extern "C" HRESULT CorePlan(
                 hr = MsiEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hCheckpointEvent, &pEngineState->userExperience, &executeAction, &rollbackAction);
                 break;
 
-            //case BURN_PACKAGE_TYPE_MSP:
-            //    hr = MspEnginePlanPackage(pPackage, &pEngineState->variables, &pEngineState->plan, hCheckpointEvent, &executeAction, &rollbackAction);
-            //    break;
+            case BURN_PACKAGE_TYPE_MSP:
+                hr = MspEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hCheckpointEvent, &pEngineState->userExperience, &executeAction, &rollbackAction);
+                break;
 
             case BURN_PACKAGE_TYPE_MSU:
                 hr = MsuEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hCheckpointEvent, &executeAction, &rollbackAction);

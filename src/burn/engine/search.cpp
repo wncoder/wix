@@ -58,12 +58,6 @@ static HRESULT MsiProductSearch(
     __in BURN_SEARCH* pSearch,
     __in BURN_VARIABLES* pVariables
     );
-static HRESULT GetMsiProductInfo(
-    __in_z LPCWSTR wzProductCode,
-    __in MSIINSTALLCONTEXT dwContext,
-    __in_z LPCWSTR wzProperty,
-    __deref_out_z LPWSTR* psczValue
-    );
 static HRESULT MsiFeatureSearch(
     __in BURN_SEARCH* pSearch,
     __in BURN_VARIABLES* pVariables
@@ -863,7 +857,6 @@ static HRESULT MsiComponentSearch(
     LPWSTR sczComponentId = NULL;
     LPWSTR sczProductCode = NULL;
     LPWSTR sczPath = NULL;
-    DWORD cchPath = MAX_PATH;
 
     // format component id string
     hr = VariableFormatString(pVariables, pSearch->MsiComponentSearch.sczComponentId, &sczComponentId, NULL);
@@ -876,28 +869,13 @@ static HRESULT MsiComponentSearch(
         ExitOnFailure(hr, "Failed to format product code string.");
     }
 
-    for (DWORD cRetry = 0; cRetry < 2; ++cRetry)
+    if (sczProductCode)
     {
-        if (BURN_MSI_COMPONENT_SEARCH_TYPE_STATE != pSearch->MsiComponentSearch.Type)
-        {
-            // allocate path string
-            hr = StrAlloc(&sczPath, ++cchPath);
-            ExitOnFailure(hr, "Failed to reallocate string.");
-        }
-
-        if (sczProductCode)
-        {
-            is = vpfnMsiGetComponentPathW(sczProductCode, sczComponentId, sczPath, &cchPath);
-        }
-        else
-        {
-            is = vpfnMsiLocateComponentW(sczComponentId, sczPath, &cchPath);
-        }
-
-        if (INSTALLSTATE_MOREDATA != is || !sczPath)
-        {
-            break;
-        }
+        hr = WiuGetComponentPath(sczProductCode, sczComponentId, &is, &sczPath);
+    }
+    else
+    {
+        hr = WiuLocateComponent(sczComponentId, &is, &sczPath);
     }
 
     if (INSTALLSTATE_SOURCEABSENT == is)
@@ -987,26 +965,18 @@ static HRESULT MsiProductSearch(
 
     // get product info
     value.Type = BURN_VARIANT_TYPE_STRING;
-    hr = GetMsiProductInfo(sczProductCode, MSIINSTALLCONTEXT_USERMANAGED, wzProperty, &value.sczValue);
+    hr = WiuGetProductInfo(sczProductCode, wzProperty, &value.sczValue);
     if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
     {
-        hr = GetMsiProductInfo(sczProductCode, MSIINSTALLCONTEXT_USERUNMANAGED, wzProperty, &value.sczValue);
-        if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
-        {
-            hr = GetMsiProductInfo(sczProductCode, MSIINSTALLCONTEXT_MACHINE, wzProperty, &value.sczValue);
-            if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
-            {
-                LogStringLine(REPORT_STANDARD, "Product not found: %ls", sczProductCode);
+        LogStringLine(REPORT_STANDARD, "Product not found: %ls", sczProductCode);
 
-                // set value to indicate absent
-                value.Type = BURN_VARIANT_TYPE_NUMERIC;
-                value.llValue = INSTALLSTATE_ABSENT;
+        // set value to indicate absent
+        value.Type = BURN_VARIANT_TYPE_NUMERIC;
+        value.llValue = INSTALLSTATE_ABSENT;
 
-                hr = S_OK;
-            }
-        }
+        hr = S_OK;
     }
-    ExitOnRootFailure(hr, "Failed to get product info.");
+    ExitOnFailure(hr, "Failed to get product info.");
 
     // change value type
     switch (pSearch->MsiProductSearch.Type)
@@ -1037,36 +1007,6 @@ LExit:
 
     ReleaseStr(sczProductCode);
     BVariantUninitialize(&value);
-
-    return hr;
-}
-
-static HRESULT GetMsiProductInfo(
-    __in_z LPCWSTR wzProductCode,
-    __in MSIINSTALLCONTEXT dwContext,
-    __in_z LPCWSTR wzProperty,
-    __deref_out_z LPWSTR* psczValue
-    )
-{
-    HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
-    DWORD cchValue = MAX_PATH;
-
-    for (DWORD cRetry = 0; cRetry < 2; ++cRetry)
-    {
-        // allocate value string
-        hr = StrAlloc(psczValue, ++cchValue);
-        ExitOnFailure(hr, "Failed to allocate string.");
-
-        er = vpfnMsiGetProductInfoExW(wzProductCode, NULL, dwContext, wzProperty, *psczValue, &cchValue);
-        if (ERROR_MORE_DATA != er)
-        {
-            break;
-        }
-    }
-    hr = HRESULT_FROM_WIN32(er);
-
-LExit:
 
     return hr;
 }

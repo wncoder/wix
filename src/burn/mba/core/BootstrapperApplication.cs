@@ -75,6 +75,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public event EventHandler<DetectRelatedMsiPackageEventArgs> DetectRelatedMsiPackage;
 
         /// <summary>
+        /// Fired when an MSP package detects a target MSI has been detected.
+        /// </summary>
+        public event EventHandler<DetectTargetMsiPackageEventArgs> DetectTargetMsiPackage;
+
+        /// <summary>
         /// Fired when a feature in an MSI package has been detected.
         /// </summary>
         public event EventHandler<DetectMsiFeatureEventArgs> DetectMsiFeature;
@@ -103,6 +108,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Fired when the engine has begun planning the installation of a specific package.
         /// </summary>
         public event EventHandler<PlanPackageBeginEventArgs> PlanPackageBegin;
+
+        /// <summary>
+        /// Fired when the engine is about to plan the target MSI of a MSP package.
+        /// </summary>
+        public event EventHandler<PlanTargetMsiPackageEventArgs> PlanTargetMsiPackage;
 
         /// <summary>
         /// Fired when the engine is about to plan a feature in an MSI package.
@@ -389,6 +399,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
+        /// Called when an MSP package detects a target MSI has been detected.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        protected virtual void OnDetectTargetMsiPackage(DetectTargetMsiPackageEventArgs args)
+        {
+            EventHandler<DetectTargetMsiPackageEventArgs> handler = this.DetectTargetMsiPackage;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
         /// Called when an MSI feature has been detected for a package.
         /// </summary>
         /// <param name="args">Additional arguments for this event.</param>
@@ -460,6 +483,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         protected virtual void OnPlanPackageBegin(PlanPackageBeginEventArgs args)
         {
             EventHandler<PlanPackageBeginEventArgs> handler = this.PlanPackageBegin;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine is about to plan the target MSI of a MSP package.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        protected virtual void OnPlanTargetMsiPackage(PlanTargetMsiPackageEventArgs args)
+        {
+            EventHandler<PlanTargetMsiPackageEventArgs> handler = this.PlanTargetMsiPackage;
             if (null != handler)
             {
                 handler(this, args);
@@ -896,17 +932,25 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnDetectRelatedMsiPackage(string wzProductCode, bool fPerMachine, long version, RelatedOperation operation)
+        Result IBootstrapperApplication.OnDetectRelatedMsiPackage(string wzPackageId, string wzProductCode, bool fPerMachine, long version, RelatedOperation operation)
         {
-            DetectRelatedMsiPackageEventArgs args = new DetectRelatedMsiPackageEventArgs(wzProductCode, fPerMachine, version, operation);
+            DetectRelatedMsiPackageEventArgs args = new DetectRelatedMsiPackageEventArgs(wzPackageId, wzProductCode, fPerMachine, version, operation);
             this.OnDetectRelatedMsiPackage(args);
 
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnDetectMsiFeature(string wzProductCode, string wzFeatureId, FeatureState state)
+        Result IBootstrapperApplication.OnDetectTargetMsiPackage(string wzPackageId, string wzProductCode, PackageState patchState)
         {
-            DetectMsiFeatureEventArgs args = new DetectMsiFeatureEventArgs(wzProductCode, wzFeatureId, state);
+            DetectTargetMsiPackageEventArgs args = new DetectTargetMsiPackageEventArgs(wzPackageId, wzProductCode, patchState);
+            this.OnDetectTargetMsiPackage(args);
+
+            return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnDetectMsiFeature(string wzPackageId, string wzFeatureId, FeatureState state)
+        {
+            DetectMsiFeatureEventArgs args = new DetectMsiFeatureEventArgs(wzPackageId, wzFeatureId, state);
             this.OnDetectMsiFeature(args);
 
             return args.Result;
@@ -943,6 +987,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             PlanPackageBeginEventArgs args = new PlanPackageBeginEventArgs(wzPackageId, pRequestedState);
             this.OnPlanPackageBegin(args);
+
+            pRequestedState = args.State;
+            return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnPlanTargetMsiPackage(string wzPackageId, string wzProductCode, ref RequestState pRequestedState)
+        {
+            PlanTargetMsiPackageEventArgs args = new PlanTargetMsiPackageEventArgs(wzPackageId, wzProductCode, pRequestedState);
+            this.OnPlanTargetMsiPackage(args);
 
             pRequestedState = args.State;
             return args.Result;

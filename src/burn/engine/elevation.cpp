@@ -113,9 +113,16 @@ static HRESULT OnExecuteMsiPackage(
     __in BYTE* pbData,
     __in DWORD cbData
     );
+static HRESULT OnExecuteMspPackage(
+    __in HANDLE hPipe,
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_VARIABLES* pVariables,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    );
 static int MsiExecuteMessageHandler(
-    __in LPVOID pvContext,
-    __in BURN_MSI_EXECUTE_MESSAGE* pMessage
+    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
+    __in_opt LPVOID pvContext
     );
 static HRESULT OnExecuteMsuPackage(
     __in BURN_PACKAGES* pPackages,
@@ -693,7 +700,7 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
     SIZE_T cbData = 0;
     BURN_ELEVATION_MESSAGE msg = { };
     SIZE_T iData = 0;
-    BURN_MSI_EXECUTE_MESSAGE message = { };
+    WIU_MSI_EXECUTE_MESSAGE message = { };
     DWORD dwResult = 0;
     LPWSTR sczMessage = NULL;
 
@@ -734,18 +741,18 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
         {
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS:
             // read message parameters
-            message.type = BURN_MSI_EXECUTE_MESSAGE_PROGRESS;
+            message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
 
             hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, &message.progress.dwPercentage);
             ExitOnFailure(hr, "Failed to read progress.");
 
             // send message
-            dwResult = (DWORD)pfnMessageHandler(pvContext, &message);
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
             break;
 
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR:
             // read message parameters
-            message.type = BURN_MSI_EXECUTE_MESSAGE_ERROR;
+            message.type = WIU_MSI_EXECUTE_MESSAGE_ERROR;
 
             hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, &message.error.dwErrorCode);
             ExitOnFailure(hr, "Failed to read error code.");
@@ -758,12 +765,12 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
             message.error.wzMessage = sczMessage;
 
             // send message
-            dwResult = (DWORD)pfnMessageHandler(pvContext, &message);
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
             break;
 
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE:
             // read message parameters
-            message.type = BURN_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
+            message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
 
             hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, (DWORD*)&message.msiMessage.mt);
             ExitOnFailure(hr, "Failed to read message type.");
@@ -776,7 +783,7 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
             message.msiMessage.wzMessage = sczMessage;
 
             // send message
-            dwResult = (DWORD)pfnMessageHandler(pvContext, &message);
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
             break;
 
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_FILES_IN_USE:
@@ -818,7 +825,169 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
         // prepare next iteration
         ElevationMessageUninitialize(&msg);
         iData = 0;
-        memset(&message, 0, sizeof(BURN_MSI_EXECUTE_MESSAGE));
+        memset(&message, 0, sizeof(WIU_MSI_EXECUTE_MESSAGE));
+    }
+
+    if (S_FALSE == hr)
+    {
+        hr = S_OK;
+    }
+
+LExit:
+    ReleaseBuffer(pbData);
+    ElevationMessageUninitialize(&msg);
+    ReleaseStr(sczMessage);
+
+    return hr;
+}
+
+extern "C" HRESULT ElevationExecuteMspPackage(
+    __in HANDLE hPipe,
+    __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BURN_VARIABLES* pVariables,
+    __in BOOL fRollback,
+    __in PFN_MSIEXECUTEMESSAGEHANDLER pfnMessageHandler,
+    __in LPVOID pvContext,
+    __out BOOTSTRAPPER_APPLY_RESTART* pRestart
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+    BURN_ELEVATION_MESSAGE msg = { };
+    SIZE_T iData = 0;
+    WIU_MSI_EXECUTE_MESSAGE message = { };
+    DWORD dwResult = 0;
+    LPWSTR sczMessage = NULL;
+
+    // serialize message data
+    hr = BuffWriteString(&pbData, &cbData, pExecuteAction->mspTarget.pPackage->sczId);
+    ExitOnFailure(hr, "Failed to write package id to message buffer.");
+
+    hr = BuffWriteString(&pbData, &cbData, pExecuteAction->mspTarget.sczTargetProductCode);
+    ExitOnFailure(hr, "Failed to write target product code to message buffer.");
+
+    hr = BuffWriteString(&pbData, &cbData, pExecuteAction->mspTarget.sczLogPath);
+    ExitOnFailure(hr, "Failed to write package log to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->mspTarget.action);
+    ExitOnFailure(hr, "Failed to write action to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, pExecuteAction->mspTarget.cOrderedPatches);
+    ExitOnFailure(hr, "Failed to write count of ordered patches to message buffer.");
+
+    for (DWORD i = 0; i < pExecuteAction->mspTarget.cOrderedPatches; ++i)
+    {
+        hr = BuffWriteNumber(&pbData, &cbData, pExecuteAction->mspTarget.rgOrderedPatches[i].dwOrder);
+        ExitOnFailure(hr, "Failed to write ordered patch order to message buffer.");
+
+        hr = BuffWriteString(&pbData, &cbData, pExecuteAction->mspTarget.rgOrderedPatches[i].pPackage->sczId);
+        ExitOnFailure(hr, "Failed to write ordered patch id to message buffer.");
+    }
+
+    hr = VariableSerialize(pVariables, &pbData, &cbData);
+    ExitOnFailure(hr, "Failed to write variables.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fRollback);
+    ExitOnFailure(hr, "Failed to write rollback flag to message buffer.");
+
+    // post message
+    hr = ElevationPostMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE, pbData, cbData);
+    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE message to per-machine process.");
+
+    // pump messages from per-machine process
+    while (S_OK == (hr = ElevationGetMessage(hPipe, &msg)))
+    {
+        // Process the message.
+        switch (msg.dwMessage)
+        {
+        case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS:
+            // read message parameters
+            message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
+
+            hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, &message.progress.dwPercentage);
+            ExitOnFailure(hr, "Failed to read progress.");
+
+            // send message
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
+            break;
+
+        case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR:
+            // read message parameters
+            message.type = WIU_MSI_EXECUTE_MESSAGE_ERROR;
+
+            hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, &message.error.dwErrorCode);
+            ExitOnFailure(hr, "Failed to read error code.");
+
+            hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, (DWORD*)&message.error.uiFlags);
+            ExitOnFailure(hr, "Failed to read UI flags.");
+
+            hr = BuffReadString((BYTE*)msg.pvData, msg.cbData, &iData, &sczMessage);
+            ExitOnFailure(hr, "Failed to read message.");
+            message.error.wzMessage = sczMessage;
+
+            // send message
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
+            break;
+
+        case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE:
+            // read message parameters
+            message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
+
+            hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, (DWORD*)&message.msiMessage.mt);
+            ExitOnFailure(hr, "Failed to read message type.");
+
+            hr = BuffReadNumber((BYTE*)msg.pvData, msg.cbData, &iData, (DWORD*)&message.msiMessage.uiFlags);
+            ExitOnFailure(hr, "Failed to read UI flags.");
+
+            hr = BuffReadString((BYTE*)msg.pvData, msg.cbData, &iData, &sczMessage);
+            ExitOnFailure(hr, "Failed to read message.");
+            message.msiMessage.wzMessage = sczMessage;
+
+            // send message
+            dwResult = (DWORD)pfnMessageHandler(&message, pvContext);
+            break;
+
+        case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_FILES_IN_USE:
+            hr = OnExecuteMsiFilesInUse(msg.pvData, msg.cbData, pfnMessageHandler, pvContext, &dwResult);
+            break;
+
+        case BURN_ELEVATION_MESSAGE_TYPE_COMPLETE:
+            if (!msg.pvData || sizeof(HRESULT) != msg.cbData)
+            {
+                hr = E_INVALIDARG;
+                ExitOnFailure(hr, "Invalid data for complete message.");
+            }
+
+            hr = *(HRESULT*)msg.pvData;
+            if (HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED) == hr)
+            {
+                *pRestart = BOOTSTRAPPER_APPLY_RESTART_REQUIRED;
+                hr = S_OK;
+            }
+            else if (HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED) == hr)
+            {
+                *pRestart = BOOTSTRAPPER_APPLY_RESTART_INITIATED;
+                hr = S_OK;
+            }
+
+            ExitFunction();
+            break;
+
+        default:
+            hr = ProcessCommonPackageMessages(&msg, &dwResult);
+            ExitOnFailure(hr, "Failed to process common package message.");
+            break;
+        }
+
+        // post result
+        hr = ElevationPostMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_COMPLETE, &dwResult, sizeof(dwResult));
+        ExitOnFailure(hr, "Failed to post result to per-machine process.");
+
+        // prepare next iteration
+        ElevationMessageUninitialize(&msg);
+        iData = 0;
+        memset(&message, 0, sizeof(WIU_MSI_EXECUTE_MESSAGE));
     }
 
     if (S_FALSE == hr)
@@ -1104,6 +1273,10 @@ extern "C" HRESULT ElevationChildPumpMessages(
 
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE:
             hrResult = OnExecuteMsiPackage(hPipe, pPackages, pVariables, (BYTE*)msg.pvData, msg.cbData);
+            break;
+
+        case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE:
+            hrResult = OnExecuteMspPackage(hPipe, pPackages, pVariables, (BYTE*)msg.pvData, msg.cbData);
             break;
 
         case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE:
@@ -1427,7 +1600,7 @@ static HRESULT OnExecuteMsiFilesInUse(
     SIZE_T iData = 0;
     DWORD cFiles = 0;
     LPWSTR* rgwzFiles = NULL;
-    BURN_MSI_EXECUTE_MESSAGE message = { };
+    WIU_MSI_EXECUTE_MESSAGE message = { };
 
     // read message parameters
     hr = BuffReadNumber((BYTE*)pvData, cbData, &iData, &cFiles);
@@ -1443,10 +1616,10 @@ static HRESULT OnExecuteMsiFilesInUse(
     }
 
     // send message
-    message.type = BURN_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
+    message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
     message.msiFilesInUse.cFiles = cFiles;
     message.msiFilesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
-    *pdwResult = (DWORD)pfnMessageHandler(pvContext, &message);
+    *pdwResult = (DWORD)pfnMessageHandler(&message, pvContext);
 
 LExit:
     if (rgwzFiles)
@@ -1747,9 +1920,94 @@ LExit:
     return hr;
 }
 
+static HRESULT OnExecuteMspPackage(
+    __in HANDLE hPipe,
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_VARIABLES* pVariables,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    )
+{
+    HRESULT hr = S_OK;
+    SIZE_T iData = 0;
+    LPWSTR sczPackage = NULL;
+    BOOL fRollback = 0;
+    BURN_EXECUTE_ACTION executeAction = { };
+    BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
+
+    executeAction.type = BURN_EXECUTE_ACTION_TYPE_MSP_TARGET;
+
+    // deserialize message data
+    hr = BuffReadString(pbData, cbData, &iData, &sczPackage);
+    ExitOnFailure(hr, "Failed to read action.");
+
+    hr = PackageFindById(pPackages, sczPackage, &executeAction.mspTarget.pPackage);
+    ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
+
+    executeAction.mspTarget.fPerMachineTarget = TRUE; // we're in the elevated process, clearly we're targeting a per-machine product.
+
+    hr = BuffReadString(pbData, cbData, &iData, &executeAction.mspTarget.sczTargetProductCode);
+    ExitOnFailure(hr, "Failed to read package log.");
+
+    hr = BuffReadString(pbData, cbData, &iData, &executeAction.mspTarget.sczLogPath);
+    ExitOnFailure(hr, "Failed to read package log.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.mspTarget.action);
+    ExitOnFailure(hr, "Failed to read action.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.mspTarget.cOrderedPatches);
+    ExitOnFailure(hr, "Failed to read count of ordered patches.");
+
+    if (executeAction.mspTarget.cOrderedPatches)
+    {
+        executeAction.mspTarget.rgOrderedPatches = (BURN_ORDERED_PATCHES*)MemAlloc(executeAction.mspTarget.cOrderedPatches * sizeof(BURN_ORDERED_PATCHES), TRUE);
+        ExitOnNull(executeAction.mspTarget.rgOrderedPatches, hr, E_OUTOFMEMORY, "Failed to allocate memory for ordered patches.");
+
+        for (DWORD i = 0; i < executeAction.mspTarget.cOrderedPatches; ++i)
+        {
+            hr = BuffReadNumber(pbData, cbData, &iData, &executeAction.mspTarget.rgOrderedPatches->dwOrder);
+            ExitOnFailure(hr, "Failed to read ordered patch order number.");
+
+            hr = BuffReadString(pbData, cbData, &iData, &sczPackage);
+            ExitOnFailure(hr, "Failed to read ordered patch package id.");
+
+            hr = PackageFindById(pPackages, sczPackage, &executeAction.mspTarget.rgOrderedPatches->pPackage);
+            ExitOnFailure1(hr, "Failed to find ordered patch package: %ls", sczPackage);
+        }
+    }
+
+    hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
+    ExitOnFailure(hr, "Failed to read variables.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&fRollback);
+    ExitOnFailure(hr, "Failed to read rollback flag.");
+
+    // execute MSP package
+    hr = MspEngineExecutePackage(&executeAction, pVariables, fRollback, MsiExecuteMessageHandler, hPipe, &restart);
+    ExitOnFailure(hr, "Failed to execute MSP package.");
+
+LExit:
+    ReleaseStr(sczPackage);
+    PlanUninitializeExecuteAction(&executeAction);
+
+    if (SUCCEEDED(hr))
+    {
+        if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED);
+        }
+        else if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED);
+        }
+    }
+
+    return hr;
+}
+
 static int MsiExecuteMessageHandler(
-    __in LPVOID pvContext,
-    __in BURN_MSI_EXECUTE_MESSAGE* pMessage
+    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
+    __in_opt LPVOID pvContext
     )
 {
     HRESULT hr = S_OK;
@@ -1761,7 +2019,7 @@ static int MsiExecuteMessageHandler(
 
     switch (pMessage->type)
     {
-    case BURN_MSI_EXECUTE_MESSAGE_PROGRESS:
+    case WIU_MSI_EXECUTE_MESSAGE_PROGRESS:
         // serialize message data
         hr = BuffWriteNumber(&pbData, &cbData, pMessage->progress.dwPercentage);
         ExitOnFailure(hr, "Failed to write error code to message buffer.");
@@ -1770,7 +2028,7 @@ static int MsiExecuteMessageHandler(
         dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS;
         break;
 
-    case BURN_MSI_EXECUTE_MESSAGE_ERROR:
+    case WIU_MSI_EXECUTE_MESSAGE_ERROR:
         // serialize message data
         hr = BuffWriteNumber(&pbData, &cbData, pMessage->error.dwErrorCode);
         ExitOnFailure(hr, "Failed to write error code to message buffer.");
@@ -1785,7 +2043,7 @@ static int MsiExecuteMessageHandler(
         dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR;
         break;
 
-    case BURN_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
+    case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
         // serialize message data
         hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pMessage->msiMessage.mt);
         ExitOnFailure(hr, "Failed to write MSI message type to message buffer.");
@@ -1800,7 +2058,7 @@ static int MsiExecuteMessageHandler(
         dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE;
         break;
 
-    case BURN_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
+    case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
         // serialize message data
         hr = BuffWriteNumber(&pbData, &cbData, pMessage->msiFilesInUse.cFiles);
         ExitOnFailure(hr, "Failed to write file name count to message buffer.");

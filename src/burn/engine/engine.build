@@ -66,6 +66,7 @@
       <include name="logging.cpp" />
       <include name="manifest.cpp" />
       <include name="msiengine.cpp" />
+      <include name="mspengine.cpp" />
       <include name="msuengine.cpp" />
       <include name="package.cpp" />
       <include name="payload.cpp" />

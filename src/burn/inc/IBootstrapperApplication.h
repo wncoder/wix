@@ -105,7 +105,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         ) = 0;
 
     STDMETHOD_(int, OnDetectRelatedBundle)(
-        __in LPCWSTR wzBundleId,
+        __in_z LPCWSTR wzBundleId,
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
@@ -116,20 +116,27 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         ) = 0;
 
     STDMETHOD_(int, OnDetectRelatedMsiPackage)(
-        __in LPCWSTR wzProductCode,
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzProductCode,
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         ) = 0;
 
+    STDMETHOD_(int, OnDetectTargetMsiPackage)(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzProductCode,
+        __in BOOTSTRAPPER_PACKAGE_STATE patchState
+        ) = 0;
+
     STDMETHOD_(int, OnDetectMsiFeature)(
-        __in LPCWSTR wzPackageId,
-        __in LPCWSTR wzFeatureId,
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzFeatureId,
         __in BOOTSTRAPPER_FEATURE_STATE state
         ) = 0;
 
     STDMETHOD_(void, OnDetectPackageComplete)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus,
         __in BOOTSTRAPPER_PACKAGE_STATE state
         ) = 0;
@@ -144,22 +151,28 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
 
     STDMETHOD_(int, OnPlanRelatedBundle)(
         __in_z LPCWSTR wzBundleId,
-        __inout_z BOOTSTRAPPER_REQUEST_STATE* pRequestedState
+        __inout BOOTSTRAPPER_REQUEST_STATE* pRequestedState
         ) = 0;
 
     STDMETHOD_(int, OnPlanPackageBegin)(
         __in_z LPCWSTR wzPackageId,
-        __inout_z BOOTSTRAPPER_REQUEST_STATE* pRequestedState
+        __inout BOOTSTRAPPER_REQUEST_STATE* pRequestedState
+        ) = 0;
+
+    STDMETHOD_(int, OnPlanTargetMsiPackage)(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzProductCode,
+        __inout BOOTSTRAPPER_REQUEST_STATE* pRequestedState
         ) = 0;
 
     STDMETHOD_(int, OnPlanMsiFeature)(
-        __in LPCWSTR wzPackageId,
-        __in LPCWSTR wzFeatureId,
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzFeatureId,
         __inout BOOTSTRAPPER_FEATURE_STATE* pRequestedState
         ) = 0;
 
     STDMETHOD_(void, OnPlanPackageComplete)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus,
         __in BOOTSTRAPPER_PACKAGE_STATE state,
         __in BOOTSTRAPPER_REQUEST_STATE requested,
@@ -194,7 +207,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     STDMETHOD_(int, OnCacheBegin)() = 0;
 
     STDMETHOD_(int, OnCachePackageBegin)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in DWORD cCachePayloads,
         __in DWORD64 dw64PackageCacheSize
         )  = 0;
@@ -242,7 +255,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         ) = 0;
 
     STDMETHOD_(void, OnCachePackageComplete)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus
         )  = 0;
 
@@ -255,7 +268,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         ) = 0;
 
     STDMETHOD_(int, OnExecutePackageBegin)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in BOOL fExecute
         ) = 0;
 
@@ -275,7 +288,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     STDMETHOD_(int, OnExecuteMsiFilesInUse)(
         __in_z LPCWSTR wzPackageId,
         __in DWORD cFiles,
-        __in LPCWSTR* rgwzFiles
+        __in_ecount_z(cFiles) LPCWSTR* rgwzFiles
         ) = 0;
 
     // OnExecutePackageComplete - called when a package execution is complete.
@@ -291,7 +304,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //  IDSUSPEND instructs the engine to stop processing the chain and suspend the current state.
     //  All other return codes are ignored.
     STDMETHOD_(int, OnExecutePackageComplete)(
-        __in LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus,
         __in BOOTSTRAPPER_APPLY_RESTART restart
         ) = 0;

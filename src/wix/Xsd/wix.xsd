@@ -333,6 +333,7 @@
         </xs:annotation>
         <xs:complexType>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="MsiProperty"/>
                 <xs:element ref="Payload"/>
                 <xs:element ref="PayloadGroupRef"/>
                 <xs:any namespace="##other" processContents="lax">

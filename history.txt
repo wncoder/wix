@@ -465,3 +465,13 @@ RobMen: WiX v3.6 MSI now external and downloadable.
 
 WixBuild: Version 3.6.0905.0
 
+RobMen: SFBUG:2997972 - MSP packages now supported by Burn.
+        SFBUG:2997973 - MSP packages support MSI properties.
+
+MikeHo: Fix ScaVirtualDirsRead7 to prevent heap buffer overrun.
+
+EricStJ: SFBUG: 3062489 - Wix.targets doesn't work with MSBuild 2.0
+         SFBUG: 3062699 - Clean doesn't clean localized MSIs
+
+WixBuild: Version 3.6.0910.0
+

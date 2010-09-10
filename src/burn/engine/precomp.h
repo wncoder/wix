@@ -80,6 +80,7 @@
 #include "plan.h"
 #include "exeengine.h"
 #include "msiengine.h"
+#include "mspengine.h"
 #include "msuengine.h"
 #include "elevation.h"
 #include "core.h"

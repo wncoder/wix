@@ -41,9 +41,10 @@ extern "C" HRESULT PackagesParseFromXml(
     IXMLDOMNode* pixnNode = NULL;
     DWORD cNodes = 0;
     BSTR bstrNodeName = NULL;
+    DWORD cMspPackages = 0;
 
     // select package nodes
-    hr = XmlSelectNodes(pixnBundle, L"Chain/ExePackage|Chain/MsiPackage|Chain/MsuPackage", &pixnNodes);
+    hr = XmlSelectNodes(pixnBundle, L"Chain/ExePackage|Chain/MsiPackage|Chain/MspPackage|Chain/MsuPackage", &pixnNodes);
     ExitOnFailure(hr, "Failed to select package nodes.");
 
     // get package node count
@@ -130,6 +131,15 @@ extern "C" HRESULT PackagesParseFromXml(
             hr = MsiEngineParsePackageFromXml(pixnNode, pPackage); // TODO: Modularization
             ExitOnFailure(hr, "Failed to parse MSI package.");
         }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MspPackage", -1))
+        {
+            pPackage->type = BURN_PACKAGE_TYPE_MSP;
+
+            hr = MspEngineParsePackageFromXml(pixnNode, pPackage); // TODO: Modularization
+            ExitOnFailure(hr, "Failed to parse MSP package.");
+
+            ++cMspPackages;
+        }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsuPackage", -1))
         {
             pPackage->type = BURN_PACKAGE_TYPE_MSU;
@@ -150,6 +160,30 @@ extern "C" HRESULT PackagesParseFromXml(
         ReleaseNullObject(pixnNode);
         ReleaseNullBSTR(bstrNodeName);
     }
+
+    if (cMspPackages)
+    {
+        pPackages->rgPatchInfo = static_cast<MSIPATCHSEQUENCEINFOW*>(MemAlloc(sizeof(MSIPATCHSEQUENCEINFOW) * cMspPackages, TRUE));
+        ExitOnNull(pPackages->rgPatchInfo, hr, E_OUTOFMEMORY, "Failed to allocate memory for MSP patch sequence information.");
+
+        pPackages->rgPatchInfoToPackage = static_cast<BURN_PACKAGE**>(MemAlloc(sizeof(BURN_PACKAGE*) * cMspPackages, TRUE));
+        ExitOnNull(pPackages->rgPatchInfo, hr, E_OUTOFMEMORY, "Failed to allocate memory for patch sequence information to package lookup.");
+
+        for (DWORD i = 0; i < pPackages->cPackages; ++i)
+        {
+            BURN_PACKAGE* pPackage = &pPackages->rgPackages[i];
+
+            if (BURN_PACKAGE_TYPE_MSP == pPackage->type)
+            {
+                pPackages->rgPatchInfo[pPackages->cPatchInfo].szPatchData = pPackage->Msp.sczApplicabilityXml;
+                pPackages->rgPatchInfo[pPackages->cPatchInfo].ePatchDataType = MSIPATCH_DATATYPE_XMLBLOB;
+                pPackages->rgPatchInfoToPackage[pPackages->cPatchInfo] = pPackage;
+                ++pPackages->cPatchInfo;
+            }
+        }
+    }
+
+    AssertSz(pPackages->cPatchInfo == cMspPackages, "Count of packages patch info should be equal to the number of MSP packages.");
 
     hr = S_OK;
 
@@ -189,6 +223,7 @@ extern "C" void PackagesUninitialize(
                 MsiEnginePackageUninitialize(pPackage); // TODO: Modularization
                 break;
             case BURN_PACKAGE_TYPE_MSP:
+                MspEnginePackageUninitialize(pPackage); // TODO: Modularization
                 break;
             case BURN_PACKAGE_TYPE_MSU:
                 MsuEnginePackageUninitialize(pPackage); // TODO: Modularization
@@ -197,6 +232,9 @@ extern "C" void PackagesUninitialize(
         }
         MemFree(pPackages->rgPackages);
     }
+
+    ReleaseMem(pPackages->rgPatchInfo);
+    ReleaseMem(pPackages->rgPatchInfoToPackage);
 
     // clear struct
     memset(pPackages, 0, sizeof(BURN_PACKAGES));

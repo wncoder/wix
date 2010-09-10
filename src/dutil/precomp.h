@@ -33,6 +33,7 @@
 #include <strsafe.h>
 #include <wininet.h>
 #include <msi.h>
+#include <msiquery.h>
 #include <psapi.h>
 #include <shlobj.h>
 #include <gdiplus.h>

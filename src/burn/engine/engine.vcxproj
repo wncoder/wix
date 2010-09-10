@@ -61,6 +61,7 @@
     <ClCompile Include="logging.cpp" />
     <ClCompile Include="manifest.cpp" />
     <ClCompile Include="msiengine.cpp" />
+    <ClCompile Include="mspengine.cpp" />
     <ClCompile Include="msuengine.cpp" />
     <ClCompile Include="package.cpp" />
     <ClCompile Include="payload.cpp" />
@@ -90,6 +91,7 @@
     <ClInclude Include="exeengine.h" />
     <ClInclude Include="manifest.h" />
     <ClInclude Include="msiengine.h" />
+    <ClInclude Include="mspengine.h" />
     <ClInclude Include="msuengine.h" />
     <ClInclude Include="package.h" />
     <ClInclude Include="payload.h" />

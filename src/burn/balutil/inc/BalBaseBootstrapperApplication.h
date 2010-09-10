@@ -101,7 +101,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
-        __in LPCWSTR /*wzBundleId*/,
+        __in_z LPCWSTR /*wzBundleId*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
@@ -111,7 +111,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
-        __in LPCWSTR /*wzProductCode*/,
+        __in_z LPCWSTR /*wzProductCode*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
@@ -120,9 +120,18 @@ public: // IBurnUserExperience
         return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDNOACTION;
     }
 
+    virtual STDMETHODIMP_(int) OnDetectTargetMsiPackage(
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzProductCode*/,
+        __in BOOTSTRAPPER_PACKAGE_STATE /*patchState*/
+        )
+    {
+        return IDNOACTION;
+    }
+
     virtual STDMETHODIMP_(int) OnDetectMsiFeature(
-        __in LPCWSTR /*wzPackageId*/,
-        __in LPCWSTR /*wzFeatureId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzFeatureId*/,
         __in BOOTSTRAPPER_FEATURE_STATE /*state*/
         )
     {
@@ -130,7 +139,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(void) OnDetectPackageComplete(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/,
         __in BOOTSTRAPPER_PACKAGE_STATE /*state*/
         )
@@ -152,7 +161,7 @@ public: // IBurnUserExperience
 
     virtual int __stdcall OnPlanRelatedBundle(
         __in_z LPCWSTR /*wzBundleId*/,
-        __inout_z BOOTSTRAPPER_REQUEST_STATE* /*pRequestedState*/
+        __inout BOOTSTRAPPER_REQUEST_STATE* /*pRequestedState*/
         )
     {
         return IDNOACTION;
@@ -166,9 +175,18 @@ public: // IBurnUserExperience
         return IDNOACTION;
     }
 
+    virtual STDMETHODIMP_(int) OnPlanTargetMsiPackage(
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzProductCode*/,
+        __inout BOOTSTRAPPER_REQUEST_STATE* /*pRequestedState*/
+        )
+    {
+        return IDNOACTION;
+    }
+
     virtual STDMETHODIMP_(int) OnPlanMsiFeature(
-        __in LPCWSTR /*wzPackageId*/,
-        __in LPCWSTR /*wzFeatureId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzFeatureId*/,
         __inout BOOTSTRAPPER_FEATURE_STATE* /*pRequestedState*/
         )
     {
@@ -176,7 +194,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(void) OnPlanPackageComplete(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/,
         __in BOOTSTRAPPER_PACKAGE_STATE /*state*/,
         __in BOOTSTRAPPER_REQUEST_STATE /*requested*/,
@@ -235,7 +253,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnCachePackageBegin(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*cCachePayloads*/,
         __in DWORD64 /*dw64PackageCacheSize*/
         )
@@ -274,7 +292,7 @@ public: // IBurnUserExperience
     }
 
     virtual void __stdcall OnCachePackageComplete(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/
         )
     {
@@ -294,7 +312,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageBegin(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in BOOL /*fExecute*/
         )
     {
@@ -302,7 +320,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnError(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*dwCode*/,
         __in_z LPCWSTR /*wzError*/,
         __in DWORD /*dwUIHint*/
@@ -320,16 +338,16 @@ public: // IBurnUserExperience
     }
 
     virtual int __stdcall OnDownloadPayloadBegin(
-        __in LPCWSTR /*wzPayloadId*/,
-        __in LPCWSTR /*wzPayloadFileName*/
+        __in_z LPCWSTR /*wzPayloadId*/,
+        __in_z LPCWSTR /*wzPayloadFileName*/
         )
     {
         return IDNOACTION;
     }
 
     virtual int __stdcall OnDownloadPayloadComplete(
-        __in LPCWSTR /*wzPayloadId*/,
-        __in LPCWSTR /*wzPayloadFileName*/,
+        __in_z LPCWSTR /*wzPayloadId*/,
+        __in_z LPCWSTR /*wzPayloadFileName*/,
         __in HRESULT /*hrStatus*/
         )
     {
@@ -366,14 +384,14 @@ public: // IBurnUserExperience
     virtual STDMETHODIMP_(int) OnExecuteMsiFilesInUse(
         __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*cFiles*/,
-        __in LPCWSTR* /*rgwzFiles*/
+        __in_ecount_z(cFiles) LPCWSTR* /*rgwzFiles*/
         )
     {
         return IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageComplete(
-        __in LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrExitCode*/,
         __in BOOTSTRAPPER_APPLY_RESTART restart
         )

@@ -93,10 +93,16 @@ extern "C" void PlanUninitializeExecuteAction(
     switch (pExecuteAction->type)
     {
     case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-        ReleaseStr(pExecuteAction->msiPackage.sczLogPath);
         ReleaseStr(pExecuteAction->msiPackage.sczProductCode);
+        ReleaseStr(pExecuteAction->msiPackage.sczLogPath);
         ReleaseMem(pExecuteAction->msiPackage.rgFeatures);
-        ReleaseMem(pExecuteAction->msiPackage.rgpPatches);
+        ReleaseMem(pExecuteAction->msiPackage.rgOrderedPatches);
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
+        ReleaseStr(pExecuteAction->mspTarget.sczTargetProductCode);
+        ReleaseStr(pExecuteAction->mspTarget.sczLogPath);
+        ReleaseMem(pExecuteAction->mspTarget.rgOrderedPatches);
         break;
 
     case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
@@ -105,7 +111,7 @@ extern "C" void PlanUninitializeExecuteAction(
 
     case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP: __fallthrough;
     case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
-        ReleaseMem(pExecuteAction->service.sczServiceName);
+        ReleaseStr(pExecuteAction->service.sczServiceName);
         break;
     }
 }

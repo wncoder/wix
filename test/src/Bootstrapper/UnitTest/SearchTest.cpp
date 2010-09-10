@@ -30,6 +30,12 @@ static INSTALLSTATE WINAPI MsiComponentSearchTest_MsiLocateComponentW(
     __out_ecount_opt(*pcchBuf) LPWSTR lpPathBuf,
     __inout_opt LPDWORD pcchBuf
     );
+static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoW(
+    __in LPCWSTR szProductCode,
+    __in LPCWSTR szProperty,
+    __out_ecount_opt(*pcchValue) LPWSTR szValue,
+    __inout_opt LPDWORD pcchValue
+    );
 static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoExW(
     __in LPCWSTR szProductCode,
     __in_opt LPCWSTR szUserSid,
@@ -282,8 +288,7 @@ namespace Bootstrapper
             try
             {
                 // set mock API's
-                vpfnMsiGetComponentPathW = MsiComponentSearchTest_MsiGetComponentPathW;
-                vpfnMsiLocateComponentW = MsiComponentSearchTest_MsiLocateComponentW;
+                WiuFunctionOverride(NULL, MsiComponentSearchTest_MsiGetComponentPathW, MsiComponentSearchTest_MsiLocateComponentW, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
                 LPCWSTR wzDocument =
                     L"<Bundle>"
@@ -357,7 +362,7 @@ namespace Bootstrapper
             try
             {
                 // set mock API's
-                vpfnMsiGetProductInfoExW = MsiProductSearchTest_MsiGetProductInfoExW;
+                WiuFunctionOverride(NULL, NULL, NULL, NULL, MsiProductSearchTest_MsiGetProductInfoW, MsiProductSearchTest_MsiGetProductInfoExW, NULL, NULL, NULL, NULL, NULL, NULL);
 
                 LPCWSTR wzDocument =
                     L"<Bundle>"
@@ -591,6 +596,17 @@ static INSTALLSTATE WINAPI MsiComponentSearchTest_MsiLocateComponentW(
     }
 
     return is;
+}
+
+static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoW(
+    __in LPCWSTR szProductCode,
+    __in LPCWSTR szProperty,
+    __out_ecount_opt(*pcchValue) LPWSTR szValue,
+    __inout_opt LPDWORD pcchValue
+    )
+{
+    UINT er = MsiProductSearchTest_MsiGetProductInfoExW(szProductCode, NULL, MSIINSTALLCONTEXT_MACHINE, szProperty, szValue, pcchValue);
+    return er;
 }
 
 static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoExW(

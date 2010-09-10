@@ -20663,7 +20663,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         switch (child.LocalName)
                         {
                             case "MsiProperty":
-                                allowed = (packageType == ChainPackageType.Msi);
+                                allowed = (packageType == ChainPackageType.Msi || packageType == ChainPackageType.Msp);
                                 if (allowed)
                                 {
                                     this.ParseMsiPropertyElement(child, id);

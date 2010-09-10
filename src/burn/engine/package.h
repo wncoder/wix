@@ -54,6 +54,15 @@ typedef struct _BURN_EXE_EXIT_CODE
     BOOL fWildcard;
 } BURN_EXE_EXIT_CODE;
 
+typedef struct _BURN_MSPTARGETPRODUCT
+{
+    MSIINSTALLCONTEXT context;
+    DWORD dwOrder;
+    WCHAR wzTargetProductCode[39];
+
+    BOOTSTRAPPER_PACKAGE_STATE patchPackageState;
+} BURN_MSPTARGETPRODUCT;
+
 typedef struct _BURN_MSIPROPERTY
 {
     LPWSTR sczId;
@@ -153,6 +162,14 @@ typedef struct _BURN_PACKAGE
         } Msi;
         struct
         {
+            LPWSTR sczPatchCode;
+            LPWSTR sczApplicabilityXml;
+
+            BURN_MSIPROPERTY* rgProperties;
+            DWORD cProperties;
+
+            BURN_MSPTARGETPRODUCT* rgTargetProducts;
+            DWORD cTargetProductCodes;
         } Msp;
         struct
         {
@@ -166,6 +183,11 @@ typedef struct _BURN_PACKAGES
 {
     BURN_PACKAGE* rgPackages;
     DWORD cPackages;
+
+    MSIPATCHSEQUENCEINFOW* rgPatchInfo;
+    BURN_PACKAGE** rgPatchInfoToPackage; // direct lookup from patch information to the (MSP) package it describes.
+                                         // Thus this array is the exact same size as rgPatchInfo.
+    DWORD cPatchInfo;
 } BURN_PACKAGES;
 
 

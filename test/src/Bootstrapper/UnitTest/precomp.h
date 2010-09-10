@@ -28,15 +28,16 @@
 #include <strsafe.h>
 
 #include <dutil.h>
-#include <memutil.h>
+#include <buffutil.h>
 #include <dirutil.h>
 #include <fileutil.h>
 #include <logutil.h>
+#include <memutil.h>
 #include <pathutil.h>
 #include <regutil.h>
 #include <resrutil.h>
 #include <strutil.h>
-#include <buffutil.h>
+#include <wiutil.h>
 #include <xmlutil.h>
 
 #include <wixver.h>
@@ -62,6 +63,7 @@
 #include "plan.h"
 #include "exeengine.h"
 #include "msiengine.h"
+#include "mspengine.h"
 #include "msuengine.h"
 #include "elevation.h"
 #include "core.h"
