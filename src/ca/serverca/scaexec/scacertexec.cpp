@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -196,6 +196,11 @@ static HRESULT ExecuteCertificateOperation(
 
     if (SCA_ACTION_INSTALL == saAction) // install operations need more data
     {
+        // Uninstall existing versions of this package.  Ignore any failures
+        // This is needed to clean up the private key of a cert when we replace an existing cert
+        // CertAddCertificateContextToStore(CERT_STORE_ADD_REPLACE_EXISTING) does not remove the private key if the cert is replaced
+        UninstallCertificatePackage(hCertStore, fUserStoreLocation, pwzName);
+
         hr = InstallCertificatePackage(hCertStore, fUserStoreLocation, pwzName, pbData, cbData, pwzPFXPassword);
         ExitOnFailure(hr, "Failed to install certificate.");
     }
@@ -215,7 +220,10 @@ LExit:
 
     if (hCertStore)
     {
-        ::CertCloseStore(hCertStore, 0);
+        if (!::CertCloseStore(hCertStore, CERT_CLOSE_STORE_CHECK_FLAG))
+        {
+            WcaLog(LOGMSG_VERBOSE, "Cert store was closed but not all resources were freed.  Error 0x%x", GetLastError());
+        }
     }
 
     ReleaseMem(pbData);
@@ -316,7 +324,10 @@ LExit:
     // Close the stores after the context's are released.
     if (hPfxCertStore)
     {
-        ::CertCloseStore(hPfxCertStore, 0);
+        if (!::CertCloseStore(hPfxCertStore, CERT_CLOSE_STORE_CHECK_FLAG))
+        {
+            WcaLog(LOGMSG_VERBOSE, "PFX cert store was closed but not all resources were freed.  Error 0x%x", GetLastError());
+        }
     }
 
     return hr;

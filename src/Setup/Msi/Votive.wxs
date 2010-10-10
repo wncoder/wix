@@ -3,7 +3,7 @@
   Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -29,15 +29,17 @@
 <?define WixVsProjectGuid       = "{930C7802-8A8C-48F9-8165-68863BCCD9DD}" ?>
 <?define XmlEditorGuid          = "{FA3CD31E-987B-443A-9B81-186104E8DAC1}" ?>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Fragment>
         <PropertyRef Id="VS2005_ITEMTEMPLATES_DIR" />
         <PropertyRef Id="VS2005_PROJECTTEMPLATES_DIR" />
         <PropertyRef Id="VS2005_SCHEMAS_DIR" />
+        <PropertyRef Id="VS2005DEVENV" />
 
         <PropertyRef Id="VS90_ITEMTEMPLATES_DIR" />
         <PropertyRef Id="VS90_PROJECTTEMPLATES_DIR" />
         <PropertyRef Id="VS90_SCHEMAS_DIR" />
+        <PropertyRef Id="VS90DEVENV" />
 
         <!-- Directories -->
         <DirectoryRef Id="TARGETDIR">
@@ -117,6 +119,7 @@
 
             <Component Id="VisualStudioPackage2005" Guid="E1195461-0D02-443B-BCF8-888ECE01E017" Win64="no">
                 <File Source="votive2005.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+                <util:RestartResource Path="[VS2005DEVENV]" />
 
                 <!-- Add the VS 2005 property page registration component -->
                 <?undef VsRegPath?>
@@ -128,6 +131,7 @@
 
             <Component Id="VisualStudioPackage2008" Guid="AD022E4C-71A5-4C1D-8F61-E09B3C2BFC2F" Win64="no">
                 <File Source="votive2008.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+                <util:RestartResource Path="[VS90DEVENV]" />
 
                 <!-- Add the VS 2008 property page registration component -->
                 <?undef VsRegPath?>
@@ -203,6 +207,7 @@
         <PropertyRef Id="VS2010_ITEMTEMPLATES_DIR" />
         <PropertyRef Id="VS2010_PROJECTTEMPLATES_DIR" />
         <PropertyRef Id="VS2010_SCHEMAS_DIR" />
+        <PropertyRef Id="VS2010DEVENV" />
 
         <DirectoryRef Id="TARGETDIR">
             <Directory Id="VisualStudio2010Folder" Name="Visual Studio 10.0">
@@ -226,6 +231,7 @@
 
             <Component Id="VisualStudioPackage2010" Guid="C8D37529-F79E-46B4-89FD-EA7BC6654770" Win64="no">
                 <File Source="votive2010.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
+                <util:RestartResource Path="[VS2010DEVENV]" />
 
                 <!-- Add the VS 2010 property page registration component -->
                 <?undef VsRegPath?>

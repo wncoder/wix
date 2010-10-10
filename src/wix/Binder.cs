@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -1325,11 +1325,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             Dictionary<string, string> componentKeyPath = new Dictionary<string, string>();
-            // Index Component table
+
+            // Index the Component table for non-directory & non-registry key paths.
             foreach (Row row in componentTable.Rows)
             {
-                string keypath = (null == row.Fields[5].Data) ? String.Empty : row.Fields[5].Data.ToString();
-                componentKeyPath.Add(row.Fields[0].Data.ToString(), keypath);
+                if (null != row.Fields[5].Data && 
+                    0 != ((int)row.Fields[3].Data & MsiInterop.MsidbComponentAttributesRegistryKeyPath))
+                {
+                    componentKeyPath.Add(row.Fields[0].Data.ToString(), row.Fields[5].Data.ToString());
+                }
             }
 
             Dictionary<string, string> componentWithChangedKeyPath = new Dictionary<string, string>();
@@ -1365,7 +1369,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             foreach (KeyValuePair<string, string> componentFile in componentWithNonKeyPathChanged)
             {
                 // Make sure all changes to non keypath files also had a change in the keypath.
-                if (!componentWithChangedKeyPath.ContainsKey(componentFile.Key))
+                if (!componentWithChangedKeyPath.ContainsKey(componentFile.Key) && componentKeyPath.ContainsKey(componentFile.Key))
                 {
                     this.core.OnMessage(WixWarnings.UpdateOfNonKeyPathFile((string)componentFile.Value, (string)componentFile.Key, (string)componentKeyPath[componentFile.Key]));
                 }

@@ -4,7 +4,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -45,6 +45,7 @@ extern "C" LPVOID DAPI MemAlloc(
     )
 {
 //    AssertSz(vfMemInitialized, "MemInitialize() not called, this would normally crash");
+    AssertSz(cbSize > 0, "MemAlloc() called with invalid size");
     return ::HeapAlloc(::GetProcessHeap(), fZero ? HEAP_ZERO_MEMORY : 0, cbSize);
 }
 
@@ -56,7 +57,51 @@ extern "C" LPVOID DAPI MemReAlloc(
     )
 {
 //    AssertSz(vfMemInitialized, "MemInitialize() not called, this would normally crash");
+    AssertSz(cbSize > 0, "MemReAlloc() called with invalid size");
     return ::HeapReAlloc(::GetProcessHeap(), fZero ? HEAP_ZERO_MEMORY : 0, pv, cbSize);
+}
+
+
+extern "C" HRESULT DAPI MemEnsureArraySize(
+    __inout_ecount(cArray) LPVOID* ppvArray,
+    __in DWORD cArray,
+    __in SIZE_T cbArrayType,
+    __in DWORD dwGrowthCount
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD cNew = 0;
+    LPVOID pvNew = NULL;
+    SIZE_T cbNew = 0;
+
+    hr = ::DWordAdd(cArray, dwGrowthCount, &cNew);
+    ExitOnFailure(hr, "Integer overflow when calculating new element size.");
+
+    hr = ::SIZETMult(cNew, cbArrayType, &cbNew);
+    ExitOnFailure(hr, "Integer overflow when calculating new block size.");
+
+    if (*ppvArray)
+    {
+        SIZE_T cbUsed = cArray * cbArrayType;
+        SIZE_T cbCurrent = MemSize(*ppvArray);
+        if (cbCurrent <= cbUsed)
+        {
+            pvNew = MemReAlloc(*ppvArray, cbNew, TRUE);
+            ExitOnNull(pvNew, hr, E_OUTOFMEMORY, "Failed to allocate array larger.");
+
+            *ppvArray = pvNew;
+        }
+    }
+    else
+    {
+        pvNew = MemAlloc(cbNew, TRUE);
+        ExitOnNull(pvNew, hr, E_OUTOFMEMORY, "Failed to allocate new array.");
+
+        *ppvArray = pvNew;
+    }
+
+LExit:
+    return hr;
 }
 
 

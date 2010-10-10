@@ -4,7 +4,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -508,7 +508,6 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     }
 
     pwz = pwzData;
-
     while (S_OK == (hr = WcaReadIntegerFromCaData(&pwz, &iAction)))
     {
         switch (iAction)
@@ -642,21 +641,19 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
         default:
             ExitOnFailure1(hr = E_UNEXPECTED, "IIS7ConfigChanges: Unexpected IIS Config action specified: %d", iAction);
             break;
-        }
+        } 
+        if( S_OK == hr )
+        {
+            // commit config changes now to close out IIS Admin changes,
+            // the Rollback or Commit defered CAs will determine final commit status.
+            hr = pAdminMgr->CommitChanges();
+            ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
+        }             
     }
-
     if (E_NOMOREITEMS == hr) // If there are no more items, all is well
     {
         hr = S_OK;
     }
-    if( hr == S_OK )
-    {
-        // commit config changes now to close out IIS Admin changes,
-        // the Rollback or Commit defered CAs will determine final commit status.
-        hr = pAdminMgr->CommitChanges();
-        ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
-    }
-
 LExit:
     ReleaseStr(pwzData);
     ReleaseNullObject(pAdminMgr);
@@ -1967,7 +1964,6 @@ HRESULT IIS7Site(
     IAppHostElement *pSites = NULL;
     IAppHostElementCollection *pCollection = NULL;
     IAppHostElement *pSiteElem = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElement *pElement = NULL;
     DWORD cSites = 0;
 
@@ -2072,7 +2068,6 @@ LExit:
     ReleaseNullObject(pCollection);
     ReleaseNullObject(pSiteElem);
     ReleaseNullObject(pElement);
-    ReleaseNullObject(pProperty);
 
     return hr;
 }
@@ -2217,7 +2212,6 @@ HRESULT IIS7VDir(
 
     IAppHostElement *pSiteElem = NULL;
     IAppHostElement *pAppElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pElement = NULL;
 
     // Get Application action
@@ -2294,7 +2288,6 @@ HRESULT IIS7VDir(
     ReleaseStr(pwzVDirPhyDir);
     ReleaseNullObject(pSiteElem);
     ReleaseNullObject(pAppElement);
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pElement);
 
     return hr;
@@ -2500,7 +2493,6 @@ HRESULT IIS7AppExtension(
 
    IAppHostElement *pSection = NULL;
    IAppHostElement *pElement = NULL;
-   IAppHostProperty *pProperty = NULL;
    IAppHostElementCollection *pCollection = NULL;
 
    BOOL fFound = FALSE;
@@ -2616,6 +2608,8 @@ HRESULT IIS7AppExtension(
             ExitOnFailure(hr, "Failed add handler element for appext");
         }
 
+        ReleaseNullObject(pElement);
+
         // Get AppExt action
         hr = WcaReadIntegerFromCaData(ppwzCustomActionData, &iAction);
         ExitOnFailure(hr, "Failed to read AppPool Property action");
@@ -2630,7 +2624,6 @@ LExit:
     ReleaseStr(pwzPath);
     ReleaseNullObject(pSection);
     ReleaseNullObject(pElement);
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pCollection);
 
     return hr;
@@ -2656,7 +2649,6 @@ LExit:
 
     IAppHostElement *pSection = NULL;
     IAppHostElement *pElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
 
     BOOL fFound = FALSE;
@@ -2763,7 +2755,6 @@ LExit:
     ReleaseStr(pwzData);
     ReleaseNullObject(pSection);
     ReleaseNullObject(pElement);
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pCollection);
 
     return hr;
@@ -2792,7 +2783,6 @@ HRESULT IIS7DirProperties(
 
     IAppHostElement *pSection = NULL;
     IAppHostElement *pElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
 
     //get web name
@@ -3004,7 +2994,6 @@ LExit:
     ReleaseStr(pwzData);
     ReleaseNullObject(pSection);
     ReleaseNullObject(pElement);
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pCollection);
 
     return hr;
@@ -3266,7 +3255,6 @@ static HRESULT CreateSite( __in IAppHostElementCollection *pCollection,
 {
     HRESULT hr = S_OK;
     IAppHostElement *pNewElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     
     hr = pCollection->CreateNewElement(ScopeBSTR(IIS_CONFIG_SITE), &pNewElement);
     ExitOnFailure(hr, "Failed create site element");
@@ -3288,7 +3276,6 @@ static HRESULT CreateSite( __in IAppHostElementCollection *pCollection,
     pNewElement = NULL;
 
 LExit:
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pNewElement);
 
     return hr;
@@ -3301,7 +3288,6 @@ static HRESULT CreateApplication( IAppHostElement *pSiteElement,
 {
     HRESULT hr = S_OK;
     IAppHostElement *pNewElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
 
     hr = pSiteElement->get_Collection(&pCollection);
@@ -3320,7 +3306,6 @@ static HRESULT CreateApplication( IAppHostElement *pSiteElement,
     pNewElement = NULL;
 
 LExit:
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pCollection);
     ReleaseNullObject(pNewElement);
 
@@ -3368,7 +3353,6 @@ static HRESULT CreateVdir( IAppHostElement *pAppElement,
 {
     HRESULT hr = S_OK;
     IAppHostElement *pElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
     BOOL fFound;
 
@@ -3400,7 +3384,6 @@ static HRESULT CreateVdir( IAppHostElement *pAppElement,
 LExit:
     ReleaseNullObject(pCollection);
     ReleaseNullObject(pElement);
-    ReleaseNullObject(pProperty);
 
     return hr;
 }
@@ -3433,7 +3416,6 @@ static HRESULT CreateBinding( IAppHostElement *pSiteElem,
     IAppHostChildElementCollection *pChildElems = NULL;
     IAppHostElement *pBindings = NULL;
     IAppHostElement *pBindingElement = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
 
     VARIANT vtProp;
@@ -3480,7 +3462,6 @@ LExit:
     ReleaseNullObject(pChildElems);
     ReleaseNullObject(pBindingElement);
     ReleaseNullObject(pBindings);
-    ReleaseNullObject(pProperty);
 
     return hr;
 }
@@ -3683,7 +3664,6 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
     IAppHostElement *pElement = NULL;
     IAppHostElement *pElement2 = NULL;
     IAppHostElement *pElement3 = NULL;
-    IAppHostProperty *pProperty = NULL;
     IAppHostElementCollection *pCollection = NULL;
     IAppHostElementCollection *pCollection2 = NULL;
     int iAction = -1;
@@ -4018,7 +3998,6 @@ static HRESULT CreateAppPool( __inout LPWSTR *ppwzCustomActionData,
 
 LExit:
     ReleaseNullObject(pAppPools);
-    ReleaseNullObject(pProperty);
     ReleaseNullObject(pCollection);
     ReleaseNullObject(pCollection2);
     ReleaseNullObject(pAppPoolElement);
@@ -4132,6 +4111,7 @@ static HRESULT SetDirPropAuthProvider(IAppHostWritableAdminManager *pAdminMgr,
     ExitOnFailure(hr, "Failed to create win auth providers clear element");
     hr = pCollection->AddElement(pNewElement);
     ExitOnFailure(hr, "Failed to add win auth providers clear element");
+    ReleaseNullObject(pNewElement);
     
     wszToken = wcstok_s( wszData, wcDelim, &wszNextToken);
     for( int i = 0; (wszToken); i++)
@@ -4152,6 +4132,7 @@ static HRESULT SetDirPropAuthProvider(IAppHostWritableAdminManager *pAdminMgr,
 LExit:
     ReleaseNullObject(pSection);
     ReleaseNullObject(pCollection);
+    ReleaseNullObject(pElement);
     ReleaseNullObject(pNewElement);
     return hr;
 }
@@ -4325,7 +4306,6 @@ static HRESULT DeleteCollectionElement(__in IAppHostElementCollection *pCollecti
                                        )
 {
     HRESULT hr = S_OK;
-    IAppHostElement *pElement = NULL;
 
     DWORD dwIndex;
     VARIANT vtIndex;
@@ -4344,7 +4324,6 @@ static HRESULT DeleteCollectionElement(__in IAppHostElementCollection *pCollecti
     // else : nothing to do, already deleted
 LExit:
     VariantClear(&vtIndex);
-    ReleaseNullObject(pElement);
 
     return hr;
 }

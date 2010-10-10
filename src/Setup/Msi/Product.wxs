@@ -3,7 +3,7 @@
   Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -23,20 +23,15 @@
         <Package Platform="$(var.Platform)" Manufacturer="Microsoft Corporation" Description="Windows Installer XML Toolset Visual Studio Package" Comments="Windows Installer XML Toolset Visual Studio Package" Compressed="yes" InstallerVersion="200" Languages="1033" Keywords="Database, Installer" ShortNames="no" SummaryCodepage="1252" />
 
         <!-- Major upgrade -->
-        <Upgrade Id="3618724B-2523-44F9-A908-866AA619504D">
-            <UpgradeVersion Minimum="$(var.WixVersion)" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" />
-            <UpgradeVersion Minimum="1.0.0.0" IncludeMinimum="yes" Maximum="$(var.WixVersion)" IncludeMaximum="no" Property="OLDERVERSIONBEINGUPGRADED" />
-        </Upgrade>
+        <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed." />
 
         <Condition Message="An administrator must approve or install [ProductName].">
             Privileged
         </Condition>
-        <Condition Message="A later version of [ProductName] is already installed.">
-            NOT NEWERVERSIONDETECTED
-        </Condition>
 
       <!-- Media -->
       <Media Id="1" Cabinet="WiX.cab" EmbedCab="yes" />
+      <Media Id="2" Cabinet="WiXLib.cab" EmbedCab="yes" />
 
       <!-- Icons -->
       <Icon Id="WixIcon" SourceFile="$(var.VotiveRoot)\Icons\ProjectFile.ico" />
@@ -161,8 +156,6 @@
 
         <!-- Install Sequences -->
         <InstallExecuteSequence>
-            <FindRelatedProducts Before="LaunchConditions" />
-            <RemoveExistingProducts After="InstallValidate" />
             <Custom Action="VS2005Setup" Before="InstallFinalize"><![CDATA[&Feature_Votive2005 > 1]]></Custom>
             <Custom Action="VS90Setup" Before="InstallFinalize"><![CDATA[&Feature_Votive2008 > 1]]></Custom>
             <Custom Action="CA_SetLatestDevenv_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV]]></Custom>
@@ -185,7 +178,6 @@
 
         <UI>
             <DialogRef Id="PrerequisitesDlg" />
-            <DialogRef Id="DevenvRunningDlg" />
             <UIRef Id="WixUI_Advanced" />
             <UIRef Id="WixUI_ErrorProgressText" />
 

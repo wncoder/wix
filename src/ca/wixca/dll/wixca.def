@@ -22,6 +22,8 @@ EXPORTS
 ; qtexecca.cpp
     CAQuietExec
     CAQuietExec64
+; RestartManager.cpp
+    WixRegisterRestartResources
 ; secureobjects.cpp
     SchedSecureObjects
     SchedSecureObjectsRollback

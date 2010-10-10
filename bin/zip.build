@@ -4,7 +4,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -309,9 +309,9 @@
         <include name="${dir.target.wix.x64}\wcautil_2008_x64.lib" if="${BuildVC9}" />
         <include name="${dir.target.wix.x64}\wcautil_2010_x64.lib" if="${BuildVC10}" />
 
-        <include name="${dir.target.wix.x64}\wcautil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
-        <include name="${dir.target.wix.x64}\wcautil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
-        <include name="${dir.target.wix.x64}\wcautil_2010_ia64.lib" if="${BuildVC10 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2010_ia64.lib" if="${BuildVC10 and ia64}" />
       </fileset>
     </zip>
 

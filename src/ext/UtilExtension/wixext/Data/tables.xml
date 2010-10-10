@@ -3,7 +3,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -28,6 +28,16 @@
                 minValue="1" maxValue="2147483647" description="Sequence to order the closings by."/>
         <columnDefinition name="Property" type="string" length="72" nullable="yes" localizable="yes" modularize="property"
                 category="identifier" description="Optional property that is set to the number of running instances of the app."/>
+    </tableDefinition>
+    <tableDefinition name="WixRestartResource">
+        <columnDefinition name="WixRestartResource" type="string" length="72" primaryKey="yes" modularize="column"
+                category="identifier" description="Primary key, non-localized identifier."/>
+        <columnDefinition name="Component_" type="string" length="72" modularize="column"
+                keyTable="Component" keyColumn="1" category="identifier" description="Foreign key into the Component table used to determine install state."/>
+        <columnDefinition name="Resource" type="string" length="0" modularize="property"
+                category="formatted" description="The resource to be registered with the Restart Manager."/>
+        <columnDefinition name="Attributes" type="number" length="4"
+                minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the type of resource and flags used for processing."/>
     </tableDefinition>
     <tableDefinition name="FileShare" createSymbols="yes">
         <columnDefinition name="FileShare" type="string" length="72" primaryKey="yes" modularize="column"

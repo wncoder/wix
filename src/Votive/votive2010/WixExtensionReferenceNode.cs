@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -163,26 +163,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             {
                 if (extensionDirectory == null)
                 {
-                    ConfigCanonicalName config;
-                    try
-                    {
-                        Utilities.TryGetActiveConfigurationAndPlatform(this.ProjectMgr.Site, this.ProjectMgr, out config);
-                    }
-                    catch (COMException)
-                    {
-                        // If there's no active configuration, just return an empty string for now but try again later.
-                        return String.Empty;
-                    }
-                    catch (ArgumentException)
-                    {
-                        // TryGetActiveConfigurationAndPlatform calls ThrowOnFailure which may throw ArgumentException.
-                        // Just return empty string for same reason as above.
-                        return String.Empty;
-                    }
-
-                    this.ProjectMgr.Build(config, WixProjectFileConstants.MsBuildTarget.GetTargetPath);
-
-                    extensionDirectory = (string)this.ProjectMgr.GetProjectProperty(WixProjectFileConstants.WixExtDir, true);
+                    extensionDirectory = (string)this.ProjectMgr.GetProjectProperty(WixProjectFileConstants.WixExtDir);
                     if (extensionDirectory == null)
                     {
                         extensionDirectory = String.Empty;

@@ -3,7 +3,7 @@
   Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -129,39 +129,5 @@
                 <Show Dialog="PrerequisitesDlg" Before="AdvancedWelcomeEulaDlg">(NOT Installed AND NOT VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV) OR (VS2005DEVENV AND NOT VS2005PROJECTAGGREGATOR2)</Show>
             </InstallUISequence>
         </UI>
-    </Fragment>
-
-    <Fragment>
-        <?if $(var.BuildVotive2010)=true ?>
-          <?define DevEnvRunningCondition = "DEVENVRUNNING AND (&Feature_Votive2005 > 1 OR &Feature_Votive2008 > 1 OR &Feature_Votive2010 > 1)" ?>
-        <?else?>
-          <?define DevEnvRunningCondition = "DEVENVRUNNING AND (&Feature_Votive2005 > 1 OR &Feature_Votive2008 > 1)" ?>
-        <?endif?>
-        
-        <UI>
-            <Dialog Id="DevenvRunningDlg" Width="320" Height="120" Title="[ProductName]">
-                <Control Id="OK" Type="PushButton" X="186" Y="93" Width="56" Height="17" Default="yes" Text="!(loc.WixUIOK)">
-                    <Publish Event="EndDialog" Value="Return">1</Publish>
-                </Control>
-                <Control Id="Cancel" Type="PushButton" X="254" Y="93" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
-                    <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
-                </Control>
-                <Control Id="DevenvRunning" Type="Text" X="10" Y="10" Width="300" Height="60" Transparent="yes" NoPrefix="yes">
-                    <Text>WiX cannot be installed when Visual Studio is running. Please close all instances of the Visual Studio shell.</Text>
-                </Control>
-            </Dialog>
-
-            <InstallUISequence>
-                <Custom Action="WixCloseApplications" Before="DevenvRunningDlg" />
-                <Show Dialog="DevenvRunningDlg" Before="AdvancedWelcomeEulaDlg">$(var.DevEnvRunningCondition)</Show>
-            </InstallUISequence>
-        </UI>
-
-        <util:CloseApplication Id="IsDevenvRunning" Property="DEVENVRUNNING" Target="devenv.exe" RebootPrompt="no" />
-        <CustomAction Id="DevenvRunningError" Error="WiX cannot be installed because Visual Studio is running." />
-        <InstallExecuteSequence>
-            <Custom Action="WixCloseApplications" After="CostFinalize" />
-            <Custom Action="DevenvRunningError" After="WixCloseApplications">$(var.DevEnvRunningCondition)</Custom>
-        </InstallExecuteSequence>
     </Fragment>
 </Wix>

@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -17,6 +17,8 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
+
+#define ARRAY_GROWTH_SIZE 5
 
 /********************************************************************
 StrAlloc - allocates or reuses dynamic string memory
@@ -2085,4 +2087,55 @@ void DAPI StrStringToLower(
     )
 {
     ::CharLowerBuffW(wzIn, lstrlenW(wzIn));
+}
+
+/****************************************************************************
+StrArrayAllocString - Allocates a string array.
+
+****************************************************************************/
+extern "C" HRESULT DAPI StrArrayAllocString(
+    __deref_inout_ecount(*pcStrArray) LPWSTR **prgsczStrArray,
+    __inout LPUINT pcStrArray,
+    __in_z LPCWSTR wzSource,
+    __in DWORD_PTR cchSource
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgsczStrArray), *pcStrArray, sizeof(LPWSTR), ARRAY_GROWTH_SIZE);
+    ExitOnFailure(hr, "Failed to allocate memory for the string array.");
+
+    hr = StrAllocString(&(*prgsczStrArray)[*pcStrArray], wzSource, cchSource);
+    ExitOnFailure(hr, "Failed to allocate and assign the string.");
+
+    ++(*pcStrArray);
+
+LExit:
+    return hr;
+}
+
+/****************************************************************************
+StrArrayFree - Frees a string array.
+
+Use ReleaseNullStrArray to nullify the arguments.
+
+****************************************************************************/
+extern "C" HRESULT DAPI StrArrayFree(
+    __in_ecount(cStrArray) LPWSTR *rgsczStrArray,
+    __in UINT cStrArray
+    )
+{
+    HRESULT hr = S_OK;
+
+    for (UINT i = 0; i < cStrArray; i++)
+    {
+        hr = StrFree(rgsczStrArray[i]);
+        ExitOnFailure1(hr, "Failed to free the string at index %d.", i);
+    }
+
+    hr = MemFree(rgsczStrArray);
+    ExitOnFailure(hr, "Failed to free memory for the string array.");
+
+LExit:
+    return hr;
 }

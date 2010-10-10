@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -134,6 +134,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 case "WixCloseApplication":
                     this.DecompileWixCloseApplicationTable(table);
                     break;
+                case "WixRestartResource":
+                    this.DecompileWixRestartResourceTable(table);
+                    break;
                 case "FileShare":
                     this.DecompileFileShareTable(table);
                     break;
@@ -243,6 +246,52 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 this.Core.RootElement.AddChild(closeApplication);
+            }
+        }
+
+        /// <summary>
+        /// Decompile the WixRestartResource table.
+        /// </summary>
+        /// <param name="table">The table to decompile.</param>
+        private void DecompileWixRestartResourceTable(Table table)
+        {
+            foreach (Row row in table.Rows)
+            {
+                // Set the Id even if auto-generated previously.
+                Util.RestartResource restartResource = new Util.RestartResource();
+                restartResource.Id = (string)row[0];
+
+                // Determine the resource type and set accordingly.
+                string resource = (string)row[2];
+                int attributes = (int)row[3];
+                UtilCompiler.WixRestartResourceAttributes type = (UtilCompiler.WixRestartResourceAttributes)(attributes & (int)UtilCompiler.WixRestartResourceAttributes.TypeMask);
+
+                switch (type)
+                {
+                    case UtilCompiler.WixRestartResourceAttributes.Filename:
+                        restartResource.Path = resource;
+                        break;
+
+                    case UtilCompiler.WixRestartResourceAttributes.ServiceName:
+                        restartResource.ServiceName = resource;
+                        break;
+
+                    default:
+                        this.Core.OnMessage(WixWarnings.UnrepresentableColumnValue(row.SourceLineNumbers, table.Name, "Attributes", attributes));
+                        break;
+                }
+
+                // Add to the appropriate Component.
+                string componentId = (string)row[1];
+                Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", componentId);
+                if (null != component)
+                {
+                    component.AddChild(restartResource);
+                }
+                else
+                {
+                    this.Core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", componentId, "Component"));
+                }
             }
         }
 

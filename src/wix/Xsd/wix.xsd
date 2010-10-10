@@ -9,7 +9,7 @@
             Copyright (c) Microsoft Corporation.  All rights reserved.
             
             The use and distribution terms for this software are covered by the
-            Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+            Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
             which can be found in the file CPL.TXT at the root of this distribution.
             By using this software in any fashion, you are agreeing to be bound by
             the terms of this license.
@@ -8590,7 +8590,7 @@
                     <xs:attribute name="BinarySource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to the Binary element that contains the chainer executeable. Mutually exclusive with
+                                Reference to the Binary element that contains the chainer executable. Mutually exclusive with
                                 the FileSource and PropertySource attributes.
                             </xs:documentation>
                         </xs:annotation>
@@ -8598,7 +8598,7 @@
                     <xs:attribute name="FileSource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to the File element that is the chainer executeable. Mutually exclusive with
+                                Reference to the File element that is the chainer executable. Mutually exclusive with
                                 the BinarySource and PropertySource attributes.
                             </xs:documentation>
                         </xs:annotation>
@@ -8606,7 +8606,7 @@
                     <xs:attribute name="PropertySource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to a Property that resolves to the full path to the chainer executeable. Mutually exclusive with
+                                Reference to a Property that resolves to the full path to the chainer executable. Mutually exclusive with
                                 the BinarySource and FileSource attributes.
                             </xs:documentation>
                         </xs:annotation>

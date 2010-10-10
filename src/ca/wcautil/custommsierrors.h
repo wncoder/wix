@@ -33,6 +33,9 @@
 #define msierrXmlConfigFailedSelect       25542
 #define msierrXmlConfigFailedSave         25543
 
+#define msierrRmuJoinFailed              25550
+#define msierrRmuRegisterFailed          25551
+
 #define msierrFirewallCannotConnect       25580
 
 //---------------------------------------------------------------------------

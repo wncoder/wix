@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -498,7 +498,7 @@ HRESULT ScaUserExecute(
 
     for (SCA_USER *psu = psuList; psu; psu = psu->psuNext)
     {
-        BOOL fUserExists = FALSE;
+        USER_EXISTS ueUserExists = USER_EXISTS_INDETERMINATE;
 
         // Always put the User Name and Domain plus Attributes on the front of the CustomAction
         // data.  Sometimes we'll add more data.
@@ -535,23 +535,24 @@ HRESULT ScaUserExecute(
         er = ::NetUserGetInfo(wzDomain, psu->wzName, 0, reinterpret_cast<LPBYTE*>(pUserInfo));
         if (NERR_Success == er)
         {
-            fUserExists = TRUE;
+            ueUserExists = USER_EXISTS_YES;
         }
         else if (NERR_UserNotFound == er)
         {
-            fUserExists = FALSE;
+            ueUserExists = USER_EXISTS_NO;
         }
         else
         {
+            ueUserExists = USER_EXISTS_INDETERMINATE;
             hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure2(hr, "Failed to check existence of domain: %S, user: %S", wzDomain, psu->wzName);
+            WcaLog(LOGMSG_VERBOSE, "Failed to check existence of domain: %S, user: %S (error code 0x%x) - continuing", wzDomain, psu->wzName, hr);
         }
 
         if (WcaIsInstalling(psu->isInstalled, psu->isAction))
         {
             // If the user exists, check to see if we are supposed to fail if user the exists before
             // the install.
-            if(fUserExists)
+            if(USER_EXISTS_YES == ueUserExists)
             {
                 // Reinstalls will always fail if we don't remove the check for "fail if exists".
                 if (WcaIsReInstalling(psu->isInstalled, psu->isAction))
@@ -566,13 +567,13 @@ HRESULT ScaUserExecute(
                 }
             }
 
-            // Rollback only if the user already exists or we are going to create the user
-            if (fUserExists || !(psu->iAttributes & SCAU_DONT_CREATE_USER))
+            // Rollback only if the user already exists, we couldn't determine if the user exists, or we are going to create the user
+            if ((USER_EXISTS_YES == ueUserExists) || (USER_EXISTS_INDETERMINATE == ueUserExists) || !(psu->iAttributes & SCAU_DONT_CREATE_USER))
             {
                 INT iRollbackUserAttributes = psu->iAttributes;
 
                 // If the user already exists, ensure this is accounted for in rollback
-                if (fUserExists)
+                if (USER_EXISTS_YES == ueUserExists)
                 {
                     iRollbackUserAttributes |= SCAU_DONT_CREATE_USER;
                 }
@@ -589,13 +590,12 @@ HRESULT ScaUserExecute(
                 ExitOnFailure1(hr, "failed to add user attributes to rollback custom action data for user: %S", psu->wzKey);
 
                 // If the user already exists, add relevant group information to rollback data
-                if (fUserExists)
+                if (USER_EXISTS_YES == ueUserExists || USER_EXISTS_INDETERMINATE == ueUserExists)
                 {
                     hr = WriteGroupRollbackInfo(psu->wzName, psu->wzDomain, psu->psgGroups, &pwzRollbackData);
                     ExitOnFailure(hr, "failed to add group information to rollback custom action data");
                 }
 
-                // All you need for deletion is the domain and user names.
                 hr = WcaDoDeferredAction(L"CreateUserRollback", pwzRollbackData, COST_USER_DELETE);
                 ExitOnFailure(hr, "failed to schedule CreateUserRollback");
             }
@@ -613,7 +613,7 @@ HRESULT ScaUserExecute(
             hr = WcaDoDeferredAction(L"CreateUser", pwzActionData, COST_USER_ADD);
             ExitOnFailure(hr, "failed to schedule CreateUser");
         }
-        else if (fUserExists && WcaIsUninstalling(psu->isInstalled, psu->isAction) && !(psu->iAttributes & SCAU_DONT_REMOVE_ON_UNINSTALL))
+        else if (((USER_EXISTS_YES == ueUserExists) || (USER_EXISTS_INDETERMINATE == ueUserExists)) && WcaIsUninstalling(psu->isInstalled, psu->isAction) && !(psu->iAttributes & SCAU_DONT_REMOVE_ON_UNINSTALL))
         {
             // Add user's group information - this will ensure the user can be removed from any groups they were added to, if the user isn't be deleted
             hr = WriteGroupInfo(psu->psgGroups, &pwzActionData);

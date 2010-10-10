@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -1150,12 +1150,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Name"));
             }
 
-            if (null == user && 8 == attributes)
+            if (null == user && 8 == (attributes & 0xF))
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "User", "Identity", "other"));
             }
 
-            if (null != user && 8 != attributes)
+            if (null != user && 8 != (attributes & 0xF))
             {
                 this.Core.OnMessage(WixErrors.IllegalAttributeValueWithoutOtherAttribute(sourceLineNumbers, node.Name, "User", user, "Identity", "other"));
             }
@@ -2334,7 +2334,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (null == directory && null != componentId)
             {
-                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Directory"));
+                this.Core.OnMessage(IIsErrors.RequiredAttributeUnderComponent(sourceLineNumbers, node.Name, "Directory"));
             }
 
             foreach (XmlNode child in node.ChildNodes)
