@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -215,6 +215,7 @@ extern "C" void CacheSendErrorCallback(
 extern "C" HRESULT CachePayload(
     __in BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
     )
@@ -224,8 +225,16 @@ extern "C" HRESULT CachePayload(
     LPWSTR sczCachedPath = NULL;
     HANDLE hFile = INVALID_HANDLE_VALUE;
 
-    hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
-    ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
+    if (NULL == wzLayoutDirectory)
+    {
+        hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
+        ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
+    }
+    else
+    {
+        hr = StrAllocString(&sczCachedDirectory, wzLayoutDirectory, 0);
+        ExitOnFailure(hr, "Failed to copy layout directory.");
+    }
 
     hr = PathConcat(sczCachedDirectory, pPayload->sczFilePath, &sczCachedPath);
     ExitOnFailure(hr, "Failed to concat complete cached path.");

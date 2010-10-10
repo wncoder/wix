@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -23,12 +23,16 @@
 
 // internal function declarations
 
-static HRESULT RunPerUser(
+static HRESULT RunNormal(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     );
-static HRESULT RunPerMachine(
+static HRESULT RunElevated(
     __in BURN_ENGINE_STATE* pEngineState
+    );
+static HRESULT RunEmbedded(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in_z LPCWSTR wzCommandLine
     );
 static HRESULT RunUncache(
     __in BURN_ENGINE_STATE* pEngineState
@@ -37,7 +41,7 @@ static HRESULT ProcessMessage(
     __in BURN_ENGINE_STATE* pEngineState,
     __in const MSG* pmsg
     );
-static HRESULT DAPI RedirectElevatedLoggingOverPipe(
+static HRESULT DAPI RedirectLoggingOverPipe(
     __in_z LPCSTR szString,
     __in_opt LPVOID pvContext
     );
@@ -76,20 +80,18 @@ extern "C" HRESULT EngineRun(
     ExitOnFailure(hr, "Failed to initialize COM.");
     fComInitialized = TRUE;
 
+    // Initialize dutil.
     LogInitialize(::GetModuleHandleW(NULL));
     fLogInitialized = TRUE;
 
-    // initialize Reg util
     hr = RegInitialize();
     ExitOnFailure(hr, "Failed to initialize Regutil.");
     fRegInitialized = TRUE;
 
-    // initialize WI util
     hr = WiuInitialize();
     ExitOnFailure(hr, "Failed to initialize Wiutil.");
     fWiuInitialized = TRUE;
 
-    // initialize XML util
     hr = XmlInitialize();
     ExitOnFailure(hr, "Failed to initialize XML util.");
     fXmlInitialized = TRUE;
@@ -102,13 +104,18 @@ extern "C" HRESULT EngineRun(
     switch (engineState.mode)
     {
     case BURN_MODE_NORMAL:
-        hr = RunPerUser(&engineState, wzCommandLine);
+        hr = RunNormal(&engineState, wzCommandLine);
         ExitOnFailure(hr, "Failed to run per-user mode.");
         break;
 
     case BURN_MODE_ELEVATED:
-        hr = RunPerMachine(&engineState);
+        hr = RunElevated(&engineState);
         ExitOnFailure(hr, "Failed to run per-machine mode.");
+        break;
+
+    case BURN_MODE_EMBEDDED:
+        hr = RunEmbedded(&engineState, wzCommandLine);
+        ExitOnFailure(hr, "Failed to run embedded mode.");
         break;
 
     case BURN_MODE_UNCACHE_PER_MACHINE: __fallthrough;
@@ -172,7 +179,7 @@ LExit:
 
 // internal function definitions
 
-static HRESULT RunPerUser(
+static HRESULT RunNormal(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     )
@@ -184,15 +191,18 @@ static HRESULT RunPerUser(
     BOOL fRet = FALSE;
     MSG msg = { };
 
-    // We don't open the log in the elevated process because it redirects
-    // its log messages to the parent process over the pipe.
+    // Initialize logging and the thread's message queue.
     hr = LoggingOpen(&pEngineState->log, wzCommandLine, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to open log.");
 
-    // Initialize this thread's message queue and load the application.
     ::PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
     dwThreadId = ::GetCurrentThreadId();
 
+    // Query registration state.
+    hr = CoreQueryRegistration(pEngineState);
+    ExitOnFailure(hr, "Failed to query registration.");
+
+    // Load the bootstrapper application.
     hr = EngineForApplicationCreate(pEngineState, dwThreadId, &pEngineForApplication);
     ExitOnFailure(hr, "Failed to create engine for UX.");
 
@@ -202,10 +212,6 @@ static HRESULT RunPerUser(
     // Set resume commandline
     hr = RegistrationSetResumeCommand(&pEngineState->registration, &pEngineState->command, &pEngineState->log);
     ExitOnFailure(hr, "Failed to set resume command");
-
-    // query registration
-    hr = CoreQueryRegistration(pEngineState);
-    ExitOnFailure(hr, "Failed to query registration.");
 
     fStartupCalled = TRUE;
     hr = pEngineState->userExperience.pUserExperience->OnStartup();
@@ -244,7 +250,7 @@ LExit:
     // end per-machine process if running
     if (pEngineState->hElevatedProcess && INVALID_HANDLE_VALUE != pEngineState->hElevatedPipe)
     {
-        ElevationParentProcessTerminate(pEngineState->hElevatedProcess, pEngineState->hElevatedPipe);
+        PipeTerminateChildProcess(pEngineState->hElevatedProcess, pEngineState->hElevatedPipe);
     }
 
     ReleaseObject(pEngineForApplication);
@@ -252,25 +258,47 @@ LExit:
     return hr;
 }
 
-static HRESULT RunPerMachine(
+static HRESULT RunElevated(
     __in BURN_ENGINE_STATE* pEngineState
     )
 {
     HRESULT hr = S_OK;
 
-    // Override logging to write over the pipe
-    LogRedirect(RedirectElevatedLoggingOverPipe, pEngineState);
+    // Override logging to write over the pipe.
+    LogRedirect(RedirectLoggingOverPipe, pEngineState);
 
     // connect to per-user process
-    hr = ElevationChildConnect(pEngineState->sczElevatedPipeName, pEngineState->sczElevatedToken, &pEngineState->hElevatedPipe);
-    ExitOnFailure(hr, "Failed to connect to per-user process.");
+    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, &pEngineState->hElevatedPipe);
+    ExitOnFailure(hr, "Failed to connect to parent process.");
 
-    hr = ElevationChildConnected(pEngineState->hElevatedPipe);
+    hr = PipeChildConnected(pEngineState->hElevatedPipe);
     ExitOnFailure(hr, "Failed to notify parent process that child is connected.");
 
-    // pump messages from per-user process
+    // Pump messages from parent process.
     hr = ElevationChildPumpMessages(pEngineState->hElevatedPipe, &pEngineState->packages, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience);
-    ExitOnFailure(hr, "Failed to pump messages from per-user process.");
+    ExitOnFailure(hr, "Failed to pump messages from parent process.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT RunEmbedded(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in_z LPCWSTR wzCommandLine
+    )
+{
+    HRESULT hr = S_OK;
+
+    // Connect to parent process.
+    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, &pEngineState->hEmbeddedPipe);
+    ExitOnFailure(hr, "Failed to connect to parent process.");
+
+    hr = PipeChildConnected(pEngineState->hEmbeddedPipe);
+    ExitOnFailure(hr, "Failed to notify parent process that child is connected.");
+
+    // Now run the application like normal.
+    hr = RunNormal(pEngineState, wzCommandLine);
+    ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:
     return hr;
@@ -332,7 +360,7 @@ static HRESULT ProcessMessage(
     return hr;
 }
 
-static HRESULT DAPI RedirectElevatedLoggingOverPipe(
+static HRESULT DAPI RedirectLoggingOverPipe(
     __in_z LPCSTR szString,
     __in_opt LPVOID pvContext
     )
@@ -346,7 +374,7 @@ static HRESULT DAPI RedirectElevatedLoggingOverPipe(
     hr = BuffWriteStringAnsi(&pbData, &cbData, szString);
     ExitOnFailure(hr, "Failed to write string to buffer.");
 
-    hr = ElevationSendMessage(pEngineState->hElevatedPipe, BURN_ELEVATION_MESSAGE_TYPE_LOG, pbData, cbData, &dwResult);
+    hr = PipeSendMessage(pEngineState->hElevatedPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_LOG), pbData, cbData, NULL, NULL, &dwResult);
     ExitOnFailure(hr, "Failed to post log message over pipe.");
     hr = (HRESULT)dwResult;
 

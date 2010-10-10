@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -33,6 +33,13 @@ enum BURN_EXE_EXIT_CODE_TYPE
     BURN_EXE_EXIT_CODE_TYPE_ERROR,
     BURN_EXE_EXIT_CODE_TYPE_SCHEDULE_REBOOT,
     BURN_EXE_EXIT_CODE_TYPE_FORCE_REBOOT,
+};
+
+enum BURN_EXE_PROTOCOL_TYPE
+{
+    BURN_EXE_PROTOCOL_TYPE_NONE,
+    BURN_EXE_PROTOCOL_TYPE_BURN,
+    BURN_EXE_PROTOCOL_TYPE_NETFX4,
 };
 
 enum BURN_PACKAGE_TYPE
@@ -105,6 +112,12 @@ typedef struct _BURN_PACKAGE_PAYLOAD
     BOOL fCached;
 } BURN_PACKAGE_PAYLOAD;
 
+typedef struct _BURN_ROLLBACK_BOUNDARY
+{
+    LPWSTR sczId;
+    BOOL fVital;
+} BURN_ROLLBACK_BOUNDARY;
+
 typedef struct _BURN_PACKAGE
 {
     LPWSTR sczId;
@@ -115,12 +128,13 @@ typedef struct _BURN_PACKAGE
     LPWSTR sczInstallCondition;
     LPWSTR sczRollbackInstallCondition;
     BOOL fPerMachine;
-    BOOL fTransactionBoundary;
     BOOL fUninstallable;
     BOOL fVital;
 
     BOOL fCache;
     LPWSTR sczCacheId;
+
+    BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
 
     BOOTSTRAPPER_PACKAGE_STATE currentState;
     BOOL fCached;
@@ -141,6 +155,7 @@ typedef struct _BURN_PACKAGE
             LPWSTR sczUninstallArguments;
             //LPWSTR sczProgressSwitch;
             BOOL fRepairable;
+            BURN_EXE_PROTOCOL_TYPE protocol;
 
             BURN_EXE_EXIT_CODE* rgExitCodes;
             DWORD cExitCodes;
@@ -181,6 +196,9 @@ typedef struct _BURN_PACKAGE
 
 typedef struct _BURN_PACKAGES
 {
+    BURN_ROLLBACK_BOUNDARY* rgRollbackBoundaries;
+    DWORD cRollbackBoundaries;
+
     BURN_PACKAGE* rgPackages;
     DWORD cPackages;
 

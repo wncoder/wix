@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -62,6 +62,33 @@ extern "C" HRESULT ExeEngineParsePackageFromXml(
     if (E_NOTFOUND != hr)
     {
         ExitOnFailure(hr, "Failed to get @Repairable.");
+    }
+
+    // @Protocol
+    hr = XmlGetAttributeEx(pixnExePackage, L"Protocol", &scz);
+    if (SUCCEEDED(hr))
+    {
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"burn", -1))
+        {
+            pPackage->Exe.protocol = BURN_EXE_PROTOCOL_TYPE_BURN;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"netfx4", -1))
+        {
+            pPackage->Exe.protocol = BURN_EXE_PROTOCOL_TYPE_NETFX4;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"none", -1))
+        {
+            pPackage->Exe.protocol = BURN_EXE_PROTOCOL_TYPE_NONE;
+        }
+        else
+        {
+            hr = E_UNEXPECTED;
+            ExitOnFailure1(hr, "Invalid exit code type: %ls", scz);
+        }
+    }
+    else if (E_NOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to get @Protocol.");
     }
 
     // select exit code nodes
@@ -296,8 +323,8 @@ extern "C" HRESULT ExeEnginePlanPackage(
         hr = PlanAppendExecuteAction(pPlan, &pAction);
         ExitOnFailure(hr, "Failed to append wait action.");
 
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_WAIT;
-        pAction->wait.hEvent = hCacheEvent;
+        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
+        pAction->syncpoint.hEvent = hCacheEvent;
     }
 
     // add execute action
@@ -355,6 +382,8 @@ LExit:
 }
 
 extern "C" HRESULT ExeEngineExecutePackage(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -397,9 +426,6 @@ extern "C" HRESULT ExeEngineExecutePackage(
         ExitOnFailure(hr, "Failed to get action arguments for executable package.");
     }
 
-    // Always use the first payload as the installation package.
-    // TODO: pick engine payload
-
     // build command
     if (wzArguments && *wzArguments)
     {
@@ -414,16 +440,23 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     ExitOnFailure(hr, "Failed to create executable command.");
 
+    // Log before we add the secret pipe name and client token for embedded processes.
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->exePackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->exePackage.action), sczExecutablePath, sczCommand);
 
-    // create process
-    si.cb = sizeof(si); // TODO: hookup the stdin/stdout/stderr pipes for logging purposes?
-    if (!::CreateProcessW(sczExecutablePath, sczCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+    if (BURN_EXE_PROTOCOL_TYPE_BURN == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        ExitWithLastError1(hr, "Failed to CreateProcess on path: %ls", sczExecutablePath);
+        hr = EmbeddedLaunchChildProcess(pExecuteAction->exePackage.pPackage, pUX, hElevatedPipe, sczExecutablePath, sczCommand, &pi.hProcess);
+        ExitOnFailure1(hr, "Failed to launch executable as embedded from path: %ls", sczExecutablePath);
+    }
+    else // create and wait for the executable process like normal.
+    {
+        si.cb = sizeof(si); // TODO: hookup the stdin/stdout/stderr pipes for logging purposes?
+        if (!::CreateProcessW(sczExecutablePath, sczCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+        {
+            ExitWithLastError1(hr, "Failed to CreateProcess on path: %ls", sczExecutablePath);
+        }
     }
 
-    // wait for process to terminate
     hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
     ExitOnFailure1(hr, "Failed to wait for executable to complete: %ls", sczExecutablePath);
 

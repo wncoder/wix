@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -29,6 +29,7 @@ extern "C" {
 // constants
 
 const LPCWSTR BURN_COMMANDLINE_SWITCH_ELEVATED = L"burn.elevated";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_EMBEDDED = L"burn.embedded";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_UNCACHE_PER_MACHINE = L"burn.uncache.machine";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_UNCACHE_PER_USER = L"burn.uncache.user";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_LOG_APPEND = L"burn.log.append";
@@ -59,9 +60,6 @@ typedef struct _BURN_ENGINE_STATE
     //BOOL fReboot;              // Is TRUE when UX confirms OnRestartRequried().
     BOOL fRestart;               // Set TRUE when UX returns IDRESTART during Apply().
 
-    HANDLE hElevatedProcess;
-    HANDLE hElevatedPipe;
-
     // engine data
     BOOTSTRAPPER_COMMAND command;
     BURN_VARIABLES variables;
@@ -80,10 +78,15 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PLAN plan;
 
     BURN_MODE mode;
-    BOOTSTRAPPER_RESUME_TYPE resumeType;
 
-    LPWSTR sczElevatedPipeName;
-    LPWSTR sczElevatedToken;
+    HANDLE hElevatedProcess;
+    HANDLE hElevatedPipe;
+
+    HANDLE hEmbeddedProcess;
+    HANDLE hEmbeddedPipe;
+
+    LPWSTR sczParentPipeName;
+    LPWSTR sczParentToken;
 } BURN_ENGINE_STATE;
 
 

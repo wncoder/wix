@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -26,6 +26,11 @@ static HRESULT ParsePayloadRefsFromXml(
     __in BURN_PAYLOADS* pPayloads,
     __in IXMLDOMNode* pixnPackage
     );
+static HRESULT FindRollbackBoundaryById(
+    __in BURN_PACKAGES* pPackages,
+    __in_z LPCWSTR wzId,
+    __out BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary
+    );
 
 
 // function definitions
@@ -42,6 +47,45 @@ extern "C" HRESULT PackagesParseFromXml(
     DWORD cNodes = 0;
     BSTR bstrNodeName = NULL;
     DWORD cMspPackages = 0;
+    LPWSTR scz = NULL;
+
+    // select rollback boundary nodes
+    hr = XmlSelectNodes(pixnBundle, L"RollbackBoundary", &pixnNodes);
+    ExitOnFailure(hr, "Failed to select rollback boundary nodes.");
+
+    // get rollback boundary node count
+    hr = pixnNodes->get_length((long*)&cNodes);
+    ExitOnFailure(hr, "Failed to get rollback bundary node count.");
+
+    if (cNodes)
+    {
+        // allocate memory for rollback boundaries
+        pPackages->rgRollbackBoundaries = (BURN_ROLLBACK_BOUNDARY*)MemAlloc(sizeof(BURN_ROLLBACK_BOUNDARY) * cNodes, TRUE);
+        ExitOnNull(pPackages->rgRollbackBoundaries, hr, E_OUTOFMEMORY, "Failed to allocate memory for rollback boundary structs.");
+
+        pPackages->cRollbackBoundaries = cNodes;
+
+        // parse rollback boundary elements
+        for (DWORD i = 0; i < cNodes; ++i)
+        {
+            BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = &pPackages->rgRollbackBoundaries[i];
+
+            hr = XmlNextElement(pixnNodes, &pixnNode, &bstrNodeName);
+            ExitOnFailure(hr, "Failed to get next node.");
+
+            // @Id
+            hr = XmlGetAttributeEx(pixnNode, L"Id", &pRollbackBoundary->sczId);
+            ExitOnFailure(hr, "Failed to get @Id.");
+
+            // @Vital
+            hr = XmlGetYesNoAttribute(pixnNode, L"Vital", &pRollbackBoundary->fVital);
+            ExitOnFailure(hr, "Failed to get @Vital.");
+
+            // prepare next iteration
+            ReleaseNullObject(pixnNode);
+            ReleaseNullBSTR(bstrNodeName);
+        }
+    }
 
     // select package nodes
     hr = XmlSelectNodes(pixnBundle, L"Chain/ExePackage|Chain/MsiPackage|Chain/MspPackage|Chain/MsuPackage", &pixnNodes);
@@ -114,6 +158,16 @@ extern "C" HRESULT PackagesParseFromXml(
         if (E_NOTFOUND != hr)
         {
             ExitOnFailure(hr, "Failed to get @InstallCondition.");
+        }
+
+        // @RollbackBoundary
+        hr = XmlGetAttributeEx(pixnNode, L"RollbackBoundary", &scz);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @RollbackBoundary.");
+
+            hr =  FindRollbackBoundaryById(pPackages, scz, &pPackage->pRollbackBoundary);
+            ExitOnFailure1(hr, "Failed to find transaction boundary: %ls", scz);
         }
 
         // read type specific attributes
@@ -191,6 +245,7 @@ LExit:
     ReleaseObject(pixnNodes);
     ReleaseObject(pixnNode);
     ReleaseBSTR(bstrNodeName);
+    ReleaseStr(scz);
 
     return hr;
 }
@@ -199,6 +254,15 @@ extern "C" void PackagesUninitialize(
     __in BURN_PACKAGES* pPackages
     )
 {
+    if (pPackages->rgRollbackBoundaries)
+    {
+        for (DWORD i = 0; i < pPackages->cRollbackBoundaries; ++i)
+        {
+            ReleaseStr(pPackages->rgRollbackBoundaries[i].sczId);
+        }
+        MemFree(pPackages->rgRollbackBoundaries);
+    }
+
     if (pPackages->rgPackages)
     {
         for (DWORD i = 0; i < pPackages->cPackages; ++i)
@@ -327,5 +391,31 @@ LExit:
     ReleaseObject(pixnNode);
     ReleaseStr(sczId);
 
+    return hr;
+}
+
+static HRESULT FindRollbackBoundaryById(
+    __in BURN_PACKAGES* pPackages,
+    __in_z LPCWSTR wzId,
+    __out BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
+
+    for (DWORD i = 0; i < pPackages->cRollbackBoundaries; ++i)
+    {
+        pRollbackBoundary = &pPackages->rgRollbackBoundaries[i];
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pRollbackBoundary->sczId, -1, wzId, -1))
+        {
+            *ppRollbackBoundary = pRollbackBoundary;
+            ExitFunction1(hr = S_OK);
+        }
+    }
+
+    hr = E_NOTFOUND;
+
+LExit:
     return hr;
 }

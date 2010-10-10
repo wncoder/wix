@@ -4,7 +4,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -103,6 +103,7 @@
         <include name="winterop.dll" />
         <include name="wix.dll" />
         <include name="wix.targets" />
+        <include name="wix200x.targets" />
         <include name="wix2010.targets" />
         <include name="WixCop.exe" />
         <include name="WixTasks.dll" />
@@ -125,7 +126,7 @@
         <include name="WixLibraryFile.ico" />
 
         <!-- extensions -->
-        <include name="WixBuxExtension.dll" />
+        <include name="WixBalExtension.dll" />
         <include name="WixComPlusExtension.dll" />
         <include name="WixDifxAppExtension.dll" />
         <include name="${dir.target.wix.x86}\difxapp_x86.wixlib" />
@@ -166,10 +167,12 @@
         <include name="burnstub.exe" />
         <include name="stdux.dll" />
         <include name="stdux.png" />
-        <include name="thm.xml" />
         <include name="tou.htm" />
-        <include name="mux.dll" />
-        <include name="muxhost.dll" />
+        <include name="BootstrapperCore.dll" />
+        <include name="mbahost.dll" />
+        <include name="mbapreq.dll" />
+        <include name="StduxResources\thm.xml" />
+        <include name="StduxResources\en-us.wxl" />
 
         <!-- Lux -->
         <include name="lux.exe" />
@@ -339,9 +342,9 @@
         <include name="${dir.target.wix.x64}\wcautil_2008_x64.lib" if="${BuildVC9}" />
         <include name="${dir.target.wix.x64}\wcautil_2010_x64.lib" if="${BuildVC10}" />
 
-        <include name="${dir.target.wix.x64}\wcautil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
-        <include name="${dir.target.wix.x64}\wcautil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
-        <include name="${dir.target.wix.x64}\wcautil_2010_ia64.lib" if="${BuildVC10 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
+        <include name="${dir.target.wix.ia64}\wcautil_2010_ia64.lib" if="${BuildVC10 and ia64}" />
       </fileset>
     </zip>
 
@@ -395,12 +398,14 @@
         <include name="**/*.vbproj" />
         <include name="**/*.vbs" />
         <include name="**/*.vcproj" />
+        <include name="**/*.vcxproj" />
         <include name="**/*.vjsproj" />
         <include name="**/*.vsdir" />
         <include name="**/*.vsmdi" />
         <include name="**/*.vstemplate" />
         <include name="**/*.xsd" />
         <include name="**/*.xaml" />
+        <include name="**/thm.xml" />
         <include name="bin/publickey_wix.snk" />
 
         <!-- skip the files we don't want that match one of the above extensions -->

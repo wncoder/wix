@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -783,14 +783,28 @@ LExit:
 
 HRESULT DAPI EseFinishUpdate(
     __in JET_SESID jsSession,
-    __in JET_TABLEID jtTable
+    __in JET_TABLEID jtTable,
+    __in BOOL fSeekToInsertedRecord
     )
 {
     HRESULT hr = S_OK;
     JET_ERR jEr = JET_errSuccess;
+    unsigned char rgbBookmark[JET_cbBookmarkMost + 1];
+    DWORD cbBookmark;
 
-    jEr = JetUpdate(jsSession, jtTable, NULL, 0, NULL);
-    ExitOnJetFailure(jEr, hr, "Failed to run update");
+    if (fSeekToInsertedRecord)
+    {
+        jEr = JetUpdate(jsSession, jtTable, rgbBookmark, sizeof(rgbBookmark), &cbBookmark);
+        ExitOnJetFailure(jEr, hr, "Failed to run update and retrieve bookmark");
+
+        jEr = JetGotoBookmark(jsSession, jtTable, rgbBookmark, cbBookmark);
+        ExitOnJetFailure(jEr, hr, "Failed to seek to recently updated record using bookmark");
+    }
+    else
+    {
+        jEr = JetUpdate(jsSession, jtTable, NULL, 0, NULL);
+        ExitOnJetFailure(jEr, hr, "Failed to run update (without retrieving bookmark)");
+    }
 
 LExit:
     // If we fail, the caller won't expect that the update wasn't finished, so we'll cancel their entire update to leave them in a good state
@@ -840,7 +854,7 @@ HRESULT DAPI EseSetColumnDwordFull(
     ExitOnFailure1(hr, "Failed to set column string value: %d", dwValue);
 
     // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable);
+    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
     ExitOnFailure(hr, "Failed to finish update");
 
     // This finishes the transaction
@@ -908,7 +922,7 @@ HRESULT DAPI EseSetColumnStringFull(
     ExitOnFailure1(hr, "Failed to set column string value: %S", pszValue);
 
     // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable);
+    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
     ExitOnFailure(hr, "Failed to finish update");
 
     // This finishes the transaction
@@ -955,7 +969,7 @@ HRESULT DAPI EseSetColumnEmptyFull(
     ExitOnFailure(hr, "Failed to set column to empty value");
 
     // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable);
+    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
     ExitOnFailure(hr, "Failed to finish update");
 
     // This finishes the transaction

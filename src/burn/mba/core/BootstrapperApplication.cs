@@ -3,7 +3,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -133,6 +133,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Fired when the engine has begun installing the bundle.
         /// </summary>
         public event EventHandler<ApplyBeginEventArgs> ApplyBegin;
+
+        /// <summary>
+        /// Fired when the engine is about to start the elevated process.
+        /// </summary>
+        public event EventHandler<ElevateEventArgs> Elevate;
 
         /// <summary>
         /// Fired when the engine has begun registering the location and visibility of the bundle.
@@ -548,6 +553,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         protected virtual void OnApplyBegin(ApplyBeginEventArgs args)
         {
             EventHandler<ApplyBeginEventArgs> handler = this.ApplyBegin;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine is about to start the elevated process.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        protected virtual void OnElevate(ElevateEventArgs args)
+        {
+            EventHandler<ElevateEventArgs> handler = this.Elevate;
             if (null != handler)
             {
                 handler(this, args);
@@ -1024,6 +1042,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             ApplyBeginEventArgs args = new ApplyBeginEventArgs();
             this.OnApplyBegin(args);
+
+            return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnElevate()
+        {
+            ElevateEventArgs args = new ElevateEventArgs();
+            this.OnElevate(args);
 
             return args.Result;
         }

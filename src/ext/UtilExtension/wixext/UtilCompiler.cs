@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -93,6 +93,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             Language = 0x2,
             State = 0x4,
             Assignment = 0x8,
+        }
+
+        internal enum WixRestartResourceAttributes
+        {
+            Filename = 1,
+            Application,
+            ServiceName,
+            TypeMask = 0xf,
         }
 
         private static readonly Regex FindPropertyBrackets = new Regex(@"\[(?!\\|\])|(?<!\[\\\]|\[\\|\\\[)\]", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
@@ -203,6 +211,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             break;
                         case "PerformanceCategory":
                             this.ParsePerformanceCategoryElement(element, componentId);
+                            break;
+                        case "RestartResource":
+                            this.ParseRestartResourceElement(element, componentId);
                             break;
                         case "ServiceConfig":
                             this.ParseServiceConfigElement(element, componentId, "Component", null);
@@ -2764,6 +2775,90 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[2] = key;
                 row[3] = value;
                 row[4] = (int)attributes;
+            }
+        }
+
+        /// <summary>
+        /// Parses a RestartResource element.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        /// <param name="componentId">The identity of the parent component.</param>
+        private void ParseRestartResourceElement(XmlNode node, string componentId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            string resource = null;
+            int attributes = CompilerCore.IntegerNotSet;
+
+            // Parse attributes.
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+
+                        case "Path":
+                            resource = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            attributes = (int)WixRestartResourceAttributes.Filename;
+                            break;
+
+                        case "ServiceName":
+                            resource = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            attributes = (int)WixRestartResourceAttributes.ServiceName;
+                            break;
+
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            // Find unexpected child elements.
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            // Validate the attribute.
+            if (String.IsNullOrEmpty(id))
+            {
+                id = this.Core.GenerateIdentifier("wrr", componentId, resource, attributes.ToString());
+            }
+
+            if (String.IsNullOrEmpty(resource) || CompilerCore.IntegerNotSet == attributes)
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttributes(sourceLineNumbers, node.Name, "Path", "ServiceName"));
+            }
+
+            if (!this.Core.EncounteredError)
+            {
+                // Add a reference to the WixRegisterRestartResources custom action since nothing will happen without it.
+                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixRegisterRestartResources");
+
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRestartResource");
+                row[0] = id;
+                row[1] = componentId;
+                row[2] = resource;
+                row[3] = attributes;
             }
         }
 

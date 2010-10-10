@@ -3,7 +3,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -47,7 +47,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [MarshalAs(UnmanagedType.U4)] private readonly Restart restart;
         [MarshalAs(UnmanagedType.LPWStr)] private readonly string wzCommandLine;
         [MarshalAs(UnmanagedType.I4)] private readonly int nCmdShow;
-        [MarshalAs(UnmanagedType.Bool)] private readonly bool resumed;
+        [MarshalAs(UnmanagedType.U4)] private readonly ResumeType resume;
 
         /// <summary>
         /// Gets the action for the user experience to perform.
@@ -82,11 +82,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Gets whether the engine was resumed from a previous installation step.
+        /// Gets the method of how the engine was resumed from a previous installation step.
         /// </summary>
-        public bool Resumed
+        public ResumeType Resume
         {
-            get { return this.resumed; }
+            get { return this.resume; }
         }
     }
 }

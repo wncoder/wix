@@ -37,12 +37,12 @@
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
       &lt;Fragment&gt;
         &lt;PackageGroup Id=&quot;MyPackage&quot;&gt;
-        	&lt;ExePackage 
+            &lt;ExePackage 
             SourceFile="[sources]\packages\shared\MyPackage.exe"
-            DownloadURL="http://mywebdomain.com/?mypackage.exe
+            DownloadUrl="http://example.com/?mypackage.exe"
             InstallCommand="/q /ACTION=Install"
             RepairCommand="/q ACTION=Repair /hideconsole"
-            UninstallCommand="/q ACTION=Uninstall /hideconsole /&gt;
+            UninstallCommand="/q ACTION=Uninstall /hideconsole" /&gt;
         &lt;/PackageGroup&gt;
       &lt;/Fragment&gt;
     &lt;/Wix&gt;</pre>
@@ -58,13 +58,13 @@
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
       &lt;Fragment&gt;
         &lt;PackageGroup Id=&quot;MyPackage&quot;&gt;
-        	&lt;ExePackage 
+            &lt;ExePackage 
             SourceFile="[sources]\packages\shared\MyPackage.exe"
-            DownloadURL="http://mywebdomain.com/?mypackage.exe
+            DownloadUrl="http://example.com/?mypackage.exe"
             InstallCommand="/q /ACTION=Install"
             RepairCommand="/q ACTION=Repair /hideconsole"
-            UninstallCommand="/q ACTION=Uninstall /hideconsole 
-           <span class="style1"> <strong>InstallCondition=&quot;NOT VersionNT64 AND VersionNT >= v5.1"</strong></span> /&gt;
+            UninstallCommand="/q ACTION=Uninstall /hideconsole" 
+           <span class="style1"> <strong>InstallCondition="NOT VersionNT64 AND VersionNT >= v5.1"</strong></span> /&gt;
         &lt;/PackageGroup&gt;
       &lt;/Fragment&gt;
     &lt;/Wix&gt;    </pre>

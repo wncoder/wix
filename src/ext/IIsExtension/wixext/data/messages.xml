@@ -3,7 +3,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -79,6 +79,12 @@
         <Message Id="CannotHarvestWebSite" Number="5160" SourceLineNumbers="no">
             <Instance>
                 Cannot harvest website. On Windows Vista, you must install IIS 6 Management Compatibility.
+            </Instance>
+        </Message>
+        <Message Id="RequiredAttributeUnderComponent" Number="5161">
+            <Instance>The {0}/@{1} attribute must be specified when the element has a Component as an ancestor.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
             </Instance>
         </Message>
     </Class>

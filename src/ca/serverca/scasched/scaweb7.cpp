@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -608,14 +608,19 @@ static HRESULT ScaWebWrite7(
     hr = ScaWriteConfigString(L"/");                    //  App Path (default)
     ExitOnFailure(hr, "Failed write app def path /");
 
-    if (psw->fHasApplication)
+    if (psw->fHasApplication && *psw->swapp.wzAppPool)
     {
         hr = ScaFindAppPool7(psw->swapp.wzAppPool, wzAppPoolName, countof(wzAppPoolName), psapList);
         ExitOnFailure(hr, "Failed to read app pool from application");
-    }
 
-    hr = ScaWriteConfigString(psw->fHasApplication ? wzAppPoolName : L"");
-    ExitOnFailure(hr, "Failed write app appPool");
+        hr = ScaWriteConfigString(wzAppPoolName);
+        ExitOnFailure(hr, "Failed write app appPool");
+    }
+    else
+    {
+        hr = ScaWriteConfigString(L"");
+        ExitOnFailure(hr, "Failed write app appPool");
+    }
 
     //create vdir for default application
     hr = ScaWriteConfigID(IIS_VDIR);

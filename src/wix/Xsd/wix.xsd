@@ -9,7 +9,7 @@
             Copyright (c) Microsoft Corporation.  All rights reserved.
             
             The use and distribution terms for this software are covered by the
-            Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+            Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
             which can be found in the file CPL.TXT at the root of this distribution.
             By using this software in any fashion, you are agreeing to be bound by
             the terms of this license.
@@ -277,6 +277,7 @@
                 <xs:element ref="MspPackage"/>
                 <xs:element ref="MsuPackage"/>
                 <xs:element ref="ExePackage"/>
+                <xs:element ref="RollbackBoundary"/>
                 <xs:element ref="PackageGroupRef"/>
             </xs:choice>
             <xs:attribute name="DisableRollback" type="YesNoType">
@@ -389,7 +390,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="ExePackage">
         <xs:annotation>
             <xs:documentation>Describes a single exe package to install.</xs:documentation>
@@ -441,6 +442,56 @@
             <xs:attribute name="PerMachine" type="YesNoType">
                 <xs:annotation>
                     <xs:documentation>Indicates the package must be executed elevated. The default is "no".</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Protocol" type="BurnExeProtocolType">
+              <xs:annotation>
+                <xs:documentation>Indicates the communication protocol the package supports for extended progress and error reporting. The default is "none".</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="RollbackBoundary">
+        <xs:annotation>
+            <xs:documentation>Describes a rollback boundary in the chain.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Chain" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="PackageGroup" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:any namespace="##other" processContents="lax">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                            elements at this point in the schema.  The extension's
+                            <html:code>
+                                <html:nobr>CompilerExtension.ParseElement()</html:nobr>
+                            </html:code>
+                            method will be called with the rollback boundary identifier as the 'RollbackBoundaryId' key in
+                            <html:code>contextValues</html:code>.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:any>
+            </xs:choice>
+            <xs:attribute name="Id" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Identifier for this rollback boundary, for ordering and cross-referencing. If this attribute is
+                        not provided a stable identifier will be generated.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Vital" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>
+                        Specifies whether the rollback boundary aborts the chain. If "yes" is specified and
+                        the rollback boundary is encountered then the chain will fail and rollback or stop. The
+                        default "no" indicates that the chain should continue successfuly at the next rollback
+                        boundary.
+                    </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
         </xs:complexType>
@@ -562,6 +613,7 @@
                 <xs:element ref="MspPackage"/>
                 <xs:element ref="MsuPackage"/>
                 <xs:element ref="ExePackage"/>
+                <xs:element ref="RollbackBoundary"/>
                 <xs:element ref="PackageGroupRef"/>
             </xs:choice>
             <xs:attribute name="Id" type="xs:string" use="required">
@@ -9300,7 +9352,7 @@
                     <xs:attribute name="BinarySource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to the Binary element that contains the chainer executeable. Mutually exclusive with
+                                Reference to the Binary element that contains the chainer executable. Mutually exclusive with
                                 the FileSource and PropertySource attributes.
                             </xs:documentation>
                         </xs:annotation>
@@ -9308,7 +9360,7 @@
                     <xs:attribute name="FileSource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to the File element that is the chainer executeable. Mutually exclusive with
+                                Reference to the File element that is the chainer executable. Mutually exclusive with
                                 the BinarySource and PropertySource attributes.
                             </xs:documentation>
                         </xs:annotation>
@@ -9316,7 +9368,7 @@
                     <xs:attribute name="PropertySource" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                Reference to a Property that resolves to the full path to the chainer executeable. Mutually exclusive with
+                                Reference to a Property that resolves to the full path to the chainer executable. Mutually exclusive with
                                 the BinarySource and FileSource attributes.
                             </xs:documentation>
                         </xs:annotation>
@@ -10953,6 +11005,36 @@
         <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value="attached"/>
             <xs:enumeration value="detached"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="BurnExeProtocolType">
+      <xs:annotation>
+          <xs:documentation>The list of communcation protocols with executable packages Burn supports.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:NMTOKEN">
+          <xs:enumeration value="none">
+            <xs:annotation>
+              <xs:documentation>
+                The executable package does not support a communication protocol.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
+          <xs:enumeration value="burn">
+            <xs:annotation>
+              <xs:documentation>
+                The executable package is another Burn bundle and supports the Burn communication protocol.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
+          <xs:enumeration value="netfx4">
+            <xs:annotation>
+              <xs:documentation>
+                The executable package implements the .NET Framework v4.0 communication protocol.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:enumeration>
         </xs:restriction>
     </xs:simpleType>
 

@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -392,6 +392,8 @@ extern "C" HRESULT DAPI ThemeLoadControls(
 
             if (THEME_CONTROL_TYPE_LISTVIEW == pControl->type)
             {
+                ::SendMessageW(pControl->hWnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, pControl->dwExtendedStyle);
+
                 for (DWORD j = 0; j < pControl->cColumns; j++)
                 {
                     LVCOLUMNW lvc = { };
@@ -533,6 +535,59 @@ LExit:
     LocFree(pLocStringSet);
     ReleaseStr(sczFileFullPath);
 
+    return hr;
+}
+
+
+/********************************************************************
+ ThemeLoadStrings - Loads string resources.
+ Must be called after loading a theme and before calling 
+ ThemeLoadControls.
+*******************************************************************/
+extern "C" HRESULT DAPI ThemeLoadStrings(
+    __in THEME* pTheme,
+    __in HMODULE hResModule
+    )
+{
+    HRESULT hr = S_OK;
+    ExitOnNull(pTheme, hr, S_FALSE, "Theme must be loaded first.");
+
+    if (UINT_MAX != pTheme->uStringId)
+    {
+        hr = ResReadString(hResModule, pTheme->uStringId, &pTheme->wzCaption);
+        ExitOnFailure(hr, "Failed to load theme caption.");
+    }
+
+    for (DWORD i = 0; i < pTheme->cControls; ++i)
+    {
+        THEME_CONTROL* pControl = pTheme->rgControls + i;
+
+        if (UINT_MAX != pControl->uStringId)
+        {
+            hr = ResReadString(hResModule, pControl->uStringId, &pControl->wzText);
+            ExitOnFailure(hr, "Failed to load control text.");
+
+            for (DWORD j = 0; j < pControl->cColumns; ++j)
+            {
+                if (UINT_MAX != pControl->ptcColumns[j].uStringId)
+                {
+                    hr = ResReadString(hResModule, pControl->ptcColumns[j].uStringId, &pControl->ptcColumns[j].pszName);
+                    ExitOnFailure(hr, "Failed to load column text.");
+                }
+            }
+
+            for (DWORD j = 0; j < pControl->cTabs; ++j)
+            {
+                if (UINT_MAX != pControl->pttTabs[j].uStringId)
+                {
+                    hr = ResReadString(hResModule, pControl->pttTabs[j].uStringId, &pControl->pttTabs[j].pszName);
+                    ExitOnFailure(hr, "Failed to load tab text.");
+                }
+            }
+        }
+    }
+
+LExit:
     return hr;
 }
 
@@ -1029,17 +1084,25 @@ static HRESULT ParseApplication(
         pTheme->nSourceY = -1;
     }
 
-    hr = XmlGetText(pixn, &bstr);
-    ExitOnFailure(hr, "Failed to get application caption.");
+    hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pTheme->uStringId));
+    ExitOnFailure(hr, "Failed to get application caption id attribute.");
 
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Failed to find application caption.");
-    }
+        pTheme->uStringId = UINT_MAX;
+      
+        hr = XmlGetText(pixn, &bstr);
+        ExitOnFailure(hr, "Failed to get application caption.");
 
-    hr = StrAllocString(&pTheme->wzCaption, bstr, 0);
-    ExitOnFailure(hr, "Failed to copy application caption.");
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            ExitOnRootFailure(hr, "Failed to find application caption.");
+        }
+
+        hr = StrAllocString(&pTheme->wzCaption, bstr, 0);
+        ExitOnFailure(hr, "Failed to copy application caption.");
+    }
 
 LExit:
     ReleaseStr(sczIconFile);
@@ -1070,7 +1133,7 @@ static HRESULT ParseFonts(
         hr = S_OK;
         ExitFunction();
     }
-    ExitOnFailure(hr, "Failed to find application element.");
+    ExitOnFailure(hr, "Failed to find font elements.");
 
     hr = pixnl->get_length(reinterpret_cast<long*>(&pTheme->cFonts));
     ExitOnFailure(hr, "Failed to count the number of theme fonts.");
@@ -1197,7 +1260,7 @@ static HRESULT ParseControls(
     IXMLDOMNode* pixn = NULL;
     BSTR bstrType = NULL;
 
-    hr = pElement->get_childNodes(&pixnl);
+    hr = XmlSelectNodes(pElement, L"*", &pixnl);
     if (S_FALSE == hr)
     {
         hr = S_OK;
@@ -1405,22 +1468,34 @@ static HRESULT ParseControl(
         pControl->dwStyle |= WS_TABSTOP;
     }
     ExitOnFailure(hr, "Failed to tell if the control is a tab stop.");
+    
+    hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pControl->uStringId));
+    ExitOnFailure(hr, "Failed to get control text id attribute.");
 
-    hr = XmlGetText(pixn, &bstrText);
-    ExitOnFailure(hr, "Failed to get control text.");
+    if (S_FALSE == hr)
+    {
+        pControl->uStringId = UINT_MAX;
+      
+        hr = XmlGetText(pixn, &bstrText);
+        ExitOnFailure(hr, "Failed to get control text.");
 
-    if (S_OK == hr)
-    {
-        hr = StrAllocString(&pControl->wzText, bstrText, 0);
-        ExitOnFailure(hr, "Failed to copy control text.");
-    }
-    else if (S_FALSE == hr)
-    {
-        hr = S_OK;
+        if (S_OK == hr)
+        {
+            hr = StrAllocString(&pControl->wzText, bstrText, 0);
+            ExitOnFailure(hr, "Failed to copy control text.");
+        }
+        else if (S_FALSE == hr)
+        {
+            hr = S_OK;
+        }
     }
 
     if (THEME_CONTROL_TYPE_LISTVIEW == type)
     {
+        // Parse the optional extended window style.
+        hr = XmlGetAttributeNumberBase(pixn, L"xs", 16, &pControl->dwExtendedStyle);
+        ExitOnFailure(hr, "Failed to get theme window extended style (t@xs) attribute.");
+
         hr = ParseColumns(pixn, pControl);
         ExitOnFailure(hr, "Failed to parse columns");
     }

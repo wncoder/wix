@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -137,6 +137,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Msp,
             Msu,
             Exe,
+            RollbackBoundary,
         }
 
 
@@ -20371,6 +20372,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 previousId = this.ParseExePackageElement(child, ComplexReferenceParentType.PackageGroup, "WixChain", previousType, previousId);
                                 previousType = ComplexReferenceChildType.Package;
                                 break;
+                            case "RollbackBoundary":
+                                previousId = this.ParseRollbackBoundaryElement(child, ComplexReferenceParentType.PackageGroup, "WixChain", previousType, previousId);
+                                previousType = ComplexReferenceChildType.Package;
+                                break;
                             case "PackageGroupRef":
                                 previousId = this.ParsePackageGroupRefElement(child, ComplexReferenceParentType.PackageGroup, "WixChain", previousType, previousId);
                                 previousType = ComplexReferenceChildType.PackageGroup;
@@ -20456,6 +20461,116 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Parse RollbackBoundary element
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        /// <param name="parentType">Type of parent group, if known.</param>
+        /// <param name="parentId">Identifier of parent group, if known.</param>
+        /// <param name="previousType">Type of previous item, if known.</param>
+        /// <param name="previousId">Identifier of previous item, if known</param>
+        /// <returns>Identifier for package element.</returns>
+        private string ParseRollbackBoundaryElement(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId)
+        {
+            Debug.Assert(ComplexReferenceParentType.PackageGroup == parentType);
+            Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PackageGroup == previousType || ComplexReferenceChildType.Package == previousType);
+
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            YesNoType vital = YesNoType.Yes;
+
+            // This crazy list lets us evaluate extension attributes *after* all core attributes
+            // have been parsed and dealt with, regardless of authoring order.
+            List<KeyValuePair<SourceLineNumberCollection, XmlAttribute>> extensionAttributes =
+                new List<KeyValuePair<SourceLineNumberCollection, XmlAttribute>>();
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    bool allowed = true;
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Vital":
+                            vital = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            allowed = false;
+                            break;
+                    }
+
+                    if (!allowed)
+                    {
+                        this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                    }
+                }
+                else
+                {
+                    // Save the extension attributes for later...
+                    extensionAttributes.Add(new KeyValuePair<SourceLineNumberCollection, XmlAttribute>(sourceLineNumbers, attrib));
+                }
+            }
+
+            if (String.IsNullOrEmpty(id))
+            {
+                if (!String.IsNullOrEmpty(previousId))
+                {
+                    id = this.core.GenerateIdentifier("rba", previousId);
+                }
+
+                if (null == id)
+                {
+                    this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+                }
+                else if (!CompilerCore.IsIdentifier(id))
+                {
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name, "Id", id));
+                }
+            }
+
+            // Now that the package ID is known, we can parse the extension attributes...
+            Dictionary<string, string> contextValues = new Dictionary<string, string>();
+            contextValues["RollbackBoundaryId"] = id;
+            foreach (KeyValuePair<SourceLineNumberCollection, XmlAttribute> pair in extensionAttributes)
+            {
+                this.core.ParseExtensionAttribute(pair.Key, (XmlElement)node, pair.Value, contextValues);
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.ParseExtensionElement(sourceLineNumbers, (XmlElement)node, (XmlElement)child, id);
+                    }
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
+                row[0] = id;
+                row[1] = ChainPackageType.RollbackBoundary.ToString();
+
+                if (YesNoType.NotSet != vital)
+                {
+                    row[10] = (YesNoType.Yes == vital) ? 1 : 0;
+                }
+
+                this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, null);
+            }
+
+            return id;
+        }
+
+        /// <summary>
         /// Parses one of the ChainPackage elements
         /// </summary>
         /// <param name="node">Element to parse</param>
@@ -20491,6 +20606,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string uninstallCommand = null;
             YesNoType perMachine = YesNoType.NotSet;
             string detectCondition = null;
+            string protocol = null;
             string msuKB = null;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
 
@@ -20566,6 +20682,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "DetectCondition":
                             detectCondition = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             allowed = (packageType == ChainPackageType.Exe || packageType == ChainPackageType.Msu);
+                            break;
+                        case "Protocol":
+                            protocol = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Exe);
                             break;
                         case "KB":
                             msuKB = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -20643,6 +20763,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (null == rollbackPathVariable)
             {
                 rollbackPathVariable = String.Concat("BurnRollbackLog_", id);
+            }
+
+            if (!String.IsNullOrEmpty(protocol) && !protocol.Equals("burn", StringComparison.Ordinal) && !protocol.Equals("netfx4", StringComparison.Ordinal) && !protocol.Equals("none", StringComparison.Ordinal))
+            {
+                this.core.OnMessage(WixErrors.IllegalAttributeValueWithLegalList(sourceLineNumbers, node.Name, "Protocol", protocol, "none, burn, netfx4"));
             }
 
             // Now that the package ID is known, we can parse the extension attributes...
@@ -20739,6 +20864,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 row[15] = logPathVariable;
                 row[16] = rollbackPathVariable;
+                row[17] = protocol;
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
             }
@@ -20803,6 +20929,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 break;
                             case "ExePackage":
                                 previousId = this.ParseExePackageElement(child, ComplexReferenceParentType.PackageGroup, id, previousType, previousId);
+                                previousType = ComplexReferenceChildType.Package;
+                                break;
+                            case "RollbackBoundary":
+                                previousId = this.ParseRollbackBoundaryElement(child, ComplexReferenceParentType.PackageGroup, id, previousType, previousId);
                                 previousType = ComplexReferenceChildType.Package;
                                 break;
                             case "PackageGroupRef":

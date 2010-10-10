@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -238,6 +238,10 @@ public: // IBootstrapperApplication
             SetState(STDUX_STATE_DETECTED);
             ::PostMessageW(m_hWnd, WM_STDUX_PLAN_PACKAGES, 0, m_command.action);
         }
+        else if (BOOTSTRAPPER_DISPLAY_FULL != m_command.display)
+        {
+            ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+        }
     }
 
 
@@ -319,6 +323,10 @@ public: // IBootstrapperApplication
             SetState(STDUX_STATE_PLANNED);
             ::PostMessageW(m_hWnd, WM_STDUX_APPLY_PACKAGES, 0, 0);
         }
+        else if (BOOTSTRAPPER_DISPLAY_FULL != m_command.display)
+        {
+            ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+        }
     }
 
 
@@ -328,6 +336,12 @@ public: // IBootstrapperApplication
         return IDOK;
     }
 
+
+    virtual STDMETHODIMP_(int) OnElevate()
+    {
+        WriteEvent("OnElevate()");
+        return IDNOACTION;
+    }
 
     virtual STDMETHODIMP_(int) OnRegisterBegin()
     {
@@ -371,16 +385,18 @@ public: // IBootstrapperApplication
 
         BOOL fRestart = FALSE;
 
-        // Failure or quiet or passive display just close at the end, no questions asked.
-        if (BOOTSTRAPPER_DISPLAY_NONE == m_command.display || BOOTSTRAPPER_DISPLAY_PASSIVE == m_command.display)
+        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
+        {
+            if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
+            {
+                int nResult = ::MessageBoxW(m_hWnd, L"One or more packages required a restart. Restart now?", L"Restart Required", MB_YESNO | MB_ICONQUESTION);
+                fRestart = (IDYES == nResult);
+            }
+        }
+        else // embedded or quiet or passive display just close at the end, no questions asked.
         {
             fRestart = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart);
             ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
-        }
-        else if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
-        {
-            int nResult = ::MessageBoxW(m_hWnd, L"One or more packages required a restart. Restart now?", L"Restart Required", MB_YESNO | MB_ICONQUESTION);
-            fRestart = (IDYES == nResult);
         }
 
         // Save this to enable us to detect failed apply phase
@@ -508,7 +524,15 @@ public: // IBootstrapperApplication
     {
         WriteEvent("OnError() - wzPackageId: %ls, dwCode: %u, wzError: %ls, dwUIHint: %u", wzPackageId, dwCode, wzError, dwUIHint);
 
-        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
+        if (BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
+        {
+             HRESULT hr = m_pCore->SendEmbeddedError(dwCode, wzError, dwUIHint, &m_nModalResult);
+             if (FAILED(hr))
+             {
+                 m_nModalResult = IDERROR;
+             }
+        }
+        else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
             ModalPrompt(STDUX_STATE_ERROR, dwUIHint, wzError);
         }
@@ -532,10 +556,17 @@ public: // IBootstrapperApplication
 
         m_nModalResult = IDOK;
 
-        ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallProgressPercentage);
+        if (BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
+        {
+            hr = m_pCore->SendEmbeddedProgress(dwProgressPercentage, dwOverallProgressPercentage, &m_nModalResult);
+        }
+        else
+        {
+            ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallProgressPercentage);
 
-        //hr = ThemeSetTextControl(m_pTheme, STDUX_CONTROL_OVERALL_PROGRESS_TEXT, wzProgress);
-        //ExitOnFailure(hr, "Failed to set progress.");
+            //hr = ThemeSetTextControl(m_pTheme, STDUX_CONTROL_OVERALL_PROGRESS_TEXT, wzProgress);
+            //ExitOnFailure(hr, "Failed to set progress.");
+        }
 
     //LExit:
         if (FAILED(hr) && IDNOACTION == m_nModalResult)
@@ -622,18 +653,12 @@ public: // IBootstrapperApplication
     }
 
 
-
     virtual STDMETHODIMP_(void) OnExecuteComplete(
         __in HRESULT hrStatus
         )
     {
         WriteEvent("OnExecuteComplete() - hrStatus: 0x%x", hrStatus);
-        // Failure or quiet or passive display just close at the end, no questions asked.
-        if (BOOTSTRAPPER_DISPLAY_NONE == m_command.display || BOOTSTRAPPER_DISPLAY_PASSIVE == m_command.display)
-        {
-            ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
-        }
-        else
+        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
             SetState(STDUX_STATE_EXECUTED);
         }
@@ -803,7 +828,7 @@ private: // privates
 
         // Calculate the window style based on the theme style and command display value.
         dwWindowStyle = m_pTheme->dwStyle;
-        if (BOOTSTRAPPER_DISPLAY_NONE == m_command.display)
+        if (BOOTSTRAPPER_DISPLAY_NONE == m_command.display || BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
         {
             dwWindowStyle &= ~WS_VISIBLE;
         }

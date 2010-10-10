@@ -4,7 +4,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -46,6 +46,7 @@ enum THEME_CONTROL_TYPE
 struct THEME_COLUMN
 {
     LPWSTR pszName;
+    UINT uStringId;
     int nWidth;
 };
 
@@ -53,6 +54,7 @@ struct THEME_COLUMN
 struct THEME_TAB
 {
     LPWSTR pszName;
+    UINT uStringId;
 };
 
 
@@ -67,6 +69,7 @@ struct THEME_CONTROL
     int nWidth;
     int nSourceX;
     int nSourceY;
+    UINT uStringId;
 
     // Used by listview controls
     THEME_COLUMN *ptcColumns;
@@ -77,6 +80,7 @@ struct THEME_CONTROL
     DWORD cTabs;
 
     DWORD dwStyle;
+    DWORD dwExtendedStyle;
     DWORD dwFontId;
     DWORD dwFontHoverId;
     DWORD dwFontSelectedId;
@@ -104,6 +108,7 @@ struct THEME
     int nWidth;
     int nSourceX;
     int nSourceY;
+    UINT uStringId;
 
     HBITMAP hImage;
 
@@ -209,6 +214,10 @@ HRESULT DAPI ThemeLoadLocFromFile(
     __in HMODULE hModule
     );
 
+HRESULT DAPI ThemeLoadStrings(
+    __in THEME* pTheme,
+    __in HMODULE hResModule
+    );
 
 #ifdef __cplusplus
 }

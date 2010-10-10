@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -55,6 +55,10 @@ static HRESULT ExtractContainer(
     __in_ecount(cExtractPayloads) BURN_EXTRACT_PAYLOAD* rgExtractPayloads,
     __in DWORD cExtractPayloads
     );
+static HRESULT LayoutBundle(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in LPCWSTR wzLayoutDirectory
+    );
 static HRESULT AcquireContainerOrPayload(
     __in BURN_USER_EXPERIENCE* pUX,
     __in_opt BURN_CONTAINER* pContainer,
@@ -95,10 +99,12 @@ static DWORD CALLBACK CacheProgressRoutine(
     __in HANDLE hDestinationFile,
     __in_opt LPVOID lpData
     );
-static HRESULT DoExecuteActions(
+static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
+    __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -168,7 +174,7 @@ static HRESULT ExecutePackageComplete(
 // function definitions
 
 extern "C" HRESULT ApplyElevate(
-    __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_ENGINE_STATE* pEngineState,
     __in HWND hwndParent,
     __out HANDLE* phElevatedProcess,
     __out HANDLE* phElevatedPipe
@@ -176,28 +182,58 @@ extern "C" HRESULT ApplyElevate(
 {
     HRESULT hr = S_OK;
     int nResult = IDOK;
+    HANDLE hPipe = INVALID_HANDLE_VALUE;
+    LPWSTR sczPipeName = NULL;
+    LPWSTR sczPipeToken = NULL;
+    HANDLE hProcess = NULL;
 
-    // TODO: enable this call
-    // nResult = pUX->OnElevate();
+    nResult = pEngineState->userExperience.pUserExperience->OnElevate();
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
+
+    hr = PipeCreatePipeNameAndToken(&hPipe, &sczPipeName, &sczPipeToken);
+    ExitOnFailure(hr, "Failed to create pipe and client token.");
 
     do
     {
         nResult = IDOK;
+        ReleaseHandle(hProcess);
 
-        hr = ElevationParentProcessConnect(hwndParent, phElevatedProcess, phElevatedPipe);
-        if (HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED) == hr)
+        // Create the elevated process.
+        if (BURN_MODE_EMBEDDED == pEngineState->mode)
         {
-            hr = S_OK;
+            hr = EmbeddedParentLaunchChildProcess(pEngineState->hEmbeddedPipe, sczPipeName, sczPipeToken, &hProcess);
         }
-        else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr)
+        else
         {
-            nResult = pUX->pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL);
+            Assert(BURN_MODE_NORMAL == pEngineState->mode);
+            hr = PipeLaunchChildProcess(TRUE, sczPipeName, sczPipeToken, hwndParent, &hProcess);
+        }
+
+        // If the process was launched successfully, wait for it.
+        if (SUCCEEDED(hr))
+        {
+            hr = PipeWaitForChildConnect(hPipe, sczPipeToken, hProcess);
+            ExitOnFailure(hr, "Failed to connect to embedded elevated child process.");
+        }
+        else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr) // the user clicked "Cancel" on the elevation prompt, provide the notification with the option to retry.
+        {
+            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL);
         }
     } while (IDRETRY == nResult);
+    ExitOnFailure(hr, "Failed to elevate.");
+
+    *phElevatedPipe = hPipe;
+    hPipe = INVALID_HANDLE_VALUE;
+    *phElevatedProcess = hProcess;
+    hProcess = NULL;
 
 LExit:
+    ReleaseHandle(hProcess);
+    ReleaseStr(sczPipeToken);
+    ReleaseStr(sczPipeName);
+    ReleaseFileHandle(hPipe);
+
     return hr;
 }
 
@@ -213,7 +249,7 @@ extern "C" HRESULT ApplyRegister(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted register begin.");
 
-    if (BOOTSTRAPPER_RESUME_TYPE_NONE == pEngineState->resumeType)
+    if (BOOTSTRAPPER_RESUME_TYPE_NONE == pEngineState->command.resumeType)
     {
         // begin new session
         hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
@@ -323,6 +359,16 @@ extern "C" HRESULT ApplyCache(
 
         switch (pCacheAction->type)
         {
+        case BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE:
+            hr = LayoutBundle(pUX, pCacheAction->bundleLayout.sczLayoutDirectory);
+            ExitOnFailure(hr, "Failed to layout bundle.");
+
+            ++(*pcOverallProgressTicks);
+
+            hr = ReportOverallProgressTicks(pUX, pPlan->cOverallProgressTicksTotal, *pcOverallProgressTicks);
+            ExitOnRootFailure(hr, "UX aborted layout bundle.");
+            break;
+
         case BURN_CACHE_ACTION_TYPE_PACKAGE_START:
             pStartedPackage = pCacheAction->packageStart.pPackage;
 
@@ -354,13 +400,18 @@ extern "C" HRESULT ApplyCache(
             }
             else
             {
-                hr = CachePayload(pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
+                hr = CachePayload(pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
                 ExitOnFailure(hr, "Failed to cache per-user payload.");
             }
             break;
 
-        case BURN_CACHE_ACTION_TYPE_CHECKPOINT:
-            AssertSz(pStartedPackage == pCacheAction->checkpoint.pPackage, "Expected package started cached to be the same as the package checkpointed.");
+        case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
+            hr = CachePayload(pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove);
+            ExitOnFailure(hr, "Failed to layout payload.");
+            break;
+
+        case BURN_CACHE_ACTION_TYPE_PACKAGE_STOP:
+            AssertSz(pStartedPackage == pCacheAction->packageStop.pPackage, "Expected package started cached to be the same as the package checkpointed.");
 
             ++(*pcOverallProgressTicks);
 
@@ -369,10 +420,12 @@ extern "C" HRESULT ApplyCache(
 
             pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr);
             pStartedPackage = NULL;
+            break;
 
-            if (!::SetEvent(pCacheAction->checkpoint.hEvent))
+        case BURN_CACHE_ACTION_TYPE_SYNCPOINT:
+            if (!::SetEvent(pCacheAction->syncpoint.hEvent))
             {
-                ExitWithLastError(hr, "Failed to set checkpoint event.");
+                ExitWithLastError(hr, "Failed to set syncpoint event.");
             }
             break;
 
@@ -405,31 +458,65 @@ extern "C" HRESULT ApplyExecute(
     DWORD dwCheckpoint = 0;
     BURN_EXECUTE_CONTEXT context = { };
     int nResult = 0;
+    BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
+    BOOL fSeekNextRollbackBoundary = FALSE;
 
     context.pUX = &pEngineState->userExperience;
     context.cExecutePackagesTotal = pEngineState->plan.cExecutePackagesTotal;
     context.pcOverallProgressTicks = pcOverallProgressTicks;
 
-    // send execute begin to UX
+    // Send execute begin to BA.
     nResult = pEngineState->userExperience.pUserExperience->OnExecuteBegin(pEngineState->plan.cExecutePackagesTotal);
     hr = HRESULT_FROM_VIEW(nResult);
-    ExitOnRootFailure(hr, "UX aborted execute begin.");
+    ExitOnRootFailure(hr, "BA aborted execute begin.");
 
-    // do execute actions
-    hr = DoExecuteActions(pEngineState, hCacheThread, &context, &dwCheckpoint, pfSuspend, pRestart);
-    TraceError(hr, "Failure during execution.");
-
-    if (FAILED(hr) && !pEngineState->fDisableRollback)
+    // Do execute actions.
+    for (DWORD i = 0; i < pEngineState->plan.cExecuteActions; ++i)
     {
-        *pfRollback = TRUE;
+        BURN_EXECUTE_ACTION* pExecuteAction = &pEngineState->plan.rgExecuteActions[i];
 
-        // do rollback actions
-        HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pRestart);
-        UNREFERENCED_PARAMETER(hrRollback);
+        // If we are seeking the next rollback boundary, skip if this action wasn't it.
+        if (fSeekNextRollbackBoundary)
+        {
+            if (BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY == pExecuteAction->type)
+            {
+                continue;
+            }
+            else
+            {
+                fSeekNextRollbackBoundary = FALSE;
+            }
+        }
+
+        // Execute the action.
+        hr = DoExecuteAction(pEngineState, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfSuspend, pRestart);
+        TraceError(hr, "Failure during execution.");
+
+        if (*pfSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
+        {
+            ExitFunction();
+        }
+
+        if (FAILED(hr) && !pEngineState->fDisableRollback)
+        {
+            // If the action failed, roll back to previous rollback boundary.
+            HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pRestart);
+            UNREFERENCED_PARAMETER(hrRollback);
+
+            // If the rollback boundary is vital, end execution here.
+            if (pRollbackBoundary->fVital)
+            {
+                *pfRollback = TRUE;
+                ExitFunction();
+            }
+
+            // Move forward to next rollback boundary.
+            fSeekNextRollbackBoundary = TRUE;
+        }
     }
 
 LExit:
-    // send execute complete to UX
+    // Send execute complete to BA.
     pEngineState->userExperience.pUserExperience->OnExecuteComplete(hr);
 
     return hr;
@@ -558,6 +645,54 @@ static HRESULT ExtractContainer(
 LExit:
     ReleaseStr(sczExtractPayloadId);
     ContainerClose(&context);
+
+    return hr;
+}
+
+static HRESULT LayoutBundle(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in LPCWSTR wzLayoutDirectory
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczBundlePath = NULL;
+    LPWSTR wzBundleFileName = NULL;
+    LPWSTR sczDestinationPath = NULL;
+    LONGLONG llBundleSize = 0;
+    BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
+    BOOL fRetry = FALSE;
+
+    hr = PathForCurrentProcess(&sczBundlePath, NULL);
+    ExitOnFailure(hr, "Failed to get path to bundle to layout.");
+
+    wzBundleFileName = PathFile(sczBundlePath);
+
+    hr = PathConcat(wzLayoutDirectory, wzBundleFileName, &sczDestinationPath);
+    ExitOnFailure(hr, "Failed to concat layout path for bundle.");
+
+    hr = FileSize(sczBundlePath, &llBundleSize);
+    ExitOnFailure1(hr, "Failed to get the size of the bundle: %ls", sczBundlePath);
+
+    progress.pUX = pUX;
+    progress.qwCacheProgress = 0;
+    progress.qwTotalCacheSize = static_cast<DWORD64>(llBundleSize);
+
+    hr = DirEnsureExists(wzLayoutDirectory, NULL);
+    ExitOnFailure1(hr, "Failed to ensure the bundle layout directory exits: %ls", wzLayoutDirectory);
+
+    do
+    {
+        fRetry = FALSE;
+        progress.fCancel = FALSE;
+
+        hr = CopyPayload(&progress, sczBundlePath, sczDestinationPath, &fRetry);
+        ExitOnFailure2(hr, "Failed to copy bundle: %ls to: %ls", sczBundlePath, sczDestinationPath);
+    } while (fRetry);
+    ExitOnFailure(hr, "Failed to copy bundle to layout.");
+
+LExit:
+    ReleaseStr(sczDestinationPath);
+    ReleaseStr(sczBundlePath);
 
     return hr;
 }
@@ -704,21 +839,21 @@ static HRESULT CopyPayload(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage->sczId;
+    LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
 
     *pfRetry = FALSE;
 
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_COPY, wzSourcePath);
     hr = HRESULT_FROM_VIEW(nResult);
-    ExitOnRootFailure(hr, "UX aborted cache copy payload begin.");
+    ExitOnRootFailure(hr, "UX aborted cache acquire begin.");
 
     if (!::CopyFileExW(wzSourcePath, wzDestinationPath, CacheProgressRoutine, pProgress, &pProgress->fCancel, COPY_FILE_RESTARTABLE))
     {
         if (pProgress->fCancel)
         {
             hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
-            ExitOnRootFailure2(hr, "UX aborted copy of %s: %ls", pProgress->pContainer ? "container" : "payload", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
+            ExitOnRootFailure2(hr, "UX aborted copy of %s: %ls", pProgress->pPayload ? "payload" : pProgress->pPackage ? "package" : pProgress->pContainer ? "container" : "bundle", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
         }
         else
         {
@@ -744,7 +879,7 @@ static HRESULT DownloadPayload(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage->sczId;
+    LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
     BURN_DOWNLOAD_SOURCE* pDownloadSource = pProgress->pContainer ? &pProgress->pContainer->downloadSource : &pProgress->pPayload->downloadSource;
     BURN_CACHE_CALLBACK callback = { };
@@ -801,7 +936,7 @@ static DWORD CALLBACK CacheProgressRoutine(
 {
     DWORD dwResult = PROGRESS_CONTINUE;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT* pProgress = static_cast<BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT*>(lpData);
-    LPCWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage->sczId;
+    LPCWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPCWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
     DWORD64 qwCacheProgress = pProgress->qwCacheProgress + TotalBytesTransferred.QuadPart;
     DWORD dwOverallPercentage = static_cast<DWORD>(qwCacheProgress * 100 / pProgress->qwTotalCacheSize);
@@ -836,10 +971,12 @@ static DWORD CALLBACK CacheProgressRoutine(
     return dwResult;
 }
 
-static HRESULT DoExecuteActions(
+static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
+    __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -849,79 +986,72 @@ static HRESULT DoExecuteActions(
     HANDLE rghWait[2] = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
 
-    rghWait[1] = hCacheThread;
-
-    for (DWORD i = 0; i < pEngineState->plan.cExecuteActions; ++i)
+    switch (pExecuteAction->type)
     {
-        BURN_EXECUTE_ACTION* pExecuteAction = &pEngineState->plan.rgExecuteActions[i];
+    case BURN_EXECUTE_ACTION_TYPE_CHECKPOINT:
+        *pdwCheckpoint = pExecuteAction->checkpoint.dwId;
+        break;
 
-        switch (pExecuteAction->type)
+    case BURN_EXECUTE_ACTION_TYPE_SYNCPOINT:
+        // wait for cache sync-point
+        rghWait[0] = pExecuteAction->syncpoint.hEvent;
+        rghWait[1] = hCacheThread;
+        switch (::WaitForMultipleObjects(rghWait[1] ? 2 : 1, rghWait, FALSE, INFINITE))
         {
-        case BURN_EXECUTE_ACTION_TYPE_CHECKPOINT:
-            *pdwCheckpoint = pExecuteAction->checkpoint.dwId;
+        case WAIT_OBJECT_0:
             break;
 
-        case BURN_EXECUTE_ACTION_TYPE_WAIT:
-            // wait for cache check-point
-            rghWait[0] = pExecuteAction->wait.hEvent;
-            switch (::WaitForMultipleObjects(rghWait[1] ? 2 : 1, rghWait, FALSE, INFINITE))
+        case WAIT_OBJECT_0 + 1:
+            if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
             {
-            case WAIT_OBJECT_0:
-                break;
-
-            case WAIT_OBJECT_0 + 1:
-                if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
-                {
-                    ExitWithLastError(hr, "Failed to get cache thread exit code.");
-                }
-                if (SUCCEEDED(hr))
-                {
-                    hr = E_UNEXPECTED;
-                }
-                ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
-
-            case WAIT_FAILED: __fallthrough;
-            default:
-                ExitWithLastError(hr, "Failed to wait for cache check-point.");
+                ExitWithLastError(hr, "Failed to get cache thread exit code.");
             }
-            break;
+            if (SUCCEEDED(hr))
+            {
+                hr = E_UNEXPECTED;
+            }
+            ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
 
-        case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
-            hr = ExecuteExePackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-            ExitOnFailure(hr, "Failed to execute EXE package.");
-            break;
-
-        case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-            hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-            ExitOnFailure(hr, "Failed to execute MSI package.");
-            break;
-
-        case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-            hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-            ExitOnFailure(hr, "Failed to execute MSP package.");
-            break;
-
-        case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
-            hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-            ExitOnFailure(hr, "Failed to execute MSU package.");
-            break;
-
-        case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
-        case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
+        case WAIT_FAILED: __fallthrough;
         default:
-            hr = E_UNEXPECTED;
-            ExitOnFailure(hr, "Invalid execute action.");
+            ExitWithLastError(hr, "Failed to wait for cache check-point.");
         }
+        break;
 
-        if (*pRestart < restart)
-        {
-            *pRestart = restart;
-        }
+    case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
+        hr = ExecuteExePackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
+        ExitOnFailure(hr, "Failed to execute EXE package.");
+        break;
 
-        if (*pfSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
-        {
-            ExitFunction();
-        }
+    case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
+        hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
+        ExitOnFailure(hr, "Failed to execute MSI package.");
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
+        hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
+        ExitOnFailure(hr, "Failed to execute MSP package.");
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
+        hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
+        ExitOnFailure(hr, "Failed to execute MSU package.");
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
+        *ppRollbackBoundary = pExecuteAction->rollbackBoundary.pRollbackBoundary;
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
+    case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
+    default:
+        hr = E_UNEXPECTED;
+        ExitOnFailure(hr, "Invalid execute action.");
+    }
+
+    if (*pRestart < restart)
+    {
+        *pRestart = restart;
     }
 
 LExit:
@@ -991,6 +1121,9 @@ static HRESULT DoRollbackActions(
                 ExitOnFailure(hr, "Failed to rollback MSU package.");
                 break;
 
+            case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
+                ExitFunction1(hr = S_OK);
+
             case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
             case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
             default:
@@ -1033,15 +1166,16 @@ static HRESULT ExecuteExePackage(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
-    // execute package
-    if (pExecuteAction->exePackage.pPackage->fPerMachine)
+    // Execute package. Per-machine packages that are not Burn based get elevated. Per-user packages don't need
+    // elevation and Burn based packages have their own way to ask for elevation.
+    if (pExecuteAction->exePackage.pPackage->fPerMachine && BURN_EXE_PROTOCOL_TYPE_BURN != pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
         hrExecute = ElevationExecuteExePackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine EXE package.");
     }
     else
     {
-        hrExecute = ExeEngineExecutePackage(pExecuteAction, &pEngineState->variables, pRestart);
+        hrExecute = ExeEngineExecutePackage(&pEngineState->userExperience, pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user EXE package.");
     }
 

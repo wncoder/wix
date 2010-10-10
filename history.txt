@@ -475,3 +475,71 @@ EricStJ: SFBUG: 3062489 - Wix.targets doesn't work with MSBuild 2.0
 
 WixBuild: Version 3.6.0910.0
 
+BobArnso: Update registry path for wix36 branch
+
+BriaRo: Fixed file version parsing from string and date/time stamp for CAB'ing.
+        Fixed issue with FileVersionFromString not handling string versions
+        which were shorter than major.minor.build.revision.
+
+MiCarls: Make thmutil support comments / extra whitespace
+
+HeathS: Added Restart Manager support to WixUtilExtension.
+
+EricStJ: SFBUG: 3066897 - Cannot set iis:WebAppPool ManagedPipelineMode
+         & User attributes
+         SFBUG: 3068104 - Failure when installing site to default pool
+
+WixBuild: Version 3.6.0917.0
+
+RobMen: Split out pipe communication from elevation to be reusable for
+        embedded.
+
+HeathS: Validate only file key path changes when building a patch.
+
+MiCarls: SFBUG: 3066590 - add wcautil IA64 libs to wix zips
+
+EricStJ: SFBUG: 3073091 - Better error for iis:Website w/o @Directory
+
+WixBuild: Version 3.6.0924.0
+
+RobMen: Embedded Burn support.
+
+PMarcu: SFBUG:3066956 Handling conflicting Type51 actions for standard 
+        directories in melt.
+
+EricStJ: SFBUG: 3074682 VS Crashes when editing build events
+
+MiCarls: SFBUG: 2937235 util:User is now willing to proceed in cases it isn't
+         able to discover whether the user already exists or not.
+
+EricStJ: SFBUG: 3055413 Project properties don't match property page
+         configuration setting (match solution configuration).
+
+EricStJ: SFBUG: 3058358 Shared component w/ Certificate orphans 
+         private key files
+
+EricStJ: SFBUG: 3069107 Pyro flags reg-keypath components when they contain
+         changed files
+
+RobMen: SFBUG:3065075 - fix "FormattedSddl" to be "FormattedSDDLText" per
+        MSI SDK.
+
+WixBuild: Version 3.6.1001.0
+
+HSeiler: SFBUG:3041864 - Install fails when installing multiple websites
+
+MiCarls: SFBUG: 3053427 - update documentation to tell users to escape
+         backslashes in XMLConfig/XMLFile XPath attributes
+
+BobArnso: SFBUG:3048233 - Correct tab order on EULA pages
+
+EricStJ: SFBUG: 3080990 Wix references weren't using WixExtPath in vs2010
+
+RobMen: SFBUG:3083239 - add WixBalExtension.dll to zip.
+
+BobArnso: Add resource string support to ThmUtil.
+
+RobMen: SFBUG:3011150 - Burn now supports the "-layout" switch.
+
+WixBuild: Version 3.6.1008.0
+

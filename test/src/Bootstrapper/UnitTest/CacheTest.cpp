@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -62,7 +62,7 @@ namespace Bootstrapper
                 payload.pbCertificateRootPublicKeyIdentifier = pb;
                 payload.cbCertificateRootPublicKeyIdentifier = cb;
 
-                hr = CachePayload(&package, &payload, sczPayloadPath, FALSE);
+                hr = CachePayload(&package, &payload, NULL, sczPayloadPath, FALSE);
                 Assert::AreEqual(S_OK, hr, "Failed while verifying path.");
             }
             finally

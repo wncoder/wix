@@ -3,7 +3,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -278,6 +278,31 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public void Plan(LaunchAction action)
         {
             this.engine.Plan(action);
+        }
+
+        /// <summary>
+        /// Sends error message when embedded.
+        /// </summary>
+        /// <param name="errorCode">Error code.</param>
+        /// <param name="message">Error message.</param>
+        /// <param name="uiHint">UI buttons to show on error dialog.</param>
+        public int SendEmbeddedError(int errorCode, string message, int uiHint)
+        {
+            int result = 0;
+            this.engine.SendEmbeddedError(errorCode, message, uiHint, out result);
+            return result;
+        }
+
+        /// <summary>
+        /// Sends progress percentages when embedded.
+        /// </summary>
+        /// <param name="progressPercentage">Percentage completed thus far.</param>
+        /// <param name="progressPercentage">Overall precentage completed.</param>
+        public int SendEmbeddedProgress(int progressPercentage, int overallPercentage)
+        {
+            int result = 0;
+            this.engine.SendEmbeddedProgress(progressPercentage, overallPercentage, out result);
+            return result;
         }
 
         /// <summary>

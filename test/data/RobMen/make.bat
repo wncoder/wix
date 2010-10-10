@@ -84,6 +84,14 @@ IF NOT EXIST %_B%versions\v2.exe (
    %_T%light.exe %_NOTIDY% -b %_P% -b %_M% -b %_R% -b %_T% -o %_B%versions\v2.exe %_M%v2.wixobj
    )
 
+IF NOT EXIST %_B%burninburn\b.exe (
+   md %_B%burninburn
+   %_T%candle.exe %_M%child.wxs -o %_M%
+   %_T%light.exe %_NOTIDY% -b %_P% -b %_M% -b %_R% -b %_T% -o %_B%burninburn\child.exe %_M%child.wixobj
+   %_T%candle.exe -ext WixUtilExtension %_M%burninburn.wxs -o %_M%
+   %_T%light.exe %_NOTIDY% -b %_P% -b %_M% -b %_R% -b %_T% -b %_B%burninburn -ext WixUtilExtension -o %_B%burninburn\b.exe %_M%burninburn.wixobj
+   )
+
 :Web
 IF NOT EXIST %_B%one_web\b.exe (
    md %_B%one_web\data

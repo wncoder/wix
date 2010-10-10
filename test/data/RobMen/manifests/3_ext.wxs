@@ -8,9 +8,13 @@
 
    <Chain>
       <MsiPackage Vital='yes' SourceFile='Package1.msi' />
+
+      <RollbackBoundary/>
       <MsiPackage Vital='yes' Name='Package2.msi'>
          <MsiProperty Name="TARGETDIR" Value="[PACKAGE2TARGETDIR]" />
       </MsiPackage>
+
+      <RollbackBoundary/>
       <MsiPackage Id='Package3' Vital='yes' SourceFile='Package3.msi' />
    </Chain>
 </Bundle>

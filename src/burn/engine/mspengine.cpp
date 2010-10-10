@@ -217,11 +217,11 @@ LExit:
 // Plan - calculates the execute and rollback state for the requested package state.
 //
 extern "C" HRESULT MspEnginePlanPackage(
-    __in DWORD dwPackageSequence,
+    __in DWORD /*dwPackageSequence*/,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in BURN_LOGGING* pLog,
-    __in BURN_VARIABLES* pVariables,
+    __in BURN_LOGGING* /*pLog*/,
+    __in BURN_VARIABLES* /*pVariables*/,
     __in_opt HANDLE hCacheEvent,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
@@ -240,8 +240,8 @@ extern "C" HRESULT MspEnginePlanPackage(
         hr = PlanAppendExecuteAction(pPlan, &pAction);
         ExitOnFailure(hr, "Failed to append wait action.");
 
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_WAIT;
-        pAction->wait.hEvent = hCacheEvent;
+        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
+        pAction->syncpoint.hEvent = hCacheEvent;
     }
 
     for (DWORD i = 0; i < pPackage->Msp.cTargetProductCodes; ++i)

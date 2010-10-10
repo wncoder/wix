@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -29,6 +29,7 @@ enum BOOTSTRAPPER_ACTION
 {
     BOOTSTRAPPER_ACTION_UNKNOWN,
     BOOTSTRAPPER_ACTION_HELP,
+    BOOTSTRAPPER_ACTION_LAYOUT,
     BOOTSTRAPPER_ACTION_UNINSTALL,
     BOOTSTRAPPER_ACTION_INSTALL,
     BOOTSTRAPPER_ACTION_MODIFY,
@@ -139,6 +140,19 @@ DECLARE_INTERFACE_IID_(IBootstrapperEngine, IUnknown, "6480D616-27A0-44D7-905B-8
     STDMETHOD(Log)(
         __in BOOTSTRAPPER_LOG_LEVEL level,
         __in_z LPCWSTR wzMessage
+        ) = 0;
+
+    STDMETHOD(SendEmbeddedError)(
+        __in DWORD dwErrorCode,
+        __in_z_opt LPCWSTR wzMessage,
+        __in DWORD dwUIHint,
+        __out int* pnResult
+        ) = 0;
+
+    STDMETHOD(SendEmbeddedProgress)(
+        __in DWORD dwProgressPercentage,
+        __in DWORD dwOverallProgressPercentage,
+        __out int* pnResult
         ) = 0;
 
     STDMETHOD(SetLocalSource)(

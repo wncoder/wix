@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -29,25 +29,30 @@ extern "C" {
 enum BURN_CACHE_ACTION_TYPE
 {
     BURN_CACHE_ACTION_TYPE_NONE,
+    BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE,
     BURN_CACHE_ACTION_TYPE_PACKAGE_START,
-    BURN_CACHE_ACTION_TYPE_CHECKPOINT,
+    BURN_CACHE_ACTION_TYPE_PACKAGE_STOP,
+    BURN_CACHE_ACTION_TYPE_SYNCPOINT,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER,
     BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD,
     BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD,
+    BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD,
+    BURN_CACHE_ACTION_TYPE_TRANSACTION_BOUNDARY,
 };
 
 enum BURN_EXECUTE_ACTION_TYPE
 {
     BURN_EXECUTE_ACTION_TYPE_NONE,
     BURN_EXECUTE_ACTION_TYPE_CHECKPOINT,
-    BURN_EXECUTE_ACTION_TYPE_WAIT,
+    BURN_EXECUTE_ACTION_TYPE_SYNCPOINT,
     BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSP_TARGET,
     BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_START,
+    BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY,
 };
 
 enum BURN_CLEAN_ACTION_TYPE
@@ -74,6 +79,10 @@ typedef struct _BURN_CACHE_ACTION
     {
         struct
         {
+            LPWSTR sczLayoutDirectory;
+        } bundleLayout;
+        struct
+        {
             BURN_PACKAGE* pPackage;
             DWORD cCachePayloads;
             DWORD64 qwCachePayloadSizeTotal;
@@ -81,8 +90,11 @@ typedef struct _BURN_CACHE_ACTION
         struct
         {
             BURN_PACKAGE* pPackage;
+        } packageStop;
+        struct
+        {
             HANDLE hEvent;
-        } checkpoint;
+        } syncpoint;
         struct
         {
             BURN_CONTAINER* pContainer;
@@ -109,6 +121,19 @@ typedef struct _BURN_CACHE_ACTION
             LPWSTR sczUnverifiedPath;
             BOOL fMove;
         } cachePayload;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
+            BURN_PAYLOAD* pPayload;
+            LPWSTR sczLayoutDirectory;
+            LPWSTR sczUnverifiedPath;
+            BOOL fMove;
+        } layoutPayload;
+        struct
+        {
+            BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
+            HANDLE hEvent;
+        } rollbackBoundary;
     };
 } BURN_CACHE_ACTION;
 
@@ -130,7 +155,7 @@ typedef struct _BURN_EXECUTE_ACTION
         struct
         {
             HANDLE hEvent;
-        } wait;
+        } syncpoint;
         struct
         {
             BURN_PACKAGE* pPackage;
@@ -169,6 +194,10 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             LPWSTR sczServiceName;
         } service;
+        struct
+        {
+            BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
+        } rollbackBoundary;
     };
 } BURN_EXECUTE_ACTION;
 
@@ -226,10 +255,19 @@ HRESULT PlanDefaultPackageRequestState(
     __in_z_opt LPCWSTR wzInstallCondition,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     );
+HRESULT PlanLayoutBundle(
+    __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzLayoutDirectory
+    );
+HRESULT PlanLayoutPackage(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzLayoutDirectory
+    );
 HRESULT PlanCachePackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,
-    __out HANDLE* phCheckpointEvent
+    __out HANDLE* phSyncpointEvent
     );
 HRESULT PlanCleanBundle(
     __in BURN_PLAN* pPlan,
@@ -240,6 +278,10 @@ HRESULT PlanCleanPackage(
     __in BURN_PACKAGE* pPackage
     );
 DWORD PlanGetNextCheckpointId();
+HRESULT PlanAppendCacheAction(
+    __in BURN_PLAN* pPlan,
+    __out BURN_CACHE_ACTION** ppCacheAction
+    );
 HRESULT PlanAppendExecuteAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction

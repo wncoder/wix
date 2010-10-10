@@ -828,7 +828,6 @@ namespace Microsoft.VisualStudio.Package
 			// Get properties for current configuration from project file and cache it
 			this.project.SetConfiguration(configCanonicalName);
 			this.evaluatedProject = this.project.BuildProject;
-			project.SetCurrentConfiguration();
 		}
 
 		public MSBuild.ProjectProperty GetMsBuildProperty(string propertyName, bool resetCache)

@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -22,6 +22,7 @@
 enum BOOTSTRAPPER_DISPLAY
 {
     BOOTSTRAPPER_DISPLAY_UNKNOWN,
+    BOOTSTRAPPER_DISPLAY_EMBEDDED,
     BOOTSTRAPPER_DISPLAY_NONE,
     BOOTSTRAPPER_DISPLAY_PASSIVE,
     BOOTSTRAPPER_DISPLAY_FULL,
@@ -84,7 +85,7 @@ struct BOOTSTRAPPER_COMMAND
     LPWSTR wzCommandLine;
     int nCmdShow;
 
-    BOOL fResumed;
+    BOOTSTRAPPER_RESUME_TYPE resumeType;
 };
 
 
@@ -186,6 +187,8 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
 
     STDMETHOD_(int, OnApplyBegin)() = 0;
 
+    STDMETHOD_(int, OnElevate)() = 0;
+
     STDMETHOD_(int, OnProgress)(
         __in DWORD dwProgressPercentage,
         __in DWORD dwOverallPercentage
@@ -213,7 +216,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         )  = 0;
 
     STDMETHOD_(int, OnCacheAcquireBegin)(
-        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
         __in BOOTSTRAPPER_CACHE_OPERATION operation,
         __in_z LPCWSTR wzSource

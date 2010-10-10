@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -95,20 +95,20 @@ static HRESULT GetIndex(
 //
 // Use DictAddValue() and DictGetValue() with this dictionary type.
 extern "C" HRESULT DAPI DictCreateWithEmbeddedKey(
-    __out STRINGDICT_HANDLE* ppvHandle,
+    __out STRINGDICT_HANDLE* psdHandle,
     __in DWORD dwNumExpectedItems,
     __in size_t cByteOffset
     )
 {
     HRESULT hr = S_OK;
 
-    ExitOnNull(ppvHandle, hr, E_INVALIDARG, "Handle not specified while creating dict");
+    ExitOnNull(psdHandle, hr, E_INVALIDARG, "Handle not specified while creating dict");
 
     // Allocate the handle
-    *ppvHandle = static_cast<STRINGDICT_HANDLE>(MemAlloc(sizeof(STRINGDICT_STRUCT), FALSE));
-    ExitOnNull(*ppvHandle, hr, E_OUTOFMEMORY, "Failed to allocate dictionary object");
+    *psdHandle = static_cast<STRINGDICT_HANDLE>(MemAlloc(sizeof(STRINGDICT_STRUCT), FALSE));
+    ExitOnNull(*psdHandle, hr, E_OUTOFMEMORY, "Failed to allocate dictionary object");
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(*ppvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(*psdHandle);
 
     // Fill out the new handle's values
     shHandle->dtType = DICT_EMBEDDED_KEY;
@@ -138,19 +138,19 @@ LExit:
 
 // The dict will store a set of keys, with no values associated with them. Use DictAddKey() and DictKeyExists() with this dictionary type.
 extern "C" HRESULT DAPI DictCreateStringList(
-    __out STRINGDICT_HANDLE* ppvHandle,
+    __out STRINGDICT_HANDLE* psdHandle,
     __in DWORD dwNumExpectedItems
     )
 {
     HRESULT hr = S_OK;
 
-    ExitOnNull(ppvHandle, hr, E_INVALIDARG, "Handle not specified while creating dict");
+    ExitOnNull(psdHandle, hr, E_INVALIDARG, "Handle not specified while creating dict");
 
     // Allocate the handle
-    *ppvHandle = static_cast<STRINGDICT_HANDLE>(MemAlloc(sizeof(STRINGDICT_STRUCT), FALSE));
-    ExitOnNull(*ppvHandle, hr, E_OUTOFMEMORY, "Failed to allocate dictionary object");
+    *psdHandle = static_cast<STRINGDICT_HANDLE>(MemAlloc(sizeof(STRINGDICT_STRUCT), FALSE));
+    ExitOnNull(*psdHandle, hr, E_OUTOFMEMORY, "Failed to allocate dictionary object");
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(*ppvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(*psdHandle);
 
     // Fill out the new handle's values
     shHandle->dtType = DICT_STRING_LIST;
@@ -180,17 +180,17 @@ LExit:
 
 // Todo: Dict should resize itself when (number of items) exceeds (number of buckets / MAX_ITEMS_TO_BUCKETS_RATIO)
 extern "C" HRESULT DAPI DictAddKey(
-    __in void *pvHandle,
+    __in STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString
     )
 {
     HRESULT hr = S_OK;
     DWORD dwIndex = 0;
 
-    ExitOnNull(pvHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
+    ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while adding value to dict");
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(pvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     if (DICT_STRING_LIST != shHandle->dtType)
     {
@@ -217,7 +217,7 @@ LExit:
 
 // Todo: Dict should resize itself when (number of items) exceeds (number of buckets / MAX_ITEMS_TO_BUCKETS_RATIO)
 extern "C" HRESULT DAPI DictAddValue(
-    __in void *pvHandle,
+    __in STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString,
     __in void *pvValue
     )
@@ -225,11 +225,11 @@ extern "C" HRESULT DAPI DictAddValue(
     HRESULT hr = S_OK;
     DWORD dwIndex = 0;
 
-    ExitOnNull(pvHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
+    ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while adding value to dict");
     ExitOnNull(pvValue, hr, E_INVALIDARG, "Value not specified while adding value to dict");
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(pvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     if (DICT_EMBEDDED_KEY != shHandle->dtType)
     {
@@ -248,17 +248,17 @@ LExit:
 }
 
 extern "C" HRESULT DAPI DictGetValue(
-    __in void *pvHandle,
+    __in STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString,
     __out void **ppvValue
     )
 {
     HRESULT hr = S_OK;
 
-    ExitOnNull(pvHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
+    ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while searching dict");
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(pvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     if (DICT_EMBEDDED_KEY != shHandle->dtType)
     {
@@ -266,7 +266,7 @@ extern "C" HRESULT DAPI DictGetValue(
         ExitOnFailure1(hr, "Tried to lookup value in wrong dictionary type! This dictionary type is: %d", shHandle->dtType);
     }
 
-    hr = GetValue(pvHandle, pszString, ppvValue);
+    hr = GetValue(sdHandle, pszString, ppvValue);
     ExitOnFailure(hr, "Failed to call internal GetValue()");
 
 LExit:
@@ -274,18 +274,18 @@ LExit:
 }
 
 extern "C" HRESULT DAPI DictKeyExists(
-    __in void *pvHandle,
+    __in STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString
     )
 {
     HRESULT hr = S_OK;
 
-    ExitOnNull(pvHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
+    ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while searching dict");
 
     // This works with either type of dictionary
 
-    hr = GetValue(pvHandle, pszString, NULL);
+    hr = GetValue(sdHandle, pszString, NULL);
     ExitOnFailure(hr, "Failed to call internal GetValue()");
 
 LExit:
@@ -293,12 +293,12 @@ LExit:
 }
 
 extern "C" void DAPI DictDestroy(
-    __in void *pvHandle
+    __in STRINGDICT_HANDLE sdHandle
     )
 {
     DWORD i;
 
-    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(pvHandle);
+    STRINGDICT_STRUCT *shHandle = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     if (DICT_STRING_LIST == shHandle->dtType)
     {

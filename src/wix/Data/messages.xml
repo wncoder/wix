@@ -3,7 +3,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -3389,6 +3389,12 @@
             <Instance>
                 More than one LayoutDirectory are writing to the same destination: '{0}'.
                 <Parameter Type="System.String" Name="layoutDirectoryDestination" />
+            </Instance>
+        </Message>
+        <Message Id="DiscardedRollbackBoundary" Number="1129">
+            <Instance>
+                The RollbackBoundary '{0}' was discarded because it was not followed by a package. Without a package the rollback boundary doesn't do anything. Verify that the RollbackBoundary element is not followed by another RollbackBoundary and that the element is not at the end of the chain.
+                <Parameter Type="System.String" Name="rollbackBoundaryId" />
             </Instance>
         </Message>
     </Class>

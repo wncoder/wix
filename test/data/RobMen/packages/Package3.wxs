@@ -3,7 +3,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -26,11 +26,11 @@
 
     <Fragment>
         <Directory Id="TARGETDIR" Name="SourceDir">
-            <Directory Id="ProgramFilesFolder">
+            <Directory Id="LocalAppDataFolder">
                 <Directory Id="MyFolder" Name="~WiX Burn Test" FileSource="$(sys.SOURCEFILEDIR)">
                     <Component Id="MyComp" Guid="C71B51C2-5841-4B06-BB93-2856E6FB53AE">
                         <File Id="MyFile" Name="Package3.wxs" KeyPath="yes" />
-                        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\WiX_Burn">
+                        <RegistryKey Root="HKCU" Key="SOFTWARE\Microsoft\WiX_Burn">
                             <RegistryValue Name="Test3" Value="true" Type="string" />
                         </RegistryKey>
                     </Component>

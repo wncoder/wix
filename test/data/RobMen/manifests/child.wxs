@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="Child Bundle" Version="0.1.0.0">
+   <UX SourceFile="stdux.dll">
+       <Payload SourceFile="en-us.wxl" />
+       <Payload SourceFile="thm.xml" />
+   </UX>
+
+   <Chain>
+      <MsiPackage Vital='yes' Name='Package3.msi' />
+   </Chain>
+</Bundle>
+</Wix>

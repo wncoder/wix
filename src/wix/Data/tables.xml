@@ -3,7 +3,7 @@
     Copyright (c) Microsoft Corporation.  All rights reserved.
     
     The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
     which can be found in the file CPL.TXT at the root of this distribution.
     By using this software in any fashion, you are agreeing to be bound by
     the terms of this license.
@@ -1623,6 +1623,7 @@
         <columnDefinition name="Repairable" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
         <columnDefinition name="RollbackLogPathVariable" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="ExeProtocol" type="string" length="0" nullable="yes"/>
     </tableDefinition>
     <tableDefinition name="MsiProperty" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"

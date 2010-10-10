@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -137,6 +137,11 @@ static HRESULT DuplicateFile(
     __in MS_CABINET_HEADER *pHeader,
     __in const CABC_DATA *pcd,
     __in const CABC_DUPLICATEFILE *pDuplicate
+    );
+static HRESULT UtcFileTimeToLocalDosDateTime(
+    __in FILETIME* pFileTime,
+    __out USHORT* pDate,
+    __out USHORT* pTime
     );
 
 static __callback int DIAMONDAPI CabCFilePlaced(__in PCCAB pccab, __in_z PSTR szFile, __in long cbFile, __in BOOL fContinuation, __out void *pv);
@@ -993,6 +998,30 @@ LExit:
 }
 
 
+static HRESULT UtcFileTimeToLocalDosDateTime(
+    __in FILETIME* pFileTime,
+    __out USHORT* pDate,
+    __out USHORT* pTime
+    )
+{
+    HRESULT hr = S_OK;
+	FILETIME ftLocal = { };
+
+    if (!::FileTimeToLocalFileTime(pFileTime, &ftLocal))
+    {
+        ExitWithLastError(hr, "Filed to convert file time to local file time.");
+    }
+
+    if (!::FileTimeToDosDateTime(&ftLocal, pDate, pTime))
+    {
+        ExitWithLastError(hr, "Filed to convert file time to DOS date time.");
+    }
+
+LExit:
+    return hr;
+}
+
+
 /********************************************************************
  FCI callback functions
 
@@ -1339,9 +1368,9 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
     __out void *pv
     )
 {
+    HRESULT hr = S_OK;
     WIN32_FILE_ATTRIBUTE_DATA fad;
     BOOL fSucceeded = FALSE;
-
 
     if (*pszName && '?' == *pszName)
     {
@@ -1352,19 +1381,30 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
         fSucceeded = ::GetFileAttributesExA(pszName, GetFileExInfoStandard, &fad);
     }
 
-    if (fSucceeded)
+    if (!fSucceeded)
     {
-        *pattribs = static_cast<USHORT>(fad.dwFileAttributes);
-        FILETIME ftLocal;
-        ::FileTimeToLocalFileTime(&fad.ftLastWriteTime, &ftLocal);
-        ::FileTimeToDosDateTime(&ftLocal, pdate, ptime);
-    }
-    else
-    {
-        *err = ::GetLastError();
+        ExitWithLastError1(hr, "Failed to get file attributes on '%s'.", pszName);
     }
 
-    return CabCOpen(pszName, _O_BINARY|_O_RDONLY, 0, err, pv);
+    *pattribs = static_cast<USHORT>(fad.dwFileAttributes);
+    hr = UtcFileTimeToLocalDosDateTime(&fad.ftLastWriteTime, pdate, ptime);
+    if (FAILED(hr))
+    {
+        // NOTE: Changed this from ftLastWriteTime to ftCreationTime because of issues around how different OSs were
+        // handling the access of the FILETIME structure and how it would fail conversion to DOS time if it wasn't
+        // found. This would create further problems if the file was written to the CAB without this value. Windows
+        // Installer would then fail to extract the file.
+        hr = UtcFileTimeToLocalDosDateTime(&fad.ftCreationTime, pdate, ptime);
+        ExitOnFailure1(hr, "Filed to read a valid file time stucture on file '%s'.", pszName);
+    }
+
+LExit:
+    if (FAILED(hr))
+    {
+        *err = (int)hr;
+    }
+
+    return FAILED(hr) ? -1 : CabCOpen(pszName, _O_BINARY|_O_RDONLY, 0, err, pv);
 }
 
 

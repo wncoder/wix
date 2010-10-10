@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -1330,11 +1330,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             Dictionary<string, string> componentKeyPath = new Dictionary<string, string>();
-            // Index Component table
+
+            // Index the Component table for non-directory & non-registry key paths.
             foreach (Row row in componentTable.Rows)
             {
-                string keypath = (null == row.Fields[5].Data) ? String.Empty : row.Fields[5].Data.ToString();
-                componentKeyPath.Add(row.Fields[0].Data.ToString(), keypath);
+                if (null != row.Fields[5].Data && 
+                    0 != ((int)row.Fields[3].Data & MsiInterop.MsidbComponentAttributesRegistryKeyPath))
+                {
+                    componentKeyPath.Add(row.Fields[0].Data.ToString(), row.Fields[5].Data.ToString());
+                }
             }
 
             Dictionary<string, string> componentWithChangedKeyPath = new Dictionary<string, string>();
@@ -1370,7 +1374,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             foreach (KeyValuePair<string, string> componentFile in componentWithNonKeyPathChanged)
             {
                 // Make sure all changes to non keypath files also had a change in the keypath.
-                if (!componentWithChangedKeyPath.ContainsKey(componentFile.Key))
+                if (!componentWithChangedKeyPath.ContainsKey(componentFile.Key) && componentKeyPath.ContainsKey(componentFile.Key))
                 {
                     this.core.OnMessage(WixWarnings.UpdateOfNonKeyPathFile((string)componentFile.Value, (string)componentFile.Key, (string)componentKeyPath[componentFile.Key]));
                 }
@@ -2809,17 +2813,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Get the chain packages, this may add more payloads.
             Dictionary<string, ChainPackageInfo> allPackages = new Dictionary<string, ChainPackageInfo>();
+            Dictionary<string, RollbackBoundaryInfo> allBoundaries = new Dictionary<string, RollbackBoundaryInfo>();
             foreach (Row row in chainPackageTable.Rows)
             {
-                ChainPackageInfo packageInfo = new ChainPackageInfo(row, wixGroupTable, allPayloads, this.FileManager, this.core);
-                allPackages.Add(packageInfo.Id, packageInfo);
+                Compiler.ChainPackageType type = (Compiler.ChainPackageType)Enum.Parse(typeof(Compiler.ChainPackageType), row[1].ToString(), true);
+                if (Compiler.ChainPackageType.RollbackBoundary == type)
+                {
+                    RollbackBoundaryInfo rollbackBoundary = new RollbackBoundaryInfo(row);
+                    allBoundaries.Add(rollbackBoundary.Id, rollbackBoundary);
+                }
+                else // package
+                {
+                    ChainPackageInfo packageInfo = new ChainPackageInfo(row, wixGroupTable, allPayloads, this.FileManager, this.core);
+                    allPackages.Add(packageInfo.Id, packageInfo);
+                }
             }
 
             // NOTE: All payloads should be generated before here with the exception of specific engine and ux data files.
 
             ArrayList fileTransfers = new ArrayList();
             string layoutDirectory = Path.GetDirectoryName(bundleFile);
-            
+
             // Handle any payloads not explicitly in a container. 
             foreach (string payloadName in allPayloads.Keys)
             {
@@ -2868,6 +2882,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             ChainInfo chain = new ChainInfo(chainTable.Rows[0]); // WixChain table always has one and only row in it.
+            RollbackBoundaryInfo previousRollbackBoundary = new RollbackBoundaryInfo("WixDefaultBoundary"); // ensure there is always a rollback boundary at the beginning of the chain.
             foreach (Row row in wixGroupTable.Rows)
             {
                 string rowParentName = (string)row[0];
@@ -2877,8 +2892,39 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if ("PackageGroup" == rowParentType && "WixChain" == rowParentName && "Package" == rowChildType)
                 {
-                    chain.Packages.Add(allPackages[rowChildName]);
+                    ChainPackageInfo packageInfo = null;
+                    if (allPackages.TryGetValue(rowChildName, out packageInfo))
+                    {
+                        if (null != previousRollbackBoundary)
+                        {
+                            chain.RollbackBoundaries.Add(previousRollbackBoundary);
+
+                            packageInfo.RollbackBoundary = previousRollbackBoundary;
+                            previousRollbackBoundary = null;
+                        }
+
+                        chain.Packages.Add(packageInfo);
+                    }
+                    else
+                    {
+                        // Discard the next rollback boundary if we have a previously defined boundary. Of course,
+                        // a boundary specifically defined will override the default boundary.
+                        RollbackBoundaryInfo nextRollbackBoundary = allBoundaries[rowChildName];
+                        if (null != previousRollbackBoundary && !previousRollbackBoundary.Default)
+                        {
+                            this.core.OnMessage(WixWarnings.DiscardedRollbackBoundary(nextRollbackBoundary.SourceLineNumbers, nextRollbackBoundary.Id));
+                        }
+                        else
+                        {
+                            previousRollbackBoundary = nextRollbackBoundary;
+                        }
+                    }
                 }
+            }
+
+            if (null != previousRollbackBoundary)
+            {
+                this.core.OnMessage(WixWarnings.DiscardedRollbackBoundary(previousRollbackBoundary.SourceLineNumbers, previousRollbackBoundary.Id));
             }
 
             // Give the chain package payloads their embedded IDs...
@@ -3206,6 +3252,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
+                foreach (RollbackBoundaryInfo rollbackBoundary in chain.RollbackBoundaries)
+                {
+                    writer.WriteStartElement("RollbackBoundary");
+                    writer.WriteAttributeString("Id", rollbackBoundary.Id);
+                    writer.WriteAttributeString("Vital", YesNoType.Yes == rollbackBoundary.Vital ? "yes" : "no");
+                    writer.WriteEndElement();
+                }
+
                 // Write the registration information...
                 writer.WriteStartElement("Registration");
 
@@ -3282,6 +3336,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("Permanent", package.Permanent ? "yes" : "no");
                     writer.WriteAttributeString("Vital", package.Vital ? "yes" : "no");
 
+                    if (null != package.RollbackBoundary)
+                    {
+                        writer.WriteAttributeString("RollbackBoundary", package.RollbackBoundary.Id);
+                    }
+
                     if (!String.IsNullOrEmpty(package.LogPathVariable))
                     {
                         writer.WriteAttributeString("LogPathVariable", package.LogPathVariable);
@@ -3304,6 +3363,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         writer.WriteAttributeString("UninstallArguments", package.UninstallCommand);
                         writer.WriteAttributeString("RepairArguments", package.RepairCommand);
                         writer.WriteAttributeString("Repairable", package.Repairable ? "yes" : "no");
+                        if (!String.IsNullOrEmpty(package.Protocol))
+                        {
+                            writer.WriteAttributeString("Protocol", package.Protocol);
+                        }
                     }
                     else if (Compiler.ChainPackageType.Msi == package.ChainPackageType)
                     {
@@ -6004,11 +6067,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 this.DisableRollback = (null != row[0] && 1 == (int)row[0]);
                 this.Packages = new List<ChainPackageInfo>();
+                this.RollbackBoundaries = new List<RollbackBoundaryInfo>();
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
 
             public bool DisableRollback { get; private set; }
             public List<ChainPackageInfo> Packages { get; private set; }
+            public List<RollbackBoundaryInfo> RollbackBoundaries { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
         }
 
@@ -6058,6 +6123,37 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Rollback boundary info for binding Bundles.
+        /// </summary>
+        private class RollbackBoundaryInfo
+        {
+            public RollbackBoundaryInfo(string id)
+            {
+                this.Default = true;
+                this.Id = id;
+                this.Vital = YesNoType.Yes;
+            }
+
+            public RollbackBoundaryInfo(Row row)
+            {
+                this.Id = row[0].ToString();
+
+                this.Vital = YesNoType.NotSet;
+                if (null != row[10])
+                {
+                    this.Vital = (1 == (int)row[10]) ? YesNoType.Yes : YesNoType.No;
+                }
+
+                this.SourceLineNumbers = row.SourceLineNumbers;
+            }
+
+            public bool Default { get; private set; }
+            public string Id { get; private set; }
+            public YesNoType Vital { get; private set; }
+            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
+        }
+
+        /// <summary>
         /// Chain package info for binding Bundles.
         /// </summary>
         private class ChainPackageInfo
@@ -6069,7 +6165,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        (string)row[4], (string)row[5], (string)row[6],
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
-                       (string)row[15], (string)row[16],
+                       (string)row[15], (string)row[16], (string)row[17],
                        wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
@@ -6079,7 +6175,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     string installCommand, string repairCommand, string uninstallCommand,
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
-                                    string logPathVariable, string rollbackPathVariable,
+                                    string logPathVariable, string rollbackPathVariable, string protocol,
                                     Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
@@ -6135,6 +6231,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Vital = (YesNoType.Yes == vital); // true only when specifically requested.
                 this.DetectCondition = detectCondition;
                 this.MsuKB = msuKB;
+                this.Protocol = protocol;
                 this.Repairable = (YesNoType.Yes == repairable); // true only when specifically requested.
                 this.LogPathVariable = logPathVariable;
                 this.RollbackLogPathVariable = rollbackPathVariable;
@@ -6214,6 +6311,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string RollbackLogPathVariable { get; private set; }
 
             public string MsuKB { get; private set; }
+            public string Protocol { get; private set; }
             public string DisplayName { get; private set; }
             public string Description { get; private set; }
 
@@ -6222,6 +6320,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public List<RelatedPackage> RelatedPackages { get; private set; }
             public List<string> MsiFeatures { get; private set; }
             public List<MsiPropertyInfo> MsiProperties { get; private set; }
+
+            public RollbackBoundaryInfo RollbackBoundary { get; set; }
 
             /// <summary>
             /// Initializes package state from the MSI contents.

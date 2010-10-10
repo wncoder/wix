@@ -3,7 +3,7 @@
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
 //    which can be found in the file CPL.TXT at the root of this distribution.
 //    By using this software in any fashion, you are agreeing to be bound by
 //    the terms of this license.
@@ -299,6 +299,76 @@ public: // IBootstrapperEngine
 
     LExit:
         ReleaseStr(sczMessage);
+        return hr;
+    }
+
+    virtual STDMETHODIMP SendEmbeddedError(
+        __in DWORD dwErrorCode,
+        __in_z_opt LPCWSTR wzMessage,
+        __in DWORD dwUIHint,
+        __out int* pnResult
+        )
+    {
+        HRESULT hr = S_OK;
+        BYTE* pbData = NULL;
+        DWORD cbData = 0;
+        DWORD dwResult = 0;
+
+        if (BURN_MODE_EMBEDDED != m_pEngineState->mode)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_STATE);
+            ExitOnRootFailure(hr, "Application requested to send embedded message when not in embedded mode.");
+        }
+
+        hr = BuffWriteNumber(&pbData, &cbData, dwErrorCode);
+        ExitOnFailure(hr, "Failed to write error code to message buffer.");
+
+        hr = BuffWriteString(&pbData, &cbData, wzMessage ? wzMessage : L"");
+        ExitOnFailure(hr, "Failed to write message string to message buffer.");
+
+        hr = BuffWriteNumber(&pbData, &cbData, dwUIHint);
+        ExitOnFailure(hr, "Failed to write UI hint to message buffer.");
+
+        hr = PipeSendMessage(m_pEngineState->hElevatedPipe, BURN_EMBEDDED_MESSAGE_TYPE_ERROR, pbData, cbData, NULL, NULL, &dwResult);
+        ExitOnFailure(hr, "Failed to send embedded message over pipe.");
+
+        *pnResult = static_cast<int>(dwResult);
+
+    LExit:
+        ReleaseBuffer(pbData);
+        return hr;
+    }
+
+    virtual STDMETHODIMP SendEmbeddedProgress(
+        __in DWORD dwProgressPercentage,
+        __in DWORD dwOverallProgressPercentage,
+        __out int* pnResult
+        )
+    {
+        HRESULT hr = S_OK;
+        BYTE* pbData = NULL;
+        DWORD cbData = 0;
+        DWORD dwResult = 0;
+
+        if (BURN_MODE_EMBEDDED != m_pEngineState->mode)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_STATE);
+            ExitOnRootFailure(hr, "Application requested to send embedded progress message when not in embedded mode.");
+        }
+
+        hr = BuffWriteNumber(&pbData, &cbData, dwProgressPercentage);
+        ExitOnFailure(hr, "Failed to write progress percentage to message buffer.");
+
+        hr = BuffWriteNumber(&pbData, &cbData, dwOverallProgressPercentage);
+        ExitOnFailure(hr, "Failed to write overall progress percentage to message buffer.");
+
+        hr = PipeSendMessage(m_pEngineState->hElevatedPipe, BURN_EMBEDDED_MESSAGE_TYPE_PROGRESS, pbData, cbData, NULL, NULL, &dwResult);
+        ExitOnFailure(hr, "Failed to send embedded progress message over pipe.");
+
+        *pnResult = static_cast<int>(dwResult);
+
+    LExit:
+        ReleaseBuffer(pbData);
         return hr;
     }
 
