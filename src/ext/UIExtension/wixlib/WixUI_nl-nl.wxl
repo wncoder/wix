@@ -15,7 +15,7 @@
     -->
 
     <String Id="WixUIBack" Overridable="yes">V&amp;orige</String>
-    <String Id="WixUINext" Overridable="yes">&amp;Volgende</String>
+    <String Id="WixUINext" Overridable="yes">V&amp;olgende</String>
     <String Id="WixUICancel" Overridable="yes">Annuleren</String>
     <String Id="WixUIFinish" Overridable="yes">&amp;Voltooien</String>
     <String Id="WixUIRetry" Overridable="yes">&amp;Opnieuw</String>
@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
-    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}De installatiewizard van [ProductName] is voltooid</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
+    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] is voltooid</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger} De installatiewizard van [ProductName] is voortijdig beëindigd</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">De installatiewizard van [ProductName] is voortijdig beëindigd vanwege een fout. Uw systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatiewizard nogmaals uit.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
+    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger} De wizard Setup van [ProductName] is voortijdig beëindigd</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">De wizard Setup van [ProductName] is voortijdig beëindigd vanwege een fout. Uw systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatiewizard nogmaals uit.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Productonderdelen</String>
@@ -124,7 +124,7 @@
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] wordt geïnstalleerd in een map per gebruiker en is alleen voor dit gebruikersaccount beschikbaar. U hebt geen lokale Administrator-bevoegdheden nodig.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] ondersteunt installatie per gebruiker niet.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Installeren voor &amp;alle gebruikers van deze computer</String>
-    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] wordt standaard geïnstalleerd op een map per computer en is beschikbaar voor alle gebruikers. U kunt de standaardinstallatiemap wijzigen. U moet lokale Administrator-bevoegdheden hebben.</String>
+    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] wordt standaard geïnstalleerd in een map per computer en is beschikbaar voor alle gebruikers. U kunt de standaardinstallatiemap wijzigen. U moet lokale Administrator-bevoegdheden hebben.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Installatie&amp;map:</String>
     <String Id="InstallScopeDlgChange" Overridable="yes">&amp;Wijzigen...</String>
 
@@ -158,12 +158,12 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Met de installatiewizard kunt u de manier wijzigen waarop onderdelen van [ProductName] op uw computer worden geïnstalleerd of kunt u [ProductName] van uw computer verwijderen. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
-    <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Installatiewizard van [ProductName]</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Met de wizard Setup kunt u de manier wijzigen waarop onderdelen van [ProductName] op uw computer worden geïnstalleerd of kunt u [ProductName] van uw computer verwijderen. Klik op Volgende om door te gaan of op Annuleren als u de wizard Setup wilt sluiten.</String>
+    <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">De volgende toepassingen gebruiken bestanden die moeten worden bijgewerkt door deze installatie. U kunt deze toepassingen met behulp van de installatiewizard sluiten en ze later opnieuw starten of u kunt de computer later opnieuw opstarten.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">De volgende toepassingen gebruiken bestanden die moeten worden bijgewerkt door deze installatie. U kunt deze toepassingen met behulp van de wizard Setup sluiten en ze later opnieuw starten of u kunt de computer later opnieuw opstarten.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Bepaalde bestanden die moeten worden bijgewerkt, zijn momenteel in gebruik.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Bestanden in gebruik</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">De toepassingen &amp;sluiten en opnieuw starten.</String>
@@ -186,8 +186,8 @@
 
     <String Id="PrepareDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">De installatiewizard wordt voorbereid. Een ogenblik geduld.</String>
-    <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Installatiewizard van [ProductName]</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">De wizard Setup wordt voorbereid. Een ogenblik geduld.</String>
+    <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -195,11 +195,11 @@
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}[ProductName] installeren</String>
     <String Id="ProgressDlgTextChanging" Overridable="yes">De installatie van [ProductName] wordt gewijzigd. Een ogenblik geduld.</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}[ProductName] wijzigen</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">[ProductName] wordt hersteld. Een ogenblik geduld.</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">De installatie van [ProductName] wordt hersteld. Een ogenblik geduld.</String>
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}[ProductName] herstellen</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">[ProductName] wordt verwijderd. Een ogenblik geduld.</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}[ProductName] verwijderen</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">[ProductName] wordt bijgewerkt. Een ogenblik geduld.</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">De installatie van [ProductName] wordt bijgewerkt. Een ogenblik geduld.</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}[ProductName] bijwerken</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Voortgang gereed</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Status:</String>
@@ -207,8 +207,8 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Installeren</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">De installatie van [ProductName] op uw computer wordt voltooid. Klik op Installeren om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
-    <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}De installatiewizard van [ProductName] hervatten</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">De installatie van [ProductName] op uw computer wordt voltooid. Klik op Installeren om door te gaan of op Annuleren als u de wizard Setup wilt sluiten.</String>
+    <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] hervatten</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="SetupTypeDlgTypicalButton" Overridable="yes">S&amp;tandaard</String>
@@ -226,26 +226,26 @@
 
     <String Id="UserExit_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}De installatiewizard van [ProductName] is onderbroken</String>
+    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] is onderbroken</String>
     <String Id="UserExitDescription1" Overridable="yes">De installatie van [ProductName] is onderbroken. Uw systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatie opnieuw uit.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Installeren</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Klik op Installeren om de installatie te starten. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt sluiten.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Klik op Installeren om de installatie te starten. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] te installeren</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Wijzigen</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Klik op Wijzigen om de installatie te starten. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt sluiten.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Klik op Wijzigen om de installatie te starten. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] te wijzigen</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">&amp;Herstellen</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Klik op Herstellen om de installatie van [ProductName] te herstellen. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt sluiten.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Klik op Herstellen om de installatie van [ProductName] te herstellen. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] te herstellen</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Verwijderen</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klik op Verwijderen om [ProductName] van uw computer te verwijderen. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt sluiten.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klik op Verwijderen om [ProductName] van uw computer te verwijderen. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] te verwijderen</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Bijwerken</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klik op Bijwerken om [ProductName] bij te werken op uw computer. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt sluiten.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klik op Bijwerken om [ProductName] bij te werken op uw computer. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] bij te werken</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] Setup</String>
@@ -256,9 +256,9 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">[ProductName] wordt geïnstalleerd op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">[ProductName] wordt bijgewerkt op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
-    <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Installatiewizard van [ProductName]</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">[ProductName] wordt geïnstalleerd op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt afsluiten.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">[ProductName] wordt bijgewerkt op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt afsluiten.</String>
+    <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -285,7 +285,7 @@
     <String Id="ProgressTextRegisterClassInfo" Overridable="yes">Klassenservers registreren</String>
     <String Id="ProgressTextRegisterClassInfoTemplate" Overridable="yes">Klasse-id: [1]</String>
     <String Id="ProgressTextRegisterExtensionInfo" Overridable="yes">Uitbreidingsservers registreren</String>
-    <String Id="ProgressTextRegisterExtensionInfoTemplate" Overridable="yes">Uitbreiding: [1]</String>
+    <String Id="ProgressTextRegisterExtensionInfoTemplate" Overridable="yes">Extensie: [1]</String>
     <String Id="ProgressTextRegisterMIMEInfo" Overridable="yes">MIME-gegevens registreren</String>
     <String Id="ProgressTextRegisterMIMEInfoTemplate" Overridable="yes">MIME-inhoudtype: [1], extensie: [2]</String>
     <String Id="ProgressTextRegisterProgIdInfo" Overridable="yes">Programma-id's registreren</String>
@@ -294,7 +294,7 @@
     <String Id="ProgressTextAllocateRegistrySpaceTemplate" Overridable="yes">Vrije ruimte: [1]</String>
     <String Id="ProgressTextAppSearch" Overridable="yes">Naar geïnstalleerde toepassingen zoeken</String>
     <String Id="ProgressTextAppSearchTemplate" Overridable="yes">Eigenschap: [1], handtekening: [2]</String>
-    <String Id="ProgressTextBindImage" Overridable="yes">Uitvoerbare bestanden verbinden</String>
+    <String Id="ProgressTextBindImage" Overridable="yes">Binding van uitvoerbare bestanden</String>
     <String Id="ProgressTextBindImageTemplate" Overridable="yes">Bestand: [1]</String>
     <String Id="ProgressTextCCPSearch" Overridable="yes">Naar in aanmerking komende producten zoeken</String>
     <String Id="ProgressTextCreateFolders" Overridable="yes">Mappen maken</String>
@@ -308,7 +308,7 @@
     <String Id="ProgressTextInstallODBC" Overridable="yes">ODBC-onderdelen installeren</String>
     <String Id="ProgressTextInstallServices" Overridable="yes">Nieuwe services installeren</String>
     <String Id="ProgressTextInstallServicesTemplate" Overridable="yes">Service: [2]</String>
-    <String Id="ProgressTextLaunchConditions" Overridable="yes">Startvoorwaarden controleren</String>
+    <String Id="ProgressTextLaunchConditions" Overridable="yes">Startvoorwaarden evalueren</String>
     <String Id="ProgressTextMigrateFeatureStates" Overridable="yes">Onderdeelstatussen van verwante toepassingen worden gemigreerd</String>
     <String Id="ProgressTextMigrateFeatureStatesTemplate" Overridable="yes">Toepassing: [1]</String>
     <String Id="ProgressTextMoveFiles" Overridable="yes">Bestanden verplaatsen</String>
@@ -353,16 +353,16 @@
     <String Id="ProgressTextStartServicesTemplate" Overridable="yes">Service: [1]</String>
     <String Id="ProgressTextStopServices" Overridable="yes">Services worden gestopt</String>
     <String Id="ProgressTextStopServicesTemplate" Overridable="yes">Service: [1]</String>
-    <String Id="ProgressTextUnpublishComponents" Overridable="yes">Publicatie van in aanmerking komende onderdelen intrekken</String>
+    <String Id="ProgressTextUnpublishComponents" Overridable="yes">Publicatie van in aanmerking komende onderdelen ongedaan maken</String>
     <String Id="ProgressTextUnpublishComponentsTemplate" Overridable="yes">Onderdeel-id: [1], kwalificatie: [2]</String>
-    <String Id="ProgressTextUnpublishFeatures" Overridable="yes">Publicatie van productonderdelen intrekken</String>
+    <String Id="ProgressTextUnpublishFeatures" Overridable="yes">Publicatie van productonderdelen ongedaan maken</String>
     <String Id="ProgressTextUnpublishFeaturesTemplate" Overridable="yes">Onderdeel: [1]</String>
     <String Id="ProgressTextUnregisterClassInfo" Overridable="yes">Registratie van klassenservers ongedaan maken</String>
     <String Id="ProgressTextUnregisterClassInfoTemplate" Overridable="yes">Klasse-id: [1]</String>
     <String Id="ProgressTextUnregisterComPlus" Overridable="yes">Registratie van COM+-toepassingen en -onderdelen ongedaan maken</String>
     <String Id="ProgressTextUnregisterComPlusTemplate" Overridable="yes">Toepassings-id: [1]{{, toepassingstype: [2]}}</String>
     <String Id="ProgressTextUnregisterExtensionInfo" Overridable="yes">Registratie van uitbreidingsservers ongedaan maken</String>
-    <String Id="ProgressTextUnregisterExtensionInfoTemplate" Overridable="yes">Uitbreiding: [1]</String>
+    <String Id="ProgressTextUnregisterExtensionInfoTemplate" Overridable="yes">Extensie: [1]</String>
     <String Id="ProgressTextUnregisterFonts" Overridable="yes">Registratie van lettertypen ongedaan maken</String>
     <String Id="ProgressTextUnregisterFontsTemplate" Overridable="yes">Lettertype: [1]</String>
     <String Id="ProgressTextUnregisterMIMEInfo" Overridable="yes">Registratie van MIME-gegevens ongedaan maken</String>
@@ -410,8 +410,8 @@
     <String Id="Error15" Overridable="yes">Actie beëindigd [Time]: [1]. Retourwaarde [2].</String>
     <String Id="Error16" Overridable="yes">Resterende tijd: {[1] minuten } en {[2] seconden}</String>
     <String Id="Error17" Overridable="yes">Onvoldoende geheugen. Sluit de andere toepassingen af voordat u het opnieuw probeert.</String>
-    <String Id="Error18" Overridable="yes">Installer reageert niet meer.</String>
-    <String Id="Error19" Overridable="yes">Installer is voortijdig beëindigd.</String>
+    <String Id="Error18" Overridable="yes">Installatieprogramma reageert niet meer.</String>
+    <String Id="Error19" Overridable="yes">Installatieprogramma is voortijdig beëindigd.</String>
     <String Id="Error20" Overridable="yes">[ProductName] wordt nu geconfigureerd. Een ogenblik geduld</String>
     <String Id="Error21" Overridable="yes">Benodigde gegevens verzamelen...</String>
     <String Id="Error22" Overridable="yes">Oudere versies van deze toepassing verwijderen...</String>
@@ -439,10 +439,10 @@
     <String Id="Error1318" Overridable="yes">Er is een netwerkfout opgetreden bij het maken van de map [2]</String>
     <String Id="Error1319" Overridable="yes">Er is een netwerkfout opgetreden bij het openen van het CAB-bronbestand [2]</String>
     <String Id="Error1320" Overridable="yes">Het opgegeven pad is te lang: [2]</String>
-    <String Id="Error1321" Overridable="yes">U hebt niet de juiste rechten om het bestand [2] te kunnen wijzigen.</String>
+    <String Id="Error1321" Overridable="yes">Het installatieprogramma heeft niet voldoende rechten om het bestand [2] te kunnen wijzigen.</String>
     <String Id="Error1322" Overridable="yes">Een gedeelte van het mappad [2] is ongeldig. Het is leeg of langer dan de toegestane maximumlengte.</String>
     <String Id="Error1323" Overridable="yes">In het pad [2] staan woorden die niet in paden zijn toegestaan.</String>
-    <String Id="Error1324" Overridable="yes">In het pad [2] staat een ongeldig teken.</String>
+    <String Id="Error1324" Overridable="yes">Het pad [2] bevat een ongeldig teken.</String>
     <String Id="Error1325" Overridable="yes">[2] is een ongeldige korte bestandsnaam.</String>
     <String Id="Error1326" Overridable="yes">Fout bij het opvragen van bestandsbeveiliging: [3] GetLastError: [2]</String>
     <String Id="Error1327" Overridable="yes">Ongeldig station: [2]</String>
@@ -488,14 +488,14 @@
     <String Id="Error1708" Overridable="yes">De installatie is mislukt.</String>
     <String Id="Error1709" Overridable="yes">Product: [2] -- [3]</String>
     <String Id="Error1710" Overridable="yes">U kunt de computer terugbrengen in de oorspronkelijke staat of later verdergaan met de installatie. Wilt u de configuratie herstellen?</String>
-    <String Id="Error1711" Overridable="yes">Er is een fout opgetreden bij het wegschrijven van installatiegegevens naar de harde schijf. Controleer of er voldoende schijfruimte beschikbaar is en klik op Opnieuw. Klik op Annuleren als u de installatie wilt beëindigen.</String>
+    <String Id="Error1711" Overridable="yes">Er is een fout opgetreden bij het schrijven van installatiegegevens naar de harde schijf. Controleer of er voldoende schijfruimte beschikbaar is en klik op Opnieuw. Klik op Annuleren als u de installatie wilt beëindigen.</String>
     <String Id="Error1712" Overridable="yes">Kan een of meer bestanden die nodig zijn om de computer in de oorspronkelijke staat terug te brengen, niet vinden. Herstel is niet mogelijk.</String>
     <String Id="Error1713" Overridable="yes">Een van de benodigde producten kan niet worden geïnstalleerd door [2]. Neem contact op met de technische ondersteuning. {{Systeemfout: [3].}}</String>
     <String Id="Error1714" Overridable="yes">De oudere versie van [2] kan niet worden verwijderd. Neem contact op met de technische ondersteuning. {{Systeemfout: [3].}}</String>
     <String Id="Error1715" Overridable="yes">Geïnstalleerd [2]</String>
     <String Id="Error1716" Overridable="yes">Geconfigureerd [2]</String>
     <String Id="Error1717" Overridable="yes">Verwijderd [2]</String>
-    <String Id="Error1718" Overridable="yes">Bestand [2] wordt geweigerd vanwege een beleidsinstelling voor digitale handtekeningen.</String>
+    <String Id="Error1718" Overridable="yes">Bestand [2] is geweigerd vanwege een beleidsinstelling voor digitale handtekeningen.</String>
     <String Id="Error1719" Overridable="yes">Geen toegang tot de Windows Installer-service. Dit kan gebeuren als Windows in veilige modus wordt uitgevoerd of als Windows Installer niet correct is geïnstalleerd. Neem contact op met iemand van Ondersteuning.</String>
     <String Id="Error1720" Overridable="yes">Er is een probleem met dit Windows Installer-pakket. Een script dat nodig is voor het voltooien van deze installatie, kan niet worden uitgevoerd. Neem contact op met iemand van Ondersteuning of met de leverancier van het pakket. {{Aangepaste actie [2], scriptfout [3], [4]: [5], regel [6], kolom [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Er is een probleem met dit Windows Installer-pakket. Een programma dat nodig is voor het voltooien van deze installatie, kan niet worden uitgevoerd. Neem contact op met iemand van Ondersteuning of met de leverancier van het pakket. {{Actie: [2], locatie: [3], opdracht: [4] }}</String>

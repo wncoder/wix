@@ -121,7 +121,7 @@
     <String Id="InstallScopeDlgDescription" Overridable="yes">Välj installationsomfattning och mapp</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Installationsomfattning</String>
     <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Installera &amp;bara för mig: ([USERNAME])</String>
-    <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] installeras som en användarinstallation och blir bara tillgängligt för ditt användarkonto. Du behöver inte administratörsprivilegier.</String>
+    <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] installeras i en mapp per användare och blir bara tillgängligt för ditt användarkonto. Du behöver inte lokala administratörsprivilegier.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] stöder inte installation per användare.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Installera för alla användare av den här &amp;datorn</String>
     <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] installeras som en datorinstallation (standard) och blir tillgängligt för alla användare. Du kan ändra standardmappen för installationen. Du måste ha lokala administratörsprivilegier.</String>

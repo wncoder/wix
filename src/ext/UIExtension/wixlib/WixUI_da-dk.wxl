@@ -71,7 +71,7 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">De fremhævede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de fremhævede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">De markerede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de markerede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Den krævede diskplads til installationen af de markerede funktioner.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Krav til diskplads</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -84,12 +84,12 @@
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="ExitDialogDescription" Overridable="yes">Klik på knappen Udfør for at afslutte guiden Installation.</String>
-    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Installationsprogrammet til [ProductName] blev fuldført</String>
+    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Guiden [ProductName] Installation blev fuldført</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Installationsprogrammet til [ProductName] blev afbrudt før tid</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">Installationsprogrammet til [ProductName] blev afbrudt før tid på grund af en fejl. Systemet er ikke blevet ændret. Hvis du vil installere programmet på et senere tidspunkt, skal du køre guiden Installation igen.</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">Guiden [ProductName] Installation blev afbrudt før tid på grund af en fejl. Systemet er ikke blevet ændret. Hvis du vil installere programmet på et senere tidspunkt, skal du køre guiden Installation igen.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Klik på knappen Udfør for at afslutte guiden Installation.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] Installation</String>
@@ -107,7 +107,7 @@
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FilesInUseText" Overridable="yes">Følgende programmer bruger filer, der skal opdateres af installationsprogrammet. Luk programmerne, og klik derefter på &amp;Prøv igen for at fortsætte installationen, eller klik på Afslut for at afslutte den.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Visse filer, som skal opdateres, er i brug.</String>
-    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Filer, der bruges</String>
+    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Filer, der er i brug</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Skift...</String>
@@ -124,7 +124,7 @@
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] installeres i en mappe pr. bruger og er kun tilgængelig for din brugerkonto. Du behøver ikke lokale administratorrettigheder.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] understøtter ikke installation pr. bruger.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Installer for alle brugere på denne &amp;computer</String>
-    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] installeres som standard i en mappe pr. bruger og er tilgængelig for alle brugere. Du kan ændre standardinstallationsmappen. Du skal have lokale administratorrettigheder.</String>
+    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] installeres som standard i en mappe pr. computer og er tilgængelig for alle brugere. Du kan ændre standardinstallationsmappen. Du skal have lokale administratorrettigheder.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Installations&amp;mappe:</String>
     <String Id="InstallScopeDlgChange" Overridable="yes">&amp;Skift...</String>
 
@@ -171,14 +171,14 @@
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">De fremhævede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de fremhævede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">Installationen kræver mere diskplads, end der er til rådighed.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">De markerede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de markerede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">Installationen kræver mere diskplads, end der er til ledigt.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Der er ikke mere ledig diskplads</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">De fremhævede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de fremhævede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">De markerede diskenheder har ikke nok ledig diskplads til de valgte funktioner. Du kan vælge at fjerne nogle filer fra de markerede diskenheder, installere færre funktioner eller vælge et andet destinationsdrev.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Installationen kræver mere diskplads, end der er til rådighed.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Der er ikke mere ledig diskplads</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -226,7 +226,7 @@
 
     <String Id="UserExit_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Guiden til [ProductName] Installation blev afbrudt</String>
+    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Guiden [ProductName] Installation blev afbrudt</String>
     <String Id="UserExitDescription1" Overridable="yes">Installationen af [ProductName] blev afbrudt. Systemet er ikke blevet ændret. Hvis du vil installere programmet på et senere tidspunkt, skal du køre installationsprogrammet igen.</String>
     <String Id="UserExitDescription2" Overridable="yes">Klik på knappen Udfør for at afslutte guiden Installation.</String>
 
@@ -469,7 +469,7 @@
     <String Id="Error1501" Overridable="yes">Der opstod en fejl under forsøg på at få adgang til sikre data. Kontrollér, at Windows Installer er konfigureret korrekt, og prøv at installere igen.</String>
     <String Id="Error1502" Overridable="yes">Brugeren '[2]' har tidligere startet en installation af programmet '[3]'. Den bruger skal køre installationen igen, før programmet kan bruges. Den aktuelle installation vil nu fortsætte.</String>
     <String Id="Error1503" Overridable="yes">Brugeren '[2]' har tidligere startet en installation af programmet '[3]'. Den bruger skal køre installationen igen, før programmet kan bruges.</String>
-    <String Id="Error1601" Overridable="yes">Der er ikke mere ledig diskplads på disk enheden: '[2]'. Påkrævet plads: [3] KB. Ledig plads: [4] KB. Frigør noget diskplads, og prøv igen.</String>
+    <String Id="Error1601" Overridable="yes">Der er ikke mere ledig diskplads på diskenheden: '[2]'. Påkrævet plads: [3] KB. Ledig plads: [4] KB. Frigør noget diskplads, og prøv igen.</String>
     <String Id="Error1602" Overridable="yes">Er du sikker på, at du vil annullere?</String>
     <String Id="Error1603" Overridable="yes">Filen [2][3] bruges{ af følgende proces: Navn: [4], id: [5], vinduestitel: '[6]'}. Luk programmet, og forsøg igen.</String>
     <String Id="Error1604" Overridable="yes">Programmet '[2]' er allerede installeret. Det forhindrer, at dette program installeres. De to programmer er ikke kompatible.</String>
@@ -547,7 +547,7 @@
     <String Id="Error1928" Overridable="yes">Der opstod fejl under registrering af COM+-programmet. Kontakt supportafdelingen for at få flere oplysninger.</String>
     <String Id="Error1929" Overridable="yes">Der opstod fejl under annullering af registreringen af COM+-programmet. Kontakt supportafdelingen for at få flere oplysninger.</String>
     <String Id="Error1930" Overridable="yes">Beskrivelsen til tjenesten '[2]' ([3]) kunne ikke ændres.</String>
-    <String Id="Error1931" Overridable="yes">Tjenesten Windows Installer kan ikke opdatere systemfilen [2], da den er beskyttet af Windows. Du skal muligvis opgradere operativsystemet, for at programmet fungerer korrekt. {{Pakkeversion: [3], version beskyttet af operativsystemet : [4]}}</String>
+    <String Id="Error1931" Overridable="yes">Tjenesten Windows Installer kan ikke opdatere systemfilen [2], da den er beskyttet af Windows. Du skal muligvis opgradere operativsystemet, for at programmet fungerer korrekt. {{Pakkeversion: [3], version beskyttet af operativsystemet: [4]}}</String>
     <String Id="Error1932" Overridable="yes">Tjenesten Windows Installer kan ikke opdatere den beskyttede Windows-fil [2]. {{Pakkeversion: [3], version beskyttet af operativsystemet: [4], SFP-fejl: [5]}}</String>
     <String Id="Error1933" Overridable="yes">Tjenesten Windows Installer kan ikke opdatere en eller flere beskyttede Windows-filer. {{SFP-fejl: [2]. Liste over beskyttede filer:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">Brugerinstallationer er deaktiveret ved hjælp af en politik på computeren.</String>
@@ -601,7 +601,7 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Denne funktion kræver [1] på harddisken. [2] af [3] underfunktioner er valgt. Underfunktionerne frigiver [4] på harddisken.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Denne funktion kræver [1] på harddisken. [2] af [3] underfunktioner er valgt. Underfunktionerne kræver [4] på harddisken.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Resterende tid: {[1] minutter }{[2] sekunder}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">Kan kontaktes</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">Ledig</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Forskel</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">Krævet</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Diskstørrelse</String>

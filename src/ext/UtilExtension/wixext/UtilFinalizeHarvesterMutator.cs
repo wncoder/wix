@@ -307,10 +307,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             }
                             else if (String.Equals(parts[0], "Component Categories", StringComparison.OrdinalIgnoreCase))
                             {
-                                // TODO: add support for this to the compiler
+                                // If this is the .NET Component Category it should not end up in the authoring. Therefore, add
+                                // the registry key to the duplicate list to ensure it gets removed later.
+                                if (String.Equals(parts[1], "{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    duplicateRegistryValues.Add(registryValue);
+                                }
+                                else
+                                {
+                                    // TODO: add support for Component Categories to the compiler.
+                                }
                             }
                             else if (String.Equals(parts[0], "Interface", StringComparison.OrdinalIgnoreCase))
-                            {                            
+                            {
                                 if (2 <= parts.Length)
                                 {
                                     index = String.Concat(parts[0], '/', parts[1]);

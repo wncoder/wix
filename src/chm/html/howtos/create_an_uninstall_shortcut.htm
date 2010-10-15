@@ -14,11 +14,11 @@
 <pre>
 <font size="2"><font color="#0000FF">&lt;</font><font color="#A31515">Shortcut</font><font color="#FF0000"> Id</font><font color="#0000FF">=</font>"<font color="#0000FF">UninstallProduct</font>" <font color="#FF0000">            
           Name</font><font color="#0000FF">=</font>"<font color="#0000FF">Uninstall My Application</font>"<font color="#FF0000">
-          Target</font><font color="#0000FF">=</font>"<font color="#0000FF">[System64Folder]msiexec.exe</font>"<font color="#FF0000">
+          Target</font><font color="#0000FF">=</font>"<font color="#0000FF">[SystemFolder]msiexec.exe</font>"<font color="#FF0000">
           Arguments</font><font color="#0000FF">=</font>"<font color="#0000FF">/x [ProductCode]</font>"<font color="#FF0000">
           Description</font><font color="#0000FF">=</font>"<font color="#0000FF">Uninstalls My Application</font>"<font color="#0000FF"> /&gt;</font></font>
 </pre>
-<p>The Target attribute points to the location of msiexec.exe. The Windows Installer <a target="_blank" href="http://msdn.microsoft.com/library/aa372054.aspx">System64Folder</a> property will resolve to the <em>System32</em> directory on 32-bit machines and the <em>SysWow64</em> directory on 64-bit machines. Using this property ensures msiexec.exe can always be located regardless of the operating system version on the target machine. The Arguments attribute is used to let msiexec.exe know which product to uninstall by passing in the ProductCode for the install package.</p>
+<p>The Target attribute points to the location of msiexec.exe. The Windows Installer <a target="_blank" href="http://msdn.microsoft.com/en-us/library/aa372055.aspx">SystemFolder</a> property will resolve to the <em>System32</em> directory where msiexec.exe resides. The Arguments attribute is used to let msiexec.exe know which product to uninstall by passing in the ProductCode for the install package.</p>
 <p>To avoid ICE validation errors at build it is important to couple the Shortcut element with a registry entry and a RemoteFolder element. Both of these are described in more detail in the <a href="create_start_menu_shortcut.htm">How To: Create a Shortcut on the Start Menu</a> topic, and are shown in the complete sample below.</p>
 <h2>The Complete Sample</h2>
 <p>The following is a complete sample that uses the above concepts. This example can be inserted into a WiX project and compiled, or compiled and linked from the command line, to generate an installer.</p>

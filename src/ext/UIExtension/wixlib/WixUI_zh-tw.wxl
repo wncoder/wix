@@ -67,11 +67,11 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">地點:</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">位置:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選擇其他目的地磁碟機。</String>
+    <String Id="DiskCostDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選取其他目的地磁碟機。</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">安裝已選取功能所需的磁碟空間。</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間需求</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -166,19 +166,19 @@
     <String Id="MsiRMFilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。您可以讓安裝精靈關閉它們，稍後再嘗試重新啟動它們或重新啟動電腦。</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">有些需要更新的檔案目前正在使用中。</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}檔案使用中</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">關閉應用程式，稍後再嘗試重新啟動它們(&amp;C)</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">關閉應用程式，稍後再嘗試重新啟動(&amp;C)</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">不關閉應用程式，必須重新開機(&amp;D)</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選擇其他目的地磁碟機。</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選取其他目的地磁碟機。</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">安裝作業所需的磁碟空間超過可用的磁碟空間。</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間不足</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選擇其他目的地磁碟機。</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選取其他目的地磁碟機。</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">安裝作業所需的磁碟空間超過可用的磁碟空間。</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間不足</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -278,7 +278,7 @@
     <String Id="ProgressTextCreateShortcuts" Overridable="yes">正在建立捷徑</String>
     <String Id="ProgressTextCreateShortcutsTemplate" Overridable="yes">捷徑: [1]</String>
     <String Id="ProgressTextPublishComponents" Overridable="yes">正在發行合格的元件</String>
-    <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">元件識別碼: [1]，識別符號: [2]</String>
+    <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">元件識別碼: [1]，辨識符號: [2]</String>
     <String Id="ProgressTextPublishFeatures" Overridable="yes">正在發行產品功能</String>
     <String Id="ProgressTextPublishFeaturesTemplate" Overridable="yes">功能: [1]</String>
     <String Id="ProgressTextPublishProduct" Overridable="yes">正在發行產品資訊</String>
@@ -354,7 +354,7 @@
     <String Id="ProgressTextStopServices" Overridable="yes">正在停止服務</String>
     <String Id="ProgressTextStopServicesTemplate" Overridable="yes">服務: [1]</String>
     <String Id="ProgressTextUnpublishComponents" Overridable="yes">正在解除發行合格的元件</String>
-    <String Id="ProgressTextUnpublishComponentsTemplate" Overridable="yes">元件識別碼: [1]，識別符號: [2]</String>
+    <String Id="ProgressTextUnpublishComponentsTemplate" Overridable="yes">元件識別碼: [1]，辨識符號: [2]</String>
     <String Id="ProgressTextUnpublishFeatures" Overridable="yes">正在解除發行產品功能</String>
     <String Id="ProgressTextUnpublishFeaturesTemplate" Overridable="yes">功能: [1]</String>
     <String Id="ProgressTextUnregisterClassInfo" Overridable="yes">解除註冊類別伺服器</String>
@@ -471,7 +471,7 @@
     <String Id="Error1503" Overridable="yes">使用者 '[2]' 之前已經啟動了產品 '[3]' 的安裝。這位使用者必須再次執行安裝才能使用該產品。</String>
     <String Id="Error1601" Overridable="yes">磁碟空間不足 -- 磁碟區: '[2]'; 需要空間: [3] KB; 可用空間: [4] KB。請釋放一些空間，然後再重試。</String>
     <String Id="Error1602" Overridable="yes">您確定要取消嗎 ?</String>
-    <String Id="Error1603" Overridable="yes">檔案 [2][3] 正在使用中 {被下列處理序使用: 名稱: [4]，識別碼: [5]，視窗標題: '[6]'}，請關閉該應用程式然後重試。</String>
+    <String Id="Error1603" Overridable="yes">檔案 [2][3] 正在使用中 {由下列處理序使用: 名稱: [4]，識別碼: [5]，視窗標題: '[6]'}，請關閉該應用程式然後重試。</String>
     <String Id="Error1604" Overridable="yes">已經安裝產品 '[2]'，無法安裝本產品。這兩項產品不相容。</String>
     <String Id="Error1605" Overridable="yes">磁碟區 '[2]' 上的磁碟空間不足，無法繼續進行啟用修復功能的安裝。需要 [3] KB 的空間，但是只有 [4] KB 可供使用。請按一下 [忽略] 繼續安裝但不儲存修復資訊，按一下 [重試] 再檢查一次是否有可用的空間，或按一下 [取消] 結束安裝。</String>
     <String Id="Error1606" Overridable="yes">無法存取網路位置 [2]。</String>
@@ -548,7 +548,7 @@
     <String Id="Error1929" Overridable="yes">解除註冊 COM+ 應用程式時發生錯誤。請連絡支援人員取得詳細資訊。</String>
     <String Id="Error1930" Overridable="yes">無法變更服務 '[2]' ([3]) 的描述。</String>
     <String Id="Error1931" Overridable="yes">Windows Installer 服務無法更新系統檔案 [2]，因為檔案受到 Windows 保護。可能需要更新您的作業系統才能正確執行這個程式。{{封裝版本: [3]，OS 保護的版本: [4]}}</String>
-    <String Id="Error1932" Overridable="yes">Windows Installer 服務無法更新受保護的 Windows 檔案 [2]。{{封裝裝版本: [3]，OS 受保護的版本: [4]，SFP 錯誤: [5]}}</String>
+    <String Id="Error1932" Overridable="yes">Windows Installer 服務無法更新受保護的 Windows 檔案 [2]。{{封裝版本: [3]，OS 保護的版本: [4]，SFP 錯誤: [5]}}</String>
     <String Id="Error1933" Overridable="yes">Windows Installer 服務無法更新一或多個受保護的 Windows 檔案。{{SFP 錯誤: [2]。受保護的檔案清單:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">電腦上的使用者安裝已透過原則停用。</String>
     <String Id="Error1935" Overridable="yes">組件 '[6]' 安裝期間發生錯誤。請參閱說明與支援取得詳細資訊。HRESULT: [3]。{{組件介面: [4], 功能: [5], 元件: [2]}}</String>
@@ -586,7 +586,7 @@
     <String Id="UITextSelCDLocal" Overridable="yes">這項功能原本是從光碟執行，將變更為安裝到本機硬碟</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">這個功能會釋放 [1] 的硬碟空間。</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">這個功能需要 [1] 的硬碟空間。</String>
-    <String Id="UITextSelCostPending" Overridable="yes">正在編譯這個功能的花費...</String>
+    <String Id="UITextSelCostPending" Overridable="yes">正在計算此功能所需的空間...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">這項功能將完全移除</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">這項功能將從本機硬碟移除，但設定成必要時才安裝</String>
     <String Id="UITextSelLocalCD" Overridable="yes">這項功能將從本機硬碟移除，但仍然可以從光碟執行</String>

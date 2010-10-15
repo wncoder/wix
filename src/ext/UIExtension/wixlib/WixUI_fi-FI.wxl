@@ -53,7 +53,7 @@
     <String Id="CancelDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="CancelDlgText" Overridable="yes">Haluatko varmasti peruuttaa tuotteen [ProductName] asennuksen?</String>
     <String Id="CancelDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
-    <String Id="CancelDlgIconTooltip" Overridable="yes">tietokuvakkeet</String>
+    <String Id="CancelDlgIconTooltip" Overridable="yes">Tietokuvake</String>
 
     <String Id="CustomizeDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="CustomizeDlgTree" Overridable="yes">Valintojen puu</String>
@@ -79,7 +79,7 @@
     <String Id="ErrorDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="ErrorDlgErrorText" Overridable="yes">Tietoteksti</String>
     <String Id="ErrorDlgErrorIcon" Overridable="yes">WixUI_Ico_Info</String>
-    <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">tietokuvakkeet</String>
+    <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">Tietokuvake</String>
 
     <String Id="ExitDialog_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -131,7 +131,7 @@
     <String Id="InvalidDirDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="InvalidDirDlgText" Overridable="yes">Asennushakemiston on oltava paikallisessa kiintolevyasemassa.</String>
     <String Id="InvalidDirDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
-    <String Id="InvalidDirDlgIconTooltip" Overridable="yes">tietokuvakkeet</String>
+    <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Tietokuvake</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Hyväksyn käyttöoikeussopimuksen ehdot</String>
@@ -378,7 +378,7 @@
     <String Id="ProgressTextWriteRegistryValues" Overridable="yes">Kirjoitetaan järjestelmärekisteriarvoja</String>
     <String Id="ProgressTextWriteRegistryValuesTemplate" Overridable="yes">Avain: [1], nimi: [2], arvo: [3]</String>
     <String Id="ProgressTextAdvertise" Overridable="yes">Ilmoitetaan sovelluksesta</String>
-    <String Id="ProgressTextGenerateScript" Overridable="yes">Muodostetaan komentojonotoimintoja toiminnolle:</String>
+    <String Id="ProgressTextGenerateScript" Overridable="yes">Muodostetaan komentosarjatoimintoja toiminnolle:</String>
     <String Id="ProgressTextGenerateScriptTemplate" Overridable="yes">[1]</String>
     <String Id="ProgressTextInstallSFPCatalogFile" Overridable="yes">Asennetaan järjestelmäluetteloa</String>
     <String Id="ProgressTextInstallSFPCatalogFileTemplate" Overridable="yes">Tiedosto: [1], riippuvuudet: [2]</String>
@@ -422,13 +422,13 @@
     <String Id="Error1301" Overridable="yes">Tiedostoa [2] ei voi luoda. Samanniminen hakemisto on jo olemassa. Peruuta asennus ja yritä suorittaa asennus toiseen sijaintiin.</String>
     <String Id="Error1302" Overridable="yes">Aseta asemaan levy: [2]</String>
     <String Id="Error1303" Overridable="yes">Asennusohjelman oikeudet eivät riitä seuraavan hakemiston käyttämiseen: [2]. Asennusta ei voi jatkaa. Kirjaudu sisään järjestelmänvalvojana tai ota yhteyttä järjestelmänvalvojaan.</String>
-    <String Id="Error1304" Overridable="yes">Virhe kirjoitettaessa tiedostoon: [2]. Tarkista, että sinulla on hakemiston käyttöoikeus.</String>
+    <String Id="Error1304" Overridable="yes">Virhe kirjoitettaessa tiedostoon: [2]. Varmista, että sinulla on tarvittavan hakemiston käyttöoikeudet.</String>
     <String Id="Error1305" Overridable="yes">Virhe luettaessa tiedostosta [2]. {{ Järjestelmävirhe [3].}} Varmista, että tiedosto on olemassa ja että käyttöoikeutesi ovat riittävät.</String>
     <String Id="Error1306" Overridable="yes">Jollakin toisella sovelluksella on yksinomainen käyttöoikeus tiedostoon [2]. Sulje kaikki muut sovellukset ja valitse sitten Yritä uudelleen.</String>
     <String Id="Error1307" Overridable="yes">Levytila ei riitä seuraavan tiedoston asentamiseen: [2]. Vapauta levytilaa ja valitse Yritä uudelleen tai lopeta valitsemalla Peruuta.</String>
     <String Id="Error1308" Overridable="yes">Lähdetiedostoa ei löytynyt: [2]. Tarkista, että tiedosto on olemassa ja että voit käyttää sitä.</String>
     <String Id="Error1309" Overridable="yes">Virhe luettaessa tiedostosta [3]. {{ Järjestelmävirhe [2].}} Varmista, että tiedosto on olemassa ja että käyttöoikeutesi ovat riittävät.</String>
-    <String Id="Error1310" Overridable="yes">Virhe kirjoitettaessa tiedostoon [3].{{ Järjestelmävirhe [2].}} Varmista, että sinulla on kirjoitusoikeus tähän kansioon.</String>
+    <String Id="Error1310" Overridable="yes">Virhe kirjoitettaessa tiedostoon [3].{{ Järjestelmävirhe [2].}} Varmista, että sinulla on tarvittavan hakemiston käyttöoikeudet.</String>
     <String Id="Error1311" Overridable="yes">Lähdetiedostoa ei löytynyt{{(CAB-tiedosto)}}: [2]. Tarkista, että tiedosto on olemassa ja että voit käyttää sitä.</String>
     <String Id="Error1312" Overridable="yes">Hakemistoa [2] ei voi luoda. Samanniminen tiedosto on jo olemassa. Vaihda tiedoston nimi tai poista se järjestelmästä ja valitse Yritä uudelleen tai lopeta valitsemalla Peruuta.</String>
     <String Id="Error1313" Overridable="yes">Asema [2] ei ole tällä hetkellä käytettävissä. Valitse toinen asema.</String>
@@ -469,7 +469,7 @@
     <String Id="Error1501" Overridable="yes">Virhe käytettäessä suojattuja tietoja. Varmista, että Windows Installer on määritetty oikein, ja yritä sitten asennusta uudelleen.</String>
     <String Id="Error1502" Overridable="yes">Käyttäjä [2] on aiemmin aloittanut tuotteen [3] asennuksen. Käyttäjän on suoritettava kyseinen asennus uudelleen, ennen kuin hän voi käyttää tuotetta. Nykyinen asennus jatkuu nyt.</String>
     <String Id="Error1503" Overridable="yes">Käyttäjä [2] on aiemmin aloittanut tuotteen [3] asennuksen. Käyttäjän on suoritettava kyseinen asennus uudelleen, ennen kuin hän voi käyttää tuotetta.</String>
-    <String Id="Error1601" Overridable="yes">Levytila lopussa -- Asema: [2]; tarvittava tila: [3] kt; käytettävissä oleva tila: [4] kt. Vapauta levytilaa ja yritä uudelleen.</String>
+    <String Id="Error1601" Overridable="yes">Levytila lopussa -- asema: [2]; tarvittava tila: [3] kt; käytettävissä oleva tila: [4] kt. Vapauta levytilaa ja yritä uudelleen.</String>
     <String Id="Error1602" Overridable="yes">Haluatko varmasti keskeyttää?</String>
     <String Id="Error1603" Overridable="yes">Tiedostoa [2][3] käyttää{ seuraava prosessi: nimi: [4], tunnus: [5], ikkunan otsikko: [6]}. Sulje kyseinen sovellus ja yritä uudelleen.</String>
     <String Id="Error1604" Overridable="yes">Tuote [2] on jo asennettu, mikä estää tämän tuotteen asennuksen. Nämä kaksi tuotetta ovat toisensa poissulkevia.</String>
@@ -497,10 +497,10 @@
     <String Id="Error1717" Overridable="yes">Poistettu [2]</String>
     <String Id="Error1718" Overridable="yes">Digitaalisten allekirjoitusten käytäntö hylkäsi tiedoston [2].</String>
     <String Id="Error1719" Overridable="yes">Windows Installer -palvelua ei voida käyttää. Tämä saattaa tapahtua, jos Windows on vikasietotilassa tai Windows Installeria ei ole asennettu oikein. Ota yhteys tukihenkilöön.</String>
-    <String Id="Error1720" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavaa komentosarjaa ei voitu suorittaa. Ota yhteyttä tukeen tai paketin myyjään. {{Mukautetun toiminnon [2] komentosarjan virhe [3], [4]: [5] rivi [6], sarake [7], [8] }}</String>
+    <String Id="Error1720" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavaa komentosarjaa ei voitu suorittaa. Ota yhteyttä tukihenkilöstöön tai paketin myyjään. {{Mukautetun toiminnon [2] komentosarjan virhe [3], [4]: [5] rivi [6], sarake [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennukseen tarvittavaa ohjelmaa ei voitu käynnistää. Ota yhteyttä tukihenkilöön tai paketin myyjään. {{Toiminto: [2], sijainti: [3], komento: [4] }}</String>
-    <String Id="Error1722" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavan ohjelman suoritus ei päättynyt odotetulla tavalla. Ota yhteyttä tukeen tai paketin myyjään. {{Toiminto [2], sijainti: [3], komento: [4] }}</String>
-    <String Id="Error1723" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavaa DLL-tiedostoa ei voitu suorittaa. Ota yhteyttä tukeen tai paketin myyjään. {{Toiminto [2], merkintä: [3], kirjasto: [4] }}</String>
+    <String Id="Error1722" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavan ohjelman suoritus ei päättynyt odotetulla tavalla. Ota yhteyttä tukihenkilöstöön tai paketin myyjään. {{Toiminto [2], sijainti: [3], komento: [4] }}</String>
+    <String Id="Error1723" Overridable="yes">Tähän Windows Installer -pakettiin liittyy jokin ongelma. Asennuksessa tarvittavaa DLL-tiedostoa ei voitu suorittaa. Ota yhteyttä tukihenkilöstöön tai paketin myyjään. {{Toiminto [2], merkintä: [3], kirjasto: [4] }}</String>
     <String Id="Error1724" Overridable="yes">Poistaminen onnistui.</String>
     <String Id="Error1725" Overridable="yes">Poistaminen epäonnistui.</String>
     <String Id="Error1726" Overridable="yes">Ilmoittaminen onnistui</String>
@@ -518,17 +518,17 @@
     <String Id="Error1806" Overridable="yes">Sinulla ei ole lukuoikeutta tähän kansioon.</String>
     <String Id="Error1807" Overridable="yes">Asennusta varten ei voitu määrittää kelvollista kohdekansiota.</String>
     <String Id="Error1901" Overridable="yes">Virhe yritettäessä lukea lähdeasennustietokannasta: [2].</String>
-    <String Id="Error1902" Overridable="yes">Ajoitetaan uudelleenkäynnistystoiminto: Tiedosto [2] nimetään uudelleen tiedostoksi [3]. Tietokone on käynnistettävä uudelleen toiminnon viimeistelemiseksi.</String>
-    <String Id="Error1903" Overridable="yes">Ajoitetaan uudelleenkäynnistystoiminto: Poistetaan tiedosto [2]. Tietokone on käynnistettävä uudelleen toiminnon viimeistelemiseksi.</String>
-    <String Id="Error1904" Overridable="yes">Moduulia [2] ei voitu rekisteröidä. HRESULT [3]. Ota yhteyttä tukeen.</String>
-    <String Id="Error1905" Overridable="yes">Moduulin [2] rekisteröintiä ei voitu poistaa. HRESULT [3]. Ota yhteyttä tukeen.</String>
+    <String Id="Error1902" Overridable="yes">Ajoitetaan uudelleenkäynnistystoiminto: tiedosto [2] nimetään uudelleen tiedostoksi [3]. Tietokone on käynnistettävä uudelleen toiminnon viimeistelemiseksi.</String>
+    <String Id="Error1903" Overridable="yes">Ajoitetaan uudelleenkäynnistystoiminto: tiedosto [2] poistetaan. Tietokone on käynnistettävä uudelleen toiminnon viimeistelemiseksi.</String>
+    <String Id="Error1904" Overridable="yes">Moduulia [2] ei voitu rekisteröidä. HRESULT [3]. Ota yhteyttä tukihenkilöstöön.</String>
+    <String Id="Error1905" Overridable="yes">Moduulin [2] rekisteröintiä ei voitu poistaa. HRESULT [3]. Ota yhteyttä tukihenkilöstöön.</String>
     <String Id="Error1906" Overridable="yes">Paketin [2] tallentaminen välimuistiin epäonnistui. Virhe: [3]. Ota yhteyttä tukeen.</String>
     <String Id="Error1907" Overridable="yes">Fonttia [2] ei voitu rekisteröidä. Varmista, että oikeutesi riittävät fonttien asentamiseen ja että järjestelmä tukee kyseistä fonttia.</String>
     <String Id="Error1908" Overridable="yes">Fontin [2] rekisteröintiä ei voi poistaa. Varmista, että sinulla on tarvittavat oikeudet fonttien rekisteröintien poistamiseen.</String>
     <String Id="Error1909" Overridable="yes">Pikakuvaketta [2] ei voi luoda. Varmista, että kohdekansio on olemassa ja että voit käyttää sitä.</String>
     <String Id="Error1910" Overridable="yes">Pikakuvaketta [2] ei voi poistaa. Varmista, että pikakuvaketiedosto on olemassa ja että voit käyttää sitä.</String>
-    <String Id="Error1911" Overridable="yes">Tiedoston [2] tyyppikirjastoa ei voitu rekisteröidä. Ota yhteyttä tukeen.</String>
-    <String Id="Error1912" Overridable="yes">Tiedoston [2] tyyppikirjaston rekisteröintiä ei voitu poistaa. Ota yhteyttä tukeen.</String>
+    <String Id="Error1911" Overridable="yes">Tiedoston [2] tyyppikirjastoa ei voitu rekisteröidä. Ota yhteyttä tukihenkilöstöön.</String>
+    <String Id="Error1912" Overridable="yes">Tiedoston [2] tyyppikirjaston rekisteröintiä ei voitu poistaa. Ota yhteyttä tukihenkilöstöön.</String>
     <String Id="Error1913" Overridable="yes">INI-tiedostoa [2][3] ei voitu päivittää. Varmista, että tiedosto on olemassa ja että voit käyttää sitä.</String>
     <String Id="Error1914" Overridable="yes">Tiedostoa [2] ei voitu ajoittaa korvaamaan tiedostoa [3] uudelleenkäynnistyksessä. Varmista, että sinulla on kirjoitusoikeudet tiedostoon [3].</String>
     <String Id="Error1915" Overridable="yes">Virhe poistettaessa ODBC-ohjaimen hallintaohjelmaa, ODBC-virhe [2]: [3]. Ota yhteyttä tukeen.</String>
@@ -544,8 +544,8 @@
     <String Id="Error1925" Overridable="yes">Oikeutesi eivät riitä tämän asennuksen tekemiseen kaikkien tietokoneen käyttäjien puolesta. Kirjaudu sisään järjestelmänvalvojana ja yritä suorittaa asennus sitten uudelleen.</String>
     <String Id="Error1926" Overridable="yes">Tiedoston [3] suojausta ei voitu määrittää. Virhe: [2]. Varmista, että oikeutesi riittävät tämän tiedoston suojausoikeuksien muokkaamiseen.</String>
     <String Id="Error1927" Overridable="yes">Tämän tietokoneeseen ei ole asennettu Component Services (COM+ 1.0) -sovellusta. Component Services tarvitaan, jotta asennus onnistuisi. Component Services löytyy Windows 2000:sta.</String>
-    <String Id="Error1928" Overridable="yes">Virhe rekisteröitäessä COM+-sovellusta. Jos haluat lisätietoja, ota yhteyttä tukeen.</String>
-    <String Id="Error1929" Overridable="yes">Virhe poistettaessa COM+-sovelluksen rekisteröintiä. Jos haluat lisätietoja, ota yhteyttä tukeen.</String>
+    <String Id="Error1928" Overridable="yes">Virhe rekisteröitäessä COM+-sovellusta. Jos haluat lisätietoja, ota yhteyttä tukihenkilöstöön.</String>
+    <String Id="Error1929" Overridable="yes">Virhe poistettaessa COM+-sovelluksen rekisteröintiä. Jos haluat lisätietoja, ota yhteyttä tukihenkilöstöön.</String>
     <String Id="Error1930" Overridable="yes">Palvelun [2] ([3]) kuvausta ei voi muuttaa.</String>
     <String Id="Error1931" Overridable="yes">Windows Installer -palvelu ei voi päivittää järjestelmätiedostoa [2], koska Windows on suojannut sen. Käyttöjärjestelmä täytyy ehkä päivittää, jotta tämä ohjelma toimii oikein. {{Paketin versio: [3], käyttöjärjestelmän suojaama versio: [4]}}</String>
     <String Id="Error1932" Overridable="yes">Windows Installer ei voi päivittää Windowsin suojaamaa tiedostoa [2]. {{Paketin versio: [3], käyttöjärjestelmän suojaama versio: [4], SFP-virhe: [5]}}</String>
@@ -568,7 +568,7 @@
     <String Id="UITextMenuCD" Overridable="yes">Asennetaan suoritettavaksi CD-levyltä</String>
     <String Id="UITextMenuLocal" Overridable="yes">Asennetaan paikalliselle kiintolevylle</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Asennetaan suoritettavaksi verkosta</String>
-    <String Id="UITextNewFolder" Overridable="yes">Folder|Uusi kansio</String>
+    <String Id="UITextNewFolder" Overridable="yes">Kansio|Uusi kansio</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Kerätään tarvittavia tietoja...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Ominaisuutta ei asenneta</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Ominaisuus asennetaan tarvittaessa</String>

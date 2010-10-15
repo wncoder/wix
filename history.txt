@@ -1314,3 +1314,21 @@ EricStJ: SFBUG: 3080990 Wix references weren't using WixExtPath in vs2010
 
 WixBuild: Version 3.5.2208.0
 
+BobArnso: Default WixUICostingPopupOptOut to 1, to avoid the CostingComplete 
+          MSI bug. Opt in to the costing dialog by setting 
+          WixUICostingPopupOptOut to 0.
+
+RobMen: SFBUG:3074436 - fix documentation where SystemFolder is better choice
+        than System64Folder.
+
+RobMen: SFBUG:2932337 - do not harvest .NET Component Categories.
+
+AaronSte: Fix inaccurate remark in the FileSearch documentation.
+
+CAraman: Update WiXUI localization.
+
+RobMen: SFBUG:3019443 - set useLegacyV2RuntimeActivationPolicy="true" in
+        template to support NETFX4.0 correctly.
+
+WixBuild: Version 3.5.2215.0
+

@@ -29,8 +29,8 @@
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] の使用許諾契約書をお読みください</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">「使用許諾契約書」の条項に同意します(&amp;A)</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">[ProductName] の使用許諾契約書をお読みください</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">自分のみを対象に既定のオプションで製品をインストールする場合は [\[]インストール[\]] をクリックしてくださいインストール オプションを変更する場合は [\[]詳細設定[\]] をクリックしてください。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">すべてのユーザーを対象に既定のオプションで製品をインストールする場合は [\[]インストール[\]] をクリックしてください。インストール オプションを変更する場合は [\[]詳細設定[\]] をクリックしてください。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">自分のみを対象に既定のオプションで製品をインストールする場合は [\[]インストール[\]] をクリックしてください。インストール オプションを変更する場合は [\[]詳細設定[\]] をクリックしてください。</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">インストール(&amp;I)</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">詳細設定(&amp;D)</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">8</String>
@@ -67,7 +67,7 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">場所</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">場所:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -446,7 +446,7 @@
     <String Id="Error1325" Overridable="yes">'[2]' は短いファイル名としては正しくありません。</String>
     <String Id="Error1326" Overridable="yes">ファイル セキュリティを取得するときにエラーが発生しました: [3] GetLastError: [2]</String>
     <String Id="Error1327" Overridable="yes">無効なドライブ: [2]</String>
-    <String Id="Error1328" Overridable="yes">ファイル [2] に更新プログラムを適用中にエラーが発生しました。このファイルは、別の方法で更新されていて、この更新プログラムでは変更できない可能性があります。詳細については、この更新プログラムの製造元に問い合わせてください。{{システム エラー: [3]}}</String>
+    <String Id="Error1328" Overridable="yes">ファイル [2] に修正プログラムを適用中にエラーが発生しました。このファイルは、別の方法で更新されていて、この修正プログラムでは変更できない可能性があります。詳細については、この修正プログラムの製造元に問い合わせてください。{{システム エラー: [3]}}</String>
     <String Id="Error1329" Overridable="yes">キャビネット ファイル [2] がデジタル署名されていないため、必要なファイルをインストールできません。キャビネット ファイルが壊れている可能性があります。</String>
     <String Id="Error1330" Overridable="yes">キャビネット ファイル [2] のデジタル署名が無効であるため、必要なファイルをインストールできません。キャビネット ファイルが壊れている可能性があります。{{  エラー [3] が WinVerifyTrust によって返されました。}}</String>
     <String Id="Error1331" Overridable="yes">[2] ファイルを正しくコピーできませんでした: CRC エラー。</String>
@@ -503,8 +503,8 @@
     <String Id="Error1723" Overridable="yes">この Windows インストーラー パッケージに問題があります。このインストールを完了するために必要な DLL を実行できませんでした。サポート担当者またはパッケージ開発元に問い合わせてください。{{アクション: [2]、エントリ: [3]、ライブラリ: [4] }}</String>
     <String Id="Error1724" Overridable="yes">削除を正常に完了しました。</String>
     <String Id="Error1725" Overridable="yes">削除に失敗しました。</String>
-    <String Id="Error1726" Overridable="yes">通知を正常に完了しました。</String>
-    <String Id="Error1727" Overridable="yes">通知に失敗しました。</String>
+    <String Id="Error1726" Overridable="yes">アドバタイズを正しく完了しました。</String>
+    <String Id="Error1727" Overridable="yes">アドバタイズに失敗しました。</String>
     <String Id="Error1728" Overridable="yes">構成を正常に完了しました。</String>
     <String Id="Error1729" Overridable="yes">構成に失敗しました。</String>
     <String Id="Error1730" Overridable="yes">このアプリケーションを削除するには、Administrator である必要があります。このアプリケーションを削除するには、Administrator としてログオンするか、テクニカル サポート グループに問い合わせてください。</String>
@@ -548,9 +548,9 @@
     <String Id="Error1929" Overridable="yes">COM+ アプリケーションの登録解除中にエラーが発生しました。詳細については、サポート担当者に問い合わせてください。</String>
     <String Id="Error1930" Overridable="yes">サービス '[2]' ([3]) の説明を変更できませんでした。</String>
     <String Id="Error1931" Overridable="yes">Windows インストーラー サービスはシステム ファイル [2] を更新できません。ファイルは Windows によって保護されています。このプログラムを正しく動作させるには、オペレーティング システムの更新が必要な場合があります。{{パッケージ バージョン: [3]、OS の保護バージョン: [4]}}</String>
-    <String Id="Error1932" Overridable="yes">Windows インストーラー サービスは、保護された Windows ファイル [2] を更新できません。{{パッケージ バージョン: [3]、OS の保護バージョン: [4]、 SFP エラー: [5]}}</String>
+    <String Id="Error1932" Overridable="yes">Windows インストーラー サービスは、保護された Windows ファイル [2] を更新できません。{{パッケージ バージョン: [3]、OS の保護バージョン: [4]、SFP エラー: [5]}}</String>
     <String Id="Error1933" Overridable="yes">Windows インストーラー サービスは、1 つ以上の保護された Windows ファイルを更新できません。{{SFP エラー: [2]。保護されているファイルの一覧:\r\n[3]}}</String>
-    <String Id="Error1934" Overridable="yes">コンピューターのポリシーによって、ユーザー インストールは無効にされています</String>
+    <String Id="Error1934" Overridable="yes">コンピューターのポリシーによって、ユーザー インストールは無効にされています。</String>
     <String Id="Error1935" Overridable="yes">アセンブリ '[6]' のインストール中にエラーが発生しました。詳細については、ヘルプとサポートを参照してください。HRESULT: [3]。{{アセンブリ インターフェイス: [4]、関数: [5]、コンポーネント: [2]}}</String>
     <String Id="Error1936" Overridable="yes">アセンブリ '[6]' のインストール中にエラーが発生しました。アセンブリは厳密な名前を持たないか、最小のキー長で署名されていません。HRESULT: [3]。{{アセンブリ インターフェイス: [4]、関数: [5]、コンポーネント: [2]}}</String>
     <String Id="Error1937" Overridable="yes">アセンブリ '[6]' のインストール中にエラーが発生しました。署名またはカタログが検証できないか無効です。HRESULT: [3]。{{アセンブリ インターフェイス: [4]、関数: [5]、コンポーネント: [2]}}</String>
