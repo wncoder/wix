@@ -168,6 +168,12 @@ HRESULT DAPI RegValueEnum(
     __deref_out_z LPWSTR* psczName,
     __out_opt DWORD *pdwType
     );
+HRESULT DAPI RegReadBinary(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __deref_out_bcount(*pcbBuffer) BYTE** ppbBuffer,
+    __out SIZE_T *pcbBuffer
+     );
 HRESULT DAPI RegReadString(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
@@ -182,6 +188,12 @@ HRESULT DAPI RegReadNumber(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
     __out DWORD* pdwValue
+    );
+HRESULT DAPI RegWriteBinary(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in_bcount(cBuffer) BYTE *pbBuffer,
+    __in DWORD cbBuffer
     );
 HRESULT DAPI RegWriteString(
     __in HKEY hk,

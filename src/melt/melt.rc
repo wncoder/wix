@@ -19,7 +19,7 @@
 #define VER_APP
 #define VER_ORIGINAL_FILENAME "melt.exe"
 #define VER_INTERNAL_NAME "melt"
-#define VER_FILE_DESCRIPTION "WiX Toolset MSM melter"
+#define VER_FILE_DESCRIPTION "WiX Toolset Melter"
 #include "wix.rc"
 
 #define MANIFEST_RESOURCE_ID 1

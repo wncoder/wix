@@ -543,3 +543,23 @@ RobMen: SFBUG:3011150 - Burn now supports the "-layout" switch.
 
 WixBuild: Version 3.6.1008.0
 
+BobArnso: Add support to Melt for rewriting .wixpdb files based on exploded
+          content of .msi packages.
+
+BobArnso: Default WixUICostingPopupOptOut to 1, to avoid the CostingComplete 
+          MSI bug. Opt in to the costing dialog by setting 
+          WixUICostingPopupOptOut to 0.
+
+RobMen: SFBUG:3074436 - fix documentation where SystemFolder is better choice
+        than System64Folder.
+
+RobMen: SFBUG:2932337 - do not harvest .NET Component Categories.
+
+AaronSte: Fix inaccurate remark in the FileSearch documentation.
+
+CAraman: Update WiXUI localization.
+
+RobMen: SFBUG:3019443 - set useLegacyV2RuntimeActivationPolicy="true" in
+        template to support NETFX4.0 correctly.
+
+WixBuild: Version 3.6.1015.0

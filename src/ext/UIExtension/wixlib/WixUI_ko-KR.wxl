@@ -29,8 +29,8 @@
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 사용 조건을 읽어 주십시오.</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">동의함(&amp;A)</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">모든 사용자에 대해 기본 옵션을 사용하여 제품을 설치하려면 "설치"를 클릭하십시오. 설치 옵션을 변경하려면 "고급"을 선택하십시오.</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">사용자에 대해서만 기본 옵션을 사용하여 제품을 설치하려면 "설치"를 클릭하십시오. 설치 옵션을 변경하려면 "고급"을 선택하십시오.</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">모든 사용자에 대해 기본 옵션을 사용하여 제품을 설치하려면 "설치"를 클릭하십시오. 설치 옵션을 변경하려면 "고급"을 클릭하십시오.</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">사용자에 대해서만 기본 옵션을 사용하여 제품을 설치하려면 "설치"를 클릭하십시오. 설치 옵션을 변경하려면 "고급"을 클릭하십시오.</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">설치(&amp;I)</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">고급(&amp;D)</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">8</String>
@@ -137,7 +137,7 @@
     <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">동의함(&amp;A)</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">다음 사용 조건을 자세히 읽어 주십시오.</String>
-    <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}최종 사용자 사용권 계약서</String>
+    <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}최종 사용자 사용권 계약</String>
 
     <String Id="MaintenanceTypeDlg_Title" Overridable="yes">[ProductName] 설치</String>
     <String Id="MaintenanceTypeDlgChangeButton" Overridable="yes">변경(&amp;C)</String>
@@ -151,14 +151,16 @@
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}설치 변경, 복구 또는 제거</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">기능 설치 방법을 변경할 수 있습니다.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName]에는 개별적으로 선택할 수 있는 기능이 없습니다.</String>
-    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">[ProductName]을(를) 컴퓨터에서 제거합니다.</String>
+    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">[ProductName]
+을(를) 컴퓨터에서 제거합니다.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName]을(를) 제거할 수 없습니다.</String>
     <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">손실되거나 손상된 파일, 바로 가기 및 레지스트리 항목을 수정하여 가장 최근의 설치에서 발생한 오류를 복구합니다.</String>
-    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName]을(를) 복구할 수 없습니다.</String>
+    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName]
+을(를) 복구할 수 없습니다.</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] 설치</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">설치 마법사로 [ProductName] 기능 설치 방법을 변경하거나 제거할 수 있습니다. 계속하려면 "다음"을 클릭하고 설치 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">설치 마법사로 [ProductName] 기능 설치 방법을 변경하거나 제거할 수 있습니다. 계속하려면 [다음]을 클릭하고 설치 마법사를 끝내려면 [취소]를 클릭하십시오.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 설치 마법사 시작</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] 설치</String>
@@ -228,21 +230,25 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 설치 마법사 중단됨</String>
     <String Id="UserExitDescription1" Overridable="yes">[ProductName] 설치가 중단되었습니다. 시스템이 수정되지 않았습니다. 나중에 이 프로그램을 설치하려면 설치 프로그램을 다시 실행하십시오.</String>
-    <String Id="UserExitDescription2" Overridable="yes">설치 마법사를 끝내려면 "마침" 단추를 클릭하십시오.</String>
+    <String Id="UserExitDescription2" Overridable="yes">설치 마법사를 끝내려면
+"마침" 단추를 클릭하십시오.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] 설치</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">설치(&amp;I)</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">설치를 시작하려면 "설치"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면 "뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">설치를 시작하려면 "설치"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면
+"뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 설치 준비 완료</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">변경(&amp;C)</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">설치를 시작하려면 "변경"을 클릭하십시오. 설치 설정을 검토하거나 변경하려면 "뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">설치를 시작하려면 "변경"을 클릭하십시오. 설치 설정을 검토하거나 변경하려면
+"뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 변경 준비 완료</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">복구(&amp;P)</String>
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">[ProductName] 설치를 복구하려면 "복구"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면 "뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 복구 준비 완료</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">제거(&amp;R)</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">[ProductName]을(를) 제거하려면 "제거"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면 "뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">[ProductName]을(를) 제거하려면 "제거"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면
+"뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 제거 준비 완료</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">업데이트(&amp;U)</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">컴퓨터에서 [ProductName]을(를) 업데이트하려면 "업데이트"를 클릭하십시오. 설치 설정을 검토하거나 변경하려면 "뒤로"를 클릭하십시오. 마법사를 끝내려면 "취소"를 클릭하십시오.</String>
@@ -265,7 +271,7 @@
     <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">동의함(&amp;A)</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">설치(&amp;I)</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">업데이트(&amp;U)</String>
-    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 사용 조건을 읽어 주십시오.</String>
+    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] 사용권 계약을 읽어 주십시오.</String>
 
     <String Id="ProgressTextInstallValidate" Overridable="yes">설치 유효성을 확인하는 중</String>
     <String Id="ProgressTextInstallFiles" Overridable="yes">새 파일을 복사하는 중</String>
@@ -464,7 +470,7 @@
     <String Id="Error1407" Overridable="yes">키 [2]의 값 이름을 가져오지 못했습니다. {{ 시스템 오류 [3].}} 해당 키에 대한 액세스 권한이 충분한지 확인하거나 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1408" Overridable="yes">키 [2]의 하위 키 이름을 가져오지 못했습니다. {{ 시스템 오류 [3].}} 해당 키에 대한 액세스 권한이 충분한지 확인하거나 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1409" Overridable="yes">키 [2]의 보안 정보를 읽지 못했습니다. {{ 시스템 오류 [3].}} 해당 키에 대한 액세스 권한이 충분한지 확인하거나 고객 지원 담당자에게 문의하십시오.</String>
-    <String Id="Error1410" Overridable="yes">사용 가능한 레지스트리 공간을 늘리지 못했습니다. [2]KB의 사용 가능한 레지스트리 공간이 있어야 응용 프로그램을 설치할 수 있습니다.</String>
+    <String Id="Error1410" Overridable="yes">사용 가능한 레지스트리 공간을 늘리지 못했습니다. [2]KB의 사용 가능한 레지스트리 공간이 있어야 이 응용 프로그램을 설치할 수 있습니다.</String>
     <String Id="Error1500" Overridable="yes">다른 프로그램을 설치하고 있습니다. 해당 프로그램의 설치를 끝낸 후 이 작업을 계속하십시오.</String>
     <String Id="Error1501" Overridable="yes">보안 데이터에 액세스하는 동안 오류가 발생했습니다. Windows Installer 구성을 올바르게 설정했는지 확인하고 다시 설치하십시오.</String>
     <String Id="Error1502" Overridable="yes">사용자 '[2]'이(가) 제품 '[3]'의 설치를 시작한 적이 있습니다. 이 사용자가 다시 설치 프로그램을 실행해야 해당 제품을 사용할 수 있습니다. 현재 설치는 계속됩니다.</String>
@@ -474,16 +480,16 @@
     <String Id="Error1603" Overridable="yes">파일 [2][3]을(를) 다른 프로세스{이름: [4], ID: [5], 창 제목: '[6]'}에서 사용하고 있습니다. 해당 응용 프로그램을 닫은 후 다시 시도하십시오.</String>
     <String Id="Error1604" Overridable="yes">제품 '[2]'이(가) 이미 설치되어 있어서 이 제품을 설치할 수 없습니다. 두 제품은 호환되지 않습니다.</String>
     <String Id="Error1605" Overridable="yes">복구를 사용하여 설치를 계속하기에는 '[2]' 볼륨에 디스크 공간이 부족합니다. [3]KB가 필요하나, [4]KB만 사용 가능합니다. 복구 정보를 저장하지 않고 설치를 계속하려면 "무시"를 클릭하고, 사용 가능한 공간을 다시 확인하려면 "다시 시도"를 클릭하십시오. 설치를 끝내려면 "취소"를 클릭하십시오.</String>
-    <String Id="Error1606" Overridable="yes">네트워크 [2]에 액세스하지 못했습니다.</String>
+    <String Id="Error1606" Overridable="yes">네트워크 위치 [2]에 액세스하지 못했습니다.</String>
     <String Id="Error1607" Overridable="yes">설치를 계속하려면 다음 응용 프로그램을 닫아야 합니다.</String>
     <String Id="Error1608" Overridable="yes">지금 설치하려는 제품의 이전 버전이 이 시스템에 설치되어 있지 않습니다.</String>
-    <String Id="Error1609" Overridable="yes">보안 설정을 적용하는 동안 오류가 발생했습니다. [2]은(는) 유효한 사용자 또는 그룹이 아닙니다. 패키지에 문제가 있거나, 네트워크의 도메인 컨트롤러에 연결하는데 문제가 있을 수 있습니다. 네트워크 연결을 확인하고 "다시 시도"를 클릭하거나, 설치를 마치려면 "취소"를 클릭하십시오. {{사용자 SID를 찾을 수 없습니다. 시스템 오류 [3]}}</String>
+    <String Id="Error1609" Overridable="yes">보안 설정을 적용하는 동안 오류가 발생했습니다. [2]은(는) 유효한 사용자 또는 그룹이 아닙니다. 패키지에 문제가 있거나, 네트워크의 도메인 컨트롤러에 연결하는 데 문제가 있을 수 있습니다. 네트워크 연결을 확인하고 "다시 시도"를 클릭하거나, 설치를 마치려면 "취소"를 클릭하십시오. {{사용자 SID를 찾을 수 없습니다. 시스템 오류 [3]}}</String>
     <String Id="Error1701" Overridable="yes">키 [2]이(가) 유효하지 않습니다. 정확한 키를 입력했는지 확인하십시오.</String>
     <String Id="Error1702" Overridable="yes">시스템을 다시 시작한 후에 [2] 구성을 계속할 수 있습니다. 지금 다시 시작하려면 "예"를 클릭하고, 나중에 수동으로 다시 시작하려면 "아니요"를 클릭하십시오.</String>
     <String Id="Error1703" Overridable="yes">변경된 구성 설정을 [2]에 적용하려면 시스템을 다시 시작해야 합니다. 지금 다시 시작하려면 "예"를 클릭하고, 나중에 수동으로 다시 시작하려면 "아니요"를 클릭하십시오.</String>
     <String Id="Error1704" Overridable="yes">[2]의 설치가 현재 중지된 상태입니다. 작업을 계속하려면 설치하면서 변경된 내용을 취소해야 합니다. 변경된 내용을 취소하시겠습니까?</String>
     <String Id="Error1705" Overridable="yes">이전에 실행했던 이 제품의 설치 작업이 진행 중인 상태입니다. 작업을 계속하려면 설치하면서 변경된 내용을 취소해야 합니다. 변경된 내용을 취소하시겠습니까?</String>
-    <String Id="Error1706" Overridable="yes">제품 [2]의 설치 패키지가 없습니다. 설치 패키지 '[3]'의 올바른 사본을 사용하여 설치를 다시 시도하십시오.</String>
+    <String Id="Error1706" Overridable="yes">제품 [2]의 설치 패키지가 없습니다. 설치 패키지 '[3]'의 올바른 복사본을 사용하여 설치를 다시 시도하십시오.</String>
     <String Id="Error1707" Overridable="yes">설치가 완료되었습니다.</String>
     <String Id="Error1708" Overridable="yes">설치하지 못했습니다.</String>
     <String Id="Error1709" Overridable="yes">제품: [2] -- [3]</String>
@@ -508,7 +514,7 @@
     <String Id="Error1728" Overridable="yes">구성이 완료되었습니다.</String>
     <String Id="Error1729" Overridable="yes">구성하지 못했습니다.</String>
     <String Id="Error1730" Overridable="yes">Administrator만 이 응용 프로그램을 제거할 수 있습니다. 이 응용 프로그램을 제거하려면 Administrator로 로그온하거나 기술 지원 부서에 문의하십시오.</String>
-    <String Id="Error1731" Overridable="yes">제품 [2]의 원본 설치 패키지가 클라이언트 패키지와 동기화되어 있지 않습니다. 설치 패키지 '[3]'의 올바른 사본을 사용하여 설치를 다시 시도하십시오.</String>
+    <String Id="Error1731" Overridable="yes">제품 [2]의 원본 설치 패키지가 클라이언트 패키지와 동기화되어 있지 않습니다. 설치 패키지 '[3]'의 올바른 복사본을 사용하여 설치를 다시 시도하십시오.</String>
     <String Id="Error1732" Overridable="yes">[2]의 설치를 완료하려면 컴퓨터를 다시 시작해야 합니다. 다른 사용자가 현재 이 컴퓨터에 로그온해 있으며 컴퓨터를 다시 시작하면 다른 사용자의 작업 내용이 손실될 수 있습니다. 지금 다시 시작하시겠습니까?</String>
     <String Id="Error1801" Overridable="yes">경로 [2]이(가) 유효하지 않습니다. 올바른 경로를 지정하십시오.</String>
     <String Id="Error1802" Overridable="yes">메모리가 부족합니다. 다른 응용 프로그램을 종료한 후 다시 시도하십시오.</String>
@@ -530,7 +536,7 @@
     <String Id="Error1911" Overridable="yes">[2] 파일의 형식 라이브러리를 등록하지 못했습니다. 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1912" Overridable="yes">[2] 파일의 형식 라이브러리 등록을 취소하지 못했습니다. 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1913" Overridable="yes">ini 파일 [2][3]을(를) 업데이트하지 못했습니다. 파일이 있는지, 그리고 해당 파일에 액세스할 수 있는지 확인하십시오.</String>
-    <String Id="Error1914" Overridable="yes">시스템을 다시 부팅할 때 파일 [2]을(를) [3](으)로 바꾸도록 지정하지 못했습니다. 파일 [3]에 대한 쓰기 권한이 있는지 확인하십시오.</String>
+    <String Id="Error1914" Overridable="yes">시스템을 다시 부팅할 때 파일 [3]을(를) [2](으)로 바꾸도록 지정하지 못했습니다. 파일 [3]에 대한 쓰기 권한이 있는지 확인하십시오.</String>
     <String Id="Error1915" Overridable="yes">ODBC 드라이버 관리자를 제거하는 동안 오류가 발생했습니다. ODBC 오류 [2]: [3]. 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1916" Overridable="yes">ODBC 드라이버 관리자를 설치하는 동안 오류가 발생했습니다. ODBC 오류 [2]: [3]. 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1917" Overridable="yes">ODBC 드라이버 [4]을(를) 제거하는 동안 오류가 발생했습니다. ODBC 오류 [2]: [3]. ODBC 드라이버를 제거할 수 있는 권한이 있는지 확인하십시오.</String>
@@ -542,7 +548,7 @@
     <String Id="Error1923" Overridable="yes">서비스 '[2]'([3])을(를) 설치하지 못했습니다. 시스템 서비스를 설치할 수 있는 권한이 있는지 확인하십시오.</String>
     <String Id="Error1924" Overridable="yes">환경 변수 '[2]'을(를) 업데이트하지 못했습니다. 환경 변수를 수정할 수 있는 권한이 있는지 확인하십시오.</String>
     <String Id="Error1925" Overridable="yes">이 시스템의 모든 사용자가 사용하도록 제품을 설치할 권한이 없습니다. Administrator로 로그온한 후 다시 설치하십시오.</String>
-    <String Id="Error1926" Overridable="yes">파일 '[3]'에 대해 파일 보안을 설정하지 못했습니다. 오류: [2]. 이 파일의 보안 설정을 수정할 수 있는 권한이 있는지 확인하십시오.</String>
+    <String Id="Error1926" Overridable="yes">파일 '[3]'에 대해 파일 보안을 설정하지 못했습니다. 오류: [2]. 이 파일의 보안 권한을 수정할 수 있는 권한이 있는지 확인하십시오.</String>
     <String Id="Error1927" Overridable="yes">이 컴퓨터에 구성 요소 서비스(COM+ 1.0)가 설치되어 있지 않습니다. 설치를 완료하려면 구성 요소 서비스가 있어야 합니다. 구성 요소 서비스는 Windows 2000에서 사용할 수 있습니다.</String>
     <String Id="Error1928" Overridable="yes">COM+ 응용 프로그램을 등록하는 동안 오류가 발생했습니다. 자세한 내용은 고객 지원 담당자에게 문의하십시오.</String>
     <String Id="Error1929" Overridable="yes">COM+ 응용 프로그램 등록을 취소하는 동안 오류가 발생했습니다. 자세한 내용은 고객 지원 담당자에게 문의하십시오.</String>
@@ -601,7 +607,7 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">이 기능을 사용하려면 하드 드라이브에 [1]이(가) 있어야 합니다. [3]개의 하위 기능 중 [2]개가 선택되었습니다. 하위 기능은 하드 드라이브에 [4]의 공간을 만듭니다.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">이 기능을 사용하려면 하드 드라이브에 [1]이(가) 있어야 합니다. [3]개의 하위 기능 중 [2]개가 선택되었습니다. 하위 기능을 사용하려면 하드 드라이브에 [4]이(가) 있어야 합니다.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">남은 시간: {[1]분 }{[2]초}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">여유 공간</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">사용 가능한 공간</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">차이</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">필요한 공간</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">디스크 크기</String>

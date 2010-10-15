@@ -12,7 +12,8 @@
 // </copyright>
 // 
 // <summary>
-// The merge module to ComponentGroup decompiler application.
+// Tool to decompile merge modules to ComponentGroups and extract files from MSI databases and 
+// rewrite corresponding .wixpdb files to the extracted paths.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -20,12 +21,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
 {
     using System;
     using System.Collections.Specialized;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Globalization;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Xml;
+    using Microsoft.Deployment.WindowsInstaller;
+    using Microsoft.Deployment.WindowsInstaller.Package;
 
     using Wix = Microsoft.Tools.WindowsInstallerXml.Serialize;
 
@@ -39,6 +43,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         private StringCollection invalidArgs;
         private string id;
         private string inputFile;
+        private string inputPdbFile;
         private ConsoleMessageHandler messageHandler;
         private string outputFile;
         private OutputType outputType;
@@ -78,10 +83,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         /// <returns>Returns the application error code.</returns>
         private int Run(string[] args)
         {
-            Decompiler decompiler = null;
-            Unbinder unbinder = null;
-            Melter melter = null;
-
             try
             {
                 // parse the command line
@@ -93,7 +94,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     return this.messageHandler.LastErrorNumber;
                 }
 
-                if (null == this.inputFile || null == this.outputFile)
+                if (String.IsNullOrEmpty(this.inputFile) || String.IsNullOrEmpty(this.outputFile) || (OutputType.Product == this.outputType && String.IsNullOrEmpty(this.inputPdbFile)))
                 {
                     this.showHelp = true;
                 }
@@ -116,6 +117,47 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 }
                 this.invalidArgs = null;
 
+                if (null == this.exportBasePath)
+                {
+                    this.exportBasePath = System.IO.Path.GetDirectoryName(this.outputFile);
+                }
+
+                if (OutputType.Module == this.outputType)
+                {
+                    MeltModule();
+                }
+                else if (OutputType.Product == this.outputType)
+                {
+                    MeltProduct();
+                }
+            }
+            catch (WixException we)
+            {
+                this.messageHandler.Display(this, we.Error);
+            }
+            catch (Exception e)
+            {
+                this.messageHandler.Display(this, WixErrors.UnexpectedException(e.Message, e.GetType().ToString(), e.StackTrace));
+                if (e is NullReferenceException || e is SEHException)
+                {
+                    throw;
+                }
+            }
+
+            return this.messageHandler.LastErrorNumber;
+        }
+
+        /// <summary>
+        /// Extracts files from a merge module and creates corresponding ComponentGroup WiX authoring.
+        /// </summary>
+        private void MeltModule()
+        {
+            Decompiler decompiler = null;
+            Unbinder unbinder = null;
+            Melter melter = null;
+
+            try
+            {
                 // create the decompiler, unbinder, and melter
                 decompiler = new Decompiler();
                 unbinder = new Unbinder();
@@ -142,11 +184,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 decompiler.Message += new MessageEventHandler(this.messageHandler.Display);
                 unbinder.Message += new MessageEventHandler(this.messageHandler.Display);
                 melter.Message += new MessageEventHandler(this.messageHandler.Display);
-
-                if (null == this.exportBasePath)
-                {
-                    this.exportBasePath = System.IO.Path.GetDirectoryName(this.outputFile);
-                }
 
                 // print friendly message saying what file is being decompiled
                 Console.WriteLine(Path.GetFileName(this.inputFile));
@@ -184,18 +221,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     }
                 }
             }
-            catch (WixException we)
-            {
-                this.messageHandler.Display(this, we.Error);
-            }
-            catch (Exception e)
-            {
-                this.messageHandler.Display(this, WixErrors.UnexpectedException(e.Message, e.GetType().ToString(), e.StackTrace));
-                if (e is NullReferenceException || e is SEHException)
-                {
-                    throw;
-                }
-            }
             finally
             {
                 if (null != decompiler)
@@ -228,8 +253,47 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     }
                 }
             }
+        }
 
-            return this.messageHandler.LastErrorNumber;
+        /// <summary>
+        /// Extracts files from an MSI database and rewrites the paths embedded in the source .wixpdb to the output .wixpdb.
+        /// </summary>
+        private void MeltProduct()
+        {
+            // print friendly message saying what file is being decompiled
+            Console.WriteLine(Path.GetFileName(this.inputFile), "/", Path.GetFileName(this.inputPdbFile));
+
+            // extract files from the .msi and get the path map of File ids to target paths
+            string outputDirectory = this.exportBasePath ?? Environment.GetEnvironmentVariable("WIX_TEMP");
+            IDictionary<string, string> paths = null;
+            using (InstallPackage package = new InstallPackage(this.inputFile, DatabaseOpenMode.ReadOnly, null, outputDirectory))
+            {
+                package.ExtractFiles();
+                paths = package.Files.SourcePaths;
+            }
+
+            Pdb inputPdb = Pdb.Load(this.inputPdbFile, true, true);
+            if (null != inputPdb)
+            {
+                Table wixFileTable = inputPdb.Output.Tables["WixFile"];
+                if (null != wixFileTable)
+                {
+                    foreach (Row row in wixFileTable.Rows)
+                    {
+                        WixFileRow fileRow = row as WixFileRow;
+                        if (null != fileRow)
+                        {
+                            string newPath;
+                            if (paths.TryGetValue(fileRow.File, out newPath))
+                            {
+                                fileRow.Source = Path.Combine(outputDirectory, newPath);
+                            }
+                        }
+                    }
+                }
+
+                inputPdb.Save(this.outputFile, null, null, outputDirectory);
+            }
         }
 
         /// <summary>
@@ -283,6 +347,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         this.outputFile = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
 
                         if (String.IsNullOrEmpty(this.outputFile))
+                        {
+                            return;
+                        }
+                    }
+                    else if ("pdb" == parameter)
+                    {
+                        this.inputPdbFile = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
+
+                        if (String.IsNullOrEmpty(this.inputPdbFile))
                         {
                             return;
                         }
@@ -393,14 +466,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         if (OutputType.Unknown == this.outputType)
                         {
                             string extension = Path.GetExtension(this.inputFile);
+                            this.outputType = Output.GetOutputType(extension);
 
-                            if (String.Equals(extension, ".msm", StringComparison.OrdinalIgnoreCase))
+                            if (OutputType.Unknown == this.outputType)
                             {
-                                this.outputType = OutputType.Module;
-                            }
-                            else
-                            {
-                                this.messageHandler.Display(this, WixErrors.UnexpectedFileExtension(extension, ".msm"));
+                                this.messageHandler.Display(this, WixErrors.UnexpectedFileExtension(extension, ".msm, .msi"));
                                 return;
                             }
                         }

@@ -52,6 +52,7 @@
         <include name="${dir.target.zips}\Wix${version.wixmajor}.exe" />
         <include name="${dir.target.zips}\data\Wix${version.wixmajor}.msi" />
         <include name="${dir.target.zips}\data\Wix${version.wixmajor}.cab" />
+        <include name="${dir.target.zips}\data\Wix${version.wixmajor}lib.cab" />
       </fileset>
     </delete>
     <delete dir="${dir.target.wix}\wix${version.wixmajor}" failonerror="false" />
@@ -64,6 +65,7 @@
     <copy file="${dir.target.wix}\Wix${version.wixmajor}.exe" todir="${dir.target.zips}" />
     <copy file="${dir.target.wix}\data\Wix${version.wixmajor}.msi" todir="${dir.target.zips}\data" />
     <copy file="${dir.target.wix}\data\Wix${version.wixmajor}.cab" todir="${dir.target.zips}\data" />
+    <copy file="${dir.target.wix}\data\Wix${version.wixmajor}lib.cab" todir="${dir.target.zips}\data" />
 
     <zip zipfile="${file.target.binaries.zip}">
       <fileset basedir="${dir.target.wix}">

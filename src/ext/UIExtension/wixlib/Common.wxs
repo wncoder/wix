@@ -18,6 +18,7 @@
         <Binary Id="WixUI_Ico_Info" SourceFile="!(wix.WixUIInfoIco=$(var.infoIco))" />
         <Binary Id="WixUI_Bmp_New" SourceFile="!(wix.WixUINewIco=$(var.newIco))" />
         <Binary Id="WixUI_Bmp_Up" SourceFile="!(wix.WixUIUpIco=$(var.upIco))" />
+        <WixVariable Id="WixUICostingPopupOptOut" Value="1" Overridable="yes" />
 
         <UI Id="WixUI_Common">
             <!-- ui text -->

@@ -118,7 +118,7 @@
 
     <String Id="InstallScopeDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="InstallScopeDlgDescription" Overridable="yes">Scegli la cartella e l'ambito di installazione</String>
+    <String Id="InstallScopeDlgDescription" Overridable="yes">Scegliere la cartella e l'ambito di installazione</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ambito di installazione</String>
     <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Installa solo per l'&amp;utente corrente ([USERNAME])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] verrà installato in una cartella per utente e sarà disponibile solo per l'account utente corrente. Non sono necessari privilegi di amministratore locale.</String>
@@ -142,19 +142,19 @@
     <String Id="MaintenanceTypeDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="MaintenanceTypeDlgChangeButton" Overridable="yes">&amp;Cambia</String>
     <String Id="MaintenanceTypeDlgChangeButtonTooltip" Overridable="yes">Consente di modificare l'installazione</String>
-    <String Id="MaintenanceTypeDlgRepairButton" Overridable="yes">Ri&amp;pristina</String>
-    <String Id="MaintenanceTypeDlgRepairButtonTooltip" Overridable="yes">Consente di ripristinare l'installazione</String>
+    <String Id="MaintenanceTypeDlgRepairButton" Overridable="yes">Ri&amp;para</String>
+    <String Id="MaintenanceTypeDlgRepairButtonTooltip" Overridable="yes">Consente di riparare l'installazione</String>
     <String Id="MaintenanceTypeDlgRemoveButton" Overridable="yes">&amp;Rimuovi</String>
     <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">Consente di rimuovere l'installazione</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Selezionare l'operazione che si desidera eseguire.</String>
-    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Modifica, ripristino o rimozione installazione</String>
+    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Modifica, riparazione o rimozione installazione</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Cambia la modalità di installazione delle funzionalità.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] non dispone di funzionalità selezionabili separatamente.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Consente di rimuovere [ProductName] dal computer.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">Impossibile rimuovere [ProductName].</String>
     <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Corregge gli errori presenti nell'installazione più recente ripristinando file mancanti o danneggiati, collegamenti e voci del Registro di sistema.</String>
-    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">Impossibile ripristinare [ProductName].</String>
+    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">Impossibile riparare [ProductName].</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Le applicazioni seguenti stanno utilizzando file che devono essere aggiornati da questa installazione. È possibile scegliere di chiudere e tentare di riavviare le applicazioni automaticamente oppure di riavviare il computer in un secondo momento.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Le applicazioni seguenti utilizzano file che devono essere aggiornati da questa installazione. È possibile consentirne la chiusura e il successivo riavvio da parte dell'Installazione guidata oppure riavviare il computer in seguito.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Alcuni file che richiedono l'aggiornamento sono attualmente in uso.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}File in uso</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Chiudi le applicazioni e tenta di riavviarle.</String>
@@ -182,7 +182,7 @@
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Spazio su disco disponibile insufficiente per l'installazione.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Spazio su disco insufficiente</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">In alternativa, è possibile scegliere di disabilitare la funzionalità di annullamento della procedura di installazione che consente, nel caso in cui l'installazione venga interrotta, di ripristinare lo stato originario del computer. Per disabilitare la funzionalità di annullamento della procedura di installazione, fare clic su Sì.</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">In alternativa, è possibile scegliere di disabilitare la funzionalità di ripristino dello stato precedente all'installazione che consente, nel caso in cui l'installazione venga interrotta, di ripristinare lo stato originario del computer. Per disabilitare la funzionalità di ripristino dello stato precedente all'installazione, fare clic su Sì.</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -195,8 +195,8 @@
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Installazione di [ProductName]</String>
     <String Id="ProgressDlgTextChanging" Overridable="yes">Attendere. Modifica di [ProductName] in corso.</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Modifica di [ProductName]</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Attendere. Ripristino di [ProductName] in corso.</String>
-    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Ripristino di [ProductName]</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Attendere. Riparazione di [ProductName] in corso.</String>
+    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Riparazione di [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">Attendere. Rimozione di [ProductName] in corso.</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Rimozione di [ProductName]</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Attendere. È in corso l'aggiornamento di [ProductName].</String>
@@ -238,9 +238,9 @@
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Cambia</String>
     <String Id="VerifyReadyDlgChangeText" Overridable="yes">Fare clic su Cambia per avviare l'installazione. Fare clic su Indietro per rivedere o modificare le impostazioni di installazione. Fare clic su Annulla per uscire dalla procedura guidata.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Inizio modifica di [ProductName]</String>
-    <String Id="VerifyReadyDlgRepair" Overridable="yes">Ri&amp;pristina</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Fare clic su Ripristina per ripristinare l'installazione di [ProductName]. Fare clic su Indietro per rivedere o modificare le impostazioni di installazione. Fare clic su Annulla per uscire dalla procedura guidata.</String>
-    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Inizio ripristino di [ProductName]</String>
+    <String Id="VerifyReadyDlgRepair" Overridable="yes">Ri&amp;para</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Fare clic su Ripara per riparare l'installazione di [ProductName]. Fare clic su Indietro per rivedere o modificare le impostazioni di installazione. Fare clic su Annulla per uscire dalla procedura guidata.</String>
+    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Inizio riparazione di [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Rimuovi</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Fare clic su Rimuovi per rimuovere [ProductName] dal computer. Fare clic su Indietro per rivedere o modificare le impostazioni di installazione. Fare clic su Annulla per uscire dalla procedura guidata.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Inizio rimozione di [ProductName]</String>
@@ -296,7 +296,7 @@
     <String Id="ProgressTextAppSearchTemplate" Overridable="yes">Proprietà: [1], firma: [2]</String>
     <String Id="ProgressTextBindImage" Overridable="yes">Binding dei file eseguibili in corso</String>
     <String Id="ProgressTextBindImageTemplate" Overridable="yes">File: [1]</String>
-    <String Id="ProgressTextCCPSearch" Overridable="yes">Ricerca dei prodotti originali in corso</String>
+    <String Id="ProgressTextCCPSearch" Overridable="yes">Ricerca del software originale richiesto in corso...</String>
     <String Id="ProgressTextCreateFolders" Overridable="yes">Creazione delle cartelle in corso</String>
     <String Id="ProgressTextCreateFoldersTemplate" Overridable="yes">Cartella: [1]</String>
     <String Id="ProgressTextDeleteServices" Overridable="yes">Eliminazione dei servizi in corso</String>
@@ -343,7 +343,7 @@
     <String Id="ProgressTextRemoveRegistryValuesTemplate" Overridable="yes">Chiave: [1], nome: [2]</String>
     <String Id="ProgressTextRemoveShortcuts" Overridable="yes">Rimozione dei collegamenti in corso</String>
     <String Id="ProgressTextRemoveShortcutsTemplate" Overridable="yes">Collegamento: [1]</String>
-    <String Id="ProgressTextRMCCPSearch" Overridable="yes">Ricerca dei prodotti originali in corso</String>
+    <String Id="ProgressTextRMCCPSearch" Overridable="yes">Ricerca del software originale richiesto in corso...</String>
     <String Id="ProgressTextSelfRegModules" Overridable="yes">Registrazione dei moduli in corso</String>
     <String Id="ProgressTextSelfRegModulesTemplate" Overridable="yes">File: [1], cartella: [2]</String>
     <String Id="ProgressTextSelfUnregModules" Overridable="yes">Annullamento della registrazione dei moduli in corso</String>
@@ -475,7 +475,7 @@
     <String Id="Error1604" Overridable="yes">Nel sistema è già installato il prodotto '[2]', che non consente l'installazione di questo prodotto perché incompatibile.</String>
     <String Id="Error1605" Overridable="yes">Spazio su disco insufficiente sul volume '[2]' per continuare l'installazione con il recupero abilitato. Sono necessari [3] KB, ma solo [4] KB sono disponibili. Scegliere Ignora per continuare senza salvare le informazioni di recupero, scegliere Riprova per controllare nuovamente lo spazio disponibile o scegliere Annulla per uscire dall'installazione.</String>
     <String Id="Error1606" Overridable="yes">Impossibile accedere al percorso di rete [2].</String>
-    <String Id="Error1607" Overridable="yes">Prima di continuare l'installazione, chiudere le applicazioni seguenti:</String>
+    <String Id="Error1607" Overridable="yes">È necessario chiudere le applicazioni seguenti prima di procedere con l'installazione:</String>
     <String Id="Error1608" Overridable="yes">Impossibile trovare versioni precedenti del software originale richiesto nel computer in uso.</String>
     <String Id="Error1609" Overridable="yes">Errore durante l'applicazione delle impostazioni di sicurezza. [2] non è un utente o un gruppo valido. L'errore potrebbe essere causato da un problema del pacchetto o da un problema durante la connessione a un controller di dominio in rete. Verificare la connessione di rete e scegliere Riprova. Altrimenti, scegliere Annulla per terminare l'installazione. {{Impossibile individuare il SID dell'utente. Errore di sistema [3]}}</String>
     <String Id="Error1701" Overridable="yes">La chiave [2] non è valida. Verificare che la chiave immessa sia corretta.</String>
@@ -497,7 +497,7 @@
     <String Id="Error1717" Overridable="yes">Rimozione di [2] completata</String>
     <String Id="Error1718" Overridable="yes">Il file [2] è stato rifiutato dai criteri di firma digitale.</String>
     <String Id="Error1719" Overridable="yes">Impossibile accedere al servizio Windows Installer. Windows potrebbe essere in esecuzione in modalità provvisoria o l'installazione di Windows Installer potrebbe non essere stata eseguita correttamente. Contattare il personale di supporto.</String>
-    <String Id="Error1720" Overridable="yes">Problema con il pacchetto Windows Installer. Impossibile eseguire uno degli script richiesti per il completamento dell'installazione. Contattare il personale di supporto o il fornitore del pacchetto. {{Azione personalizzata [2] errore script [3], [4]: [5] Riga [6], Colonna [7], [8] }}</String>
+    <String Id="Error1720" Overridable="yes">Problema con il pacchetto Windows Installer. Impossibile eseguire uno degli script richiesti per il completamento dell'installazione. Contattare il personale di supporto o il fornitore del pacchetto. {{Azione personalizzata [2] errore script [3], [4]: [5] riga [6], colonna [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Problema con il pacchetto Windows Installer. Impossibile eseguire uno dei programmi richiesti per il completamento dell'installazione. Contattare il personale di supporto o il fornitore del pacchetto. {{Azione: [2], percorso: [3], comando: [4] }}</String>
     <String Id="Error1722" Overridable="yes">Problema con il pacchetto Windows Installer. Uno dei programmi eseguiti come parte dell'installazione non è stato terminato correttamente. Contattare il personale di supporto o il fornitore del pacchetto. {{Azione: [2], percorso: [3], comando: [4] }}</String>
     <String Id="Error1723" Overridable="yes">Problema con il pacchetto Windows Installer. Impossibile eseguire una DLL necessaria per il completamento dell'installazione. Contattare il personale di supporto o il fornitore del pacchetto. {{Azione [2], voce: [3], libreria: [4] }}</String>
@@ -518,7 +518,7 @@
     <String Id="Error1806" Overridable="yes">Privilegi in lettura insufficienti per la cartella specificata.</String>
     <String Id="Error1807" Overridable="yes">Impossibile determinare una cartella di destinazione valida per l'installazione.</String>
     <String Id="Error1901" Overridable="yes">Errore durante il tentativo di lettura dal database di installazione di origine: [2].</String>
-    <String Id="Error1902" Overridable="yes">Pianificazione dell'operazione di riavvio. Il file [2] verrà rinominato in [3]. Per completare l'operazione, è necessario riavviare il computer.</String>
+    <String Id="Error1902" Overridable="yes">Pianificazione dell'operazione di riavvio. Il file [2] verrà rinominato [3]. Per completare l'operazione, è necessario riavviare il computer.</String>
     <String Id="Error1903" Overridable="yes">Pianificazione dell'operazione di riavvio. Il file [2] verrà eliminato. Per completare l'operazione, è necessario riavviare il computer.</String>
     <String Id="Error1904" Overridable="yes">Impossibile registrare il modulo [2]. HRESULT [3]. Contattare il personale di supporto.</String>
     <String Id="Error1905" Overridable="yes">Impossibile annullare la registrazione del modulo [2]. HRESULT [3]. Contattare il personale di supporto.</String>
@@ -562,40 +562,40 @@
     <String Id="UITextMB" Overridable="yes">MB</String>
     <String Id="UITextMenuAbsent" Overridable="yes">La funzionalità completa non sarà disponibile.</String>
     <String Id="UITextMenuAdvertise" Overridable="yes">La funzionalità specificata verrà installata quando richiesto.</String>
-    <String Id="UITextMenuAllCD" Overridable="yes">La funzionalità specificata verrà installata per essere utilizzata da CD.</String>
-    <String Id="UITextMenuAllLocal" Overridable="yes">La funzionalità specificata verrà installata sul disco rigido locale.</String>
-    <String Id="UITextMenuAllNetwork" Overridable="yes">La funzionalità completa e tutte le sottofunzionalità verranno installate per essere utilizzate dalla rete.</String>
-    <String Id="UITextMenuCD" Overridable="yes">Verrà installata per essere utilizzata da CD.</String>
+    <String Id="UITextMenuAllCD" Overridable="yes">La funzionalità completa verrà installata in modo da consentirne l'avvio da CD.</String>
+    <String Id="UITextMenuAllLocal" Overridable="yes">La funzionalità completa verrà installata sul disco rigido locale.</String>
+    <String Id="UITextMenuAllNetwork" Overridable="yes">La funzionalità completa verrà installata in modo da consentirne l'avvio dalla rete.</String>
+    <String Id="UITextMenuCD" Overridable="yes">Verrà installata in modo da consentirne l'avvio da CD.</String>
     <String Id="UITextMenuLocal" Overridable="yes">Verrà installata sul disco rigido locale.</String>
-    <String Id="UITextMenuNetwork" Overridable="yes">Verrà installata per essere utilizzata dalla rete.</String>
+    <String Id="UITextMenuNetwork" Overridable="yes">Verrà installata in modo da consentirne l'avvio dalla rete.</String>
     <String Id="UITextNewFolder" Overridable="yes">Folder|Nuova cartella</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Raccolta delle informazioni necessarie in corso...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">La funzionalità specificata non verrà installata.</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">La funzionalità specificata verrà impostata per essere installata quando richiesto.</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">La funzionalità specificata verrà installata per essere utilizzata da CD.</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">La funzionalità specificata verrà installata in modo da consentirne l'avvio da CD.</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">La funzionalità specificata verrà installata sul disco rigido locale.</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">La funzionalità specificata verrà installata per essere utilizzata dalla rete.</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">La funzionalità specificata verrà installata in modo da consentirne l'avvio dalla rete.</String>
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">La funzionalità specificata non sarà disponibile.</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Verrà installata quando richiesto.</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">La funzionalità specificata sarà disponibile per l'utilizzo da CD.</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">La funzionalità specificata sarà disponibile per l'avvio da CD.</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">La funzionalità specificata verrà installata sul disco rigido locale.</String>
-    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">La funzionalità specificata sarà disponibile per essere utilizzata dalla rete.</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">La funzionalità specificata verrà rimossa completamente e non potrà più essere utilizzata da CD.</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">La funzionalità specificata veniva eseguita da CD ma verrà installata quando richiesto.</String>
-    <String Id="UITextSelCDCD" Overridable="yes">La funzionalità specificata continuerà ad essere eseguita da CD.</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">La funzionalità specificata non verrà eseguita da CD ma verrà installata sull'unità disco rigido.</String>
+    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">La funzionalità specificata sarà disponibile per l'avvio dalla rete.</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">La funzionalità specificata verrà rimossa completamente e non potrà più essere avviata da CD.</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">La funzionalità specificata, correntemente impostata per l'avvio da CD, verrà impostata per essere installata quando richiesto.</String>
+    <String Id="UITextSelCDCD" Overridable="yes">La funzionalità specificata rimarrà impostata per l'avvio da CD.</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">La funzionalità specificata, correntemente impostata per l'avvio da CD, verrà installata sul disco rigido locale.</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">La funzionalità specificata consente di liberare [1] sul disco rigido.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">La funzionalità specificata richiede [1] sul disco rigido.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Calcolo dello spazio necessario per la funzionalità specificata in corso...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">La funzionalità specificata verrà rimossa completamente.</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">La funzionalità specificata verrà rimossa dal disco rigido locale ma verrà impostata per essere installata quando richiesto.</String>
-    <String Id="UITextSelLocalCD" Overridable="yes">La funzionalità specificata verrà rimossa dal disco rigido locale ma sarà ancora disponibile per essere utilizzata da CD.</String>
+    <String Id="UITextSelLocalCD" Overridable="yes">La funzionalità specificata verrà rimossa dal disco rigido locale ma sarà ancora disponibile per l'avvio da CD.</String>
     <String Id="UITextSelLocalLocal" Overridable="yes">La funzionalità specificata rimarrà sul disco rigido locale.</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">La funzionalità specificata verrà rimossa dal disco rigido locale ma sarà disponibile per essere utilizzata dalla rete.</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">La funzionalità specificata verrà completamente rimossa e non potrà più essere utilizzata dalla rete.</String>
-    <String Id="UITextSelNetworkAdvertise" Overridable="yes">La funzionalità specificata veniva eseguita dalla rete ma verrà installata quando richiesto.</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">La funzionalità specificata veniva eseguita dalla rete ma verrà installata sul disco rigido locale.</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">La funzionalità specificata continuerà a poter essere utilizzata dalla rete.</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">La funzionalità specificata verrà rimossa dal disco rigido locale ma sarà disponibile per l'avvio dalla rete.</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">La funzionalità specificata verrà completamente rimossa e non potrà più essere avviata dalla rete.</String>
+    <String Id="UITextSelNetworkAdvertise" Overridable="yes">La funzionalità specificata, correntemente impostata per l'avvio dalla rete, verrà impostata per essere installata quando richiesto.</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">La funzionalità specificata, correntemente impostata per l'avvio dalla rete, verrà installata sul disco rigido locale.</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">La funzionalità specificata rimarrà impostata per l'avvio dalla rete.</String>
     <String Id="UITextSelParentCostNegNeg" Overridable="yes">La funzionalità specificata consente di liberare [1] sul disco rigido. Sono selezionate [2] funzionalità secondarie su [3]. Le funzionalità secondarie consentono di liberare [4] sul disco rigido.</String>
     <String Id="UITextSelParentCostNegPos" Overridable="yes">La funzionalità specificata consente di liberare [1] sul disco rigido. Sono selezionate [2] funzionalità secondarie su [3]. Le funzionalità secondarie richiedono [4] sul disco rigido.</String>
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">La funzionalità specificata richiede [1] sul disco rigido. Sono selezionate [2] funzionalità secondarie su [3]. Le funzionalità secondarie consentono di liberare [4] sul disco rigido.</String>

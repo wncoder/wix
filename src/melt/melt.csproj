@@ -42,5 +42,13 @@
       <Project>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</Project>
       <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
+    <ProjectReference Include="..\DTF\Libraries\WindowsInstaller\WindowsInstaller.csproj">
+      <Project>{24121677-0ED0-41B5-833F-1B9A18E87BF4}</Project>
+      <Name>WindowsInstaller</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DTF\Libraries\WindowsInstaller.Package\WindowsInstaller.Package.csproj">
+      <Project>{1A9940A7-3E29-4428-B753-C4CC66058F1A}</Project>
+      <Name>WindowsInstaller</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

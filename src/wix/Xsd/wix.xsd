@@ -2806,7 +2806,7 @@
                 <xse:msiRef table="Signature" href="http://msdn.microsoft.com/library/aa371853.aspx"/>
                 <xse:howtoRef href="check_the_version_number.htm">How To: Check the version number of a file during installation</xse:howtoRef>
                 <xse:remarks>
-                    <html:a>When the parent DirectorySearch/@Depth attribute is greater than 1, the FileSearch/@Id attribute must be absent or the same as the parent DirectorySearch/@Id attribute value, unless the parent DirectorySearch/@AssignToProperty attribute value is 'yes'.</html:a>
+                    <html:a>When the parent DirectorySearch/@Depth attribute is greater than 0, the FileSearch/@Id attribute must be absent or the same as the parent DirectorySearch/@Id attribute value, unless the parent DirectorySearch/@AssignToProperty attribute value is 'yes'.</html:a>
                 </xse:remarks>
             </xs:appinfo>
             <xs:documentation>Searches for file and assigns to fullpath value of parent Property</xs:documentation>

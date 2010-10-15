@@ -196,12 +196,29 @@ extern "C" HRESULT DAPI RegDelete(
 {
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
+    LPWSTR pszEnumeratedSubKey = NULL;
+    LPWSTR pszRecursiveSubKey = NULL;
+    HKEY hkKey = NULL;
     REGSAM samDesired = 0;
 
     if (fDeleteTree)
     {
-        hr = E_NOTIMPL;
-        ExitOnRootFailure(hr, "Deleting a registry tree is not implemented yet.");
+        hr = RegOpen(hkRoot, wzSubKey, KEY_READ, &hkKey);
+        ExitOnFailure1(hr, "Failed to open this key for enumerating subkeys", wzSubKey);
+
+        // Yes, keep enumerating the 0th item, because we're deleting it every time
+        while (E_NOMOREITEMS != (hr = RegKeyEnum(hkKey, 0, &pszEnumeratedSubKey)))
+        {
+            ExitOnFailure(hr, "Failed to enumerate key 0");
+            
+            hr = PathConcat(wzSubKey, pszEnumeratedSubKey, &pszRecursiveSubKey);
+            ExitOnFailure2(hr, "Failed to concatenate paths while recursively deleting subkeys. Path1: %ls, Path2: %ls", wzSubKey, pszEnumeratedSubKey);
+
+            hr = RegDelete(hkRoot, pszRecursiveSubKey, kbKeyBitness, fDeleteTree);
+            ExitOnFailure1(hr, "Failed to recursively delete subkey: %ls", pszRecursiveSubKey);
+        }
+
+        hr = S_OK;
     }
 
     if (!vfRegInitialized && REG_KEY_DEFAULT != kbKeyBitness)
@@ -235,6 +252,10 @@ extern "C" HRESULT DAPI RegDelete(
     }
 
 LExit:
+    ReleaseRegKey(hkKey);
+    ReleaseStr(pszEnumeratedSubKey);
+    ReleaseStr(pszRecursiveSubKey);
+
     return hr;
 }
 
@@ -321,6 +342,50 @@ HRESULT DAPI RegValueEnum(
     ExitOnWin32Error(er, hr, "Failed to enumerate registry value");
 
 LExit:
+    return hr;
+}
+
+
+/********************************************************************
+ RegReadBinary - reads a registry key binary value.
+ NOTE: caller is responsible for freeing *ppbBuffer
+*********************************************************************/
+HRESULT DAPI RegReadBinary(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __deref_out_bcount(*pcbBuffer) BYTE** ppbBuffer,
+    __out DWORD *pcbBuffer
+     )
+{
+    HRESULT hr = S_OK;
+    LPBYTE pbBuffer = NULL;
+    DWORD er = ERROR_SUCCESS;
+    DWORD cb = 0;
+    DWORD dwType = 0;
+
+    vpfnRegQueryValueExW(hk, wzName, 0, &dwType, NULL, &cb);
+
+    pbBuffer = static_cast<LPBYTE>(MemAlloc(cb, FALSE));
+    ExitOnNull(pbBuffer, hr, E_OUTOFMEMORY, "Failed to allocate buffer for binary registry value.");
+
+    er = vpfnRegQueryValueExW(hk, wzName, 0, &dwType, pbBuffer, &cb);
+    ExitOnWin32Error(er, hr, "Failed to read registry key.");
+
+    if (REG_BINARY == dwType)
+    {
+        *ppbBuffer = pbBuffer;
+        pbBuffer = NULL;
+        *pcbBuffer = cb;
+    }
+    else
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE);
+        ExitOnRootFailure1(hr, "Error reading binary registry value due to unexpected data type: %u", dwType);
+    }
+
+LExit:
+    ReleaseMem(pbBuffer);
+
     return hr;
 }
 
@@ -459,6 +524,28 @@ extern "C" HRESULT DAPI RegReadNumber(
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE);
         ExitOnRootFailure1(hr, "Error reading version registry value due to unexpected data type: %u", dwType);
     }
+
+LExit:
+    return hr;
+}
+
+
+/********************************************************************
+ RegWriteBinary - writes a registry key value as a binary.
+
+*********************************************************************/
+HRESULT DAPI RegWriteBinary(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in_bcount(cBuffer) BYTE *pbBuffer,
+    __in DWORD cbBuffer
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_BINARY, pbBuffer, cbBuffer);
+    ExitOnWin32Error1(er, hr, "Failed to write binary registry value with name: %ls", wzName);
 
 LExit:
     return hr;
