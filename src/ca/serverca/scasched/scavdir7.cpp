@@ -17,14 +17,6 @@
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
-LPCWSTR vcsWebDirQuery7 = L"SELECT `Web_`, `WebDir`, `Component_`, `Path`, `DirProperties_`, `Application_` "
-                                       L"FROM `IIsWebDir`";
-
-LPCWSTR vcsVDirQuery7 = L"SELECT `Web_`, `VirtualDir`, `Component_`, `Alias`, `Directory_`, `DirProperties_`, `Application_` "
-                       L"FROM `IIsWebVirtualDir`";
-enum eVDirQuery { vdqWeb = 1, vdqVDir, vdqComponent , vdqAlias, vdqDirectory, vdqProperties, vdqApplication };
-
-//enum eVDirQuery { vdqWeb = 1, vdqVDir, vdqComponent , vdqAlias, vdqDirectory, vdqProperties, vdqApplication, vdqInstalled, vdqAction, vdqSourcePath, vdqTargetPath };
 
 // prototypes
 static HRESULT AddVirtualDirToList7(
@@ -37,35 +29,38 @@ HRESULT __stdcall ScaVirtualDirsRead7(
     __in SCA_VDIR7** ppsvdList,
     __in SCA_MIMEMAP** ppsmmList,
     __in SCA_HTTP_HEADER** ppshhList,
-    __in SCA_WEB_ERROR** ppsweList
+    __in SCA_WEB_ERROR** ppsweList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData
     )
 {
     Assert(ppsvdList);
 
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
-    PMSIHANDLE hView, hRec;
-
-    INSTALLSTATE isInstalled = INSTALLSTATE_UNKNOWN;
-    INSTALLSTATE isAction = INSTALLSTATE_UNKNOWN;
+    MSIHANDLE hRec;
 
     SCA_VDIR7* pvdir = NULL;
     LPWSTR pwzData = NULL;
     DWORD cchData = 0;
     DWORD dwLen = 0;
-    
-    if (S_OK != WcaTableExists(L"IIsWebVirtualDir"))
+    WCA_WRAPQUERY_HANDLE hWrapQuery = NULL;
+
+    hr = WcaBeginUnwrapQuery(&hWrapQuery, ppwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap query for ScaAppPoolRead");
+
+    if (0 == WcaGetQueryRecords(hWrapQuery))
     {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaVirtualDirsRead7() - because IIsWebVirtualDir table not present.");
+        WcaLog(LOGMSG_VERBOSE, "Skipping ScaVirtualDirsRead() because IIsWebVirtualDir table not present");
         ExitFunction1(hr = S_FALSE);
     }
 
-    // loop through all the Vdirs
-    hr = WcaOpenExecuteView(vcsVDirQuery7, &hView);
-    ExitOnFailure(hr, "failed to open view on IIsWebVirtualDir table");
-    
     // loop through all the vdirs
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
+    while (S_OK == (hr = WcaFetchWrappedRecord(hWrapQuery, &hRec)))
     {
         BOOL fHasComponent = FALSE;
         // Add this record's information into the list of things to process.
@@ -76,48 +71,34 @@ HRESULT __stdcall ScaVirtualDirsRead7(
 
         // get the darwin information
         hr = WcaGetRecordString(hRec, vdqComponent, &pwzData);
-        ExitOnFailure(hr, "failed to get vdir.Component");
-        hr = ::StringCchCopyW(pvdir->wzComponent, countof(pvdir->wzComponent), pwzData);
-        ExitOnFailure(hr, "Failed StringCchCopyW of vdir component");
+        ExitOnFailure(hr, "failed to get IIsWebVirtualDir.Component");
 
-        if (*(pvdir->wzComponent))
-        {
-            er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pvdir->wzComponent, &pvdir->isInstalled, &pvdir->isAction);
-            hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure(hr, "Failed to get vdir Component state");
-        }
+        hr = WcaGetRecordInteger(hRec, vdqInstalled, (int *)&pvdir->isInstalled);
+        ExitOnFailure(hr, "Failed to get Component installed state for virtual dir");
+
+        hr = WcaGetRecordInteger(hRec, vdqAction, (int *)&pvdir->isAction);
+        ExitOnFailure(hr, "Failed to get Component action state for virtual dir");
 
         // get vdir properties
         hr = ::StringCchCopyW(pvdir->wzComponent, countof(pvdir->wzComponent), pwzData);
-        ExitOnFailure1(hr, "failed to copy vdir component name: %S", pwzData);
-
-        // get the web key
-        SCA_WEB7 *pswWeb;
+        ExitOnFailure1(hr, "failed to copy vdir component name: %ls", pwzData);
 
         hr = WcaGetRecordString(hRec, vdqWeb, &pwzData);
         ExitOnFailure(hr, "Failed to get Web for VirtualDir");
 
-        hr = ScaWebsGetBase7(pswList, pwzData, &pswWeb);
+        hr = ScaWebsGetBase7(pswList, pwzData, pvdir->wzWebName , countof(pvdir->wzWebName));
         if(S_FALSE == hr)
         {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
             ExitOnFailure(hr, "Failed to get Web Base for VirtualDir");
         }
-        if (WcaIsUninstalling(isInstalled, isAction))
+        if (WcaIsUninstalling(pvdir->isInstalled, pvdir->isAction))
         {
             // If we're uninstalling, ignore any failure to find the existing web
             hr = S_OK;
         }
-        ExitOnFailure1(hr, "Failed to get base of web: %S for VirtualDir", pwzData);
-        
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-        if (0 != wcslen(pswWeb->wzDescription))
-        {
-            hr = ::StringCchCopyW(pvdir->wzWebName , countof(pvdir->wzWebName), pswWeb->wzDescription);
-            ExitOnFailure(hr, "Failed to set WebName for VirtualDir");
-        }
 
-        hr = WcaGetRecordFormattedString(hRec, vdqAlias, &pwzData);
+        hr = WcaGetRecordString(hRec, vdqAlias, &pwzData);
         ExitOnFailure(hr, "Failed to get Alias for VirtualDir");
 
         hr = ::StringCchCopyW(pvdir->wzVDirRoot, countof(pvdir->wzVDirRoot), pwzData);
@@ -128,25 +109,22 @@ HRESULT __stdcall ScaVirtualDirsRead7(
         ExitOnFailure(hr, "Failed to get Directory for VirtualDir");
 
         // get the web's directory
-        WCHAR wzTargetPath[MAX_PATH] = {};
-        dwLen = countof(wzTargetPath);
         if (INSTALLSTATE_SOURCE == pvdir->isAction)
         {
-            er = ::MsiGetSourcePathW(WcaGetInstallHandle(), pwzData, wzTargetPath, &dwLen);
+            hr = WcaGetRecordString(hRec, vdqSourcePath, &pwzData);
         }
         else
         {
-            er = ::MsiGetTargetPathW(WcaGetInstallHandle(), pwzData, wzTargetPath, &dwLen);
+            hr = WcaGetRecordString(hRec, vdqTargetPath, &pwzData);
         }
-        hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure(hr, "Failed to get TargetPath for Directory for VirtualDir");
+        ExitOnFailure(hr, "Failed to get Source/TargetPath for Directory");
 
         // remove trailing backslash(es)
-        while (lstrlenW(wzTargetPath) > 0 && wzTargetPath[lstrlenW(wzTargetPath)-1] == L'\\')
+        while (lstrlenW(pwzData) > 0 && pwzData[lstrlenW(pwzData)-1] == L'\\')
         {
-            wzTargetPath[lstrlenW(wzTargetPath)-1] = 0;
+            pwzData[lstrlenW(pwzData)-1] = 0;
         }
-        hr = ::StringCchCopyW(pvdir->wzDirectory, countof(pvdir->wzDirectory), wzTargetPath);
+        hr = ::StringCchCopyW(pvdir->wzDirectory, countof(pvdir->wzDirectory), pwzData);
         ExitOnFailure(hr, "Failed to copy directory string to vdir object");
 
         // get the security information for this web
@@ -154,7 +132,7 @@ HRESULT __stdcall ScaVirtualDirsRead7(
         ExitOnFailure(hr, "Failed to get web directory identifier for VirtualDir");
         if (*pwzData)
         {
-            hr = ScaGetWebDirProperties7(pwzData, &pvdir->swp);
+            hr = ScaGetWebDirProperties(pwzData, hUserQuery, hWebDirPropQuery, &pvdir->swp);
             ExitOnFailure(hr, "Failed to get web directory for VirtualDir");
 
             pvdir->fHasProperties = TRUE;
@@ -165,7 +143,7 @@ HRESULT __stdcall ScaVirtualDirsRead7(
         ExitOnFailure(hr, "Failed to get application identifier for VirtualDir");
         if (*pwzData)
         {
-            hr = ScaGetWebApplication7(NULL, pwzData, &pvdir->swapp);
+            hr = ScaGetWebApplication(NULL, pwzData, hWebAppQuery, hWebAppExtQuery, &pvdir->swapp);
             ExitOnFailure(hr, "Failed to get application for VirtualDir");
 
             pvdir->fHasApplication = TRUE;
@@ -176,20 +154,20 @@ HRESULT __stdcall ScaVirtualDirsRead7(
 
         if (*pwzData && *ppsmmList)
         {
-            hr = ScaGetMimeMap7(mmptVDir, pwzData, ppsmmList, &pvdir->psmm);
+            hr = ScaGetMimeMap(mmptVDir, pwzData, ppsmmList, &pvdir->psmm);
             ExitOnFailure(hr, "Failed to get mimemap for VirtualDir");
         }
 
         if (*pwzData && *ppshhList)
         {
-            hr = ScaGetHttpHeader7(hhptVDir, pwzData, ppshhList, &pvdir->pshh);
-            ExitOnFailure1(hr, "Failed to get custom HTTP headers for VirtualDir: %S", pwzData);
+            hr = ScaGetHttpHeader(hhptVDir, pwzData, ppshhList, &pvdir->pshh);
+            ExitOnFailure1(hr, "Failed to get custom HTTP headers for VirtualDir: %ls", pwzData);
         }
 
         if (*pwzData && *ppsweList)
         {
-            hr = ScaGetWebError7(weptVDir, pwzData, ppsweList, &pvdir->pswe);
-            ExitOnFailure1(hr, "Failed to get custom web errors for VirtualDir: %S", pwzData);
+            hr = ScaGetWebError(weptVDir, pwzData, ppsweList, &pvdir->pswe);
+            ExitOnFailure1(hr, "Failed to get custom web errors for VirtualDir: %ls", pwzData);
         }
     }
 
@@ -200,6 +178,8 @@ HRESULT __stdcall ScaVirtualDirsRead7(
     ExitOnFailure(hr, "Failure while processing VirtualDirs");
 
 LExit:
+    WcaFinishUnwrapQuery(hWrapQuery);
+
     ReleaseStr(pwzData);
 
     return hr;
@@ -331,12 +311,12 @@ HRESULT ScaVirtualDirsUninstall7(
     {
         if (WcaIsUninstalling(psvd->isInstalled, psvd->isAction))
         {
-            //init path        
+            //init path
             hr = StrAllocFormatted(&wzPath, L"/%s", psvd->wzVDirRoot);
             ExitOnFailure(hr, "Failed to create vdir path");
 
             if( psvd->fHasApplication )
-            {        
+            {
                 //delete Application
                 hr = ScaWriteConfigID(IIS_APPLICATION);
                 ExitOnFailure(hr, "Failed to write app ID ");
@@ -366,7 +346,7 @@ HRESULT ScaVirtualDirsUninstall7(
                 ExitOnFailure(hr, "Failed to write vdir path");
             }
 
-            ExitOnFailure1(hr, "Failed to remove VirtualDir '%S' from config", psvd->wzKey);
+            ExitOnFailure1(hr, "Failed to remove VirtualDir '%ls' from config", psvd->wzKey);
         }
 
         psvd = psvd->psvdNext;
@@ -390,7 +370,7 @@ void ScaVirtualDirsFreeList7(
 
         if (psvdDelete->psmm)
         {
-            ScaMimeMapFreeList7(psvdDelete->psmm);
+            ScaMimeMapFreeList(psvdDelete->psmm);
         }
 
         if (psvdDelete->pswe)

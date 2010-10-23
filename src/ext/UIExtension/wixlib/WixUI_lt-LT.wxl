@@ -25,9 +25,9 @@
     <String Id="WixUIOK" Overridable="yes">Gerai</String>
     <String Id="WixUIPrint" Overridable="yes">&amp;Spausdinti</String>
 
-    <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Perskaitykite „[ProductName]“ licencijos sutartį</String>
+    <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Perskaitykite [ProductName] licencijos sutartį</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Sutinku su licencijos sutarties sąlygomis</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Spustelėkite Diegti, norėdami įdiegti produktą visiems vartotojams su numatytosiomis parinktimis. Spustelėkite Išsamiau, norėdami pakeisti diegimo parinktis.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Spustelėkite Diegti, norėdami įdiegti produktą su numatytosiomis parinktimis tik sau. Spustelėkite Išsamiau, norėdami pakeisti diegimo parinktis.</String>
@@ -39,7 +39,7 @@
     <String Id="Advanced_Font_Emphasized_Size" Overridable="yes">8</String>
     <String Id="Advanced_Font_FaceName" Overridable="yes">„Tahoma“</String>
 
-    <String Id="BrowseDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="BrowseDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="BrowseDlgComboLabel" Overridable="yes">&amp;Kur ieškoti:</String>
     <String Id="BrowseDlgWixUI_Bmp_Up" Overridable="yes">WixUI_Bmp_Up</String>
     <String Id="BrowseDlgWixUI_Bmp_UpTooltip" Overridable="yes">Vienu lygiu aukščiau</String>
@@ -50,12 +50,12 @@
     <String Id="BrowseDlgDescription" Overridable="yes">Eiti į paskirties aplanką</String>
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Keisti paskirties aplanką</String>
 
-    <String Id="CancelDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
-    <String Id="CancelDlgText" Overridable="yes">Ar tikrai norite atšaukti „[ProductName]“ diegimą?</String>
+    <String Id="CancelDlg_Title" Overridable="yes">[ProductName] sąranka</String>
+    <String Id="CancelDlgText" Overridable="yes">Ar tikrai norite atšaukti [ProductName] diegimą?</String>
     <String Id="CancelDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="CancelDlgIconTooltip" Overridable="yes">Informacijos piktograma</String>
 
-    <String Id="CustomizeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="CustomizeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="CustomizeDlgTree" Overridable="yes">Parinkčių medis</String>
     <String Id="CustomizeDlgBrowse" Overridable="yes">N&amp;aršyti...</String>
     <String Id="CustomizeDlgReset" Overridable="yes">Nu&amp;statyti iš naujo</String>
@@ -69,30 +69,30 @@
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
     <String Id="CustomizeDlgLocationLabel" Overridable="yes">Vieta:</String>
 
-    <String Id="DiskCostDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="DiskCostDlgText" Overridable="yes">Paryškintuose tomuose nepakanka vietos pasirinktoms priemonėms. Galite pašalinti kai kuriuos failus iš paryškintų tomų, įdiegti naujų priemonių arba pasirinkti kitus paskirties diskus.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Reikalinga vieta diske pažymėtoms priemonėms diegti.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Diske reikalinga vieta</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
-    <String Id="ErrorDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="ErrorDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="ErrorDlgErrorText" Overridable="yes">Informacinis tekstas</String>
     <String Id="ErrorDlgErrorIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">Informacijos piktograma</String>
 
-    <String Id="ExitDialog_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="ExitDialog_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="ExitDialogDescription" Overridable="yes">Norėdami uždaryti sąrankos vedlį, spustelėkite mygtuką Baigti.</String>
-    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Atlikti „[ProductName]“ sąrankos vedlio nurodymai</String>
+    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Atlikti [ProductName] sąrankos vedlio nurodymai</String>
 
-    <String Id="FatalError_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="FatalError_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}„[ProductName]“ sąrankos vedlys nutrūko per anksti</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">„[ProductName]“ sąrankos vedlys baigėsi per anksti dėl klaidos. Sistema nebuvo modifikuota. Norėdami įdiegti šią programą vėliau, vėl paleiskite sąrankos vedlį.</String>
+    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] sąrankos vedlys nutrūko per anksti</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">[ProductName] sąrankos vedlys nustojo dirbti per anksti dėl klaidos. Sistema nebuvo modifikuota. Norėdami įdiegti šią programą vėliau, vėl paleiskite sąrankos vedlį.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Norėdami uždaryti sąrankos vedlį, spustelėkite mygtuką Baigti.</String>
 
-    <String Id="FeaturesDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Produkto priemonės</String>
     <String Id="FeaturesDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FeaturesDlgDescription" Overridable="yes">Pažymėkite, kaip norite įdiegti priemones.</String>
@@ -102,66 +102,66 @@
     <String Id="FeaturesDlgInstall" Overridable="yes">&amp;Diegti</String>
     <String Id="FeaturesDlgChange" Overridable="yes">&amp;Keisti</String>
 
-    <String Id="FilesInUse_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="FilesInUse_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="FilesInUseExit" Overridable="yes">I&amp;šeiti</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FilesInUseText" Overridable="yes">Šios programos naudoja sąrankos metu būtinus atnaujinti failus. Uždarykite šias programas, tada norėdami tęsti diegimą spustelėkite mygtuką &amp;Kartoti arba norėdami iš jo išeiti spustelėkite mygtuką Išeiti.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Kai kurie failai, kuriuos reikia atnaujinti, šiuo metu naudojami.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Naudojami failai</String>
 
-    <String Id="InstallDirDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Keisti...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}Paskirties aplankas</String>
     <String Id="InstallDirDlgDescription" Overridable="yes">Spustelėkite Pirmyn, norėdami įdiegti numatytajame aplanke, arba spustelėkite Keisti, norėdami pasirinkti kitą.</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">Diegti „[ProductName]“ į:</String>
 
-    <String Id="InstallScopeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="InstallScopeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Pasirinkite diegimo aprėptį ir aplanką</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Diegimo aprėptis</String>
     <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Diegti &amp;tik sau ([USERNAME])</String>
-    <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">„[ProductName]“ bus įdiegta vartotojo aplanke ir bus pasiekiama tik jūsų vartotojo abonementui. Nereikia turėti vietinio administratoriaus teisių.</String>
-    <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">„[ProductName]“ nepalaiko vartotojo įdiegties.</String>
+    <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] bus įdiegta vartotojo aplanke ir bus pasiekiama tik jūsų vartotojo abonementui. Nereikia turėti vietinio administratoriaus teisių.</String>
+    <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] nepalaiko vartotojo įdiegties.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Diegti visiems šio &amp;kompiuterio vartotojams</String>
-    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">„[ProductName]“ bus pagal numatytuosius nustatymus įdiegta kompiuterio aplanke ir pasiekiama visiems vartotojams. Galite pakeisti numatytąjį diegimo aplanką. Reikia turėti vietinio administratoriaus teises.</String>
+    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] bus pagal numatytuosius nustatymus įdiegta kompiuterio aplanke ir pasiekiama visiems vartotojams. Galite pakeisti numatytąjį diegimo aplanką.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Diegimo &amp;aplankas:</String>
     <String Id="InstallScopeDlgChange" Overridable="yes">&amp;Keisti...</String>
 
-    <String Id="InvalidDirDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="InvalidDirDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="InvalidDirDlgText" Overridable="yes">Diegimo katalogas turi būti vietiniame standžiajame diske.</String>
     <String Id="InvalidDirDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Informacijos piktograma</String>
 
-    <String Id="LicenseAgreementDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="LicenseAgreementDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Sutinku su licencijos sutarties sąlygomis</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">Atidžiai perskaitykite šią licencijos sutartį</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Galutinio vartotojo licencijos sutartis</String>
 
-    <String Id="MaintenanceTypeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="MaintenanceTypeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="MaintenanceTypeDlgChangeButton" Overridable="yes">&amp;Keisti</String>
-    <String Id="MaintenanceTypeDlgChangeButtonTooltip" Overridable="yes">Keisti diegimą</String>
+    <String Id="MaintenanceTypeDlgChangeButtonTooltip" Overridable="yes">Keisti įdiegtį</String>
     <String Id="MaintenanceTypeDlgRepairButton" Overridable="yes">Ta&amp;isyti</String>
-    <String Id="MaintenanceTypeDlgRepairButtonTooltip" Overridable="yes">Taisyti diegimą</String>
+    <String Id="MaintenanceTypeDlgRepairButtonTooltip" Overridable="yes">Taisyti įdiegtį</String>
     <String Id="MaintenanceTypeDlgRemoveButton" Overridable="yes">&amp;Šalinti</String>
-    <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">Šalinti diegimą</String>
+    <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">Šalinti įdiegtį</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Pažymėkite norimą atlikti operaciją.</String>
-    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Keisti, taisyti arba šalinti diegimą</String>
+    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Įdiegties keitimas, taisymas arba šalinimas</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Leidžia keisti priemonių diegimo būdą.</String>
-    <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">„[ProductName]“ nėra atskirai pasirenkamų priemonių.</String>
-    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Pašalina „[ProductName]“ iš kompiuterio.</String>
-    <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">„[ProductName]“ negalima pašalinti.</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Ištaiso klaidas daugelyje neseniai įdiegtų funkcijų pataisydama trūkstamus ir sugadintus failus, sparčiąsias nuorodas ir registro įrašus.</String>
-    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">„[ProductName]“ negalima pataisyti.</String>
+    <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] nėra atskirai pasirenkamų priemonių.</String>
+    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Pašalina [ProductName] iš kompiuterio.</String>
+    <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName] negalima pašalinti.</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Ištaiso naujausios įdiegties klaidas pataisydama trūkstamus ir sugadintus failus, sparčiąsias nuorodas ir registro įrašus.</String>
+    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName] negalima pataisyti.</String>
 
-    <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Sąrankos vedlys leidžia keisti būdą, kuriuo „[ProductName]“ priemonės yra diegiamos jūsų kompiuteryje, ar pašalinti jas iš jūsų kompiuterio. Norėdami, kad sąrankos vedlys tęstų savo darbą, spustelėkite mygtuką Pirmyn, o norėdami išeiti iš jo, spustelėkite mygtuką Atšaukti.</String>
-    <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sveiki! Čia „[ProductName]“ sąrankos vedlys</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Sąrankos vedlys leidžia keisti būdą, kuriuo [ProductName] priemonės yra diegiamos jūsų kompiuteryje, ar pašalinti jas iš jūsų kompiuterio. Norėdami, kad sąrankos vedlys tęstų savo darbą, spustelėkite mygtuką Pirmyn, o norėdami išeiti iš jo, spustelėkite mygtuką Atšaukti.</String>
+    <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sveiki! Čia [ProductName] sąrankos vedlys</String>
 
-    <String Id="MsiRMFilesInUse_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MsiRMFilesInUseText" Overridable="yes">Šios programos naudoja sąrankos metu būtinus atnaujinti failus. Galite leisti sąrankos vedliui juos uždaryti ir bandyti paleisti iš naujo arba vėliau perkrauti kompiuterį.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Kai kurie failai, kuriuos reikia atnaujinti, šiuo metu naudojami.</String>
@@ -169,48 +169,48 @@
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Uždarykite programas ir pabandykite paleisti jas iš naujo.</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Neuždarykite programų. Reikės iš naujo paleisti kompiuterį.</String>
 
-    <String Id="OutOfDiskDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfDiskDlgText" Overridable="yes">Pažymėtuose tomuose nėra pakankamai vietos, kurią būtų galima panaudoti nurodytoms priemonėms įdiegti. Galite pašalinti kai kuriuos failus iš pažymėtų tomų, įdiegti mažiau priemonių arba pasirinkti kitą paskirties diską.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">Diegimo procesui reikalinga vieta viršija laisvą disko vietą.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">Įdiegčiai reikia daugiau vietos, nei jos yra diske.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Diske neliko vietos</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
-    <String Id="OutOfRbDiskDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfRbDiskDlgText" Overridable="yes">Pažymėtuose tomuose nėra pakankamai vietos, kurią būtų galima panaudoti nurodytoms priemonėms įdiegti. Galite pašalinti kai kuriuos failus iš pažymėtų tomų, įdiegti mažiau priemonių arba pasirinkti kitą paskirties diską.</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Diegimo procesui reikalinga vieta viršija laisvą disko vietą.</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Įdiegčiai reikia daugiau vietos, nei jos yra diske.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Diske neliko vietos</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
     <String Id="OutOfRbDiskDlgText2" Overridable="yes">Arba galite pasirinkti išjungti diegimo programos keitimų atšaukimo funkcijas. Išjungus keitimų atšaukimą, diegimo programa negalės atkurti kompiuterio pradinės būsenos, jei diegimas būtų kaip nors nutrauktas. Spustelėkite Taip, jei norite surizikuoti ir išjungti keitimų atšaukimą.</String>
 
-    <String Id="PrepareDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="PrepareDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="PrepareDlgDescription" Overridable="yes">Palaukite, kol sąrankos vedlys pasiruoš vadovauti diegimo procesui.</String>
-    <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sveiki! Čia „[ProductName]“ sąrankos vedlys</String>
+    <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sveiki! Čia [ProductName] sąrankos vedlys</String>
 
-    <String Id="ProgressDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="ProgressDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="ProgressDlgTextInstalling" Overridable="yes">Palaukite, kol sąrankos vedlys įdiegs „[ProductName]“.</String>
-    <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}„[ProductName]“ diegimas</String>
-    <String Id="ProgressDlgTextChanging" Overridable="yes">Palaukite, kol sąrankos vedlys pakeis „[ProductName]“.</String>
-    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}„[ProductName]“ keitimas</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Palaukite, kol sąrankos vedlys pataisys „[ProductName]“.</String>
-    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}„[ProductName]“ taisymas</String>
-    <String Id="ProgressDlgTextRemoving" Overridable="yes">Palaukite, kol sąrankos vedlys pašalins „[ProductName]“.</String>
-    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}„[ProductName]“ šalinimas</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">Palaukite, kol sąrankos vedlys atnaujins „[ProductName]“.</String>
-    <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Naujinama „[ProductName]“</String>
+    <String Id="ProgressDlgTextInstalling" Overridable="yes">Palaukite, kol sąrankos vedlys įdiegs [ProductName].</String>
+    <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}[ProductName] diegimas</String>
+    <String Id="ProgressDlgTextChanging" Overridable="yes">Palaukite, kol sąrankos vedlys pakeis [ProductName].</String>
+    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}[ProductName] keitimas</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Palaukite, kol sąrankos vedlys pataisys [ProductName].</String>
+    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}[ProductName] taisymass</String>
+    <String Id="ProgressDlgTextRemoving" Overridable="yes">Palaukite, kol sąrankos vedlys pašalins [ProductName].</String>
+    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}[ProductName] šalinimas</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Palaukite, kol sąrankos vedlys atnaujins [ProductName].</String>
+    <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}[ProductName] naujinimas</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Atlikta</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Būsena:</String>
 
-    <String Id="ResumeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Diegti</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Sąrankos vedlys baigs diegti „[ProductName]“ jūsų kompiuteryje. Norėdami tęsti spustelėkite mygtuką Diegti, o norėdami išeiti iš sąrankos vedlio, spustelėkite mygtuką Atšaukti.</String>
-    <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger} „[ProductName]“ sąrankos vedlys tęsia darbą</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Sąrankos vedlys baigs diegti [ProductName] jūsų kompiuteryje. Norėdami tęsti spustelėkite mygtuką Diegti, o norėdami išeiti iš sąrankos vedlio, spustelėkite mygtuką Atšaukti.</String>
+    <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] sąrankos vedlys tęsia darbą</String>
 
-    <String Id="SetupTypeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="SetupTypeDlgTypicalButton" Overridable="yes">&amp;Įprastas</String>
     <String Id="SetupTypeDlgTypicalButtonTooltip" Overridable="yes">Įprastas diegimas</String>
     <String Id="SetupTypeDlgCustomButton" Overridable="yes">P&amp;asirinktinis</String>
@@ -222,52 +222,52 @@
     <String Id="SetupTypeDlgDescription" Overridable="yes">Pasirinkite sąrankos tipą, kuris geriausiai atitinka jūsų poreikius</String>
     <String Id="SetupTypeDlgTypicalText" Overridable="yes">Diegia dažniausias programos priemones. Rekomenduojama daugumai vartotojų.</String>
     <String Id="SetupTypeDlgCustomText" Overridable="yes">Leidžia vartotojams pasirinkti, kurias programos priemones diegti ir diegimo vietą. Rekomenduojama pažengusiems vartotojams.</String>
-    <String Id="SetupTypeDlgCompleteText" Overridable="yes">Bus įdiegtos visos programos priemonės. Reikia daugiausiai disko vietos.</String>
+    <String Id="SetupTypeDlgCompleteText" Overridable="yes">Bus įdiegtos visos programos priemonės. Reikia daugiausia disko vietos.</String>
 
-    <String Id="UserExit_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="UserExit_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}„[ProductName]“ sąrankos vedlio darbas nutrūko</String>
-    <String Id="UserExitDescription1" Overridable="yes">„[ProductName]“ sąranka nutrūko. Sistema nebuvo modifikuota. Norėdami įdiegti šią programą vėliau, vėl paleiskite diegimą.</String>
+    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] sąrankos vedlio darbas nutrūko</String>
+    <String Id="UserExitDescription1" Overridable="yes">[ProductName] sąranka nutrūko. Sistema nebuvo modifikuota. Norėdami įdiegti šią programą vėliau, vėl paleiskite diegimą.</String>
     <String Id="UserExitDescription2" Overridable="yes">Norėdami uždaryti sąrankos vedlį, spustelėkite mygtuką Baigti.</String>
 
-    <String Id="VerifyReadyDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Diegti</String>
     <String Id="VerifyReadyDlgInstallText" Overridable="yes">Norėdami pradėti diegti, spustelėkite mygtuką Diegti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
-    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Parengta diegti „[ProductName]“</String>
+    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Parengta diegti [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Keisti</String>
     <String Id="VerifyReadyDlgChangeText" Overridable="yes">Norėdami pradėti diegti spustelėkite mygtuką Keisti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
-    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Parengta keisti „[ProductName]“</String>
+    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Parengta keisti [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Ta&amp;isyti</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Norėdami taisyti „[ProductName]“ diegimą, spustelėkite mygtuką Taisyti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą, spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
-    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Parengta taisyti „[ProductName]“</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Norėdami taisyti [ProductName] įdiegtį, spustelėkite mygtuką Taisyti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą, spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
+    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Parengta taisyti [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Šalinti</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Norėdami pašalinti „[ProductName]“ iš savo kompiuterio, spustelėkite mygtuką Šalinti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
-    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Parengta pašalinti „[ProductName]“</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Norėdami pašalinti [ProductName] iš savo kompiuterio, spustelėkite mygtuką Šalinti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
+    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Parengta pašalinti [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Naujinti</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Spustelėkite Naujinti, norėdami atnaujinti „[ProductName]“ iš savo kompiuterio. Spustelėkite Atgal, norėdami peržiūrėti arba pakeisti kuriuos nors diegimo parametrus. Spustelėkite Atšaukti, norėdami uždaryti vedlį.</String>
-    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Parengta naujinti „[ProductName]“</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Spustelėkite Naujinti, norėdami atnaujinti [ProductName] iš savo kompiuterio. Spustelėkite Atgal, norėdami peržiūrėti arba pakeisti kuriuos nors diegimo parametrus. Spustelėkite Atšaukti, norėdami uždaryti vedlį.</String>
+    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Parengta naujinti [ProductName]</String>
 
-    <String Id="WaitForCostingDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Grįžti</String>
     <String Id="WaitForCostingDlgText" Overridable="yes">Palaukite, kol diegimo programa nustatys jūsų disko vietos reikalavimus.</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">Šauktuko piktograma</String>
 
-    <String Id="WelcomeDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Sąrankos vedlys įdiegs „[ProductName]“ jūsų kompiuteryje. Jei norite tęsti, spustelėkite Pirmyn, jei norite baigti darbą su sąrankos vedliu, spustelėkite Atšaukti.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Sąrankos vedlys atnaujins „[ProductName]“ jūsų kompiuteryje. Spustelėkite Pirmyn, norėdami tęsti, arba spustelėkite Atšaukti, norėdami uždaryti sąrankos vedlį.</String>
-    <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sveiki! Čia „[ProductName]“ sąrankos vedlys</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Sąrankos vedlys įdiegs [ProductName] jūsų kompiuteryje. Jei norite tęsti, spustelėkite Pirmyn, jei norite baigti darbą su sąrankos vedliu, spustelėkite Atšaukti.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Sąrankos vedlys atnaujins [ProductName] jūsų kompiuteryje. Spustelėkite Pirmyn, norėdami tęsti, arba spustelėkite Atšaukti, norėdami uždaryti sąrankos vedlį.</String>
+    <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Sąrankos vedlys atnaujins [ProductName]</String>
 
-    <String Id="WelcomeEulaDlg_Title" Overridable="yes">„[ProductName]“ sąranka</String>
+    <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] sąranka</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Sutinku su licencijos sutarties sąlygomis</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">&amp;Diegti</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Naujinti</String>
-    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Perskaitykite „[ProductName]“ licencijos sutartį</String>
+    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Perskaitykite [ProductName] licencijos sutartį</String>
 
-    <String Id="ProgressTextInstallValidate" Overridable="yes">Tikrinamas įdiegimas</String>
+    <String Id="ProgressTextInstallValidate" Overridable="yes">Tikrinama įdiegtis</String>
     <String Id="ProgressTextInstallFiles" Overridable="yes">Kopijuojami nauji failai</String>
     <String Id="ProgressTextInstallFilesTemplate" Overridable="yes">Failas: [1], katalogas: [9], dydis: [6]</String>
     <String Id="ProgressTextInstallAdminPackage" Overridable="yes">Kopijuojami diegimo failai iš tinklo</String>
@@ -294,7 +294,7 @@
     <String Id="ProgressTextAllocateRegistrySpaceTemplate" Overridable="yes">Laisva vieta: [1]</String>
     <String Id="ProgressTextAppSearch" Overridable="yes">Ieškoma įdiegtų taikomųjų programų</String>
     <String Id="ProgressTextAppSearchTemplate" Overridable="yes">Ypatybė: [1], parašas: [2]</String>
-    <String Id="ProgressTextBindImage" Overridable="yes">Komponuojamos vykdomosios programos</String>
+    <String Id="ProgressTextBindImage" Overridable="yes">Susietosios vykdomosios programos</String>
     <String Id="ProgressTextBindImageTemplate" Overridable="yes">Failas: [1]</String>
     <String Id="ProgressTextCCPSearch" Overridable="yes">Ieškoma tinkamų produktų</String>
     <String Id="ProgressTextCreateFolders" Overridable="yes">Kuriami aplankai</String>
@@ -386,7 +386,7 @@
     <String Id="ProgressTextMsiPublishAssembliesTemplate" Overridable="yes">Taikomosios programos kontekstas:[1], rinkinio pavadinimas:[2]</String>
     <String Id="ProgressTextMsiUnpublishAssemblies" Overridable="yes">Atšaukiamas rinkinio informacijos skelbimas</String>
     <String Id="ProgressTextMsiUnpublishAssembliesTemplate" Overridable="yes">Taikomosios programos kontekstas:[1], rinkinio pavadinimas:[2]</String>
-    <String Id="ProgressTextRollback" Overridable="yes">Atšaukiami veiksmo keitimai:</String>
+    <String Id="ProgressTextRollback" Overridable="yes">Atšaukiamas keitimas</String>
     <String Id="ProgressTextRollbackTemplate" Overridable="yes">[1]</String>
     <String Id="ProgressTextRollbackCleanup" Overridable="yes">Šalinamos atsarginės failų kopijos</String>
     <String Id="ProgressTextRollbackCleanupTemplate" Overridable="yes">Failas: [1]</String>
@@ -412,7 +412,7 @@
     <String Id="Error17" Overridable="yes">Nepakanka atminties. Uždarykite kitas taikomąsias programas ir bandykite dar kartą.</String>
     <String Id="Error18" Overridable="yes">Diegimo programa neatsiliepia.</String>
     <String Id="Error19" Overridable="yes">Diegimas nutrūko per anksti.</String>
-    <String Id="Error20" Overridable="yes">Palaukite, kol „Windows“ sukonfigūruos „[ProductName]“</String>
+    <String Id="Error20" Overridable="yes">Palaukite, kol „Windows“ sukonfigūruos [ProductName]</String>
     <String Id="Error21" Overridable="yes">Renkama reikalinga informacija...</String>
     <String Id="Error22" Overridable="yes">Šalinamos senesnės šios taikomosios programos versijos...</String>
     <String Id="Error23" Overridable="yes">Ruošiamasi pašalinti senesnes šios taikomosios programos versijas...</String>
@@ -432,12 +432,12 @@
     <String Id="Error1311" Overridable="yes">Šaltinio failas nerastas{{(cabinet)}}: [2]. Patikrinkite, ar šis failas yra ir ar turite prieigą prie jo.</String>
     <String Id="Error1312" Overridable="yes">Nepavyko sukurti katalogo [2]. Failas tokiu pavadinimu jau yra. Pervardykite ar pašalinkite failą ir spustelėkite Kartoti arba išeikite spustelėdami Atšaukti.</String>
     <String Id="Error1313" Overridable="yes">Tomas [2] šiuo metu nepasiekiamas. Pasirinkite kitą.</String>
-    <String Id="Error1314" Overridable="yes">Nurodytas kelias '[2]' yra nepasiekiamas.</String>
+    <String Id="Error1314" Overridable="yes">Nurodytas kelias [2] nepasiekiamas.</String>
     <String Id="Error1315" Overridable="yes">Nepavyksta įrašyti į nurodytą aplanką: [2].</String>
-    <String Id="Error1316" Overridable="yes">Bandant skaityti failą [2] įvyko tinklo klaida</String>
-    <String Id="Error1317" Overridable="yes">Bandant sukurti katalogą [2] įvyko klaida</String>
-    <String Id="Error1318" Overridable="yes">Bandant sukurti katalogą [2] įvyko tinklo klaida</String>
-    <String Id="Error1319" Overridable="yes">Bandant atidaryti pirminį kabinetinio formato failą [2] įvyko tinklo klaida</String>
+    <String Id="Error1316" Overridable="yes">Bandant skaityti failą įvyko tinklo klaida: [2]</String>
+    <String Id="Error1317" Overridable="yes">Bandant sukurti katalogą įvyko klaida: [2]</String>
+    <String Id="Error1318" Overridable="yes">Bandant sukurti katalogą įvyko tinklo klaida: [2]</String>
+    <String Id="Error1319" Overridable="yes">Bandant atidaryti pirminį kabinetinio formato failą įvyko tinklo klaida: [2]</String>
     <String Id="Error1320" Overridable="yes">Nurodytas kelias yra per ilgas: [2]</String>
     <String Id="Error1321" Overridable="yes">Diegimo programa turi per mažai teisių, kad galėtų modifikuoti šį failą: [2].</String>
     <String Id="Error1322" Overridable="yes">Dalis aplanko kelio [2] netinkama. Ji tuščia arba viršija sistemos leidžiamą ilgį.</String>
@@ -449,12 +449,12 @@
     <String Id="Error1328" Overridable="yes">Klaida taikant pataisas failui [2]. Tikriausiai jis buvo atnaujintas kitu būdu, todėl ši pataisa nebegali jo modifikuoti. Dėl išsamesnės informacijos kreipkitės į savo pataisų teikėją. {{Sistemos klaida: [3]}}</String>
     <String Id="Error1329" Overridable="yes">Reikiamo failo negalima įdiegti, nes kabinetinio formato failas [2] nepasirašytas skaitmeniniu būdu. Tai gali rodyti, kad kabinetinio formato failas yra sugadintas.</String>
     <String Id="Error1330" Overridable="yes">Reikiamo failo negalima įdiegti, nes kabinetinio formato failas [2] pasirašytas netinkamu skaitmeniniu parašu. Tai gali rodyti, kad kabinetinio formato failas yra sugadintas.{{  WinVerifyTrust pateikė klaidą [3].}}</String>
-    <String Id="Error1331" Overridable="yes">Nepavyko teisingai nukopijuoti failo [2]: CRC klaida.</String>
-    <String Id="Error1332" Overridable="yes">Nepavyko teisingai perkelti failo [2]: CRC klaida.</String>
-    <String Id="Error1333" Overridable="yes">Nepavyko teisingai pritaikyti pataisų failui [2]: CRC klaida.</String>
+    <String Id="Error1331" Overridable="yes">Nepavyko tinkamai nukopijuoti failo [2]: CRC klaida.</String>
+    <String Id="Error1332" Overridable="yes">Nepavyko tinkamai perkelti failo [2]: CRC klaida.</String>
+    <String Id="Error1333" Overridable="yes">Nepavyko tinkamai pritaikyti pataisų failui [2]: CRC klaida.</String>
     <String Id="Error1334" Overridable="yes">Negalima įdiegti failo [2], nes failo nėra kabinetinio formato faile [3]. Tai gali reikšti tinklo klaidą, skaitymo iš kompaktinio disko klaidą arba šio paketo problemą.</String>
     <String Id="Error1335" Overridable="yes">Diegimui reikalingas kabinetinio formato failas [2] yra sugadintas ir negali būti naudojamas. Tai gali reikšti tinklo klaidą, skaitymo iš kompaktinio disko klaidą arba šio paketo problemą.</String>
-    <String Id="Error1336" Overridable="yes">Klaida kuriant diegimui baigti reikalingą laikinąjį failą.{{ Aplankas: [3]. Sistemos klaidos kodas: [2]}}</String>
+    <String Id="Error1336" Overridable="yes">Įvyko klaida kuriant diegimui baigti reikalingą laikinąjį failą.{{ Aplankas: [3]. Sistemos klaidos kodas: [2]}}</String>
     <String Id="Error1401" Overridable="yes">Nepavyko sukurti rakto: [2]. {{ Sistemos klaida [3].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą. </String>
     <String Id="Error1402" Overridable="yes">Nepavyko atidaryti rakto: [2]. {{ Sistemos klaida [3].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą. </String>
     <String Id="Error1403" Overridable="yes">Nepavyko panaikinti rakto [3] reikšmės [2]. {{ Sistemos klaida [4].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą. </String>
@@ -464,16 +464,16 @@
     <String Id="Error1407" Overridable="yes">Nepavyko nuskaityti rakto [2] reikšmės pavadinimų. {{ Sistemos klaida [3].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą.</String>
     <String Id="Error1408" Overridable="yes">Nepavyko nuskaityti rakto [2] antrinių raktų pavadinimų. {{ Sistemos klaida [3].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą.</String>
     <String Id="Error1409" Overridable="yes">Nepavyko nuskaityti rakto [2] saugos informacijos. {{ Sistemos klaida [3].}} Patikrinkite, ar tikrai turite pakankamą prieigą prie šio rakto, arba kreipkitės į techninės pagalbos personalą.</String>
-    <String Id="Error1410" Overridable="yes">Nepavyko padidinti laisvos vietos registre kiekio. Šiai taikomajai programai įdiegti reikia [2] KB laisvos registro vietos.</String>
+    <String Id="Error1410" Overridable="yes">Nepavyko padaryti daugiau laisvos vietos registre. Šiai taikomajai programai įdiegti reikia [2] KB laisvos registro vietos.</String>
     <String Id="Error1500" Overridable="yes">Vyksta kitos programos diegimas. Turite jį užbaigti, kad galėtumėte toliau diegti šią programą.</String>
     <String Id="Error1501" Overridable="yes">Klaida kreipiantis į apsaugotus duomenis. Įsitikinkite, kad programa „Windows Installer“ yra tinkamai sukonfigūruota, ir bandykite diegti dar kartą.</String>
     <String Id="Error1502" Overridable="yes">Vartotojas [2] anksčiau pradėjo diegti produktą [3]. Šis vartotojas turės pakartoti diegimą, kad galėtų naudoti šį produktą. Jūsų pradėtas diegimas dabar bus tęsiamas.</String>
     <String Id="Error1503" Overridable="yes">Vartotojas [2] anksčiau pradėjo diegti produktą [3]. Šis vartotojas turės pakartoti diegimą, kad galėtų naudoti šį produktą.</String>
-    <String Id="Error1601" Overridable="yes">Diske nebėra vietos -- Tomas: [2]; reikia vietos: [3] KB; laisva vieta: [4] KB. Atlaisvinkite vietos diske ir bandykite dar kartą.</String>
+    <String Id="Error1601" Overridable="yes">Diske nebėra vietos -- tomas: [2]; reikia vietos: [3] KB; laisvos vietos: [4] KB. Atlaisvinkite vietos diske ir bandykite dar kartą.</String>
     <String Id="Error1602" Overridable="yes">Ar tikrai norite atšaukti?</String>
     <String Id="Error1603" Overridable="yes">Failą [2][3] naudoja { šis procesas: pavadinimas: [4], ID: [5], lango pavadinimas: [6]}. Uždarykite šią taikomąją programą ir bandykite dar kartą.</String>
-    <String Id="Error1604" Overridable="yes">[2] produktas jau įdiegtas ir neleidžia diegti šio produkto. Šis du produktai nesuderinami.</String>
-    <String Id="Error1605" Overridable="yes">Nepakanka disko tomo [2] vietos diegti su atkūrimo galimybe. Reikia [3] KB, o yra tik [4] KB laisvos vietos. Spustelėkite Nepaisyti ir diekite toliau, neįrašydami atkūrimo informacijos, spustelėkite Kartoti ir dar kartą patikrinkite, kiek yra laisvos vietos, arba spustelėkite Atšaukti ir nutraukite diegimą.</String>
+    <String Id="Error1604" Overridable="yes">[2] produktas jau įdiegtas ir neleidžia diegti šio produkto. Šie du produktai nesuderinami.</String>
+    <String Id="Error1605" Overridable="yes">Nepakanka disko tomo [2] vietos toliau diegti su atkūrimo galimybe. Reikia [3] KB, o yra tik [4] KB laisvos vietos. Spustelėkite Nepaisyti ir diekite toliau, neįrašydami atkūrimo informacijos, spustelėkite Kartoti ir dar kartą patikrinkite, kiek yra laisvos vietos, arba spustelėkite Atšaukti ir nutraukite diegimą.</String>
     <String Id="Error1606" Overridable="yes">Nepavyko pasiekti tinklo vietos [2].</String>
     <String Id="Error1607" Overridable="yes">Kad galėtumėte tęsti diegimą, uždarykite šias taikomąsias programas:</String>
     <String Id="Error1608" Overridable="yes">Nepavyko rasti jokių anksčiau kompiuteryje įdiegtų reikalavimus atitinkančių produktų, kad būtų galima diegti šį produktą.</String>
@@ -481,8 +481,8 @@
     <String Id="Error1701" Overridable="yes">Raktas [2] negalioja. Patikrinkite, ar įvedėte teisingą raktą.</String>
     <String Id="Error1702" Overridable="yes">Diegimo programa turi paleisti sistemą iš naujo, kad būtų galima tęsti [2] konfigūravimą. Spustelėkite Taip ir paleiskite iš naujo dabar arba spustelėkite Ne ir paleiskite iš naujo vėliau neautomatiškai.</String>
     <String Id="Error1703" Overridable="yes">Turite paleisti sistemą iš naujo, kad [2] konfigūravimo metu padaryti keitimai įsigaliotų. Spustelėkite Taip ir paleiskite iš naujo dabar arba spustelėkite Ne ir paleiskite iš naujo vėliau.</String>
-    <String Id="Error1704" Overridable="yes">[2] diegimas šiuo metu sustabdytas. Norėdami tęsti, turite anuliuoti diegimo padarytus keitimus. Ar norite anuliuoti šiuos keitimus?</String>
-    <String Id="Error1705" Overridable="yes">Vykdomas ankstesnis šio produkto diegimas. Norėdami tęsti, turite anuliuoti diegimo padarytus keitimus. Ar norite anuliuoti šiuos keitimus?</String>
+    <String Id="Error1704" Overridable="yes">[2] diegimas šiuo metu sustabdytas. Norėdami tęsti, turite anuliuoti diegiant padarytus keitimus. Ar norite anuliuoti šiuos keitimus?</String>
+    <String Id="Error1705" Overridable="yes">Vykdomas ankstesnis šio produkto diegimas. Norėdami tęsti, turite anuliuoti diegiant padarytus keitimus. Ar norite anuliuoti šiuos keitimus?</String>
     <String Id="Error1706" Overridable="yes">Nepavyko rasti produkto [2] diegimo paketo. Bandykite diegti dar kartą, naudodami tinkamą diegimo paketo [3] kopiją.</String>
     <String Id="Error1707" Overridable="yes">Sėkmingai įdiegta.</String>
     <String Id="Error1708" Overridable="yes">Nepavyko įdiegti.</String>
@@ -492,14 +492,14 @@
     <String Id="Error1712" Overridable="yes">Nepavyko rasti vieno ar daugiau failų, reikalingų ankstesnei kompiuterio būsenai atkurti. Atkūrimas neįmanomas.</String>
     <String Id="Error1713" Overridable="yes">[2] negali įdiegti vieno iš būtinų produktų. Kreipkitės į techninės pagalbos grupę. {{Sistemos klaida: [3].}}</String>
     <String Id="Error1714" Overridable="yes">Ankstesnės [2] versijos negalima pašalinti. Kreipkitės į techninės pagalbos grupę. {{Sistemos klaida [3].}}</String>
-    <String Id="Error1715" Overridable="yes">[2] įdiegtas</String>
-    <String Id="Error1716" Overridable="yes">[2] sukonfigūruotas</String>
-    <String Id="Error1717" Overridable="yes">[2] pašalintas</String>
+    <String Id="Error1715" Overridable="yes">[2] įdiegta</String>
+    <String Id="Error1716" Overridable="yes">[2] sukonfigūruota</String>
+    <String Id="Error1717" Overridable="yes">[2] pašalinta</String>
     <String Id="Error1718" Overridable="yes">Skaitmeninio parašo strategija atmetė failą [2].</String>
     <String Id="Error1719" Overridable="yes">Nepavyko pasiekti „Windows Installer“ tarnybos. Taip gali įvykti, jei naudojate sistemą „Windows“ saugos režimu arba jei „Windows Installer“ nėra tinkamai įdiegta. Kreipkitės pagalbos į palaikymo personalą.</String>
-    <String Id="Error1720" Overridable="yes">„Windows Installer“ paketo problema. Scenarijaus, reikalingo užbaigti šį diegimą, paleisti nepavyko. Kreipkitės į techninės pagalbos darbuotojus arba į paketo tiekėją. {{Pasirinktinis veiksmas [2] scenarijaus klaida [3], [4]: [5] eilutė [6], stulpelis [7], [8] }}</String>
-    <String Id="Error1721" Overridable="yes">„Windows Installer“ paketo problema. Nepavyko paleisti programos, būtinos diegimui baigti. Kreipkitės į techninės pagalbos darbuotojus arba paketo tiekėją. {{Veiksmas: [2], vieta: [3], komanda: [4] }}</String>
-    <String Id="Error1722" Overridable="yes">„Windows Installer“ paketo problema. Programa, paleista kaip sąrankos dalis, baigė darbą netikėtu būdu. Kreipkitės į techninės pagalbos darbuotojus arba į paketo tiekėją. {{Veiksmas [2], vieta: [3], komanda: [4] }}</String>
+    <String Id="Error1720" Overridable="yes">„Windows Installer“ paketo problema. Scenarijaus, reikalingo šiam diegimui užbaigti, paleisti nepavyko. Kreipkitės į techninės pagalbos darbuotojus arba į paketo tiekėją. {{Pasirinktinis veiksmas [2] scenarijaus klaida [3], [4]: [5] eilutė [6], stulpelis [7], [8] }}</String>
+    <String Id="Error1721" Overridable="yes">„Windows Installer“ paketo problema. Nepavyko paleisti programos, reikalingos diegimui baigti. Kreipkitės į techninės pagalbos darbuotojus arba paketo tiekėją. {{Veiksmas: [2], vieta: [3], komanda: [4] }}</String>
+    <String Id="Error1722" Overridable="yes">„Windows Installer“ paketo problema. Programa, paleista kaip sąrankos dalis, baigė darbą ne taip, kaip tikėtasi. Kreipkitės į techninės pagalbos darbuotojus arba į paketo tiekėją. {{Veiksmas [2], vieta: [3], komanda: [4] }}</String>
     <String Id="Error1723" Overridable="yes">„Windows Installer“ paketo problema. Nepavyko paleisti DLL, reikalingo šiam diegimui atlikti. Kreipkitės į techninės pagalbos darbuotojus arba į paketo tiekėją. {{Veiksmas [2], įrašas: [3], biblioteka: [4] }}</String>
     <String Id="Error1724" Overridable="yes">Pašalinta sėkmingai.</String>
     <String Id="Error1725" Overridable="yes">Pašalinti nepavyko.</String>
@@ -516,7 +516,7 @@
     <String Id="Error1804" Overridable="yes">Įrenginyje [2] nėra disko. Įdėkite diską ir spustelėkite Kartoti arba spustelėkite Atšaukti ir grįžkite į naršyklės dialogo langą ir pasirinkite kitą tomą.</String>
     <String Id="Error1805" Overridable="yes">Aplanko [2] nėra. Įveskite kelią į esantį aplanką.</String>
     <String Id="Error1806" Overridable="yes">Neturite pakankamai teisių skaityti šį aplanką.</String>
-    <String Id="Error1807" Overridable="yes">Nepavyko nustatyti tinkamo paskirties aplanko šiam diegimui.</String>
+    <String Id="Error1807" Overridable="yes">Nepavyko nustatyti tinkamo šio diegimo paskirties aplanko.</String>
     <String Id="Error1901" Overridable="yes">Klaida bandant skaityti diegimo duomenų bazės šaltinį: [2].</String>
     <String Id="Error1902" Overridable="yes">Planuojama perkrovimo operacija: keičiamas failo vardas iš [2] į [3]. Būtina perkrauti, kad operacija būtų atlikta iki galo.</String>
     <String Id="Error1903" Overridable="yes">Planuojama perkrovimo operacija: naikinamas failas [2]. Būtina perkrauti, kad operacija būtų atlikta iki galo.</String>
@@ -524,7 +524,7 @@
     <String Id="Error1905" Overridable="yes">[2] modulio išregistruoti nepavyko. HRESULT [3]. Kreipkitės į techninės pagalbos personalą.</String>
     <String Id="Error1906" Overridable="yes">Nepavyko perkelti paketo [2] į talpyklą. Klaida: [3]. Kreipkitės į techninės pagalbos personalą.</String>
     <String Id="Error1907" Overridable="yes">Nepavyko užregistruoti šrifto [2]. Patikrinkite, ar tikrai turite pakankamai teisių diegti šriftus ir ar sistema palaiko šį šriftą.</String>
-    <String Id="Error1908" Overridable="yes">Nepavyko išregistruoti šrifto [2]. Patikrinkite, ar tikrai turite pakankamai teisių šriftams šalinti.</String>
+    <String Id="Error1908" Overridable="yes">Nepavyko išregistruoti šrifto [2]. Patikrinkite, ar tikrai turite pakankamai teisių šalinti šriftus.</String>
     <String Id="Error1909" Overridable="yes">Nepavyko sukurti nuorodos [2]. Patikrinkite, ar tikrai paskirties aplankas yra ir ar turite prie jo prieigą.</String>
     <String Id="Error1910" Overridable="yes">Nepavyko pašalinti nuorodos [2]. Patikrinkite, ar tikrai nuorodos failas yra ir ar turite prie jo prieigą.</String>
     <String Id="Error1911" Overridable="yes">Nepavyko užregistruoti [2] failui skirtos tipų bibliotekos. Kreipkitės į techninės pagalbos personalą.</String>
@@ -601,9 +601,9 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Šiai priemonei reikia [1] vietos jūsų standžiajame diske. Jai priskirta [2] iš [3] pažymėtų papildomų priemonių. Papildomos priemonės atlaisvina [4] vietos jūsų standžiajame diske.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Šiai priemonei reikia [1] vietos jūsų standžiajame diske. Jai priskirta [2] iš [3] pažymėtų papildomų priemonių. Papildomoms priemonėms reikia [4] vietos jūsų standžiajame diske.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Liko laiko: {[1] min. }{[2] sek.}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">Pasiekiamas</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">Pasiekiama</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Skirtumas</String>
-    <String Id="UITextVolumeCostRequired" Overridable="yes">Reikalingas</String>
+    <String Id="UITextVolumeCostRequired" Overridable="yes">Reikalinga</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Disko talpa</String>
     <String Id="UITextVolumeCostVolume" Overridable="yes">Tomas</String>
 </WixLocalization>

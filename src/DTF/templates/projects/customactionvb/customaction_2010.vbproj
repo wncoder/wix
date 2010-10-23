@@ -35,9 +35,7 @@
 $if$ ($targetframeworkversion$ >= 3.5)
 		<Reference Include="System.Core"/>
 		<Reference Include="System.Xml.Linq"/>
-		<Reference Include="System.Data.DataSetExtensions"/>
 $endif$
-		<Reference Include="System.Data" />
 		<Reference Include="System.Xml" />
 		<Reference Include="Microsoft.Deployment.WindowsInstaller"/>
 	</ItemGroup>
@@ -46,7 +44,6 @@ $endif$
 		<Import Include="System" />
 		<Import Include="System.Collections" />
 		<Import Include="System.Collections.Generic" />
-		<Import Include="System.Data" />
 		<Import Include="System.Diagnostics" />
 		$if$ ($targetframeworkversion$ >= 3.5)
 		<Import Include="System.Linq" />

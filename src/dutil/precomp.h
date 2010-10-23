@@ -41,6 +41,7 @@
 #include <richedit.h>
 #include <stddef.h>
 #include <esent.h>
+#include <ahadmin.h>
 
 #include "dutil.h"
 #include "aclutil.h"
@@ -55,6 +56,7 @@
 #include "fileutil.h"
 #include "gdiputil.h"
 #include "dictutil.h"
+#include "iis7util.h"
 #include "inetutil.h"
 #include "jsonutil.h"
 #include "logutil.h"

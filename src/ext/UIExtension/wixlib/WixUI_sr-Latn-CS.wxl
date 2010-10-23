@@ -89,7 +89,7 @@
     <String Id="FatalError_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarobnjak za instalaciju proizvoda [ProductName] je pre vremena završio sa radom</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">Čarobnjak za instalaciju proizvoda [ProductName] je pre vremena završio sa radom zbog greške. Vaš sistem nije izmenjen. Da biste kasnije instalirali ovaj program, ponovo pokrenite čarobnjak za instalaciju.</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">Čarobnjak za instalaciju proizvoda [ProductName] je pre vremena završio sa radom zbog greške. Sistem nije izmenjen. Da biste kasnije instalirali ovaj program, ponovo pokrenite čarobnjak za instalaciju.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Kliknite na dugme „Završi“ da biste izašli iz čarobnjaka za instalaciju.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
@@ -112,7 +112,7 @@
     <String Id="InstallDirDlg_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Promeni...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}Odredišna fascikla</String>
-    <String Id="InstallDirDlgDescription" Overridable="yes">Kliknite na dugme „Dalje“ da biste instalaciju izvršili u podrazumevanoj fascikli ili kliknite na dugme „Promeni“ da biste odabrali drugu fasciklu.</String>
+    <String Id="InstallDirDlgDescription" Overridable="yes">Kliknite na dugme „Dalje“ da biste instalaciju izvršili u podrazumevanoj fascikli ili na dugme „Promeni“ da biste odabrali drugu fasciklu.</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">Instaliraj [ProductName] u:</String>
 
@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Sledeće aplikacije koriste datoteke koje ova instalacija treba da ažurira. Možete dozvoliti čarobnjaku za instalaciju da ih zatvori i pokuša ponovo da ih pokrene ili kasnije ponovo pokrenuti računar.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Sledeće aplikacije koriste datoteke koje ova instalacija treba da ažurira. Možete dozvoliti čarobnjaku za instalaciju da ih zatvori i pokuša ponovo da ih pokrene ili možete kasnije ponovo pokrenuti računar.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Neke datoteke koje treba ažurirati trenutno se koriste.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Datoteke u upotrebi</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Zatvori aplikacije i pokušaj ponovo da ih pokreneš.</String>
@@ -227,7 +227,7 @@
     <String Id="UserExit_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarobnjak za instalaciju proizvoda [ProductName] je prekinut</String>
-    <String Id="UserExitDescription1" Overridable="yes">Instalacija proizvoda [ProductName] je prekinuta. Vaš sistem nije izmenjen. Da biste ovaj program instalirali kasnije, ponovo pokrenite instalaciju.</String>
+    <String Id="UserExitDescription1" Overridable="yes">Instalacija proizvoda [ProductName] je prekinuta. Sistem nije izmenjen. Da biste ovaj program instalirali kasnije, ponovo pokrenite instalaciju.</String>
     <String Id="UserExitDescription2" Overridable="yes">Kliknite na dugme „Završi“ da biste izašli iz čarobnjaka za instalaciju.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Instalacija proizvoda [ProductName]</String>
@@ -430,7 +430,7 @@
     <String Id="Error1309" Overridable="yes">Greška tokom čitanja iz datoteke: [3]. {{ Sistemska greška [2].}} Proverite da li datoteka postoji i da li joj možete pristupiti.</String>
     <String Id="Error1310" Overridable="yes">Greška tokom upisivanja u datoteku: [3]. {{ Sistemska greška [2].}} Proverite da li imate pristup tom direktorijumu.</String>
     <String Id="Error1311" Overridable="yes">Izvorna datoteka nije pronađena{{(datoteka pakovanja)}}: [2]. Proverite da li datoteka postoji i da li joj možete pristupiti.</String>
-    <String Id="Error1312" Overridable="yes">Nije moguće kreirati direktorijum „[2]“. Datoteka sa ovim imenom već postoji. Preimenujte ili premestite datoteku i kliknite na dugme „Pokušaj opet“ ili na dugme „Otkaži“ da biste izašli.</String>
+    <String Id="Error1312" Overridable="yes">Nije moguće kreirati direktorijum „[2]“. Datoteka sa ovim imenom već postoji. Preimenujte ili uklonite datoteku i kliknite na dugme „Pokušaj opet“ ili na dugme „Otkaži“ da biste izašli.</String>
     <String Id="Error1313" Overridable="yes">Volumen [2] trenutno nije dostupan. Izaberite drugi volumen.</String>
     <String Id="Error1314" Overridable="yes">Navedena putanja „[2]“ nije dostupna.</String>
     <String Id="Error1315" Overridable="yes">Nije moguće upisivati u navedenu fasciklu: [2].</String>
@@ -442,9 +442,9 @@
     <String Id="Error1321" Overridable="yes">Instalacioni program nema dovoljno privilegija da bi izmenio ovu datoteku: [2].</String>
     <String Id="Error1322" Overridable="yes">Deo putanje fascikle „[2]“ je nevažeći. On je prazan ili prekoračuje dužinu koju sistem dozvoljava.</String>
     <String Id="Error1323" Overridable="yes">Putanja fascikle „[2]“ sadrži reči koje nisu važeće u putanji fascikle.</String>
-    <String Id="Error1324" Overridable="yes">Putanja fascikle „[2]“ sadrži jedan nevažeći znak.</String>
+    <String Id="Error1324" Overridable="yes">Putanja fascikle „[2]“ sadrži nevažeći znak.</String>
     <String Id="Error1325" Overridable="yes">„[2]“ nije važeće kratko ime datoteke.</String>
-    <String Id="Error1326" Overridable="yes">Greška tokom preuzimanja bezbednosti datoteke: [3] Preuzmi poslednju grešku: [2]</String>
+    <String Id="Error1326" Overridable="yes">Greška tokom preuzimanja bezbednosti datoteke: [3] GetLastError: [2]</String>
     <String Id="Error1327" Overridable="yes">Nevažeća disk jedinica: [2]</String>
     <String Id="Error1328" Overridable="yes">Došlo je do greške tokom primenjivanja zakrpe na datoteku [2]. Datoteka je verovatno već ažurirana na neki drugi način i ne može se više menjati ovom zakrpom. Za više informacija obratite se prodavcu zakrpe. {{Sistemska greška: [3]}}</String>
     <String Id="Error1329" Overridable="yes">Potrebna datoteka se ne može instalirati zato što datoteka pakovanja [2] nije digitalno potpisana. Ovo može da ukazuje na to da je datoteka pakovanja oštećena.</String>
@@ -454,7 +454,7 @@
     <String Id="Error1333" Overridable="yes">Nije uspelo ispravno krpljenje datoteke [2]: CRC greška.</String>
     <String Id="Error1334" Overridable="yes">Nije moguće instalirati datoteku „[2]“ zato što ona ne može da se pronađe u datoteci pakovanja „[3]“. Ovo može da ukazuje na mrežnu grešku, grešku prilikom čitanja sa CD-ROM-a ili problem sa ovim paketom.</String>
     <String Id="Error1335" Overridable="yes">Datoteka pakovanja „[2]“ neophodna za ovu instalaciju je oštećena i ne može da se koristi. Ovo može da ukazuje na mrežnu grešku, grešku prilikom čitanja sa CD-ROM-a ili problem sa ovim paketom.</String>
-    <String Id="Error1336" Overridable="yes">Došlo je do greške tokom kreiranja privremene datoteke koja je potrebna da bi se dovršila ova instalacija.{{  Fascikla: [3]. Kod sistemske greške: [2]}}</String>
+    <String Id="Error1336" Overridable="yes">Došlo je do greške tokom kreiranja privremene datoteke koja je potrebna da bi se dovršila ova instalacija.{{  Fascikla: [3]. Kôd sistemske greške: [2]}}</String>
     <String Id="Error1401" Overridable="yes">Nije bilo moguće kreirati ključ: [2]. {{ Sistemska greška [3].}} Proverite da li imate odgovarajući pristup tom ključu ili se obratite osoblju za podršku. </String>
     <String Id="Error1402" Overridable="yes">Nije bilo moguće otvoriti ključ: [2]. {{ Sistemska greška [3].}} Proverite da li imate odgovarajući pristup tom ključu ili se obratite osoblju za podršku. </String>
     <String Id="Error1403" Overridable="yes">Nije bilo moguće izbrisati vrednost [2] iz ključa [3]. {{ Sistemska greška [4].}} Proverite da li imate odgovarajući pristup tom ključu ili se obratite osoblju za podršku. </String>
@@ -483,13 +483,13 @@
     <String Id="Error1703" Overridable="yes">Morate ponovo da pokrenete sistem da bi promene napravljene u konfiguraciji proizvoda [2] stupile na snagu. Kliknite na dugme „Da“ da biste odmah ponovo pokrenuli računar ili na dugme „Ne“ ako planirate kasnije ručno da ponovo pokrenete računar.</String>
     <String Id="Error1704" Overridable="yes">Instalacija proizvoda [2] je trenutno obustavljena. Morate da opozovete promene koje je napravila ta instalacija da biste nastavili. Želite li da opozovete te promene?</String>
     <String Id="Error1705" Overridable="yes">Prethodno započeta instalacija ovog proizvoda je u toku. Morate da opozovete promene koje je napravila ta instalacija da biste nastavili. Želite li da opozovete te promene?</String>
-    <String Id="Error1706" Overridable="yes">Nije moguće pronaći instalacioni paket za proizvod [2]. Pokušajte ponovo da izvršite instalaciju pomoću važeće kopije instalacionog paketa „[3]“.</String>
+    <String Id="Error1706" Overridable="yes">Nije moguće pronaći instalacioni paket za proizvod [2]. Ponovo pokušajte da izvršite instalaciju pomoću važeće kopije instalacionog paketa „[3]“.</String>
     <String Id="Error1707" Overridable="yes">Instaliranje je uspešno dovršeno.</String>
     <String Id="Error1708" Overridable="yes">Instaliranje nije uspelo.</String>
     <String Id="Error1709" Overridable="yes">Proizvod: [2] -- [3]</String>
     <String Id="Error1710" Overridable="yes">Možete da vratite računar u prethodno stanje ili da nastavite instaliranje kasnije. Želite li da vratite računar u prethodno stanje?</String>
     <String Id="Error1711" Overridable="yes">Došlo je do greške tokom upisivanja informacija o instalaciji na disk. Uverite se da imate dovoljno dostupnog prostora na disku i kliknite na dugme „Pokušaj opet“ ili na dugme „Otkaži“ da biste završili instalaciju.</String>
-    <String Id="Error1712" Overridable="yes">Neke od datoteka potrebnih da se vaš računar vrati u prethodno stanje nisu mogle biti pronađene. Vraćanje računara u prethodno stanje neće biti moguće.</String>
+    <String Id="Error1712" Overridable="yes">Nije bilo moguće pronaći neke datoteke potrebne da se vaš računar vrati u prethodno stanje. Vraćanje računara u prethodno stanje neće biti moguće.</String>
     <String Id="Error1713" Overridable="yes">[2] ne može da instalira jedan od potrebnih proizvoda. Obratite se grupi za tehničku podršku. {{Sistemska greška: [3].}}</String>
     <String Id="Error1714" Overridable="yes">Nije moguće ukloniti stariju verziju programa [2]. Obratite se grupi za tehničku podršku. {{Sistemska greška [3].}}</String>
     <String Id="Error1715" Overridable="yes">Proizvod [2] je instaliran</String>
@@ -509,7 +509,7 @@
     <String Id="Error1729" Overridable="yes">Konfigurisanje nije uspelo.</String>
     <String Id="Error1730" Overridable="yes">Morate biti administrator da biste mogli da uklonite ovu aplikaciju. Da biste uklonili ovu aplikaciju, možete se prijaviti kao administrator ili se obratiti grupi za tehničku podršku za pomoć.</String>
     <String Id="Error1731" Overridable="yes">Izvorni instalacioni paket proizvoda [2] nije sinhronizovan sa paketom klijenta. Ponovo pokušajte da izvršite instalaciju pomoću važeće kopije instalacionog paketa „[3]“.</String>
-    <String Id="Error1732" Overridable="yes">Da biste dovršili instalaciju proizvoda [2], morate ponovo pokrenuti računar. Drugi korisnici su trenutno prijavljeni na ovaj računar i mogu izgubiti ono što su uradili zbog ponovnog pokretanja računara. Želite li da odmah ponovo pokrenete računar?</String>
+    <String Id="Error1732" Overridable="yes">Da biste dovršili instalaciju proizvoda [2], morate ponovo pokrenuti računar. Na ovaj računar su trenutno prijavljeni drugi korisnici, koji zbog ponovnog pokretanja mogu izgubiti ono što su uradili. Želite li da odmah ponovo pokrenete računar?</String>
     <String Id="Error1801" Overridable="yes">Putanja [2] nije važeća. Navedite važeću putanju.</String>
     <String Id="Error1802" Overridable="yes">Nema dovoljno memorije. Zatvorite ostale aplikacije pre nego što pokušate ponovo.</String>
     <String Id="Error1803" Overridable="yes">Ne postoji disk u disk jedinici [2]. Stavite disk i kliknite na dugme „Pokušaj opet“ ili na dugme „Otkaži“ da biste se vratili na prethodno izabrani volumen.</String>
@@ -519,14 +519,14 @@
     <String Id="Error1807" Overridable="yes">Nije bilo moguće odrediti važeću odredišnu fasciklu za instalaciju.</String>
     <String Id="Error1901" Overridable="yes">Greška pri pokušaju čitanja iz izvorne baze podataka instalacije: [2].</String>
     <String Id="Error1902" Overridable="yes">Planiranje ponovnog pokretanja sistema: preimenovanje datoteke [2] u [3]. Morate ponovo pokrenuti sistem da biste dovršili operaciju.</String>
-    <String Id="Error1903" Overridable="yes">Planiranje ponovnog pokretanja sistema: brisanje datoteke [2]. Morate ponovo pokrenuti sistema da biste dovršili operaciju.</String>
+    <String Id="Error1903" Overridable="yes">Planiranje ponovnog pokretanja sistema: brisanje datoteke [2]. Morate ponovo pokrenuti sistem da biste dovršili operaciju.</String>
     <String Id="Error1904" Overridable="yes">Registracija modula [2] nije uspela. HRESULT [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1905" Overridable="yes">Opoziv registracije modula [2] nije uspeo. HRESULT [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1906" Overridable="yes">Keširanje paketa [2] nije uspelo. Greška: [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1907" Overridable="yes">Nije bilo moguće registrovati font [2]. Proverite da li imate odgovarajuće dozvole za instaliranje fontova i da li sistem podržava ovaj font.</String>
     <String Id="Error1908" Overridable="yes">Nije bilo moguće opozvati registraciju fonta [2]. Proverite da li imate odgovarajuće dozvole za uklanjanje fontova.</String>
     <String Id="Error1909" Overridable="yes">Nije bilo moguće kreirati prečicu [2]. Proverite da li odredišna fascikla postoji i da li joj možete pristupiti.</String>
-    <String Id="Error1910" Overridable="yes">Nije bilo moguće ukloniti prečicu [2]. Proverite da li prečica postoji i da li joj možete pristupiti.</String>
+    <String Id="Error1910" Overridable="yes">Nije bilo moguće ukloniti prečicu [2]. Proverite da li datoteka prečice postoji i da li joj možete pristupiti.</String>
     <String Id="Error1911" Overridable="yes">Nije bilo moguće registrovati biblioteku tipova za datoteku [2]. Obratite se osoblju za podršku.</String>
     <String Id="Error1912" Overridable="yes">Nije bilo moguće opozvati registraciju biblioteke tipova za datoteku [2]. Obratite se osoblju za podršku.</String>
     <String Id="Error1913" Overridable="yes">Nije bilo moguće ažurirati ini datoteku [2][3]. Proverite da li datoteka postoji i da li joj možete pristupiti.</String>
@@ -547,11 +547,11 @@
     <String Id="Error1928" Overridable="yes">Greška tokom registracije COM+ aplikacije. Za više informacija obratite se osoblju za podršku.</String>
     <String Id="Error1929" Overridable="yes">Greška tokom opoziva registracije COM+ aplikacije. Za više informacija obratite se osoblju za podršku.</String>
     <String Id="Error1930" Overridable="yes">Opis usluge „[2]“ ([3]) ne može da se menja.</String>
-    <String Id="Error1931" Overridable="yes">Usluga Windows Installer ne može da ažurira sistemsku datoteku [2] zato što je Windows zaštitio datoteku. Možda ćete morati da ažurirate operativni sistem da bi ovaj program radio ispravno. {{Verzija paketa: [3], zaštićena verzija operativnog sistema: [4]}}</String>
-    <String Id="Error1932" Overridable="yes">Usluga Windows Installer ne može da ažurira zaštićenu Windows datoteku [2]. {{Verzija paketa: [3], Zaštićena verzija operativnog sistema: [4], SFP greška: [5]}}</String>
+    <String Id="Error1931" Overridable="yes">Usluga Windows Installer ne može da ažurira sistemsku datoteku [2] zato što je Windows zaštitio datoteku. Možda ćete morati da ažurirate operativni sistem da bi ovaj program radio ispravno. {{Verzija paketa: [3], verzija koju štiti operativni sistem: [4]}}</String>
+    <String Id="Error1932" Overridable="yes">Usluga Windows Installer ne može da ažurira zaštićenu Windows datoteku [2]. {{Verzija paketa: [3], verzija koju štiti operativni sistem: [4], SFP greška: [5]}}</String>
     <String Id="Error1933" Overridable="yes">Usluga Windows Installer ne može da ažurira neke zaštićene Windows datoteke. {{SFP greška: [2]. Lista zaštićenih datoteka:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">Korisničke instalacije su onemogućene putem smernica na računaru.</String>
-    <String Id="Error1935" Overridable="yes">Došlo je do greške tokom instaliranja asemblera „[6]“. Za više informacija pogledajte Pomoć i podršku. HRESULT: [3]. {{interfejs asemblera: [4], funkcija: [5], komponenta: [2]}}</String>
+    <String Id="Error1935" Overridable="yes">Došlo je do greške prilikom instaliranja asemblera „[6]“. Za više informacija pogledajte Pomoć i podršku. HRESULT: [3]. {{interfejs asemblera: [4], funkcija: [5], komponenta: [2]}}</String>
     <String Id="Error1936" Overridable="yes">Došlo je do greške prilikom instaliranja asemblera „[6]“. Asembler nema dovoljno jako ime ili nije potpisan minimalnom dužinom ključa. HRESULT: [3]. {{interfejs asemblera: [4], funkcija: [5], komponenta: [2]}}</String>
     <String Id="Error1937" Overridable="yes">Došlo je do greške prilikom instaliranja asemblera „[6]“. Nije bilo moguće verifikovati potpis ili katalog ili su oni nevažeći. HRESULT: [3]. {{interfejs asemblera: [4], funkcija: [5], komponenta: [2]}}</String>
     <String Id="Error1938" Overridable="yes">Došlo je do greške prilikom instaliranja asemblera „[6]“. Nije bilo moguće pronaći neke module asemblera. HRESULT: [3]. {{interfejs asemblera: [4], funkcija: [5], komponenta: [2]}}</String>
@@ -601,7 +601,7 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Ova funkcija zahteva [1] na čvrstom disku. Izabrano je [2] od [3] njenih potfunkcija. Potfunkcije oslobađaju [4] na čvrstom disku.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Ova funkcija zahteva [1] na čvrstom disku. Izabrano je [2] od [3] njenih potfunkcija. Potfunkcije zahtevaju [4] na čvrstom disku.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Preostalo vreme: {[1] minuta }{[2] sekundi}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">Dostupno</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">Dostupan</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Razlika</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">Potrebno</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Veličina diska</String>

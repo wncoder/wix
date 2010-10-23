@@ -36,7 +36,7 @@ namespace Microsoft.Tools.WindowsInstaller.Tools
         private const string WixLocalizationNamespaceURI = "http://schemas.microsoft.com/wix/2006/localization";
         private static readonly Regex WixVariableRegex = new Regex(@"(\!|\$)\((?<namespace>loc|wix)\.(?<name>[_A-Za-z][0-9A-Za-z_]+)\)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
         private static readonly Regex AddPrefix = new Regex(@"^[^a-zA-Z_]", RegexOptions.Compiled);
-        private static readonly Regex IllegalIdentifierCharacters = new Regex(@"[^A-Za-z0-9_\.]|\.{2,}", RegexOptions.Compiled); // non 'words' and assorted valid characters
+        private static readonly Regex IllegalIdentifierCharacters = new Regex(@"[^A-Za-z0-9_\.\$\(\)]|\.{2,}", RegexOptions.Compiled); // non 'words' and assorted valid characters
 
         private int errors;
         private Hashtable errorsAsWarnings;
@@ -3423,7 +3423,9 @@ namespace Microsoft.Tools.WindowsInstaller.Tools
         /// </summary>
         /// <param name="name">File/directory name to generate identifer from</param>
         /// <returns>A version of the name that is a legal identifier.</returns>
-        /// <remarks>This is duplicated from WiX's Common class.</remarks>
+        /// <remarks>This is very similar to WiX's Common class, except that in wixcop's case,
+        ///          the identifier hasn't been run through the preprocessor, so we are more
+        ///          permissive to account for that.</remarks>
         private static string GetIdentifierFromName(string name)
         {
             string result = IllegalIdentifierCharacters.Replace(name, "_"); // replace illegal characters with "_".

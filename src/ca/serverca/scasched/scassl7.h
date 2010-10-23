@@ -18,16 +18,7 @@
 //-------------------------------------------------------------------------------------------------
 
 // prototypes
-HRESULT ScaSslCertificateRead7(
-    __in_z LPCWSTR wzWebId,
-    __inout SCA_WEB_SSL_CERTIFICATE** ppswscList
-    );
-
 HRESULT ScaSslCertificateWrite7(
     __in_z LPCWSTR wzWebBase,
-    __in SCA_WEB_SSL_CERTIFICATE* pswscList
-    );
-
-void ScaSslCertificateFreeList7(
     __in SCA_WEB_SSL_CERTIFICATE* pswscList
     );

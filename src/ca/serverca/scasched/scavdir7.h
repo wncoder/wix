@@ -58,7 +58,13 @@ HRESULT __stdcall ScaVirtualDirsRead7(
     __in SCA_VDIR7** ppsvdList,
     __in SCA_MIMEMAP** ppsmmList,
     __in SCA_HTTP_HEADER** ppshhList,
-    __in SCA_WEB_ERROR** ppsweList
+    __in SCA_WEB_ERROR** ppsweList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData
     );
 
 HRESULT ScaVirtualDirsInstall7(

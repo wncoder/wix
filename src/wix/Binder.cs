@@ -3486,12 +3486,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         string version;
                         string language;
 
-                        if (fileInfo.Length > Int32.MaxValue)
+                        using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
-                        }
+                            if (Int32.MaxValue < fileStream.Length)
+                            {
+                                throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
+                            }
 
-                        fileRow.FileSize = Convert.ToInt32(fileInfo.Length, CultureInfo.InvariantCulture);
+                            fileRow.FileSize = Convert.ToInt32(fileStream.Length, CultureInfo.InvariantCulture);
+                        }
 
                         try
                         {

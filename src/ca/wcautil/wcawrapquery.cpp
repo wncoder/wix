@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Windows Installer XML CustomAction utility library wrappers meant to wrap an MSI view as
 //    opened by an immediate custom action and transmit it to a deferred custom action
@@ -48,18 +48,21 @@ WCA_WRAPQUERY_HANDLE WIXAPI GetNewQueryInstance(
     hNewHandle->dwNextIndex = 0;
 
     // Initialize arrays
-    hNewHandle->pcdtColumnType = static_cast<eColumnDataType *>(MemAlloc(hNewHandle->dwColumns * sizeof(eColumnDataType), TRUE));
-    if (NULL == hNewHandle->pcdtColumnType)
+    if (0 != hNewHandle->dwColumns)
     {
-        hr = E_OUTOFMEMORY;
-        ExitOnFailure(hr, "Failed to allocate column type array");
-    }
+        hNewHandle->pcdtColumnType = static_cast<eColumnDataType *>(MemAlloc(hNewHandle->dwColumns * sizeof(eColumnDataType), TRUE));
+        if (NULL == hNewHandle->pcdtColumnType)
+        {
+            hr = E_OUTOFMEMORY;
+            ExitOnFailure(hr, "Failed to allocate column type array");
+        }
 
-    hNewHandle->ppwzColumnNames = static_cast<LPWSTR *>(MemAlloc(hNewHandle->dwColumns * sizeof(LPWSTR), TRUE));
-    if (NULL == hNewHandle->ppwzColumnNames)
-    {
-        hr = E_OUTOFMEMORY;
-        ExitOnFailure(hr, "Failed to allocate column names array");
+        hNewHandle->ppwzColumnNames = static_cast<LPWSTR *>(MemAlloc(hNewHandle->dwColumns * sizeof(LPWSTR), TRUE));
+        if (NULL == hNewHandle->ppwzColumnNames)
+        {
+            hr = E_OUTOFMEMORY;
+            ExitOnFailure(hr, "Failed to allocate column names array");
+        }
     }
 
     for (DWORD i=0;i<hNewHandle->dwColumns;i++)
@@ -68,12 +71,16 @@ WCA_WRAPQUERY_HANDLE WIXAPI GetNewQueryInstance(
         hNewHandle->ppwzColumnNames[i] = NULL;
     }
 
-    hNewHandle->phRecords = static_cast<MSIHANDLE *>(MemAlloc(hNewHandle->dwRows * sizeof(MSIHANDLE), TRUE));
-    if (NULL == hNewHandle->phRecords)
+    if (0 != hNewHandle->dwRows)
     {
-        hr = E_OUTOFMEMORY;
-        ExitOnFailure(hr, "Failed to allocate records array");
+        hNewHandle->phRecords = static_cast<MSIHANDLE *>(MemAlloc(hNewHandle->dwRows * sizeof(MSIHANDLE), TRUE));
+        if (NULL == hNewHandle->phRecords)
+        {
+            hr = E_OUTOFMEMORY;
+            ExitOnFailure(hr, "Failed to allocate records array");
+        }
     }
+
     for (DWORD i=0;i<hNewHandle->dwRows;i++)
     {
         hNewHandle->phRecords[i] = NULL;
@@ -509,7 +516,7 @@ HRESULT WIXAPI WcaBeginUnwrapQuery(
     if (wqaTableBegin != iTempInteger)
     {
         hr = E_INVALIDARG;
-    }    
+    }
     ExitOnFailure1(hr, "Failed to read table begin marker from custom action data (read %d instead)", iTempInteger);
 
     hr = WcaReadIntegerFromCaData(ppwzCustomActionData, &iColumns);
@@ -596,7 +603,7 @@ HRESULT WIXAPI WcaBeginUnwrapQuery(
     if (wqaTableFinish != iTempInteger)
     {
         hr = E_INVALIDARG;
-    }    
+    }
     ExitOnFailure1(hr, "Failed to read table finish marker from custom action data (read %d instead)", iTempInteger);
 
     *phWrapQuery = hWrapQuery;
@@ -667,7 +674,7 @@ HRESULT WIXAPI WcaFetchWrappedRecordWhereString(
     HRESULT hr = S_OK;
     MSIHANDLE hRec = NULL;
     LPWSTR pwzData = NULL;
-    
+
     while (S_OK == (hr = WcaFetchWrappedRecord(hWrapQuery, &hRec)))
     {
         ExitOnFailure(hr, "Failed to fetch a wrapped record");

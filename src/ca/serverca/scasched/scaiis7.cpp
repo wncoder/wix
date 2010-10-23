@@ -18,38 +18,7 @@
 
 #include "precomp.h"
 
-// globals
-LPWSTR vpwzCustomActionDataIIS7 = NULL;
-DWORD vdwCustomActionCostIIS7 = 0;
-
 #define COST_IIS_WRITEKEY 10
-
-
-// prototypes
-static HRESULT ScaAddToIIS7Configuration(LPCWSTR pwzData, DWORD dwCost);
-
-
-HRESULT ScaScheduleIIS7Configuration()
-{
-    HRESULT hr = S_OK;
-
-    if (vpwzCustomActionDataIIS7 && *vpwzCustomActionDataIIS7)
-    {
-        hr = WcaDoDeferredAction(L"WriteIIS7ConfigChanges", vpwzCustomActionDataIIS7, vdwCustomActionCostIIS7);
-        ExitOnFailure(hr, "Failed to schedule IIS7 Config Changes custom action");
-
-        ReleaseNullStr(vpwzCustomActionDataIIS7);
-    }
-    else
-    {
-        hr = S_FALSE;
-    }
-
-LExit:
-    return hr;
-}
-
-
 
 HRESULT ScaIIS7ConfigTransaction(LPCWSTR wzBackup)
 {
@@ -68,7 +37,6 @@ LExit:
     return hr;
 }
 
-
 HRESULT ScaWriteConfigString(const LPCWSTR wzValue)
 {
     HRESULT hr = S_OK;
@@ -77,8 +45,8 @@ HRESULT ScaWriteConfigString(const LPCWSTR wzValue)
     hr = WcaWriteStringToCaData(wzValue, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase delete key directive to CustomActionData");
 
-    hr = ScaAddToIIS7Configuration(pwzCustomActionData, COST_IIS_WRITEKEY);
-    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %S, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_WRITEKEY);
+    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %ls, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -94,8 +62,8 @@ HRESULT ScaWriteConfigInteger(DWORD dwValue)
     hr = WcaWriteIntegerToCaData(dwValue, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase delete key directive to CustomActionData");
 
-    hr = ScaAddToIIS7Configuration(pwzCustomActionData, COST_IIS_WRITEKEY);
-    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %S, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_WRITEKEY);
+    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %ls, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -111,25 +79,12 @@ HRESULT ScaWriteConfigID(IIS_CONFIG_ACTION emID)
     hr = WcaWriteIntegerToCaData(emID, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase delete key directive to CustomActionData");
 
-    hr = ScaAddToIIS7Configuration(pwzCustomActionData, COST_IIS_WRITEKEY);
-    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %S, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_WRITEKEY);
+    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %ls, cost: %d", pwzCustomActionData, COST_IIS_WRITEKEY);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
 
-    return hr;
-}
-
-static HRESULT ScaAddToIIS7Configuration(LPCWSTR pwzData, DWORD dwCost)
-{
-    HRESULT hr = S_OK;
-
-    hr = WcaWriteStringToCaData(pwzData, &vpwzCustomActionDataIIS7);
-    ExitOnFailure1(hr, "failed to add to metabase configuration data string: %S", pwzData);
-
-    vdwCustomActionCostIIS7 += dwCost;
-
-LExit:
     return hr;
 }
 

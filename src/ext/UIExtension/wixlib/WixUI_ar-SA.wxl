@@ -27,7 +27,7 @@
 
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">برنامج إعداد [ProductName]</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}يرجى قراءة اتفاقية ترخيص [ProductName]</String>
+    <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}الرجاء قراءة اتفاقية ترخيص [ProductName]</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">أوافق &amp;على الشروط الواردة في اتفاقية الترخيص</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">انقر فوق "تثبيت" لتثبيت المنتج بالخيارات الافتراضية لجميع المستخدمين. انقر فوق "‏‏خيارات متقدمة" لتغيير خيارات التثبيت.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">انقر فوق "تثبيت" لتثبيت المنتج بالخيارات الافتراضية لك فقط. انقر فوق "خيارات متقدمة" لتغيير خيارات التثبيت.</String>
@@ -265,7 +265,7 @@
     <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">أوافق &amp;على الشروط الواردة في اتفاقية الترخيص</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">ت&amp;ثبيت</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">ت&amp;حديث</String>
-    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}يرجى قراءة اتفاقية ترخيص [ProductName]</String>
+    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}الرجاء قراءة اتفاقية ترخيص [ProductName]</String>
 
     <String Id="ProgressTextInstallValidate" Overridable="yes">‏‏التحقق من صحة التثبيت</String>
     <String Id="ProgressTextInstallFiles" Overridable="yes">‏‏نسخ الملفات الجديدة</String>
@@ -422,7 +422,7 @@
     <String Id="Error1301" Overridable="yes">لا يمكن إنشاء الملف '[2]'. يوجد دليل يحمل هذا الاسم بالفعل. قم بإلغاء التثبيت، ثم حاول إجراء التثبيت في موقع مختلف.</String>
     <String Id="Error1302" Overridable="yes">‏‏الرجاء إدراج القرص: [2]</String>
     <String Id="Error1303" Overridable="yes">المثبت ليست لديه امتيازات كافية للوصول إلى هذا الدليل: [2]. تتعذر متابعة التثبيت. قم بتسجيل الدخول كمسؤول أو اتصل بمسؤول النظام.</String>
-    <String Id="Error1304" Overridable="yes">حدث خطأ أثناء الكتابة على الملف: [2].تحقق من وجود الملف وإمكانية الوصول إلى ذلك الدليل.</String>
+    <String Id="Error1304" Overridable="yes">حدث خطأ أثناء الكتابة على الملف: [2]. تحقق من إمكانية الوصول إلى ذلك الدليل.</String>
     <String Id="Error1305" Overridable="yes">حدث خطأ أثناء القراءة من الملف [2]. {{ خطأ في النظام [3].}} تحقق من وجود الملف وإمكانية الوصول إليه.</String>
     <String Id="Error1306" Overridable="yes">لدى تطبيق آخر وصول خاص للملف '[2]'. الرجاء إيقاف تشغيل كافة التطبيقات الأخرى ثم النقر فوق "إعادة المحاولة".</String>
     <String Id="Error1307" Overridable="yes">لا توجد مساحة كافية على القرص لتثبيت هذا الملف: [2]. حرر بعض المساحة على القرص ثم انقر فوق " إعادة المحاولة"، أو انقر فوق " إلغاء الأمر" للإنهاء.</String>
@@ -499,7 +499,7 @@
     <String Id="Error1719" Overridable="yes">‏‏تعذر الوصول إلى خدمة Windows Installer. قد يحدث هذا إذا كنت تقوم بتشغيل Windows في الوضع الآمن، أو إذا لم يتم تثبيت Windows Installer بشكل صحيح. قم بالاتصال بموظفي الدعم للحصول على المساعدة.</String>
     <String Id="Error1720" Overridable="yes">توجد مشكلة في حزمة Windows Installer هذه. تعذر تشغيل برنامج نصي مطلوب لإكمال هذا التثبيت. اتصل بموظفي الدعم أو مورّد الحزمة. {{الإجراء المخصص [2] خطأ البرنامج النصي [3]، [4]: [5] السطر [6]، العمود [7]، [8] }}</String>
     <String Id="Error1721" Overridable="yes">‏‏توجد مشكلة في حزمة Windows Installer هذه. تعذر تشغيل برنامج مطلوب لإتمام عملية التثبيت هذه. قم بالاتصال بموظفي الدعم أو مورّد الحزمة. {{الإجراء [2]، الموقع [3]، الأمر [4]}}</String>
-    <String Id="Error1722" Overridable="yes">توجد مشكلة في حزمة Windows Installer هذه. تعذر إنهاء برنامج - يتم تشغيله كجزء من عملية الإعداد - بالشكل المتوقع. اتصل بموظفي الدعم أو مورّد الحزمة. {{الإجراء: [2]، الموقع: [3]، الأمر: [4]}}</String>
+    <String Id="Error1722" Overridable="yes">توجد مشكلة في حزمة Windows Installer هذه. تعذر إنهاء برنامج يتم تشغيله كجزء من عملية الإعداد بالشكل المتوقع. اتصل بموظفي الدعم أو مورّد الحزمة. {{الإجراء: [2]، الموقع: [3]، الأمر: [4]}}</String>
     <String Id="Error1723" Overridable="yes">توجد مشكلة في حزمة Windows Installer هذه. تعذر تشغيل DLL مطلوب لإكمال هذا التثبيت. اتصل بموظفي الدعم أو مورّد الحزمة. {{الإجراء: [2]، الإدخال: [3]، المكتبة: [4] }}</String>
     <String Id="Error1724" Overridable="yes">‏‏تمت عملية الإزالة بنجاح.</String>
     <String Id="Error1725" Overridable="yes">‏‏فشلت عملية الإزالة.</String>
@@ -510,11 +510,11 @@
     <String Id="Error1730" Overridable="yes">‏‏يجب أن تكون مسؤولاً لكي تتمكن من إزالة هذا التطبيق. لإزالة هذا التطبيق، يمكنك تسجيل الدخول كمسؤول، أو الاتصال بمجموعة الدعم التقني للحصول على المساعدة.</String>
     <String Id="Error1731" Overridable="yes">حزمة التثبيت المصدر للمنتج [2] غير متزامنة مع حزمة العميل. حاول إجراء التثبيت مرة أخرى باستخدام نسخة صالحة من حزمة التثبيت '[3]'.</String>
     <String Id="Error1732" Overridable="yes">لإكمال تثبيت [2]، يجب إعادة تشغيل الكمبيوتر. يوجد حاليًا مستخدمون آخرون قاموا بتسجيل الدخول إلى هذا الكمبيوتر، وقد ينتج عن إعادة التشغيل فقدانهم لعملهم. هل ترغب في إعادة التشغيل الآن؟</String>
-    <String Id="Error1801" Overridable="yes">المسار [2] غير صالح. يرجى تحديد مسار صالح.</String>
+    <String Id="Error1801" Overridable="yes">المسار [2] غير صالح. الرجاء تحديد مسار صالح.</String>
     <String Id="Error1802" Overridable="yes">‏‏نفدت الذاكرة. أغلق التطبيقات الأخرى قبل إعادة المحاولة.</String>
     <String Id="Error1803" Overridable="yes">‏‏لا يوجد قرص داخل محرك الأقراص [2]. الرجاء إدراج قرص، ثم انقر فوق "إعادة المحاولة"، أو فوق "إلغاء الأمر" للرجوع إلى وحدة التخزين المحددة سابقًا.</String>
     <String Id="Error1804" Overridable="yes">‏‏لا يوجد قرص داخل محرك الأقراص [2]. الرجاء إدراج قرص، ثم انقر فوق "إعادة المحاولة"، أو فوق "إلغاء الأمر" للرجوع إلى مربع حوار الاستعراض وتحديد وحدة تخزين أخرى.</String>
-    <String Id="Error1805" Overridable="yes">المجلد [2] غير موجود. يرجى إدخال مسار لمجلد موجود.</String>
+    <String Id="Error1805" Overridable="yes">المجلد [2] غير موجود. الرجاء إدخال مسار لمجلد موجود.</String>
     <String Id="Error1806" Overridable="yes">‏‏ليست لديك الامتيازات الكافية لقراءة هذا المجلد.</String>
     <String Id="Error1807" Overridable="yes">‏‏تعذر تحديد مجلد وجهة صالح للتثبيت.</String>
     <String Id="Error1901" Overridable="yes">‏‏حدث خطأ أثناء محاولة القراءة من قاعدة بيانات تثبيت المصدر: [2].</String>
@@ -523,7 +523,7 @@
     <String Id="Error1904" Overridable="yes">‏‏فشل تسجيل الوحدة النمطية [2]. HRESULT [3]‎. اتصل بموظفي الدعم.</String>
     <String Id="Error1905" Overridable="yes">‏‏فشل إلغاء تسجيل الوحدة النمطية [2]. HRESULT [3]‎. اتصل بموظفي الدعم.</String>
     <String Id="Error1906" Overridable="yes">‏‏فشل التخزين المؤقت للحزمة [2]. الخطأ: [3]. اتصل بموظفي الدعم.</String>
-    <String Id="Error1907" Overridable="yes">تعذر تسجيل الخط [2]. تحقق من توفر الأذونات الكافية لتثبيت الخطوط، وأن النظام يدعم ذلك الخط.</String>
+    <String Id="Error1907" Overridable="yes">تعذر تسجيل الخط [2]. تحقق من توفر الأذونات الكافية لتثبيت الخطوط، وأن النظام يعتمد ذلك الخط.</String>
     <String Id="Error1908" Overridable="yes">‏‏تعذر إلغاء تسجيل الخط [2]. تحقق من امتلاكك الأذونات الكافية لإزالة الخطوط.</String>
     <String Id="Error1909" Overridable="yes">‏‏تعذر إنشاء الاختصار [2]. تحقق من وجود مجلد الوجهة وإمكانية الوصول إليه.</String>
     <String Id="Error1910" Overridable="yes">‏‏تعذرت إزالة الاختصار [2]. تحقق من وجود ملف الاختصار وإمكانية الوصول إليه.</String>
@@ -551,7 +551,7 @@
     <String Id="Error1932" Overridable="yes">‏‏لا يمكن لخدمة Windows Installer تحديث ملف Windows المحمي [2]. {{إصدار الحزمة: [3], إصدار نظام التشغيل المحمي: [4]، خطأ SFP: [5]}}</String>
     <String Id="Error1933" Overridable="yes">لا يمكن لخدمة Windows Installer القيام بتحديث ملف واحد أو أكثر من ملفات Windows المحمية. {{خطأ SFP: [2]. قائمة الملفات المحمية:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">‏‏تم تعطيل عمليات تثبيت المستخدم بواسطة النهج الموجود على الجهاز.</String>
-    <String Id="Error1935" Overridable="yes">حدث خطأ أثناء تثبيت التجميع '[6]'. لمزيد من المعلومات، الرجاء الرجوع إلى " تعليمات ودعم". ‎HRESULT‏: [3]. {{واجهة التجميع: [4]، الوظيفة: [5]، المكون: [2]}}</String>
+    <String Id="Error1935" Overridable="yes">حدث خطأ أثناء تثبيت التجميع '[6]'. لمزيد من المعلومات، الرجاء الرجوع إلى "التعليمات والدعم". ‎HRESULT‏: [3]. {{واجهة التجميع: [4]، الوظيفة: [5]، المكون: [2]}}</String>
     <String Id="Error1936" Overridable="yes">حدث خطـأ أثناء تثبيت التجميع '[6]'. إما إنه لم تتم تسمية التجميع باسم مميز أو لم يتم التوقيع عليه بمفتاح يبلغ طوله الحد الأدنى. HRESULT: [3]. {{واجهة التجميع: [4], الوظيفة: [5], المكون: [2]}}</String>
     <String Id="Error1937" Overridable="yes">حدث خطـأ أثناء تثبيت التجميع '[6]'. تعذر التحقق من صحة التوقيع أو الكتالوج أو أنهما غير صالحين. HRESULT: [3]. {{واجهة التجميع: [4], الوظيفة: [5], المكون: [2]}}</String>
     <String Id="Error1938" Overridable="yes">حدث خطـأ أثناء تثبيت التجميع '[6]'. تعذر العثور على وحدة نمطية واحدة أو أكثر من وحدات التجميع النمطية. HRESULT: [3]. {{واجهة التجميع: [4], الوظيفة: [5], المكون: [2]}}</String>
@@ -578,7 +578,7 @@
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">ستصبح هذه الميزة غير متوفرة</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">سيتم تثبيتها عند الحاجة</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">‏‏ستتوفر هذه الميزة لتشغيلها من القرص المضغوط</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">سيتم تثبيت هذه الميزة على محرك الأقراص المحلي</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">سيتم تثبيت هذه الميزة على القرص الثابت المحلي</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">‏‏ستتوفر هذه الميزة لتشغيلها من الشبكة</String>
     <String Id="UITextSelCDAbsent" Overridable="yes">ستتم إزالة تثبيت هذه الميزة بشكل كامل، ولن تتمكن من تشغيلها من القرص المضغوط</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">‏‏ستتغير هذه الميزة من حالة التشغيل من القرص المضغوط إلى تعيينها بحيث يتم تثبيتها عند الطلب</String>
@@ -601,9 +601,9 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">تتطلب هذه الميزة [1] على محرك الأقراص الثابت. لديها [2] من [3] من الميزات الفرعية المحددة. تحرر الميزات الفرعية [4] على محرك الأقراص الثابت.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">تتطلب هذه الميزة [1] على محرك الأقراص الثابت. لديها [2] من [3] من الميزات الفرعية المحددة. تتطلب الميزات الفرعية [4] على محرك الأقراص الثابت.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">‏‏الوقت المتبقي: {[1] دقيقة }{[2] ثانية}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">متصل</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">متوفر</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">الفرق</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">مطلوب</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">حجم القرص</String>
-    <String Id="UITextVolumeCostVolume" Overridable="yes">الحجم</String>
+    <String Id="UITextVolumeCostVolume" Overridable="yes">وحدة تخزين</String>
 </WixLocalization>

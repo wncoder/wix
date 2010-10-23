@@ -10,121 +10,13 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Property functions for CustomActions
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
-
-/*------------------------------------------------------------------
-IIsProperty table:
-
-Property  Component_  Attributes  Value
-s72      s72         i4          s255
-------------------------------------------------------------------*/
-
-// sql queries
-LPCWSTR vcsPropertyQuery7 = L"SELECT `Property`, `Component_`, `Attributes`, `Value` "
-                         L"FROM `IIsProperty`";
-
-enum ePropertyQuery { pqProperty = 1, pqComponent, pqAttributes, pqValue, pqInstalled, pqAction };
-
-
-// prototypes
-static HRESULT AddPropertyToList(
-    SCA_PROPERTY** ppspList
-    );
-
-
-// functions
-void ScaPropertyFreeList7(
-    SCA_PROPERTY* pspList
-    )
-{
-    SCA_PROPERTY* pspDelete = pspList;
-    while (pspList)
-    {
-        pspDelete = pspList;
-        pspList = pspList->pspNext;
-
-        MemFree(pspDelete);
-    }
-}
-
-
-HRESULT ScaPropertyRead7(
-    SCA_PROPERTY** ppspList
-    )
-{
-    HRESULT hr = S_OK;
-    UINT er = ERROR_SUCCESS;
-    PMSIHANDLE hView, hRec;
-    INSTALLSTATE isInstalled = INSTALLSTATE_UNKNOWN;
-    INSTALLSTATE isAction = INSTALLSTATE_UNKNOWN;    
-
-    LPWSTR pwzData = NULL;
-    SCA_PROPERTY* pss;
-
-    ExitOnNull(ppspList, hr, E_INVALIDARG, "Failed to read property, because no property to read was provided");
-
-    if (S_OK != WcaTableExists(L"IIsProperty"))
-    {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaPropertyRead7() - because IIsProperty table not present.");
-        ExitFunction1(hr = S_FALSE);
-    }
-
-    // loop through all the Settings
-    hr = WcaOpenExecuteView(vcsPropertyQuery7, &hView);
-    ExitOnFailure(hr, "failed to open view on IIsProperty table");
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
-    {
-        hr = WcaGetRecordString(hRec, pqComponent, &pwzData);
-        ExitOnFailure(hr, "failed to get IIsProperty.Component");
-        
-        er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzData, &isInstalled, &isAction);
-        hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure(hr, "Failed to get Component state for WebSvcExt");    
-
-        hr = AddPropertyToList(ppspList);
-        ExitOnFailure(hr, "failed to add property to list");
-
-        pss = *ppspList;
-
-        hr = ::StringCchCopyW(pss->wzComponent, countof(pss->wzComponent), pwzData);
-        ExitOnFailure1(hr, "failed to copy component name: %S", pwzData);
-
-        pss->isInstalled = isInstalled;
-        pss->isAction = isAction;
-
-        hr = WcaGetRecordString(hRec, pqProperty, &pwzData);
-        ExitOnFailure(hr, "failed to get IIsProperty.Property");
-        hr = ::StringCchCopyW(pss->wzProperty, countof(pss->wzProperty), pwzData);
-        ExitOnFailure1(hr, "failed to copy Property name: %S", pwzData);
-
-        hr = WcaGetRecordFormattedString(hRec, pqValue, &pwzData);
-        ExitOnFailure(hr, "failed to get IIsProperty.Value");
-        hr = ::StringCchCopyW(pss->wzValue, countof(pss->wzValue), pwzData);
-        ExitOnFailure1(hr, "failed to copy Property value: %S", pwzData);
-
-        hr = WcaGetRecordInteger(hRec, pqAttributes, &pss->iAttributes);
-        ExitOnFailure(hr, "failed to get IIsProperty.Attributes");
-
-    }
-
-    if (E_NOMOREITEMS == hr)
-    {
-        hr = S_OK;
-    }
-    ExitOnFailure(hr, "failure while processing IIsProperty table");
-
-LExit:
-    ReleaseStr(pwzData);
-
-    return hr;
-}
-
 
 HRESULT ScaPropertyInstall7(
     SCA_PROPERTY* pspList
@@ -138,7 +30,7 @@ HRESULT ScaPropertyInstall7(
         if (WcaIsInstalling(psp->isInstalled, psp->isAction))
         {
             hr = ScaWriteProperty7(psp);
-            ExitOnFailure1(hr, "failed to write Property '%S' ", psp->wzProperty);
+            ExitOnFailure1(hr, "failed to write Property '%ls' ", psp->wzProperty);
         }
     }
 
@@ -159,7 +51,7 @@ HRESULT ScaPropertyUninstall7(
         if (WcaIsUninstalling(psp->isInstalled, psp->isAction))
         {
             hr = ScaRemoveProperty7(psp);
-            ExitOnFailure1(hr, "Failed to remove Property '%S'", psp->wzProperty);
+            ExitOnFailure1(hr, "Failed to remove Property '%ls'", psp->wzProperty);
         }
     }
 
@@ -207,7 +99,7 @@ HRESULT ScaWriteProperty7(
     }
     else if (0 == wcscmp(psp->wzProperty, wzIISPROPERTY_ETAG_CHANGENUMBER))
     {
-        //EtagChangenumber not supported 
+        //EtagChangenumber not supported
         WcaLog(LOGMSG_VERBOSE, "Not supported by IIS7: EtagChangenumber, ignoring");
     }
 
@@ -228,20 +120,5 @@ HRESULT ScaRemoveProperty7(
 
     HRESULT hr = S_OK;
 
-    return hr;
-}
-
-static HRESULT AddPropertyToList(
-    SCA_PROPERTY** ppspList
-    )
-{
-    HRESULT hr = S_OK;
-    SCA_PROPERTY* psp = static_cast<SCA_PROPERTY*>(MemAlloc(sizeof(SCA_PROPERTY), TRUE));
-    ExitOnNull(psp, hr, E_OUTOFMEMORY, "failed to allocate memory for new property list element");
-    
-    psp->pspNext = *ppspList;
-    *ppspList = psp;
-    
-LExit:
     return hr;
 }

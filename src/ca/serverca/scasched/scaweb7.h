@@ -81,14 +81,22 @@ struct SCA_WEB7
 // prototypes
 HRESULT ScaWebsRead7(
     __in SCA_WEB7** ppswList,
-    __in SCA_HTTP_HEADER** pshhList,
-    __in SCA_WEB_ERROR** psweList
+    __in SCA_HTTP_HEADER** ppshhList,
+    __in SCA_WEB_ERROR** ppsweList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hSslCertQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebLogQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData
     );
 
 HRESULT ScaWebsGetBase7(
     __in SCA_WEB7* pswList,
     __in LPCWSTR pswWebKey,
-    __in SCA_WEB7** pswWeb
+    __out_ecount(cchDest) LPWSTR pswWeb,
+    __in DWORD_PTR cchDest
     );
 
 HRESULT ScaWebsInstall7(

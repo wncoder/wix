@@ -17,14 +17,7 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-HRESULT __stdcall ScaWebSvcExtRead7(
-    __in SCA_WEBSVCEXT** ppsWseList
-    );
-
 HRESULT ScaWebSvcExtCommit7(
     __in SCA_WEBSVCEXT* psWseList
     );
 
-void ScaWebSvcExtFreeList7(
-    __in SCA_WEBSVCEXT* psWseList
-    );

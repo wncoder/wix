@@ -19,17 +19,6 @@
 
 // prototypes
 
-HRESULT __stdcall ScaMimeMapRead7(SCA_MIMEMAP** ppsmmList);
-
-HRESULT ScaGetMimeMap7(
-    int iParentType,
-    __in_z LPCWSTR wzParentValue,
-    SCA_MIMEMAP **psmmList,
-    SCA_MIMEMAP **ppsmmOut
-    );
-
-void ScaMimeMapFreeList7(SCA_MIMEMAP* psmmList);
-
 HRESULT ScaWriteMimeMap7(
     __in_z LPCWSTR wzWebName,
     __in_z LPCWSTR wzRootOfWeb,

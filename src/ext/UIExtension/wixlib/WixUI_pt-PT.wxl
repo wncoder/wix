@@ -40,14 +40,14 @@
     <String Id="Advanced_Font_FaceName" Overridable="yes">Tahoma</String>
 
     <String Id="BrowseDlg_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
-    <String Id="BrowseDlgComboLabel" Overridable="yes">&amp;Procurar Em:</String>
+    <String Id="BrowseDlgComboLabel" Overridable="yes">&amp;Procurar em:</String>
     <String Id="BrowseDlgWixUI_Bmp_Up" Overridable="yes">WixUI_Bmp_Up</String>
     <String Id="BrowseDlgWixUI_Bmp_UpTooltip" Overridable="yes">Subir um nível</String>
     <String Id="BrowseDlgNewFolder" Overridable="yes">WixUI_Bmp_New</String>
     <String Id="BrowseDlgNewFolderTooltip" Overridable="yes">Criar uma nova pasta</String>
     <String Id="BrowseDlgPathLabel" Overridable="yes">&amp;Nome da pasta:</String>
     <String Id="BrowseDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="BrowseDlgDescription" Overridable="yes">Navegue para a pasta de destino</String>
+    <String Id="BrowseDlgDescription" Overridable="yes">Navegar para a pasta de destino</String>
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Alterar a pasta de destino</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
@@ -103,7 +103,7 @@
     <String Id="FeaturesDlgChange" Overridable="yes">Alt&amp;erar</String>
 
     <String Id="FilesInUse_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
-    <String Id="FilesInUseExit" Overridable="yes">&amp;Sair</String>
+    <String Id="FilesInUseExit" Overridable="yes">Sai&amp;r</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FilesInUseText" Overridable="yes">As aplicações seguintes estão a utilizar ficheiros que necessitam de ser actualizados por esta configuração. Feche estas aplicações e, em seguida, clique em &amp;Repetir para continuar a instalação ou em Sair para sair.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Alguns ficheiros que é necessário actualizar estão actualmente em utilização.</String>
@@ -112,7 +112,7 @@
     <String Id="InstallDirDlg_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
     <String Id="InstallDirDlgChange" Overridable="yes">Alt&amp;erar...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}Pasta de Destino</String>
-    <String Id="InstallDirDlgDescription" Overridable="yes">Clique em Seguinte para instalar a pasta predefinida ou clique em Alterar para escolher outra.</String>
+    <String Id="InstallDirDlgDescription" Overridable="yes">Clique em Seguinte para instalar na pasta predefinida ou clique em Alterar para escolher outra.</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">Instalar o [ProductName] em:</String>
 
@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Escolha o âmbito e a pasta de instalação</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Âmbito de Instalação</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Instalar apenas para &amp;si ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}In&amp;stalar apenas para mim ([USERNAME])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">O [ProductName] será instalado numa pasta por utilizador e estará disponível apenas para a sua conta de utilizador. Não é necessário ter privilégios de Administrador locais.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">O [ProductName] não suporta a instalação por utilizador.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Instalar para todos os utilizadores deste &amp;computador</String>
@@ -167,7 +167,7 @@
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Alguns ficheiros que é necessário actualizar estão actualmente em utilização.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Ficheiros em Utilização</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Fechar as aplicações e tentar reiniciá-las.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Não fechar as aplicações. Será necessário um reinício.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Não fechar as aplicações. Será necessário reiniciar o computador.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -426,10 +426,10 @@
     <String Id="Error1305" Overridable="yes">Erro ao ler a partir do ficheiro [2]. {{ Erro de sistema [3].}} Verifique se o ficheiro existe e se pode aceder ao mesmo.</String>
     <String Id="Error1306" Overridable="yes">Outra aplicação tem acesso exclusivo ao ficheiro '[2]'. Encerre todas as outras aplicações e clique em Repetir.</String>
     <String Id="Error1307" Overridable="yes">Não existe espaço suficiente em disco para instalar este ficheiro: [2]. Liberte algum espaço em disco e clique em Repetir ou clique em Cancelar para sair.</String>
-    <String Id="Error1308" Overridable="yes">Ficheiro de origem não localizado: [2]. Verifique se o ficheiro existe e se consegue aceder-lhe.</String>
+    <String Id="Error1308" Overridable="yes">Ficheiro de origem não localizado: [2]. Verifique se o ficheiro existe e se consegue aceder ao mesmo.</String>
     <String Id="Error1309" Overridable="yes">Erro ao ler a partir do ficheiro: [3]. {{ Erro de sistema [2].}} Verifique se o ficheiro existe e se pode aceder ao mesmo.</String>
     <String Id="Error1310" Overridable="yes">Erro ao escrever no ficheiro: [3]. {{ Erro de sistema [2].}} Verifique se tem acesso a esse directório.</String>
-    <String Id="Error1311" Overridable="yes">Ficheiro de origem não localizado{{(cabinet)}}: [2]. Verifique se o ficheiro existe e se consegue aceder-lhe.</String>
+    <String Id="Error1311" Overridable="yes">Ficheiro de origem não localizado{{(cabinet)}}: [2]. Verifique se o ficheiro existe e se consegue aceder ao mesmo.</String>
     <String Id="Error1312" Overridable="yes">Não é possível criar o directório '[2]'. Já existe um ficheiro com este nome. Mude o nome ou remova o ficheiro e clique em Repetir ou clique em Cancelar para sair.</String>
     <String Id="Error1313" Overridable="yes">O volume [2] está actualmente indisponível. Seleccione outro volume.</String>
     <String Id="Error1314" Overridable="yes">O caminho especificado '[2]' está indisponível.</String>
@@ -490,13 +490,13 @@
     <String Id="Error1710" Overridable="yes">Pode restaurar o computador para o estado anterior ou continuar mais tarde a instalação. Pretende restaurar?</String>
     <String Id="Error1711" Overridable="yes">Ocorreu um erro ao escrever as informações de instalação no disco. Verifique se existe espaço em disco suficiente disponível e clique em Repetir ou clique em Cancelar para terminar a instalação.</String>
     <String Id="Error1712" Overridable="yes">Não foi possível localizar um ou mais dos ficheiros necessários para restaurar o estado anterior do computador. O restauro não será possível.</String>
-    <String Id="Error1713" Overridable="yes">[2] não consegue instalar um dos produtos necessários. Contacte o grupo de suporte técnico. {{Erro de Sistema: [3].}}</String>
+    <String Id="Error1713" Overridable="yes">O [2] não consegue instalar um dos produtos necessários. Contacte o grupo de suporte técnico. {{Erro de Sistema: [3].}}</String>
     <String Id="Error1714" Overridable="yes">Não é possível remover a versão anterior do [2]. Contacte o grupo de suporte técnico. {{Erro de Sistema [3].}}</String>
     <String Id="Error1715" Overridable="yes">[2] instalado</String>
     <String Id="Error1716" Overridable="yes">[2] configurado</String>
     <String Id="Error1717" Overridable="yes">[2] removido</String>
     <String Id="Error1718" Overridable="yes">O ficheiro [2] foi rejeitado pela política de assinaturas digitais.</String>
-    <String Id="Error1719" Overridable="yes">Não foi possível aceder ao serviço Windows Installer. Esta situação pode ocorrer se estiver a executar o Windows em modo seguro ou se o Windows Installer não estiver correctamente instalado. Contacte o suporte técnico para obter assistência.</String>
+    <String Id="Error1719" Overridable="yes">Não foi possível aceder ao serviço Windows Installer. Esta situação pode ocorrer se estiver a executar o Windows em modo de segurança ou se o Windows Installer não estiver correctamente instalado. Contacte o suporte técnico para obter assistência.</String>
     <String Id="Error1720" Overridable="yes">Existe um problema com este pacote do Windows Installer. Não foi possível executar um script necessário para concluir esta instalação. Contacte o suporte técnico ou o fornecedor do pacote. {{Acção personalizada [2] erro de script [3], [4]: [5] Linha [6], Coluna [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Existe um problema com este pacote do Windows Installer. Não foi possível executar um programa necessário para concluir esta instalação. Contacte o suporte técnico ou o fornecedor do pacote. {{Acção: [2], localização: [3], comando: [4] }}</String>
     <String Id="Error1722" Overridable="yes">Existe um problema com este pacote do Windows Installer. Um programa executado como parte da configuração não terminou conforme esperado. Contacte o suporte técnico ou o fornecedor do pacote. {{Acção [2], localização: [3], comando: [4] }}</String>
@@ -529,7 +529,7 @@
     <String Id="Error1910" Overridable="yes">Não foi possível remover o Atalho [2]. Verifique se o ficheiro de atalho existe e se pode aceder ao mesmo.</String>
     <String Id="Error1911" Overridable="yes">Não foi possível registar a biblioteca de tipos para o ficheiro [2]. Contacte o suporte técnico.</String>
     <String Id="Error1912" Overridable="yes">Não foi possível anular o registo da biblioteca de tipos para o ficheiro [2]. Contacte o suporte técnico.</String>
-    <String Id="Error1913" Overridable="yes">Não foi possível actualizar o ficheiro ini [2][3]. Verifique se o ficheiro existe e se consegue aceder-lhe.</String>
+    <String Id="Error1913" Overridable="yes">Não foi possível actualizar o ficheiro ini [2][3]. Verifique se o ficheiro existe e se consegue aceder ao mesmo.</String>
     <String Id="Error1914" Overridable="yes">Não foi possível agendar o ficheiro [2] para substituir o ficheiro [3] ao reiniciar. Verifique se tem permissões de escrita para o ficheiro [3].</String>
     <String Id="Error1915" Overridable="yes">Erro ao remover o gestor do controlador ODBC, erro de ODBC [2]: [3]. Contacte o suporte técnico.</String>
     <String Id="Error1916" Overridable="yes">Erro ao instalar o gestor do controlador ODBC, erro de ODBC [2]: [3]. Contacte o suporte técnico.</String>
@@ -543,12 +543,12 @@
     <String Id="Error1924" Overridable="yes">Não foi possível actualizar a variável de ambiente '[2]'. Verifique se tem privilégios suficientes para modificar variáveis de ambiente.</String>
     <String Id="Error1925" Overridable="yes">Não tem privilégios suficientes para concluir esta instalação para todos os utilizadores do computador. Inicie sessão como administrador e repita esta instalação.</String>
     <String Id="Error1926" Overridable="yes">Não foi possível definir a segurança para o ficheiro '[3]'. Erro: [2]. Verifique se tem privilégios suficientes para modificar as permissões de segurança para este ficheiro.</String>
-    <String Id="Error1927" Overridable="yes">Os Serviços de Componentes (COM+ 1.0) não estão instalados neste computador. Esta instalação necessita dos serviços de componentes para ser concluída com êxito. Os Serviços de Componentes estão disponíveis no Windows 2000.</String>
-    <String Id="Error1928" Overridable="yes">Erro ao registar Aplicação COM+. Contacte o suporte técnico para obter mais informações.</String>
+    <String Id="Error1927" Overridable="yes">O COM+ 1.0 (Serviços de Componentes) não está instalado neste computador. Esta instalação necessita do COM+ para ser concluída com êxito. O COM+ está disponível no Windows 2000.</String>
+    <String Id="Error1928" Overridable="yes">Erro ao registar a Aplicação COM+. Contacte o suporte técnico para obter mais informações.</String>
     <String Id="Error1929" Overridable="yes">Erro ao anular o registo da Aplicação COM+. Contacte o suporte técnico para obter mais informações.</String>
     <String Id="Error1930" Overridable="yes">Não foi possível alterar a descrição do serviço'[2]' ([3]).</String>
     <String Id="Error1931" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro de sistema [2] porque este está protegido pelo Windows. Poderá necessitar de actualizar o sistema operativo para que este programa funcione correctamente. {{Versão do pacote: [3], Versão protegida do Sistema Operativo: [4]}}</String>
-    <String Id="Error1932" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro protegido do Windows [2]. {{Versão do pacote: [3], Versão protegida do Sistema Operativo: [4], Erro de SFP: [5]}}</String>
+    <String Id="Error1932" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro protegido do Windows [2]. {{Versão do pacote: [3], Versão protegida pelo Sistema Operativo: [4], Erro de SFP: [5]}}</String>
     <String Id="Error1933" Overridable="yes">O serviço Windows Installer não pode actualizar um ou mais ficheiros do Windows protegidos. {{Erro de SFP: [2]. Lista de ficheiros protegidos:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">As instalações de utilizador são desactivadas por política neste computador.</String>
     <String Id="Error1935" Overridable="yes">Ocorreu um erro durante a instalação da assemblagem '[6]'. Consulte a Ajuda e Suporte para obter mais informações. HRESULT: [3]. {{interface de assemblagem: [4], função: [5], componente: [2]}}</String>
@@ -568,7 +568,7 @@
     <String Id="UITextMenuCD" Overridable="yes">Será instalada para ser executada a partir do CD</String>
     <String Id="UITextMenuLocal" Overridable="yes">Será instalada no disco rígido local</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Será instalada para ser executada a partir da rede</String>
-    <String Id="UITextNewFolder" Overridable="yes">Folder|Nova Pasta</String>
+    <String Id="UITextNewFolder" Overridable="yes">Pasta|Nova Pasta</String>
     <String Id="UITextScriptInProgress" Overridable="yes">A recolher as informações necessárias...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Esta funcionalidade permanecerá desinstalada</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Esta funcionalidade será definida para ser instalada quando necessário</String>

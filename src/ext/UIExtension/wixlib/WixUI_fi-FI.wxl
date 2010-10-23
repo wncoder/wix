@@ -411,7 +411,7 @@
     <String Id="Error16" Overridable="yes">Aikaa jäljellä: {[1] minuuttia }{[2] sekuntia}</String>
     <String Id="Error17" Overridable="yes">Muisti ei riitä. Sulje muut sovellukset ja yritä uudelleen.</String>
     <String Id="Error18" Overridable="yes">Asennusohjelma ei enää vastaa.</String>
-    <String Id="Error19" Overridable="yes">Asennusohjelma keskeytyi ennen valmistumista.</String>
+    <String Id="Error19" Overridable="yes">Asennusohjelma pysähtyi ennen valmistumista.</String>
     <String Id="Error20" Overridable="yes">Odota, Windows määrittää tuotteen [ProductName]</String>
     <String Id="Error21" Overridable="yes">Kerätään tarvittavia tietoja...</String>
     <String Id="Error22" Overridable="yes">Poistetaan sovelluksen vanhempia versioita...</String>
@@ -470,7 +470,7 @@
     <String Id="Error1502" Overridable="yes">Käyttäjä [2] on aiemmin aloittanut tuotteen [3] asennuksen. Käyttäjän on suoritettava kyseinen asennus uudelleen, ennen kuin hän voi käyttää tuotetta. Nykyinen asennus jatkuu nyt.</String>
     <String Id="Error1503" Overridable="yes">Käyttäjä [2] on aiemmin aloittanut tuotteen [3] asennuksen. Käyttäjän on suoritettava kyseinen asennus uudelleen, ennen kuin hän voi käyttää tuotetta.</String>
     <String Id="Error1601" Overridable="yes">Levytila lopussa -- asema: [2]; tarvittava tila: [3] kt; käytettävissä oleva tila: [4] kt. Vapauta levytilaa ja yritä uudelleen.</String>
-    <String Id="Error1602" Overridable="yes">Haluatko varmasti keskeyttää?</String>
+    <String Id="Error1602" Overridable="yes">Haluatko varmasti peruuttaa?</String>
     <String Id="Error1603" Overridable="yes">Tiedostoa [2][3] käyttää{ seuraava prosessi: nimi: [4], tunnus: [5], ikkunan otsikko: [6]}. Sulje kyseinen sovellus ja yritä uudelleen.</String>
     <String Id="Error1604" Overridable="yes">Tuote [2] on jo asennettu, mikä estää tämän tuotteen asennuksen. Nämä kaksi tuotetta ovat toisensa poissulkevia.</String>
     <String Id="Error1605" Overridable="yes">Asennuksen jatkamiseen ei ole tarpeeksi levytilaa asemassa [2] palautustoiminnon ollessa käytössä. [3] kt vaaditaan, mutta vain [4] kt on käytettävissä. Valitse Ohita jatkaaksesi asennusta ilman palautustietojen tallentamista, Yritä uudelleen tarkistaaksesi vapaa levytila uudelleen tai keskeytä asennus valitsemalla Peruuta.</String>

@@ -61,8 +61,8 @@
     <String Id="CustomizeDlgReset" Overridable="yes">&amp;Obnoviť</String>
     <String Id="CustomizeDlgDiskCost" Overridable="yes">Vy&amp;užitie disku</String>
     <String Id="CustomizeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="CustomizeDlgText" Overridable="yes">Klikaním na ikony v strome nižšie môžete zmeniť spôsob inštalácie funkcií.</String>
-    <String Id="CustomizeDlgDescription" Overridable="yes">Vyberte spôsob inštalácie funkcií.</String>
+    <String Id="CustomizeDlgText" Overridable="yes">Klikaním na ikony v strome nižšie môžete zmeniť spôsob inštalácie súčastí.</String>
+    <String Id="CustomizeDlgDescription" Overridable="yes">Vyberte spôsob inštalácie súčastí.</String>
     <String Id="CustomizeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Vlastná inštalácia</String>
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
@@ -71,8 +71,8 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre vybraté funkcie. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej funkcií alebo vybrať iné cieľové jednotky.</String>
-    <String Id="DiskCostDlgDescription" Overridable="yes">Požadované miesto na disku na inštaláciu vybratých funkcií.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať iné cieľové jednotky.</String>
+    <String Id="DiskCostDlgDescription" Overridable="yes">Požadované miesto na disku na inštaláciu vybratých súčastí.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Požiadavky na miesto na disku</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
@@ -93,10 +93,10 @@
     <String Id="FatalErrorDescription2" Overridable="yes">Ak chcete ukončiť Sprievodcu inštaláciou, kliknite na tlačidlo Dokončiť.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
-    <String Id="FeaturesDlgTree" Overridable="yes">Funkcie produktu</String>
+    <String Id="FeaturesDlgTree" Overridable="yes">Súčasti produktu</String>
     <String Id="FeaturesDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FeaturesDlgDescription" Overridable="yes">Vyberte spôsob inštalácie funkcií.</String>
-    <String Id="FeaturesDlgTitle" Overridable="yes">{\WixUI_Font_Title}Funkcie produktu</String>
+    <String Id="FeaturesDlgDescription" Overridable="yes">Vyberte spôsob inštalácie súčastí.</String>
+    <String Id="FeaturesDlgTitle" Overridable="yes">{\WixUI_Font_Title}Súčasti produktu</String>
     <String Id="FeaturesDlgItemDescription" Overridable="yes">FeaturesDlgItemDescription</String>
     <String Id="FeaturesDlgItemSize" Overridable="yes">FeaturesDlgItemSize</String>
     <String Id="FeaturesDlgInstall" Overridable="yes">I&amp;nštalovať</String>
@@ -123,7 +123,7 @@
     <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Inštalovať len pre &amp;seba ([USERNAME])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">Program [ProductName] sa nainštaluje do priečinka pre konkrétneho používateľa a bude k dispozícii len pre vaše používateľské konto. Nepotrebujete lokálne oprávnenia správcu.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">Program [ProductName] nepodporuje inštaláciu pre konkrétneho používateľa.</String>
-    <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Inštalovať pre všetkých používateľov tohto &amp;zariadenia</String>
+    <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Inštalovať pre všetkých používateľov tohto &amp;počítača</String>
     <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">Program [ProductName] sa predvolene nainštaluje do priečinka pre konkrétne zariadenie a bude k dispozícii pre všetkých používateľov. Predvolený inštalačný priečinok môžete zmeniť. Musíte mať lokálne oprávnenia správcu.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Inštalačný &amp;priečinok:</String>
     <String Id="InstallScopeDlgChange" Overridable="yes">Z&amp;meniť...</String>
@@ -149,8 +149,8 @@
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Vyberte operáciu, ktorú chcete vykonať.</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Zmena, oprava alebo odstránenie inštalácie</String>
-    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Umožňuje zmeniť spôsob inštalácie funkcií.</String>
-    <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">Program [ProductName] neobsahuje žiadne funkcie, ktoré možno nezávisle vybrať.</String>
+    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Umožňuje zmeniť spôsob inštalácie súčastí.</String>
+    <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">Program [ProductName] neobsahuje žiadne súčasti, ktoré možno nezávisle vybrať.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Odstráni program [ProductName] z počítača.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">Program [ProductName] nemožno odstrániť.</String>
     <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Slúži na opravu chýb poslednej inštalácie prostredníctvom opravy chýbajúcich a poškodených súborov, odkazov a položiek databázy Registry.</String>
@@ -158,27 +158,27 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Sprievodca inštaláciou umožňuje zmeniť spôsob inštalácie funkcií programu [ProductName] v počítači alebo odstrániť tento program z počítača. Ak chcete pokračovať, kliknite na tlačidlo Ďalej. Ak chcete Sprievodcu inštaláciou ukončiť, kliknite na tlačidlo Zrušiť.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Sprievodca inštaláciou umožňuje zmeniť spôsob inštalácie súčastí programu [ProductName] v počítači alebo odstrániť tento program z počítača. Ak chcete pokračovať, kliknite na tlačidlo Ďalej. Ak chcete Sprievodcu inštaláciou ukončiť, kliknite na tlačidlo Zrušiť.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Víta vás Sprievodca inštaláciou programu [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Sprievodca inštaláciou ich môže zavrieť a potom sa ich pokúsiť reštartovať alebo môže zariadenie reštartovať neskôr.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Sprievodca inštaláciou ich môže zavrieť a potom sa ich pokúsi znova otvoriť alebo reštartovať počítač.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Niektoré súbory určené na aktualizáciu sa momentálne používajú.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Používané súbory</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">Z&amp;avrieť aplikácie a pokúsiť sa ich reštartovať.</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">Z&amp;avrieť aplikácie a pokúsiť sa ich znova spustiť.</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Nezatvárať aplikácie. Bude sa vyžadovať reštartovanie.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté funkcie. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej funkcií alebo vybrať inú cieľovú jednotku.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">Miesto na disku požadované na inštaláciu prekračuje dostupné miesto na disku.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nedostatok miesta na disku</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté funkcie. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej funkcií alebo vybrať inú cieľovú jednotku.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Miesto na disku požadované na inštaláciu prekračuje dostupné miesto na disku.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nedostatok miesta na disku</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -221,8 +221,8 @@
     <String Id="SetupTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Výber typu inštalácie</String>
     <String Id="SetupTypeDlgDescription" Overridable="yes">Vyberte typ inštalácie zodpovedajúci vašim potrebám</String>
     <String Id="SetupTypeDlgTypicalText" Overridable="yes">Nainštaluje najčastejšie používané funkcie programu. Odporúča sa pre väčšinu používateľov.</String>
-    <String Id="SetupTypeDlgCustomText" Overridable="yes">Umožňuje používateľom vybrať funkcie programu, ktoré sa majú nainštalovať, a miesto, kam sa majú nainštalovať. Odporúča sa pre skúsených používateľov.</String>
-    <String Id="SetupTypeDlgCompleteText" Overridable="yes">Nainštalujú sa všetky funkcie programu. Vyžaduje najviac miesta na disku.</String>
+    <String Id="SetupTypeDlgCustomText" Overridable="yes">Umožňuje používateľom vybrať súčasti programu, ktoré sa majú nainštalovať, a miesto, kam sa majú nainštalovať. Odporúča sa pre skúsených používateľov.</String>
+    <String Id="SetupTypeDlgCompleteText" Overridable="yes">Nainštalujú sa všetky súčasti programu. Vyžaduje najviac miesta na disku.</String>
 
     <String Id="UserExit_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -280,11 +280,11 @@
     <String Id="ProgressTextPublishComponents" Overridable="yes">Publikujú sa oprávňujúce súčasti</String>
     <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">Identifikácia súčasti: [1], kvalifikátor: [2]</String>
     <String Id="ProgressTextPublishFeatures" Overridable="yes">Publikujú sa funkcie produktu</String>
-    <String Id="ProgressTextPublishFeaturesTemplate" Overridable="yes">Funkcia: [1]</String>
+    <String Id="ProgressTextPublishFeaturesTemplate" Overridable="yes">Súčasť: [1]</String>
     <String Id="ProgressTextPublishProduct" Overridable="yes">Publikujú sa informácie o produkte</String>
     <String Id="ProgressTextRegisterClassInfo" Overridable="yes">Registrujú sa servery tried</String>
     <String Id="ProgressTextRegisterClassInfoTemplate" Overridable="yes">Identifikácia triedy: [1]</String>
-    <String Id="ProgressTextRegisterExtensionInfo" Overridable="yes">Registrujú sa servery rozšírenia</String>
+    <String Id="ProgressTextRegisterExtensionInfo" Overridable="yes">Registrujú sa servery rozšírení</String>
     <String Id="ProgressTextRegisterExtensionInfoTemplate" Overridable="yes">Rozšírenie: [1]</String>
     <String Id="ProgressTextRegisterMIMEInfo" Overridable="yes">Registrujú sa informácie MIME</String>
     <String Id="ProgressTextRegisterMIMEInfoTemplate" Overridable="yes">Typ obsahu MIME: [1], rozšírenie: [2]</String>
@@ -336,7 +336,7 @@
     <String Id="ProgressTextRemoveFilesTemplate" Overridable="yes">Súbor: [1], adresár: [9]</String>
     <String Id="ProgressTextRemoveFolders" Overridable="yes">Odstraňujú sa priečinky</String>
     <String Id="ProgressTextRemoveFoldersTemplate" Overridable="yes">Priečinok: [1]</String>
-    <String Id="ProgressTextRemoveIniValues" Overridable="yes">Odstraňujú sa položky súboru INI</String>
+    <String Id="ProgressTextRemoveIniValues" Overridable="yes">Odstraňujú sa položky súborov INI</String>
     <String Id="ProgressTextRemoveIniValuesTemplate" Overridable="yes">Súbor: [1], sekcia: [2], kľúč: [3], hodnota: [4]</String>
     <String Id="ProgressTextRemoveODBC" Overridable="yes">Odstraňujú sa súčasti ODBC</String>
     <String Id="ProgressTextRemoveRegistryValues" Overridable="yes">Odstraňujú sa hodnoty zo systémovej databázy Registry</String>
@@ -356,12 +356,12 @@
     <String Id="ProgressTextUnpublishComponents" Overridable="yes">Ruší sa publikovanie oprávňujúcich súčastí</String>
     <String Id="ProgressTextUnpublishComponentsTemplate" Overridable="yes">Identifikácia súčasti: [1], kvalifikátor: [2]</String>
     <String Id="ProgressTextUnpublishFeatures" Overridable="yes">Ruší sa publikovanie funkcií produktu</String>
-    <String Id="ProgressTextUnpublishFeaturesTemplate" Overridable="yes">Funkcia: [1]</String>
+    <String Id="ProgressTextUnpublishFeaturesTemplate" Overridable="yes">Súčasť: [1]</String>
     <String Id="ProgressTextUnregisterClassInfo" Overridable="yes">Ruší sa registrácia serverov tried</String>
     <String Id="ProgressTextUnregisterClassInfoTemplate" Overridable="yes">Identifikácia triedy: [1]</String>
     <String Id="ProgressTextUnregisterComPlus" Overridable="yes">Ruší sa registrácia aplikácií a súčastí COM+</String>
     <String Id="ProgressTextUnregisterComPlusTemplate" Overridable="yes">Identifikácia aplikácie: [1]{{, typ aplikácie: [2]}}</String>
-    <String Id="ProgressTextUnregisterExtensionInfo" Overridable="yes">Ruší sa registrácia serverov rozšírenia</String>
+    <String Id="ProgressTextUnregisterExtensionInfo" Overridable="yes">Ruší sa registrácia serverov rozšírení</String>
     <String Id="ProgressTextUnregisterExtensionInfoTemplate" Overridable="yes">Rozšírenie: [1]</String>
     <String Id="ProgressTextUnregisterFonts" Overridable="yes">Ruší sa registrácia písiem</String>
     <String Id="ProgressTextUnregisterFontsTemplate" Overridable="yes">Písmo: [1]</String>
@@ -410,7 +410,7 @@
     <String Id="Error15" Overridable="yes">Ukončenie akcie [Time]: [1]. Vrátená hodnota [2].</String>
     <String Id="Error16" Overridable="yes">Zostávajúci čas: {[1] min. }{[2] s}</String>
     <String Id="Error17" Overridable="yes">Nedostatok pamäte. Pred opakovaním operácie ukončite ostatné aplikácie.</String>
-    <String Id="Error18" Overridable="yes">Inštalátor už neodpovedá.</String>
+    <String Id="Error18" Overridable="yes">Inštalátor neodpovedá.</String>
     <String Id="Error19" Overridable="yes">Inštalátor sa predčasne zastavil.</String>
     <String Id="Error20" Overridable="yes">Počkajte, kým systém Windows nakonfiguruje program [ProductName]</String>
     <String Id="Error21" Overridable="yes">Zhromažďujú sa požadované informácie...</String>
@@ -419,7 +419,7 @@
     <String Id="Error32" Overridable="yes">Inštalácia programu {[ProductName] }bola úspešne dokončená.</String>
     <String Id="Error33" Overridable="yes">Inštalácia programu {[ProductName] }zlyhala.</String>
     <String Id="Error1101" Overridable="yes">Chyba pri čítaní zo súboru: [2]. {{ Systémová chyba [3].}} Overte, či súbor existuje a či máte k nemu prístup.</String>
-    <String Id="Error1301" Overridable="yes">Nemožno vytvoriť súbor [2]. Adresár s týmto názvom už existuje. Zrušte inštaláciu a skúste inštalovať v inom cieľovom umiestnení.</String>
+    <String Id="Error1301" Overridable="yes">Nemožno vytvoriť súbor [2]. Adresár s týmto názvom už existuje. Zrušte inštaláciu a skúste vykonať inštaláciu do iného cieľového umiestnenia.</String>
     <String Id="Error1302" Overridable="yes">Vložte disk: [2]</String>
     <String Id="Error1303" Overridable="yes">Inštalátor nemá dostatočné oprávnenia na prístup k adresáru [2]. Inštalácia nemôže pokračovať. Prihláste sa ako správca alebo sa obráťte na správcu systému.</String>
     <String Id="Error1304" Overridable="yes">Chyba pri zápise do súboru: [2]. Overte, či máte prístup do tohto adresára.</String>
@@ -441,7 +441,7 @@
     <String Id="Error1320" Overridable="yes">Zadaná cesta [2] je príliš dlhá.</String>
     <String Id="Error1321" Overridable="yes">Inštalátor nemá dostatočné oprávnenia na zmenu súboru [2].</String>
     <String Id="Error1322" Overridable="yes">Časť cesty k priečinku [2] je neplatná. Cesta je prázdna alebo prekračuje dĺžku povolenú systémom.</String>
-    <String Id="Error1323" Overridable="yes">Cesta k priečinku [2] obsahuje slová, ktoré nie sú platné pre cesty k priečinku.</String>
+    <String Id="Error1323" Overridable="yes">Cesta k priečinku [2] obsahuje slová, ktoré nie sú platné pre cesty k priečinkom.</String>
     <String Id="Error1324" Overridable="yes">Cesta k priečinku [2] obsahuje neplatný znak.</String>
     <String Id="Error1325" Overridable="yes">[2] nie je platný krátky názov súboru.</String>
     <String Id="Error1326" Overridable="yes">Chyba pri zisťovaní zabezpečenia súboru: [3] GetLastError: [2]</String>
@@ -508,7 +508,7 @@
     <String Id="Error1728" Overridable="yes">Konfigurácia bola úspešne dokončená.</String>
     <String Id="Error1729" Overridable="yes">Konfigurácia zlyhala.</String>
     <String Id="Error1730" Overridable="yes">Túto aplikáciu môžete odstrániť, iba ak ste správca. Ak chcete odstrániť túto aplikáciu, môžete sa prihlásiť ako správca alebo sa obráťte na pracovníkov technickej podpory.</String>
-    <String Id="Error1731" Overridable="yes">Zdrojový inštalačný balík pre produkt [2] nie je zosynchronizovaný s klientskym balíkom. Skúste zopakovať inštaláciu pomocou platnej kópie inštalačného balíka [3].</String>
+    <String Id="Error1731" Overridable="yes">Zdrojový inštalačný balík pre produkt [2] nie je zosynchronizovaný s klientskym balíkom. Skúste zopakovať inštaláciu s použitím platnej kópie inštalačného balíka [3].</String>
     <String Id="Error1732" Overridable="yes">Ak chcete dokončiť inštaláciu produktu [2], musíte reštartovať počítač. V tomto počítači sú momentálne prihlásení ďalší používatelia a reštartovaním by mohli stratiť svoju prácu. Chcete reštartovať počítač?</String>
     <String Id="Error1801" Overridable="yes">Cesta [2] nie je platná. Zadajte platnú cestu.</String>
     <String Id="Error1802" Overridable="yes">Nedostatok pamäte. Pred opakovaním operácie ukončite ostatné aplikácie.</String>
@@ -560,46 +560,46 @@
     <String Id="UITextGB" Overridable="yes">GB</String>
     <String Id="UITextKB" Overridable="yes">kB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
-    <String Id="UITextMenuAbsent" Overridable="yes">Celá funkcia bude nedostupná</String>
-    <String Id="UITextMenuAdvertise" Overridable="yes">Funkcia sa nainštaluje v prípade potreby</String>
-    <String Id="UITextMenuAllCD" Overridable="yes">Celá funkcia sa nainštaluje na spúšťanie z disku CD</String>
-    <String Id="UITextMenuAllLocal" Overridable="yes">Celá funkcia sa nainštaluje na lokálny pevný disk</String>
-    <String Id="UITextMenuAllNetwork" Overridable="yes">Celá funkcia sa nainštaluje na spúšťanie zo siete</String>
+    <String Id="UITextMenuAbsent" Overridable="yes">Celá súčasť bude nedostupná</String>
+    <String Id="UITextMenuAdvertise" Overridable="yes">Súčasť sa nainštaluje v prípade potreby</String>
+    <String Id="UITextMenuAllCD" Overridable="yes">Celá súčasť sa nainštaluje na spúšťanie z disku CD</String>
+    <String Id="UITextMenuAllLocal" Overridable="yes">Celá súčasť sa nainštaluje na lokálny pevný disk</String>
+    <String Id="UITextMenuAllNetwork" Overridable="yes">Celá súčasť sa nainštaluje na spúšťanie zo siete</String>
     <String Id="UITextMenuCD" Overridable="yes">Nainštaluje sa na spúšťanie z disku CD</String>
     <String Id="UITextMenuLocal" Overridable="yes">Nainštaluje sa na lokálny pevný disk</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Nainštaluje sa na spúšťanie zo siete</String>
     <String Id="UITextNewFolder" Overridable="yes">Priečinok|Nový priečinok</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Zhromažďujú sa požadované informácie...</String>
-    <String Id="UITextSelAbsentAbsent" Overridable="yes">Táto funkcia zostane nenainštalovaná</String>
-    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Táto funkcia sa nainštaluje v prípade potreby</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">Táto funkcia sa nainštaluje na spúšťanie z disku CD</String>
-    <String Id="UITextSelAbsentLocal" Overridable="yes">Táto funkcia sa nainštaluje na lokálny pevný disk</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">Táto funkcia sa nainštaluje na spúšťanie zo siete</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Táto funkcia nebude k dispozícii</String>
+    <String Id="UITextSelAbsentAbsent" Overridable="yes">Táto súčasť zostane nenainštalovaná</String>
+    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Táto súčasť sa nainštaluje v prípade potreby</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">Táto súčasť sa nainštaluje na spúšťanie z disku CD</String>
+    <String Id="UITextSelAbsentLocal" Overridable="yes">Táto súčasť sa nainštaluje na lokálny pevný disk</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">Táto súčasť sa nainštaluje na spúšťanie zo siete</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Táto súčasť nebude k dispozícii</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Nainštaluje sa v prípade potreby</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Táto funkcia sa bude spúšťať z disku CD</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Táto funkcia sa nainštaluje na lokálny pevný disk</String>
-    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Táto funkcia sa bude spúšťať zo siete</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">Táto funkcia sa úplne odinštaluje a nebudete ju môcť spúšťať z disku CD</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">Táto funkcia sa už nebude spúšťať z disku CD, ale sa nainštaluje v prípade potreby</String>
-    <String Id="UITextSelCDCD" Overridable="yes">Táto funkcia sa bude dať spúšťať z disku CD</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Táto funkcia sa už nebude spúšťať z disku CD, ale sa nainštaluje na lokálny pevný disk</String>
-    <String Id="UITextSelChildCostNeg" Overridable="yes">Táto funkcia uvoľní [1] na pevnom disku.</String>
-    <String Id="UITextSelChildCostPos" Overridable="yes">Táto funkcia vyžaduje [1] na pevnom disku.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">Kompilujú sa údaje o prostriedkoch požadovaných pre túto funkciu...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Táto funkcia sa úplne odstráni</String>
-    <String Id="UITextSelLocalAdvertise" Overridable="yes">Táto funkcia sa odstráni z lokálneho pevného disku, v prípade potreby sa však nainštaluje</String>
-    <String Id="UITextSelLocalCD" Overridable="yes">Táto funkcia sa odstráni z lokálneho pevného disku, ale bude sa dať spúšťať z disku CD</String>
-    <String Id="UITextSelLocalLocal" Overridable="yes">Táto funkcia zostane na lokálnom pevnom disku</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Táto funkcia sa odstráni z lokálneho pevného disku, ale bude sa dať spúšťať zo siete</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">Táto funkcia sa úplne odinštaluje a nebudete ju môcť spúšťať zo siete</String>
-    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Táto funkcia sa už nebude spúšťať zo siete, v prípade potreby sa však nainštaluje</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">Táto funkcia sa už nebude spúšťať zo siete, ale sa nainštaluje na lokálny pevný disk</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">Táto funkcia sa bude dať spúšťať zo siete</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Táto funkcia uvoľní [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších funkcií. Vedľajšie funkcie uvoľnia [4] na pevnom disku.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">Táto funkcia uvoľní [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších funkcií. Vedľajšie funkcie vyžadujú [4] na pevnom disku.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Táto funkcia vyžaduje [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších funkcií. Vedľajšie funkcie uvoľnia [4] na pevnom disku.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Táto funkcia vyžaduje [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších funkcií. Vedľajšie funkcie vyžadujú [4] na pevnom disku.</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Táto súčasť sa bude spúšťať z disku CD</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Táto súčasť sa nainštaluje na lokálny pevný disk</String>
+    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Táto súčasť sa bude spúšťať zo siete</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">Táto súčasť sa úplne odinštaluje a nebudete ju môcť spúšťať z disku CD</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">Táto súčasť sa už nebude spúšťať z disku CD, ale sa nainštaluje v prípade potreby</String>
+    <String Id="UITextSelCDCD" Overridable="yes">Táto súčasť sa bude dať spúšťať z disku CD</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Táto súčasť sa už nebude spúšťať z disku CD, ale sa nainštaluje na lokálny pevný disk</String>
+    <String Id="UITextSelChildCostNeg" Overridable="yes">Táto súčasť uvoľní [1] na pevnom disku.</String>
+    <String Id="UITextSelChildCostPos" Overridable="yes">Táto súčasť vyžaduje [1] na pevnom disku.</String>
+    <String Id="UITextSelCostPending" Overridable="yes">Kompilujú sa údaje o prostriedkoch požadovaných pre túto súčasť...</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Táto súčasť sa úplne odstráni</String>
+    <String Id="UITextSelLocalAdvertise" Overridable="yes">Táto súčasť sa odstráni z lokálneho pevného disku, v prípade potreby sa však nainštaluje</String>
+    <String Id="UITextSelLocalCD" Overridable="yes">Táto súčasť sa odstráni z lokálneho pevného disku, ale bude sa dať spúšťať z disku CD</String>
+    <String Id="UITextSelLocalLocal" Overridable="yes">Táto súčasť zostane na lokálnom pevnom disku</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Táto súčasť sa odstráni z lokálneho pevného disku, ale bude sa dať spúšťať zo siete</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">Táto súčasť sa úplne odinštaluje a nebudete ju môcť spúšťať zo siete</String>
+    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Táto súčasť sa už nebude spúšťať zo siete, v prípade potreby sa však nainštaluje</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">Táto súčasť sa už nebude spúšťať zo siete, ale sa nainštaluje na lokálny pevný disk</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">Táto súčasť sa bude dať spúšťať zo siete</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Táto súčasť uvoľní [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších súčastí. Vedľajšie súčasti uvoľnia [4] na pevnom disku.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">Táto súčasť uvoľní [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších súčastí. Vedľajšie súčasti vyžadujú [4] na pevnom disku.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Táto súčasť vyžaduje [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších súčastí. Vedľajšie súčasti uvoľnia [4] na pevnom disku.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Táto súčasť vyžaduje [1] na pevnom disku. Obsahuje [2] z [3] vybratých vedľajších súčastí. Vedľajšie súčasti vyžadujú [4] na pevnom disku.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Zostávajúci čas: {[1] min. }{[2] s}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">K dispozícii</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Rozdiel</String>

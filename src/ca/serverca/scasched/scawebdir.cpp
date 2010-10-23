@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Web Directory functions for CustomActions
 // </summary>
@@ -51,7 +51,7 @@ UINT __stdcall ScaWebDirsRead(
     WCA_WRAPQUERY_HANDLE hWrapQuery = NULL;
 
     hr = WcaBeginUnwrapQuery(&hWrapQuery, ppwzCustomActionData);
-    ExitOnFailure(hr, "Failed to unwrap query for ScaAppPoolRead");
+    ExitOnFailure(hr, "Failed to unwrap query for ScaWebDirsRead");
 
     if (0 == WcaGetQueryRecords(hWrapQuery))
     {
@@ -209,7 +209,7 @@ HRESULT ScaWebDirsUninstall(IMSAdminBase* piMetabase, SCA_WEBDIR* pswdList)
             }
 
             hr = ScaDeleteMetabaseKey(piMetabase, pswd->wzWebDirRoot, L"");
-            ExitOnFailure1(hr, "Failed to remove WebDir '%S' from metabase", pswd->wzKey);
+            ExitOnFailure1(hr, "Failed to remove WebDir '%ls' from metabase", pswd->wzKey);
         }
 
         pswd = pswd->pswdNext;

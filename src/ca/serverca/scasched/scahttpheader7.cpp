@@ -18,93 +18,6 @@
 
 #include "precomp.h"
 
-LPCWSTR vcsHttpHeaderQuery7 = L"SELECT `Name`, `ParentType`, `ParentValue`, `Value`, `Attributes` FROM `IIsHttpHeader` ORDER BY `Sequence`";
-enum eHttpHeaderQuery { hhqName = 1, hhqParentType, hhqParentValue, hhqValue, hhqAttributes};
-
-static HRESULT AddHttpHeaderToList(
-    __in SCA_HTTP_HEADER** ppshhList
-    );
-
-
-void ScaHttpHeaderFreeList7(
-    __in SCA_HTTP_HEADER* pshhList
-    )
-{
-    SCA_HTTP_HEADER* pshhDelete = pshhList;
-    while (pshhList)
-    {
-        pshhDelete = pshhList;
-        pshhList = pshhList->pshhNext;
-
-        MemFree(pshhDelete);
-    }
-}
-
-
-HRESULT ScaHttpHeaderRead7(
-    __in SCA_HTTP_HEADER** ppshhList
-    )
-{
-    Assert(ppshhList);
-
-    HRESULT hr = S_OK;
-    UINT er = 0;
-    PMSIHANDLE hView, hRec;
-    LPWSTR pwzData = NULL;
-    SCA_HTTP_HEADER* pshh = NULL;
-
-    // bail quickly if the IIsHttpHeader table isn't around
-    if (S_OK != WcaTableExists(L"IIsHttpHeader"))
-    {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaHttpHeaderRead7() - because IIsHttpHeader table not present.");
-        ExitFunction1(hr = S_FALSE);
-    }
-    // loop through all the HTTP headers
-    hr = WcaOpenExecuteView(vcsHttpHeaderQuery7, &hView);
-    ExitOnFailure(hr, "Failed to open view on IIsHttpHeader table");
-
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
-    {
-        hr = AddHttpHeaderToList(ppshhList);
-        ExitOnFailure(hr, "failed to add http header to list");
-
-        pshh = *ppshhList;
-
-        hr = WcaGetRecordInteger(hRec, hhqParentType, &(pshh->iParentType));
-        ExitOnFailure(hr, "failed to get IIsHttpHeader.ParentType");
-
-        hr = WcaGetRecordString(hRec, hhqParentValue, &pwzData);
-        ExitOnFailure(hr, "Failed to get IIsHttpHeader.ParentValue");
-        hr = ::StringCchCopyW(pshh->wzParentValue, countof(pshh->wzParentValue), pwzData);
-        ExitOnFailure(hr, "Failed to copy IIsHttpHeader.ParentValue");
-
-        hr = WcaGetRecordFormattedString(hRec, hhqName, &pwzData);
-        ExitOnFailure(hr, "Failed to get IIsHttpHeader.Name");
-        hr = ::StringCchCopyW(pshh->wzName, countof(pshh->wzName), pwzData);
-        ExitOnFailure(hr, "Failed to copy IIsHttpHeader.Name");
-
-        hr = WcaGetRecordFormattedString(hRec, hhqValue, &pwzData);
-        ExitOnFailure(hr, "Failed to get IIsHttpHeader.Value");
-        hr = ::StringCchCopyW(pshh->wzValue, countof(pshh->wzValue), pwzData);
-        ExitOnFailure(hr, "Failed to copy IIsHttpHeader.Value");
-
-        hr = WcaGetRecordInteger(hRec, hhqAttributes, &(pshh->iAttributes));
-        ExitOnFailure(hr, "failed to get IIsHttpHeader.Attributes");
-    }
-
-    if (E_NOMOREITEMS == hr)
-    {
-        hr = S_OK;
-    }
-    ExitOnFailure(hr, "Failure while processing web errors");
-
-LExit:
-    ReleaseStr(pwzData);
-
-    return hr;
-}
-
-
 HRESULT ScaGetHttpHeader7(
     __in int iParentType,
     __in_z LPCWSTR wzParentValue,
@@ -209,7 +122,7 @@ HRESULT ScaHttpHeaderCheckList7(
 
     while (pshhList)
     {
-        WcaLog(LOGMSG_STANDARD, "Http Header: %S for parent: %S not used!", pshhList->wzName, pshhList->wzParentValue);
+        WcaLog(LOGMSG_STANDARD, "Http Header: %ls for parent: %ls not used!", pshhList->wzName, pshhList->wzParentValue);
         pshhList = pshhList->pshhNext;
     }
 

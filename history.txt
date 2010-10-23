@@ -1325,10 +1325,38 @@ RobMen: SFBUG:2932337 - do not harvest .NET Component Categories.
 
 AaronSte: Fix inaccurate remark in the FileSearch documentation.
 
-CAraman: Update WiXUI localization.
+CAraman: Update WixUI localization.
 
 RobMen: SFBUG:3019443 - set useLegacyV2RuntimeActivationPolicy="true" in
         template to support NETFX4.0 correctly.
 
 WixBuild: Version 3.5.2215.0
+
+CAraman: Update WixUI localization.
+
+RobMen: SFBUG:3090762 - allow UI/PropertyRef as per wix.xsd.
+
+EricStJ: SFBUG: 3085773 Use a product-unique backup file for IIS 7 CAs
+
+MiCarls: SFBUG:3087404 - Wixcop should allow preprocessor variables in ID
+         fields
+
+RobMen: BREAKING CHANGE - remove DTF dependencies on System.Data and
+                          System.Windows.Forms to solve NETFX 4.0 issues.
+
+EricStJ: BREAKING CHANGE - removing ConfigureIIS7 custom action.  IIS7 
+                           scheduling is now done by ConfigureIIS.  Do not 
+                           override the conditionon this CA.  If you wish 
+                           to use IIS6 metabase compatibility set the 
+                           UseIis6Compatibility property in your MSI
+         SFBUG: 3038987 IIS7 doesn't support SiteId or binding WebSite search.
+         SFBUG: 3085541 IIS WebFilter with WebSite attribute not uninstalled
+         SFBUG: 3086534 WriteIIS7ConfigChanges: Error 0x800700b7: Unable modify site
+         Fixing Global.include to enable wix builds with only VS 2010
+
+EricStJ: SFBUG: 3092442 - Password shown when configuring IIS
+
+EricStJ: ScaGetWebLog7 failing after recent refactoring
+
+WixBuild: Version 3.5.2222.0
 

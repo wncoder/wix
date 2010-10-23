@@ -26,15 +26,6 @@
 #define APATTR_OTHERUSER 0x0008 // Other User
 
 // prototypes
-
-HRESULT ScaAppPoolRead7(
-    __inout SCA_APPPOOL** ppsapList
-    );
-
-void ScaAppPoolFreeList7(
-    __in SCA_APPPOOL* psapList
-    );
-
 HRESULT ScaFindAppPool7(
     __in LPCWSTR wzAppPool,
     __out_ecount(cchName) LPWSTR wzName,

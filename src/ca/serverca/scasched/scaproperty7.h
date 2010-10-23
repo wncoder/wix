@@ -24,15 +24,6 @@
 #define wzIISPROPERTY_ETAG_CHANGENUMBER L"ETagChangeNumber"
 
 // prototypes
-
-HRESULT ScaPropertyRead7(
-    SCA_PROPERTY** ppspList
-    );
-
-void ScaPropertyFreeList7(
-    SCA_PROPERTY* pspList
-    );
-
 HRESULT ScaPropertyInstall7(
     SCA_PROPERTY* pspList
     );

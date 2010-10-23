@@ -29,29 +29,35 @@ static HRESULT AddWebDirToList(SCA_WEBDIR7** ppswdList);
 
 
 UINT __stdcall ScaWebDirsRead7(
-    SCA_WEB7* pswList,
-    SCA_WEBDIR7** ppswdList
+    __in SCA_WEB7* pswList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData,
+    __out SCA_WEBDIR7** ppswdList
     )
 {
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
-    PMSIHANDLE hView, hRec;
+    MSIHANDLE hRec;
 
     LPWSTR pwzData = NULL;
     SCA_WEBDIR7* pswd;
-    SCA_WEB7 *pswWeb;
+    WCA_WRAPQUERY_HANDLE hWrapQuery = NULL;
 
-    // check to see if necessary tables are specified
-    if (S_OK != WcaTableExists(L"IIsWebDir"))
+    hr = WcaBeginUnwrapQuery(&hWrapQuery, ppwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap query for ScaWebDirsRead7");
+
+    if (0 == WcaGetQueryRecords(hWrapQuery))
     {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaWebDirsRead7() - because IIsWebDir table not present");
+        WcaLog(LOGMSG_VERBOSE, "Skipping ScaInstallWebDirs7() because IIsWebDir table not present");
         ExitFunction1(hr = S_FALSE);
     }
 
     // loop through all the web directories
-    hr = WcaOpenExecuteView(vcsWebDirQuery7, &hView);
-    ExitOnFailure(hr, "Failed to open view on IIsWebDir table");
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
+    while (S_OK == (hr = WcaFetchWrappedRecord(hWrapQuery, &hRec)))
     {
         hr = AddWebDirToList(ppswdList);
         ExitOnFailure(hr, "failed to add web dir to list");
@@ -65,22 +71,22 @@ UINT __stdcall ScaWebDirsRead7(
         hr = ::StringCchCopyW(pswd->wzComponent, countof(pswd->wzComponent), pwzData);
         ExitOnFailure(hr, "Failed to copy component string to webdir object");
 
-        er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzData, &pswd->isInstalled, &pswd->isAction);
-        hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure(hr, "Failed to get Component state for WebDirs");
+        hr = WcaGetRecordInteger(hRec, wdqInstalled, (int *)&pswd->isInstalled);
+        ExitOnFailure(hr, "Failed to get Component installed state for webdir");
+
+        hr = WcaGetRecordInteger(hRec, wdqAction, (int *)&pswd->isAction);
+        ExitOnFailure(hr, "Failed to get Component action state for webdir");
 
         hr = WcaGetRecordString(hRec, wdqWeb, &pwzData);
         ExitOnFailure(hr, "Failed to get Web for WebDir");
 
         // get the web key
-        hr = ScaWebsGetBase7(pswList, pwzData, &pswWeb);
+        hr = ScaWebsGetBase7(pswList, pwzData, pswd->wzWebSite, countof(pswd->wzWebSite));
         if(S_FALSE == hr)
         {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
             ExitOnFailure(hr, "Failed to get base of web for WebDir");
         }
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-        hr = ::StringCchCopyW(pswd->wzWebSite, countof(pswd->wzWebSite), pswWeb->wzDescription);
         ExitOnFailure(hr, "Failed to format webdir root string");
 
         hr = WcaGetRecordString(hRec, wdqPath, &pwzData);
@@ -94,7 +100,7 @@ UINT __stdcall ScaWebDirsRead7(
         ExitOnFailure(hr, "Failed to get security identifier for WebDir");
         if (*pwzData)
         {
-            hr = ScaGetWebDirProperties7(pwzData, &pswd->swp);
+            hr = ScaGetWebDirProperties(pwzData, hUserQuery, hWebDirPropQuery, &pswd->swp);
             ExitOnFailure(hr, "Failed to get properties for WebDir");
 
             pswd->fHasProperties = TRUE;
@@ -105,7 +111,7 @@ UINT __stdcall ScaWebDirsRead7(
         ExitOnFailure(hr, "Failed to get application identifier for WebDir");
         if (*pwzData)
         {
-            hr = ScaGetWebApplication7(NULL, pwzData, &pswd->swapp);
+            hr = ScaGetWebApplication(NULL, pwzData, hWebAppQuery, hWebAppExtQuery, &pswd->swapp);
             ExitOnFailure(hr, "Failed to get application for WebDir");
 
             pswd->fHasApplication = TRUE;
@@ -119,6 +125,8 @@ UINT __stdcall ScaWebDirsRead7(
     ExitOnFailure(hr, "Failure while processing WebDirs");
 
 LExit:
+    WcaFinishUnwrapQuery(hWrapQuery);
+
     ReleaseStr(pwzData);
 
     return hr;

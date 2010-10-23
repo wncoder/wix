@@ -44,10 +44,10 @@
     <String Id="BrowseDlgWixUI_Bmp_Up" Overridable="yes">WixUI_Bmp_Up</String>
     <String Id="BrowseDlgWixUI_Bmp_UpTooltip" Overridable="yes">O úroveň výš</String>
     <String Id="BrowseDlgNewFolder" Overridable="yes">WixUI_Bmp_New</String>
-    <String Id="BrowseDlgNewFolderTooltip" Overridable="yes">Vytvoří novou složku.</String>
+    <String Id="BrowseDlgNewFolderTooltip" Overridable="yes">Umožňuje vytvořit novou složku.</String>
     <String Id="BrowseDlgPathLabel" Overridable="yes">&amp;Název složky:</String>
     <String Id="BrowseDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="BrowseDlgDescription" Overridable="yes">Přejděte do cílové složky.</String>
+    <String Id="BrowseDlgDescription" Overridable="yes">Umožňuje přejít do cílové složky.</String>
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Změnit cílovou složku</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
@@ -118,7 +118,7 @@
 
     <String Id="InstallScopeDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="InstallScopeDlgDescription" Overridable="yes">Zvolte obor instalace a instalační složku.</String>
+    <String Id="InstallScopeDlgDescription" Overridable="yes">Umožňuje zvolit obor instalace a instalační složku.</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Obor instalace</String>
     <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Nainstalovat &amp;pouze pro vás ([USERNAME])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">Produkt [ProductName] bude nainstalován do složky konkrétního uživatele a bude k dispozici pouze pro váš uživatelský účet. Nepotřebujete oprávnění místního správce.</String>
@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Následující aplikace používají soubory, které je třeba při instalaci aktualizovat. Můžete je nechat zavřít Průvodcem instalací a pokusit se je znovu spustit nebo restartovat počítač později.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Následující aplikace používají soubory, které je třeba při instalaci aktualizovat. Můžete je nechat Průvodcem instalací ukončit a pokusit se je znovu spustit, nebo později restartovat počítač.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Některé soubory, které je třeba aktualizovat, jsou právě používány.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Používané soubory</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Ukončit aplikace a pokusit se je znovu spustit</String>
@@ -186,7 +186,7 @@
 
     <String Id="PrepareDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">Počkejte prosím, než Průvodce instalací připraví na požadované kroky instalace.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">Počkejte prosím, než se Průvodce instalací připraví na požadované kroky instalace.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Vítá vás Průvodce instalací produktu [ProductName].</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
@@ -408,7 +408,7 @@
     <String Id="Error13" Overridable="yes">=== Konec protokolování: [Date] [Time] ===</String>
     <String Id="Error14" Overridable="yes">Začátek akce [Time]: [1]</String>
     <String Id="Error15" Overridable="yes">Akce ukončena [Time]: [1]. Návratová hodnota: [2]</String>
-    <String Id="Error16" Overridable="yes">Zbývající čas: {[1] min. }{[2] s}</String>
+    <String Id="Error16" Overridable="yes">Zbývající čas: {[1] min }{[2] s}</String>
     <String Id="Error17" Overridable="yes">Nedostatek paměti. Ukončete jiné aplikace a opakujte akci.</String>
     <String Id="Error18" Overridable="yes">Instalační služba nereaguje.</String>
     <String Id="Error19" Overridable="yes">Instalační služba byla předčasně ukončena.</String>
@@ -492,9 +492,9 @@
     <String Id="Error1712" Overridable="yes">Jeden nebo více souborů potřebných pro obnovení předchozího stavu počítače nelze najít. Předchozí stav počítače nelze obnovit.</String>
     <String Id="Error1713" Overridable="yes">[2] nemůže nainstalovat některý z požadovaných produktů. Obraťte se na pracovníky podpory. {{Systémová chyba: [3]}}</String>
     <String Id="Error1714" Overridable="yes">Starší verzi produktu [2] nelze odebrat. Obraťte se na pracovníky podpory. {{Systémová chyba [3]}}</String>
-    <String Id="Error1715" Overridable="yes">Nainstalováno [2]</String>
-    <String Id="Error1716" Overridable="yes">Nakonfigurováno [2]</String>
-    <String Id="Error1717" Overridable="yes">Odebráno [2]</String>
+    <String Id="Error1715" Overridable="yes">Byl nainstalován produkt [2].</String>
+    <String Id="Error1716" Overridable="yes">Byl nakonfigurován produkt [2].</String>
+    <String Id="Error1717" Overridable="yes">Byl odebrán produkt [2].</String>
     <String Id="Error1718" Overridable="yes">Soubor [2] byl na základě zásad digitálních podpisů odmítnut.</String>
     <String Id="Error1719" Overridable="yes">Instalační služba systému Windows není přístupná. K tomuto problému může dojít, pokud je systém Windows spuštěn v nouzovém režimu nebo pokud není Instalační služba systému Windows správně nainstalována. Obraťte se na pracovníky podpory.</String>
     <String Id="Error1720" Overridable="yes">Došlo k problému s tímto balíčkem Instalační služby systému Windows. Nelze spustit skript potřebný pro tuto instalaci. Obraťte se na pracovníky podpory nebo na dodavatele balíčku. {{Vlastní akce [2], chyba skriptu [3], [4]: [5] řádek [6], sloupec [7], [8] }}</String>
@@ -505,7 +505,7 @@
     <String Id="Error1725" Overridable="yes">Odebrání se nezdařilo.</String>
     <String Id="Error1726" Overridable="yes">Inzerování proběhlo úspěšně.</String>
     <String Id="Error1727" Overridable="yes">Inzerování se nezdařilo.</String>
-    <String Id="Error1728" Overridable="yes">Konfigurace byla úspěšně dokončena.</String>
+    <String Id="Error1728" Overridable="yes">Konfigurace proběhla úspěšně.</String>
     <String Id="Error1729" Overridable="yes">Konfigurace se nezdařila.</String>
     <String Id="Error1730" Overridable="yes">Tuto aplikaci může odebrat pouze správce. Pokud chcete tuto aplikaci odebrat, přihlaste se jako správce nebo se obraťte na pracovníky technické podpory.</String>
     <String Id="Error1731" Overridable="yes">Zdrojový instalační balíček pro produkt [2] není synchronizován s klientským balíčkem. Spusťte instalaci znovu pomocí platné kopie instalačního balíčku [3].</String>
@@ -543,7 +543,7 @@
     <String Id="Error1924" Overridable="yes">Nelze aktualizovat proměnnou prostředí [2]. Ověřte, zda máte dostatečná oprávnění ke změnám proměnných prostředí.</String>
     <String Id="Error1925" Overridable="yes">Nemáte dostatečná oprávnění k dokončení této instalace pro všechny uživatele tohoto počítače. Přihlaste se jako správce a instalaci opakujte.</String>
     <String Id="Error1926" Overridable="yes">Nelze nastavit zabezpečení souboru [3]. Chyba: [2]. Ověřte, zda máte dostatečná oprávnění ke změnám bezpečnostních oprávnění pro tento soubor.</String>
-    <String Id="Error1927" Overridable="yes">V tomto počítači není nainstalovaná Služba komponent (COM+ 1.0). K úspěšnému dokončení této instalace je vyžadována Služba komponent. Služba komponent je k dispozici v systému Windows 2000.</String>
+    <String Id="Error1927" Overridable="yes">V tomto počítači není nainstalována Služba komponent (COM+ 1.0). K úspěšnému dokončení této instalace je vyžadována Služba komponent. Služba komponent je k dispozici v systému Windows 2000.</String>
     <String Id="Error1928" Overridable="yes">Při registraci aplikace modelu COM+ došlo k chybě. Další informace získáte u pracovníků podpory.</String>
     <String Id="Error1929" Overridable="yes">Při rušení registrace aplikace modelu COM+ došlo k chybě. Další informace získáte u pracovníků podpory.</String>
     <String Id="Error1930" Overridable="yes">Popis služby [2] ([3]) nelze změnit.</String>
@@ -600,7 +600,7 @@
     <String Id="UITextSelParentCostNegPos" Overridable="yes">Tato součást uvolní [1] na pevném disku. Je pro ni vybráno [2] z [3] dílčích součástí. Tyto dílčí součásti vyžadují [4] na pevném disku.</String>
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Tato součást vyžaduje [1] na pevném disku. Je pro ni vybráno [2] z [3] dílčích součástí. Tyto dílčí součásti uvolní [4] na pevném disku.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Tato součást vyžaduje [1] na pevném disku. Je pro ni vybráno [2] z [3] dílčích součástí. Tyto dílčí součásti vyžadují [4] na pevném disku.</String>
-    <String Id="UITextTimeRemaining" Overridable="yes">Zbývající čas: {[1] min. }{[2] s}</String>
+    <String Id="UITextTimeRemaining" Overridable="yes">Zbývající čas: {[1] min }{[2] s}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">K dispozici</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Rozdíl</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">Vyžadováno</String>

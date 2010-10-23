@@ -18,202 +18,12 @@
 
 #include "precomp.h"
 
-/*------------------------------------------------------------------
-AppPool table:
-
-Column                Type   Nullable     Example Value
-AppPool               s72    No           TestPool
-Name                  s72    No           "TestPool"
-Component_            s72    No           ComponentName
-Attributes            i2     No           8 (APATTR_OTHERUSER)
-User_                 s72    Yes          UserKey
-RecycleMinutes        i2     Yes          500
-RecycleRequests       i2     Yes          5000
-RecycleTimes          s72    Yes          "1:45,13:30,22:00"
-IdleTimeout           i2     Yes          15
-QueueLimit            i2     Yes          500
-CPUMon                s72    Yes          "65,500,1" (65% CPU usage, 500 minutes, Shutdown Action)
-MaxProc               i2     Yes          5
-ManagedRuntimeVersion s72    Yes          "v2.0"
-
-Notes:
-RecycleTimes is a comma delimeted list of times.  CPUMon is a
-comma delimeted list of the following format:
-<percent CPU usage>,<refress minutes>,<Action>.  The values for
-Action are 1 (Shutdown) and 0 (No Action).
-
-------------------------------------------------------------------*/
-// sql queries
-LPCWSTR vcsAppPoolQuery7 = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `ManagedRuntimeVersion` FROM `IIsAppPool`";
-enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqManagedRuntimeVersion};
-
-LPCWSTR vcsComponentAttrQuery = L"SELECT `Attributes` FROM `Component` WHERE `Component`=?";
-enum eComponentAttrQuery { caqAttributes = 1 };
-
 // prototypes
 static HRESULT AppPoolExists(
     __in LPCWSTR wzAppPool
     );
 
-static HRESULT AddAppPoolToList(
-    __in SCA_APPPOOL** ppsapList
-    );
-
 // functions
-
-void ScaAppPoolFreeList7(
-    __in SCA_APPPOOL* psapList
-    )
-{
-    SCA_APPPOOL* psapDelete = psapList;
-    while (psapList)
-    {
-        psapDelete = psapList;
-        psapList = psapList->psapNext;
-
-        MemFree(psapDelete);
-    }
-}
-
-
-HRESULT ScaAppPoolRead7(
-    __inout SCA_APPPOOL** ppsapList
-    )
-{
-    Assert(ppsapList);
-
-    HRESULT hr = S_OK;
-    UINT er = ERROR_SUCCESS;
-
-    PMSIHANDLE hView, hRec, hViewComp, hRecComp, hRecAttr;
-    LPWSTR pwzData = NULL;
-    INSTALLSTATE isInstalled = INSTALLSTATE_UNKNOWN;
-    INSTALLSTATE isAction = INSTALLSTATE_UNKNOWN;
-    SCA_APPPOOL* psap = NULL;
-
-
-    if (S_OK != WcaTableExists(L"IIsAppPool"))
-    {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaAppPoolRead7() - because IIsAppPool table not present");
-        ExitFunction1(hr = S_FALSE);
-    }
-
-    // open a view on the component table
-    hr = WcaOpenView(vcsComponentAttrQuery, &hViewComp);
-    ExitOnFailure(hr, "Failed to open view on Component table for ScaAppPoolRead7");
-
-    // loop through all the AppPools
-    hr = WcaOpenExecuteView(vcsAppPoolQuery7, &hView);
-    ExitOnFailure(hr, "failed to open view on IIsAppPool table");
-    // loop through all the AppPools
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
-    {
-        BOOL fHasComponent = FALSE;
-        // Add this record's information into the list of things to process.
-        hr = AddAppPoolToList(ppsapList);
-        ExitOnFailure(hr, "failed to add app pool to app pool list");
-
-        psap = *ppsapList;
-
-        // get the darwin information
-        hr = WcaGetRecordString(hRec, apqComponent, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.Component");
-        hr = ::StringCchCopyW(psap->wzComponent, countof(psap->wzComponent), pwzData);
-        ExitOnFailure(hr, "Failed StringCchCopyW of apppool component");
-
-        if (*(psap->wzComponent))
-        {
-            psap->fHasComponent = TRUE;
-
-            er = ::MsiGetComponentStateW(WcaGetInstallHandle(), psap->wzComponent, &psap->isInstalled, &psap->isAction);
-            hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure(hr, "Failed to get appPool Component state");
-
-            // Determine component attributes, this needs to be a seperate query since not all app pools have components
-            hRecComp = ::MsiCreateRecord(1);
-            hr = WcaSetRecordString(hRecComp, 1, psap->wzComponent);
-            ExitOnFailure(hr, "Failed to look up component attributes");
-
-            hr = WcaExecuteView(hViewComp, hRecComp);
-            ExitOnFailure1(hr, "Failed to open Component.Attributes for Component '%S'", psap->wzComponent);
-            hr = WcaFetchSingleRecord(hViewComp, &hRecAttr);
-            ExitOnFailure1(hr, "Failed to fetch Component.Attributes for Component '%S'", psap->wzComponent);
-
-            hr = WcaGetRecordInteger(hRecAttr, caqAttributes, &psap->iCompAttributes);
-            ExitOnFailure(hr, "failed to get Component.Attributes");
-        }
-        //
-        //get apppool properties
-        //
-        hr = WcaGetRecordString(hRec, apqAppPool, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.AppPool");
-        hr = ::StringCchCopyW(psap->wzAppPool, countof(psap->wzAppPool), pwzData);
-        ExitOnFailure1(hr, "failed to copy AppPool name: %S", pwzData);
-
-        hr = WcaGetRecordFormattedString(hRec, apqName, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.Name");
-        hr = ::StringCchCopyW(psap->wzName, countof(psap->wzName), pwzData);
-        ExitOnFailure1(hr, "failed to copy app pool name: %S", pwzData);
-
-        hr = WcaGetRecordInteger(hRec, apqAttributes, &psap->iAttributes);
-        ExitOnFailure(hr, "failed to get AppPool.Attributes");
-
-        hr = WcaGetRecordString(hRec, apqUser, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.User");
-
-        hr = ScaGetUser(pwzData, &psap->suUser);
-        ExitOnFailure1(hr, "failed to get user: %S", pwzData);
-
-        hr = WcaGetRecordInteger(hRec, apqRecycleRequests, &psap->iRecycleRequests);
-        ExitOnFailure(hr, "failed to get AppPool.RecycleRequests");
-
-        hr = WcaGetRecordInteger(hRec, apqRecycleMinutes, &psap->iRecycleMinutes);
-        ExitOnFailure(hr, "failed to get AppPool.Minutes");
-
-        hr = WcaGetRecordString(hRec, apqRecycleTimes, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.RecycleTimes");
-        hr = ::StringCchCopyW(psap->wzRecycleTimes, countof(psap->wzRecycleTimes), pwzData);
-        ExitOnFailure1(hr, "failed to copy recycle value: %S", pwzData);
-
-        hr = WcaGetRecordInteger(hRec, apqVirtualMemory, &psap->iVirtualMemory);
-        ExitOnFailure(hr, "failed to get AppPool.VirtualMemory");
-
-        hr = WcaGetRecordInteger(hRec, apqPrivateMemory, &psap->iPrivateMemory);
-        ExitOnFailure(hr, "failed to get AppPool.PrivateMemory");
-
-        hr = WcaGetRecordInteger(hRec, apqIdleTimeout, &psap->iIdleTimeout);
-        ExitOnFailure(hr, "failed to get AppPool.IdleTimeout");
-
-        hr = WcaGetRecordInteger(hRec, apqQueueLimit, &psap->iQueueLimit);
-        ExitOnFailure(hr, "failed to get AppPool.QueueLimit");
-
-        hr = WcaGetRecordString(hRec, apqCpuMon, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.CPUMon");
-        hr = ::StringCchCopyW(psap->wzCpuMon, countof(psap->wzCpuMon), pwzData);
-        ExitOnFailure1(hr, "failed to copy cpu monitor value: %S", pwzData);
-
-        hr = WcaGetRecordInteger(hRec, apqMaxProc, &psap->iMaxProcesses);
-        ExitOnFailure(hr, "failed to get AppPool.MaxProc");
-        
-        hr = WcaGetRecordString(hRec, apqManagedRuntimeVersion, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.ManagedRuntimeVersion");
-        hr = ::StringCchCopyW(psap->wzManagedRuntimeVersion, countof(psap->wzManagedRuntimeVersion), pwzData);
-        ExitOnFailure1(hr, "failed to copy ManagedRuntimeVersion value: %S", pwzData);
-    }
-
-    if (E_NOMOREITEMS == hr)
-    {
-        hr = S_OK;
-    }
-    ExitOnFailure(hr, "failure while processing AppPools");
-
-LExit:
-    ReleaseStr(pwzData);
-
-    return hr;
-}
-
-
 HRESULT ScaFindAppPool7(
     __in LPCWSTR wzAppPool,
     __out_ecount(cchName) LPWSTR wzName,
@@ -234,18 +44,18 @@ HRESULT ScaFindAppPool7(
             break;
         }
     }
-    ExitOnNull1(psap, hr, HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Could not find the app pool: %S", wzAppPool);
+    ExitOnNull1(psap, hr, HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "Could not find the app pool: %ls", wzAppPool);
 
     // copy the web app pool name
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
     hr = ::StringCchCopyW(wzName, cchName, psap->wzName);
-    ExitOnFailure1(hr, "failed to copy app pool name while finding app pool: %S", psap->wzName);
+    ExitOnFailure1(hr, "failed to copy app pool name while finding app pool: %ls", psap->wzName);
 
     // if it's not being installed now, check if it exists already
     if (!psap->fHasComponent)
     {
         hr = AppPoolExists(psap->wzName);
-        ExitOnFailure1(hr, "failed to check for existence of app pool: %S", psap->wzName);
+        ExitOnFailure1(hr, "failed to check for existence of app pool: %ls", psap->wzName);
     }
 
 LExit:
@@ -280,7 +90,7 @@ HRESULT ScaAppPoolInstall7(
         if (psap->fHasComponent && WcaIsInstalling(psap->isInstalled, psap->isAction))
         {
             hr = ScaWriteAppPool7(psap);
-            ExitOnFailure1(hr, "failed to write AppPool '%S' to metabase", psap->wzAppPool);
+            ExitOnFailure1(hr, "failed to write AppPool '%ls' to metabase", psap->wzAppPool);
         }
     }
 
@@ -302,7 +112,7 @@ HRESULT ScaAppPoolUninstall7(
         if (psap->fHasComponent && WcaIsUninstalling(psap->isInstalled, psap->isAction))
         {
             hr = ScaRemoveAppPool7(psap);
-            ExitOnFailure1(hr, "Failed to remove AppPool '%S' from metabase", psap->wzAppPool);
+            ExitOnFailure1(hr, "Failed to remove AppPool '%ls' from metabase", psap->wzAppPool);
         }
     }
 
@@ -331,7 +141,7 @@ HRESULT ScaWriteAppPool7(
     ExitOnFailure(hr, "failed to write AppPool create action.");
 
     hr = ScaWriteConfigString(psap->wzName);
-    ExitOnFailure1(hr, "failed to write AppPool name: %S", psap->wzName);
+    ExitOnFailure1(hr, "failed to write AppPool name: %ls", psap->wzName);
 
     // Now do all the optional stuff
 
@@ -530,12 +340,12 @@ HRESULT ScaWriteAppPool7(
             if (*psap->suUser.wzDomain)
             {
                 hr = StrAllocFormatted(&pwzValue, L"%s\\%s", psap->suUser.wzDomain, psap->suUser.wzName);
-                ExitOnFailure2(hr, "failed to format user name: %S domain: %S", psap->suUser.wzName, psap->suUser.wzDomain);
+                ExitOnFailure2(hr, "failed to format user name: %ls domain: %ls", psap->suUser.wzName, psap->suUser.wzDomain);
             }
             else
             {
                 hr = StrAllocFormatted(&pwzValue, L"%s", psap->suUser.wzName);
-                ExitOnFailure1(hr, "failed to format user name: %S", psap->suUser.wzName);
+                ExitOnFailure1(hr, "failed to format user name: %ls", psap->suUser.wzName);
             }
 
             hr = ScaWriteConfigID(IIS_APPPOOL_USER);
@@ -597,24 +407,8 @@ HRESULT ScaRemoveAppPool7(
         ExitOnFailure(hr, "failed to write AppPool delete action.");
 
         hr = ScaWriteConfigString(psap->wzName);
-        ExitOnFailure1(hr, "failed to delete AppPool: %S", psap->wzName);
+        ExitOnFailure1(hr, "failed to delete AppPool: %ls", psap->wzName);
     }
-
-LExit:
-    return hr;
-}
-
-
-static HRESULT AddAppPoolToList(
-    __in SCA_APPPOOL** ppsapList
-    )
-{
-    HRESULT hr = S_OK;
-    SCA_APPPOOL* psap = static_cast<SCA_APPPOOL*>(MemAlloc(sizeof(SCA_APPPOOL), TRUE));
-    ExitOnNull(psap, hr, E_OUTOFMEMORY, "failed to allocate memory for new element in app pool list");
-
-    psap->psapNext = *ppsapList;
-    *ppsapList = psap;
 
 LExit:
     return hr;

@@ -11,7 +11,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Application Pool functions for CustomActions
 // </summary>
@@ -79,21 +79,25 @@ HRESULT ScaFindAppPool(
     );
 
 HRESULT ScaAppPoolInstall(
-    __in IMSAdminBase* piMetabase, 
+    __in IMSAdminBase* piMetabase,
     __in SCA_APPPOOL* psapList
     );
 
 HRESULT ScaAppPoolUninstall(
-    __in IMSAdminBase* piMetabase, 
+    __in IMSAdminBase* piMetabase,
     __in SCA_APPPOOL* psapList
     );
 
 HRESULT ScaWriteAppPool(
-    __in IMSAdminBase* piMetabase, 
+    __in IMSAdminBase* piMetabase,
     __in SCA_APPPOOL* psap
     );
 
 HRESULT ScaRemoveAppPool(
-    __in IMSAdminBase* piMetabase, 
+    __in IMSAdminBase* piMetabase,
     __in SCA_APPPOOL* psap
+    );
+
+HRESULT AddAppPoolToList(
+    __in SCA_APPPOOL** ppsapList
     );

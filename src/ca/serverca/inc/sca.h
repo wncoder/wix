@@ -11,7 +11,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Shared header between scheduling and execution CustomActions
 // </summary>
@@ -44,7 +44,6 @@ enum METABASE_ACTION
 enum IIS_CONFIG_ACTION
 {
     IIS_CREATE,
-    IIS_CREATE_NEW,
     IIS_DELETE,
     IIS_SITE,
     IIS_APPLICATION,
@@ -58,7 +57,7 @@ enum IIS_CONFIG_ACTION
     IIS_APPPOOL_RECYCLE_QUEUELIMIT,
     IIS_APPPOOL_RECYCLE_CPU_PCT,
     IIS_APPPOOL_RECYCLE_CPU_REFRESH,
-    IIS_APPPOOL_RECYCLE_CPU_ACTION,    
+    IIS_APPPOOL_RECYCLE_CPU_ACTION,
     IIS_APPPOOL_MAXPROCESS,
     IIS_APPPOOL_IDENTITY,
     IIS_APPPOOL_USER,
@@ -75,7 +74,7 @@ enum IIS_CONFIG_ACTION
     IIS_MIMEMAP_BEGIN,
     IIS_MIMEMAP,
     IIS_MIMEMAP_END,
-    IIS_DIRPROP_BEGIN, 
+    IIS_DIRPROP_BEGIN,
     IIS_DIRPROP_ACCESS,
     IIS_DIRPROP_AUTH,
     IIS_DIRPROP_USER,

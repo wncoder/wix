@@ -11,7 +11,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Virtual Directory functions for CustomActions
 // </summary>
@@ -21,6 +21,8 @@
 #include "scawebapp.h"
 #include "scamimemap.h"
 #include "scaapppool.h"
+
+enum eVDirQuery { vdqWeb = 1, vdqVDir, vdqComponent , vdqAlias, vdqDirectory, vdqProperties, vdqApplication, vdqInstalled, vdqAction, vdqSourcePath, vdqTargetPath };
 
 struct SCA_VDIR
 {

@@ -147,7 +147,7 @@
     <String Id="MaintenanceTypeDlgRemoveButton" Overridable="yes">&amp;Ta bort</String>
     <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">Ta bort installationen</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Markera den åtgärd som du vill utföra.</String>
+    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Välj den åtgärd som du vill utföra.</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ändra, reparera eller ta bort installationen</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Här kan du ändra hur olika funktioner är installerade.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">Det finns inga funktioner som kan väljas separat i [ProductName].</String>
@@ -166,8 +166,8 @@
     <String Id="MsiRMFilesInUseText" Overridable="yes">Följande program använder filer som behöver uppdateras under installationen. Du kan låta installationsguiden stänga dem och försöka starta om dem, eller starta om datorn senare.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Några filer som måste uppdateras används just nu.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Filer som används</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Stäng programmen och försök starta dem igen.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Stäng inte programmen. En systemomstart krävs.</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">St&amp;äng programmen och försök starta om dem.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">Stäng &amp;inte programmen. En omstart kommer att krävas.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Installationsguiden för [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -196,9 +196,9 @@
     <String Id="ProgressDlgTextChanging" Overridable="yes">Vänta medan [ProductName] ändras av installationsguiden.</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Ändrar [ProductName]</String>
     <String Id="ProgressDlgTextRepairing" Overridable="yes">Vänta medan [ProductName] repareras.</String>
-    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Reparerar [ProductName]</String>
+    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}[ProductName] repareras</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">Vänta medan [ProductName] tas bort av installationsguiden.</String>
-    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Tar bort [ProductName]</String>
+    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}[ProductName] tas bort</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Vänta medan [ProductName] uppdateras.</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}[ProductName] uppdateras</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Filöverföringen är klar</String>
@@ -234,19 +234,19 @@
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Installera</String>
     <String Id="VerifyReadyDlgInstallText" Overridable="yes">Klicka på Installera om du vill påbörja installationen. Klicka på Föregående om du vill granska eller ändra någon installationsinställning. Klicka på Avbryt om du vill avsluta guiden.</String>
-    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Installationen av [ProductName] kan påbörjas</String>
+    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Klart för installation av [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Ändra</String>
     <String Id="VerifyReadyDlgChangeText" Overridable="yes">Klicka på Ändra om du vill påbörja installationen. Klicka på Föregående om du vill granska eller ändra någon installationsinställning. Klicka på Avbryt om du vill avsluta guiden.</String>
-    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Ändringen av [ProductName] kan påbörjas</String>
+    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Klart för ändring av [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Re&amp;parera</String>
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">Klicka på Reparera om du vill reparera installationen av [ProductName]. Klicka på Föregående om du vill granska eller ändra någon installationsinställning. Klicka på Avbryt om du vill avsluta guiden.</String>
-    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Reparationen av [ProductName] kan påbörjas</String>
+    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Klart för reparation av [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Ta bort</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klicka på Ta bort om du vill ta bort [ProductName] från datorn. Klicka på Föregående om du vill granska eller ändra någon installationsinställning. Klicka på Avbryt om du vill avsluta guiden.</String>
-    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Borttagningen av [ProductName] kan påbörjas</String>
+    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Klart för borttagning av [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Uppdatera</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klicka på Uppdatera om du vill uppdatera [ProductName] på datorn. Klicka på Föregående om du vill granska eller ändra någon installationsinställning. Klicka på Avbryt om du vill avsluta guiden.</String>
-    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] klart för att uppdateras</String>
+    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Klart för uppdatering av [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">Installationsguiden för [ProductName]</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Återgå</String>
@@ -475,7 +475,7 @@
     <String Id="Error1604" Overridable="yes">Det går inte att installera den här produkten eftersom produkten [2] redan är installerad. De här två produkterna är inkompatibla.</String>
     <String Id="Error1605" Overridable="yes">Det finns inte tillräckligt med diskutrymme på volymen [2] för att fortsätta installera med återställning aktiverat. [3] kB krävs men bara [4] kB är tillgängligt. Klicka på Ignorera om du vill fortsätta installera utan att spara återställningsinformation, klicka på Försök igen om du vill kontrollera nödvändigt diskutrymme igen eller klicka på Avbryt om du vill avbryta installationen.</String>
     <String Id="Error1606" Overridable="yes">Det gick inte att komma åt nätverksplatsen [2].</String>
-    <String Id="Error1607" Overridable="yes">Avsluta följande program innan du går vidare med installationen:</String>
+    <String Id="Error1607" Overridable="yes">Du bör stänga följande program innan du fortsätter med installationen:</String>
     <String Id="Error1608" Overridable="yes">Det går inte att hitta några tidigare installerade kompatibla produkter på datorn för installation av den här produkten.</String>
     <String Id="Error1609" Overridable="yes">Ett fel uppstod när säkerhetsinställningar skulle tillämpas. [2] är inte en giltig användare eller grupp. Detta kan tyda på ett problem med paketet eller med att ansluta till en domänkontrollant i nätverket. Kontrollera att nätverksanslutningen fungerar och klicka därefter på Försök igen eller klicka på Avbryt om du vill avbryta installationen. {{Det gick inte att hitta användarens SID, systemfel [3]}}</String>
     <String Id="Error1701" Overridable="yes">Nyckeln [2] är ogiltig. Kontrollera att rätt nyckel har angetts.</String>
@@ -552,9 +552,9 @@
     <String Id="Error1933" Overridable="yes">Tjänsten Windows Installer kunde inte uppdatera en eller fler skyddade Windows-filer. {{SFP-fel: [2]. Skyddade filer:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">Användarinstallationer har inaktiverats av en princip på datorn.</String>
     <String Id="Error1935" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Se Hjälp och support för mer information. HRESULT: [3]. {{paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
-    <String Id="Error1936" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Paketet har inte ett starkt namn eller är inte signerad med minsta nyckellängd. {{HRESULT: [3]. paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
-    <String Id="Error1937" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Signaturen och/eller katalogen kunde inte bekräftas eller är inte giltiga. {{HRESULT: [3]. paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
-    <String Id="Error1938" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Det gick inte att hitta en eller flera moduler. {{HRESULT: [3]. paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
+    <String Id="Error1936" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Paketet har inte ett starkt namn eller är inte signerad med minsta nyckellängd. HRESULT: [3]. {{paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
+    <String Id="Error1937" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Signaturen och/eller katalogen kunde inte bekräftas eller är inte giltiga. HRESULT: [3]. {{paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
+    <String Id="Error1938" Overridable="yes">Ett fel uppstod när paketet [6] skulle installeras. Det gick inte att hitta en eller flera moduler. HRESULT: [3]. {{paketets gränssnitt: [4], funktion: [5], komponent: [2]}}</String>
 
     <String Id="UITextbytes" Overridable="yes">byte</String>
     <String Id="UITextGB" Overridable="yes">GB</String>

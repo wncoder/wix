@@ -59,7 +59,7 @@
     <String Id="CustomizeDlgTree" Overridable="yes">Drzewo wyborów</String>
     <String Id="CustomizeDlgBrowse" Overridable="yes">&amp;Przeglądaj...</String>
     <String Id="CustomizeDlgReset" Overridable="yes">Re&amp;setuj</String>
-    <String Id="CustomizeDlgDiskCost" Overridable="yes">Wykorzystanie dysk&amp;u</String>
+    <String Id="CustomizeDlgDiskCost" Overridable="yes">Użycie dysk&amp;u</String>
     <String Id="CustomizeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="CustomizeDlgText" Overridable="yes">Kliknij ikony w poniższym drzewie, aby zmienić sposób instalowania funkcji.</String>
     <String Id="CustomizeDlgDescription" Overridable="yes">Wybierz żądany sposób instalowania funkcji.</String>
@@ -67,13 +67,13 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Miejsce:</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Lokalizacja:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">Instalator produktu [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="DiskCostDlgText" Overridable="yes">Wyróżnione woluminy nie mają wystarczająco dużo dostępnego miejsca na dysku na wybrane funkcje. Możesz usunąć niektóre pliki z wyróżnionych woluminów, zainstalować mniej funkcji lub wybrać inne dyski docelowe.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Miejsce na dysku wymagane do zainstalowania wybranych funkcji.</String>
-    <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Wymagania przestrzeni dyskowej</String>
+    <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Wymagane miejsce na dysku</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="ErrorDlg_Title" Overridable="yes">Instalator produktu [ProductName]</String>
@@ -294,7 +294,7 @@
     <String Id="ProgressTextAllocateRegistrySpaceTemplate" Overridable="yes">Wolne miejsce: [1]</String>
     <String Id="ProgressTextAppSearch" Overridable="yes">Wyszukiwanie zainstalowanych aplikacji</String>
     <String Id="ProgressTextAppSearchTemplate" Overridable="yes">Właściwość: [1], podpis: [2]</String>
-    <String Id="ProgressTextBindImage" Overridable="yes">Powiązywanie plików wykonywalnych</String>
+    <String Id="ProgressTextBindImage" Overridable="yes">Wiązanie plików wykonywalnych</String>
     <String Id="ProgressTextBindImageTemplate" Overridable="yes">Plik: [1]</String>
     <String Id="ProgressTextCCPSearch" Overridable="yes">Wyszukiwanie kwalifikujących produktów</String>
     <String Id="ProgressTextCreateFolders" Overridable="yes">Tworzenie folderów</String>
@@ -326,7 +326,7 @@
     <String Id="ProgressTextRegisterTypeLibrariesTemplate" Overridable="yes">Identyfikator biblioteki: [1]</String>
     <String Id="ProgressTextRegisterUser" Overridable="yes">Rejestrowanie użytkownika</String>
     <String Id="ProgressTextRegisterUserTemplate" Overridable="yes">[1]</String>
-    <String Id="ProgressTextRemoveDuplicateFiles" Overridable="yes">Usuwanie plików zduplikowanych</String>
+    <String Id="ProgressTextRemoveDuplicateFiles" Overridable="yes">Usuwanie zduplikowanych plików</String>
     <String Id="ProgressTextRemoveDuplicateFilesTemplate" Overridable="yes">Plik: [1], katalog: [9]</String>
     <String Id="ProgressTextRemoveEnvironmentStrings" Overridable="yes">Aktualizowanie ciągów środowiska</String>
     <String Id="ProgressTextRemoveEnvironmentStringsTemplate" Overridable="yes">Nazwa: [1], wartość: [2], akcja [3]</String>
@@ -382,10 +382,10 @@
     <String Id="ProgressTextGenerateScriptTemplate" Overridable="yes">[1]</String>
     <String Id="ProgressTextInstallSFPCatalogFile" Overridable="yes">Instalowanie wykazu systemu</String>
     <String Id="ProgressTextInstallSFPCatalogFileTemplate" Overridable="yes">Plik: [1],  zależności: [2]</String>
-    <String Id="ProgressTextMsiPublishAssemblies" Overridable="yes">Publikowanie informacji o asemblowaniu</String>
-    <String Id="ProgressTextMsiPublishAssembliesTemplate" Overridable="yes">Kontekst aplikacji: [1], nazwa asemblowania: [2]</String>
-    <String Id="ProgressTextMsiUnpublishAssemblies" Overridable="yes">Cofanie publikowania informacji o asemblowaniu</String>
-    <String Id="ProgressTextMsiUnpublishAssembliesTemplate" Overridable="yes">Kontekst aplikacji: [1], nazwa asemblowania: [2]</String>
+    <String Id="ProgressTextMsiPublishAssemblies" Overridable="yes">Publikowanie informacji o asemblerze</String>
+    <String Id="ProgressTextMsiPublishAssembliesTemplate" Overridable="yes">Kontekst aplikacji: [1], nazwa asemblera: [2]</String>
+    <String Id="ProgressTextMsiUnpublishAssemblies" Overridable="yes">Cofanie publikowania informacji o asemblerze</String>
+    <String Id="ProgressTextMsiUnpublishAssembliesTemplate" Overridable="yes">Kontekst aplikacji: [1], nazwa asemblera: [2]</String>
     <String Id="ProgressTextRollback" Overridable="yes">Powrót do poprzedniej akcji:</String>
     <String Id="ProgressTextRollbackTemplate" Overridable="yes">[1]</String>
     <String Id="ProgressTextRollbackCleanup" Overridable="yes">Usuwanie plików kopii zapasowej</String>
@@ -421,9 +421,9 @@
     <String Id="Error1101" Overridable="yes">Błąd podczas odczytu z pliku: [2]. {{ Błąd systemu [3].}} Sprawdź, czy plik istnieje i czy masz do niego dostęp.</String>
     <String Id="Error1301" Overridable="yes">Nie można utworzyć pliku „[2]”. Istnieje już katalog o tej nazwie. Anuluj instalację i spróbuj przeprowadzić ją w innej lokalizacji.</String>
     <String Id="Error1302" Overridable="yes">Włóż dysk: [2]</String>
-    <String Id="Error1303" Overridable="yes">Instalator ma niewystarczające uprawnienia dostępu do tego katalogu: [2]. Nie można kontynuować instalacji. Zaloguj się jako administrator lub skontaktuj się ze swoim administratorem systemu.</String>
-    <String Id="Error1304" Overridable="yes">Błąd zapisu w pliku: [2]. Sprawdź, czy masz dostęp do tego katalogu.</String>
-    <String Id="Error1305" Overridable="yes">Błąd podczas odczytu z pliku [2]. {{ Błąd systemu [3].}} Sprawdź, czy plik istnieje i czy masz do niego dostęp.</String>
+    <String Id="Error1303" Overridable="yes">Instalator ma niewystarczające uprawnienia dostępu do tego katalogu: [2]. Nie można kontynuować instalacji. Zaloguj się jako administrator lub skontaktuj się z administratorem systemu.</String>
+    <String Id="Error1304" Overridable="yes">Błąd przy zapisywaniu do pliku: [2]. Sprawdź, czy masz dostęp do tego katalogu.</String>
+    <String Id="Error1305" Overridable="yes">Błąd odczytu z pliku [2]. {{ Błąd systemu [3].}} Sprawdź, czy plik istnieje i czy masz do niego dostęp.</String>
     <String Id="Error1306" Overridable="yes">Inna aplikacja ma wyłączny dostęp do pliku „[2]”. Zamknij wszystkie inne aplikacje, a następnie kliknij przycisk Ponów próbę.</String>
     <String Id="Error1307" Overridable="yes">Za mało miejsca na dysku, aby zainstalować ten plik: [2]. Zwolnij nieco miejsca na dysku i kliknij przycisk Ponów próbę lub kliknij przycisk Anuluj, aby zakończyć.</String>
     <String Id="Error1308" Overridable="yes">Nie znaleziono pliku źródłowego: [2]. Sprawdź, czy plik istnieje i czy masz do niego dostęp.</String>
@@ -467,13 +467,13 @@
     <String Id="Error1410" Overridable="yes">Nie można zwiększyć dostępnego miejsca dla rejestru. Do zainstalowania tej aplikacji wymagane jest [2] KB wolnego miejsca dla rejestru.</String>
     <String Id="Error1500" Overridable="yes">Inna instalacja jest w toku. Musisz ukończyć tamtą instalację przed kontynuowaniem tej instalacji.</String>
     <String Id="Error1501" Overridable="yes">Błąd dostępu do zabezpieczonych danych. Upewnij się, że Instalator Windows jest skonfigurowany prawidłowo, i spróbuj ponownie przeprowadzić instalację.</String>
-    <String Id="Error1502" Overridable="yes">Użytkownik „[2]” zainicjował poprzednio instalację dla produktu „[3]”. Użytkownik ten będzie musiał uruchomić tę instalację ponownie, aby używać tego produktu. Teraz będzie kontynuowana Twoja bieżąca instalacja.</String>
+    <String Id="Error1502" Overridable="yes">Użytkownik „[2]” zainicjował poprzednio instalację dla produktu „[3]”. Użytkownik ten będzie musiał uruchomić tę instalację ponownie, aby używać tego produktu. Bieżąca instalacja będzie kontynuowana.</String>
     <String Id="Error1503" Overridable="yes">Użytkownik „[2]” zainicjował poprzednio instalację dla produktu „[3]”. Użytkownik ten będzie musiał uruchomić tę instalację ponownie, aby używać tego produktu.</String>
     <String Id="Error1601" Overridable="yes">Za mało miejsca na dysku — wolumin: „[2]”; wymagane miejsce: [3] KB; dostępne miejsce: [4] KB. Zwolnij nieco miejsca na dysku i ponów próbę.</String>
     <String Id="Error1602" Overridable="yes">Czy na pewno chcesz anulować operację?</String>
     <String Id="Error1603" Overridable="yes">Plik [2][3] jest używany{ przez następujący proces: Nazwa: [4], Id: [5], Nazwa okna: „[6]”}. Zamknij aplikację i ponów próbę.</String>
     <String Id="Error1604" Overridable="yes">Jest już zainstalowany produkt „[2]”, co uniemożliwia instalację tego produktu. Te dwa produkty nie są zgodne.</String>
-    <String Id="Error1605" Overridable="yes">Jest niewystarczająca ilość miejsca na dysku w woluminie „[2]”, aby kontynuować instalację z włączonym odzyskiwaniem. Miejsce wymagane: [3] KB; miejsce dostępne: [4] KB. Kliknij przycisk Ignoruj, aby kontynuować instalację bez zapisywania informacji odzyskiwania, kliknij przycisk Ponów próbę, aby ponownie sprawdzić dostępne miejsce lub kliknij przycisk Anuluj, aby zakończyć instalację.</String>
+    <String Id="Error1605" Overridable="yes">Za mało miejsca na dysku na woluminie [2], aby kontynuować instalację z włączoną opcją odzyskiwania. Dostępna ilość miejsca: [3] KB; wymagana ilość miejsca: [4] KB. Kliknij przycisk Ignoruj, aby kontynuować instalację bez zapisywania informacji odzyskiwania, kliknij przycisk Ponów próbę, aby ponownie sprawdzić dostępne miejsce lub kliknij przycisk Anuluj, aby zakończyć instalację.</String>
     <String Id="Error1606" Overridable="yes">Nie można uzyskać dostępu do lokalizacji sieciowej [2].</String>
     <String Id="Error1607" Overridable="yes">Następujące aplikacje należy zamknąć przed kontynuowaniem instalacji:</String>
     <String Id="Error1608" Overridable="yes">Nie można znaleźć na tym komputerze żadnego poprzednio zainstalowanego produktu zgodnego, który umożliwiałby instalację tego produktu.</String>
@@ -523,19 +523,19 @@
     <String Id="Error1904" Overridable="yes">Nie można zarejestrować modułu [2]. Wynik HRESULT [3]. Skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1905" Overridable="yes">Nie można wyrejestrować modułu [2]. Wynik HRESULT [3]. Skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1906" Overridable="yes">Nie można przechować pakietu [2] w pamięci podręcznej. Błąd: [3]. Skontaktuj się z pomocą techniczną.</String>
-    <String Id="Error1907" Overridable="yes">Nie można zarejestrować czcionki [2]. Sprawdź, czy masz wystarczające uprawnienia do instalacji czcionek, i czy system obsługuje tę czcionkę.</String>
+    <String Id="Error1907" Overridable="yes">Nie można zarejestrować czcionki [2]. Sprawdź, czy masz wystarczające uprawnienia do instalacji czcionek i czy system obsługuje tę czcionkę.</String>
     <String Id="Error1908" Overridable="yes">Nie można wyrejestrować czcionki [2]. Sprawdź, czy masz wystarczające uprawnienia do usuwania czcionek.</String>
-    <String Id="Error1909" Overridable="yes">Nie można utworzyć skrótu [2]. Sprawdź, czy folder docelowy istnieje, i czy masz do niego dostęp.</String>
-    <String Id="Error1910" Overridable="yes">Nie można usunąć skrótu [2]. Sprawdź, czy plik skrótu istnieje, i czy masz do niego dostęp.</String>
+    <String Id="Error1909" Overridable="yes">Nie można utworzyć skrótu [2]. Sprawdź, czy folder docelowy istnieje i czy masz do niego dostęp.</String>
+    <String Id="Error1910" Overridable="yes">Nie można usunąć skrótu [2]. Sprawdź, czy plik skrótu istnieje i czy masz do niego dostęp.</String>
     <String Id="Error1911" Overridable="yes">Nie można zarejestrować biblioteki typów dla pliku [2]. Skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1912" Overridable="yes">Nie można wyrejestrować biblioteki typów dla pliku [2]. Skontaktuj się z pomocą techniczną.</String>
-    <String Id="Error1913" Overridable="yes">Nie można zaktualizować pliku ini [2][3]. Sprawdź, czy plik istnieje, i czy masz do niego dostęp.</String>
+    <String Id="Error1913" Overridable="yes">Nie można zaktualizować pliku ini [2][3]. Sprawdź, czy plik istnieje i czy masz do niego dostęp.</String>
     <String Id="Error1914" Overridable="yes">Nie można zaplanować, aby plik [2] zastąpił plik [3] przy ponownym uruchomieniu. Sprawdź, czy masz uprawnienia do zapisu pliku [3].</String>
     <String Id="Error1915" Overridable="yes">Błąd usuwania menedżera sterownika ODBC, błąd ODBC [2]: [3]. Skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1916" Overridable="yes">Błąd instalowania menedżera sterownika ODBC, błąd ODBC [2]: [3]. Skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1917" Overridable="yes">Błąd usuwania sterownika ODBC: [4], błąd ODBC [2]: [3]. Sprawdź, czy masz wystarczające uprawnienia do usuwania sterowników ODBC.</String>
-    <String Id="Error1918" Overridable="yes">Błąd instalowania sterownika ODBC: [4], błąd ODBC [2]: [3]. Sprawdź, czy plik [4] istnieje, i czy masz do niego dostęp.</String>
-    <String Id="Error1919" Overridable="yes">Błąd konfiguracji źródła danych ODBC: [4], błąd ODBC [2]: [3]. Sprawdź, czy plik [4] istnieje, i czy masz do niego dostęp.</String>
+    <String Id="Error1918" Overridable="yes">Błąd instalowania sterownika ODBC: [4], błąd ODBC [2]: [3]. Sprawdź, czy plik [4] istnieje i czy masz do niego dostęp.</String>
+    <String Id="Error1919" Overridable="yes">Błąd konfiguracji źródła danych ODBC: [4], błąd ODBC [2]: [3]. Sprawdź, czy plik [4] istnieje i czy masz do niego dostęp.</String>
     <String Id="Error1920" Overridable="yes">Nie można uruchomić usługi „[2]” ([3]). Sprawdź, czy masz wystarczające uprawnienia do uruchamiania usług systemowych.</String>
     <String Id="Error1921" Overridable="yes">Nie można zatrzymać usługi „[2]” ([3]). Sprawdź, czy masz wystarczające uprawnienia do zatrzymywania usług systemowych.</String>
     <String Id="Error1922" Overridable="yes">Nie można usunąć usługi „[2]” ([3]). Sprawdź, czy masz wystarczające uprawnienia do usuwania usług systemowych.</String>
@@ -544,12 +544,12 @@
     <String Id="Error1925" Overridable="yes">Nie masz wystarczających uprawnień do zakończenia tej instalacji dla wszystkich użytkowników na tym komputerze. Zaloguj się jako administrator, a następnie ponów próbę tej instalacji.</String>
     <String Id="Error1926" Overridable="yes">Nie można ustawić zabezpieczeń pliku „[3]”. Błąd: [2]. Sprawdź, czy masz wystarczające uprawnienia do modyfikowania uprawnień zabezpieczeń dla tego pliku.</String>
     <String Id="Error1927" Overridable="yes">Na tym komputerze nie są zainstalowane usługi składowe (COM+ 1.0). W celu prawidłowego wykonania instalacji wymagane są usługi składowe. Usługi składowe są dostępne w systemie Windows 2000.</String>
-    <String Id="Error1928" Overridable="yes">Podczas rejestrowania aplikacji COM+ wystąpił błąd. Aby uzyskać więcej informacji, skontaktuj się z pomocą techniczną.</String>
-    <String Id="Error1929" Overridable="yes">Podczas wyrejestrowywania aplikacji COM+ wystąpił błąd. Aby uzyskać więcej informacji, skontaktuj się z pomocą techniczną.</String>
+    <String Id="Error1928" Overridable="yes">Wystąpił błąd podczas rejestrowania aplikacji COM+. Aby uzyskać więcej informacji, skontaktuj się z pomocą techniczną.</String>
+    <String Id="Error1929" Overridable="yes">Wystąpił błąd podczas wyrejestrowywania aplikacji COM+. Aby uzyskać więcej informacji, skontaktuj się z pomocą techniczną.</String>
     <String Id="Error1930" Overridable="yes">Zmiana opisu dla usługi „[2]” ([3]) nie jest możliwa.</String>
     <String Id="Error1931" Overridable="yes">Usługa Instalator Windows nie może zaktualizować pliku systemowego [2], ponieważ plik jest chroniony przez system Windows. Aby program działał prawidłowo, należy zaktualizować system operacyjny. {{Wersja pakietu: [3], wersja chroniona systemu operacyjnego: [4]}}</String>
     <String Id="Error1932" Overridable="yes">Usługa Instalator Windows nie może zaktualizować chronionego przez system Windows pliku [2]. {{Wersja pakietu: [3], wersja chroniona systemu operacyjnego: [4], błąd SFP: [5]}}</String>
-    <String Id="Error1933" Overridable="yes">Usługa Instalatora Windows nie może zaktualizować jednego lub kilku chronionych plików Windows. {{Błąd SFP: [2]. Lista chronionych plików:\r\n[3]}}</String>
+    <String Id="Error1933" Overridable="yes">Usługa Instalator Windows nie może zaktualizować jednego lub kilku chronionych plików Windows. {{Błąd SFP: [2]. Lista chronionych plików:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">Instalacje użytkownika są wyłączone ze względu na zasady obowiązujące na tym komputerze.</String>
     <String Id="Error1935" Overridable="yes">Wystąpił błąd podczas instalacji zestawu „[6]”. Zobacz Pomoc i obsługę techniczną, aby uzyskać więcej informacji. Wynik HRESULT: [3]. {{Interfejs zestawu: [4], funkcja: [5], składnik: [2]}}</String>
     <String Id="Error1936" Overridable="yes">Wystąpił błąd podczas instalacji zestawu „[6]”. Zestaw nie ma silnej nazwy lub nie jest podpisany za pomocą klucza o minimalnej długości. Wynik HRESULT: [3]. {{Interfejs zestawu: [4], funkcja: [5], składnik: [2]}}</String>

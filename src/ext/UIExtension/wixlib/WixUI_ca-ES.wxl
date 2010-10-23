@@ -221,7 +221,7 @@
     <String Id="SetupTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Trieu un tipus de configuració</String>
     <String Id="SetupTypeDlgDescription" Overridable="yes">Trieu el tipus de configuració que més bé s'adapti a les vostres necessitats</String>
     <String Id="SetupTypeDlgTypicalText" Overridable="yes">Instal·la les característiques del programa més comunes. Recomanat per a la majoria dels usuaris.</String>
-    <String Id="SetupTypeDlgCustomText" Overridable="yes">Permet que els usuaris triïn quines característiques del programa s'instal·laran. Recomanat per a usuaris avançats.</String>
+    <String Id="SetupTypeDlgCustomText" Overridable="yes">Permet que els usuaris triïn quines característiques del programa s'instal·laran i on s'instal·laran. Recomanat per a usuaris avançats.</String>
     <String Id="SetupTypeDlgCompleteText" Overridable="yes">S'instal·laran totes les característiques del programa. Requereix la major part de l'espai al disc.</String>
 
     <String Id="UserExit_Title" Overridable="yes">Instal·lació del producte [ProductName]</String>
@@ -427,7 +427,7 @@
     <String Id="Error1306" Overridable="yes">Hi ha una altra aplicació que té accés exclusiu al fitxer "[2]". Tanqueu totes les altres aplicacions i feu clic a Torna-ho a provar.</String>
     <String Id="Error1307" Overridable="yes">No hi ha prou espai al disc per instal·lar el fitxer: [2]. Allibereu espai al disc i feu clic a Torna-ho a provar, o bé feu clic a Cancel·la per sortir.</String>
     <String Id="Error1308" Overridable="yes">No s'ha trobat el fitxer d'origen: [2]. Comproveu que el fitxer existeix i que hi podeu accedir.</String>
-    <String Id="Error1309" Overridable="yes">S'ha produït un error en llegir el fitxer: [3]. {{ Error del sistema [2].}} Comproveu que existeix i que hi podeu accedir.</String>
+    <String Id="Error1309" Overridable="yes">S'ha produït un error en llegir el fitxer: [3]. {{ Error del sistema [2].}} Comproveu que el fitxer existeix i que hi podeu accedir.</String>
     <String Id="Error1310" Overridable="yes">S'ha produït un error en escriure al fitxer: [3]. {{ Error del sistema [2].}} Comproveu que teniu accés al directori.</String>
     <String Id="Error1311" Overridable="yes">No s'ha trobat el fitxer d'origen{{(cabinet)}}: [2]. Comproveu que el fitxer existeix i que hi podeu accedir.</String>
     <String Id="Error1312" Overridable="yes">No es pot crear el directori "[2]". Hi ha un fitxer que té el mateix nom. Canvieu el nom del fitxer o suprimiu-lo i feu clic a Torna-ho a provar, o bé feu clic a Cancel·la per sortir.</String>
@@ -464,16 +464,16 @@
     <String Id="Error1407" Overridable="yes">No s'han pogut obtenir els noms dels valors de la clau [2]. {{ Error del sistema [3].}} Comproveu que teniu l'accés necessari a la clau o poseu-vos en contacte amb el personal de suport tècnic.</String>
     <String Id="Error1408" Overridable="yes">No s'han pogut obtenir els noms de les subclaus de la clau [2]. {{ Error del sistema [3].}} Comproveu que teniu l'accés necessari a la clau o poseu-vos en contacte amb el personal de suport tècnic.</String>
     <String Id="Error1409" Overridable="yes">No s'ha pogut llegir la informació de seguretat de la clau [2]. {{ Error del sistema [3].}} Comproveu que teniu l'accés necessari a la clau o poseu-vos en contacte amb el personal de suport tècnic.</String>
-    <String Id="Error1410" Overridable="yes">No s'ha pogut augmentar l'espai disponible al registre. Cal tenir [2] KB d'espai lliure al registre per instal·lar aquesta aplicació.</String>
+    <String Id="Error1410" Overridable="yes">No s'ha pogut augmentar l'espai disponible al registre. Cal tenir [2] kB d'espai lliure al registre per instal·lar aquesta aplicació.</String>
     <String Id="Error1500" Overridable="yes">Hi ha una altra instal·lació en curs. Completeu l'altra instal·lació abans de continuar amb aquesta.</String>
     <String Id="Error1501" Overridable="yes">S'ha produït un error en accedir a dades protegides. Assegureu-vos que el Windows Installer està configurat correctament i torneu a intentar portar a terme la instal·lació.</String>
     <String Id="Error1502" Overridable="yes">L'usuari "[2]" ja ha iniciat prèviament una instal·lació del producte "[3]", però haurà de tornar a executar-la per poder utilitzar el producte. La instal·lació actual d'aquest producte continuarà.</String>
     <String Id="Error1503" Overridable="yes">L'usuari "[2]" ja ha iniciat prèviament una instal·lació del producte "[3]", però haurà de tornar a executar-la per poder utilitzar el producte.</String>
-    <String Id="Error1601" Overridable="yes">No hi ha prou espai al disc -- Volum: "[2]"; espai necessari: [3] KB; espai disponible: [4] KB. Augmenteu l'espai disponible del disc i torneu a provar-ho.</String>
+    <String Id="Error1601" Overridable="yes">No hi ha prou espai al disc -- Volum: "[2]"; espai necessari: [3] kB; espai disponible: [4] KB. Augmenteu l'espai disponible del disc i torneu a provar-ho.</String>
     <String Id="Error1602" Overridable="yes">Esteu segur que voleu cancel·lar?</String>
     <String Id="Error1603" Overridable="yes">El fitxer [2][3] està en ús{ pel procés següent: nom: [4], identificador: [5], títol de la finestra: "[6]"}. Tanqueu aquesta aplicació i torneu a provar-ho.</String>
     <String Id="Error1604" Overridable="yes">El producte "[2]" ja està instal·lat, la qual cosa impedeix instal·lar aquest producte. Aquests dos productes són incompatibles.</String>
-    <String Id="Error1605" Overridable="yes">No hi ha prou espai de disc disponible al volum "[2]" per continuar la instal·lació amb la recuperació habilitada. Cal tenir [3] KB disponibles, però només n'hi ha [4] KB. Feu clic a Ignora per continuar la instal·lació sense desar la informació de recuperació, feu clic a Torna-ho a provar per tornar a comprovar l'espai disponible o feu clic a Cancel·la per sortir de la instal·lació.</String>
+    <String Id="Error1605" Overridable="yes">No hi ha prou espai de disc disponible al volum "[2]" per continuar la instal·lació amb la recuperació habilitada. Cal tenir [3] kB disponibles, però només hi ha [4] kB. Feu clic a Ignora per continuar la instal·lació sense desar la informació de recuperació, feu clic a Torna-ho a provar per tornar a comprovar l'espai disponible o feu clic a Cancel·la per sortir de la instal·lació.</String>
     <String Id="Error1606" Overridable="yes">No s'ha pogut accedir a la ubicació de xarxa [2].</String>
     <String Id="Error1607" Overridable="yes">Tanqueu les aplicacions següents abans de continuar la instal·lació:</String>
     <String Id="Error1608" Overridable="yes">No s'ha trobat cap producte compatible instal·lat anteriorment a l'ordinador per instal·lar aquest producte.</String>
@@ -549,8 +549,8 @@
     <String Id="Error1930" Overridable="yes">No s'ha pogut canviar la descripció del servei "[2]" ([3]).</String>
     <String Id="Error1931" Overridable="yes">El servei Windows Installer no pot actualitzar el fitxer del sistema [2] perquè està protegit pel Windows. És possible que hàgiu d'actualitzar el sistema operatiu perquè aquest programa funcioni correctament. {{Versió del paquet: [3], versió protegida del sistema operatiu: [4]}}</String>
     <String Id="Error1932" Overridable="yes">El servei del Windows Installer no pot actualitzar el fitxer protegit del Windows [2]. {{Versió del paquet: [3], versió protegida del sistema operatiu: [4], error d'SFP: [5]}}</String>
-    <String Id="Error1933" Overridable="yes">El servei del Windows Installer no pot actualitzar un o més fitxers protegits del Windows. {{SFP Error: [2]. Llista de fitxers protegits:\r\n[3]}}</String>
-    <String Id="Error1934" Overridable="yes">Les instal·lacions d'usuari estan inhabilitades per la norma de l'ordinador.</String>
+    <String Id="Error1933" Overridable="yes">El servei del Windows Installer no pot actualitzar un o més fitxers protegits del Windows. {{Error d'SFP: [2]. Llista de fitxers protegits:\r\n[3]}}</String>
+    <String Id="Error1934" Overridable="yes">Les instal·lacions d'usuari estan inhabilitades per una norma de l'ordinador.</String>
     <String Id="Error1935" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". Vegeu l'Ajuda i suport tècnic per obtenir més informació. HRESULT: [3]. {{interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
     <String Id="Error1936" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". L'assemblat no té un nom segur o no està signat amb la longitud de clau mínima. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
     <String Id="Error1937" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". La signatura o el catàleg no s'han pogut comprovar o no són vàlids. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
@@ -558,7 +558,7 @@
 
     <String Id="UITextbytes" Overridable="yes">bytes</String>
     <String Id="UITextGB" Overridable="yes">GB</String>
-    <String Id="UITextKB" Overridable="yes">KB</String>
+    <String Id="UITextKB" Overridable="yes">kB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
     <String Id="UITextMenuAbsent" Overridable="yes">Aquesta característica no estarà disponible</String>
     <String Id="UITextMenuAdvertise" Overridable="yes">Aquesta característica s'instal·larà quan calgui</String>

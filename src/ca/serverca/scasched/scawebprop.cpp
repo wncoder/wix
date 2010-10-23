@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Web directory property functions for CustomActions
 // </summary>
@@ -49,7 +49,10 @@ HRESULT ScaGetWebDirProperties(
         Assert(0 == lstrcmpW(pswp->wzKey, wzProperties));
 
         hr = WcaGetRecordInteger(hRec, wpqAccess, &pswp->iAccess);
+        ExitOnFailure(hr, "Failed to get access value");
+
         hr = WcaGetRecordInteger(hRec, wpqAuthorization, &pswp->iAuthorization);
+        ExitOnFailure(hr, "Failed to get authorization value");
 
         // if allow anonymous users
         if (S_OK == hr && pswp->iAuthorization & 1)
@@ -170,11 +173,13 @@ HRESULT ScaGetWebDirProperties(
     }
     else if (E_NOMOREITEMS == hr)
     {
-        WcaLog(LOGMSG_STANDARD, "Error: Cannot locate IIsWebDirProperties.DirProperties='%S'", wzProperties);
+        WcaLog(LOGMSG_STANDARD, "Error: Cannot locate IIsWebDirProperties.DirProperties='%ls'", wzProperties);
         hr = E_FAIL;
     }
     else
+    {
         ExitOnFailure(hr, "Error getting appropriate webdirproperty");
+    }
 
     // Let's check that there isn't more than one record found - if there is, throw an assert like WcaFetchSingleRecord() would
     HRESULT hrTemp = WcaFetchWrappedRecordWhereString(hWebDirPropQuery, 1, wzProperties, &hRec);

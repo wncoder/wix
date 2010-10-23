@@ -26,7 +26,6 @@ namespace Microsoft.Deployment.Samples.EmbeddedUI
     using System.Windows.Controls;
     using System.Windows.Data;
     using System.Windows.Documents;
-    using System.Windows.Forms;
     using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
@@ -50,7 +49,7 @@ namespace Microsoft.Deployment.Samples.EmbeddedUI
         }
 
         public MessageResult ProcessMessage(InstallMessage messageType, Record messageRecord,
-            MessageBoxButtons buttons, MessageBoxIcon icon, MessageBoxDefaultButton defaultButton)
+            MessageButtons buttons, MessageIcon icon, MessageDefaultButton defaultButton)
         {
             try
             {

@@ -16812,6 +16812,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "Property":
                                 this.ParsePropertyElement(child);
                                 break;
+                            case "PropertyRef":
+                                this.ParseSimpleRefElement(child, "Property");
+                                break;
                             case "UIRef":
                                 this.ParseSimpleRefElement(child, "WixUI");
                                 break;

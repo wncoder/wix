@@ -18,15 +18,7 @@
 //-------------------------------------------------------------------------------------------------
 
 // prototypes
-HRESULT ScaHttpHeaderRead7(
-    __in SCA_HTTP_HEADER **ppshhList
-    );
-void ScaHttpHeaderFreeList7(
-    __in SCA_HTTP_HEADER *pshhList
-    );
-HRESULT ScaHttpHeaderCheckList7(
-    __in SCA_HTTP_HEADER* pshhList
-    );
+
 HRESULT ScaGetHttpHeader7(
     __in int iParentType,
     __in_z LPCWSTR wzParentValue,
