@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Web Table functions for CustomActions
 // </summary>
@@ -20,14 +20,10 @@
 
 //Adding this because delivery doesn't have the updated specstrings.h that windows build does
 #ifndef __in_xcount
-#define __in_xcount(size) 
+#define __in_xcount(size)
 #endif
 
 // sql queries
-enum eWebQuery { wqWeb = 1, wqComponent, wqId, wqDescription, wqConnectionTimeout, wqDirectory,
-                 wqState, wqAttributes, wqProperties, wqApplication, wqAddress, wqIP, wqPort, wqHeader, wqSecure, wqLog, wqInstalled, wqAction, wqSourcePath, wqTargetPath};
-
-enum eWebAddressQuery { waqAddress = 1, waqWeb, waqIP, waqPort, waqHeader, waqSecure };
 
 enum eWebBaseQuery { wbqWeb = 1, wbqId, wbqIP, wbqPort, wbqHeader, wbqSecure, wbqDescription };
 
@@ -137,7 +133,7 @@ HRESULT ScaWebsRead(
             hr = ScaGetMimeMap(mmptWeb, pwzData, ppsmmList, &psw->psmm);
             ExitOnFailure(hr, "Failed to get mimemap for VirtualDir");
         }
-        
+
         // get component install state
         hr = WcaGetRecordString(hRec, wqComponent, &pwzData);
         ExitOnFailure(hr, "Failed to get Component for Web");
@@ -228,7 +224,7 @@ HRESULT ScaWebsRead(
                 }
                 else if (WcaIsUninstalling(psw->isInstalled, psw->isAction))
                 {
-                    WcaLog(LOGMSG_VERBOSE, "Web site: '%S' was already removed, skipping.", psw->wzKey);
+                    WcaLog(LOGMSG_VERBOSE, "Web site: '%ls' was already removed, skipping.", psw->wzKey);
 
                     hr = S_OK;
                     continue;
@@ -479,7 +475,7 @@ HRESULT ScaWebsInstall(
         if (psw->fHasComponent && WcaIsInstalling(psw->isInstalled, psw->isAction))
         {
             hr = ScaWebWrite(piMetabase, psw, psapList);
-            ExitOnFailure1(hr, "failed to write web '%S' to metabase", psw->wzKey);
+            ExitOnFailure1(hr, "failed to write web '%ls' to metabase", psw->wzKey);
         }
 
         psw = psw->pswNext;
@@ -504,7 +500,7 @@ HRESULT ScaWebsUninstall(
         if (psw->fHasComponent && WcaIsUninstalling(psw->isInstalled, psw->isAction))
         {
             hr = ScaWebRemove(piMetabase, psw);
-            ExitOnFailure1(hr, "Failed to remove web '%S' from metabase", psw->wzKey);
+            ExitOnFailure1(hr, "Failed to remove web '%ls' from metabase", psw->wzKey);
         }
 
         psw = psw->pswNext;
@@ -550,7 +546,7 @@ static SCA_WEB* NewWeb()
 
 
 static SCA_WEB* AddWebToList(
-    __in SCA_WEB* pswList, 
+    __in SCA_WEB* pswList,
     __in SCA_WEB* psw
     )
 {
@@ -625,7 +621,7 @@ static HRESULT ScaWebFindBase(
             }
             else
             {
-                WcaLog(LOGMSG_STANDARD, "Found web `%S` but data did not match.", wzWeb);
+                WcaLog(LOGMSG_STANDARD, "Found web `%ls` but data did not match.", wzWeb);
                 hr = E_UNEXPECTED;
                 break;
             }
@@ -880,7 +876,7 @@ static HRESULT ScaWebFindFreeBase(
                 }
             }
             // In case we don't find a slash, error out
-            ExitOnNull1(pcchSlash, hr, E_INVALIDARG, "Failed to find a slash in the web root: %S", psw->wzWebBase);
+            ExitOnNull1(pcchSlash, hr, E_INVALIDARG, "Failed to find a slash in the web root: %ls", psw->wzWebBase);
 
             prgdwSubKeys[cSubKeysFilled] = wcstol(pcchSlash + 1, NULL, 10);
             cSubKeysFilled++;
@@ -955,7 +951,7 @@ static HRESULT ScaWebWrite(
         Assert(psw->fBaseExists);
 
         hr = S_FALSE;
-        WcaLog(LOGMSG_VERBOSE, "Skipping configuration of existing web: %S", psw->wzKey);
+        WcaLog(LOGMSG_VERBOSE, "Skipping configuration of existing web: %ls", psw->wzKey);
         ExitFunction();
     }
 
@@ -966,7 +962,7 @@ static HRESULT ScaWebWrite(
     ::ZeroMemory(wzSecureBindings, sizeof(wzSecureBindings));
     pcchSecureNext = wzSecureBindings;
     cchPcchSecureNext = countof(wzSecureBindings);
-    
+
     // set the IP address appropriately
     if (0 == lstrcmpW(psw->swaKey.wzIP, L"*"))
     {
@@ -1111,7 +1107,7 @@ static HRESULT ScaWebWrite(
     if (psw->pswscList)
     {
         hr = ScaSslCertificateWriteMetabase(piMetabase, psw->wzWebBase, psw->pswscList);
-        ExitOnFailure1(hr, "Failed to write SSL certificates for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write SSL certificates for Web site: %ls", psw->wzKey);
     }
 
     hr = ScaWriteMetabaseValue(piMetabase, psw->wzWebBase, L"", MD_SECURE_BINDINGS, METADATA_NO_ATTRIBUTES, IIS_MD_UT_SERVER, MULTISZ_METADATA, wzSecureBindings);
@@ -1121,23 +1117,23 @@ static HRESULT ScaWebWrite(
     if (psw->pshhList)
     {
         hr = ScaWriteHttpHeader(piMetabase, wzRootOfWeb, psw->pshhList);
-        ExitOnFailure1(hr, "Failed to write custom HTTP headers for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write custom HTTP headers for Web site: %ls", psw->wzKey);
     }
 
     // write the errors
     if (psw->psweList)
     {
         hr = ScaWriteWebError(piMetabase, weptWeb, psw->wzWebBase, psw->psweList);
-        ExitOnFailure1(hr, "Failed to write custom web errors for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write custom web errors for Web site: %ls", psw->wzKey);
     }
 
     // write the mimetypes
     if (psw->psmm)
     {
         hr = ScaWriteMimeMap(piMetabase, wzRootOfWeb, psw->psmm);
-        ExitOnFailure1(hr, "Failed to write mimemap for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write mimemap for Web site: %ls", psw->wzKey);
     }
-    
+
     // write the log information to the metabase
     if (psw->fHasLog)
     {
@@ -1159,7 +1155,7 @@ static HRESULT ScaWebRemove(
 
     // simply remove the root key and everything else is pulled at the same time
     hr = ScaDeleteMetabaseKey(piMetabase, psw->wzWebBase, L"");
-    ExitOnFailure1(hr, "Failed to remove web '%S' from metabase", psw->wzKey);
+    ExitOnFailure1(hr, "Failed to remove web '%ls' from metabase", psw->wzKey);
 
 LExit:
     return hr;

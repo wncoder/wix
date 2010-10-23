@@ -1117,6 +1117,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     webSite.WebLog = (string)row[11];
                 }
 
+                if (null != row[12])
+                {
+                    webSite.SiteId = (string)row[12];
+                }
+
                 if (null != row[1])
                 {
                     Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", (string)row[1]);

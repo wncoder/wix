@@ -91,9 +91,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// </summary>
     public sealed class Binder : WixBinder, IDisposable
     {
-        private const int VisitedActionSentinel = -10;
-        private static readonly char[] tabCharacter = "\t".ToCharArray();
-
         private string emptyFile;
 
         private bool backwardsCompatibleGuidGen;
@@ -3014,6 +3011,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string manifestPath = Path.Combine(this.TempFilesLocation, "bundle-manifest.xml");
             this.CreateBurnManifest(bundleInfo, manifestPath, allVariables, orderedSearches, allPayloads, chain, containers);
 
+            this.UpdateBurnResources(bundleInfo);
+
             // update the .wixburn section to point to at the UX and attached container(s) then attach the container(s) if they should be attached.
             using (BurnWriter writer = new BurnWriter(bundleInfo.Path, this.core, bundleInfo.Id))
             {
@@ -3209,6 +3208,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 // write the UX element
                 writer.WriteStartElement("UX");
+                if (!String.IsNullOrEmpty(bundleInfo.SplashScreenBitmapPath))
+                {
+                    writer.WriteAttributeString("SplashScreen", "yes");
+                }
 
                 // write the UX allPayloads...
                 List<PayloadInfo> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
@@ -3450,6 +3453,63 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
+        private void UpdateBurnResources(BundleInfo bundleInfo)
+        {
+            Microsoft.Deployment.Resources.ResourceCollection resources = new Microsoft.Deployment.Resources.ResourceCollection();
+            Microsoft.Deployment.Resources.VersionResource version = new Microsoft.Deployment.Resources.VersionResource("#1", 1033);
+
+            version.Load(bundleInfo.Path);
+            resources.Add(version);
+
+            Microsoft.Deployment.Resources.VersionStringTable strings = version[1033];
+            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
+            strings["FileVersion"] = bundleInfo.Version;
+            strings["ProductVersion"] = bundleInfo.Version;
+            strings["LegalCopyright"] = bundleInfo.Copyright;
+
+            if (null != bundleInfo.RegistrationInfo)
+            {
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Name))
+                {
+                    strings["ProductName"] = bundleInfo.RegistrationInfo.Name;
+                    strings["FileDescription"] = bundleInfo.RegistrationInfo.Name;
+                }
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
+                {
+                    strings["CompanyName"] = bundleInfo.RegistrationInfo.Publisher;
+                }
+                else
+                {
+                    strings["CompanyName"] = String.Empty;
+                }
+            }
+
+            if (!String.IsNullOrEmpty(bundleInfo.IconPath))
+            {
+                string iconPath = this.FileManager.ResolveFile(bundleInfo.IconPath);
+                Deployment.Resources.GroupIconResource iconGroup = new Deployment.Resources.GroupIconResource("#1", 1033);
+
+                iconGroup.ReadFromFile(iconPath);
+                resources.Add(iconGroup);
+
+                foreach (Deployment.Resources.Resource icon in iconGroup.Icons)
+                {
+                    resources.Add(icon);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(bundleInfo.SplashScreenBitmapPath))
+            {
+                string bitmapPath = this.FileManager.ResolveFile(bundleInfo.SplashScreenBitmapPath);
+                Deployment.Resources.BitmapResource bitmap = new Deployment.Resources.BitmapResource("#1", 1033);
+                bitmap.ReadFromFile(bitmapPath);
+                resources.Add(bitmap);
+            }
+
+            resources.Save(bundleInfo.Path);
+        }
+
         private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, ContainerInfo container, int containerIndex)
         {
             writer.WriteAttributeString("Id", container.Id);
@@ -3477,9 +3537,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             writer.WriteAttributeString("FileSize", payload.FileSize.ToString(CultureInfo.InvariantCulture));
             writer.WriteAttributeString("Hash", payload.Sha1);
 
-            if (!String.IsNullOrEmpty(payload.CertificateRootPublicKeyIdentifier))
+            if (!String.IsNullOrEmpty(payload.CertificatePublicKeyIdentifier))
             {
-                writer.WriteAttributeString("CertificateRootPublicKeyIdentifier", payload.CertificateRootPublicKeyIdentifier);
+                writer.WriteAttributeString("CertificatePublicKeyIdentifier", payload.CertificatePublicKeyIdentifier);
             }
 
             // TODO: should we show a warning if we are doing embedded-only because the URL will be ignored?
@@ -4400,12 +4460,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         string version;
                         string language;
 
-                        if (fileInfo.Length > Int32.MaxValue)
+                        using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                         {
-                            throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
-                        }
+                            if (Int32.MaxValue < fileStream.Length)
+                            {
+                                throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
+                            }
 
-                        fileRow.FileSize = Convert.ToInt32(fileInfo.Length, CultureInfo.InvariantCulture);
+                            fileRow.FileSize = Convert.ToInt32(fileStream.Length, CultureInfo.InvariantCulture);
+                        }
 
                         try
                         {
@@ -5878,8 +5941,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         private class PayloadInfo
         {
-            private string rootPublicKeyIdentifier;
-            private string rootThumbprint;
+            private string certificatePublicKeyIdentifier;
+            private string certificateThumbprint;
             private string sha1;
 
             public enum PackagingType
@@ -5932,14 +5995,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            public string CertificateRootPublicKeyIdentifier
+            public string CertificatePublicKeyIdentifier
             {
-                get { return this.rootPublicKeyIdentifier; }
+                get { return this.certificatePublicKeyIdentifier; }
             }
 
-            public string CertificateRootThumbprint
+            public string CertificateThumbprint
             {
-                get { return this.rootThumbprint; }
+                get { return this.certificateThumbprint; }
             }
 
             private void Initialize(string id, string name, string sourceFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
@@ -5951,35 +6014,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Container = container;
                 this.Packaging = packaging;
 
-                // Try to get the root certificate if this is a signed file.
-                X509Certificate2 rootCertificate = null;
+                // Try to get the certificate if this is a signed file.
+                X509Certificate2 certificate = null;
                 try
                 {
-                    X509Certificate2 signedFile = new X509Certificate2(this.FileInfo.FullName);
-                    X509Chain chain = new X509Chain();
-                    chain.Build(signedFile);
-
-                    rootCertificate = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                    certificate = new X509Certificate2(this.FileInfo.FullName);
                 }
                 catch (CryptographicException) // we don't care about non-signed files.
                 {
                 }
 
-                // If there is a root certificate, remember its hashed public key identifier and thumbprint.
-                if (null != rootCertificate)
+                // If there is a certificate, remember its hashed public key identifier and thumbprint.
+                if (null != certificate)
                 {
                     byte[] publicKeyIdentifierHash = new byte[128];
                     uint publicKeyIdentifierHashSize = (uint)publicKeyIdentifierHash.Length;
 
-                    Microsoft.Tools.WindowsInstallerXml.Cab.Interop.NativeMethods.HashPublicKeyInfo(rootCertificate.Handle, publicKeyIdentifierHash, ref publicKeyIdentifierHashSize);
+                    Microsoft.Tools.WindowsInstallerXml.Cab.Interop.NativeMethods.HashPublicKeyInfo(certificate.Handle, publicKeyIdentifierHash, ref publicKeyIdentifierHashSize);
                     StringBuilder sb = new StringBuilder();
                     for (int i = 0; i < publicKeyIdentifierHashSize; ++i)
                     {
                         sb.AppendFormat("{0:X2}", publicKeyIdentifierHash[i]);
                     }
 
-                    this.rootPublicKeyIdentifier = sb.ToString();
-                    this.rootThumbprint = rootCertificate.Thumbprint;
+                    this.certificatePublicKeyIdentifier = sb.ToString();
+                    this.certificateThumbprint = certificate.Thumbprint;
                 }
             }
         }
@@ -5997,42 +6056,53 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.SourceLineNumbers = row.SourceLineNumbers;
                 this.Version = (string)row[0];
+                this.Copyright = (string)row[1];
 
-                if (null != row[8])
+                if (null != row[2])
                 {
                     this.RegistrationInfo = new RegistrationInfo();
-                    this.RegistrationInfo.AboutUrl = (string)row[1];
-                    this.RegistrationInfo.DisableModify = (null != row[2] && 1 == (int)row[2]);
-                    this.RegistrationInfo.DisableRemove = (null != row[3] && 1 == (int)row[3]);
-                    this.RegistrationInfo.DisableRepair = (null != row[4] && 1 == (int)row[4]);
-                    this.RegistrationInfo.HelpTelephone = (string)row[5];
-                    this.RegistrationInfo.HelpLink = (string)row[6];
-                    this.RegistrationInfo.Publisher = (string)row[7];
-                    this.RegistrationInfo.Name = (string)row[8];
-                    this.RegistrationInfo.UpdateUrl = (string)row[9];
+                    this.RegistrationInfo.Name = (string)row[2];
+                    this.RegistrationInfo.AboutUrl = (string)row[3];
+                    this.RegistrationInfo.DisableModify = (null != row[4] && 1 == (int)row[4]);
+                    this.RegistrationInfo.DisableRemove = (null != row[5] && 1 == (int)row[5]);
+                    this.RegistrationInfo.DisableRepair = (null != row[6] && 1 == (int)row[6]);
+                    this.RegistrationInfo.HelpTelephone = (string)row[7];
+                    this.RegistrationInfo.HelpLink = (string)row[8];
+                    this.RegistrationInfo.Publisher = (string)row[9];
+                    this.RegistrationInfo.UpdateUrl = (string)row[10];
                 }
 
                 Guid upgradeCode = this.Id; // default UpgradeCode to the Bundle Id.
-                if (null != row[10])
+                if (null != row[11])
                 {
-                    upgradeCode = new Guid((string)row[10]);
+                    upgradeCode = new Guid((string)row[11]);
                 }
                 this.UpgradeCode = upgradeCode.ToString("B");
 
-                if (null != row[11])
-                {
-                    Compressed = (1 == (int)row[11]) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
-                }
-
                 if (null != row[12])
                 {
-                    string[] logVariableAndPrefixExtension = ((string)row[12]).Split(':');
+                    Compressed = (1 == (int)row[12]) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
+                }
+
+                if (null != row[13])
+                {
+                    string[] logVariableAndPrefixExtension = ((string)row[13]).Split(':');
                     this.LogPathVariable = logVariableAndPrefixExtension[0];
 
                     string logPrefixAndExtension = logVariableAndPrefixExtension[1];
                     int extensionIndex = logPrefixAndExtension.LastIndexOf('.');
                     this.LogPrefix = logPrefixAndExtension.Substring(0, extensionIndex);
                     this.LogExtension = logPrefixAndExtension.Substring(extensionIndex + 1);
+                }
+
+                if (null != row[14])
+                {
+                    this.IconPath = (string)row[14];
+                }
+
+                if (null != row[15])
+                {
+                    this.SplashScreenBitmapPath = (string)row[15];
                 }
             }
 
@@ -6047,12 +6117,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 private set {}
             }
             public Guid Id { get; private set; }
+            public string Copyright { get; private set; }
+            public string IconPath { get; private set; }
             public string LogPathVariable { get; private set; }
             public string LogPrefix { get; private set; }
             public string LogExtension { get; private set; }
             public string Path { get; private set; }
             public bool PerMachine { get; set; }
             public RegistrationInfo RegistrationInfo { get; set; }
+            public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Version { get; private set; }
             public string UpgradeCode { get; private set; }

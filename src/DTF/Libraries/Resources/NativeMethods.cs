@@ -60,6 +60,8 @@ namespace Microsoft.Deployment.Resources
         internal static extern IntPtr BeginUpdateResource(string fileName, [MarshalAs(UnmanagedType.Bool)] bool deleteExistingResources);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool UpdateResource(IntPtr updateHandle, IntPtr type, IntPtr name, ushort lcid, IntPtr data, uint dataSize);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)][return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool UpdateResource(IntPtr updateHandle, IntPtr type, string name, ushort lcid, IntPtr data, uint dataSize);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool UpdateResource(IntPtr updateHandle, string type, string name, ushort lcid, IntPtr data, uint dataSize);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] [return: MarshalAs(UnmanagedType.Bool)]

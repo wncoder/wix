@@ -371,7 +371,7 @@ static HRESULT VerifyPayloadSignature(
     HCRYPTMSG hCryptMsg = NULL;
     PCCERT_CONTEXT pCertContext = NULL;
     PCCERT_CHAIN_CONTEXT pChainContext = NULL;
-    PCCERT_CONTEXT pRootCertContext = NULL;
+    PCCERT_CONTEXT pChainElementCertContext = NULL;
 
     BYTE rgbPublicKeyIdentifier[SHA1_HASH_LEN] = { };
     DWORD cbPublicKeyIdentifier = sizeof(rgbPublicKeyIdentifier);
@@ -405,37 +405,51 @@ static HRESULT VerifyPayloadSignature(
         ExitWithLastError(hr, "Failed to get certificate context from embedded authenticode certificate.");
     }
 
-    // Get the certificate chain then the root certificate (which is the last in the chain).
+    // Get the certificate chain.
     hr = GetVerifiedCertificateChain(hCryptMsg, hCertStore, pCertContext, &pChainContext);
-    ExitOnFailure(hr, "Failed to get root certificate for authenticode certificate.");
+    ExitOnFailure(hr, "Failed to get certificate chain for authenticode certificate.");
 
-    pRootCertContext = pChainContext->rgpChain[0]->rgpElement[pChainContext->rgpChain[0]->cElement - 1]->pCertContext;
-
-    // Get the root certificate's public key identifier.
-    if (!::CryptHashPublicKeyInfo(NULL, CALG_SHA1, 0, X509_ASN_ENCODING, &pRootCertContext->pCertInfo->SubjectPublicKeyInfo, rgbPublicKeyIdentifier, &cbPublicKeyIdentifier))
+    // Walk up the chain looking for a certificate in the chain that matches our expected public key identifier
+    // and thumbprint (if a thumbprint was provided).
+    hr = E_NOTFOUND; // assume we won't find a match.
+    for (DWORD i = 0; i < pChainContext->rgpChain[0]->cElement; ++i)
     {
-        ExitWithLastError(hr, "Failed to get certificiate root public key identifier.");
-    }
+        pChainElementCertContext = pChainContext->rgpChain[0]->rgpElement[i]->pCertContext;
 
-    // Compare the root certificate's public key identifier with the payload's public key identifier.
-    if (pPayload->cbCertificateRootPublicKeyIdentifier != cbPublicKeyIdentifier || 0 != memcmp(pPayload->pbCertificateRootPublicKeyIdentifier, rgbPublicKeyIdentifier, cbPublicKeyIdentifier))
-    {
-        hr = SEC_E_CERT_UNKNOWN;
-        ExitOnFailure(hr, "Failed when verifying certificate public key identifier.");
-    }
-
-    // If the payload specified a thumbprint for the root certificate, verify it.
-    if (pPayload->pbCertificateRootThumbprint)
-    {
-        hr = CertReadProperty(pRootCertContext, CERT_SHA1_HASH_PROP_ID, &pbThumbprint, &cbThumbprint);
-        ExitOnFailure(hr, "Failed to read certificate thumbprint.");
-
-        if (pPayload->cbCertificateRootThumbprint != cbThumbprint || 0 != memcmp(pPayload->pbCertificateRootThumbprint, pbThumbprint, cbThumbprint))
+        // Get the certificate's public key identifier.
+        if (!::CryptHashPublicKeyInfo(NULL, CALG_SHA1, 0, X509_ASN_ENCODING, &pChainElementCertContext->pCertInfo->SubjectPublicKeyInfo, rgbPublicKeyIdentifier, &cbPublicKeyIdentifier))
         {
-            hr = SEC_E_CERT_UNKNOWN;
-            ExitOnFailure(hr, "Failed when verifying certificate thumbprint.");
+            ExitWithLastError(hr, "Failed to get certificate public key identifier.");
+        }
+
+        // Compare the certificate's public key identifier with the payload's public key identifier. If they
+        // match, we're one step closer to the a positive result.
+        if (pPayload->cbCertificateRootPublicKeyIdentifier == cbPublicKeyIdentifier &&
+            0 == memcmp(pPayload->pbCertificateRootPublicKeyIdentifier, rgbPublicKeyIdentifier, cbPublicKeyIdentifier))
+        {
+            // If the payload specified a thumbprint for the certificate, verify it.
+            if (pPayload->pbCertificateRootThumbprint)
+            {
+                hr = CertReadProperty(pChainElementCertContext, CERT_SHA1_HASH_PROP_ID, &pbThumbprint, &cbThumbprint);
+                ExitOnFailure(hr, "Failed to read certificate thumbprint.");
+
+                if (pPayload->cbCertificateRootThumbprint == cbThumbprint &&
+                    0 == memcmp(pPayload->pbCertificateRootThumbprint, pbThumbprint, cbThumbprint))
+                {
+                    // If we got here, we found that our payload public key identifier and thumbprint
+                    // matched an element in the certficate chain.
+                    hr = S_OK;
+                    break;
+                }
+            }
+            else // no thumbprint match necessary so we're good to go.
+            {
+                hr = S_OK;
+                break;
+            }
         }
     }
+    ExitOnFailure(hr, "Failed to verify expected payload certificate with any certificate in the actual certificate chain.");
 
 LExit:
     ReleaseMem(pbThumbprint);

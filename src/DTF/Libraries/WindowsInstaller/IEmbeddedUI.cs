@@ -18,7 +18,6 @@
 namespace Microsoft.Deployment.WindowsInstaller
 {
     using System.Diagnostics.CodeAnalysis;
-    using System.Windows.Forms;
 
     /// <summary>
     /// [MSI 4.5] Interface for an embedded external user interface for an installation.
@@ -53,7 +52,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </summary>
         /// <param name="messageType">Message type.</param>
         /// <param name="messageRecord">Record that contains message data.</param>
-        /// <param name="buttons">Message box buttons.</param>
+        /// <param name="buttons">Message buttons.</param>
         /// <param name="icon">Message box icon.</param>
         /// <param name="defaultButton">Message box default button.</param>
         /// <returns>Result of processing the message.</returns>
@@ -64,9 +63,9 @@ namespace Microsoft.Deployment.WindowsInstaller
         MessageResult ProcessMessage(
             InstallMessage messageType,
             Record messageRecord,
-            MessageBoxButtons buttons,
-            MessageBoxIcon icon,
-            MessageBoxDefaultButton defaultButton);
+            MessageButtons buttons,
+            MessageIcon icon,
+            MessageDefaultButton defaultButton);
 
         /// <summary>
         /// Shuts down the embedded UI at the end of the installation.

@@ -11,13 +11,15 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Filter functions for CustomActions
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include "scaweb.h"
+
+enum eFilterQuery { fqWeb = 1, fqFilter, fqComponent , fqPath, fqDescription, fqFlags, fqLoadOrder, fqInstalled, fqAction };
 
 struct SCA_FILTER
 {
@@ -43,7 +45,11 @@ struct SCA_FILTER
 
 
 // prototypes
-UINT __stdcall ScaFiltersRead(IMSAdminBase* piMetabase, 
+HRESULT AddFilterToList(
+    __in SCA_FILTER** ppsfList
+    );
+
+UINT __stdcall ScaFiltersRead(IMSAdminBase* piMetabase,
                               SCA_WEB* pswList, __in WCA_WRAPQUERY_HANDLE hWebBaseQuery, SCA_FILTER** ppsfList,
                               __inout LPWSTR *ppwzCustomActionData);
 

@@ -63,6 +63,16 @@ HRESULT DAPI CrypHashFileHandle(
     __out_opt DWORD64* pqwBytesHashed
     );
 
+HRESULT DAPI CrypHashBuffer(
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer,
+    __in DWORD dwProvType,
+    __in ALG_ID algid,
+    __out_bcount(cbHash) BYTE* pbHash,
+    __in DWORD cbHash,
+    __out_opt DWORD64* pqwBytesHashed
+    );
+
 #ifdef __cplusplus
 }
 #endif

@@ -61,7 +61,7 @@
     <property name="compileCpp.additionalIncludes" value="${stub.additionalIncludes} /I &quot;$(dir.externalroot)\MsiSdk\v4.5\INCLUDE&quot;" />
     <property name="compileCpp.additionalOptions" value="-DUNICODE -D_UNICODE" />
     <property name="makeNativeExe.file.target" value="${stub.file.target}" />
-    <property name="makeNativeExe.additionalLibs" value="/SWAPRUN:CD /SWAPRUN:NET -entry:wWinMainCRTStartup &quot;${dir.target.wix}\engine.lib&quot; &quot;${dir.target.wix}\engine.res&quot; &quot;${file.target.dutil}&quot; &quot;${dir.externalroot}\MsiSdk\v4.5\LIB\x86\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\rpcrt4.lib&quot; &quot;${dir.platformsdk.lib}\wininet.lib&quot; &quot;${dir.platformsdk.lib}\wintrust.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\shlwapi.lib&quot; &quot;${dir.platformsdk.lib}\cabinet.lib&quot;" />
+    <property name="makeNativeExe.additionalLibs" value="/SWAPRUN:CD /SWAPRUN:NET -entry:wWinMainCRTStartup &quot;${dir.target.wix}\engine.lib&quot; &quot;${dir.target.wix}\engine.res&quot; &quot;${file.target.dutil}&quot; &quot;${dir.externalroot}\MsiSdk\v4.5\LIB\x86\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\rpcrt4.lib&quot; &quot;${dir.platformsdk.lib}\wininet.lib&quot; &quot;${dir.platformsdk.lib}\wintrust.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\gdi32.lib&quot; &quot;${dir.platformsdk.lib}\shlwapi.lib&quot; &quot;${dir.platformsdk.lib}\cabinet.lib&quot;" />
 
     <!-- Make setupbld.exe -->
     <call target="makeNativeExe" />

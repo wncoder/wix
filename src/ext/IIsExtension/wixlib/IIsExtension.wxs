@@ -77,21 +77,20 @@
         </UI>
 
         <CustomAction Id="ConfigureIIs" BinaryKey="IIsSchedule" DllEntry="ConfigureIIs" Execute="immediate" Return="check" SuppressModularization="yes" />
-        <CustomAction Id="ConfigureIIsExec" BinaryKey="IIsSchedule" DllEntry="ConfigureIIsExec" Impersonate="no" Execute="deferred" Return="check" SuppressModularization="yes" />
+        <CustomAction Id="ConfigureIIsExec" BinaryKey="IIsSchedule" DllEntry="ConfigureIIsExec" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="StartMetabaseTransaction" BinaryKey="IIsExecute" DllEntry="StartMetabaseTransaction" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="RollbackMetabaseTransaction" BinaryKey="IIsExecute" DllEntry="RollbackMetabaseTransaction" Impersonate="no" Execute="rollback" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="CommitMetabaseTransaction" BinaryKey="IIsExecute" DllEntry="CommitMetabaseTransaction" Impersonate="no" Execute="commit" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="WriteMetabaseChanges" BinaryKey="IIsExecute" DllEntry="WriteMetabaseChanges" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
 
-        <CustomAction Id="ConfigureIIs7" BinaryKey="IIsSchedule" DllEntry="ConfigureIIs7" Execute="immediate" Return="check" SuppressModularization="yes" />
+        <CustomAction Id="ConfigureIIs7Exec" BinaryKey="IIsSchedule" DllEntry="ConfigureIIs7Exec" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="StartIIS7ConfigTransaction" BinaryKey="IIsExecute" DllEntry="StartIIS7ConfigTransaction" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="RollbackIIS7ConfigTransaction" BinaryKey="IIsExecute" DllEntry="RollbackIIS7ConfigTransaction" Impersonate="no" Execute="rollback" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="CommitIIS7ConfigTransaction" BinaryKey="IIsExecute" DllEntry="CommitIIS7ConfigTransaction" Impersonate="no" Execute="commit" Return="check" HideTarget="yes" SuppressModularization="yes" />
         <CustomAction Id="WriteIIS7ConfigChanges" BinaryKey="IIsExecute" DllEntry="WriteIIS7ConfigChanges" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />
 
         <InstallExecuteSequence>
-            <Custom Action="ConfigureIIs" Before="RegisterUser" Overridable="yes">NOT SKIPCONFIGUREIIS AND VersionNT &gt; 400 AND VersionNT &lt; 600</Custom>
-            <Custom Action="ConfigureIIs7" Before="RegisterUser" Overridable="yes">NOT SKIPCONFIGUREIIS AND VersionNT &gt;= 600</Custom>
+            <Custom Action="ConfigureIIs" Before="RegisterUser" Overridable="yes">NOT SKIPCONFIGUREIIS AND VersionNT &gt; 400</Custom>
         </InstallExecuteSequence>
     </Fragment>
 

@@ -76,6 +76,7 @@
       <include name="platform.cpp" />
       <include name="registration.cpp" />
       <include name="search.cpp" />
+      <include name="splashscreen.cpp" />
       <include name="userexperience.cpp" />
       <include name="variable.cpp" />
       <include name="variant.cpp" />

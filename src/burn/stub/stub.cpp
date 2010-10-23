@@ -20,7 +20,7 @@
 
 
 int WINAPI wWinMain(
-    __in HINSTANCE /* hInstance */,
+    __in HINSTANCE hInstance,
     __in_opt HINSTANCE /* hPrevInstance */,
     __in_z_opt LPWSTR lpCmdLine,
     __in int nCmdShow
@@ -32,7 +32,7 @@ int WINAPI wWinMain(
     DWORD dwExitCode = 0;
 
     // call run
-    hr = EngineRun(lpCmdLine, nCmdShow, &dwExitCode);
+    hr = EngineRun(hInstance, lpCmdLine, nCmdShow, &dwExitCode);
     ExitOnFailure(hr, "Failed to run application.");
 
 LExit:

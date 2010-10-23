@@ -1585,6 +1585,8 @@
     </tableDefinition>
     <tableDefinition name="WixBundle" unreal="yes">
         <columnDefinition name="Version" type="string" length="24" />
+        <columnDefinition name="Copyright" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Name" type="string" length="0" nullable="yes" />
         <columnDefinition name="AboutUrl" type="string" length="0" nullable="yes" />
         <columnDefinition name="DisableModify" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="DisableRemove" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
@@ -1592,11 +1594,12 @@
         <columnDefinition name="HelpTelephone" type="string" length="0" nullable="yes" />
         <columnDefinition name="HelpUrl" type="string" length="0" nullable="yes" />
         <columnDefinition name="Manufacturer" type="string" length="0" nullable="yes" />
-        <columnDefinition name="Name" type="string" length="0" nullable="yes" />
         <columnDefinition name="UpdateUrl" type="string" length="0" nullable="yes" />
         <columnDefinition name="UpgradeCode" type="string" length="38" nullable="yes" />
         <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="LogPrefixAndExtension" type="string" length="0" nullable="yes" />
+        <columnDefinition name="IconSourceFile" type="string" length="0" nullable="yes" />
+        <columnDefinition name="SplashScreenSourceFile" type="string" length="0" nullable="yes" />
     </tableDefinition>
     <tableDefinition name="WixChain" unreal="yes">
         <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>

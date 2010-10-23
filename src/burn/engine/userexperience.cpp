@@ -41,6 +41,13 @@ extern "C" HRESULT UserExperienceParseFromXml(
     }
     ExitOnFailure(hr, "Failed to select user experience node.");
 
+    // parse splash screen
+    hr = XmlGetYesNoAttribute(pixnUserExperienceNode, L"SplashScreen", &pUserExperience->fSplashScreen);
+    if (E_NOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to to get UX/@SplashScreen");
+    }
+
     // parse payloads
     hr = PayloadsParseFromXml(&pUserExperience->payloads, NULL, pixnUserExperienceNode);
     ExitOnFailure(hr, "Failed to parse user experience payloads.");

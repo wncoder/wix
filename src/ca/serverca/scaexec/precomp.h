@@ -42,6 +42,7 @@
 #include "aclutil.h"
 #include "certutil.h"
 #include "dirutil.h"
+#include "iis7util.h"
 #include "fileutil.h"
 #include "memutil.h"
 #include "metautil.h"

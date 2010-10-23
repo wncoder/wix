@@ -24,7 +24,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
     using System.Collections.Specialized;
     using System.ComponentModel;
     using System.IO;
-    using System.Windows.Forms;
     using System.Xml;
     using Microsoft.Deployment.WindowsInstaller;
 
@@ -117,9 +116,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         public MessageResult UIRecordHandler(
             InstallMessage messageType,
             Record messageRecord,
-            MessageBoxButtons buttons,
-            MessageBoxIcon icon,
-            MessageBoxDefaultButton defaultButton)
+            MessageButtons buttons,
+            MessageIcon icon,
+            MessageDefaultButton defaultButton)
         {
 #if False
             Console.WriteLine("Message type {0}: {1}", messageType.ToString(), this.session.FormatRecord(messageRecord));

@@ -18,20 +18,6 @@
 //-------------------------------------------------------------------------------------------------
 
 // prototypes
-HRESULT ScaWebErrorRead7(
-    SCA_WEB_ERROR **ppsweList
-    );
-
-void ScaWebErrorFreeList7(SCA_WEB_ERROR *psweList);
-
-HRESULT ScaWebErrorCheckList7(SCA_WEB_ERROR* psweList);
-
-HRESULT ScaGetWebError7(
-    int iParentType,
-    __in_z LPCWSTR wzParentValue,
-    SCA_WEB_ERROR **ppsweList,
-    SCA_WEB_ERROR **ppsweOut
-    );
 
 HRESULT ScaWriteWebError7(
     __in_z LPCWSTR wzWebName,

@@ -40,14 +40,14 @@
     <String Id="Advanced_Font_FaceName" Overridable="yes">Tahoma</String>
 
     <String Id="BrowseDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
-    <String Id="BrowseDlgComboLabel" Overridable="yes">&amp;Διερεύνηση σε:</String>
+    <String Id="BrowseDlgComboLabel" Overridable="yes">&amp;Αναζήτηση σε:</String>
     <String Id="BrowseDlgWixUI_Bmp_Up" Overridable="yes">WixUI_Bmp_Up</String>
     <String Id="BrowseDlgWixUI_Bmp_UpTooltip" Overridable="yes">Ένα επίπεδο επάνω</String>
     <String Id="BrowseDlgNewFolder" Overridable="yes">WixUI_Bmp_New</String>
     <String Id="BrowseDlgNewFolderTooltip" Overridable="yes">Δημιουργία νέου φακέλου</String>
     <String Id="BrowseDlgPathLabel" Overridable="yes">Ό&amp;νομα φακέλου:</String>
     <String Id="BrowseDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="BrowseDlgDescription" Overridable="yes">Μετάβαση στο φάκελο προορισμού</String>
+    <String Id="BrowseDlgDescription" Overridable="yes">Αναζήτηση του φακέλου προορισμού</String>
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Αλλαγή φακέλου προορισμού</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -61,7 +61,7 @@
     <String Id="CustomizeDlgReset" Overridable="yes">Επανα&amp;φορά</String>
     <String Id="CustomizeDlgDiskCost" Overridable="yes">Χρήση &amp;δίσκου</String>
     <String Id="CustomizeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="CustomizeDlgText" Overridable="yes">Κάντε κλικ στα εικονίδια στο παρακάτω δέντρο, για να αλλάξετε τον τρόπο με τον οποίο θα εγκατασταθούν οι δυνατότητες.</String>
+    <String Id="CustomizeDlgText" Overridable="yes">Κάντε κλικ στα εικονίδια στο παρακάτω δέντρο, για να αλλάξετε τον τρόπο εγκατάστασης των δυνατοτήτων.</String>
     <String Id="CustomizeDlgDescription" Overridable="yes">Επιλέξτε τον τρόπο εγκατάστασης των δυνατοτήτων.</String>
     <String Id="CustomizeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Προσαρμοσμένη εγκατάσταση</String>
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
@@ -71,7 +71,7 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">Οι επισημασμένοι τόμοι δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους επισημασμένους τόμους, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση των επιλεγμένων δυνατοτήτων.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Απαιτήσεις χώρου στο δίσκο</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -136,7 +136,7 @@
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Αποδέχομαι τους όρους της άδειας χρήσης</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="LicenseAgreementDlgDescription" Overridable="yes">Διαβάστε προσεκτικά την παρακάτω σύμβαση άδειας χρήσης</String>
+    <String Id="LicenseAgreementDlgDescription" Overridable="yes">Διαβάστε προσεκτικά την παρακάτω άδειας χρήσης</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Άδεια χρήσης τελικού χρήστη</String>
 
     <String Id="MaintenanceTypeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -171,14 +171,14 @@
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Οι επισημασμένοι τόμοι δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις δυνατότητες που είναι επιλεγμένες αυτήν τη στιγμή. Μπορείτε να καταργήσετε μερικά αρχεία από τους επισημασμένους τόμους, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε μια διαφορετική μονάδα δίσκου προορισμού.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση υπερβαίνει τον διαθέσιμο χώρο στο δίσκο.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ο χώρος στο δίσκο εξαντλήθηκε</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Οι επισημασμένοι τόμοι δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις δυνατότητες που είναι επιλεγμένες αυτήν τη στιγμή. Μπορείτε να καταργήσετε μερικά αρχεία από τους επισημασμένους τόμους, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε μια διαφορετική μονάδα δίσκου προορισμού.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση υπερβαίνει τον διαθέσιμο χώρο στο δίσκο.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ο χώρος στο δίσκο εξαντλήθηκε</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Εγκατάσταση</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα ολοκληρώσει την εγκατάσταση του [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Εγκατάσταση", για να συνεχίσετε, ή στο κουμπί " Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα ολοκληρώσει την εγκατάσταση του [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Εγκατάσταση", για να συνεχίσετε ή στο κουμπί " Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Συνέχιση του Οδηγού εγκατάστασης του [ProductName]</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -236,7 +236,7 @@
     <String Id="VerifyReadyDlgInstallText" Overridable="yes">Κάντε κλικ στο κουμπί "Εγκατάσταση", για να ξεκινήσει η εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Έτοιμο για εγκατάσταση του [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Αλλαγή</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Κάντε κλικ στο κουμπί "Αλλαγή", για να ξεκινήσει την εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Κάντε κλικ στο κουμπί "Αλλαγή", για να ξεκινήσετε την εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Έτοιμο για αλλαγή του [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Επι&amp;διόρθωση</String>
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">Κάντε κλικ στο κουμπί "Επιδιόρθωση" για να επιδιορθώσετε την εγκατάσταση του [ProductName]. Κάντε κλικ στο κουμπί "Πίσω" για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο" για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
@@ -256,8 +256,8 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα εγκαταστήσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε, ή στο κουμπί "Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Ο Οδηγός εγκατάστασης θα ενημερώσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε, ή στο κουμπί "Άκυρο", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα εγκαταστήσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Ο Οδηγός εγκατάστασης θα ενημερώσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Καλώς ορίσατε στον Οδηγό εγκατάστασης του [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -265,7 +265,7 @@
     <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Αποδέχομαι τους όρους της άδειας χρήσης</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">&amp;Εγκατάσταση</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Ενημέρωση</String>
-    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Διαβάστε τη σύμβαση άδειας χρήσης του [ProductName]</String>
+    <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Διαβάστε την άδεια χρήσης του  [ProductName]</String>
 
     <String Id="ProgressTextInstallValidate" Overridable="yes">Επικύρωση εγκατάστασης</String>
     <String Id="ProgressTextInstallFiles" Overridable="yes">Αντιγραφή νέων αρχείων</String>
@@ -410,14 +410,14 @@
     <String Id="Error15" Overridable="yes">Τερματισμός ενέργειας [Time]: [1]. Τιμή επιστροφής [2].</String>
     <String Id="Error16" Overridable="yes">Χρόνος που απομένει: {[1] λεπτά }{[2] δευτερόλεπτα}</String>
     <String Id="Error17" Overridable="yes">Η μνήμη δεν επαρκεί. Τερματίστε τις άλλες εφαρμογές προτού προσπαθήσετε ξανά.</String>
-    <String Id="Error18" Overridable="yes">Το πρόγραμμα εγκατάστασης δεν ανταποκρίνεται πλέον.</String>
+    <String Id="Error18" Overridable="yes">Το πρόγραμμα εγκατάστασης δεν αποκρίνεται πλέον.</String>
     <String Id="Error19" Overridable="yes">Το πρόγραμμα εγκατάστασης τερματίστηκε πρόωρα.</String>
     <String Id="Error20" Overridable="yes">Περιμένετε όσο τα Windows ρυθμίζουν τις παραμέτρους του [ProductName]</String>
     <String Id="Error21" Overridable="yes">Συλλογή απαιτούμενων πληροφοριών...</String>
     <String Id="Error22" Overridable="yes">Κατάργηση παλαιότερων εκδόσεων αυτής της εφαρμογής...</String>
     <String Id="Error23" Overridable="yes">Προετοιμασία για κατάργηση παλαιότερων εκδόσεων της εφαρμογής...</String>
     <String Id="Error32" Overridable="yes">Η εγκατάσταση του {[ProductName] }ολοκληρώθηκε με επιτυχία.</String>
-    <String Id="Error33" Overridable="yes">Η εγκατάσταση του {[ProductName] }απέτυχε.</String>
+    <String Id="Error33" Overridable="yes">Η εγκατάσταση του {[ProductName] } απέτυχε.</String>
     <String Id="Error1101" Overridable="yes">Παρουσιάστηκε σφάλμα κατά την ανάγνωση από το αρχείο: [2].  {{Σφάλμα συστήματος [3].}}  Βεβαιωθείτε ότι το αρχείο υπάρχει και ότι έχετε πρόσβαση σε αυτό.</String>
     <String Id="Error1301" Overridable="yes">Δεν είναι δυνατή η δημιουργία του αρχείου "[2]". Υπάρχει ήδη ένας κατάλογος με αυτό το όνομα.  Ακυρώστε την εγκατάσταση και προσπαθήστε να κάνετε εγκατάσταση σε διαφορετική θέση.</String>
     <String Id="Error1302" Overridable="yes">Τοποθετήστε το δίσκο: [2]</String>
@@ -442,7 +442,7 @@
     <String Id="Error1321" Overridable="yes">Το πρόγραμμα εγκατάστασης δεν έχει επαρκή δικαιώματα για την τροποποίηση αυτού του αρχείου: [2].</String>
     <String Id="Error1322" Overridable="yes">Ένα μέρος της διαδρομής φακέλου "[2]" δεν είναι έγκυρο. Είτε είναι κενό είτε υπερβαίνει το μέγιστο επιτρεπόμενο μήκος του συστήματος.</String>
     <String Id="Error1323" Overridable="yes">Η διαδρομή φακέλου "[2]" περιέχει λέξεις που δεν είναι έγκυρες σε διαδρομές φακέλων.</String>
-    <String Id="Error1324" Overridable="yes">Η διαδρομή φακέλου "[2]" περιέχει έναν μη έγκυρο χαρακτήρα.</String>
+    <String Id="Error1324" Overridable="yes">Η διαδρομή φακέλου "[2]" περιέχει ένα μη έγκυρο χαρακτήρα.</String>
     <String Id="Error1325" Overridable="yes">Το "[2]" δεν είναι έγκυρο σύντομο όνομα αρχείου.</String>
     <String Id="Error1326" Overridable="yes">Παρουσιάστηκε σφάλμα κατά τη λήψη της ασφάλειας του αρχείου: [3] GetLastError: [2]</String>
     <String Id="Error1327" Overridable="yes">Η μονάδα δίσκου δεν είναι έγκυρη: [2]</String>
@@ -471,15 +471,15 @@
     <String Id="Error1503" Overridable="yes">Ο χρήστης "[2]" έχει προετοιμάσει ήδη μια εγκατάσταση για το προϊόν "[3]".  Αυτός ο χρήστης θα πρέπει να εκτελέσει τη συγκεκριμένη εγκατάσταση ξανά, για να μπορέσει να χρησιμοποιήσει το προϊόν.</String>
     <String Id="Error1601" Overridable="yes">Δεν επαρκεί ο χώρος στο δίσκο -- Τόμος: "[2]"; απαιτούμενος χώρος: [3] KB, διαθέσιμος χώρος: [4] KB.  Αποδεσμεύστε χώρο στο δίσκο και δοκιμάστε ξανά.</String>
     <String Id="Error1602" Overridable="yes">Είστε βέβαιοι ότι θέλετε να κάνετε ακύρωση;</String>
-    <String Id="Error1603" Overridable="yes">Το αρχείο [2][3] χρησιμοποιείται{ από την ακόλουθη διεργασία: Όνομα: [4], Αναγνωριστικό: [5], Τίτλος παραθύρου: "[6]"}. Κλείστε αυτή την εφαρμογή και δοκιμάστε ξανά.</String>
+    <String Id="Error1603" Overridable="yes">Το αρχείο [2][3] χρησιμοποιείται { από την ακόλουθη διεργασία: Όνομα: [4], Αναγνωριστικό: [5], Τίτλος παραθύρου: "[6]"}. Κλείστε αυτή την εφαρμογή και δοκιμάστε ξανά.</String>
     <String Id="Error1604" Overridable="yes">Το προϊόν "[2]" είναι ήδη εγκατεστημένο, γεγονός που εμποδίζει την εγκατάσταση αυτού του προϊόντος. Τα δύο προϊόντα δεν είναι συμβατά.</String>
-    <String Id="Error1605" Overridable="yes">Δεν υπάρχει αρκετός χώρος δίσκου στον τόμο "[2]" για την συνέχιση της εγκατάστασης με ενεργοποιημένη την ανάκτηση. Απαιτούνται [3] KB, αλλά είναι διαθέσιμα μόνο [4] KB. Κάντε κλικ στο κουμπί "Παράβλεψη", για να συνεχίσετε την εγκατάσταση χωρίς την αποθήκευση πληροφοριών ανάκτησης, κάντε κλικ στο κουμπί "Επανάληψη" για νέο έλεγχο του διαθέσιμου χώρου ή στο κουμπί "Άκυρο", για να τερματίσετε την εγκατάσταση.</String>
+    <String Id="Error1605" Overridable="yes">Δεν υπάρχει αρκετός χώρος δίσκου στον τόμο "[2]" για τη συνέχιση της εγκατάστασης με ενεργοποιημένη την ανάκτηση. Απαιτούνται [3] KB, αλλά είναι διαθέσιμα μόνο [4] KB. Κάντε κλικ στο κουμπί "Παράβλεψη", για να συνεχίσετε την εγκατάσταση χωρίς την αποθήκευση πληροφοριών ανάκτησης, κάντε κλικ στο κουμπί "Επανάληψη" για νέο έλεγχο του διαθέσιμου χώρου ή στο κουμπί "Άκυρο", για να τερματίσετε την εγκατάσταση.</String>
     <String Id="Error1606" Overridable="yes">Δεν ήταν δυνατή η πρόσβαση στη θέση δικτύου [2].</String>
     <String Id="Error1607" Overridable="yes">Πρέπει να κλείσετε τις παρακάτω εφαρμογές, για να συνεχίσετε την εγκατάσταση:</String>
     <String Id="Error1608" Overridable="yes">Δεν ήταν δυνατή η εύρεση συμβατών προϊόντων που έχουν ήδη εγκατασταθεί στον υπολογιστή για την εγκατάσταση αυτού του προϊόντος.</String>
-    <String Id="Error1609" Overridable="yes">Παρουσιάστηκε σφάλμα κατά την εφαρμογή των ρυθμίσεων ασφαλείας. Ο χρήστης "[2]" δεν είναι έγκυρος χρήστης ή ομάδα χρηστών. Αυτό θα μπορούσε να σημαίνει πρόβλημα με το πακέτο ή πρόβλημα με τη σύνδεση σε ελεγκτή τομέα στο δίκτυο. Ελέγξτε την σύνδεση δικτύου σας και κάντε κλικ στο κουμπί "Επανάληψη" ή κάντε κλικ στο κουμπί "Άκυρο", για να τερματίσετε την εγκατάσταση. {{Δεν ήταν δυνατός ο εντοπισμός του SID χρήστη, σφάλμα συστήματος [3]}}</String>
+    <String Id="Error1609" Overridable="yes">Παρουσιάστηκε σφάλμα κατά την εφαρμογή των ρυθμίσεων ασφαλείας. Ο χρήστης "[2]" δεν είναι έγκυρος χρήστης ή ομάδα χρηστών. Αυτό θα μπορούσε να σημαίνει πρόβλημα με το πακέτο ή πρόβλημα με τη σύνδεση σε ελεγκτή τομέα στο δίκτυο. Ελέγξτε τη σύνδεση δικτύου σας και κάντε κλικ στο κουμπί "Επανάληψη" ή κάντε κλικ στο κουμπί "Άκυρο", για να τερματίσετε την εγκατάσταση. {{Δεν ήταν δυνατός ο εντοπισμός του SID χρήστη, σφάλμα συστήματος [3]}}</String>
     <String Id="Error1701" Overridable="yes">Το κλειδί [2] δεν είναι έγκυρο. Βεβαιωθείτε ότι εισαγάγατε το σωστό κλειδί.</String>
-    <String Id="Error1702" Overridable="yes">Το πρόγραμμα εγκατάστασης πρέπει να επανεκκινήσει το σύστημά σας, για να συνεχιστεί η ρύθμιση των παραμέτρων του [2]. Κάντε κλικ στο κουμπί "Ναι", για να γίνει επανεκκίνηση τώρα, ή στο κουμπί "Όχι", εάν θέλετε να κάνετε επανεκκίνηση αργότερα με μη αυτόματο τρόπο.</String>
+    <String Id="Error1702" Overridable="yes">Το πρόγραμμα εγκατάστασης πρέπει να επανεκκινήσει το σύστημά σας, για να συνεχιστεί η ρύθμιση των παραμέτρων του [2]. Κάντε κλικ στο κουμπί "Ναι", για να γίνει επανεκκίνηση τώρα ή στο κουμπί "Όχι", εάν θέλετε να κάνετε επανεκκίνηση αργότερα με μη αυτόματο τρόπο.</String>
     <String Id="Error1703" Overridable="yes">Πρέπει να κάνετε επανεκκίνηση του συστήματός σας για να ενεργοποιηθούν οι αλλαγές που έγιναν στις ρυθμίσεις των παραμέτρων του [2]. Κάντε κλικ στο κουμπί "Ναι" για να γίνει επανεκκίνηση τώρα ή στο κουμπί "Όχι" εάν θέλετε να κάνετε επανεκκίνηση αργότερα με μη αυτόματο τρόπο.</String>
     <String Id="Error1704" Overridable="yes">Αυτήν τη στιγμή έχει ανασταλεί η εγκατάσταση του [2]. Πρέπει να αναιρέσετε τις αλλαγές που έγιναν από αυτή την εγκατάσταση για να συνεχίσετε. Θέλετε να αναιρέσετε αυτές τις αλλαγές;</String>
     <String Id="Error1705" Overridable="yes">Μια προηγούμενη εγκατάσταση για αυτό το προϊόν βρίσκεται σε εξέλιξη. Πρέπει να αναιρέσετε τις αλλαγές που έγιναν από αυτή την εγκατάσταση για να συνεχίσετε. Θέλετε να αναιρέσετε αυτές τις αλλαγές;</String>
@@ -496,7 +496,7 @@
     <String Id="Error1716" Overridable="yes">Έγινε ρύθμιση παραμέτρων του [2]</String>
     <String Id="Error1717" Overridable="yes">Έγινε κατάργηση του [2]</String>
     <String Id="Error1718" Overridable="yes">Το αρχείο [2] απορρίφθηκε από την πολιτική ψηφιακής υπογραφής.</String>
-    <String Id="Error1719" Overridable="yes">Δεν ήταν δυνατή η πρόσβαση στην υπηρεσία του Windows Installer. Αυτό μπορεί να συμβεί, εάν εκτελείτε τα Windows σε κατάσταση ασφαλούς λειτουργίας ή εάν ο Windows Installer δεν έχει εγκατασταθεί σωστά. Επικοινωνήστε με το προσωπικό υποστήριξης για βοήθεια.</String>
+    <String Id="Error1719" Overridable="yes">Δεν ήταν δυνατή η πρόσβαση στην υπηρεσία του Windows Installer. Αυτό μπορεί να συμβεί, εάν εκτελείτε τα Windows σε κατάσταση ασφαλούς λειτουργίας ή εάν το Windows Installer δεν έχει εγκατασταθεί σωστά. Επικοινωνήστε με το προσωπικό υποστήριξης για βοήθεια.</String>
     <String Id="Error1720" Overridable="yes">Υπάρχει ένα πρόβλημα με αυτό το πακέτο του Windows Installer. Μια δέσμη ενεργειών που απαιτείται για να ολοκληρωθεί αυτή η εγκατάσταση δεν μπόρεσε να εκτελεστεί. Επικοινωνήστε με το προσωπικό υποστήριξης ή τον προμηθευτή του πακέτου. {{Προσαρμοσμένη ενέργεια [2] σφάλμα δέσμης ενεργειών [3], [4]: [5] Γραμμή [6], Στήλη [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Υπάρχει ένα πρόβλημα με αυτό το πακέτο του Windows Installer. Ένα πρόγραμμα που απαιτείται για να ολοκληρωθεί αυτή η εγκατάσταση δεν μπόρεσε να εκτελεστεί. Επικοινωνήστε με το προσωπικό υποστήριξης ή τον προμηθευτή του πακέτου. {{Ενέργεια: [2], θέση: [3], εντολή: [4] }}</String>
     <String Id="Error1722" Overridable="yes">Υπάρχει ένα πρόβλημα με αυτό το πακέτο του Windows Installer. Ένα πρόγραμμα που εκτελείται ως μέρος αυτού του προγράμματος εγκατάστασης δεν ολοκληρώθηκε όπως αναμενόταν. Επικοινωνήστε με το προσωπικό υποστήριξης ή τον προμηθευτή του πακέτου. {{Ενέργεια [2], θέση: [3], εντολή: [4] }}</String>
@@ -507,14 +507,14 @@
     <String Id="Error1727" Overridable="yes">Η κοινοποίηση απέτυχε.</String>
     <String Id="Error1728" Overridable="yes">Η ρύθμιση παραμέτρων ολοκληρώθηκε με επιτυχία.</String>
     <String Id="Error1729" Overridable="yes">Η ρύθμιση παραμέτρων απέτυχε.</String>
-    <String Id="Error1730" Overridable="yes">Πρέπει να είστε διαχειριστής, για να καταργήσετε αυτή την εφαρμογή. Για την κατάργησή της θα πρέπει να συνδεθείτε στον υπολογιστή ως διαχειριστές ή να ζητήσετε βοήθεια από την ομάδα τεχνικής υποστήριξης.</String>
+    <String Id="Error1730" Overridable="yes">Πρέπει να είστε διαχειριστής, για να καταργήσετε αυτή την εφαρμογή. Για την κατάργησή της θα πρέπει να συνδεθείτε στον υπολογιστή ως διαχειριστής ή να ζητήσετε βοήθεια από την ομάδα τεχνικής υποστήριξης.</String>
     <String Id="Error1731" Overridable="yes">Το πακέτο εγκατάστασης του αρχείου προέλευσης για το προϊόν [2] είναι εκτός συγχρονισμού με το πακέτο του προγράμματος-πελάτη. Επιχειρήστε εκ νέου εγκατάσταση χρησιμοποιώντας ένα έγκυρο αντίγραφο του πακέτου εγκατάστασης '[3]'.</String>
     <String Id="Error1732" Overridable="yes">Για να ολοκληρωθεί η εγκατάσταση του [2], πρέπει να κάνετε επανεκκίνηση του υπολογιστή. Αυτήν τη στιγμή είναι συνδεδεμένοι άλλοι χρήστες σε αυτόν τον υπολογιστή και με την επανεκκίνηση μπορεί να χάσουν τις εργασίες τους. Θέλετε να κάνετε επανεκκίνηση τώρα;</String>
     <String Id="Error1801" Overridable="yes">Η διαδρομή [2] δεν είναι έγκυρη.  Καθορίστε μια έγκυρη διαδρομή.</String>
     <String Id="Error1802" Overridable="yes">Η μνήμη δεν επαρκεί. Τερματίστε τις άλλες εφαρμογές προτού προσπαθήσετε ξανά.</String>
     <String Id="Error1803" Overridable="yes">Δεν υπάρχει δίσκος στη μονάδα δίσκου [2]. Τοποθετήστε ένα δίσκο και κάντε κλικ στο κουμπί "Επανάληψη" ή κάντε κλικ στο κουμπί "Άκυρο", για να επιστρέψετε στον τόμο που είχε επιλεγεί προηγουμένως.</String>
     <String Id="Error1804" Overridable="yes">Δεν υπάρχει δίσκος στη μονάδα δίσκου [2]. Τοποθετήστε ένα δίσκο και κάντε κλικ στο κουμπί "Επανάληψη" ή κάντε κλικ στο κουμπί "Άκυρο" για να επιστρέψετε στο παράθυρο διαλόγου "Αναζήτηση" και να επιλέξετε έναν άλλον τόμο.</String>
-    <String Id="Error1805" Overridable="yes">Ο φάκελος [2] δεν υπάρχει. Πληκτρολογήστε μια διαδρομή προς έναν φάκελο που υπάρχει.</String>
+    <String Id="Error1805" Overridable="yes">Ο φάκελος [2] δεν υπάρχει. Πληκτρολογήστε μια διαδρομή προς ένα φάκελο που υπάρχει.</String>
     <String Id="Error1806" Overridable="yes">Δεν έχετε επαρκή δικαιώματα για την ανάγνωση αυτού του φακέλου.</String>
     <String Id="Error1807" Overridable="yes">Δεν ήταν δυνατός ο προσδιορισμός έγκυρου φακέλου προορισμού για την εγκατάσταση.</String>
     <String Id="Error1901" Overridable="yes">Παρουσιάστηκε σφάλμα κατά την προσπάθεια ανάγνωσης από τη βάση δεδομένων εγκατάστασης προέλευσης: [2].</String>
@@ -541,7 +541,7 @@
     <String Id="Error1922" Overridable="yes">Δεν ήταν δυνατή η διαγραφή της υπηρεσίας "[2]" ([3]). Βεβαιωθείτε ότι έχετε επαρκή δικαιώματα για την κατάργηση υπηρεσιών συστήματος.</String>
     <String Id="Error1923" Overridable="yes">Δεν ήταν δυνατή η εγκατάσταση της υπηρεσίας "[2]" ([3]). Βεβαιωθείτε ότι έχετε επαρκή δικαιώματα για την εγκατάσταση υπηρεσιών συστήματος.</String>
     <String Id="Error1924" Overridable="yes">Δεν ήταν δυνατή η ενημέρωση της μεταβλητής περιβάλλοντος "[2]". Βεβαιωθείτε ότι έχετε επαρκή δικαιώματα για την τροποποίηση μεταβλητών περιβάλλοντος.</String>
-    <String Id="Error1925" Overridable="yes">Δεν έχετε επαρκή δικαιώματα για την ολοκλήρωση αυτής της εγκατάστασης για όλους τους χρήστες του υπολογιστή. Συνδεθείτε ως διαχειριστές και προσπαθήστε ξανά να κάνετε εγκατάσταση.</String>
+    <String Id="Error1925" Overridable="yes">Δεν έχετε επαρκή δικαιώματα για την ολοκλήρωση αυτής της εγκατάστασης για όλους τους χρήστες του υπολογιστή. Συνδεθείτε ως διαχειριστής και προσπαθήστε ξανά να κάνετε εγκατάσταση.</String>
     <String Id="Error1926" Overridable="yes">Δεν ήταν δυνατή η ρύθμιση ασφαλείας αρχείου για το αρχείο "[3]". Σφάλμα: [2]. Βεβαιωθείτε ότι έχετε επαρκή δικαιώματα για την τροποποίηση των δικαιωμάτων ασφαλείας για αυτό το αρχείο.</String>
     <String Id="Error1927" Overridable="yes">Οι υπηρεσίες στοιχείων (COM+ 1.0) δεν έχουν εγκατασταθεί σε αυτόν τον υπολογιστή. Αυτή η εγκατάσταση απαιτεί τις υπηρεσίες στοιχείων για να ολοκληρωθεί με επιτυχία. Οι υπηρεσίες στοιχείων είναι διαθέσιμες στα Windows 2000.</String>
     <String Id="Error1928" Overridable="yes">Παρουσιάστηκε σφάλμα κατά την καταχώρηση της εφαρμογής COM+. Για περισσότερες πληροφορίες, επικοινωνήστε με το προσωπικό υποστήριξης.</String>
@@ -571,7 +571,7 @@
     <String Id="UITextNewFolder" Overridable="yes">Φάκελος|Νέος φάκελος</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Συλλογή απαιτούμενων πληροφοριών...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Αυτή η δυνατότητα δεν θα εγκατασταθεί</String>
-    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Αυτή η δυνατότητα θα ρυθμιστεί να εγκατασταθεί όταν ζητηθεί</String>
+    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Αυτή η δυνατότητα θα ρυθμιστεί έτσι ώστε να εγκατασταθεί όταν θα είναι απαραίτητη</String>
     <String Id="UITextSelAbsentCD" Overridable="yes">Αυτή η δυνατότητα θα εγκατασταθεί ώστε να εκτελείται από CD</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">Αυτή η δυνατότητα θα εγκατασταθεί στον τοπικό σκληρό δίσκο</String>
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Αυτή η δυνατότητα θα εγκατασταθεί ώστε να εκτελείται από το δίκτυο</String>
@@ -584,8 +584,8 @@
     <String Id="UITextSelCDAdvertise" Overridable="yes">Αυτή η δυνατότητα θα αλλάξει από την κατάσταση εκτέλεσης από CD, για να εγκατασταθεί όταν ζητηθεί</String>
     <String Id="UITextSelCDCD" Overridable="yes">Αυτή η δυνατότητα θα εξακολουθήσει να εκτελείται από CD</String>
     <String Id="UITextSelCDLocal" Overridable="yes">Αυτή η δυνατότητα θα αλλάξει από την κατάσταση εκτέλεσης από CD, για να εγκατασταθεί στον τοπικό σκληρό δίσκο</String>
-    <String Id="UITextSelChildCostNeg" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από τον σκληρό δίσκο.</String>
-    <String Id="UITextSelChildCostPos" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στον σκληρό δίσκο.</String>
+    <String Id="UITextSelChildCostNeg" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από το σκληρό δίσκο.</String>
+    <String Id="UITextSelChildCostPos" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στο σκληρό δίσκο.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Υπολογισμός απαιτούμενου χώρου για αυτήν τη δυνατότητα...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">Αυτή η δυνατότητα θα καταργηθεί εντελώς</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">Αυτή η δυνατότητα θα καταργηθεί από τον τοπικό σκληρό σας δίσκο, αλλά θα ρυθμιστεί για να εγκατασταθεί όταν ζητηθεί</String>
@@ -596,10 +596,10 @@
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Αυτή η δυνατότητα θα αλλάξει από την κατάσταση εκτέλεσης από το δίκτυο, για να εγκατασταθεί όταν ζητηθεί</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">Αυτή η δυνατότητα θα αλλάξει από την κατάσταση εκτέλεσης από το δίκτυο, για να εγκατασταθεί στον τοπικό σκληρό δίσκο</String>
     <String Id="UITextSelNetworkNetwork" Overridable="yes">Αυτή η δυνατότητα θα εξακολουθήσει να εκτελείται από το δίκτυο</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από τον σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες αποδεσμεύουν έως [4] από τον σκληρό δίσκο.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από τον σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες απαιτούν [4] στον σκληρό δίσκο.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στον σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες αποδεσμεύουν έως [4] από τον σκληρό δίσκο.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στον σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες απαιτούν [4] στον σκληρό δίσκο.</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από το σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες αποδεσμεύουν έως [4] από το σκληρό δίσκο.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">Αυτή η δυνατότητα αποδεσμεύει [1] από το σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες απαιτούν [4] στο σκληρό δίσκο.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στο σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες αποδεσμεύουν έως [4] από το σκληρό δίσκο.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Αυτή η δυνατότητα απαιτεί [1] στο σκληρό δίσκο. Οι [2] από τις [3] δευτερεύουσες δυνατότητές της είναι επιλεγμένες. Οι δευτερεύουσες δυνατότητες απαιτούν [4] στο σκληρό δίσκο.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Χρόνος που απομένει: {[1] λεπτά }{[2] δευτερόλεπτα}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Διαθέσιμο</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Διαφορά</String>

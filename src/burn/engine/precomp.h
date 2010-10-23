@@ -88,6 +88,7 @@
 #include "apply.h"
 #include "manifest.h"
 #include "pipe.h"
+#include "splashscreen.h"
 
 #include "EngineForApplication.h"
 #include "engine.messages.h"

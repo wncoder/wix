@@ -1607,7 +1607,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 if (fileRow.Sequence <= mediaRow.LastSequence)
                                 {
-                                    file.DiskId = mediaRow.DiskId;
+                                    file.DiskId = Convert.ToString(mediaRow.DiskId);
                                     break;
                                 }
                             }
@@ -5937,7 +5937,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    family.DiskId = (int)row[2];
+                    family.DiskId = Convert.ToString((int)row[2]);
                 }
 
                 if (null != row[3])

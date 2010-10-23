@@ -29,6 +29,7 @@ extern "C" {
 // function declarations
 
 HRESULT EngineRun(
+    __in HINSTANCE hInstance,
     __in_z_opt LPCWSTR wzCommandLine,
     __in int nCmdShow,
     __out DWORD* pdwExitCode

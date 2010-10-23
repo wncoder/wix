@@ -205,3 +205,54 @@ LExit:
 
     return hr;
 }
+
+HRESULT DAPI CrypHashBuffer(
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer,
+    __in DWORD dwProvType,
+    __in ALG_ID algid,
+    __out_bcount(cbHash) BYTE* pbHash,
+    __in DWORD cbHash,
+    __out_opt DWORD64* /*pqwBytesHashed*/
+    )
+{
+    HRESULT hr = S_OK;
+    HCRYPTPROV hProv = NULL;
+    HCRYPTHASH hHash = NULL;
+
+    // get handle to the crypto provider
+    if (!::CryptAcquireContext(&hProv, NULL, NULL, dwProvType, CRYPT_VERIFYCONTEXT))
+    {
+        ExitWithLastError(hr, "Failed to acquire crypto context.");
+    }
+
+    // initiate hash
+    if (!::CryptCreateHash(hProv, algid, 0, 0, &hHash))
+    {
+        ExitWithLastError(hr, "Failed to initiate hash.");
+    }
+
+    if (!::CryptHashData(hHash, pbBuffer, static_cast<DWORD>(cbBuffer), 0))
+    {
+        ExitWithLastError(hr, "Failed to hash data.");
+    }
+
+    // get hash value
+    if (!::CryptGetHashParam(hHash, HP_HASHVAL, pbHash, &cbHash, 0))
+    {
+        ExitWithLastError(hr, "Failed to get hash value.");
+    }
+
+LExit:
+    if (hHash)
+    {
+        ::CryptDestroyHash(hHash);
+    }
+    if (hProv)
+    {
+        ::CryptReleaseContext(hProv, 0);
+    }
+
+    return hr;
+}
+

@@ -117,6 +117,10 @@ HRESULT DAPI EseDeleteRow(
 HRESULT DAPI EseBeginTransaction(
     __in JET_SESID jsSession
     );
+HRESULT DAPI EseRollbackTransaction(
+    __in JET_SESID jsSession,
+    __in BOOL fAll
+    );
 HRESULT DAPI EseCommitTransaction(
     __in JET_SESID jsSession
     );
@@ -130,14 +134,14 @@ HRESULT DAPI EseFinishUpdate(
     __in JET_TABLEID jtTable,
     __in BOOL fSeekToInsertedRecord
     );
-HRESULT DAPI EseSetColumnDword(
+HRESULT DAPI EseSetColumnBinary(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
-    __in DWORD dwValue
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer
     );
-// Sets a column value without the need to call begintransaction, prepareupdate, finishupdate, or committransaction (all of these are called in sequence for you)
-HRESULT DAPI EseSetColumnDwordFull(
+HRESULT DAPI EseSetColumnDword(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
@@ -155,19 +159,7 @@ HRESULT DAPI EseSetColumnString(
     __in DWORD dwColumn,
     __in_z LPCWSTR pszValue
     );
-// Sets a column value without the need to call begintransaction, prepareupdate, finishupdate, or committransaction (all of these are called in sequence for you)
-HRESULT DAPI EseSetColumnStringFull(
-    __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
-    __in DWORD dwColumn,
-    __in_z LPCWSTR pszValue
-    );
 HRESULT DAPI EseSetColumnEmpty(
-    __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
-    __in DWORD dwColumn
-    );
-HRESULT DAPI EseSetColumnEmptyFull(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
     __in DWORD dwColumn

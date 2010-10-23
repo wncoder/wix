@@ -20,7 +20,8 @@
 // prototypes
 HRESULT ScaGetWebLog7(
     __in_z LPCWSTR wzLog,
-    SCA_WEB_LOG* pswl
+    __in WCA_WRAPQUERY_HANDLE hWebLogQuery,
+    __out SCA_WEB_LOG* pswl
     );
 
 HRESULT ScaWriteWebLog7(

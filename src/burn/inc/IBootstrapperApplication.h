@@ -86,6 +86,7 @@ struct BOOTSTRAPPER_COMMAND
     int nCmdShow;
 
     BOOTSTRAPPER_RESUME_TYPE resumeType;
+    HWND hwndSplashScreen;
 };
 
 

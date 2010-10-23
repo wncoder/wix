@@ -28,7 +28,7 @@
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Lütfen [ProductName] Lisans Sözleşmesi'ni okuyun</String>
-    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'ndeki koşulları kabul &amp;ediyorum</String>
+    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'nin koşullarını kabul &amp;ediyorum</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Ürünü tüm kullanıcılar için varsayılan seçeneklerle yüklemek istiyorsanız Yükle'yi tıklatın. Yükleme seçeneklerini değiştirmek için Gelişmiş'i tıklatın.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Ürünü yalnızca sizin için varsayılan seçeneklerle yüklemek istiyorsanız Yükle'yi tıklatın. Yükleme seçeneklerini değiştirmek için Gelişmiş'i tıklatın.</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">Yü&amp;kle</String>
@@ -67,7 +67,7 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Yer:</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Konum:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -89,7 +89,7 @@
     <String Id="FatalError_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] Kurulum Sihirbazı tamamlanmadan sona erdi</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">[ProductName] Kurulum Sihirbazı bir hata nedeniyle erken sonlandırıldı. Sisteminizde değişiklik yapılmadı. Daha sonra bu programı yüklemek için Kurulum Sihirbazı'nı yeniden çalıştırın.</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">[ProductName] Kurulum Sihirbazı bir hata nedeniyle tamamlanmadan sona erdi. Sisteminizde değişiklik yapılmadı. Daha sonra bu programı yüklemek için Kurulum Sihirbazı'nı yeniden çalıştırın.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Kurulum Sihirbazı'ndan çıkmak için Son düğmesini tıklatın.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
@@ -107,7 +107,7 @@
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FilesInUseText" Overridable="yes">Aşağıdaki uygulamalar, bu kurulum tarafından güncelleştirilmesi gereken dosyaları kullanıyor. Bu uygulamaları kapatın ve sonra yüklemeye devam etmek için Yeniden &amp;Dene'yi veya çıkmak için Çıkış'ı tıklatın.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Güncelleştirilmesi gereken bazı dosyalar şu anda kullanılıyor.</String>
-    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Kullanılmakta Olan Dosyalar</String>
+    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Kullanılan Dosyalar</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Değiştir...</String>
@@ -120,11 +120,11 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Yükleme kapsamını ve klasörünü seçin</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Yükleme Kapsamı</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Yalnızca &amp;kullanıcı ([USERNAME]) için yükle</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Yalnızca benim için ([USERNAME]) yükle</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] kullanıcıya özel bir klasöre yüklenecek yalnızca sizin kullanıcı hesabınız tarafından kullanılabilecek. Yerel Yönetici ayrıcalıklarınız olması gerekmez.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] kullanıcıya özel yüklemeyi desteklemiyor.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Bu &amp;makinede tüm kullanıcılar için yükle</String>
-    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] varsayılan olarak makineye genel bir klasöre yüklenecek ve tüm kullanıcılar tarafından kullanılabilecek. Varsayılan yükleme klasörünü değiştirebilirsiniz. Yerel Yönetici ayrıcalıklarına sahip olmanız gerekir.</String>
+    <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">[ProductName] varsayılan olarak genel bir klasöre yüklenecek ve tüm kullanıcılar tarafından kullanılabilecek. Varsayılan yükleme klasörünü değiştirebilirsiniz. Yerel Yönetici ayrıcalıklarına sahip olmanız gerekir.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Yü&amp;kleme klasörü:</String>
     <String Id="InstallScopeDlgChange" Overridable="yes">&amp;Değiştir...</String>
 
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Bilgi simgesi</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'ndeki koşulları kabul &amp;ediyorum</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'nin koşullarını kabul &amp;ediyorum</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">Lütfen aşağıdaki lisans sözleşmesini dikkatle okuyun</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Son Kullanıcı Lisans Sözleşmesi</String>
@@ -165,7 +165,7 @@
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MsiRMFilesInUseText" Overridable="yes">Aşağıdaki uygulamalar, bu kurulum tarafından güncelleştirilmesi gereken dosyaları kullanıyor. Kurulum Sihirbazı'nın bu uygulamaları kapatmayı ve yeniden başlatmayı denemesine izin verebilir veya makineyi daha sonra yeniden başlatabilirsiniz.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Güncelleştirilmesi gereken bazı dosyalar şu anda kullanılıyor.</String>
-    <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Kullanılmakta Olan Dosyalar</String>
+    <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Kullanılan Dosyalar</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Uygulamaları kapat ve yeniden başlatmayı dene.</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">Uygula&amp;maları kapatma. Yeniden başlatma gerekir.</String>
 
@@ -262,7 +262,7 @@
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'ndeki koşulları kabul &amp;ediyorum</String>
+    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Lisans Sözleşmesi'nin koşullarını kabul &amp;ediyorum</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">Yü&amp;kle</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Güncelleştir</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Lütfen [ProductName] Lisans Sözleşmesi'ni okuyun</String>
@@ -419,17 +419,17 @@
     <String Id="Error32" Overridable="yes">{[ProductName] }Kurulumu başarıyla tamamlandı.</String>
     <String Id="Error33" Overridable="yes">{[ProductName] }Kurulumu başarısız oldu.</String>
     <String Id="Error1101" Overridable="yes">Dosyadan okuma hatası: [2]. {{ Sistem hatası [3].}} Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
-    <String Id="Error1301" Overridable="yes">'[2]' dosyası oluşturulamıyor. Bu adda bir dizin zaten var. Yüklemeyi iptal edin ve farklı bir konuma yüklemeyi deneyin.</String>
+    <String Id="Error1301" Overridable="yes">'[2]' dosyası oluşturulamıyor. Bu ada sahip bir dizin zaten var. Yüklemeyi iptal edin ve farklı bir konuma yüklemeyi deneyin.</String>
     <String Id="Error1302" Overridable="yes">Lütfen diski takın: [2]</String>
-    <String Id="Error1303" Overridable="yes">Yükleyicinin bu dizine erişmek için yeterli ayrıcalığı yok: [2]. Yükleme devam edemiyor. Yönetici olarak oturum açın veya sistem yöneticinize başvurun.</String>
-    <String Id="Error1304" Overridable="yes">Dosyaya yazma hatası: [2]. Bu dizine erişiminiz olduğunu doğrulayın.</String>
-    <String Id="Error1305" Overridable="yes">[2] dosyasından okuma hatası. {{ Sistem hatası [3].}} Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
+    <String Id="Error1303" Overridable="yes">Yükleyicinin [2] dizinine erişmek için yeterli ayrıcalığı yok. Yükleme işlemi devam edemiyor. Yönetici olarak oturum açın veya sistem yöneticinize başvurun.</String>
+    <String Id="Error1304" Overridable="yes">Dosyaya yazma hatası: [2]. Bu dizine erişiminizin olduğundan emin olun.</String>
+    <String Id="Error1305" Overridable="yes">[2] dosyasından okuma hatası. {{ Sistem hatası [3].}} Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
     <String Id="Error1306" Overridable="yes">Başka bir uygulamanın '[2]' dosyasına özel kullanım erişimi var. Lütfen diğer tüm uygulamaları kapatın, sonra Yeniden Dene'yi tıklatın.</String>
     <String Id="Error1307" Overridable="yes">Bu dosyayı yüklemek için yeterli disk alanı yok: [2]. Bir miktar disk alanı boşaltın ve Yeniden Dene'yi tıklatın veya çıkmak için İptal'i tıklatın.</String>
-    <String Id="Error1308" Overridable="yes">Kaynak dosya bulunamadı: [2]. Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
-    <String Id="Error1309" Overridable="yes">Dosyadan okuma hatası: [3]. {{ Sistem hatası [2].}} Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
-    <String Id="Error1310" Overridable="yes">Dosyaya yazma hatası: [3]. {{ Sistem hatası [2].}} Bu dizine erişiminiz olduğunu doğrulayın.</String>
-    <String Id="Error1311" Overridable="yes">Kaynak dosya bulunamadı {{(dolap)}}: [2]. Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
+    <String Id="Error1308" Overridable="yes">Kaynak dosya bulunamadı: [2]. Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
+    <String Id="Error1309" Overridable="yes">Dosyadan okuma hatası: [3]. {{ Sistem hatası [2].}} Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
+    <String Id="Error1310" Overridable="yes">Dosyaya yazma hatası: [3]. {{ Sistem hatası [2].}} Bu dizine erişiminiz olduğundan emin olun.</String>
+    <String Id="Error1311" Overridable="yes">Kaynak dosya bulunamadı {{(dolap)}}: [2]. Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
     <String Id="Error1312" Overridable="yes">'[2]' dizini oluşturulamıyor. Bu adda bir dosya zaten var. Lütfen dosyayı yeniden adlandırın veya kaldırın ve Yeniden Dene'yi tıklatın veya çıkmak için İptal'i tıklatın.</String>
     <String Id="Error1313" Overridable="yes">[2] birimi şu anda kullanılamıyor. Lütfen başka bir birim seçin.</String>
     <String Id="Error1314" Overridable="yes">Belirtilen '[2]' yolu kullanılamıyor.</String>
@@ -467,8 +467,8 @@
     <String Id="Error1410" Overridable="yes">Kullanılabilir kayıt defteri alanı artırılamadı. Bu uygulamanın yüklenmesi için [2] KB boş kayıt defteri alanı gerekiyor.</String>
     <String Id="Error1500" Overridable="yes">Başka bir yükleme sürüyor. Buna devam etmeden önce söz konusu yükleme işlemini tamamlamalısınız.</String>
     <String Id="Error1501" Overridable="yes">Güvenli verilere erişim hatası. Lütfen Windows Installer'ın düzgün yapılandırıldığından emin olun ve yüklemeyi yeniden deneyin.</String>
-    <String Id="Error1502" Overridable="yes">'[2]' kullanıcısı '[3]' ürünü için daha önce bir yükleme başlatmış. Bu kullanıcının o ürünü kullanabilmesi için o yükleme işlemini yeniden çalıştırması gerekir. Geçerli yüklemeniz şimdi devam edecek.</String>
-    <String Id="Error1503" Overridable="yes">'[2]' kullanıcısı '[3]' ürünü için daha önce bir yükleme başlatmış. Bu kullanıcının o ürünü kullanabilmesi için o yükleme işlemini yeniden çalıştırması gerekir.</String>
+    <String Id="Error1502" Overridable="yes">'[2]' kullanıcısı '[3]' ürününü yüklemeyi daha önce başlattı. Bu kullanıcının ürünü kullanabilmesi için söz konusu yüklemeyi yeniden çalıştırması gerekecek. Şimdi geçerli yükleme işleminiz devam edecek.</String>
+    <String Id="Error1503" Overridable="yes">'[2]' kullanıcısı '[3]' ürününü yüklemeyi daha önce başlattı. Bu kullanıcının ürünü kullanabilmesi için söz konusu yüklemeyi yeniden çalıştırması gerekecek.</String>
     <String Id="Error1601" Overridable="yes">Disk alanı yetersiz -- Birim: '[2]'; gerekli alan: [3] KB; kullanılabilir alan: [4] KB. Bir miktar disk alanı boşaltın ve yeniden deneyin.</String>
     <String Id="Error1602" Overridable="yes">İptal etmek istediğinizden emin misiniz?</String>
     <String Id="Error1603" Overridable="yes">[2][3] dosyası kullanımda tutulmaktadır {şu işlem tarafından: Ad: [4], Kimlik: [5], Pencere Başlığı: '[6]'}. Bu uygulamayı kapatın ve yeniden deneyin.</String>
@@ -586,12 +586,12 @@
     <String Id="UITextSelCDLocal" Overridable="yes">Bu özellik, CD'den çalışma durumundan çıkarılıp yerel sabit sürücüye yüklenecek olarak değiştirilecek</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] boşaltır.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">Bu özelliğin gereksinimi belirleniyor...</String>
+    <String Id="UITextSelCostPending" Overridable="yes">Bu özellik için gerekenler belirleniyor...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">Bu özellik tamamen kaldırılacak</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">Bu özellik yerel sabit sürücünüzden kaldırılacak, ancak gerektiğinde yüklenecek şekilde ayarlanacak</String>
     <String Id="UITextSelLocalCD" Overridable="yes">Bu özellik yerel sabit sürücünüzden kaldırılacak, ancak CD'den çalıştırılabilmeye de devam edecek</String>
     <String Id="UITextSelLocalLocal" Overridable="yes">Bu özellik yerel sabit sürücünüzde kalacak</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Bu özellik yerel sabit sürücünüzden kaldırılacak, ancak ağdan çalıştırılabilmeye de devam edecek</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Bu özellik yerel sabit diskinizden kaldırılacak, ancak ağ üzerinden çalıştırılabilecek</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Bu özellik tamamen kaldırılacak, ağ üzerinden çalıştıramayacaksınız</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Bu özellik, ağdan çalışma durumundan çıkarılıp gerektiğinde yüklenecek olarak değiştirilecek</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">Bu özellik, ağdan çalışma durumundan çıkarılıp yerel sabit sürücüye yüklenecek olarak değiştirilecek</String>
@@ -601,7 +601,7 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] boşaltır.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] gerektirir.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Kalan süre: {[1] dakika }{[2] saniye}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">Kullanılabilir</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">Uygun</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Fark</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">Gerekli</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Disk Boyutu</String>

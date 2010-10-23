@@ -20,7 +20,6 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System;
     using System.IO;
     using System.Text;
-    using System.Data;
     using System.Globalization;
     using System.Diagnostics.CodeAnalysis;
 
@@ -167,17 +166,17 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
-        /// Gets the type of the column as a System.Data.DbType.  This is one of the following: Int16, Int32, String, or Binary
+        /// Gets the type of the column as an integer that can be cast to a System.Data.DbType.  This is one of the following: Int16, Int32, String, or Binary
         /// </summary>
-        /// <value>equivalent DbType of the column</value>
-        public DbType DBType
+        /// <value>equivalent DbType of the column as an integer</value>
+        public int DBType
         {
             get
             {
-                if (this.type == typeof(Int16)) return DbType.Int16;
-                else if (this.type == typeof(Int32)) return DbType.Int32;
-                else if (this.type == typeof(Stream)) return DbType.Binary;
-                else return DbType.String;
+                if (this.type == typeof(Int16)) return 10;
+                else if (this.type == typeof(Int32)) return 11;
+                else if (this.type == typeof(Stream)) return 1;
+                else return 16;
             }
         }
 

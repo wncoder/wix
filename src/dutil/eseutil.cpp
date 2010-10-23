@@ -222,7 +222,6 @@ HRESULT AllocColumnCreateStruct(
         }
         else if (JET_coltypLong == (*ppjccColumnCreate)[i].coltyp)
         {
-            ptsSchema->pcsColumns[i].fNullable = FALSE;
             (*ppjccColumnCreate)[i].cbMax = 4;
 
             if (ptsSchema->pcsColumns[i].fAutoIncrement)
@@ -751,6 +750,21 @@ LExit:
     return hr;
 }
 
+HRESULT DAPI EseRollbackTransaction(
+    __in JET_SESID jsSession,
+    __in BOOL fAll
+    )
+{
+    HRESULT hr = S_OK;
+    JET_ERR jEr = JET_errSuccess;
+
+    jEr = JetRollback(jsSession, fAll ? JET_bitRollbackAll : 0);
+    ExitOnJetFailure(jEr, hr, "Failed to rollback transaction");
+
+LExit:
+    return hr;
+}
+
 HRESULT DAPI EseCommitTransaction(
     __in JET_SESID jsSession
     )
@@ -816,6 +830,24 @@ LExit:
     return hr;
 }
 
+HRESULT DAPI EseSetColumnBinary(
+    __in JET_SESID jsSession,
+    __in TABLE_SCHEMA tsTable,
+    __in DWORD dwColumn,
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer
+    )
+{
+    HRESULT hr = S_OK;
+    JET_ERR jEr = JET_errSuccess;
+
+    jEr = JetSetColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, pbBuffer, static_cast<unsigned long>(cbBuffer), 0, NULL);
+    ExitOnJetFailure(jEr, hr, "Failed to set binary value into column of database");
+
+LExit:
+    return hr;
+}
+
 HRESULT DAPI EseSetColumnDword(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
@@ -828,38 +860,6 @@ HRESULT DAPI EseSetColumnDword(
 
     jEr = JetSetColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, &dwValue, sizeof(DWORD), 0, NULL);
     ExitOnJetFailure1(jEr, hr, "Failed to set dword value into column of database: %d", dwValue);
-
-LExit:
-    return hr;
-}
-
-HRESULT DAPI EseSetColumnDwordFull(
-    __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
-    __in DWORD dwColumn,
-    __in DWORD dwValue
-    )
-{
-    HRESULT hr = S_OK;
-
-    // Begin transaction
-    hr = EseBeginTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to begin transaction");
-
-    // Use this to update the current row
-    hr = EsePrepareUpdate(jsSession, tsTable.jtTable, JET_prepReplace);
-    ExitOnFailure(hr, "Failed to prepare for replace");
-
-    hr = EseSetColumnDword(jsSession, tsTable, dwColumn, dwValue);
-    ExitOnFailure1(hr, "Failed to set column string value: %d", dwValue);
-
-    // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
-    ExitOnFailure(hr, "Failed to finish update");
-
-    // This finishes the transaction
-    hr = EseCommitTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to commit transaction");
 
 LExit:
     return hr;
@@ -901,38 +901,6 @@ LExit:
     return hr;
 }
 
-HRESULT DAPI EseSetColumnStringFull(
-    __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
-    __in DWORD dwColumn,
-    __in_z LPCWSTR pszValue
-    )
-{
-    HRESULT hr = S_OK;
-
-    // Begin transaction
-    hr = EseBeginTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to begin transaction");
-
-    // Use this to update the current row
-    hr = EsePrepareUpdate(jsSession, tsTable.jtTable, JET_prepReplace);
-    ExitOnFailure(hr, "Failed to prepare for replace");
-
-    hr = EseSetColumnString(jsSession, tsTable, dwColumn, pszValue);
-    ExitOnFailure1(hr, "Failed to set column string value: %S", pszValue);
-
-    // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
-    ExitOnFailure(hr, "Failed to finish update");
-
-    // This finishes the transaction
-    hr = EseCommitTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to commit transaction");
-
-LExit:
-    return hr;
-}
-
 HRESULT DAPI EseSetColumnEmpty(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
@@ -944,37 +912,6 @@ HRESULT DAPI EseSetColumnEmpty(
 
     jEr = JetSetColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, NULL, 0, 0, NULL);
     ExitOnJetFailure(jEr, hr, "Failed to set empty value into column of database");
-
-LExit:
-    return hr;
-}
-
-HRESULT DAPI EseSetColumnEmptyFull(
-    __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
-    __in DWORD dwColumn
-    )
-{
-    HRESULT hr = S_OK;
-
-    // Begin transaction
-    hr = EseBeginTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to begin transaction");
-
-    // Use this to update the current row
-    hr = EsePrepareUpdate(jsSession, tsTable.jtTable, JET_prepReplace);
-    ExitOnFailure(hr, "Failed to prepare for replace");
-
-    hr = EseSetColumnEmpty(jsSession, tsTable, dwColumn);
-    ExitOnFailure(hr, "Failed to set column to empty value");
-
-    // This finishes the row
-    hr = EseFinishUpdate(jsSession, tsTable.jtTable, FALSE);
-    ExitOnFailure(hr, "Failed to finish update");
-
-    // This finishes the transaction
-    hr = EseCommitTransaction(jsSession);
-    ExitOnFailure(hr, "Failed to commit transaction");
 
 LExit:
     return hr;

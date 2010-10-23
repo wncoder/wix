@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Web Service Extension Table functions for CustomActions
 // </summary>
@@ -208,7 +208,7 @@ HRESULT __stdcall ScaWebSvcExtCommit(
 
     // Write Metabase
     hr = ScaWriteMetabaseValue(piMetabase, vcsWebSvcExtRoot, NULL, MD_WEB_SVC_EXT_RESTRICTION_LIST, METADATA_INHERIT, IIS_MD_UT_FILE, MULTISZ_METADATA, wzWebSvcExtList);
-    ExitOnFailure1(hr, "Failed to write WebServiceExtensions: '%S'", wzWebSvcExtList);
+    ExitOnFailure1(hr, "Failed to write WebServiceExtensions: '%ls'", wzWebSvcExtList);
 
 LExit:
     ReleaseStr(wzWebSvcExtList);
@@ -217,7 +217,7 @@ LExit:
 }
 
 
-HRESULT __stdcall ScaWebSvcExtInstall(
+static HRESULT ScaWebSvcExtInstall(
     __in LPWSTR *ppwzWebSvcExtList,
     __in DWORD_PTR *pcchWebSvcExtList,
     __in SCA_WEBSVCEXT* psWseList
@@ -239,7 +239,7 @@ HRESULT __stdcall ScaWebSvcExtInstall(
 
     // Check if it's already in there
     hr = MultiSzFindSubstring(*ppwzWebSvcExtList, psWseList->wzFile, &dwIndex, &wzFoundString);
-    ExitOnFailure1(hr, "failed to search for string:%S in web service extension MULTISZ", psWseList->wzFile);
+    ExitOnFailure1(hr, "failed to search for string:%ls in web service extension MULTISZ", psWseList->wzFile);
 
     if (S_FALSE != hr && NULL != wcsstr(wzFoundString, psWseList->wzGroup) && NULL != wcsstr(wzFoundString, psWseList->wzDescription))
     {
@@ -255,12 +255,12 @@ HRESULT __stdcall ScaWebSvcExtInstall(
     if (fAlreadyExists)
     {
         hr = MultiSzReplaceString(ppwzWebSvcExtList, dwIndex, pwzWebSvcExt);
-        ExitOnFailure1(hr, "failed to update web service extension string: %S", pwzWebSvcExt);
+        ExitOnFailure1(hr, "failed to update web service extension string: %ls", pwzWebSvcExt);
     }
     else
     {
         hr = MultiSzPrepend(ppwzWebSvcExtList, pcchWebSvcExtList, pwzWebSvcExt);
-        ExitOnFailure1(hr, "failed to prepend web service extension string: %S", pwzWebSvcExt);
+        ExitOnFailure1(hr, "failed to prepend web service extension string: %ls", pwzWebSvcExt);
     }
 
 LExit:
@@ -270,7 +270,7 @@ LExit:
 }
 
 
-HRESULT __stdcall ScaWebSvcExtUninstall(
+static HRESULT ScaWebSvcExtUninstall(
     __in LPWSTR *ppwzWebSvcExtList,
     __in const DWORD
     *pcchWebSvcExtList,
@@ -286,7 +286,7 @@ HRESULT __stdcall ScaWebSvcExtUninstall(
 
     // Find the string to remove
     hr = MultiSzFindSubstring(*ppwzWebSvcExtList, psWseList->wzFile, &dwIndex, &wzFoundString);
-    ExitOnFailure1(hr, "failed to search for string:%S in web service extension MULTISZ", psWseList->wzFile);
+    ExitOnFailure1(hr, "failed to search for string:%ls in web service extension MULTISZ", psWseList->wzFile);
 
     // If we found a match (ignoring the Allow and Deletable flags)
     if (S_FALSE != hr && NULL != wcsstr(wzFoundString, psWseList->wzGroup) && NULL != wcsstr(wzFoundString, psWseList->wzDescription))

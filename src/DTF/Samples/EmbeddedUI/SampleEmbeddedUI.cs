@@ -22,7 +22,6 @@ namespace Microsoft.Deployment.Samples.EmbeddedUI
     using System.Configuration;
     using System.Threading;
     using System.Windows;
-    using System.Windows.Forms;
     using System.Windows.Threading;
     using Microsoft.Deployment.WindowsInstaller;
     using Application = System.Windows.Application;
@@ -104,7 +103,7 @@ namespace Microsoft.Deployment.Samples.EmbeddedUI
         /// <param name="defaultButton">Message box default button.</param>
         /// <returns>Result of processing the message.</returns>
         public MessageResult ProcessMessage(InstallMessage messageType, Record messageRecord,
-            MessageBoxButtons buttons, MessageBoxIcon icon, MessageBoxDefaultButton defaultButton)
+            MessageButtons buttons, MessageIcon icon, MessageDefaultButton defaultButton)
         {
             // Synchronously send the message to the setup wizard window on its thread.
             object result = this.setupWizard.Dispatcher.Invoke(DispatcherPriority.Send,

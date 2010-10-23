@@ -135,14 +135,6 @@ BLOCK "StringFileInfo"
         VALUE "InternalName",      VER_INTERNAL_NAME
         
         VALUE "LegalCopyright",    VER_LEGAL_COPYRIGHT
-#if defined(VER_LEGAL_COPYRIGHT1)
-        VALUE "LegalCopyright1",   VER_LEGAL_COPYRIGHT1
-#endif
-#if defined(VER_LEGAL_COPYRIGHT2)
-        VALUE "LegalCopyright2",   VER_LEGAL_COPYRIGHT2
-#endif
-        VALUE "LegalTrademarks1",  VER_LEGAL_TRADEMARK1
-        VALUE "LegalTrademarks2",  VER_LEGAL_TRADEMARK2
 
         VALUE "OriginalFilename",  VER_ORIGINAL_FILENAME
         VALUE "ProductName",       VER_PRODUCT_NAME

@@ -19,16 +19,6 @@
 
 #include "scauser.h"
 
-// global sql queries provided for optimization
-extern LPCWSTR vcsWebDirPropertiesQuery;
-
-
-// prototypes
-HRESULT ScaGetWebDirProperties7(
-    __in_z LPCWSTR pwzProperties,
-    __inout SCA_WEB_PROPERTIES* pswp
-    );
-
 HRESULT ScaWriteWebDirProperties7(
     __in_z LPCWSTR wzwWebName,
     __in_z LPCWSTR wzRootOfWeb,

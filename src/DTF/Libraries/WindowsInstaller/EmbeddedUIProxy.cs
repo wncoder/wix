@@ -26,7 +26,6 @@ namespace Microsoft.Deployment.WindowsInstaller
     using System.Runtime.InteropServices;
     using System.Security;
     using System.Text;
-    using System.Windows.Forms;
 
     /// <summary>
     /// Managed-code portion of the embedded UI proxy.
@@ -143,9 +142,9 @@ namespace Microsoft.Deployment.WindowsInstaller
                         return (int) EmbeddedUIProxy.uiInstance.ProcessMessage(
                             (InstallMessage) msgType,
                             msgRec,
-                            (MessageBoxButtons) buttons,
-                            (MessageBoxIcon) icon,
-                            (MessageBoxDefaultButton) defButton);
+                            (MessageButtons) buttons,
+                            (MessageIcon) icon,
+                            (MessageDefaultButton) defButton);
                     }
                 }
                 catch (Exception)

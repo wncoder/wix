@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-<Bundle Version="0.1.0.0">
+<Bundle Version="0.1.0.0" Name="Test Embedded Bundle" IconSourceFile="$(env.WIX_ROOT)\src\Votive\votive2010\Templates\Projects\WixProject\WixProject.ico">
    <Log />
-   <UX SourceFile="stdux.dll">
+   <UX SourceFile="stdux.dll" SplashScreenSourceFile="logo.bmp">
        <Payload SourceFile="en-us.wxl" />
        <Payload SourceFile="thm.xml" />
    </UX>

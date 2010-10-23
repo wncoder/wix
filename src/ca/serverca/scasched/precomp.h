@@ -49,6 +49,7 @@
 #include "wcawrapquery.h"
 #include "certutil.h"
 #include "fileutil.h"
+#include "iis7util.h"
 #include "memutil.h"
 #include "metautil.h"
 #include "perfutil.h"

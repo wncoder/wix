@@ -18,17 +18,9 @@
 //-------------------------------------------------------------------------------------------------
 
 // prototypes
-HRESULT ScaWebAppExtensionsRead7(
-    __in_z LPCWSTR wzApplication,
-    __inout SCA_WEB_APPLICATION_EXTENSION** ppswappextList
-    );
 
 HRESULT ScaWebAppExtensionsWrite7(
     __in_z LPCWSTR wzWebName,
     __in_z LPCWSTR wzRootOfWeb,
-    __in SCA_WEB_APPLICATION_EXTENSION* pswappextList
-    );
-
-void ScaWebAppExtensionsFreeList7(
     __in SCA_WEB_APPLICATION_EXTENSION* pswappextList
     );

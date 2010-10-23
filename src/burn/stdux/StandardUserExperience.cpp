@@ -946,7 +946,7 @@ private: // privates
 
         ::ResetEvent(m_hModalWait);
 
-        ::WaitForSingleObject(m_hModalWait, INFINITE);
+        //::WaitForSingleObject(m_hModalWait, INFINITE);
 
         ShowModalControls(0xF);
 
@@ -1112,6 +1112,12 @@ private: // privates
 
         hr = ThemeLoadControls(m_pTheme, hWnd);
         ExitOnFailure(hr, "Failed to load theme controls.");
+
+        // If the splash screen is around, close it since we're showing our UI now.
+        if (::IsWindow(m_command.hwndSplashScreen))
+        {
+             ::PostMessageW(m_command.hwndSplashScreen, WM_CLOSE, 0, 0);
+        }
 
         // Okay, we're ready for packages now.
         SetState(STDUX_STATE_DETECTING);

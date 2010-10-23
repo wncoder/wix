@@ -16969,6 +16969,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "Property":
                                 this.ParsePropertyElement(child);
                                 break;
+                            case "PropertyRef":
+                                this.ParseSimpleRefElement(child, "Property");
+                                break;
                             case "UIRef":
                                 this.ParseSimpleRefElement(child, "WixUI");
                                 break;
@@ -19325,6 +19328,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseBundleElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string copyright = null;
             string aboutUrl = null;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
             YesNoType disableModify = YesNoType.NotSet;
@@ -19340,6 +19344,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             string fileSystemSafeBundleName = null;
             string logVariablePrefixAndExtension = null;
+            string iconSourceFile = null;
+            string splashScreenSourceFile = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -19349,6 +19355,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         case "AboutUrl":
                             aboutUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Copyright":
+                            copyright = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
@@ -19370,6 +19379,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "Manufacturer":
                             manufacturer = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "IconSourceFile":
+                            iconSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "Name":
                             name = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -19401,6 +19413,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
             else if (!CompilerCore.IsValidModuleOrBundleVersion(version))
             {
                 this.core.OnMessage(WixWarnings.InvalidModuleOrBundleVersion(sourceLineNumbers, "Bundle", version));
+            }
+
+            if (String.IsNullOrEmpty(copyright))
+            {
+                if (String.IsNullOrEmpty(manufacturer))
+                {
+                    copyright = "Copyright (c). All rights reserved.";
+                }
+                else
+                {
+                    copyright = String.Format("Copyright (c) {0}. All rights reserved.", manufacturer);
+                }
             }
 
             if (String.IsNullOrEmpty(name))
@@ -19503,7 +19527,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
                                     this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name, "UX"));
                                 }
-                                this.ParseUXElement(child);
+                                this.ParseUXElement(child, ref splashScreenSourceFile);
                                 uxSeen = true;
                                 break;
                             case "Variable":
@@ -19535,31 +19559,34 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "WixBundle");
                 row[0] = version;
-                row[1] = aboutUrl;
+                row[1] = copyright;
+                row[2] = name;
+                row[3] = aboutUrl;
                 if (YesNoType.NotSet != disableModify)
                 {
-                    row[2] = (YesNoType.Yes == disableModify) ? 1 : 0;
+                    row[4] = (YesNoType.Yes == disableModify) ? 1 : 0;
                 }
                 if (YesNoType.NotSet != disableRemove)
                 {
-                    row[3] = (YesNoType.Yes == disableRemove) ? 1 : 0;
+                    row[5] = (YesNoType.Yes == disableRemove) ? 1 : 0;
                 }
                 if (YesNoType.NotSet != disableRepair)
                 {
-                    row[4] = (YesNoType.Yes == disableRepair) ? 1 : 0;
+                    row[6] = (YesNoType.Yes == disableRepair) ? 1 : 0;
                 }
-                row[5] = helpTelephone;
-                row[6] = helpUrl;
-                row[7] = manufacturer;
-                row[8] = name;
-                row[9] = updateUrl;
-                row[10] = upgradeCode;
+                row[7] = helpTelephone;
+                row[8] = helpUrl;
+                row[9] = manufacturer;
+                row[10] = updateUrl;
+                row[11] = upgradeCode;
                 if (YesNoDefaultType.Default != compressed)
                 {
-                    row[11] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
+                    row[12] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
                 }
 
-                row[12] = logVariablePrefixAndExtension;
+                row[13] = logVariablePrefixAndExtension;
+                row[14] = iconSourceFile;
+                row[15] = splashScreenSourceFile;
             }
         }
 
@@ -19964,14 +19991,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// Parse UX element.
         /// </summary>
         /// <param name="node">Element to parse</param>
-        private void ParseUXElement(XmlNode node)
+        private void ParseUXElement(XmlNode node, ref string splashScreenSourceFile)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             ComplexReferenceChildType previousType = ComplexReferenceChildType.Unknown;
             // Delegate to the "Payload" attribute parsing code to parse
             // and create a Payload entry.
 
-            string previousId = this.ParsePayloadElementAttributes(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, ComplexReferenceChildType.Unknown, null, false);
+            string previousId = this.ParsePayloadElementAttributes(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, ComplexReferenceChildType.Unknown, null, false, ref splashScreenSourceFile);
 
             if (null != previousId)
             {
@@ -20035,7 +20062,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PayloadGroup == previousType || ComplexReferenceChildType.Payload == previousType);
 
-            string id = ParsePayloadElementAttributes(node, parentType, parentId, previousType, previousId, true);
+            string splashScreenSourceFileIgnored = null;
+            string id = ParsePayloadElementAttributes(node, parentType, parentId, previousType, previousId, true, ref splashScreenSourceFileIgnored);
 
             foreach (XmlNode child in node.ChildNodes)
             {
@@ -20061,7 +20089,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="node">Element to parse</param>
         /// <param name="parentType">ComplexReferenceParentType of parent element.</param>
         /// <param name="parentId">Identifier of parent element.</param>
-        private string ParsePayloadElementAttributes(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required)
+        private string ParsePayloadElementAttributes(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required, ref string splashScreenSourceFile)
         {
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
 
@@ -20088,6 +20116,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "DownloadUrl":
                             downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "SplashScreenSourceFile":
+                            splashScreenSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -20119,6 +20150,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 compressed = YesNoDefaultType.Yes;
+            }
+            else // not the UX so there cannot be a splash screen.
+            {
+                splashScreenSourceFile = null;
             }
 
             string id = this.core.GenerateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);

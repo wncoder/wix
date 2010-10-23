@@ -281,6 +281,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
+        /// Set the local source for a package or container.
+        /// </summary>
+        /// <param name="packageOrContainerId">The id that uniquely identifies the package or container.</param>
+        /// <param name="payloadId">The id that uniquely identifies the payload.</param>
+        /// <param name="path">The new source path.</param>
+        public void SetLocalSource(string packageOrContainerId, string payloadId, string path)
+        {
+            this.engine.SetLocalSource(packageOrContainerId, payloadId, path);
+        }
+
+        /// <summary>
+        /// Set the new download URL for a package or container.
+        /// </summary>
+        /// <param name="packageOrContainerId">The id that uniquely identifies the package or container.</param>
+        /// <param name="payloadId">The id that uniquely identifies the payload.</param>
+        /// <param name="url">The new url.</param>
+        /// <param name="user">The user name for proxy authentication.</param>
+        /// <param name="password">The password for proxy authentication.</param>
+        public void SetDownloadSource(string packageOrContainerId, string payloadId, string url, string user, string password)
+        {
+            this.engine.SetDownloadSource(packageOrContainerId, payloadId, url, user, password);
+        }
+
+        /// <summary>
         /// Sends error message when embedded.
         /// </summary>
         /// <param name="errorCode">Error code.</param>

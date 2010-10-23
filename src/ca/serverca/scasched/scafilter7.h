@@ -21,8 +21,10 @@
 
 // prototypes
 UINT __stdcall ScaFiltersRead7(
-    SCA_WEB7* pswList,
-    SCA_FILTER** ppsfList
+    __in SCA_WEB7* pswList,
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery, 
+    __inout SCA_FILTER** ppsfList,
+    __inout LPWSTR *ppwzCustomActionData
     );
 
 HRESULT ScaFiltersInstall7(
@@ -30,9 +32,5 @@ HRESULT ScaFiltersInstall7(
     );
 
 HRESULT ScaFiltersUninstall7(
-    SCA_FILTER* psfList
-    );
-
-void ScaFiltersFreeList7(
     SCA_FILTER* psfList
     );

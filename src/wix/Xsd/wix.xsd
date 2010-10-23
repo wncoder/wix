@@ -100,6 +100,14 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="Copyright" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        The legal copyright found in the version resources of final bundle executable. If
+                        this attribute is not provided the copyright will be set to "Copyright (c) [Bundle/@Manufacturer]. All rights reserved.".
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="Compressed" type="YesNoDefaultType">
                 <xs:annotation>
                     <xs:documentation>Whether Packages and Payloads not assigned to a container should be added to the default attached container or if they should be external. The default is yes.</xs:documentation>
@@ -147,6 +155,15 @@
                         A URL to the help for the bundle to display in Programs and Features (also known as
                         Add/Remove Programs). If the Bundle/@Name attribute is not specified then this attribute
                         may not be specified either.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="IconSourceFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Path to an icon that will replace the default icon in the final Bundle executable.
+                        This icon will also be displayed in Programs and Features (also known as Add/Remove
+                        Programs).
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
@@ -259,6 +276,11 @@
             <xs:attribute name="Name" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>The destination path and file name for this UX payload. The default is the source file name. Use this attribute to rename the UX entry point or extract it into a subfolder.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="SplashScreenSourceFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Path to a bitmap that will be shown as the bootstrapper application is being loaded. If this attribute is not specified, no splash screen will be displayed.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
         </xs:complexType>
@@ -2042,7 +2064,7 @@
                 </xs:choice>
             </xs:sequence>
 
-            <xs:attribute name="DiskId" type="xs:int">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation><xs:documentation>Entered into the DiskId field of the new Media table record.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="DiskPrompt" type="xs:string">
@@ -4033,7 +4055,7 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
-            <xs:attribute name="DiskId" type="xs:integer">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation><xs:documentation>
                     The value of this attribute should correspond to the Id attribute of a Media
                     element authored elsewhere.  By creating this connection between a file and
@@ -6507,7 +6529,7 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="DiskId" type="xs:integer">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation>
                     <xs:documentation>
                         This attribute provides a default DiskId attribute for all child File elements. Specifying
@@ -6819,7 +6841,7 @@
             <xs:attribute name="Id" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>The unique identifier for the Merge element in the source code.  Referenced by the MergeRef/@Id.</xs:documentation></xs:annotation>
             </xs:attribute>
-            <xs:attribute name="DiskId" type="xs:string">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation><xs:documentation>The value of this attribute should correspond to the Id attribute of a
                     Media element authored elsewhere.  By creating this connection between the merge module and Media
                     element, you set the packaging options to the values specified in the Media
@@ -6921,7 +6943,7 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="DiskId" type="xs:integer">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation>
                     <xs:documentation>
                         Sets the default disk identifier for the files contained in this directory.
@@ -7047,7 +7069,7 @@
             <xs:attribute name="Id" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>The identifier of the Directory element to reference.</xs:documentation></xs:annotation>
             </xs:attribute>
-            <xs:attribute name="DiskId" type="xs:integer">
+            <xs:attribute name="DiskId" type="DiskIdType">
                 <xs:annotation>
                     <xs:documentation>
                         Sets the default disk identifier for the files contained in this directory.
@@ -11227,6 +11249,15 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="DiskIdType">
+        <xs:annotation>
+            <xs:documentation>Values of this type must be an integer or the value of one or more preprocessor variables with the format $(var.Variable) where "Variable" is the name of the preprocessor variable.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([0-9]|\$\((?:var)\.[_A-Za-z][0-9A-Za-z_.]+\))+"/>
         </xs:restriction>
     </xs:simpleType>
 

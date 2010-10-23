@@ -17,15 +17,6 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-
-HRESULT ScaGetWebApplication7(
-    __in MSIHANDLE hViewApplications,
-    __in_z LPCWSTR pwzApplication,
-    SCA_WEB_APPLICATION* pswapp
-    );
-
-
-
 HRESULT ScaWriteWebApplication7(
     __in_z LPCWSTR wzWebName,
     __in_z LPCWSTR wzRootOfWeb,

@@ -43,8 +43,14 @@ struct SCA_WEBDIR7
 
 // prototypes
 UINT __stdcall ScaWebDirsRead7(
-    SCA_WEB7* pswList,
-    SCA_WEBDIR7** ppswdList
+    __in SCA_WEB7* pswList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData,
+    __out SCA_WEBDIR7** ppswdList
     );
 
 HRESULT ScaWebDirsInstall7(

@@ -226,8 +226,8 @@
 
     <String Id="UserExit_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarobnjak za instalaciju programa [ProductName] prekinut je</String>
-    <String Id="UserExitDescription1" Overridable="yes">Instalacija programa [ProductName] prekinuta je. Sustav nije izmijenjen. Da biste naknadno instalirali program, ponovno pokrenite instalaciju.</String>
+    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Instalacija programa [ProductName] je prekinuta</String>
+    <String Id="UserExitDescription1" Overridable="yes">Instalacija programa [ProductName] je prekinuta. Sustav nije izmijenjen. Da biste naknadno instalirali program, ponovno pokrenite instalaciju.</String>
     <String Id="UserExitDescription2" Overridable="yes">Kliknite gumb "Dovrši" da biste izašli iz čarobnjaka za instalaciju.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
@@ -398,7 +398,7 @@
     <String Id="Error1" Overridable="yes">{{Pogreška [1]. }}</String>
     <String Id="Error2" Overridable="yes">Upozorenje [1]. </String>
     <String Id="Error4" Overridable="yes">Informacija [1]. </String>
-    <String Id="Error5" Overridable="yes">Instalacijski program naišao je na neočekivanu pogrešku pri instalaciji ovog paketa. To možda upućuje na problem s ovim paketom. Kod je pogreške [1]. {{Argumenti su: [2], [3], [4]}}</String>
+    <String Id="Error5" Overridable="yes">Instalacijski program naišao je na neočekivanu pogrešku pri instalaciji ovog paketa. To možda upućuje na problem s ovim paketom. Kod pogreške je [1]. {{Argumenti su: [2], [3], [4]}}</String>
     <String Id="Error7" Overridable="yes">{{Disk pun: }}</String>
     <String Id="Error8" Overridable="yes">Akcija [Time]: [1]. [2]</String>
     <String Id="Error9" Overridable="yes">[ProductName]</String>
@@ -541,7 +541,7 @@
     <String Id="Error1922" Overridable="yes">Servis "[2]" ([3]) nije moguće izbrisati. Provjerite imate li dovoljne ovlasti za uklanjanje servisa sustava.</String>
     <String Id="Error1923" Overridable="yes">Servis "[2]" ([3]) nije moguće instalirati. Provjerite imate li dovoljne ovlasti za instalaciju servisa sustava.</String>
     <String Id="Error1924" Overridable="yes">Nije moguće ažurirati varijablu okruženja "[2]". Provjerite imate li dovoljne ovlasti za izmjenu varijabli okruženja.</String>
-    <String Id="Error1925" Overridable="yes">Nemate dovoljne ovlasti da biste dovršili instalaciju za sve korisnike računala. Prijavite se kao administrator, a zatim ponovno pokušajte instalirati.</String>
+    <String Id="Error1925" Overridable="yes">Nemate dovoljno ovlasti da biste dovršili instalaciju za sve korisnike računala. Prijavite se kao administrator, a zatim ponovno pokušajte instalirati.</String>
     <String Id="Error1926" Overridable="yes">Nije moguće postaviti zaštitu datoteke za datoteku "[3]". Pogreška: [2]. Provjerite imate li dovoljne ovlasti za izmjenu sigurnosnih dozvola za tu datoteku.</String>
     <String Id="Error1927" Overridable="yes">Na ovom računalu nije instalirana komponenta Component Services (COM+ 1.0). Da bi se ova instalacija uspješno dovršila, potrebna je komponenta Component Services. Komponenta Component Services dostupna je u sustavu Windows 2000.</String>
     <String Id="Error1928" Overridable="yes">Pogreška pri registraciji aplikacije COM+. Dodatne informacije zatražite od osoblja za podršku.</String>

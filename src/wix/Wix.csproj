@@ -238,6 +238,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.Deployment.Resources">
+      <HintPath>$(TargetDir)Microsoft.Deployment.Resources.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Deployment.WindowsInstaller">
       <HintPath>$(TargetDir)Microsoft.Deployment.WindowsInstaller.dll</HintPath>
     </Reference>

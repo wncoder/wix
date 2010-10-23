@@ -11,7 +11,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS functions for CustomActions
 // </summary>
@@ -23,25 +23,26 @@ HRESULT ScaCreateWeb(IMSAdminBase* piMetabase, LPCWSTR wzWeb, LPCWSTR wzWebBase)
 
 HRESULT ScaDeleteApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot);
 
-HRESULT ScaCreateApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot, 
+HRESULT ScaCreateApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot,
                      DWORD dwIsolation);
 
-HRESULT ScaCreateMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaCreateMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                              LPCWSTR wzSubKey);
 
-HRESULT ScaDeleteMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaDeleteMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                              LPCWSTR wzSubKey);
 
-HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
-                              LPCWSTR wzSubKey, DWORD dwIdentifier, 
-                              DWORD dwAttributes, DWORD dwUserType, 
+HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
+                              LPCWSTR wzSubKey, DWORD dwIdentifier,
+                              DWORD dwAttributes, DWORD dwUserType,
                               DWORD dwDataType, LPVOID pvData);
 
-HRESULT ScaDeleteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaDeleteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                               LPCWSTR wzSubKey, DWORD dwIdentifier,
                               DWORD dwDataType);
 
-HRESULT ScaWriteMetabaseConfigurationScript(LPCWSTR pwzCaScriptKey);
+HRESULT ScaWriteConfigurationScript(LPCWSTR pwzCaScriptKey);
 
+HRESULT ScaAddToIisConfiguration(LPCWSTR pwzData, DWORD dwCost);
 
 HRESULT ScaLoadMetabase(IMSAdminBase** piMetabase);

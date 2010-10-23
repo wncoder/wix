@@ -31,6 +31,7 @@ extern "C" {
 
 typedef struct _BURN_USER_EXPERIENCE
 {
+    BOOL fSplashScreen;
     BURN_PAYLOADS payloads;
 
     HMODULE hUXModule;

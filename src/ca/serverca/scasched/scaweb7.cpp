@@ -23,27 +23,6 @@
 #define __in_xcount(size)
 #endif
 
-// sql queries
-LPCWSTR vcsWebQueryIIS7 = L"SELECT `Web`, `Component_`, `Id`, `Description`, `ConnectionTimeout`, `Directory_`, `State`, `Attributes`, `DirProperties_`, `Application_`, "
-                      L"`Address`, `IP`, `Port`, `Header`, `Secure`, `Log_` FROM `IIsWebSite`, `IIsWebAddress` "
-                      L"WHERE `KeyAddress_`=`Address` ORDER BY `Sequence`";
-
-enum eWebQueryIIS7 { wqWeb = 1, wqComponent , wqId, wqDescription, wqConnectionTimeout, wqDirectory,
-                 wqState, wqAttributes, wqProperties, wqApplication, wqAddress, wqIP, wqPort, wqHeader, wqSecure, wqLog};
-
-LPCWSTR vcsWebAddressQueryIIS7 = L"SELECT `Address`, `IP`, `Port`, `Header`, `Secure` "
-                             L"FROM `IIsWebAddress` WHERE `Web_`=?";
-
-enum eWebAddressQueryIIS7 { waqAddress = 1, waqIP, waqPort, waqHeader, waqSecure };
-
-
-LPCWSTR vcsWebBaseQueryIIS7 = L"SELECT `Web`, `IP`, `Port`, `Header`, `Secure` "
-                          L"FROM `IIsWebSite`, `IIsWebAddress` "
-                          L"WHERE `KeyAddress_`=`Address` AND `Web`=?";
-enum eWebBaseQueryIIS7 { wbqWeb = 1, wbqIP, wbqPort, wbqHeader, wbqSecure};
-
-
-
 // prototypes for private helper functions
 static SCA_WEB7* NewWeb7();
 static SCA_WEB7* AddWebToList7(
@@ -67,7 +46,14 @@ static HRESULT ScaWebRemove7(__in const SCA_WEB7* psw);
 HRESULT ScaWebsRead7(
     __in SCA_WEB7** ppswList,
     __in SCA_HTTP_HEADER** ppshhList,
-    __in SCA_WEB_ERROR** ppsweList
+    __in SCA_WEB_ERROR** ppsweList,
+    __in WCA_WRAPQUERY_HANDLE hUserQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebDirPropQuery,
+    __in WCA_WRAPQUERY_HANDLE hSslCertQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebLogQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppQuery,
+    __in WCA_WRAPQUERY_HANDLE hWebAppExtQuery,
+    __inout LPWSTR *ppwzCustomActionData
     )
 {
     Assert(ppswList);
@@ -80,9 +66,11 @@ HRESULT ScaWebsRead7(
     BOOL fIIsWebAddressTable = FALSE;
     BOOL fIIsWebApplicationTable = FALSE;
 
-    PMSIHANDLE hView, hRec;
-    PMSIHANDLE hViewAddresses, hRecAddresses;
-    PMSIHANDLE hViewApplications, hRecApplications;
+    MSIHANDLE hRec;
+    MSIHANDLE hRecAddresses;
+
+    WCA_WRAPQUERY_HANDLE hQueryWebSite = NULL;
+    WCA_WRAPQUERY_HANDLE hQueryWebAddress = NULL;
 
     SCA_WEB7* psw = NULL;
     LPWSTR pwzData = NULL;
@@ -91,39 +79,21 @@ HRESULT ScaWebsRead7(
     errno_t error = EINVAL;
 
     // check to see what tables are available
-    fIIsWebSiteTable = (S_OK == WcaTableExists(L"IIsWebSite"));
-    fIIsWebAddressTable = (S_OK == WcaTableExists(L"IIsWebAddress"));
-    fIIsWebApplicationTable = (S_OK == WcaTableExists(L"IIsWebApplication"));
+    hr = WcaBeginUnwrapQuery(&hQueryWebSite, ppwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap query for ScaWebsRead");
 
-    if (!fIIsWebSiteTable || !fIIsWebAddressTable)
+    hr = WcaBeginUnwrapQuery(&hQueryWebAddress, ppwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap query for ScaWebsRead");
+
+
+    if (0 == WcaGetQueryRecords(hQueryWebSite) || 0 == WcaGetQueryRecords(hQueryWebAddress))
     {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaWebsRead7() - because IIsWebSite/IIsWebAddress table not present.");
+        WcaLog(LOGMSG_VERBOSE, "Required tables not present");
         ExitFunction1(hr = S_FALSE);
     }
-    else
-    {
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Confirmed minimum required tables exist");
-    }
-
-    // open the view on webs' addresses
-    hr = WcaOpenView(vcsWebAddressQueryIIS7, &hViewAddresses);
-    ExitOnFailure(hr, "Failed to open view on IIsWebAddress table");
-
-    // open the view on webs' applications
-    if (fIIsWebApplicationTable)
-    {
-        hr = WcaOpenView(vcsWebApplicationQuery, &hViewApplications);
-        ExitOnFailure(hr, "Failed to open view on IIsWebApplication table");
-    }
-
-    WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Opened views for IIsWebAddress table & IIsWebApplicationTable");
 
     // loop through all the webs
-    hr = WcaOpenExecuteView(vcsWebQueryIIS7, &hView);
-    ExitOnFailure(hr, "Failed to execute view on IIsWebSite table");
-    WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Opened and executed view for IIsWebSite");
-    
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
+    while (S_OK == (hr = WcaFetchWrappedRecord(hQueryWebSite, &hRec)))
     {
         psw = NewWeb7();
         if (!psw)
@@ -137,26 +107,29 @@ HRESULT ScaWebsRead7(
         hr = WcaGetRecordString(hRec, wqWeb, &pwzData);
         ExitOnFailure(hr, "Failed to get Web");
         hr = ::StringCchCopyW(psw->wzKey, countof(psw->wzKey), pwzData);
-        ExitOnFailure(hr, "Failed to copy web key");
+        ExitOnFailure(hr, "Failed to copy key string to web object");
 
         // get component install state
         hr = WcaGetRecordString(hRec, wqComponent, &pwzData);
         ExitOnFailure(hr, "Failed to get Component for Web");
         hr = ::StringCchCopyW(psw->wzComponent, countof(psw->wzComponent), pwzData);
-        ExitOnFailure(hr, "Failed to copy web component");
+        ExitOnFailure(hr, "Failed to copy component string to web object");
         if (*(psw->wzComponent))
         {
             psw->fHasComponent = TRUE;
 
-            er = ::MsiGetComponentStateW(WcaGetInstallHandle(), psw->wzComponent, &psw->isInstalled, &psw->isAction);
-            hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure(hr, "Failed to get web Component state");
+            hr = WcaGetRecordInteger(hRec, wqInstalled, (int *)&psw->isInstalled);
+            ExitOnFailure(hr, "Failed to get web Component's installed state");
+
+            WcaGetRecordInteger(hRec, wqAction, (int *)&psw->isAction);
+            ExitOnFailure(hr, "Failed to get web Component's action state");
         }
-        // get the web's description (Site Name)
-        hr = WcaGetRecordFormattedString(hRec, wqDescription, &pwzData);
+
+        // Get the web's description.
+        hr = WcaGetRecordString(hRec, wqDescription, &pwzData);
         ExitOnFailure(hr, "Failed to get Description for Web");
         hr = ::StringCchCopyW(psw->wzDescription, countof(psw->wzDescription), pwzData);
-        ExitOnFailure(hr, "Failed to copy web description");
+        ExitOnFailure(hr, "Failed to copy description string to web object");
 
         //get web's site Id
         hr = WcaGetRecordInteger(hRec, wqId, &psw->iSiteId);
@@ -168,16 +141,16 @@ HRESULT ScaWebsRead7(
         hr = ::StringCchCopyW(psw->swaBinding.wzKey, countof(psw->swaBinding.wzKey), pwzData);
         ExitOnFailure(hr, "Failed to copy web binding key");
 
-        hr = WcaGetRecordFormattedString(hRec, wqIP, &pwzData);
+        hr = WcaGetRecordString(hRec, wqIP, &pwzData);
         ExitOnFailure(hr, "Failed to get IP for Web");
         hr = ::StringCchCopyW(psw->swaBinding.wzIP, countof(psw->swaBinding.wzIP), pwzData);
         ExitOnFailure(hr, "Failed to copy web IP");
 
-        hr = WcaGetRecordFormattedString(hRec, wqPort, &pwzData);
+        hr = WcaGetRecordString(hRec, wqPort, &pwzData);
         ExitOnFailure(hr, "Failed to get Web Address port");
         psw->swaBinding.iPort = wcstol(pwzData, NULL, 10);
 
-        hr = WcaGetRecordFormattedString(hRec, wqHeader, &pwzData);
+        hr = WcaGetRecordString(hRec, wqHeader, &pwzData);
         ExitOnFailure(hr, "Failed to get Header for Web");
         hr = ::StringCchCopyW(psw->swaBinding.wzHeader, countof(psw->swaBinding.wzHeader), pwzData);
         ExitOnFailure(hr, "Failed to copy web header");
@@ -212,10 +185,9 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to find web site");
 
         // get any extra web addresses
-        hr = WcaExecuteView(hViewAddresses, hRec);
-        ExitOnFailure(hr, "Failed to execute view on extra IIsWebAddress table");
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Executing view on Address table");
-        while (S_OK == (hr = WcaFetchRecord(hViewAddresses, &hRecAddresses)))
+        WcaFetchWrappedReset(hQueryWebAddress);
+
+        while (S_OK == (hr = WcaFetchWrappedRecordWhereString(hQueryWebAddress, 2, psw->wzKey, &hRecAddresses)))
         {
             WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Fetched record from IIsWebAddress table");
             if (MAX_ADDRESSES_PER_WEB <= psw->cExtraAddresses)
@@ -226,41 +198,46 @@ HRESULT ScaWebsRead7(
 
             hr = WcaGetRecordString(hRecAddresses, waqAddress, &pwzData);
             ExitOnFailure(hr, "Failed to get extra web Address");
-            hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzKey,
-                countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzKey), pwzData);
-            ExitOnFailure(hr, "Failed to copy web binding key");
 
-            hr = WcaGetRecordFormattedString(hRecAddresses, waqIP, &pwzData);
-            ExitOnFailure(hr, "Failed to get extra web IP");
-            hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzIP, countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzIP), pwzData);
-            ExitOnFailure(hr, "Failed to copy web binding IP");
-
-            hr = WcaGetRecordFormattedString(hRecAddresses, waqPort, &pwzData);
-            ExitOnFailure(hr, "Failed to get port for extra web IP");
-            psw->swaExtraAddresses[psw->cExtraAddresses].iPort= wcstol(pwzData, NULL, 10);
-
-            // errno is set to ERANGE if overflow or underflow occurs
-            _get_errno(&error);
-
-            if (ERANGE == error)
+            // if this isn't the key address add it
+            if (0 != lstrcmpW(pwzData, psw->swaBinding.wzKey))
             {
-                hr = E_INVALIDARG;
-                ExitOnFailure(hr, "Failed to convert web Port address");
+                hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzKey,
+                    countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzKey), pwzData);
+                ExitOnFailure(hr, "Failed to copy web binding key");
+
+                hr = WcaGetRecordString(hRecAddresses, waqIP, &pwzData);
+                ExitOnFailure(hr, "Failed to get extra web IP");
+                hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzIP, countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzIP), pwzData);
+                ExitOnFailure(hr, "Failed to copy web binding IP");
+
+                hr = WcaGetRecordString(hRecAddresses, waqPort, &pwzData);
+                ExitOnFailure(hr, "Failed to get port for extra web IP");
+                psw->swaExtraAddresses[psw->cExtraAddresses].iPort= wcstol(pwzData, NULL, 10);
+
+                // errno is set to ERANGE if overflow or underflow occurs
+                _get_errno(&error);
+
+                if (ERANGE == error)
+                {
+                    hr = E_INVALIDARG;
+                    ExitOnFailure(hr, "Failed to convert web Port address");
+                }
+
+                hr = WcaGetRecordString(hRecAddresses, waqHeader, &pwzData);
+                ExitOnFailure(hr, "Failed to get header for extra web IP");
+                hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzHeader, countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzHeader), pwzData);
+                ExitOnFailure(hr, "Failed to copy web binding header");
+
+                hr = WcaGetRecordInteger(hRecAddresses, waqSecure, &psw->swaExtraAddresses[psw->cExtraAddresses].fSecure);
+                ExitOnFailure(hr, "Failed to get if secure extra web IP");
+                if (S_FALSE == hr)
+                {
+                    psw->swaExtraAddresses[psw->cExtraAddresses].fSecure = FALSE;
+                }
+
+                psw->cExtraAddresses++;
             }
-
-            hr = WcaGetRecordFormattedString(hRecAddresses, waqHeader, &pwzData);
-            ExitOnFailure(hr, "Failed to get header for extra web IP");
-            hr = ::StringCchCopyW(psw->swaExtraAddresses[psw->cExtraAddresses].wzHeader, countof(psw->swaExtraAddresses[psw->cExtraAddresses].wzHeader), pwzData);
-            ExitOnFailure(hr, "Failed to copy web binding header");
-
-            hr = WcaGetRecordInteger(hRecAddresses, waqSecure, &psw->swaExtraAddresses[psw->cExtraAddresses].fSecure);
-            ExitOnFailure(hr, "Failed to get if secure extra web IP");
-            if (S_FALSE == hr)
-            {
-                psw->swaExtraAddresses[psw->cExtraAddresses].fSecure = FALSE;
-            }
-
-            psw->cExtraAddresses++;
         }
 
         if (E_NOMOREITEMS == hr)
@@ -278,35 +255,24 @@ HRESULT ScaWebsRead7(
         if (psw->fHasComponent) // If we're installing it, it needs a dir
         {
             // get the web's directory
-            hr = WcaGetRecordString(hRec, wqDirectory, &pwzData);
-            ExitOnFailure(hr, "Failed to get Directory for Web");
-
-            WCHAR wzPath[MAX_PATH];
-            dwLen = countof(wzPath);
             if (INSTALLSTATE_SOURCE == psw->isAction)
             {
-                er = ::MsiGetSourcePathW(WcaGetInstallHandle(), pwzData, wzPath, &dwLen);
+                hr = WcaGetRecordString(hRec, wqSourcePath, &pwzData);
             }
             else
             {
-                er = ::MsiGetTargetPathW(WcaGetInstallHandle(), pwzData, wzPath, &dwLen);
+                hr = WcaGetRecordString(hRec, wqTargetPath, &pwzData);
             }
-            hr = HRESULT_FROM_WIN32(er);
             ExitOnFailure(hr, "Failed to get Source/TargetPath for Directory");
 
-            if (dwLen > countof(wzPath))
-            {
-                hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-                ExitOnFailure(hr, "Failed because Source/TargetPath for Directory was greater than MAX_PATH.");
-            }
-
+            dwLen = lstrlenW(pwzData);
             // remove trailing backslash
-            if (dwLen > 0 && wzPath[dwLen-1] == L'\\')
+            if (dwLen > 0 && pwzData[dwLen-1] == L'\\')
             {
-                wzPath[dwLen-1] = 0;
+                pwzData[dwLen-1] = 0;
             }
-            hr = ::StringCchCopyW(psw->wzDirectory, countof(psw->wzDirectory), wzPath);
-            ExitOnFailure1(hr, "Failed to copy web dir: '%S'", wzPath);
+            hr = ::StringCchCopyW(psw->wzDirectory, countof(psw->wzDirectory), pwzData);
+            ExitOnFailure1(hr, "Failed to copy web dir: '%ls'", pwzData);
 
         }
 
@@ -321,10 +287,10 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get directory properties for Web");
         if (*pwzData)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties7");
-            hr = ScaGetWebDirProperties7(pwzData, &psw->swp);
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties");
+            hr = ScaGetWebDirProperties(pwzData, hUserQuery, hWebDirPropQuery, &psw->swp);
             ExitOnFailure(hr, "Failed to get directory properties for Web");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties7");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebDirProperties");
 
             psw->fHasProperties = TRUE;
         }
@@ -334,25 +300,25 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get application identifier for Web");
         if (*pwzData)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebApplication7");
-            hr = ScaGetWebApplication7(NULL, pwzData, &psw->swapp);
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebApplication");
+            hr = ScaGetWebApplication(NULL, pwzData, hWebAppQuery, hWebAppExtQuery, &psw->swapp);
             ExitOnFailure(hr, "Failed to get application for Web");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebApplication7");
+            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebApplication");
 
             psw->fHasApplication = TRUE;
         }
 
         // get the SSL certificates
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaSslCertificateRead7");
-        hr = ScaSslCertificateRead7(psw->wzKey, &(psw->pswscList));
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaSslCertificateRead");
+        hr = ScaSslCertificateRead(psw->wzKey, hSslCertQuery, &(psw->pswscList));
         ExitOnFailure(hr, "Failed to get SSL Certificates.");
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaSslCertificateRead7");
+        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaSslCertificateRead");
 
         // get the custom headers
         if (*ppshhList)
         {
             WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetHttpHeader7");
-            hr = ScaGetHttpHeader7(hhptWeb, psw->wzKey, ppshhList, &(psw->pshhList));
+            hr = ScaGetHttpHeader(hhptWeb, psw->wzKey, ppshhList, &(psw->pshhList));
             ExitOnFailure(hr, "Failed to get Custom HTTP Headers");
             WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetHttpHeader7");
         }
@@ -361,7 +327,7 @@ HRESULT ScaWebsRead7(
         if (*ppsweList)
         {
             WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebError7");
-            hr = ScaGetWebError7(weptWeb, psw->wzKey, ppsweList, &(psw->psweList));
+            hr = ScaGetWebError(weptWeb, psw->wzKey, ppsweList, &(psw->psweList));
             ExitOnFailure(hr, "Failed to get Custom Errors");
             WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebError7");
         }
@@ -371,7 +337,7 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get log identifier for Web");
         if (*pwzData)
         {
-            hr = ScaGetWebLog7(pwzData, &psw->swl);
+            hr = ScaGetWebLog7(pwzData, hWebLogQuery, &psw->swl);
             ExitOnFailure(hr, "Failed to get Log for Web.");
             psw->fHasLog = TRUE;
         }
@@ -387,6 +353,9 @@ HRESULT ScaWebsRead7(
 
 LExit:
     // if anything was left over after an error clean it all up
+    WcaFinishUnwrapQuery(hQueryWebSite);
+    WcaFinishUnwrapQuery(hQueryWebAddress);
+
     ScaWebsFreeList7(psw);
 
     ReleaseStr(pwzData);
@@ -395,35 +364,241 @@ LExit:
     return hr;
 }
 
+BOOL CompareBinding(
+    __in IAppHostElement* pBinding,
+    __in LPVOID pContext
+    )
+{
+    BOOL fFound = FALSE;
+    HRESULT hr = S_OK;
+    LPWSTR pwzBindingInfo = NULL;
+    SCA_WEB7* psw = (SCA_WEB7*)pContext;
+
+    hr = Iis7GetPropertyString(pBinding, IIS_CONFIG_BINDINGINFO, &pwzBindingInfo);
+    ExitOnFailure(hr, "Failed to get bindinginfo for binding element");
+
+    LPWSTR pwzExists = pwzBindingInfo;
+    // Break down the address into its constituent parts (IP:Port:Header).
+    // Taken from IIS6 CA code for compatibility
+    while (S_OK == hr && *pwzExists)
+    {
+        LPCWSTR pwzIPExists = pwzExists;
+        pwzExists = const_cast<LPWSTR>(wcsstr(pwzIPExists, L":"));
+        ExitOnNull(pwzExists, hr, E_INVALIDARG, "Invalid web address. IP was not separated by a colon.");
+        *pwzExists = L'\0';
+
+        LPCWSTR pwzPortExists = pwzExists + 1;
+        pwzExists = const_cast<LPWSTR>(wcsstr(pwzPortExists, L":"));
+        ExitOnNull(pwzExists, hr, E_INVALIDARG, "Invalid web address. Port was not separated by a colon.");
+        *pwzExists = L'\0';
+        int iPortExists = wcstol(pwzPortExists, NULL, 10);
+
+        LPCWSTR pwzHeaderExists = pwzExists + 1;
+
+        // compare the passed in address with the address listed for this web
+        if ((0 == lstrcmpW(psw->swaBinding.wzIP, pwzIPExists) || 0 == lstrcmpW(psw->swaBinding.wzIP, L"*")) &&
+            psw->swaBinding.iPort == iPortExists &&
+            0 == lstrcmpW(psw->swaBinding.wzHeader, pwzHeaderExists))
+        {
+            fFound = TRUE;
+            break;
+        }
+
+        // move to the next block of data, this may move beyond the available
+        // data and exit the while loop above.
+        pwzExists = const_cast<LPWSTR>(pwzHeaderExists + lstrlenW(pwzHeaderExists));
+    }
+
+LExit:
+    ReleaseNullStr(pwzBindingInfo);
+    return fFound;
+}
+
+BOOL EnumSiteCompareBinding(
+    __in IAppHostElement* pSite,
+    __in LPVOID pContext
+    )
+{
+    BOOL fFound = FALSE;
+    HRESULT hr = S_OK;
+    SCA_WEB7* psw = (SCA_WEB7*)pContext;
+    IAppHostChildElementCollection *pSiteChildren = NULL;
+    IAppHostElement *pBindings = NULL;
+    IAppHostElementCollection *pBindingsCollection = NULL;
+    IAppHostElement *pBinding = NULL;
+    VARIANT vtProp;
+    VariantInit(&vtProp);
+
+    hr = pSite->get_ChildElements(&pSiteChildren);
+    ExitOnFailure(hr, "Failed get site child elements collection");
+
+    vtProp.vt = VT_BSTR;
+    vtProp.bstrVal = ::SysAllocString(IIS_CONFIG_BINDINGS);
+    hr = pSiteChildren->get_Item(vtProp, &pBindings);
+    ExitOnFailure(hr, "Failed get bindings element");
+
+    hr = pBindings->get_Collection(&pBindingsCollection);
+    ExitOnFailure(hr, "Failed get bindings collection");
+
+    hr = Iis7EnumAppHostElements(pBindingsCollection, CompareBinding, psw, &pBinding, NULL);
+    ExitOnFailure(hr, "Failed search bindings collection");
+
+    fFound = NULL != pBinding;
+LExit:
+    VariantClear(&vtProp);
+    ReleaseNullObject(pSiteChildren);
+    ReleaseNullObject(pBindings);
+    ReleaseNullObject(pBindingsCollection);
+    ReleaseNullObject(pBinding);
+    return fFound;
+}
+
+HRESULT ScaWebSearch7(
+    __in SCA_WEB7* psw,
+    __deref_out_z_opt LPWSTR* pswWeb,
+    __out_opt BOOL* pfFound
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fInitializedCom = FALSE;
+    IAppHostAdminManager *pAdminMgr = NULL;
+    IAppHostElement *pSites = NULL;
+    IAppHostElementCollection *pCollection = NULL;
+    IAppHostElement *pSite = NULL;
+    DeclareConstBSTR(bstrSites, IIS_CONFIG_SITES_SECTION);
+    DeclareConstBSTR(bstrAppHostRoot, IIS_CONFIG_APPHOST_ROOT);
+
+    if (NULL != pswWeb)
+    {
+        ReleaseNullStr(*pswWeb);
+    }
+
+    if (NULL != pfFound)
+    {
+        *pfFound = FALSE;
+    }
+
+    hr = ::CoInitialize(NULL);
+    ExitOnFailure(hr, "Failed to initialize COM");
+    fInitializedCom = TRUE;
+
+    hr = CoCreateInstance(__uuidof(AppHostAdminManager), NULL, CLSCTX_INPROC_SERVER, __uuidof(IAppHostAdminManager), reinterpret_cast<void**> (&pAdminMgr));
+    ExitOnFailure(hr, "Failed to CoCreate IAppHostAdminManager");
+
+    hr = pAdminMgr->GetAdminSection(UseConstBSTR(bstrSites), UseConstBSTR(bstrAppHostRoot), &pSites);
+    ExitOnFailure(hr, "Failed get sites section");
+    ExitOnNull(pSites, hr, ERROR_FILE_NOT_FOUND, "Failed get sites section object");
+
+    hr = pSites->get_Collection(&pCollection);
+    ExitOnFailure(hr, "Failed get sites collection");
+
+    // not explicitly doing a Description search
+    if (-1 != psw->iSiteId)
+    {
+        if (MSI_NULL_INTEGER == psw->iSiteId)
+        {
+            // Enumerate sites & determine if the binding matches
+            hr = Iis7EnumAppHostElements(pCollection, EnumSiteCompareBinding, psw, &pSite, NULL);
+            ExitOnFailure(hr, "Failed locate site by ID");
+        }
+        else
+        {
+            // Find a site with ID matches
+            hr = Iis7FindAppHostElementInteger(pCollection, IIS_CONFIG_SITE, IIS_CONFIG_ID, psw->iSiteId, &pSite, NULL);
+            ExitOnFailure(hr, "Failed locate site by ID");
+        }
+    }
+
+    if (NULL == pSite)
+    {
+        // Find a site with Name that matches
+        hr = Iis7FindAppHostElementString(pCollection, IIS_CONFIG_SITE, IIS_CONFIG_NAME, psw->wzDescription, &pSite, NULL);
+        ExitOnFailure(hr, "Failed locate site by ID");
+    }
+
+    if (NULL != pSite)
+    {
+        if (NULL != pfFound)
+        {
+            *pfFound = TRUE;
+        }
+
+        if (NULL != pswWeb)
+        {
+            // We found a site, return its description
+            hr = Iis7GetPropertyString(pSite, IIS_CONFIG_NAME, pswWeb);
+            ExitOnFailure(hr, "Failed get site name");
+        }
+    }
+LExit:
+    ReleaseNullObject(pAdminMgr);
+    ReleaseNullObject(pSites);
+    ReleaseNullObject(pCollection);
+    ReleaseNullObject(pSite);
+
+    if (fInitializedCom)
+    {
+        ::CoUninitialize();
+    }
+    return hr;
+}
+
 
 HRESULT ScaWebsGetBase7(
     __in SCA_WEB7* pswList,
     __in LPCWSTR pswWebKey,
-    __in SCA_WEB7** pswWeb
+    __out_ecount(cchDest) LPWSTR pswWeb,
+    __in DWORD_PTR cchDest
     )
 {
     HRESULT hr = S_OK;
     BOOL fFound = FALSE;
+    SCA_WEB7* psw = pswList;
+    LPWSTR wzSiteName = NULL;
+
+    *pswWeb = '/0';
 
     //looking for psw->wzKey == pswWebKey
-    for (SCA_WEB7* psw = pswList; psw; psw = psw->pswNext)
+    while(psw)
     {
         if (0 == wcscmp(pswWebKey, psw->wzKey))
         {
-            *pswWeb = psw;
             fFound = TRUE;
             break;
         }
+        psw = psw->pswNext;
     }
 
-    if (!fFound && SUCCEEDED(hr))
+    if (!fFound)
     {
-        hr = S_FALSE;
+        ExitFunction1(hr = S_FALSE);
     }
 
+    // Search if we're not installing the site
+    if (!psw->fHasComponent || (psw->iAttributes & SWATTRIB_NOCONFIGUREIFEXISTS))
+    {
+        // We are not installing this website.  Search for it in IIS config
+        hr = ScaWebSearch7(psw, &wzSiteName, NULL);
+        ExitOnFailure(hr, "Failed to search for Website");
+
+        if (NULL != wzSiteName)
+        {
+            hr = ::StringCchCopyW(pswWeb, cchDest, wzSiteName);
+            ExitOnFailure(hr, "Failed to set Website description for located Website");
+        }
+    }
+
+    if ('/0' == *pswWeb)
+    {
+        WcaLog(LOGMSG_VERBOSE, "Could not find Web: %ls, defaulting to %ls", psw->wzKey, psw->wzDescription);
+        // Default to the provided description, the Exec CA will locate by description
+        hr = ::StringCchCopyW(pswWeb, cchDest, psw->wzDescription);
+        ExitOnFailure(hr, "Failed to set Website description to default");
+    }
+LExit:
+    ReleaseNullStr(wzSiteName);
     return hr;
 }
-
 
 HRESULT ScaWebsInstall7(
     __in SCA_WEB7* pswList,
@@ -439,7 +614,7 @@ HRESULT ScaWebsInstall7(
         if (psw->fHasComponent && WcaIsInstalling(psw->isInstalled, psw->isAction))
         {
             hr = ScaWebWrite7(psw, psapList);
-            ExitOnFailure1(hr, "failed to write web '%S' to metabase", psw->wzKey);
+            ExitOnFailure1(hr, "failed to write web '%ls' to metabase", psw->wzKey);
         }
 
         psw = psw->pswNext;
@@ -459,11 +634,11 @@ HRESULT ScaWebsUninstall7(
 
     while (psw)
     {
-        // if we are uninstalling the web site
         if (psw->fHasComponent && WcaIsUninstalling(psw->isInstalled, psw->isAction))
         {
+            // If someone
             hr = ScaWebRemove7(psw);
-            ExitOnFailure1(hr, "Failed to remove web '%S' ", psw->wzKey);
+            ExitOnFailure1(hr, "Failed to remove web '%ls' ", psw->wzKey);
         }
 
         psw = psw->pswNext;
@@ -483,8 +658,8 @@ void ScaWebsFreeList7(__in SCA_WEB7* pswList)
         pswList = pswList->pswNext;
 
         // Free the SSL, headers and errors list first
-        ScaSslCertificateFreeList7(pswDelete->pswscList);
-        ScaHttpHeaderFreeList7(pswDelete->pshhList);
+        ScaSslCertificateFreeList(pswDelete->pswscList);
+        ScaHttpHeaderFreeList(pswDelete->pshhList);
         ScaWebErrorFreeList(pswDelete->psweList);
 
         MemFree(pswDelete);
@@ -560,29 +735,36 @@ static HRESULT ScaWebWrite7(
 {
     HRESULT hr = S_OK;
 
+    BOOL fExists = FALSE;
     UINT ui = 0;
     WCHAR wzIP[64];
     WCHAR wzBinding[1024];
     WCHAR wzAppPoolName[MAX_PATH];
 
-    //create a site
-    hr = ScaWriteConfigID(IIS_SITE);
-    ExitOnFailure(hr, "Failed write site ID");
     //
     // determine if site must be new
     //
     if (psw->iAttributes & SWATTRIB_NOCONFIGUREIFEXISTS)
-        // if we're not supposed to configure existing webs
-        // then create only if new
     {
-        hr = ScaWriteConfigID(IIS_CREATE_NEW);
-        ExitOnFailure(hr, "Failed write site ID create new action");
+        // Check if site already exists.
+        hr = ScaWebSearch7(psw, NULL, &fExists);
+        ExitOnFailure1(hr, "Failed to search for web: %ls", psw->wzKey);
+
+        if (fExists)
+        {
+            hr = S_FALSE;
+            WcaLog(LOGMSG_VERBOSE, "Skipping configuration of existing web: %ls", psw->wzKey);
+            ExitFunction();
+        }
     }
-    else
-    {
-        hr = ScaWriteConfigID(IIS_CREATE);
-        ExitOnFailure(hr, "Failed write site ID create action");
-    }
+
+    //create a site
+    hr = ScaWriteConfigID(IIS_SITE);
+    ExitOnFailure(hr, "Failed write site ID");
+
+    hr = ScaWriteConfigID(IIS_CREATE);
+    ExitOnFailure(hr, "Failed write site ID create action");
+
     //Site Name
     hr = ScaWriteConfigString(psw->wzDescription);                  //Site Name
     ExitOnFailure(hr, "Failed write site desc");
@@ -731,21 +913,21 @@ static HRESULT ScaWebWrite7(
     if (psw->pswscList)
     {
         hr = ScaSslCertificateWrite7(psw->wzDescription, psw->pswscList);
-        ExitOnFailure1(hr, "Failed to write SSL certificates for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write SSL certificates for Web site: %ls", psw->wzKey);
     }
 
     // write the headers
     if (psw->pshhList)
     {
         hr = ScaWriteHttpHeader7(psw->wzDescription, L"/", psw->pshhList);
-        ExitOnFailure1(hr, "Failed to write custom HTTP headers for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write custom HTTP headers for Web site: %ls", psw->wzKey);
     }
 
     // write the errors
     if (psw->psweList)
     {
         hr = ScaWriteWebError7(psw->wzDescription, L"/", psw->psweList);
-        ExitOnFailure1(hr, "Failed to write custom web errors for Web site: %S", psw->wzKey);
+        ExitOnFailure1(hr, "Failed to write custom web errors for Web site: %ls", psw->wzKey);
     }
 
     // write the log information to the metabase

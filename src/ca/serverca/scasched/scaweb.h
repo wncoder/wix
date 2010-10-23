@@ -11,7 +11,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS Web functions for CustomActions
 // </summary>
@@ -28,6 +28,11 @@
 
 // globals
 #define MAX_ADDRESSES_PER_WEB 10
+
+enum eWebQuery { wqWeb = 1, wqComponent, wqId, wqDescription, wqConnectionTimeout, wqDirectory,
+                 wqState, wqAttributes, wqProperties, wqApplication, wqAddress, wqIP, wqPort, wqHeader, wqSecure, wqLog, wqInstalled, wqAction, wqSourcePath, wqTargetPath};
+
+enum eWebAddressQuery { waqAddress = 1, waqWeb, waqIP, waqPort, waqHeader, waqSecure };
 
 enum SCA_WEB_ATTRIBUTES
 {
@@ -79,7 +84,7 @@ struct SCA_WEB
     BOOL fHasSecurity;
     int dwAccessPermissions;
     int iConnectionTimeout;
-    
+
     SCA_MIMEMAP* psmm; // mime mappings
     SCA_WEB_SSL_CERTIFICATE* pswscList;
     SCA_HTTP_HEADER* pshhList;

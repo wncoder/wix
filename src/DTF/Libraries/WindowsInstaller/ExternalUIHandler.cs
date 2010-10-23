@@ -19,7 +19,6 @@
 namespace Microsoft.Deployment.WindowsInstaller
 {
     using System;
-    using System.Windows.Forms;
     using System.Collections;
     using System.Runtime.InteropServices;
     using System.Diagnostics.CodeAnalysis;
@@ -30,9 +29,9 @@ namespace Microsoft.Deployment.WindowsInstaller
     public delegate MessageResult ExternalUIHandler(
         InstallMessage messageType,
         string message,
-        MessageBoxButtons buttons,
-        MessageBoxIcon icon,
-        MessageBoxDefaultButton defaultButton);
+        MessageButtons buttons,
+        MessageIcon icon,
+        MessageDefaultButton defaultButton);
 
     /// <summary>
     /// [MSI 3.1] Defines a callback function that the installer calls for record-based progress notification and error messages.
@@ -40,9 +39,9 @@ namespace Microsoft.Deployment.WindowsInstaller
     public delegate MessageResult ExternalUIRecordHandler(
         InstallMessage messageType,
         Record messageRecord,
-        MessageBoxButtons buttons,
-        MessageBoxIcon icon,
-        MessageBoxDefaultButton defaultButton);
+        MessageButtons buttons,
+        MessageIcon icon,
+        MessageDefaultButton defaultButton);
 
     internal delegate int NativeExternalUIHandler(IntPtr context, int messageType, [MarshalAs(UnmanagedType.LPWStr)] string message);
 
@@ -75,9 +74,9 @@ namespace Microsoft.Deployment.WindowsInstaller
                 return (int) this.handler(
                         (InstallMessage) msgType,
                         message,
-                        (MessageBoxButtons) buttons,
-                        (MessageBoxIcon) icon,
-                        (MessageBoxDefaultButton) defButton);
+                        (MessageButtons) buttons,
+                        (MessageIcon) icon,
+                        (MessageDefaultButton) defButton);
             }
             catch
             {
@@ -116,9 +115,9 @@ namespace Microsoft.Deployment.WindowsInstaller
                     return (int) this.handler(
                         (InstallMessage) msgType,
                         msgRec,
-                        (MessageBoxButtons) buttons,
-                        (MessageBoxIcon) icon,
-                        (MessageBoxDefaultButton) defButton);
+                        (MessageButtons) buttons,
+                        (MessageIcon) icon,
+                        (MessageDefaultButton) defButton);
                 }
             }
             catch

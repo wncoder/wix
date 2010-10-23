@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    IIS functions for CustomActions
 // </summary>
@@ -21,9 +21,6 @@
 // globals
 LPWSTR vpwzCustomActionData = NULL;
 DWORD vdwCustomActionCost = 0;
-
-// prototypes
-static HRESULT ScaAddToMetabaseConfiguration(LPCWSTR pwzData, DWORD dwCost);
 
 HRESULT ScaMetabaseTransaction(__in_z LPCWSTR wzBackup)
 {
@@ -101,8 +98,8 @@ HRESULT ScaDeleteApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot)
     hr = WcaWriteStringToCaData(wzKey, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase key to CustomActionData");
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_DELETEAPP);
-    ExitOnFailure2(hr, "Failed to add ScaDeleteApp action data: %S cost: %d", pwzCustomActionData, COST_IIS_DELETEAPP);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_DELETEAPP);
+    ExitOnFailure2(hr, "Failed to add ScaDeleteApp action data: %ls cost: %d", pwzCustomActionData, COST_IIS_DELETEAPP);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -111,7 +108,7 @@ LExit:
 }
 
 
-HRESULT ScaCreateApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot, 
+HRESULT ScaCreateApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot,
                      DWORD dwIsolation)
 {
     Assert(piMetabase);
@@ -139,8 +136,8 @@ HRESULT ScaCreateApp(IMSAdminBase* piMetabase, LPCWSTR wzWebRoot,
     hr = WcaWriteIntegerToCaData(fInProc, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add isolation value to CustomActionData");
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_CREATEAPP);
-    ExitOnFailure2(hr, "Failed to add ScaCreateApp action data: %S cost: %d", pwzCustomActionData, COST_IIS_CREATEAPP);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_CREATEAPP);
+    ExitOnFailure2(hr, "Failed to add ScaCreateApp action data: %ls cost: %d", pwzCustomActionData, COST_IIS_CREATEAPP);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -149,7 +146,7 @@ LExit:
 }
 
 
-HRESULT ScaCreateMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaCreateMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                              LPCWSTR wzSubKey)
 {
     Assert(piMetabase);
@@ -186,8 +183,8 @@ HRESULT ScaCreateMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
     hr = WcaWriteStringToCaData(wzKey, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase key to CustomActionData");
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_CREATEKEY);
-    ExitOnFailure2(hr, "Failed to add ScaCreateMetabaseKey action data: %S cost: %d", pwzCustomActionData, COST_IIS_CREATEKEY);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_CREATEKEY);
+    ExitOnFailure2(hr, "Failed to add ScaCreateMetabaseKey action data: %ls cost: %d", pwzCustomActionData, COST_IIS_CREATEKEY);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -196,7 +193,7 @@ LExit:
 }
 
 
-HRESULT ScaDeleteMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaDeleteMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                              LPCWSTR wzSubKey)
 {
     Assert(piMetabase);
@@ -233,8 +230,8 @@ HRESULT ScaDeleteMetabaseKey(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
     hr = WcaWriteStringToCaData(wzKey, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase key to CustomActionData");
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_DELETEKEY);
-    ExitOnFailure2(hr, "Failed to add ScaDeleteMetabaseKey action data: %S cost: %d", pwzCustomActionData, COST_IIS_DELETEKEY);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_DELETEKEY);
+    ExitOnFailure2(hr, "Failed to add ScaDeleteMetabaseKey action data: %ls cost: %d", pwzCustomActionData, COST_IIS_DELETEKEY);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -243,7 +240,7 @@ LExit:
 }
 
 
-HRESULT ScaDeleteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
+HRESULT ScaDeleteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                               LPCWSTR wzSubKey, DWORD dwIdentifier,
                               DWORD dwDataType)
 {
@@ -288,8 +285,8 @@ HRESULT ScaDeleteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
     hr = WcaWriteIntegerToCaData(dwDataType, &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to add metabase data type to CustomActionData");
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_DELETEVALUE);
-    ExitOnFailure2(hr, "Failed to add ScaDeleteMetabaseValue action data: %S, cost: %d", pwzCustomActionData, COST_IIS_DELETEVALUE);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_DELETEVALUE);
+    ExitOnFailure2(hr, "Failed to add ScaDeleteMetabaseValue action data: %ls, cost: %d", pwzCustomActionData, COST_IIS_DELETEVALUE);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -301,9 +298,9 @@ LExit:
 #pragma prefast(push)
 #pragma prefast(disable:25120) // Disable "requires count parameter" warning - we do have a way to distinguish buffer sizes in all situations,
                                // it just depends on the dwDataType, and there's no way to annotate the situation in SAL
-HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey, 
-                              LPCWSTR wzSubKey, DWORD dwIdentifier, 
-                              DWORD dwAttributes, DWORD dwUserType, 
+HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
+                              LPCWSTR wzSubKey, DWORD dwIdentifier,
+                              DWORD dwAttributes, DWORD dwUserType,
                               DWORD dwDataType, LPVOID pvData)
 #pragma prefast(pop)
 {
@@ -395,8 +392,8 @@ HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
 
     // TODO: maybe look the key up and make sure we're not just writing the same value that already there
 
-    hr = ScaAddToMetabaseConfiguration(pwzCustomActionData, COST_IIS_WRITEVALUE);
-    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %S, cost: %d", pwzCustomActionData, COST_IIS_WRITEVALUE);
+    hr = ScaAddToIisConfiguration(pwzCustomActionData, COST_IIS_WRITEVALUE);
+    ExitOnFailure2(hr, "Failed to add ScaWriteMetabaseValue action data: %ls, cost: %d", pwzCustomActionData, COST_IIS_WRITEVALUE);
 
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -405,12 +402,12 @@ LExit:
 }
 
 
-static HRESULT ScaAddToMetabaseConfiguration(LPCWSTR pwzData, DWORD dwCost)
+HRESULT ScaAddToIisConfiguration(LPCWSTR pwzData, DWORD dwCost)
 {
     HRESULT hr = S_OK;
 
     hr = WcaWriteStringToCaData(pwzData, &vpwzCustomActionData);
-    ExitOnFailure1(hr, "failed to add to metabase configuration data string: %S", pwzData);
+    ExitOnFailure1(hr, "failed to add to metabase configuration data string: %ls", pwzData);
 
     vdwCustomActionCost += dwCost;
 
@@ -419,21 +416,21 @@ LExit:
 }
 
 
-HRESULT ScaWriteMetabaseConfigurationScript(__in LPCWSTR pwzCaScriptKey)
+HRESULT ScaWriteConfigurationScript(__in LPCWSTR pwzCaScriptKey)
 {
     HRESULT hr = S_OK;
-    WCA_CASCRIPT_HANDLE hWriteMetabase = NULL;
+    WCA_CASCRIPT_HANDLE hScript = NULL;
 
     // Create CaScript for communication with WriteMetabaseChanges
-    hr = WcaCaScriptCreate(WCA_ACTION_INSTALL, WCA_CASCRIPT_SCHEDULED, FALSE, pwzCaScriptKey, FALSE, &hWriteMetabase);
+    hr = WcaCaScriptCreate(WCA_ACTION_INSTALL, WCA_CASCRIPT_SCHEDULED, FALSE, pwzCaScriptKey, FALSE, &hScript);
     ExitOnFailure(hr, "Failed to write ca script for WriteMetabaseChanges script.");
 
     if (vpwzCustomActionData && *vpwzCustomActionData)
     {
         // Write the actual custom action data to the ca script
-        WcaCaScriptWriteString(hWriteMetabase, vpwzCustomActionData);
+        WcaCaScriptWriteString(hScript, vpwzCustomActionData);
 
-        WcaLog(LOGMSG_TRACEONLY, "Custom action data being written to ca script: %S", vpwzCustomActionData);
+        WcaLog(LOGMSG_TRACEONLY, "Custom action data being written to ca script: %ls", vpwzCustomActionData);
     }
     else
         hr = S_FALSE;
@@ -443,9 +440,9 @@ LExit:
     ReleaseStr(vpwzCustomActionData);
 
     // Flush the ca script to disk as best we can
-    WcaCaScriptFlush(hWriteMetabase);
+    WcaCaScriptFlush(hScript);
 
-    WcaCaScriptClose(hWriteMetabase, WCA_CASCRIPT_CLOSE_PRESERVE);
+    WcaCaScriptClose(hScript, WCA_CASCRIPT_CLOSE_PRESERVE);
 
     return hr;
 }
@@ -460,7 +457,7 @@ HRESULT ScaLoadMetabase(IMSAdminBase** ppiMetabase)
     // user to still uninstall this package by clicking "Ignore"
     do
     {
-        hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, (void**)ppiMetabase); 
+        hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, (void**)ppiMetabase);
         if (FAILED(hr))
         {
             WcaLog(LOGMSG_STANDARD, "failed to get IID_IMSAdminBase Object");

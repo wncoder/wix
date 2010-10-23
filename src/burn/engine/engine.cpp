@@ -24,6 +24,7 @@
 // internal function declarations
 
 static HRESULT RunNormal(
+    __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     );
@@ -31,6 +32,7 @@ static HRESULT RunElevated(
     __in BURN_ENGINE_STATE* pEngineState
     );
 static HRESULT RunEmbedded(
+    __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     );
@@ -51,6 +53,7 @@ static HRESULT Restart();
 // function definitions
 
 extern "C" HRESULT EngineRun(
+    __in HINSTANCE hInstance,
     __in_z_opt LPCWSTR wzCommandLine,
     __in int nCmdShow,
     __out DWORD* pdwExitCode
@@ -104,7 +107,7 @@ extern "C" HRESULT EngineRun(
     switch (engineState.mode)
     {
     case BURN_MODE_NORMAL:
-        hr = RunNormal(&engineState, wzCommandLine);
+        hr = RunNormal(hInstance, &engineState, wzCommandLine);
         ExitOnFailure(hr, "Failed to run per-user mode.");
         break;
 
@@ -114,7 +117,7 @@ extern "C" HRESULT EngineRun(
         break;
 
     case BURN_MODE_EMBEDDED:
-        hr = RunEmbedded(&engineState, wzCommandLine);
+        hr = RunEmbedded(hInstance, &engineState, wzCommandLine);
         ExitOnFailure(hr, "Failed to run embedded mode.");
         break;
 
@@ -180,6 +183,7 @@ LExit:
 // internal function definitions
 
 static HRESULT RunNormal(
+    __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     )
@@ -197,6 +201,11 @@ static HRESULT RunNormal(
 
     ::PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
     dwThreadId = ::GetCurrentThreadId();
+
+    if (pEngineState->userExperience.fSplashScreen && BOOTSTRAPPER_DISPLAY_FULL == pEngineState->command.display)
+    {
+        SplashScreenCreate(hInstance, NULL, &pEngineState->command.hwndSplashScreen);
+    }
 
     // Query registration state.
     hr = CoreQueryRegistration(pEngineState);
@@ -255,6 +264,12 @@ LExit:
 
     ReleaseObject(pEngineForApplication);
 
+    // If the splash screen is still around, close it.
+    if (::IsWindow(pEngineState->command.hwndSplashScreen))
+    {
+        ::PostMessageW(pEngineState->command.hwndSplashScreen, WM_CLOSE, 0, 0);
+    }
+
     return hr;
 }
 
@@ -283,6 +298,7 @@ LExit:
 }
 
 static HRESULT RunEmbedded(
+    __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z LPCWSTR wzCommandLine
     )
@@ -297,7 +313,7 @@ static HRESULT RunEmbedded(
     ExitOnFailure(hr, "Failed to notify parent process that child is connected.");
 
     // Now run the application like normal.
-    hr = RunNormal(pEngineState, wzCommandLine);
+    hr = RunNormal(hInstance, pEngineState, wzCommandLine);
     ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:

@@ -277,7 +277,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <returns>The result of the condition evaluation</returns>
         /// <exception cref="InvalidHandleException">the Session handle is invalid</exception>
         /// <exception cref="ArgumentNullException">the condition is null or empty</exception>
-        /// <exception cref="System.Data.SyntaxErrorException">the conditional expression is invalid</exception>
+        /// <exception cref="InvalidOperationException">the conditional expression is invalid</exception>
         /// <remarks><p>
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msievaluatecondition.asp">MsiEvaluateCondition</a>
@@ -300,7 +300,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
             else
             {
-                throw new System.Data.SyntaxErrorException();
+                throw new InvalidOperationException();
             }
         }
 
@@ -312,7 +312,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="defaultValue">value to return if the condition is empty</param>
         /// <returns>The result of the condition evaluation</returns>
         /// <exception cref="InvalidHandleException">the Session handle is invalid</exception>
-        /// <exception cref="System.Data.SyntaxErrorException">the conditional expression is invalid</exception>
+        /// <exception cref="InvalidOperationException">the conditional expression is invalid</exception>
         /// <remarks><p>
         /// Win32 MSI API:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msievaluatecondition.asp">MsiEvaluateCondition</a>

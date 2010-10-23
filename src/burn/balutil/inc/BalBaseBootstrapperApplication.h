@@ -111,6 +111,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
+        __in_z LPCWSTR /*wzPackageId*/,
         __in_z LPCWSTR /*wzProductCode*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,

@@ -48,6 +48,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [MarshalAs(UnmanagedType.LPWStr)] private readonly string wzCommandLine;
         [MarshalAs(UnmanagedType.I4)] private readonly int nCmdShow;
         [MarshalAs(UnmanagedType.U4)] private readonly ResumeType resume;
+        private readonly IntPtr hwndSplashScreen;
 
         /// <summary>
         /// Gets the action for the user experience to perform.
@@ -87,6 +88,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public ResumeType Resume
         {
             get { return this.resume; }
+        }
+
+        /// <summary>
+        /// Gets the handle to the splash screen window. If no splash screen was displayed this value will be IntPtr.Zero.
+        /// </summary>
+        public IntPtr SplashScreen
+        {
+            get { return this.hwndSplashScreen; }
         }
     }
 }

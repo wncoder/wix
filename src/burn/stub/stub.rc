@@ -23,5 +23,7 @@
 #define VER_FILE_DESCRIPTION "WiX Toolset Bootstrapper"
 #include "wix.rc"
 
+1 ICON "stub.ico"
+
 #define MANIFEST_RESOURCE_ID 1
 MANIFEST_RESOURCE_ID RT_MANIFEST "stub.manifest"

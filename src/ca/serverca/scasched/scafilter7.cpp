@@ -18,55 +18,47 @@
 
 #include "precomp.h"
 
-// sql queries
-LPCWSTR vcsFilterQuery7 = L"SELECT `Web_`, `Name`, `Component_`, `Path`, `Description`, `Flags`, `LoadOrder` FROM `IIsFilter` ORDER BY `Web_`";
-
-enum eFilterQuery { fqWeb = 1, fqFilter, fqComponent , fqPath, fqDescription, fqFlags, fqLoadOrder, fqInstalled, fqAction };
-
-// prototypes
-static HRESULT AddFilterToList(
-    __in SCA_FILTER** ppsfList
-    );
-
 static HRESULT WriteFilter(const SCA_FILTER* psf);
-
 
 UINT __stdcall ScaFiltersRead7(
     __in SCA_WEB7* pswList,
-    __inout SCA_FILTER** ppsfList
+    __in WCA_WRAPQUERY_HANDLE hWebBaseQuery,
+    __inout SCA_FILTER** ppsfList,
+    __inout LPWSTR *ppwzCustomActionData
     )
 {
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
-    PMSIHANDLE hView, hRec;
+    MSIHANDLE hRec;
     INSTALLSTATE isInstalled = INSTALLSTATE_UNKNOWN;
     INSTALLSTATE isAction = INSTALLSTATE_UNKNOWN;
-    SCA_WEB7 *pswWeb;
     SCA_FILTER* psf;
 
     LPWSTR pwzData = NULL;
+    WCA_WRAPQUERY_HANDLE hWrapQuery = NULL;
+    hr = WcaBeginUnwrapQuery(&hWrapQuery, ppwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap query for ScaAppPoolRead");
 
-    // check for required table
-    if (S_OK != WcaTableExists(L"IIsFilter"))
+    if (0 == WcaGetQueryRecords(hWrapQuery))
     {
-        WcaLog(LOGMSG_VERBOSE, "Skipping ScaFiltersRead7() - because IIsFilter table not present");
+        WcaLog(LOGMSG_VERBOSE, "Skipping ScaFiltersRead() - no IIsFilter table");
         ExitFunction1(hr = S_FALSE);
     }
 
     // loop through all the filters
-    hr = WcaOpenExecuteView(vcsFilterQuery7, &hView);
-    ExitOnFailure(hr, "Failed to open view on IIsFilter table");
-    while (S_OK == (hr = WcaFetchRecord(hView, &hRec)))
+    while (S_OK == (hr = WcaFetchWrappedRecord(hWrapQuery, &hRec)))
     {
         // Get the Component first.  If the component is not being modified during
         // this transaction, skip processing this whole record.
         // get the darwin information
         hr = WcaGetRecordString(hRec, fqComponent, &pwzData);
-        ExitOnFailure(hr, "failed to get WebFilter.Component");
+        ExitOnFailure(hr, "failed to get IIsFilter.Component");
 
-        er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzData, &isInstalled, &isAction);
-        hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure(hr, "Failed to get WebFilter Component state");
+        hr = WcaGetRecordInteger(hRec, fqInstalled, (int *)&isInstalled);
+        ExitOnFailure(hr, "Failed to get Component installed state for IIs filter");
+
+        hr = WcaGetRecordInteger(hRec, fqAction, (int *)&isAction);
+        ExitOnFailure(hr, "Failed to get Component action state for IIs filter");
 
         if (!WcaIsInstalling(isInstalled, isAction) &&
             !WcaIsReInstalling(isInstalled, isAction) &&
@@ -80,30 +72,24 @@ UINT __stdcall ScaFiltersRead7(
 
         psf = *ppsfList;
 
+        hr = ::StringCchCopyW(psf->wzComponent, countof(psf->wzComponent), pwzData);
+        ExitOnFailure1(hr, "failed to copy component name: %ls", pwzData);
+
         psf->isInstalled = isInstalled;
         psf->isAction = isAction;
-        hr = ::StringCchCopyW(psf->wzComponent, countof(psf->wzComponent), pwzData);
-        ExitOnFailure1(hr, "failed to copy component name: %S", pwzData);
-
 
         hr = WcaGetRecordString(hRec, fqWeb, &pwzData);
         ExitOnFailure(hr, "Failed to get Web for VirtualDir");
 
         if (*pwzData)
         {
-            hr = ScaWebsGetBase7(pswList, pwzData, &pswWeb);
+            hr = ScaWebsGetBase7(pswList, pwzData, psf->wzFilterRoot, countof(psf->wzFilterRoot));
             if (FAILED(hr) && WcaIsUninstalling(isInstalled, isAction))
             {
                 // If we're uninstalling, don't bother finding the existing web, just leave the filter root empty
                 hr = S_OK;
             }
             ExitOnFailure(hr, "Failed to get base of web for Filter");
-#pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
-            if (0 != wcslen(pswWeb->wzDescription))
-            {
-                hr = ::StringCchCopyW(psf->wzFilterRoot, countof(psf->wzFilterRoot), pswWeb->wzDescription);
-                ExitOnFailure(hr, "Failed to set WebName for Filter");
-            }
         }
         else
         {
@@ -118,13 +104,13 @@ UINT __stdcall ScaFiltersRead7(
         ExitOnFailure(hr, "Failed to copy key string to filter object");
 
         // filter path
-        hr = WcaGetRecordFormattedString(hRec, fqPath, &pwzData);
+        hr = WcaGetRecordString(hRec, fqPath, &pwzData);
         ExitOnFailure(hr, "Failed to get Filter.Path");
         hr = ::StringCchCopyW(psf->wzPath, countof(psf->wzPath), pwzData);
         ExitOnFailure(hr, "Failed to copy path string to filter object");
 
         // filter description -- not supported in iis 7
-        hr = WcaGetRecordFormattedString(hRec, fqDescription, &pwzData);
+        hr = WcaGetRecordString(hRec, fqDescription, &pwzData);
         ExitOnFailure(hr, "Failed to get Filter.Description");
         hr = ::StringCchCopyW(psf->wzDescription, countof(psf->wzDescription), pwzData);
         ExitOnFailure(hr, "Failed to copy description string to filter object");
@@ -146,6 +132,8 @@ UINT __stdcall ScaFiltersRead7(
     ExitOnFailure(hr, "Failure while processing filters");
 
 LExit:
+    WcaFinishUnwrapQuery(hWrapQuery);
+
     ReleaseStr(pwzData);
 
     return hr;
@@ -215,7 +203,7 @@ static HRESULT WriteFilter(const SCA_FILTER* psf)
 
     //filter Name key
     hr = ScaWriteConfigString(psf->wzKey);
-    ExitOnFailure1(hr, "Failed to write key name for filter '%S'", psf->wzKey);
+    ExitOnFailure1(hr, "Failed to write key name for filter '%ls'", psf->wzKey);
 
     //web site name
     hr = ScaWriteConfigString(psf->wzFilterRoot);
@@ -223,11 +211,11 @@ static HRESULT WriteFilter(const SCA_FILTER* psf)
 
     // filter path
     hr = ScaWriteConfigString(psf->wzPath);
-    ExitOnFailure1(hr, "Failed to write Path for filter '%S'", psf->wzKey);
+    ExitOnFailure1(hr, "Failed to write Path for filter '%ls'", psf->wzKey);
 
     //filter load order
     hr = ScaWriteConfigInteger(psf->iLoadOrder);
-    ExitOnFailure1(hr, "Failed to write load order for filter '%S'", psf->wzKey);
+    ExitOnFailure1(hr, "Failed to write load order for filter '%ls'", psf->wzKey);
 
 LExit:
     return hr;
@@ -264,7 +252,7 @@ HRESULT ScaFiltersUninstall7(
 
                 //filter Name key
                 hr = ScaWriteConfigString(psf->wzKey);
-                ExitOnFailure1(hr, "Failed to write key name for filter '%S'", psf->wzKey);
+                ExitOnFailure1(hr, "Failed to write key name for filter '%ls'", psf->wzKey);
 
                 //web site name
                 hr = ScaWriteConfigString(psf->wzFilterRoot);
@@ -281,7 +269,7 @@ HRESULT ScaFiltersUninstall7(
     psf = psfList;
 
     //Uninstall website filters
-    hr = ScaWriteConfigID(IIS_FILTER_GLOBAL_BEGIN);
+    hr = ScaWriteConfigID(IIS_FILTER_BEGIN);
     ExitOnFailure(hr, "Failed to write filter begin ID");
     while (psf)
     {
@@ -297,7 +285,7 @@ HRESULT ScaFiltersUninstall7(
 
                 //filter Name key
                 hr = ScaWriteConfigString(psf->wzKey);
-                ExitOnFailure1(hr, "Failed to write key name for filter '%S'", psf->wzKey);
+                ExitOnFailure1(hr, "Failed to write key name for filter '%ls'", psf->wzKey);
 
                 //web site name
                 hr = ScaWriteConfigString(psf->wzFilterRoot);
@@ -312,37 +300,3 @@ HRESULT ScaFiltersUninstall7(
 LExit:
     return hr;
 }
-
-
-void ScaFiltersFreeList7(
-    __in SCA_FILTER* psfList
-    )
-{
-    SCA_FILTER* psfDelete = psfList;
-    while (psfList)
-    {
-        psfDelete = psfList;
-        psfList = psfList->psfNext;
-
-        MemFree(psfDelete);
-    }
-}
-
-
-// private helper functions
-static HRESULT AddFilterToList(
-    __inout SCA_FILTER** ppsfList)
-{
-    HRESULT hr = S_OK;
-
-    SCA_FILTER* psf = static_cast<SCA_FILTER*>(MemAlloc(sizeof(SCA_FILTER), TRUE));
-    ExitOnNull(psf, hr, E_OUTOFMEMORY, "failed to add filter to filter list");
-
-    psf->psfNext = *ppsfList;
-    *ppsfList = psf;
-
-LExit:
-    return hr;
-}
-
-

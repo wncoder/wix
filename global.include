@@ -631,49 +631,50 @@
     </if>
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.1\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.0A\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.0\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.1\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v6.1\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v6.0A\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
     <!-- If we failed, check again in the Wow6432Node just in case -->
-    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
+    <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir) or not directory::exists(path::combine(PlatformSDKDir, 'lib'))}">
       <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v6.0A\InstallationFolder" hive="LocalMachine" property="PlatformSDKDir" failonerror="false" />
     </if>
 
     <if test="${not property::exists('PlatformSDKDir') or PlatformSDKDir == '' or not directory::exists(PlatformSDKDir)}">
       <fail message="Couldn't find Platform SDK directory - please ensure the Windows Server 2008 and .NET Framework 3.5 SDK or Visual Studio 2008 is installed" />
     </if>
+    <echo message="Setting PlatformSDKDir directory to : ${PlatformSDKDir}" />
 
     <foreach property="singlepath" item="String" delim=";" in="${environment::get-variable('PATH')}">
       <do>

@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Windows Installer XML Server Scheduling CustomAction.
 // </summary>
@@ -20,13 +20,16 @@
 
 const int ConfigureIIsCost = 8;
 const int WriteMetabaseChangesCost = 20;
+const int WriteIIS7ConfigChangesCost = 20;
 
 // sql queries
 LPCWSTR vcsUserDeferredQuery = L"SELECT `User`, `Component_`, `Name`, `Domain`, `Password` FROM `User`";
 
 LPCWSTR vcsWebSvcExtQuery = L"SELECT `Component_`, `File`, `Description`, `Group`, `Attributes` FROM `IIsWebServiceExtension`";
 
-LPCWSTR vcsAppPoolQuery = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc` FROM `IIsAppPool`";
+LPCWSTR vcsAppPoolQuery = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `ManagedRuntimeVersion` FROM `IIsAppPool`";
+
+LPCWSTR vcsComponentAttrQuery = L"SELECT `Component`,`Attributes` FROM `Component`";
 
 LPCWSTR vcsMimeMapQuery = L"SELECT `MimeMap`, `ParentType`, `ParentValue`, `MimeType`, `Extension` FROM `IIsMimeMap`";
 
@@ -37,41 +40,43 @@ LPCWSTR vcsWebErrorQuery =
     L"FROM `IIsWebError` ORDER BY `ErrorCode`, `SubCode`";
 
 LPCWSTR vcsWebDirPropertiesQuery = L"SELECT `DirProperties`, `Access`, `Authorization`, `AnonymousUser_`, `IIsControlledPassword`, `LogVisits`, `Index`, `DefaultDoc`, `AspDetailedError`, `HttpExpires`, `CacheControlMaxAge`, `CacheControlCustom`, `NoCustomError`, `AccessSSLFlags`, `AuthenticationProviders` "
-                                   L"FROM `IIsWebDirProperties`";
+    L"FROM `IIsWebDirProperties`";
 
 LPCWSTR vcsSslCertificateQuery = L"SELECT `Certificate`.`StoreName`, `CertificateHash`.`Hash`, `IIsWebSiteCertificates`.`Web_` FROM `Certificate`, `CertificateHash`, `IIsWebSiteCertificates` WHERE `Certificate`.`Certificate`=`CertificateHash`.`Certificate_` AND `CertificateHash`.`Certificate_`=`IIsWebSiteCertificates`.`Certificate_`";
 
 LPCWSTR vcsWebLogQuery = L"SELECT `Log`, `Format` "
-                         L"FROM `IIsWebLog`";
+    L"FROM `IIsWebLog`";
 
 LPCWSTR vcsWebApplicationQuery = L"SELECT `Name`, `Isolation`, `AllowSessions`, `SessionTimeout`, "
-                                 L"`Buffer`, `ParentPaths`, `DefaultScript`, `ScriptTimeout`, "
-                                 L"`ServerDebugging`, `ClientDebugging`, `AppPool_`, `Application` "
-                                 L"FROM `IIsWebApplication`";
+    L"`Buffer`, `ParentPaths`, `DefaultScript`, `ScriptTimeout`, "
+    L"`ServerDebugging`, `ClientDebugging`, `AppPool_`, `Application` "
+    L"FROM `IIsWebApplication`";
 
 LPCWSTR vcsWebAppExtensionQuery = L"SELECT `Extension`, `Verbs`, `Executable`, `Attributes`, `Application_` FROM `IIsWebApplicationExtension`";
 
 LPCWSTR vcsWebQuery = L"SELECT `Web`, `Component_`, `Id`, `Description`, `ConnectionTimeout`, `Directory_`, `State`, `Attributes`, `DirProperties_`, `Application_`, "
-                      L"`Address`, `IP`, `Port`, `Header`, `Secure`, `Log_` FROM `IIsWebSite`, `IIsWebAddress` "
-                      L"WHERE `KeyAddress_`=`Address` ORDER BY `Sequence`";
+    L"`Address`, `IP`, `Port`, `Header`, `Secure`, `Log_` FROM `IIsWebSite`, `IIsWebAddress` "
+    L"WHERE `KeyAddress_`=`Address` ORDER BY `Sequence`";
 
 LPCWSTR vcsWebAddressQuery = L"SELECT `Address`, `Web_`, `IP`, `Port`, `Header`, `Secure` "
-                             L"FROM `IIsWebAddress`";
+    L"FROM `IIsWebAddress`";
 
 LPCWSTR vcsWebBaseQuery = L"SELECT `Web`, `Id`, `IP`, `Port`, `Header`, `Secure`, `Description` "
-                          L"FROM `IIsWebSite`, `IIsWebAddress` "
-                          L"WHERE `KeyAddress_`=`Address`";
+    L"FROM `IIsWebSite`, `IIsWebAddress` "
+    L"WHERE `KeyAddress_`=`Address`";
 
 LPCWSTR vcsWebDirQuery = L"SELECT `Web_`, `WebDir`, `Component_`, `Path`, `DirProperties_`, `Application_` "
-                                       L"FROM `IIsWebDir`";
+    L"FROM `IIsWebDir`";
 
 LPCWSTR vcsVDirQuery = L"SELECT `Web_`, `VirtualDir`, `Component_`, `Alias`, `Directory_`, `DirProperties_`, `Application_` "
-                       L"FROM `IIsWebVirtualDir`";
+    L"FROM `IIsWebVirtualDir`";
 
 LPCWSTR vcsFilterQuery = L"SELECT `Web_`, `Name`, `Component_`, `Path`, `Description`, `Flags`, `LoadOrder` FROM `IIsFilter` ORDER BY `Web_`";
 
 LPCWSTR vcsPropertyQuery = L"SELECT `Property`, `Component_`, `Attributes`, `Value` "
-                         L"FROM `IIsProperty`";
+    L"FROM `IIsProperty`";
+
+#define USEIIS7CONDITION L"VersionNT >= 600 AND NOT UseIis6Compatibility"
 
 /********************************************************************
 DllMain - standard entry point for all WiX CustomActions
@@ -109,7 +114,9 @@ extern "C" UINT __stdcall ConfigureIIs(
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
     LPWSTR pwzScriptKey = NULL;
+    LPWSTR pwzBackupId = NULL;
     LPWSTR pwzCustomActionData = NULL; // CustomActionData for ConfigureIIs custom action
+    BOOL fUseIis7 = FALSE;
 
     // initialize
     hr = WcaInitialize(hInstall, "ConfigureIIs");
@@ -122,13 +129,34 @@ extern "C" UINT __stdcall ConfigureIIs(
         ExitFunction1(hr = S_FALSE);
     }
 
-    // make sure the operations below are wrapped in a "transaction"
-    hr = ScaMetabaseTransaction(L"ScaConfigureIIs");
-    MessageExitOnFailure(hr, msierrIISFailedSchedTransaction, "failed to start transaction");
+    if (MSICONDITION_TRUE == ::MsiEvaluateConditionW(hInstall, USEIIS7CONDITION))
+    {
+        fUseIis7 = TRUE;
+    }
 
     // Get a CaScript key
     hr = WcaCaScriptCreateKey(&pwzScriptKey);
     ExitOnFailure(hr, "Failed to get encoding key.");
+
+    // Generate a unique string to be used for this product's transaction
+    // This prevents a name collision when doing a major upgrade
+    hr = WcaGetProperty(L"ProductCode", &pwzBackupId);
+    ExitOnFailure(hr, "failed to get ProductCode");
+
+    hr = StrAllocConcat(&pwzBackupId, L"ScaConfigureIIs", 0);
+    ExitOnFailure(hr, "failed to concat ScaConfigureIIs");
+
+    // make sure the operations below are wrapped in a "transaction"
+    if (fUseIis7)
+    {
+        hr = ScaIIS7ConfigTransaction(pwzBackupId);
+        MessageExitOnFailure(hr, msierrIISFailedSchedTransaction, "failed to start IIS7 transaction");
+    }
+    else
+    {
+        hr = ScaMetabaseTransaction(pwzBackupId);
+        MessageExitOnFailure(hr, msierrIISFailedSchedTransaction, "failed to start IIS transaction");
+    }
 
     // Write the CaScript key to the ConfigureIIS custom action data
     hr = WcaWriteStringToCaData(pwzScriptKey, &pwzCustomActionData);
@@ -163,6 +191,9 @@ extern "C" UINT __stdcall ConfigureIIs(
     {
         hr = WcaWrapQuery(vcsAppPoolQuery, &pwzCustomActionData, efmcColumn2, 3, 0xFFFFFFFF);
         ExitOnFailure(hr, "Failed to wrap IIsAppPool query");
+
+        hr = WcaWrapQuery(vcsComponentAttrQuery, &pwzCustomActionData, 0, 0xFFFFFFFF, 0xFFFFFFFF);
+        ExitOnFailure(hr, "Failed to wrap Component query");
     }
     else
     {
@@ -265,7 +296,7 @@ extern "C" UINT __stdcall ConfigureIIs(
         hr = WcaWrapEmptyQuery(&pwzCustomActionData);
         ExitOnFailure(hr, "Failed to wrap IIsWebApplicationExtension empty query");
     }
-    
+
     // Wrap vcsWebQuery, vcsWebAddressQuery, and vcsWebBaseQuery to send to deferred CA
     if (S_OK == WcaTableExists(L"IIsWebAddress") && S_OK == WcaTableExists(L"IIsWebSite"))
     {
@@ -313,7 +344,7 @@ extern "C" UINT __stdcall ConfigureIIs(
         hr = WcaWrapEmptyQuery(&pwzCustomActionData);
         ExitOnFailure(hr, "Failed to wrap IIsWebVirtualDir empty query");
     }
-    
+
     // Wrap vcsFilterQuery to send to deferred CA
     if (S_OK == WcaTableExists(L"IIsFilter"))
     {
@@ -338,22 +369,44 @@ extern "C" UINT __stdcall ConfigureIIs(
         ExitOnFailure(hr, "Failed to wrap IIsProperty empty query");
     }
 
-    WcaLog(LOGMSG_TRACEONLY, "Custom Action Data for ConfigureIISExec will be: %S", pwzCustomActionData);
+    if (fUseIis7)
+    {
+        // This must remain trace only, CA data may contain password
+        WcaLog(LOGMSG_TRACEONLY, "Custom Action Data for ConfigureIIS7Exec will be: %ls", pwzCustomActionData);
 
-    hr = WcaDoDeferredAction(L"ConfigureIIsExec", pwzCustomActionData, ConfigureIIsCost);
-    ExitOnFailure(hr, "Failed to schedule ConfigureIISExec custom action");
+        hr = WcaDoDeferredAction(L"ConfigureIIs7Exec", pwzCustomActionData, ConfigureIIsCost);
+        ExitOnFailure(hr, "Failed to schedule ConfigureIIs7Exec custom action");
 
-    ReleaseNullStr(pwzCustomActionData);
+        ReleaseNullStr(pwzCustomActionData);
 
-    // Write the CaScript key to the ConfigureIIS custom action data
-    hr = WcaWriteStringToCaData(pwzScriptKey, &pwzCustomActionData);
-    ExitOnFailure(hr, "Failed to add encoding key to CustomActionData.");
+        // Write the CaScript key to the ConfigureIIS custom action data
+        hr = WcaWriteStringToCaData(pwzScriptKey, &pwzCustomActionData);
+        ExitOnFailure(hr, "Failed to add script key to CustomActionData.");
 
-    hr = WcaDoDeferredAction(L"WriteMetabaseChanges", pwzCustomActionData, WriteMetabaseChangesCost);
-    ExitOnFailure(hr, "Failed to schedule WriteMetabaseChanges custom action");
+        hr = WcaDoDeferredAction(L"WriteIIS7ConfigChanges", pwzCustomActionData, WriteIIS7ConfigChangesCost);
+        ExitOnFailure(hr, "Failed to schedule WriteMetabaseChanges custom action");
+    }
+    else
+    {
+        // This must remain trace only, CA data may contain password
+        WcaLog(LOGMSG_TRACEONLY, "Custom Action Data for ConfigureIISExec will be: %ls", pwzCustomActionData);
+
+        hr = WcaDoDeferredAction(L"ConfigureIIsExec", pwzCustomActionData, ConfigureIIsCost);
+        ExitOnFailure(hr, "Failed to schedule ConfigureIISExec custom action");
+
+        ReleaseNullStr(pwzCustomActionData);
+
+        // Write the CaScript key to the ConfigureIIS custom action data
+        hr = WcaWriteStringToCaData(pwzScriptKey, &pwzCustomActionData);
+        ExitOnFailure(hr, "Failed to add script key to CustomActionData.");
+
+        hr = WcaDoDeferredAction(L"WriteMetabaseChanges", pwzCustomActionData, WriteMetabaseChangesCost);
+        ExitOnFailure(hr, "Failed to schedule WriteMetabaseChanges custom action");
+    }
 
 LExit:
     ReleaseStr(pwzScriptKey);
+    ReleaseStr(pwzBackupId);
     ReleaseStr(pwzCustomActionData);
 
     er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
@@ -362,8 +415,8 @@ LExit:
 
 /********************************************************************
 ConfigureIIsExec - custom action for installing IIs settings - table
-               data will be wrapped and passed in from immediate CA
-               ReadIIsTables
+data will be wrapped and passed in from immediate CA
+ReadIIsTables
 
 ********************************************************************/
 extern "C" UINT __stdcall ConfigureIIsExec(
@@ -414,7 +467,7 @@ extern "C" UINT __stdcall ConfigureIIsExec(
     // user to still uninstall this package by clicking "Ignore"
     do
     {
-        hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, (void**)&piMetabase); 
+        hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, (void**)&piMetabase);
         if (FAILED(hr))
         {
             WcaLog(LOGMSG_STANDARD, "failed to get IID_IMSAdminBase Object");
@@ -535,7 +588,7 @@ extern "C" UINT __stdcall ConfigureIIsExec(
     hr = ScaPropertyInstall(piMetabase, pspList);
     MessageExitOnFailure(hr, msierrIISFailedSchedInstallProp, "failed to schedule install of properties");
 
-    hr = ScaWriteMetabaseConfigurationScript(pwzScriptKey);
+    hr = ScaWriteConfigurationScript(pwzScriptKey);
     ExitOnFailure(hr, "failed to schedule metabase configuration");
 
 LExit:
@@ -609,71 +662,99 @@ LExit:
 ConfigureIIs - CUSTOM ACTION ENTRY POINT for installing IIs settings
 
 ********************************************************************/
-extern "C" UINT __stdcall ConfigureIIs7(
+extern "C" UINT __stdcall ConfigureIIs7Exec(
     __in MSIHANDLE hInstall
     )
 {
-    //AssertSz(FALSE, "debug ConfigureIIs7 here");
+    //AssertSz(FALSE, "debug ConfigureIIs7Exec here");
     HRESULT hr = S_OK;
-    UINT er = ERROR_SUCCESS;  
+    UINT er = ERROR_SUCCESS;
+
+    LPWSTR pwzScriptKey = NULL;
+    LPWSTR pwzCustomActionData = NULL;
 
     SCA_WEB7* pswList = NULL;
     SCA_WEBDIR7* pswdList = NULL;
     SCA_VDIR7* psvdList = NULL;
     SCA_FILTER* psfList = NULL;
-    SCA_APPPOOL* psapList = NULL;
+    SCA_APPPOOL *psapList = NULL;
     SCA_MIMEMAP* psmmList = NULL;
     SCA_HTTP_HEADER* pshhList = NULL;
-    SCA_PROPERTY* pspList = NULL;
+    SCA_PROPERTY *pspList = NULL;
     SCA_WEBSVCEXT* psWseList = NULL;
     SCA_WEB_ERROR* psweList = NULL;
 
+    WCA_WRAPQUERY_HANDLE hUserQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hWebBaseQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hWebDirPropQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hSslCertQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hWebLogQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hWebAppQuery = NULL;
+    WCA_WRAPQUERY_HANDLE hWebAppExtQuery = NULL;
+
     // initialize
-    hr = WcaInitialize(hInstall, "ConfigureIIs7");
+    hr = WcaInitialize(hInstall, "ConfigureIIs7Exec");
     ExitOnFailure(hr, "Failed to initialize");
 
-    // check for the prerequsite tables
-    if (S_OK != WcaTableExists(L"IIsWebSite") && S_OK != WcaTableExists(L"IIsFilter") && S_OK != WcaTableExists(L"IIsWebServiceExtension"))
-    {
-        WcaLog(LOGMSG_VERBOSE, "skipping IIs CustomAction, no IIsWebSite table, no IIsFilter table, and no IIsWebServiceExtension table");
-        ExitFunction1(hr = S_FALSE);
-    }
+    hr = WcaGetProperty(L"CustomActionData", &pwzCustomActionData);
+    ExitOnFailure(hr, "failed to get CustomActionData");
 
-    //// make sure the operations below are wrapped in a "transaction"
-    hr = ScaIIS7ConfigTransaction(L"ScaConfigureIIs");
-    MessageExitOnFailure(hr, msierrIISFailedSchedTransaction, "failed to start transaction");
+    // Get the CaScript key
+    hr = WcaReadStringFromCaData(&pwzCustomActionData, &pwzScriptKey);
+    ExitOnFailure(hr, "Failed to get CaScript key from custom action data");
 
     // read the msi tables
-    hr = ScaWebSvcExtRead7(&psWseList);
-    MessageExitOnFailure(hr, msierrIISFailedReadWebSvcExt, "failed to read IIsWebServiceExtension table");
+    hr = WcaBeginUnwrapQuery(&hUserQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap user query");
 
-    hr = ScaAppPoolRead7(&psapList);
-    MessageExitOnFailure(hr, msierrIISFailedReadAppPool, "failed to read IIsAppPool table");
+    hr = ScaWebSvcExtRead(&psWseList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadWebSvcExt, "failed while processing WebServiceExtensions");
+
+    hr = ScaAppPoolRead(&psapList, hUserQuery, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadAppPool, "failed while processing WebAppPools");
 
     // MimeMap, Error and HttpHeader need to be read before the virtual directory and web read
-    hr = ScaMimeMapRead7(&psmmList);
-    MessageExitOnFailure(hr, msierrIISFailedReadMimeMap, "failed to read IIsMimeMap table");
+    hr = ScaMimeMapRead(&psmmList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadMimeMap, "failed while processing MimeMaps");
 
-    hr = ScaHttpHeaderRead7(&pshhList);
-    MessageExitOnFailure(hr, msierrIISFailedReadHttpHeader, "failed to read IIsHttpHeader table");
+    hr = ScaHttpHeaderRead(&pshhList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadHttpHeader, "failed while processing HttpHeaders");
 
-    hr = ScaWebErrorRead7(&psweList);
-    MessageExitOnFailure(hr, msierrIISFailedReadWebError, "failed to read IIsWebError table");
+    hr = ScaWebErrorRead(&psweList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadWebError, "failed while processing WebErrors");
 
-    hr = ScaWebsRead7(&pswList, &pshhList, &psweList);
-    MessageExitOnFailure(hr, msierrIISFailedReadWebSite, "failed to read IIsWebSite table");
+    hr = WcaBeginUnwrapQuery(&hWebDirPropQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap web dir properties query");
 
-    hr = ScaWebDirsRead7(pswList, &pswdList);
-    MessageExitOnFailure(hr, msierrIISFailedReadWebDirs, "failed to read IIsWebDir table");
+    hr = WcaBeginUnwrapQuery(&hSslCertQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap ssl certificate query");
 
-    hr = ScaVirtualDirsRead7(pswList, &psvdList, &psmmList, &pshhList, &psweList);
-    MessageExitOnFailure(hr, msierrIISFailedReadVDirs, "failed to read IIsWebVirtualDir table");
+    hr = WcaBeginUnwrapQuery(&hWebLogQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap web log query");
 
-    hr = ScaFiltersRead7(pswList, &psfList);
-    MessageExitOnFailure(hr, msierrIISFailedReadFilters, "failed to read IIsFilter table");
+    hr = WcaBeginUnwrapQuery(&hWebAppQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap web application query");
 
-    hr = ScaPropertyRead7(&pspList);
-    MessageExitOnFailure(hr, msierrIISFailedReadProp, "failed to read IIsProperty table");
+    hr = WcaBeginUnwrapQuery(&hWebAppExtQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap web application extension query");
+
+    hr = ScaWebsRead7(&pswList, &pshhList, &psweList, hUserQuery, hWebDirPropQuery, hSslCertQuery, hWebLogQuery, hWebAppQuery, hWebAppExtQuery, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadWebSite, "failed while processing WebSites");
+
+    hr = WcaBeginUnwrapQuery(&hWebBaseQuery, &pwzCustomActionData);
+    ExitOnFailure(hr, "Failed to unwrap web base query");
+
+    hr = ScaWebDirsRead7(pswList, hUserQuery, hWebBaseQuery, hWebDirPropQuery, hWebAppQuery, hWebAppExtQuery, &pwzCustomActionData, &pswdList);
+    MessageExitOnFailure(hr, msierrIISFailedReadWebDirs, "failed while processing WebDirs");
+
+    hr = ScaVirtualDirsRead7(pswList, &psvdList, &psmmList, &pshhList, &psweList, hUserQuery, hWebBaseQuery, hWebDirPropQuery, hWebAppQuery, hWebAppExtQuery, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadVDirs, "failed while processing WebVirtualDirs");
+
+    hr = ScaFiltersRead7(pswList, hWebBaseQuery, &psfList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadFilters, "failed while processing WebFilters");
+
+    hr = ScaPropertyRead(&pspList, &pwzCustomActionData);
+    MessageExitOnFailure(hr, msierrIISFailedReadProp, "failed while processing WebProperties");
 
     // do uninstall actions (order is important!)
     hr = ScaPropertyUninstall7(pspList);
@@ -718,18 +799,29 @@ extern "C" UINT __stdcall ConfigureIIs7(
     hr = ScaPropertyInstall7(pspList);
     MessageExitOnFailure(hr, msierrIISFailedSchedInstallProp, "failed to schedule install of properties");
 
-    hr = ScaScheduleIIS7Configuration();
-    ExitOnFailure(hr, "failed to schedule IIS7 configuration");
+    hr = ScaWriteConfigurationScript(pwzScriptKey);
+    ExitOnFailure(hr, "failed to schedule metabase configuration");
 
 LExit:
+    ReleaseNullStr(pwzScriptKey);
+    ReleaseNullStr(pwzCustomActionData);
+
+    WcaFinishUnwrapQuery(hUserQuery);
+    WcaFinishUnwrapQuery(hWebBaseQuery);
+    WcaFinishUnwrapQuery(hWebDirPropQuery);
+    WcaFinishUnwrapQuery(hSslCertQuery);
+    WcaFinishUnwrapQuery(hWebLogQuery);
+    WcaFinishUnwrapQuery(hWebAppQuery);
+    WcaFinishUnwrapQuery(hWebAppExtQuery);
+
     if (psWseList)
     {
-        ScaWebSvcExtFreeList7(psWseList);
+        ScaWebSvcExtFreeList(psWseList);
     }
 
     if (psfList)
     {
-        ScaFiltersFreeList7(psfList);
+        ScaFiltersFreeList(psfList);
     }
 
     if (psvdList)
@@ -749,19 +841,19 @@ LExit:
 
     if (psmmList)
     {
-        ScaMimeMapFreeList7(psmmList);
+        ScaMimeMapFreeList(psmmList);
     }
 
     if (pshhList)
     {
-        ScaHttpHeaderCheckList7(pshhList);
-        ScaHttpHeaderFreeList7(pshhList);
+        ScaHttpHeaderCheckList(pshhList);
+        ScaHttpHeaderFreeList(pshhList);
     }
 
     if (psweList)
     {
-        ScaWebErrorCheckList7(psweList);
-        ScaWebErrorFreeList7(psweList);
+        ScaWebErrorCheckList(psweList);
+        ScaWebErrorFreeList(psweList);
     }
 
     er = SUCCEEDED(hr) ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;

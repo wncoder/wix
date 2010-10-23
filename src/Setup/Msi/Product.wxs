@@ -31,7 +31,7 @@
 
       <!-- Media -->
       <Media Id="1" Cabinet="Wix36.cab" />
-      <Media Id="2" Cabinet="WiX36lib.cab" />
+      <Media Id="2" Cabinet="Wix36lib.cab" />
 
       <!-- Icons -->
       <Icon Id="WixIcon" SourceFile="$(var.VotiveRoot)\Icons\ProjectFile.ico" />
