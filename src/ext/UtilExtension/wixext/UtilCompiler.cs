@@ -96,7 +96,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         internal enum WixRestartResourceAttributes
         {
             Filename = 1,
-            Application,
+            ProcessName,
             ServiceName,
             TypeMask = 0xf,
         }
@@ -267,6 +267,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             break;
                         case "Group":
                             this.ParseGroupElement(element, null);
+                            break;
+                        case "RestartResource":
+                            // Currently not supported for Bundles.
+                            if (parentElement.LocalName != "Bundle")
+                            {
+                                this.ParseRestartResourceElement(element, null);
+                            }
+                            else
+                            {
+                                this.Core.UnexpectedElement(parentElement, element);
+                            }
                             break;
                         case "User":
                             this.ParseUserElement(element, null);
@@ -2785,6 +2796,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         case "Path":
                             resource = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
                             attributes = (int)WixRestartResourceAttributes.Filename;
+                            break;
+
+                        case "ProcessName":
+                            resource = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            attributes = (int)WixRestartResourceAttributes.ProcessName;
                             break;
 
                         case "ServiceName":

@@ -534,7 +534,7 @@ HRESULT CpiApplicationsUninstall(
     for (CPI_APPLICATION* pItm = pList->pFirst; pItm; pItm = pItm->pNext)
     {
         // applications that are being uninstalled only
-        if (!pItm->fHasComponent || !WcaIsUninstalling(pItm->isInstalled, pItm->isAction))
+        if (pItm->fObjectNotFound || !pItm->fHasComponent || !WcaIsUninstalling(pItm->isInstalled, pItm->isAction))
             continue;
 
         // action type

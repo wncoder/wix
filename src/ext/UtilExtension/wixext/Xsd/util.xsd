@@ -788,7 +788,10 @@
     <xs:annotation>
       <xs:documentation>Registers a resource with the Restart Manager.</xs:documentation>
       <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Component" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Component" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Module" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Product" />
       </xs:appinfo>
     </xs:annotation>
     <xs:complexType>
@@ -802,6 +805,12 @@
         <xs:annotation>
           <xs:documentation>The full path to the process module to register with the Restart Manager.
                     This can be a formatted value that resolves to a full path.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ProcessName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The name of a process to register with the Restart Manager.
+                    This can be a formatted value that resolves to a process name.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="ServiceName" type="xs:string">

@@ -736,14 +736,15 @@ HRESULT DisplayLicenseText(
     )
 {
     HRESULT hr = S_OK;
+    HMODULE richEd = NULL;
     INT_PTR iResult = 0;
 
     // Initialize common controls.
     ::InitCommonControls();
 
     // Load rich edit before trying to create the controls.
-    HMODULE richEd = ::LoadLibraryW(L"Riched20.dll");
-    ExitOnNullWithLastError(richEd, hr, "Failed to load Rich Edit Control.");
+    hr = LoadSystemLibrary(L"Riched20.dll", &richEd);
+    ExitOnFailure(hr, "Failed to load Rich Edit Control.");
 
     vwzLicenseText = wzLicenseText;
 

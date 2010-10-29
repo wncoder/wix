@@ -66,23 +66,30 @@ extern "C" UINT __stdcall StartMetabaseTransaction(MSIHANDLE hInstall)
     ExitOnFailure(hr, "failed to initialize COM");
     fInitializedCom = TRUE;
     hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, reinterpret_cast<void**>(&piMetabase));
-    MessageExitOnFailure(hr, msierrIISCannotConnect, "failed to get IID_IIMSAdminBase object");
-
-    hr = WcaGetProperty(L"CustomActionData", &pwzData);
-    ExitOnFailure(hr, "failed to get CustomActionData");
-
-    // back up the metabase
-    Assert(lstrlenW(pwzData) < MD_BACKUP_MAX_LEN);
-
-    // MD_BACKUP_OVERWRITE = Overwrite if a backup of the same name and version exists in the backup location
-    hr = piMetabase->Backup(pwzData, MD_BACKUP_NEXT_VERSION, MD_BACKUP_OVERWRITE | MD_BACKUP_FORCE_BACKUP | MD_BACKUP_SAVE_FIRST);
-    if (MD_WARNING_SAVE_FAILED == hr)
+    if (hr == REGDB_E_CLASSNOTREG)
     {
-        WcaLog(LOGMSG_STANDARD, "Failed to save metabase before backing up - continuing");
+        WcaLog(LOGMSG_STANDARD, "Failed to get IIMSAdminBase to backup - continuing");
         hr = S_OK;
     }
-    MessageExitOnFailure1(hr, msierrIISFailedStartTransaction, "failed to begin metabase transaction: '%ls'", pwzData);
+    else
+    {
+        MessageExitOnFailure(hr, msierrIISCannotConnect, "failed to get IID_IIMSAdminBase object");
 
+        hr = WcaGetProperty(L"CustomActionData", &pwzData);
+        ExitOnFailure(hr, "failed to get CustomActionData");
+
+        // back up the metabase
+        Assert(lstrlenW(pwzData) < MD_BACKUP_MAX_LEN);
+
+        // MD_BACKUP_OVERWRITE = Overwrite if a backup of the same name and version exists in the backup location
+        hr = piMetabase->Backup(pwzData, MD_BACKUP_NEXT_VERSION, MD_BACKUP_OVERWRITE | MD_BACKUP_FORCE_BACKUP | MD_BACKUP_SAVE_FIRST);
+        if (MD_WARNING_SAVE_FAILED == hr)
+        {
+            WcaLog(LOGMSG_STANDARD, "Failed to save metabase before backing up - continuing");
+            hr = S_OK;
+        }
+        MessageExitOnFailure1(hr, msierrIISFailedStartTransaction, "failed to begin metabase transaction: '%ls'", pwzData);
+    }
     hr = WcaProgressMessage(COST_IIS_TRANSACTIONS, FALSE);
 LExit:
     ReleaseStr(pwzData);
@@ -122,6 +129,12 @@ extern "C" UINT __stdcall RollbackMetabaseTransaction(MSIHANDLE hInstall)
     ExitOnFailure(hr, "failed to initialize COM");
     fInitializedCom = TRUE;
     hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, reinterpret_cast<void**>(&piMetabase));
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        WcaLog(LOGMSG_STANDARD, "Failed to get IIMSAdminBase to rollback - continuing");
+        hr = S_OK;
+        ExitFunction();
+    }
     ExitOnFailure(hr, "failed to get IID_IIMSAdminBase object");
 
 
@@ -173,6 +186,12 @@ extern "C" UINT __stdcall CommitMetabaseTransaction(MSIHANDLE hInstall)
     ExitOnFailure(hr, "failed to initialize COM");
     fInitializedCom = TRUE;
     hr = ::CoCreateInstance(CLSID_MSAdminBase, NULL, CLSCTX_ALL, IID_IMSAdminBase, reinterpret_cast<void**>(&piMetabase));
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        WcaLog(LOGMSG_STANDARD, "Failed to get IIMSAdminBase to commit - continuing");
+        hr = S_OK;
+        ExitFunction();
+    }
     ExitOnFailure(hr, "failed to get IID_IIMSAdminBase object");
 
     hr = WcaGetProperty( L"CustomActionData", &pwzData);
@@ -2081,7 +2100,17 @@ extern "C" UINT __stdcall CommitIIS7ConfigTransaction(MSIHANDLE hInstall)
 
     if (!::DeleteFileW(wzConfigCopy))
     {
-        ExitWithLastError(hr, "failed to delete config backup");
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr ||
+            HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
+        {
+            WcaLog(LOGMSG_STANDARD, "Failed to delete backup applicationHost, not found - continuing");
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "failed to delete config backup");
+        }
     }
 
 LExit:
@@ -2166,7 +2195,17 @@ extern "C" UINT __stdcall StartIIS7ConfigTransaction(MSIHANDLE hInstall)
     if ( !::CopyFileW(wzConfigSource, wzConfigCopy, FALSE) )
     {
         hr = HRESULT_FROM_WIN32(GetLastError());
-        ExitOnFailure2(hr, "Failed to copy config backup %ls -> %ls", wzConfigSource, wzConfigCopy);
+        if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr ||
+            HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
+        {
+            // IIS may not be installed on the machine, we'll fail later if we try to install anything
+            WcaLog(LOGMSG_STANDARD, "Failed to back up applicationHost, not found - continuing");
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure2(hr, "Failed to copy config backup %ls -> %ls", wzConfigSource, wzConfigCopy);
+        }
     }
 
 
@@ -2252,7 +2291,17 @@ extern "C" UINT __stdcall RollbackIIS7ConfigTransaction(MSIHANDLE hInstall)
     //copy is reverse of start transaction
     if (!::CopyFileW(wzConfigCopy, wzConfigSource, FALSE))
     {
-        ExitWithLastError(hr, "failed to restore config backup");
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr ||
+            HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
+        {
+            WcaLog(LOGMSG_STANDARD, "Failed to restore applicationHost, not found - continuing");
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "failed to restore config backup");
+        }
     }
 
     if (!::DeleteFileW(wzConfigCopy))

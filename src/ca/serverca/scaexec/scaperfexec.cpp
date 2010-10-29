@@ -121,8 +121,10 @@ extern "C" UINT __stdcall RegisterPerfmon(
 
     // do the perfmon registration
     if (NULL == hMod)
-        hMod = ::LoadLibraryW(L"loadperf.dll");
-    ExitOnNullWithLastError(hMod, hr, "failed to load DLL for PerfMon");
+    {
+        hr = LoadSystemLibrary(L"loadperf.dll", &hMod);
+    }
+    ExitOnFailure(hr, "failed to load DLL for PerfMon");
 
     pfnPerfCounterTextString = (PFNPERFCOUNTERTEXTSTRINGS)::GetProcAddress(hMod, "LoadPerfCounterTextStringsW");
     ExitOnNullWithLastError(pfnPerfCounterTextString, hr, "failed to get DLL function for PerfMon");
@@ -192,8 +194,10 @@ extern "C" UINT __stdcall UnregisterPerfmon(
     // do the perfmon unregistration
     hr = E_FAIL;
     if (hMod == NULL)
-        hMod = LoadLibraryW(L"loadperf.dll");
-    ExitOnNullWithLastError(hMod, hr, "failed to load DLL for PerfMon");
+    {
+        hr = LoadSystemLibrary(L"loadperf.dll", &hMod);
+    }
+    ExitOnFailure(hr, "failed to load DLL for PerfMon");
 
     pfnPerfCounterTextString = (PFNPERFCOUNTERTEXTSTRINGS)::GetProcAddress(hMod, "UnloadPerfCounterTextStringsW");
     ExitOnNullWithLastError(pfnPerfCounterTextString, hr, "failed to get DLL function for PerfMon");
@@ -247,8 +251,8 @@ static HRESULT ExecutePerfCounterData(
     // Load the system performance counter helper DLL then get the appropriate
     // entrypoint out of it. Fortunately, they have the same signature so we
     // can use one function pointer to point to both.
-    hModule = LoadLibraryW(L"loadperf.dll");
-    ExitOnNullWithLastError(hModule, hr, "failed to load DLL for PerfMon");
+    hr = LoadSystemLibrary(L"loadperf.dll", &hModule);
+    ExitOnFailure(hr, "failed to load DLL for PerfMon");
 
     if (fInstall)
     {

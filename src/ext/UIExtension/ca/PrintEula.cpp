@@ -78,8 +78,8 @@ extern "C" UINT __stdcall PrintEula(MSIHANDLE hInstall)
         ExitOnFailure(hr, "failed to read Eula text from MSI database");
 
         // Have to load Rich Edit since we'll be creating a Rich Edit control in the window
-        hRichEdit = ::LoadLibraryW(L"Riched20.dll");
-        ExitOnNullWithLastError(hRichEdit, hr, "failed to load rich edit 2.0 library");
+        hr = LoadSystemLibrary(L"Riched20.dll", &hRichEdit);
+        ExitOnFailure(hr, "failed to load rich edit 2.0 library");
 
         hr = CreateRichTextWindow(&hWndMain);
         ExitOnFailure(hr, "failed to create rich text window for printing");

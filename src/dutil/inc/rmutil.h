@@ -33,6 +33,16 @@ HRESULT DAPI RmuAddFile(
     __in_z LPCWSTR wzPath
     );
 
+HRESULT DAPI RmuAddProcessById(
+    __in PRMU_SESSION pSession,
+    __in DWORD dwProcessId
+    );
+
+HRESULT DAPI RmuAddProcessesByName(
+    __in PRMU_SESSION pSession,
+    __in_z LPCWSTR wzProcessName
+    );
+
 HRESULT DAPI RmuAddService(
     __in PRMU_SESSION pSession,
     __in_z LPCWSTR wzServiceName

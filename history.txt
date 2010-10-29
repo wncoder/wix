@@ -1360,3 +1360,20 @@ EricStJ: ScaGetWebLog7 failing after recent refactoring
 
 WixBuild: Version 3.5.2222.0
 
+FGrohn: SFBUG:2995324 - Uninstall fails if ComPlusApplication was removed manually
+
+HeathS: Secured calls to LoadLibrary.
+
+MiCarls: SFBUG: 3094739 - Fix a DARK0001 error
+
+EricStJ: SFBUG: 3095961 IIS config fails when IIS feature does not exist and all 
+         components are conditioned to not installh
+         Fix regression, Failure to install multiple app pools.
+
+HeathS: Added process support to the Restart Manager CA.
+        Allowed restart resources to be defined at the product scope.
+
+EricStJ: SFBUG: 3091362 WixLibraries are shown as file nodes in project
+
+WixBuild: Version 3.5.2229.0
+

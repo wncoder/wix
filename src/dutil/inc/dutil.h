@@ -202,7 +202,11 @@ typedef const BYTE* LPCBYTE;
 #define E_MOREDATA HRESULT_FROM_WIN32(ERROR_MORE_DATA)
 #define E_NOMOREITEMS HRESULT_FROM_WIN32(ERROR_NO_MORE_ITEMS)
 #define E_NOTFOUND HRESULT_FROM_WIN32(ERROR_NOT_FOUND)
+#define E_MODNOTFOUND HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)
 
 #define AddRefAndRelease(x) { x->AddRef(); x->Release(); }
 
 #define MAKEQWORDVERSION(mj, mi, b, r) (((DWORD64)MAKELONG(r, b)) | (((DWORD64)MAKELONG(mi, mj)) << 32))
+
+// other functions
+extern "C" HRESULT DAPI LoadSystemLibrary(__in_z LPCWSTR wzModuleName, __out HMODULE *phModule);

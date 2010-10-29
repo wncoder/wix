@@ -74,8 +74,8 @@ inline HRESULT LoadCabinetDll()
     HRESULT hr = S_OK;
     if (!vhCabinetDll)
     {
-        vhCabinetDll = ::LoadLibraryW(L"CABINET");
-        ExitOnNullWithLastError(vhCabinetDll, hr, "failed to load CABINET.DLL");
+        hr = LoadSystemLibrary(L"cabinet.dll", &vhCabinetDll);
+        ExitOnFailure(hr, "failed to load cabinet.dll");
 
         // retrieve all address functions
         vpfnFDICreate = reinterpret_cast<PFNFDICREATE>(::GetProcAddress(vhCabinetDll, "FDICreate"));

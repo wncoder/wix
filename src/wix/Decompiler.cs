@@ -979,30 +979,30 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.Control control = (Wix.Control)this.core.GetIndexedElement(row);
 
-                    if ("CheckBox" == (string)row[2] && null != row[8])
+                    if ("CheckBox" == Convert.ToString(row[2]) && null != row[8])
                     {
                         Row checkBoxRow = (Row)checkBoxes[row[8]];
 
                         if (null == checkBoxRow)
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Control", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Property", (string)row[8], "CheckBox"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Control", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Property", Convert.ToString(row[8]), "CheckBox"));
                         }
                         else 
                         {
                             // if we've seen this property already, create a reference to it
-                            if ((bool)checkBoxProperties[row[8]])
+                            if (Convert.ToBoolean(checkBoxProperties[row[8]]))
                             {
-                                control.CheckBoxPropertyRef = (string)row[8];
+                                control.CheckBoxPropertyRef = Convert.ToString(row[8]);
                             }
                             else
                             {
-                                control.Property = (string)row[8];
+                                control.Property = Convert.ToString(row[8]);
                                 checkBoxProperties[row[8]] = true;
                             }
                             
                             if (null != checkBoxRow[1])
                             {
-                                control.CheckBoxValue = (string)checkBoxRow[1];
+                                control.CheckBoxValue = Convert.ToString(checkBoxRow[1]);
                             }
                         }
                     }
@@ -1029,17 +1029,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in componentTable.Rows)
                 {
-                    int attributes = (int)row[3];
+                    int attributes = Convert.ToInt32(row[3]);
 
                     if (null == row[5])
                     {
-                        Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[0]);
+                        Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[0]));
 
                         component.KeyPath = Wix.YesNoType.yes;
                     }
                     else if (MsiInterop.MsidbComponentAttributesRegistryKeyPath == (attributes & MsiInterop.MsidbComponentAttributesRegistryKeyPath))
                     {
-                        object registryObject = this.core.GetIndexedElement("Registry", (string)row[5]);
+                        object registryObject = this.core.GetIndexedElement("Registry", Convert.ToString(row[5]));
 
                         if (null != registryObject)
                         {
@@ -1051,17 +1051,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             else
                             {
-                                this.core.OnMessage(WixWarnings.IllegalRegistryKeyPath(row.SourceLineNumbers, "Component", (string)row[5]));
+                                this.core.OnMessage(WixWarnings.IllegalRegistryKeyPath(row.SourceLineNumbers, "Component", Convert.ToString(row[5])));
                             }
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", (string)row[5], "Registry"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", Convert.ToString(row[5]), "Registry"));
                         }
                     }
                     else if (MsiInterop.MsidbComponentAttributesODBCDataSource == (attributes & MsiInterop.MsidbComponentAttributesODBCDataSource))
                     {
-                        Wix.ODBCDataSource odbcDataSource = (Wix.ODBCDataSource)this.core.GetIndexedElement("ODBCDataSource", (string)row[5]);
+                        Wix.ODBCDataSource odbcDataSource = (Wix.ODBCDataSource)this.core.GetIndexedElement("ODBCDataSource", Convert.ToString(row[5]));
 
                         if (null != odbcDataSource)
                         {
@@ -1069,12 +1069,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", (string)row[5], "ODBCDataSource"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", Convert.ToString(row[5]), "ODBCDataSource"));
                         }
                     }
                     else
                     {
-                        Wix.File file = (Wix.File)this.core.GetIndexedElement("File", (string)row[5]);
+                        Wix.File file = (Wix.File)this.core.GetIndexedElement("File", Convert.ToString(row[5]));
 
                         if (null != file)
                         {
@@ -1082,7 +1082,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", (string)row[5], "File"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Component", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "KeyPath", Convert.ToString(row[5]), "File"));
                         }
                     }
                 }
@@ -1112,7 +1112,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in odbcDataSourceTable.Rows)
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                     Wix.ODBCDataSource odbcDataSource = (Wix.ODBCDataSource)this.core.GetIndexedElement(row);
 
                     if (null != component)
@@ -1121,7 +1121,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "ODBCDataSource", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "ODBCDataSource", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                     }
                 }
             }
@@ -1131,7 +1131,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in registryTable.Rows)
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[5]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[5]));
                     Wix.ISchemaElement registryElement = (Wix.ISchemaElement)this.core.GetIndexedElement(row);
 
                     if (null != component)
@@ -1140,7 +1140,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Registry", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[5], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Registry", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[5]), "Component"));
                     }
                 }
             }
@@ -1182,12 +1182,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (Row row in dialogTable.Rows)
                 {
                     Wix.Dialog dialog = (Wix.Dialog)this.core.GetIndexedElement(row);
-                    string dialogId = (string)row[0];
+                    string dialogId = Convert.ToString(row[0]);
 
-                    Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, (string)row[7]);
+                    Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, Convert.ToString(row[7]));
                     if (null == control)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_First", (string)row[7], "Control"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_First", Convert.ToString(row[7]), "Control"));
                     }
 
                     // add tabbable controls
@@ -1201,7 +1201,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                         if (null != controlRow[10])
                         {
-                            control = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, (string)controlRow[10]);
+                            control = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, Convert.ToString(controlRow[10]));
                             if (null != control)
                             {
                                 // looped back to the first control in the dialog
@@ -1212,7 +1212,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             else
                             {
-                                this.core.OnMessage(WixWarnings.ExpectedForeignRow(controlRow.SourceLineNumbers, "Control", controlRow.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", dialogId, "Control_Next", (string)controlRow[10], "Control"));
+                                this.core.OnMessage(WixWarnings.ExpectedForeignRow(controlRow.SourceLineNumbers, "Control", controlRow.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", dialogId, "Control_Next", Convert.ToString(controlRow[10]), "Control"));
                             }
                         }
                         else
@@ -1224,7 +1224,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // set default control
                     if (null != row[8])
                     {
-                        Wix.Control defaultControl = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, (string)row[8]);
+                        Wix.Control defaultControl = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, Convert.ToString(row[8]));
 
                         if (null != defaultControl)
                         {
@@ -1232,14 +1232,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_Default", (string)row[8], "Control"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_Default", Convert.ToString(row[8]), "Control"));
                         }
                     }
 
                     // set cancel control
                     if (null != row[9])
                     {
-                        Wix.Control cancelControl = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, (string)row[9]);
+                        Wix.Control cancelControl = (Wix.Control)this.core.GetIndexedElement("Control", dialogId, Convert.ToString(row[9]));
 
                         if (null != cancelControl)
                         {
@@ -1247,7 +1247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_Cancel", (string)row[9], "Control"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Dialog", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog", dialogId, "Control_Cancel", Convert.ToString(row[9]), "Control"));
                         }
                     }
                 }
@@ -1259,11 +1259,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (Row row in controlTable.Rows)
                 {
                     Wix.Control control = (Wix.Control)this.core.GetIndexedElement(row);
-                    Wix.Dialog dialog = (Wix.Dialog)this.core.GetIndexedElement("Dialog", (string)row[0]);
+                    Wix.Dialog dialog = (Wix.Dialog)this.core.GetIndexedElement("Dialog", Convert.ToString(row[0]));
 
                     if (null == dialog)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Control", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", (string)row[0], "Dialog"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Control", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", Convert.ToString(row[0]), "Dialog"));
                         continue;
                     }
 
@@ -1297,13 +1297,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (null != row[4])
                     {
-                        if (null != this.core.GetIndexedElement("Directory", (string)row[4]))
+                        if (null != this.core.GetIndexedElement("Directory", Convert.ToString(row[4])))
                         {
-                            copyFile.DestinationDirectory = (string)row[4];
+                            copyFile.DestinationDirectory = Convert.ToString(row[4]);
                         }
                         else
                         {
-                            copyFile.DestinationProperty = (string)row[4];
+                            copyFile.DestinationProperty = Convert.ToString(row[4]);
                         }
                     }
                 }
@@ -1317,23 +1317,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (null != row[4])
                     {
-                        if (null != this.core.GetIndexedElement("Directory", (string)row[4]))
+                        if (null != this.core.GetIndexedElement("Directory", Convert.ToString(row[4])))
                         {
-                            copyFile.SourceDirectory = (string)row[4];
+                            copyFile.SourceDirectory = Convert.ToString(row[4]);
                         }
                         else
                         {
-                            copyFile.SourceProperty = (string)row[4];
+                            copyFile.SourceProperty = Convert.ToString(row[4]);
                         }
                     }
 
-                    if (null != this.core.GetIndexedElement("Directory", (string)row[5]))
+                    if (null != this.core.GetIndexedElement("Directory", Convert.ToString(row[5])))
                     {
-                        copyFile.DestinationDirectory = (string)row[5];
+                        copyFile.DestinationDirectory = Convert.ToString(row[5]);
                     }
                     else
                     {
-                        copyFile.DestinationProperty = (string)row[5];
+                        copyFile.DestinationProperty = Convert.ToString(row[5]);
                     }
                 }
             }
@@ -1359,8 +1359,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (null != row[2] && null != row[3])
                     {
-                        string[] retainOffsets = ((string)row[2]).Split(',');
-                        string[] retainLengths = ((string)row[3]).Split(',');
+                        string[] retainOffsets = (Convert.ToString(row[2])).Split(',');
+                        string[] retainLengths = (Convert.ToString(row[3])).Split(',');
 
                         if (retainOffsets.Length == retainLengths.Length)
                         {
@@ -1405,7 +1405,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.ExternalFile externalFile = (Wix.ExternalFile)this.core.GetIndexedElement(row);
 
-                    Wix.ProtectRange protectRange = (Wix.ProtectRange)this.core.GetIndexedElement("FamilyFileRanges", (string)row[0], (string)row[1]);
+                    Wix.ProtectRange protectRange = (Wix.ProtectRange)this.core.GetIndexedElement("FamilyFileRanges", Convert.ToString(row[0]), Convert.ToString(row[1]));
                     if (null != protectRange)
                     {
                         externalFile.AddChild(protectRange);
@@ -1447,18 +1447,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     Row targetImageRow = (Row)targetImageRows[row[0]];
                     if (null == targetImageRow)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, targetFiles_OptionalDataTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Target", (string)row[0], "TargetImages"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, targetFiles_OptionalDataTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Target", Convert.ToString(row[0]), "TargetImages"));
                         continue;
                     }
 
                     Row upgradedImagesRow = (Row)upgradedImagesRows[targetImageRow[3]];
                     if (null == upgradedImagesRow)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(targetImageRow.SourceLineNumbers, targetImageRow.Table.Name, targetImageRow.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", (string)row[3], "UpgradedImages"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(targetImageRow.SourceLineNumbers, targetImageRow.Table.Name, targetImageRow.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", Convert.ToString(row[3]), "UpgradedImages"));
                         continue;
                     }
 
-                    Wix.ProtectRange protectRange = (Wix.ProtectRange)this.core.GetIndexedElement("FamilyFileRanges", (string)upgradedImagesRow[4], (string)row[1]);
+                    Wix.ProtectRange protectRange = (Wix.ProtectRange)this.core.GetIndexedElement("FamilyFileRanges", Convert.ToString(upgradedImagesRow[4]), Convert.ToString(row[1]));
                     if (null != protectRange)
                     {
                         targetFile.AddChild(protectRange);
@@ -1477,18 +1477,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         Wix.ProtectFile protectFile = new Wix.ProtectFile();
 
-                        protectFile.File = (string)row[1];
+                        protectFile.File = Convert.ToString(row[1]);
 
                         protectFile.AddChild(protectRange);
 
-                        Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", (string)row[0]);
+                        Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", Convert.ToString(row[0]));
                         if (null != family)
                         {
                             family.AddChild(protectFile);
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, familyFileRangesTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", (string)row[0], "ImageFamilies"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, familyFileRangesTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", Convert.ToString(row[0]), "ImageFamilies"));
                         }
                     }
                 }
@@ -1549,7 +1549,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in shortcutTable.Rows)
                 {
-                    string target = (string)row[4];
+                    string target = Convert.ToString(row[4]);
 
                     if (!target.StartsWith("[", StringComparison.Ordinal) && !target.EndsWith("]", StringComparison.Ordinal))
                     {
@@ -1651,11 +1651,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in msiAssemblyTable.Rows)
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[0]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[0]));
 
                     if (null == component)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "MsiAssembly", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[0], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "MsiAssembly", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[0]), "Component"));
                     }
                     else
                     {
@@ -1667,15 +1667,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 if (null != row[2])
                                 {
-                                    file.AssemblyManifest = (string)row[2];
+                                    file.AssemblyManifest = Convert.ToString(row[2]);
                                 }
 
                                 if (null != row[3])
                                 {
-                                    file.AssemblyApplication = (string)row[3];
+                                    file.AssemblyApplication = Convert.ToString(row[3]);
                                 }
 
-                                if (null == row[4] || 0 == (int)row[4])
+                                if (null == row[4] || 0 == Convert.ToInt32(row[4]))
                                 {
                                     file.Assembly = Wix.File.AssemblyType.net;
                                 }
@@ -1694,7 +1694,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in typeLibTable.Rows)
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[2]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[2]));
                     Wix.TypeLib typeLib = (Wix.TypeLib)this.core.GetIndexedElement(row);
 
                     foreach (Wix.ISchemaElement element in component.Children)
@@ -1742,7 +1742,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // set the default MIME element for this extension
                     if (null != row[3])
                     {
-                        Wix.MIME mime = (Wix.MIME)this.core.GetIndexedElement("MIME", (string)row[3]);
+                        Wix.MIME mime = (Wix.MIME)this.core.GetIndexedElement("MIME", Convert.ToString(row[3]));
 
                         if (null != mime)
                         {
@@ -1750,7 +1750,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Extension", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "MIME_", (string)row[3], "MIME"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Extension", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "MIME_", Convert.ToString(row[3]), "MIME"));
                         }
                     }
                 }
@@ -1773,7 +1773,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "MIME", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Extension_", (string)row[1], "Extension"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "MIME", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Extension_", Convert.ToString(row[1]), "Extension"));
                     }
                 }
             }
@@ -1809,13 +1809,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (null != row[3])
                     {
-                        Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", (string)row[3]);
+                        Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", Convert.ToString(row[3]));
 
                         if (null != progId)
                         {
                             if (addedProgIds.Contains(progId))
                             {
-                                this.core.OnMessage(WixWarnings.TooManyProgIds(row.SourceLineNumbers, (string)row[0], (string)row[3], (string)addedProgIds[progId]));
+                                this.core.OnMessage(WixWarnings.TooManyProgIds(row.SourceLineNumbers, Convert.ToString(row[0]), Convert.ToString(row[3]), Convert.ToString(addedProgIds[progId])));
                             }
                             else
                             {
@@ -1825,7 +1825,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Class", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_Default", (string)row[3], "ProgId"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Class", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_Default", Convert.ToString(row[3]), "ProgId"));
                         }
                     }
 
@@ -1859,7 +1859,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "ProgId", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Class_", (string)row[2], "Class"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "ProgId", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Class_", Convert.ToString(row[2]), "Class"));
                         }
                     }
                 }
@@ -1891,7 +1891,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         continue;
                     }
 
-                    Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", (string)row[2]);
+                    Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", Convert.ToString(row[2]));
 
                     // Haven't added the progId yet and it doesn't have a parent progId
                     if (!addedProgIds.Contains(progId) && null == progId.ParentElement)
@@ -1907,7 +1907,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         else
                         {
-                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Extension", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                            this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Extension", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                         }
                     }
                 }
@@ -1930,7 +1930,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (Row row in removeFileTable.Rows)
                 {
                     bool isDirectory = false;
-                    string property = (string)row[3];
+                    string property = Convert.ToString(row[3]);
 
                     // determine if the property is actually authored as a directory
                     if (null != this.core.GetIndexedElement("Directory", property))
@@ -1991,7 +1991,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (Row row in createFolderTable.Rows)
                 {
                     Wix.CreateFolder createFolder = (Wix.CreateFolder)this.core.GetIndexedElement(row);
-                    string directoryId = (string)row[0];
+                    string directoryId = Convert.ToString(row[0]);
 
                     if (!createFolders.Contains(directoryId))
                     {
@@ -2005,8 +2005,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in lockPermissionsTable.Rows)
                 {
-                    string id = (string)row[0];
-                    string table = (string)row[1];
+                    string id = Convert.ToString(row[0]);
+                    string table = Convert.ToString(row[1]);
 
                     Wix.Permission permission = (Wix.Permission)this.core.GetIndexedElement(row);
 
@@ -2065,7 +2065,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (Row row in createFolderTable.Rows)
                 {
                     Wix.CreateFolder createFolder = (Wix.CreateFolder)this.core.GetIndexedElement(row);
-                    string directoryId = (string)row[0];
+                    string directoryId = Convert.ToString(row[0]);
 
                     if (!createFolders.Contains(directoryId))
                     {
@@ -2079,8 +2079,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in msiLockPermissionsExTable.Rows)
                 {
-                    string id = (string)row[1];
-                    string table = (string)row[2];
+                    string id = Convert.ToString(row[1]);
+                    string table = Convert.ToString(row[2]);
 
                     Wix.PermissionEx permissionEx = (Wix.PermissionEx)this.core.GetIndexedElement(row);
 
@@ -2142,8 +2142,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in appSearchTable.Rows)
                 {
-                    string property = (string)row[0];
-                    string signature = (string)row[1];
+                    string property = Convert.ToString(row[0]);
+                    string signature = Convert.ToString(row[1]);
 
                     if (!appSearches.Contains(signature))
                     {
@@ -2159,7 +2159,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in ccpSearchTable.Rows)
                 {
-                    string signature = (string)row[0];
+                    string signature = Convert.ToString(row[0]);
 
                     if (!ccpSearches.Contains(signature))
                     {
@@ -2195,7 +2195,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     foreach (Row row in locatorTable.Rows)
                     {
-                        string signature = (string)row[0];
+                        string signature = Convert.ToString(row[0]);
 
                         if (!locators.Contains(signature))
                         {
@@ -2223,7 +2223,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             firstDrLocator = i;
                         }
 
-                        if ("CCP_DRIVE" == (string)locatorRow[1])
+                        if ("CCP_DRIVE" == Convert.ToString(locatorRow[1]))
                         {
                             locatorRows.RemoveAt(i);
                             locatorRows.Insert(firstDrLocator, locatorRow);
@@ -2264,7 +2264,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else if ("DrLocator" == locatorRow.TableDefinition.Name && null != locatorRow[1])
                     {
-                        string parentSignature = (string)locatorRow[1];
+                        string parentSignature = Convert.ToString(locatorRow[1]);
 
                         if ("CCP_DRIVE" == parentSignature)
                         {
@@ -2310,12 +2310,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                         if (null != locatorRow[1])
                                         {
-                                            directorySearchRef.Parent = (string)locatorRow[1];
+                                            directorySearchRef.Parent = Convert.ToString(locatorRow[1]);
                                         }
 
                                         if (null != locatorRow[2])
                                         {
-                                            directorySearchRef.Path = (string)locatorRow[2];
+                                            directorySearchRef.Path = Convert.ToString(locatorRow[2]);
                                         }
 
                                         complianceDrive.AddChild(directorySearchRef);
@@ -2355,12 +2355,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                     if (null != locatorRow[1])
                                     {
-                                        directorySearchRef.Parent = (string)locatorRow[1];
+                                        directorySearchRef.Parent = Convert.ToString(locatorRow[1]);
                                     }
 
                                     if (null != locatorRow[2])
                                     {
-                                        directorySearchRef.Path = (string)locatorRow[2];
+                                        directorySearchRef.Path = Convert.ToString(locatorRow[2]);
                                     }
 
                                     complianceDrive.AddChild(directorySearchRef);
@@ -2390,12 +2390,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                             if (null != parentDrLocatorRow[1])
                                             {
-                                                directorySeachRef.Parent = (string)parentDrLocatorRow[1];
+                                                directorySeachRef.Parent = Convert.ToString(parentDrLocatorRow[1]);
                                             }
 
                                             if (null != parentDrLocatorRow[2])
                                             {
-                                                directorySeachRef.Path = (string)parentDrLocatorRow[2];
+                                                directorySeachRef.Path = Convert.ToString(parentDrLocatorRow[2]);
                                             }
 
                                             parentSearchElement = directorySeachRef;
@@ -2418,7 +2418,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                             if (null != locatorRow[2])
                                             {
-                                                directorySearchRef.Path = (string)locatorRow[2];
+                                                directorySearchRef.Path = Convert.ToString(locatorRow[2]);
                                             }
 
                                             parentSearchElement.AddChild(searchElement);
@@ -2590,14 +2590,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             WixActionRow actionRow = (WixActionRow)actionsTable.CreateRow(null);
 
-                            actionRow.Action = (string)row[0];
+                            actionRow.Action = Convert.ToString(row[0]);
 
                             if (null != row[1])
                             {
-                                actionRow.Condition = (string)row[1];
+                                actionRow.Condition = Convert.ToString(row[1]);
                             }
 
-                            actionRow.Sequence = (int)row[2];
+                            actionRow.Sequence = Convert.ToInt32(row[2]);
 
                             actionRow.SequenceTable = sequenceTable;
 
@@ -2721,22 +2721,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             WixActionRow actionRow = (WixActionRow)actionsTable.CreateRow(null);
 
-                            actionRow.Action = (string)row[0];
+                            actionRow.Action = Convert.ToString(row[0]);
 
                             if (null != row[1])
                             {
-                                actionRow.Sequence = (int)row[1];
+                                actionRow.Sequence = Convert.ToInt32(row[1]);
                             }
 
                             if (null != row[2] && null != row[3])
                             {
-                                switch ((int)row[3])
+                                switch (Convert.ToInt32(row[3]))
                                 {
                                     case 0:
-                                        actionRow.Before = (string)row[2];
+                                        actionRow.Before = Convert.ToString(row[2]);
                                         break;
                                     case 1:
-                                        actionRow.After = (string)row[2];
+                                        actionRow.After = Convert.ToString(row[2]);
                                         break;
                                     default:
                                         this.core.OnMessage(WixWarnings.IllegalColumnValue(row.SourceLineNumbers, table.Name, row.Fields[3].Column.Name, row[3]));
@@ -2746,7 +2746,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                             if (null != row[4])
                             {
-                                actionRow.Condition = (string)row[4];
+                                actionRow.Condition = Convert.ToString(row[4]);
                             }
 
                             actionRow.SequenceTable = sequenceTable;
@@ -2783,13 +2783,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row launchRow in launchConditionTable.Rows)
                 {
-                    if (Compiler.DowngradePreventedCondition == (string)launchRow[0])
+                    if (Compiler.DowngradePreventedCondition == Convert.ToString(launchRow[0]))
                     {
-                        downgradeErrorMessage = (string)launchRow[1];
+                        downgradeErrorMessage = Convert.ToString(launchRow[1]);
                     }
-                    else if (Compiler.UpgradePreventedCondition == (string)launchRow[0])
+                    else if (Compiler.UpgradePreventedCondition == Convert.ToString(launchRow[0]))
                     {
-                        disallowUpgradeErrorMessage = (string)launchRow[1];
+                        disallowUpgradeErrorMessage = Convert.ToString(launchRow[1]);
                     }
                 }
             }
@@ -2901,7 +2901,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, verbTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Extension_", (string)row[0], "Extension"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, verbTable.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Extension_", Convert.ToString(row[0]), "Extension"));
                     }
                 }
             }
@@ -3019,7 +3019,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // resolve the dependencies for each table
             while (0 < unsortedTableNames.Count)
             {
-                this.ResolveTableDependencies((string)unsortedTableNames.GetByIndex(0), unsortedTableNames, sortedTableNames);
+                this.ResolveTableDependencies(Convert.ToString(unsortedTableNames.GetByIndex(0)), unsortedTableNames, sortedTableNames);
             }
 
             return sortedTableNames;
@@ -3081,15 +3081,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 // the Actions table needs to be handled specially
                                 if ("WixAction" == table.Name)
                                 {
-                                    primaryKey = (string)row[1];
+                                    primaryKey = Convert.ToString(row[1]);
 
                                     if (OutputType.Module == this.outputType)
                                     {
-                                        tableName = String.Concat("Module", (string)row[0]);
+                                        tableName = String.Concat("Module", Convert.ToString(row[0]));
                                     }
                                     else
                                     {
-                                        tableName = (string)row[0];
+                                        tableName = Convert.ToString(row[0]);
                                     }
                                 }
                                 else
@@ -3603,11 +3603,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 foreach (Row row in table.Rows)
                 {
-                    string value = (string)row[1];
+                    string value = Convert.ToString(row[1]);
 
                     if (null != value && 0 < value.Length)
                     {
-                        switch ((int)row[0])
+                        switch (Convert.ToInt32(row[0]))
                         {
                             case 1:
                                 if ("1252" != value)
@@ -3716,8 +3716,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 foreach (Row row in table.Rows)
                 {
-                    int propertyId = (int)row[0];
-                    string value = (string)row[1];
+                    int propertyId = Convert.ToInt32(row[0]);
+                    string value = Convert.ToString(row[1]);
 
                     if (null != row[1] && 0 < value.Length)
                     {
@@ -3803,16 +3803,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ProgressText progressText = new Wix.ProgressText();
 
-                progressText.Action = (string)row[0];
+                progressText.Action = Convert.ToString(row[0]);
 
                 if (null != row[1])
                 {
-                    progressText.Content = (string)row[1];
+                    progressText.Content = Convert.ToString(row[1]);
                 }
 
                 if (null != row[2])
                 {
-                    progressText.Template = (string)row[2];
+                    progressText.Template = Convert.ToString(row[2]);
                 }
 
                 this.core.UIElement.AddChild(progressText);
@@ -3831,26 +3831,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 appId.Advertise = Wix.YesNoType.yes;
 
-                appId.Id = (string)row[0];
+                appId.Id = Convert.ToString(row[0]);
 
                 if (null != row[1])
                 {
-                    appId.RemoteServerName = (string)row[1];
+                    appId.RemoteServerName = Convert.ToString(row[1]);
                 }
 
                 if (null != row[2])
                 {
-                    appId.LocalService = (string)row[2];
+                    appId.LocalService = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    appId.ServiceParameters = (string)row[3];
+                    appId.ServiceParameters = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    appId.DllSurrogate = (string)row[4];
+                    appId.DllSurrogate = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5] && Int32.Equals(row[5], 1))
@@ -3925,9 +3925,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Billboard billboard = new Wix.Billboard();
 
-                billboard.Id = (string)row[0];
+                billboard.Id = Convert.ToString(row[0]);
 
-                billboard.Feature = (string)row[1];
+                billboard.Feature = Convert.ToString(row[1]);
 
                 this.core.IndexElement(row, billboard);
                 billboards.Add(String.Format(CultureInfo.InvariantCulture, "{0}|{1:0000000000}", row[0], row[3]), row);
@@ -3942,7 +3942,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     billboardAction = new Wix.BillboardAction();
 
-                    billboardAction.Id = (string)row[2];
+                    billboardAction.Id = Convert.ToString(row[2]);
 
                     this.core.UIElement.AddChild(billboardAction);
                     billboardActions.Add(row[2], billboardAction);
@@ -3962,9 +3962,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Binary binary = new Wix.Binary();
 
-                binary.Id = (string)row[0];
+                binary.Id = Convert.ToString(row[0]);
 
-                binary.SourceFile = (string)row[1];
+                binary.SourceFile = Convert.ToString(row[1]);
 
                 this.core.RootElement.AddChild(binary);
             }
@@ -3978,15 +3978,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", (string)row[0]);
+                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", Convert.ToString(row[0]));
 
                 if (null != file)
                 {
-                    file.BindPath = (string)row[1];
+                    file.BindPath = Convert.ToString(row[1]);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", (string)row[0], "File"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", Convert.ToString(row[0]), "File"));
                 }
             }
         }
@@ -4003,9 +4003,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 wixClass.Advertise = Wix.YesNoType.yes;
 
-                wixClass.Id = (string)row[0];
+                wixClass.Id = Convert.ToString(row[0]);
 
-                switch ((string)row[1])
+                switch (Convert.ToString(row[1]))
                 {
                     case "LocalServer":
                         wixClass.Context = Wix.Class.ContextType.LocalServer;
@@ -4028,17 +4028,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4])
                 {
-                    wixClass.Description = (string)row[4];
+                    wixClass.Description = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    wixClass.AppId = (string)row[5];
+                    wixClass.AppId = Convert.ToString(row[5]);
                 }
 
                 if (null != row[6])
                 {
-                    string[] fileTypeMaskStrings = ((string)row[6]).Split(';');
+                    string[] fileTypeMaskStrings = (Convert.ToString(row[6])).Split(';');
 
                     try
                     {
@@ -4076,27 +4076,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[7])
                 {
-                    wixClass.Icon = (string)row[7];
+                    wixClass.Icon = Convert.ToString(row[7]);
                 }
 
                 if (null != row[8])
                 {
-                    wixClass.IconIndex = (int)row[8];
+                    wixClass.IconIndex = Convert.ToInt32(row[8]);
                 }
 
                 if (null != row[9])
                 {
-                    wixClass.Handler = (string)row[9];
+                    wixClass.Handler = Convert.ToString(row[9]);
                 }
 
                 if (null != row[10])
                 {
-                    wixClass.Argument = (string)row[10];
+                    wixClass.Argument = Convert.ToString(row[10]);
                 }
 
                 if (null != row[12])
                 {
-                    if (1 == (int)row[12])
+                    if (1 == Convert.ToInt32(row[12]))
                     {
                         wixClass.RelativePath = Wix.YesNoType.yes;
                     }
@@ -4106,14 +4106,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[2]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[2]));
                 if (null != component)
                 {
                     component.AddChild(wixClass);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[2], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[2]), "Component"));
                 }
 
                 this.core.IndexElement(row, wixClass);
@@ -4137,22 +4137,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (Row row in comboBoxRows.Values)
             {
-                if (null == comboBox || (string)row[0] != comboBox.Property)
+                if (null == comboBox || Convert.ToString(row[0]) != comboBox.Property)
                 {
                     comboBox = new Wix.ComboBox();
 
-                    comboBox.Property = (string)row[0];
+                    comboBox.Property = Convert.ToString(row[0]);
 
                     this.core.UIElement.AddChild(comboBox);
                 }
 
                 Wix.ListItem listItem = new Wix.ListItem();
 
-                listItem.Value = (string)row[2];
+                listItem.Value = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    listItem.Text = (string)row[3];
+                    listItem.Text = Convert.ToString(row[3]);
                 }
 
                 comboBox.AddChild(listItem);
@@ -4416,7 +4416,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Condition condition = new Wix.Condition();
 
-                switch ((string)row[2])
+                switch (Convert.ToString(row[2]))
                 {
                     case "Default":
                         condition.Action = Wix.Condition.ActionType.@default;
@@ -4438,16 +4438,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                condition.Content = (string)row[3];
+                condition.Content = Convert.ToString(row[3]);
 
-                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", (string)row[0], (string)row[1]);
+                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", Convert.ToString(row[0]), Convert.ToString(row[1]));
                 if (null != control)
                 {
                     control.AddChild(condition);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", (string)row[0], "Control_", (string)row[1], "Control"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", Convert.ToString(row[0]), "Control_", Convert.ToString(row[1]), "Control"));
                 }
             }
         }
@@ -4464,35 +4464,35 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Publish publish = new Wix.Publish();
 
-                string publishEvent = (string)row[2];
+                string publishEvent = Convert.ToString(row[2]);
                 if (publishEvent.StartsWith("[", StringComparison.Ordinal) && publishEvent.EndsWith("]", StringComparison.Ordinal))
                 {
                     publish.Property = publishEvent.Substring(1, publishEvent.Length - 2);
 
-                    if ("{}" != (string)row[3])
+                    if ("{}" != Convert.ToString(row[3]))
                     {
-                        publish.Value = (string)row[3];
+                        publish.Value = Convert.ToString(row[3]);
                     }
                 }
                 else
                 {
                     publish.Event = publishEvent;
-                    publish.Value = (string)row[3];
+                    publish.Value = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    publish.Content = (string)row[4];
+                    publish.Content = Convert.ToString(row[4]);
                 }
 
-                controlEvents.Add(String.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2:0000000000}|{3}|{4}|{5}", row[0], row[1], (null == row[5] ? 0 : (int)row[5]), row[2], row[3], row[4]), row);
+                controlEvents.Add(String.Format(CultureInfo.InvariantCulture, "{0}|{1}|{2:0000000000}|{3}|{4}|{5}", row[0], row[1], (null == row[5] ? 0 : Convert.ToInt32(row[5])), row[2], row[3], row[4]), row);
 
                 this.core.IndexElement(row, publish);
             }
 
             foreach (Row row in controlEvents.Values)
             {
-                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", (string)row[0], (string)row[1]);
+                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", Convert.ToString(row[0]), Convert.ToString(row[1]));
                 Wix.Publish publish = (Wix.Publish)this.core.GetIndexedElement(row);
 
                 if (null != control)
@@ -4501,7 +4501,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", (string)row[0], "Control_", (string)row[1], "Control"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", Convert.ToString(row[0]), "Control_", Convert.ToString(row[1]), "Control"));
                 }
             }
         }
@@ -4742,16 +4742,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.CreateFolder createFolder = new Wix.CreateFolder();
 
-                createFolder.Directory = (string)row[0];
+                createFolder.Directory = Convert.ToString(row[0]);
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(createFolder);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
                 this.core.IndexElement(row, createFolder);
             }
@@ -4767,9 +4767,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.CustomAction customAction = new Wix.CustomAction();
 
-                customAction.Id = (string)row[0];
+                customAction.Id = Convert.ToString(row[0]);
 
-                int type = (int)row[1];
+                int type = Convert.ToInt32(row[1]);
 
                 if (MsiInterop.MsidbCustomActionTypeHideTarget == (type & MsiInterop.MsidbCustomActionTypeHideTarget))
                 {
@@ -4842,22 +4842,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (source)
                 {
                     case MsiInterop.MsidbCustomActionTypeBinaryData:
-                        customAction.BinaryKey = (string)row[2];
+                        customAction.BinaryKey = Convert.ToString(row[2]);
                         break;
                     case MsiInterop.MsidbCustomActionTypeSourceFile:
                         if (null != row[2])
                         {
-                            customAction.FileKey = (string)row[2];
+                            customAction.FileKey = Convert.ToString(row[2]);
                         }
                         break;
                     case MsiInterop.MsidbCustomActionTypeDirectory:
                         if (null != row[2])
                         {
-                            customAction.Directory = (string)row[2];
+                            customAction.Directory = Convert.ToString(row[2]);
                         }
                         break;
                     case MsiInterop.MsidbCustomActionTypeProperty:
-                        customAction.Property = (string)row[2];
+                        customAction.Property = Convert.ToString(row[2]);
                         break;
                     default:
                         this.core.OnMessage(WixWarnings.IllegalColumnValue(row.SourceLineNumbers, table.Name, row.Fields[1].Column.Name, row[1]));
@@ -4867,41 +4867,41 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (type & MsiInterop.MsidbCustomActionTypeTargetBits)
                 {
                     case MsiInterop.MsidbCustomActionTypeDll:
-                        customAction.DllEntry = (string)row[3];
+                        customAction.DllEntry = Convert.ToString(row[3]);
                         break;
                     case MsiInterop.MsidbCustomActionTypeExe:
-                        customAction.ExeCommand = (string)row[3];
+                        customAction.ExeCommand = Convert.ToString(row[3]);
                         break;
                     case MsiInterop.MsidbCustomActionTypeTextData:
                         if (MsiInterop.MsidbCustomActionTypeSourceFile == source)
                         {
-                            customAction.Error = (string)row[3];
+                            customAction.Error = Convert.ToString(row[3]);
                         }
                         else
                         {
-                            customAction.Value = (string)row[3];
+                            customAction.Value = Convert.ToString(row[3]);
                         }
                         break;
                     case MsiInterop.MsidbCustomActionTypeJScript:
                         if (MsiInterop.MsidbCustomActionTypeDirectory == source)
                         {
                             customAction.Script = Wix.CustomAction.ScriptType.jscript;
-                            customAction.Content = (string)row[3];
+                            customAction.Content = Convert.ToString(row[3]);
                         }
                         else
                         {
-                            customAction.JScriptCall = (string)row[3];
+                            customAction.JScriptCall = Convert.ToString(row[3]);
                         }
                         break;
                     case MsiInterop.MsidbCustomActionTypeVBScript:
                         if (MsiInterop.MsidbCustomActionTypeDirectory == source)
                         {
                             customAction.Script = Wix.CustomAction.ScriptType.vbscript;
-                            customAction.Content = (string)row[3];
+                            customAction.Content = Convert.ToString(row[3]);
                         }
                         else
                         {
-                            customAction.VBScriptCall = (string)row[3];
+                            customAction.VBScriptCall = Convert.ToString(row[3]);
                         }
                         break;
                     case MsiInterop.MsidbCustomActionTypeInstall:
@@ -4912,7 +4912,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                int extype = 4 < row.Fields.Length && null != row[4] ? (int)row[4] : 0;
+                int extype = 4 < row.Fields.Length && null != row[4] ? Convert.ToInt32(row[4]) : 0;
                 if (MsiInterop.MsidbCustomActionTypePatchUninstall == (extype & MsiInterop.MsidbCustomActionTypePatchUninstall))
                 {
                     customAction.PatchUninstall = Wix.YesNoType.yes;
@@ -4933,13 +4933,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ComponentSearch componentSearch = new Wix.ComponentSearch();
 
-                componentSearch.Id = (string)row[0];
+                componentSearch.Id = Convert.ToString(row[0]);
 
-                componentSearch.Guid = (string)row[1];
+                componentSearch.Guid = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    switch ((int)row[2])
+                    switch (Convert.ToInt32(row[2]))
                     {
                         case MsiInterop.MsidbLocatorTypeDirectory:
                             componentSearch.Type = Wix.ComponentSearch.TypeType.directory;
@@ -4967,15 +4967,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if (null != row[1])
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[0]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[0]));
 
                     if (null != component)
                     {
-                        component.ComPlusFlags = (int)row[1];
+                        component.ComPlusFlags = Convert.ToInt32(row[1]);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[0], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[0]), "Component"));
                     }
                 }
             }
@@ -4991,11 +4991,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Component component = new Wix.Component();
 
-                component.Id = (string)row[0];
+                component.Id = Convert.ToString(row[0]);
 
-                component.Guid = (string)row[1];
+                component.Guid = Convert.ToString(row[1]);
 
-                int attributes = (int)row[3];
+                int attributes = Convert.ToInt32(row[3]);
 
                 if (MsiInterop.MsidbComponentAttributesSourceOnly == (attributes & MsiInterop.MsidbComponentAttributesSourceOnly))
                 {
@@ -5050,19 +5050,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.Condition condition = new Wix.Condition();
 
-                    condition.Content = (string)row[4];
+                    condition.Content = Convert.ToString(row[4]);
 
                     component.AddChild(condition);
                 }
 
-                Wix.Directory directory = (Wix.Directory)this.core.GetIndexedElement("Directory", (string)row[2]);
+                Wix.Directory directory = (Wix.Directory)this.core.GetIndexedElement("Directory", Convert.ToString(row[2]));
                 if (null != directory)
                 {
                     directory.AddChild(component);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Directory_", (string)row[2], "Directory"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Directory_", Convert.ToString(row[2]), "Directory"));
                 }
                 this.core.IndexElement(row, component);
             }
@@ -5078,21 +5078,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Condition condition = new Wix.Condition();
 
-                condition.Level = (int)row[1];
+                condition.Level = Convert.ToInt32(row[1]);
 
                 if (null != row[2])
                 {
-                    condition.Content = (string)row[2];
+                    condition.Content = Convert.ToString(row[2]);
                 }
 
-                Wix.Feature feature = (Wix.Feature)this.core.GetIndexedElement("Feature", (string)row[0]);
+                Wix.Feature feature = (Wix.Feature)this.core.GetIndexedElement("Feature", Convert.ToString(row[0]));
                 if (null != feature)
                 {
                     feature.AddChild(condition);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_", (string)row[0], "Feature"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_", Convert.ToString(row[0]), "Feature"));
                 }
             }
         }
@@ -5107,19 +5107,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Dialog dialog = new Wix.Dialog();
 
-                dialog.Id = (string)row[0];
+                dialog.Id = Convert.ToString(row[0]);
 
-                dialog.X = (int)row[1];
+                dialog.X = Convert.ToInt32(row[1]);
 
-                dialog.Y = (int)row[2];
+                dialog.Y = Convert.ToInt32(row[2]);
 
-                dialog.Width = (int)row[3];
+                dialog.Width = Convert.ToInt32(row[3]);
 
-                dialog.Height = (int)row[4];
+                dialog.Height = Convert.ToInt32(row[4]);
 
                 if (null != row[5])
                 {
-                    int attributes = (int)row[5];
+                    int attributes = Convert.ToInt32(row[5]);
 
                     if (0 == (attributes & MsiInterop.MsidbDialogAttributesVisible))
                     {
@@ -5179,7 +5179,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[6])
                 {
-                    dialog.Title = (string)row[6];
+                    dialog.Title = Convert.ToString(row[6]);
                 }
 
                 this.core.UIElement.AddChild(dialog);
@@ -5197,9 +5197,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Directory directory = new Wix.Directory();
 
-                directory.Id = (string)row[0];
+                directory.Id = Convert.ToString(row[0]);
 
-                string[] names = Installer.GetNames((string)row[2]);
+                string[] names = Installer.GetNames(Convert.ToString(row[2]));
 
                 if (String.Equals(directory.Id, "TARGETDIR", StringComparison.Ordinal) && !String.Equals(names[0], "SourceDir", StringComparison.Ordinal))
                 {
@@ -5257,11 +5257,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    Wix.Directory parentDirectory = (Wix.Directory)this.core.GetIndexedElement("Directory", (string)row[1]);
+                    Wix.Directory parentDirectory = (Wix.Directory)this.core.GetIndexedElement("Directory", Convert.ToString(row[1]));
 
                     if (null == parentDirectory)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Directory_Parent", (string)row[1], "Directory"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Directory_Parent", Convert.ToString(row[1]), "Directory"));
                     }
                     else if (parentDirectory == directory) // another way to specify a root directory
                     {
@@ -5285,16 +5285,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.DirectorySearch directorySearch = new Wix.DirectorySearch();
 
-                directorySearch.Id = (string)row[0];
+                directorySearch.Id = Convert.ToString(row[0]);
 
                 if (null != row[2])
                 {
-                    directorySearch.Path = (string)row[2];
+                    directorySearch.Path = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    directorySearch.Depth = (int)row[3];
+                    directorySearch.Depth = Convert.ToInt32(row[3]);
                 }
 
                 this.core.IndexElement(row, directorySearch);
@@ -5311,13 +5311,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.CopyFile copyFile = new Wix.CopyFile();
 
-                copyFile.Id = (string)row[0];
+                copyFile.Id = Convert.ToString(row[0]);
 
-                copyFile.FileId = (string)row[2];
+                copyFile.FileId = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    string[] names = Installer.GetNames((string)row[3]);
+                    string[] names = Installer.GetNames(Convert.ToString(row[3]));
                     if (null != names[0] && null != names[1])
                     {
                         copyFile.DestinationShortName = names[0];
@@ -5331,14 +5331,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 // destination directory/property is set in FinalizeDuplicateMoveFileTables
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(copyFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
                 this.core.IndexElement(row, copyFile);
             }
@@ -5354,11 +5354,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Environment environment = new Wix.Environment();
 
-                environment.Id = (string)row[0];
+                environment.Id = Convert.ToString(row[0]);
 
                 bool done = false;
                 bool permanent = true;
-                string name = (string)row[1];
+                string name = Convert.ToString(row[1]);
                 for (int i = 0; i < name.Length && !done; i++)
                 {
                     switch (name[i])
@@ -5392,7 +5392,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    string value = (string)row[2];
+                    string value = Convert.ToString(row[2]);
 
                     if (value.StartsWith("[~]", StringComparison.Ordinal))
                     {
@@ -5420,14 +5420,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[3]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[3]));
                 if (null != component)
                 {
                     component.AddChild(environment);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[3], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[3]), "Component"));
                 }
             }
         }
@@ -5442,9 +5442,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Error error = new Wix.Error();
 
-                error.Id = (int)row[0];
+                error.Id = Convert.ToInt32(row[0]);
 
-                error.Content = (string)row[1];
+                error.Content = Convert.ToString(row[1]);
 
                 this.core.UIElement.AddChild(error);
             }
@@ -5460,18 +5460,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Subscribe subscribe = new Wix.Subscribe();
 
-                subscribe.Event = (string)row[2];
+                subscribe.Event = Convert.ToString(row[2]);
 
-                subscribe.Attribute = (string)row[3];
+                subscribe.Attribute = Convert.ToString(row[3]);
 
-                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", (string)row[0], (string)row[1]);
+                Wix.Control control = (Wix.Control)this.core.GetIndexedElement("Control", Convert.ToString(row[0]), Convert.ToString(row[1]));
                 if (null != control)
                 {
                     control.AddChild(subscribe);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", (string)row[0], "Control_", (string)row[1], "Control"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Dialog_", Convert.ToString(row[0]), "Control_", Convert.ToString(row[1]), "Control"));
                 }
             }
         }
@@ -5488,11 +5488,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 extension.Advertise = Wix.YesNoType.yes;
 
-                extension.Id = (string)row[0];
+                extension.Id = Convert.ToString(row[0]);
 
                 if (null != row[3])
                 {
-                    Wix.MIME mime = (Wix.MIME)this.core.GetIndexedElement("MIME", (string)row[3]);
+                    Wix.MIME mime = (Wix.MIME)this.core.GetIndexedElement("MIME", Convert.ToString(row[3]));
 
                     if (null != mime)
                     {
@@ -5500,13 +5500,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "MIME_", (string)row[3], "MIME"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "MIME_", Convert.ToString(row[3]), "MIME"));
                     }
                 }
 
                 if (null != row[2])
                 {
-                    Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", (string)row[2]);
+                    Wix.ProgId progId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", Convert.ToString(row[2]));
 
                     if (null != progId)
                     {
@@ -5514,12 +5514,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_", (string)row[2], "ProgId"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_", Convert.ToString(row[2]), "ProgId"));
                     }
                 }
                 else
                 {
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
 
                     if (null != component)
                     {
@@ -5527,7 +5527,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                     }
                 }
 
@@ -5545,13 +5545,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ExternalFile externalFile = new Wix.ExternalFile();
 
-                externalFile.File = (string)row[1];
+                externalFile.File = Convert.ToString(row[1]);
 
-                externalFile.Source = (string)row[2];
+                externalFile.Source = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    string[] symbolPaths = ((string)row[3]).Split(';');
+                    string[] symbolPaths = (Convert.ToString(row[3])).Split(';');
 
                     foreach (string symbolPathString in symbolPaths)
                     {
@@ -5565,8 +5565,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4] && null != row[5])
                 {
-                    string[] ignoreOffsets = ((string)row[4]).Split(',');
-                    string[] ignoreLengths = ((string)row[5]).Split(',');
+                    string[] ignoreOffsets = (Convert.ToString(row[4])).Split(',');
+                    string[] ignoreLengths = (Convert.ToString(row[5])).Split(',');
 
                     if (ignoreOffsets.Length == ignoreLengths.Length)
                     {
@@ -5609,17 +5609,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[7])
                 {
-                    externalFile.Order = (int)row[7];
+                    externalFile.Order = Convert.ToInt32(row[7]);
                 }
 
-                Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", (string)row[0]);
+                Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", Convert.ToString(row[0]));
                 if (null != family)
                 {
                     family.AddChild(externalFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", (string)row[0], "ImageFamilies"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", Convert.ToString(row[0]), "ImageFamilies"));
                 }
                 this.core.IndexElement(row, externalFile);
             }
@@ -5637,16 +5637,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Feature feature = new Wix.Feature();
 
-                feature.Id = (string)row[0];
+                feature.Id = Convert.ToString(row[0]);
 
                 if (null != row[2])
                 {
-                    feature.Title = (string)row[2];
+                    feature.Title = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    feature.Description = (string)row[3];
+                    feature.Description = Convert.ToString(row[3]);
                 }
 
                 if (null == row[4])
@@ -5655,7 +5655,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    int display = (int)row[4];
+                    int display = Convert.ToInt32(row[4]);
 
                     if (0 == display)
                     {
@@ -5667,14 +5667,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                feature.Level = (int)row[5];
+                feature.Level = Convert.ToInt32(row[5]);
 
                 if (null != row[6])
                 {
-                    feature.ConfigurableDirectory = (string)row[6];
+                    feature.ConfigurableDirectory = Convert.ToString(row[6]);
                 }
 
-                int attributes = (int)row[7];
+                int attributes = Convert.ToInt32(row[7]);
 
                 if (MsiInterop.MsidbFeatureAttributesFavorSource == (attributes & MsiInterop.MsidbFeatureAttributesFavorSource) && MsiInterop.MsidbFeatureAttributesFollowParent == (attributes & MsiInterop.MsidbFeatureAttributesFollowParent))
                 {
@@ -5723,7 +5723,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // nest the features
             foreach (Row row in sortedFeatures.Values)
             {
-                Wix.Feature feature = (Wix.Feature)this.core.GetIndexedElement("Feature", (string)row[0]);
+                Wix.Feature feature = (Wix.Feature)this.core.GetIndexedElement("Feature", Convert.ToString(row[0]));
 
                 if (null == row[1])
                 {
@@ -5731,11 +5731,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    Wix.Feature parentFeature = (Wix.Feature)this.core.GetIndexedElement("Feature", (string)row[1]);
+                    Wix.Feature parentFeature = (Wix.Feature)this.core.GetIndexedElement("Feature", Convert.ToString(row[1]));
 
                     if (null == parentFeature)
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_Parent", (string)row[1], "Feature"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_Parent", Convert.ToString(row[1]), "Feature"));
                     }
                     else if (parentFeature == feature)
                     {
@@ -5759,16 +5759,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ComponentRef componentRef = new Wix.ComponentRef();
 
-                componentRef.Id = (string)row[1];
+                componentRef.Id = Convert.ToString(row[1]);
 
-                Wix.Feature parentFeature = (Wix.Feature)this.core.GetIndexedElement("Feature", (string)row[0]);
+                Wix.Feature parentFeature = (Wix.Feature)this.core.GetIndexedElement("Feature", Convert.ToString(row[0]));
                 if (null != parentFeature)
                 {
                     parentFeature.AddChild(componentRef);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_", (string)row[0], "Feature"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Feature_", Convert.ToString(row[0]), "Feature"));
                 }
                 this.core.IndexElement(row, componentRef);
             }
@@ -5858,16 +5858,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.SFPFile sfpFile = new Wix.SFPFile();
 
-                sfpFile.Id = (string)row[0];
+                sfpFile.Id = Convert.ToString(row[0]);
 
-                Wix.SFPCatalog sfpCatalog = (Wix.SFPCatalog)this.core.GetIndexedElement("SFPCatalog", (string)row[1]);
+                Wix.SFPCatalog sfpCatalog = (Wix.SFPCatalog)this.core.GetIndexedElement("SFPCatalog", Convert.ToString(row[1]));
                 if (null != sfpCatalog)
                 {
                     sfpCatalog.AddChild(sfpFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "SFPCatalog_", (string)row[1], "SFPCatalog"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "SFPCatalog_", Convert.ToString(row[1]), "SFPCatalog"));
                 }
             }
         }
@@ -5880,13 +5880,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", (string)row[0]);
+                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", Convert.ToString(row[0]));
 
                 if (null != file)
                 {
                     if (null != row[1])
                     {
-                        file.FontTitle = (string)row[1];
+                        file.FontTitle = Convert.ToString(row[1]);
                     }
                     else
                     {
@@ -5895,7 +5895,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", (string)row[0], "File"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", Convert.ToString(row[0]), "File"));
                 }
             }
         }
@@ -5910,9 +5910,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Icon icon = new Wix.Icon();
 
-                icon.Id = (string)row[0];
+                icon.Id = Convert.ToString(row[0]);
 
-                icon.SourceFile = (string)row[1];
+                icon.SourceFile = Convert.ToString(row[1]);
 
                 this.core.RootElement.AddChild(icon);
             }
@@ -5928,31 +5928,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Family family = new Wix.Family();
 
-                family.Name = (string)row[0];
+                family.Name = Convert.ToString(row[0]);
 
                 if (null != row[1])
                 {
-                    family.MediaSrcProp = (string)row[1];
+                    family.MediaSrcProp = Convert.ToString(row[1]);
                 }
 
                 if (null != row[2])
                 {
-                    family.DiskId = (int)row[2];
+                    family.DiskId = Convert.ToInt32(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    family.SequenceStart = (int)row[3];
+                    family.SequenceStart = Convert.ToInt32(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    family.DiskPrompt = (string)row[4];
+                    family.DiskPrompt = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    family.VolumeLabel = (string)row[5];
+                    family.VolumeLabel = Convert.ToString(row[5]);
                 }
 
                 this.core.RootElement.AddChild(family);
@@ -5970,9 +5970,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.IniFile iniFile = new Wix.IniFile();
 
-                iniFile.Id = (string)row[0];
+                iniFile.Id = Convert.ToString(row[0]);
 
-                string[] names = Installer.GetNames((string)row[1]);
+                string[] names = Installer.GetNames(Convert.ToString(row[1]));
 
                 if (null != names[0])
                 {
@@ -5993,16 +5993,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    iniFile.Directory = (string)row[2];
+                    iniFile.Directory = Convert.ToString(row[2]);
                 }
 
-                iniFile.Section = (string)row[3];
+                iniFile.Section = Convert.ToString(row[3]);
 
-                iniFile.Key = (string)row[4];
+                iniFile.Key = Convert.ToString(row[4]);
 
-                iniFile.Value = (string)row[5];
+                iniFile.Value = Convert.ToString(row[5]);
 
-                switch ((int)row[6])
+                switch (Convert.ToInt32(row[6]))
                 {
                     case MsiInterop.MsidbIniFileActionAddLine:
                         iniFile.Action = Wix.IniFile.ActionType.addLine;
@@ -6018,14 +6018,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[7]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[7]));
                 if (null != component)
                 {
                     component.AddChild(iniFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[7], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[7]), "Component"));
                 }
             }
         }
@@ -6040,9 +6040,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.IniFileSearch iniFileSearch = new Wix.IniFileSearch();
 
-                iniFileSearch.Id = (string)row[0];
+                iniFileSearch.Id = Convert.ToString(row[0]);
 
-                string[] names = Installer.GetNames((string)row[1]);
+                string[] names = Installer.GetNames(Convert.ToString(row[1]));
                 if (null != names[0] && null != names[1])
                 {
                     iniFileSearch.ShortName = names[0];
@@ -6053,13 +6053,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     iniFileSearch.Name = names[0];
                 }
 
-                iniFileSearch.Section = (string)row[2];
+                iniFileSearch.Section = Convert.ToString(row[2]);
 
-                iniFileSearch.Key = (string)row[3];
+                iniFileSearch.Key = Convert.ToString(row[3]);
 
                 if (null != row[4])
                 {
-                    int field = (int)row[4];
+                    int field = Convert.ToInt32(row[4]);
 
                     if (0 != field)
                     {
@@ -6069,7 +6069,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[5])
                 {
-                    switch ((int)row[5])
+                    switch (Convert.ToInt32(row[5]))
                     {
                         case MsiInterop.MsidbLocatorTypeDirectory:
                             iniFileSearch.Type = Wix.IniFileSearch.TypeType.directory;
@@ -6100,16 +6100,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.IsolateComponent isolateComponent = new Wix.IsolateComponent();
 
-                isolateComponent.Shared = (string)row[0];
+                isolateComponent.Shared = Convert.ToString(row[0]);
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(isolateComponent);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
             }
         }
@@ -6122,16 +6122,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if (Compiler.DowngradePreventedCondition == (string)row[0] || Compiler.UpgradePreventedCondition == (string)row[0])
+                if (Compiler.DowngradePreventedCondition == Convert.ToString(row[0]) || Compiler.UpgradePreventedCondition == Convert.ToString(row[0]))
                 {
                     continue; // MajorUpgrade rows processed in FinalizeUpgradeTable
                 }
 
                 Wix.Condition condition = new Wix.Condition();
 
-                condition.Content = (string)row[0];
+                condition.Content = Convert.ToString(row[0]);
 
-                condition.Message = (string)row[1];
+                condition.Message = Convert.ToString(row[1]);
 
                 this.core.RootElement.AddChild(condition);
             }
@@ -6154,22 +6154,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (Row row in listBoxRows.Values)
             {
-                if (null == listBox || (string)row[0] != listBox.Property)
+                if (null == listBox || Convert.ToString(row[0]) != listBox.Property)
                 {
                     listBox = new Wix.ListBox();
 
-                    listBox.Property = (string)row[0];
+                    listBox.Property = Convert.ToString(row[0]);
 
                     this.core.UIElement.AddChild(listBox);
                 }
 
                 Wix.ListItem listItem = new Wix.ListItem();
 
-                listItem.Value = (string)row[2];
+                listItem.Value = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    listItem.Text = (string)row[3];
+                    listItem.Text = Convert.ToString(row[3]);
                 }
 
                 listBox.AddChild(listItem);
@@ -6193,27 +6193,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (Row row in listViewRows.Values)
             {
-                if (null == listView || (string)row[0] != listView.Property)
+                if (null == listView || Convert.ToString(row[0]) != listView.Property)
                 {
                     listView = new Wix.ListView();
 
-                    listView.Property = (string)row[0];
+                    listView.Property = Convert.ToString(row[0]);
 
                     this.core.UIElement.AddChild(listView);
                 }
 
                 Wix.ListItem listItem = new Wix.ListItem();
 
-                listItem.Value = (string)row[2];
+                listItem.Value = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    listItem.Text = (string)row[3];
+                    listItem.Text = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    listItem.Icon = (string)row[4];
+                    listItem.Icon = Convert.ToString(row[4]);
                 }
 
                 listView.AddChild(listItem);
@@ -6231,7 +6231,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 Wix.Permission permission = new Wix.Permission();
                 string[] specialPermissions;
 
-                switch ((string)row[1])
+                switch (Convert.ToString(row[1]))
                 {
                     case "CreateFolder":
                         specialPermissions = Common.FolderPermissions;
@@ -6247,7 +6247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         return;
                 }
 
-                int permissionBits = (int)row[4];
+                int permissionBits = Convert.ToInt32(row[4]);
                 for (int i = 0; i < 32; i++)
                 {
                     if (0 != ((permissionBits >> i) & 1))
@@ -6359,10 +6359,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    permission.Domain = (string)row[2];
+                    permission.Domain = Convert.ToString(row[2]);
                 }
 
-                permission.User = (string)row[3];
+                permission.User = Convert.ToString(row[3]);
 
                 this.core.IndexElement(row, permission);
             }
@@ -6418,11 +6418,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.MIME mime = new Wix.MIME();
 
-                mime.ContentType = (string)row[0];
+                mime.ContentType = Convert.ToString(row[0]);
 
                 if (null != row[2])
                 {
-                    mime.Class = (string)row[2];
+                    mime.Class = Convert.ToString(row[2]);
                 }
 
                 this.core.IndexElement(row, mime);
@@ -6439,9 +6439,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Configuration configuration = new Wix.Configuration();
 
-                configuration.Name = (string)row[0];
+                configuration.Name = Convert.ToString(row[0]);
 
-                switch ((int)row[1])
+                switch (Convert.ToInt32(row[1]))
                 {
                     case 0:
                         configuration.Format = Wix.Configuration.FormatType.Text;
@@ -6462,22 +6462,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    configuration.Type = (string)row[2];
+                    configuration.Type = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    configuration.ContextData = (string)row[3];
+                    configuration.ContextData = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    configuration.DefaultValue = (string)row[4];
+                    configuration.DefaultValue = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    int attributes = (int)row[5];
+                    int attributes = Convert.ToInt32(row[5]);
 
                     if (MsiInterop.MsidbMsmConfigurableOptionKeyNoOrphan == (attributes & MsiInterop.MsidbMsmConfigurableOptionKeyNoOrphan))
                     {
@@ -6497,22 +6497,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[6])
                 {
-                    configuration.DisplayName = (string)row[6];
+                    configuration.DisplayName = Convert.ToString(row[6]);
                 }
 
                 if (null != row[7])
                 {
-                    configuration.Description = (string)row[7];
+                    configuration.Description = Convert.ToString(row[7]);
                 }
 
                 if (null != row[8])
                 {
-                    configuration.HelpLocation = (string)row[8];
+                    configuration.HelpLocation = Convert.ToString(row[8]);
                 }
 
                 if (null != row[9])
                 {
-                    configuration.HelpKeyword = (string)row[9];
+                    configuration.HelpKeyword = Convert.ToString(row[9]);
                 }
 
                 this.core.RootElement.AddChild(configuration);
@@ -6529,13 +6529,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Dependency dependency = new Wix.Dependency();
 
-                dependency.RequiredId = (string)row[2];
+                dependency.RequiredId = Convert.ToString(row[2]);
 
                 dependency.RequiredLanguage = Convert.ToInt32(row[3], CultureInfo.InvariantCulture);
 
                 if (null != row[4])
                 {
-                    dependency.RequiredVersion = (string)row[4];
+                    dependency.RequiredVersion = Convert.ToString(row[4]);
                 }
 
                 this.core.RootElement.AddChild(dependency);
@@ -6552,9 +6552,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Exclusion exclusion = new Wix.Exclusion();
 
-                exclusion.ExcludedId = (string)row[2];
+                exclusion.ExcludedId = Convert.ToString(row[2]);
 
-                int excludedLanguage = Convert.ToInt32((string)row[3], CultureInfo.InvariantCulture);
+                int excludedLanguage = Convert.ToInt32(Convert.ToString(row[3]), CultureInfo.InvariantCulture);
                 if (0 < excludedLanguage)
                 {
                     exclusion.ExcludeLanguage = excludedLanguage;
@@ -6566,12 +6566,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4])
                 {
-                    exclusion.ExcludedMinVersion = (string)row[4];
+                    exclusion.ExcludedMinVersion = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    exclusion.ExcludedMinVersion = (string)row[5];
+                    exclusion.ExcludedMinVersion = Convert.ToString(row[5]);
                 }
 
                 this.core.RootElement.AddChild(exclusion);
@@ -6586,7 +6586,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                string tableName = (string)row[0];
+                string tableName = Convert.ToString(row[0]);
 
                 // the linker automatically adds a ModuleIgnoreTable row for some tables
                 if ("ModuleConfiguration" != tableName && "ModuleSubstitution" != tableName)
@@ -6612,12 +6612,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 Wix.Module module = (Wix.Module)this.core.RootElement;
 
-                module.Id = (string)row[0];
+                module.Id = Convert.ToString(row[0]);
 
                 // support Language columns that are treated as integers as well as strings (the WiX default, to support localizability)
                 module.Language = Convert.ToString(row[1], CultureInfo.InvariantCulture);
 
-                module.Version = (string)row[2];
+                module.Version = Convert.ToString(row[2]);
             }
             else
             {
@@ -6635,15 +6635,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Substitution substitution = new Wix.Substitution();
 
-                substitution.Table = (string)row[0];
+                substitution.Table = Convert.ToString(row[0]);
 
-                substitution.Row = (string)row[1];
+                substitution.Row = Convert.ToString(row[1]);
 
-                substitution.Column = (string)row[2];
+                substitution.Column = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    substitution.Value = (string)row[3];
+                    substitution.Value = Convert.ToString(row[3]);
                 }
 
                 this.core.RootElement.AddChild(substitution);
@@ -6660,16 +6660,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.CopyFile copyFile = new Wix.CopyFile();
 
-                copyFile.Id = (string)row[0];
+                copyFile.Id = Convert.ToString(row[0]);
 
                 if (null != row[2])
                 {
-                    copyFile.SourceName = (string)row[2];
+                    copyFile.SourceName = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    string[] names = Installer.GetNames((string)row[3]);
+                    string[] names = Installer.GetNames(Convert.ToString(row[3]));
                     if (null != names[0] && null != names[1])
                     {
                         copyFile.DestinationShortName = names[0];
@@ -6683,7 +6683,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 // source/destination directory/property is set in FinalizeDuplicateMoveFileTables
 
-                switch ((int)row[6])
+                switch (Convert.ToInt32(row[6]))
                 {
                     case 0:
                         break;
@@ -6695,14 +6695,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(copyFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
                 this.core.IndexElement(row, copyFile);
             }
@@ -6718,9 +6718,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.DigitalCertificate digitalCertificate = new Wix.DigitalCertificate();
 
-                digitalCertificate.Id = (string)row[0];
+                digitalCertificate.Id = Convert.ToString(row[0]);
 
-                digitalCertificate.SourceFile = (string)row[1];
+                digitalCertificate.SourceFile = Convert.ToString(row[1]);
 
                 this.core.IndexElement(row, digitalCertificate);
             }
@@ -6738,27 +6738,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[3])
                 {
-                    digitalSignature.SourceFile = (string)row[3];
+                    digitalSignature.SourceFile = Convert.ToString(row[3]);
                 }
 
-                Wix.DigitalCertificate digitalCertificate = (Wix.DigitalCertificate)this.core.GetIndexedElement("MsiDigitalCertificate", (string)row[2]);
+                Wix.DigitalCertificate digitalCertificate = (Wix.DigitalCertificate)this.core.GetIndexedElement("MsiDigitalCertificate", Convert.ToString(row[2]));
                 if (null != digitalCertificate)
                 {
                     digitalSignature.AddChild(digitalCertificate);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DigitalCertificate_", (string)row[2], "MsiDigitalCertificate"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DigitalCertificate_", Convert.ToString(row[2]), "MsiDigitalCertificate"));
                 }
 
-                Wix.IParentElement parentElement = (Wix.IParentElement)this.core.GetIndexedElement((string)row[0], (string)row[1]);
+                Wix.IParentElement parentElement = (Wix.IParentElement)this.core.GetIndexedElement(Convert.ToString(row[0]), Convert.ToString(row[1]));
                 if (null != parentElement)
                 {
                     parentElement.AddChild(digitalSignature);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "SignObject", (string)row[1], (string)row[0]));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "SignObject", Convert.ToString(row[1]), Convert.ToString(row[0])));
                 }
             }
         }
@@ -6773,25 +6773,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.EmbeddedChainer embeddedChainer = new Wix.EmbeddedChainer();
 
-                embeddedChainer.Id = (string)row[0];
+                embeddedChainer.Id = Convert.ToString(row[0]);
 
-                embeddedChainer.Content = (string)row[1];
+                embeddedChainer.Content = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    embeddedChainer.CommandLine = (string)row[2];
+                    embeddedChainer.CommandLine = Convert.ToString(row[2]);
                 }
 
-                switch ((int)row[4])
+                switch (Convert.ToInt32(row[4]))
                 {
                     case MsiInterop.MsidbCustomActionTypeExe + MsiInterop.MsidbCustomActionTypeBinaryData:
-                        embeddedChainer.BinarySource = (string)row[3];
+                        embeddedChainer.BinarySource = Convert.ToString(row[3]);
                         break;
                     case MsiInterop.MsidbCustomActionTypeExe + MsiInterop.MsidbCustomActionTypeSourceFile:
-                        embeddedChainer.FileSource = (string)row[3];
+                        embeddedChainer.FileSource = Convert.ToString(row[3]);
                         break;
                     case MsiInterop.MsidbCustomActionTypeExe + MsiInterop.MsidbCustomActionTypeProperty:
-                        embeddedChainer.PropertySource = (string)row[3];
+                        embeddedChainer.PropertySource = Convert.ToString(row[3]);
                         break;
                     default:
                         this.core.OnMessage(WixWarnings.IllegalColumnValue(row.SourceLineNumbers, table.Name, row.Fields[4].Column.Name, row[4]));
@@ -6814,7 +6814,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (Row row in table.Rows)
             {
-                int attributes = (int)row[2];
+                int attributes = Convert.ToInt32(row[2]);
 
                 if (MsiInterop.MsidbEmbeddedUI == (attributes & MsiInterop.MsidbEmbeddedUI))
                 {
@@ -6824,10 +6824,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        embeddedUI.Id = (string)row[0];
-                        embeddedUI.Name = (string)row[1];
+                        embeddedUI.Id = Convert.ToString(row[0]);
+                        embeddedUI.Name = Convert.ToString(row[1]);
 
-                        int messageFilter = (int)row[3];
+                        int messageFilter = Convert.ToInt32(row[3]);
                         if (0 == (messageFilter & MsiInterop.INSTALLLOGMODE_FATALEXIT))
                         {
                             embeddedUI.IgnoreFatalExit = Wix.YesNoType.yes;
@@ -6923,7 +6923,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             embeddedUI.SupportBasicUI = Wix.YesNoType.yes;
                         }
 
-                        embeddedUI.SourceFile = (string)row[4];
+                        embeddedUI.SourceFile = Convert.ToString(row[4]);
 
                         this.core.UIElement.AddChild(embeddedUI);
                         foundEmbeddedUI = true;
@@ -6933,9 +6933,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.EmbeddedUIResource embeddedResource = new Wix.EmbeddedUIResource();
 
-                    embeddedResource.Id = (string)row[0];
-                    embeddedResource.Name = (string)row[1];
-                    embeddedResource.SourceFile = (string)row[4];
+                    embeddedResource.Id = Convert.ToString(row[0]);
+                    embeddedResource.Name = Convert.ToString(row[1]);
+                    embeddedResource.SourceFile = Convert.ToString(row[4]);
 
                     embeddedUI.AddChild(embeddedResource);
                     foundEmbeddedResources = true;
@@ -6957,17 +6957,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
             foreach (Row row in table.Rows)
             {
                 Wix.PermissionEx permissionEx = new Wix.PermissionEx();
-                permissionEx.Id = (string)row[0];
-                permissionEx.Sddl = (string)row[3];
+                permissionEx.Id = Convert.ToString(row[0]);
+                permissionEx.Sddl = Convert.ToString(row[3]);
                 
                 if (null != row[4])
                 {
                     Wix.Condition condition = new Wix.Condition();
-                    condition.Content = (string)row[4];
+                    condition.Content = Convert.ToString(row[4]);
                     permissionEx.AddChild(condition);
                 }
 
-                switch ((string)row[2])
+                switch (Convert.ToString(row[2]))
                 {
                     case "CreateFolder":
                     case "File":
@@ -7020,7 +7020,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                Wix.DigitalCertificate digitalCertificate = (Wix.DigitalCertificate)this.core.GetIndexedElement("MsiDigitalCertificate", (string)row[1]);
+                Wix.DigitalCertificate digitalCertificate = (Wix.DigitalCertificate)this.core.GetIndexedElement("MsiDigitalCertificate", Convert.ToString(row[1]));
 
                 if (null != digitalCertificate)
                 {
@@ -7028,7 +7028,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DigitalCertificate_", (string)row[1], "MsiDigitalCertificate"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DigitalCertificate_", Convert.ToString(row[1]), "MsiDigitalCertificate"));
                 }
             }
         }
@@ -7042,18 +7042,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
             foreach (Row row in table.Rows)
             {
                 Wix.ShortcutProperty property = new Wix.ShortcutProperty();
-                property.Id = (string)row[0];
-                property.Key = (string)row[2];
-                property.Value = (string)row[3];
+                property.Id = Convert.ToString(row[0]);
+                property.Key = Convert.ToString(row[2]);
+                property.Value = Convert.ToString(row[3]);
 
-                Wix.Shortcut shortcut = (Wix.Shortcut)this.core.GetIndexedElement("Shortcut", (string)row[1]);
+                Wix.Shortcut shortcut = (Wix.Shortcut)this.core.GetIndexedElement("Shortcut", Convert.ToString(row[1]));
                 if (null != shortcut)
                 {
                     shortcut.AddChild(property);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Shortcut_", (string)row[1], "Shortcut"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Shortcut_", Convert.ToString(row[1]), "Shortcut"));
                 }
             }
         }
@@ -7068,21 +7068,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Property property = new Wix.Property();
 
-                property.Id = (string)row[1];
+                property.Id = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    property.Value = (string)row[2];
+                    property.Value = Convert.ToString(row[2]);
                 }
 
-                Wix.ODBCDriver odbcDriver = (Wix.ODBCDriver)this.core.GetIndexedElement("ODBCDriver", (string)row[0]);
+                Wix.ODBCDriver odbcDriver = (Wix.ODBCDriver)this.core.GetIndexedElement("ODBCDriver", Convert.ToString(row[0]));
                 if (null != odbcDriver)
                 {
                     odbcDriver.AddChild(property);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Driver_", (string)row[0], "ODBCDriver"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Driver_", Convert.ToString(row[0]), "ODBCDriver"));
                 }
             }
         }
@@ -7097,13 +7097,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ODBCDataSource odbcDataSource = new Wix.ODBCDataSource();
 
-                odbcDataSource.Id = (string)row[0];
+                odbcDataSource.Id = Convert.ToString(row[0]);
 
-                odbcDataSource.Name = (string)row[2];
+                odbcDataSource.Name = Convert.ToString(row[2]);
 
-                odbcDataSource.DriverName = (string)row[3];
+                odbcDataSource.DriverName = Convert.ToString(row[3]);
 
-                switch ((int)row[4])
+                switch (Convert.ToInt32(row[4]))
                 {
                     case MsiInterop.MsidbODBCDataSourceRegistrationPerMachine:
                         odbcDataSource.Registration = Wix.ODBCDataSource.RegistrationType.machine;
@@ -7130,25 +7130,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ODBCDriver odbcDriver = new Wix.ODBCDriver();
 
-                odbcDriver.Id = (string)row[0];
+                odbcDriver.Id = Convert.ToString(row[0]);
 
-                odbcDriver.Name = (string)row[2];
+                odbcDriver.Name = Convert.ToString(row[2]);
 
-                odbcDriver.File = (string)row[3];
+                odbcDriver.File = Convert.ToString(row[3]);
 
                 if (null != row[4])
                 {
-                    odbcDriver.SetupFile = (string)row[4];
+                    odbcDriver.SetupFile = Convert.ToString(row[4]);
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(odbcDriver);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
                 this.core.IndexElement(row, odbcDriver);
             }
@@ -7164,21 +7164,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Property property = new Wix.Property();
 
-                property.Id = (string)row[1];
+                property.Id = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    property.Value = (string)row[2];
+                    property.Value = Convert.ToString(row[2]);
                 }
 
-                Wix.ODBCDataSource odbcDataSource = (Wix.ODBCDataSource)this.core.GetIndexedElement("ODBCDataSource", (string)row[0]);
+                Wix.ODBCDataSource odbcDataSource = (Wix.ODBCDataSource)this.core.GetIndexedElement("ODBCDataSource", Convert.ToString(row[0]));
                 if (null != odbcDataSource)
                 {
                     odbcDataSource.AddChild(property);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DataSource_", (string)row[0], "ODBCDataSource"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "DataSource_", Convert.ToString(row[0]), "ODBCDataSource"));
                 }
             }
         }
@@ -7193,25 +7193,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ODBCTranslator odbcTranslator = new Wix.ODBCTranslator();
 
-                odbcTranslator.Id = (string)row[0];
+                odbcTranslator.Id = Convert.ToString(row[0]);
 
-                odbcTranslator.Name = (string)row[2];
+                odbcTranslator.Name = Convert.ToString(row[2]);
 
-                odbcTranslator.File = (string)row[3];
+                odbcTranslator.File = Convert.ToString(row[3]);
 
                 if (null != row[4])
                 {
-                    odbcTranslator.SetupFile = (string)row[4];
+                    odbcTranslator.SetupFile = Convert.ToString(row[4]);
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(odbcTranslator);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
             }
         }
@@ -7228,9 +7228,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 foreach (Row row in table.Rows)
                 {
-                    string value = (string)row[2];
+                    string value = Convert.ToString(row[2]);
 
-                    switch ((string)row[1])
+                    switch (Convert.ToString(row[1]))
                     {
                         case "AllowRemoval":
                             if ("1" == value)
@@ -7283,17 +7283,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "OptimizeCA":
                             Wix.OptimizeCustomActions optimizeCustomActions = new Wix.OptimizeCustomActions();
                             int optimizeCA = Int32.Parse(value, CultureInfo.InvariantCulture);
-                            if (0 != ((int)OptimizeCA.SkipAssignment & optimizeCA))
+                            if (0 != (Convert.ToInt32(OptimizeCA.SkipAssignment) & optimizeCA))
                             {
                                 optimizeCustomActions.SkipAssignment = Wix.YesNoType.yes;
                             }
 
-                            if (0 != ((int)OptimizeCA.SkipImmediate & optimizeCA))
+                            if (0 != (Convert.ToInt32(OptimizeCA.SkipImmediate) & optimizeCA))
                             {
                                 optimizeCustomActions.SkipImmediate = Wix.YesNoType.yes;
                             }
 
-                            if (0 != ((int)OptimizeCA.SkipDeferred & optimizeCA))
+                            if (0 != (Convert.ToInt32(OptimizeCA.SkipDeferred) & optimizeCA))
                             {
                                 optimizeCustomActions.SkipDeferred = Wix.YesNoType.yes;
                             }
@@ -7317,14 +7317,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                             if (null != row[0])
                             {
-                                customProperty.Company = (string)row[0];
+                                customProperty.Company = Convert.ToString(row[0]);
                             }
 
-                            customProperty.Property = (string)row[1];
+                            customProperty.Property = Convert.ToString(row[1]);
 
                             if (null != row[2])
                             {
-                                customProperty.Value = (string)row[2];
+                                customProperty.Value = Convert.ToString(row[2]);
                             }
 
                             patchMetadata.AddChild(customProperty);
@@ -7346,28 +7346,28 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.PatchSequence patchSequence = new Wix.PatchSequence();
 
-                patchSequence.PatchFamily = (string)row[0];
+                patchSequence.PatchFamily = Convert.ToString(row[0]);
 
                 if (null != row[1])
                 {
                     try
                     {
-                        Guid guid = new Guid((string)row[1]);
+                        Guid guid = new Guid(Convert.ToString(row[1]));
 
-                        patchSequence.ProductCode = (string)row[1];
+                        patchSequence.ProductCode = Convert.ToString(row[1]);
                     }
                     catch // non-guid value
                     {
-                        patchSequence.TargetImage = (string)row[1];
+                        patchSequence.TargetImage = Convert.ToString(row[1]);
                     }
                 }
 
                 if (null != row[2])
                 {
-                    patchSequence.Sequence = (string)row[2];
+                    patchSequence.Sequence = Convert.ToString(row[2]);
                 }
 
-                if (null != row[3] && 0x1 == (int)row[3])
+                if (null != row[3] && 0x1 == Convert.ToInt32(row[3]))
                 {
                     patchSequence.Supersede = Wix.YesNoType.yes;
                 }
@@ -7388,21 +7388,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 progId.Advertise = Wix.YesNoType.yes;
 
-                progId.Id = (string)row[0];
+                progId.Id = Convert.ToString(row[0]);
 
                 if (null != row[3])
                 {
-                    progId.Description = (string)row[3];
+                    progId.Description = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    progId.Icon = (string)row[4];
+                    progId.Icon = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    progId.IconIndex = (int)row[5];
+                    progId.IconIndex = Convert.ToInt32(row[5]);
                 }
 
                 this.core.IndexElement(row, progId);
@@ -7415,7 +7415,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[1])
                 {
-                    Wix.ProgId parentProgId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", (string)row[1]);
+                    Wix.ProgId parentProgId = (Wix.ProgId)this.core.GetIndexedElement("ProgId", Convert.ToString(row[1]));
 
                     if (null != parentProgId)
                     {
@@ -7423,7 +7423,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_Parent", (string)row[1], "ProgId"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "ProgId_Parent", Convert.ToString(row[1]), "ProgId"));
                     }
                 }
                 else if (null != row[2])
@@ -7447,8 +7447,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (Row row in table.Rows)
             {
-                string name = (string)row[0];
-                string value = (string)row[1];
+                string name = Convert.ToString(row[0]);
+                string value = Convert.ToString(row[1]);
 
                 switch (name)
                 {
@@ -7556,8 +7556,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                string id = (string)row[0];
-                string value = (string)row[1];
+                string id = Convert.ToString(row[0]);
+                string value = Convert.ToString(row[1]);
 
                 if ("AdminProperties" == id || "MsiHiddenProperties" == id || "SecureCustomProperties" == id)
                 {
@@ -7648,23 +7648,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Category category = new Wix.Category();
 
-                category.Id = (string)row[0];
+                category.Id = Convert.ToString(row[0]);
 
-                category.Qualifier = (string)row[1];
+                category.Qualifier = Convert.ToString(row[1]);
 
                 if (null != row[3])
                 {
-                    category.AppData = (string)row[3];
+                    category.AppData = Convert.ToString(row[3]);
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[2]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[2]));
                 if (null != component)
                 {
                     component.AddChild(category);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[2], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[2]), "Component"));
                 }
             }
         }
@@ -7682,7 +7682,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.RadioButton radioButton = new Wix.RadioButton();
 
-                radioButton.Value = (string)row[2];
+                radioButton.Value = Convert.ToString(row[2]);
 
                 radioButton.X = Convert.ToString(row[3], CultureInfo.InvariantCulture);
 
@@ -7694,12 +7694,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[7])
                 {
-                    radioButton.Text = (string)row[7];
+                    radioButton.Text = Convert.ToString(row[7]);
                 }
 
                 if (null != row[8])
                 {
-                    string[] help = ((string)row[8]).Split('|');
+                    string[] help = (Convert.ToString(row[8])).Split('|');
 
                     if (2 == help.Length)
                     {
@@ -7723,16 +7723,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             foreach (Row row in radioButtons.Values)
             {
                 Wix.RadioButton radioButton = (Wix.RadioButton)this.core.GetIndexedElement(row);
-                Wix.RadioButtonGroup radioButtonGroup = (Wix.RadioButtonGroup)radioButtonGroups[(string)row[0]];
+                Wix.RadioButtonGroup radioButtonGroup = (Wix.RadioButtonGroup)radioButtonGroups[Convert.ToString(row[0])];
 
                 if (null == radioButtonGroup)
                 {
                     radioButtonGroup = new Wix.RadioButtonGroup();
 
-                    radioButtonGroup.Property = (string)row[0];
+                    radioButtonGroup.Property = Convert.ToString(row[0]);
 
                     this.core.UIElement.AddChild(radioButtonGroup);
-                    radioButtonGroups.Add((string)row[0], radioButtonGroup);
+                    radioButtonGroups.Add(Convert.ToString(row[0]), radioButtonGroup);
                 }
 
                 radioButtonGroup.AddChild(radioButton);
@@ -7747,11 +7747,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if ("-" == (string)row[3] && null == row[4])
+                if ("-" == Convert.ToString(row[3]) && null == row[4])
                 {
                     Wix.RemoveRegistryKey removeRegistryKey = new Wix.RemoveRegistryKey();
 
-                    removeRegistryKey.Id = (string)row[0];
+                    removeRegistryKey.Id = Convert.ToString(row[0]);
 
                     Wix.RegistryRootType registryRootType;
                     if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
@@ -7759,17 +7759,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         removeRegistryKey.Root = registryRootType;
                     }
 
-                    removeRegistryKey.Key = (string)row[2];
+                    removeRegistryKey.Key = Convert.ToString(row[2]);
 
                     removeRegistryKey.Action = Wix.RemoveRegistryKey.ActionType.removeOnUninstall;
 
                     this.core.IndexElement(row, removeRegistryKey);
                 }
-                else if (("+" == (string)row[3] || "*" == (string)row[3]) && null == row[4])
+                else if (("+" == Convert.ToString(row[3]) || "*" == Convert.ToString(row[3])) && null == row[4])
                 {
                     Wix.RegistryKey registryKey = new Wix.RegistryKey();
 
-                    registryKey.Id = (string)row[0];
+                    registryKey.Id = Convert.ToString(row[0]);
 
                     Wix.RegistryRootType registryRootType;
                     if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
@@ -7777,9 +7777,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         registryKey.Root = registryRootType;
                     }
 
-                    registryKey.Key = (string)row[2];
+                    registryKey.Key = Convert.ToString(row[2]);
 
-                    if ("+" == (string)row[3])
+                    if ("+" == Convert.ToString(row[3]))
                     {
                         registryKey.Action = Wix.RegistryKey.ActionType.create;
                     }
@@ -7794,7 +7794,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.RegistryValue registryValue = new Wix.RegistryValue();
 
-                    registryValue.Id = (string)row[0];
+                    registryValue.Id = Convert.ToString(row[0]);
 
                     Wix.RegistryRootType registryRootType;
                     if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
@@ -7802,16 +7802,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         registryValue.Root = registryRootType;
                     }
 
-                    registryValue.Key = (string)row[2];
+                    registryValue.Key = Convert.ToString(row[2]);
 
                     if (null != row[3])
                     {
-                        registryValue.Name = (string)row[3];
+                        registryValue.Name = Convert.ToString(row[3]);
                     }
 
                     if (null != row[4])
                     {
-                        string value = (string)row[4];
+                        string value = Convert.ToString(row[4]);
 
                         if (value.StartsWith("#x", StringComparison.Ordinal))
                         {
@@ -7896,9 +7896,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.RegistrySearch registrySearch = new Wix.RegistrySearch();
 
-                registrySearch.Id = (string)row[0];
+                registrySearch.Id = Convert.ToString(row[0]);
 
-                switch ((int)row[1])
+                switch (Convert.ToInt32(row[1]))
                 {
                     case MsiInterop.MsidbRegistryRootClassesRoot:
                         registrySearch.Root = Wix.RegistrySearch.RootType.HKCR;
@@ -7917,11 +7917,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                registrySearch.Key = (string)row[2];
+                registrySearch.Key = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    registrySearch.Name = (string)row[3];
+                    registrySearch.Name = Convert.ToString(row[3]);
                 }
 
                 if (null == row[4])
@@ -7930,7 +7930,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    int type = (int)row[4];
+                    int type = Convert.ToInt32(row[4]);
 
                     if (MsiInterop.MsidbLocatorType64bit == (type & MsiInterop.MsidbLocatorType64bit))
                     {
@@ -7971,11 +7971,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.RemoveFolder removeFolder = new Wix.RemoveFolder();
 
-                    removeFolder.Id = (string)row[0];
+                    removeFolder.Id = Convert.ToString(row[0]);
 
                     // directory/property is set in FinalizeDecompile
 
-                    switch ((int)row[4])
+                    switch (Convert.ToInt32(row[4]))
                     {
                         case MsiInterop.MsidbRemoveFileInstallModeOnInstall:
                             removeFolder.On = Wix.InstallUninstallType.install;
@@ -7991,14 +7991,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                     }
 
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                     if (null != component)
                     {
                         component.AddChild(removeFolder);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                     }
                     this.core.IndexElement(row, removeFolder);
                 }
@@ -8006,9 +8006,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     Wix.RemoveFile removeFile = new Wix.RemoveFile();
 
-                    removeFile.Id = (string)row[0];
+                    removeFile.Id = Convert.ToString(row[0]);
 
-                    string[] names = Installer.GetNames((string)row[2]);
+                    string[] names = Installer.GetNames(Convert.ToString(row[2]));
                     if (null != names[0] && null != names[1])
                     {
                         removeFile.ShortName = names[0];
@@ -8021,7 +8021,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     // directory/property is set in FinalizeDecompile
 
-                    switch ((int)row[4])
+                    switch (Convert.ToInt32(row[4]))
                     {
                         case MsiInterop.MsidbRemoveFileInstallModeOnInstall:
                             removeFile.On = Wix.InstallUninstallType.install;
@@ -8037,14 +8037,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                     }
 
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                     if (null != component)
                     {
                         component.AddChild(removeFile);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                     }
                     this.core.IndexElement(row, removeFile);
                 }
@@ -8061,9 +8061,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.IniFile iniFile = new Wix.IniFile();
 
-                iniFile.Id = (string)row[0];
+                iniFile.Id = Convert.ToString(row[0]);
 
-                string[] names = Installer.GetNames((string)row[1]);
+                string[] names = Installer.GetNames(Convert.ToString(row[1]));
                 if (null != names[0] && null != names[1])
                 {
                     iniFile.ShortName = names[0];
@@ -8076,19 +8076,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    iniFile.Directory = (string)row[2];
+                    iniFile.Directory = Convert.ToString(row[2]);
                 }
 
-                iniFile.Section = (string)row[3];
+                iniFile.Section = Convert.ToString(row[3]);
 
-                iniFile.Key = (string)row[4];
+                iniFile.Key = Convert.ToString(row[4]);
 
                 if (null != row[5])
                 {
-                    iniFile.Value = (string)row[5];
+                    iniFile.Value = Convert.ToString(row[5]);
                 }
 
-                switch ((int)row[6])
+                switch (Convert.ToInt32(row[6]))
                 {
                     case MsiInterop.MsidbIniFileActionRemoveLine:
                         iniFile.Action = Wix.IniFile.ActionType.removeLine;
@@ -8101,14 +8101,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[7]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[7]));
                 if (null != component)
                 {
                     component.AddChild(iniFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[7], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[7]), "Component"));
                 }
             }
         }
@@ -8121,11 +8121,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if ("-" == (string)row[3])
+                if ("-" == Convert.ToString(row[3]))
                 {
                     Wix.RemoveRegistryKey removeRegistryKey = new Wix.RemoveRegistryKey();
 
-                    removeRegistryKey.Id = (string)row[0];
+                    removeRegistryKey.Id = Convert.ToString(row[0]);
 
                     Wix.RegistryRootType registryRootType;
                     if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
@@ -8133,25 +8133,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         removeRegistryKey.Root = registryRootType;
                     }
 
-                    removeRegistryKey.Key = (string)row[2];
+                    removeRegistryKey.Key = Convert.ToString(row[2]);
 
                     removeRegistryKey.Action = Wix.RemoveRegistryKey.ActionType.removeOnInstall;
 
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[4]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[4]));
                     if (null != component)
                     {
                         component.AddChild(removeRegistryKey);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[4], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[4]), "Component"));
                     }
                 }
                 else
                 {
                     Wix.RemoveRegistryValue removeRegistryValue = new Wix.RemoveRegistryValue();
 
-                    removeRegistryValue.Id = (string)row[0];
+                    removeRegistryValue.Id = Convert.ToString(row[0]);
 
                     Wix.RegistryRootType registryRootType;
                     if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
@@ -8159,21 +8159,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         removeRegistryValue.Root = registryRootType;
                     }
 
-                    removeRegistryValue.Key = (string)row[2];
+                    removeRegistryValue.Key = Convert.ToString(row[2]);
 
                     if (null != row[3])
                     {
-                        removeRegistryValue.Name = (string)row[3];
+                        removeRegistryValue.Name = Convert.ToString(row[3]);
                     }
 
-                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[4]);
+                    Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[4]));
                     if (null != component)
                     {
                         component.AddChild(removeRegistryValue);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[4], "Component"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[4]), "Component"));
                     }
                 }
             }
@@ -8189,25 +8189,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ReserveCost reserveCost = new Wix.ReserveCost();
 
-                reserveCost.Id = (string)row[0];
+                reserveCost.Id = Convert.ToString(row[0]);
 
                 if (null != row[2])
                 {
-                    reserveCost.Directory = (string)row[2];
+                    reserveCost.Directory = Convert.ToString(row[2]);
                 }
 
-                reserveCost.RunLocal = (int)row[3];
+                reserveCost.RunLocal = Convert.ToInt32(row[3]);
 
-                reserveCost.RunFromSource = (int)row[4];
+                reserveCost.RunFromSource = Convert.ToInt32(row[4]);
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[1]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[1]));
                 if (null != component)
                 {
                     component.AddChild(reserveCost);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[1], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
                 }
             }
         }
@@ -8220,13 +8220,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", (string)row[0]);
+                Wix.File file = (Wix.File)this.core.GetIndexedElement("File", Convert.ToString(row[0]));
 
                 if (null != file)
                 {
                     if (null != row[1])
                     {
-                        file.SelfRegCost = (int)row[1];
+                        file.SelfRegCost = Convert.ToInt32(row[1]);
                     }
                     else
                     {
@@ -8235,7 +8235,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", (string)row[0], "File"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "File_", Convert.ToString(row[0]), "File"));
                 }
             }
         }
@@ -8250,11 +8250,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ServiceControl serviceControl = new Wix.ServiceControl();
 
-                serviceControl.Id = (string)row[0];
+                serviceControl.Id = Convert.ToString(row[0]);
 
-                serviceControl.Name = (string)row[1];
+                serviceControl.Name = Convert.ToString(row[1]);
 
-                int eventValue = (int)row[2];
+                int eventValue = Convert.ToInt32(row[2]);
                 if (MsiInterop.MsidbServiceControlEventStart == (eventValue & MsiInterop.MsidbServiceControlEventStart) &&
                     MsiInterop.MsidbServiceControlEventUninstallStart == (eventValue & MsiInterop.MsidbServiceControlEventUninstallStart))
                 {
@@ -8299,7 +8299,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[3])
                 {
-                    string[] arguments = NullSplitter.Split((string)row[3]);
+                    string[] arguments = NullSplitter.Split(Convert.ToString(row[3]));
 
                     foreach (string argument in arguments)
                     {
@@ -8313,7 +8313,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4])
                 {
-                    if (0 == (int)row[4])
+                    if (0 == Convert.ToInt32(row[4]))
                     {
                         serviceControl.Wait = Wix.YesNoType.no;
                     }
@@ -8323,14 +8323,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[5]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[5]));
                 if (null != component)
                 {
                     component.AddChild(serviceControl);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[5], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[5]), "Component"));
                 }
             }
         }
@@ -8345,16 +8345,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.ServiceInstall serviceInstall = new Wix.ServiceInstall();
 
-                serviceInstall.Id = (string)row[0];
+                serviceInstall.Id = Convert.ToString(row[0]);
 
-                serviceInstall.Name = (string)row[1];
+                serviceInstall.Name = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    serviceInstall.DisplayName = (string)row[2];
+                    serviceInstall.DisplayName = Convert.ToString(row[2]);
                 }
 
-                int serviceType = (int)row[3];
+                int serviceType = Convert.ToInt32(row[3]);
                 if (MsiInterop.MsidbServiceInstallInteractive == (serviceType & MsiInterop.MsidbServiceInstallInteractive))
                 {
                     serviceInstall.Interactive = Wix.YesNoType.yes;
@@ -8374,7 +8374,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     serviceInstall.Type = Wix.ServiceInstall.TypeType.shareProcess;
                 }
 
-                int startType = (int)row[4];
+                int startType = Convert.ToInt32(row[4]);
                 if (MsiInterop.MsidbServiceInstallDisabled == startType)
                 {
                     serviceInstall.Start = Wix.ServiceInstall.StartType.disabled;
@@ -8392,7 +8392,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.core.OnMessage(WixWarnings.IllegalColumnValue(row.SourceLineNumbers, table.Name, row.Fields[4].Column.Name, row[4]));
                 }
 
-                int errorControl = (int)row[5];
+                int errorControl = Convert.ToInt32(row[5]);
                 if (MsiInterop.MsidbServiceInstallErrorCritical == (errorControl & MsiInterop.MsidbServiceInstallErrorCritical))
                 {
                     serviceInstall.ErrorControl = Wix.ServiceInstall.ErrorControlType.critical;
@@ -8413,12 +8413,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[6])
                 {
-                    serviceInstall.LoadOrderGroup = (string)row[6];
+                    serviceInstall.LoadOrderGroup = Convert.ToString(row[6]);
                 }
 
                 if (null != row[7])
                 {
-                    string[] dependencies = NullSplitter.Split((string)row[7]);
+                    string[] dependencies = NullSplitter.Split(Convert.ToString(row[7]));
 
                     foreach (string dependency in dependencies)
                     {
@@ -8443,32 +8443,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[8])
                 {
-                    serviceInstall.Account = (string)row[8];
+                    serviceInstall.Account = Convert.ToString(row[8]);
                 }
 
                 if (null != row[9])
                 {
-                    serviceInstall.Password = (string)row[9];
+                    serviceInstall.Password = Convert.ToString(row[9]);
                 }
 
                 if (null != row[10])
                 {
-                    serviceInstall.Arguments = (string)row[10];
+                    serviceInstall.Arguments = Convert.ToString(row[10]);
                 }
 
                 if (null != row[12])
                 {
-                    serviceInstall.Description = (string)row[12];
+                    serviceInstall.Description = Convert.ToString(row[12]);
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[11]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[11]));
                 if (null != component)
                 {
                     component.AddChild(serviceInstall);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[11], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[11]), "Component"));
                 }
                 this.core.IndexElement(row, serviceInstall);
             }
@@ -8484,9 +8484,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.SFPCatalog sfpCatalog = new Wix.SFPCatalog();
 
-                sfpCatalog.Name = (string)row[0];
+                sfpCatalog.Name = Convert.ToString(row[0]);
 
-                sfpCatalog.SourceFile = (string)row[1];
+                sfpCatalog.SourceFile = Convert.ToString(row[1]);
 
                 this.core.IndexElement(row, sfpCatalog);
             }
@@ -8498,7 +8498,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    Wix.SFPCatalog parentSFPCatalog = (Wix.SFPCatalog)this.core.GetIndexedElement("SFPCatalog", (string)row[2]);
+                    Wix.SFPCatalog parentSFPCatalog = (Wix.SFPCatalog)this.core.GetIndexedElement("SFPCatalog", Convert.ToString(row[2]));
 
                     if (null != parentSFPCatalog)
                     {
@@ -8506,7 +8506,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        sfpCatalog.Dependency = (string)row[2];
+                        sfpCatalog.Dependency = Convert.ToString(row[2]);
 
                         this.core.RootElement.AddChild(sfpCatalog);
                     }
@@ -8528,11 +8528,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Shortcut shortcut = new Wix.Shortcut();
 
-                shortcut.Id = (string)row[0];
+                shortcut.Id = Convert.ToString(row[0]);
 
-                shortcut.Directory = (string)row[1];
+                shortcut.Directory = Convert.ToString(row[1]);
 
-                string[] names = Installer.GetNames((string)row[2]);
+                string[] names = Installer.GetNames(Convert.ToString(row[2]));
                 if (null != names[0] && null != names[1])
                 {
                     shortcut.ShortName = names[0];
@@ -8543,7 +8543,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     shortcut.Name = names[0];
                 }
 
-                string target = (string)row[4];
+                string target = Convert.ToString(row[4]);
                 if (target.StartsWith("[", StringComparison.Ordinal) && target.EndsWith("]", StringComparison.Ordinal))
                 {
                     // TODO: use this value to do a "more-correct" nesting under the indicated File or CreateDirectory element
@@ -8558,32 +8558,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[5])
                 {
-                    shortcut.Arguments = (string)row[5];
+                    shortcut.Arguments = Convert.ToString(row[5]);
                 }
 
                 if (null != row[6])
                 {
-                    shortcut.Description = (string)row[6];
+                    shortcut.Description = Convert.ToString(row[6]);
                 }
 
                 if (null != row[7])
                 {
-                    shortcut.Hotkey = (int)row[7];
+                    shortcut.Hotkey = Convert.ToInt32(row[7]);
                 }
 
                 if (null != row[8])
                 {
-                    shortcut.Icon = (string)row[8];
+                    shortcut.Icon = Convert.ToString(row[8]);
                 }
 
                 if (null != row[9])
                 {
-                    shortcut.IconIndex = (int)row[9];
+                    shortcut.IconIndex = Convert.ToInt32(row[9]);
                 }
 
                 if (null != row[10])
                 {
-                    switch ((int)row[10])
+                    switch (Convert.ToInt32(row[10]))
                     {
                         case 1:
                             shortcut.Show = Wix.Shortcut.ShowType.normal;
@@ -8602,7 +8602,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[11])
                 {
-                    shortcut.WorkingDirectory = (string)row[11];
+                    shortcut.WorkingDirectory = Convert.ToString(row[11]);
                 }
 
                 // Only try to read the MSI 4.0-specific columns if they actually exist
@@ -8610,33 +8610,33 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (null != row[12])
                     {
-                        shortcut.DisplayResourceDll = (string)row[12];
+                        shortcut.DisplayResourceDll = Convert.ToString(row[12]);
                     }
 
                     if (null != row[13])
                     {
-                        shortcut.DisplayResourceId = (int)row[13];
+                        shortcut.DisplayResourceId = Convert.ToInt32(row[13]);
                     }
 
                     if (null != row[14])
                     {
-                        shortcut.DescriptionResourceDll = (string)row[14];
+                        shortcut.DescriptionResourceDll = Convert.ToString(row[14]);
                     }
 
                     if (null != row[15])
                     {
-                        shortcut.DescriptionResourceId = (int)row[15];
+                        shortcut.DescriptionResourceId = Convert.ToInt32(row[15]);
                     }
                 }
 
-                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", (string)row[3]);
+                Wix.Component component = (Wix.Component)this.core.GetIndexedElement("Component", Convert.ToString(row[3]));
                 if (null != component)
                 {
                     component.AddChild(shortcut);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", (string)row[3], "Component"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[3]), "Component"));
                 }
 
                 this.core.IndexElement(row, shortcut);
@@ -8653,9 +8653,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.FileSearch fileSearch = new Wix.FileSearch();
 
-                fileSearch.Id = (string)row[0];
+                fileSearch.Id = Convert.ToString(row[0]);
 
-                string[] names = Installer.GetNames((string)row[1]);
+                string[] names = Installer.GetNames(Convert.ToString(row[1]));
                 if (null != names[0])
                 {
                     // it is permissable to just have a long name
@@ -8676,37 +8676,37 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[2])
                 {
-                    fileSearch.MinVersion = (string)row[2];
+                    fileSearch.MinVersion = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    fileSearch.MaxVersion = (string)row[3];
+                    fileSearch.MaxVersion = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    fileSearch.MinSize = (int)row[4];
+                    fileSearch.MinSize = Convert.ToInt32(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    fileSearch.MaxSize = (int)row[5];
+                    fileSearch.MaxSize = Convert.ToInt32(row[5]);
                 }
 
                 if (null != row[6])
                 {
-                    fileSearch.MinDate = DecompilerCore.ConvertIntegerToDateTime((int)row[6]);
+                    fileSearch.MinDate = DecompilerCore.ConvertIntegerToDateTime(Convert.ToInt32(row[6]));
                 }
 
                 if (null != row[7])
                 {
-                    fileSearch.MaxDate = DecompilerCore.ConvertIntegerToDateTime((int)row[7]);
+                    fileSearch.MaxDate = DecompilerCore.ConvertIntegerToDateTime(Convert.ToInt32(row[7]));
                 }
 
                 if (null != row[8])
                 {
-                    fileSearch.Languages = (string)row[8];
+                    fileSearch.Languages = Convert.ToString(row[8]);
                 }
 
                 this.core.IndexElement(row, fileSearch);
@@ -8726,23 +8726,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     targetFile = new Wix.TargetFile();
 
-                    targetFile.Id = (string)row[1];
+                    targetFile.Id = Convert.ToString(row[1]);
 
-                    Wix.TargetImage targetImage = (Wix.TargetImage)this.core.GetIndexedElement("TargetImages", (string)row[0]);
+                    Wix.TargetImage targetImage = (Wix.TargetImage)this.core.GetIndexedElement("TargetImages", Convert.ToString(row[0]));
                     if (null != targetImage)
                     {
                         targetImage.AddChild(targetFile);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Target", (string)row[0], "TargetImages"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Target", Convert.ToString(row[0]), "TargetImages"));
                     }
                     this.patchTargetFiles.Add(row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), targetFile);
                 }
 
                 if (null != row[2])
                 {
-                    string[] symbolPaths = ((string)row[2]).Split(';');
+                    string[] symbolPaths = (Convert.ToString(row[2])).Split(';');
 
                     foreach (string symbolPathString in symbolPaths)
                     {
@@ -8756,8 +8756,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[3] && null != row[4])
                 {
-                    string[] ignoreOffsets = ((string)row[3]).Split(',');
-                    string[] ignoreLengths = ((string)row[4]).Split(',');
+                    string[] ignoreOffsets = (Convert.ToString(row[3])).Split(',');
+                    string[] ignoreLengths = (Convert.ToString(row[4])).Split(',');
 
                     if (ignoreOffsets.Length == ignoreLengths.Length)
                     {
@@ -8810,13 +8810,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.TargetImage targetImage = new Wix.TargetImage();
 
-                targetImage.Id = (string)row[0];
+                targetImage.Id = Convert.ToString(row[0]);
 
-                targetImage.SourceFile = (string)row[1];
+                targetImage.SourceFile = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    string[] symbolPaths = ((string)row[3]).Split(';');
+                    string[] symbolPaths = (Convert.ToString(row[3])).Split(';');
 
                     foreach (string symbolPathString in symbolPaths)
                     {
@@ -8828,26 +8828,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                targetImage.Order = (int)row[4];
+                targetImage.Order = Convert.ToInt32(row[4]);
 
                 if (null != row[5])
                 {
-                    targetImage.Validation = (string)row[5];
+                    targetImage.Validation = Convert.ToString(row[5]);
                 }
 
-                if (0 != (int)row[6])
+                if (0 != Convert.ToInt32(row[6]))
                 {
                     targetImage.IgnoreMissingFiles = Wix.YesNoType.yes;
                 }
 
-                Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", (string)row[3]);
+                Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", Convert.ToString(row[3]));
                 if (null != upgradeImage)
                 {
                     upgradeImage.AddChild(targetImage);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", (string)row[3], "UpgradedImages"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", Convert.ToString(row[3]), "UpgradedImages"));
                 }
                 this.core.IndexElement(row, targetImage);
             }
@@ -8863,15 +8863,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.TextStyle textStyle = new Wix.TextStyle();
 
-                textStyle.Id = (string)row[0];
+                textStyle.Id = Convert.ToString(row[0]);
 
-                textStyle.FaceName = (string)row[1];
+                textStyle.FaceName = Convert.ToString(row[1]);
 
-                textStyle.Size = (string)row[2];
+                textStyle.Size = Convert.ToString(row[2]);
 
                 if (null != row[3])
                 {
-                    int color = (int)row[3];
+                    int color = Convert.ToInt32(row[3]);
 
                     textStyle.Red = color & 0xFF;
 
@@ -8882,7 +8882,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4])
                 {
-                    int styleBits = (int)row[4];
+                    int styleBits = Convert.ToInt32(row[4]);
 
                     if (MsiInterop.MsidbTextStyleStyleBitsBold == (styleBits & MsiInterop.MsidbTextStyleStyleBitsBold))
                     {
@@ -8919,15 +8919,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.TypeLib typeLib = new Wix.TypeLib();
 
-                typeLib.Id = (string)row[0];
+                typeLib.Id = Convert.ToString(row[0]);
 
                 typeLib.Advertise = Wix.YesNoType.yes;
 
-                typeLib.Language = (int)row[1];
+                typeLib.Language = Convert.ToInt32(row[1]);
 
                 if (null != row[3])
                 {
-                    int version = (int)row[3];
+                    int version = Convert.ToInt32(row[3]);
 
                     if (65536 == version)
                     {
@@ -8940,17 +8940,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (null != row[4])
                 {
-                    typeLib.Description = (string)row[4];
+                    typeLib.Description = Convert.ToString(row[4]);
                 }
 
                 if (null != row[5])
                 {
-                    typeLib.HelpDirectory = (string)row[5];
+                    typeLib.HelpDirectory = Convert.ToString(row[5]);
                 }
 
                 if (null != row[7])
                 {
-                    typeLib.Cost = (int)row[7];
+                    typeLib.Cost = Convert.ToInt32(row[7]);
                 }
 
                 // nested under the appropriate File element in FinalizeFileTable
@@ -9054,11 +9054,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.UpgradeFile upgradeFile = new Wix.UpgradeFile();
 
-                upgradeFile.File = (string)row[1];
+                upgradeFile.File = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    string[] symbolPaths = ((string)row[2]).Split(';');
+                    string[] symbolPaths = (Convert.ToString(row[2])).Split(';');
 
                     foreach (string symbolPathString in symbolPaths)
                     {
@@ -9070,26 +9070,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                if (null != row[3] && 1 == (int)row[3])
+                if (null != row[3] && 1 == Convert.ToInt32(row[3]))
                 {
                     upgradeFile.AllowIgnoreOnError = Wix.YesNoType.yes;
                 }
 
-                if (null != row[4] && 0 != (int)row[4])
+                if (null != row[4] && 0 != Convert.ToInt32(row[4]))
                 {
                     upgradeFile.WholeFile = Wix.YesNoType.yes;
                 }
 
                 upgradeFile.Ignore = Wix.YesNoType.no;
 
-                Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", (string)row[0]);
+                Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", Convert.ToString(row[0]));
                 if (null != upgradeImage)
                 {
                     upgradeImage.AddChild(upgradeFile);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", (string)row[0], "UpgradedImages"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", Convert.ToString(row[0]), "UpgradedImages"));
                 }
             }
         }
@@ -9102,22 +9102,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if ("*" != (string)row[0])
+                if ("*" != Convert.ToString(row[0]))
                 {
                     Wix.UpgradeFile upgradeFile = new Wix.UpgradeFile();
 
-                    upgradeFile.File = (string)row[1];
+                    upgradeFile.File = Convert.ToString(row[1]);
 
                     upgradeFile.Ignore = Wix.YesNoType.yes;
 
-                    Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", (string)row[0]);
+                    Wix.UpgradeImage upgradeImage = (Wix.UpgradeImage)this.core.GetIndexedElement("UpgradedImages", Convert.ToString(row[0]));
                     if (null != upgradeImage)
                     {
                         upgradeImage.AddChild(upgradeFile);
                     }
                     else
                     {
-                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", (string)row[0], "UpgradedImages"));
+                        this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Upgraded", Convert.ToString(row[0]), "UpgradedImages"));
                     }
                 }
                 else
@@ -9137,18 +9137,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.UpgradeImage upgradeImage = new Wix.UpgradeImage();
 
-                upgradeImage.Id = (string)row[0];
+                upgradeImage.Id = Convert.ToString(row[0]);
 
-                upgradeImage.SourceFile = (string)row[1];
+                upgradeImage.SourceFile = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    upgradeImage.SourcePatch = (string)row[2];
+                    upgradeImage.SourcePatch = Convert.ToString(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    string[] symbolPaths = ((string)row[3]).Split(';');
+                    string[] symbolPaths = (Convert.ToString(row[3])).Split(';');
 
                     foreach (string symbolPathString in symbolPaths)
                     {
@@ -9160,14 +9160,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", (string)row[4]);
+                Wix.Family family = (Wix.Family)this.core.GetIndexedElement("ImageFamilies", Convert.ToString(row[4]));
                 if (null != family)
                 {
                     family.AddChild(upgradeImage);
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", (string)row[4], "ImageFamilies"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Family", Convert.ToString(row[4]), "ImageFamilies"));
                 }
                 this.core.IndexElement(row, upgradeImage);
             }
@@ -9183,9 +9183,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.UIText uiText = new Wix.UIText();
 
-                uiText.Id = (string)row[0];
+                uiText.Id = Convert.ToString(row[0]);
 
-                uiText.Content = (string)row[1];
+                uiText.Content = Convert.ToString(row[1]);
 
                 this.core.UIElement.AddChild(uiText);
             }
@@ -9201,21 +9201,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Verb verb = new Wix.Verb();
 
-                verb.Id = (string)row[1];
+                verb.Id = Convert.ToString(row[1]);
 
                 if (null != row[2])
                 {
-                    verb.Sequence = (int)row[2];
+                    verb.Sequence = Convert.ToInt32(row[2]);
                 }
 
                 if (null != row[3])
                 {
-                    verb.Command = (string)row[3];
+                    verb.Command = Convert.ToString(row[3]);
                 }
 
                 if (null != row[4])
                 {
-                    verb.Argument = (string)row[4];
+                    verb.Argument = Convert.ToString(row[4]);
                 }
 
                 this.core.IndexElement(row, verb);
@@ -9232,7 +9232,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>true if the value could be converted; false otherwise.</returns>
         private bool GetRegistryRootType(SourceLineNumberCollection sourceLineNumbers, string tableName, Field field, out Wix.RegistryRootType registryRootType)
         {
-            switch ((int)field.Data)
+            switch (Convert.ToInt32(field.Data))
             {
                 case (-1):
                     registryRootType = Wix.RegistryRootType.HKMU;
@@ -9270,7 +9270,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 Field featureField = row.Fields[featureColumnIndex];
                 Field componentField = row.Fields[componentColumnIndex];
 
-                Wix.ComponentRef componentRef = (Wix.ComponentRef)this.core.GetIndexedElement("FeatureComponents", (string)featureField.Data, (string)componentField.Data);
+                Wix.ComponentRef componentRef = (Wix.ComponentRef)this.core.GetIndexedElement("FeatureComponents", Convert.ToString(featureField.Data), Convert.ToString(componentField.Data));
 
                 if (null != componentRef)
                 {
@@ -9278,7 +9278,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, row.TableDefinition.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), featureField.Column.Name, (string)featureField.Data, componentField.Column.Name, (string)componentField.Data, "FeatureComponents"));
+                    this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, row.TableDefinition.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), featureField.Column.Name, Convert.ToString(featureField.Data), componentField.Column.Name, Convert.ToString(componentField.Data), "FeatureComponents"));
                 }
             }
         }
@@ -9303,8 +9303,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 for (int i = 0; i < installExecuteSequenceTable.Rows.Count; i++)
                 {
                     Row row = installExecuteSequenceTable.Rows[i];
-                    string action = (string)row[0];
-                    int sequence = (int)row[2];
+                    string action = Convert.ToString(row[0]);
+                    int sequence = Convert.ToInt32(row[2]);
 
                     switch (action)
                     {

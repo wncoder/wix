@@ -414,6 +414,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         protected override bool FilterItemTypeToBeAddedToHierarchy(string itemType)
         {
             return (String.Compare(itemType, WixProjectFileConstants.WixExtension, StringComparison.OrdinalIgnoreCase) == 0) ||
+                (String.Compare(itemType, WixProjectFileConstants.WixLibrary, StringComparison.OrdinalIgnoreCase) == 0) ||
                 base.FilterItemTypeToBeAddedToHierarchy(itemType);
         }
 

@@ -38,7 +38,4 @@
     <String Id="msierrXmlConfigFailedOpen" Overridable="yes">Failed to open XML file [3], system error: [2]</String>
     <String Id="msierrXmlConfigFailedSelect" Overridable="yes">Failed to find node: [3] in XML file: [4], system error: [2]</String>
     <String Id="msierrXmlConfigFailedSave" Overridable="yes">Failed to save changes to XML file [3], system error: [2]</String>
-
-    <String Id="msierrRmuJoinFailed" Overridable="yes">Could not join the existing Restart Manager session [3], system error: [2]</String>
-    <String Id="msierrRmuRegisterFailed" Overridable="yes">Could not register the resources with the Restart Manager, system error: [2]</String>
 </WixLocalization>
