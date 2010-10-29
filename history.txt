@@ -605,3 +605,20 @@ EricStJ: ScaGetWebLog7 failing after recent refactoring
 
 WixBuild: Version 3.6.1022.0
 
+MiCarls: SFBUG: 3027622 - allow users to override the default InstallSize for
+         any chained package
+HeathS: Secured calls to LoadLibrary.
+
+MiCarls: SFBUG: 3094739 - Fix a DARK0001 error
+
+EricStJ: SFBUG: 3095961 IIS config fails when IIS feature does not exist and all 
+         components are conditioned to not installh
+         Fix regression, Failure to install multiple app pools.
+
+HeathS: Added process support to the Restart Manager CA.
+        Allowed restart resources to be defined at the product scope.
+
+EricStJ: SFBUG: 3091362 WixLibraries are shown as file nodes in project
+
+WixBuild: Version 3.6.1029.0
+

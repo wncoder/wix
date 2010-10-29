@@ -32,7 +32,7 @@
     <tableDefinition name="WixRestartResource">
         <columnDefinition name="WixRestartResource" type="string" length="72" primaryKey="yes" modularize="column"
                 category="identifier" description="Primary key, non-localized identifier."/>
-        <columnDefinition name="Component_" type="string" length="72" modularize="column"
+        <columnDefinition name="Component_" type="string" length="72" nullable="yes" modularize="column"
                 keyTable="Component" keyColumn="1" category="identifier" description="Foreign key into the Component table used to determine install state."/>
         <columnDefinition name="Resource" type="string" length="0" modularize="property"
                 category="formatted" description="The resource to be registered with the Restart Manager."/>

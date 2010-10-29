@@ -33,11 +33,6 @@
     </Fragment>
 
     <Fragment>
-        <UI>
-            <Error Id="$(var.msierrRmuJoinFailed)">!(loc.msierrRmuJoinFailed)</Error>
-            <Error Id="$(var.msierrRmuRegisterFailed)">!(loc.msierrRmuRegisterFailed)</Error>
-        </UI>
-
         <CustomAction Id="WixRegisterRestartResources" BinaryKey="WixCA" DllEntry="WixRegisterRestartResources" Execute="immediate" Return="check" SuppressModularization="yes" />
 
         <InstallExecuteSequence>

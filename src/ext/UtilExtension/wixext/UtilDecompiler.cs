@@ -272,6 +272,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         restartResource.Path = resource;
                         break;
 
+                    case UtilCompiler.WixRestartResourceAttributes.ProcessName:
+                        restartResource.ProcessName = resource;
+                        break;
+
                     case UtilCompiler.WixRestartResourceAttributes.ServiceName:
                         restartResource.ServiceName = resource;
                         break;
@@ -281,16 +285,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         break;
                 }
 
-                // Add to the appropriate Component.
+                // Add to the appropriate Component or section element.
                 string componentId = (string)row[1];
-                Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", componentId);
-                if (null != component)
+                if (!String.IsNullOrEmpty(componentId))
                 {
-                    component.AddChild(restartResource);
+                    Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", componentId);
+                    if (null != component)
+                    {
+                        component.AddChild(restartResource);
+                    }
+                    else
+                    {
+                        this.Core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", componentId, "Component"));
+                    }
                 }
                 else
                 {
-                    this.Core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", componentId, "Component"));
+                    this.Core.RootElement.AddChild(restartResource);
                 }
             }
         }

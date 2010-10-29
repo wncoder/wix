@@ -69,8 +69,7 @@ HRESULT DAPI CrypHashBuffer(
     __in DWORD dwProvType,
     __in ALG_ID algid,
     __out_bcount(cbHash) BYTE* pbHash,
-    __in DWORD cbHash,
-    __out_opt DWORD64* pqwBytesHashed
+    __in DWORD cbHash
     );
 
 #ifdef __cplusplus

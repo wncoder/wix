@@ -148,7 +148,7 @@ extern "C" HRESULT DAPI CrypHashFileHandle(
     const LARGE_INTEGER liZero = { };
 
     // get handle to the crypto provider
-    if (!::CryptAcquireContext(&hProv, NULL, NULL, dwProvType, CRYPT_VERIFYCONTEXT))
+    if (!::CryptAcquireContext(&hProv, NULL, NULL, dwProvType, CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
     {
         ExitWithLastError(hr, "Failed to acquire crypto context.");
     }
@@ -212,8 +212,7 @@ HRESULT DAPI CrypHashBuffer(
     __in DWORD dwProvType,
     __in ALG_ID algid,
     __out_bcount(cbHash) BYTE* pbHash,
-    __in DWORD cbHash,
-    __out_opt DWORD64* /*pqwBytesHashed*/
+    __in DWORD cbHash
     )
 {
     HRESULT hr = S_OK;
@@ -221,7 +220,7 @@ HRESULT DAPI CrypHashBuffer(
     HCRYPTHASH hHash = NULL;
 
     // get handle to the crypto provider
-    if (!::CryptAcquireContext(&hProv, NULL, NULL, dwProvType, CRYPT_VERIFYCONTEXT))
+    if (!::CryptAcquireContext(&hProv, NULL, NULL, dwProvType, CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
     {
         ExitWithLastError(hr, "Failed to acquire crypto context.");
     }

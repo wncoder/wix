@@ -6238,7 +6238,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        (string)row[4], (string)row[5], (string)row[6],
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
-                       (string)row[15], (string)row[16], (string)row[17],
+                       (string)row[15], (string)row[16], (string)row[17], (int)row[18],
                        wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
@@ -6248,7 +6248,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     string installCommand, string repairCommand, string uninstallCommand,
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
-                                    string logPathVariable, string rollbackPathVariable, string protocol,
+                                    string logPathVariable, string rollbackPathVariable, string protocol, int installSize,
                                     Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
@@ -6352,6 +6352,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     case Compiler.ChainPackageType.Exe:
                         this.ResolveExePackage(core);
                         break;
+                }
+
+                if (CompilerCore.IntegerNotSet != installSize)
+                {
+                    this.InstallSize = installSize;
                 }
             }
 

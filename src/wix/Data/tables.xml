@@ -1627,6 +1627,7 @@
         <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
         <columnDefinition name="RollbackLogPathVariable" type="string" length="0" nullable="yes"/>
         <columnDefinition name="ExeProtocol" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="InstallSize" type="number" length="4"/>
     </tableDefinition>
     <tableDefinition name="MsiProperty" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"

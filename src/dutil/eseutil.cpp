@@ -20,7 +20,7 @@
 
 struct ESE_QUERY
 {
-    BOOL fExact;
+    QUERY_TYPE qtQueryType;
     BOOL fIndexRangeSet;
 
     JET_SESID jsSession;
@@ -206,7 +206,7 @@ HRESULT AllocColumnCreateStruct(
         (*ppjccColumnCreate)[i].cbStruct = sizeof(JET_COLUMNCREATE);
 
         hr = StrAnsiAllocString(&(*ppjccColumnCreate)[i].szColumnName, ptsSchema->pcsColumns[i].pszName, 0, CP_ACP);
-        ExitOnFailure1(hr, "Failed to allocate ansi column name: %S", ptsSchema->pcsColumns[i].pszName);
+        ExitOnFailure1(hr, "Failed to allocate ansi column name: %ls", ptsSchema->pcsColumns[i].pszName);
 
         (*ppjccColumnCreate)[i].coltyp = ptsSchema->pcsColumns[i].jcColumnType;
 
@@ -284,7 +284,7 @@ HRESULT AllocIndexCreateStruct(
         if (ptsSchema->pcsColumns[i].fKey)
         {
             hr = StrAnsiAllocString(&pszTempString, ptsSchema->pcsColumns[i].pszName, 0, CP_ACP);
-            ExitOnFailure1(hr, "Failed to convert string to ansi: %S", ptsSchema->pcsColumns[i].pszName);
+            ExitOnFailure1(hr, "Failed to convert string to ansi: %ls", ptsSchema->pcsColumns[i].pszName);
 
             hr = StrAnsiAllocConcat(&pszMultiSzKeys, "+", 0);
             ExitOnFailure1(hr, "Failed to append plus sign to multisz string: %s", pszTempString);
@@ -297,7 +297,7 @@ HRESULT AllocIndexCreateStruct(
             // All question marks will be converted to null characters later; this is just to trick dutil
             // into letting us create an ansi, double-null-terminated list of single-null-terminated strings
             hr = StrAnsiAllocConcat(&pszMultiSzKeys, "?", 0);
-            ExitOnFailure1(hr, "Failed to append placeholder character to multisz string: %S", pszMultiSzKeys);
+            ExitOnFailure1(hr, "Failed to append placeholder character to multisz string: %ls", pszMultiSzKeys);
 
             // Record that at least one key column was found
             fKeyColumns = TRUE;
@@ -311,10 +311,10 @@ HRESULT AllocIndexCreateStruct(
     }
 
     hr = StrAnsiAllocString(&pszIndexName, ptsSchema->pszName, 0, CP_ACP);
-    ExitOnFailure1(hr, "Failed to allocate ansi string version of %S", ptsSchema->pszName);
+    ExitOnFailure1(hr, "Failed to allocate ansi string version of %ls", ptsSchema->pszName);
 
     hr = StrAnsiAllocConcat(&pszIndexName, "_Index", 0);
-    ExitOnFailure1(hr, "Failed to append table name string version of %S", ptsSchema->pszName);
+    ExitOnFailure1(hr, "Failed to append table name string version of %ls", ptsSchema->pszName);
 
     *ppjicIndexCreate = static_cast<JET_INDEXCREATE*>(MemAlloc(sizeof(JET_INDEXCREATE), TRUE));
     ExitOnNull(*ppjicIndexCreate, hr, E_OUTOFMEMORY, "Failed to allocate index create structure for database");
@@ -400,7 +400,7 @@ HRESULT EnsureSchema(
             // TODO: Investigate why we can't create a table without a key column?
             // Actually create the table using our JET_TABLECREATE struct
             jEr = JetCreateTableColumnIndex(jsSession, jdbDb, &jtTableCreate);
-            ExitOnJetFailure1(jEr, hr, "Failed to create %S table", pwzTableName);
+            ExitOnJetFailure1(jEr, hr, "Failed to create %ls table", pwzTableName);
 
             // Record the table ID in our cache
             pdsSchema->ptsTables[dwTable].jtTable = jtTableCreate.tableid;
@@ -445,7 +445,7 @@ HRESULT EnsureSchema(
                 }
 
                 hr = EseEnsureColumn(jsSession, pdsSchema->ptsTables[dwTable].jtTable, pcsColumn->pszName, pcsColumn->jcColumnType, ulColumnSize, pcsColumn->fFixed, fNullable, &pcsColumn->jcColumn);
-                ExitOnFailure2(hr, "Failed to create column %d of %S table", dwColumn, pwzTableName);
+                ExitOnFailure2(hr, "Failed to create column %u of %ls table", dwColumn, pwzTableName);
             }
         }
     }
@@ -517,7 +517,7 @@ HRESULT DAPI EseEnsureDatabase(
     else
     {
         jEr = JetCreateDatabase2A(jsSession, pszAnsiFile, 0, pjdbDb, 0);
-        ExitOnJetFailure1(jEr, hr, "Failed to create database %S", pszFile);
+        ExitOnJetFailure1(jEr, hr, "Failed to create database %ls", pszFile);
     }
 
     hr = EnsureSchema(*pjdbDb, jsSession, pdsSchema);
@@ -663,7 +663,7 @@ HRESULT DAPI EseEnsureColumn(
     }
 
     jEr = JetAddColumnA(jsSession, jtTable, pszAnsiColumnName, &jcdColumnDef, NULL, 0, pjcColumn);
-    ExitOnJetFailure1(jEr, hr, "Failed to add column %S", pszColumnName);
+    ExitOnJetFailure1(jEr, hr, "Failed to add column %ls", pszColumnName);
 
 LExit:
     ReleaseStr(pszAnsiColumnName);
@@ -859,7 +859,7 @@ HRESULT DAPI EseSetColumnDword(
     JET_ERR jEr = JET_errSuccess;
 
     jEr = JetSetColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, &dwValue, sizeof(DWORD), 0, NULL);
-    ExitOnJetFailure1(jEr, hr, "Failed to set dword value into column of database: %d", dwValue);
+    ExitOnJetFailure1(jEr, hr, "Failed to set dword value into column of database: %u", dwValue);
 
 LExit:
     return hr;
@@ -895,7 +895,7 @@ HRESULT DAPI EseSetColumnString(
     ULONG cbValueSize = static_cast<ULONG>((wcslen(pwzValue) + 1) * sizeof(WCHAR)); // add 1 for null character, then multiply by size of WCHAR to get bytes
 
     jEr = JetSetColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, pwzValue, cbValueSize, 0, NULL);
-    ExitOnJetFailure1(jEr, hr, "Failed to set string value into column of database: %S", pwzValue);
+    ExitOnJetFailure1(jEr, hr, "Failed to set string value into column of database: %ls", pwzValue);
 
 LExit:
     return hr;
@@ -914,6 +914,50 @@ HRESULT DAPI EseSetColumnEmpty(
     ExitOnJetFailure(jEr, hr, "Failed to set empty value into column of database");
 
 LExit:
+    return hr;
+}
+
+HRESULT DAPI EseGetColumnBinary(
+    __in JET_SESID jsSession,
+    __in TABLE_SCHEMA tsTable,
+    __in DWORD dwColumn,
+    __deref_out_bcount(*piBuffer) BYTE** ppbBuffer,
+    __inout SIZE_T* piBuffer
+    )
+{
+    HRESULT hr = S_OK;
+    JET_ERR jEr = JET_errSuccess;
+    ULONG ulActualSize = 0;
+
+    jEr = JetRetrieveColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, NULL, 0, &ulActualSize, 0, NULL);
+    if (JET_wrnBufferTruncated == jEr)
+    {
+        jEr = JET_errSuccess;
+    }
+    ExitOnJetFailure(jEr, hr, "Failed to check size of binary value from record");
+
+    if (NULL == *ppbBuffer)
+    {
+        *ppbBuffer = reinterpret_cast<BYTE *>(MemAlloc(ulActualSize, FALSE));
+        ExitOnNull(*ppbBuffer, hr, E_OUTOFMEMORY, "Failed to allocate memory for reading binary value column");
+    }
+    else
+    {
+        *ppbBuffer = reinterpret_cast<BYTE *>(MemReAlloc(*ppbBuffer, ulActualSize, FALSE));
+        ExitOnNull(*ppbBuffer, hr, E_OUTOFMEMORY, "Failed to reallocate memory for reading binary value column");
+    }
+
+    jEr = JetRetrieveColumn(jsSession, tsTable.jtTable, tsTable.pcsColumns[dwColumn].jcColumn, *ppbBuffer, ulActualSize, NULL, 0, NULL);
+    ExitOnJetFailure(jEr, hr, "Failed to retrieve binary value from record");
+
+    *piBuffer = static_cast<SIZE_T>(ulActualSize);
+
+LExit:
+    if (FAILED(hr))
+    {
+        ReleaseNullMem(*ppbBuffer);
+    }
+
     return hr;
 }
 
@@ -992,7 +1036,7 @@ LExit:
 HRESULT DAPI EseBeginQuery(
     __in JET_SESID jsSession,
     __in JET_TABLEID jtTable,
-    __in BOOL fExact,
+    __in QUERY_TYPE qtQueryType,
     __out ESE_QUERY_HANDLE *peqhHandle
     )
 {
@@ -1005,7 +1049,7 @@ HRESULT DAPI EseBeginQuery(
     ExitOnNull(*peqhHandle, hr, E_OUTOFMEMORY, "Failed to allocate new query");
 
     ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(*peqhHandle);
-    peqHandle->fExact = fExact;
+    peqHandle->qtQueryType = qtQueryType;
     peqHandle->jsSession = jsSession;
     peqHandle->jtTable = jtTable;
 
@@ -1041,7 +1085,7 @@ HRESULT DAPI SetQueryColumn(
     ExitOnJetFailure(jEr, hr, "Failed to begin new query");
 
     // If the query is wildcard, setup the cached copy of pvData
-    if (!peqHandle->fExact)
+    if (QUERY_EXACT != peqHandle->qtQueryType)
     {
         peqHandle->pvData[peqHandle->dwColumns] = MemAlloc(cbData, FALSE);
         ExitOnNull(peqHandle->pvData[peqHandle->dwColumns], hr, E_OUTOFMEMORY, "Failed to allocate memory");
@@ -1058,6 +1102,41 @@ LExit:
     return hr;
 }
 
+HRESULT DAPI EseSetQueryColumnBinary(
+    __in ESE_QUERY_HANDLE eqhHandle,
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer,
+    __in BOOL fFinal // If this is true, all other key columns in the query will be set to "*"
+    )
+{
+    HRESULT hr = S_OK;
+    ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
+    JET_GRBIT jGrb = 0;
+
+    if (cbBuffer > DWORD_MAX)
+    {
+        ExitFunction1(hr = E_INVALIDARG);
+    }
+
+    if (fFinal)
+    {
+        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnStartLimit;
+        }
+        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnEndLimit;
+        }
+    }
+
+    hr = SetQueryColumn(eqhHandle, reinterpret_cast<const void *>(pbBuffer), static_cast<DWORD>(cbBuffer), jGrb);
+    ExitOnFailure(hr, "Failed to set value of query colum (as binary) to:");
+
+LExit:
+    return hr;
+}
+
 HRESULT DAPI EseSetQueryColumnDword(
     __in ESE_QUERY_HANDLE eqhHandle,
     __in DWORD dwData,
@@ -1065,16 +1144,53 @@ HRESULT DAPI EseSetQueryColumnDword(
     )
 {
     HRESULT hr = S_OK;
-
+    ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
     JET_GRBIT jGrb = 0;
 
     if (fFinal)
     {
-        jGrb = jGrb | JET_bitFullColumnStartLimit;
+        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnStartLimit;
+        }
+        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnEndLimit;
+        }
     }
 
     hr = SetQueryColumn(eqhHandle, (const void *)&dwData, sizeof(DWORD), jGrb);
-    ExitOnFailure1(hr, "Failed to set value of query colum (as dword) to: %d", dwData);
+    ExitOnFailure1(hr, "Failed to set value of query colum (as dword) to: %u", dwData);
+
+LExit:
+    return hr;
+}
+
+HRESULT DAPI EseSetQueryColumnBool(
+    __in ESE_QUERY_HANDLE eqhHandle,
+    __in BOOL fValue,
+    __in BOOL fFinal
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE bByte = fValue ? 0xFF : 0x00;
+    ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
+    JET_GRBIT jGrb = 0;
+
+    if (fFinal)
+    {
+        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnStartLimit;
+        }
+        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnEndLimit;
+        }
+    }
+
+    hr = SetQueryColumn(eqhHandle, (const void *)&bByte, 1, jGrb);
+    ExitOnFailure1(hr, "Failed to set value of query colum (as bool) to: %s", fValue ? "TRUE" : "FALSE");
 
 LExit:
     return hr;
@@ -1088,18 +1204,26 @@ HRESULT DAPI EseSetQueryColumnString(
 {
     HRESULT hr = S_OK;
     DWORD dwStringSize = 0;
+    ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
+    JET_GRBIT jGrb = 0;
 
     dwStringSize = sizeof(WCHAR) * (lstrlenW(pszString) + 1); // Add 1 for null terminator
 
-    JET_GRBIT jGrb = 0;
 
     if (fFinal)
     {
-        jGrb = jGrb | JET_bitFullColumnStartLimit;
+        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnStartLimit;
+        }
+        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        {
+            jGrb = jGrb | JET_bitFullColumnEndLimit;
+        }
     }
 
     hr = SetQueryColumn(eqhHandle, (const void *)pszString, dwStringSize, jGrb);
-    ExitOnFailure1(hr, "Failed to set value of query colum (as string) to: %S", pszString);
+    ExitOnFailure1(hr, "Failed to set value of query colum (as string) to: %ls", pszString);
 
 LExit:
     return hr;
@@ -1140,18 +1264,28 @@ HRESULT DAPI EseRunQuery(
     HRESULT hr = S_OK;
     JET_ERR jEr = JET_errSuccess;
     JET_GRBIT jGrb = 0;
+    JET_GRBIT jGrbSeekType = 0;
     DWORD i;
 
     ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
 
-    if (peqHandle->fExact)
+    if (QUERY_EXACT == peqHandle->qtQueryType)
     {
         jEr = JetSeek(peqHandle->jsSession, peqHandle->jtTable, JET_bitSeekEQ);
         ExitOnJetFailure(jEr, hr, "Failed to seek EQ within jet table");
     }
     else
     {
-        jEr = JetSeek(peqHandle->jsSession, peqHandle->jtTable, JET_bitSeekGE);
+        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        {
+            jGrbSeekType = JET_bitSeekGE;
+        }
+        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        {
+            jGrbSeekType = JET_bitSeekLE;
+        }
+
+        jEr = JetSeek(peqHandle->jsSession, peqHandle->jtTable, jGrbSeekType);
         if (jEr == JET_wrnSeekNotEqual)
         {
             jEr = JET_errSuccess;

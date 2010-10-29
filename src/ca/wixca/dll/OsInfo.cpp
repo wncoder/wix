@@ -384,12 +384,17 @@ DetectWDDMDriver
 static HRESULT DetectWDDMDriver()
 {
     HRESULT hr = S_OK;
-    HMODULE hModule= NULL;
+    HMODULE hModule = NULL;
 
     // Manually load the d3d9.dll library. If the library couldn't be loaded then we obviously won't be able
     // to try calling the function so just return.
-    hModule = ::LoadLibraryW(L"d3d9.dll");
-    ExitOnNull(hModule, hr, S_OK, "Unable to load DirectX APIs, skipping WDDM driver check.");
+    hr = LoadSystemLibrary(L"d3d9.dll", &hModule);
+    if (E_MODNOTFOUND == hr)
+    {
+        TraceError(hr, "Unable to load DirectX APIs, skipping WDDM driver check.");
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to the load the existing DirectX APIs.");
 
     // Obtain the address of the Direct3DCreate9Ex function. If this fails we know it isn't a WDDM
     // driver so just exit.
@@ -422,8 +427,13 @@ static HRESULT DetectIsCompositionEnabled()
 
     // Manually load the d3d9.dll library. If the library can't load it's likely because we are not on a Vista
     // OS. Just return ok, and the property won't get set.
-    hModule = ::LoadLibraryW(L"dwmapi.dll");
-    ExitOnNull(hModule, hr, S_OK, "Unable to load Vista desktop window manager APIs, skipping Composition Enabled check.");
+    hr = LoadSystemLibrary(L"dwmapi.dll", &hModule);
+    if (E_MODNOTFOUND == hr)
+    {
+        TraceError(hr, "Unable to load Vista desktop window manager APIs, skipping Composition Enabled check.");
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to load the existing window manager APIs.");
 
     // If for some reason we can't get the function pointer that's ok, just return.
     typedef HRESULT (WINAPI *DWMISCOMPOSITIONENABLEDPTR)(BOOL*);

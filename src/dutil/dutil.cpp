@@ -409,3 +409,39 @@ extern "C" void DAPI Dutil_RootFailure(
 
     TraceError2(hrError, "Root failure at %s:%d", szFile, iLine);
 }
+
+/*******************************************************************
+ LoadSystemLibrary - Fully qualifies the path to a module in the
+                     Windows system directory and loads it.
+
+ Returns
+   E_MODNOTFOUND - The module could not be found.
+   * - Another error occured.
+********************************************************************/
+extern "C" HRESULT DAPI LoadSystemLibrary(
+    __in_z LPCWSTR wzModuleName,
+    __out HMODULE *phModule
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD cch = 0;
+    WCHAR wzPath[MAX_PATH] = {};
+
+    cch = ::GetSystemDirectoryW(wzPath, MAX_PATH);
+    ExitOnNullWithLastError(cch, hr, "Failed to get the Windows system directory.");
+
+    if (L'\\' != wzPath[cch - 1])
+    {
+        hr = ::StringCchCatNW(wzPath, MAX_PATH, L"\\", 1);
+        ExitOnFailure(hr, "Failed to terminate the string with a backslash.");
+    }
+
+    hr = ::StringCchCatW(wzPath, MAX_PATH, wzModuleName);
+    ExitOnFailure1(hr, "Failed to create the fully-qualified path to %ls.", wzModuleName);
+
+    *phModule = ::LoadLibraryW(wzPath);
+    ExitOnNullWithLastError1(*phModule, hr, "Failed to load the library %ls.", wzModuleName);
+
+LExit:
+    return hr;
+}

@@ -139,8 +139,8 @@ extern "C" HRESULT DAPI GetCryptProvFromCert(
     typedef BOOL (WINAPI *GETCRYPTPROVFROMCERTPTR)(HWND, PCCERT_CONTEXT, HCRYPTPROV*, DWORD*,BOOL*,LPWSTR*,LPWSTR*,DWORD*);
     GETCRYPTPROVFROMCERTPTR pGetCryptProvFromCert = NULL;
 
-    hMsSign32 = ::LoadLibraryW(L"MsSign32.dll");
-    ExitOnNullWithLastError(hMsSign32, hr, "Failed to get handle to MsSign32.dll");
+    hr = LoadSystemLibrary(L"MsSign32.dll", &hMsSign32);
+    ExitOnFailure(hr, "Failed to get handle to MsSign32.dll");
 
     pGetCryptProvFromCert = (GETCRYPTPROVFROMCERTPTR)::GetProcAddress(hMsSign32, "GetCryptProvFromCert");
     ExitOnNullWithLastError(hMsSign32, hr, "Failed to get handle to MsSign32.dll");
@@ -174,8 +174,8 @@ extern "C" HRESULT DAPI FreeCryptProvFromCert(
     typedef void (WINAPI *FREECRYPTPROVFROMCERT)(BOOL, HCRYPTPROV, LPWSTR, DWORD, LPWSTR);
     FREECRYPTPROVFROMCERT pFreeCryptProvFromCert = NULL;
 
-    hMsSign32 = ::LoadLibraryW(L"MsSign32.dll");
-    ExitOnNullWithLastError(hMsSign32, hr, "Failed to get handle to MsSign32.dll");
+    hr = LoadSystemLibrary(L"MsSign32.dll", &hMsSign32);
+    ExitOnFailure(hr, "Failed to get handle to MsSign32.dll");
 
     pFreeCryptProvFromCert = (FREECRYPTPROVFROMCERT)::GetProcAddress(hMsSign32, "FreeCryptProvFromCert");
     ExitOnNullWithLastError(hMsSign32, hr, "Failed to get handle to MsSign32.dll");

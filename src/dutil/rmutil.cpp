@@ -19,6 +19,8 @@
 #include "precomp.h"
 #include <restartmanager.h>
 
+#define ARRAY_GROWTH_SIZE 5
+
 typedef DWORD (WINAPI *PFNRMJOINSESSION)(
     __out DWORD *pSessionHandle,
     __in_z const WCHAR strSessionKey[]
@@ -43,9 +45,13 @@ typedef struct _RMU_SESSION
     CRITICAL_SECTION cs;
     DWORD dwSessionHandle;
     BOOL fStartedSessionHandle;
+    BOOL fInitialized;
 
     UINT cFilenames;
     LPWSTR *rgsczFilenames;
+
+    UINT cApplications;
+    RM_UNIQUE_PROCESS *rgApplications;
 
     UINT cServiceNames;
     LPWSTR *rgsczServiceNames;
@@ -60,6 +66,19 @@ static PFNRMREGISTERRESOURCES vpfnRmRegisterResources = NULL;
 
 static HRESULT RmuInitialize();
 static void RmuUninitialize();
+
+static HRESULT RmuApplicationArrayAlloc(
+    __deref_inout_ecount(*pcApplications) RM_UNIQUE_PROCESS **prgApplications,
+    __inout LPUINT pcApplications,
+    __in DWORD dwProcessId,
+    __in FILETIME ProcessStartTime
+    );
+
+static HRESULT RmuApplicationArrayFree(
+    __in RM_UNIQUE_PROCESS *rgApplications
+    );
+
+#define ReleaseNullApplicationArray(rg, c) { if (rg) { RmuApplicationArrayFree(rg); c = 0; rg = NULL; } }
 
 /********************************************************************
 RmuJoinSession - Joins an existing Restart Manager session.
@@ -88,6 +107,8 @@ extern "C" HRESULT DAPI RmuJoinSession(
     ExitOnWin32Error1(er, hr, "Failed to join Restart Manager session %ls.", wzSessionKey);
 
     ::InitializeCriticalSection(&pSession->cs);
+    pSession->fInitialized = TRUE;
+
     *ppSession = pSession;
 
 LExit:
@@ -121,6 +142,86 @@ extern "C" HRESULT DAPI RmuAddFile(
 
 LExit:
     ::LeaveCriticalSection(&pSession->cs);
+    return hr;
+}
+
+/********************************************************************
+RmuAddProcessById - Adds the process ID to the Restart Manager sesion.
+
+You should call this multiple times as necessary before calling
+RmuRegisterResources.
+
+********************************************************************/
+extern "C" HRESULT DAPI RmuAddProcessById(
+    __in PRMU_SESSION pSession,
+    __in DWORD dwProcessId
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hProcess = NULL;
+    FILETIME CreationTime = {};
+    FILETIME ExitTime = {};
+    FILETIME KernelTime = {};
+    FILETIME UserTime = {};
+    BOOL fLocked = FALSE;
+
+    hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwProcessId);
+    ExitOnNullWithLastError1(hProcess, hr, "Failed to open the process ID %d.", dwProcessId);
+
+    if (!::GetProcessTimes(hProcess, &CreationTime, &ExitTime, &KernelTime, &UserTime))
+    {
+        ExitWithLastError1(hr, "Failed to get the process times for process ID %d.", dwProcessId);
+    }
+
+    ::EnterCriticalSection(&pSession->cs);
+    fLocked = TRUE;
+
+    hr = RmuApplicationArrayAlloc(&pSession->rgApplications, &pSession->cApplications, dwProcessId, CreationTime);
+    ExitOnFailure(hr, "Failed to add the application to the array.");
+
+LExit:
+    if (hProcess)
+    {
+        ::CloseHandle(hProcess);
+    }
+
+    if (fLocked)
+    {
+        ::LeaveCriticalSection(&pSession->cs);
+    }
+
+    return hr;
+}
+
+/********************************************************************
+RmuAddProcessesByName - Adds all processes by the given process name
+                        to the Restart Manager Session.
+
+You should call this multiple times as necessary before calling
+RmuRegisterResources.
+
+********************************************************************/
+extern "C" HRESULT DAPI RmuAddProcessesByName(
+    __in PRMU_SESSION pSession,
+    __in_z LPCWSTR wzProcessName
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD *pdwProcessIds = NULL;
+    DWORD cProcessIds = 0;
+
+    hr = ProcFindAllIdsFromExeName(wzProcessName, &pdwProcessIds, &cProcessIds);
+    ExitOnFailure1(hr, "Failed to enumerate all the processes by name %ls.", wzProcessName);
+
+    for (DWORD i = 0; i < cProcessIds; i++)
+    {
+        hr = RmuAddProcessById(pSession, pdwProcessIds[i]);
+        ExitOnFailure2(hr, "Failed to add process %ls (%d) to the Restart Manager session.", wzProcessName, pdwProcessIds[i]);
+    }
+
+LExit:
+    ReleaseMem(pdwProcessIds);
+
     return hr;
 }
 
@@ -176,8 +277,8 @@ extern "C" HRESULT DAPI RmuRegisterResources(
         pSession->dwSessionHandle,
         pSession->cFilenames,
         pSession->rgsczFilenames,
-        0,
-        NULL,
+        pSession->cApplications,
+        pSession->rgApplications,
         pSession->cServiceNames,
         pSession->rgsczServiceNames
         );
@@ -185,6 +286,7 @@ extern "C" HRESULT DAPI RmuRegisterResources(
 
     // Empty the arrays if registered in case additional resources are added later.
     ReleaseNullStrArray(pSession->rgsczFilenames, pSession->cFilenames);
+    ReleaseNullApplicationArray(pSession->rgApplications, pSession->cApplications);
     ReleaseNullStrArray(pSession->rgsczServiceNames, pSession->cServiceNames);
 
 LExit:
@@ -221,9 +323,13 @@ extern "C" HRESULT DAPI RmuEndSession(
     ExitOnWin32Error(er, hr, "Failed to end the Restart Manager session.");
 
 LExit:
-    ::DeleteCriticalSection(&pSession->cs);
+    if (pSession->fInitialized)
+    {
+        ::DeleteCriticalSection(&pSession->cs);
+    }
 
     ReleaseNullStrArray(pSession->rgsczFilenames, pSession->cFilenames);
+    ReleaseNullApplicationArray(pSession->rgApplications, pSession->cApplications);
     ReleaseNullStrArray(pSession->rgsczServiceNames, pSession->cServiceNames);
     ReleaseNullMem(pSession);
 
@@ -240,8 +346,8 @@ static HRESULT RmuInitialize()
     LONG iRef = ::InterlockedIncrement(&vcRmuInitialized);
     if (1 == iRef && !vhModule)
     {
-        hModule = ::LoadLibraryW(L"rstrtmgr.dll");
-        ExitOnNullWithLastError(hModule, hr, "Failed to load the rstrtmgr.dll module.");
+        hr = LoadSystemLibrary(L"rstrtmgr.dll", &hModule);
+        ExitOnFailure(hr, "Failed to load the rstrtmgr.dll module.");
 
         vpfnRmJoinSession = reinterpret_cast<PFNRMJOINSESSION>(::GetProcAddress(hModule, "RmJoinSession"));
         ExitOnNullWithLastError(vpfnRmJoinSession, hr, "Failed to get the RmJoinSession procedure from rstrtmgr.dll.");
@@ -271,4 +377,40 @@ static void RmuUninitialize()
         ::FreeLibrary(vhModule);
         vhModule = NULL;
     }
+}
+
+static HRESULT RmuApplicationArrayAlloc(
+    __deref_inout_ecount(*pcApplications) RM_UNIQUE_PROCESS **prgApplications,
+    __inout LPUINT pcApplications,
+    __in DWORD dwProcessId,
+    __in FILETIME ProcessStartTime
+    )
+{
+    HRESULT hr = S_OK;
+    RM_UNIQUE_PROCESS *pApplication = NULL;
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgApplications), *pcApplications, sizeof(RM_UNIQUE_PROCESS), ARRAY_GROWTH_SIZE);
+    ExitOnFailure(hr, "Failed to allocate memory for the application array.");
+
+    pApplication = static_cast<RM_UNIQUE_PROCESS*>(&(*prgApplications)[*pcApplications]);
+    pApplication->dwProcessId = dwProcessId;
+    pApplication->ProcessStartTime = ProcessStartTime;
+
+    ++(*pcApplications);
+
+LExit:
+    return hr;
+}
+
+static HRESULT RmuApplicationArrayFree(
+    __in RM_UNIQUE_PROCESS *rgApplications
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = MemFree(rgApplications);
+    ExitOnFailure(hr, "Failed to free memory for the application array.");
+
+LExit:
+    return hr;
 }

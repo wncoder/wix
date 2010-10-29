@@ -20642,6 +20642,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoType perMachine = YesNoType.NotSet;
             string detectCondition = null;
             string protocol = null;
+            int installSize = CompilerCore.IntegerNotSet;
             string msuKB = null;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
 
@@ -20721,6 +20722,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "Protocol":
                             protocol = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             allowed = (packageType == ChainPackageType.Exe);
+                            break;
+                        case "InstallSize":
+                            installSize = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, int.MaxValue);
                             break;
                         case "KB":
                             msuKB = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -20900,6 +20904,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[15] = logPathVariable;
                 row[16] = rollbackPathVariable;
                 row[17] = protocol;
+                row[18] = installSize;
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
             }

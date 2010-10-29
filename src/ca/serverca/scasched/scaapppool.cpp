@@ -144,7 +144,8 @@ HRESULT ScaAppPoolRead(
 
             psap->isInstalled = isInstalled;
             psap->isAction = isAction;
-
+            
+            WcaFetchWrappedReset(hComponentQuery);
             hr = WcaFetchWrappedRecordWhereString(hComponentQuery, caqComponent, psap->wzComponent, &hRecComp);
             ExitOnFailure1(hr, "Failed to fetch Component.Attributes for Component '%ls'", psap->wzComponent);
 

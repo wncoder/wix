@@ -49,6 +49,13 @@ struct DATABASE_SCHEMA
     TABLE_SCHEMA *ptsTables;
 };
 
+enum QUERY_TYPE
+{
+    QUERY_EXACT,
+    QUERY_FROM_TOP,
+    QUERY_FROM_BOTTOM
+};
+
 typedef void* ESE_QUERY_HANDLE;
 
 HRESULT DAPI EseBeginSession(
@@ -164,6 +171,13 @@ HRESULT DAPI EseSetColumnEmpty(
     __in TABLE_SCHEMA tsTable,
     __in DWORD dwColumn
     );
+HRESULT DAPI EseGetColumnBinary(
+    __in JET_SESID jsSession,
+    __in TABLE_SCHEMA tsTable,
+    __in DWORD dwColumn,
+    __deref_out_bcount(*piBuffer) BYTE** ppbBuffer,
+    __inout SIZE_T* piBuffer
+    );
 HRESULT DAPI EseGetColumnDword(
     __in JET_SESID jsSession,
     __in TABLE_SCHEMA tsTable,
@@ -187,12 +201,23 @@ HRESULT DAPI EseGetColumnString(
 HRESULT DAPI EseBeginQuery(
     __in JET_SESID jsSession,
     __in JET_TABLEID jtTable,
-    __in BOOL fExact,
+    __in QUERY_TYPE qtQueryType,
     __out ESE_QUERY_HANDLE *peqhHandle
+    );
+HRESULT DAPI EseSetQueryColumnBinary(
+    __in ESE_QUERY_HANDLE eqhHandle,
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer,
+    __in BOOL fFinal // If this is true, all other key columns in the query will be set to "*"
     );
 HRESULT DAPI EseSetQueryColumnDword(
     __in ESE_QUERY_HANDLE eqhHandle,
     __in DWORD dwData,
+    __in BOOL fFinal // If this is true, all other key columns in the query will be set to "*"
+    );
+HRESULT DAPI EseSetQueryColumnBool(
+    __in ESE_QUERY_HANDLE eqhHandle,
+    __in BOOL fValue,
     __in BOOL fFinal // If this is true, all other key columns in the query will be set to "*"
     );
 HRESULT DAPI EseSetQueryColumnString(

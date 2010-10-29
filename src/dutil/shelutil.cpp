@@ -216,8 +216,13 @@ extern "C" HRESULT DAPI ShelGetKnownFolder(
     PFN_SHGetKnownFolderPath pfn = NULL;
     LPWSTR pwzPath = NULL;
 
-    hShell32Dll = ::LoadLibraryW(L"shell32.dll");
-    ExitOnNull(hShell32Dll, hr, E_NOTIMPL, "Failed to load shell32.dll.");
+    hr = LoadSystemLibrary(L"shell32.dll", &hShell32Dll);
+    if (E_MODNOTFOUND == hr)
+    {
+        TraceError(hr, "Failed to load shell32.dll");
+        ExitFunction1(hr = E_NOTIMPL);
+    }
+    ExitOnFailure(hr, "Failed to load shell32.dll.");
 
     pfn = reinterpret_cast<PFN_SHGetKnownFolderPath>(::GetProcAddress(hShell32Dll, "SHGetKnownFolderPath"));
     ExitOnNull(pfn, hr, E_NOTIMPL, "Failed to find SHGetKnownFolderPath entry point.");

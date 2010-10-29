@@ -71,6 +71,7 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
     LPWSTR wzComponent = NULL;
     LPWSTR wzResource = NULL;
     int iAttributes = NULL;
+    BOOL fIsComponentNull = FALSE;
     WCA_TODO todo = WCA_TODO_UNKNOWN;
     int iType = etInvalid;
 
@@ -98,9 +99,14 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
         ExitFunction();
     }
 
-    // Join the existing Restart Manager session.
+    // Join the existing Restart Manager session if supported.
     hr = RmuJoinSession(&pSession, wzSessionKey);
-    MessageExitOnFailure1(hr, msierrRmuJoinFailed, "Could not join the existing Restart Manager session %ls.", wzSessionKey);
+    if (E_MODNOTFOUND == hr)
+    {
+        WcaLog(LOGMSG_STANDARD, "The Restart Manager is not supported on this platform. Skipping.");
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure1(hr, "Failed to join the existing Restart Manager session %ls.", wzSessionKey);
 
     // Loop through each record in the table.
     hr = WcaOpenExecuteView(vcsRestartResourceQuery, &hView);
@@ -120,11 +126,13 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
         hr = WcaGetRecordInteger(hRec, rrqAttributes, &iAttributes);
         ExitOnFailure(hr, "Failed to get the Attributes field value.");
 
-        // Only register resources for components that are being installed, reinstalled, or uninstalled.
+        fIsComponentNull = ::MsiRecordIsNull(hRec, rrqComponent);
         todo = WcaGetComponentToDo(wzComponent);
-        if (WCA_TODO_UNKNOWN == todo)
+
+        // Only register resources for components that are null, or being installed, reinstalled, or uninstalled.
+        if (!fIsComponentNull && WCA_TODO_UNKNOWN == todo)
         {
-            WcaLog(LOGMSG_VERBOSE, "Skipping resource %ls for null action component %ls.", wzRestartResource, wzComponent);
+            WcaLog(LOGMSG_VERBOSE, "Skipping resource %ls.", wzRestartResource);
             continue;
         }
 
@@ -133,15 +141,21 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
         switch (iType)
         {
         case etFilename:
-            WcaLog(LOGMSG_VERBOSE, "Adding file %ls for component %ls to register with the Restart Manager.", wzResource, wzComponent);
+            WcaLog(LOGMSG_VERBOSE, "Registering file name %ls with the Restart Manager.", wzResource);
             hr = RmuAddFile(pSession, wzResource);
-            ExitOnFailure(hr, "Failed to add the filename to the Restart Manager session.");
+            ExitOnFailure(hr, "Failed to register the file name with the Restart Manager session.");
+            break;
+
+        case etApplication:
+            WcaLog(LOGMSG_VERBOSE, "Registering process name %ls with the Restart Manager.", wzResource);
+            hr = RmuAddProcessesByName(pSession, wzResource);
+            ExitOnFailure(hr, "Failed to register the process name with the Restart Manager session.");
             break;
 
         case etServiceName:
-            WcaLog(LOGMSG_VERBOSE, "Adding service name %ls for component %ls to register with the Restart Manager.", wzResource, wzComponent);
+            WcaLog(LOGMSG_VERBOSE, "Registering service name %ls with the Restart Manager.", wzResource);
             hr = RmuAddService(pSession, wzResource);
-            ExitOnFailure(hr, "Failed to add the service name to the Restart Manager session.");
+            ExitOnFailure(hr, "Failed to register the service name with the Restart Manager session.");
             break;
 
         default:
@@ -158,7 +172,7 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
 
     // Register the resources and unjoin the session.
     hr = RmuEndSession(pSession);
-    MessageExitOnFailure(hr, msierrRmuRegisterFailed, "Could not register the resources with the Restart Manager.");
+    ExitOnFailure(hr, "Failed to register the resources with the Restart Manager.");
 
 LExit:
     ReleaseStr(wzRestartResource);
