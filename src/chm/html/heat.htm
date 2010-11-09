@@ -115,6 +115,67 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
       </td>
     </tr>
     <tr>
+      <td valign="top" style="white-space: nowrap">
+        <p>
+          -cg &lt;ComponentGroupName&gt;</p>
+      </td>
+      <td>
+        <p>
+          Component group name (cannot contain spaces e.g -cg MyComponentGroup).</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -configuration</p>
+      </td>
+      <td>
+        <p>
+          Configuration to set when harvesting the project.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -directoryid</p>
+      </td>
+      <td>
+        <p>
+          Overridden directory id for generated directory elements.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -dr &lt;DirectoryName&gt;</p>
+      </td>
+      <td>
+        <p>
+          Directory reference to root directories (cannot contains spaces e.g. -dr MyAppDirRef).</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -ext &lt;extension&gt;</p>
+      </td>
+      <td>
+        <p>
+          Extension assembly or &quot;class, assembly&quot;.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -generate</p>
+      </td>
+      <td>
+        <p>
+          Specify what elements to generate, one of: components, container, payloadgroup,
+          layout (default is components).</p>
+      </td>
+    </tr>
+    <tr>
       <td valign="top">
         <p>
           -gg</p>
@@ -167,6 +228,16 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
     <tr>
       <td valign="top">
         <p>
+          -platform</p>
+      </td>
+      <td>
+        <p>
+          Platform to set when harvesting the project.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
           -pog:&lt;group&gt;</p>
       </td>
       <td>
@@ -183,6 +254,16 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
         </ul>
         <p>
           This option may be repeated for multiple output groups; e.g. -pog:Binaries -pog:Content.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -projectname</p>
+      </td>
+      <td>
+        <p>
+          Overridden project name to use in variables.</p>
       </td>
     </tr>
     <tr>
@@ -208,6 +289,16 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
     <tr>
       <td valign="top">
         <p>
+          -srd</p>
+      </td>
+      <td>
+        <p>
+          Suppress harvesting the root directory as an element.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
           -sreg</p>
       </td>
       <td>
@@ -223,6 +314,25 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
       <td>
         <p>
           Suppress unique identifiers for files, components, &amp; directories.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -svb6</p>
+      </td>
+      <td>
+        <p>
+          Suppress VB6 COM registration entries. When registering a COM component created
+          in VB6 it adds registry entries that are part of the VB6 runtime component. This
+          flag is recommend for VB6 components to avoid breaking the VB6 runtime on uninstall.</p>
+        <p>
+          The following values are excluded:<br />
+          - CLSID\{D5DE8D20-5BB8-11D1-A1E3-00A0C90F2731}<br />
+          - Typelib\{EA544A21-C82D-11D1-A3E4-00A0C90AEA82}<br />
+          - Typelib\{000204EF-0000-0000-C000-000000000046}<br />
+          - Any Interfaces that reference these two type libraries
+        </p>
       </td>
     </tr>
     <tr>
@@ -248,26 +358,7 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
     <tr>
       <td valign="top">
         <p>
-          -svb6</p>
-      </td>
-      <td>
-        <p>
-          Suppress VB6 COM registration entries. When registering a COM component created
-          in VB6 it adds registry entries that are part of the VB6 runtime component, recommend
-          for VB6 components to avoid breaking the VB6 runtime on uninstall.</p>
-        <p>
-          The following values are excluded:<br />
-          - CLSID\{D5DE8D20-5BB8-11D1-A1E3-00A0C90F2731}<br />
-          - Typelib\{EA544A21-C82D-11D1-A3E4-00A0C90AEA82}<br />
-          - Typelib\{000204EF-0000-0000-C000-000000000046}<br />
-          - Any Interfaces that reference these two type libraries
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td valign="top">
-        <p>
-          -t:&lt;xsl&gt;</p>
+          -t &lt;xsl&gt;</p>
       </td>
       <td>
         <p>
@@ -287,7 +378,7 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
     <tr>
       <td valign="top" style="white-space: nowrap">
         <p>
-          -template:&lt;template&gt;</p>
+          -template &lt;template&gt;</p>
       </td>
       <td>
         <p>
@@ -303,6 +394,28 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
       <td>
         <p>
           Verbose output.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -var &lt;VariableName&gt;</p>
+      </td>
+      <td>
+        <p>
+          Substitute File/@Source=&quot;SourceDir&quot; with a preprocessor or a wix variable
+          (e.g. -var var.MySource will become File/@Source=&quot;$(var.MySource)\myfile.txt&quot;
+          and -var wix.MySource will become File/@Source=&quot;!(wix.MySource)\myfile.txt&quot;.</p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <p>
+          -wixvar</p>
+      </td>
+      <td>
+        <p>
+          Generate binder variables instead of preprocessor variables.</p>
       </td>
     </tr>
     <tr>
