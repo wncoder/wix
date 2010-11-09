@@ -341,49 +341,49 @@ heat.exe [-?] harvestType &lt;harvester arguments&gt; -out sourceFile.wxs
   <h3>
     Harvest a directory</h3>
   <pre>
-heat dir -gg -sfrag -template:fragment -out directory.wxs ".\My Files"
+heat dir &quot;.\My Files&quot; -gg -sfrag -template:fragment -out directory.wxs
 </pre>
   <p>
-    This will harvest the sub folder "My Files" as a single fragment to the file directory.wxs.
-    It will generate guids for all the files as they are found.</p>
+    This will harvest the sub folder &quot;My Files&quot; as a single fragment to the
+    file directory.wxs. It will generate guids for all the files as they are found.</p>
   <h4>
     Harvest a file</h4>
   <pre>
-heat file -ag -template:fragment -out file.wxs ".\My Files\File.dll"
+heat file &quot;.\My Files\File.dll&quot; -ag -template:fragment -out file.wxs
 </pre>
   <p>
-    This will harvest the file "File.dll" as a single fragment to the file file.wxs.
-    The component guid will be set to "*".</p>
+    This will harvest the file &quot;File.dll&quot; as a single fragment to the file
+    file.wxs. The component guid will be set to &quot;*&quot;.</p>
   <h4>
     Harvest a Visual Studio project</h4>
   <pre>
-heat project -pog:Binaries -ag -template:fragment -out project.wxs &quot;MyProject.csproj&quot;</pre>
+heat project &quot;MyProject.csproj&quot; -pog:Binaries -ag -template:fragment -out project.wxs</pre>
   <p>
-    This will harvest the binary output files from the Visual Studio project &quot;MyProject.csproj"
+    This will harvest the binary output files from the Visual Studio project &quot;MyProject.csproj&quot;
     as a single fragment to the file project.wxs. The component guid will be set to
-    "*".</p>
+    &quot;*&quot;.</p>
   <h4>
     Harvest a Website</h4>
   <pre>
-heat website -template:fragment -out website.wxs &quot;Default Web Site&quot;</pre>
+heat website &quot;Default Web Site&quot; -template:fragment -out website.wxs</pre>
   <p>
     This will harvest the website &quot;Default Web Site&quot; as a single fragment
     to the file website.wxs.</p>
   <h4>
     Harvest a VB6 COM component</h4>
   <pre>
-heat file -ag -template:fragment -svb6 -out vb6file.wxs ".\My Files\VB6File.dll"
+heat file &quot;.\My Files\VB6File.dll&quot; -ag -template:fragment -svb6 -out vb6file.wxs
 </pre>
   <p>
-    This will harvest the VB6 COM component "VB6File.dll" as a single fragment to the
-    file vb6file.wxs and suppress the VB6 runtime specific registy entries.</p>
+    This will harvest the VB6 COM component &quot;VB6File.dll&quot;as a single fragment
+    to the file vb6file.wxs and suppress the VB6 runtime specific registy entries.</p>
   <h4>
     Harvest performance counters</h4>
   <pre>
-heat perf "My Category" -out perf.wxs
+heat perf &quot;My Category&quot; -out perf.wxs
 </pre>
   <p>
-    This will harvest all the performance counters from the category "My Category".</p>
+    This will harvest all the performance counters from the category &quot;My Category&quot;.</p>
   <h4>
     Harvest a registry file</h4>
   <pre>
@@ -391,7 +391,7 @@ heat reg registry.reg -out reg.wxs
 </pre>
   <p>
     This will harvest all the registry information from the file registry.reg. The registry
-    file can be either a standard "Windows Registry Editor Version 5.00" reigstry file
-    or a legacy Win9.x/NT4 (REGEDIT4) reigstry file.</p>
+    file can be either a standard &quot;Windows Registry Editor Version 5.00&quot; reigstry
+    file or a legacy Win9.x/NT4 (REGEDIT4) reigstry file.</p>
 </body>
 </html>
