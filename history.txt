@@ -1377,3 +1377,42 @@ EricStJ: SFBUG: 3091362 WixLibraries are shown as file nodes in project
 
 WixBuild: Version 3.5.2229.0
 
+FGrohn: SFBUG:2995027 - ComPlusApplication doesn't work with ChangeAble="no"
+
+CAraman: Update WixUI localization.
+
+RobMen: SFBUG:3101895 - ensure paths passed to heat from MSBuild are quoted
+        as necessary.
+
+EricStJ: SFBUG: 3101820 Crash when running 64-bit msbuild
+
+WixBuild: Version 3.5.2305.0
+
+EricStJ: IIS: Install VDir to AppPool in seperate MSI transactions is broken
+
+CAraman: remove unused variables
+
+CAraman: include .PDBs for nit, lux and LuxTasks
+
+BobArnso: Fix sfbug:3075067 - Major Upgrade HowTo is outdated
+
+BobArnso: - Allow WixProj tests to just build, with no diff verification or 
+            expected errors.
+          - Validate WixUI localizations
+
+MiCarls: SFBUG: 3103180 - Make insignia.exe support "-nologo" switch.
+
+RobMen: SFBUG:3104047 - fix zh-TW UI localization by escaping [ and ]
+        as necessary.
+
+EricStJ: Clean up IIS ProgressText
+
+EricStJ: SFBUG: 3100784 SolutionDir doesn't work for Import statement
+         in wixproj
+
+EricStJ: SFBUG: 3091925 WriteIIS7ConfigChanges fails occasionally
+         with 0x80070020
+
+PMarcu: SFBUG:3105890 - Handling PID_LASTPRINTED in transforms.
+
+WixBuild: Version 3.5.2312.0

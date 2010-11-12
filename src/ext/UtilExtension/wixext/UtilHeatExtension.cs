@@ -48,7 +48,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     new HeatCommandLineOption("reg", "harvest a .reg file"),
                     new HeatCommandLineOption("-ag", "autogenerate component guids at compile time"),
                     new HeatCommandLineOption("-cg <ComponentGroupName>", "component group name (cannot contain spaces e.g -cg MyComponentGroup)"),
-                    new HeatCommandLineOption("-dr <DirectoryName>", "directory reference to root directories (cannot contains spaces e.g. -dr MyAppDirRef)"),
+                    new HeatCommandLineOption("-dr <DirectoryName>", "directory reference to root directories (cannot contain spaces e.g. -dr MyAppDirRef)"),
                     new HeatCommandLineOption("-var <VariableName>", "substitute File/@Source=\"SourceDir\" with a preprocessor or a wix variable" + Environment.NewLine +
                                                       "(e.g. -var var.MySource will become File/@Source=\"$(var.MySource)\\myfile.txt\" and " + Environment.NewLine + 
                                                       "-var wix.MySource will become File/@Source=\"!(wix.MySource)\\myfile.txt\""),
@@ -324,6 +324,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     else
                     {
                         this.Core.Harvester.Core.RootDirectory = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(this.Core.Harvester.Core.ExtensionArgument)));
+
+                        // GetDirectoryName() returns null for root paths such as "c:\", so make sure to support that as well
+                        if (null == this.Core.Harvester.Core.RootDirectory)
+                        {
+                            this.Core.Harvester.Core.RootDirectory = Path.GetPathRoot(Path.GetDirectoryName(Path.GetFullPath(this.Core.Harvester.Core.ExtensionArgument)));
+                        }
                     }
                 }
             }

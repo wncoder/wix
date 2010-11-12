@@ -28,7 +28,7 @@
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}โปรดอ่านข้อตกลงสิทธิ์การใช้งานของ [ProductName]</String>
-    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">ฉัน&amp;ยอมรับตามข้อความในข้อตกลงสิทธิ์การใช้งานนี้</String>
+    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">ฉัน&amp;ยอมรับเงื่อนไขในข้อตกลงสิทธิ์การใช้งาน</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">คลิก ติดตั้ง เพื่อติดตั้งผลิตภัณฑ์ด้วยตัวเลือกเริ่มต้นสำหรับผู้ใช้ทุกราย คลิก ขั้นสูง เพื่อเปลี่ยนแปลงตัวเลือกการติดตั้ง</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">คลิก ติดตั้ง เพื่อติดตั้งผลิตภัณฑ์ด้วยตัวเลือกเริ่มต้นสำหรับคุณเท่านั้น คลิก ขั้นสูง เพื่อเปลี่ยนแปลงตัวเลือกการติดตั้ง</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">&amp;ติดตั้ง</String>
@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="FilesInUseExit" Overridable="yes">&amp;จบการทำงาน</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">โปรแกรมประยุกต์ต่อไปนี้กำลังใช้แฟ้มที่จำเป็นต้องได้รับการปรับปรุงโดยโปรแกรมติดตั้งนี้ ให้ปิดโปรแกรมประยุกต์เหล่านี้แล้วคลิก ลอ&amp;งใหม่ เพื่อทำการติดตั้งต่อไปหรือคลิก จบการทำงาน เพื่อออกจากการติดตั้ง</String>
+    <String Id="FilesInUseText" Overridable="yes">โปรแกรมประยุกต์ต่อไปนี้กำลังใช้งานแฟ้มที่จำเป็นต้องได้รับการปรับปรุงโดยโปรแกรมติดตั้งนี้ ให้ปิดโปรแกรมประยุกต์เหล่านี้แล้วคลิก ลอ&amp;งใหม่ เพื่อทำการติดตั้งต่อไปหรือคลิก จบการทำงาน เพื่อออกจากการติดตั้ง</String>
     <String Id="FilesInUseDescription" Overridable="yes">แฟ้มที่จำเป็นต้องปรับปรุงมีการใช้งานอยู่แล้วในขณะนี้</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}แฟ้มถูกใช้งานอยู่</String>
 
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">ไอคอนข้อมูล</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">ฉัน&amp;ยอมรับตามข้อความในข้อตกลงสิทธิ์การใช้งานนี้</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">ฉัน&amp;ยอมรับเงื่อนไขในข้อตกลงสิทธิ์การใช้งาน</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">โปรดอ่านข้อตกลงสิทธิ์การใช้งานต่อไปนี้อย่างถี่ถ้วน</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}ข้อตกลงสิทธิ์การใช้งานสำหรับผู้ใช้</String>
@@ -153,7 +153,7 @@
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] ไม่มีคุณลักษณะที่เลือกได้โดยอิสระ</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">เอา [ProductName] ออกจากคอมพิวเตอร์ของคุณ</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">ไม่สามารถเอา [ProductName] ออกได้</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">ซ่อมแซมข้อผิดพลาดในการติดตั้งครั้งล่าสุด โดยแก้ไขแฟ้มที่สูญหายและเสียหาย ทางลัด และรายการรีจิสทรี</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">ซ่อมแซมข้อผิดพลาดในการติดตั้งครั้งล่าสุด โดยแก้ไขแฟ้มที่ขาดหายและเสียหาย ทางลัด และรายการรีจิสทรี</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">ไม่สามารถซ่อมแซม [ProductName] ได้</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
@@ -167,7 +167,7 @@
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">แฟ้มที่จำเป็นต้องปรับปรุงมีการใช้งานอยู่แล้วในขณะนี้</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}แฟ้มถูกใช้งานอยู่</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">ปิ&amp;ดโปรแกรมประยุกต์และเริ่มการทำงานใหม่</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;ไม่ต้องปิดโปรแกรมประยุกต์ จำเป็นต้องเริ่มระบบใหม่</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;อย่าปิดโปรแกรมประยุกต์ คุณจำเป็นต้องเริ่มระบบคอมพิวเตอร์ใหม่</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -199,7 +199,7 @@
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}กำลังซ่อมแซม [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">โปรดรอสักครู่ขณะที่ตัวช่วยสร้างการติดตั้งทำการเอา [ProductName] ออก</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}กำลังเอา [ProductName] ออก</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">โปรดรอขณะตัวช่วยสร้างการติดตั้งทำการปรับปรุง [ProductName]</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">โปรดรอสักครู่ขณะที่ตัวช่วยสร้างการติดตั้งปรับปรุง [ProductName]</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}กำลังปรับปรุง [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">การดำเนินการเสร็จสิ้น</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">สถานะ:</String>
@@ -257,7 +257,7 @@
     <String Id="WelcomeDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="WelcomeDlgDescription" Overridable="yes">ตัวช่วยสร้างการติดตั้งจะติดตั้ง [ProductName] บนเครื่องคอมพิวเตอร์ของคุณ คลิก ถัดไป เพื่อดำเนินการต่อ หรือ ยกเลิก เพื่อออกจากตัวช่วยสร้างการติดตั้ง</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">ตัวช่วยสร้างการติดตั้งจะปรับปรุง [ProductName] บนคอมพิวเตอร์ของคุณ คลิก ถัดไป เพื่อทำต่อ หรือ ยกเลิก เพื่อออกจากตัวช่วยสร้างการติดตั้ง</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">ตัวช่วยสร้างการติดตั้งจะปรับปรุง [ProductName] บนคอมพิวเตอร์ของคุณ คลิก ถัดไป เพื่อดำเนินการต่อ หรือ ยกเลิก เพื่อออกจากตัวช่วยสร้างการติดตั้ง</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}ยินดีต้อนรับสู่ตัวช่วยสร้างการติดตั้ง [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
@@ -317,7 +317,7 @@
     <String Id="ProgressTextPatchFilesTemplate" Overridable="yes">แฟ้ม: [1]  ไดเรกทอรี: [2]  ขนาด: [3]</String>
     <String Id="ProgressTextProcessComponents" Overridable="yes">กำลังปรับปรุงการลงทะเบียนคอมโพเนนต์</String>
     <String Id="ProgressTextRegisterComPlus" Overridable="yes">กำลังลงทะเบียนโปรแกรมประยุกต์และคอมโพเนนต์ COM+</String>
-    <String Id="ProgressTextRegisterComPlusTemplate" Overridable="yes">AppId: [1]{{ AppType: [2] ผู้ใช้: [3] RSN: [4]}}</String>
+    <String Id="ProgressTextRegisterComPlusTemplate" Overridable="yes">AppId: [1]{{, AppType: [2] ผู้ใช้: [3] RSN: [4]}}</String>
     <String Id="ProgressTextRegisterFonts" Overridable="yes">กำลังลงทะเบียนแบบอักษร</String>
     <String Id="ProgressTextRegisterFontsTemplate" Overridable="yes">แบบอักษร: [1]</String>
     <String Id="ProgressTextRegisterProduct" Overridable="yes">กำลังลงทะเบียนผลิตภัณฑ์</String>
@@ -470,12 +470,12 @@
     <String Id="Error1502" Overridable="yes">ผู้ใช้ '[2]' ได้เริ่มต้นการติดตั้งผลิตภัณฑ์ '[3]' แล้วก่อนหน้านี้ ผู้ใช้ดังกล่าวต้องเรียกใช้การติดตั้งนั้นอีกครั้งก่อนจึงจะสามารถใช้ผลิตภัณฑ์นั้นได้ การติดตั้งปัจจุบันของคุณจะดำเนินการต่อไปในขณะนี้</String>
     <String Id="Error1503" Overridable="yes">ผู้ใช้ '[2]' ได้เริ่มต้นการติดตั้งผลิตภัณฑ์ '[3]' แล้วก่อนหน้านี้ ผู้ใช้ดังกล่าวต้องเรียกใช้การติดตั้งนั้นอีกครั้งก่อนจึงจะสามารถใช้ผลิตภัณฑ์นั้นได้</String>
     <String Id="Error1601" Overridable="yes">เนื้อที่ว่างบนดิสก์ไม่เพียงพอ -- ไดรฟ์ข้อมูล: '[2]'; พื้นที่ที่ต้องการ: [3] กิโลไบต์; พื้นที่ที่มีอยู่: [4] กิโลไบต์ ให้เพิ่มเนื้อที่ว่างบนดิสก์แล้วลองใหม่</String>
-    <String Id="Error1602" Overridable="yes">คุณแน่ใจหรือไม่ว่าต้องการยกเลิก</String>
+    <String Id="Error1602" Overridable="yes">คุณแน่ใจหรือไม่ว่าคุณต้องการยกเลิก</String>
     <String Id="Error1603" Overridable="yes">แฟ้ม [2][3] กำลังถูกนำไปใช้งาน{ โดยขั้นตอนต่อไปนี้: ชื่อ: [4], Id: [5], ชื่อหน้าต่าง: '[6]'} ให้ปิดโปรแกรมประยุกต์นั้นแล้วลองใหม่</String>
     <String Id="Error1604" Overridable="yes">ผลิตภัณฑ์ '[2]' ถูกติดตั้งไว้แล้ว ซึ่งจะป้องกันไม่ให้มีการติดตั้งผลิตภัณฑ์นี้ ผลิตภัณฑ์ทั้งสองไม่สามารถทำงานร่วมกันได้</String>
     <String Id="Error1605" Overridable="yes">มีเนื้อที่ดิสก์บนไดรฟ์ข้อมูล '[2]' ไม่เพียงพอที่จะทำการติดตั้งต่อไปโดยที่เปิดใช้งานการกู้คืน เนื้อที่ที่ต้องการคือ [3] กิโลไบต์ แต่มีเนื้อที่ที่พร้อมใช้งานเพียง [4] กิโลไบต์ คลิก ละเว้น เพื่อทำการติดตั้งต่อไปโดยไม่บันทึกข้อมูลการกู้คืน คลิก ลองใหม่ เพื่อตรวจสอบเนื้อที่ที่พร้อมใช้งานอีกครั้ง หรือคลิก ยกเลิก เพื่อออกจากการติดตั้ง</String>
     <String Id="Error1606" Overridable="yes">ไม่สามารถเข้าถึงตำแหน่งบนเครือข่าย [2]</String>
-    <String Id="Error1607" Overridable="yes">โปรแกรมประยุกต์ต่อไปนี้ควรปิดก่อนทำการติดตั้งต่อไป:</String>
+    <String Id="Error1607" Overridable="yes">ควรปิดโปรแกรมประยุกต์ต่อไปนี้ก่อนทำการติดตั้งต่อไป:</String>
     <String Id="Error1608" Overridable="yes">ไม่พบผลิตภัณฑ์ที่เข้ากันได้ถูกติดตั้งไว้ก่อนหน้านี้บนเครื่องที่จะติดตั้งผลิตภัณฑ์นี้</String>
     <String Id="Error1609" Overridable="yes">เกิดข้อผิดพลาดขณะใช้การตั้งค่าความปลอดภัย [2] ไม่ใช่ผู้ใช้หรือกลุ่มที่ถูกต้อง อาจเป็นปัญหาที่เกิดขึ้นกับแพคเกจ หรือปัญหาที่เกี่ยวข้องกับตัวควบคุมโดเมนบนเครือข่าย ให้ตรวจสอบการเชื่อมต่อเครือข่ายของคุณ แล้วคลิก ลองใหม่ หรือ ยกเลิก เพื่อจบการติดตั้ง {{ไม่สามารถค้นหาตำแหน่ง SID ของผู้ใช้ ข้อผิดพลาดของระบบ [3]}}</String>
     <String Id="Error1701" Overridable="yes">คีย์ [2] ไม่ถูกต้อง ให้ตรวจสอบว่าคุณได้ใส่คีย์ที่ถูกต้อง</String>
@@ -551,7 +551,7 @@
     <String Id="Error1932" Overridable="yes">บริการ Windows Installer ไม่สามารถปรับปรุงแฟ้ม Windows [2] ที่ได้รับการป้องกันได้ {{รุ่นของแพคเกจ: [3]  รุ่นที่ได้รับการป้องกันโดย OS: [4] ข้อผิดพลาด SFP: [5]}}</String>
     <String Id="Error1933" Overridable="yes">บริการ Windows Installer ไม่สามารถปรับปรุงแฟ้ม Windows ที่ได้รับการป้องกันอย่างน้อยหนึ่งแฟ้ม {{ข้อผิดพลาด SFP: [2] รายการแฟ้มที่ได้รับการป้องกัน:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">การติดตั้งของผู้ใช้ถูกปิดใช้งานโดยนโยบายของเครื่อง</String>
-    <String Id="Error1935" Overridable="yes">เกิดข้อผิดพลาดระหว่างการติดตั้งแอสเซมบลี '[6]' โปรดดูจากวิธีใช้และการสนับสนุนสำหรับข้อมูลเพิ่มเติม HRESULT: [3] {{ส่วนติดต่อแอสเซมบลี: [4] ฟังก์ชัน: [5] คอมโพเนนต์: [2]}}</String>
+    <String Id="Error1935" Overridable="yes">เกิดข้อผิดพลาดระหว่างการติดตั้งแอสเซมบลี '[6]' โปรดดูวิธีใช้และการสนับสนุนสำหรับข้อมูลเพิ่มเติม HRESULT: [3] {{ส่วนติดต่อแอสเซมบลี: [4] ฟังก์ชัน: [5] คอมโพเนนต์: [2]}}</String>
     <String Id="Error1936" Overridable="yes">เกิดข้อผิดพลาดระหว่างการติดตั้งแอสเซมบลี '[6]' แอสเซมบลีไม่มีการตั้งชื่ออย่างชัดเจน หรือไม่มีการลงชื่อโดยมีความยาวคีย์ขั้นต่ำ HRESULT: [3] {{ส่วนติดต่อแอสเซมบลี: [4] ฟังก์ชัน: [5] คอมโพเนนต์: [2]}}</String>
     <String Id="Error1937" Overridable="yes">เกิดข้อผิดพลาดระหว่างการติดตั้งแอสเซมบลี '[6]' ไม่สามารถตรวจสอบลายเซ็นหรือแค็ตตาล็อกได้ หรือไม่ถูกต้อง HRESULT: [3] {{ส่วนติดต่อแอสเซมบลี: [4] ฟังก์ชัน: [5] คอมโพเนนต์: [2]}}</String>
     <String Id="Error1938" Overridable="yes">เกิดข้อผิดพลาดระหว่างการติดตั้งแอสเซมบลี '[6]' ไม่พบโมดูลอย่างน้อยหนึ่งโมดูลของแอสเซมบลี HRESULT: [3]. {{ส่วนติดต่อแอสเซมบลี: [4] ฟังก์ชัน: [5] คอมโพเนนต์: [2]}}</String>

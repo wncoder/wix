@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes">Instal·lació del producte [ProductName]</String>
     <String Id="FilesInUseExit" Overridable="yes">&amp;Surt</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">Les següents aplicacions fan servir fitxers que cal actualitzar en aquesta instal·lació. Tanqueu aquestes aplicacions i feu clic a &amp;Torna-ho a provar per continuar amb la instal·lació, o a Surt, per sortir-ne.</String>
+    <String Id="FilesInUseText" Overridable="yes">Les següents aplicacions fan servir fitxers que cal actualitzar en aquesta instal·lació. Tanqueu aquestes aplicacions i feu clic a &amp;Torna-ho a provar per continuar amb la instal·lació o bé a Surt per sortir-ne.</String>
     <String Id="FilesInUseDescription" Overridable="yes">S'estan utilitzant alguns fitxers que cal actualitzar.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Fitxers en ús</String>
 
@@ -153,7 +153,7 @@
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">El producte [ProductName] no té cap característica que es pugui seleccionar de manera independent.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Suprimeix el producte [ProductName] de l'ordinador.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">No es pot suprimir el producte [ProductName].</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repara els errors de la instal·lació més recent corregint fitxers perduts i malmesos, dreceres i entrades del registre.</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repara els errors de la instal·lació més recent corregint fitxers, dreceres i entrades del registre perduts i malmesos.</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">No es pot reparar el producte [ProductName].</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Instal·lació del producte [ProductName]</String>
@@ -167,7 +167,7 @@
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">S'estan utilitzant alguns fitxers que cal actualitzar.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Fitxers en ús</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Tanca les aplicacions i intenta reiniciar-les.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;No tanquis les aplicacions. Caldrà reiniciar l'ordinador.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;No tanquis les aplicacions. Caldrà reiniciar.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Instal·lació del producte [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -413,7 +413,7 @@
     <String Id="Error18" Overridable="yes">L'instal·lador ja no respon.</String>
     <String Id="Error19" Overridable="yes">L'instal·lador s'ha aturat abans d'hora.</String>
     <String Id="Error20" Overridable="yes">Espereu mentre el Windows configura el producte [ProductName]</String>
-    <String Id="Error21" Overridable="yes">S'està compilant la informació necessària...</String>
+    <String Id="Error21" Overridable="yes">S'està recopilant la informació necessària...</String>
     <String Id="Error22" Overridable="yes">S'estan suprimint les versions anteriors d'aquesta aplicació...</String>
     <String Id="Error23" Overridable="yes">S'està preparant la supressió de les versions anteriors de l'aplicació...</String>
     <String Id="Error32" Overridable="yes">La instal·lació del producte {[ProductName] }s'ha completat correctament.</String>
@@ -452,7 +452,7 @@
     <String Id="Error1331" Overridable="yes">No s'ha pogut copiar correctament el fitxer [2]: error de CRC.</String>
     <String Id="Error1332" Overridable="yes">No s'ha pogut desplaçar correctament el fitxer [2]: error de CRC.</String>
     <String Id="Error1333" Overridable="yes">No s'ha pogut aplicar el pedaç correctament al fitxer [2]: error de CRC.</String>
-    <String Id="Error1334" Overridable="yes">El fitxer "[2]" no es pot instal·lar perquè no es troba al fitxer CAB "[3]". Això podria indicar un error de xarxa, un error en llegir del CD-ROM o bé un problema amb el paquet.</String>
+    <String Id="Error1334" Overridable="yes">El fitxer "[2]" no es pot instal·lar perquè no es troba al fitxer CAB "[3]". Això podria indicar un error de xarxa, un error en llegir del CD-ROM, o bé un problema amb el paquet.</String>
     <String Id="Error1335" Overridable="yes">El fitxer CAB "[2]" necessari per a aquesta instal·lació està malmès i no es pot utilitzar. Això podria indicar un error de xarxa, un error en llegir del CD-ROM, o bé un problema amb el paquet.</String>
     <String Id="Error1336" Overridable="yes">S'ha produït un error en crear un fitxer temporal necessari per completar la instal·lació. {{ Carpeta: [3]. Codi d'error del sistema: [2]}}</String>
     <String Id="Error1401" Overridable="yes">No s'ha pogut crear la clau: [2]. {{ Error del sistema [3].}} Comproveu que teniu l'accés necessari a la clau o poseu-vos en contacte amb el personal de suport tècnic. </String>
@@ -470,7 +470,7 @@
     <String Id="Error1502" Overridable="yes">L'usuari "[2]" ja ha iniciat prèviament una instal·lació del producte "[3]", però haurà de tornar a executar-la per poder utilitzar el producte. La instal·lació actual d'aquest producte continuarà.</String>
     <String Id="Error1503" Overridable="yes">L'usuari "[2]" ja ha iniciat prèviament una instal·lació del producte "[3]", però haurà de tornar a executar-la per poder utilitzar el producte.</String>
     <String Id="Error1601" Overridable="yes">No hi ha prou espai al disc -- Volum: "[2]"; espai necessari: [3] kB; espai disponible: [4] KB. Augmenteu l'espai disponible del disc i torneu a provar-ho.</String>
-    <String Id="Error1602" Overridable="yes">Esteu segur que voleu cancel·lar?</String>
+    <String Id="Error1602" Overridable="yes">Esteu segur que voleu cancel·lar-ho?</String>
     <String Id="Error1603" Overridable="yes">El fitxer [2][3] està en ús{ pel procés següent: nom: [4], identificador: [5], títol de la finestra: "[6]"}. Tanqueu aquesta aplicació i torneu a provar-ho.</String>
     <String Id="Error1604" Overridable="yes">El producte "[2]" ja està instal·lat, la qual cosa impedeix instal·lar aquest producte. Aquests dos productes són incompatibles.</String>
     <String Id="Error1605" Overridable="yes">No hi ha prou espai de disc disponible al volum "[2]" per continuar la instal·lació amb la recuperació habilitada. Cal tenir [3] kB disponibles, però només hi ha [4] kB. Feu clic a Ignora per continuar la instal·lació sense desar la informació de recuperació, feu clic a Torna-ho a provar per tornar a comprovar l'espai disponible o feu clic a Cancel·la per sortir de la instal·lació.</String>
@@ -551,7 +551,7 @@
     <String Id="Error1932" Overridable="yes">El servei del Windows Installer no pot actualitzar el fitxer protegit del Windows [2]. {{Versió del paquet: [3], versió protegida del sistema operatiu: [4], error d'SFP: [5]}}</String>
     <String Id="Error1933" Overridable="yes">El servei del Windows Installer no pot actualitzar un o més fitxers protegits del Windows. {{Error d'SFP: [2]. Llista de fitxers protegits:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">Les instal·lacions d'usuari estan inhabilitades per una norma de l'ordinador.</String>
-    <String Id="Error1935" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". Vegeu l'Ajuda i suport tècnic per obtenir més informació. HRESULT: [3]. {{interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
+    <String Id="Error1935" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". Vegeu l'Ajuda i suport tècnic per obtenir més informació. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
     <String Id="Error1936" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". L'assemblat no té un nom segur o no està signat amb la longitud de clau mínima. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
     <String Id="Error1937" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". La signatura o el catàleg no s'han pogut comprovar o no són vàlids. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
     <String Id="Error1938" Overridable="yes">S'ha produït un error durant la instal·lació de l'assemblat "[6]". No s'ha pogut trobar un o més mòduls de l'assemblat. HRESULT: [3]. {{Interfície de l'assemblat: [4], funció: [5], component: [2]}}</String>
@@ -569,7 +569,7 @@
     <String Id="UITextMenuLocal" Overridable="yes">S'instal·larà al disc dur local</String>
     <String Id="UITextMenuNetwork" Overridable="yes">S'instal·larà per executar-se des de la xarxa</String>
     <String Id="UITextNewFolder" Overridable="yes">Carpeta|Crea una carpeta</String>
-    <String Id="UITextScriptInProgress" Overridable="yes">S'està compilant la informació necessària...</String>
+    <String Id="UITextScriptInProgress" Overridable="yes">S'està recopilant la informació necessària...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Aquesta característica no s'instal·larà</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Aquesta característica es definirà per instal·lar-se quan calgui</String>
     <String Id="UITextSelAbsentCD" Overridable="yes">Aquesta característica s'instal·larà per executar-se des del CD</String>
@@ -590,7 +590,7 @@
     <String Id="UITextSelLocalAbsent" Overridable="yes">Aquesta característica se suprimirà completament</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">Aquesta característica se suprimirà del disc dur local, però es definirà per instal·lar-se quan calgui</String>
     <String Id="UITextSelLocalCD" Overridable="yes">Aquesta característica se suprimirà de la unitat de disc dur local, però encara es podrà executar des del CD</String>
-    <String Id="UITextSelLocalLocal" Overridable="yes">Aquesta característica romandrà a la vostra unitat de disc dur local</String>
+    <String Id="UITextSelLocalLocal" Overridable="yes">Aquesta característica romandrà a la unitat de disc dur local</String>
     <String Id="UITextSelLocalNetwork" Overridable="yes">Aquesta característica se suprimirà de la unitat de disc dur local, però encara es podrà executar des de la xarxa</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Aquesta característica es desinstal·larà completament i no podreu executar-la des de la xarxa</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Aquesta característica canviarà d'executar-se des de la xarxa a definir-se per instal·lar-se quan calgui</String>

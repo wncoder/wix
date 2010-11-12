@@ -137,8 +137,6 @@ BOOL CompareVariantDefault(
     )
 {
     BOOL fEqual = FALSE;
-    ULONGLONG ull1 = 0;
-    ULONGLONG ull2 = 0;
     switch(pVariant1->vt)
     {
         // VarCmp doesn't work for unsigned ints

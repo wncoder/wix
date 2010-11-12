@@ -182,11 +182,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         name = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
                         break;
                     case "Changeable":
-                        if (null == componentKey)
-                        {
-                            this.Core.OnMessage(ComPlusErrors.IllegalAttributeWithoutComponent(sourceLineNumbers, node.Name, attrib.Name));
-                        }
-                        properties["Changeable"] = YesNoType.Yes == this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib) ? "1" : "0";
+                        this.Core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
                         break;
                     case "Deleteable":
                         if (null == componentKey)
@@ -650,11 +646,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         }
                         break;
                     case "Changeable":
-                        if (null == componentKey)
-                        {
-                            this.Core.OnMessage(ComPlusErrors.IllegalAttributeWithoutComponent(sourceLineNumbers, node.Name, attrib.Name));
-                        }
-                        properties["Changeable"] = YesNoType.Yes == this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib) ? "1" : "0";
+                        this.Core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
                         break;
                     case "CommandLine":
                         if (null == componentKey)

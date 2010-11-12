@@ -63,6 +63,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             /// <summary>PID_REVNUMBER = {productcode}version;{newproductcode}newversion;upgradecode</summary>
             ProductCodes = 9,
 
+            /// <summary>PID_LASTPRINTED should be null for transforms</summary>
+            Reserved11 = 11,
+
             ///.<summary>PID_CREATE_DTM = the timestamp when the transform was created</summary>
             CreationTime = 12,
 

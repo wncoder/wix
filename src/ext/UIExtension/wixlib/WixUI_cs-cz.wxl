@@ -16,7 +16,7 @@
 
     <String Id="WixUIBack" Overridable="yes">&amp;Zpět</String>
     <String Id="WixUINext" Overridable="yes">&amp;Další</String>
-    <String Id="WixUICancel" Overridable="yes">Zrušit</String>
+    <String Id="WixUICancel" Overridable="yes">Storno</String>
     <String Id="WixUIFinish" Overridable="yes">&amp;Dokončit</String>
     <String Id="WixUIRetry" Overridable="yes">&amp;Opakovat</String>
     <String Id="WixUIIgnore" Overridable="yes">&amp;Ignorovat</String>
@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Kliknutím na tlačítko Dokončit ukončete Průvodce instalací.</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Kliknutím na tlačítko Dokončit Průvodce instalací ukončete.</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Průvodce instalací produktu [ProductName] byl dokončen.</String>
 
     <String Id="FatalError_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Průvodce instalací produktu [ProductName] byl předčasně ukončen.</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Průvodce instalací produktu [ProductName] byl předčasně ukončen z důvodu chyby. Systém nebyl změněn. Budete-li chtít tento program nainstalovat později, spusťte znovu Průvodce instalací.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Kliknutím na tlačítko Dokončit ukončete Průvodce instalací.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Kliknutím na tlačítko Dokončit Průvodce instalací ukončete.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Součásti produktu</String>
@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Následující aplikace používají soubory, které je třeba při instalaci aktualizovat. Můžete je nechat Průvodcem instalací ukončit a pokusit se je znovu spustit, nebo později restartovat počítač.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Následující aplikace používají soubory, které je třeba při instalaci aktualizovat. Můžete je nechat zavřít Průvodcem instalací a pokusit se je znovu spustit nebo restartovat počítač později.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Některé soubory, které je třeba aktualizovat, jsou právě používány.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Používané soubory</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Ukončit aplikace a pokusit se je znovu spustit</String>
@@ -228,7 +228,7 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Průvodce instalací produktu [ProductName] byl přerušen.</String>
     <String Id="UserExitDescription1" Overridable="yes">Průvodce instalací produktu [ProductName] byl přerušen. Systém nebyl změněn. Chcete-li tento program nainstalovat později, spusťte znovu instalaci.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Kliknutím na tlačítko Dokončit ukončete Průvodce instalací.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Kliknutím na tlačítko Dokončit Průvodce instalací ukončete.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Instalace produktu [ProductName]</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>

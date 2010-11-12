@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Če želite zapustiti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Če želite zapreti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarovnik za namestitev programa [ProductName] je dokončan</String>
 
     <String Id="FatalError_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarovnik za namestitev programa [ProductName] se je predčasno končal</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Čarovnik za namestitev programa [ProductName] se je zaradi napake predčasno končal. Sistem ni bil spremenjen. Če želite program namestiti pozneje, znova zaženite čarovnika za namestitev.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Če želite zapustiti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Če želite zapreti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Funkcije izdelka</String>
@@ -172,14 +172,14 @@
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfDiskDlgText" Overridable="yes">Na označenih nosilcih ni na voljo dovolj prostora za trenutno izbrane funkcije. Z označenih nosilcev lahko odstranite nekatere datoteke, namestite manj funkcij ali izberite drugi ciljni pogon.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">Prostor, ki ga potrebujete za namestitev, presega prostor, ki je na voljo na disku.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">Prostor, ki je potreben za namestitev, presega prostor, ki je na voljo na disku.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Zmanjkalo je prostora na disku</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfRbDiskDlgText" Overridable="yes">Na označenih nosilcih ni na voljo dovolj prostora za trenutno izbrane funkcije. Z označenih nosilcev lahko odstranite nekatere datoteke, namestite manj funkcij ali izberite drugi ciljni pogon.</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Prostor, ki ga potrebujete za namestitev, presega prostor, ki je na voljo na disku.</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Prostor, ki je potreben za namestitev, presega prostor, ki je na voljo na disku.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Zmanjkalo je prostora na disku</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
     <String Id="OutOfRbDiskDlgText2" Overridable="yes">Lahko tudi onemogočite funkcijo razveljavitve namestitvenega programa. Če onemogočite razveljavitev, namestitvenemu programu preprečite obnovitev prvotnega stanja vašega računalnika, če bi prišlo do kakršne koli prekinitve med namestitvijo. Kliknite »Da«, če želite kljub temu onemogočiti razveljavitev.</String>
@@ -228,21 +228,21 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarovnik za namestitev programa [ProductName] je bil prekinjen</String>
     <String Id="UserExitDescription1" Overridable="yes">Namestitev programa [ProductName] je bila prekinjena. Sistem ni bil spremenjen. Če želite ta program namestiti pozneje, znova zaženite namestitev.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Če želite zapustiti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Če želite zapreti čarovnika za namestitev, kliknite gumb »Dokončaj«.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Namesti</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Kliknite »Namesti«, če želite začeti namestitev. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapustiti čarovnika.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Kliknite »Namesti«, če želite začeti namestitev. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapreti čarovnika.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Pripravljen na namestitev programa [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Spremeni</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Kliknite »Spremeni«, če želite začeti namestitev. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapustiti čarovnika.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Kliknite »Spremeni«, če želite začeti namestitev. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapreti čarovnika.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Pripravljen na spreminjanje programa [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Po&amp;pravi</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknite »Popravi«, če želite popraviti namestitev programa [ProductName]. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapustiti čarovnika.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknite »Popravi«, če želite popraviti namestitev programa [ProductName]. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapreti čarovnika.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Pripravljen na popravljanje programa [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Odstrani</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknite »Odstrani«, če želite odstraniti program [ProductName] iz računalnika. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapustiti čarovnika.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknite »Odstrani«, če želite odstraniti program [ProductName] iz računalnika. Kliknite »Nazaj«, če želite pregledati ali spremeniti nastavitve namestitve. Kliknite »Prekliči«, če želite zapreti čarovnika.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Pripravljen na odstranjevanje programa [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Posodobitev</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Kliknite »Posodobi«, da posodobite [ProductName] v računalniku. Kliknite »Nazaj«, če želite pregledati ali spremeniti katero koli nastavitev namestitve. Kliknite »Prekliči«, če želite zapreti čarovnika.</String>
@@ -601,7 +601,7 @@
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Za to funkcijo potrebujete [1] prostora na trdem disku. Izbrali ste [2] od [3] podfunkcij, ki sprostijo [4] prostora na trdem disku.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">Za to funkcijo potrebujete [1] prostora na trdem disku. Izbrali ste [2] od [3] podfunkcij, ki potrebujejo [4] prostora na trdem disku.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Preostali čas: {[1] min. }{[2] s}</String>
-    <String Id="UITextVolumeCostAvailable" Overridable="yes">Prosto</String>
+    <String Id="UITextVolumeCostAvailable" Overridable="yes">Na voljo</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Razlika</String>
     <String Id="UITextVolumeCostRequired" Overridable="yes">Zahtevano</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Velikost diska</String>

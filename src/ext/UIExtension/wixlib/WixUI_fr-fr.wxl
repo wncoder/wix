@@ -51,7 +51,7 @@
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Modifier le dossier de destination</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">Installation de [ProductName]</String>
-    <String Id="CancelDlgText" Overridable="yes">Êtes-vous sûr de vouloir annuler l’installation de [ProductName] ?</String>
+    <String Id="CancelDlgText" Overridable="yes">Êtes-vous sûr de vouloir annuler l'installation de [ProductName] ?</String>
     <String Id="CancelDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="CancelDlgIconTooltip" Overridable="yes">Icône d'information</String>
 
@@ -149,11 +149,11 @@
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Sélectionnez l'opération à exécuter.</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Modifier, réparer ou supprimer l'installation</String>
-    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Vous permet de modifier le mode d'installation des composants.</String>
+    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Vous permet de modifier la façon dont les composants sont installés.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] n'a aucun composant individuellement sélectionnable.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Supprime [ProductName] de votre ordinateur.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName] ne peut pas être supprimé.</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Répare les erreurs de l'installation la plus récente en réparant les fichiers, raccourcis et entrées de Registre manquants ou endommagés.</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Corrige les erreurs de l'installation la plus récente en réparant les fichiers, raccourcis et entrées de Registre manquants ou endommagés.</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName] ne peut pas être réparé.</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Installation de [ProductName]</String>
@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Installation de [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Les applications suivantes utilisent des fichiers qui doivent être mis à jour par ce programme d'installation. Vous pouvez laisser l'Assistant Installation les fermer et essayer de les redémarrer, ou redémarrer l'ordinateur ultérieurement.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Les applications suivantes utilisent des fichiers qui doivent être mis à jour au cours de cette installation. Vous pouvez laisser l'Assistant Installation se charger de les fermer et tenter de les redémarrer, ou redémarrer l'ordinateur ultérieurement.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Certains fichiers qui doivent être mis à jour sont en cours d'utilisation.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Fichiers en cours d'utilisation</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Fermer les applications et tenter de les redémarrer.</String>
@@ -172,21 +172,21 @@
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Installation de [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfDiskDlgText" Overridable="yes">Les volumes mis en surbrillance ne disposent pas de suffisamment d'espace disque pour les composants actuellement sélectionnés. Vous pouvez supprimer certains fichiers des volumes mis en surbrillance, installer moins de composants ou sélectionner un lecteur de destination différent.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">L'espace disque nécessaire pour l'installation dépasse l'espace disponible.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">L'espace disque requis pour l'installation dépasse l'espace disponible.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Espace disque insuffisant</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Installation de [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfRbDiskDlgText" Overridable="yes">Les volumes mis en surbrillance ne disposent pas de suffisamment d'espace disque pour les composants actuellement sélectionnés. Vous pouvez supprimer certains fichiers des volumes mis en surbrillance, installer moins de composants ou sélectionner un lecteur de destination différent.</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">L'espace disque nécessaire pour l'installation dépasse l'espace disponible.</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">L'espace disque requis pour l'installation dépasse l'espace disponible.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Espace disque insuffisant</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
     <String Id="OutOfRbDiskDlgText2" Overridable="yes">Vous pouvez également désactiver la fonctionnalité de restauration du programme d'installation. La désactivation de la restauration empêche le programme d'installation de restaurer l'état d'origine de l'ordinateur en cas d'interruption de l'installation. Cliquez sur Oui si vous souhaitez prendre le risque de désactiver la restauration.</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">Installation de [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">Veuillez patienter pendant que l'Assistant Installation se prépare à vous guider tout au long de l'installation.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">Veuillez patienter pendant que l'Assistant Installation se prépare pour vous guider dans l'installation.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Bienvenue dans l'Assistant Installation de [ProductName]</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">Installation de [ProductName]</String>
@@ -236,10 +236,10 @@
     <String Id="VerifyReadyDlgInstallText" Overridable="yes">Cliquez sur Installer pour commencer l'installation. Cliquez sur Précédent pour vérifier ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Prêt à installer [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Modifier</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Cliquez sur Modifier pour commencer l'installation. Cliquez sur Précédent pour vérifier ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Cliquez sur Modifier pour lancer l'installation. Cliquez sur Précédent pour consulter ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant Installation.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Prêt à modifier [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Ré&amp;parer</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Cliquez sur Réparer pour réparer l'installation de [ProductName]. Cliquez sur Précédent pour vérifier ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Cliquez sur Réparer pour réparer l'installation de [ProductName]. Cliquez sur Précédent pour consulter ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant Installation.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Prêt à réparer [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Supprimer</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Cliquez sur Supprimer pour supprimer [ProductName] de votre ordinateur. Cliquez sur Précédent pour vérifier ou modifier vos paramètres d'installation. Cliquez sur Annuler pour quitter l'Assistant.</String>
@@ -250,7 +250,7 @@
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">Installation de [ProductName]</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Retour</String>
-    <String Id="WaitForCostingDlgText" Overridable="yes">Veuillez patienter pendant que le programme d'installation calcule l'espace disque nécessaire.</String>
+    <String Id="WaitForCostingDlgText" Overridable="yes">Veuillez patienter pendant que l'Assistant Installation finit de calculer l'espace disque nécessaire.</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">Icône d'exclamation</String>
 
@@ -572,12 +572,12 @@
     <String Id="UITextScriptInProgress" Overridable="yes">Collecte des informations nécessaires...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Ce composant ne sera pas installé</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Ce composant sera configuré pour être installé à la demande</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">Ce composant sera installé pour être exécuté à partir du CD-ROM</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">Ce composant sera installé pour être exécuté à partir du CD</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">Ce composant sera installé sur le disque dur local</String>
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Ce composant sera installé pour être exécuté à partir du réseau</String>
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Ce composant ne sera plus disponible</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Installation à la demande</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Ce composant sera disponible pour être exécuté à partir du CD-ROM</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Ce composant sera disponible pour être exécuté à partir du CD</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">Ce composant sera installé sur le disque dur local</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Ce composant sera disponible pour être exécuté à partir du réseau</String>
     <String Id="UITextSelCDAbsent" Overridable="yes">Ce composant sera désinstallé en totalité et ne pourra plus être exécuté à partir du CD</String>

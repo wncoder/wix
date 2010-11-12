@@ -101,6 +101,7 @@
         <include name="winterop.dll" />
         <include name="wix.dll" />
         <include name="wix.targets" />
+        <include name="wix200x.targets" />
         <include name="wix2010.targets" />
         <include name="WixCop.exe" />
         <include name="WixTasks.dll" />

@@ -90,7 +90,7 @@
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Čarobnjak za instalaciju programa [ProductName] završio je prerano</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Čarobnjak za instalaciju programa [ProductName] završio je prerano zbog pogreške. Sustav nije izmijenjen. Da biste proizvod naknadno instalirali, ponovno pokrenite čarobnjak za instalaciju.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Kliknite gumb Dovrši da biste izašli iz čarobnjaka za instalaciju.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Kliknite gumb "Dovrši" da biste izašli iz čarobnjaka za instalaciju.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Značajke proizvoda</String>
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Ikona informacija</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Prihvaćam uvjete Licencnog ugovora</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Prihvaćam uvjete licencnog ugovora</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">Pozorno pročitajte sljedeći licencni ugovor</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Licencni ugovor za krajnjeg korisnika</String>
@@ -171,15 +171,15 @@
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Na označenim jedinicama nema dovoljno slobodnog prostora na disku za trenutno odabrane značajke. Možete ukloniti neke datoteke s označenih jedinica, instalirati manje značajki ili odabrati drugi odredišni disk.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">Prostor na disku potreban za instalaciju premašuje slobodan prostor na disku.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Na označenim jedinicama nema dovoljno slobodnog prostora na disku za trenutno odabrane značajke. Možete ukloniti neke datoteke s označenih jedinica, instalirati manje značajki ili odabrati neki drugi odredišni disk.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">Za instalaciju je potrebno više prostora nego što je slobodno na disku.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nema dovoljno prostora na disku</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Na označenim jedinicama nema dovoljno slobodnog prostora na disku za trenutno odabrane značajke. Možete ukloniti neke datoteke s označenih jedinica, instalirati manje značajki ili odabrati drugi odredišni disk.</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Prostor na disku potreban za instalaciju premašuje slobodan prostor na disku.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Na označenim jedinicama nema dovoljno slobodnog prostora na disku za trenutno odabrane značajke. Možete ukloniti neke datoteke s označenih jedinica, instalirati manje značajki ili odabrati neki drugi odredišni disk.</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Za instalaciju je potrebno više prostora nego što je slobodno na disku.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nema dovoljno prostora na disku</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
     <String Id="OutOfRbDiskDlgText2" Overridable="yes">Druga je mogućnost da onemogućite funkciju vraćanja instalacijskog programa. Ako onemogućite vraćanje, instalacijski program neće moći vratiti računalo u izvorno stanje u slučaju da zbog bilo kojeg razloga dođe do prekida instalacije. Kliknite "Da" ako želite riskirati i onemogućiti vraćanje.</String>
@@ -233,19 +233,19 @@
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Instaliraj</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Kliknite "Instaliraj" da biste započeli instalaciju. Kliknite "Natrag" da biste pregledali postavke instalacije i promijenili ih. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Kliknite "Instaliraj" da biste započeli instalaciju. Kliknite "Natrag" da biste pregledali postavke instalacije ili ih promijenili. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Spreman instalirati [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Promijeni</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Kliknite "Promijeni" da biste započeli instalaciju. Kliknite "Natrag" da biste pregledali postavke instalacije i promijenili ih. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Kliknite "Promijeni" da biste započeli instalaciju. Kliknite "Natrag" da biste pregledali postavke instalacije ili ih promijenili. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Spreman promijeniti [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Po&amp;pravi</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknite "Popravi" da biste popravili instalaciju programa [ProductName]. Kliknite "Natrag" da biste pregledali postavke instalacije i promijenili ih. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknite "Popravi" da biste popravili instalaciju programa [ProductName]. Kliknite "Natrag" da biste pregledali postavke instalacije ili ih promijenili. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Spreman popraviti [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Ukloni</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknite "Ukloni" da biste uklonili [ProductName] s računala. Kliknite "Natrag" da biste pregledali postavke instalacije i promijenili ih. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknite "Ukloni" da biste uklonili [ProductName] s računala. Kliknite "Natrag" da biste pregledali postavke instalacije ili ih promijenili. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Spreman ukloniti [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Ažuriraj</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Kliknite "Ažuriraj" da biste ažurirali [ProductName] s računala. Kliknite "Natrag" da biste pregledali postavke instalacije i promijenili ih. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Kliknite "Ažuriraj" da biste ažurirali [ProductName] s računala. Kliknite "Natrag" da biste pregledali postavke instalacije ili ih promijenili. Kliknite "Odustani" da biste izašli iz čarobnjaka.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Spreman ažurirati [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
@@ -257,12 +257,12 @@
     <String Id="WelcomeDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="WelcomeDlgDescription" Overridable="yes">Čarobnjak za instalaciju instalirat će [ProductName] na računalo. Kliknite "Dalje" da biste nastavili ili "Odustani" da biste izašli iz čarobnjaka za instalaciju.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Čarobnjak za instalaciju ažurirat će [ProductName] na vašem računalu. Kliknite "Dalje" da biste nastavili ili "Odustani" da biste izašli iz čarobnjaka za instalaciju.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Čarobnjak za instalaciju ažurirat će [ProductName] na računalu. Kliknite "Dalje" da biste nastavili ili "Odustani" da biste izašli iz čarobnjaka za instalaciju.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Dobro došli u čarobnjak za instalaciju programa [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Prihvaćam uvjete Licencnog ugovora</String>
+    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Prihvaćam uvjete licencnog ugovora</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">&amp;Instaliraj</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Ažuriraj</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Pročitajte licencni ugovor za proizvod [ProductName]</String>
@@ -465,7 +465,7 @@
     <String Id="Error1408" Overridable="yes">Nije moguće dohvatiti nazive potključeva za ključ [2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
     <String Id="Error1409" Overridable="yes">Nije moguće pročitati sigurnosne informacije za ključ 2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
     <String Id="Error1410" Overridable="yes">Nije moguće povećati slobodan prostor registra. Za instalaciju aplikacije potrebno je najmanje [2] kB slobodnog prostora u registru.</String>
-    <String Id="Error1500" Overridable="yes">U tijeku je druga instalacija.  Morate dovršiti tu instalaciju prije nastavka ove.</String>
+    <String Id="Error1500" Overridable="yes">U tijeku je druga instalacija. Morate dovršiti tu instalaciju prije nastavka ove.</String>
     <String Id="Error1501" Overridable="yes">Pogreška prilikom pristupa osiguranim podacima. Provjerite je li Windows Installer pravilno konfiguriran i pokušajte ponoviti instalaciju.</String>
     <String Id="Error1502" Overridable="yes">Korisnik "[2]" već je započeo instalaciju proizvoda "[3]". Morat će ponovno pokrenuti instalaciju da bi mogao koristiti proizvod. Vaša će se trenutna instalacija sada nastaviti.</String>
     <String Id="Error1503" Overridable="yes">Korisnik "[2]" već je započeo instalaciju proizvoda "[3]". Morat će ponovno pokrenuti instalaciju da bi mogao koristiti proizvod.</String>
@@ -524,7 +524,7 @@
     <String Id="Error1905" Overridable="yes">Poništavanje registracije modula [2] nije uspjelo. HRESULT [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1906" Overridable="yes">Predmemoriranje paketa [2] nije uspjelo. Pogreška: [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1907" Overridable="yes">Nije moguće registrirati font [2]. Provjerite imate li potrebne dozvole za instalaciju fontove te podržava li sustav taj font.</String>
-    <String Id="Error1908" Overridable="yes">Poništavanje registracije fonta [2] nije uspjelo.  Provjerite imate li potrebne dozvole za uklanjanje fontova.</String>
+    <String Id="Error1908" Overridable="yes">Poništavanje registracije fonta [2] nije uspjelo. Provjerite imate li potrebne dozvole za uklanjanje fontova.</String>
     <String Id="Error1909" Overridable="yes">Stvaranje prečaca [2] nije moguće. Provjerite postoji li odredišna mapa te možete li joj pristupiti.</String>
     <String Id="Error1910" Overridable="yes">Uklanjanje prečaca [2] nije uspjelo. Provjerite postoji li datoteka prečaca te možete li joj pristupiti.</String>
     <String Id="Error1911" Overridable="yes">Nije moguće registrirati biblioteku tipa za datoteku [2]. Obratite se osoblju za podršku.</String>
@@ -533,7 +533,7 @@
     <String Id="Error1914" Overridable="yes">Nije moguće zakazati zamjenu datoteke [3] datotekom [2] pri ponovnom pokretanju sustava. Provjerite imate li dozvole pisanja za datoteku [3].</String>
     <String Id="Error1915" Overridable="yes">Pogreška pri uklanjanju ODBC upravitelja upravljačkim programima, ODBC pogreška [2]: [3]. Obratite se osoblju za podršku.</String>
     <String Id="Error1916" Overridable="yes">Pogreška pri instaliranju ODBC upravitelja upravljačkim programima, ODBC pogreška [2]: [3]. Obratite se osoblju za podršku.</String>
-    <String Id="Error1917" Overridable="yes">Pogreška pri uklanjanju ODBC upravljačkog programa: [4], ODBC pogreška [2]: [3].  Provjerite imate li dovoljne ovlasti za uklanjanje ODBC upravljačkih programa.</String>
+    <String Id="Error1917" Overridable="yes">Pogreška pri uklanjanju ODBC upravljačkog programa: [4], ODBC pogreška [2]: [3]. Provjerite imate li dovoljne ovlasti za uklanjanje ODBC upravljačkih programa.</String>
     <String Id="Error1918" Overridable="yes">Pogreška pri instaliranju ODBC upravljačkog programa: [4], ODBC pogreška [2]: [3]. Provjerite postoji li datoteka [4] te možete li joj pristupiti.</String>
     <String Id="Error1919" Overridable="yes">Pogreška pri konfiguriranju ODBC izvora podataka: [4], ODBC pogreška [2]: [3]. Provjerite postoji li datoteka [4] te možete li joj pristupiti.</String>
     <String Id="Error1920" Overridable="yes">Servis "[2]" ([3]) nije se uspio pokrenuti. Provjerite imate li dovoljne ovlasti za pokretanje servisa sustava.</String>
@@ -575,7 +575,7 @@
     <String Id="UITextSelAbsentCD" Overridable="yes">Značajka će se instalirati za pokretanje s CD-a</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">Značajka će se instalirati na lokalni tvrdi disk</String>
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Značajka će se instalirati za pokretanje s mreže</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Značajke neće više biti dostupna</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Značajka više neće biti dostupna</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Značajka će se instalirati po potrebi</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">Značajka će biti dostupna za pokretanje s CD-a</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">Značajka će se instalirati na lokalni tvrdi disk</String>
@@ -586,20 +586,20 @@
     <String Id="UITextSelCDLocal" Overridable="yes">Stanje instalacije značajke promijenit će se iz pokretanja s CD-a u instalaciju na lokalnom tvrdom disku</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Ta značajka oslobađa [1] na tvrdom disku.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Za tu je značajku potrebno [1] na tvrdom disku.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">Izračunavanje potrošnje memorijskog prostora za ovu značajku...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Značajka će se potpuno ukloniti</String>
+    <String Id="UITextSelCostPending" Overridable="yes">Izračunavanje potrošnje memorijskog prostora za tu značajku...</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Značajka će biti potpuno uklonjena</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">Značajka će se ukloniti s lokalnog tvrdog diska, ali će se postaviti na instalaciju po potrebi</String>
     <String Id="UITextSelLocalCD" Overridable="yes">Značajka će se ukloniti s lokalnog tvrdog diska, ali će i dalje biti dostupna za pokretanje s CD-a</String>
     <String Id="UITextSelLocalLocal" Overridable="yes">Značajka će ostati na lokalnom tvrdom disku</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Značajka će se ukloniti s lokalnog tvrdog diska, ali će i dalje biti dostupna za pokretanje s mreže</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Značajka će biti uklonjena s lokalnog tvrdog diska, ali će i dalje biti dostupna za pokretanje s mreže</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Značajka će se potpuno deinstalirati i nećete je moći pokrenuti s mreže</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Stanje instalacije značajke promijenit će se iz pokretanja s mreže u instalaciju po potrebi</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">Stanje instalacije značajke promijenit će se iz pokretanja s mreže u instalaciju na lokalnom tvrdom disku</String>
     <String Id="UITextSelNetworkNetwork" Overridable="yes">Značajka će se i dalje pokretati s mreže</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Ta značajka oslobađa [1] na tvrdom disku. Odabrano podznačajki: [2] od [3]. Podznačajke oslobađaju [4] na tvrdom disku.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">Značajka oslobađa [1] na tvrdom disku. Odabrano podznačajki: [2] od [3]. Za podznačajke je potrebno [4] na tvrdom disku.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Za značajku je potrebno [1] na tvrdom disku. Odabrano podznačajki: [2] od [3]. Podznačajke oslobađaju [4] na tvrdom disku.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Za značajku je potrebno [1] na tvrdom disku. Odabrano podznačajki: [2] od [3]. Za podznačajke je potrebno [4] na tvrdom disku.</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Značajka oslobađa [1] na tvrdom disku. Odabrane podznačajke: [2] od [3]. Podznačajke oslobađaju [4] na tvrdom disku.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">Značajka oslobađa [1] na tvrdom disku. Odabrane podznačajke: [2] od [3]. Za podznačajke je potrebno [4] na tvrdom disku.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Za značajku je potrebno [1] na tvrdom disku. Odabrane podznačajke: [2] od [3]. Podznačajke oslobađaju [4] na tvrdom disku.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Za značajku je potrebno [1] na tvrdom disku. Odabrane podznačajke: [2] od [3]. Za podznačajke je potrebno [4] na tvrdom disku.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Preostalo vrijeme: {[1] min }{[2] s}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Slobodno</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Razlika</String>

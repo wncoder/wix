@@ -28,7 +28,7 @@
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Прочетете лицензионното споразумение за [ProductName]</String>
-    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в Лицензионното споразумение</String>
+    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в лицензионното споразумение</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Щракнете върху "Инсталирай", за да инсталирате продукта с опции по подразбиране за всички потребители. Щракнете върху "Разширени", за да промените опциите за инсталиране.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Щракнете върху "Инсталирай", за да инсталирате продукта с опции по подразбиране само за вас. Щракнете върху "Разширени", за да промените опциите за инсталиране.</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">&amp;Инсталирай</String>
@@ -71,7 +71,7 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място за избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство на местоназначение.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място за избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство за местоназначение.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Дисковото пространство, необходимо за инсталиране на избраните компоненти.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Изисквания за дисковото пространство</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Информационна икона</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в Лицензионното споразумение</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в лицензионното споразумение</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">Прочетете внимателно следното лицензионно споразумение</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Лицензионно споразумение с краен потребител</String>
@@ -167,18 +167,18 @@
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Някои от файловете, които трябва да се актуализират, в момента се използват.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Използвани в момента файлове</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Затвори приложенията и направи опит за рестартирането им.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Не затваряй приложенията. Изисква се рестартиране.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Не затваряй приложенията. Ще се изисква рестартиране.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място на диска за текущо избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство на местоназначение.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място на диска за текущо избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство за местоназначение.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">Дисковото пространство, необходимо за инсталирането, надвишава свободното дисково пространство.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Недостатъчно място на диска</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място на диска за текущо избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство на местоназначение.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Маркираните томове нямат достатъчно свободно място на диска за текущо избраните компоненти. Можете да премахнете някои файлове от маркираните томове, да инсталирате по-малко компоненти или да изберете друго устройство за местоназначение.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Дисковото пространство, необходимо за инсталирането, надвишава свободното дисково пространство.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Недостатъчно място на диска</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -263,7 +263,7 @@
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в Лицензионното споразумение</String>
+    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Приемам условията в лицензионното споразумение</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">&amp;Инсталирай</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Актуализирай</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Прочетете лицензионното споразумение за [ProductName]</String>

@@ -31,7 +31,7 @@
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Acepto los términos del Contrato de licencia</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Haga clic en Instalar para instalar el producto con las opciones predeterminadas para todos los usuarios. Haga clic en Avanzada para cambiar las opciones de instalación.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Haga clic en Instalar para instalar el producto con las opciones predeterminadas solo para el usuario actual. Haga clic en Avanzada para cambiar las opciones de instalación.</String>
-    <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">&amp;Instalar</String>
+    <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">I&amp;nstalar</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">A&amp;vanzada</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">8</String>
     <String Id="Advanced_Font_Bigger_Size" Overridable="yes">12</String>
@@ -77,7 +77,7 @@
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="ErrorDlg_Title" Overridable="yes">Instalación de [ProductName]</String>
-    <String Id="ErrorDlgErrorText" Overridable="yes">Texto de información</String>
+    <String Id="ErrorDlgErrorText" Overridable="yes">Texto informativo</String>
     <String Id="ErrorDlgErrorIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">Icono de información</String>
 

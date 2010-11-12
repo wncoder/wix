@@ -2756,6 +2756,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     transformFlags = Convert.ToInt32(row[1], CultureInfo.InvariantCulture);
                 }
+                else if ((int)SummaryInformation.Transform.Reserved11 == (int)row[0])
+                {
+                    // PID_LASTPRINTED should be null for transforms
+                    row.Operation = RowOperation.None;
+                }
                 else
                 {
                     // add everything else as is

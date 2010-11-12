@@ -178,6 +178,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         this.showHelp = true;
                         return;
                     }
+                    else if ("nologo" == parameter)
+                    {
+                        this.showLogo = false;
+                    }
                     else if ("notidy" == parameter)
                     {
                         this.tidy = false;

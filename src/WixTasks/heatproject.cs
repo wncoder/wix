@@ -18,7 +18,6 @@
 
 namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
 {
-    using System;
     using Microsoft.Build.Framework;
 
     public sealed class HeatProject : HeatTask
@@ -101,13 +100,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             WixCommandLineBuilder commandLineBuilder = new WixCommandLineBuilder();
 
             commandLineBuilder.AppendSwitch(this.OperationName);
-
-            // Ensure there are quotes around the project path, if there aren't already
-            if (!this.Project.StartsWith("\"", StringComparison.Ordinal))
-            {
-                this.Project = "\"" + this.Project + "\"";
-            }
-            commandLineBuilder.AppendSwitch(this.Project);
+            commandLineBuilder.AppendFileNameIfNotNull(this.Project);
 
             commandLineBuilder.AppendSwitchIfNotNull("-configuration ", this.Configuration);
             commandLineBuilder.AppendSwitchIfNotNull("-directoryid ", this.DirectoryIds);

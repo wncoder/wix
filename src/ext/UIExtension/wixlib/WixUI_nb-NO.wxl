@@ -51,7 +51,7 @@
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Endre målmappe</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">Installere [ProductName]</String>
-    <String Id="CancelDlgText" Overridable="yes">Vil du avbryte installasjonen av [ProductName]?</String>
+    <String Id="CancelDlgText" Overridable="yes">Er du sikker på at du vil avbryte installasjonen av [ProductName]?</String>
     <String Id="CancelDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="CancelDlgIconTooltip" Overridable="yes">Informasjonsikon</String>
 

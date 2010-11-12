@@ -88,7 +88,7 @@
 
     <String Id="FatalError_Title" Overridable="yes">Інсталяція програми [ProductName]</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Роботу майстра інсталяції програми [ProductName] передчасно завершено</String>
+    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Роботу майстра інсталяції програми [ProductName] завершено передчасно</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Роботу майстра інсталяції програми [ProductName] передчасно завершено через помилку. Систему не змінено. Щоб продовжити інсталяцію пізніше, знову запустіть майстер інсталяції.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Натисніть кнопку "Готово", щоб закрити майстер інсталяції.</String>
 
@@ -148,7 +148,7 @@
     <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">Видалити інсталяцію</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Виберіть операцію, яку потрібно виконати.</String>
-    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Змінення, відновлення або видалення інсталяції</String>
+    <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Змінити, відновити або видалити інсталяцію</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Дає змогу змінити спосіб інсталяції компонентів.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">Для програми [ProductName] немає компонентів, які можна вибрати окремо.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Видаляє [ProductName] з комп’ютера.</String>
@@ -166,7 +166,7 @@
     <String Id="MsiRMFilesInUseText" Overridable="yes">Наведені нижче застосунки використовують файли, які підлягають оновленню під час цієї інсталяції. Можна дозволити майстру інсталяції закрити та спробувати перезапустити їх або перезавантажити комп’ютер пізніше.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Деякі файли, що підлягають оновленню, зараз використовуються.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Файли, які використовуються</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Закрити застосунки та спробувати перезапустити їх.</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Закрийте ці застосунки та спробуйте їх перезапустити.</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Не закривати застосунки. Потрібно буде перезавантажити комп’ютер.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Інсталяція програми [ProductName]</String>
@@ -199,7 +199,7 @@
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Відновлення програми [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">Зачекайте: майстер інсталяції видаляє програму [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Видалення програми [ProductName]</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">Зачекайте: майстер інсталяції оновлює програму [ProductName].</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Зачекайте, доки майстер інсталяції оновить програму [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Оновлення програми [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Перебіг виконання</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Стан:</String>
@@ -226,7 +226,7 @@
 
     <String Id="UserExit_Title" Overridable="yes">Інсталяція програми [ProductName]</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Роботу майстра інсталяції програми [ProductName] було перервано</String>
+    <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Роботу майстра інсталяції програми [ProductName] перервано</String>
     <String Id="UserExitDescription1" Overridable="yes">Інсталяцію програми [ProductName] було перервано. Систему не змінено. Щоб інсталювати цю програму пізніше, знову запустіть процес інсталяції.</String>
     <String Id="UserExitDescription2" Overridable="yes">Натисніть кнопку "Готово", щоб закрити майстер інсталяції.</String>
 
@@ -408,7 +408,7 @@
     <String Id="Error13" Overridable="yes">=== Запис до журналу зупинено: [Date] [Time] ===</String>
     <String Id="Error14" Overridable="yes">Дію почато [Time]: [1].</String>
     <String Id="Error15" Overridable="yes">Дію завершено [Time]: [1]. Повернено значення [2].</String>
-    <String Id="Error16" Overridable="yes">Залишилось часу: {[1] хв. }{[2] сек.}</String>
+    <String Id="Error16" Overridable="yes">Залишилося часу: {[1] хв. }{[2] сек.}</String>
     <String Id="Error17" Overridable="yes">Бракує пам’яті. Закрийте інші застосунки та повторіть спробу.</String>
     <String Id="Error18" Overridable="yes">Інсталятор не відповідає.</String>
     <String Id="Error19" Overridable="yes">Інсталятор передчасно припинив роботу.</String>
@@ -568,42 +568,42 @@
     <String Id="UITextMenuCD" Overridable="yes">Буде інстальовано для запуску з компакт-диска</String>
     <String Id="UITextMenuLocal" Overridable="yes">Буде інстальовано на локальний жорсткий диск</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Буде інстальовано для запуску з мережі</String>
-    <String Id="UITextNewFolder" Overridable="yes">Folder|Нова папка</String>
+    <String Id="UITextNewFolder" Overridable="yes">Папка|Нова папка</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Триває збирання потрібних даних...</String>
-    <String Id="UITextSelAbsentAbsent" Overridable="yes">Компонент не буде інстальовано</String>
-    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Компонент буде настроєно для інсталяції в разі потреби</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">Компонент буде інстальовано для запуску з компакт-диска</String>
-    <String Id="UITextSelAbsentLocal" Overridable="yes">Компонент буде інстальовано на локальний жорсткий диск</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">Компонент буде інстальовано для запуску з мережі</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Компонент стане недоступний</String>
+    <String Id="UITextSelAbsentAbsent" Overridable="yes">Цей компонент не буде інстальовано</String>
+    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Цей компонент буде настроєно для інсталяції в разі потреби</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">Цей компонент буде інстальовано для запуску з компакт-диска</String>
+    <String Id="UITextSelAbsentLocal" Overridable="yes">Цей компонент буде інстальовано на локальний жорсткий диск</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">Цей компонент буде інстальовано для запуску з мережі</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Цей компонент стане недоступний</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Буде інстальовано в разі потреби</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Компонент буде доступний для запуску з компакт-диска</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Цей компонент буде доступний для запуску з компакт-диска</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">Цей компонент буде інстальовано на локальний жорсткий диск</String>
-    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Компонент буде доступний для запуску з мережі</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">Компонент буде повністю видалено, його неможливо буде запустити з компакт-диска</String>
+    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Цей компонент буде доступний для запуску з мережі</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">Цей компонент буде повністю видалено, його не можна буде запустити з компакт-диска</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">Для цього компонента запуск із компакт-диска буде замінено на інсталяцію в разі потреби</String>
-    <String Id="UITextSelCDCD" Overridable="yes">Компонент залишиться доступним для запуску з компакт-диска</String>
+    <String Id="UITextSelCDCD" Overridable="yes">Цей компонент залишиться доступний для запуску з компакт-диска</String>
     <String Id="UITextSelCDLocal" Overridable="yes">Для цього компонента запуск із компакт-диска буде замінено на інсталяцію на локальний жорсткий диск</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Цей компонент звільняє [1] на жорсткому диску.</String>
-    <String Id="UITextSelChildCostPos" Overridable="yes">Цей компонент потребує [1] на жорсткому диску.</String>
+    <String Id="UITextSelChildCostPos" Overridable="yes">Для цього компонента потрібно [1] на жорсткому диску.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Триває обчислення місця для компонента...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Компонент буде повністю видалено</String>
-    <String Id="UITextSelLocalAdvertise" Overridable="yes">Компонент буде видалено з локального жорсткого диска, але настроєно для інсталяції в разі потреби</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Цей компонент буде повністю видалено</String>
+    <String Id="UITextSelLocalAdvertise" Overridable="yes">Цей компонент буде видалено з локального жорсткого диска, але настроєно для інсталяції в разі потреби</String>
     <String Id="UITextSelLocalCD" Overridable="yes">Компонент буде видалено з локального жорсткого диска, але він залишиться доступним для запуску з компакт-диска</String>
-    <String Id="UITextSelLocalLocal" Overridable="yes">Компонент залишиться на локальному жорсткому диску</String>
+    <String Id="UITextSelLocalLocal" Overridable="yes">Цей компонент залишиться на локальному жорсткому диску</String>
     <String Id="UITextSelLocalNetwork" Overridable="yes">Компонент буде видалено з локального жорсткого диска, але він залишиться доступним для запуску з мережі</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Компонент буде повністю видалено, його неможливо буде запустити з мережі</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Для цього компонента запуск з мережі буде замінено на інсталяцію в разі потреби</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">Для цього компонента запуск із мережі буде замінено на інсталяцію на локальний жорсткий диск</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">Компонент залишиться доступним для запуску з мережі</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Компонент звільняє [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони звільнять [4] на жорсткому диску.</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">Цей компонент залишиться доступний для запуску з мережі</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Цей компонент звільняє [1] на жорсткому диску. Вибрано [2] з [3] його частин. Ці частини звільняють [4] на жорсткому диску.</String>
     <String Id="UITextSelParentCostNegPos" Overridable="yes">Компонент звільняє [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони потребують [4] на жорсткому диску.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Цей компонент потребує [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони звільнять [4] на жорсткому диску.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Цей компонент потребує [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони потребують [4] на жорсткому диску.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Для цього компонента потрібно [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони звільнять [4] на жорсткому диску.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Для цього компонента потрібно [1] на жорсткому диску. Вибрано [2] з [3] його частин. Разом вони потребують [4] на жорсткому диску.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Залишилось часу: {[1] хв. }{[2] сек.}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Доступно</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Різниця</String>
-    <String Id="UITextVolumeCostRequired" Overridable="yes">Необхідно</String>
+    <String Id="UITextVolumeCostRequired" Overridable="yes">Обов’язково</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Розмір диска</String>
     <String Id="UITextVolumeCostVolume" Overridable="yes">Обсяг</String>
 </WixLocalization>

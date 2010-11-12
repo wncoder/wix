@@ -186,18 +186,18 @@
 
     <String Id="PrepareDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">Attendere. Preparazione dell'Installazione guidata in corso.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">Attendere. È in corso la preparazione dell'Installazione guidata.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Installazione guidata di [ProductName]</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="ProgressDlgTextInstalling" Overridable="yes">Attendere. Installazione di [ProductName] in corso.</String>
+    <String Id="ProgressDlgTextInstalling" Overridable="yes">Attendere. È in corso l'installazione di [ProductName].</String>
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Installazione di [ProductName]</String>
-    <String Id="ProgressDlgTextChanging" Overridable="yes">Attendere. Modifica di [ProductName] in corso.</String>
+    <String Id="ProgressDlgTextChanging" Overridable="yes">Attendere. È in corso la modifica di [ProductName].</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Modifica di [ProductName]</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Attendere. Riparazione di [ProductName] in corso.</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Attendere. È in corso la riparazione di [ProductName].</String>
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Riparazione di [ProductName]</String>
-    <String Id="ProgressDlgTextRemoving" Overridable="yes">Attendere. Rimozione di [ProductName] in corso.</String>
+    <String Id="ProgressDlgTextRemoving" Overridable="yes">Attendere. È in corso la rimozione di [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Rimozione di [ProductName]</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Attendere. È in corso l'aggiornamento di [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Aggiornamento di [ProductName]</String>
@@ -250,7 +250,7 @@
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">Installazione di [ProductName]</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Torna indietro</String>
-    <String Id="WaitForCostingDlgText" Overridable="yes">Attendere. Calcolo dello spazio su disco richiesto in corso.</String>
+    <String Id="WaitForCostingDlgText" Overridable="yes">Attendere. È in corso il calcolo dello spazio su disco richiesto.</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">Icona punto esclamativo</String>
 
@@ -267,132 +267,132 @@
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">A&amp;ggiorna</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Leggere il Contratto di Licenza di [ProductName]</String>
 
-    <String Id="ProgressTextInstallValidate" Overridable="yes">Convalida dell'installazione in corso</String>
-    <String Id="ProgressTextInstallFiles" Overridable="yes">Copia dei nuovi file in corso</String>
+    <String Id="ProgressTextInstallValidate" Overridable="yes">Convalida dell'installazione in corso...</String>
+    <String Id="ProgressTextInstallFiles" Overridable="yes">Copia dei nuovi file in corso...</String>
     <String Id="ProgressTextInstallFilesTemplate" Overridable="yes">File: [1], directory: [9], dimensione: [6]</String>
-    <String Id="ProgressTextInstallAdminPackage" Overridable="yes">Copia dei file per l'installazione in rete in corso</String>
+    <String Id="ProgressTextInstallAdminPackage" Overridable="yes">Copia dei file per l'installazione in rete in corso...</String>
     <String Id="ProgressTextInstallAdminPackageTemplate" Overridable="yes">File: [1], directory: [9], dimensione: [6]</String>
-    <String Id="ProgressTextFileCost" Overridable="yes">Calcolo dello spazio necessario in corso</String>
-    <String Id="ProgressTextCostInitialize" Overridable="yes">Calcolo dello spazio necessario in corso</String>
-    <String Id="ProgressTextCostFinalize" Overridable="yes">Calcolo dello spazio necessario in corso</String>
-    <String Id="ProgressTextCreateShortcuts" Overridable="yes">Creazione dei collegamenti in corso</String>
+    <String Id="ProgressTextFileCost" Overridable="yes">Calcolo dello spazio necessario in corso...</String>
+    <String Id="ProgressTextCostInitialize" Overridable="yes">Calcolo dello spazio necessario in corso...</String>
+    <String Id="ProgressTextCostFinalize" Overridable="yes">Calcolo dello spazio necessario in corso...</String>
+    <String Id="ProgressTextCreateShortcuts" Overridable="yes">Creazione dei collegamenti in corso...</String>
     <String Id="ProgressTextCreateShortcutsTemplate" Overridable="yes">Collegamento: [1]</String>
-    <String Id="ProgressTextPublishComponents" Overridable="yes">Pubblicazione dei componenti qualificati in corso</String>
+    <String Id="ProgressTextPublishComponents" Overridable="yes">Pubblicazione dei componenti qualificati in corso...</String>
     <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">ID componente: [1], qualificatore: [2]</String>
-    <String Id="ProgressTextPublishFeatures" Overridable="yes">Pubblicazione delle funzionalità del prodotto in corso</String>
+    <String Id="ProgressTextPublishFeatures" Overridable="yes">Pubblicazione delle funzionalità del prodotto in corso...</String>
     <String Id="ProgressTextPublishFeaturesTemplate" Overridable="yes">Funzionalità: [1]</String>
-    <String Id="ProgressTextPublishProduct" Overridable="yes">Pubblicazione delle informazioni sul prodotto in corso</String>
-    <String Id="ProgressTextRegisterClassInfo" Overridable="yes">Registrazione dei server delle classi in corso</String>
+    <String Id="ProgressTextPublishProduct" Overridable="yes">Pubblicazione delle informazioni sul prodotto in corso...</String>
+    <String Id="ProgressTextRegisterClassInfo" Overridable="yes">Registrazione dei server delle classi in corso...</String>
     <String Id="ProgressTextRegisterClassInfoTemplate" Overridable="yes">ID classe: [1]</String>
-    <String Id="ProgressTextRegisterExtensionInfo" Overridable="yes">Registrazione dei server delle estensioni in corso</String>
+    <String Id="ProgressTextRegisterExtensionInfo" Overridable="yes">Registrazione dei server delle estensioni in corso...</String>
     <String Id="ProgressTextRegisterExtensionInfoTemplate" Overridable="yes">Estensione: [1]</String>
-    <String Id="ProgressTextRegisterMIMEInfo" Overridable="yes">Registrazione delle informazioni MIME in corso</String>
+    <String Id="ProgressTextRegisterMIMEInfo" Overridable="yes">Registrazione delle informazioni MIME in corso...</String>
     <String Id="ProgressTextRegisterMIMEInfoTemplate" Overridable="yes">Tipo di contenuto MIME: [1], estensione: [2]</String>
-    <String Id="ProgressTextRegisterProgIdInfo" Overridable="yes">Registrazione degli ID di programma in corso</String>
+    <String Id="ProgressTextRegisterProgIdInfo" Overridable="yes">Registrazione degli ID di programma in corso...</String>
     <String Id="ProgressTextRegisterProgIdInfoTemplate" Overridable="yes">ID programma: [1]</String>
-    <String Id="ProgressTextAllocateRegistrySpace" Overridable="yes">Allocazione dello spazio nel Registro di sistema in corso</String>
+    <String Id="ProgressTextAllocateRegistrySpace" Overridable="yes">Allocazione dello spazio nel Registro di sistema in corso...</String>
     <String Id="ProgressTextAllocateRegistrySpaceTemplate" Overridable="yes">Spazio disponibile: [1]</String>
-    <String Id="ProgressTextAppSearch" Overridable="yes">Rilevamento delle applicazioni installate in corso</String>
+    <String Id="ProgressTextAppSearch" Overridable="yes">Rilevamento delle applicazioni installate in corso...</String>
     <String Id="ProgressTextAppSearchTemplate" Overridable="yes">Proprietà: [1], firma: [2]</String>
-    <String Id="ProgressTextBindImage" Overridable="yes">Binding dei file eseguibili in corso</String>
+    <String Id="ProgressTextBindImage" Overridable="yes">Binding dei file eseguibili in corso...</String>
     <String Id="ProgressTextBindImageTemplate" Overridable="yes">File: [1]</String>
     <String Id="ProgressTextCCPSearch" Overridable="yes">Ricerca del software originale richiesto in corso...</String>
-    <String Id="ProgressTextCreateFolders" Overridable="yes">Creazione delle cartelle in corso</String>
+    <String Id="ProgressTextCreateFolders" Overridable="yes">Creazione delle cartelle in corso...</String>
     <String Id="ProgressTextCreateFoldersTemplate" Overridable="yes">Cartella: [1]</String>
-    <String Id="ProgressTextDeleteServices" Overridable="yes">Eliminazione dei servizi in corso</String>
+    <String Id="ProgressTextDeleteServices" Overridable="yes">Eliminazione dei servizi in corso...</String>
     <String Id="ProgressTextDeleteServicesTemplate" Overridable="yes">Servizio: [1]</String>
-    <String Id="ProgressTextDuplicateFiles" Overridable="yes">Creazione file duplicati in corso</String>
+    <String Id="ProgressTextDuplicateFiles" Overridable="yes">Creazione file duplicati in corso...</String>
     <String Id="ProgressTextDuplicateFilesTemplate" Overridable="yes">File: [1], directory: [9], dimensione: [6]</String>
-    <String Id="ProgressTextFindRelatedProducts" Overridable="yes">Ricerca delle applicazioni correlate in corso</String>
+    <String Id="ProgressTextFindRelatedProducts" Overridable="yes">Ricerca delle applicazioni correlate in corso...</String>
     <String Id="ProgressTextFindRelatedProductsTemplate" Overridable="yes">Applicazione trovata: [1]</String>
-    <String Id="ProgressTextInstallODBC" Overridable="yes">Installazione dei componenti ODBC in corso</String>
-    <String Id="ProgressTextInstallServices" Overridable="yes">Installazione dei nuovi servizi in corso</String>
+    <String Id="ProgressTextInstallODBC" Overridable="yes">Installazione dei componenti ODBC in corso...</String>
+    <String Id="ProgressTextInstallServices" Overridable="yes">Installazione dei nuovi servizi in corso...</String>
     <String Id="ProgressTextInstallServicesTemplate" Overridable="yes">Servizio: [2]</String>
-    <String Id="ProgressTextLaunchConditions" Overridable="yes">Valutazione delle condizioni di avvio in corso</String>
-    <String Id="ProgressTextMigrateFeatureStates" Overridable="yes">Migrazione degli stati delle funzionalità da applicazioni correlate in corso</String>
+    <String Id="ProgressTextLaunchConditions" Overridable="yes">Valutazione delle condizioni di avvio in corso...</String>
+    <String Id="ProgressTextMigrateFeatureStates" Overridable="yes">Migrazione degli stati delle funzionalità da applicazioni correlate in corso...</String>
     <String Id="ProgressTextMigrateFeatureStatesTemplate" Overridable="yes">Applicazione: [1]</String>
-    <String Id="ProgressTextMoveFiles" Overridable="yes">Spostamento dei file in corso</String>
+    <String Id="ProgressTextMoveFiles" Overridable="yes">Spostamento dei file in corso...</String>
     <String Id="ProgressTextMoveFilesTemplate" Overridable="yes">File: [1], directory: [9], dimensione: [6]</String>
-    <String Id="ProgressTextPatchFiles" Overridable="yes">Installazione della patch in corso</String>
+    <String Id="ProgressTextPatchFiles" Overridable="yes">Installazione della patch in corso...</String>
     <String Id="ProgressTextPatchFilesTemplate" Overridable="yes">File: [1], directory: [2], dimensione: [3]</String>
-    <String Id="ProgressTextProcessComponents" Overridable="yes">Aggiornamento della registrazione del componente in corso</String>
-    <String Id="ProgressTextRegisterComPlus" Overridable="yes">Registrazione dei componenti e delle applicazioni COM+ in corso</String>
+    <String Id="ProgressTextProcessComponents" Overridable="yes">Aggiornamento della registrazione del componente in corso...</String>
+    <String Id="ProgressTextRegisterComPlus" Overridable="yes">Registrazione dei componenti e delle applicazioni COM+ in corso...</String>
     <String Id="ProgressTextRegisterComPlusTemplate" Overridable="yes">ID applicazione: [1]{{, Tipo applicazione: [2], Utenti: [3], RSN: [4]}}</String>
-    <String Id="ProgressTextRegisterFonts" Overridable="yes">Registrazione dei tipi di carattere in corso</String>
+    <String Id="ProgressTextRegisterFonts" Overridable="yes">Registrazione dei tipi di carattere in corso...</String>
     <String Id="ProgressTextRegisterFontsTemplate" Overridable="yes">Tipo di carattere: [1]</String>
-    <String Id="ProgressTextRegisterProduct" Overridable="yes">Registrazione del prodotto in corso</String>
+    <String Id="ProgressTextRegisterProduct" Overridable="yes">Registrazione del prodotto in corso...</String>
     <String Id="ProgressTextRegisterProductTemplate" Overridable="yes">[1]</String>
-    <String Id="ProgressTextRegisterTypeLibraries" Overridable="yes">Registrazione delle librerie dei tipi in corso</String>
+    <String Id="ProgressTextRegisterTypeLibraries" Overridable="yes">Registrazione delle librerie dei tipi in corso...</String>
     <String Id="ProgressTextRegisterTypeLibrariesTemplate" Overridable="yes">ID libreria: [1]</String>
-    <String Id="ProgressTextRegisterUser" Overridable="yes">Registrazione dell'utente in corso</String>
+    <String Id="ProgressTextRegisterUser" Overridable="yes">Registrazione dell'utente in corso...</String>
     <String Id="ProgressTextRegisterUserTemplate" Overridable="yes">[1]</String>
-    <String Id="ProgressTextRemoveDuplicateFiles" Overridable="yes">Rimozione dei file duplicati in corso</String>
+    <String Id="ProgressTextRemoveDuplicateFiles" Overridable="yes">Rimozione dei file duplicati in corso...</String>
     <String Id="ProgressTextRemoveDuplicateFilesTemplate" Overridable="yes">File: [1], directory: [9]</String>
-    <String Id="ProgressTextRemoveEnvironmentStrings" Overridable="yes">Aggiornamento delle stringhe di ambiente in corso</String>
+    <String Id="ProgressTextRemoveEnvironmentStrings" Overridable="yes">Aggiornamento delle stringhe di ambiente in corso...</String>
     <String Id="ProgressTextRemoveEnvironmentStringsTemplate" Overridable="yes">Nome: [1], valore: [2], azione [3]</String>
-    <String Id="ProgressTextRemoveExistingProducts" Overridable="yes">Rimozione delle applicazioni in corso</String>
+    <String Id="ProgressTextRemoveExistingProducts" Overridable="yes">Rimozione delle applicazioni in corso...</String>
     <String Id="ProgressTextRemoveExistingProductsTemplate" Overridable="yes">Applicazione: [1], riga di comando: [2]</String>
-    <String Id="ProgressTextRemoveFiles" Overridable="yes">Rimozione dei file in corso</String>
+    <String Id="ProgressTextRemoveFiles" Overridable="yes">Rimozione dei file in corso...</String>
     <String Id="ProgressTextRemoveFilesTemplate" Overridable="yes">File: [1], directory: [9]</String>
-    <String Id="ProgressTextRemoveFolders" Overridable="yes">Rimozione delle cartelle in corso</String>
+    <String Id="ProgressTextRemoveFolders" Overridable="yes">Rimozione delle cartelle in corso...</String>
     <String Id="ProgressTextRemoveFoldersTemplate" Overridable="yes">Cartella: [1]</String>
-    <String Id="ProgressTextRemoveIniValues" Overridable="yes">Rimozione delle voci dei file INI in corso</String>
+    <String Id="ProgressTextRemoveIniValues" Overridable="yes">Rimozione delle voci dei file INI in corso...</String>
     <String Id="ProgressTextRemoveIniValuesTemplate" Overridable="yes">File: [1], sezione: [2], chiave: [3], valore: [4]</String>
-    <String Id="ProgressTextRemoveODBC" Overridable="yes">Rimozione dei componenti ODBC in corso</String>
-    <String Id="ProgressTextRemoveRegistryValues" Overridable="yes">Rimozione dei valori del Registro di sistema in corso</String>
+    <String Id="ProgressTextRemoveODBC" Overridable="yes">Rimozione dei componenti ODBC in corso...</String>
+    <String Id="ProgressTextRemoveRegistryValues" Overridable="yes">Rimozione dei valori del Registro di sistema in corso...</String>
     <String Id="ProgressTextRemoveRegistryValuesTemplate" Overridable="yes">Chiave: [1], nome: [2]</String>
-    <String Id="ProgressTextRemoveShortcuts" Overridable="yes">Rimozione dei collegamenti in corso</String>
+    <String Id="ProgressTextRemoveShortcuts" Overridable="yes">Rimozione dei collegamenti in corso...</String>
     <String Id="ProgressTextRemoveShortcutsTemplate" Overridable="yes">Collegamento: [1]</String>
     <String Id="ProgressTextRMCCPSearch" Overridable="yes">Ricerca del software originale richiesto in corso...</String>
-    <String Id="ProgressTextSelfRegModules" Overridable="yes">Registrazione dei moduli in corso</String>
+    <String Id="ProgressTextSelfRegModules" Overridable="yes">Registrazione dei moduli in corso...</String>
     <String Id="ProgressTextSelfRegModulesTemplate" Overridable="yes">File: [1], cartella: [2]</String>
-    <String Id="ProgressTextSelfUnregModules" Overridable="yes">Annullamento della registrazione dei moduli in corso</String>
+    <String Id="ProgressTextSelfUnregModules" Overridable="yes">Annullamento della registrazione dei moduli in corso...</String>
     <String Id="ProgressTextSelfUnregModulesTemplate" Overridable="yes">File: [1], cartella: [2]</String>
-    <String Id="ProgressTextSetODBCFolders" Overridable="yes">Inizializzazione delle directory ODBC in corso</String>
-    <String Id="ProgressTextStartServices" Overridable="yes">Avvio dei servizi in corso</String>
+    <String Id="ProgressTextSetODBCFolders" Overridable="yes">Inizializzazione delle directory ODBC in corso...</String>
+    <String Id="ProgressTextStartServices" Overridable="yes">Avvio dei servizi in corso...</String>
     <String Id="ProgressTextStartServicesTemplate" Overridable="yes">Servizio: [1]</String>
-    <String Id="ProgressTextStopServices" Overridable="yes">Arresto dei servizi in corso</String>
+    <String Id="ProgressTextStopServices" Overridable="yes">Arresto dei servizi in corso...</String>
     <String Id="ProgressTextStopServicesTemplate" Overridable="yes">Servizio: [1]</String>
-    <String Id="ProgressTextUnpublishComponents" Overridable="yes">Annullamento della pubblicazione dei componenti qualificati in corso</String>
+    <String Id="ProgressTextUnpublishComponents" Overridable="yes">Annullamento della pubblicazione dei componenti qualificati in corso...</String>
     <String Id="ProgressTextUnpublishComponentsTemplate" Overridable="yes">ID componente: [1], qualificatore: [2]</String>
-    <String Id="ProgressTextUnpublishFeatures" Overridable="yes">Annullamento della pubblicazione delle funzionalità del prodotto in corso</String>
+    <String Id="ProgressTextUnpublishFeatures" Overridable="yes">Annullamento della pubblicazione delle funzionalità del prodotto in corso...</String>
     <String Id="ProgressTextUnpublishFeaturesTemplate" Overridable="yes">Funzionalità: [1]</String>
-    <String Id="ProgressTextUnregisterClassInfo" Overridable="yes">Annullamento della registrazione dei server delle classi in corso</String>
+    <String Id="ProgressTextUnregisterClassInfo" Overridable="yes">Annullamento della registrazione dei server delle classi in corso...</String>
     <String Id="ProgressTextUnregisterClassInfoTemplate" Overridable="yes">ID classe: [1]</String>
-    <String Id="ProgressTextUnregisterComPlus" Overridable="yes">Annullamento della registrazione dei componenti e delle applicazioni COM+ in corso</String>
+    <String Id="ProgressTextUnregisterComPlus" Overridable="yes">Annullamento della registrazione dei componenti e delle applicazioni COM+ in corso...</String>
     <String Id="ProgressTextUnregisterComPlusTemplate" Overridable="yes">ID applicazione: [1]{{, Tipo applicazione: [2]}}</String>
-    <String Id="ProgressTextUnregisterExtensionInfo" Overridable="yes">Annullamento della registrazione dei server delle estensioni in corso</String>
+    <String Id="ProgressTextUnregisterExtensionInfo" Overridable="yes">Annullamento della registrazione dei server delle estensioni in corso...</String>
     <String Id="ProgressTextUnregisterExtensionInfoTemplate" Overridable="yes">Estensione: [1]</String>
-    <String Id="ProgressTextUnregisterFonts" Overridable="yes">Annullamento della registrazione dei tipi di carattere in corso</String>
+    <String Id="ProgressTextUnregisterFonts" Overridable="yes">Annullamento della registrazione dei tipi di carattere in corso...</String>
     <String Id="ProgressTextUnregisterFontsTemplate" Overridable="yes">Tipo di carattere: [1]</String>
-    <String Id="ProgressTextUnregisterMIMEInfo" Overridable="yes">Annullamento della registrazione delle informazioni MIME in corso</String>
+    <String Id="ProgressTextUnregisterMIMEInfo" Overridable="yes">Annullamento della registrazione delle informazioni MIME in corso...</String>
     <String Id="ProgressTextUnregisterMIMEInfoTemplate" Overridable="yes">Tipo di contenuto MIME: [1], estensione: [2]</String>
-    <String Id="ProgressTextUnregisterProgIdInfo" Overridable="yes">Annullamento della registrazione degli ID di programma in corso</String>
+    <String Id="ProgressTextUnregisterProgIdInfo" Overridable="yes">Annullamento della registrazione degli ID di programma in corso...</String>
     <String Id="ProgressTextUnregisterProgIdInfoTemplate" Overridable="yes">ID programma: [1]</String>
-    <String Id="ProgressTextUnregisterTypeLibraries" Overridable="yes">Annullamento della registrazione delle librerie dei tipi in corso</String>
+    <String Id="ProgressTextUnregisterTypeLibraries" Overridable="yes">Annullamento della registrazione delle librerie dei tipi in corso...</String>
     <String Id="ProgressTextUnregisterTypeLibrariesTemplate" Overridable="yes">ID libreria: [1]</String>
-    <String Id="ProgressTextWriteEnvironmentStrings" Overridable="yes">Aggiornamento delle stringhe di ambiente in corso</String>
+    <String Id="ProgressTextWriteEnvironmentStrings" Overridable="yes">Aggiornamento delle stringhe di ambiente in corso...</String>
     <String Id="ProgressTextWriteEnvironmentStringsTemplate" Overridable="yes">Nome: [1], valore: [2], azione [3]</String>
-    <String Id="ProgressTextWriteIniValues" Overridable="yes">Scrittura dei valori dei file INI in corso</String>
+    <String Id="ProgressTextWriteIniValues" Overridable="yes">Scrittura dei valori dei file INI in corso...</String>
     <String Id="ProgressTextWriteIniValuesTemplate" Overridable="yes">File: [1], sezione: [2], chiave: [3], valore: [4]</String>
-    <String Id="ProgressTextWriteRegistryValues" Overridable="yes">Scrittura dei valori del Registro di sistema in corso</String>
+    <String Id="ProgressTextWriteRegistryValues" Overridable="yes">Scrittura dei valori del Registro di sistema in corso...</String>
     <String Id="ProgressTextWriteRegistryValuesTemplate" Overridable="yes">Chiave: [1], nome: [2], valore: [3]</String>
-    <String Id="ProgressTextAdvertise" Overridable="yes">Visualizzazione degli avvisi relativi all'applicazione in corso</String>
+    <String Id="ProgressTextAdvertise" Overridable="yes">Visualizzazione degli avvisi relativi all'applicazione in corso...</String>
     <String Id="ProgressTextGenerateScript" Overridable="yes">Generazione delle operazioni di script per l'azione in corso:</String>
     <String Id="ProgressTextGenerateScriptTemplate" Overridable="yes">[1]</String>
-    <String Id="ProgressTextInstallSFPCatalogFile" Overridable="yes">Installazione del catalogo di sistema in corso</String>
+    <String Id="ProgressTextInstallSFPCatalogFile" Overridable="yes">Installazione del catalogo di sistema in corso...</String>
     <String Id="ProgressTextInstallSFPCatalogFileTemplate" Overridable="yes">File: [1], dipendenze: [2]</String>
-    <String Id="ProgressTextMsiPublishAssemblies" Overridable="yes">Pubblicazione delle informazioni sull'assembly in corso</String>
+    <String Id="ProgressTextMsiPublishAssemblies" Overridable="yes">Pubblicazione delle informazioni sull'assembly in corso...</String>
     <String Id="ProgressTextMsiPublishAssembliesTemplate" Overridable="yes">Contesto applicazione:[1], nome assembly:[2]</String>
-    <String Id="ProgressTextMsiUnpublishAssemblies" Overridable="yes">Annullamento della pubblicazione delle informazioni sull'assembly in corso</String>
+    <String Id="ProgressTextMsiUnpublishAssemblies" Overridable="yes">Annullamento della pubblicazione delle informazioni sull'assembly in corso...</String>
     <String Id="ProgressTextMsiUnpublishAssembliesTemplate" Overridable="yes">Contesto applicazione:[1], nome assembly:[2]</String>
     <String Id="ProgressTextRollback" Overridable="yes">Ripristino stato precedente in corso:</String>
     <String Id="ProgressTextRollbackTemplate" Overridable="yes">[1]</String>
-    <String Id="ProgressTextRollbackCleanup" Overridable="yes">Rimozione dei file di backup in corso</String>
+    <String Id="ProgressTextRollbackCleanup" Overridable="yes">Rimozione dei file di backup in corso...</String>
     <String Id="ProgressTextRollbackCleanupTemplate" Overridable="yes">File: [1]</String>
-    <String Id="ProgressTextUnmoveFiles" Overridable="yes">Rimozione dei file spostati in corso</String>
+    <String Id="ProgressTextUnmoveFiles" Overridable="yes">Rimozione dei file spostati in corso...</String>
     <String Id="ProgressTextUnmoveFilesTemplate" Overridable="yes">File: [1], directory: [9]</String>
-    <String Id="ProgressTextUnpublishProduct" Overridable="yes">Annullamento della pubblicazione delle informazioni sul prodotto in corso</String>
+    <String Id="ProgressTextUnpublishProduct" Overridable="yes">Annullamento della pubblicazione delle informazioni sul prodotto in corso...</String>
 
     <String Id="Error0" Overridable="yes">{{Errore irreversibile: }}</String>
     <String Id="Error1" Overridable="yes">{{Errore [1]. }}</String>
@@ -412,7 +412,7 @@
     <String Id="Error17" Overridable="yes">Memoria esaurita. Chiudere alcune applicazioni, quindi riprovare.</String>
     <String Id="Error18" Overridable="yes">Windows Installer non risponde.</String>
     <String Id="Error19" Overridable="yes">Windows Installer arrestato in modo anomalo.</String>
-    <String Id="Error20" Overridable="yes">Attendere. Configurazione di [ProductName] in corso...</String>
+    <String Id="Error20" Overridable="yes">Attendere. È in corso la configurazione di [ProductName].</String>
     <String Id="Error21" Overridable="yes">Raccolta delle informazioni necessarie in corso...</String>
     <String Id="Error22" Overridable="yes">Rimozione delle versioni precedenti di questa applicazione in corso...</String>
     <String Id="Error23" Overridable="yes">Preparazione alla rimozione delle versioni precedenti di questa applicazione in corso...</String>

@@ -199,7 +199,7 @@
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}[ProductName] herstellen</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">[ProductName] wordt verwijderd. Een ogenblik geduld.</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}[ProductName] verwijderen</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">De installatie van [ProductName] wordt bijgewerkt. Een ogenblik geduld.</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Een ogenblik geduld. [ProductName] wordt bijgewerkt.</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}[ProductName] bijwerken</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Voortgang gereed</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Status:</String>
@@ -245,7 +245,7 @@
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klik op Verwijderen om [ProductName] van uw computer te verwijderen. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] te verwijderen</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Bijwerken</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klik op Bijwerken om [ProductName] bij te werken op uw computer. Klik op Vorige om uw installatie-instellingen te bekijken of te wijzigen. Klik op Annuleren als u de wizard wilt afsluiten.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klik op Bijwerken om [ProductName] bij te werken vanaf uw computer. Klik op Vorige om een willekeurige installatie-instelling te controleren. Klik op Annuleren om de wizard af te sluiten.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Gereed om [ProductName] bij te werken</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] Setup</String>
@@ -257,7 +257,7 @@
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="WelcomeDlgDescription" Overridable="yes">[ProductName] wordt geïnstalleerd op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt afsluiten.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">[ProductName] wordt bijgewerkt op uw computer. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt afsluiten.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Met deze wizard wordt [ProductName] op uw computer bijgewerkt. Klik op Volgende als u wilt doorgaan of op Annuleren als u de wizard wilt afsluiten.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] Setup</String>
@@ -575,7 +575,7 @@
     <String Id="UITextSelAbsentCD" Overridable="yes">Dit onderdeel wordt geïnstalleerd voor uitvoering vanaf cd</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">Dit onderdeel wordt op de lokale harde schijf geïnstalleerd</String>
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Dit onderdeel wordt geïnstalleerd voor uitvoering vanaf het netwerk</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Dit onderdeel is niet beschikbaar</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Dit onderdeel zal niet meer beschikbaar zijn</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Wordt indien nodig geïnstalleerd</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">Dit onderdeel kan vanaf cd worden uitgevoerd</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">Dit onderdeel wordt op de lokale harde schijf geïnstalleerd</String>

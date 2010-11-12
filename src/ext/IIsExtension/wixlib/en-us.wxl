@@ -55,7 +55,7 @@
     <String Id="CommitMetabaseTransaction" Overridable="yes">Committing IIS Metabase Transaction</String>
     <String Id="WriteMetabaseChanges" Overridable="yes">Installing Metabase Keys and Values</String>
 
-    <String Id="ConfigureIIs7" Overridable="yes">Configuring IIS</String>
+    <String Id="ConfigureIIs7Exec" Overridable="yes">Configuring IIS</String>
     <String Id="StartIIS7ConfigTransaction" Overridable="yes">Starting IIS Config Transaction</String>
     <String Id="RollbackIIS7ConfigTransaction" Overridable="yes">Rolling back IIS Config Transaction</String>
     <String Id="CommitIIS7ConfigTransaction" Overridable="yes">Committing IIS Config Transaction</String>

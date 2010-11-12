@@ -28,9 +28,9 @@
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">[ProductName]-Setup</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Lesen Sie die Lizenzbedingungen für [ProductName].</String>
-    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen des Lizenzvertrags zu</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Klicken Sie auf 'Installieren', um das Produkt mit Standardoptionen für alle Benutzer zu installieren. Klicken Sie auf 'Erweitert', um die Installationsoptionen zu ändern.</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Klicken Sie auf 'Installieren', um das Produkt mit Standardoptionen nur für Sie zu installieren. Klicken Sie auf 'Erweitert', um die Installationsoptionen zu ändern.</String>
+    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen der Lizenzvereinbarung zu.</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Klicken Sie auf "Installieren", um das Produkt mit Standardoptionen für alle Benutzer zu installieren. Klicken Sie auf "Erweitert", um die Installationsoptionen zu ändern.</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Klicken Sie auf "Installieren", um das Produkt mit Standardoptionen nur für Sie zu installieren. Klicken Sie auf "Erweitert", um die Installationsoptionen zu ändern.</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">&amp;Installieren</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">&amp;Erweitert</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">8</String>
@@ -112,7 +112,7 @@
     <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName]-Setup</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Ändern...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}Zielordner</String>
-    <String Id="InstallDirDlgDescription" Overridable="yes">Klicken Sie auf 'Weiter', um die Installation im Standardordner vorzunehmen, oder klicken Sie auf 'Ändern', um einen anderen Ordner auszuwählen.</String>
+    <String Id="InstallDirDlgDescription" Overridable="yes">Klicken Sie auf "Weiter", um die Installation im Standardordner vorzunehmen, oder klicken Sie auf 'Ändern', um einen anderen Ordner auszuwählen.</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">[ProductName] installieren in:</String>
 
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">Informationssymbol</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">[ProductName]-Setup</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen des Lizenzvertrags zu</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen der Lizenzvereinbarung zu.</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">Lesen Sie die nachfolgenden Lizenzbedingungen aufmerksam durch</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}Lizenzbedingungen</String>
@@ -153,7 +153,7 @@
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] verfügt nicht über unabhängig voneinander auswählbare Funktionen.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Entfernt [ProductName] von Ihrem Computer.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName] kann nicht entfernt werden.</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repariert Fehler in der aktuellen Installation, indem fehlende oder fehlerhafte Dateien, Verknüpfungen und Registrierungseinträge wiederhergestellt werden.</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repariert das zuletzt installierte Programm durch Berichtigen von fehlenden und beschädigten Dateien, Verknüpfungen und Registry-Einträgen.</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName] kann nicht repariert werden.</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName]-Setup</String>
@@ -201,7 +201,7 @@
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}[ProductName] wird entfernt</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Der Setup-Assistent aktualisiert [ProductName]. Bitte warten Sie.</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}[ProductName] wird aktualisiert</String>
-    <String Id="ProgressDlgProgressBar" Overridable="yes">Fortschritt</String>
+    <String Id="ProgressDlgProgressBar" Overridable="yes">Ausgeführt</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Status:</String>
 
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName]-Setup</String>
@@ -245,29 +245,29 @@
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klicken Sie auf "Entfernen", um [ProductName] von Ihrem Computer zu entfernen. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Bereit zum Entfernen von [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Aktualisieren</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klicken Sie auf 'Aktualisieren', um [ProductName] auf Ihrem Computer zu aktualisieren. Klicken Sie auf 'Zurück', um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf 'Abbrechen', um den Assistenten zu beenden.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klicken Sie auf "Aktualisieren", um [ProductName] auf Ihrem Computer zu aktualisieren. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Bereit zum Aktualisieren von [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName]-Setup</String>
-    <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Zurück</String>
-    <String Id="WaitForCostingDlgText" Overridable="yes">Warten Sie, während der Speicherplatzbedarf ermittelt wird.</String>
+    <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Zurückspringen</String>
+    <String Id="WaitForCostingDlgText" Overridable="yes">Das Installationsprogramm ermittelt den Speicherplatzbedarf. Bitte warten Sie.</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">Hinweissymbol</String>
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName]-Setup</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">[ProductName] wird auf dem Computer installiert. Klicken Sie auf 'Weiter', um den Vorgang fortzusetzen, oder auf 'Abbrechen', um den Setup-Assistenten zu beenden.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">[ProductName] wird auf dem Computer aktualisiert. Klicken Sie auf 'Weiter', um den Vorgang fortzusetzen, oder auf 'Abbrechen', um den Setup-Assistenten zu beenden.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">[ProductName] wird auf dem Computer installiert. Klicken Sie auf "Weiter", um den Vorgang fortzusetzen, oder auf "Abbrechen", um den Setup-Assistenten zu beenden.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">[ProductName] wird auf dem Computer aktualisiert. Klicken Sie auf "Weiter", um den Vorgang fortzusetzen, oder auf "Abbrechen", um den Setup-Assistenten zu beenden.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Willkommen beim Setup-Assistenten von [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName]-Setup</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen des Lizenzvertrags zu</String>
+    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">Ich &amp;stimme den Bedingungen der Lizenzvereinbarung zu.</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">&amp;Installieren</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">&amp;Aktualisieren</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}Lesen Sie die Lizenzbedingungen für [ProductName].</String>
 
-    <String Id="ProgressTextInstallValidate" Overridable="yes">Die Installation wird überprüft</String>
+    <String Id="ProgressTextInstallValidate" Overridable="yes">Installation wird überprüft</String>
     <String Id="ProgressTextInstallFiles" Overridable="yes">Neue Dateien werden kopiert</String>
     <String Id="ProgressTextInstallFilesTemplate" Overridable="yes">Datei: [1], Verzeichnis: [9], Größe: [6]</String>
     <String Id="ProgressTextInstallAdminPackage" Overridable="yes">Netzwerkinstallationsdateien werden kopiert</String>
@@ -418,12 +418,12 @@
     <String Id="Error23" Overridable="yes">Das Entfernen älterer Versionen der Anwendung wird vorbereitet...</String>
     <String Id="Error32" Overridable="yes">Das Setup für {[ProductName]} wurde erfolgreich abgeschlossen.</String>
     <String Id="Error33" Overridable="yes">Fehler beim Setup für {[ProductName]}.</String>
-    <String Id="Error1101" Overridable="yes">Fehler beim Lesen der Datei: [3]. {{ Systemfehler [2].}} Überprüfen Sie, ob die Datei vorhanden ist und Sie darauf zugreifen können.</String>
+    <String Id="Error1101" Overridable="yes">Fehler beim Lesen der Datei: [2]. {{ Systemfehler [3].}} Überprüfen Sie, ob die Datei vorhanden ist und Sie darauf zugreifen können.</String>
     <String Id="Error1301" Overridable="yes">Die Datei "[2]" kann nicht erstellt werden. Ein Verzeichnis mit diesem Namen ist bereits vorhanden. Brechen Sie die Installation ab, und versuchen Sie, an einem anderen Ort zu installieren.</String>
     <String Id="Error1302" Overridable="yes">Legen Sie den Datenträger ein: [2]</String>
-    <String Id="Error1303" Overridable="yes">Die Berechtigungen des Installatiionsprogramms sind für den Zugriff auf dieses Verzeichnis unzureichend: [2]. Die Installation kann nicht fortgesetzt werden. Melden Sie sich als Administrator an, oder wenden Sie sich an den Systemadministrator.</String>
+    <String Id="Error1303" Overridable="yes">Die Berechtigungen des Installationsprogramms sind für den Zugriff auf dieses Verzeichnis unzureichend: [2]. Die Installation kann nicht fortgesetzt werden. Melden Sie sich als Administrator an, oder wenden Sie sich an den Systemadministrator.</String>
     <String Id="Error1304" Overridable="yes">Fehler beim Schreiben in Datei: [2]. Überprüfen Sie, ob Sie auf das Verzeichnis zugreifen können.</String>
-    <String Id="Error1305" Overridable="yes">Fehler beim Lesen der Datei: [3]. {{ Systemfehler [2].}} Überprüfen Sie, ob die Datei vorhanden ist und Sie darauf zugreifen können.</String>
+    <String Id="Error1305" Overridable="yes">Fehler beim Lesen der Datei: [2]. {{ Systemfehler [3].}} Überprüfen Sie, ob die Datei vorhanden ist und Sie darauf zugreifen können.</String>
     <String Id="Error1306" Overridable="yes">Eine andere Anwendung hat exklusiven Zugriff auf die Datei "[2]". Beenden Sie alle anderen Anwendungen, und klicken Sie anschließend auf "Wiederholen".</String>
     <String Id="Error1307" Overridable="yes">Auf Ihrem Datenträger ist nicht genügend freier Speicherplatz vorhanden, um diese Datei zu installieren: "[2]". Geben Sie zusätzlichen Speicher frei, und klicken Sie auf "Wiederholen", oder klicken Sie auf "Abbrechen", um das Installationsprogramm zu beenden.</String>
     <String Id="Error1308" Overridable="yes">Die Quelldatei wurde nicht gefunden: [2]. Überprüfen Sie, ob die Datei vorhanden ist, und ob Sie darauf zugreifen können.</String>
@@ -467,8 +467,8 @@
     <String Id="Error1410" Overridable="yes">Der verfügbare Registrierungsspeicher konnte nicht vergrößert werden. [2] KB freier Registrierungsspeicher sind zum Installieren dieser Anwendung erforderlich.</String>
     <String Id="Error1500" Overridable="yes">Es wird bereits eine weitere Installation ausgeführt. Sie müssen diese Installation abschließen, bevor Sie den Vorgang fortsetzen können.</String>
     <String Id="Error1501" Overridable="yes">Fehler beim Zugriff auf gesicherte Daten. Stellen Sie sicher, dass Windows Installer ordnungsgemäß konfiguriert ist, und wiederholen Sie die Installation.</String>
-    <String Id="Error1502" Overridable="yes">Benutzer '[2]' hat bereits die Installation für das Produkt '[3]' initiiert. Dieser Benutzer muss die Installation erneut ausführen, bevor dieses Produkt verwendet werden kann. Ihre aktuelle Installation wird jetzt fortgesetzt.</String>
-    <String Id="Error1503" Overridable="yes">Benutzer '[2]' hat bereits die Installation für das Produkt '[3]' initiiert. Dieser Benutzer muss die Installation erneut ausführen, bevor dieses Produkt verwendet werden kann.</String>
+    <String Id="Error1502" Overridable="yes">Benutzer "[2]" hat bereits die Installation für das Produkt "[3]" initiiert. Dieser Benutzer muss die Installation erneut ausführen, bevor dieses Produkt verwendet werden kann. Ihre aktuelle Installation wird jetzt fortgesetzt.</String>
+    <String Id="Error1503" Overridable="yes">Benutzer "[2]" hat bereits die Installation für das Produkt "[3]" initiiert. Dieser Benutzer muss die Installation erneut ausführen, bevor dieses Produkt verwendet werden kann.</String>
     <String Id="Error1601" Overridable="yes">Nicht genügend freier Speicher auf dem Laufwerk -- Volume: "[2]"; erforderlicher Speicher: [3] KB; verfügbarer Speicher: [4] KB. Geben Sie Datenträgerspeicher frei, und versuchen Sie es erneut.</String>
     <String Id="Error1602" Overridable="yes">Möchten Sie den Vorgang wirklich abbrechen?</String>
     <String Id="Error1603" Overridable="yes">Die Datei "[2][3]" ist zurzeit in Gebrauch {des folgenden Prozesses: Name: [4], ID: [5], Fenstertitel: "[6]"}. Schließen Sie die Anwendung, und wiederholen Sie den Vorgang.</String>
@@ -508,7 +508,7 @@
     <String Id="Error1728" Overridable="yes">Die Konfiguration wurde erfolgreich abgeschlossen.</String>
     <String Id="Error1729" Overridable="yes">Fehler bei der Konfiguration.</String>
     <String Id="Error1730" Overridable="yes">Zum Entfernen dieser Anwendung sind Administratorrechte erforderlich. Wenn Sie diese Anwendung entfernen möchten, melden Sie sich als Administrator an, oder wenden Sie sich an den technischen Support.</String>
-    <String Id="Error1731" Overridable="yes">Das Quellinstallationspaket für das Produkt [2] ist nicht mehr mit dem Clientpaket synchron. Wiederholen Sie die Installation unter Verwendung einer gültigen Kopie des Installationspakets '[3]'.</String>
+    <String Id="Error1731" Overridable="yes">Das Quellinstallationspaket für das Produkt [2] ist nicht mehr mit dem Clientpaket synchron. Wiederholen Sie die Installation unter Verwendung einer gültigen Kopie des Installationspakets "[3]".</String>
     <String Id="Error1732" Overridable="yes">Zum Abschließen der Installation von [2] ist ein Neustart des Computers erforderlich. Es sind zurzeit andere Benutzer an diesem Computer angemeldet, deren Arbeit bei einem Neustart verloren gehen könnte. Möchten Sie den Neustart jetzt ausführen?</String>
     <String Id="Error1801" Overridable="yes">Der Pfad "[2]" ist ungültig. Geben Sie einen gültigen Pfad an.</String>
     <String Id="Error1802" Overridable="yes">Nicht genügend Arbeitsspeicher. Beenden Sie andere Anwendungen, und wiederholen Sie den Vorgang.</String>
@@ -573,17 +573,17 @@
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Die Funktion wird nicht installiert</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Die Funktion wird bei Bedarf installiert</String>
     <String Id="UITextSelAbsentCD" Overridable="yes">Die Funktion wird zum Starten von CD installiert</String>
-    <String Id="UITextSelAbsentLocal" Overridable="yes">Die Funktion wird auf der lokalen Festplatte installiert</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">Die Funktion wird zum Starten vom Netzwerk installiert</String>
+    <String Id="UITextSelAbsentLocal" Overridable="yes">Diese Funktion wird auf der lokalen Festplatte installiert</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">Diese Funktion wird zum Starten vom Netzwerk installiert</String>
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Die Funktion wird nicht verfügbar sein</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Wird bei Bedarf installiert</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">Die Funktion wird von der CD gestartet</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Die Funktion wird auf der lokalen Festplatte installiert</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Diese Funktion wird auf der lokalen Festplatte installiert</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Die Funktion wird vom Netzwerk gestartet</String>
     <String Id="UITextSelCDAbsent" Overridable="yes">Die Funktion wird vollständig entfernt. Sie können sie auch nicht von der CD starten</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">Die Funktion wird nicht mehr von der CD gestartet, sondern bei Bedarf installiert</String>
     <String Id="UITextSelCDCD" Overridable="yes">Die Funktion wird weiterhin von der CD gestartet</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Diese Funktion wird nicht mehr von der CD gestartet, sondern auf der lokalen Festplatte installiert.</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Diese Funktion wird nicht mehr von CD gestartet, sondern auf der lokalen Festplatte installiert.</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Die Funktion gibt [1] auf der Festplatte frei.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Die Funktion erfordert [1] auf der Festplatte.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Speicherplatzbedarf für diese Funktion wird ermittelt...</String>

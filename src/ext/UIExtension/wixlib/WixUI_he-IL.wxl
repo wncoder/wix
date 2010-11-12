@@ -163,7 +163,7 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">תוכנית ההתקנה של [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">היישומים הבאים עושים שימוש בקבצים שתוכנית התקנה זו חייבת לעדכן. באפשרותך לאפשר לאשף ההתקנה לסגור אותם ולנסות להפעיל אותם מחדש או לאתחל מחדש את המחשב מאוחר יותר.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">היישומים הבאים משתמשים בקבצים שתוכנית התקנה זו צריכה לעדכן. באפשרותך לאפשר לאשף ההתקנה לסגור אותם ולנסות להפעיל אותם מחדש או לאתחל מחדש את המחשב מאוחר יותר.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">חלק מהקבצים שיש לעדכן נמצאים כעת בשימוש.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}קבצים בשימוש</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;סגור את היישומים ונסה להפעיל אותם מחדש.</String>
@@ -199,7 +199,7 @@
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}תיקון [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">נא המתן בזמן שאשף ההתקנה מסיר את [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}הסרת [ProductName]</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">המתן בזמן שאשף ההתקנה מעדכן את [ProductName].</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">נא המתן בזמן שאשף ההתקנה מעדכן את [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}עדכון [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">ההתקדמות הסתיימה</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">מצב:</String>
@@ -245,7 +245,7 @@
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">לחץ על 'הסר' כדי להסיר את [ProductName] מהמחשב. לחץ על 'הקודם' כדי לסקור או לשנות הגדרה כלשהי מהגדרות ההתקנה. לחץ על 'ביטול' כדי לצאת מהאשף.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}מוכן להסרת [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;עדכן</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">לחץ על 'עדכן' כדי לחץ על 'עדכן' כדי לעדכן את [ProductName] במחשב. לחץ על 'הקודם' כדי לסקור או לשנות הגדרה כלשהי מהגדרות ההתקנה. לחץ על 'ביטול' כדי לצאת מהאשף.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">לחץ על 'עדכן' כדי לעדכן את [ProductName] במחשב. לחץ על 'הקודם' כדי לסקור או לשנות הגדרה כלשהי מהגדרות ההתקנה. לחץ על 'ביטול' כדי לצאת מהאשף.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}מוכן לעדכון [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">תוכנית ההתקנה של [ProductName]</String>
@@ -580,7 +580,7 @@
     <String Id="UITextSelAdvertiseCD" Overridable="yes">תכונה זו תהיה זמינה להפעלה מתקליטור</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">תכונה זו תותקן בכונן הקשיח המקומי שלך</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">תכונה זו תהיה זמינה להפעלה מהרשת</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">תכונה זו תוסר לחלוטין, לא תוכל להפעילה מתקליטור</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">תכונה זו תוסר לחלוטין, לא תוכל להפעיל אותה מתקליטור</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">תכונה זו תעבור ממצב הפעלה מתקליטור להגדרת התקנה לפי דרישה</String>
     <String Id="UITextSelCDCD" Overridable="yes">תכונה זו תישאר במצב הפעלה מתקליטור</String>
     <String Id="UITextSelCDLocal" Overridable="yes">תכונה זו תשתנה ממצב הפעלה מתקליטור למצב התקנה בכונן הקשיח המקומי</String>
@@ -592,12 +592,12 @@
     <String Id="UITextSelLocalCD" Overridable="yes">תכונה זו תוסר מהכונן הקשיח המקומי שלך, אך עדיין תהיה זמינה להפעלה מתקליטור</String>
     <String Id="UITextSelLocalLocal" Overridable="yes">תכונה זו תישאר בכונן הקשיח המקומי</String>
     <String Id="UITextSelLocalNetwork" Overridable="yes">תכונה זו תוסר מהכונן הקשיח המקומי, אך עדיין תהיה זמינה להפעלה מהרשת</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">תכונה זו תוסר לחלוטין, לא יהיה באפשרותך להפעיל אותה מהרשת</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">תכונה זו תוסר לחלוטין, לא תוכל להפעיל אותה מהרשת</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">תכונה זו תשתנה ממצב הפעלה מהרשת להגדרה להתקנה לפי דרישה</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">תכונה זו תשתנה ממצב הפעלה מהרשת למצב התקנה בכונן הקשיח המקומי</String>
     <String Id="UITextSelNetworkNetwork" Overridable="yes">תכונה זו תישאר במצב הפעלה מהרשת</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">תכונה זו מפנה עד [1] בכונן הקשיח. נבחרו בה [2] מתוך [3] תכונות משנה. תכונות המשנה מפנות עד [4] בכונן הקשיח.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">תכונה זו מפנה עד [1] בכונן הקשיח. נבחרו בה [2] מתוך [3] תכונות משנה. תכונות המשנה צורכות עד [4] בכונן הקשיח.</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">תכונה זו מפנה [1] בכונן הקשיח. נבחרו [2] מתוך [3] תכונות המשנה שלה. תכונות המשנה מפנות [4] בכונן הקשיח.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">תכונה זו מפנה [1] בכונן הקשיח. נבחרו [2] מתוך [3] תכונות המשנה שלה. תכונות המשנה דורשות [4] בכונן הקשיח.</String>
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">תכונה זו דורשת [1] בכונן הקשיח. נבחרו [2] מתוך [3] תכונות המשנה שלה. תכונות המשנה מפנות [4] בכונן הקשיח.</String>
     <String Id="UITextSelParentCostPosPos" Overridable="yes">תכונה זו דורשת [1] בכונן הקשיח. נבחרו [2] מתוך [3] תכונות המשנה שלה. תכונות המשנה דורשות [4] בכונן הקשיח.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">זמן נותר: {[1] דקות }{[2] שניות}</String>

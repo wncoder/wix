@@ -105,9 +105,9 @@
     <String Id="FilesInUse_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="FilesInUseExit" Overridable="yes">&amp;Lopeta</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">Seuraavat sovellukset käyttävät tiedostoja, jotka asennusohjelman on päivitettävä. Sulje nämä sovellukset ja jatka sitten asennusta valitsemalla &amp;Yritä uudelleen tai lopeta asennus valitsemalla Lopeta.</String>
+    <String Id="FilesInUseText" Overridable="yes">Seuraavat sovellukset käyttävät tiedostoja, jotka tämän asennuksen on päivitettävä. Sulje sovellukset ja jatka sitten asennusta valitsemalla &amp;Yritä uudelleen tai lopeta ohjattu toiminto valitsemalla Lopeta.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Jotkin päivitettävät tiedostot ovat tällä hetkellä käytössä.</String>
-    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Käytössä olevat tiedostot</String>
+    <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Tiedostoja on käytössä</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="InstallDirDlgChange" Overridable="yes">&amp;Muuta...</String>
@@ -163,30 +163,30 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Seuraavat sovellukset käyttävät tiedostoja, jotka asennusohjelman on päivitettävä. Voit antaa asennusohjelman sulkea ne ja yrittää käynnistää ne uudelleen tai käynnistää tietokoneen myöhemmin uudelleen.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Seuraavat sovellukset käyttävät tiedostoja, jotka tämän asennuksen on päivitettävä. Voit antaa ohjatun asennuksen sulkea ne ja yrittää käynnistää ne uudelleen tai käynnistää tietokoneen myöhemmin uudelleen.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Jotkin päivitettävät tiedostot ovat tällä hetkellä käytössä.</String>
-    <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Käytössä olevat tiedostot</String>
+    <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Tiedostoja on käytössä</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Sulje sovellukset ja yritä käynnistää ne uudelleen.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Älä sulje sovelluksia. Järjestelmä on käynnistettävä uudelleen.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Älä sulje sovelluksia. Uudelleenkäynnistys tarvitaan.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Korostetuissa asemissa ei ole riittävästi levytilaa valituille ominaisuuksille. Voit poistaa joitakin tiedostoja korostetuista asemista, asentaa vähemmän ominaisuuksia tai valita toisen kohdeaseman.</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">Asennuksen vaatima levytila on suurempi kuin saatavilla oleva levytila.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Korostetuissa asemissa ei ole tarpeeksi vapaata levytilaa valittuja ominaisuuksia varten. Voit poistaa tiedostoja korostetuista asemista, asentaa vähemmän ominaisuuksia tai valita toisen kohdeaseman.</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">Asennuksen vaatima levytila on suurempi kuin käytettävissä oleva levytila.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Levytila lopussa</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Korostetuissa asemissa ei ole riittävästi levytilaa valituille ominaisuuksille. Voit poistaa joitakin tiedostoja korostetuista asemista, asentaa vähemmän ominaisuuksia tai valita toisen kohdeaseman.</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Asennuksen vaatima levytila on suurempi kuin saatavilla oleva levytila.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Korostetuissa asemissa ei ole tarpeeksi vapaata levytilaa valittuja ominaisuuksia varten. Voit poistaa tiedostoja korostetuista asemista, asentaa vähemmän ominaisuuksia tai valita toisen kohdeaseman.</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Asennuksen vaatima levytila on suurempi kuin käytettävissä oleva levytila.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Levytila lopussa</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">Voit vaihtoehtoisesti poistaa käytöstä asennusohjelman perumistoiminnon. Kun perumistoiminto poistetaan käytöstä, asennusohjelma ei voi palauttaa tietokoneen alkuperäistä tilaa, jos asennus keskeytyy jostakin syystä. Valitse Kyllä, jos haluat siitä huolimatta poistaa perumistoiminnon käytöstä.</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">Voit myös poistaa asennusohjelman palautustoiminnon käytöstä. Palautuksen poistaminen käytöstä estää asennusohjelmaa palauttamasta tietokoneen alkuperäistä tilaa, jos asennus keskeytyy jollakin tavalla. Valitse Kyllä, jos haluat ottaa riskin ja poistaa palautuksen käytöstä.</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">Odota. Ohjattu asennus valmistautuu opastamaan asennuksessa.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">Odota. Ohjattu asennus valmistautuu asennukseen.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Tervetuloa tuotteen [ProductName] ohjattuun asennukseen</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
@@ -194,12 +194,12 @@
     <String Id="ProgressDlgTextInstalling" Overridable="yes">Odota. Ohjattu asennus asentaa tuotteen [ProductName].</String>
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Asennetaan tuotetta [ProductName]</String>
     <String Id="ProgressDlgTextChanging" Overridable="yes">Odota. Ohjattu asennus muuttaa tuotteen [ProductName] asennusta.</String>
-    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Muutetaan tuotteen [ProductName] asennusta</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Odota. Ohjattu asennus korjaa tuotteen [ProductName] asennusta.</String>
-    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Korjataan tuotteen [ProductName] asennusta</String>
-    <String Id="ProgressDlgTextRemoving" Overridable="yes">Odota. Ohjattu asennus poistaa tuotetta [ProductName].</String>
+    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Muutetaan tuotetta [ProductName]</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Odota. Ohjattu asennus korjaa tuotteen [ProductName].</String>
+    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Korjataan tuotetta [ProductName]</String>
+    <String Id="ProgressDlgTextRemoving" Overridable="yes">Odota. Ohjattu asennus poistaa tuotteen [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Poistetaan tuotetta [ProductName]</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">Odota. Ohjattu asennus päivittää tuotetta [ProductName].</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Odota. Ohjattu asennus päivittää tuotteen [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Päivitetään tuotetta [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Valmis</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Tila:</String>
@@ -233,20 +233,20 @@
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Asenna</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Aloita asennus valitsemalla Asenna. Voit tarkastella tai muuttaa asennuksen asetuksia valitsemalla Edellinen. Voit lopettaa ohjatun toiminnon valitsemalla Peruuta.</String>
-    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Tuote [ProductName] on valmis asennettavaksi</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Voit aloittaa asennuksen valitsemalla Asenna. Voit tarkastella tai muuttaa asennuksen asetuksia valitsemalla Edellinen. Voit lopettaa ohjatun toiminnon valitsemalla Peruuta.</String>
+    <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina asentamaan tuotteen [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Muuta</String>
     <String Id="VerifyReadyDlgChangeText" Overridable="yes">Voit aloittaa asennuksen valitsemalla Muuta. Voit tarkastella ja muuttaa asennuksen asetuksia valitsemalla Edellinen. Voit lopettaa ohjatun toiminnon valitsemalla Peruuta.</String>
-    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] on valmis muutettavaksi</String>
+    <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina muuttamaan tuotetta [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">&amp;Korjaa</String>
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">Voit aloittaa tuotteen [ProductName] asennuksen korjauksen valitsemalla Korjaa. Voit tarkastella tai muuttaa asennuksen asetuksia valitsemalla Edellinen. Voit lopettaa ohjatun toiminnon valitsemalla Peruuta.</String>
-    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] on valmis korjattavaksi</String>
+    <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina korjaamaan tuotteen [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Poista</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Voit poistaa tuotteen [ProductName] tietokoneestasi valitsemalla Poista. Voit tarkastella tai muuttaa asennuksen asetuksia valitsemalla Edellinen. Voit lopettaa ohjatun toiminnon valitsemalla Peruuta.</String>
-    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] on valmis poistettavaksi</String>
+    <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina poistamaan tuotteen [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Päivitä</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Valitse Päivitä, jos haluat päivittää tietokoneessa olevan tuotteen [ProductName]. Valitse Edellinen, jos haluat tarkastella tai muuttaa asennuksen asetuksia. Valitse Peruuta, jos haluat lopettaa ohjatun toiminnon.</String>
-    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina päivittämään [ProductName]</String>
+    <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Valmiina päivittämään tuotteen [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">Tuotteen [ProductName] asennus</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Palaa</String>
@@ -475,7 +475,7 @@
     <String Id="Error1604" Overridable="yes">Tuote [2] on jo asennettu, mikä estää tämän tuotteen asennuksen. Nämä kaksi tuotetta ovat toisensa poissulkevia.</String>
     <String Id="Error1605" Overridable="yes">Asennuksen jatkamiseen ei ole tarpeeksi levytilaa asemassa [2] palautustoiminnon ollessa käytössä. [3] kt vaaditaan, mutta vain [4] kt on käytettävissä. Valitse Ohita jatkaaksesi asennusta ilman palautustietojen tallentamista, Yritä uudelleen tarkistaaksesi vapaa levytila uudelleen tai keskeytä asennus valitsemalla Peruuta.</String>
     <String Id="Error1606" Overridable="yes">Verkon kohteeseen [2] ei voi muodostaa yhteyttä.</String>
-    <String Id="Error1607" Overridable="yes">Seuraavat sovellukset tulee sulkea ennen asentamisen jatkamista:</String>
+    <String Id="Error1607" Overridable="yes">Seuraavat sovellukset on suljettava ennen asennuksen jatkamista:</String>
     <String Id="Error1608" Overridable="yes">Tietokoneesta ei löytynyt tämän tuotteen asennuksen edellyttämiä yhteensopivia tuotteita.</String>
     <String Id="Error1609" Overridable="yes">Virhe suojausasetusten käyttöönotossa. [2] ei ole kelvollinen käyttäjä tai ryhmä. Ongelma saattaa olla paketissa tai yhteyden muodostamisessa toimialueen ohjauskoneeseen verkossa. Tarkista verkkoyhteys ja yritä uudelleen valitsemalla Yritä uudelleen. Voit keskeyttää asennuksen valitsemalla Peruuta. {{Käyttäjän SID-tunnusta ei löydy, järjestelmävirhe [3]}}</String>
     <String Id="Error1701" Overridable="yes">Avain [2] ei kelpaa. Varmista, että olet antanut oikean avaimen.</String>
@@ -577,22 +577,22 @@
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Ominaisuus asennetaan toimimaan verkosta</String>
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Ominaisuus poistetaan käytettävistä</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Asennetaan tarvittaessa</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Tämä ominaisuus voidaan suorittaa CD-levyltä</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Tämä ominaisuus asennetaan paikalliselle kiintolevylle</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Ominaisuus voidaan suorittaa CD-levyltä</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Ominaisuus asennetaan paikalliselle kiintolevylle</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Ominaisuus voidaan suorittaa verkosta</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">Tämä ominaisuus poistetaan kokonaisuudessaan, jolloin sitä ei voi enää suorittaa CD-levyltä</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">Ominaisuus poistetaan kokonaisuudessaan, jolloin sitä ei voi enää suorittaa CD-levyltä</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">Ominaisuus muutetaan CD-levyltä suoritettavasta tarvittaessa asennettavaksi</String>
     <String Id="UITextSelCDCD" Overridable="yes">Ominaisuus jää CD-levyltä suoritettavaksi</String>
     <String Id="UITextSelCDLocal" Overridable="yes">Ominaisuus muutetaan CD-levyltä suoritettavasta paikalliselle kiintolevylle asennetuksi</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Tämä ominaisuus vapauttaa [1] kiintolevytilaa.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Tämä ominaisuus vaatii [1] kiintolevytilaa.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">Ominaisuuden vaatimuksia määritetään...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Ominaisuus poistetaan kokonaisuudessaan</String>
-    <String Id="UITextSelLocalAdvertise" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta se asennetaan tarvittaessa.</String>
-    <String Id="UITextSelLocalCD" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta sen voi edelleen suorittaa CD-levyltä.</String>
+    <String Id="UITextSelCostPending" Overridable="yes">Lasketaan ominaisuuden tarvitsemaa levytilaa...</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Ominaisuus poistetaan kokonaan</String>
+    <String Id="UITextSelLocalAdvertise" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta se asennetaan tarvittaessa</String>
+    <String Id="UITextSelLocalCD" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta sen voi edelleen suorittaa CD-levyltä</String>
     <String Id="UITextSelLocalLocal" Overridable="yes">Ominaisuus jätetään paikalliselle kiintolevylle</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta sen voi edelleen suorittaa verkosta.</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">Tämä ominaisuus poistetaan kokonaisuudessaan, jolloin sitä ei voi enää suorittaa verkosta</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Ominaisuus poistetaan paikalliselta kiintolevyltä, mutta sen voi edelleen suorittaa verkosta</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">Ominaisuus poistetaan kokonaisuudessaan, jolloin sitä ei voi enää suorittaa verkosta</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Ominaisuus muutetaan verkosta suoritettavasta tarvittaessa asennettavaksi</String>
     <String Id="UITextSelNetworkLocal" Overridable="yes">Ominaisuus muutetaan verkosta suoritettavasta paikalliselle kiintolevylle asennetuksi</String>
     <String Id="UITextSelNetworkNetwork" Overridable="yes">Ominaisuus voidaan edelleen suorittaa verkosta</String>
@@ -603,7 +603,7 @@
     <String Id="UITextTimeRemaining" Overridable="yes">Aikaa jäljellä: {[1] minuuttia }{[2] sekuntia}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Käytettävissä</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Ero</String>
-    <String Id="UITextVolumeCostRequired" Overridable="yes">Pakollinen</String>
+    <String Id="UITextVolumeCostRequired" Overridable="yes">Tarvitaan</String>
     <String Id="UITextVolumeCostSize" Overridable="yes">Levyn koko</String>
     <String Id="UITextVolumeCostVolume" Overridable="yes">Levyasema</String>
 </WixLocalization>
