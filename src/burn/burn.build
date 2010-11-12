@@ -34,6 +34,7 @@
   <include buildfile="mba\mba.build" />
   <include buildfile="stdux\stdux.build" />
   <include buildfile="stub\stub.build" />
+  <include buildfile="wixstdba\wixstdba.build" />
 
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +59,8 @@
                    balutil.clean
                    mba.clean,
                    stdux.clean,
-                   stub.clean">
+                   stub.clean,
+                   wixstdba.clean">
     <delete dir="${dir.build.burn}" failonerror="false" if="${directory::exists(dir.build.burn)}" />
     
     <delete failonerror="false">
@@ -70,7 +72,7 @@
   </target>
 
   <!-- Inc -->
-  <target name="burn.inc" description="Performs an incremental build" depends="burnengine, balutil, mba, stdux, stub">
+  <target name="burn.inc" description="Performs an incremental build" depends="burnengine, balutil, mba, stdux, stub, wixstdba">
     <copy todir="${dir.target.wix}">
       <fileset basedir="${dir.src.burn.inc}">
         <include name="IBootstrapperEngine.h" />
@@ -84,4 +86,5 @@
   <target name="mba" depends="burnengine, mba.inc" />
   <target name="stdux" depends="stdux.inc" />
   <target name="stub" depends="burnengine, stub.inc" />
+  <target name="wixstdba" depends="balutil, wixstdba.inc" />
 </project>

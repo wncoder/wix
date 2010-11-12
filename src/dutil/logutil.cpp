@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Logging helper funtions.
 // </summary>
@@ -399,7 +399,7 @@ extern "C" HRESULT DAPI LogGetPath(
     Assert(pwzLogPath);
 
     HRESULT hr = S_OK;
-    
+
     if (NULL == LogUtil_sczLogPath)        // they can't have a path if there isn't one!
     {
         ExitFunction1(hr = E_UNEXPECTED);
@@ -435,11 +435,11 @@ extern "C" HRESULT DAPIV LogString(
 {
     HRESULT hr = S_OK;
     va_list args;
-    
+
     va_start(args, szFormat);
     hr = LogStringArgs(rl, szFormat, args);
     va_end(args);
-    
+
     return hr;
 }
 
@@ -476,7 +476,7 @@ extern "C" HRESULT DAPIV LogStringLine(
 {
     HRESULT hr = S_OK;
     va_list args;
-    
+
     va_start(args, szFormat);
     hr = LogStringLineArgs(rl, szFormat, args);
     va_end(args);
@@ -712,7 +712,7 @@ static HRESULT LogFooterWork(
     )
 {
     HRESULT hr = S_OK;
-    
+
     va_list args;
     va_start(args, szFormat);
     hr = LogStringWorkArgs(szFormat, args, TRUE);
@@ -789,7 +789,7 @@ static HRESULT LogIdWork(
     // get the string for the id
 #pragma prefast(push)
 #pragma prefast(disable:25028)
-    cch = ::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE, 
+    cch = ::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
                            static_cast<LPCVOID>(hModule), dwLogId, 0, reinterpret_cast<LPSTR>(&psz), 0, &args);
 #pragma prefast(pop)
 

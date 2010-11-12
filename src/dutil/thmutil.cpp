@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //  Theme helper functions.
 // </summary>
@@ -20,6 +20,7 @@
 
 const DWORD THEME_INVALID_ID = 0xFFFFFFFF;
 const COLORREF THEME_INVISIBLE_COLORREF = 0xFFFFFFFF;
+const DWORD GROW_WINDOW_TEXT = 250;
 const LPCWSTR THEME_WC_HYPERLINK = L"ThemeHyperLink";
 
 static Gdiplus::GdiplusStartupInput vgsi;
@@ -46,14 +47,20 @@ static HRESULT ParseFonts(
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
     );
-static HRESULT ParseControls(
+static HRESULT ParsePages(
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
+    );
+static HRESULT ParseControls(
+    __in IXMLDOMNode* pElement,
+    __in THEME* pTheme,
+    __in_opt THEME_PAGE* pPage
     );
 static HRESULT ParseControl(
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL_TYPE type,
-    __in THEME* pTheme
+    __in THEME* pTheme,
+    __in DWORD iControl
     );
 static HRESULT ParseColumns(
     __in IXMLDOMNode* pixn,
@@ -93,6 +100,9 @@ static DWORD CALLBACK EditStreamCallback(
     __in LONG cb,
     __in LONG *pcb
     );
+static void FreePage(
+    __in THEME_PAGE* pPage
+    );
 static void FreeControl(
     __in THEME_CONTROL* pControl
     );
@@ -116,7 +126,7 @@ extern "C" HRESULT DAPI ThemeInitialize(
     )
 {
     HRESULT hr = S_OK;
-    INITCOMMONCONTROLSEX icex;
+    INITCOMMONCONTROLSEX icex = { };
     WNDCLASSW wcHyperlink = { };
 
     hr = XmlInitialize();
@@ -142,11 +152,11 @@ extern "C" HRESULT DAPI ThemeInitialize(
     Gdiplus::Status gdiStatus = Gdiplus::GdiplusStartup(&vgdiToken, &vgsi, &vgso);
     ExitOnGdipFailure(gdiStatus, hr, "Failed to initialize GDI+.");
 
-    // Ensure that the common control DLL is loaded. 
+    // Ensure that the common control DLL is loaded.
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC  = ICC_LISTVIEW_CLASSES | ICC_TAB_CLASSES;
-    InitCommonControlsEx(&icex); 
-    
+    icex.dwICC  = ICC_PROGRESS_CLASS | ICC_LISTVIEW_CLASSES | ICC_TREEVIEW_CLASSES | ICC_TAB_CLASSES;
+    ::InitCommonControlsEx(&icex);
+
     (*vgso.NotificationHook)(&vgdiHookToken);
 
 LExit:
@@ -158,7 +168,7 @@ LExit:
  ThemeUninitialize - .unitialize theme management.
 
 *******************************************************************/
-void DAPI ThemeUninitialize()
+extern "C" void DAPI ThemeUninitialize()
 {
     if (vhModuleRichEd)
     {
@@ -267,6 +277,11 @@ extern "C" void DAPI ThemeFree(
 {
     if (pTheme)
     {
+        for (DWORD i = 0; i < pTheme->cPages; ++i)
+        {
+            FreePage(pTheme->rgPages + i);
+        }
+
         for (DWORD i = 0; i < pTheme->cControls; ++i)
         {
             FreeControl(pTheme->rgControls + i);
@@ -278,6 +293,7 @@ extern "C" void DAPI ThemeFree(
         }
 
         ReleaseMem(pTheme->rgControls);
+        ReleaseMem(pTheme->rgPages);
         ReleaseMem(pTheme->rgFonts);
 
         if (pTheme->hImage)
@@ -297,10 +313,19 @@ extern "C" void DAPI ThemeFree(
 *******************************************************************/
 extern "C" HRESULT DAPI ThemeLoadControls(
     __in THEME* pTheme,
-    __in HWND hwndParent
+    __in HWND hwndParent,
+    __in_ecount_opt(cAssignControlIds) THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
+    __in DWORD cAssignControlIds
     )
 {
+    AssertSz(!pTheme->hwndParent, "Theme already loaded controls because it has a parent window.");
+
     HRESULT hr = S_OK;
+    RECT rcParent = { };
+
+    pTheme->hwndParent = hwndParent;
+
+    ::GetClientRect(pTheme->hwndParent, &rcParent);
 
     for (DWORD i = 0; i < pTheme->cControls; ++i)
     {
@@ -323,6 +348,10 @@ extern "C" HRESULT DAPI ThemeLoadControls(
 
         case THEME_CONTROL_TYPE_LISTVIEW:
             wzWindowClass = WC_LISTVIEWW;
+            break;
+
+        case THEME_CONTROL_TYPE_TREEVIEW:
+            wzWindowClass = WC_TREEVIEWW;
             break;
 
         case THEME_CONTROL_TYPE_TAB:
@@ -387,8 +416,29 @@ extern "C" HRESULT DAPI ThemeLoadControls(
         // If the control has a window, set the other information.
         if (wzWindowClass)
         {
-            pControl->hWnd = ::CreateWindowW(wzWindowClass, pControl->wzText, pControl->dwStyle | dwWindowBits, pControl->nX, pControl->nY, pControl->nWidth, pControl->nHeight, hwndParent, NULL, NULL, NULL);
+            // Default control ids to the theme id and its index in the control array, unless there
+            // is a specific id to assign to a named control.
+            WORD wControlId = MAKEWORD(i, pTheme->wId);
+            for (DWORD iAssignControl = 0; pControl->wzName && iAssignControl < cAssignControlIds; ++iAssignControl)
+            {
+                if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pControl->wzName, -1, rgAssignControlIds[iAssignControl].wzName, -1))
+                {
+                    wControlId = rgAssignControlIds[iAssignControl].wId;
+                    break;
+                }
+            }
+
+            pControl->wId = wControlId;
+
+            int w = pControl->nWidth < 1 ? pControl->nX < 0 ? rcParent.right + pControl->nWidth : rcParent.right + pControl->nWidth - pControl->nX : pControl->nWidth;
+            int h = pControl->nHeight < 1 ? pControl->nY < 0 ? rcParent.bottom + pControl->nHeight : rcParent.bottom + pControl->nHeight - pControl->nY : pControl->nHeight;
+            int x = pControl->nX < 0 ? rcParent.right + pControl->nX - w : pControl->nX;
+            int y = pControl->nY < 0 ? rcParent.bottom + pControl->nY - h : pControl->nY;
+
+            pControl->hWnd = ::CreateWindowW(wzWindowClass, pControl->wzText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
             ExitOnNullWithLastError(pControl->hWnd, hr, "Failed to create window.");
+
+            ::SetWindowLongPtrW(pControl->hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pControl));
 
             if (THEME_CONTROL_TYPE_LISTVIEW == pControl->type)
             {
@@ -426,8 +476,6 @@ extern "C" HRESULT DAPI ThemeLoadControls(
                 }
             }
 
-            ::SetWindowLongW(pControl->hWnd, GWL_ID, i);
-
             if (pTheme->cFonts > pControl->dwFontId)
             {
                 THEME_FONT* pFont = pTheme->rgFonts + pControl->dwFontId;
@@ -437,50 +485,6 @@ extern "C" HRESULT DAPI ThemeLoadControls(
     }
 
 LExit:
-    return hr;
-}
-
-
-/********************************************************************
- ThemeLoadRichEditFromFile - Attach a richedit control to a RTF file.
-
- *******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadRichEditFromFile(
-    __in THEME* pTheme,
-    __in DWORD dwControl,
-    __in_z LPCWSTR wzFileName,
-    __in HMODULE hModule
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczFile = NULL;
-    THEME_CONTROL* pControl = pTheme->rgControls + dwControl;
-    HWND hWnd = pControl->hWnd;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-
-    hr = PathRelativeToModule(&sczFile, wzFileName, hModule);
-    ExitOnFailure(hr, "Failed to create RTF path.");
-
-    hFile = ::CreateFileW(sczFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    if (INVALID_HANDLE_VALUE == hFile)
-    {
-        ExitWithLastError(hr, "Failed to open RTF file.");
-    }
-    else
-    {
-        EDITSTREAM es = { };
-
-        es.pfnCallback = EditStreamCallback;
-        es.dwCookie = reinterpret_cast<DWORD_PTR>(hFile);
-
-        ::SendMessageW(hWnd, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
-        hr = es.dwError;
-        ExitOnFailure(hr, "Failed to update RTF stream");
-    }
-
-LExit:
-    ReleaseStr(sczFile);
-    ReleaseFile(hFile);
     return hr;
 }
 
@@ -541,7 +545,7 @@ LExit:
 
 /********************************************************************
  ThemeLoadStrings - Loads string resources.
- Must be called after loading a theme and before calling 
+ Must be called after loading a theme and before calling
  ThemeLoadControls.
 *******************************************************************/
 extern "C" HRESULT DAPI ThemeLoadStrings(
@@ -593,6 +597,279 @@ LExit:
 
 
 /********************************************************************
+ ThemeLoadRichEditFromFile - Attach a richedit control to a RTF file.
+
+ *******************************************************************/
+extern "C" HRESULT DAPI ThemeLoadRichEditFromFile(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in_z LPCWSTR wzFileName,
+    __in HMODULE hModule
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczFile = NULL;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+
+    hr = PathRelativeToModule(&sczFile, wzFileName, hModule);
+    ExitOnFailure(hr, "Failed to create RTF path.");
+
+    hFile = ::CreateFileW(sczFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hFile)
+    {
+        ExitWithLastError(hr, "Failed to open RTF file.");
+    }
+    else
+    {
+        EDITSTREAM es = { };
+
+        es.pfnCallback = EditStreamCallback;
+        es.dwCookie = reinterpret_cast<DWORD_PTR>(hFile);
+
+        ::SendMessageW(hWnd, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
+        hr = es.dwError;
+        ExitOnFailure(hr, "Failed to update RTF stream");
+    }
+
+LExit:
+    ReleaseStr(sczFile);
+    ReleaseFile(hFile);
+    return hr;
+}
+
+
+/********************************************************************
+ ThemeTranslateAccelerator - will translate the message using the active
+                             accelerator table.
+
+*******************************************************************/
+extern "C" BOOL DAPI ThemeTranslateAccelerator(
+    __in_opt THEME* pTheme,
+    __in HWND hWnd,
+    __in MSG* pMsg
+    )
+{
+    BOOL fProcessed = FALSE;
+
+    if (pTheme && pTheme->hActiveAcceleratorTable)
+    {
+        fProcessed = ::TranslateAcceleratorW(hWnd, pTheme->hActiveAcceleratorTable, pMsg);
+    }
+
+    return fProcessed;
+}
+
+
+/********************************************************************
+ ThemeDefWindowProc - replacement for DefWindowProc() when using theme.
+
+*******************************************************************/
+extern "C" LRESULT CALLBACK ThemeDefWindowProc(
+    __in_opt THEME* pTheme,
+    __in HWND hWnd,
+    __in UINT uMsg,
+    __in WPARAM wParam,
+    __in LPARAM lParam
+    )
+{
+    if (pTheme)
+    {
+        switch (uMsg)
+        {
+        case WM_NCHITTEST:
+            if (pTheme->dwStyle & WS_POPUP)
+            {
+                return HTCAPTION; // allow pop-up windows to be moved by grabbing any non-control.
+            }
+            break;
+
+        case WM_WINDOWPOSCHANGED:
+            {
+                //WINDOWPOS* pos = reinterpret_cast<LPWINDOWPOS>(lParam);
+                //ThemeWindowPositionChanged(pTheme, pos);
+            }
+            break;
+
+        case WM_DRAWITEM:
+            ThemeDrawControl(pTheme, reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
+            return TRUE;
+
+        case WM_CTLCOLORSTATIC:
+            {
+            HBRUSH hBrush = NULL;
+            if (ThemeSetControlColor(pTheme, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(hWnd), &hBrush))
+            {
+                return reinterpret_cast<LRESULT>(hBrush);
+            }
+            }
+            break;
+
+        case WM_SETCURSOR:
+            ThemeHoverControl(pTheme, hWnd, reinterpret_cast<HWND>(wParam));
+            break;
+
+        case WM_PAINT:
+            if (::GetUpdateRect(hWnd, NULL, FALSE))
+            {
+                PAINTSTRUCT ps;
+                ::BeginPaint(hWnd, &ps);
+                ThemeDrawBackground(pTheme, &ps);
+                ::EndPaint(hWnd, &ps);
+            }
+            return 0;
+        }
+    }
+
+    return ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
+}
+
+
+/********************************************************************
+ ThemeGetPageIds - gets the page ids for the theme via page names.
+
+*******************************************************************/
+extern "C" void DAPI ThemeGetPageIds(
+    __in THEME* pTheme,
+    __in_ecount(cGetPages) LPCWSTR* rgwzFindNames,
+    __inout_ecount(cGetPages) DWORD* rgdwPageIds,
+    __in DWORD cGetPages
+    )
+{
+    for (DWORD i = 0; i < cGetPages; ++i)
+    {
+        LPCWSTR wzFindName = rgwzFindNames[i];
+        for (DWORD j = 0; j < pTheme->cPages; ++j)
+        {
+            LPCWSTR wzPageName = pTheme->rgPages[j].wzName;
+            if (wzPageName && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPageName, -1, wzFindName, -1))
+            {
+                rgdwPageIds[i] = j + 1; // add one to make the page ids 1-based (so zero is invalid).
+                break;
+            }
+        }
+    }
+}
+
+
+/********************************************************************
+ ThemeShowPage - shows or hides all of the controls in the page at one time.
+
+ *******************************************************************/
+extern "C" void DAPI ThemeShowPage(
+    __in THEME* pTheme,
+    __in DWORD dwPage,
+    __in int nCmdShow
+    )
+{
+    DWORD iPage = dwPage - 1;
+    if (iPage < pTheme->cPages)
+    {
+        THEME_PAGE* pPage = pTheme->rgPages + iPage;
+        for (DWORD i = 0; i < pPage->cControlIndices; ++i)
+        {
+            THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[i];
+            HWND hWnd = pControl->hWnd;
+
+            if (pControl->fHideWhenDisabled && !::IsWindowEnabled(hWnd))
+            {
+                ::ShowWindow(hWnd, SW_HIDE);
+            }
+            else
+            {
+                ::ShowWindow(hWnd, nCmdShow);
+            }
+        }
+    }
+}
+
+
+/********************************************************************
+ ThemeControlExists - check if a control with the specified id exists.
+
+ *******************************************************************/
+extern "C" BOOL DAPI ThemeControlExists(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    )
+{
+    BOOL fExists = FALSE;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    if (hWnd)
+    {
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        fExists = (hWnd == pControl->hWnd);
+    }
+
+    return fExists;
+}
+
+
+/********************************************************************
+ ThemeControlEnable - enables/disables a control.
+
+ *******************************************************************/
+extern "C" void DAPI ThemeControlEnable(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in BOOL fEnable
+    )
+{
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    ::EnableWindow(hWnd, fEnable);
+}
+
+
+/********************************************************************
+ ThemeShowControl - shows/hides a control.
+
+ *******************************************************************/
+extern "C" void DAPI ThemeShowControl(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in int nCmdShow
+    )
+{
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    ::ShowWindow(hWnd, nCmdShow);
+}
+
+
+extern "C" BOOL DAPI ThemePostControlMessage(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in UINT Msg,
+    __in WPARAM wParam,
+    __in LPARAM lParam
+    )
+{
+    HRESULT hr = S_OK;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+
+    if (!::PostMessageW(hWnd, Msg, wParam, lParam))
+    {
+        hr = ::GetLastError();
+        hr = HRESULT_FROM_WIN32(hr);
+    }
+
+    return hr;
+}
+
+
+extern "C" LRESULT DAPI ThemeSendControlMessage(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in UINT Msg,
+    __in WPARAM wParam,
+    __in LPARAM lParam
+    )
+{
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    return ::SendMessageW(hWnd, Msg, wParam, lParam);
+}
+
+
+/********************************************************************
  ThemeDrawBackground - draws the theme background.
 
 *******************************************************************/
@@ -630,11 +907,11 @@ extern "C" HRESULT DAPI ThemeDrawControl(
     )
 {
     HRESULT hr = S_OK;
-    const THEME_CONTROL* pControl = pTheme->rgControls + pdis->CtlID;
+    const THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA));
 
     AssertSz(pControl->hWnd == pdis->hwndItem, "Expected control window to match owner draw window.");
-    AssertSz(pControl->nWidth == pdis->rcItem.right - pdis->rcItem.left, "Expected control window width to match owner draw window width.");
-    AssertSz(pControl->nHeight == pdis->rcItem.bottom - pdis->rcItem.top, "Expected control window height to match owner draw window height.");
+    AssertSz(pControl->nWidth < 1 || pControl->nWidth == pdis->rcItem.right - pdis->rcItem.left, "Expected control window width to match owner draw window width.");
+    AssertSz(pControl->nHeight < 1 || pControl->nHeight == pdis->rcItem.bottom - pdis->rcItem.top, "Expected control window height to match owner draw window height.");
 
     switch (pControl->type)
     {
@@ -700,13 +977,13 @@ extern "C" void DAPI ThemeHoverControl(
                          really useful for checkbox controls.
 
 *******************************************************************/
-BOOL DAPI ThemeIsControlChecked(
+extern "C" BOOL DAPI ThemeIsControlChecked(
     __in THEME* pTheme,
     __in DWORD dwControl
     )
 {
-    THEME_CONTROL* pControl = pTheme->rgControls + dwControl;
-    return BST_CHECKED == ::SendMessageW(pControl->hWnd, BM_GETCHECK, 0, 0);
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    return BST_CHECKED == ::SendMessageW(hWnd, BM_GETCHECK, 0, 0);
 }
 
 
@@ -721,22 +998,33 @@ extern "C" BOOL DAPI ThemeSetControlColor(
     __out HBRUSH* phBackgroundBrush
     )
 {
+    THEME_FONT* pFont = NULL;
     BOOL fHasBackground = FALSE;
-    DWORD dwControl = ::GetWindowLongW(hWnd, GWL_ID);
-    const THEME_CONTROL* pControl = pTheme->rgControls + dwControl;
-    THEME_FONT* pFont = (THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
 
-    if (pFont && pFont->hForeground)
+    if (hWnd == pTheme->hwndParent)
     {
-        ::SetTextColor(hdc, pFont->crForeground);
+        pFont = (THEME_INVALID_ID == pTheme->dwFontId) ? NULL : pTheme->rgFonts + pTheme->dwFontId;
+    }
+    else
+    {
+        const THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        pFont = (THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
     }
 
-    if (pFont && pFont->hBackground)
+    if (pFont)
     {
-        ::SetBkColor(hdc, pFont->crBackground);
+        if (pFont->hForeground)
+        {
+            ::SetTextColor(hdc, pFont->crForeground);
+        }
 
-        *phBackgroundBrush = pFont->hBackground;
-        fHasBackground = TRUE;
+        if (pFont->hBackground)
+        {
+            ::SetBkColor(hdc, pFont->crBackground);
+
+            *phBackgroundBrush = pFont->hBackground;
+            fHasBackground = TRUE;
+        }
     }
 
     return fHasBackground;
@@ -755,29 +1043,32 @@ extern "C" HRESULT DAPI ThemeSetProgressControl(
     )
 {
     HRESULT hr = S_FALSE;
-    THEME_CONTROL* pControl = pTheme->rgControls + dwControl;
-    HWND hWnd = pControl->hWnd;
-    LONG_PTR dwData = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
-    DWORD dwCurrentProgress =  LOWORD(dwData);
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
-    if (dwCurrentProgress != dwProgressPercentage)
+    if (hWnd)
     {
-        DWORD dwColor = HIWORD(dwData);
-        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, MAKELONG(dwProgressPercentage, dwColor));
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        DWORD dwCurrentProgress = LOWORD(pControl->dwData);
 
-        if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+        if (dwCurrentProgress != dwProgressPercentage)
         {
-            if (!::InvalidateRect(hWnd, NULL, FALSE))
+            DWORD dwColor = HIWORD(pControl->dwData);
+            pControl->dwData = MAKEDWORD(dwProgressPercentage, dwColor);
+
+            if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
             {
-                ExitWithLastError(hr, "Failed to invalidate progress bar window.");
+                if (!::InvalidateRect(hWnd, NULL, FALSE))
+                {
+                    ExitWithLastError(hr, "Failed to invalidate progress bar window.");
+                }
             }
-        }
-        else
-        {
-            ::SendMessageW(hWnd, PBM_SETPOS, dwProgressPercentage, 0);
-        }
+            else
+            {
+                ::SendMessageW(hWnd, PBM_SETPOS, dwProgressPercentage, 0);
+            }
 
-        hr = S_OK;
+            hr = S_OK;
+        }
     }
 
 LExit:
@@ -797,26 +1088,28 @@ extern "C" HRESULT DAPI ThemeSetProgressControlColor(
     )
 {
     HRESULT hr = S_FALSE;
-    THEME_CONTROL* pControl = pTheme->rgControls + dwControl;
-
-    // Only set color on owner draw progress bars.
-    if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    if (hWnd)
     {
-        HWND hWnd = pControl->hWnd;
-        LONG_PTR dwData = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
-        DWORD dwCurrentColor = HIWORD(dwData);
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
 
-        if (dwCurrentColor != dwColorIndex)
+        // Only set color on owner draw progress bars.
+        if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
         {
-            DWORD dwCurrentProgress =  LOWORD(dwData);
-            ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, MAKELONG(dwCurrentProgress, dwColorIndex));
+            DWORD dwCurrentColor = HIWORD(pControl->dwData);
 
-            if (!::InvalidateRect(hWnd, NULL, FALSE))
+            if (dwCurrentColor != dwColorIndex)
             {
-                ExitWithLastError(hr, "Failed to invalidate progress bar window.");
-            }
+                DWORD dwCurrentProgress =  LOWORD(pControl->dwData);
+                pControl->dwData = MAKEDWORD(dwCurrentProgress, dwColorIndex);
 
-            hr = S_OK;
+                if (!::InvalidateRect(hWnd, NULL, FALSE))
+                {
+                    ExitWithLastError(hr, "Failed to invalidate progress bar window.");
+                }
+
+                hr = S_OK;
+            }
         }
     }
 
@@ -829,16 +1122,16 @@ LExit:
  ThemeSetTextControl - sets the text of a control.
 
 *******************************************************************/
-HRESULT DAPI ThemeSetTextControl(
+extern "C" HRESULT DAPI ThemeSetTextControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in_z LPCWSTR wzText
     )
 {
     HRESULT hr = S_OK;
-    HWND hWnd = pTheme->rgControls[dwControl].hWnd;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
-    if (!::SetWindowTextW(hWnd, wzText))
+    if (hWnd && !::SetWindowTextW(hWnd, wzText))
     {
         ExitWithLastError(hr, "Failed to set control text.");
     }
@@ -859,20 +1152,46 @@ extern "C" HRESULT DAPI ThemeGetTextControl(
     )
 {
     HRESULT hr = S_OK;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    DWORD cchText = 0;
+    DWORD cchTextRead = 0;
 
-    if (pTheme->cControls <= dwControl)
+    // Ensure the string has room for at least one character.
+    hr = StrMaxLength(psczText, reinterpret_cast<DWORD_PTR*>(&cchText));
+    ExitOnFailure(hr, "Failed to get text buffer length.");
+
+    if (0 == cchText)
     {
-        hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Invalid theme control id.");
+        cchText = GROW_WINDOW_TEXT;
+
+        hr = StrAlloc(psczText, cchText);
+        ExitOnFailure(hr, "Failed to grow text buffer.");
     }
 
-    hr = StrAllocString(psczText, pTheme->rgControls[dwControl].wzText, 0);
-    ExitOnFailure(hr, "Unable to copy control text.");
+    // Read (and keep growing buffer) until we finally read less than there
+    // is room in the buffer.
+    for (;;)
+    {
+        cchTextRead = ::GetWindowTextW(hWnd, *psczText, cchText);
+        if (cchTextRead < cchText)
+        {
+            break;
+        }
+        else
+        {
+            cchText = cchTextRead + GROW_WINDOW_TEXT;
+
+            hr = StrAlloc(psczText, cchText);
+            ExitOnFailure(hr, "Failed to grow text buffer again.");
+        }
+    }
 
 LExit:
     return hr;
 }
 
+
+// Internal functions.
 
 static HRESULT ParseTheme(
     __in_opt HMODULE hModule,
@@ -881,6 +1200,8 @@ static HRESULT ParseTheme(
     __out THEME** ppTheme
     )
 {
+    static WORD wThemeId = 0;
+
     HRESULT hr = S_OK;
     THEME* pTheme = NULL;
     IXMLDOMElement *pThemeElement = NULL;
@@ -895,8 +1216,14 @@ static HRESULT ParseTheme(
     pTheme = static_cast<THEME*>(MemAlloc(sizeof(THEME), TRUE));
     ExitOnNull(pTheme, hr, E_OUTOFMEMORY, "Failed to allocate memory for theme.");
 
+    pTheme->wId = ++wThemeId;
+
     // Parse the optional background resource image.
-    hr = XmlGetAttribute(pThemeElement, L"i", &bstr);
+    hr = XmlGetAttribute(pThemeElement, L"IconResource", &bstr);
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttribute(pThemeElement, L"i", &bstr);
+    }
     ExitOnFailure(hr, "Failed to get theme image (t@i) attribute.");
 
     if (S_OK == hr)
@@ -913,7 +1240,11 @@ static HRESULT ParseTheme(
     // Parse the optional background image from a given file.
     if (!pBitmap)
     {
-        hr = XmlGetAttribute(pThemeElement, L"if", &bstr);
+        hr = XmlGetAttribute(pThemeElement, L"ImageFile", &bstr);
+        if (S_FALSE == hr)
+        {
+            hr = XmlGetAttribute(pThemeElement, L"if", &bstr);
+        }
         ExitOnFailure(hr, "Failed to get theme image (t@if) attribute.");
 
         if (S_OK == hr)
@@ -948,7 +1279,11 @@ static HRESULT ParseTheme(
     ExitOnFailure(hr, "Failed to parse theme application element.");
 
     // Parse the optional window style.
-    hr = XmlGetAttributeNumberBase(pThemeElement, L"s", 16, &pTheme->dwStyle);
+    hr = XmlGetAttributeNumberBase(pThemeElement, L"HexStyle", 16, &pTheme->dwStyle);
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttributeNumberBase(pThemeElement, L"s", 16, &pTheme->dwStyle);
+    }
     ExitOnFailure(hr, "Failed to get theme window style (t@s) attribute.");
 
     if (S_FALSE == hr)
@@ -961,8 +1296,12 @@ static HRESULT ParseTheme(
     hr = ParseFonts(pThemeElement, pTheme);
     ExitOnFailure(hr, "Failed to parse theme fonts.");
 
-    // Parse the controls.
-    hr = ParseControls(pThemeElement, pTheme);
+    // Parse the pages.
+    hr = ParsePages(pThemeElement, pTheme);
+    ExitOnFailure(hr, "Failed to parse theme pages.");
+
+    // Parse the non-paged controls.
+    hr = ParseControls(pThemeElement, pTheme, NULL);
     ExitOnFailure(hr, "Failed to parse theme controls.");
 
     *ppTheme = pTheme;
@@ -1000,42 +1339,55 @@ static HRESULT ParseApplication(
     BSTR bstr = NULL;
     LPWSTR sczIconFile = NULL;
 
-    hr = XmlSelectSingleNode(pElement, L"a", &pixn);
+    hr = XmlSelectSingleNode(pElement, L"Application|App|a", &pixn);
     if (S_FALSE == hr)
     {
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
     }
     ExitOnFailure(hr, "Failed to find application element.");
 
-    hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&pTheme->nWidth));
+    hr = XmlGetAttributeNumber(pixn, L"Width", reinterpret_cast<DWORD*>(&pTheme->nWidth));
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&pTheme->nWidth));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            ExitOnRootFailure(hr, "Failed to find application width attribute.");
+        }
+    }
     ExitOnFailure(hr, "Failed to get application width attribute.");
 
+    hr = XmlGetAttributeNumber(pixn, L"Height", reinterpret_cast<DWORD*>(&pTheme->nHeight));
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Failed to find application width attribute.");
+        hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&pTheme->nHeight));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            ExitOnFailure(hr, "Failed to find application height attribute.");
+        }
     }
-
-    hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&pTheme->nHeight));
     ExitOnFailure(hr, "Failed to get application height attribute.");
 
+    hr = XmlGetAttributeNumber(pixn, L"FontId", &pTheme->dwFontId);
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure(hr, "Failed to find application height attribute.");
+        hr = XmlGetAttributeNumber(pixn, L"f", &pTheme->dwFontId);
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            ExitOnRootFailure(hr, "Failed to find application font attribute.");
+        }
     }
-
-    hr = XmlGetAttributeNumber(pixn, L"f", &pTheme->dwFontId);
     ExitOnFailure(hr, "Failed to get application font attribute.");
 
+    // Get the optional application icon from a resource.
+    hr = XmlGetAttribute(pixn, L"IconResource", &bstr);
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Failed to find application font attribute.");
+        hr = XmlGetAttribute(pixn, L"i", &bstr);
     }
-
-    // Get the optional application icon from a resource.
-    hr = XmlGetAttribute(pixn, L"i", &bstr);
     ExitOnFailure(hr, "Failed to get application icon resource attribute.");
 
     if (S_OK == hr)
@@ -1047,7 +1399,11 @@ static HRESULT ParseApplication(
     }
 
     // Get the optional application icon from a file.
-    hr = XmlGetAttribute(pixn, L"if", &bstr);
+    hr = XmlGetAttribute(pixn, L"IconFile", &bstr);
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttribute(pixn, L"if", &bstr);
+    }
     ExitOnFailure(hr, "Failed to get application icon file attribute.");
 
     if (S_OK == hr)
@@ -1068,29 +1424,39 @@ static HRESULT ParseApplication(
         ExitOnNullWithLastError1(pTheme->hIcon, hr, "Failed to load application icon: %ls.", bstr);
     }
 
-    hr = XmlGetAttributeNumber(pixn, L"sx", reinterpret_cast<DWORD*>(&pTheme->nSourceX));
+    hr = XmlGetAttributeNumber(pixn, L"SourceX", reinterpret_cast<DWORD*>(&pTheme->nSourceX));
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttributeNumber(pixn, L"sx", reinterpret_cast<DWORD*>(&pTheme->nSourceX));
+        if (S_FALSE == hr)
+        {
+            pTheme->nSourceX = -1;
+        }
+    }
     ExitOnFailure(hr, "Failed to get application source X attribute.");
 
+    hr = XmlGetAttributeNumber(pixn, L"SourceY", reinterpret_cast<DWORD*>(&pTheme->nSourceY));
     if (S_FALSE == hr)
     {
-        pTheme->nSourceX = -1;
+        hr = XmlGetAttributeNumber(pixn, L"sy", reinterpret_cast<DWORD*>(&pTheme->nSourceY));
+        if (S_FALSE == hr)
+        {
+            pTheme->nSourceY = -1;
+        }
     }
-
-    hr = XmlGetAttributeNumber(pixn, L"sy", reinterpret_cast<DWORD*>(&pTheme->nSourceY));
     ExitOnFailure(hr, "Failed to get application source Y attribute.");
 
+    hr = XmlGetAttributeNumber(pixn, L"StringId", reinterpret_cast<DWORD*>(&pTheme->uStringId));
     if (S_FALSE == hr)
     {
-        pTheme->nSourceY = -1;
+        hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pTheme->uStringId));
     }
-
-    hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pTheme->uStringId));
     ExitOnFailure(hr, "Failed to get application caption id attribute.");
 
     if (S_FALSE == hr)
     {
         pTheme->uStringId = UINT_MAX;
-      
+
         hr = XmlGetText(pixn, &bstr);
         ExitOnFailure(hr, "Failed to get application caption.");
 
@@ -1127,7 +1493,7 @@ static HRESULT ParseFonts(
     COLORREF crForeground = THEME_INVISIBLE_COLORREF;
     COLORREF crBackground = THEME_INVISIBLE_COLORREF;
 
-    hr = XmlSelectNodes(pElement, L"f", &pixnl);
+    hr = XmlSelectNodes(pElement, L"Font|f", &pixnl);
     if (S_FALSE == hr)
     {
         hr = S_OK;
@@ -1169,40 +1535,61 @@ static HRESULT ParseFonts(
         hr = ::StringCchCopyW(lf.lfFaceName, countof(lf.lfFaceName), bstrName);
         ExitOnFailure(hr, "Failed to copy font name.");
 
-        hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&lf.lfHeight));
+        hr = XmlGetAttributeNumber(pixn, L"Height", reinterpret_cast<DWORD*>(&lf.lfHeight));
         if (S_FALSE == hr)
         {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&lf.lfHeight));
+            if (S_FALSE == hr)
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            }
         }
         ExitOnFailure(hr, "Failed to find font height attribute.");
 
-        hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&lf.lfWeight));
+        hr = XmlGetAttributeNumber(pixn, L"Weight", reinterpret_cast<DWORD*>(&lf.lfWeight));
         if (S_FALSE == hr)
         {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&lf.lfWeight));
+            if (S_FALSE == hr)
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            }
         }
         ExitOnFailure(hr, "Failed to find font weight attribute.");
 
-        hr = XmlGetAttributeNumber(pixn, L"u", reinterpret_cast<DWORD*>(&lf.lfUnderline));
-        if (S_FALSE == hr)
+        hr = XmlGetYesNoAttribute(pixn, L"Underline", reinterpret_cast<BOOL*>(&lf.lfUnderline));
+        if (E_NOTFOUND == hr)
         {
-            lf.lfUnderline = FALSE;
+            hr = XmlGetYesNoAttribute(pixn, L"u", reinterpret_cast<BOOL*>(&lf.lfUnderline));
+            if (E_NOTFOUND == hr)
+            {
+                lf.lfUnderline = FALSE;
+                hr = S_OK;
+            }
         }
-        ExitOnFailure(hr, "Failed to find font weight attribute.");
+        ExitOnFailure(hr, "Failed to find font underline attribute.");
 
-        hr = XmlGetAttributeNumberBase(pixn, L"f", 16, &crForeground);
+        hr = XmlGetAttributeNumberBase(pixn, L"Foreground", 16, &crForeground);
         if (S_FALSE == hr)
         {
-            crForeground = THEME_INVISIBLE_COLORREF;
-            hr = S_OK;
+            hr = XmlGetAttributeNumberBase(pixn, L"f", 16, &crForeground);
+            if (S_FALSE == hr)
+            {
+                crForeground = THEME_INVISIBLE_COLORREF;
+                hr = S_OK;
+            }
         }
         ExitOnFailure(hr, "Failed to find font foreground color.");
 
-        hr = XmlGetAttributeNumberBase(pixn, L"b", 16, &crBackground);
+        hr = XmlGetAttributeNumberBase(pixn, L"Background", 16, &crBackground);
         if (S_FALSE == hr)
         {
-            crBackground = THEME_INVISIBLE_COLORREF;
-            hr = S_OK;
+            hr = XmlGetAttributeNumberBase(pixn, L"b", 16, &crBackground);
+            if (S_FALSE == hr)
+            {
+                crBackground = THEME_INVISIBLE_COLORREF;
+                hr = S_OK;
+            }
         }
         ExitOnFailure(hr, "Failed to find font background color.");
 
@@ -1250,7 +1637,7 @@ LExit:
 }
 
 
-static HRESULT ParseControls(
+static HRESULT ParsePages(
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
     )
@@ -1259,87 +1646,183 @@ static HRESULT ParseControls(
     IXMLDOMNodeList* pixnl = NULL;
     IXMLDOMNode* pixn = NULL;
     BSTR bstrType = NULL;
+    THEME_PAGE* pPage = NULL;
+    DWORD iPage = 0;
+
+    hr = XmlSelectNodes(pElement, L"Page", &pixnl);
+    if (S_FALSE == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to find page elements.");
+
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pTheme->cPages));
+    ExitOnFailure(hr, "Failed to count the number of theme pages.");
+
+    if (0 == pTheme->cPages)
+    {
+        ExitFunction();
+    }
+
+    pTheme->rgPages = static_cast<THEME_PAGE*>(MemAlloc(sizeof(THEME_PAGE) * pTheme->cPages, TRUE));
+    ExitOnNull(pTheme->rgPages, hr, E_OUTOFMEMORY, "Failed to allocate theme pages.");
+
+    while (S_OK == (hr = XmlNextElement(pixnl, &pixn, &bstrType)))
+    {
+        pPage = pTheme->rgPages + iPage;
+
+        pPage->wId = static_cast<WORD>(iPage + 1);
+
+        hr = XmlGetAttributeEx(pixn, L"Name", &pPage->wzName);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        ExitOnFailure(hr, "Failed when querying page Name.");
+
+        hr = ParseControls(pixn, pTheme, pPage);
+        ExitOnFailure(hr, "Failed to parse page controls.");
+
+        ++iPage;
+
+        ReleaseNullBSTR(bstrType);
+    }
+
+LExit:
+    ReleaseBSTR(bstrType);
+    return hr;
+}
+
+
+static HRESULT ParseControls(
+    __in IXMLDOMNode* pElement,
+    __in THEME* pTheme,
+    __in_opt THEME_PAGE* pPage
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNodeList* pixnl = NULL;
+    IXMLDOMNode* pixn = NULL;
+    BSTR bstrType = NULL;
+    DWORD cNewControls = 0;
+    DWORD iControl = 0;
+    DWORD iPageControl = 0;
 
     hr = XmlSelectNodes(pElement, L"*", &pixnl);
     if (S_FALSE == hr)
     {
-        hr = S_OK;
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
     ExitOnFailure(hr, "Failed to find control elements.");
 
-    hr = pixnl->get_length(reinterpret_cast<long*>(&pTheme->cControls));
+    hr = pixnl->get_length(reinterpret_cast<long*>(&cNewControls));
     ExitOnFailure(hr, "Failed to count the number of theme controls.");
 
-    if (pTheme->cControls <= pTheme->cFonts)
+    // If we are creating top level controls (no page provided), subtract the font and
+    // page elements and "application" element since they are all siblings and inflate
+    // the count.
+    if (!pPage)
     {
-        hr = E_INVALIDARG;
-        ExitOnFailure(hr, "Number of controls should be greater than number of fonts");
+        cNewControls = cNewControls - pTheme->cFonts - pTheme->cPages - 1;
     }
 
-    pTheme->cControls = pTheme->cControls - pTheme->cFonts - 1; // subtract the font elements and "application" element since they are siblings and inflate the count.
-
-    if (0 == pTheme->cControls)
+    if (0 == cNewControls)
     {
         ExitFunction1(hr = S_OK);
     }
 
-    pTheme->rgControls = static_cast<THEME_CONTROL*>(MemAlloc(sizeof(THEME_CONTROL) * pTheme->cControls, TRUE));
-    ExitOnNull(pTheme->rgControls, hr, E_OUTOFMEMORY, "Failed to allocate theme controls.");
+    if (pPage)
+    {
+        pPage->rgdwControlIndices = static_cast<DWORD*>(MemAlloc(sizeof(DWORD) * cNewControls, TRUE));
+        ExitOnNull(pPage->rgdwControlIndices, hr, E_OUTOFMEMORY, "Failed to allocate theme page controls.");
+
+        pPage->cControlIndices = cNewControls;
+    }
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pTheme->rgControls), pTheme->cControls, sizeof(THEME_CONTROL), cNewControls);
+    ExitOnFailure(hr, "Failed to allocate theme controls.");
+
+    iControl = pTheme->cControls;
+    pTheme->cControls += cNewControls;
 
     while (S_OK == (hr = XmlNextElement(pixnl, &pixn, &bstrType)))
     {
         THEME_CONTROL_TYPE type = THEME_CONTROL_TYPE_UNKNOWN;
 
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"b", 1))
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Button", -1) ||
+            CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"b", 1))
         {
             type = THEME_CONTROL_TYPE_BUTTON;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"cb", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Checkbox", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"cb", 2))
         {
             type = THEME_CONTROL_TYPE_CHECKBOX;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"eb", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Editbox", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"eb", 2))
         {
             type = THEME_CONTROL_TYPE_EDITBOX;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"l", 1))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Hyperlink", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"l", 1))
         {
             type = THEME_CONTROL_TYPE_HYPERLINK;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"i", 1))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Image", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"i", 1))
         {
             type = THEME_CONTROL_TYPE_IMAGE;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"pb", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Progressbar", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"pb", 2))
         {
             type = THEME_CONTROL_TYPE_PROGRESSBAR;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"rt", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Richedit", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"rt", 2))
         {
             type = THEME_CONTROL_TYPE_RICHEDIT;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"s", 1))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Static", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"s", 1))
         {
             type = THEME_CONTROL_TYPE_STATIC;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"t", 1))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Text", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"t", 1))
         {
             type = THEME_CONTROL_TYPE_TEXT;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"lv", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Listview", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"lv", 2))
         {
             type = THEME_CONTROL_TYPE_LISTVIEW;
         }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"tb", 2))
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Treeview", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"tv", 2))
+        {
+            type = THEME_CONTROL_TYPE_TREEVIEW;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Tab", -1) ||
+                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"tb", 2))
         {
             type = THEME_CONTROL_TYPE_TAB;
         }
 
         if (THEME_CONTROL_TYPE_UNKNOWN != type)
         {
-            hr = ParseControl(pixn, type, pTheme);
+            hr = ParseControl(pixn, type, pTheme, iControl);
             ExitOnFailure(hr, "Failed to parse control.");
+
+            if (pPage)
+            {
+                pTheme->rgControls[iControl].wPageId = pPage->wId;
+                pPage->rgdwControlIndices[iPageControl] = iControl;
+                ++iPageControl;
+            }
+
+            ++iControl;
         }
 
         ReleaseNullBSTR(bstrType);
@@ -1363,19 +1846,21 @@ LExit:
 static HRESULT ParseControl(
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL_TYPE type,
-    __in THEME* pTheme
+    __in THEME* pTheme,
+    __in DWORD iControl
     )
 {
     HRESULT hr = S_OK;
     DWORD dwId = 0;
     THEME_CONTROL* pControl = NULL;
     DWORD dwValue = 0;
+    BOOL fValue = FALSE;
     BSTR bstrText = NULL;
 
     hr = XmlGetAttributeNumber(pixn, L"id", &dwId);
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        dwId = iControl;
     }
     ExitOnFailure(hr, "Failed to find control id.");
 
@@ -1394,88 +1879,160 @@ static HRESULT ParseControl(
 
     pControl->type = type;
 
-    hr = XmlGetAttributeNumber(pixn, L"x", reinterpret_cast<DWORD*>(&pControl->nX));
+    hr = XmlGetAttributeEx(pixn, L"Name", &pControl->wzName);
+    if (E_NOTFOUND == hr)
+    {
+        hr = S_OK;
+    }
+    ExitOnFailure(hr, "Failed when querying control Name.");
+
+    hr = XmlGetAttributeNumber(pixn, L"X", reinterpret_cast<DWORD*>(&pControl->nX));
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        hr = XmlGetAttributeNumber(pixn, L"x", reinterpret_cast<DWORD*>(&pControl->nX));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        }
     }
     ExitOnFailure(hr, "Failed to find control X attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"y", reinterpret_cast<DWORD*>(&pControl->nY));
+    hr = XmlGetAttributeNumber(pixn, L"Y", reinterpret_cast<DWORD*>(&pControl->nY));
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        hr = XmlGetAttributeNumber(pixn, L"y", reinterpret_cast<DWORD*>(&pControl->nY));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        }
     }
     ExitOnFailure(hr, "Failed to find control Y attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&pControl->nHeight));
+    hr = XmlGetAttributeNumber(pixn, L"Height", reinterpret_cast<DWORD*>(&pControl->nHeight));
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        hr = XmlGetAttributeNumber(pixn, L"h", reinterpret_cast<DWORD*>(&pControl->nHeight));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        }
     }
     ExitOnFailure(hr, "Failed to find control height attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&pControl->nWidth));
+    hr = XmlGetAttributeNumber(pixn, L"Width", reinterpret_cast<DWORD*>(&pControl->nWidth));
     if (S_FALSE == hr)
     {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        hr = XmlGetAttributeNumber(pixn, L"w", reinterpret_cast<DWORD*>(&pControl->nWidth));
+        if (S_FALSE == hr)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        }
     }
     ExitOnFailure(hr, "Failed to find control weight attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"sx", reinterpret_cast<DWORD*>(&pControl->nSourceX));
+    hr = XmlGetAttributeNumber(pixn, L"SourceX", reinterpret_cast<DWORD*>(&pControl->nSourceX));
     if (S_FALSE == hr)
     {
-        pControl->nSourceX = -1;
+        hr = XmlGetAttributeNumber(pixn, L"sx", reinterpret_cast<DWORD*>(&pControl->nSourceX));
+        if (S_FALSE == hr)
+        {
+            pControl->nSourceX = -1;
+        }
     }
     ExitOnFailure(hr, "Failed to find control source X attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"sy", reinterpret_cast<DWORD*>(&pControl->nSourceY));
+    hr = XmlGetAttributeNumber(pixn, L"SourceY", reinterpret_cast<DWORD*>(&pControl->nSourceY));
     if (S_FALSE == hr)
     {
-        pControl->nSourceY = -1;
+        hr = XmlGetAttributeNumber(pixn, L"sy", reinterpret_cast<DWORD*>(&pControl->nSourceY));
+        if (S_FALSE == hr)
+        {
+            pControl->nSourceY = -1;
+        }
     }
     ExitOnFailure(hr, "Failed to find control source Y attribute.");
 
-    hr = XmlGetAttributeNumber(pixn, L"f", &pControl->dwFontId);
+    hr = XmlGetAttributeNumber(pixn, L"FontId", &pControl->dwFontId);
     if (S_FALSE == hr)
     {
-        pControl->dwFontId = THEME_INVALID_ID;
+        hr = XmlGetAttributeNumber(pixn, L"f", &pControl->dwFontId);
+        if (S_FALSE == hr)
+        {
+            pControl->dwFontId = THEME_INVALID_ID;
+        }
     }
     ExitOnFailure(hr, "Failed to find font for control.");
 
-    hr = XmlGetAttributeNumber(pixn, L"fh", &pControl->dwFontHoverId);
+    hr = XmlGetAttributeNumber(pixn, L"HoverFontId", &pControl->dwFontHoverId);
     if (S_FALSE == hr)
     {
-        pControl->dwFontHoverId = THEME_INVALID_ID;
+        hr = XmlGetAttributeNumber(pixn, L"fh", &pControl->dwFontHoverId);
+        if (S_FALSE == hr)
+        {
+            pControl->dwFontHoverId = THEME_INVALID_ID;
+        }
     }
     ExitOnFailure(hr, "Failed to find hover font for control.");
 
-    hr = XmlGetAttributeNumber(pixn, L"fs", &pControl->dwFontSelectedId);
+    hr = XmlGetAttributeNumber(pixn, L"SelectedFontId", &pControl->dwFontSelectedId);
     if (S_FALSE == hr)
     {
-        pControl->dwFontSelectedId = THEME_INVALID_ID;
+        hr = XmlGetAttributeNumber(pixn, L"fs", &pControl->dwFontSelectedId);
+        if (S_FALSE == hr)
+        {
+            pControl->dwFontSelectedId = THEME_INVALID_ID;
+        }
     }
     ExitOnFailure(hr, "Failed to find selected font for control.");
 
     // Parse the optional window style.
-    hr = XmlGetAttributeNumberBase(pixn, L"s", 16, &pControl->dwStyle);
-    ExitOnFailure(hr, "Failed to get control window style (@s) attribute.");
+    hr = XmlGetAttributeNumberBase(pixn, L"HexStyle", 16, &pControl->dwStyle);
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttributeNumberBase(pixn, L"s", 16, &pControl->dwStyle);
+        ExitOnFailure(hr, "Failed to get control window style (@s) attribute.");
+    }
 
     // Parse the tabstop bit "shortcut nomenclature", this could have been set with the style above.
-    hr = XmlGetAttributeNumber(pixn, L"t", &dwValue);
+    hr = XmlGetAttributeNumber(pixn, L"TabStop", &dwValue);
     if (S_OK == hr && dwValue)
     {
-        pControl->dwStyle |= WS_TABSTOP;
+        hr = XmlGetAttributeNumber(pixn, L"t", &dwValue);
+        if (S_OK == hr && dwValue)
+        {
+            pControl->dwStyle |= WS_TABSTOP;
+        }
     }
     ExitOnFailure(hr, "Failed to tell if the control is a tab stop.");
-    
-    hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pControl->uStringId));
+
+    hr = XmlGetYesNoAttribute(pixn, L"Visible", &fValue);
+    if (E_NOTFOUND == hr)
+    {
+        hr = S_OK;
+    }
+    else if (fValue)
+    {
+        pControl->dwStyle |= WS_VISIBLE;
+    }
+    ExitOnFailure(hr, "Failed to tell if the control is visible.");
+
+    hr = XmlGetYesNoAttribute(pixn, L"HideWhenDisabled", &pControl->fHideWhenDisabled);
+    if (E_NOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to parse if the control should be hidden when disabled.");
+    }
+
+    hr = XmlGetAttributeNumber(pixn, L"StringId", reinterpret_cast<DWORD*>(&pControl->uStringId));
+    if (S_FALSE == hr)
+    {
+        hr = XmlGetAttributeNumber(pixn, L"sid", reinterpret_cast<DWORD*>(&pControl->uStringId));
+    }
     ExitOnFailure(hr, "Failed to get control text id attribute.");
 
     if (S_FALSE == hr)
     {
         pControl->uStringId = UINT_MAX;
-      
+
         hr = XmlGetText(pixn, &bstrText);
         ExitOnFailure(hr, "Failed to get control text.");
 
@@ -1493,11 +2050,85 @@ static HRESULT ParseControl(
     if (THEME_CONTROL_TYPE_LISTVIEW == type)
     {
         // Parse the optional extended window style.
-        hr = XmlGetAttributeNumberBase(pixn, L"xs", 16, &pControl->dwExtendedStyle);
+        hr = XmlGetAttributeNumberBase(pixn, L"HexExtendedStyle", 16, &pControl->dwExtendedStyle);
+        if (S_FALSE == hr)
+        {
+            hr = XmlGetAttributeNumberBase(pixn, L"xs", 16, &pControl->dwExtendedStyle);
+        }
         ExitOnFailure(hr, "Failed to get theme window extended style (t@xs) attribute.");
 
         hr = ParseColumns(pixn, pControl);
         ExitOnFailure(hr, "Failed to parse columns");
+    }
+    else if (THEME_CONTROL_TYPE_TREEVIEW == type)
+    {
+        pControl->dwStyle |= TVS_DISABLEDRAGDROP;
+
+        hr = XmlGetYesNoAttribute(pixn, L"EnableDragDrop", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= ~TVS_DISABLEDRAGDROP;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control control enables drag and drop..");
+
+        hr = XmlGetYesNoAttribute(pixn, L"FullRowSelect", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= TVS_FULLROWSELECT;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control enables full row select.");
+
+        hr = XmlGetYesNoAttribute(pixn, L"HasButtons", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= TVS_HASBUTTONS;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control show buttons.");
+
+        hr = XmlGetYesNoAttribute(pixn, L"AlwaysShowSelect", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= TVS_SHOWSELALWAYS;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control always displays the selection.");
+
+        hr = XmlGetYesNoAttribute(pixn, L"LinesAtRoot", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= TVS_LINESATROOT;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control shows lines at the root.");
+
+        hr = XmlGetYesNoAttribute(pixn, L"HasLines", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= TVS_HASLINES;
+        }
+        ExitOnFailure(hr, "Failed to tell if the tree control shows lines.");
     }
     else if (THEME_CONTROL_TYPE_TAB == type)
     {
@@ -1523,7 +2154,7 @@ static HRESULT ParseColumns(
     IXMLDOMNode* pixnChild = NULL;
     BSTR bstrText = NULL;
 
-    hr = XmlSelectNodes(pixn, L"c", &pixnl);
+    hr = XmlSelectNodes(pixn, L"Column|c", &pixnl);
     ExitOnFailure(hr, "Failed to select child column nodes");
 
     if (S_FALSE != hr)
@@ -1540,10 +2171,14 @@ static HRESULT ParseColumns(
             hr = XmlGetText(pixnChild, &bstrText);
             ExitOnFailure(hr, "Failed to get inner text of column element");
 
-            hr = XmlGetAttributeNumber(pixnChild, L"w", reinterpret_cast<DWORD*>(&pControl->ptcColumns[i].nWidth));
+            hr = XmlGetAttributeNumber(pixnChild, L"Width", reinterpret_cast<DWORD*>(&pControl->ptcColumns[i].nWidth));
             if (S_FALSE == hr)
             {
-                pControl->ptcColumns[i].nWidth = 100; // Default to 100
+                hr = XmlGetAttributeNumber(pixnChild, L"w", reinterpret_cast<DWORD*>(&pControl->ptcColumns[i].nWidth));
+                if (S_FALSE == hr)
+                {
+                    pControl->ptcColumns[i].nWidth = 100; // Default to 100
+                }
             }
             ExitOnFailure(hr, "Failed to get column width attribute.");
 
@@ -1574,7 +2209,7 @@ static HRESULT ParseTabs(
     IXMLDOMNode* pixnChild = NULL;
     BSTR bstrText = NULL;
 
-    hr = XmlSelectNodes(pixn, L"t", &pixnl);
+    hr = XmlSelectNodes(pixn, L"Tab|t", &pixnl);
     ExitOnFailure(hr, "Failed to select child tab nodes");
 
     if (S_FALSE != hr)
@@ -1615,7 +2250,6 @@ static HRESULT DrawButton(
 {
     HRESULT hr = S_OK;
     DWORD_PTR dwStyle = ::GetWindowLongPtrW(pdis->hwndItem, GWL_STYLE);
-    DWORD_PTR dwData = ::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA);
     int nSourceY = pControl->nSourceY;
 
     HDC hdcMem = ::CreateCompatibleDC(pdis->hDC);
@@ -1625,7 +2259,7 @@ static HRESULT DrawButton(
     {
         nSourceY += pControl->nHeight * 2;
     }
-    else if (dwData & THEME_CONTROL_DATA_HOVER)
+    else if (pControl->dwData & THEME_CONTROL_DATA_HOVER)
     {
         nSourceY += pControl->nHeight;
     }
@@ -1650,7 +2284,6 @@ static HRESULT DrawHyperlink(
     )
 {
     HRESULT hr = S_OK;
-    DWORD_PTR dwData = ::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA);
     WCHAR wzText[256] = { };
     DWORD cchText = 0;
     THEME_FONT* pFont = NULL;
@@ -1667,7 +2300,7 @@ static HRESULT DrawHyperlink(
     {
         pFont = pTheme->rgFonts + pControl->dwFontSelectedId;
     }
-    else if (dwData & THEME_CONTROL_DATA_HOVER)
+    else if (pControl->dwData & THEME_CONTROL_DATA_HOVER)
     {
         pFont = pTheme->rgFonts + pControl->dwFontHoverId;
     }
@@ -1725,9 +2358,8 @@ static HRESULT DrawProgressBar(
     __in const THEME_CONTROL* pControl
     )
 {
-    DWORD_PTR dwData = ::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA);
-    DWORD dwProgressColor = HIWORD(dwData);
-    DWORD dwProgressPercentage = LOWORD(dwData);
+    DWORD dwProgressColor = HIWORD(pControl->dwData);
+    DWORD dwProgressPercentage = LOWORD(pControl->dwData);
     DWORD dwHeight = pdis->rcItem.bottom - pdis->rcItem.top;
     DWORD dwCenter = (pdis->rcItem.right - 2) * dwProgressPercentage / 100;
     int nSourceY = pControl->nSourceY + (dwProgressColor * pControl->nHeight);
@@ -1764,19 +2396,30 @@ static void DrawHoverControl(
     __in BOOL fHover
     )
 {
-    DWORD_PTR dwData = ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+    AssertSz(pControl->hWnd == hWnd, "Expected control's window to be the same as the window's user data.");
 
     if (fHover)
     {
-        dwData |= THEME_CONTROL_DATA_HOVER;
+        pControl->dwData |= THEME_CONTROL_DATA_HOVER;
     }
     else
     {
-        dwData &= ~THEME_CONTROL_DATA_HOVER;
+        pControl->dwData &= ~THEME_CONTROL_DATA_HOVER;
     }
 
-    ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, dwData);
-    ::InvalidateRect(hWnd, NULL, FALSE);
+    ::InvalidateRect(pControl->hWnd, NULL, FALSE);
+}
+
+
+static void FreePage(
+    __in THEME_PAGE* pPage
+    )
+{
+    if (pPage)
+    {
+        ReleaseStr(pPage->wzName);
+    }
 }
 
 
@@ -1786,12 +2429,13 @@ static void FreeControl(
 {
     if (pControl)
     {
-        if (pControl->hWnd)
+        if (::IsWindow(pControl->hWnd))
         {
             ::CloseWindow(pControl->hWnd);
             pControl->hWnd = NULL;
         }
 
+        ReleaseStr(pControl->wzName);
         ReleaseStr(pControl->wzText);
 
         for (DWORD i = 0; i < pControl->cColumns; i++)
@@ -1805,6 +2449,7 @@ static void FreeControl(
         }
 
         ReleaseMem(pControl->ptcColumns);
+        ReleaseMem(pControl->pttTabs);
     }
 }
 
@@ -1856,13 +2501,13 @@ static DWORD CALLBACK EditStreamCallback(
     __in DWORD_PTR dwCookie,
     __in LPBYTE pbBuff,
     __in LONG cb,
-    __in LONG *pcb
+    __in LONG* pcb
     )
 {
     HRESULT hr = S_OK;
-    HANDLE hFile = (HANDLE)dwCookie;
- 
-    if (!::ReadFile(hFile, pbBuff, cb, reinterpret_cast<DWORD *>(pcb), NULL))
+    HANDLE hFile = reinterpret_cast<HANDLE>(dwCookie);
+
+    if (!::ReadFile(hFile, pbBuff, cb, reinterpret_cast<DWORD*>(pcb), NULL))
     {
         ExitWithLastError(hr, "Failed to read file");
     }

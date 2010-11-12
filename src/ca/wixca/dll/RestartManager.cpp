@@ -106,7 +106,11 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
         WcaLog(LOGMSG_STANDARD, "The Restart Manager is not supported on this platform. Skipping.");
         ExitFunction1(hr = S_OK);
     }
-    ExitOnFailure1(hr, "Failed to join the existing Restart Manager session %ls.", wzSessionKey);
+    else if (FAILED(hr))
+    {
+        WcaLog(LOGMSG_STANDARD, "Failed to join the existing Restart Manager session %ls.", wzSessionKey);
+        ExitFunction1(hr = S_OK);
+    }
 
     // Loop through each record in the table.
     hr = WcaOpenExecuteView(vcsRestartResourceQuery, &hView);
@@ -172,7 +176,11 @@ extern "C" UINT __stdcall WixRegisterRestartResources(
 
     // Register the resources and unjoin the session.
     hr = RmuEndSession(pSession);
-    ExitOnFailure(hr, "Failed to register the resources with the Restart Manager.");
+    if (FAILED(hr))
+    {
+        WcaLog(LOGMSG_VERBOSE, "Failed to register the resources with the Restart Manager.");
+        ExitFunction1(hr = S_OK);
+    }
 
 LExit:
     ReleaseStr(wzRestartResource);

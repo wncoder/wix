@@ -49,6 +49,7 @@ typedef struct _BURN_VARIABLE
 
 typedef struct _BURN_VARIABLES
 {
+    CRITICAL_SECTION csAccess;
     DWORD dwMaxVariables;
     DWORD cVariables;
     BURN_VARIABLE* rgVariables;
@@ -57,7 +58,7 @@ typedef struct _BURN_VARIABLES
 
 // function declarations
 
-HRESULT VariableInitializeBuiltIn(
+HRESULT VariableInitialize(
     __in BURN_VARIABLES* pVariables
     );
 HRESULT VariablesParseFromXml(

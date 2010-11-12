@@ -50,6 +50,7 @@
   <include buildfile="${dir.wixroot.src}\setup\setup.build" />
   <include buildfile="${dir.wixroot.src}\setupbld\setupbld.build" />
   <include buildfile="${dir.wixroot.src}\setupexe\setupexe.build" />
+  <include buildfile="${dir.src.toolsrc}\toolsrc.build" />
   <include buildfile="${dir.wixroot.src}\updateexe\updateexe.build" />
   <include buildfile="${dir.src.votive}\votive2005.build" />
   <include buildfile="${dir.src.votive}\votive2008.build" />
@@ -195,16 +196,6 @@
   <target name="zip" depends="setup, zip.inc" />
 
   <!-- Build -->
-  <target name="toolsrc.build" description="Peforms a full rebuild (clean then build)">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Rebuild" />
-      <arg file="${dir.src.toolsrc}\Toolsrc.sln" />
-    </exec>
-  </target>
-
   <target name="chm.build" description="Peforms a full rebuild (clean then build)">
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
@@ -274,16 +265,6 @@
   </target>
 
   <!-- Clean -->
-  <target name="toolsrc.clean" description="Cleans the build">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Clean" />
-      <arg file="${dir.src.toolsrc}\Toolsrc.sln" />
-    </exec>
-  </target>
-
   <target name="chm.clean" description="Cleans the build">
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
@@ -351,16 +332,6 @@
   </target>
 
   <!-- Inc -->
-  <target name="toolsrc.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.src.toolsrc}\Toolsrc.sln" />
-    </exec>
-  </target>
-
   <target name="chm.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />

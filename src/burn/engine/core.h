@@ -63,6 +63,7 @@ typedef struct _BURN_ENGINE_STATE
     // engine data
     BOOTSTRAPPER_COMMAND command;
     BURN_VARIABLES variables;
+    BURN_CONDITION condition;
     BURN_SEARCHES searches;
     BURN_USER_EXPERIENCE userExperience;
     BURN_REGISTRATION registration;
@@ -87,6 +88,8 @@ typedef struct _BURN_ENGINE_STATE
 
     LPWSTR sczParentPipeName;
     LPWSTR sczParentToken;
+
+    BURN_RESUME_MODE resumeMode;
 } BURN_ENGINE_STATE;
 
 
@@ -127,6 +130,9 @@ HRESULT CoreApply(
 HRESULT CoreQuit(
     __in BURN_ENGINE_STATE* pEngineState,
     __in int nExitCode
+    );
+HRESULT CoreSaveEngineState(
+    __in BURN_ENGINE_STATE* pEngineState
     );
 
 #if defined(__cplusplus)

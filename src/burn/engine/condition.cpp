@@ -133,6 +133,10 @@ static HRESULT CompareVersionValues(
     __in DWORD64 qwRightOperand,
     __out BOOL* pfResult
     );
+static HRESULT DisplayError(
+    BOOTSTRAPPER_DISPLAY display,
+    HRESULT hrError
+    );
 
 
 // function definitions
@@ -171,6 +175,81 @@ LExit:
         Assert(FAILED(hr));
         LogErrorId(hr, MSG_FAILED_PARSE_CONDITION, wzCondition, NULL, NULL);
     }
+
+    return hr;
+}
+
+extern "C" HRESULT ConditionGlobalCheck(
+    __in BURN_VARIABLES* pVariables,
+    __in BURN_CONDITION* pCondition,
+    __in BOOTSTRAPPER_DISPLAY display,
+    __out DWORD *pdwExitCode,
+    __out BOOL *pfContinueExecution
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fSuccess = TRUE;
+    HRESULT hrError = HRESULT_FROM_WIN32(ERROR_OLD_WIN_VERSION);
+    OS_VERSION osv = OS_VERSION_UNKNOWN;
+    DWORD dwServicePack = 0;
+
+    OsGetVersion(&osv, &dwServicePack);
+
+    // Always error on Windows 2000 or lower
+    if (OS_VERSION_WIN2000 >= osv)
+    {
+        fSuccess = FALSE;
+    }
+    else
+    {
+        if (NULL != pCondition->sczConditionString)
+        {
+            hr = ConditionEvaluate(pVariables, pCondition->sczConditionString, &fSuccess);
+            ExitOnFailure1(hr, "Failed to evaluate condition: %ls", pCondition->sczConditionString);
+        }
+    }
+
+    if (!fSuccess)
+    {
+        // Display the error messagebox, as long as we're in an appropriate display mode
+        hr = DisplayError(display, hrError);
+        ExitOnFailure(hr, "Failed to display error dialog");
+
+        *pdwExitCode = static_cast<DWORD>(hrError);
+        *pfContinueExecution = FALSE;
+    }
+
+LExit:
+    return hr;
+}
+
+HRESULT ConditionGlobalParseFromXml(
+    __in BURN_CONDITION* pCondition,
+    __in IXMLDOMNode* pixnBundle
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNode* pixnNode = NULL;
+    BSTR bstrExpression = NULL;
+
+    // select variable nodes
+    hr = XmlSelectSingleNode(pixnBundle, L"Condition", &pixnNode);
+    if (S_FALSE == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to select condition node.");
+
+    // @Condition
+    hr = XmlGetText(pixnNode, &bstrExpression);
+    ExitOnFailure(hr, "Failed to get Condition inner text.");
+
+    hr = StrAllocString(&pCondition->sczConditionString, bstrExpression, 0);
+    ExitOnFailure(hr, "Failed to copy condition string from BSTR");
+
+LExit:
+    ReleaseBSTR(bstrExpression);
+    ReleaseObject(pixnNode);
 
     return hr;
 }
@@ -824,5 +903,32 @@ static HRESULT CompareVersionValues(
     }
 
 LExit:
+    return hr;
+}
+
+static HRESULT DisplayError(
+    BOOTSTRAPPER_DISPLAY display,
+    HRESULT hrError
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczDisplayString = NULL;
+
+    hr = StrAllocFromError(&sczDisplayString, hrError, NULL);
+    ExitOnFailure(hr, "Failed to allocate string to display error message");
+
+    Trace1(REPORT_STANDARD, "Error message displayed because: %ls", sczDisplayString);
+
+    if (BOOTSTRAPPER_DISPLAY_NONE == display || BOOTSTRAPPER_DISPLAY_PASSIVE == display || BOOTSTRAPPER_DISPLAY_EMBEDDED == display)
+    {
+        // Don't display the error dialog in these modes
+        ExitFunction1(hr = S_OK);
+    }
+
+    ::MessageBox(NULL, sczDisplayString, sczDisplayString, MB_OK | MB_ICONERROR);
+
+LExit:
+    ReleaseStr(sczDisplayString);
+
     return hr;
 }

@@ -3181,6 +3181,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 writer.WriteStartElement("BurnManifest", BurnCommon.BurnNamespace);
 
+                // Write the condition, if there is one
+                if (null != bundleInfo.Condition)
+                {
+                    writer.WriteElementString("Condition", bundleInfo.Condition);
+                }
+
                 // Write the log element if default logging wasn't disabled.
                 if (!String.IsNullOrEmpty(bundleInfo.LogPrefix))
                 {
@@ -3729,6 +3735,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 else if ((int)SummaryInformation.Transform.ValidationFlags == (int)row[0])
                 {
                     transformFlags = Convert.ToInt32(row[1], CultureInfo.InvariantCulture);
+                }
+                else if ((int)SummaryInformation.Transform.Reserved11 == (int)row[0])
+                {
+                    // PID_LASTPRINTED should be null for transforms
+                    row.Operation = RowOperation.None;
                 }
                 else
                 {
@@ -6104,6 +6115,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     this.SplashScreenBitmapPath = (string)row[15];
                 }
+
+                this.Condition = (string)row[16];
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
@@ -6117,6 +6130,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 private set {}
             }
             public Guid Id { get; private set; }
+            public string Condition { get; private set; }
             public string Copyright { get; private set; }
             public string IconPath { get; private set; }
             public string LogPathVariable { get; private set; }

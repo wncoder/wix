@@ -28,7 +28,7 @@
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] の使用許諾契約書をお読みください</String>
-    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">「使用許諾契約書」の条項に同意します(&amp;A)</String>
+    <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">使用許諾契約書に同意します(&amp;A)</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">すべてのユーザーを対象に既定のオプションで製品をインストールする場合は [\[]インストール[\]] をクリックしてください。インストール オプションを変更する場合は [\[]詳細設定[\]] をクリックしてください。</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">自分のみを対象に既定のオプションで製品をインストールする場合は [\[]インストール[\]] をクリックしてください。インストール オプションを変更する場合は [\[]詳細設定[\]] をクリックしてください。</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">インストール(&amp;I)</String>
@@ -134,7 +134,7 @@
     <String Id="InvalidDirDlgIconTooltip" Overridable="yes">情報アイコン</String>
 
     <String Id="LicenseAgreementDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
-    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">「使用許諾契約書」の条項に同意します(&amp;A)</String>
+    <String Id="LicenseAgreementDlgLicenseAcceptedCheckBox" Overridable="yes">使用許諾契約書に同意します(&amp;A)</String>
     <String Id="LicenseAgreementDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="LicenseAgreementDlgDescription" Overridable="yes">以下の使用許諾契約書をよくお読みください。</String>
     <String Id="LicenseAgreementDlgTitle" Overridable="yes">{\WixUI_Font_Title}使用許諾契約書</String>
@@ -147,7 +147,7 @@
     <String Id="MaintenanceTypeDlgRemoveButton" Overridable="yes">削除(&amp;R)</String>
     <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">インストール内容の削除</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">実行する操作を選択します。</String>
+    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">実行する操作を選択してください。</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}インストールの変更、修復、または削除</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">機能のインストール方法を変更できます。</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] の機能は個別に選択できません。</String>
@@ -167,18 +167,18 @@
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">更新する必要のある一部のファイルは現在使用中です。</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}使用中のファイル</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">アプリケーションを終了してから再起動する(&amp;C)</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">アプリケーションを終了しない (再起動が必要になります)(&amp;D)</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">アプリケーションを終了しない (再起動が必要)(&amp;D)</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">強調表示されたボリュームには、現在選択中の機能に利用できる十分な空き領域がありません。強調表示されたボリュームから一部のファイルを削除するか、インストールする機能を減らすか、別のインストール先ドライブを選択することができます。</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">強調表示されたボリュームには、現在選択中の機能に利用できる十分なディスク領域がありません。強調表示されたボリュームから一部のファイルを削除するか、インストールする機能を減らすか、別のインストール先ドライブを選択することができます。</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">インストールに必要なディスク領域がディスクの空き領域を超えています。</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}ディスク領域の不足</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">強調表示されたボリュームには、現在選択中の機能に利用できる十分な空き領域がありません。強調表示されたボリュームから一部のファイルを削除するか、インストールする機能を減らすか、別のインストール先ドライブを選択することができます。</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">強調表示されたボリュームには、現在選択中の機能に利用できる十分なディスク領域がありません。強調表示されたボリュームから一部のファイルを削除するか、インストールする機能を減らすか、別のインストール先ドライブを選択することができます。</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">インストールに必要なディスク領域がディスクの空き領域を超えています。</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}ディスク領域の不足</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="ResumeDlgInstall" Overridable="yes">インストール(&amp;I)</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">セットアップ ウィザードは、このコンピューターへの [ProductName] のインストールを完了します。セットアップを続行する場合は [\[]インストール[\]] を、終了する場合は [\[]キャンセル[\]] をクリックしてください。</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">セットアップ ウィザードは [ProductName] のインストールを完了します。セットアップを続行する場合は [\[]インストール[\]] を、終了する場合は [\[]キャンセル[\]] をクリックしてください。</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] セットアップ ウィザードの再開</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
@@ -262,7 +262,7 @@
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] セットアップ</String>
     <String Id="WelcomeEulaDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">「使用許諾契約書」の条項に同意します(&amp;A)</String>
+    <String Id="WelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">使用許諾契約書に同意します(&amp;A)</String>
     <String Id="WelcomeEulaDlgInstall" Overridable="yes">インストール(&amp;I)</String>
     <String Id="WelcomeEulaDlgUpdate" Overridable="yes">更新(&amp;U)</String>
     <String Id="WelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] の使用許諾契約書をお読みください</String>
@@ -570,7 +570,7 @@
     <String Id="UITextMenuNetwork" Overridable="yes">ネットワークから実行</String>
     <String Id="UITextNewFolder" Overridable="yes">Folder|新しいフォルダー</String>
     <String Id="UITextScriptInProgress" Overridable="yes">必要な情報を集めています...</String>
-    <String Id="UITextSelAbsentAbsent" Overridable="yes">この機能はインストールされません。</String>
+    <String Id="UITextSelAbsentAbsent" Overridable="yes">この機能はインストールされません</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">この機能は必要時にインストールされます</String>
     <String Id="UITextSelAbsentCD" Overridable="yes">この機能は CD から実行されます</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">この機能はローカル ハード ドライブにインストールされます</String>

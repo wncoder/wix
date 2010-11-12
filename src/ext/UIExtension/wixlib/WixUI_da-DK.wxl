@@ -84,12 +84,12 @@
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="ExitDialogDescription" Overridable="yes">Klik på knappen Udfør for at afslutte guiden Installation.</String>
-    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Guiden [ProductName] Installation blev fuldført</String>
+    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Guiden [ProductName] Installation er fuldført</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] Installation</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Installationsprogrammet til [ProductName] blev afbrudt før tid</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">Guiden [ProductName] Installation blev afbrudt før tid på grund af en fejl. Systemet er ikke blevet ændret. Hvis du vil installere programmet på et senere tidspunkt, skal du køre guiden Installation igen.</String>
+    <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Installationsprogrammet til [ProductName] blev afsluttet før tid</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">Guiden [ProductName] Installation blev afsluttet før tid på grund af en fejl. Systemet er ikke blevet ændret. Hvis du vil installere programmet på et senere tidspunkt, skal du køre guiden Installation igen.</String>
     <String Id="FatalErrorDescription2" Overridable="yes">Klik på knappen Udfør for at afslutte guiden Installation.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] Installation</String>
@@ -411,7 +411,7 @@
     <String Id="Error16" Overridable="yes">Resterende tid: {[1] minutter }{[2] sekunder}</String>
     <String Id="Error17" Overridable="yes">Der er ikke mere hukommelse. Luk andre programmer, før du prøver igen.</String>
     <String Id="Error18" Overridable="yes">Installationsprogrammet svarer ikke længere.</String>
-    <String Id="Error19" Overridable="yes">Installationsprogrammet stoppede for tidligt.</String>
+    <String Id="Error19" Overridable="yes">Installationsprogrammet stoppede for tid.</String>
     <String Id="Error20" Overridable="yes">Vent, mens Windows konfigurerer [ProductName]</String>
     <String Id="Error21" Overridable="yes">Indsamler nødvendige oplysninger...</String>
     <String Id="Error22" Overridable="yes">Fjerner ældre versioner af dette program...</String>
@@ -421,7 +421,7 @@
     <String Id="Error1101" Overridable="yes">Der opstod en fejl under læsning fra filen: [2]. {{ Systemfejl [3].}} Kontrollér, at filen findes, og at du har adgang til den.</String>
     <String Id="Error1301" Overridable="yes">Filen '[2]' kunne ikke oprettes. Der findes allerede en mappe med dette navn. Annuller installationsprogrammet, og forsøg at installere på en anden placering.</String>
     <String Id="Error1302" Overridable="yes">Indsæt disken: [2]</String>
-    <String Id="Error1303" Overridable="yes">Installationsprogrammet har ikke de relevante rettigheder til at få adgang til mappen: [2]. Installationen kan ikke fortsætte. Log på som administrator, eller kontakt systemadministratoren.</String>
+    <String Id="Error1303" Overridable="yes">Installationsprogrammet har ikke tilstrækkelige rettigheder til at få adgang til mappen: [2]. Installationen kan ikke fortsætte. Log på som administrator, eller kontakt systemadministratoren.</String>
     <String Id="Error1304" Overridable="yes">Der opstod en fejl under skrivning til filen: [2]. Kontrollér, at du har adgang til mappen.</String>
     <String Id="Error1305" Overridable="yes">Der opstod en fejl under læsning fra filen [2]. {{ Systemfejl [3].}} Kontrollér, at filen findes, og at du har adgang til den.</String>
     <String Id="Error1306" Overridable="yes">Der er et andet program, der har udelt adgang til filen '[2]'. Luk alle andre programmer, og klik derefter på Prøv igen.</String>
@@ -515,7 +515,7 @@
     <String Id="Error1803" Overridable="yes">Der er ingen disk i drev [2]. Indsæt en disk, og klik på Forsøg igen, eller klik på Annuller for at gå tilbage til den enhed, som blev brugt tidligere.</String>
     <String Id="Error1804" Overridable="yes">Der er ingen disk i drev [2]. Indsæt en disk, og klik på Forsøg igen, eller klik på Annuller for at gå tilbage til dialogboksen til søgning og vælge en anden diskenhed.</String>
     <String Id="Error1805" Overridable="yes">Mappen [2] findes ikke. Angiv en sti til en mappe, der findes.</String>
-    <String Id="Error1806" Overridable="yes">Du har ikke de nødvendige rettigheder til at læse denne mappe.</String>
+    <String Id="Error1806" Overridable="yes">Du har ikke tilstrækkelige rettigheder til at læse denne mappe.</String>
     <String Id="Error1807" Overridable="yes">Der blev ikke fundet en gyldig destinationsmappe til installationen.</String>
     <String Id="Error1901" Overridable="yes">Der opstod en fejl under forsøg på at læse fra kildeinstallationsdatabasen: [2].</String>
     <String Id="Error1902" Overridable="yes">Planlægger genstart: Omdøber filen [2] til [3]. Computeren skal genstartes, for at handlingen kan fuldføres.</String>
@@ -523,7 +523,7 @@
     <String Id="Error1904" Overridable="yes">Modulet [2] blev ikke registreret. HRESULT [3]. Kontakt supportafdelingen.</String>
     <String Id="Error1905" Overridable="yes">Annullering af registreringen af modulet [2] blev ikke fuldført. HRESULT [3]. Kontakt supportafdelingen.</String>
     <String Id="Error1906" Overridable="yes">Systemet kunne ikke cachelagre pakken [2]. Fejl: [3]. Kontakt supportafdelingen.</String>
-    <String Id="Error1907" Overridable="yes">Skrifttypen [2] blev ikke registreret. Kontrollér, at du har de relevante rettigheder til at installere skrifttyper, og at skrifttypen understøttes af systemet.</String>
+    <String Id="Error1907" Overridable="yes">Skrifttypen [2] blev ikke registreret. Kontrollér, at du har de nødvendige rettigheder til at installere skrifttyper, og at skrifttypen understøttes af systemet.</String>
     <String Id="Error1908" Overridable="yes">Registreringen af skrifttypen [2] kunne ikke fjernes. Kontrollér, at du har de nødvendige rettigheder til at fjerne skrifttyper.</String>
     <String Id="Error1909" Overridable="yes">Det var ikke muligt at oprette genvejen [2]. Kontrollér, at destinationsmappen findes, og at du har adgang til den.</String>
     <String Id="Error1910" Overridable="yes">Det var ikke muligt at fjerne genvejen [2]. Kontrollér, at genvejsfilen findes, og at du har adgang til den.</String>
@@ -536,13 +536,13 @@
     <String Id="Error1917" Overridable="yes">Der opstod en fejl under fjernelse af ODBC-driveren: [4], ODBC-fejl [2]: [3]. Kontrollér, at du har de nødvendige rettigheder til at fjerne ODBC-drivere.</String>
     <String Id="Error1918" Overridable="yes">Der opstod en fejl under installation af ODBC-driveren: [4], ODBC-fejl [2]: [3]. Kontrollér, at filen [4] findes, og at du kan få adgang til den.</String>
     <String Id="Error1919" Overridable="yes">Der opstod en fejl under konfiguration af ODBC-datakilden: [4], ODBC-fejl [2]: [3]. Kontrollér, at filen [4] findes, og at du kan få adgang til den.</String>
-    <String Id="Error1920" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke starte. Kontrollér, at du har de relevante rettigheder til at starte systemtjenester.</String>
-    <String Id="Error1921" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke stoppes. Kontrollér, at du har de relevante rettigheder til at standse systemtjenester.</String>
-    <String Id="Error1922" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke slettes. Kontrollér, at du har de relevante rettigheder til at fjerne systemtjenester.</String>
-    <String Id="Error1923" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke installeres. Kontrollér, at du har de relevante rettigheder til at installere systemtjenester.</String>
-    <String Id="Error1924" Overridable="yes">Miljøvariablen '[2]' blev ikke opdateret. Kontrollér, at du har de relevante rettigheder til at ændre miljøvariabler.</String>
-    <String Id="Error1925" Overridable="yes">Du har ikke de relevante rettigheder til at fuldføre installationen for alle brugerne af computeren. Log på som administrator, og prøv derefter at installere igen.</String>
-    <String Id="Error1926" Overridable="yes">Filsikkerheden for filen '[3]' kunne ikke angives. Fejl: [2]. Kontrollér, at du har de relevante rettigheder til at ændre sikkerhedsindstillingerne for filen.</String>
+    <String Id="Error1920" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke starte. Kontrollér, at du har tilstrækkelige rettigheder til at starte systemtjenester.</String>
+    <String Id="Error1921" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke stoppes. Kontrollér, at du har tilstrækkelige rettigheder til at standse systemtjenester.</String>
+    <String Id="Error1922" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke slettes. Kontrollér, at du har tilstrækkelige rettigheder til at fjerne systemtjenester.</String>
+    <String Id="Error1923" Overridable="yes">Tjenesten '[2]' ([3]) kunne ikke installeres. Kontrollér, at du har tilstrækkelige rettigheder til at installere systemtjenester.</String>
+    <String Id="Error1924" Overridable="yes">Miljøvariablen '[2]' blev ikke opdateret. Kontrollér, at du har tilstrækkelige rettigheder til at ændre miljøvariabler.</String>
+    <String Id="Error1925" Overridable="yes">Du har ikke tilstrækkelige rettigheder til at fuldføre installationen for alle brugerne af computeren. Log på som administrator, og prøv derefter at installere igen.</String>
+    <String Id="Error1926" Overridable="yes">Filsikkerheden for filen '[3]' kunne ikke angives. Fejl: [2]. Kontrollér, at du har tilstrækkelige rettigheder til at ændre sikkerhedsindstillingerne for filen.</String>
     <String Id="Error1927" Overridable="yes">Component Services (COM+ 1.0) er ikke installeret på computeren. Component Services er påkrævet, for at installationen kan fuldføres. Component Services findes på Windows 2000.</String>
     <String Id="Error1928" Overridable="yes">Der opstod fejl under registrering af COM+-programmet. Kontakt supportafdelingen for at få flere oplysninger.</String>
     <String Id="Error1929" Overridable="yes">Der opstod fejl under annullering af registreringen af COM+-programmet. Kontakt supportafdelingen for at få flere oplysninger.</String>

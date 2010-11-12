@@ -129,7 +129,7 @@ namespace Bootstrapper
                 Assert::AreEqual(String::Concat("\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // end session
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -211,7 +211,7 @@ namespace Bootstrapper
                 Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was updated
@@ -231,7 +231,7 @@ namespace Bootstrapper
                 Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -313,7 +313,7 @@ namespace Bootstrapper
                 Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was updated
@@ -346,7 +346,7 @@ namespace Bootstrapper
                 Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -467,7 +467,7 @@ namespace Bootstrapper
                 Assert::AreNotEqual(nullptr, Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // end session
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // read resume type after session

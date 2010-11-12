@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="aclutil.cpp" company="Microsoft">
+// <copyright file="osutil.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Access Control List helper funtions.
+//    Operating system helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

@@ -71,7 +71,7 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε μερικά αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε μια διαφορετική μονάδα δίσκου προορισμού.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση των επιλεγμένων δυνατοτήτων.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Απαιτήσεις χώρου στο δίσκο</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Ο Οδηγός εγκατάστασης του [ProductName] ολοκληρώθηκε</String>
 
     <String Id="FatalError_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Ο Οδηγός εγκατάστασης του [ProductName] τερματίστηκε πρόωρα</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Ο Οδηγός εγκατάστασης του [ProductName] τερματίστηκε πρόωρα λόγω σφάλματος. Το σύστημά σας δεν τροποποιήθηκε. Για να εγκαταστήσετε αυτό το πρόγραμμα αργότερα, εκτελέστε ξανά τον Οδηγό εγκατάστασης.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Δυνατότητες προϊόντος</String>
@@ -158,7 +158,7 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης σας επιτρέπει να αλλάξετε τον τρόπο εγκατάστασης των δυνατοτήτων του [ProductName] στον υπολογιστή σας ή την κατάργησή του από τον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο" για να συνεχίσετε ή στο κουμπί "Άκυρο" για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης σάς επιτρέπει να αλλάξετε τον τρόπο εγκατάστασης των δυνατοτήτων του [ProductName] στον υπολογιστή σας ή την κατάργησή του από τον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Καλώς ορίσατε στον Οδηγό εγκατάστασης του [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -171,14 +171,14 @@
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε μερικά αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε μια διαφορετική μονάδα δίσκου προορισμού.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση υπερβαίνει τον διαθέσιμο χώρο στο δίσκο.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ο χώρος στο δίσκο εξαντλήθηκε</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε ορισμένα αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε διαφορετικές μονάδες δίσκου προορισμού.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Οι τόμοι που επισημαίνονται δεν έχουν αρκετό διαθέσιμο χώρο στο δίσκο για τις επιλεγμένες δυνατότητες. Μπορείτε να καταργήσετε μερικά αρχεία από τους τόμους που επισημαίνονται, να εγκαταστήσετε λιγότερες δυνατότητες ή να επιλέξετε μια διαφορετική μονάδα δίσκου προορισμού.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Ο χώρος στο δίσκο που απαιτείται για την εγκατάσταση υπερβαίνει τον διαθέσιμο χώρο στο δίσκο.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ο χώρος στο δίσκο εξαντλήθηκε</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Εγκατάσταση</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα ολοκληρώσει την εγκατάσταση του [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Εγκατάσταση", για να συνεχίσετε ή στο κουμπί " Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα ολοκληρώσει την εγκατάσταση του [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Εγκατάσταση", για να συνεχίσετε ή στο κουμπί " Άκυρο", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Συνέχιση του Οδηγού εγκατάστασης του [ProductName]</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
@@ -228,7 +228,7 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Ο Οδηγός εγκατάστασης του [ProductName] διακόπηκε</String>
     <String Id="UserExitDescription1" Overridable="yes">Η εγκατάσταση του [ProductName] διακόπηκε. Το σύστημά σας δεν τροποποιήθηκε. Για να εγκαταστήσετε αυτό το πρόγραμμα αργότερα, εκτελέστε ξανά το πρόγραμμα εγκατάστασης.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Κάντε κλικ στο κουμπί "Τέλος", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -236,10 +236,10 @@
     <String Id="VerifyReadyDlgInstallText" Overridable="yes">Κάντε κλικ στο κουμπί "Εγκατάσταση", για να ξεκινήσει η εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Έτοιμο για εγκατάσταση του [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Αλλαγή</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Κάντε κλικ στο κουμπί "Αλλαγή", για να ξεκινήσετε την εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Κάντε κλικ στο κουμπί "Αλλαγή", για να ξεκινήσει η εγκατάσταση. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Έτοιμο για αλλαγή του [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Επι&amp;διόρθωση</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Κάντε κλικ στο κουμπί "Επιδιόρθωση" για να επιδιορθώσετε την εγκατάσταση του [ProductName]. Κάντε κλικ στο κουμπί "Πίσω" για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο" για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Κάντε κλικ στο κουμπί "Επιδιόρθωση" για να επιδιορθώσετε την εγκατάσταση του [ProductName]. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Έτοιμο για επιδιόρθωση του [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Κατάργηση</String>
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Κάντε κλικ στο κουμπί "Κατάργηση", για να καταργήσετε το [ProductName] από τον υπολογιστή σας. Κάντε κλικ στο κουμπί "Πίσω", για να ελέγξετε ή να αλλάξετε τις ρυθμίσεις της εγκατάστασης. Κάντε κλικ στο κουμπί "Άκυρο", για να πραγματοποιήσετε έξοδο από τον οδηγό.</String>
@@ -256,8 +256,8 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα εγκαταστήσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να τερματίσετε τον Οδηγό εγκατάστασης.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Ο Οδηγός εγκατάστασης θα ενημερώσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να κλείσετε τον Οδηγό εγκατάστασης.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Ο Οδηγός εγκατάστασης θα εγκαταστήσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Ο Οδηγός εγκατάστασης θα ενημερώσει το [ProductName] στον υπολογιστή σας. Κάντε κλικ στο κουμπί "Επόμενο", για να συνεχίσετε ή στο κουμπί "Άκυρο", για να εξέλθετε από τον Οδηγό εγκατάστασης.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Καλώς ορίσατε στον Οδηγό εγκατάστασης του [ProductName]</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">Πρόγραμμα εγκατάστασης του [ProductName]</String>

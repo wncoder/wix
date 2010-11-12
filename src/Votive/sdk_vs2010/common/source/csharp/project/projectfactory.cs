@@ -171,7 +171,7 @@ namespace Microsoft.VisualStudio.Package
 		{
 			// Load the project so we can extract the list of GUIDs
 
-			this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, file, this.buildProject);
+			this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, file, this.buildProject, this.Site);
 
 			// Retrieve the list of GUIDs, if it is not specify, make it our GUID
 			string guids = buildProject.GetPropertyValue(ProjectFileConstants.ProjectTypeGuids);

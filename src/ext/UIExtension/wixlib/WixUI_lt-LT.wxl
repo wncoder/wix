@@ -242,7 +242,7 @@
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">Norėdami taisyti [ProductName] įdiegtį, spustelėkite mygtuką Taisyti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą, spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Parengta taisyti [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Šalinti</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Norėdami pašalinti [ProductName] iš savo kompiuterio, spustelėkite mygtuką Šalinti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Norėdami pašalinti [ProductName] iš savo kompiuterio, spustelėkite mygtuką Pašalinti. Norėdami peržiūrėti ar pakeisti bet kurį diegimo parametrą spustelėkite mygtuką Atgal. Norėdami išeiti iš vedlio spustelėkite mygtuką Atšaukti.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Parengta pašalinti [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Naujinti</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Spustelėkite Naujinti, norėdami atnaujinti [ProductName] iš savo kompiuterio. Spustelėkite Atgal, norėdami peržiūrėti arba pakeisti kuriuos nors diegimo parametrus. Spustelėkite Atšaukti, norėdami uždaryti vedlį.</String>
@@ -475,7 +475,7 @@
     <String Id="Error1604" Overridable="yes">[2] produktas jau įdiegtas ir neleidžia diegti šio produkto. Šie du produktai nesuderinami.</String>
     <String Id="Error1605" Overridable="yes">Nepakanka disko tomo [2] vietos toliau diegti su atkūrimo galimybe. Reikia [3] KB, o yra tik [4] KB laisvos vietos. Spustelėkite Nepaisyti ir diekite toliau, neįrašydami atkūrimo informacijos, spustelėkite Kartoti ir dar kartą patikrinkite, kiek yra laisvos vietos, arba spustelėkite Atšaukti ir nutraukite diegimą.</String>
     <String Id="Error1606" Overridable="yes">Nepavyko pasiekti tinklo vietos [2].</String>
-    <String Id="Error1607" Overridable="yes">Kad galėtumėte tęsti diegimą, uždarykite šias taikomąsias programas:</String>
+    <String Id="Error1607" Overridable="yes">Prieš tęsiant diegimą reikia uždaryti šias taikomąsias programas:</String>
     <String Id="Error1608" Overridable="yes">Nepavyko rasti jokių anksčiau kompiuteryje įdiegtų reikalavimus atitinkančių produktų, kad būtų galima diegti šį produktą.</String>
     <String Id="Error1609" Overridable="yes">Klaida pritaikant saugos parametrus. [2] nėra tinkamas vartotojas ar grupė. Tai gali būti paketo problema arba ryšio klaida, kreipiantis į tinklo domeno valdiklį. Patikrinkite tinklo ryšį ir spustelėkite Kartoti arba spustelėkite Atšaukti ir nutraukite diegimą. {{Nepavyko rasti vartotojo SID, sistemos klaida [3]}}</String>
     <String Id="Error1701" Overridable="yes">Raktas [2] negalioja. Patikrinkite, ar įvedėte teisingą raktą.</String>

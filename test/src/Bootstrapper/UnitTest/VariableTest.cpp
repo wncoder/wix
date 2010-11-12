@@ -46,6 +46,9 @@ namespace Bootstrapper
             BURN_VARIABLES variables = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // set variables
                 VariableSetStringHelper(&variables, L"PROP1", L"VAL1");
                 VariableSetNumericHelper(&variables, L"PROP2", 2);
@@ -99,6 +102,9 @@ namespace Bootstrapper
                     L"    <Variable Id='Var3' Type='version' Value='1.2.3.4' />"
                     L"</Bundle>";
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
@@ -130,6 +136,9 @@ namespace Bootstrapper
             DWORD cch = 0;
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // set variables
                 VariableSetStringHelper(&variables, L"PROP1", L"VAL1");
                 VariableSetStringHelper(&variables, L"PROP2", L"VAL2");
@@ -185,6 +194,9 @@ namespace Bootstrapper
             BURN_VARIABLES variables = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // set variables
                 VariableSetStringHelper(&variables, L"PROP1", L"VAL1");
                 VariableSetStringHelper(&variables, L"PROP2", L"VAL2");
@@ -357,8 +369,8 @@ namespace Bootstrapper
             try
             {
                 // serialize
-                hr = VariableInitializeBuiltIn(&variables1);
-                TestThrowOnFailure(hr, L"Failed to initialize built-in variables.");
+                hr = VariableInitialize(&variables1);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 VariableSetStringHelper(&variables1, L"PROP1", L"VAL1");
                 VariableSetNumericHelper(&variables1, L"PROP2", 2);
@@ -369,8 +381,8 @@ namespace Bootstrapper
                 TestThrowOnFailure(hr, L"Failed to serialize variables.");
 
                 // deserialize
-                hr = VariableInitializeBuiltIn(&variables2);
-                TestThrowOnFailure(hr, L"Failed to initialize built-in variables.");
+                hr = VariableInitialize(&variables2);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 hr = VariableDeserialize(&variables2, pbBuffer, cbBuffer, &iBuffer);
                 TestThrowOnFailure(hr, L"Failed to deserialize variables.");
@@ -395,8 +407,8 @@ namespace Bootstrapper
             BURN_VARIABLES variables = { };
             try
             {
-                hr = VariableInitializeBuiltIn(&variables);
-                TestThrowOnFailure(hr, L"Failed to initialize built-in variables.");
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 // VersionMsi
                 Assert::IsTrue(EvaluateConditionHelper(&variables, L"VersionMsi >= v1.1"));

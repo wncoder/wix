@@ -943,8 +943,8 @@ static HRESULT ParseRelatedMsiFromXml(
         hr = FileVersionFromStringEx(scz, 0, &pRelatedMsi->qwMaxVersion);
         ExitOnFailure1(hr, "Failed to parse @MaxVersion: %ls", scz);
 
-        // flag that we have a min version
-        pRelatedMsi->fMinProvided = TRUE;
+        // flag that we have a max version
+        pRelatedMsi->fMaxProvided = TRUE;
 
         // @MaxInclusive
         hr = XmlGetYesNoAttribute(pixnRelatedMsi, L"MaxInclusive", &pRelatedMsi->fMaxInclusive);

@@ -105,46 +105,28 @@ HRESULT ScaAppPoolRead(
     // loop through all the AppPools
     while (S_OK == (hr = WcaFetchWrappedRecord(hAppPoolQuery, &hRec)))
     {
-        BOOL fHasComponent = FALSE;
-
-        // Get the Component first.  If there is a Component and it is not being modified during
-        // this transaction, skip processing this whole record.
-        hr = WcaGetRecordString(hRec, apqComponent, &pwzData);
-        ExitOnFailure(hr, "failed to get AppPool.Component");
-
-        if (pwzData && *pwzData)
-        {
-            fHasComponent = TRUE;
-
-            hr = WcaGetRecordInteger(hRec, apqInstalled, (int *)&isInstalled);
-            ExitOnFailure(hr, "Failed to get Component installed state for app pool");
-
-            hr = WcaGetRecordInteger(hRec, apqAction, (int *)&isAction);
-            ExitOnFailure(hr, "Failed to get Component action state for app pool");
-
-            if (!WcaIsInstalling(isInstalled, isAction) &&
-                !WcaIsReInstalling(isInstalled, isAction) &&
-                !WcaIsUninstalling(isInstalled, isAction))
-            {
-                continue; // skip this record.
-            }
-        }
-
         // Add this record's information into the list of things to process.
         hr = AddAppPoolToList(ppsapList);
         ExitOnFailure(hr, "failed to add app pool to app pool list");
 
         psap = *ppsapList;
 
-        psap->fHasComponent = fHasComponent;
-        if (psap->fHasComponent)
+        hr = WcaGetRecordString(hRec, apqComponent, &pwzData);
+        ExitOnFailure(hr, "failed to get AppPool.Component");
+
+        if (pwzData && *pwzData)
         {
+            psap->fHasComponent = TRUE;
+
             hr = ::StringCchCopyW(psap->wzComponent, countof(psap->wzComponent), pwzData);
             ExitOnFailure1(hr, "failed to copy component name: %ls", pwzData);
 
-            psap->isInstalled = isInstalled;
-            psap->isAction = isAction;
-            
+            hr = WcaGetRecordInteger(hRec, apqInstalled, (int *)&psap->isInstalled);
+            ExitOnFailure(hr, "Failed to get Component installed state for app pool");
+
+            hr = WcaGetRecordInteger(hRec, apqAction, (int *)&psap->isAction);
+            ExitOnFailure(hr, "Failed to get Component action state for app pool");
+
             WcaFetchWrappedReset(hComponentQuery);
             hr = WcaFetchWrappedRecordWhereString(hComponentQuery, caqComponent, psap->wzComponent, &hRecComp);
             ExitOnFailure1(hr, "Failed to fetch Component.Attributes for Component '%ls'", psap->wzComponent);

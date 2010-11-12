@@ -131,12 +131,16 @@ public: // IBootstrapperEngine
                     hr = ::StringCchCopyExW(wzValue, *pcchValue, sczValue, NULL, &cchRemaining, STRSAFE_FILL_BEHIND_NULL);
                     if (STRSAFE_E_INSUFFICIENT_BUFFER == hr)
                     {
+                        hr = E_MOREDATA;
+
                         ::StringCchLengthW(sczValue, STRSAFE_MAX_CCH, &cchRemaining);
                         *pcchValue = cchRemaining;
                     }
                 }
                 else
                 {
+                    hr = E_MOREDATA;
+
                     ::StringCchLengthW(sczValue, STRSAFE_MAX_CCH, &cchRemaining);
                     *pcchValue = cchRemaining;
                 }
@@ -522,10 +526,6 @@ public: // IBootstrapperEngine
     {
         HRESULT hr = S_OK;
 
-        ::EnterCriticalSection(&m_pEngineState->csActive);
-        hr = UserExperienceEnsureEngineInactive(&m_pEngineState->userExperience);
-        ExitOnFailure(hr, "Engine is active, cannot change engine state.");
-
         if (wzVariable && *wzVariable)
         {
             hr = VariableSetNumeric(&m_pEngineState->variables, wzVariable, llValue);
@@ -538,7 +538,6 @@ public: // IBootstrapperEngine
         }
 
     LExit:
-        ::LeaveCriticalSection(&m_pEngineState->csActive);
         return hr;
     }
 
@@ -548,10 +547,6 @@ public: // IBootstrapperEngine
         )
     {
         HRESULT hr = S_OK;
-
-        ::EnterCriticalSection(&m_pEngineState->csActive);
-        hr = UserExperienceEnsureEngineInactive(&m_pEngineState->userExperience);
-        ExitOnFailure(hr, "Engine is active, cannot change engine state.");
 
         if (wzVariable && *wzVariable)
         {
@@ -573,7 +568,6 @@ public: // IBootstrapperEngine
         }
 
     LExit:
-        ::LeaveCriticalSection(&m_pEngineState->csActive);
         return hr;
     }
 
@@ -583,10 +577,6 @@ public: // IBootstrapperEngine
         )
     {
         HRESULT hr = S_OK;
-
-        ::EnterCriticalSection(&m_pEngineState->csActive);
-        hr = UserExperienceEnsureEngineInactive(&m_pEngineState->userExperience);
-        ExitOnFailure(hr, "Engine is active, cannot change engine state.");
 
         if (wzVariable && *wzVariable)
         {
@@ -600,7 +590,6 @@ public: // IBootstrapperEngine
         }
 
     LExit:
-        ::LeaveCriticalSection(&m_pEngineState->csActive);
         return hr;
     }
 

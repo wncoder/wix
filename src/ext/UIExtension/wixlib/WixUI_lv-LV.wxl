@@ -152,18 +152,18 @@
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Ļauj mainīt līdzekļu instalēšanas veidu.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">Produktam [ProductName] nav neatkarīgi atlasāmu līdzekļu.</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Noņem produktu [ProductName] no datora.</String>
-    <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">Nevar noņemt produktu [ProductName].</String>
+    <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">Nevar noņemt [ProductName].</String>
     <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Jaunākajā instalācijā labo kļūdas, labojot trūkstošos un bojātos failus, saīsnes un reģistra ierakstus.</String>
-    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">Nevar labot produktu [ProductName].</String>
+    <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">Nevar labot [ProductName].</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Izmantojot Uzstādīšanas vedni, varat mainīt veidu, kā [ProductName] līdzekļi tiek instalēti datorā, vai noņemt to no datora. Lai turpinātu, noklikšķiniet uz Tālāk, vai uz Atcelt, lai izietu no Uzstādīšanas vedņa.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Izmantojot uzstādīšanas vedni, varat mainīt veidu, kā [ProductName] līdzekļi tiek instalēti datorā, vai noņemt to no datora. Noklikšķiniet uz Tālāk, lai turpinātu, vai uz Atcelt, lai izietu no uzstādīšanas vedņa.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Esiet sveicināts [ProductName] uzstādīšanas vednī!</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Tālāk norādītās lietojumprogrammas izmanto failus, kas ir jāatjaunina uzstādīšanas laikā. Varat ļaut Uzstādīšanas vednim tās aizvērt un mēģināt restartēt, vai vēlāk atkārtoti sāknēt ierīci.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Tālāk norādītās lietojumprogrammas izmanto failus, kas ir jāatjaunina uzstādīšanas laikā. Varat ļaut uzstādīšanas vednim tās aizvērt un mēģināt restartēt vai vēlāk atkārtoti sāknēt ierīci.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Daži no failiem, kas jāatjaunina, pašlaik tiek lietoti.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Faili, kas tiek lietoti</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Aizveriet lietojumprogrammas un mēģiniet tās restartēt.</String>
@@ -191,23 +191,23 @@
 
     <String Id="ProgressDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="ProgressDlgTextInstalling" Overridable="yes">Lūdzu, uzgaidiet, kamēr Uzstādīšanas vednis instalē produktu [ProductName].</String>
+    <String Id="ProgressDlgTextInstalling" Overridable="yes">Lūdzu, uzgaidiet, kamēr uzstādīšanas vednis instalē [ProductName].</String>
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Notiek [ProductName] instalēšana</String>
-    <String Id="ProgressDlgTextChanging" Overridable="yes">Lūdzu, uzgaidiet, kamēr Uzstādīšanas vednis maina produktu [ProductName].</String>
+    <String Id="ProgressDlgTextChanging" Overridable="yes">Lūdzu, uzgaidiet, kamēr uzstādīšanas vednis maina [ProductName].</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Notiek [ProductName] maiņa</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Lūdzu, uzgaidiet, kamēr Uzstādīšanas vednis labo produktu [ProductName].</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Lūdzu, uzgaidiet, kamēr uzstādīšanas vednis labo [ProductName].</String>
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Notiek [ProductName] labošana</String>
-    <String Id="ProgressDlgTextRemoving" Overridable="yes">Lūdzu, uzgaidiet, kamēr Uzstādīšanas vednis noņem produktu [ProductName].</String>
+    <String Id="ProgressDlgTextRemoving" Overridable="yes">Lūdzu, uzgaidiet, kamēr uzstādīšanas vednis noņem [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Notiek [ProductName] noņemšana</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">Lūdzu, uzgaidiet, kamēr Uzstādīšanas vednis atjaunina produktu [ProductName].</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Lūdzu, uzgaidiet, kamēr uzstādīšanas vednis atjaunina produktu [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Notiek [ProductName] atjaunināšana</String>
-    <String Id="ProgressDlgProgressBar" Overridable="yes">Norise pabeigta</String>
+    <String Id="ProgressDlgProgressBar" Overridable="yes">Norises progress</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Statuss:</String>
 
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Instalēt</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Uzstādīšanas vednis pabeigs [ProductName] instalēšanu datorā. Noklikšķiniet uz Instalēt, lai turpinātu, vai uz Atcelt, lai izietu no Uzstādīšanas vedņa.</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Izmantojot uzstādīšanas vedni, datorā tiks pabeigta [ProductName] instalēšana. Noklikšķiniet uz Instalēt, lai turpinātu, vai uz Atcelt, lai izietu no uzstādīšanas vedņa.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Notiek [ProductName] uzstādīšanas vedņa atsākšana</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
@@ -245,19 +245,19 @@
     <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Noklikšķiniet uz Noņemt, lai noņemtu produktu [ProductName] no datora. Noklikšķiniet uz Atpakaļ, lai pārskatītu vai mainītu jebkuru instalēšanas iestatījumu. Noklikšķiniet uz Atcelt, lai izietu no vedņa.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Gatavs [ProductName] noņemšanai</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">Atja&amp;unināt</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Noklikšķiniet uz Atjaunināt, lai atjauninātu produktu [ProductName] no sava datora. Noklikšķiniet uz Atpakaļ, lai pārskatītu vai mainītu jebkuru instalēšanas iestatījumu. Noklikšķiniet uz Atcelt, lai izietu no vedņa.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Noklikšķiniet uz Atjaunināt, lai atjauninātu [ProductName] no datora. Noklikšķiniet uz Atpakaļ, lai pārskatītu vai mainītu jebkuru instalēšanas iestatījumu. Noklikšķiniet uz Atcelt, lai izietu no vedņa.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Gatavs [ProductName] atjaunināšanai</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;Atgriezt</String>
-    <String Id="WaitForCostingDlgText" Overridable="yes">Lūdzu, gaidiet, kamēr instalēšanas programma pabeidz noteikt nepieciešamo vietu diskā.</String>
+    <String Id="WaitForCostingDlgText" Overridable="yes">Lūdzu, uzgaidiet, kamēr instalēšanas programma pabeidz noteikt nepieciešamo vietu diskā.</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">Izsaukuma zīmes ikona</String>
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Uzstādīšanas vednis instalēs produktu [ProductName] datorā. Noklikšķiniet uz Tālāk, lai turpinātu, vai uz Atcelt, lai izietu no Uzstādīšanas vedņa.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Uzstādīšanas vednis atjauninās produktu [ProductName] datorā. Noklikšķiniet uz Tālāk, lai turpinātu, vai uz Atcelt, lai izietu no Uzstādīšanas vedņa.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Izmantojot uzstādīšanas vedni, datorā tiks instalēts [ProductName]. Noklikšķiniet uz Tālāk, lai turpinātu, vai uz Atcelt, lai izietu no uzstādīšanas vedņa.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Izmantojot uzstādīšanas vedni, datorā tiks atjaunināts [ProductName]. Noklikšķiniet uz Tālāk, lai turpinātu, vai uz Atcelt, lai izietu no uzstādīšanas vedņa.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Esiet sveicināts [ProductName] uzstādīšanas vednī!</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] uzstādīšana</String>
@@ -560,7 +560,7 @@
     <String Id="UITextGB" Overridable="yes">GB</String>
     <String Id="UITextKB" Overridable="yes">KB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
-    <String Id="UITextMenuAbsent" Overridable="yes">Viss līdzeklis būs nepieejams</String>
+    <String Id="UITextMenuAbsent" Overridable="yes">Viss līdzeklis nebūs pieejams</String>
     <String Id="UITextMenuAdvertise" Overridable="yes">Šis līdzeklis tiks instalēts nepieciešamības gadījumā</String>
     <String Id="UITextMenuAllCD" Overridable="yes">Tiks instalēts viss līdzeklis, un to varēs palaist no kompaktdiska</String>
     <String Id="UITextMenuAllLocal" Overridable="yes">Viss līdzeklis tiks instalēts lokālajā cietajā diskā</String>
@@ -583,7 +583,7 @@
     <String Id="UITextSelCDAbsent" Overridable="yes">Šis līdzeklis tiks pilnībā atinstalēts, un to nevarēs palaist no kompaktdiska</String>
     <String Id="UITextSelCDAdvertise" Overridable="yes">Šī līdzekļa iestatījums tiks mainīts no iespējas palaist no kompaktdiska uz iespēju instalēt nepieciešamības gadījumā</String>
     <String Id="UITextSelCDCD" Overridable="yes">Šo līdzekli joprojām varēs palaist no kompaktdiska</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Šī līdzekļa iestatījums tiks mainīts no iespējas palaist no kompaktdiska uz instalēšanu lokālajā cietajā diskā</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Šī līdzekļa iestatījums tiks mainīts no iespējas palaist no kompaktdiska uz iespēju instalēt lokālajā cietajā diskā</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Šis līdzeklis cietajā diskā atbrīvo [1].</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Šim līdzeklim cietajā diskā nepieciešams: [1].</String>
     <String Id="UITextSelCostPending" Overridable="yes">Notiek šī līdzekļa maksas aprēķināšana...</String>

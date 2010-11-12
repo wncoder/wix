@@ -54,6 +54,9 @@ namespace Bootstrapper
                     "    <RegistrySearch Id='Search1' Type='exists' Root='HKLM' Key='SOFTWARE\\Microsoft' Variable='Variable1' Condition='0' />"
                     "</Bundle>";
 
+                hr = VariableInitialize(&engineState.variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // load manifest from XML
                 hr = ManifestLoadXmlFromBuffer((BYTE*)szDocument, lstrlenA(szDocument), &engineState);
                 TestThrowOnFailure(hr, L"Failed to parse searches from XML.");

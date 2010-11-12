@@ -40,6 +40,7 @@ enum OS_INFO_VARIABLE
     OS_INFO_VARIABLE_NONE,
     OS_INFO_VARIABLE_VersionNT,
     OS_INFO_VARIABLE_VersionNT64,
+    OS_INFO_VARIABLE_ServicePackLevel,
     OS_INFO_VARIABLE_NTProductType,
     OS_INFO_VARIABLE_NTSuiteBackOffice,
     OS_INFO_VARIABLE_NTSuiteDataCenter,
@@ -113,11 +114,13 @@ static HRESULT InitializeVariablePrivileged(
 
 // function definitions
 
-extern "C" HRESULT VariableInitializeBuiltIn(
+extern "C" HRESULT VariableInitialize(
     __in BURN_VARIABLES* pVariables
     )
 {
     HRESULT hr = S_OK;
+
+    ::InitializeCriticalSection(&pVariables->csAccess);
 
     const BUILT_IN_VARIABLE_DECLARATION vrgBuiltInVariables[] = {
         {L"AdminToolsFolder", InitializeVariableCsidlFolder, CSIDL_ADMINTOOLS},
@@ -145,6 +148,7 @@ extern "C" HRESULT VariableInitializeBuiltIn(
         {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},
+        {L"ServicePackLevel", InitializeVariableOsInfo, OS_INFO_VARIABLE_ServicePackLevel},
         {L"StartMenuFolder", InitializeVariableCsidlFolder, CSIDL_STARTMENU},
         {L"StartupFolder", InitializeVariableCsidlFolder, CSIDL_STARTUP},
         {L"SystemFolder", InitializeVariableCsidlFolder, CSIDL_SYSTEMX86},
@@ -251,6 +255,7 @@ LExit:
     ReleaseStr(scz);
     ReleaseStr(sczId);
     BVariantUninitialize(&value);
+
     return hr;
 }
 
@@ -258,6 +263,8 @@ extern "C" void VariablesUninitialize(
     __in BURN_VARIABLES* pVariables
     )
 {
+    ::DeleteCriticalSection(&pVariables->csAccess);
+
     if (pVariables->rgVariables)
     {
         for (DWORD i = 0; i < pVariables->cVariables; ++i)
@@ -282,6 +289,8 @@ extern "C" HRESULT VariableGetNumeric(
     HRESULT hr = S_OK;
     BURN_VARIABLE* pVariable = NULL;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     hr = GetVariable(pVariables, wzVariable, &pVariable);
     ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
 
@@ -289,6 +298,8 @@ extern "C" HRESULT VariableGetNumeric(
     ExitOnFailure1(hr, "Failed to get value as numeric for variable: %S", wzVariable);
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -301,6 +312,8 @@ extern "C" HRESULT VariableGetString(
     HRESULT hr = S_OK;
     BURN_VARIABLE* pVariable = NULL;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     hr = GetVariable(pVariables, wzVariable, &pVariable);
     ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
 
@@ -308,6 +321,8 @@ extern "C" HRESULT VariableGetString(
     ExitOnFailure1(hr, "Failed to get value as string for variable: %S", wzVariable);
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -320,6 +335,8 @@ extern "C" HRESULT VariableGetVersion(
     HRESULT hr = S_OK;
     BURN_VARIABLE* pVariable = NULL;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     hr = GetVariable(pVariables, wzVariable, &pVariable);
     ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
 
@@ -327,6 +344,8 @@ extern "C" HRESULT VariableGetVersion(
     ExitOnFailure1(hr, "Failed to get value as version for variable: %S", wzVariable);
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -339,6 +358,8 @@ extern "C" HRESULT VariableGetVariant(
     HRESULT hr = S_OK;
     BURN_VARIABLE* pVariable = NULL;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     hr = GetVariable(pVariables, wzVariable, &pVariable);
     ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
 
@@ -346,6 +367,8 @@ extern "C" HRESULT VariableGetVariant(
     ExitOnFailure1(hr, "Failed to copy value of variable: %S", wzVariable);
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -357,6 +380,8 @@ extern "C" HRESULT VariableGetFormatted(
 {
     HRESULT hr = S_OK;
     BURN_VARIABLE* pVariable = NULL;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
     ExitOnFailure1(hr, "Failed to get variable: %S", wzVariable);
@@ -375,6 +400,8 @@ extern "C" HRESULT VariableGetFormatted(
     }
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -435,6 +462,8 @@ extern "C" HRESULT VariableSetVariant(
     HRESULT hr = S_OK;
     DWORD iVariable = 0;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     hr = FindVariableIndexByName(pVariables, wzVariable, &iVariable);
     ExitOnFailure1(hr, "Failed to find variable value '%S'.", wzVariable);
 
@@ -455,6 +484,8 @@ extern "C" HRESULT VariableSetVariant(
     ExitOnFailure1(hr, "Failed to set value of variable: %S", wzVariable);
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     if (FAILED(hr))
     {
         LogStringLine(REPORT_STANDARD, "Setting variable failed: ID '%ls', HRESULT 0x%x", wzVariable, hr);
@@ -482,6 +513,8 @@ extern "C" HRESULT VariableFormatString(
     DWORD cVariables = 0;
     DWORD cch = 0;
     MSIHANDLE hRecord = NULL;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
 
     // allocate buffer for format string
     hr = StrAlloc(&sczFormat, lstrlenW(wzIn) + 1);
@@ -623,6 +656,8 @@ extern "C" HRESULT VariableFormatString(
     }
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     if (rgVariables)
     {
         for (DWORD i = 0; i < cVariables; ++i)
@@ -707,6 +742,8 @@ extern "C" HRESULT VariableSerialize(
 {
     HRESULT hr = S_OK;
 
+    ::EnterCriticalSection(&pVariables->csAccess);
+
     // write variable count
     hr = BuffWriteNumber(ppbBuffer, piBuffer, pVariables->cVariables);
     ExitOnFailure(hr, "Failed to write variable count.");
@@ -751,6 +788,8 @@ extern "C" HRESULT VariableSerialize(
     }
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     return hr;
 }
 
@@ -766,6 +805,8 @@ extern "C" HRESULT VariableDeserialize(
     LPWSTR sczName = NULL;
     DWORD fBuiltIn = 0;
     BURN_VARIANT value = { };
+
+    ::EnterCriticalSection(&pVariables->csAccess);
 
     // read variable count
     hr = BuffReadNumber(pbBuffer, cbBuffer, piBuffer, &cVariables);
@@ -817,8 +858,11 @@ extern "C" HRESULT VariableDeserialize(
     }
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     ReleaseStr(sczName);
     BVariantUninitialize(&value);
+
     return hr;
 }
 
@@ -1006,6 +1050,13 @@ static HRESULT InitializeVariableOsInfo(
 
     switch ((OS_INFO_VARIABLE)dwpData)
     {
+    case OS_INFO_VARIABLE_ServicePackLevel:
+        if (0 != ovix.wServicePackMajor)
+        {
+            value.qwValue = static_cast<DWORD64>(ovix.wServicePackMajor);
+            value.Type = BURN_VARIANT_TYPE_NUMERIC;
+        }
+        break;
     case OS_INFO_VARIABLE_VersionNT:
         value.qwValue = MAKEQWORDVERSION(ovix.dwMajorVersion, ovix.dwMinorVersion, 0, 0);
         value.Type = BURN_VARIANT_TYPE_VERSION;

@@ -139,7 +139,8 @@ HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION action,
     __in BOOL fRollback,
-    __in BOOL fPerMachineProcess
+    __in BOOL fPerMachineProcess,
+    __out_opt BURN_RESUME_MODE* pResumeMode
     );
 HRESULT RegistrationSaveState(
     __in BURN_REGISTRATION* pRegistration,

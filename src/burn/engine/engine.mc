@@ -53,6 +53,13 @@ Language=English
 Condition '%1!ls!' evaluates to %2.
 .
 
+MessageId=53
+Severity=Error
+SymbolicName=MSG_FAILED_CONDITION_CHECK
+Language=English
+Bundle global condition check didn't succeed - aborting without loading application.
+.
+
 MessageId=100
 Severity=Success
 SymbolicName=MSG_DETECT_BEGIN

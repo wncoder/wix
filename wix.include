@@ -49,14 +49,15 @@
   <property name="dir.target.wix.ia64" value="${dir.target.project.ia64}" readonly="true" />
 
   <!-- Build directories for the toolsrc projects, which are all x86-specific -->
-  <property name="dir.build.doccompiler" value="${dir.build.wix.x86}\toolsrc\doccompiler" readonly="true" />
-  <property name="dir.build.generatewixinclude" value="${dir.build.wix.x86}\toolsrc\generatewixinclude" readonly="true" />
-  <property name="dir.build.msggen" value="${dir.build.wix.x86}\toolsrc\msggen" readonly="true" />
-  <property name="dir.build.votivepp" value="${dir.build.wix.x86}\toolsrc\votivepp" readonly="true" />
-  <property name="dir.build.residgen" value="${dir.build.wix.x86}\toolsrc\residgen" readonly="true" />
-  <property name="dir.build.wixcop" value="${dir.build.wix.x86}\toolsrc\wixcop" readonly="true" />
-  <property name="dir.build.xsdgen" value="${dir.build.wix.x86}\toolsrc\xsdgen" readonly="true" />
-  <property name="dir.build.xsdstitch" value="${dir.build.wix.x86}\toolsrc\xsdstitch" readonly="true" />
+  <property name="dir.build.toolsrc" value="${dir.build.wix.x86}\toolsrc" readonly="true" />
+  <property name="dir.build.doccompiler" value="${dir.build.toolsrc}\doccompiler" readonly="true" />
+  <property name="dir.build.generatewixinclude" value="${dir.build.toolsrc}\generatewixinclude" readonly="true" />
+  <property name="dir.build.msggen" value="${dir.build.toolsrc}\msggen" readonly="true" />
+  <property name="dir.build.votivepp" value="${dir.build.toolsrc}\votivepp" readonly="true" />
+  <property name="dir.build.residgen" value="${dir.build.toolsrc}\residgen" readonly="true" />
+  <property name="dir.build.wixcop" value="${dir.build.toolsrc}\wixcop" readonly="true" />
+  <property name="dir.build.xsdgen" value="${dir.build.toolsrc}\xsdgen" readonly="true" />
+  <property name="dir.build.xsdstitch" value="${dir.build.toolsrc}\xsdstitch" readonly="true" />
 
   <!-- Source directories for the toolsrc projects -->
   <property name="dir.src.toolsrc" value="${dir.wixroot}\toolsrc" readonly="true" />

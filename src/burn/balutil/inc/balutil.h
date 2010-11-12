@@ -1,6 +1,6 @@
 #pragma once
 //-------------------------------------------------------------------------------------------------
-// <copyright file="buxutil.h" company="Microsoft">
+// <copyright file="balutil.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -33,6 +33,36 @@ DAPI_(HRESULT) BalManifestLoad(
     __out IXMLDOMDocument** ppixdManifest
     );
 
+/*******************************************************************
+BalStringVariableExists - checks if a string variable exists in the engine.
+
+********************************************************************/
+DAPI_(BOOL) BalStringVariableExists(
+    __in IBootstrapperEngine* pEngine,
+    __in_z LPCWSTR wzVariable
+    );
+
+/*******************************************************************
+BalGetStringVariable - gets a string from a variable in the engine.
+
+ Note: Use StrFree() to release psczValue.
+********************************************************************/
+DAPI_(HRESULT) BalGetStringVariable(
+    __in IBootstrapperEngine* pEngine,
+    __in_z LPCWSTR wzVariable,
+    __inout LPWSTR* psczValue
+    );
+
+/*******************************************************************
+ BalLog - logs a message with the engine.
+
+********************************************************************/
+DAPIV_(HRESULT) BalLog(
+    __in IBootstrapperEngine* pEngine,
+    __in BOOTSTRAPPER_LOG_LEVEL level,
+    __in_z __format_string LPCSTR szFormat,
+    ...
+    );
 
 #ifdef __cplusplus
 }

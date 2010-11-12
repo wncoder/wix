@@ -537,11 +537,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Gets the requested state for the bundle.
+        /// Gets or sets the requested state for the bundle.
         /// </summary>
         public RequestState State
         {
             get { return this.state; }
+            set { this.state = value; }
         }
     }
 
@@ -962,7 +963,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     }
 
     /// <summary>
-    /// Additional arguments used when the engine complets the acquisition of a container or payload.
+    /// Additional arguments used when the engine completes the acquisition of a container or payload.
     /// </summary>
     [Serializable]
     public class CacheAcquireCompleteEventArgs : ResultStatusEventArgs
@@ -990,6 +991,77 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         /// <summary>
         /// Gets the identifier of the payload (if acquiring a payload).
+        /// </summary>
+        public string PayloadId
+        {
+            get { return this.payloadId; }
+        }
+    }
+
+    /// <summary>
+    /// Additional arguments used when the engine starts the verification of a payload.
+    /// </summary>
+    [Serializable]
+    public class CacheVerifyBeginEventArgs : ResultEventArgs
+    {
+        private string packageId;
+        private string payloadId;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="CacheVerifyBeginEventArgs"/> class.
+        /// </summary>
+        public CacheVerifyBeginEventArgs(string packageId, string payloadId)
+        {
+            this.packageId = packageId;
+            this.payloadId = payloadId;
+        }
+
+        /// <summary>
+        /// Gets the identifier of the package.
+        /// </summary>
+        public string PackagerId
+        {
+            get { return this.packageId; }
+        }
+
+        /// <summary>
+        /// Gets the identifier of the payload.
+        /// </summary>
+        public string PayloadId
+        {
+            get { return this.payloadId; }
+        }
+    }
+
+    /// <summary>
+    /// Additional arguments used when the engine completes the verification of a payload.
+    /// </summary>
+    [Serializable]
+    public class CacheVerifyCompleteEventArgs : ResultStatusEventArgs
+    {
+        private string packageId;
+        private string payloadId;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="CacheVerifyCompleteEventArgs"/> class.
+        /// </summary>
+        public CacheVerifyCompleteEventArgs(string packageId, string payloadId, int status)
+            : base(status)
+        {
+            this.packageId = packageId;
+            this.payloadId = payloadId;
+        }
+
+        /// <summary>
+        /// Gets the identifier of the package.
+        /// </summary>
+        public string PackagerId
+        {
+            get { return this.packageId; }
+        }
+
+        /// <summary>
+        /// Gets the identifier of the payload.
         /// </summary>
         public string PayloadId
         {

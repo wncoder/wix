@@ -165,19 +165,44 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public event EventHandler<CacheBeginEventArgs> CacheBegin;
 
         /// <summary>
-        /// Fired when the engine has begun caching the installation sources.
+        /// Fired when the engine has begun caching a specific package.
+        /// </summary>
+        public event EventHandler<CachePackageBeginEventArgs> CachePackageBegin;
+
+        /// <summary>
+        /// Fired when the engine has begun acquiring the installation sources.
         /// </summary>
         public event EventHandler<CacheAcquireBeginEventArgs> CacheAcquireBegin;
 
         /// <summary>
-        /// Fired when the engine has progress caching the installation sources.
+        /// Fired when the engine has progress acquiring the installation sources.
         /// </summary>
         public event EventHandler<CacheAcquireProgressEventArgs> CacheAcquireProgress;
 
         /// <summary>
-        /// Fired when the engine has complete the caching the installation sources.
+        /// Fired by the engine to allow the user experience to change the source using <see cref="Engine.SetLocalSource"/> or <see cref="Engine.SetDownloadSource"/>.
+        /// </summary>
+        public event EventHandler<ResolveSourceEventArgs> ResolveSource;
+
+        /// <summary>
+        /// Fired when the engine has completed the acquisition of the installation sources.
         /// </summary>
         public event EventHandler<CacheAcquireCompleteEventArgs> CacheAcquireComplete;
+
+        /// <summary>
+        /// Fired when the engine begins the verification of the acquired installation sources.
+        /// </summary>
+        public event EventHandler<CacheVerifyBeginEventArgs> CacheVerifyBegin;
+
+        /// <summary>
+        /// Fired when the engine complete the verification of the acquired installation sources.
+        /// </summary>
+        public event EventHandler<CacheVerifyCompleteEventArgs> CacheVerifyComplete;
+
+        /// <summary>
+        /// Fired when the engine has completed caching a specific package.
+        /// </summary>
+        public event EventHandler<CachePackageCompleteEventArgs> CachePackageComplete;
 
         /// <summary>
         /// Fired after the engine has cached the installation sources.
@@ -233,36 +258,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Fired when the engine has completed installing the bundle.
         /// </summary>
         public event EventHandler<ApplyCompleteEventArgs> ApplyComplete;
-
-        /// <summary>
-        /// Fired by the engine to allow the user experience to change the source using <see cref="Engine.SetLocalSource"/> or <see cref="Engine.SetDownloadSource"/>.
-        /// </summary>
-        public event EventHandler<ResolveSourceEventArgs> ResolveSource;
-
-        /// <summary>
-        /// Fired when the engine has begun caching a specific package.
-        /// </summary>
-        public event EventHandler<CachePackageBeginEventArgs> CachePackageBegin;
-
-        /// <summary>
-        /// Fired when the engine has completed caching a specific package.
-        /// </summary>
-        public event EventHandler<CachePackageCompleteEventArgs> CachePackageComplete;
-
-        /// <summary>
-        /// Fired by the engine when it has begun downloading a specific payload.
-        /// </summary>
-        public event EventHandler<DownloadPayloadBeginEventArgs> DownloadPayloadBegin;
-
-        /// <summary>
-        /// Fired by the engine when it has completed downloading a specific payload.
-        /// </summary>
-        public event EventHandler<DownloadPayloadCompleteEventArgs> DownloadPayloadComplete;
-
-        /// <summary>
-        /// Fired by the engine while downloading payload.
-        /// </summary>
-        public event EventHandler<DownloadProgressEventArgs> DownloadProgress;
 
         /// <summary>
         /// Fired by the engine while executing on payload.
@@ -625,7 +620,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Called when the engine has begun caching the installation sources.
+        /// Called when the engine begins to cache the installation sources.
         /// </summary>
         /// <param name="args"></param>
         protected virtual void OnCacheBegin(CacheBeginEventArgs args)
@@ -638,7 +633,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Called when the engine has begun caching the container or payload.
+        /// Called by the engine when it begins to cache a specific package.
+        /// </summary>
+        /// <param name="args"></param>
+        protected virtual void OnCachePackageBegin(CachePackageBeginEventArgs args)
+        {
+            EventHandler<CachePackageBeginEventArgs> handler = this.CachePackageBegin;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine begins to cache the container or payload.
         /// </summary>
         /// <param name="args"></param>
         protected virtual void OnCacheAcquireBegin(CacheAcquireBeginEventArgs args)
@@ -664,12 +672,64 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Called when the engine has begun caching the container or payload.
+        /// Called by the engine to allow the user experience to change the source using <see cref="Engine.SetSource"/>.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        protected virtual void OnResolveSource(ResolveSourceEventArgs args)
+        {
+            EventHandler<ResolveSourceEventArgs> handler = this.ResolveSource;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine complets caching of the container or payload.
         /// </summary>
         /// <param name="args"></param>
         protected virtual void OnCacheAcquireComplete(CacheAcquireCompleteEventArgs args)
         {
             EventHandler<CacheAcquireCompleteEventArgs> handler = this.CacheAcquireComplete;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine has started verify the payload.
+        /// </summary>
+        /// <param name="args"></param>
+        protected virtual void OnCacheVerifyBegin(CacheVerifyBeginEventArgs args)
+        {
+            EventHandler<CacheVerifyBeginEventArgs> handler = this.CacheVerifyBegin;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine completes verification of the payload.
+        /// </summary>
+        /// <param name="args"></param>
+        protected virtual void OnCacheVerifyComplete(CacheVerifyCompleteEventArgs args)
+        {
+            EventHandler<CacheVerifyCompleteEventArgs> handler = this.CacheVerifyComplete;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the engine completes caching a specific package.
+        /// </summary>
+        /// <param name="args"></param>
+        protected virtual void OnCachePackageComplete(CachePackageCompleteEventArgs args)
+        {
+            EventHandler<CachePackageCompleteEventArgs> handler = this.CachePackageComplete;
             if (null != handler)
             {
                 handler(this, args);
@@ -813,84 +873,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         protected virtual void OnApplyComplete(ApplyCompleteEventArgs args)
         {
             EventHandler<ApplyCompleteEventArgs> handler = this.ApplyComplete;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine to allow the user experience to change the source using <see cref="Engine.SetSource"/>.
-        /// </summary>
-        /// <param name="args">Additional arguments for this event.</param>
-        protected virtual void OnResolveSource(ResolveSourceEventArgs args)
-        {
-            EventHandler<ResolveSourceEventArgs> handler = this.ResolveSource;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine when it has begun caching a specific package.
-        /// </summary>
-        /// <param name="args"></param>
-        protected virtual void OnCachePackageBegin(CachePackageBeginEventArgs args)
-        {
-            EventHandler<CachePackageBeginEventArgs> handler = this.CachePackageBegin;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine when it has completed caching a specific package.
-        /// </summary>
-        /// <param name="args"></param>
-        protected virtual void OnCachePackageComplete(CachePackageCompleteEventArgs args)
-        {
-            EventHandler<CachePackageCompleteEventArgs> handler = this.CachePackageComplete;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine when it has begun downloading a specific payload.
-        /// </summary>
-        /// <param name="args">Additional arguments for this event.</param>
-        protected virtual void OnDownloadPayloadBegin(DownloadPayloadBeginEventArgs args)
-        {
-            EventHandler<DownloadPayloadBeginEventArgs> handler = this.DownloadPayloadBegin;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine when it has completed downloading a specific payload.
-        /// </summary>
-        /// <param name="args">Additional arguments for this event.</param>
-        protected virtual void OnDownloadPayloadComplete(DownloadPayloadCompleteEventArgs args)
-        {
-            EventHandler<DownloadPayloadCompleteEventArgs> handler = this.DownloadPayloadComplete;
-            if (null != handler)
-            {
-                handler(this, args);
-            }
-        }
-
-        /// <summary>
-        /// Called by the engine while downloading payload.
-        /// </summary>
-        /// <param name="args">Additional arguments for this event.</param>
-        protected virtual void OnDownloadProgress(DownloadProgressEventArgs args)
-        {
-            EventHandler<DownloadProgressEventArgs> handler = this.DownloadProgress;
             if (null != handler)
             {
                 handler(this, args);
@@ -1085,6 +1067,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
+        Result IBootstrapperApplication.OnCachePackageBegin(string wzPackageId, int cCachePayloads, long dw64PackageCacheSize)
+        {
+            CachePackageBeginEventArgs args = new CachePackageBeginEventArgs(wzPackageId, cCachePayloads, dw64PackageCacheSize);
+            this.OnCachePackageBegin(args);
+
+            return args.Result;
+        }
+
         Result IBootstrapperApplication.OnCacheAcquireBegin(string wzPackageOrContainerId, string wzPayloadId, CacheOperation operation, string wzSource)
         {
             CacheAcquireBeginEventArgs args = new CacheAcquireBeginEventArgs(wzPackageOrContainerId, wzPayloadId, operation, wzSource);
@@ -1101,12 +1091,41 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
+        Result IBootstrapperApplication.OnResolveSource(string wzPackageOrContainerId, string wzPayloadId, string wzLocalSource, string wzDownloadSource)
+        {
+            ResolveSourceEventArgs args = new ResolveSourceEventArgs(wzPackageOrContainerId, wzPayloadId, wzLocalSource, wzDownloadSource);
+            this.OnResolveSource(args);
+
+            return args.Result;
+        }
+
         Result IBootstrapperApplication.OnCacheAcquireComplete(string wzPackageOrContainerId, string wzPayloadId, int hrStatus)
         {
             CacheAcquireCompleteEventArgs args = new CacheAcquireCompleteEventArgs(wzPackageOrContainerId, wzPayloadId, hrStatus);
             this.OnCacheAcquireComplete(args);
 
             return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnCacheVerifyBegin(string wzPackageId, string wzPayloadId)
+        {
+            CacheVerifyBeginEventArgs args = new CacheVerifyBeginEventArgs(wzPackageId, wzPayloadId);
+            this.OnCacheVerifyBegin(args);
+
+            return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnCacheVerifyComplete(string wzPackageId, string wzPayloadId, int hrStatus)
+        {
+            CacheVerifyCompleteEventArgs args = new CacheVerifyCompleteEventArgs(wzPackageId, wzPayloadId, hrStatus);
+            this.OnCacheVerifyComplete(args);
+
+            return args.Result;
+        }
+
+        void IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus)
+        {
+            this.OnCachePackageComplete(new CachePackageCompleteEventArgs(wzPackageId, hrStatus));
         }
 
         void IBootstrapperApplication.OnCacheComplete(int hrStatus)
@@ -1183,31 +1202,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnCachePackageBegin(string wzPackageId, int cCachePayloads, long dw64PackageCacheSize)
-        {
-            CachePackageBeginEventArgs args = new CachePackageBeginEventArgs(wzPackageId, cCachePayloads, dw64PackageCacheSize);
-            this.OnCachePackageBegin(args);
-
-            return args.Result;
-        }
-
-        void IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus)
-        {
-            this.OnCachePackageComplete(new CachePackageCompleteEventArgs(wzPackageId, hrStatus));
-        }
-
         Result IBootstrapperApplication.OnExecuteProgress(string wzPackageId, int dwProgressPercentage, int dwOverallPercentage)
         {
             ExecuteProgressEventArgs args = new ExecuteProgressEventArgs(wzPackageId, dwProgressPercentage, dwOverallPercentage);
             this.OnExecuteProgress(args);
-
-            return args.Result;
-        }
-
-        Result IBootstrapperApplication.OnResolveSource(string wzPackageOrContainerId, string wzPayloadId, string wzLocalSource, string wzDownloadSource)
-        {
-            ResolveSourceEventArgs args = new ResolveSourceEventArgs(wzPackageOrContainerId, wzPayloadId, wzLocalSource, wzDownloadSource);
-            this.OnResolveSource(args);
 
             return args.Result;
         }

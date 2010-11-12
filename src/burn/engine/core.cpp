@@ -84,9 +84,9 @@ extern "C" HRESULT CoreInitialize(
 
     pEngineState->command.nCmdShow = nCmdShow;
 
-    // initialize built-in variables
-    hr = VariableInitializeBuiltIn(&pEngineState->variables);
-    ExitOnFailure(hr, "Failed to initialize built-in variables.");
+    // initialize variables
+    hr = VariableInitialize(&pEngineState->variables);
+    ExitOnFailure(hr, "Failed to initialize variables.");
 
     // open attached UX container
     hr = ContainerOpenUX(&containerContext);
@@ -652,17 +652,53 @@ LExit:
 }
 
 extern "C" HRESULT CoreQuit(
-    __in BURN_ENGINE_STATE* /*pEngineState*/,
+    __in BURN_ENGINE_STATE* pEngineState,
     __in int nExitCode
     )
 {
     HRESULT hr = S_OK;
 
-    // TODO: SFBUG:3007072 - save engine state if the bundle is still cached.
+    // Save engine state if resume mode is unequal to "none".
+    if (BURN_RESUME_MODE_NONE != pEngineState->resumeMode)
+    {
+        hr = CoreSaveEngineState(pEngineState);
+        ExitOnFailure(hr, "Failed to save engine state.");
+    }
 
+LExit:
     LogId(REPORT_STANDARD, MSG_SHUTDOWN, nExitCode);
 
     ::PostQuitMessage(nExitCode); // go bye-bye.
+
+    return hr;
+}
+
+extern "C" HRESULT CoreSaveEngineState(
+    __in BURN_ENGINE_STATE* pEngineState
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbBuffer = NULL;
+    SIZE_T cbBuffer = 0;
+
+    // serialize engine state
+    hr = CoreSerializeEngineState(pEngineState, &pbBuffer, &cbBuffer);
+    ExitOnFailure(hr, "Failed to serialize engine state.");
+
+    // write to registration store
+    if (pEngineState->registration.fPerMachine)
+    {
+        hr = ElevationSaveState(pEngineState->hElevatedPipe, pbBuffer, cbBuffer);
+        ExitOnFailure(hr, "Failed to save engine state in per-machine process.");
+    }
+    else
+    {
+        hr = RegistrationSaveState(&pEngineState->registration, pbBuffer, cbBuffer);
+        ExitOnFailure(hr, "Failed to save engine state.");
+    }
+
+LExit:
+    ReleaseBuffer(pbBuffer);
 
     return hr;
 }

@@ -51,7 +51,7 @@
     <String Id="BrowseDlgTitle" Overridable="yes">{\WixUI_Font_Title}Hedef klasörü değiştir</String>
 
     <String Id="CancelDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
-    <String Id="CancelDlgText" Overridable="yes">[ProductName] yüklemesini iptal etmek istediğinizden emin misiniz?</String>
+    <String Id="CancelDlgText" Overridable="yes">[ProductName] yükleme işlemini iptal etmek istediğinizden emin misiniz?</String>
     <String Id="CancelDlgIcon" Overridable="yes">WixUI_Ico_Info</String>
     <String Id="CancelDlgIconTooltip" Overridable="yes">Bilgi simgesi</String>
 
@@ -158,12 +158,12 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Kurulum Sihirbazı, [ProductName] özelliklerinin bilgisayarınıza yüklenme yöntemini değiştirmenize veya ürünü bilgisayarınızdan kaldırmanıza olanak verir. Devam etmek için İleri'yi veya Kurulum Sihirbazı'ndan çıkmak için İptal'i tıklatın.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Kurulum Sihirbazı, [ProductName] özelliklerinin bilgisayarınıza yüklenme yöntemini değiştirmenize veya ürünü bilgisayarınızdan kaldırmanıza olanak verir. Devam etmek için İleri'yi, Kurulum Sihirbazı'ndan çıkmak içinse İptal'i tıklatın.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] Kurulum Sihirbazı'na Hoş Geldiniz</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Aşağıdaki uygulamalar, bu kurulum tarafından güncelleştirilmesi gereken dosyaları kullanıyor. Kurulum Sihirbazı'nın bu uygulamaları kapatmayı ve yeniden başlatmayı denemesine izin verebilir veya makineyi daha sonra yeniden başlatabilirsiniz.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Aşağıdaki uygulamalar, bu kurulum tarafından güncelleştirilmesi gereken dosyaları kullanıyor. Kurulum Sihirbazı'nın söz konusu uygulamaları kapatmasına ve yeniden başlatmayı denemesine izin verebilir veya makineyi daha sonra yeniden başlatabilirsiniz.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Güncelleştirilmesi gereken bazı dosyalar şu anda kullanılıyor.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Kullanılan Dosyalar</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Uygulamaları kapat ve yeniden başlatmayı dene.</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="ResumeDlgInstall" Overridable="yes">Yü&amp;kle</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Kurulum Sihirbazı [ProductName] ürününü bilgisayarınıza yüklemeyi tamamlayacak. Devam etmek için Yükle'yi, Kurulum Sihirbazı'ndan çıkmak için İptal'i tıklatın.</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Kurulum Sihirbazı [ProductName] ürününü bilgisayarınıza yüklemeyi tamamlayacak. Devam etmek için Yükle'yi, Kurulum Sihirbazı'ndan çıkmak içinse İptal'i tıklatın.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] Kurulum Sihirbazı sürdürülüyor</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
@@ -233,19 +233,19 @@
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">Yü&amp;kle</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Yüklemeyi başlatmak için Yükle'yi tıklatın. Yükleme ayarlarınızı gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Yüklemeyi başlatmak için Yükle'yi tıklatın. Yükleme ayarlarınızdan herhangi birini gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] ürünü yüklenmeye hazır</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Değiştir</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Yüklemeyi başlatmak için Değiştir'i tıklatın. Yükleme ayarlarınızı gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Yükleme işlemini başlatmak için Değiştir'i tıklatın. Yükleme ayarlarınızdan herhangi birini gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] ürünü değiştirilmeye hazır</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">&amp;Onar</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">[ProductName] yüklemesini onarmak için Onar'ı tıklatın. Yükleme ayarlarınızı gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">[ProductName] yüklemesini onarmak için Onar'ı tıklatın. Yükleme ayarlarınızdan herhangi birini gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] ürünü onarılmaya hazır</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Kaldır</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">[ProductName] ürününü bilgisayarınızdan kaldırmak için Kaldır'ı tıklatın. Yükleme ayarlarınızı gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">[ProductName] ürününü bilgisayarınızdan kaldırmak için Kaldır'ı tıklatın. Yükleme ayarlarınızdan herhangi birini gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] ürünü kaldırılmaya hazır</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Güncelleştir</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Bilgisayarınızdaki [ProductName] ürününü güncelleştirmek için Güncelleştir'i tıklatın. Yükleme ayarlarınızı gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">[ProductName] ürününü bilgisayarınızdan güncelleştirmek için Güncelleştir'i tıklatın. Yükleme ayarlarınızdan herhangi birini gözden geçirmek veya değiştirmek için Geri'yi tıklatın. Sihirbazdan çıkmak için İptal'i tıklatın.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}[ProductName] ürünü güncelleştirilmeye hazır</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
@@ -256,8 +256,8 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Kurulum Sihirbazı [ProductName] ürününü bilgisayarınıza yükleyecek. Devam etmek için İleri'yi veya Kurulum Sihirbazı'ndan çıkmak için İptal'i tıklatın.</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Kurulum Sihirbazı bilgisayarınızdaki [ProductName] ürününü güncelleştirecek. Devam etmek için İleri'yi veya Kurulum Sihirbazı'ndan çıkmak için İptal'i tıklatın.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Kurulum Sihirbazı [ProductName] ürününü bilgisayarınıza yükleyecek. Devam etmek için İleri'yi, Kurulum Sihirbazı'ndan çıkmak içinse İptal'i tıklatın.</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Kurulum Sihirbazı [ProductName] ürününü bilgisayarınızda güncelleştirecek. Devam etmek için İleri'yi, Kurulum Sihirbazı'ndan çıkmak içinse İptal'i tıklatın.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] Kurulum Sihirbazı'na Hoş Geldiniz</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] Kurulumu</String>
@@ -418,7 +418,7 @@
     <String Id="Error23" Overridable="yes">Bu uygulamanın eski sürümlerini kaldırma hazırlığı yapılıyor...</String>
     <String Id="Error32" Overridable="yes">{[ProductName] }Kurulumu başarıyla tamamlandı.</String>
     <String Id="Error33" Overridable="yes">{[ProductName] }Kurulumu başarısız oldu.</String>
-    <String Id="Error1101" Overridable="yes">Dosyadan okuma hatası: [2]. {{ Sistem hatası [3].}} Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
+    <String Id="Error1101" Overridable="yes">Dosyadan okuma hatası: [2]. {{ Sistem hatası [3].}} Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
     <String Id="Error1301" Overridable="yes">'[2]' dosyası oluşturulamıyor. Bu ada sahip bir dizin zaten var. Yüklemeyi iptal edin ve farklı bir konuma yüklemeyi deneyin.</String>
     <String Id="Error1302" Overridable="yes">Lütfen diski takın: [2]</String>
     <String Id="Error1303" Overridable="yes">Yükleyicinin [2] dizinine erişmek için yeterli ayrıcalığı yok. Yükleme işlemi devam edemiyor. Yönetici olarak oturum açın veya sistem yöneticinize başvurun.</String>
@@ -475,7 +475,7 @@
     <String Id="Error1604" Overridable="yes">'[2]' ürünü zaten yüklü olduğundan bu ürünün yüklenmesini engelliyor. İki ürün birbiriyle uyumlu değil.</String>
     <String Id="Error1605" Overridable="yes">'[2]' birimindeki disk alanı, kurtarma etkinleştirilmiş olarak yüklemeye devam etmek için yeterli değil. [3] KB gerekiyor, ancak yalnızca [4] KB var. Kurtarma bilgilerini kaydetmeden yüklemeye devam etmek için Yoksay'ı, kullanılabilir disk alanını yeniden denetlemek için Yeniden Dene'yi veya yükleme işleminden çıkmak için İptal'i tıklatın.</String>
     <String Id="Error1606" Overridable="yes">[2] ağ konumuna erişilemedi.</String>
-    <String Id="Error1607" Overridable="yes">Yüklemeye devam etmeden önce şu uygulamaların kapatılması gerekir:</String>
+    <String Id="Error1607" Overridable="yes">Yüklemeye devam etmeden önce aşağıdaki uygulamaların kapatılması gerekiyor:</String>
     <String Id="Error1608" Overridable="yes">Bu ürünü yüklemek için bu makineye daha önce yüklenmiş uygun bir ürün bulunamadı.</String>
     <String Id="Error1609" Overridable="yes">Güvenlik ayarları uygulanırken hata oluştu. [2] geçerli bir kullanıcı veya grup değil. Bunun nedeni paketin sorunlu olması veya ağdaki etki alanı denetleyicisiyle bağlantıda bir sorun olması olabilir. Ağ bağlantınızı denetleyip Yeniden Dene'yi veya yüklemeyi sona erdirmek için İptal'i tıklatın. {{Kullanıcının SID'si bulunamadı, sistem hatası [3]}}</String>
     <String Id="Error1701" Overridable="yes">[2] anahtarı geçerli değil. Doğru anahtarı girdiğinizi doğrulayın.</String>
@@ -529,7 +529,7 @@
     <String Id="Error1910" Overridable="yes">[2] Kısayolu kaldırılamadı. Kısayol dosyasının varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
     <String Id="Error1911" Overridable="yes">[2] dosyası için tür kitaplığı kaydettirilemedi. Destek biriminize başvurun.</String>
     <String Id="Error1912" Overridable="yes">[2] dosyasının tür kitaplığı kaydı silinemedi. Destek biriminize başvurun.</String>
-    <String Id="Error1913" Overridable="yes">[2] [3] ini dosyası güncelleştirilemedi. Dosyanın varolduğunu ve dosyaya erişebildiğinizi doğrulayın.</String>
+    <String Id="Error1913" Overridable="yes">[2] [3] ini dosyası güncelleştirilemedi. Dosyanın varolduğundan ve dosyaya erişebildiğinizden emin olun.</String>
     <String Id="Error1914" Overridable="yes">Yeniden başlatma sırasında [3] dosyasının [2] dosyasıyla değiştirilmesi zamanlanamadı. [3] dosyasına yazma izniniz olduğunu doğrulayın.</String>
     <String Id="Error1915" Overridable="yes">ODBC sürücü yöneticisini kaldırma hatası, ODBC hatası [2]: [3]. Destek biriminize başvurun.</String>
     <String Id="Error1916" Overridable="yes">ODBC sürücü yöneticisini yükleme hatası, ODBC hatası [2]: [3]. Destek biriminize başvurun.</String>
@@ -568,24 +568,24 @@
     <String Id="UITextMenuCD" Overridable="yes">CD'den çalışacak şekilde yüklenecek</String>
     <String Id="UITextMenuLocal" Overridable="yes">Yerel sabit sürücüye yüklenecek</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Ağdan çalışacak şekilde yüklenecek</String>
-    <String Id="UITextNewFolder" Overridable="yes">Folder|Yeni Klasör</String>
+    <String Id="UITextNewFolder" Overridable="yes">Klasör|Yeni Klasör</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Gerekli bilgiler toplanıyor...</String>
     <String Id="UITextSelAbsentAbsent" Overridable="yes">Bu özellik yüklenmemiş olarak kalacak</String>
     <String Id="UITextSelAbsentAdvertise" Overridable="yes">Bu özellik gerektiğinde yüklenecek şekilde ayarlanacak</String>
     <String Id="UITextSelAbsentCD" Overridable="yes">Bu özellik CD'den çalışacak şekilde yüklenecek</String>
     <String Id="UITextSelAbsentLocal" Overridable="yes">Bu özellik yerel sabit sürücüye yüklenecek</String>
     <String Id="UITextSelAbsentNetwork" Overridable="yes">Bu özellik ağdan çalışacak şekilde yüklenecek</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Bu özellik kullanılamaz hale gelecek</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Bu özellik kullanılamaz duruma gelecek</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Gerektiğinde yüklenecek</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">Bu özellik CD'den çalıştırılabilecek</String>
     <String Id="UITextSelAdvertiseLocal" Overridable="yes">Bu özellik yerel sabit sürücünüze yüklenecek</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Bu özellik ağdan çalıştırılabilecek</String>
     <String Id="UITextSelCDAbsent" Overridable="yes">Bu özellik tamamen kaldırılacak, CD'den çalıştıramayacaksınız</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">Bu özellik, CD'den çalışma durumundan çıkarılıp gerektiğinde yüklenecek olarak ayarlanacak</String>
-    <String Id="UITextSelCDCD" Overridable="yes">Bu özellik CD'den çalıştırılacak şekilde kalacak</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Bu özellik, CD'den çalışma durumundan çıkarılıp yerel sabit sürücüye yüklenecek olarak değiştirilecek</String>
-    <String Id="UITextSelChildCostNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] boşaltır.</String>
-    <String Id="UITextSelChildCostPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir.</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">Bu özellik, CD'den çalıştırılabilir durumdan çıkarak gerektiğinde yüklenecek şekilde ayarlanacak</String>
+    <String Id="UITextSelCDCD" Overridable="yes">Bu özellik CD'den çalıştırılabilecek şekilde kalacak</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Bu özellik, CD'den çalıştırılabilir durumdan çıkarak yerel sabit sürücüye yüklenebilecek duruma gelecek</String>
+    <String Id="UITextSelChildCostNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] yer açar.</String>
+    <String Id="UITextSelChildCostPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] alan gerektirir.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Bu özellik için gerekenler belirleniyor...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">Bu özellik tamamen kaldırılacak</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">Bu özellik yerel sabit sürücünüzden kaldırılacak, ancak gerektiğinde yüklenecek şekilde ayarlanacak</String>
@@ -593,13 +593,13 @@
     <String Id="UITextSelLocalLocal" Overridable="yes">Bu özellik yerel sabit sürücünüzde kalacak</String>
     <String Id="UITextSelLocalNetwork" Overridable="yes">Bu özellik yerel sabit diskinizden kaldırılacak, ancak ağ üzerinden çalıştırılabilecek</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Bu özellik tamamen kaldırılacak, ağ üzerinden çalıştıramayacaksınız</String>
-    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Bu özellik, ağdan çalışma durumundan çıkarılıp gerektiğinde yüklenecek olarak değiştirilecek</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">Bu özellik, ağdan çalışma durumundan çıkarılıp yerel sabit sürücüye yüklenecek olarak değiştirilecek</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">Bu özellik ağdan çalıştırılacak şekilde kalacak</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] boşaltır. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] boşaltır.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] boşaltır. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] gerektirir.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] boşaltır.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] gerektirir. [3] alt özelliğinden [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] gerektirir.</String>
+    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Bu özellik, ağdan çalıştırılabilir durumdan çıkarak gerektiğinde yüklenecek şekilde ayarlanacak</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">Bu özellik, ağdan çalıştırılabilir durumdan çıkarak yerel sabit sürücüye yüklenebilir duruma gelecek</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">Bu özellik ağdan çalıştırılabilecek şekilde kalacak</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] yer açar. [3] alt özellikten [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] yer açar.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] yer açar. [3] alt özellikten [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] alan gerektirir.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Bu özellik sabit sürücünüzde [1] alan gerektirir. [3] alt özellikten [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] yer açar.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Bu özellik sabit sürücünüzde [1] alan gerektirir. [3] alt özellikten [2] tanesi seçili. Alt özellikler sabit sürücünüzde [4] alan gerektirir.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Kalan süre: {[1] dakika }{[2] saniye}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Uygun</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Fark</String>

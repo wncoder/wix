@@ -363,6 +363,12 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
             // commit config changes now to close out IIS Admin changes,
             // the Rollback or Commit defered CAs will determine final commit status.
             hr = pAdminMgr->CommitChanges();
+            for (int i = 100; i > 0 && HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr; i--)
+            {
+                ::Sleep(300);
+                WcaLog(LOGMSG_VERBOSE, "Failed to Commit IIS changes, retrying %d more time(s)...", i);
+                hr = pAdminMgr->CommitChanges();
+            }
             ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
         }
     }

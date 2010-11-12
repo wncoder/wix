@@ -53,6 +53,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         private const string wixMstExtension = ".wixmst";
         private const string wixPdbExtension = ".wixpdb";
         private const string wixOutExtension = ".wixout";
+        private const string msiExtension = ".msi";
 
         /// <summary>
         /// Instantiate a new Torch class.
@@ -105,42 +106,81 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     this.showHelp = true;
                 }
 
-                string[] expectedExtensions;
+                string[] allValidExtensions = new string[] { wixMstExtension, wixOutExtension, wixPdbExtension, msiExtension };
+                string[] expectedSingleInputExtensions = new string[] { wixMstExtension, wixOutExtension };
+                string[] expectedDoubleInputXmlExtensions = new string[] { wixOutExtension, wixPdbExtension };
+                string[] expectedDoubleInputMsiExtensions = new string[] { msiExtension };
+
+                // Validate that all inputs have the correct extension and we dont have too many inputs.
                 if (1 == this.inputFiles.Count)
                 {
-                    expectedExtensions = new string[] { wixMstExtension, wixOutExtension };
-                }
-                else
-                {
-                    if (this.xmlInputs)
-                    {
-                        expectedExtensions = new string[] {wixOutExtension, wixPdbExtension};
-                    }
-                    else
-                    {
-                        expectedExtensions = new string[] { ".msi" };
-                    }
-                }
+                    string inputFile = this.inputFiles[0];
 
-                if (2 >= this.inputFiles.Count)
+                    bool hasValidExtension = false;
+                    foreach (string extension in expectedSingleInputExtensions)
+                    {
+                        if (String.Equals(Path.GetExtension(inputFile), extension, StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasValidExtension = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasValidExtension)
+                    {
+                        bool missingInput = false;
+
+                        // Check if its using an extension that could be valid in other scenarios.
+                        foreach (string validExtension in allValidExtensions)
+                        {
+                            if (String.Equals(Path.GetExtension(inputFile), validExtension, StringComparison.OrdinalIgnoreCase))
+                            {
+                                this.messageHandler.Display(this, WixErrors.WrongFileExtensionForNumberOfInputs(Path.GetExtension(inputFile), inputFile));
+                                missingInput = true;
+                                break;
+                            }
+                        }
+
+                        if (!missingInput)
+                        {
+                            this.messageHandler.Display(this, WixErrors.UnexpectedFileExtension(inputFile, String.Join(", ", expectedSingleInputExtensions)));
+                        }
+                    }
+                }
+                else if (2 == this.inputFiles.Count)
                 {
-                    // Validate that all inputs have the correct extension
                     foreach (string inputFile in inputFiles)
                     {
                         bool hasValidExtension = false;
-                        foreach (string extension in expectedExtensions)
+                        string[] expectedExtensions = allValidExtensions;
+                        if (this.xmlInputs)
                         {
-                            if (String.Equals(Path.GetExtension(inputFile), extension, StringComparison.OrdinalIgnoreCase))
+                            foreach (string extension in expectedDoubleInputXmlExtensions)
                             {
-                                hasValidExtension = true;
-                                break;
+                                if (String.Equals(Path.GetExtension(inputFile), extension, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    hasValidExtension = true;
+                                    expectedExtensions = expectedDoubleInputXmlExtensions;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (string extension in expectedDoubleInputMsiExtensions)
+                            {
+                                if (String.Equals(Path.GetExtension(inputFile), extension, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    hasValidExtension = true;
+                                    expectedExtensions = expectedDoubleInputMsiExtensions;
+                                    break;
+                                }
                             }
                         }
 
                         if (!hasValidExtension)
                         {
-                            string expectedExtension = String.Join(", ", expectedExtensions);
-                            this.messageHandler.Display(this, WixErrors.UnexpectedFileExtension(this.inputFiles[0], expectedExtension));
+                            this.messageHandler.Display(this, WixErrors.UnexpectedFileExtension(inputFile, String.Join(", ", expectedExtensions)));
                         }
                     }
                 }
@@ -383,7 +423,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 if ('-' == arg[0] || '/' == arg[0])
                 {
                     string parameter = arg.Substring(1);
-                    
+
                     if ("a" == parameter)
                     {
                         this.adminImage = true;

@@ -192,7 +192,7 @@ public: // IBootstrapperApplication
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
-        ) 
+        )
     {
         WriteEvent("OnDetectRelatedMsiPackage() - wzPackageId: %ls, wzProductCode: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzPackageId, wzProductCode, fPerMachine, dw64Version, operation);
         return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
@@ -266,7 +266,7 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnPlanPackageBegin(
-        __in_z LPCWSTR wzPackageId, 
+        __in_z LPCWSTR wzPackageId,
         __inout BOOTSTRAPPER_REQUEST_STATE *pRequestState
         )
     {
@@ -472,6 +472,27 @@ public: // IBootstrapperApplication
     {
         WriteEvent("OnCacheAcquireComplete() - wzPackageOrContainerId: %ls, wzPayloadId: %ls, hrStatus: 0x%x", wzPackageOrContainerId, wzPayloadId, hrStatus);
         return IDOK;
+    }
+
+
+    virtual STDMETHODIMP_(int) OnCacheVerifyBegin(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPayloadId
+        )
+    {
+        WriteEvent("OnCacheVerifyBegin() - wzPackageId: %ls, wzPayloadId: %ls", wzPackageId, wzPayloadId);
+        return IDNOACTION;
+    }
+
+
+    virtual STDMETHODIMP_(int) OnCacheVerifyComplete(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPayloadId,
+        __in HRESULT hrStatus
+        )
+    {
+        WriteEvent("OnCacheVerifyComplete() - wzPackageId: %ls, wzPayloadId: %ls, hrStatus: 0x%x", wzPackageId, wzPayloadId, hrStatus);
+        return IDNOACTION;
     }
 
 
@@ -753,10 +774,13 @@ private: // privates
                 hr = E_UNEXPECTED;
                 ExitOnFailure(hr, "Unexpected return value from message pump.");
             }
-            else if (!::IsDialogMessageW(pThis->m_hWnd, &msg))
+            else if (!::IsDialogMessageW(msg.hwnd, &msg))
             {
-                ::TranslateMessage(&msg);
-                ::DispatchMessageW(&msg);
+                if (!ThemeTranslateAccelerator(pThis->m_pTheme, msg.hwnd, &msg))
+                {
+                    ::TranslateMessage(&msg);
+                    ::DispatchMessageW(&msg);
+                }
             }
         }
 
@@ -1110,7 +1134,7 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        hr = ThemeLoadControls(m_pTheme, hWnd);
+        hr = ThemeLoadControls(m_pTheme, hWnd, NULL, 0);
         ExitOnFailure(hr, "Failed to load theme controls.");
 
         // If the splash screen is around, close it since we're showing our UI now.

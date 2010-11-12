@@ -14,7 +14,7 @@
     You must not remove this notice, or any other, from this software.
     -->
 
-    <String Id="WixUIBack" Overridable="yes">&amp;Naspäť</String>
+    <String Id="WixUIBack" Overridable="yes">&amp;Späť</String>
     <String Id="WixUINext" Overridable="yes">Ď&amp;alej</String>
     <String Id="WixUICancel" Overridable="yes">Zrušiť</String>
     <String Id="WixUIFinish" Overridable="yes">&amp;Dokončiť</String>
@@ -71,7 +71,7 @@
 
     <String Id="DiskCostDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="DiskCostDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať iné cieľové jednotky.</String>
+    <String Id="DiskCostDlgText" Overridable="yes">Označené zväzky nemajú dostatok miesta na disku na vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať iné cieľové jednotky.</String>
     <String Id="DiskCostDlgDescription" Overridable="yes">Požadované miesto na disku na inštaláciu vybratých súčastí.</String>
     <String Id="DiskCostDlgTitle" Overridable="yes">{\WixUI_Font_Title}Požiadavky na miesto na disku</String>
     <String Id="DiskCostDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Ak chcete ukončiť Sprievodcu inštaláciou, kliknite na tlačidlo Dokončiť.</String>
-    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Sprievodca inštaláciou programu [ProductName] sa ukončil</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Kliknutím na tlačidlo Dokončiť ukončíte Sprievodcu inštaláciou.</String>
+    <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Sprievodca inštaláciou programu [ProductName] bol dokončený</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}Sprievodca inštaláciou programu [ProductName] sa predčasne ukončil</String>
     <String Id="FatalErrorDescription1" Overridable="yes">Sprievodca inštaláciou programu [ProductName] sa predčasne ukončil pre chybu. Nastavenie systému sa nezmenilo. Ak budete chcieť tento program nainštalovať neskôr, znova spustite Sprievodcu inštaláciou.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Ak chcete ukončiť Sprievodcu inštaláciou, kliknite na tlačidlo Dokončiť.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Kliknutím na tlačidlo Dokončiť ukončíte Sprievodcu inštaláciou.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Súčasti produktu</String>
@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="FilesInUseExit" Overridable="yes">Sk&amp;ončiť</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Zavrite tieto aplikácie, kliknite na tlačidlo Z&amp;nova a pokračujte v inštalácii. Ak chcete skončiť, kliknite na tlačidlo Skončiť.</String>
+    <String Id="FilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Zavrite tieto aplikácie, kliknite na tlačidlo &amp;Znova a pokračujte v inštalácii. Ak chcete skončiť, kliknite na tlačidlo Skončiť.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Niektoré súbory určené na aktualizáciu sa momentálne používajú.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Používané súbory</String>
 
@@ -163,22 +163,22 @@
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Sprievodca inštaláciou ich môže zavrieť a potom sa ich pokúsi znova otvoriť alebo reštartovať počítač.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Nasledujúce aplikácie používajú súbory, ktoré musí táto inštalácia aktualizovať. Sprievodca inštaláciou ich môže ukončiť a potom sa ich pokúsiť reštartovať alebo môže zariadenie reštartovať neskôr.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Niektoré súbory určené na aktualizáciu sa momentálne používajú.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Používané súbory</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">Z&amp;avrieť aplikácie a pokúsiť sa ich znova spustiť.</String>
-    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Nezatvárať aplikácie. Bude sa vyžadovať reštartovanie.</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">Ukončiť apliká&amp;cie a pokúsiť sa o ich opätovné spustenie.</String>
+    <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Neukončiť aplikácie. Bude sa vyžadovať reštartovanie počítača.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">Označené zväzky nemajú dostatok miesta na disku na aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">Miesto na disku požadované na inštaláciu prekračuje dostupné miesto na disku.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nedostatok miesta na disku</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfRbDiskDlgText" Overridable="yes">Vyznačené zväzky nemajú dostatok miesta na disku pre aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
+    <String Id="OutOfRbDiskDlgText" Overridable="yes">Označené zväzky nemajú dostatok miesta na disku na aktuálne vybraté súčasti. Môžete odstrániť niektoré súbory z vyznačených zväzkov, nainštalovať menej súčastí alebo vybrať inú cieľovú jednotku.</String>
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Miesto na disku požadované na inštaláciu prekračuje dostupné miesto na disku.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Nedostatok miesta na disku</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -228,24 +228,24 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}Sprievodca inštaláciou programu [ProductName] sa prerušil</String>
     <String Id="UserExitDescription1" Overridable="yes">Inštalácia programu [ProductName] sa prerušila. Nastavenie systému sa nezmenilo. Ak budete chcieť tento program nainštalovať neskôr, znova spustite inštaláciu.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Ak chcete ukončiť Sprievodcu inštaláciou, kliknite na tlačidlo Dokončiť.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Kliknutím na tlačidlo Dokončiť ukončíte Sprievodcu inštaláciou.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">I&amp;nštalovať</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Ak chcete spustiť inštaláciu, kliknite na tlačidlo Inštalovať. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Naspäť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Ak chcete spustiť inštaláciu, kliknite na tlačidlo Inštalovať. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Späť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Pripravený na inštaláciu programu [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">Z&amp;meniť</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Ak chcete spustiť inštaláciu, kliknite na tlačidlo Zmeniť. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Naspäť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Ak chcete spustiť inštaláciu, kliknite na tlačidlo Zmeniť. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Späť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Pripravený na zmenu programu [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">Opr&amp;aviť</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknutím na tlačidlo Opraviť môžete opraviť inštaláciu programu [ProductName]. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Naspäť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Kliknutím na tlačidlo Opraviť môžete opraviť inštaláciu programu [ProductName]. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Späť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Pripravený na opravu programu [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Odstrániť</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknutím na tlačidlo Odstrániť odstránite program [ProductName] z počítača. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Naspäť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Kliknutím na tlačidlo Odstrániť odstránite program [ProductName] z počítača. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Späť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Pripravený na odstránenie programu [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Aktualizovať</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Kliknutím na tlačidlo Aktualizovať vykonáte aktualizáciu programu [ProductName] v počítači. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Naspäť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Kliknutím na tlačidlo Aktualizovať vykonáte aktualizáciu programu [ProductName] v počítači. Ak chcete skontrolovať alebo zmeniť niektoré z nastavení inštalácie, kliknite na tlačidlo Späť. Kliknutím na tlačidlo Zrušiť ukončíte sprievodcu.</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Pripravený na aktualizáciu programu [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] – inštalácia</String>
@@ -496,7 +496,7 @@
     <String Id="Error1716" Overridable="yes">Nakonfigurované: [2]</String>
     <String Id="Error1717" Overridable="yes">Odstránené: [2]</String>
     <String Id="Error1718" Overridable="yes">Súbor [2] bol odmietnutý politikou digitálnych podpisov.</String>
-    <String Id="Error1719" Overridable="yes">Službu Inštalátora systému Windows nemožno spustiť. Táto chyba sa môže vyskytnúť, ak systém Windows pracuje v núdzovom režime alebo ak Inštalátor systému Windows nie je správne nainštalovaný. Obráťte sa na pracovníkov technickej podpory.</String>
+    <String Id="Error1719" Overridable="yes">Službu Inštalátora systému Windows nemožno spustiť. Táto chyba sa môže vyskytnúť, ak systém Windows pracuje v núdzovom režime alebo ak Inštalátor systému Windows nie je správne nainštalovaný. O pomoc požiadajte pracovníkov technickej podpory.</String>
     <String Id="Error1720" Overridable="yes">Vyskytol sa problém s balíkom Inštalátora systému Windows. Skript požadovaný na dokončenie inštalácie sa nepodarilo spustiť. Obráťte sa na pracovníkov technickej podpory alebo dodávateľa balíka. {{Vlastná akcia [2], chyba skriptu [3], [4]: [5] riadok [6], stĺpec [7], [8] }}</String>
     <String Id="Error1721" Overridable="yes">Vyskytol sa problém s balíkom Inštalátora systému Windows. Program požadovaný na dokončenie inštalácie sa nepodarilo spustiť. Obráťte sa na pracovníkov technickej podpory alebo dodávateľa balíka. {{Akcia: [2], umiestnenie: [3], príkaz: [4] }}</String>
     <String Id="Error1722" Overridable="yes">Vyskytol sa problém s balíkom Inštalátora systému Windows. Program spustený ako súčasť inštalácie sa nedokončil podľa očakávania. Obráťte sa na pracovníkov technickej podpory alebo dodávateľa balíka. {{Akcia: [2], umiestnenie: [3], príkaz: [4] }}</String>
@@ -508,7 +508,7 @@
     <String Id="Error1728" Overridable="yes">Konfigurácia bola úspešne dokončená.</String>
     <String Id="Error1729" Overridable="yes">Konfigurácia zlyhala.</String>
     <String Id="Error1730" Overridable="yes">Túto aplikáciu môžete odstrániť, iba ak ste správca. Ak chcete odstrániť túto aplikáciu, môžete sa prihlásiť ako správca alebo sa obráťte na pracovníkov technickej podpory.</String>
-    <String Id="Error1731" Overridable="yes">Zdrojový inštalačný balík pre produkt [2] nie je zosynchronizovaný s klientskym balíkom. Skúste zopakovať inštaláciu s použitím platnej kópie inštalačného balíka [3].</String>
+    <String Id="Error1731" Overridable="yes">Zdrojový inštalačný balík pre produkt [2] nie je zosynchronizovaný s klientskym balíkom. Skúste zopakovať inštaláciu pomocou platnej kópie inštalačného balíka [3].</String>
     <String Id="Error1732" Overridable="yes">Ak chcete dokončiť inštaláciu produktu [2], musíte reštartovať počítač. V tomto počítači sú momentálne prihlásení ďalší používatelia a reštartovaním by mohli stratiť svoju prácu. Chcete reštartovať počítač?</String>
     <String Id="Error1801" Overridable="yes">Cesta [2] nie je platná. Zadajte platnú cestu.</String>
     <String Id="Error1802" Overridable="yes">Nedostatok pamäte. Pred opakovaním operácie ukončite ostatné aplikácie.</String>

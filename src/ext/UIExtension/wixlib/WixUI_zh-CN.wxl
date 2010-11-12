@@ -147,9 +147,9 @@
     <String Id="MaintenanceTypeDlgRemoveButton" Overridable="yes">删除(&amp;R)</String>
     <String Id="MaintenanceTypeDlgRemoveButtonTooltip" Overridable="yes">删除安装</String>
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">请选择要执行的操作。</String>
+    <String Id="MaintenanceTypeDlgDescription" Overridable="yes">选择希望执行的操作。</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}更改、修复或删除安装</String>
-    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">可以更改安装功能的方式。</String>
+    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">允许您更改功能的安装方式。</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] 没有单独可选的功能。</String>
     <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">从您的计算机中删除 [ProductName]。</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName] 无法删除。</String>
@@ -158,12 +158,12 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] 安装程序</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">通过安装向导可以更改 [ProductName] 功能在您的计算机上的安装方式，或将其从您的计算机中删除。单击“下一步”继续，或单击“取消”退出安装向导。</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">通过安装向导可以更改在您的计算机上安装 [ProductName] 功能的方式，或将其从您的计算机中删除。单击“下一步”继续，或单击“取消”退出安装向导。</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}欢迎使用 [ProductName] 安装向导</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] 安装程序</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">以下应用程序正在使用需要由此安装程序更新的文件。您可以让安装向导关闭这些应用程序，然后尝试重新启动，或以后重新启动计算机。</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">以下应用程序正在使用此安装程序需要更新的文件。可以让安装向导关闭这些应用程序，稍后再尝试重新启动这些应用程序或重新启动计算机。</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">一些需要更新的文件当前正在使用中。</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}使用中的文件</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">关闭应用程序，然后尝试将其重新启动(&amp;C)。</String>
@@ -256,7 +256,7 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] 安装程序</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">安装向导将在您的计算机上安装 [ProductName]。单击“下一步”继续，或单击“取消”退出安装向导。</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">安装向导将在计算机上安装 [ProductName]。单击“下一步”继续，或单击“取消”退出安装向导。</String>
     <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">安装向导将更新您计算机上的 [ProductName]。单击“下一步”继续或单击“取消”退出安装向导。</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}欢迎使用 [ProductName] 安装向导</String>
 

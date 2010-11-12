@@ -111,6 +111,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <UsingTask TaskName="RefreshGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
   <UsingTask TaskName="RefreshBundleGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
 
+  <!-- WiX tools are 32bit EXEs, so run them out-of-proc when MSBuild is not 32bit. -->
+  <PropertyGroup>
+    <RunWixToolsOutOfProc Condition=" '$(PROCESSOR_ARCHITECTURE)'!='x86' ">true</RunWixToolsOutOfProc>
+  </PropertyGroup>
+
   <!--
   Several properties must be set in the main project file, before using this .targets file.
   However, if the properties are not set, we pick some defaults.

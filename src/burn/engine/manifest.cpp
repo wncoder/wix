@@ -74,33 +74,37 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
         }
     }
 
+    // parse built-in condition 
+    hr = ConditionGlobalParseFromXml(&pEngineState->condition, pixeBundle);
+    ExitOnFailure(hr, "Failed to parse global condition.");
+
     // parse variables
     hr = VariablesParseFromXml(&pEngineState->variables, pixeBundle);
-    ExitOnFailure(hr, "Failed parse variables.");
+    ExitOnFailure(hr, "Failed to parse variables.");
 
     // parse searches
     hr = SearchesParseFromXml(&pEngineState->searches, pixeBundle); // TODO: Modularization
-    ExitOnFailure(hr, "Failed parse searches.");
+    ExitOnFailure(hr, "Failed to parse searches.");
 
     // parse user experience
     hr = UserExperienceParseFromXml(&pEngineState->userExperience, pixeBundle);
-    ExitOnFailure(hr, "Failed parse user experience.");
+    ExitOnFailure(hr, "Failed to parse user experience.");
 
     // parse registration
     hr = RegistrationParseFromXml(&pEngineState->registration, pixeBundle);
-    ExitOnFailure(hr, "Failed parse registration.");
+    ExitOnFailure(hr, "Failed to parse registration.");
 
     // parse containers
     hr = ContainersParseFromXml(&pEngineState->containers, pixeBundle);
-    ExitOnFailure(hr, "Failed parse containers.");
+    ExitOnFailure(hr, "Failed to parse containers.");
 
     // parse payloads
     hr = PayloadsParseFromXml(&pEngineState->payloads, &pEngineState->containers, pixeBundle);
-    ExitOnFailure(hr, "Failed parse payloads.");
+    ExitOnFailure(hr, "Failed to parse payloads.");
 
     // parse packages
     hr = PackagesParseFromXml(&pEngineState->packages, &pEngineState->payloads, pixeBundle);
-    ExitOnFailure(hr, "Failed parse packages.");
+    ExitOnFailure(hr, "Failed to parse packages.");
 
 LExit:
     ReleaseObject(pixnChain);

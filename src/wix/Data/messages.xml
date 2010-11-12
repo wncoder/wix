@@ -2702,6 +2702,13 @@
           <Parameter Type="System.Int64" Name="bundleVersion" />
         </Instance>
       </Message>
+      <Message Id="WrongFileExtensionForNumberOfInputs" Number="356" SourceLineNumbers="no">
+        <Instance>
+          The extension '{0}' on the input specified '{1}' does not match the number of inputs required to handle an input with this extension. Check if you are missing an input or have too many.
+          <Parameter Type="System.String" Name="inputExtension" />
+          <Parameter Type="System.String" Name="input" />
+        </Instance>
+      </Message>
     </Class>
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
         <Message Id="IdentifierCannotBeModularized" Number="1000">

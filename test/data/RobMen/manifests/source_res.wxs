@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 <Bundle Version="0.1.0.0" Compressed="no">
-   <UX SourceFile="stdux.dll">
+   <UX SourceFile="wixstdba.dll">
        <Payload SourceFile="en-us.wxl" />
        <Payload SourceFile="thm.xml" />
    </UX>

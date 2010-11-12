@@ -19341,6 +19341,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string updateUrl = null;
             string upgradeCode = null;
             string version = null;
+            string condition = null;
 
             string fileSystemSafeBundleName = null;
             string logVariablePrefixAndExtension = null;
@@ -19356,11 +19357,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "AboutUrl":
                             aboutUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
-                        case "Copyright":
-                            copyright = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Condition":
+                            condition = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Copyright":
+                            copyright = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "DisableModify":
                             disableModify = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -19587,6 +19591,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[13] = logVariablePrefixAndExtension;
                 row[14] = iconSourceFile;
                 row[15] = splashScreenSourceFile;
+                row[16] = condition;
             }
         }
 

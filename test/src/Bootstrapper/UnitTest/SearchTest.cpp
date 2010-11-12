@@ -73,6 +73,9 @@ namespace Bootstrapper
             BURN_SEARCHES searches = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 pin_ptr<const WCHAR> wzDirectory1 = PtrToStringChars(this->TestContext->TestDir);
                 pin_ptr<const WCHAR> wzDirectory2 = PtrToStringChars(System::IO::Path::Combine(this->TestContext->TestDir, gcnew String(L"none")));
 
@@ -117,6 +120,9 @@ namespace Bootstrapper
             ULARGE_INTEGER uliVersion = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 pin_ptr<const WCHAR> wzFile1 = PtrToStringChars(System::IO::Path::Combine(this->TestContext->TestDir, gcnew String(L"none.txt")));
                 pin_ptr<const WCHAR> wzFile2 = PtrToStringChars(System::Reflection::Assembly::GetExecutingAssembly()->Location);
 
@@ -169,6 +175,9 @@ namespace Bootstrapper
 
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 Registry::SetValue(gcnew String(L"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\WiX_Burn_UnitTest\\Value"), gcnew String(L"String"), gcnew String(L"String1 %TEMP%"), RegistryValueKind::String);
                 Registry::SetValue(gcnew String(L"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\WiX_Burn_UnitTest\\Value"), gcnew String(L"StringExpand"), gcnew String(L"String1 %TEMP%"), RegistryValueKind::ExpandString);
                 Registry::SetValue(gcnew String(L"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\WiX_Burn_UnitTest\\Value"), gcnew String(L"DWord"), 1, RegistryValueKind::DWord);
@@ -287,6 +296,9 @@ namespace Bootstrapper
             BURN_SEARCHES searches = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // set mock API's
                 WiuFunctionOverride(NULL, MsiComponentSearchTest_MsiGetComponentPathW, MsiComponentSearchTest_MsiLocateComponentW, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -361,6 +373,9 @@ namespace Bootstrapper
             BURN_SEARCHES searches = { };
             try
             {
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // set mock API's
                 WiuFunctionOverride(NULL, NULL, NULL, NULL, MsiProductSearchTest_MsiGetProductInfoW, MsiProductSearchTest_MsiGetProductInfoExW, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -414,6 +429,9 @@ namespace Bootstrapper
                     L"    <MsiFeatureSearch Id='Search1' Type='state' ProductCode='{BAD00000-0000-0000-0000-000000000000}' FeatureId='' Variable='Variable1' />"
                     L"</Bundle>";
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
@@ -447,6 +465,9 @@ namespace Bootstrapper
                     L"    <RegistrySearch Id='Search2' Type='exists' Root='HKLM' Key='SOFTWARE\\Microsoft' Variable='Variable2' Condition='1' />"
                     L"    <RegistrySearch Id='Search3' Type='exists' Root='HKLM' Key='SOFTWARE\\Microsoft' Variable='Variable3' Condition='=' />"
                     L"</Bundle>";
+
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
@@ -482,6 +503,9 @@ namespace Bootstrapper
                 LPCWSTR wzDocument =
                     L"<Bundle>"
                     L"</Bundle>";
+
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);

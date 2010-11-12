@@ -297,6 +297,23 @@ public: // IBurnUserExperience
         return IDNOACTION;
     }
 
+    virtual STDMETHODIMP_(int) OnCacheVerifyBegin(
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPayloadId*/
+        )
+    {
+        return IDNOACTION;
+    }
+
+    virtual STDMETHODIMP_(int) OnCacheVerifyComplete(
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzPayloadId*/,
+        __in HRESULT /*hrStatus*/
+        )
+    {
+        return IDNOACTION;
+    }
+
     virtual void __stdcall OnCachePackageComplete(
         __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/

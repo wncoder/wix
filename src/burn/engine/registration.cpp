@@ -172,7 +172,7 @@ extern "C" HRESULT RegistrationParseFromXml(
         }
 
         // @NoRemove
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"NoModify", &pRegistration->fNoRemove);
+        hr = XmlGetYesNoAttribute(pixnArpNode, L"NoRemove", &pRegistration->fNoRemove);
         if (E_NOTFOUND != hr)
         {
             ExitOnFailure(hr, "Failed to get @NoRemove.");
@@ -829,28 +829,35 @@ extern "C" HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION action,
     __in BOOL fRollback,
-    __in BOOL fPerMachineProcess
+    __in BOOL fPerMachineProcess,
+    __out_opt BURN_RESUME_MODE* pResumeMode
     )
 {
     HRESULT hr = S_OK;
     BURN_RESUME_MODE resumeMode = BURN_RESUME_MODE_NONE;
     HKEY hkRegistration = NULL;
 
-    // alter registration in the correct process
+    // If we are ARP registered, and not uninstalling, then set resume mode to "ARP".
+    if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
+    {
+        resumeMode = BURN_RESUME_MODE_ARP;
+    }
+
+    // Alter registration in the correct process.
     if (pRegistration->fPerMachine == fPerMachineProcess)
     {
-        // if we are ARP registered, and not uninstalling, then leave the cache behind and set resume mode to "ARP"
+        // If resume mode is "ARP", then leave the cache behind.
         if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
         {
             resumeMode = BURN_RESUME_MODE_ARP;
 
-            // open registration key
+            // Open registration key.
             hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
             ExitOnFailure(hr, "Failed to open registration key.");
         }
         else
         {
-            // delete registration key
+            // Delete registration key.
             hr = RegDelete(pRegistration->hkRoot, pRegistration->sczRegistrationKey, REG_KEY_DEFAULT, FALSE);
             if (E_FILENOTFOUND != hr)
             {
@@ -859,15 +866,21 @@ extern "C" HRESULT RegistrationSessionEnd(
 
             LogStringLine(REPORT_STANDARD, "Removing bundle cache: %ls", pRegistration->sczCacheDirectory);
 
-            // delete cache directory
+            // Delete cache directory.
             hr = DirEnsureDeleteEx(pRegistration->sczCacheDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
             ExitOnFailure1(hr, "Failed to remove bundle directory: %ls", pRegistration->sczCacheDirectory);
         }
     }
 
-    // update resume mode
+    // Update resume mode.
     hr = UpdateResumeMode(pRegistration, hkRegistration, resumeMode, fPerMachineProcess);
     ExitOnFailure(hr, "Failed to update resume mode.");
+
+    // Return resume mode.
+    if (pResumeMode)
+    {
+        *pResumeMode = resumeMode;
+    }
 
 LExit:
     ReleaseRegKey(hkRegistration);

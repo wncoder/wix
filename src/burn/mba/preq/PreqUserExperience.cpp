@@ -661,7 +661,7 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        hr = ThemeLoadControls(m_pTheme, hWnd);
+        hr = ThemeLoadControls(m_pTheme, hWnd, NULL, 0);
         ExitOnFailure(hr, "Failed to load theme controls.");
 
         // Okay, we're ready for packages now.

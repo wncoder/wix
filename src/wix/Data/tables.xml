@@ -1600,6 +1600,7 @@
         <columnDefinition name="LogPrefixAndExtension" type="string" length="0" nullable="yes" />
         <columnDefinition name="IconSourceFile" type="string" length="0" nullable="yes" />
         <columnDefinition name="SplashScreenSourceFile" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Condition" type="string" length="0" nullable="yes" />
     </tableDefinition>
     <tableDefinition name="WixChain" unreal="yes">
         <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>

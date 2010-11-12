@@ -69,7 +69,7 @@
             <ProgressText Action="CommitMetabaseTransaction">!(loc.CommitMetabaseTransaction)</ProgressText>
             <ProgressText Action="WriteMetabaseChanges">!(loc.WriteMetabaseChanges)</ProgressText>
 
-            <ProgressText Action="ConfigureIIs7">!(loc.ConfigureIIs7)</ProgressText>
+            <ProgressText Action="ConfigureIIs7Exec">!(loc.ConfigureIIs7Exec)</ProgressText>
             <ProgressText Action="StartIIS7ConfigTransaction">!(loc.StartIIS7ConfigTransaction)</ProgressText>
             <ProgressText Action="RollbackIIS7ConfigTransaction">!(loc.RollbackIIS7ConfigTransaction)</ProgressText>
             <ProgressText Action="CommitIIS7ConfigTransaction">!(loc.CommitIIS7ConfigTransaction)</ProgressText>

@@ -561,7 +561,7 @@
     <String Id="UITextKB" Overridable="yes">KB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
     <String Id="UITextMenuAbsent" Overridable="yes">A teljes szolgáltatás elérhetetlen lesz.</String>
-    <String Id="UITextMenuAdvertise" Overridable="yes">A szolgáltatás szükség esetén lesz telepítve.</String>
+    <String Id="UITextMenuAdvertise" Overridable="yes">A szolgáltatás igény szerint lesz telepítve.</String>
     <String Id="UITextMenuAllCD" Overridable="yes">A teljes szolgáltatás CD-ről történő futtatáshoz lesz telepítve.</String>
     <String Id="UITextMenuAllLocal" Overridable="yes">A teljes szolgáltatás a helyi merevlemezre lesz telepítve.</String>
     <String Id="UITextMenuAllNetwork" Overridable="yes">A teljes szolgáltatás hálózatról történő futtatáshoz lesz telepítve.</String>

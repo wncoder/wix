@@ -158,7 +158,7 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Instalação do [ProductName]</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">O Assistente para Instalação permite alterar a forma como os recursos do [ProductName] são instalados ou removidos do computador. Clique em Avançar para continuar ou em Cancelar para sair do Assistente para Instalação.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">O Assistente para Instalação permite alterar a forma como os recursos do [ProductName] são instalados ou removê-lo do computador. Clique em Avançar para continuar ou em Cancelar para sair do Assistente para Instalação.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Bem-vindo ao Assistente para Instalação do [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Instalação do [ProductName]</String>
@@ -201,7 +201,7 @@
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Removendo o [ProductName]</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Aguarde enquanto o Assistente para Instalação atualiza o [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Atualizando o [ProductName]</String>
-    <String Id="ProgressDlgProgressBar" Overridable="yes">Operação concluída</String>
+    <String Id="ProgressDlgProgressBar" Overridable="yes">Andamento da operação</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Status:</String>
 
     <String Id="ResumeDlg_Title" Overridable="yes">Instalação do [ProductName]</String>
@@ -594,7 +594,7 @@
     <String Id="UITextSelLocalNetwork" Overridable="yes">Este recurso será removido do disco rígido local, mas ainda ficará disponível para ser executado da rede</String>
     <String Id="UITextSelNetworkAbsent" Overridable="yes">Este recurso será totalmente desinstalado e você não poderá executá-lo da rede</String>
     <String Id="UITextSelNetworkAdvertise" Overridable="yes">Este recurso deixará de ser executado da rede e será configurado para ser instalado quando necessário</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">Este recurso deixará de ser executado da rede e será configurado para ser instalado no disco rígido local</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">Este recurso deixará de ser executado da rede e será instalado no disco rígido local</String>
     <String Id="UITextSelNetworkNetwork" Overridable="yes">Este recurso continuará a ser executado da rede</String>
     <String Id="UITextSelParentCostNegNeg" Overridable="yes">Este recurso libera [1] no disco rígido. [2] de [3] sub-recursos estão selecionados. Os sub-recursos liberam [4] no disco rígido.</String>
     <String Id="UITextSelParentCostNegPos" Overridable="yes">Este recurso libera [1] no disco rígido. [2] de [3] sub-recursos estão selecionados. Os sub-recursos requerem [4] no disco rígido.</String>

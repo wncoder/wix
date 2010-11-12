@@ -1006,7 +1006,7 @@ static HRESULT OnSessionEnd(
     ExitOnFailure(hr, "Failed to read rollback flag.");
 
     // suspend session in per-machine process
-    hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)fRollback, TRUE);
+    hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)fRollback, TRUE, NULL);
     ExitOnFailure(hr, "Failed to suspend registration session.");
 
 LExit:

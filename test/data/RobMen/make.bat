@@ -11,6 +11,7 @@ set _B=build\
 set _M=manifests\
 set _P=packages\
 set _R=..\..\..\build\debug\x86\StduxResources
+set _S=..\..\..\build\debug\x86\WixstdbaResources
 set _T=..\..\..\build\debug\x86\
 rem set _NOTIDY=-notidy
 
@@ -43,7 +44,7 @@ rem    )
 IF NOT EXIST %_B%source_res\b.exe (
    md %_B%source_res\data
    %_T%candle.exe %_M%source_res.wxs -o %_M%
-   %_T%light.exe %_NOTIDY% -b %_P% -b %_M% -b %_R% -b %_T% -o %_B%source_res\b.exe %_M%source_res.wixobj
+   %_T%light.exe %_NOTIDY% -b %_P% -b %_M% -b %_S% -b %_T% -o %_B%source_res\b.exe %_M%source_res.wixobj
    move %_B%source_res\Package3.msi %_B%source_res\data
    move %_B%source_res\pkg3.cab %_B%source_res\data
    )

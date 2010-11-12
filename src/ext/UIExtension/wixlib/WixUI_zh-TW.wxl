@@ -29,8 +29,8 @@
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}請閱讀 [ProductName] 授權合約</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">我接受授權合約中的條款(&amp;A)</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">按一下 [安裝] 以預設選項為所有使用者安裝產品。按一下 [進階] 可變更安裝選項。</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">按一下 [安裝] 以預設選項僅為您安裝產品。按一下 [進階] 可變更安裝選項。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">按一下 [\[]安裝[\]] 以預設選項為所有使用者安裝產品。按一下 [\[]進階[\]] 可變更安裝選項。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">按一下 [\[]安裝[\]] 以預設選項僅為您安裝產品。按一下 [\[]進階[\]] 可變更安裝選項。</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">安裝(&amp;I)</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">進階(&amp;D)</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">9</String>
@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="ExitDialogDescription" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}已完成 [ProductName] 安裝精靈</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 安裝精靈提前結束</String>
     <String Id="FatalErrorDescription1" Overridable="yes">[ProductName] 安裝精靈因發生錯誤而提前結束，您的系統尚未被修改。若要稍後再安裝此程式，請再執行一次安裝精靈。</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FeaturesDlgTree" Overridable="yes">產品功能</String>
@@ -105,14 +105,14 @@
     <String Id="FilesInUse_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FilesInUseExit" Overridable="yes">結束(&amp;X)</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。請按 [結束] 結束，或關閉這些應用程式，然後按一下 [重試] 繼續進行安裝(&amp;R)</String>
+    <String Id="FilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。請按 [\[]結束[\]] 結束，或關閉這些應用程式，然後按一下 [\[]重試[\]] 繼續進行安裝(&amp;R)</String>
     <String Id="FilesInUseDescription" Overridable="yes">有些需要更新的檔案目前正在使用中。</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}檔案使用中</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="InstallDirDlgChange" Overridable="yes">變更(&amp;C)...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}目的地資料夾</String>
-    <String Id="InstallDirDlgDescription" Overridable="yes">按一下 [下一步] 安裝至預設資料夾，或按一下 [變更] 選擇其他位置。</String>
+    <String Id="InstallDirDlgDescription" Overridable="yes">按一下 [\[]下一步[\]] 安裝至預設資料夾，或按一下 [\[]變更[\]] 選擇其他位置。</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">安裝 [ProductName] 到:</String>
 
@@ -158,7 +158,7 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">安裝精靈可以讓您變更 [ProductName] 功能安裝在電腦上的方式，或從電腦移除它們。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">安裝精靈可以讓您變更 [ProductName] 功能安裝在電腦上的方式，或從電腦移除它們。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}歡迎使用 [ProductName] 安裝精靈</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -166,23 +166,23 @@
     <String Id="MsiRMFilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。您可以讓安裝精靈關閉它們，稍後再嘗試重新啟動它們或重新啟動電腦。</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">有些需要更新的檔案目前正在使用中。</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}檔案使用中</String>
-    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">關閉應用程式，稍後再嘗試重新啟動(&amp;C)</String>
+    <String Id="MsiRMFilesInUseUseRM" Overridable="yes">關閉應用程式，稍後再嘗試重新啟動它們(&amp;C)</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">不關閉應用程式，必須重新開機(&amp;D)</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選取其他目的地磁碟機。</String>
-    <String Id="OutOfDiskDlgDescription" Overridable="yes">安裝作業所需的磁碟空間超過可用的磁碟空間。</String>
+    <String Id="OutOfDiskDlgDescription" Overridable="yes">安裝所需的磁碟空間超過可用的磁碟空間。</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間不足</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
 
     <String Id="OutOfRbDiskDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="OutOfRbDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="OutOfRbDiskDlgText" Overridable="yes">反白顯示的磁碟區沒有足夠磁碟空間可供目前選取的功能使用。您可以從反白顯示的磁碟區移除一些檔案、安裝較少功能，或是選取其他目的地磁碟機。</String>
-    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">安裝作業所需的磁碟空間超過可用的磁碟空間。</String>
+    <String Id="OutOfRbDiskDlgDescription" Overridable="yes">安裝所需的磁碟空間超過可用的磁碟空間。</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間不足</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">或者，您可以選擇停用安裝程式的復原功能。停用復原會阻礙安裝程式在安裝受到任何形式的中斷時，將電腦還原成原先的狀態。如果您願意承擔停用復原功能的風險，請按一下 [是]。</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">或者，您可以選擇停用安裝程式的復原功能。停用復原會阻礙安裝程式在安裝受到任何形式的中斷時，將電腦還原成原先的狀態。如果您願意承擔停用復原功能的風險，請按一下 [\[]是[\]]。</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="ResumeDlgInstall" Overridable="yes">安裝(&amp;I)</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">安裝精靈即將完成在您的電腦上安裝 [ProductName]。請按 [安裝] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">安裝精靈即將完成在您的電腦上安裝 [ProductName]。請按 [\[]安裝[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}繼續執行 [ProductName] 安裝精靈</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -228,24 +228,24 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 安裝精靈已中斷</String>
     <String Id="UserExitDescription1" Overridable="yes">[ProductName] 安裝程式已中斷。您的系統尚未被修改。若要稍後再安裝此程式，請再執行一次安裝精靈。</String>
-    <String Id="UserExitDescription2" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="UserExitDescription2" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">安裝(&amp;I)</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">按一下 [安裝] 即可開始安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">按一下 [\[]安裝[\]] 即可開始安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}準備安裝 [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">變更(&amp;C)</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">按一下 [變更] 即可開始安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">按一下 [\[]變更[\]] 即可開始安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}準備變更 [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">修復(&amp;P)</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">按一下 [修復] 即可修復 [ProductName] 的安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">按一下 [\[]修復[\]] 即可修復 [ProductName] 安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}準備修復 [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">移除(&amp;R)</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">按一下 [移除] 即可從電腦移除 [ProductName]。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">按一下 [\[]移除[\]] 即可從電腦移除 [ProductName]。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}準備移除 [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">更新(&amp;U)</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">按一下 [更新] 即可更新您電腦中的 [ProductName]。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">按一下 [\[]更新[\]] 即可更新您電腦中的 [ProductName]。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}準備更新 [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -256,8 +256,8 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">安裝精靈將在您的電腦上安裝 [ProductName]。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">安裝精靈將更新您電腦上的 [ProductName]。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">安裝精靈將在您的電腦上安裝 [ProductName]。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">安裝精靈將更新您電腦上的 [ProductName]。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}歡迎使用 [ProductName] 安裝精靈</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -424,13 +424,13 @@
     <String Id="Error1303" Overridable="yes">安裝程式的權限不足，無法存取這個目錄: [2]，安裝無法繼續，請以管理員身分登入或是與您的系統管理員連絡。</String>
     <String Id="Error1304" Overridable="yes">寫入檔案 [2] 時發生錯誤。請檢查您是否有存取該目錄的權限。</String>
     <String Id="Error1305" Overridable="yes">讀取檔案 [2] 時發生錯誤。{{ 系統錯誤 [3]。}} 請確認檔案存在，而且您可以存取它。</String>
-    <String Id="Error1306" Overridable="yes">其他的應用程式對檔案 '[2]' 獨佔存取。請關閉所有其他的應用程式，然後按一下 [重試]。</String>
-    <String Id="Error1307" Overridable="yes">磁碟空間不足，無法安裝這個檔案: [2]。請釋放一些磁碟空間然後按一下 [重試]，或按一下 [取消] 結束。</String>
+    <String Id="Error1306" Overridable="yes">其他的應用程式對檔案 '[2]' 獨佔存取。請關閉所有其他的應用程式，然後按一下 [\[]重試[\]]。</String>
+    <String Id="Error1307" Overridable="yes">磁碟空間不足，無法安裝這個檔案: [2]。請釋放一些磁碟空間然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束。</String>
     <String Id="Error1308" Overridable="yes">找不到來源檔案: [2]。請確認檔案存在，而且您可以存取它。</String>
     <String Id="Error1309" Overridable="yes">讀取檔案 [3] 時發生錯誤。{{ 系統錯誤 [2]。}} 請確認檔案存在，而且您可以存取它。</String>
     <String Id="Error1310" Overridable="yes">寫入至檔案時發生錯誤: [3]。{{ 系統錯誤 [2]。}} 請檢查您是否有存取該目錄的權限。</String>
     <String Id="Error1311" Overridable="yes">找不到來源檔案{{(封包檔)}}: [2]。請確認檔案存在，而且您可以存取它。</String>
-    <String Id="Error1312" Overridable="yes">無法建立目錄 '[2]'。同名的檔案已經存在，請更名或移除此檔案，然後按一下 [重試]，或按一下 [取消] 結束。</String>
+    <String Id="Error1312" Overridable="yes">無法建立目錄 '[2]'。同名的檔案已經存在，請更名或移除此檔案，然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束。</String>
     <String Id="Error1313" Overridable="yes">目前無法使用磁碟區 [2]，請選取別的磁碟區。</String>
     <String Id="Error1314" Overridable="yes">指定的路徑 '[2]' 無法使用。</String>
     <String Id="Error1315" Overridable="yes">無法寫入指定的資料夾: [2]。</String>
@@ -473,14 +473,14 @@
     <String Id="Error1602" Overridable="yes">您確定要取消嗎 ?</String>
     <String Id="Error1603" Overridable="yes">檔案 [2][3] 正在使用中 {由下列處理序使用: 名稱: [4]，識別碼: [5]，視窗標題: '[6]'}，請關閉該應用程式然後重試。</String>
     <String Id="Error1604" Overridable="yes">已經安裝產品 '[2]'，無法安裝本產品。這兩項產品不相容。</String>
-    <String Id="Error1605" Overridable="yes">磁碟區 '[2]' 上的磁碟空間不足，無法繼續進行啟用修復功能的安裝。需要 [3] KB 的空間，但是只有 [4] KB 可供使用。請按一下 [忽略] 繼續安裝但不儲存修復資訊，按一下 [重試] 再檢查一次是否有可用的空間，或按一下 [取消] 結束安裝。</String>
+    <String Id="Error1605" Overridable="yes">磁碟區 '[2]' 上的磁碟空間不足，無法繼續進行啟用修復功能的安裝。需要 [3] KB 的空間，但是只有 [4] KB 可供使用。請按一下 [\[]忽略[\]] 繼續安裝但不儲存修復資訊，按一下 [\[]重試[\]] 再檢查一次是否有可用的空間，或按一下 [\[]取消[\]] 結束安裝。</String>
     <String Id="Error1606" Overridable="yes">無法存取網路位置 [2]。</String>
     <String Id="Error1607" Overridable="yes">繼續安裝之前應先關閉下列應用程式:</String>
     <String Id="Error1608" Overridable="yes">在此機器上，找不到與本產品相容的舊版產品。</String>
-    <String Id="Error1609" Overridable="yes">套用安全性設定時發生錯誤。[2] 不是有效的使用者或群組。可能是因為套件有問題，或連線至網路上的網域控制站時發生問題。請檢查您的網路連線再按一下 [重試]，或按一下 [取消] 結束安裝。{{找不到使用者的 SID，系統錯誤 [3]}}</String>
+    <String Id="Error1609" Overridable="yes">套用安全性設定時發生錯誤。[2] 不是有效的使用者或群組。可能是因為套件有問題，或連線至網路上的網域控制站時發生問題。請檢查您的網路連線再按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束安裝。{{找不到使用者的 SID，系統錯誤 [3]}}</String>
     <String Id="Error1701" Overridable="yes">金鑰 [2] 無效。請檢查您輸入的金鑰是否正確。</String>
-    <String Id="Error1702" Overridable="yes">安裝程式必須重新啟動您的系統才能繼續設定 [2]。請按一下 [是] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [否]。</String>
-    <String Id="Error1703" Overridable="yes">您必須重新啟動系統，才能使對 [2] 的設定變更生效。請按一下 [是] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [否]。</String>
+    <String Id="Error1702" Overridable="yes">安裝程式必須重新啟動您的系統才能繼續設定 [2]。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>
+    <String Id="Error1703" Overridable="yes">您必須重新啟動系統，才能使對 [2] 的設定變更生效。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>
     <String Id="Error1704" Overridable="yes">[2] 的安裝目前已暫停。您必須復原該安裝所做的變更才能繼續。是否要復原那些變更?</String>
     <String Id="Error1705" Overridable="yes">本產品先前的安裝正在進行中，您必須復原該安裝所做的變更才能繼續。是否要復原那些變更?</String>
     <String Id="Error1706" Overridable="yes">找不到產品 [2] 的安裝套件。請試著使用有效的安裝套件 '[3]' 再安裝一次。</String>
@@ -488,7 +488,7 @@
     <String Id="Error1708" Overridable="yes">安裝失敗。</String>
     <String Id="Error1709" Overridable="yes">產品: [2] -- [3]</String>
     <String Id="Error1710" Overridable="yes">您可以將電腦還原成先前的狀態或稍後再繼續安裝。要還原嗎?</String>
-    <String Id="Error1711" Overridable="yes">寫入安裝資訊至磁碟時發生錯誤。請檢查確定有足夠的可用磁碟空間，然後按一下 [重試]，或按一下 [取消] 結束安裝。</String>
+    <String Id="Error1711" Overridable="yes">寫入安裝資訊至磁碟時發生錯誤。請檢查確定有足夠的可用磁碟空間，然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束安裝。</String>
     <String Id="Error1712" Overridable="yes">找不到將您的電腦還原為之前狀態所需的一個或多個檔案。無法還原。</String>
     <String Id="Error1713" Overridable="yes">[2] 無法安裝其中一項必要的產品。請連絡技術支援團隊。{{系統錯誤: [3]。}}</String>
     <String Id="Error1714" Overridable="yes">無法移除舊版的 [2]。請連絡技術支援團隊。{{系統錯誤: [3]。}}</String>
@@ -512,8 +512,8 @@
     <String Id="Error1732" Overridable="yes">若要完成 [2] 的安裝，您必須重新啟動電腦。這部電腦目前有其他使用者登入，重新啟動可能會造成他們工作遺失。是否要立即重新啟動?</String>
     <String Id="Error1801" Overridable="yes">路徑 [2] 無效。請指定有效的路徑。</String>
     <String Id="Error1802" Overridable="yes">記憶體不足，重試之前請先關閉其他應用程式。</String>
-    <String Id="Error1803" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [重試]，或按一下 [取消] 回到上次選取的磁碟機代號。</String>
-    <String Id="Error1804" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [重試]，或按一下 [取消] 返回瀏覽對話方塊，並選取其他磁碟機代號。</String>
+    <String Id="Error1803" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 回到上次選取的磁碟機代號。</String>
+    <String Id="Error1804" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 返回瀏覽對話方塊，並選取其他磁碟機代號。</String>
     <String Id="Error1805" Overridable="yes">資料夾 [2] 不存在，請輸入現有資料夾的路徑。</String>
     <String Id="Error1806" Overridable="yes">您的權限不足，無法讀取這個資料夾。</String>
     <String Id="Error1807" Overridable="yes">無法判斷安裝的有效目的地資料夾。</String>
@@ -561,7 +561,7 @@
     <String Id="UITextKB" Overridable="yes">KB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
     <String Id="UITextMenuAbsent" Overridable="yes">整個功能將無法使用</String>
-    <String Id="UITextMenuAdvertise" Overridable="yes">功能會在必要時才安裝</String>
+    <String Id="UITextMenuAdvertise" Overridable="yes">這項功能將在需要時才進行安裝</String>
     <String Id="UITextMenuAllCD" Overridable="yes">整個功能將安裝成從光碟執行</String>
     <String Id="UITextMenuAllLocal" Overridable="yes">整個功能將安裝在本機硬碟上</String>
     <String Id="UITextMenuAllNetwork" Overridable="yes">整個功能將安裝成從網路執行</String>

@@ -68,6 +68,15 @@ static HRESULT AcquireContainerOrPayload(
     __in DWORD64 qwTotalCacheSize,
     __inout DWORD64* pqwTotalCacheProgress
     );
+static HRESULT LayoutOrCachePayload(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_opt HANDLE hPipe,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPath,
+    __in BOOL fMove
+    );
 static HRESULT PromptForSource(
     __in BURN_USER_EXPERIENCE* pUX,
     __in_z LPCWSTR wzPackageOrContainerId,
@@ -242,8 +251,6 @@ extern "C" HRESULT ApplyRegister(
     )
 {
     HRESULT hr = S_OK;
-    BYTE* pbBuffer = NULL;
-    SIZE_T cbBuffer = 0;
 
     int nResult = pEngineState->userExperience.pUserExperience->OnRegisterBegin();
     hr = HRESULT_FROM_VIEW(nResult);
@@ -275,23 +282,11 @@ extern "C" HRESULT ApplyRegister(
     }
 
     // save engine state
-    hr = CoreSerializeEngineState(pEngineState, &pbBuffer, &cbBuffer);
-    ExitOnFailure(hr, "Failed to serialize engine state.");
-
-    if (pEngineState->registration.fPerMachine)
-    {
-        hr = ElevationSaveState(pEngineState->hElevatedPipe, pbBuffer, cbBuffer);
-        ExitOnFailure(hr, "Failed to save engine state in per-machine process.");
-    }
-    else
-    {
-        hr = RegistrationSaveState(&pEngineState->registration, pbBuffer, cbBuffer);
-        ExitOnFailure(hr, "Failed to save engine state.");
-    }
+    hr = CoreSaveEngineState(pEngineState);
+    ExitOnFailure(hr, "Failed to save engine state.");
 
 LExit:
     pEngineState->userExperience.pUserExperience->OnRegisterComplete(hr);
-    ReleaseBuffer(pbBuffer);
 
     return hr;
 }
@@ -327,7 +322,7 @@ extern "C" HRESULT ApplyUnregister(
             ExitOnFailure(hr, "Failed to end session in per-machine process.");
         }
 
-        hr = RegistrationSessionEnd(&pEngineState->registration, pEngineState->plan.action, fRollback, FALSE);
+        hr = RegistrationSessionEnd(&pEngineState->registration, pEngineState->plan.action, fRollback, FALSE, &pEngineState->resumeMode);
         ExitOnFailure(hr, "Failed to end session in per-user process.");
     }
 
@@ -395,18 +390,18 @@ extern "C" HRESULT ApplyCache(
         case BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD:
             if (pCacheAction->cachePayload.pPackage->fPerMachine)
             {
-                hr = ElevationCachePayload(hPipe, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
+                hr = LayoutOrCachePayload(pUX, hPipe, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
                 ExitOnFailure(hr, "Failed to cache per-machine payload.");
             }
             else
             {
-                hr = CachePayload(pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
+                hr = LayoutOrCachePayload(pUX, NULL, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
                 ExitOnFailure(hr, "Failed to cache per-user payload.");
             }
             break;
 
         case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
-            hr = CachePayload(pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove);
+            hr = LayoutOrCachePayload(pUX, NULL, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
             ExitOnFailure(hr, "Failed to layout payload.");
             break;
 
@@ -504,7 +499,7 @@ extern "C" HRESULT ApplyExecute(
             UNREFERENCED_PARAMETER(hrRollback);
 
             // If the rollback boundary is vital, end execution here.
-            if (pRollbackBoundary->fVital)
+            if (pRollbackBoundary && pRollbackBoundary->fVital)
             {
                 *pfRollback = TRUE;
                 ExitFunction();
@@ -771,6 +766,49 @@ LExit:
         (*pqwCacheProgress) += pContainer ? pContainer->qwFileSize : pPayload->qwFileSize;
     }
 
+    return hr;
+}
+
+static HRESULT LayoutOrCachePayload(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_opt HANDLE hPipe,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fRetry = FALSE;
+
+    do
+    {
+        fRetry = FALSE;
+
+        int nResult = pUX->pUserExperience->OnCacheVerifyBegin(pPackage->sczId, pPayload->sczKey);
+        hr = HRESULT_FROM_VIEW(nResult);
+        ExitOnRootFailure(hr, "UX aborted cache verify begin.");
+
+        if (hPipe)
+        {
+            hr = ElevationCachePayload(hPipe, pPackage, pPayload, wzUnverifiedPath, fMove);
+        }
+        else
+        {
+            hr = CachePayload(pPackage, pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
+        }
+
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage->sczId, pPayload->sczKey, hr);
+        if (FAILED(hr) && IDRETRY == nResult)
+        {
+            fRetry = TRUE;
+            hr = S_OK;
+        }
+    } while (fRetry);
+    ExitOnFailure(hr, "Failed to layout or cache payload.");
+
+LExit:
     return hr;
 }
 

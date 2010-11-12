@@ -83,7 +83,7 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Для выхода из мастера установки нажмите кнопку "Готово".</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Нажмите кнопку "Готово", чтобы выйти из мастера установки.</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}Установка [ProductName] завершена</String>
 
     <String Id="FatalError_Title" Overridable="yes">Установка [ProductName]</String>
@@ -106,7 +106,7 @@
     <String Id="FilesInUseExit" Overridable="yes">В&amp;ыход</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="FilesInUseText" Overridable="yes">Следующие приложения используют файлы, нуждающиеся в обновлении. Закройте эти приложения, а затем нажмите кнопку "&amp;Повторить" для продолжения установки или "Выход" для ее завершения.</String>
-    <String Id="FilesInUseDescription" Overridable="yes">Некоторые файлы, нуждающиеся в обновлении, в данный момент используются.</String>
+    <String Id="FilesInUseDescription" Overridable="yes">Некоторые файлы, которые должны быть обновлены, в данный момент используются.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Используемые файлы</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">Установка [ProductName]</String>
@@ -149,29 +149,29 @@
     <String Id="MaintenanceTypeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="MaintenanceTypeDlgDescription" Overridable="yes">Выберите операцию, которую следует выполнить.</String>
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Изменение, восстановление или удаление установки</String>
-    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Позволяет изменить набор устанавливаемых компонентов.</String>
+    <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Позволяет изменить параметры установки компонентов.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">У [ProductName] нет независимо выбираемых компонентов.</String>
-    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Удаление программы [ProductName] с компьютера.</String>
+    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Удаление [ProductName] с компьютера.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">Невозможно удалить [ProductName].</String>
     <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Исправление ошибок в последней установке путем восстановления отсутствующих и поврежденных файлов, ярлыков и записей реестра.</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">Невозможно восстановить [ProductName].</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Мастер установки позволяет выбрать способ установки или удаления компонентов [ProductName] на этом компьютере. Для продолжения нажмите кнопку "Далее". Для выхода из мастера установки нажмите кнопку "Отмена".</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Мастер установки позволяет изменить способ установки или удаления компонентов [ProductName] на компьютере. Нажмите кнопку "Далее", чтобы продолжить, или кнопку "Отмена", чтобы выйти из мастера установки.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Вас приветствует мастер установки [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">Файлы, нуждающиеся в обновлении, используются в следующих приложениях. Мастер установки может закрыть и попробовать перезапустить их или перезагрузить компьютер позднее.</String>
-    <String Id="MsiRMFilesInUseDescription" Overridable="yes">Некоторые файлы, нуждающиеся в обновлении, в данный момент используются.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">Следующие приложения используют файлы, нуждающиеся в обновлении. Мастер установки может закрыть их и попробовать перезапустить их; также можно перезагрузить компьютер позднее.</String>
+    <String Id="MsiRMFilesInUseDescription" Overridable="yes">Некоторые файлы, которые должны быть обновлены, в данный момент используются.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Используемые файлы</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">&amp;Закрыть приложения и попытаться перезапустить их.</String>
     <String Id="MsiRMFilesInUseDontUseRM" Overridable="yes">&amp;Не закрывать приложения. Потребуется перезагрузка.</String>
 
     <String Id="OutOfDiskDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="OutOfDiskDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="OutOfDiskDlgText" Overridable="yes">На выделенных томах недостаточно свободного места для установки выбранных компонентов. Можно удалить некоторые файлы с выделенных томов, установить меньшее количество компонентов или выбрать другой диск для установки.</String>
+    <String Id="OutOfDiskDlgText" Overridable="yes">На выделенных томах недостаточно свободного места для выбранных сейчас компонентов. Удалите несколько файлов с выделенных томов, установите меньшее количество компонентов либо выберите другой конечный диск.</String>
     <String Id="OutOfDiskDlgDescription" Overridable="yes">На диске недостаточно места для установки.</String>
     <String Id="OutOfDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Недостаточно места на диске</String>
     <String Id="OutOfDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
@@ -186,20 +186,20 @@
 
     <String Id="PrepareDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">Подождите, пока выполняется подготовка к установке.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">Подождите, пока мастер выполняет подготовку к установке.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Вас приветствует мастер установки [ProductName]</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="ProgressDlgTextInstalling" Overridable="yes">Подождите, пока мастер установит [ProductName].</String>
+    <String Id="ProgressDlgTextInstalling" Overridable="yes">Подождите, пока мастер установки устанавливает [ProductName].</String>
     <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Установка [ProductName]</String>
-    <String Id="ProgressDlgTextChanging" Overridable="yes">Подождите, пока мастер изменит [ProductName].</String>
+    <String Id="ProgressDlgTextChanging" Overridable="yes">Подождите, пока мастер установки изменяет [ProductName].</String>
     <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Изменение [ProductName]</String>
-    <String Id="ProgressDlgTextRepairing" Overridable="yes">Подождите, пока мастер восстановит [ProductName].</String>
+    <String Id="ProgressDlgTextRepairing" Overridable="yes">Подождите, пока мастер установки восстанавливает [ProductName].</String>
     <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Восстановление [ProductName]</String>
-    <String Id="ProgressDlgTextRemoving" Overridable="yes">Подождите, пока мастер удалит [ProductName].</String>
+    <String Id="ProgressDlgTextRemoving" Overridable="yes">Подождите, пока мастер установки удаляет [ProductName].</String>
     <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Удаление [ProductName]</String>
-    <String Id="ProgressDlgTextUpdating" Overridable="yes">Подождите, пока мастер установки обновит [ProductName].</String>
+    <String Id="ProgressDlgTextUpdating" Overridable="yes">Подождите, пока мастер установки обновляет [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Идет обновление [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Выполнено</String>
     <String Id="ProgressDlgStatusLabel" Overridable="yes">Состояние:</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Установить</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">Мастер установки завершит установку [ProductName] на ваш компьютер. Для продолжения нажмите кнопку "Установить". Для выхода из мастера установки нажмите кнопку "Отмена".</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">Мастер установки завершит установку [ProductName] на компьютер. Нажмите кнопку "Установить", чтобы продолжить, или кнопку "Отмена", чтобы выйти из мастера установки.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Продолжение работы мастера установки [ProductName]</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">Установка [ProductName]</String>
@@ -233,16 +233,16 @@
     <String Id="VerifyReadyDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">&amp;Установить</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Чтобы начать установку, нажмите кнопку "Установить". Если необходимо просмотреть или изменить какие-либо параметры установки, нажмите кнопку "Назад". Чтобы выйти из мастера, нажмите кнопку "Отмена".</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">Нажмите кнопку "Установить", чтобы начать установку. Нажмите кнопку "Назад", чтобы проверить или изменить параметры установки. Нажмите кнопку "Отмена", чтобы выйти из мастера.</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}Все готово к установке [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">&amp;Изменить</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Чтобы начать установку, нажмите кнопку "Изменить". Если необходимо просмотреть или изменить какие-либо параметры установки, нажмите кнопку "Назад". Чтобы выйти из мастера, нажмите кнопку "Отмена".</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">Нажмите кнопку "Изменить", чтобы начать установку. Нажмите кнопку "Назад", чтобы проверить или изменить параметры установки. Нажмите кнопку "Отмена", чтобы выйти из мастера.</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}Все готово к изменению [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">&amp;Восстановить</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Чтобы восстановить установку [ProductName], нажмите кнопку "Восстановить". Если необходимо просмотреть или изменить какие-либо параметры установки, нажмите кнопку "Назад". Чтобы выйти из мастера, нажмите кнопку "Отмена".</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">Нажмите кнопку "Восстановить", чтобы восстановить установку [ProductName]. Нажмите кнопку "Назад", чтобы проверить или изменить параметры установки. Нажмите кнопку "Отмена", чтобы выйти из мастера.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Все готово к восстановлению [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Удалить</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Чтобы удалить [ProductName] с этого компьютера, нажмите кнопку "Удалить". Если необходимо просмотреть или изменить какие-либо параметры установки, нажмите кнопку "Назад". Чтобы выйти из мастера, нажмите кнопку "Отмена".</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Нажмите кнопку "Удалить", чтобы удалить [ProductName] с компьютера. Нажмите кнопку "Назад", чтобы проверить или изменить параметры установки. Нажмите кнопку "Отмена", чтобы выйти из мастера.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Все готово к удалению [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Обновить</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Нажмите кнопку "Обновить", чтобы обновить [ProductName] на компьютере. Нажмите кнопку "Назад", чтобы проверить или изменить параметры установки. Нажмите кнопку "Отмена", чтобы выйти из мастера.</String>
@@ -256,7 +256,7 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">Установка [ProductName]</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">Мастер установки установит [ProductName] на ваш компьютер. Нажмите кнопку "Далее" для продолжения или кнопку "Отмена" для выхода из мастера установки.</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">Мастер установки установит [ProductName] на компьютере. Нажмите кнопку "Далее", чтобы продолжить, или кнопку "Отмена", чтобы выйти из мастера установки.</String>
     <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">Мастер установки обновит [ProductName] на компьютере. Нажмите кнопку "Далее", чтобы продолжить, или кнопку "Отмена", чтобы выйти из мастера установки.</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Вас приветствует мастер установки [ProductName]</String>
 
@@ -413,7 +413,7 @@
     <String Id="Error18" Overridable="yes">Установщик не отвечает.</String>
     <String Id="Error19" Overridable="yes">Установщик преждевременно завершил работу.</String>
     <String Id="Error20" Overridable="yes">Подождите, пока Windows настроит программу [ProductName]</String>
-    <String Id="Error21" Overridable="yes">Сбор необходимой информации...</String>
+    <String Id="Error21" Overridable="yes">Идет сбор необходимых данных...</String>
     <String Id="Error22" Overridable="yes">Удаление старых версий этого приложения...</String>
     <String Id="Error23" Overridable="yes">Подготовка к удалению старых версий этого приложения...</String>
     <String Id="Error32" Overridable="yes">Установка {[ProductName]} успешно завершена.</String>
@@ -486,7 +486,7 @@
     <String Id="Error1706" Overridable="yes">Пакет установки продукта [2] не найден. Попробуйте повторить установку, используя работоспособную копию пакета установки "[3]".</String>
     <String Id="Error1707" Overridable="yes">Установка успешно завершена.</String>
     <String Id="Error1708" Overridable="yes">Сбой установки.</String>
-    <String Id="Error1709" Overridable="yes">Продукт: [2] - [3]</String>
+    <String Id="Error1709" Overridable="yes">Продукт: [2] — [3]</String>
     <String Id="Error1710" Overridable="yes">Можно либо восстановить предыдущее состояние компьютера, либо продолжить установку позже. Восстановить предыдущее состояние?</String>
     <String Id="Error1711" Overridable="yes">При записи информации об установке на диск возникла ошибка. Убедитесь в наличии требуемого свободного места на диске и нажмите кнопку "Повторить" либо нажмите кнопку "Отмена" для прекращения установки.</String>
     <String Id="Error1712" Overridable="yes">Не удалось найти один или несколько файлов, необходимых для восстановления предыдущего состояния компьютера. Восстановление невозможно.</String>
@@ -568,38 +568,38 @@
     <String Id="UITextMenuCD" Overridable="yes">Будет установлен для запуска с компакт-диска</String>
     <String Id="UITextMenuLocal" Overridable="yes">Будет установлен на локальный жесткий диск</String>
     <String Id="UITextMenuNetwork" Overridable="yes">Будет установлен для запуска из сети</String>
-    <String Id="UITextNewFolder" Overridable="yes">Folder|Новая папка</String>
-    <String Id="UITextScriptInProgress" Overridable="yes">Сбор необходимой информации...</String>
-    <String Id="UITextSelAbsentAbsent" Overridable="yes">Этот компонент не будет установлен</String>
-    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Этот компонент будет установлен при необходимости</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">Этот компонент будет установлен для запуска с компакт-диска</String>
-    <String Id="UITextSelAbsentLocal" Overridable="yes">Этот компонент будет установлен на локальный жесткий диск</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">Этот компонент будет установлен для запуска из сети</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Этот компонент будет полностью недоступен</String>
+    <String Id="UITextNewFolder" Overridable="yes">Папка|Новая папка</String>
+    <String Id="UITextScriptInProgress" Overridable="yes">Идет сбор необходимых данных...</String>
+    <String Id="UITextSelAbsentAbsent" Overridable="yes">Компонент не будет установлен</String>
+    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Компонент будет установлен при необходимости</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">Компонент будет установлен для запуска с компакт-диска</String>
+    <String Id="UITextSelAbsentLocal" Overridable="yes">Компонент будет установлен на локальный жесткий диск</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">Компонент будет установлен для запуска из сети</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Компонент будет полностью недоступен</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Будет установлен при необходимости</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Этот компонент будет доступен для запуска с компакт-диска</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Этот компонент будет установлен на локальный жесткий диск</String>
-    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Этот компонент будет доступен для запуска из сети</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">Этот компонент будет полностью удален и станет недоступен для запуска с компакт-диска</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">Этот компонент станет недоступен для запуска с компакт-диска и будет установлен при необходимости</String>
-    <String Id="UITextSelCDCD" Overridable="yes">Этот компонент останется доступен для запуска с компакт-диска</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Этот компонент станет недоступен для запуска с компакт-диска и будет установлен на локальный жесткий диск</String>
-    <String Id="UITextSelChildCostNeg" Overridable="yes">Этот компонент освободит [1] на жестком диске.</String>
-    <String Id="UITextSelChildCostPos" Overridable="yes">Для этого компонента требуется [1] на жестком диске.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">Компиляция затрат для этого компонента...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Этот компонент будет полностью удален</String>
-    <String Id="UITextSelLocalAdvertise" Overridable="yes">Этот компонент будет удален с локального жесткого диска и будет установлен при необходимости</String>
-    <String Id="UITextSelLocalCD" Overridable="yes">Этот компонент будет удален с локального жесткого диска, но останется доступен для запуска с компакт-диска</String>
-    <String Id="UITextSelLocalLocal" Overridable="yes">Этот компонент останется на локальном жестком диске</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Этот компонент будет удален с локального жесткого диска, но останется доступен для запуска из сети</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">Этот компонент будет полностью удален и станет недоступен для запуска из сети</String>
-    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Этот компонент станет недоступен для запуска из сети и будет установлен при необходимости</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">Этот компонент станет недоступен для запуска из сети и будет установлен на локальный жесткий диск</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">Этот компонент останется доступен для запуска из сети</String>
-    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Этот компонент освободит [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Подкомпоненты освободят [4] на жестком диске.</String>
-    <String Id="UITextSelParentCostNegPos" Overridable="yes">Этот компонент освободит [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Для подкомпонентов требуется [4] на жестком диске.</String>
-    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Для этого компонента требуется [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Подкомпоненты освободят [4] на жестком диске.</String>
-    <String Id="UITextSelParentCostPosPos" Overridable="yes">Для этого компонента требуется [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Для подкомпонентов требуется [4] на жестком диске.</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Компонент будет доступен для запуска с компакт-диска</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Компонент будет установлен на локальный жесткий диск</String>
+    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Компонент будет доступен для запуска из сети</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">Компонент будет полностью удален, его нельзя будет запустить с компакт-диска</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">Компонент нельзя будет запустить с компакт-диска, он будет установлен при необходимости</String>
+    <String Id="UITextSelCDCD" Overridable="yes">Компонент можно будет запустить с компакт-диска</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Компонент нельзя будет запустить с компакт-диска, он будет установлен на локальный жесткий диск</String>
+    <String Id="UITextSelChildCostNeg" Overridable="yes">Компонент освободит [1] на жестком диске.</String>
+    <String Id="UITextSelChildCostPos" Overridable="yes">Для компонента требуется [1] на жестком диске.</String>
+    <String Id="UITextSelCostPending" Overridable="yes">Идет подсчет затрат для этого компонента...</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Компонент будет полностью удален</String>
+    <String Id="UITextSelLocalAdvertise" Overridable="yes">Компонент будет удален с локального жесткого диска, но будет доступен для установки при необходимости</String>
+    <String Id="UITextSelLocalCD" Overridable="yes">Компонент будет удален с локального жесткого диска, но будет доступен для запуска с компакт-диска</String>
+    <String Id="UITextSelLocalLocal" Overridable="yes">Компонент будет доступен на локальном жестком диске</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Компонент будет удален с локального жесткого диска, но будет доступен для запуска из сети</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">Компонент будет полностью удален, его нельзя будет запустить из сети</String>
+    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Компонент больше нельзя будет запустить из сети, он будет установлен при необходимости</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">Компонент нельзя будет запустить из сети, он будет установлен на локальный жесткий диск</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">Компонент можно будет запустить из сети</String>
+    <String Id="UITextSelParentCostNegNeg" Overridable="yes">Компонент освободит [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Подкомпоненты освободят [4] на жестком диске.</String>
+    <String Id="UITextSelParentCostNegPos" Overridable="yes">Компонент освободит [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Для подкомпонентов требуется [4] на жестком диске.</String>
+    <String Id="UITextSelParentCostPosNeg" Overridable="yes">Для компонента требуется [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Подкомпоненты освободят [4] на жестком диске.</String>
+    <String Id="UITextSelParentCostPosPos" Overridable="yes">Для компонента требуется [1] на жестком диске. Выбрано подкомпонентов: [2] из [3]. Для подкомпонентов требуется [4] на жестком диске.</String>
     <String Id="UITextTimeRemaining" Overridable="yes">Осталось: {[1] мин. }{[2] сек.}</String>
     <String Id="UITextVolumeCostAvailable" Overridable="yes">Доступно</String>
     <String Id="UITextVolumeCostDifference" Overridable="yes">Разница</String>

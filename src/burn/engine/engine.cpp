@@ -193,16 +193,28 @@ static HRESULT RunNormal(
     IBootstrapperEngine* pEngineForApplication = NULL;
     BOOL fStartupCalled = FALSE;
     BOOL fRet = FALSE;
+    BOOL fContinueExecution = TRUE;
     MSG msg = { };
 
     // Initialize logging and the thread's message queue.
     hr = LoggingOpen(&pEngineState->log, wzCommandLine, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to open log.");
 
+    hr = ConditionGlobalCheck(&pEngineState->variables, &pEngineState->condition, pEngineState->command.display, &pEngineState->userExperience.dwExitCode, &fContinueExecution);
+    ExitOnFailure(hr, "Failed to check global conditions");
+
+    if (!fContinueExecution)
+    {
+        LogId(REPORT_STANDARD, MSG_FAILED_CONDITION_CHECK);
+
+        // If the block told us to abort, abort!
+        ExitFunction1(hr = S_OK);
+    }
+
     ::PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
     dwThreadId = ::GetCurrentThreadId();
 
-    if (pEngineState->userExperience.fSplashScreen && BOOTSTRAPPER_DISPLAY_FULL == pEngineState->command.display)
+    if (pEngineState->userExperience.fSplashScreen && BOOTSTRAPPER_DISPLAY_NONE < pEngineState->command.display)
     {
         SplashScreenCreate(hInstance, NULL, &pEngineState->command.hwndSplashScreen);
     }
@@ -339,7 +351,7 @@ static HRESULT RunUncache(
 
     if (pEngineState->registration.fRegisterArp && fRunningPerMachine == pEngineState->registration.fPerMachine)
     {
-        hr = RegistrationSessionEnd(&pEngineState->registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, fRunningPerMachine);
+        hr = RegistrationSessionEnd(&pEngineState->registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, fRunningPerMachine, NULL);
     }
 
     hr = S_OK;

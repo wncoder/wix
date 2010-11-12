@@ -66,11 +66,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
             string msBuildDirectory = Environment.GetEnvironmentVariable("WixTestMSBuildDirectory");
 
             // check the combinations of attributes
-            if (expectedErrors.Length == 0 && expectedResult.Length == 0)
-            {
-                throw new WixException(WixErrors.ExpectedAttributes(null, element.Name, "ExpectedErrors", "ExpectedResult"));
-            }
-
             if (expectedErrors.Length > 0 && expectedResult.Length > 0)
             {
                 throw new WixException(WixErrors.IllegalAttributeWithOtherAttribute(null, element.Name, "ExpectedErrors", "ExpectedResult"));

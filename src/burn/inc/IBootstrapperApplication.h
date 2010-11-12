@@ -258,6 +258,17 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         __in HRESULT hrStatus
         ) = 0;
 
+    STDMETHOD_(int, OnCacheVerifyBegin)(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPayloadId
+        ) = 0;
+
+    STDMETHOD_(int, OnCacheVerifyComplete)(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPayloadId,
+        __in HRESULT hrStatus
+        ) = 0;
+
     STDMETHOD_(void, OnCachePackageComplete)(
         __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus

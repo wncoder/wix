@@ -13,41 +13,42 @@
     <p>Burn offers a set of commonly-used variables so you can use them without defining your own. Here is the list of 
         the built-in variable names:</p>
     <ul>
-        <li>AdminToolsFolder</li>
-        <li>AppDataFolder</li>
-        <li>CommonAppDataFolder</li>
-        <li>CommonFiles64Folder</li>
-        <li>CommonFilesFolder</li>
-        <li>CompatibilityMode</li>
-        <li>DesktopFolder</li>
-        <li>FavoritesFolder</li>
-        <li>FontsFolder</li>
-        <li>LocalAppDataFolder</li>
-        <li>MyPicturesFolder</li>
-        <li>NTProductType</li>
-        <li>NTSuiteBackOffice</li>
-        <li>NTSuiteDataCenter</li>
-        <li>NTSuiteEnterprise</li>
-        <li>NTSuitePersonal</li>
-        <li>NTSuiteSmallBusiness</li>
-        <li>NTSuiteSmallBusinessRestricted</li>
-        <li>NTSuiteWebServer</li>
-        <li>PersonalFolder</li>
-        <li>Privileged</li>
-        <li>ProgramFiles64Folder</li>
-        <li>ProgramFilesFolder</li>
-        <li>ProgramMenuFolder</li>
-        <li>SendToFolder</li>
-        <li>StartMenuFolder</li>
-        <li>StartupFolder</li>
-        <li>SystemFolder</li>
-        <li>TempFolder</li>
-        <li>TemplateFolder</li>
-        <li>VersionMsi</li>
-        <li>VersionNT</li>
-        <li>VersionNT64</li>
-        <li>WindowsFolder</li>
-        <li>WindowsVolume</li>
+        <li>AdminToolsFolder - gets the well-known folder for CSIDL_ADMINTOOLS.</li>
+        <li>AppDataFolder - gets the well-known folder for CSIDL_APPDATA.</li>
+        <li>CommonAppDataFolder - gets the well-known folder for CSIDL_COMMON_APPDATA.</li>
+        <li>CommonFiles64Folder - gets the well-known folder for FOLDERID_ProgramFilesCommonX64.</li>
+        <li>CommonFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMONX86.</li>
+        <li>CompatibilityMode - non-zero if the operating system launced the bootstrapper in compatibility mode.</li>
+        <li>DesktopFolder - gets the well-known folder for CSIDL_DESKTOP.</li>
+        <li>FavoritesFolder - gets the well-known folder for CSIDL_FAVORITES.</li>
+        <li>FontsFolder - gets the well-known folder for CSIDL_FONTS.</li>
+        <li>LocalAppDataFolder - gets the well-known folder for CSIDL_LOCAL_APPDATA.</li>
+        <li>MyPicturesFolder - gets the well-known folder for CSIDL_MYPICTURES.</li>
+        <li>NTProductType - numeric product type from OS version information.</li>
+        <li>NTSuiteBackOffice - non-zero if OS version suite is Back Office.</li>
+        <li>NTSuiteDataCenter - non-zero if OS version suite is Datacenter.</li>
+        <li>NTSuiteEnterprise - non-zero if OS version suite is Enterprise.</li>
+        <li>NTSuitePersonal - non-zero if OS version suite is Personal.</li>
+        <li>NTSuiteSmallBusiness - non-zero if OS version suite is Small Business.</li>
+        <li>NTSuiteSmallBusinessRestricted - non-zero if OS version suite is Restricted Small Business.</li>
+        <li>NTSuiteWebServer - non-zero if OS version suite is Web Server.</li>
+        <li>PersonalFolder - gets the well-known folder for CSIDL_PERSONAL.</li>
+        <li>Privileged - non-zero if the process is running elevated (on Vista+) or as an Administrator (on Windows XP).</li>
+        <li>ProgramFiles64Folder - gets the well-known folder for FOLDERID_ProgramFilesX64.</li>
+        <li>ProgramFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILESX86</li>
+        <li>ProgramMenuFolder - gets the well-known folder for CSIDL_PROGRAMS.</li>
+        <li>SendToFolder - gets the well-known folder for CSIDL_SENDTO.</li>
+        <li>ServicePackLevel - numeric value representing the installed OS service pack.</li>
+        <li>StartMenuFolder - gets the well-known folder for CSIDL_STARTMENU.</li>
+        <li>StartupFolder - gets the well-known folder for CSIDL_STARTUP.</li>
+        <li>SystemFolder - gets the well-known folder for CSIDL_SYSTEMX86.</li>
+        <li>TempFolder - gets the well-known folder for temp location</li>
+        <li>TemplateFolder - gets the well-known folder for CSIDL_TEMPLATES.</li>
+        <li>VersionMsi - version value representing the Windows Installer engine version.</li>
+        <li>VersionNT - version value representing the OS version.</li>
+        <li>VersionNT64 - version value representing the OS version if 64-bit. Undefined if running a 32-bit operating system.</li>
+        <li>WindowsFolder - gets the well-known folder for CSIDL_WINDOWS.</li>
+        <li>WindowsVolume - gets the well-known folder for the windows volume.</li>
     </ul>
     </body>
 </html>
