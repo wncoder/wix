@@ -416,6 +416,7 @@ namespace Microsoft.VisualStudio.Package
                 task.Text = errorEvent.Message;
                 task.Category = TaskCategory.BuildCompile;
                 task.HierarchyItem = hierarchy;
+                task.Navigate += NavigateTo;
 
                 return task;
             });
@@ -560,6 +561,73 @@ namespace Microsoft.VisualStudio.Package
         private void ClearCachedVerbosity()
         {
             this.haveCachedVerbosity = false;
+        }
+
+        /// <summary>
+        /// Handle Task.NavigateTo by opening the task's document and navigating to line/offset
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="arguments"></param>
+        private void NavigateTo(object sender, EventArgs arguments)
+        {
+            Microsoft.VisualStudio.Shell.Task task = sender as Microsoft.VisualStudio.Shell.Task;
+            if (task == null)
+            {
+                throw new ArgumentException("sender");
+            }
+
+            // Get the doc data for the task's document
+            if (String.IsNullOrEmpty(task.Document))
+            {
+                return;
+            }
+
+            IVsUIShellOpenDocument openDoc = serviceProvider.GetService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+            if (openDoc == null)
+            {
+                return;
+            }
+
+            IVsWindowFrame frame;
+            IOleServiceProvider sp;
+            IVsUIHierarchy hier;
+            uint itemid;
+            Guid logicalView = VSConstants.LOGVIEWID_Code;
+
+            if (Microsoft.VisualStudio.ErrorHandler.Failed(openDoc.OpenDocumentViaProject(task.Document, ref logicalView, out sp, out hier, out itemid, out frame)) || frame == null)
+            {
+                return;
+            }
+
+            object docData;
+            frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
+
+            // Get the VsTextBuffer
+            VsTextBuffer buffer = docData as VsTextBuffer;
+            if (buffer == null)
+            {
+                IVsTextBufferProvider bufferProvider = docData as IVsTextBufferProvider;
+                if (bufferProvider != null)
+                {
+                    IVsTextLines lines;
+                    Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(bufferProvider.GetTextBuffer(out lines));
+                    buffer = lines as VsTextBuffer;
+                    Debug.Assert(buffer != null, "IVsTextLines does not implement IVsTextBuffer");
+                    if (buffer == null)
+                    {
+                        return;
+                    }
+                }
+            }
+
+            // Finally, perform the navigation.
+            IVsTextManager mgr = serviceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
+            if (mgr == null)
+            {
+                return;
+            }
+
+            mgr.NavigateToLineAndColumn(buffer, ref logicalView, task.Line, task.Column, task.Line, task.Column);
         }
 
         #endregion helpers

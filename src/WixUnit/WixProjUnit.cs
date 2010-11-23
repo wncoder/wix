@@ -64,6 +64,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
             string testName = element.ParentNode.Attributes["Name"].Value;
             string toolsDirectory = element.GetAttribute("ToolsDirectory");
             string msBuildDirectory = Environment.GetEnvironmentVariable("WixTestMSBuildDirectory");
+            string msBuildToolsVersion = Environment.GetEnvironmentVariable("WixTestMSBuildToolsVersion");
 
             // check the combinations of attributes
             if (expectedErrors.Length > 0 && expectedResult.Length > 0)
@@ -146,6 +147,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
                 commandLine.AppendFormat(" /property:OutputPath=\"{0}\\\\\"", Path.GetDirectoryName(outputFile));
             }
             previousUnitResults.OutputFiles.Add(outputFile);
+
+            if (!String.IsNullOrEmpty(msBuildToolsVersion))
+            {
+                commandLine.AppendFormat(" /tv:{0}", msBuildToolsVersion);
+            }
 
             // add the source file as the last parameter
             commandLine.AppendFormat(" \"{0}\"", sourceFile);

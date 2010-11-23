@@ -78,85 +78,6 @@
       </xs:simpleContent>
     </xs:complexType>
   </xs:element>
-  <xs:element name="ComponentSearch">
-    <xs:annotation>
-      <xs:documentation>Describes a component search.</xs:documentation>
-      <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-      </xs:appinfo>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:attributeGroup ref="SearchCommonAttributes" />
-      <xs:attribute name="Guid" type="xs:string" use="required">
-        <xs:annotation>
-          <xs:documentation>Component to search for.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="ProductCode" type="xs:string">
-        <xs:annotation>
-          <xs:documentation>Optional ProductCode to determine if the component is installed.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Result">
-        <xs:annotation>
-          <xs:documentation>
-                        Rather than saving the matching key path into the variable, a ComponentSearch can save an attribute of the component instead.
-                    </xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Directory">
-              <xs:annotation>
-                <xs:documentation>Saves the parent directory for the component's file key path; other types of key path are returned unmodified.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="State">
-              <xs:annotation>
-                <xs:documentation>Saves the state of the component: absent (2), locally installed (3), will run from source (4), or installed in default location (either local or from source) (5)</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="KeyPath">
-              <xs:annotation>
-                <xs:documentation>Saves the key path of the component if installed. This is the default.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="DirectorySearch">
-    <xs:annotation>
-      <xs:documentation>Describes a directory search.</xs:documentation>
-      <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-      </xs:appinfo>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:attributeGroup ref="SearchCommonAttributes" />
-      <xs:attribute name="Path" type="xs:string">
-        <xs:annotation>
-          <xs:documentation>Directory path to search for.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Result">
-        <xs:annotation>
-          <xs:documentation>
-                        Rather than saving the matching directory path into the variable, a DirectorySearch can save an attribute of the matching directory instead.
-                    </xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Exists">
-              <xs:annotation>
-                <xs:documentation>Saves true if a matching directory is found; false otherwise.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
   <xs:element name="EventSource">
     <xs:annotation>
       <xs:appinfo>
@@ -257,43 +178,6 @@
                         Equivalent to EVENTLOG_WARNING_TYPE.
                     </xs:documentation>
         </xs:annotation>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="FileSearch">
-    <xs:annotation>
-      <xs:documentation>Describes a file search.</xs:documentation>
-      <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-      </xs:appinfo>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:attributeGroup ref="SearchCommonAttributes" />
-      <xs:attribute name="Path" type="xs:string">
-        <xs:annotation>
-          <xs:documentation>File path to search for.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Result">
-        <xs:annotation>
-          <xs:documentation>
-                        Rather than saving the matching file path into the variable, a FileSearch can save an attribute of the matching file instead.
-                    </xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Exists">
-              <xs:annotation>
-                <xs:documentation>Saves true if a matching file is found; false otherwise.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="Version">
-              <xs:annotation>
-                <xs:documentation>Saves the version information for files that have it (.exe, .dll); zero-version (0.0.0.0) otherwise.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
       </xs:attribute>
     </xs:complexType>
   </xs:element>
@@ -737,53 +621,6 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
-  <xs:element name="ProductSearch">
-    <xs:annotation>
-      <xs:documentation>Describes a product search.</xs:documentation>
-      <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-      </xs:appinfo>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:attributeGroup ref="SearchCommonAttributes" />
-      <xs:attribute name="Guid" type="xs:string" use="required">
-        <xs:annotation>
-          <xs:documentation>ProductCode to search for.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Result">
-        <xs:annotation>
-          <xs:documentation>
-                        Rather than saving the product version into the variable, a ProductSearch can save another attribute of the matching product instead.
-                    </xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Version">
-              <xs:annotation>
-                <xs:documentation>Saves the version of a matching product if found; 0.0.0.0 otherwise. This is the default.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="Language">
-              <xs:annotation>
-                <xs:documentation>Saves the language of a matching product if found; empty otherwise.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="State">
-              <xs:annotation>
-                <xs:documentation>Saves the state of the product: advertised (1), absent (2), or locally installed (3).</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="Assignment">
-              <xs:annotation>
-                <xs:documentation>Saves the assignment type of the product: per-user (0), or per-machine (1).</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
   <xs:element name="RestartResource">
     <xs:annotation>
       <xs:documentation>Registers a resource with the Restart Manager.</xs:documentation>
@@ -818,96 +655,6 @@
           <xs:documentation>The name of a Windows service to register with the Restart Manager.
                     This can be a formatted value that resolves to a service name.</xs:documentation>
         </xs:annotation>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="RegistrySearch">
-    <xs:annotation>
-      <xs:documentation>Describes a registry search.</xs:documentation>
-      <xs:appinfo>
-        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-      </xs:appinfo>
-    </xs:annotation>
-    <xs:complexType>
-      <xs:attributeGroup ref="SearchCommonAttributes" />
-      <xs:attribute name="Root" use="required">
-        <xs:annotation>
-          <xs:documentation>Registry root hive to search under.</xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="HKLM">
-              <xs:annotation>
-                <xs:documentation>HKEY_LOCAL_MACHINE</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="HKCU">
-              <xs:annotation>
-                <xs:documentation>HKEY_CURRENT_USER</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="HKCR">
-              <xs:annotation>
-                <xs:documentation>HKEY_CLASSES_ROOT</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="HKU">
-              <xs:annotation>
-                <xs:documentation>HKEY_USERS</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute name="Key" type="xs:string" use="required">
-        <xs:annotation>
-          <xs:documentation>Key to search for.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Value" type="xs:string">
-        <xs:annotation>
-          <xs:documentation>Optional value to search for under the given Key.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Format">
-        <xs:annotation>
-          <xs:documentation>What format to return the value in.</xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Raw">
-              <xs:annotation>
-                <xs:documentation>Returns the unformatted value directly from the registry. For example, a REG_DWORD value of '1' is returned as '1', not '#1'.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="Compatible">
-              <xs:annotation>
-                <xs:documentation>Returns the value formatted as Windows Installer would. For example, a REG_DWORD value of '1' is returned as '#1', not '1'.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-      <xs:attribute name="ExpandEnvironmentVariables" type="YesNoType">
-        <xs:annotation>
-          <xs:documentation>Whether to expand any environment variables in REG_SZ, REG_EXPAND_SZ, or REG_MULTI_SZ values.</xs:documentation>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Result">
-        <xs:annotation>
-          <xs:documentation>
-                        Rather than saving the matching registry value into the variable, a RegistrySearch can save an attribute of the matching entry instead.
-                    </xs:documentation>
-        </xs:annotation>
-        <xs:simpleType>
-          <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="Exists">
-              <xs:annotation>
-                <xs:documentation>Saves true if a matching registry entry is found; false otherwise.</xs:documentation>
-              </xs:annotation>
-            </xs:enumeration>
-          </xs:restriction>
-        </xs:simpleType>
       </xs:attribute>
     </xs:complexType>
   </xs:element>
@@ -1254,28 +1001,6 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
-  <xs:attributeGroup name="SearchCommonAttributes">
-    <xs:attribute name="Id" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>Id of the search for ordering and dependency.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="Variable" type="xs:string" use="required">
-      <xs:annotation>
-        <xs:documentation>Name of the variable in which to place the result of the search.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="Condition" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>Condition for evaluating the search. If this evaluates to false, the search is not executed at all.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-    <xs:attribute name="After" type="xs:string">
-      <xs:annotation>
-        <xs:documentation>Id of the search that this one should come after.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:simpleType name="YesNoType">
     <xs:annotation>
       <xs:documentation>Values of this type will either be "yes" or "no".</xs:documentation>

@@ -1416,3 +1416,21 @@ EricStJ: SFBUG: 3091925 WriteIIS7ConfigChanges fails occasionally
 PMarcu: SFBUG:3105890 - Handling PID_LASTPRINTED in transforms.
 
 WixBuild: Version 3.5.2312.0
+
+AaronSte: Adding a link to make WixUI topics accessible from the
+          web-based documentation set.
+
+EricStJ: SFBUG: 3109991, 3106809 Source file with identical name is not properly linked
+         Fixing a double free in IIS7 custom action.
+
+EricStJ: SFBUG: 3105643 Cert uninstall fails with AV
+
+EricStJ: Adding logging to CoCreate in IIS7ConfigChanges
+
+RobMen: SFBUG:3112558 - remove WiX v3.6 elements from Util schema.
+
+EricStJ: SFBUG: 3112388 click in error panel does not go to error
+
+
+WixBuild: Version 3.5.2322.0
+

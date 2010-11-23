@@ -13,8 +13,10 @@
       <Topic Title="Compiler (Candle)" SourceFile="html\candle.htm"/>
       <Topic Title="Linker (Light)" SourceFile="html\light.htm"/>
       <Topic Title="Librarian (Lit)" SourceFile="html\lit.htm"/>
+      <Topic Title="Havester (Heat)" SourceFile="html\heat.htm"/>
       <Topic Title="Inscriber (Insignia)" SourceFile="html\insignia.htm" />
       <Topic Title="WixCop" SourceFile="html\wixcop.htm"/>
+      <Topic Title="Havester (Heat)" SourceFile="html\heat.htm"/>
       <Topic Title="MSI Tables to WiX Schema" SourceFile="html\msitowix.htm"/>
       <Topic Title="Code Pages" SourceFile="html\codepage.htm"/>
       <Topic Title="Useful Windows Installer Information" SourceFile="html\msi_useful_links.htm"/>

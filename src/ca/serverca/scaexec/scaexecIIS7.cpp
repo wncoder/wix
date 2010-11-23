@@ -213,15 +213,12 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     ExitOnFailure(hr, "Failed to initialize COM");
     fInitializedCom = TRUE;
 
-    hr = CoCreateInstance( __uuidof(AppHostWritableAdminManager),
+    hr = ::CoCreateInstance( __uuidof(AppHostWritableAdminManager),
                             NULL,
                             CLSCTX_INPROC_SERVER,
                             __uuidof(IAppHostWritableAdminManager),
                             reinterpret_cast<void**> (&pAdminMgr));
-    if (FAILED(hr))
-    {
-        ExitFunction();   // bail with the error result from the CoCreate to kick off a rollback
-    }
+    ExitOnFailure(hr , "Failed to open AppHostWritableAdminManager to configure IIS7");
 
     pwz = pwzData;
     while (S_OK == (hr = WcaReadIntegerFromCaData(&pwz, &iAction)))
@@ -377,7 +374,6 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
         hr = S_OK;
     }
 LExit:
-    ReleaseStr(pwzData);
     ReleaseNullObject(pAdminMgr);
 
     if (fInitializedCom)

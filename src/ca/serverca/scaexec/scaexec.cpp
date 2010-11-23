@@ -2008,7 +2008,7 @@ extern "C" UINT __stdcall WriteIIS7ConfigChanges(MSIHANDLE hInstall)
     UINT er = ERROR_SUCCESS;
     LPWSTR pwzData = NULL;
     LPWSTR pwzScriptKey = NULL;
-    WCA_CASCRIPT_HANDLE hWriteMetabaseScript = NULL;
+    WCA_CASCRIPT_HANDLE hWriteIis7Script = NULL;
 
     hr = WcaInitialize(hInstall, "WriteIIS7ConfigChanges");
     ExitOnFailure(hr, "Failed to initialize");
@@ -2017,10 +2017,10 @@ extern "C" UINT __stdcall WriteIIS7ConfigChanges(MSIHANDLE hInstall)
     ExitOnFailure(hr, "Failed to get CustomActionData");
     WcaLog(LOGMSG_TRACEONLY, "Script WriteIIS7ConfigChanges: %ls", pwzScriptKey);
 
-    hr = WcaCaScriptOpen(WCA_ACTION_INSTALL, WCA_CASCRIPT_SCHEDULED, FALSE, pwzScriptKey, &hWriteMetabaseScript);
+    hr = WcaCaScriptOpen(WCA_ACTION_INSTALL, WCA_CASCRIPT_SCHEDULED, FALSE, pwzScriptKey, &hWriteIis7Script);
     ExitOnFailure(hr, "Failed to open CaScript file");
 
-    hr = WcaCaScriptReadAsCustomActionData(hWriteMetabaseScript, &pwzData);
+    hr = WcaCaScriptReadAsCustomActionData(hWriteIis7Script, &pwzData);
     ExitOnFailure(hr, "Failed to read script into CustomAction data.");
 
     WcaLog(LOGMSG_TRACEONLY, "CustomActionData WriteIIS7ConfigChanges: %ls", pwzData);
@@ -2029,7 +2029,7 @@ extern "C" UINT __stdcall WriteIIS7ConfigChanges(MSIHANDLE hInstall)
     ExitOnFailure(hr, "WriteIIS7ConfigChanges Failed.");
 
 LExit:
-    WcaCaScriptClose(hWriteMetabaseScript, WCA_CASCRIPT_CLOSE_DELETE);
+    WcaCaScriptClose(hWriteIis7Script, WCA_CASCRIPT_CLOSE_DELETE);
     ReleaseStr(pwzScriptKey);
     ReleaseStr(pwzData);
 
