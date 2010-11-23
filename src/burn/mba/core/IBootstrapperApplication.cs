@@ -363,8 +363,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     /// </summary>
     public enum Result
     {
+        Error = -1,
         None,
-        Ok = 1,
+        Ok,
         Cancel,
         Abort,
         Retry,

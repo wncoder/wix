@@ -57,6 +57,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         /// <summary>Container parent of complex reference.</summary>
         Container,
+
+        /// <summary>Layout parent of complex reference.</summary>
+        Layout,
     }
 
     /// <summary>

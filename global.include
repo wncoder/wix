@@ -676,6 +676,19 @@
     </if>
     <echo message="Setting PlatformSDKDir directory to : ${PlatformSDKDir}" />
 
+    <readregistry key="SOFTWARE\Microsoft\Microsoft SQL Server Compact Edition\v3.5\NativeDir" hive="LocalMachine" property="SQLCEDir" failonerror="false" />
+    <if test="${not property::exists('SQLCEDir') or SQLCEDir == '' or not directory::exists(SQLCEDir)}">
+      <readregistry key="SOFTWARE\Microsoft\Microsoft SQL Server Compact Edition\v3.5\NativeDir" hive="LocalMachine" property="SQLCEDir" failonerror="false" />
+    </if>
+
+    <if test="${not property::exists('SQLCEDir') or SQLCEDir == '' or not directory::exists(SQLCEDir)}">
+      <fail message="Couldn't find SQL CE directory - please ensure SQL CE is installed" />
+    </if>
+    <echo message="Setting SQLCEDir directory to : ${SQLCEDir}" />
+
+    <!-- set SQL CE properties -->
+    <property name="dir.sqlce.inc" value="${string::to-lower(path::combine(SQLCEDir, 'include'))}" />
+
     <foreach property="singlepath" item="String" delim=";" in="${environment::get-variable('PATH')}">
       <do>
         <!-- Trim any spaces from the single path -->
@@ -797,7 +810,7 @@
       we'll just build a big string.
     -->
     <property name="cl.standardIncludes" value="" />
-    <foreach property="incDir" item="String" delim=";" in="${dir.platformsdk.inc};${dir.vc.inc};${dir.netfxsdk2.inc};${dir.inc.dutil}">
+    <foreach property="incDir" item="String" delim=";" in="${dir.platformsdk.inc};${dir.vc.inc};${dir.netfxsdk2.inc};${dir.inc.dutil};${dir.sqlce.inc}">
       <property name="cl.standardIncludes" value="${cl.standardIncludes} /I &quot;${incDir}&quot;"/>
     </foreach>
 

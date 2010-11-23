@@ -19,14 +19,12 @@
 
     <?include WixVer.wxi ?>
     <Bundle Name='Wix36' Version='$(var.WixVersion)' UpgradeCode='65E893AD-EDD5-4E7D-80CA-F0F50F383532'>
-        <UX SourceFile='mbahost.dll'>
-          <PayloadGroupRef Id='Mba' />
-          <PayloadGroupRef Id='MbaPreq' />
 
+        <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
           <Payload SourceFile='WixUX.dll' />
           <Payload Name='BootstrapperCore.config' SourceFile='WixUX.BootstrapperCore.config' />
           <Payload SourceFile='License.rtf' />
-        </UX>
+        </BootstrapperApplicationRef>
 
         <bal:Condition Message='WiX requires Windows 2000 (or higher).'>VersionNT &gt; v5.0</bal:Condition>
 

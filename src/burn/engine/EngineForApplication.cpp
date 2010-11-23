@@ -134,7 +134,7 @@ public: // IBootstrapperEngine
                         hr = E_MOREDATA;
 
                         ::StringCchLengthW(sczValue, STRSAFE_MAX_CCH, &cchRemaining);
-                        *pcchValue = cchRemaining;
+                        *pcchValue = cchRemaining + 1;
                     }
                 }
                 else
@@ -142,7 +142,7 @@ public: // IBootstrapperEngine
                     hr = E_MOREDATA;
 
                     ::StringCchLengthW(sczValue, STRSAFE_MAX_CCH, &cchRemaining);
-                    *pcchValue = cchRemaining;
+                    *pcchValue = cchRemaining + 1;
                 }
             }
         }
@@ -194,6 +194,11 @@ public: // IBootstrapperEngine
                 {
                     *pcchOut = cchValue;
                 }
+            }
+            else
+            {
+                hr = E_MOREDATA;
+                *pcchOut = cchValue;
             }
         }
         else
@@ -543,7 +548,7 @@ public: // IBootstrapperEngine
 
     virtual STDMETHODIMP SetVariableString(
         __in_z LPCWSTR wzVariable,
-        __in_z LPCWSTR wzValue
+        __in_z_opt LPCWSTR wzValue
         )
     {
         HRESULT hr = S_OK;

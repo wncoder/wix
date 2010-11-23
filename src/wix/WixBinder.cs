@@ -279,7 +279,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             for (int i = 0; i < fileTransfers.Count; ++i)
             {
                 FileTransfer fileTransfer = (FileTransfer)fileTransfers[i];
-                string fileSource = fileManager.ResolveFile(fileTransfer.Source);
+                string fileSource = fileManager.ResolveFile(fileTransfer.Source, fileTransfer.Type, fileTransfer.SourceLineNumbers);
 
                 // If the source and destination are identical, then there's nothing to do here
                 if (0 == String.Compare(fileSource, fileTransfer.Destination, StringComparison.OrdinalIgnoreCase))
@@ -438,17 +438,39 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// <summary>Flag if file should be moved (optimal).</summary>
             public bool Move;
 
+            /// <summary>Optional source line numbers where this file transfer orginated.</summary>
+            public SourceLineNumberCollection SourceLineNumbers;
+
+            /// <summary>Optional type of file this transfer is moving or copying.</summary>
+            public string Type;
+
             /// <summary>
             /// Basic constructor for struct
             /// </summary>
             /// <param name="source">Source path to file.</param>
             /// <param name="destination">Destination path for file.</param>
             /// <param name="move">File if file should be moved (optimal).</param>
-            public FileTransfer(string source, string destination, bool move)
+            public FileTransfer(string source, string destination, bool move) :
+                this(source, destination, move, null , null)
+            {
+            }
+
+            /// <summary>
+            /// Basic constructor for struct
+            /// </summary>
+            /// <param name="source">Source path to file.</param>
+            /// <param name="destination">Destination path for file.</param>
+            /// <param name="move">File if file should be moved (optimal).</param>
+            /// <param name="type">Optional type of file this transfer is transferring.</param>
+            /// <param name="move">Optional source line numbers wher this transfer originated.</param>
+            public FileTransfer(string source, string destination, bool move, string type, SourceLineNumberCollection sourceLineNumbers)
             {
                 this.Source = source;
                 this.Destination = destination;
                 this.Move = move;
+
+                this.Type = type;
+                this.SourceLineNumbers = sourceLineNumbers;
             }
         }
 

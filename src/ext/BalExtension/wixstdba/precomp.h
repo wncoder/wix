@@ -37,6 +37,7 @@
 #include "shelutil.h"
 #include "strutil.h"
 #include "thmutil.h"
+#include "uriutil.h"
 
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"

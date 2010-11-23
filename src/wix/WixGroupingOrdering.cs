@@ -660,9 +660,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// before we attempt to flatten the ordering.</remarks>
             public void PropagateAfterToChildItems(IMessageHandler messageHandler)
             {
-                foreach (Item childItem in this.childItems)
+                if (this.ShouldItemPropagateChildOrdering())
                 {
-                    childItem.AddAfter(this.afterItems, messageHandler);
+                    foreach (Item childItem in this.childItems)
+                    {
+                        childItem.AddAfter(this.afterItems, messageHandler);
+                    }
                 }
             }
 
@@ -688,17 +691,37 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     afterItem.FlattenAfters(messageHandler);
                     nestedAfterItems.Add(afterItem.afterItems);
 
-                    // If we are after a group, it really means
-                    // we are after all of the group's children.
-                    foreach (Item childItem in afterItem.ChildItems)
+                    if (afterItem.ShouldItemPropagateChildOrdering())
                     {
-                        childItem.FlattenAfters(messageHandler);
-                        nestedAfterItems.Add(childItem.afterItems);
-                        nestedAfterItems.Add(childItem);
+                        // If we are after a group, it really means
+                        // we are after all of the group's children.
+                        foreach (Item childItem in afterItem.ChildItems)
+                        {
+                            childItem.FlattenAfters(messageHandler);
+                            nestedAfterItems.Add(childItem.afterItems);
+                            nestedAfterItems.Add(childItem);
+                        }
                     }
                 }
 
                 this.AddAfter(nestedAfterItems, messageHandler);
+            }
+
+            // We *don't* propagate ordering information from Packages or
+            // Containers to their children, because ordering doesn't matter
+            // for them, and a Payload in two Packages (or Containers) can
+            // cause a circular reference to occur.  We do, however, need to
+            // track the ordering in the UX Container, because we need the
+            // first payload to be the entrypoint.
+            private bool ShouldItemPropagateChildOrdering()
+            {
+                if (String.Equals("Package", this.Type, StringComparison.Ordinal) ||
+                    (String.Equals("Container", this.Type, StringComparison.Ordinal) &&
+                    !String.Equals(Compiler.BurnUXContainerId, this.Id, StringComparison.Ordinal)))
+                {
+                    return false;
+                }
+                return true;
             }
 
             /// <summary>

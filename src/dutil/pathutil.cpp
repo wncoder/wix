@@ -20,11 +20,7 @@
 
 #define PATH_GOOD_ENOUGH 64
 
-/*******************************************************************
- PathFile -  returns a pointer to the file part of the path
-
-********************************************************************/
-extern "C" LPWSTR DAPI PathFile(
+DAPI_(LPWSTR) PathFile(
     __in_z LPCWSTR wzPath
     )
 {
@@ -50,11 +46,7 @@ extern "C" LPWSTR DAPI PathFile(
 }
 
 
-/*******************************************************************
- PathFile -  returns a pointer to the extension part of the path (including the dot)
-
-********************************************************************/
-extern "C" LPCWSTR DAPI PathExtension(
+DAPI_(LPCWSTR) PathExtension(
     __in_z LPCWSTR wzPath
     )
 {
@@ -81,11 +73,7 @@ extern "C" LPCWSTR DAPI PathExtension(
 }
 
 
-/*******************************************************************
- PathGetDirectory - extracts the directory from a path.
-
-********************************************************************/
-extern "C" HRESULT DAPI PathGetDirectory(
+DAPI_(HRESULT) PathGetDirectory(
     __in_z LPCWSTR wzPath,
     __out LPWSTR *psczDirectory
     )
@@ -119,12 +107,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathExpand - gets the full path to a file resolving environment
-              variables along the way.
-
-********************************************************************/
-extern "C" HRESULT DAPI PathExpand(
+DAPI_(HRESULT) PathExpand(
     __out LPWSTR *psczFullPath,
     __in_z LPCWSTR wzRelativePath,
     __in DWORD dwResolveFlags
@@ -244,12 +227,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathPrefix - prefixes a full path with \\?\ or \\?\UNC as 
-              appropriate.
-
-********************************************************************/
-extern "C" HRESULT DAPI PathPrefix(
+DAPI_(HRESULT) PathPrefix(
     __inout LPWSTR *psczFullPath
     )
 {
@@ -292,12 +270,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathFixedBackslashTerminate - appends a \ if path does not have it
-                                 already, but fails if the buffer is
-                                 insufficient.
-********************************************************************/
-extern "C" HRESULT DAPI PathFixedBackslashTerminate(
+DAPI_(HRESULT) PathFixedBackslashTerminate(
     __inout_ecount_z(cchPath) LPWSTR wzPath,
     __in DWORD_PTR cchPath
     )
@@ -323,11 +296,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathBackslashTerminate - appends a \ if path does not have it
-                                 already.
-********************************************************************/
-extern "C" HRESULT DAPI PathBackslashTerminate(
+DAPI_(HRESULT) PathBackslashTerminate(
     __inout LPWSTR* psczPath
     )
 {
@@ -354,11 +323,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathForCurrentProcess - gets the full path to the currently executing
-                         process or (optionally) a module inside the process.
-********************************************************************/
-extern "C" HRESULT DAPI PathForCurrentProcess(
+DAPI_(HRESULT) PathForCurrentProcess(
     __inout LPWSTR *psczFullPath,
     __in_opt HMODULE hModule
     )
@@ -392,12 +357,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathRelativeToModule - gets the name of a file in the same 
-    directory as the current process or (optionally) a module inside 
-    the process
-********************************************************************/
-HRESULT DAPI PathRelativeToModule(
+DAPI_(HRESULT) PathRelativeToModule(
     __inout LPWSTR *psczFullPath,
     __in_opt LPCWSTR wzFileName,
     __in_opt HMODULE hModule
@@ -420,13 +380,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathCreateTempFile
-
- Note: if wzDirectory is null, ::GetTempPath() will be used instead.
-       if wzFileNameTemplate is null, GetTempFileName() will be used instead.
-*******************************************************************/
-extern "C" HRESULT DAPI PathCreateTempFile(
+DAPI_(HRESULT) PathCreateTempFile(
     __in_opt LPCWSTR wzDirectory,
     __in_opt __format_string LPCWSTR wzFileNameTemplate,
     __in DWORD dwUniqueCount,
@@ -532,12 +486,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathCreateTimeBasedTempFile - creates an empty temp file based on current
-                           system time
-
-********************************************************************/
-extern "C" HRESULT DAPI PathCreateTimeBasedTempFile(
+DAPI_(HRESULT) PathCreateTimeBasedTempFile(
     __in_z_opt LPCWSTR wzDirectory,
     __in_z LPCWSTR wzPrefix,
     __in_z_opt LPCWSTR wzPostfix,
@@ -634,12 +583,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathCreateTempDirectory
-
- Note: if wzDirectory is null, ::GetTempPath() will be used instead.
-*******************************************************************/
-extern "C" HRESULT DAPI PathCreateTempDirectory(
+DAPI_(HRESULT) PathCreateTempDirectory(
     __in_opt LPCWSTR wzDirectory,
     __in __format_string LPCWSTR wzDirectoryNameTemplate,
     __in DWORD dwUniqueCount,
@@ -720,11 +664,8 @@ LExit:
     return hr;
 }
 
-/*******************************************************************
- PathGetKnownFolder - returns the path to a well-known shell folder
 
-*******************************************************************/
-extern "C" HRESULT DAPI PathGetKnownFolder(
+DAPI_(HRESULT) PathGetKnownFolder(
     __in int csidl,
     __out LPWSTR* psczKnownFolder
     )
@@ -745,11 +686,7 @@ LExit:
 }
 
 
-/*******************************************************************
- PathIsAbsolute - returns true if the path is absolute; false 
-    otherwise.
-*******************************************************************/
-extern "C" BOOL DAPI PathIsAbsolute(
+DAPI_(BOOL) PathIsAbsolute(
     __in_z LPCWSTR wzPath
     )
 {
@@ -758,12 +695,7 @@ extern "C" BOOL DAPI PathIsAbsolute(
 }
 
 
-/*******************************************************************
- PathConcat - like .NET's Path.Combine, lets you build up a path
-    one piece -- file or directory -- at a time.
-
-*******************************************************************/
-extern "C" HRESULT DAPI PathConcat(
+DAPI_(HRESULT) PathConcat(
     __in_opt LPCWSTR wzPath1,
     __in_opt LPCWSTR wzPath2,
     __deref_out_z LPWSTR* psczCombined
@@ -797,13 +729,8 @@ LExit:
     return hr;
 }
 
-/*******************************************************************
- PathEnsureQuoted - ensures that a path is quoted; optionally,
-     this function also terminates a directory with a backslash
-     if it is not already.
 
-*******************************************************************/
-extern "C" HRESULT DAPI PathEnsureQuoted(
+DAPI_(HRESULT) PathEnsureQuoted(
     __inout LPWSTR* ppszPath,
     __in BOOL fDirectory
     )
@@ -856,6 +783,32 @@ extern "C" HRESULT DAPI PathEnsureQuoted(
     }
 
 LExit:
+
+    return hr;
+}
+
+
+DAPI_(HRESULT) PathCompare(
+    __in_z LPCWSTR wzPath1,
+    __in_z LPCWSTR wzPath2,
+    __out int* pnResult
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczPath1 = NULL;
+    LPWSTR sczPath2 = NULL;
+
+    hr = PathExpand(&sczPath1, wzPath1, PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
+    ExitOnFailure(hr, "Failed to expand path1.");
+
+    hr = PathExpand(&sczPath2, wzPath2, PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
+    ExitOnFailure(hr, "Failed to expand path2.");
+
+    *pnResult = ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, sczPath1, -1, sczPath2, -1);
+
+LExit:
+    ReleaseStr(sczPath2);
+    ReleaseStr(sczPath1);
 
     return hr;
 }

@@ -176,7 +176,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperEngine, IUnknown, "6480D616-27A0-44D7-905B-8
 
     STDMETHOD(SetVariableString)(
         __in_z LPCWSTR wzVariable,
-        __in_z LPCWSTR wzValue
+        __in_z_opt LPCWSTR wzValue
         ) = 0;
 
     STDMETHOD(SetVariableVersion)(

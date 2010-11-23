@@ -367,8 +367,20 @@ extern "C" HRESULT CorePlan(
         hr = PathBackslashTerminate(&sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to ensure layout directory is backslash terminated.");
 
+        // Plan the bundle's layout.
         hr = PlanLayoutBundle(&pEngineState->plan, sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to plan the layout of the bundle.");
+
+        // Plan the layout of layout only payloads.
+        for (DWORD i = 0; i < pEngineState->payloads.cPayloads; ++i)
+        {
+            BURN_PAYLOAD* pPayload = pEngineState->payloads.rgPayloads + i;
+            if (pPayload->fLayoutOnly)
+            {
+                hr = PlanLayoutOnlyPayload(&pEngineState->plan, pPayload, sczLayoutDirectory);
+                ExitOnFailure(hr, "Failed to plan layout payload.");
+            }
+        }
     }
     else if (pEngineState->registration.fPerMachine) // the registration of this bundle is per-machine then the plan needs to be per-machine as well.
     {

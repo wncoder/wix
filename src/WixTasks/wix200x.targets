@@ -1767,6 +1767,43 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
   <!--
   ================================================================================================
+  GenerateCompileWithObjectPath
+
+    Generates metadata on the for compile output objects.
+
+  ================================================================================================
+  -->
+  <PropertyGroup>
+    <GenerateCompileWithObjectPathDependsOn></GenerateCompileWithObjectPathDependsOn>
+  </PropertyGroup>
+  <Target Name="GenerateCompileWithObjectPath"
+    Condition=" '@(Compile)' != '' ">
+    <!-- If ObjectPath is defined include directly -->
+    <CreateItem
+      Include="@(Compile)"
+      Condition=" '%(Compile.ObjectPath)' != '' ">
+      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
+    </CreateItem>
+
+    <!-- If RelativeDir is not rooted and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
+    <CreateItem
+      Include="@(Compile)"
+      Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(Compile.ObjectPath)' == '' "
+      AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)%(RelativeDir)">
+      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
+    </CreateItem>
+
+    <!-- If RelativeDir is rooted and ObjectPath is undefined use IntermediateOutputPath -->
+    <CreateItem
+      Include="@(Compile)"
+      Condition=" '%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' AND '%(Compile.ObjectPath)' == '' "
+      AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)">
+      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
+    </CreateItem>
+  </Target>
+
+  <!--
+  ================================================================================================
   Compile
 
     Compiles the wxs files into wixobj files using candle.exe.
@@ -1783,7 +1820,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <PropertyGroup>
     <CompileDependsOn>
       PrepareForBuild;
-      ResolveWixExtensionReferences
+      ResolveWixExtensionReferences;
+      GenerateCompileWithObjectPath
     </CompileDependsOn>
   </PropertyGroup>
   <Target
@@ -1793,12 +1831,12 @@ Copyright (c) Microsoft Corporation. All rights reserved.
             @(_ResolvedWixExtensionPaths);
             @(_ResolvedProjectReferencePaths);
             $(MSBuildAllProjects)"
-    Outputs="@(Compile -> '$(IntermediateOutputPath)%(Filename)$(IntermediateExt)')"
+    Outputs="@(_CompileWithObjectPath -> '%(ObjectPath)%(Filename)$(IntermediateExt)')"
     DependsOnTargets="$(CompileDependsOn)"
     Condition=" '@(Compile)' != '' ">
 
     <Candle
-      SourceFiles="@(Compile)"
+      SourceFiles="@(_CompileWithObjectPath)"
       AdditionalOptions="$(CompilerAdditionalOptions)" 
       DefineConstants="$(DefineConstants);$(SolutionDefineConstants);$(ProjectDefineConstants);$(ProjectReferenceDefineConstants)"
       ExtensionDirectory="$(WixExtDir)"
@@ -1811,7 +1849,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       InstallerPlatform="$(InstallerPlatform)"
       NoLogo="$(CompilerNoLogo)"
       OnlyValidateDocuments="$(OnlyValidateDocuments)" 
-      OutputFile="$(IntermediateOutputPath)"
+      OutputFile="%(_CompileWithObjectPath.ObjectPath)"
       Pedantic="$(Pedantic)"
       ReferencePaths="$(ReferencePaths)"
       RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
@@ -1825,7 +1863,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       VerboseOutput="$(CompilerVerboseOutput)">
     </Candle>
 
-    <CreateItem Include="@(Compile -> '$(IntermediateOutputPath)%(Filename)$(IntermediateExt)')">
+    <CreateItem Include="@(_CompileWithObjectPath -> '%(ObjectPath)%(Filename)$(IntermediateExt)')">
       <Output TaskParameter="Include" ItemName="CompileObjOutput" />
     </CreateItem>
   </Target>

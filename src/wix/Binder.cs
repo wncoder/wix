@@ -1495,7 +1495,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 extension.DatabaseInitialize(output);
             }
 
-            Hashtable cabinets = new Hashtable();
             bool compressed = false;
             FileRowCollection fileRows = new FileRowCollection(OutputType.Patch == output.Type);
             ArrayList fileTransfers = new ArrayList();
@@ -1527,9 +1526,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            ArrayList delayedFields = new ArrayList();
-
             // localize fields, resolve wix variables, and resolve file paths
+            Hashtable cabinets = new Hashtable();
+            ArrayList delayedFields = new ArrayList();
             this.ResolveFields(output.Tables, cabinets, delayedFields);
 
             // process the summary information table before the other tables
@@ -1706,46 +1705,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // extract files that come from cabinet files (this does not extract files from merge modules)
-            foreach (DictionaryEntry cabinet in cabinets)
-            {
-                Uri baseUri = new Uri((string)cabinet.Key);
-                string localPath;
-
-                if ("embeddedresource" == baseUri.Scheme)
-                {
-                    int bytesRead;
-                    byte[] buffer = new byte[512];
-
-                    string originalLocalPath = Path.GetFullPath(baseUri.LocalPath.Substring(1));
-                    string resourceName = baseUri.Fragment.Substring(1);
-                    Assembly assembly = Assembly.LoadFile(originalLocalPath);
-
-                    localPath = String.Concat(cabinet.Value, ".cab");
-
-                    using (FileStream fs = File.OpenWrite(localPath))
-                    {
-                        using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
-                        {
-                            while (0 < (bytesRead = resourceStream.Read(buffer, 0, buffer.Length)))
-                            {
-                                fs.Write(buffer, 0, bytesRead);
-                            }
-                        }
-                    }
-                }
-                else // normal file
-                {
-                    localPath = baseUri.LocalPath;
-                }
-
-                // extract the cabinet's files into a temporary directory
-                Directory.CreateDirectory((string)cabinet.Value);
-
-                using (WixExtractCab extractCab = new WixExtractCab())
-                {
-                    extractCab.Extract(localPath, (string)cabinet.Value);
-                }
-            }
+            this.ExtractCabinets(cabinets);
 
             // retrieve files and their information from merge modules
             if (OutputType.Product == output.Type)
@@ -1841,7 +1801,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.core.OnMessage(WixVerboses.GeneratingDatabase());
             string tempDatabaseFile = Path.Combine(this.TempFilesLocation, Path.GetFileName(databaseFile));
             this.GenerateDatabase(output, tempDatabaseFile, false, false);
-            fileTransfers.Add(new FileTransfer(tempDatabaseFile, databaseFile, true)); // note where this database needs to move in the future
+            fileTransfers.Add(new FileTransfer(tempDatabaseFile, databaseFile, true, output.Type.ToString(), null)); // note where this database needs to move in the future
 
             // stop processing if an error previously occurred
             if (this.core.EncounteredError)
@@ -2004,7 +1964,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 try
                                 {
                                     // resolve the path to the file
-                                    objectField.Data = this.FileManager.ResolveFile((string)objectField.Data);
+                                    objectField.Data = this.FileManager.ResolveFile((string)objectField.Data, table.Name, row.SourceLineNumbers);
                                 }
                                 catch (WixFileNotFoundException)
                                 {
@@ -2053,7 +2013,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         try
                                         {
                                             // resolve the path to the file
-                                            objectField.PreviousData = this.FileManager.ResolveFile((string)objectField.PreviousData);
+                                            objectField.PreviousData = this.FileManager.ResolveFile((string)objectField.PreviousData, table.Name, row.SourceLineNumbers);
                                         }
                                         catch (WixFileNotFoundException)
                                         {
@@ -2072,6 +2032,54 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (this.WixVariableResolver.EncounteredError)
             {
                 this.core.EncounteredError = true;
+            }
+        }
+
+        /// <summary>
+        /// Extracts embedded cabinets for resolved data.
+        /// </summary>
+        /// <param name="cabinets">Collection of cabinets containing resolved data.</param>
+        private void ExtractCabinets(Hashtable cabinets)
+        {
+            foreach (DictionaryEntry cabinet in cabinets)
+            {
+                Uri baseUri = new Uri((string)cabinet.Key);
+                string localPath;
+
+                if ("embeddedresource" == baseUri.Scheme)
+                {
+                    int bytesRead;
+                    byte[] buffer = new byte[512];
+
+                    string originalLocalPath = Path.GetFullPath(baseUri.LocalPath.Substring(1));
+                    string resourceName = baseUri.Fragment.Substring(1);
+                    Assembly assembly = Assembly.LoadFile(originalLocalPath);
+
+                    localPath = String.Concat(cabinet.Value, ".cab");
+
+                    using (FileStream fs = File.OpenWrite(localPath))
+                    {
+                        using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
+                        {
+                            while (0 < (bytesRead = resourceStream.Read(buffer, 0, buffer.Length)))
+                            {
+                                fs.Write(buffer, 0, bytesRead);
+                            }
+                        }
+                    }
+                }
+                else // normal file
+                {
+                    localPath = baseUri.LocalPath;
+                }
+
+                // extract the cabinet's files into a temporary directory
+                Directory.CreateDirectory((string)cabinet.Value);
+
+                using (WixExtractCab extractCab = new WixExtractCab())
+                {
+                    extractCab.Extract(localPath, (string)cabinet.Value);
+                }
             }
         }
 
@@ -2676,6 +2684,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
+            // gather all the wix variables
+            Table wixVariableTable = bundle.Tables["WixVariable"];
+            if (null != wixVariableTable)
+            {
+                foreach (WixVariableRow wixVariableRow in wixVariableTable.Rows)
+                {
+                    this.WixVariableResolver.AddVariable(wixVariableRow);
+                }
+            }
+
+            Hashtable cabinets = new Hashtable();
+            ArrayList delayedFields = new ArrayList();
+
+            // localize fields, resolve wix variables, and resolve file paths
+            this.ResolveFields(bundle.Tables, cabinets, delayedFields);
+
+            if (this.core.EncounteredError)
+            {
+                return false;
+            }
+
             // To make lookups easier, we load the constituent data bottom-up, so
             // that we can index by ID.
             Table variableTable = bundle.Tables["Variable"];
@@ -2747,6 +2776,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // extract files that come from cabinet files (this does not extract files from merge modules)
+            this.ExtractCabinets(cabinets);
+
             BundleInfo bundleInfo = new BundleInfo(bundleFile, bundleTable.Rows[0]);
 
             // Get the explicit payloads.
@@ -2781,7 +2813,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             containers.Add("WixAttachedContainer", new ContainerInfo("WixAttachedContainer", "bundle-attached.cab", "attached", this.FileManager));
             containers["WixAttachedContainer"].Payloads = payloadsInDefaultAttachedContainer;
 
-            // Create lists of which payloads go in each container.
+            // Create lists of which payloads go in each container or are layout only.
             foreach (Row row in wixGroupTable.Rows)
             {
                 string rowParentName = (string)row[0];
@@ -2789,14 +2821,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 string rowChildName = (string)row[2];
                 string rowChildType = (string)row[3];
 
-                if (Enum.GetName(typeof(ComplexReferenceParentType), ComplexReferenceParentType.Container) == rowParentType && 
-                    Enum.GetName(typeof(ComplexReferenceChildType), ComplexReferenceChildType.Payload) == rowChildType)
+                if (Enum.GetName(typeof(ComplexReferenceChildType), ComplexReferenceChildType.Payload) == rowChildType)
                 {
-                    ContainerInfo container = containers[rowParentName];
                     PayloadInfo payload = allPayloads[rowChildName];
-                    container.Payloads.Add(payload);
-                    payload.Container = container;
-                    payloadsAddedToContainers.Add(rowChildName, false);
+
+                    if (Enum.GetName(typeof(ComplexReferenceParentType), ComplexReferenceParentType.Container) == rowParentType)
+                    {
+                        ContainerInfo container = containers[rowParentName];
+                        container.Payloads.Add(payload);
+
+                        payload.Container = container;
+                        payloadsAddedToContainers.Add(rowChildName, false);
+                    }
+                    else if (Enum.GetName(typeof(ComplexReferenceParentType), ComplexReferenceParentType.Layout) == rowParentType)
+                    {
+                        payload.LayoutOnly = true;
+                    }
                 }
             }
 
@@ -2831,7 +2871,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ArrayList fileTransfers = new ArrayList();
             string layoutDirectory = Path.GetDirectoryName(bundleFile);
 
-            // Handle any payloads not explicitly in a container. 
+            // Handle any payloads not explicitly in a container.
             foreach (string payloadName in allPayloads.Keys)
             {
                 if (!payloadsAddedToContainers.ContainsKey(payloadName))
@@ -2844,7 +2884,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        fileTransfers.Add(new FileTransfer(payload.FileInfo.FullName, Path.Combine(layoutDirectory, payload.FileName), false));
+                        fileTransfers.Add(new FileTransfer(payload.FileInfo.FullName, Path.Combine(layoutDirectory, payload.FileName), false, "Payload", payload.SourceLineNumbers));
                     }
                 }
             }
@@ -2859,17 +2899,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // fully present before any downloading starts, so that rules out downloading.
                 // Also, the burn engine does not currently copy external UX payloads into
                 // the temporary UX directory correctly, so we don't allow external either.
-                switch (payload.Packaging)
+                if (PayloadInfo.PackagingType.Embedded != payload.Packaging)
                 {
-                    case PayloadInfo.PackagingType.Embedded:
-                        // These are fine.
-                        break;
-                    default:
-                        core.OnMessage(WixWarnings.UxPayloadsOnlySupportEmbedding(payload.SourceLineNumbers, payload.FileInfo.FullName));
-                        break;
+                    core.OnMessage(WixWarnings.UxPayloadsOnlySupportEmbedding(payload.SourceLineNumbers, payload.FileInfo.FullName));
+                    payload.Packaging = PayloadInfo.PackagingType.Embedded;
                 }
 
-                payload.Packaging = PayloadInfo.PackagingType.Embedded;
                 payload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloadIndex);
             }
 
@@ -2924,26 +2959,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixWarnings.DiscardedRollbackBoundary(previousRollbackBoundary.SourceLineNumbers, previousRollbackBoundary.Id));
             }
 
-            // Give the chain package payloads their embedded IDs...
+            // Give all embedded payloads that don't have an embedded ID yet an embedded ID.
             int payloadIndex = 0;
-            foreach (ChainPackageInfo package in chain.Packages)
+            foreach (PayloadInfo payload in allPayloads.Values)
             {
-                PayloadInfo packagePayload = package.PackagePayload;
-                if (PayloadInfo.PackagingType.Unknown == packagePayload.Packaging || PayloadInfo.PackagingType.Embedded == packagePayload.Packaging)
-                {
-                    packagePayload.Packaging = PayloadInfo.PackagingType.Embedded;
-                    packagePayload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnAttachedContainerEmbeddedIdFormat, payloadIndex);
-                    ++payloadIndex;
-                }
+                Debug.Assert(PayloadInfo.PackagingType.Unknown != payload.Packaging);
 
-                foreach (PayloadInfo payload in package.Payloads)
+                if (PayloadInfo.PackagingType.Embedded == payload.Packaging && String.IsNullOrEmpty(payload.EmbeddedId))
                 {
-                    if (PayloadInfo.PackagingType.Unknown == payload.Packaging || PayloadInfo.PackagingType.Embedded == payload.Packaging)
-                    {
-                        payload.Packaging = PayloadInfo.PackagingType.Embedded;
-                        payload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnAttachedContainerEmbeddedIdFormat, payloadIndex);
-                        ++payloadIndex;
-                    }
+                    payload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnAttachedContainerEmbeddedIdFormat, payloadIndex);
+                    ++payloadIndex;
                 }
             }
 
@@ -3051,7 +3076,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if ("detached" == container.Type)
                 {
-                    fileTransfers.Add(new FileTransfer(Path.Combine(this.TempFilesLocation, container.Name), Path.Combine(layoutDirectory, container.Name), true));
+                    fileTransfers.Add(new FileTransfer(Path.Combine(this.TempFilesLocation, container.Name), Path.Combine(layoutDirectory, container.Name), true, "Container", container.SourceLineNumbers));
                 }
             }
 
@@ -3493,10 +3518,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!String.IsNullOrEmpty(bundleInfo.IconPath))
             {
-                string iconPath = this.FileManager.ResolveFile(bundleInfo.IconPath);
                 Deployment.Resources.GroupIconResource iconGroup = new Deployment.Resources.GroupIconResource("#1", 1033);
-
-                iconGroup.ReadFromFile(iconPath);
+                iconGroup.ReadFromFile(bundleInfo.IconPath);
                 resources.Add(iconGroup);
 
                 foreach (Deployment.Resources.Resource icon in iconGroup.Icons)
@@ -3507,9 +3530,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!String.IsNullOrEmpty(bundleInfo.SplashScreenBitmapPath))
             {
-                string bitmapPath = this.FileManager.ResolveFile(bundleInfo.SplashScreenBitmapPath);
                 Deployment.Resources.BitmapResource bitmap = new Deployment.Resources.BitmapResource("#1", 1033);
-                bitmap.ReadFromFile(bitmapPath);
+                bitmap.ReadFromFile(bundleInfo.SplashScreenBitmapPath);
                 resources.Add(bitmap);
             }
 
@@ -3542,6 +3564,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             writer.WriteAttributeString("FilePath", payload.FileName);
             writer.WriteAttributeString("FileSize", payload.FileSize.ToString(CultureInfo.InvariantCulture));
             writer.WriteAttributeString("Hash", payload.Sha1);
+
+            if (payload.LayoutOnly)
+            {
+                writer.WriteAttributeString("LayoutOnly", "yes");
+            }
 
             if (!String.IsNullOrEmpty(payload.CertificatePublicKeyIdentifier))
             {
@@ -5475,7 +5502,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (String.Equals(row[1].ToString(), thisDir[0].ToString(), StringComparison.Ordinal))
                     {
-                        fileTransfers.Add(new FileTransfer(row[3].ToString(), Path.Combine(currentDir, row[2].ToString()), false));
+                        fileTransfers.Add(new FileTransfer(row[3].ToString(), Path.Combine(currentDir, row[2].ToString()), false, "LayoutFile", row.SourceLineNumbers));
                     }
                 }
             }
@@ -5602,7 +5629,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             else
             {
                 string destinationPath = Path.Combine(cabinetDir, mediaRow.Cabinet);
-                fileTransfers.Add(new FileTransfer(tempCabinetFile, destinationPath, CabinetBuildOption.BuildAndMove == cabinetBuildOption));
+                fileTransfers.Add(new FileTransfer(tempCabinetFile, destinationPath, CabinetBuildOption.BuildAndMove == cabinetBuildOption, "Cabinet", mediaRow.SourceLineNumbers));
             }
 
             return cabinetWorkItem;
@@ -5727,7 +5754,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             if (!String.Equals(sourceFullPath, fileLayoutFullPath, StringComparison.OrdinalIgnoreCase))
                             {
                                 // just put the file in the transfers array, how anti-climatic
-                                fileTransfers.Add(new FileTransfer(fileRow.Source, fileLayoutPath, false));
+                                fileTransfers.Add(new FileTransfer(fileRow.Source, fileLayoutPath, false, "File", fileRow.SourceLineNumbers));
                             }
                         }
                     }
@@ -5992,6 +6019,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public PackagingType Packaging { get; set; }
             public PayloadInfo ParentPackagePayload { get; set; }
             public ContainerInfo Container { get; set; }
+            public bool LayoutOnly { get; set; }
 
             public string Sha1
             {
@@ -6019,8 +6047,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private void Initialize(string id, string name, string sourceFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
             {
                 this.Id = id;
-                this.FileInfo = new FileInfo(fileManager.ResolveFile(sourceFile));
-                this.FileName = !String.IsNullOrEmpty(name) ? name : this.FileInfo.Name;
+                this.FileInfo = new FileInfo(sourceFile);
+                this.FileName = name;
                 this.DownloadUrl = downloadUrl;
                 this.Container = container;
                 this.Packaging = packaging;

@@ -48,6 +48,7 @@ typedef struct _BURN_PAYLOAD
 {
     LPWSTR sczKey;
     BURN_PAYLOAD_PACKAGING packaging;
+    BOOL fLayoutOnly;
     DWORD64 qwFileSize;
     LPWSTR sczFilePath; // file path relative to the execute location
 

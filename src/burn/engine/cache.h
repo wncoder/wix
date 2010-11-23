@@ -43,7 +43,7 @@ typedef struct _BURN_CACHE_CALLBACK
 // functions
 
 HRESULT CacheCalculatePayloadUnverifiedPath(
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __deref_out_z LPWSTR* psczUnverifiedPath
     );
@@ -77,7 +77,7 @@ void CacheSendErrorCallback(
     __out_opt BOOL* pfRetry
     );
 HRESULT CachePayload(
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,

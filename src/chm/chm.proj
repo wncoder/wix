@@ -42,6 +42,7 @@
         <HelpSourceFile Include="html\extension_development_preprocessor.htm"/>
         <HelpSourceFile Include="html\extension_development_simple_example.htm"/>
         <HelpSourceFile Include="html\files.htm"/>
+        <HelpSourceFile Include="html\heat.htm"/>
         <HelpSourceFile Include="html\help.htm"/>
         <HelpSourceFile Include="html\help_development.htm"/>
         <HelpSourceFile Include="html\insignia.htm"/>

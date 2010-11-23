@@ -1,0 +1,43 @@
+<Theme HexStyle="100a0000">
+    <Application Width="500" Height="300" FontId="2">[BundleName]</Application>
+    <Font id="0" Height="-16" Weight="700" Foreground="0"></Font>
+    <Font id="1" Height="-18" Weight="700" Foreground="0"></Font>
+    <Font id="2" Height="-11" Weight="550" Foreground="0" Background="ffffff"></Font>
+    <Font id="3" Height="-16" Weight="700" Foreground="ff0000" Background="ffffff" Underline="no">Consolas</Font>
+    <Font id="4" Height="-16" Weight="700" Foreground="00ff00" Background="ffffff" Underline="yes">Consolas</Font>
+    <Page Name="Install">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">License Agreement</Text>
+        <Hyperlink Name="EulaHyperlink" X="10" Y="50" Width="-10" Height="30" FontId="0" HoverFontId="3" SelectedFontId="4">Click here for thwe License Agreement</Hyperlink>
+        <Checkbox Name="EulaAcceptCheckbox" X="-10" Y="-60" Width="260" Height="23" FontId="0">Accept license agreement.</Checkbox>
+        <Button Name="OptionsButton" X="-190" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Options</Button>
+        <Button Name="InstallButton" X="-100" Y="-10" Width="80" Height="30" FontId="0">Install</Button>
+        <Button Name="WelcomeCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Close</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
+    <Page Name="Progress">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Progress</Text>
+        <Text X="10" Y="80" Width="-10" Height="20" FontId="2">[ProgressAction]: [ProgressPackageName]</Text>
+        <Progressbar X="10" Y="110" Width="-10" Height="25" />
+        <Button Name="ProgressCancelButton" X="-10" Y="-10" Width="100" Height="30" FontId="0">Cancel</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
+    <Page Name="Modify">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Modify Setup</Text>
+        <Button Name="RepairButton" X="40" Y="40" Width="200" Height="65" FontId="0">Repair</Button>
+        <Button Name="UninstallButton" X="40" Y="110" Width="200" Height="65" FontId="0">Uninstall</Button>
+        <Button Name="ModifyCancelButton" X="-10" Y="-10" Width="100" Height="30" FontId="0">Close</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
+    <Page Name="Finish">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Succesful</Text>
+        <Button Name="LaunchButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Launch</Button>
+        <Button Name="RestartButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Restart</Button>
+        <Button Name="FinishCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Finish</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
+    <Page Name="Failure">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Failed</Text>
+        <Button Name="FailureCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Close</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
+</Theme>

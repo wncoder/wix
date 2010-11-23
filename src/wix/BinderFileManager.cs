@@ -222,90 +222,98 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>Should return a valid path for the stream to be imported.</returns>
         public virtual string ResolveFile(string source)
         {
+            return this.ResolveFile(source, null, null);
+        }
+
+        /// <summary>
+        /// Resolves the source path of a file.
+        /// </summary>
+        /// <param name="source">Original source value.</param>
+        /// <param name="type">Optional type of source file being resolved.</param>
+        /// <param name="sourceLineNumbers">Optional source line of source file being resolved.</param>
+        /// <returns>Should return a valid path for the stream to be imported.</returns>
+        public virtual string ResolveFile(string source, string type, SourceLineNumberCollection sourceLineNumbers)
+        {
             if (String.IsNullOrEmpty(source))
             {
                 throw new ArgumentNullException("source");
             }
 
-            string filePath = null;
-            const string bindPathOpenString = "!(bindpath.";
-
-            if (source.StartsWith(bindPathOpenString, StringComparison.Ordinal) && source.IndexOf(')') != -1)
+            // If the path is rooted, it better exist or we're not going to find it.
+            if (Path.IsPathRooted(source))
             {
-                int bindpathSignatureLength = bindPathOpenString.Length;
-                string name = source.Substring(bindpathSignatureLength, source.IndexOf(')') - bindpathSignatureLength);
-                string[] values = this.namedBindPaths.GetValues(name);
-
-                if (null != values)
-                {
-                    foreach (string bindPath in values)
-                    {
-                        // Parse out '\\' chars that separate the "bindpath" variable and the next part of the path, 
-                        // because Path.Combine() thinks that rooted second paths don't need the first path.
-                        string nameSection = string.Empty;
-                        int nameStart = bindpathSignatureLength + 1 + name.Length;  // +1 for the closing bracket.
-
-                        nameSection = source.Substring(nameStart).TrimStart('\\');
-                        filePath = Path.Combine(bindPath, nameSection);
-
-                        if (File.Exists(filePath))
-                        {
-                            return filePath;
-                        }
-                    }
-                }
-            }
-
-            if (source.StartsWith("SourceDir\\", StringComparison.Ordinal) || source.StartsWith("SourceDir/", StringComparison.Ordinal))
-            {
-                foreach (string bindPath in this.bindPaths)
-                {
-                    filePath = Path.Combine(bindPath, source.Substring(10));
-                    if (File.Exists(filePath))
-                    {
-                        return filePath;
-                    }
-                }
-            }
-
-            try
-            {
-                if (Path.IsPathRooted(source) || File.Exists(source))
+                if (BinderFileManager.CheckFileExists(source))
                 {
                     return source;
                 }
             }
-            catch (ArgumentException)
+            else // not a rooted path so let's try applying all the different source resolution options.
             {
-                throw new WixException(WixErrors.IllegalCharactersInPath(source));
-            }
+                string filePath = null;
+                const string bindPathOpenString = "!(bindpath.";
 
-            foreach (string path in this.sourcePaths)
-            {
-                filePath = Path.Combine(path, source);
-                if (File.Exists(filePath))
+                if (source.StartsWith(bindPathOpenString, StringComparison.Ordinal) && source.IndexOf(')') != -1)
                 {
-                    return filePath;
-                }
+                    int bindpathSignatureLength = bindPathOpenString.Length;
+                    string name = source.Substring(bindpathSignatureLength, source.IndexOf(')') - bindpathSignatureLength);
+                    string[] values = this.namedBindPaths.GetValues(name);
 
-                if (source.StartsWith("SourceDir\\", StringComparison.Ordinal) || source.StartsWith("SourceDir/", StringComparison.Ordinal))
-                {
-                    filePath = Path.Combine(path, source.Substring(10));
-                    try
+                    if (null != values)
                     {
-                        if (File.Exists(filePath))
+                        foreach (string bindPath in values)
+                        {
+                            // Parse out '\\' chars that separate the "bindpath" variable and the next part of the path, 
+                            // because Path.Combine() thinks that rooted second paths don't need the first path.
+                            string nameSection = string.Empty;
+                            int nameStart = bindpathSignatureLength + 1 + name.Length;  // +1 for the closing bracket.
+
+                            nameSection = source.Substring(nameStart).TrimStart('\\');
+                            filePath = Path.Combine(bindPath, nameSection);
+
+                            if (BinderFileManager.CheckFileExists(filePath))
+                            {
+                                return filePath;
+                            }
+                        }
+                    }
+                }
+                else if (source.StartsWith("SourceDir\\", StringComparison.Ordinal) || source.StartsWith("SourceDir/", StringComparison.Ordinal))
+                {
+                    foreach (string bindPath in this.bindPaths)
+                    {
+                        filePath = Path.Combine(bindPath, source.Substring(10));
+                        if (BinderFileManager.CheckFileExists(filePath))
                         {
                             return filePath;
                         }
                     }
-                    catch (ArgumentException)
+                }
+                else if (BinderFileManager.CheckFileExists(source))
+                {
+                    return source;
+                }
+
+                foreach (string path in this.sourcePaths)
+                {
+                    filePath = Path.Combine(path, source);
+                    if (BinderFileManager.CheckFileExists(filePath))
                     {
-                        throw new WixException(WixErrors.IllegalCharactersInPath(source));
+                        return filePath;
+                    }
+
+                    if (source.StartsWith("SourceDir\\", StringComparison.Ordinal) || source.StartsWith("SourceDir/", StringComparison.Ordinal))
+                    {
+                        filePath = Path.Combine(path, source.Substring(10));
+                        if (BinderFileManager.CheckFileExists(filePath))
+                        {
+                            return filePath;
+                        }
                     }
                 }
             }
 
-            throw new WixFileNotFoundException(source);
+            // Didn't find the file.
+            throw new WixFileNotFoundException(sourceLineNumbers, source, type);
         }
 
         /// <summary>
@@ -341,7 +349,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 bool cabinetExists = false;
 
-                if (File.Exists(cabinetPath))
+                if (BinderFileManager.CheckFileExists(cabinetPath))
                 {
                     // check to see if
                     // 1. any files are added or removed
@@ -538,6 +546,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         fileRow.Source = deltaFile;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Checks if a path exists, and throws a well known error for invalid paths.
+        /// </summary>
+        /// <param name="path">Path to check.</param>
+        /// <returns>True if path exists.</returns>
+        private static bool CheckFileExists(string path)
+        {
+            try
+            {
+                return File.Exists(path);
+            }
+            catch (ArgumentException)
+            {
+                throw new WixException(WixErrors.IllegalCharactersInPath(path));
             }
         }
     }

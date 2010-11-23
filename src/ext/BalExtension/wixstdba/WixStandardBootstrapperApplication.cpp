@@ -18,6 +18,8 @@
 static const LPCWSTR WIXSTDBA_WINDOW_CLASS = L"WixStdBA";
 static const LPCWSTR WIXSTDBA_VARIABLE_EULA_RTF_PATH = L"EulaFile";
 static const LPCWSTR WIXSTDBA_VARIABLE_EULA_LINK_TARGET = L"EulaHyperlinkTarget";
+static const LPCWSTR WIXSTDBA_VARIABLE_PROGRESS_ACTION = L"ProgressAction";
+static const LPCWSTR WIXSTDBA_VARIABLE_PROGRESS_PACKAGE_NAME = L"ProgressPackageName";
 static const LPCWSTR WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH = L"LaunchTarget";
 
 enum WIXSTDBA_STATE
@@ -34,7 +36,6 @@ enum WIXSTDBA_STATE
     WIXSTDBA_STATE_EXECUTING,
     WIXSTDBA_STATE_EXECUTED,
     WIXSTDBA_STATE_APPLIED,
-    WIXSTDBA_STATE_ERROR,
     WIXSTDBA_STATE_FAILED,
 };
 
@@ -103,6 +104,7 @@ enum WIXSTDBA_CONTROL
 
     // Success page
     WIXSTDBA_CONTROL_LAUNCH_BUTTON,
+    WIXSTDBA_CONTROL_RESTART_BUTTON,
     WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON,
 
     // Failure page
@@ -135,6 +137,7 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, L"ProgressCancelButton" },
 
     { WIXSTDBA_CONTROL_LAUNCH_BUTTON, L"LaunchButton" },
+    { WIXSTDBA_CONTROL_RESTART_BUTTON, L"RestartButton" },
     { WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON, L"SuccessCancelButton" },
 
     { WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, L"FailureMessageText" },
@@ -163,14 +166,29 @@ public: // IBootstrapperApplication
 
     virtual STDMETHODIMP_(int) OnShutdown()
     {
-        // wait for UX thread to terminate
+        int nResult = IDNOACTION;
+
+        // wait for UI thread to terminate
         if (m_hUiThread)
         {
             ::WaitForSingleObject(m_hUiThread, INFINITE);
             ReleaseHandle(m_hUiThread);
         }
 
-        return IDNOACTION;
+        // If a restart was required.
+        if (m_fRestartRequired)
+        {
+            // If the user allowed the restart then obviously we should take the
+            // restart. If we did not show UI to ask the user then assume the restart
+            // is allowed. Finally, if the command-line said take a reboot automatically
+            // then take it because we need it.
+            if (m_fAllowRestart || BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_RESTART_PROMPT < m_command.restart)
+            {
+                nResult = IDRESTART;
+            }
+        }
+
+        return nResult;
     }
 
 
@@ -182,7 +200,7 @@ public: // IBootstrapperApplication
         )
     {
         // TODO: Show messagebox if we are downgrading.
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
+        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDOK;
     }
 
 
@@ -194,7 +212,7 @@ public: // IBootstrapperApplication
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
+        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDOK;
     }
 
 
@@ -240,26 +258,20 @@ public: // IBootstrapperApplication
         __in BOOTSTRAPPER_APPLY_RESTART restart
         )
     {
-        BOOL fRestart = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart && BOOTSTRAPPER_RESTART_NEVER < m_command.restart);
-
+        m_fRestartRequired = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart && BOOTSTRAPPER_RESTART_NEVER < m_command.restart);
         SetState(WIXSTDBA_STATE_APPLIED, hrStatus);
 
-        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
-        {
-            // If a restart is expected but we are showing full UI and expected to prompt, check with the user if it is okay
-            // to actually restart now.
-            if (fRestart && BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
-            {
-                int nResult = ::MessageBoxW(m_hWnd, L"A restart is required to complete this action. Restart now?", L"Restart Required", MB_YESNO | MB_ICONQUESTION);
-                fRestart = (IDYES == nResult);
-            }
-        }
-        else // embedded or quiet or passive display just close at the end, no questions asked.
+        // Clear our action variables.
+        m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_ACTION, NULL);
+        m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_PACKAGE_NAME, NULL);
+
+        // embedded or quiet or passive display just close at the end, no questions asked.
+        if (BOOTSTRAPPER_DISPLAY_FULL > m_command.display)
         {
             ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
         }
 
-        return fRestart ? IDRESTART : IDOK;
+        return IDNOACTION;
     }
 
 
@@ -278,7 +290,7 @@ public: // IBootstrapperApplication
 
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_CACHE_PROGRESS_BAR, dwOverallPercentage);
 
-        return m_fCanceled ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
 
@@ -309,7 +321,7 @@ public: // IBootstrapperApplication
         }
         else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
-            nResult = ::MessageBoxW(m_hWnd, wzError, L"Error", dwUIHint);
+            nResult = ::MessageBoxW(m_hWnd, wzError, m_pTheme->wzCaption, dwUIHint);
         }
         else // just cancel when quiet or passive.
         {
@@ -343,7 +355,21 @@ public: // IBootstrapperApplication
         }
 
     LExit:
-        return FAILED(hr) ? IDERROR : m_fCanceled ? IDCANCEL : nResult;
+        return FAILED(hr) ? IDERROR : CheckCanceled() ? IDCANCEL : nResult;
+    }
+
+
+    virtual STDMETHODIMP_(int) OnExecutePackageBegin(
+        __in_z LPCWSTR wzPackageId,
+        __in BOOL /*fExecute*/
+        )
+    {
+        if (wzPackageId && *wzPackageId)
+        {
+            m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_PACKAGE_NAME, wzPackageId);
+        }
+
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
 
@@ -360,55 +386,7 @@ public: // IBootstrapperApplication
 
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_BAR, dwOverallProgressPercentage);
 
-        return m_fCanceled ? IDCANCEL : IDNOACTION;
-    }
-
-
-    virtual STDMETHODIMP_(int) OnExecuteMsiMessage(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in INSTALLMESSAGE /*mt*/,
-        __in UINT /*uiFlags*/,
-        __in_z LPCWSTR /*wzMessage*/
-        )
-    {
-        return IDOK;
-    }
-
-
-    virtual STDMETHODIMP_(int) OnExecuteMsiFilesInUse(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in DWORD /*cFiles*/,
-        __in LPCWSTR* /*rgwzFiles*/
-        )
-    {
-        return IDOK;
-    }
-
-
-    virtual STDMETHODIMP_(int) OnExecutePackageComplete(
-        __in LPCWSTR wzPackageId,
-        __in HRESULT /*hrExitCode*/,
-        __in BOOTSTRAPPER_APPLY_RESTART restart
-        )
-    {
-        HRESULT hr = S_OK;
-        BOOL fRestart = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart && BOOTSTRAPPER_RESTART_NEVER < m_command.restart);
-        LPWSTR sczRestartPackage = NULL;
-
-        // If a restart is expected but we are showing full UI and expected to prompt, check with the user if it is okay
-        // to actually restart now.
-        if (fRestart && BOOTSTRAPPER_DISPLAY_FULL == m_command.display && BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
-        {
-            hr = StrAllocFormatted(&sczRestartPackage, L"Package %ls requires a restart. Restart now?", wzPackageId);
-            ExitOnFailure(hr, "Failed to format restart package.");
-
-            int nResult = ::MessageBoxW(m_hWnd, sczRestartPackage, L"Restart Required", MB_YESNO | MB_ICONQUESTION);
-            fRestart = (IDYES == nResult);
-        }
-
-    LExit:
-        ReleaseStr(sczRestartPackage);
-        return fRestart ? IDRESTART : IDOK;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
 
@@ -420,7 +398,7 @@ public: // IBootstrapperApplication
     }
 
 
-    virtual int __stdcall OnResolveSource(
+    virtual STDMETHODIMP_(int) OnResolveSource(
         __in_z LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
         __in_z LPCWSTR /*wzLocalSource*/,
@@ -438,7 +416,7 @@ public: // IBootstrapperApplication
         {
             StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
 
-            nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONQUESTION);
+            nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONASTERISK);
         }
 
         if (IDYES == nResult)
@@ -473,7 +451,7 @@ public: // IBootstrapperApplication
 
         ReleaseStr(sczText);
         ReleaseStr(sczCaption);
-        return nResult;
+        return CheckCanceled() ? IDCANCEL : nResult;
     }
 
 
@@ -506,12 +484,6 @@ private: // privates
         // Okay, we're ready for packages now.
         pThis->SetState(WIXSTDBA_STATE_INITIALIZED, hr);
         ::PostMessageW(pThis->m_hWnd, WM_WIXSTDBA_DETECT_PACKAGES, 0, 0);
-
-        // If the splash screen is around, close it since we're showing our UI now.
-        if (::IsWindow(pThis->m_command.hwndSplashScreen))
-        {
-             ::PostMessageW(pThis->m_command.hwndSplashScreen, WM_CLOSE, 0, 0);
-        }
 
         // message pump
         while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
@@ -559,6 +531,7 @@ private: // privates
         WNDCLASSW wc = { };
         DWORD dwWindowStyle = 0;
         LPWSTR sczThemePath = NULL;
+        LPWSTR sczCaption = NULL;
 
         // load theme relative to stdux.dll.
         hr = PathRelativeToModule(&sczThemePath, L"thm.xml", m_hModule);
@@ -577,8 +550,8 @@ private: // privates
         }
         else
         {
-            hr = ThemeLoadLocFromFile(m_pTheme, L"en-us.wxl", m_hModule);
-            ExitOnFailure(hr, "Failed to localize from default language.");
+            hr = ThemeLoadLocFromFile(m_pTheme, L"thm.wxl", m_hModule);
+            ExitOnFailure(hr, "Failed to localize from fallback language.");
         }
 
         // Register the window class and create the window.
@@ -603,10 +576,20 @@ private: // privates
             dwWindowStyle &= ~WS_VISIBLE;
         }
 
+        // Update the caption if there are any formated strings in it.
+        hr = BalFormatString(m_pEngine, m_pTheme->wzCaption, &sczCaption);
+        if (SUCCEEDED(hr))
+        {
+            ThemeUpdateCaption(m_pTheme, sczCaption);
+        }
+
         m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->wzCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
         ExitOnNullWithLastError(m_hWnd, hr, "Failed to create window.");
 
+        hr = S_OK;
+
     LExit:
+        ReleaseStr(sczCaption);
         ReleaseStr(sczThemePath);
         ReleaseStr(m_sczLanguage);
 
@@ -730,16 +713,9 @@ private: // privates
             break;
 
         case WM_CLOSE:
-            if (WIXSTDBA_STATE_EXECUTED > pBA->m_state)
-            {
-                // Check with the user to verify they want to cancel.
-                //pBA->PromptCancel(hWnd);
-            }
-            pBA->m_fCanceled = TRUE; // TODO: let the prompt set this instead.
-
-            // If the user chose not to cancel, do not let the default window proc
+            // If the user chose not to close, do not let the default window proc
             // handle the message.
-            if (!pBA->m_fCanceled)
+            if (!pBA->OnClose())
             {
                 return 0;
             }
@@ -788,11 +764,19 @@ private: // privates
                 pBA->OnClickLaunchButton();
                 break;
 
-            case WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON:
-            case WIXSTDBA_CONTROL_MODIFY_CANCEL_BUTTON:
-            case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON:
-            case WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON:
-            case WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON:
+            case WIXSTDBA_CONTROL_RESTART_BUTTON:
+                pBA->OnClickRestartButton();
+                break;
+
+            case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON: // progress cancel is special because it will cause rollback.
+                pBA->OnClose();
+                break;
+
+            // The other cancel buttons just close the window.
+            case WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON: __fallthrough;
+            case WIXSTDBA_CONTROL_MODIFY_CANCEL_BUTTON: __fallthrough;
+            case WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON: __fallthrough;
+            case WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_CLOSE_BUTTON:
                 pBA->OnClickCloseButton();
                 break;
@@ -862,6 +846,12 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
+        // If the splash screen is still around, close it since if there is a UI it's showing by now.
+        if (::IsWindow(m_command.hwndSplashScreen))
+        {
+             ::PostMessageW(m_command.hwndSplashScreen, WM_CLOSE, 0, 0);
+        }
+
         // Tell the core we're ready for the packages to be processed now.
         hr = m_pEngine->Detect();
         ExitOnFailure(hr, "Failed to start detecting chain.");
@@ -880,6 +870,20 @@ private: // privates
         )
     {
         HRESULT hr = S_OK;
+
+        // TODO: need to localize the following strings eventually.
+        switch (action)
+        {
+        case BOOTSTRAPPER_ACTION_INSTALL:
+            m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_ACTION, L"Installing");
+            break;
+        case BOOTSTRAPPER_ACTION_REPAIR:
+            m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_ACTION, L"Repairing");
+            break;
+        case BOOTSTRAPPER_ACTION_UNINSTALL:
+            m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_ACTION, L"Uninstalling");
+            break;
+        }
 
         hr = m_pEngine->Plan(action);
         ExitOnFailure(hr, "Failed to start planning packages.");
@@ -903,6 +907,23 @@ private: // privates
     LExit:
         SetState(WIXSTDBA_STATE_APPLYING, hr);
         return;
+    }
+
+
+    //
+    // OnClose - called when the window is trying to be closed.
+    //
+    BOOL OnClose()
+    {
+        // Force the cancel if we are not showing UI or we're already on the success or failure page.
+        // TODO: make prompt localizable string.
+        BOOL fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display || WIXSTDBA_STATE_APPLIED <= m_state, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
+        if (fClose)
+        {
+            // TODO: disable all the cancel buttons.
+        }
+
+        return fClose;
     }
 
 
@@ -948,7 +969,7 @@ private: // privates
     //
     void OnClickCloseButton()
     {
-        ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+        ::SendMessageW(m_hWnd, WM_CLOSE, 0, 0);
     }
 
 
@@ -958,16 +979,25 @@ private: // privates
     void OnClickEulaLink()
     {
         HRESULT hr = S_OK;
-        WCHAR wzLicenseUrl[1024] = { };
-        DWORD cchLicenseUrl = countof(wzLicenseUrl);
+        LPWSTR sczLicenseUrl = NULL;
+        LPWSTR sczLicensePath = NULL;
+        URI_PROTOCOL protocol = URI_PROTOCOL_UNKNOWN;
 
-        hr = m_pEngine->GetVariableString(L"EulaUrl", wzLicenseUrl, &cchLicenseUrl);
+        hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_EULA_LINK_TARGET, &sczLicenseUrl);
         ExitOnFailure(hr, "Failed to get URL to EULA.");
 
-        hr = ShelExec(wzLicenseUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
+        hr = UriProtocol(sczLicenseUrl, &protocol);
+        if (FAILED(hr) || URI_PROTOCOL_UNKNOWN == protocol)
+        {
+            hr = PathRelativeToModule(&sczLicensePath, sczLicenseUrl, m_hModule);
+        }
+
+        hr = ShelExec(sczLicensePath ? sczLicensePath : sczLicenseUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
         ExitOnFailure(hr, "Failed to launch URL to EULA.");
 
     LExit:
+        ReleaseStr(sczLicensePath);
+        ReleaseStr(sczLicenseUrl);
         return;
     }
 
@@ -986,8 +1016,22 @@ private: // privates
         hr = ShelExec(sczLaunchTarget, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
         ExitOnFailure1(hr, "Failed to launch target: %ls", sczLaunchTarget);
 
+        ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+
     LExit:
         ReleaseStr(sczLaunchTarget);
+        return;
+    }
+
+
+    //
+    // OnClickRestartButton - allows the restart and closes the app.
+    //
+    void OnClickRestartButton()
+    {
+        m_fAllowRestart = TRUE;
+        ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+
         return;
     }
 
@@ -1002,6 +1046,7 @@ private: // privates
     {
         DWORD dwOldPageId = 0;
         DWORD dwNewPageId = 0;
+        LPWSTR sczText = NULL;
 
         if (FAILED(hrStatus))
         {
@@ -1024,12 +1069,41 @@ private: // privates
                     BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
                 }
-                else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the launch button should be enabled.
+                else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the restart or launch button should be enabled.
                 {
-                    if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
+                    if (m_fRestartRequired)
+                    {
+                        BOOL fShowRestartButton = FALSE;
+                        if (BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
+                        {
+                            fShowRestartButton = TRUE;
+                        }
+
+                        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton);
+                        ThemeShowControl(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton ? SW_SHOW : SW_HIDE);
+                    }
+                    else if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
                     {
                         BOOL fLaunchTargetExists = BalStringVariableExists(m_pEngine, WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
                         ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                    }
+                }
+
+                // Format the text in each of the new page's controls.
+                THEME_PAGE* pPage = ThemeGetPage(m_pTheme, dwNewPageId);
+                if (pPage)
+                {
+                    for (DWORD i = 0; i < pPage->cControlIndices; ++i)
+                    {
+                        THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
+                        if (pControl->wzText && *pControl->wzText)
+                        {
+                            HRESULT hr = BalFormatString(m_pEngine, pControl->wzText, &sczText);
+                            if (SUCCEEDED(hr))
+                            {
+                                ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
+                            }
+                        }
                     }
                 }
 
@@ -1037,6 +1111,8 @@ private: // privates
                 ThemeShowPage(m_pTheme, dwNewPageId, SW_SHOW);
             }
         }
+
+        ReleaseStr(sczText);
     }
 
 
@@ -1074,7 +1150,8 @@ private: // privates
                     break;
 
                 case BOOTSTRAPPER_ACTION_MODIFY: __fallthrough;
-                case BOOTSTRAPPER_ACTION_REPAIR:
+                case BOOTSTRAPPER_ACTION_REPAIR: __fallthrough;
+                case BOOTSTRAPPER_ACTION_UNINSTALL:
                     *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_MODIFY];
                     break;
                 }
@@ -1094,7 +1171,6 @@ private: // privates
                 *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS];
                 break;
 
-            case WIXSTDBA_STATE_ERROR: __fallthrough;
             case WIXSTDBA_STATE_FAILED:
                 *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_FAILURE];
                 break;
@@ -1124,7 +1200,9 @@ public:
 
         m_state = WIXSTDBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
-        m_fCanceled = FALSE;
+
+        m_fRestartRequired = FALSE;
+        m_fAllowRestart = FALSE;
 
         m_sczLanguage = NULL;
         m_sczFamilyBundleId = NULL;
@@ -1159,7 +1237,9 @@ private:
 
     WIXSTDBA_STATE m_state;
     HRESULT m_hrFinal;
-    BOOL m_fCanceled;
+
+    BOOL m_fRestartRequired;
+    BOOL m_fAllowRestart;
 
     LPWSTR m_sczLanguage;
     LPWSTR m_sczFamilyBundleId;

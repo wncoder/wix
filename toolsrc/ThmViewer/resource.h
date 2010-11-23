@@ -3,6 +3,7 @@
 //
 #define IDC_STATIC                      -1
 #define THMVWR_RES_THEME_FILE            1
+#define THMVWR_RES_RICHEDIT_FILE         2
 
 // Next default values for new objects
 // 

@@ -114,6 +114,13 @@ extern "C" HRESULT PayloadsParseFromXml(
             }
         }
 
+        // @LayoutOnly
+        hr = XmlGetYesNoAttribute(pixnNode, L"LayoutOnly", &pPayload->fLayoutOnly);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @LayoutOnly.");
+        }
+
         // @SourcePath
         hr = XmlGetAttributeEx(pixnNode, L"SourcePath", &pPayload->sczSourcePath);
         if (E_NOTFOUND != hr || BURN_PAYLOAD_PACKAGING_DOWNLOAD != pPayload->packaging)

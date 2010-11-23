@@ -259,6 +259,11 @@ HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzLayoutDirectory
     );
+HRESULT PlanLayoutOnlyPayload(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzLayoutDirectory
+    );
 HRESULT PlanLayoutPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,

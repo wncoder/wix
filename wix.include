@@ -93,6 +93,7 @@
   <property name="dir.build.ct.setup" value="${dir.build.ct}\setup" readonly="true" />
   <property name="dir.build.dark" value="${dir.build.wix}\dark" readonly="true" />
   <property name="dir.build.ext" value="${dir.build.wix}\ext" readonly="true" />
+  <property name="dir.build.ext.balextension" value="${dir.build.ext}\balextension" readonly="true" />
   <property name="dir.build.ext.complusextension" value="${dir.build.ext}\complusextension" readonly="true" />
   <property name="dir.build.ext.difxappextension" value="${dir.build.ext}\difxappextension" readonly="true" />
   <property name="dir.build.ext.directxextension" value="${dir.build.ext}\DirectXExtension" readonly="true" />
@@ -164,7 +165,6 @@
   <property name="dir.src.burn.mba.core" value="${dir.src.burn.mba}\core" readonly="true" />
   <property name="dir.src.burn.mba.host" value="${dir.src.burn.mba}\host" readonly="true" />
   <property name="dir.src.burn.mba.preq" value="${dir.src.burn.mba}\preq" readonly="true" />
-  <property name="dir.src.burn.balutil" value="${dir.src.burn}\balutil" readonly="true" />
   <property name="dir.src.ca" value="${dir.wixroot.src}\ca" readonly="true" />
   <property name="dir.src.ca.serverca" value="${dir.wixroot.src}\ca\serverca" readonly="true" />
   <property name="dir.src.ca.wcautil" value="${dir.wixroot.src}\ca\wcautil" readonly="true" />
@@ -182,6 +182,8 @@
   <property name="dir.src.chm" value="${dir.wixroot.src}\chm" readonly="true" />
   <property name="dir.src.dark" value="${dir.wixroot.src}\dark" readonly="true" />
   <property name="dir.src.ext" value="${dir.wixroot.src}\ext" readonly="true" />
+  <property name="dir.src.balextension" value="${dir.src.ext}\BalExtension" readonly="true" />
+  <property name="dir.src.balutil" value="${dir.src.balextension}\balutil" readonly="true" />
   <property name="dir.src.heat" value="${dir.wixroot.src}\heat" readonly="true" />
   <property name="dir.src.insignia" value="${dir.wixroot.src}\insignia" readonly="true" />
   <property name="dir.src.light" value="${dir.wixroot.src}\light" readonly="true" />
@@ -204,7 +206,7 @@
 
   <!-- Include directories for the shared wix projects -->
   <property name="dir.inc.burn" value="${dir.src.burn}\inc" readonly="true" />
-  <property name="dir.inc.balutil" value="${dir.src.burn}\balutil\inc" readonly="true" />
+  <property name="dir.inc.balutil" value="${dir.src.balextension}\balutil\inc" readonly="true" />
   <property name="dir.inc.dutil" value="${dir.src.dutil}\inc" readonly="true" />
 
   <!-- Target files that are referenced between projects -->
@@ -322,6 +324,7 @@
     <mkdir dir="${dir.build.ct.clickthrough}" />
     <mkdir dir="${dir.build.dark}" />
     <mkdir dir="${dir.build.ext}" />
+    <mkdir dir="${dir.build.ext.balextension}" />
     <mkdir dir="${dir.build.ext.complusextension}" />
     <mkdir dir="${dir.build.ext.difxappextension}" />
     <mkdir dir="${dir.build.ext.directxextension}" />

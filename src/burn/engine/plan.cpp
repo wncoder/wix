@@ -30,7 +30,7 @@ static HRESULT GetActionDefaultRequestState(
     );
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory
     );
@@ -175,6 +175,21 @@ extern "C" HRESULT PlanLayoutBundle(
     ExitOnFailure(hr, "Failed to to copy layout directory for bundle.");
 
     ++pPlan->cOverallProgressTicksTotal;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanLayoutOnlyPayload(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzLayoutDirectory
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = AppendCacheOrLayoutPayloadAction(pPlan, NULL, pPayload, wzLayoutDirectory);
+    ExitOnFailure(hr, "Failed to append payload layout only action.");
 
 LExit:
     return hr;
@@ -460,7 +475,7 @@ LExit:
 
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory
     )

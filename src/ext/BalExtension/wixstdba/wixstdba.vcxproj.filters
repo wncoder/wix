@@ -23,14 +23,26 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\thm.xml">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="wixstdba.def">
       <Filter>Source Files</Filter>
     </None>
     <None Include="wixstdba.build" />
-    <None Include="Resources\en-us.wxl">
+    <None Include="Resources\HyperlinkTheme.wxl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\HyperlinkTheme.xml">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\Logo.bmp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\LoremIpsumLicense.rtf">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\RtfTheme.wxl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\RtfTheme.xml">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

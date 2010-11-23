@@ -445,6 +445,8 @@ namespace Bootstrapper
                 VariableGetNumericHelper(&variables, L"NTSuiteWebServer");
                 VariableGetNumericHelper(&variables, L"CompatibilityMode");
                 VariableGetNumericHelper(&variables, L"Privileged");
+                VariableGetNumericHelper(&variables, L"SystemLanguageID");
+                VariableGetNumericHelper(&variables, L"UserLanguageID");
 
                 // known folders
                 Assert::AreEqual(VariableGetStringHelper(&variables, L"AppDataFolder"), Environment::GetFolderPath(Environment::SpecialFolder::ApplicationData));

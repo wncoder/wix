@@ -22,7 +22,7 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="${dir.src.burn.balutil}\balutil.build" unless="${property::exists('balutil.properties.defined')}" />
+  <include buildfile="${dir.src.balutil}\balutil.build" unless="${property::exists('balutil.properties.defined')}" />
 
   <!-- preq-specific properties -->
   <property name="preq.file.dll.target" value="${dir.target.wix}\mbapreq.dll" readonly="true" />

@@ -85,22 +85,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             get
             {
-                try
+                Symbol symbol = this.collection[symbolName] as Symbol;
+                if (null == symbol)
                 {
-                    return (Symbol)this.collection[symbolName];
-                }
-                catch (InvalidCastException)
-                {
-                    ArrayList symbols = this.collection[symbolName] as ArrayList;
-                    if (null == symbols)
-                    {
-                        throw;
-                    }
-                    else
+                    ArrayList symbols = (ArrayList)this.collection[symbolName];
+                    if (null != symbols)
                     {
                         throw new DuplicateSymbolsException(symbols);
                     }
                 }
+
+                return symbol;
             }
         }
 

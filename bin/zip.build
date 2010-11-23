@@ -190,6 +190,10 @@
         <include name="LuxTasks.dll" />
       </fileset>
 
+      <fileset prefix="doc" basedir="${dir.wixroot}\src\dutil\Xsd">
+        <include name="thmutil.xsd" />
+      </fileset>
+
       <fileset prefix="doc" basedir="${dir.wixroot}\src\lux\wixext\Xsd">
         <include name="lux.xsd" />
       </fileset>
@@ -307,6 +311,7 @@
         <include name="${dir.inc.dutil}\reswutil.h" />
         <include name="${dir.inc.dutil}\rexutil.h" />
         <include name="${dir.inc.dutil}\rssutil.h" />
+        <include name="${dir.inc.dutil}\sceutil.h" />
         <include name="${dir.inc.dutil}\shelutil.h" />
         <include name="${dir.inc.dutil}\sqlutil.h" />
         <include name="${dir.inc.dutil}\strutil.h" />

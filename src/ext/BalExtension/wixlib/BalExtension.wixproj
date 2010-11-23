@@ -1,5 +1,6 @@
 ﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\..\..\..\WixBuild.Common.targets" />
+
   <PropertyGroup>
     <ProjectGuid>{3444d952-f21c-496f-ab6b-56435bfd0787}</ProjectGuid>
     <OutputName>bal</OutputName>
@@ -11,11 +12,24 @@
     <Cultures>en-us</Cultures>
     <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
     <DefineConstants>
-      $(DefineConstants);
+        $(DefineConstants);
+        LogoImage=SourceDir\Logo.bmp;
+        LoremIpsumLicenseFile=SourceDir\LoremIpsumLicense.rtf;
+        RtfThemeXml=SourceDir\RtfTheme.xml;
+        RtfThemeWxl=SourceDir\RtfTheme.wxl;
+        HyperlinkThemeXml=SourceDir\HyperlinkTheme.xml;
+        HyperlinkThemeWxl=SourceDir\HyperlinkTheme.wxl;
     </DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="BalExtension.wxs" />
+    <Compile Include="wixstdba.wxs" />
   </ItemGroup>
+  <ItemGroup>
+    <BindInputPaths Include="$(OutputPath)WixstdbaResources\" />
+    <BindInputPaths Include="$(OutputPath)" />
+  </ItemGroup>
+
   <Import Project="$(WixTargetsPath)" />
 </Project>

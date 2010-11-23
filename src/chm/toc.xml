@@ -13,6 +13,7 @@
       <Topic Title="Compiler (Candle)" SourceFile="html\candle.htm"/>
       <Topic Title="Linker (Light)" SourceFile="html\light.htm"/>
       <Topic Title="Librarian (Lit)" SourceFile="html\lit.htm"/>
+      <Topic Title="Havester (Heat)" SourceFile="html\heat.htm"/>
       <Topic Title="Inscriber (Insignia)" SourceFile="html\insignia.htm" />
       <Topic Title="WixCop" SourceFile="html\wixcop.htm"/>
       <Topic Title="MSI Tables to WiX Schema" SourceFile="html\msitowix.htm"/>
@@ -149,6 +150,7 @@
     </Topic>
 
     <Topic Title="WiX Schema References" SourceFile="html\schema_index.htm">
+      <XmlSchema SourceFile="..\dutil\Xsd\thmutil.xsd" Main="yes"/>
       <XmlSchema SourceFile="..\wix\Xsd\wix.xsd" Main="yes"/>
       <XmlSchema SourceFile="..\wix\Xsd\wixloc.xsd" Main="yes"/>
       <XmlSchema SourceFile="..\ext\ComPlusExtension\wixext\Xsd\complus.xsd" />

@@ -37,7 +37,7 @@ static HRESULT GetVerifiedCertificateChain(
 
 
 extern "C" HRESULT CacheCalculatePayloadUnverifiedPath(
-    __in BURN_PACKAGE* /* pPackage */,
+    __in_opt BURN_PACKAGE* /* pPackage */,
     __in BURN_PAYLOAD* pPayload,
     __deref_out_z LPWSTR* psczUnverifiedPath
     )
@@ -213,7 +213,7 @@ extern "C" void CacheSendErrorCallback(
 
 
 extern "C" HRESULT CachePayload(
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
@@ -227,6 +227,8 @@ extern "C" HRESULT CachePayload(
 
     if (NULL == wzLayoutDirectory)
     {
+        AssertSz(pPackage, "Package is required when caching.");
+
         hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
         ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
     }

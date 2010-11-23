@@ -30,12 +30,27 @@ static ULONG_PTR vgdiHookToken = 0;
 static HMODULE vhHyperlinkRegisteredModule = NULL;
 static HMODULE vhModuleRichEd = NULL;
 
+struct MEMBUFFER_FOR_RICHEDIT
+{
+    BYTE* rgbData;
+    DWORD cbData;
+
+    DWORD iData;
+};
+
+
 // prototypes
 static HRESULT ParseTheme(
     __in_opt HMODULE hModule,
     __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMDocument* pixd,
     __out THEME** ppTheme
+    );
+HRESULT ParseImage(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
+    __in IXMLDOMNode* pElement,
+    __out HBITMAP* phImage
     );
 static HRESULT ParseApplication(
     __in_opt HMODULE hModule,
@@ -48,19 +63,31 @@ static HRESULT ParseFonts(
     __in THEME* pTheme
     );
 static HRESULT ParsePages(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
     );
 static HRESULT ParseControls(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pElement,
     __in THEME* pTheme,
     __in_opt THEME_PAGE* pPage
     );
 static HRESULT ParseControl(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL_TYPE type,
     __in THEME* pTheme,
     __in DWORD iControl
+    );
+static HRESULT ParseBillboards(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
+    __in IXMLDOMNode* pixn,
+    __in THEME_CONTROL* pControl
     );
 static HRESULT ParseColumns(
     __in IXMLDOMNode* pixn,
@@ -69,6 +96,11 @@ static HRESULT ParseColumns(
 static HRESULT ParseTabs(
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL* pControl
+    );
+static HRESULT DrawBillboard(
+    __in THEME* pTheme,
+    __in DRAWITEMSTRUCT* pdis,
+    __in const THEME_CONTROL* pControl
     );
 static HRESULT DrawButton(
     __in THEME* pTheme,
@@ -94,17 +126,32 @@ static void DrawHoverControl(
     __in HWND hWnd,
     __in BOOL fHover
     );
-static DWORD CALLBACK EditStreamCallback(
+static DWORD CALLBACK RichEditStreamFromFileHandleCallback(
     __in DWORD_PTR dwCookie,
     __in LPBYTE pbBuff,
     __in LONG cb,
     __in LONG *pcb
+    );
+static DWORD CALLBACK RichEditStreamFromMemoryCallback(
+    __in DWORD_PTR dwCookie,
+    __in LPBYTE pbBuff,
+    __in LONG cb,
+    __in LONG *pcb
+    );
+static void CALLBACK BillboardTimerProc(
+    __in HWND hwnd,
+    __in UINT uMsg,
+    __in UINT_PTR idEvent,
+    __in DWORD dwTime
     );
 static void FreePage(
     __in THEME_PAGE* pPage
     );
 static void FreeControl(
     __in THEME_CONTROL* pControl
+    );
+static void FreeBillboard(
+    __in THEME_BILLBOARD* pBillboard
     );
 static void FreeColumn(
     __in THEME_COLUMN* pColumn
@@ -117,11 +164,7 @@ static void FreeTab(
     );
 
 
-/********************************************************************
- ThemeInitialize - initialized theme management.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeInitialize(
+DAPI_(HRESULT) ThemeInitialize(
     __in HMODULE hModule
     )
 {
@@ -147,12 +190,12 @@ extern "C" HRESULT DAPI ThemeInitialize(
     }
     vhHyperlinkRegisteredModule = hModule;
 
+    // Initialize GDI+ and common controls.
     vgsi.SuppressBackgroundThread = TRUE;
 
     Gdiplus::Status gdiStatus = Gdiplus::GdiplusStartup(&vgdiToken, &vgsi, &vgso);
     ExitOnGdipFailure(gdiStatus, hr, "Failed to initialize GDI+.");
 
-    // Ensure that the common control DLL is loaded.
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC  = ICC_PROGRESS_CLASS | ICC_LISTVIEW_CLASSES | ICC_TREEVIEW_CLASSES | ICC_TAB_CLASSES;
     ::InitCommonControlsEx(&icex);
@@ -164,11 +207,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeUninitialize - .unitialize theme management.
-
-*******************************************************************/
-extern "C" void DAPI ThemeUninitialize()
+DAPI_(void) ThemeUninitialize()
 {
     if (vhModuleRichEd)
     {
@@ -192,11 +231,7 @@ extern "C" void DAPI ThemeUninitialize()
 }
 
 
-/********************************************************************
- ThemeLoadFromFile - loads a theme from a loose file.
-
- *******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadFromFile(
+DAPI_(HRESULT) ThemeLoadFromFile(
     __in_z LPCWSTR wzThemeFile,
     __out THEME** ppTheme
     )
@@ -221,12 +256,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeLoadFromResource - loads a theme from a module's data resource.
-
- NOTE: The resource data must be UTF-8 encoded.
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadFromResource(
+DAPI_(HRESULT) ThemeLoadFromResource(
     __in_opt HMODULE hModule,
     __in_z LPCSTR szResource,
     __out THEME** ppTheme
@@ -267,11 +297,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeFree - frees any memory associated with a theme.
-
-*******************************************************************/
-extern "C" void DAPI ThemeFree(
+DAPI_(void) ThemeFree(
     __in THEME* pTheme
     )
 {
@@ -307,11 +333,7 @@ extern "C" void DAPI ThemeFree(
 }
 
 
-/********************************************************************
- ThemeLoadControls - creates the windows for all the theme controls.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadControls(
+DAPI_(HRESULT) ThemeLoadControls(
     __in THEME* pTheme,
     __in HWND hwndParent,
     __in_ecount_opt(cAssignControlIds) THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
@@ -335,12 +357,24 @@ extern "C" HRESULT DAPI ThemeLoadControls(
 
         switch (pControl->type)
         {
+        case THEME_CONTROL_TYPE_BILLBOARD: // billboards are basically just owner drawn static controls (where we draw different images).
+            if (pControl->cBillboards)
+            {
+                wzWindowClass = WC_STATICW;
+                dwWindowBits |= SS_OWNERDRAW;
+            }
+            else
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            }
+            break;
+
         case THEME_CONTROL_TYPE_CHECKBOX:
             dwWindowBits |= BS_AUTOCHECKBOX; // checkbox is basically a button with an extra bit tossed in.
             __fallthrough;
         case THEME_CONTROL_TYPE_BUTTON:
             wzWindowClass = WC_BUTTONW;
-            if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+            if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
             {
                 dwWindowBits |= BS_OWNERDRAW;
             }
@@ -369,7 +403,7 @@ extern "C" HRESULT DAPI ThemeLoadControls(
             break;
 
         case THEME_CONTROL_TYPE_IMAGE: // images are basically just owner drawn static controls (so we can draw .jpgs and .pngs instead of just bitmaps).
-            if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+            if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
             {
                 wzWindowClass = WC_STATICW;
                 dwWindowBits |= SS_OWNERDRAW;
@@ -381,7 +415,7 @@ extern "C" HRESULT DAPI ThemeLoadControls(
             break;
 
         case THEME_CONTROL_TYPE_PROGRESSBAR:
-            if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+            if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
             {
                 wzWindowClass = WC_STATICW; // no such thing as an owner drawn progress bar so we'll make our own out of a static control.
                 dwWindowBits |= SS_OWNERDRAW;
@@ -489,12 +523,22 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeLoadLocFromFile - Loads a wxl file and localizes strings.
- Must be called after loading a theme.
+DAPI_(void) ThemeUnloadControls(
+    __in THEME* pTheme
+    )
+{
+    for (DWORD i = 0; i < pTheme->cControls; ++i)
+    {
+        // TODO: Should the control id get reset as well?
+        pTheme->rgControls[i].hWnd = NULL;
+    }
 
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadLocFromFile(
+    pTheme->hwndHover = NULL;
+    pTheme->hwndParent = NULL;
+}
+
+
+DAPI_(HRESULT) ThemeLoadLocFromFile(
     __in THEME* pTheme,
     __in_z LPCWSTR wzFileName,
     __in HMODULE hModule
@@ -548,7 +592,7 @@ LExit:
  Must be called after loading a theme and before calling
  ThemeLoadControls.
 *******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadStrings(
+DAPI_(HRESULT) ThemeLoadStrings(
     __in THEME* pTheme,
     __in HMODULE hResModule
     )
@@ -596,11 +640,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeLoadRichEditFromFile - Attach a richedit control to a RTF file.
-
- *******************************************************************/
-extern "C" HRESULT DAPI ThemeLoadRichEditFromFile(
+DAPI_(HRESULT) ThemeLoadRichEditFromFile(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in_z LPCWSTR wzFileName,
@@ -613,7 +653,7 @@ extern "C" HRESULT DAPI ThemeLoadRichEditFromFile(
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
     hr = PathRelativeToModule(&sczFile, wzFileName, hModule);
-    ExitOnFailure(hr, "Failed to create RTF path.");
+    ExitOnFailure(hr, "Failed to read resource data.");
 
     hFile = ::CreateFileW(sczFile, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if (INVALID_HANDLE_VALUE == hFile)
@@ -624,7 +664,7 @@ extern "C" HRESULT DAPI ThemeLoadRichEditFromFile(
     {
         EDITSTREAM es = { };
 
-        es.pfnCallback = EditStreamCallback;
+        es.pfnCallback = RichEditStreamFromFileHandleCallback;
         es.dwCookie = reinterpret_cast<DWORD_PTR>(hFile);
 
         ::SendMessageW(hWnd, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
@@ -639,12 +679,34 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeTranslateAccelerator - will translate the message using the active
-                             accelerator table.
+DAPI_(HRESULT) ThemeLoadRichEditFromResource(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    )
+{
+    HRESULT hr = S_OK;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    MEMBUFFER_FOR_RICHEDIT buffer = { };
+    EDITSTREAM es = { };
 
-*******************************************************************/
-extern "C" BOOL DAPI ThemeTranslateAccelerator(
+    hr = ResReadData(hModule, szResourceName, reinterpret_cast<LPVOID*>(&buffer.rgbData), &buffer.cbData);
+    ExitOnFailure(hr, "Failed to read resource data.");
+
+    es.pfnCallback = RichEditStreamFromMemoryCallback;
+    es.dwCookie = reinterpret_cast<DWORD_PTR>(&buffer);
+
+    ::SendMessageW(hWnd, EM_STREAMIN, SF_RTF, reinterpret_cast<LPARAM>(&es));
+    hr = es.dwError;
+    ExitOnFailure(hr, "Failed to update RTF stream");
+
+LExit:
+    return hr;
+}
+
+
+DAPI_(BOOL) ThemeTranslateAccelerator(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
     __in MSG* pMsg
@@ -661,10 +723,6 @@ extern "C" BOOL DAPI ThemeTranslateAccelerator(
 }
 
 
-/********************************************************************
- ThemeDefWindowProc - replacement for DefWindowProc() when using theme.
-
-*******************************************************************/
 extern "C" LRESULT CALLBACK ThemeDefWindowProc(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
@@ -706,7 +764,10 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
             break;
 
         case WM_SETCURSOR:
-            ThemeHoverControl(pTheme, hWnd, reinterpret_cast<HWND>(wParam));
+            if (ThemeHoverControl(pTheme, hWnd, reinterpret_cast<HWND>(wParam)))
+            {
+                return TRUE;
+            }
             break;
 
         case WM_PAINT:
@@ -725,11 +786,7 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
 }
 
 
-/********************************************************************
- ThemeGetPageIds - gets the page ids for the theme via page names.
-
-*******************************************************************/
-extern "C" void DAPI ThemeGetPageIds(
+DAPI_(void) ThemeGetPageIds(
     __in THEME* pTheme,
     __in_ecount(cGetPages) LPCWSTR* rgwzFindNames,
     __inout_ecount(cGetPages) DWORD* rgdwPageIds,
@@ -752,11 +809,24 @@ extern "C" void DAPI ThemeGetPageIds(
 }
 
 
-/********************************************************************
- ThemeShowPage - shows or hides all of the controls in the page at one time.
+DAPI_(THEME_PAGE*) ThemeGetPage(
+    __in THEME* pTheme,
+    __in DWORD dwPage
+    )
+{
+    DWORD iPage = dwPage - 1;
+    THEME_PAGE* pPage = NULL;
 
- *******************************************************************/
-extern "C" void DAPI ThemeShowPage(
+    if (iPage < pTheme->cPages)
+    {
+        pPage = pTheme->rgPages + iPage;
+    }
+
+    return pPage;
+}
+
+
+DAPI_(void) ThemeShowPage(
     __in THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
@@ -773,22 +843,28 @@ extern "C" void DAPI ThemeShowPage(
 
             if (pControl->fHideWhenDisabled && !::IsWindowEnabled(hWnd))
             {
-                ::ShowWindow(hWnd, SW_HIDE);
+                nCmdShow = SW_HIDE;
             }
-            else
+
+            ::ShowWindow(hWnd, nCmdShow);
+
+            if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
             {
-                ::ShowWindow(hWnd, nCmdShow);
+                if (SW_HIDE == nCmdShow || !::IsWindowEnabled(hWnd))
+                {
+                    ThemeStopBillboard(pTheme, pControl->wId);
+                }
+                else
+                {
+                    ThemeStartBillboard(pTheme, pControl->wId, 0xFFFF);
+                }
             }
         }
     }
 }
 
 
-/********************************************************************
- ThemeControlExists - check if a control with the specified id exists.
-
- *******************************************************************/
-extern "C" BOOL DAPI ThemeControlExists(
+DAPI_(BOOL) ThemeControlExists(
     __in THEME* pTheme,
     __in DWORD dwControl
     )
@@ -805,11 +881,7 @@ extern "C" BOOL DAPI ThemeControlExists(
 }
 
 
-/********************************************************************
- ThemeControlEnable - enables/disables a control.
-
- *******************************************************************/
-extern "C" void DAPI ThemeControlEnable(
+DAPI_(void) ThemeControlEnable(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in BOOL fEnable
@@ -820,11 +892,7 @@ extern "C" void DAPI ThemeControlEnable(
 }
 
 
-/********************************************************************
- ThemeShowControl - shows/hides a control.
-
- *******************************************************************/
-extern "C" void DAPI ThemeShowControl(
+DAPI_(void) ThemeShowControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in int nCmdShow
@@ -835,7 +903,7 @@ extern "C" void DAPI ThemeShowControl(
 }
 
 
-extern "C" BOOL DAPI ThemePostControlMessage(
+DAPI_(BOOL) ThemePostControlMessage(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in UINT Msg,
@@ -856,7 +924,7 @@ extern "C" BOOL DAPI ThemePostControlMessage(
 }
 
 
-extern "C" LRESULT DAPI ThemeSendControlMessage(
+DAPI_(LRESULT) ThemeSendControlMessage(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in UINT Msg,
@@ -869,11 +937,7 @@ extern "C" LRESULT DAPI ThemeSendControlMessage(
 }
 
 
-/********************************************************************
- ThemeDrawBackground - draws the theme background.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeDrawBackground(
+DAPI_(HRESULT) ThemeDrawBackground(
     __in THEME* pTheme,
     __in PAINTSTRUCT* pps
     )
@@ -897,11 +961,7 @@ extern "C" HRESULT DAPI ThemeDrawBackground(
 }
 
 
-/********************************************************************
- ThemeDrawControl - draw an owner drawn control.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeDrawControl(
+DAPI_(HRESULT) ThemeDrawControl(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis
     )
@@ -915,6 +975,11 @@ extern "C" HRESULT DAPI ThemeDrawControl(
 
     switch (pControl->type)
     {
+    case THEME_CONTROL_TYPE_BILLBOARD:
+        hr = DrawBillboard(pTheme, pdis, pControl);
+        ExitOnFailure(hr, "Failed to draw billboard.");
+        break;
+
     case THEME_CONTROL_TYPE_BUTTON:
         hr = DrawButton(pTheme, pdis, pControl);
         ExitOnFailure(hr, "Failed to draw button");
@@ -945,16 +1010,13 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeHoverControl - mark a control as hover.
-
-*******************************************************************/
-extern "C" void DAPI ThemeHoverControl(
+DAPI_(BOOL) ThemeHoverControl(
     __in THEME* pTheme,
     __in HWND hwndParent,
     __in HWND hwndControl
     )
 {
+    BOOL fHovered = FALSE;
     if (hwndControl != pTheme->hwndHover)
     {
         if (pTheme->hwndHover && pTheme->hwndHover != hwndParent)
@@ -967,17 +1029,15 @@ extern "C" void DAPI ThemeHoverControl(
         if (pTheme->hwndHover && pTheme->hwndHover != hwndParent)
         {
             DrawHoverControl(pTheme->hwndHover, TRUE);
+            fHovered = TRUE;
         }
     }
+
+    return fHovered;
 }
 
 
-/********************************************************************
- ThemeIsControlChecked - gets whether a control is checked. Only
-                         really useful for checkbox controls.
-
-*******************************************************************/
-extern "C" BOOL DAPI ThemeIsControlChecked(
+DAPI_(BOOL) ThemeIsControlChecked(
     __in THEME* pTheme,
     __in DWORD dwControl
     )
@@ -987,11 +1047,7 @@ extern "C" BOOL DAPI ThemeIsControlChecked(
 }
 
 
-/********************************************************************
- ThemeSetControlColor - sets the color of text for a control.
-
-*******************************************************************/
-extern "C" BOOL DAPI ThemeSetControlColor(
+DAPI_(BOOL) ThemeSetControlColor(
     __in THEME* pTheme,
     __in HDC hdc,
     __in HWND hWnd,
@@ -1031,18 +1087,68 @@ extern "C" BOOL DAPI ThemeSetControlColor(
 }
 
 
-/********************************************************************
- ThemeSetProgressControl - sets the current percentage complete in a
-                           progress bar control.
+DAPI_(HRESULT) ThemeStartBillboard(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in WORD iImage
+    )
+{
+    HRESULT hr = E_NOTFOUND;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeSetProgressControl(
+    if (hWnd)
+    {
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
+        {
+            WORD wStart = static_cast<WORD>((iImage < pControl->cBillboards) ? iImage : (pControl->dwData < pControl->cBillboards) ? pControl->dwData : 0);
+
+            pControl->dwData = wStart;
+            if (!::SetTimer(pTheme->hwndParent, pControl->wId, pControl->wBillboardInterval, BillboardTimerProc))
+            {
+                ExitWithLastError(hr, "Failed to start billboard.");
+            }
+
+            hr = S_OK;
+        }
+    }
+
+LExit:
+    return hr;
+}
+
+
+DAPI_(HRESULT) ThemeStopBillboard(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    )
+{
+    HRESULT hr = E_NOTFOUND;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+
+    if (hWnd)
+    {
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
+        {
+            if (::KillTimer(pTheme->hwndParent, pControl->wId))
+            {
+                hr = S_OK;
+            }
+        }
+    }
+
+    return hr;
+}
+
+
+DAPI_(HRESULT) ThemeSetProgressControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in DWORD dwProgressPercentage
     )
 {
-    HRESULT hr = S_FALSE;
+    HRESULT hr = E_NOTFOUND;
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
     if (hWnd)
@@ -1055,7 +1161,7 @@ extern "C" HRESULT DAPI ThemeSetProgressControl(
             DWORD dwColor = HIWORD(pControl->dwData);
             pControl->dwData = MAKEDWORD(dwProgressPercentage, dwColor);
 
-            if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+            if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
             {
                 if (!::InvalidateRect(hWnd, NULL, FALSE))
                 {
@@ -1069,6 +1175,10 @@ extern "C" HRESULT DAPI ThemeSetProgressControl(
 
             hr = S_OK;
         }
+        else
+        {
+            hr = S_FALSE;
+        }
     }
 
 LExit:
@@ -1076,12 +1186,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeSetProgressControlColor - sets the current color of a
-                                progress bar control.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeSetProgressControlColor(
+DAPI_(HRESULT) ThemeSetProgressControlColor(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in DWORD dwColorIndex
@@ -1094,7 +1199,7 @@ extern "C" HRESULT DAPI ThemeSetProgressControlColor(
         THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
 
         // Only set color on owner draw progress bars.
-        if (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY)
+        if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
         {
             DWORD dwCurrentColor = HIWORD(pControl->dwData);
 
@@ -1118,11 +1223,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeSetTextControl - sets the text of a control.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeSetTextControl(
+DAPI_(HRESULT) ThemeSetTextControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in_z LPCWSTR wzText
@@ -1141,11 +1242,7 @@ LExit:
 }
 
 
-/********************************************************************
- ThemeGetTextControl - gets the text of a control.
-
-*******************************************************************/
-extern "C" HRESULT DAPI ThemeGetTextControl(
+DAPI_(HRESULT) ThemeGetTextControl(
     __in const THEME* pTheme,
     __in DWORD dwControl,
     __out LPWSTR* psczText
@@ -1191,6 +1288,21 @@ LExit:
 }
 
 
+DAPI_(HRESULT) ThemeUpdateCaption(
+    __in THEME* pTheme,
+    __in_z LPCWSTR wzCaption
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = StrAllocString(&pTheme->wzCaption, wzCaption, 0);
+    ExitOnFailure(hr, "Failed to update theme caption.");
+
+LExit:
+    return hr;
+}
+
+
 // Internal functions.
 
 static HRESULT ParseTheme(
@@ -1205,10 +1317,6 @@ static HRESULT ParseTheme(
     HRESULT hr = S_OK;
     THEME* pTheme = NULL;
     IXMLDOMElement *pThemeElement = NULL;
-    Gdiplus::Bitmap* pBitmap = NULL;
-    BSTR bstr = NULL;
-    LPSTR pszId = NULL;
-    LPWSTR sczImageFile = NULL;
 
     hr = pixd->get_documentElement(&pThemeElement);
     ExitOnFailure(hr, "Failed to get theme element.");
@@ -1219,33 +1327,79 @@ static HRESULT ParseTheme(
     pTheme->wId = ++wThemeId;
 
     // Parse the optional background resource image.
-    hr = XmlGetAttribute(pThemeElement, L"IconResource", &bstr);
+    hr = ParseImage(hModule, wzRelativePath, pThemeElement, &pTheme->hImage);
+    ExitOnFailure(hr, "Failed while parsing theme image.");
+
+    // Parse the optional window style.
+    hr = XmlGetAttributeNumberBase(pThemeElement, L"HexStyle", 16, &pTheme->dwStyle);
     if (S_FALSE == hr)
     {
-        hr = XmlGetAttribute(pThemeElement, L"i", &bstr);
+        hr = XmlGetAttributeNumberBase(pThemeElement, L"s", 16, &pTheme->dwStyle);
     }
-    ExitOnFailure(hr, "Failed to get theme image (t@i) attribute.");
+    ExitOnFailure(hr, "Failed to get theme window style (t@s) attribute.");
+
+    // Parse the application element
+    hr = ParseApplication(hModule, wzRelativePath, pThemeElement, pTheme);
+    ExitOnFailure(hr, "Failed to parse theme application element.");
+
+    // Parse the fonts.
+    hr = ParseFonts(pThemeElement, pTheme);
+    ExitOnFailure(hr, "Failed to parse theme fonts.");
+
+    // Parse the pages.
+    hr = ParsePages(hModule, wzRelativePath, pThemeElement, pTheme);
+    ExitOnFailure(hr, "Failed to parse theme pages.");
+
+    // Parse the non-paged controls.
+    hr = ParseControls(hModule, wzRelativePath, pThemeElement, pTheme, NULL);
+    ExitOnFailure(hr, "Failed to parse theme controls.");
+
+    *ppTheme = pTheme;
+    pTheme = NULL;
+
+LExit:
+    ReleaseObject(pThemeElement);
+
+    if (pTheme)
+    {
+        ThemeFree(pTheme);
+    }
+
+    return hr;
+}
+
+HRESULT ParseImage(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
+    __in IXMLDOMNode* pElement,
+    __out HBITMAP* phImage
+    )
+{
+    HRESULT hr = S_OK;
+    BSTR bstr = NULL;
+    LPSTR pszId = NULL;
+    LPWSTR sczImageFile = NULL;
+    Gdiplus::Bitmap* pBitmap = NULL;
+
+    hr = XmlGetAttribute(pElement, L"ImageResource", &bstr);
+    ExitOnFailure(hr, "Failed to get image resource attribute.");
 
     if (S_OK == hr)
     {
         hr = StrAnsiAllocString(&pszId, bstr, 0, CP_UTF8);
-        ExitOnFailure(hr, "Failed to convert theme image attribute to ANSI.");
-
-        ReleaseNullBSTR(bstr);
+        ExitOnFailure(hr, "Failed to convert image attribute to ANSI.");
 
         hr = GdipBitmapFromResource(hModule, pszId, &pBitmap);
         //// don't fail
     }
 
+    ReleaseNullBSTR(bstr);
+
     // Parse the optional background image from a given file.
     if (!pBitmap)
     {
-        hr = XmlGetAttribute(pThemeElement, L"ImageFile", &bstr);
-        if (S_FALSE == hr)
-        {
-            hr = XmlGetAttribute(pThemeElement, L"if", &bstr);
-        }
-        ExitOnFailure(hr, "Failed to get theme image (t@if) attribute.");
+        hr = XmlGetAttribute(pElement, L"ImageFile", &bstr);
+        ExitOnFailure(hr, "Failed to get image file attribute.");
 
         if (S_OK == hr)
         {
@@ -1259,7 +1413,6 @@ static HRESULT ParseTheme(
                 hr = PathRelativeToModule(&sczImageFile, bstr, hModule);
                 ExitOnFailure(hr, "Failed to get image filename.");
             }
-            ReleaseNullBSTR(bstr);
 
             hr = GdipBitmapFromFile(sczImageFile, &pBitmap);
             // don't fail
@@ -1270,58 +1423,21 @@ static HRESULT ParseTheme(
     if (pBitmap)
     {
         Gdiplus::Color black;
-        Gdiplus::Status gs = pBitmap->GetHBITMAP(black, &pTheme->hImage);
+        Gdiplus::Status gs = pBitmap->GetHBITMAP(black, phImage);
         ExitOnGdipFailure(gs, hr, "Failed to convert GDI+ bitmap into HBITMAP.");
     }
 
-    // Parse the application element
-    hr = ParseApplication(hModule, wzRelativePath, pThemeElement, pTheme);
-    ExitOnFailure(hr, "Failed to parse theme application element.");
-
-    // Parse the optional window style.
-    hr = XmlGetAttributeNumberBase(pThemeElement, L"HexStyle", 16, &pTheme->dwStyle);
-    if (S_FALSE == hr)
-    {
-        hr = XmlGetAttributeNumberBase(pThemeElement, L"s", 16, &pTheme->dwStyle);
-    }
-    ExitOnFailure(hr, "Failed to get theme window style (t@s) attribute.");
-
-    if (S_FALSE == hr)
-    {
-        pTheme->dwStyle = WS_VISIBLE | WS_MINIMIZEBOX | WS_SYSMENU;
-        pTheme->dwStyle |= (0 <= pTheme->nSourceX && 0 <= pTheme->nSourceY) ? WS_POPUP : WS_OVERLAPPED;
-    }
-
-    // Parse the fonts.
-    hr = ParseFonts(pThemeElement, pTheme);
-    ExitOnFailure(hr, "Failed to parse theme fonts.");
-
-    // Parse the pages.
-    hr = ParsePages(pThemeElement, pTheme);
-    ExitOnFailure(hr, "Failed to parse theme pages.");
-
-    // Parse the non-paged controls.
-    hr = ParseControls(pThemeElement, pTheme, NULL);
-    ExitOnFailure(hr, "Failed to parse theme controls.");
-
-    *ppTheme = pTheme;
-    pTheme = NULL;
+    hr = S_OK;
 
 LExit:
-    ReleaseStr(sczImageFile);
-    ReleaseStr(pszId);
-    ReleaseBSTR(bstr);
-    ReleaseObject(pThemeElement);
-
     if (pBitmap)
     {
         delete pBitmap;
     }
 
-    if (pTheme)
-    {
-        ThemeFree(pTheme);
-    }
+    ReleaseStr(sczImageFile);
+    ReleaseStr(pszId);
+    ReleaseBSTR(bstr);
 
     return hr;
 }
@@ -1339,12 +1455,22 @@ static HRESULT ParseApplication(
     BSTR bstr = NULL;
     LPWSTR sczIconFile = NULL;
 
-    hr = XmlSelectSingleNode(pElement, L"Application|App|a", &pixn);
+    hr = XmlSelectSingleNode(pElement, L"Window|Application|App|a", &pixn);
     if (S_FALSE == hr)
     {
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
     }
     ExitOnFailure(hr, "Failed to find application element.");
+
+    // Parse the optional window style.
+    hr = XmlGetAttributeNumberBase(pixn, L"HexStyle", 16, &pTheme->dwStyle);
+    ExitOnFailure(hr, "Failed to get theme window style (Window@HexStyle) attribute.");
+
+    if (S_FALSE == hr)
+    {
+        pTheme->dwStyle = WS_VISIBLE | WS_MINIMIZEBOX | WS_SYSMENU;
+        pTheme->dwStyle |= (0 <= pTheme->nSourceX && 0 <= pTheme->nSourceY) ? WS_POPUP : WS_OVERLAPPED;
+    }
 
     hr = XmlGetAttributeNumber(pixn, L"Width", reinterpret_cast<DWORD*>(&pTheme->nWidth));
     if (S_FALSE == hr)
@@ -1512,12 +1638,16 @@ static HRESULT ParseFonts(
 
     while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
     {
-        hr = XmlGetAttributeNumber(pixn, L"id", &dwId);
+        hr = XmlGetAttributeNumber(pixn, L"Id", &dwId);
         if (S_FALSE == hr)
         {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            hr = XmlGetAttributeNumber(pixn, L"id", &dwId);
+            if (S_FALSE == hr)
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+            }
         }
-        ExitOnFailure(hr, "Failed to find font foreground color.");
+        ExitOnFailure(hr, "Failed to find font id.");
 
         if (pTheme->cFonts <= dwId)
         {
@@ -1638,6 +1768,8 @@ LExit:
 
 
 static HRESULT ParsePages(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
     )
@@ -1680,7 +1812,7 @@ static HRESULT ParsePages(
         }
         ExitOnFailure(hr, "Failed when querying page Name.");
 
-        hr = ParseControls(pixn, pTheme, pPage);
+        hr = ParseControls(hModule, wzRelativePath, pixn, pTheme, pPage);
         ExitOnFailure(hr, "Failed to parse page controls.");
 
         ++iPage;
@@ -1695,6 +1827,8 @@ LExit:
 
 
 static HRESULT ParseControls(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pElement,
     __in THEME* pTheme,
     __in_opt THEME_PAGE* pPage
@@ -1749,7 +1883,11 @@ static HRESULT ParseControls(
     {
         THEME_CONTROL_TYPE type = THEME_CONTROL_TYPE_UNKNOWN;
 
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Button", -1) ||
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Billboard", -1))
+        {
+            type = THEME_CONTROL_TYPE_BILLBOARD;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Button", -1) ||
             CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"b", 1))
         {
             type = THEME_CONTROL_TYPE_BUTTON;
@@ -1812,7 +1950,7 @@ static HRESULT ParseControls(
 
         if (THEME_CONTROL_TYPE_UNKNOWN != type)
         {
-            hr = ParseControl(pixn, type, pTheme, iControl);
+            hr = ParseControl(hModule, wzRelativePath, pixn, type, pTheme, iControl);
             ExitOnFailure(hr, "Failed to parse control.");
 
             if (pPage)
@@ -1844,6 +1982,8 @@ LExit:
 
 
 static HRESULT ParseControl(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL_TYPE type,
     __in THEME* pTheme,
@@ -1930,6 +2070,10 @@ static HRESULT ParseControl(
     }
     ExitOnFailure(hr, "Failed to find control weight attribute.");
 
+    // Parse the optional background resource image.
+    hr = ParseImage(hModule, wzRelativePath, pixn, &pControl->hImage);
+    ExitOnFailure(hr, "Failed while parsing theme image.");
+
     hr = XmlGetAttributeNumber(pixn, L"SourceX", reinterpret_cast<DWORD*>(&pControl->nSourceX));
     if (S_FALSE == hr)
     {
@@ -1994,16 +2138,21 @@ static HRESULT ParseControl(
     }
 
     // Parse the tabstop bit "shortcut nomenclature", this could have been set with the style above.
-    hr = XmlGetAttributeNumber(pixn, L"TabStop", &dwValue);
-    if (S_OK == hr && dwValue)
+    hr = XmlGetYesNoAttribute(pixn, L"TabStop", &fValue);
+    if (E_NOTFOUND == hr)
     {
         hr = XmlGetAttributeNumber(pixn, L"t", &dwValue);
         if (S_OK == hr && dwValue)
         {
-            pControl->dwStyle |= WS_TABSTOP;
+            fValue = TRUE;
         }
     }
     ExitOnFailure(hr, "Failed to tell if the control is a tab stop.");
+
+    if (S_OK == hr && fValue)
+    {
+        pControl->dwStyle |= WS_TABSTOP;
+    }
 
     hr = XmlGetYesNoAttribute(pixn, L"Visible", &fValue);
     if (E_NOTFOUND == hr)
@@ -2040,6 +2189,8 @@ static HRESULT ParseControl(
         {
             hr = StrAllocString(&pControl->wzText, bstrText, 0);
             ExitOnFailure(hr, "Failed to copy control text.");
+
+            ReleaseNullBSTR(bstrText);
         }
         else if (S_FALSE == hr)
         {
@@ -2047,7 +2198,26 @@ static HRESULT ParseControl(
         }
     }
 
-    if (THEME_CONTROL_TYPE_LISTVIEW == type)
+    if (THEME_CONTROL_TYPE_BILLBOARD == type)
+    {
+        hr = XmlGetYesNoAttribute(pixn, L"Loop", &pControl->fBillboardLoops);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get Billboard/@Loop attribute.");
+        }
+
+        pControl->wBillboardInterval = 5000;
+        hr = XmlGetAttributeNumber(pixn, L"Interval", &dwValue);
+        if (S_OK == hr && dwValue)
+        {
+            pControl->wBillboardInterval = dwValue & 0xFFFF;
+        }
+        ExitOnFailure(hr, "Failed to get Billboard/@Interval.");
+
+        hr = ParseBillboards(hModule, wzRelativePath, pixn, pControl);
+        ExitOnFailure(hr, "Failed to parse billboards.");
+    }
+    else if (THEME_CONTROL_TYPE_LISTVIEW == type)
     {
         // Parse the optional extended window style.
         hr = XmlGetAttributeNumberBase(pixn, L"HexExtendedStyle", 16, &pControl->dwExtendedStyle);
@@ -2143,6 +2313,61 @@ LExit:
 }
 
 
+static HRESULT ParseBillboards(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
+    __in IXMLDOMNode* pixn,
+    __in THEME_CONTROL* pControl
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD i = 0;
+    IXMLDOMNodeList* pixnl = NULL;
+    IXMLDOMNode* pixnChild = NULL;
+    BSTR bstrText = NULL;
+
+    hr = XmlSelectNodes(pixn, L"Image", &pixnl);
+    ExitOnFailure(hr, "Failed to select child billboard image nodes.");
+
+    if (S_FALSE != hr)
+    {
+        hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cBillboards));
+        ExitOnFailure(hr, "Failed to count the number of billboard images.");
+
+        pControl->ptbBillboards = static_cast<THEME_BILLBOARD*>(MemAlloc(sizeof(THEME_BILLBOARD) * pControl->cBillboards, TRUE));
+        ExitOnNull(pControl->ptbBillboards, hr, E_OUTOFMEMORY, "Failed to allocate billboard image structs.");
+
+        i = 0;
+        while (S_OK == (hr = XmlNextElement(pixnl, &pixnChild, NULL)))
+        {
+            hr = ParseImage(hModule, wzRelativePath, pixnChild, &pControl->ptbBillboards[i].hImage);
+            ExitOnFailure(hr, "Failed to get billboard image.");
+
+            hr = XmlGetText(pixnChild, &bstrText);
+            ExitOnFailure(hr, "Failed to get inner text of the Billboard/@Image element.");
+
+            if (S_OK == hr && bstrText && *bstrText)
+            {
+                hr = StrAllocString(&(pControl->ptbBillboards[i].wzUrl), bstrText, 0);
+                ExitOnFailure(hr, "Failed to copy image URL.");
+
+                pControl->wBillboardUrls |= (1 << i);
+            }
+
+            i++;
+            ReleaseNullBSTR(bstrText);
+        }
+    }
+
+LExit:
+    ReleaseObject(pixnl);
+    ReleaseObject(pixnChild);
+    ReleaseBSTR(bstrText);
+
+    return hr;
+}
+
+
 static HRESULT ParseColumns(
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL* pControl
@@ -2186,6 +2411,7 @@ static HRESULT ParseColumns(
             ExitOnFailure(hr, "Failed to copy column name");
 
             i++;
+            ReleaseNullBSTR(bstrText);
         }
     }
 
@@ -2230,6 +2456,7 @@ static HRESULT ParseTabs(
             ExitOnFailure(hr, "Failed to copy tab name");
 
             i++;
+            ReleaseNullBSTR(bstrText);
         }
     }
 
@@ -2242,6 +2469,30 @@ LExit:
 }
 
 
+static HRESULT DrawBillboard(
+    __in THEME* pTheme,
+    __in DRAWITEMSTRUCT* pdis,
+    __in const THEME_CONTROL* pControl
+    )
+{
+    HBITMAP hImage = pControl->ptbBillboards[pControl->dwData].hImage;
+    DWORD dwHeight = pdis->rcItem.bottom - pdis->rcItem.top;
+    DWORD dwWidth = pdis->rcItem.right - pdis->rcItem.left;
+    int nSourceX = hImage ? 0 : pControl->nSourceX;
+    int nSourceY = hImage ? 0 : pControl->nSourceY;
+
+    HDC hdcMem = ::CreateCompatibleDC(pdis->hDC);
+    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, hImage ? hImage : pTheme->hImage));
+
+    // Draw the image.
+    ::StretchBlt(pdis->hDC, 0, 0, dwWidth, dwHeight, hdcMem, nSourceX, nSourceY, dwWidth, dwHeight, SRCCOPY);
+
+    ::SelectObject(hdcMem, hDefaultBitmap);
+    ::DeleteDC(hdcMem);
+    return S_OK;
+}
+
+
 static HRESULT DrawButton(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis,
@@ -2250,10 +2501,11 @@ static HRESULT DrawButton(
 {
     HRESULT hr = S_OK;
     DWORD_PTR dwStyle = ::GetWindowLongPtrW(pdis->hwndItem, GWL_STYLE);
-    int nSourceY = pControl->nSourceY;
+    int nSourceX = pControl->hImage ? 0 : pControl->nSourceX;
+    int nSourceY = pControl->hImage ? 0 : pControl->nSourceY;
 
     HDC hdcMem = ::CreateCompatibleDC(pdis->hDC);
-    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pTheme->hImage));
+    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pControl->hImage ? pControl->hImage : pTheme->hImage));
 
     if (ODS_SELECTED & pdis->itemState)
     {
@@ -2264,7 +2516,7 @@ static HRESULT DrawButton(
         nSourceY += pControl->nHeight;
     }
 
-    ::StretchBlt(pdis->hDC, 0, 0, pControl->nWidth, pControl->nHeight, hdcMem, pControl->nSourceX, nSourceY, pControl->nWidth, pControl->nHeight, SRCCOPY);
+    ::StretchBlt(pdis->hDC, 0, 0, pControl->nWidth, pControl->nHeight, hdcMem, nSourceX, nSourceY, pControl->nWidth, pControl->nHeight, SRCCOPY);
 
     if (WS_TABSTOP & dwStyle && ODS_FOCUS & pdis->itemState)
     {
@@ -2339,12 +2591,14 @@ static HRESULT DrawImage(
 {
     DWORD dwHeight = pdis->rcItem.bottom - pdis->rcItem.top;
     DWORD dwWidth = pdis->rcItem.right - pdis->rcItem.left;
+    int nSourceX = pControl->hImage ? 0 : pControl->nSourceX;
+    int nSourceY = pControl->hImage ? 0 : pControl->nSourceY;
 
     HDC hdcMem = ::CreateCompatibleDC(pdis->hDC);
-    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pTheme->hImage));
+    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pControl->hImage ? pControl->hImage : pTheme->hImage));
 
     // Draw the image.
-    ::StretchBlt(pdis->hDC, 0, 0, dwWidth, dwHeight, hdcMem, pControl->nSourceX, pControl->nSourceY, dwWidth, dwHeight, SRCCOPY);
+    ::StretchBlt(pdis->hDC, 0, 0, dwWidth, dwHeight, hdcMem, nSourceX, nSourceY, dwWidth, dwHeight, SRCCOPY);
 
     ::SelectObject(hdcMem, hDefaultBitmap);
     ::DeleteDC(hdcMem);
@@ -2362,28 +2616,29 @@ static HRESULT DrawProgressBar(
     DWORD dwProgressPercentage = LOWORD(pControl->dwData);
     DWORD dwHeight = pdis->rcItem.bottom - pdis->rcItem.top;
     DWORD dwCenter = (pdis->rcItem.right - 2) * dwProgressPercentage / 100;
-    int nSourceY = pControl->nSourceY + (dwProgressColor * pControl->nHeight);
+    int nSourceX = pControl->hImage ? 0 : pControl->nSourceX;
+    int nSourceY = (pControl->hImage ? 0 : pControl->nSourceY) + (dwProgressColor * pControl->nHeight);
 
     HDC hdcMem = ::CreateCompatibleDC(pdis->hDC);
-    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pTheme->hImage));
+    HBITMAP hDefaultBitmap = static_cast<HBITMAP>(::SelectObject(hdcMem, pControl->hImage ? pControl->hImage : pTheme->hImage));
 
     // Draw the left side of the progress bar.
-    ::StretchBlt(pdis->hDC, 0, 0, 1, dwHeight, hdcMem, pControl->nSourceX, nSourceY, 1, dwHeight, SRCCOPY);
+    ::StretchBlt(pdis->hDC, 0, 0, 1, dwHeight, hdcMem, nSourceX, nSourceY, 1, dwHeight, SRCCOPY);
 
     // Draw the filled side of the progress bar, if there is any.
     if (0 < dwCenter)
     {
-        ::StretchBlt(pdis->hDC, 1, 0, dwCenter, dwHeight, hdcMem, pControl->nSourceX + 1, nSourceY, 1, dwHeight, SRCCOPY);
+        ::StretchBlt(pdis->hDC, 1, 0, dwCenter, dwHeight, hdcMem, nSourceX + 1, nSourceY, 1, dwHeight, SRCCOPY);
     }
 
     // Draw the unfilled side of the progress bar, if there is any.
     if (dwCenter < static_cast<DWORD>(pdis->rcItem.right - 2))
     {
-        ::StretchBlt(pdis->hDC, 1 + dwCenter, 0, pdis->rcItem.right - dwCenter - 1, dwHeight, hdcMem, pControl->nSourceX + 2, nSourceY, 1, dwHeight, SRCCOPY);
+        ::StretchBlt(pdis->hDC, 1 + dwCenter, 0, pdis->rcItem.right - dwCenter - 1, dwHeight, hdcMem, nSourceX + 2, nSourceY, 1, dwHeight, SRCCOPY);
     }
 
     // Draw the right side of the progress bar.
-    ::StretchBlt(pdis->hDC, pdis->rcItem.right - 1, 0, 1, dwHeight, hdcMem, pControl->nSourceX, nSourceY, 1, dwHeight, SRCCOPY);
+    ::StretchBlt(pdis->hDC, pdis->rcItem.right - 1, 0, 1, dwHeight, hdcMem, nSourceX, nSourceY, 1, dwHeight, SRCCOPY);
 
     ::SelectObject(hdcMem, hDefaultBitmap);
     ::DeleteDC(hdcMem);
@@ -2438,6 +2693,16 @@ static void FreeControl(
         ReleaseStr(pControl->wzName);
         ReleaseStr(pControl->wzText);
 
+        if (pControl->hImage)
+        {
+            ::DeleteBitmap(pControl->hImage);
+        }
+
+        for (DWORD i = 0; i < pControl->cBillboards; i++)
+        {
+            FreeBillboard(&(pControl->ptbBillboards[i]));
+        }
+
         for (DWORD i = 0; i < pControl->cColumns; i++)
         {
             FreeColumn(&(pControl->ptcColumns[i]));
@@ -2448,8 +2713,21 @@ static void FreeControl(
             FreeTab(&(pControl->pttTabs[i]));
         }
 
+        ReleaseMem(pControl->ptbBillboards)
         ReleaseMem(pControl->ptcColumns);
         ReleaseMem(pControl->pttTabs);
+    }
+}
+
+
+static void FreeBillboard(
+    __in THEME_BILLBOARD* pBillboard
+    )
+{
+    ReleaseStr(pBillboard->wzUrl);
+    if (pBillboard->hImage)
+    {
+        ::DeleteBitmap(pBillboard->hImage);
     }
 }
 
@@ -2497,7 +2775,7 @@ static void FreeFont(
 }
 
 
-static DWORD CALLBACK EditStreamCallback(
+static DWORD CALLBACK RichEditStreamFromFileHandleCallback(
     __in DWORD_PTR dwCookie,
     __in LPBYTE pbBuff,
     __in LONG cb,
@@ -2514,4 +2792,61 @@ static DWORD CALLBACK EditStreamCallback(
 
 LExit:
     return hr;
+}
+
+
+static DWORD CALLBACK RichEditStreamFromMemoryCallback(
+    __in DWORD_PTR dwCookie,
+    __in LPBYTE pbBuff,
+    __in LONG cb,
+    __in LONG* pcb
+    )
+{
+    HRESULT hr = S_OK;
+    MEMBUFFER_FOR_RICHEDIT* pBuffer = reinterpret_cast<MEMBUFFER_FOR_RICHEDIT*>(dwCookie);
+    DWORD cbCopy = 0;
+
+    if (pBuffer->iData < pBuffer->cbData)
+    {
+        cbCopy = min(static_cast<DWORD>(cb), pBuffer->cbData - pBuffer->iData);
+        memcpy(pbBuff, pBuffer->rgbData + pBuffer->iData, cbCopy);
+
+        pBuffer->iData += cbCopy;
+        Assert(pBuffer->iData <= pBuffer->cbData);
+    }
+
+    *pcb = cbCopy;
+    return hr;
+}
+
+
+static void CALLBACK BillboardTimerProc(
+    __in HWND hwnd,
+    __in UINT /*uMsg*/,
+    __in UINT_PTR idEvent,
+    __in DWORD /*dwTime*/
+    )
+{
+    HWND hwndControl = ::GetDlgItem(hwnd, static_cast<int>(idEvent));
+
+    if (hwndControl)
+    {
+        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hwndControl, GWLP_USERDATA));
+        AssertSz(THEME_CONTROL_TYPE_BILLBOARD == pControl->type, "Only billboard controls should have the BillboardTimerProc().");
+
+        ++pControl->dwData;
+        if (pControl->dwData < pControl->cBillboards)
+        {
+            ::InvalidateRect(hwndControl, NULL, FALSE);
+        }
+        else if (pControl->fBillboardLoops)
+        {
+            pControl->dwData = 0;
+            ::InvalidateRect(hwndControl, NULL, FALSE);
+        }
+        else // no more looping
+        {
+            ::KillTimer(hwnd, idEvent);
+        }
+    }
 }

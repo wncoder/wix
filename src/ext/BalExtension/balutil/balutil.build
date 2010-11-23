@@ -21,7 +21,7 @@
   -->
 
   <!-- Include the global build properties -->
-  <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+  <include buildfile="..\..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
   <!-- balutil-specific properties -->
   <property name="balutil.additionalOptions" value="/I &quot;${dir.inc.burn}&quot; /I &quot;${dir.inc.balutil}&quot;"/>
@@ -52,13 +52,13 @@
 
   <!-- Inc -->
   <target name="balutil.inc" description="Performs an incremental build" depends="makeDirs">
-    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.balutil}">
+    <fileset id="compileCpp.fileset.sources" basedir="${dir.src.balutil}">
       <include name="balutil.cpp" />
       <include name="balcondition.cpp" />
     </fileset>
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2010.x86}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions}" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2010.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
@@ -67,7 +67,7 @@
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2010.x64}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions}" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2010.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />
@@ -76,7 +76,7 @@
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2008.x86}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions}" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2008.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
@@ -85,7 +85,7 @@
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2008.x64}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions}" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2008.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />
@@ -94,7 +94,7 @@
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2005.x86}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions} -WX-" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2005.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
@@ -103,7 +103,7 @@
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2005.x64}" dynamic="true" />
-    <property name="compileCpp.file.precomp.h" value="${dir.src.burn.balutil}\precomp.h" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
     <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions} -WX-" />
     <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2005.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />

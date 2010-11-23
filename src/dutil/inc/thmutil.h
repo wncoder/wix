@@ -29,6 +29,7 @@ enum THEME_CONTROL_DATA
 enum THEME_CONTROL_TYPE
 {
     THEME_CONTROL_TYPE_UNKNOWN,
+    THEME_CONTROL_TYPE_BILLBOARD,
     THEME_CONTROL_TYPE_BUTTON,
     THEME_CONTROL_TYPE_CHECKBOX,
     THEME_CONTROL_TYPE_EDITBOX,
@@ -41,6 +42,13 @@ enum THEME_CONTROL_TYPE
     THEME_CONTROL_TYPE_LISTVIEW,
     THEME_CONTROL_TYPE_TREEVIEW,
     THEME_CONTROL_TYPE_TAB,
+};
+
+
+struct THEME_BILLBOARD
+{
+    HBITMAP hImage;
+    LPWSTR wzUrl;
 };
 
 
@@ -85,13 +93,7 @@ struct THEME_CONTROL
     int nSourceY;
     UINT uStringId;
 
-    // Used by listview controls
-    THEME_COLUMN *ptcColumns;
-    DWORD cColumns;
-
-    // Used by tab controls
-    THEME_TAB *pttTabs;
-    DWORD cTabs;
+    HBITMAP hImage;
 
     BOOL fHideWhenDisabled;
     DWORD dwStyle;
@@ -99,6 +101,21 @@ struct THEME_CONTROL
     DWORD dwFontId;
     DWORD dwFontHoverId;
     DWORD dwFontSelectedId;
+
+    // Used by billboard controls
+    THEME_BILLBOARD* ptbBillboards;
+    DWORD cBillboards;
+    WORD wBillboardInterval;
+    WORD wBillboardUrls;
+    BOOL fBillboardLoops;
+
+    // Used by listview controls
+    THEME_COLUMN *ptcColumns;
+    DWORD cColumns;
+
+    // Used by tab controls
+    THEME_TAB *pttTabs;
+    DWORD cTabs;
 
     // state variables that should be ignored
     HWND hWnd;
@@ -157,58 +174,121 @@ struct THEME
 };
 
 
-HRESULT DAPI ThemeInitialize(
+/********************************************************************
+ ThemeInitialize - initialized theme management.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeInitialize(
     __in HMODULE hModule
     );
 
-void DAPI ThemeUninitialize();
+/********************************************************************
+ ThemeUninitialize - unitialize theme management.
 
-HRESULT DAPI ThemeLoadFromFile(
+*******************************************************************/
+DAPI_(void) ThemeUninitialize();
+
+/********************************************************************
+ ThemeLoadFromFile - loads a theme from a loose file.
+
+ *******************************************************************/
+DAPI_(HRESULT) ThemeLoadFromFile(
     __in_z LPCWSTR wzThemeFile,
     __out THEME** ppTheme
     );
 
-HRESULT DAPI ThemeLoadFromResource(
+/********************************************************************
+ ThemeLoadFromResource - loads a theme from a module's data resource.
+
+ NOTE: The resource data must be UTF-8 encoded.
+*******************************************************************/
+DAPI_(HRESULT) ThemeLoadFromResource(
     __in_opt HMODULE hModule,
     __in_z LPCSTR szResource,
     __out THEME** ppTheme
     );
 
-void DAPI ThemeFree(
+/********************************************************************
+ ThemeFree - frees any memory associated with a theme.
+
+*******************************************************************/
+DAPI_(void) ThemeFree(
     __in THEME* pTheme
     );
 
-HRESULT DAPI ThemeLoadControls(
+/********************************************************************
+ ThemeLoadControls - creates the windows for all the theme controls.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeLoadControls(
     __in THEME* pTheme,
     __in HWND hwndParent,
     __in_ecount_opt(cAssignControlIds) THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
     __in DWORD cAssignControlIds
     );
 
-HRESULT DAPI ThemeLoadLocFromFile(
+/********************************************************************
+ ThemeUnloadControls - resets all the theme control windows so the theme
+                       controls can be reloaded.
+
+*******************************************************************/
+DAPI_(void) ThemeUnloadControls(
+    __in THEME* pTheme
+    );
+
+/********************************************************************
+ ThemeLoadLocFromFile - Loads a wxl file and localizes strings.
+ Must be called after loading a theme.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeLoadLocFromFile(
     __in THEME* pTheme,
     __in_z LPCWSTR wzFileName,
     __in HMODULE hModule
     );
 
-HRESULT DAPI ThemeLoadStrings(
+DAPI_(HRESULT) ThemeLoadStrings(
     __in THEME* pTheme,
     __in HMODULE hResModule
     );
 
-HRESULT DAPI ThemeLoadRichEditFromFile(
+/********************************************************************
+ ThemeLoadRichEditFromFile - Attach a richedit control to a RTF file.
+
+ *******************************************************************/
+DAPI_(HRESULT) ThemeLoadRichEditFromFile(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in_z LPCWSTR wzFileName,
     __in HMODULE hModule
     );
 
-BOOL DAPI ThemeTranslateAccelerator(
+/********************************************************************
+ ThemeLoadRichEditFromResource - Attach a richedit control to resource data.
+
+ *******************************************************************/
+DAPI_(HRESULT) ThemeLoadRichEditFromResource(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    );
+
+/********************************************************************
+ ThemeTranslateAccelerator - will translate the message using the active
+                             accelerator table.
+
+*******************************************************************/
+DAPI_(BOOL) ThemeTranslateAccelerator(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
     __in MSG* pMsg
     );
 
+/********************************************************************
+ ThemeDefWindowProc - replacement for DefWindowProc() when using theme.
+
+*******************************************************************/
 LRESULT CALLBACK ThemeDefWindowProc(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
@@ -217,37 +297,66 @@ LRESULT CALLBACK ThemeDefWindowProc(
     __in LPARAM lParam
     );
 
-void DAPI ThemeGetPageIds(
+/********************************************************************
+ ThemeGetPageIds - gets the page ids for the theme via page names.
+
+*******************************************************************/
+DAPI_(void) ThemeGetPageIds(
     __in THEME* pTheme,
     __in_ecount(cGetPages) LPCWSTR* rgwzFindNames,
     __in_ecount(cGetPages) DWORD* rgdwPageIds,
     __in DWORD cGetPages
     );
 
-void DAPI ThemeShowPage(
+/********************************************************************
+ ThemeGetPage - gets a theme page by id.
+
+ *******************************************************************/
+DAPI_(THEME_PAGE*) ThemeGetPage(
+    __in THEME* pTheme,
+    __in DWORD dwPage
+    );
+
+/********************************************************************
+ ThemeShowPage - shows or hides all of the controls in the page at one time.
+
+ *******************************************************************/
+DAPI_(void) ThemeShowPage(
     __in THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
     );
 
-BOOL DAPI ThemeControlExists(
+/********************************************************************
+ ThemeControlExists - check if a control with the specified id exists.
+
+ *******************************************************************/
+DAPI_(BOOL) ThemeControlExists(
     __in THEME* pTheme,
     __in DWORD dwControl
     );
 
-void DAPI ThemeControlEnable(
+/********************************************************************
+ ThemeControlEnable - enables/disables a control.
+
+ *******************************************************************/
+DAPI_(void) ThemeControlEnable(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in BOOL fEnable
     );
 
-void DAPI ThemeShowControl(
+/********************************************************************
+ ThemeShowControl - shows/hides a control.
+
+ *******************************************************************/
+DAPI_(void) ThemeShowControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in int nCmdShow
     );
 
-BOOL DAPI ThemePostControlMessage(
+DAPI_(BOOL) ThemePostControlMessage(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in UINT Msg,
@@ -255,7 +364,7 @@ BOOL DAPI ThemePostControlMessage(
     __in LPARAM lParam
     );
 
-LRESULT DAPI ThemeSendControlMessage(
+DAPI_(LRESULT) ThemeSendControlMessage(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in UINT Msg,
@@ -263,56 +372,127 @@ LRESULT DAPI ThemeSendControlMessage(
     __in LPARAM lParam
     );
 
-HRESULT DAPI ThemeDrawBackground(
+/********************************************************************
+ ThemeDrawBackground - draws the theme background.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeDrawBackground(
     __in THEME* pTheme,
     __in PAINTSTRUCT* pps
     );
 
-HRESULT DAPI ThemeDrawControl(
+/********************************************************************
+ ThemeDrawControl - draw an owner drawn control.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeDrawControl(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis
     );
 
-void DAPI ThemeHoverControl(
+/********************************************************************
+ ThemeHoverControl - mark a control as hover.
+
+*******************************************************************/
+DAPI_(BOOL) ThemeHoverControl(
     __in THEME* pTheme,
     __in HWND hwndParent,
     __in HWND hwndControl
     );
 
-BOOL DAPI ThemeIsControlChecked(
+/********************************************************************
+ ThemeIsControlChecked - gets whether a control is checked. Only
+                         really useful for checkbox controls.
+
+*******************************************************************/
+DAPI_(BOOL) ThemeIsControlChecked(
     __in THEME* pTheme,
     __in DWORD dwControl
     );
 
-BOOL DAPI ThemeSetControlColor(
+/********************************************************************
+ ThemeSetControlColor - sets the color of text for a control.
+
+*******************************************************************/
+DAPI_(BOOL) ThemeSetControlColor(
     __in THEME* pTheme,
     __in HDC hdc,
     __in HWND hWnd,
     __out HBRUSH* phBackgroundBrush
     );
 
-HRESULT DAPI ThemeSetProgressControl(
+/********************************************************************
+ ThemeStartBillboard - starts a billboard control changing images according
+                       to their interval.
+
+ NOTE: iImage specifies the image to start on. If iImage is
+       greater than the number of images, the last image shown
+       will be the start image.
+*******************************************************************/
+DAPI_(HRESULT) ThemeStartBillboard(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in WORD iImage
+    );
+
+/********************************************************************
+ ThemeStopBillboard - stops a billboard control from changing images.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeStopBillboard(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    );
+
+/********************************************************************
+ ThemeSetProgressControl - sets the current percentage complete in a
+                           progress bar control.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeSetProgressControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in DWORD dwProgressPercentage
     );
 
-HRESULT DAPI ThemeSetProgressControlColor(
+/********************************************************************
+ ThemeSetProgressControlColor - sets the current color of a
+                                progress bar control.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeSetProgressControlColor(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in DWORD dwColorIndex
     );
 
-HRESULT DAPI ThemeSetTextControl(
+/********************************************************************
+ ThemeSetTextControl - sets the text of a control.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeSetTextControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in_z LPCWSTR wzText
     );
 
-HRESULT DAPI ThemeGetTextControl(
+/********************************************************************
+ ThemeGetTextControl - gets the text of a control.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeGetTextControl(
     __in const THEME* pTheme,
     __in DWORD dwControl,
     __out LPWSTR* psczText
+    );
+
+/********************************************************************
+ ThemeUpdateCaption - updates the caption in the theme.
+
+*******************************************************************/
+DAPI_(HRESULT) ThemeUpdateCaption(
+    __in THEME* pTheme,
+    __in_z LPCWSTR wzCaption
     );
 
 #ifdef __cplusplus

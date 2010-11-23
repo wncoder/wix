@@ -116,6 +116,10 @@
             <ComponentRef Id="UtilExt" />
             <ComponentRef Id="VSExt" />
             <ComponentRef Id="ExtensionXsds" />
+
+            <Component Directory="DocDir">
+                <File Source="dutil\Xsd\thmutil.xsd" />
+            </Component>
         </ComponentGroup>
     </Fragment>
 </Wix>

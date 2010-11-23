@@ -75,10 +75,14 @@
         <xs:complexType>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="Log" minOccurs="0" maxOccurs="1"/>
-                <xs:element ref="UX" minOccurs="1" maxOccurs="1"/>
+                <xs:element ref="BootstrapperApplication" minOccurs="0" maxOccurs="1"/>
+                <xs:element ref="BootstrapperApplicationRef" minOccurs="0" maxOccurs="1"/>
+                <xs:element ref="UX" minOccurs="0" maxOccurs="1"/>
                 <xs:element ref="Chain" minOccurs="1" maxOccurs="1"/>
                 <xs:element ref="Container"/>
                 <xs:element ref="ContainerRef"/>
+                <xs:element ref="PayloadGroup"/>
+                <xs:element ref="PayloadGroupRef"/>
                 <xs:element ref="LayoutDirectory"/>
                 <xs:element ref="LayoutDirectoryRef"/>
                 <xs:element ref="Variable"/>
@@ -185,6 +189,11 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="SplashScreenSourceFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Path to a bitmap that will be shown as the bootstrapper application is being loaded. If this attribute is not specified, no splash screen will be displayed.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="UpdateUrl" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
@@ -214,7 +223,7 @@
                 <xs:annotation>
                     <xs:documentation>
                         The condition of the bundle. If the condition is not met, the bundle will
-                        refuse to run. Conditions are checked before the UX is loaded
+                        refuse to run. Conditions are checked before the bootstrapper application is loaded
                         (before detect), and thus can only reference built-in variables such as
                         variables which indicate the version of the OS.
                     </xs:documentation>
@@ -265,7 +274,7 @@
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="UX">
+    <xs:element name="BootstrapperApplication">
         <xs:annotation>
             <xs:documentation>Contains all the relevant information about the setup UI.</xs:documentation>
             <xs:appinfo>
@@ -278,19 +287,80 @@
                 <xs:element ref="Payload"/>
                 <xs:element ref="PayloadGroupRef"/>
             </xs:choice>
+            <xs:attribute name="Id" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The identifier of the BootstrapperApplication element. Only required if you want to reference this element using a BootstrapperApplicationRef element.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="SourceFile" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>The entry point of the UX.</xs:documentation>
+                    <xs:documentation>The DLL with the bootstrapper application entry function.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="Name" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>The destination path and file name for this UX payload. The default is the source file name. Use this attribute to rename the UX entry point or extract it into a subfolder.</xs:documentation>
+                    <xs:documentation>The relative destination path and file name for the bootstrapper application DLL. The default is the source file name. Use this attribute to rename the bootstrapper application DLL or extract it into a subfolder.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="BootstrapperApplicationRef">
+        <xs:annotation>
+            <xs:documentation>Used to reference a BootstrapperApplication element and optionally add additional payloads to the bootstrapper application.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="Payload"/>
+                <xs:element ref="PayloadGroupRef"/>
+            </xs:choice>
+            <xs:attribute name="Id" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The identifier of the BootstrapperApplication element to reference.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:anyAttribute namespace="##other" processContents="lax">
+                <xs:annotation>
+                    <xs:documentation>
+                        Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                        attributes at this point in the schema.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:anyAttribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="UX">
+        <xs:annotation>
+            <xs:documentation>This element has been deprecated. Use the BootstrapperApplication element instead.</xs:documentation>
+            <xs:appinfo>
+                <xse:deprecated ref="BootstrapperApplication" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="Payload"/>
+                <xs:element ref="PayloadGroupRef"/>
+            </xs:choice>
+            <xs:attribute name="SourceFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>See the BootstrapperApplication instead.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Name" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>See the BootstrapperApplication instead.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="SplashScreenSourceFile" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>Path to a bitmap that will be shown as the bootstrapper application is being loaded. If this attribute is not specified, no splash screen will be displayed.</xs:documentation>
+                    <xs:documentation>See the BootstrapperApplication instead.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
         </xs:complexType>
@@ -318,8 +388,8 @@
                         Specifies whether the bundle will attempt to rollback packages
                         executed in the chain. If "yes" is specified then when a vital
                         package fails to install only that package will rollback and the
-                        chain will stop with the error. The default is "no" which 
-                        indicates all packages executed during the chain will be 
+                        chain will stop with the error. The default is "no" which
+                        indicates all packages executed during the chain will be
                         rolledback to their previous state when a vital package fails.
                     </xs:documentation>
                 </xs:annotation>
@@ -790,6 +860,7 @@
         <xs:annotation>
             <xs:documentation>Describes a payload to a bootstrapper.</xs:documentation>
             <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="BootstrapperApplication" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="ExePackage" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsiPackage" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MspPackage" />
@@ -846,6 +917,7 @@
             <xs:documentation>Create a reference to PayloadGroup element that exists inside a Bundle or Fragment element.</xs:documentation>
             <xs:appinfo>
                 <xse:seeAlso ref="PayloadGroup"/>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="BootstrapperApplication" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="UX" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="PayloadGroup" />
             </xs:appinfo>
@@ -1231,7 +1303,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="Substitution">
         <xs:annotation>
             <xs:documentation>Specifies the configurable fields of a module database and provides a template for the configuration of each field.</xs:documentation>
@@ -1290,6 +1362,8 @@
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="AppId"/>
                 <xs:element ref="Binary"/>
+                <xs:element ref="BootstrapperApplication" />
+                <xs:element ref="BootstrapperApplicationRef" />
                 <xs:element ref="ComplianceCheck"/>
                 <xs:element ref="Component"/>
                 <xs:element ref="ComponentGroup"/>
@@ -1359,8 +1433,8 @@
                 <xse:remarks>
                     <html:p>You can specify any valid Windows code by by integer like 1252, or by web name like Windows-1252. See <html:a href="codepage.htm">Code Pages</html:a> for more information.</html:p>
                     <html:p>The ClientPatchId attribute allows you to specify an easily referenced identity that you can use in product authoring. This identity prefixes properties added by WiX to a patch transform, such as <html:i>ClientPatchId</html:i>.PatchCode and <html:i>ClientPatchId</html:i>.AllowRemoval. If the patch code GUID is auto-generated you could not reference any properties using this auto-generated prefix.</html:p>
-					<html:p>For example, if you were planning to ship a patch referred to as "QFE1" and needed to write your own registry values for Add/Remove Programs in product authoring such as the UninstallString for this patch, you could author a RegistryValue with the name UninstallString and the value <html:code><html:nobr>[SystemFolder]msiexec.exe</html:nobr> /package [ProductCode] /uninstall [QFE1.PatchCode]</html:code>. In your patch authoring you would then set ClientPatchId to "QFE1" and WiX will add the QFE1.PatchCode property to the patch transform when the patch is created. If the Id attribute specified the patch code to be generated automatically, you could not reference the <html:i>prefix</html:i>.PatchCode property as shown above.</html:p>
-					<html:p>The summary information is automatically populated from attribute values of the Patch element including the code page. If you want to override some of these summary information properties or use a different code page for the summary information itself, author the PatchInformation element.</html:p>
+                    <html:p>For example, if you were planning to ship a patch referred to as "QFE1" and needed to write your own registry values for Add/Remove Programs in product authoring such as the UninstallString for this patch, you could author a RegistryValue with the name UninstallString and the value <html:code><html:nobr>[SystemFolder]msiexec.exe</html:nobr> /package [ProductCode] /uninstall [QFE1.PatchCode]</html:code>. In your patch authoring you would then set ClientPatchId to "QFE1" and WiX will add the QFE1.PatchCode property to the patch transform when the patch is created. If the Id attribute specified the patch code to be generated automatically, you could not reference the <html:i>prefix</html:i>.PatchCode property as shown above.</html:p>
+                    <html:p>The summary information is automatically populated from attribute values of the Patch element including the code page. If you want to override some of these summary information properties or use a different code page for the summary information itself, author the PatchInformation element.</html:p>
                 </xse:remarks>
             </xs:appinfo>
         </xs:annotation>
@@ -1722,7 +1796,7 @@
                     <xs:element ref="TargetProductCode"/>
                 </xs:choice>
             </xs:sequence>
-        
+
             <xs:attribute name="Id" type="Guid" use="required">
                 <xs:annotation><xs:documentation>PatchCreation identifier; this is the primary key for identifying patches.</xs:documentation></xs:annotation>
             </xs:attribute>
@@ -1983,7 +2057,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="PatchProperty">
         <xs:annotation>
             <xs:documentation>A property for this patch database.</xs:documentation>
@@ -2012,7 +2086,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="PatchSequence">
         <xs:annotation>
             <xs:documentation>Sequence information for this patch database. Sequence information is generated automatically in most cases, and rarely needs to be set explicitly.</xs:documentation>
@@ -2099,7 +2173,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="UpgradeImage">
         <xs:annotation><xs:documentation>Contains information about the upgraded images of the product.</xs:documentation></xs:annotation>
         <xs:complexType>
@@ -2110,7 +2184,7 @@
                     <xs:element ref="UpgradeFile"/>
                 </xs:choice>
             </xs:sequence>
-            
+
             <xs:attribute name="Id" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>Identifier to connect target images with upgraded image.</xs:documentation></xs:annotation>
             </xs:attribute>
@@ -2142,7 +2216,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="TargetImage">
         <xs:annotation><xs:documentation>Contains information about the target images of the product.</xs:documentation></xs:annotation>
         <xs:complexType>
@@ -2178,7 +2252,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="TargetFile">
         <xs:annotation><xs:documentation>Information about specific files in a target image.</xs:documentation></xs:annotation>
         <xs:complexType>
@@ -2189,13 +2263,13 @@
                     <xs:element ref="ProtectRange"/>
                 </xs:choice>
             </xs:sequence>
-            
+
             <xs:attribute name="Id" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>Foreign key into the File table.</xs:documentation></xs:annotation>
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="IgnoreRange">
         <xs:annotation><xs:documentation>Specifies part of a file that is to be ignored during patching.</xs:documentation></xs:annotation>
         <xs:complexType>
@@ -2243,7 +2317,7 @@
                     <xs:element ref="IgnoreRange"/>
                 </xs:choice>
             </xs:sequence>
-            
+
             <xs:attribute name="File" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>Foreign key into the File table.</xs:documentation></xs:annotation>
             </xs:attribute>
@@ -2272,7 +2346,7 @@
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="SymbolPath"/>
             </xs:choice>
-            
+
             <xs:attribute name="File" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>Foreign key into the File table.</xs:documentation></xs:annotation>
             </xs:attribute>
@@ -2296,7 +2370,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-  
+
     <xs:element name="Package">
         <xs:annotation>
             <xs:documentation>
@@ -2531,7 +2605,7 @@
             </xs:choice>
         </xs:complexType>
     </xs:element>
-  
+
     <xs:element name="PackageCertificates">
       <xs:annotation>
         <xs:documentation>
@@ -3320,7 +3394,7 @@
             <xs:appinfo>
                 <xse:seeAlso ref="PropertyRef"/>
                 <xse:msiRef table="Property" href="http://msdn.microsoft.com/library/aa370908.aspx"/>
-                <xse:howtoRef href="check_the_version_number.htm">How To: Check the version number of a file during installation</xse:howtoRef>                
+                <xse:howtoRef href="check_the_version_number.htm">How To: Check the version number of a file during installation</xse:howtoRef>
             </xs:appinfo>
             <xs:documentation>Property value for a Product or Module.</xs:documentation>
         </xs:annotation>
@@ -3473,21 +3547,21 @@
                 <xs:annotation><xs:documentation>The localizable description for the shortcut.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Arguments" type="xs:string">
-                <xs:annotation><xs:documentation>The command-line arguments for the shortcut. Note that the resolution of properties 
-                in the Arguments field is limited. A property formatted as [Property] in this field can only be resolved if the 
-                property already has the intended value when the component owning the shortcut is installed. For example, for the 
-                argument "[#MyDoc.doc]" to resolve to the correct value, the same process must be installing the file MyDoc.doc and 
+                <xs:annotation><xs:documentation>The command-line arguments for the shortcut. Note that the resolution of properties
+                in the Arguments field is limited. A property formatted as [Property] in this field can only be resolved if the
+                property already has the intended value when the component owning the shortcut is installed. For example, for the
+                argument "[#MyDoc.doc]" to resolve to the correct value, the same process must be installing the file MyDoc.doc and
                 the component that owns the shortcut.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Hotkey" type="xs:integer">
-                <xs:annotation><xs:documentation>The hotkey for the shortcut. The low-order byte contains the virtual-key code for 
-                the key, and the high-order byte contains modifier flags. This must be a non-negative number. Authors of 
-                installation packages are generally recommend not to set this option, because this can add duplicate hotkeys to a 
-                users desktop. In addition, the practice of assigning hotkeys to shortcuts can be problematic for users using hotkeys 
+                <xs:annotation><xs:documentation>The hotkey for the shortcut. The low-order byte contains the virtual-key code for
+                the key, and the high-order byte contains modifier flags. This must be a non-negative number. Authors of
+                installation packages are generally recommend not to set this option, because this can add duplicate hotkeys to a
+                users desktop. In addition, the practice of assigning hotkeys to shortcuts can be problematic for users using hotkeys
                 for accessibility.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Icon" type="xs:string">
-                <xs:annotation><xs:documentation>Identifier reference to Icon element. The Icon identifier should have the same extension 
+                <xs:annotation><xs:documentation>Identifier reference to Icon element. The Icon identifier should have the same extension
                 as the file that it points at.  For example, a shortcut to an executable (e.g. "my.exe") should reference an Icon with identifier
                 like "MyIcon.exe"</xs:documentation></xs:annotation>
             </xs:attribute>
@@ -3526,20 +3600,20 @@
                 to the path of the working directory for the shortcut.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Advertise" type="YesNoType">
-                <xs:annotation><xs:documentation>Specifies if the shortcut should be advertised or not. Note that advertised shortcuts 
-                always point at a particular application, identified by a ProductCode, and should not be shared between applications. 
-                Advertised shortcuts only work for the most recently installed application, and are removed when that application is 
+                <xs:annotation><xs:documentation>Specifies if the shortcut should be advertised or not. Note that advertised shortcuts
+                always point at a particular application, identified by a ProductCode, and should not be shared between applications.
+                Advertised shortcuts only work for the most recently installed application, and are removed when that application is
                 removed.  The default value is 'no'.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="DisplayResourceDll" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
-                        The Formatted string providing the full path to the language neutral file containing the MUI Manifest.   Generally 
-                        authored using [#filekey] form.  When this attribute is specified, the DisplayResourceId attribute must also 
+                        The Formatted string providing the full path to the language neutral file containing the MUI Manifest.   Generally
+                        authored using [#filekey] form.  When this attribute is specified, the DisplayResourceId attribute must also
                         be provided.
 
-                        This attribute is only used on Windows Vista and above.  If this attribute is not populated and the install 
-                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is populated and 
+                        This attribute is only used on Windows Vista and above.  If this attribute is not populated and the install
+                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is populated and
                         the install is running on Vista and above, the value in the Name attribute is ignored.
                     </xs:documentation>
                 </xs:annotation>
@@ -3547,11 +3621,11 @@
             <xs:attribute name="DisplayResourceId" type="xs:integer">
                 <xs:annotation>
                     <xs:documentation>
-                        The display name index for the shortcut. This must be a non-negative number.  When this attribute is specified, the 
+                        The display name index for the shortcut. This must be a non-negative number.  When this attribute is specified, the
                         DisplayResourceDll attribute must also be provided.
 
-                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install 
-                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is specified and 
+                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install
+                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is specified and
                         the install is running on Vista and above, the value in the Name attribute is ignored.
                     </xs:documentation>
                 </xs:annotation>
@@ -3559,12 +3633,12 @@
             <xs:attribute name="DescriptionResourceDll" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
-                        The Formatted string providing the full path to the language neutral file containing the MUI Manifest.   Generally 
-                        authored using [#filekey] form.  When this attribute is specified, the DescriptionResourceId attribute must also 
+                        The Formatted string providing the full path to the language neutral file containing the MUI Manifest.   Generally
+                        authored using [#filekey] form.  When this attribute is specified, the DescriptionResourceId attribute must also
                         be provided.
 
-                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install 
-                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is provided and 
+                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install
+                        is running on Vista and above, the value in the Name attribute is used.  If this attribute is provided and
                         the install is running on Vista and above, the value in the Name attribute is ignored.
                     </xs:documentation>
                 </xs:annotation>
@@ -3575,7 +3649,7 @@
                         The description name index for the shortcut. This must be a non-negative number.  When this attribute is specified,
                         the DescriptionResourceDll attribute must also be populated.
 
-                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install 
+                        This attribute is only used on Windows Vista and above.  If this attribute is not specified and the install
                         is running on Vista and above, the value in the Name attribute is used.  If this attribute is populated and the
                         install is running on Vista and above, the value in the Name attribute is ignored.
                     </xs:documentation>
@@ -3735,7 +3809,7 @@
                 a Component element and no FileId attribute is specified, the file to copy or move must already be on the target machine.
                 When this element is nested under a Component element and the FileId attribute is specified, the specified file is installed,
                 then copied to the specified destination if the parent component is selected for installation or removal (use
-                this option to control the copy of a file in a different component by the parent component's installation state).  If the 
+                this option to control the copy of a file in a different component by the parent component's installation state).  If the
                 specified destination directory is the same as the directory containing the original file and the name for the proposed source
                 file is the same as the original, then no action takes place.
             </xs:documentation>
@@ -3884,10 +3958,10 @@
             </xs:attribute>
             <xs:attribute name="CompanionFile" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>Set this attribute to make this file a companion child of another file.  The installation 
-                    state of a companion file depends not on its own file versioning information, but on the versioning of its 
-                    companion parent.  A file that is the key path for its component can not be a companion file (that means 
-                    this attribute cannot be set if KeyPath="yes" for this file).  The Version attribute cannot be set along 
+                    <xs:documentation>Set this attribute to make this file a companion child of another file.  The installation
+                    state of a companion file depends not on its own file versioning information, but on the versioning of its
+                    companion parent.  A file that is the key path for its component can not be a companion file (that means
+                    this attribute cannot be set if KeyPath="yes" for this file).  The Version attribute cannot be set along
                     with this attribute since companion files are not installed based on their own version.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
@@ -3902,8 +3976,8 @@
                         allow WiX to attempt to generate a unique short file name.
                         However, if this name collides with another file or you wish to manually specify
                         the short file name, then the ShortName attribute may be specified.
-                        Finally, if this attribute is omitted then its default value is the file name portion 
-                        of the Source attribute, if one is specified, or the value of the Id attribute, if 
+                        Finally, if this attribute is omitted then its default value is the file name portion
+                        of the Source attribute, if one is specified, or the value of the Id attribute, if
                         the Source attribute is omitted or doesn't contain a file name.
                     </xs:documentation>
                 </xs:annotation>
@@ -3986,7 +4060,7 @@
             <xs:attribute name="Assembly">
                 <xs:annotation>
                     <xs:documentation>
-                        Specifies if this File is a Win32 Assembly or .NET Assembly that needs to be installed into the 
+                        Specifies if this File is a Win32 Assembly or .NET Assembly that needs to be installed into the
                         Global Assembly Cache (GAC).  If the value is '.net' or 'win32', this file must also be the key path of the Component.
                     </xs:documentation>
                 </xs:annotation>
@@ -4611,7 +4685,7 @@
             </xs:attribute>
             <xs:attribute name="Name" type="xs:string">
                 <xs:annotation><xs:documentation>
-                    The localizable registry value name.  If this attribute is not provided the default value for the registry key will 
+                    The localizable registry value name.  If this attribute is not provided the default value for the registry key will
                     be set instead.  The Windows Installer allows several special values to be set for this attribute.  You should not
                     use them in WiX.  Instead use appropriate values in the Action attribute to get the desired behavior.
                 </xs:documentation></xs:annotation>
@@ -4761,7 +4835,7 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-    
+
     <xs:element name="RemoveFolder">
         <xs:annotation>
             <xs:appinfo>
@@ -4900,7 +4974,7 @@
     <xs:element name="Verb">
         <xs:annotation>
             <xs:documentation>
-            Verb definition for an Extension.  When advertised, this element creates a row in the 
+            Verb definition for an Extension.  When advertised, this element creates a row in the
             <html:a href='http://msdn.microsoft.com/library/aa372487.aspx' target='_blank'>Verb table</html:a>.
             When not advertised, this element creates the appropriate rows in <html:a href='http://msdn.microsoft.com/library/aa371168.aspx' target='_blank'>Registry table</html:a>.
             </xs:documentation>
@@ -4917,15 +4991,15 @@
                 <xs:annotation><xs:documentation>The localized text displayed on the context menu.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Argument" type="xs:string">
-                <xs:annotation><xs:documentation>Value for the command arguments.  Note that the resolution of properties in the 
-                Argument field is limited. A property formatted as [Property] in this field can only be resolved if the property 
-                already has the intended value when the component owning the verb is installed. For example, for the argument 
-                "[#MyDoc.doc]" to resolve to the correct value, the same process must be installing the file MyDoc.doc and the 
+                <xs:annotation><xs:documentation>Value for the command arguments.  Note that the resolution of properties in the
+                Argument field is limited. A property formatted as [Property] in this field can only be resolved if the property
+                already has the intended value when the component owning the verb is installed. For example, for the argument
+                "[#MyDoc.doc]" to resolve to the correct value, the same process must be installing the file MyDoc.doc and the
                 component that owns the verb.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Sequence" type="xs:integer">
                 <xs:annotation><xs:documentation>The sequence of the commands. Only verbs for which the Sequence is specified
-                are used to prepare an ordered list for the default value of the shell key. The Verb with the lowest value in this 
+                are used to prepare an ordered list for the default value of the shell key. The Verb with the lowest value in this
                 column becomes the default verb. Used only for Advertised verbs.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Target" type="xs:string">
@@ -5109,7 +5183,7 @@
     <xs:element name="AppId">
         <xs:annotation>
             <xs:documentation>
-                Application ID containing DCOM information for the associated application GUID.  
+                Application ID containing DCOM information for the associated application GUID.
                 If this element is nested under a Fragment, Module, or Product element, it must be
                 advertised.
             </xs:documentation>
@@ -5266,7 +5340,7 @@
             </xs:attribute>
             <xs:attribute name="DllSurrogate" type="xs:string">
                 <xs:annotation><xs:documentation>
-                    Set this value to specify that the class is a DLL that is to be activated in a surrogate EXE 
+                    Set this value to specify that the class is a DLL that is to be activated in a surrogate EXE
                     process, and the surrogate process to be used is the path of a surrogate EXE file specified by the value.
                 </xs:documentation></xs:annotation>
             </xs:attribute>
@@ -6005,9 +6079,9 @@
     <xs:element name="ServiceControl">
         <xs:annotation>
             <xs:documentation>
-                Starts, stops, and removes services for parent Component. This element is used to control the state 
+                Starts, stops, and removes services for parent Component. This element is used to control the state
                 of a service installed by the MSI or MSM file by using the start, stop and remove attributes.
-                For example, Start='install' Stop='both' Remove='uninstall' would mean: start the service on install, 
+                For example, Start='install' Stop='both' Remove='uninstall' would mean: start the service on install,
                 remove the service when the product is uninstalled, and stop the service both on install and uninstall.
             </xs:documentation>
             <xs:appinfo>
@@ -6333,7 +6407,7 @@
             <xs:simpleContent>
                 <xs:extension base="xs:string">
                     <xs:annotation><xs:documentation>
-                        Under a Component element, the condition becomes the condition of the component.  Under a Control element, 
+                        Under a Component element, the condition becomes the condition of the component.  Under a Control element,
                         the condition becomes a ControlCondition entry.  Under a Feature element, the condition becomes a Condition
                         entry.  Under a Fragment or Product element, the condition becomes a LaunchCondition entry.
                     </xs:documentation></xs:annotation>
@@ -6558,9 +6632,9 @@
                 <xs:annotation>
                     <xs:documentation>
                         Identifies a feature to which this component belongs, as a shorthand for a child
-                        ComponentRef element of the Feature element. The value of this attribute should 
-                        correspond to the Id attribute of a Feature element authored elsewhere. Note that 
-                        a single component can belong to multiple features but this attribute allows you 
+                        ComponentRef element of the Feature element. The value of this attribute should
+                        correspond to the Id attribute of a Feature element authored elsewhere. Note that
+                        a single component can belong to multiple features but this attribute allows you
                         to specify only a single feature.
                     </xs:documentation>
                 </xs:annotation>
@@ -6570,7 +6644,7 @@
                     <xs:documentation>
                         This value should be a guid that uniquely identifies this component's contents, language, platform, and version.
                         If omitted, the default value is '*' which indicates that the linker should generate a stable guid.
-                        Generatable guids are supported only for components with a single file as the component's keypath 
+                        Generatable guids are supported only for components with a single file as the component's keypath
                         or no files and a registry value as the keypath.
                         It's also possible to set the value to an empty string to specify an unmanaged component.
                         Unmanaged components are a security vulnerability because the component cannot be removed or repaired
@@ -6788,7 +6862,7 @@
             </xs:anyAttribute>
         </xs:complexType>
     </xs:element>
-  
+
       <xs:element name="IconRef">
         <xs:annotation>
             <xs:documentation>Used only for PatchFamilies to include only a icon table entry in a patch.</xs:documentation>
@@ -6805,13 +6879,13 @@
             </xs:anyAttribute>
         </xs:complexType>
     </xs:element>
-  
+
     <xs:element name="ComponentRef">
         <xs:annotation>
             <xs:documentation>Create a reference to a Feature element in another Fragment.</xs:documentation>
             <xs:appinfo>
                 <xse:seeAlso ref="Component"/>
-                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>               
+                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>
             </xs:appinfo>
         </xs:annotation>
         <xs:complexType>
@@ -6888,7 +6962,7 @@
         <xs:annotation>
             <xs:appinfo>
                 <xse:seeAlso ref="Merge"/>
-                <xse:howtoRef href="install_vcredist.htm">How To: Install the Visual C++ Redistributable with your installer</xse:howtoRef>                
+                <xse:howtoRef href="install_vcredist.htm">How To: Install the Visual C++ Redistributable with your installer</xse:howtoRef>
             </xs:appinfo>
             <xs:documentation>Merge reference to connect a Merge Module to parent Feature</xs:documentation>
         </xs:annotation>
@@ -6951,7 +7025,7 @@
                     <xs:documentation>
                         The Component Guid Generation Seed is a guid that must be used when a Component with the generate guid directive ("*")
                         is not rooted in a standard Windows Installer directory (for example, ProgramFilesFolder or CommonFilesFolder, etc).
-                        It is recommended that this attribute be avoided and that developers install their Components under standard 
+                        It is recommended that this attribute be avoided and that developers install their Components under standard
                         directories with unique names instead (for example, "ProgramFilesFolder\Company Name Product Name Version"). It is
                         important to note that once a directory is assigned a Component Guid Generation Seed the value must not change until
                         the directory name changes.
@@ -7065,7 +7139,7 @@
             <xs:documentation>Create a reference to a Directory element in another Fragment.</xs:documentation>
             <xs:appinfo>
                 <xse:seeAlso ref="Directory"/>
-                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>                
+                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>
             </xs:appinfo>
         </xs:annotation>
         <xs:complexType>
@@ -7206,7 +7280,7 @@
             <xs:appinfo>
                 <xse:seeAlso ref="FeatureRef"/>
                 <xse:msiRef table="Feature" href="http://msdn.microsoft.com/library/aa368585.aspx"/>
-                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>                
+                <xse:howtoRef href="add_a_file.htm">How To: Add a file to your installer</xse:howtoRef>
             </xs:appinfo>
         </xs:annotation>
         <xs:complexType>
@@ -7469,7 +7543,7 @@
             </xs:attribute>
             <xs:attribute name="IgnoreParent" type="YesNoType">
                 <xs:annotation><xs:documentation>
-                    Normally feature group references that end up nested under a parent element create a 
+                    Normally feature group references that end up nested under a parent element create a
                     connection to that parent. This behavior is undesirable when trying to simply reference
                     to a FeatureGroup in a different Fragment.  Specify 'yes' to have this feature group
                     reference not create a connection to its parent. The default is 'no'.
@@ -7479,13 +7553,13 @@
                 <xs:annotation>
                     <xs:documentation>
                         Set this attribute to 'yes' in order to make the parent feature of this group
-                        the primary feature for any components and merges contained in the group. 
-                        Features may belong to multiple features.  By designating a feature as the 
-                        primary feature of a component or merge, you ensure that whenever a component is 
-                        selected for install-on-demand (IOD), the primary feature will be the one to install 
-                        it.  This attribute should only be set if a component actually nests under multiple 
-                        features.  If a component nests under only one feature, that feature is the primary 
-                        feature for the component.  You cannot set more than one feature as the primary 
+                        the primary feature for any components and merges contained in the group.
+                        Features may belong to multiple features.  By designating a feature as the
+                        primary feature of a component or merge, you ensure that whenever a component is
+                        selected for install-on-demand (IOD), the primary feature will be the one to install
+                        it.  This attribute should only be set if a component actually nests under multiple
+                        features.  If a component nests under only one feature, that feature is the primary
+                        feature for the component.  You cannot set more than one feature as the primary
                         feature of a given component.
                     </xs:documentation>
                 </xs:annotation>
@@ -7569,7 +7643,7 @@
             <xs:attribute name="CompressionLevel">
                 <xs:annotation>
                     <xs:documentation>
-                        Indicates the compression level for the Media's cabinet.  This attribute can 
+                        Indicates the compression level for the Media's cabinet.  This attribute can
                         only be used in conjunction with the Cabinet attribute.  The default is 'mszip'.
                     </xs:documentation>
                 </xs:annotation>
@@ -7615,12 +7689,12 @@
             <xs:attribute name="VolumeLabel" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
-                        The label attributed to the volume. This is the volume label returned 
-                        by the GetVolumeInformation function. If the SourceDir property refers 
-                        to a removable (floppy or CD-ROM) volume, then this volume label is 
-                        used to verify that the proper disk is in the drive before attempting 
-                        to install files. The entry in this column must match the volume label 
-                        of the physical media. 
+                        The label attributed to the volume. This is the volume label returned
+                        by the GetVolumeInformation function. If the SourceDir property refers
+                        to a removable (floppy or CD-ROM) volume, then this volume label is
+                        used to verify that the proper disk is in the drive before attempting
+                        to install files. The entry in this column must match the volume label
+                        of the physical media.
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
@@ -7705,7 +7779,7 @@
                                 This attribute is a reference to a Binary element with matching Id attribute.  That binary stream contains
                                 the custom action for use during install.  The custom action will not be installed into a target directory.  This attribute is
                                 typically used with the DllEntry attribute to specify the custom action DLL to use for a type 1 custom action, with the ExeCommand
-                                attribute to specify a type 17 custom action that runs an embedded executable, or with the VBScriptCall or JScriptCall attributes 
+                                attribute to specify a type 17 custom action that runs an embedded executable, or with the VBScriptCall or JScriptCall attributes
                                 to specify a type 5 or 6 custom action.
                             </xs:documentation>
                         </xs:annotation>
@@ -7714,10 +7788,10 @@
                         <xs:annotation>
                             <xs:documentation>
                                 This attribute specifies a reference to a File element with matching Id attribute that
-                                will execute the custom action code in the file after the file is installed.  This 
+                                will execute the custom action code in the file after the file is installed.  This
                                 attribute is typically used with the ExeCommand attribute to specify a type 18 custom action
                                 that runs an installed executable, with the DllEntry attribute to specify an installed custom
-                                action DLL to use for a type 17 custom action, or with the VBScriptCall or JScriptCall 
+                                action DLL to use for a type 17 custom action, or with the VBScriptCall or JScriptCall
                                 attributes to specify a type 21 or 22 custom action.
                             </xs:documentation>
                         </xs:annotation>
@@ -7726,10 +7800,10 @@
                         <xs:annotation>
                             <xs:documentation>
                                 This attribute specifies a reference to a Property element with matching Id attribute that specifies the Property
-                                to be used or updated on execution of this custom action. This attribute is 
-                                typically used with the Value attribute to create a type 51 custom action that parses 
-                                the text in Value and places it into the specified Property.  This attribute is also used with 
-                                the ExeCommand attribute to create a type 50 custom action that uses the value of the 
+                                to be used or updated on execution of this custom action. This attribute is
+                                typically used with the Value attribute to create a type 51 custom action that parses
+                                the text in Value and places it into the specified Property.  This attribute is also used with
+                                the ExeCommand attribute to create a type 50 custom action that uses the value of the
                                 given property to specify the path to the executable. Type 51 custom actions are often useful to
                                 pass values to a deferred custom action.
                                 See <html:a href="http://msdn.microsoft.com/library/aa370543.aspx" target="_blank">
@@ -7741,9 +7815,9 @@
                     <xs:attribute name="Directory" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                This attribute specifies a reference to a Directory element with matching Id attribute containing a directory path. 
-                                This attribute is typically used with the ExeCommand attribute to specify the source executable for a type 34 
-                                custom action, or with the Value attribute to specify a formatted string to place in the specified Directory 
+                                This attribute specifies a reference to a Directory element with matching Id attribute containing a directory path.
+                                This attribute is typically used with the ExeCommand attribute to specify the source executable for a type 34
+                                custom action, or with the Value attribute to specify a formatted string to place in the specified Directory
                                 table entry in a type 35 custom action.
                             </xs:documentation>
                         </xs:annotation>
@@ -7753,7 +7827,7 @@
                         <xs:annotation>
                             <xs:documentation>
                                 This attribute specifies the name of a function in a custom action to execute.
-                                This attribute is used with the BinaryKey attribute to create a type 1 custom 
+                                This attribute is used with the BinaryKey attribute to create a type 1 custom
                                 action, or with the FileKey attribute to create a type 17 custom action.
                             </xs:documentation>
                         </xs:annotation>
@@ -7761,10 +7835,10 @@
                     <xs:attribute name="ExeCommand" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                This attribute specifies the command line parameters to supply to an externally 
-                                run executable. This attribute is typically used with the BinaryKey attribute for a type 2 custom action, 
+                                This attribute specifies the command line parameters to supply to an externally
+                                run executable. This attribute is typically used with the BinaryKey attribute for a type 2 custom action,
                                 the FileKey attribute for a type 18 custom action, the Property attribute for a type 50 custom action,
-                                or the Directory attribute for a type 34 custom action that specify the executable to run. 
+                                or the Directory attribute for a type 34 custom action that specify the executable to run.
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
@@ -7811,14 +7885,14 @@
                                 type 51 custom action or with the Directory attribute to set a directory path in that
                                 table in a type 35 custom action. The value can be a literal value or derived from a
                                 Property element using the <html:a href='http://msdn.microsoft.com/library/aa368609.aspx' target='_blank'>Formatted</html:a>
-                                syntax. 
+                                syntax.
                             </xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
                     <xs:attribute name="Error" type="xs:string">
                         <xs:annotation>
                             <xs:documentation>
-                                This attribute specifies an index in the MSI Error table to use as an error message for a 
+                                This attribute specifies an index in the MSI Error table to use as an error message for a
                                 type 19 custom action that displays the error message and aborts a product's installation.
                             </xs:documentation>
                         </xs:annotation>
@@ -7927,8 +8001,8 @@
                     <xs:attribute name="Impersonate" type="YesNoType">
                         <xs:annotation>
                             <xs:documentation>
-                                This attribute specifies whether the Windows Installer, which executes as LocalSystem, 
-                                should impersonate the user context of the installing user when executing this custom action. 
+                                This attribute specifies whether the Windows Installer, which executes as LocalSystem,
+                                should impersonate the user context of the installing user when executing this custom action.
                                 Typically the value should be 'yes', except when the custom action needs elevated privileges
                                 to apply changes to the machine.
                             </xs:documentation>
@@ -7955,11 +8029,11 @@
                     <xs:attribute name="TerminalServerAware" type="YesNoType">
                         <xs:annotation>
                             <xs:documentation>
-                                This attribute specifies controls whether the custom action will impersonate the 
+                                This attribute specifies controls whether the custom action will impersonate the
                                 installing user during per-machine installs on Terminal Server machines.
                                 Deferred execution custom actions that do not specify this attribute, or explicitly set it 'no',
-                                will run with no user impersonation on Terminal Server machines during 
-                                per-machine installations.  This attribute is only applicable when installing on the 
+                                will run with no user impersonation on Terminal Server machines during
+                                per-machine installations.  This attribute is only applicable when installing on the
                                 Windows Server 2003 family.
                             </xs:documentation>
                         </xs:annotation>
@@ -7984,7 +8058,7 @@
                 <xse:seeAlso ref="CustomAction"/>
             </xs:appinfo>
             <xs:documentation>
-                This will cause the entire contents of the Fragment containing the referenced CustomAction to be 
+                This will cause the entire contents of the Fragment containing the referenced CustomAction to be
                 included in the installer database.
             </xs:documentation>
         </xs:annotation>
@@ -8130,7 +8204,7 @@
                 <xse:seeAlso ref="PatchFamily"/>
             </xs:appinfo>
             <xs:documentation>
-                This will cause the entire contents of the Fragment containing the referenced PatchFamily to be 
+                This will cause the entire contents of the Fragment containing the referenced PatchFamily to be
                 used in the process of creating a patch.
             </xs:documentation>
         </xs:annotation>
@@ -8767,7 +8841,7 @@
     <xs:element name="Custom">
         <xs:annotation>
             <xs:appinfo>
-                <xse:seeAlso ref="CustomAction"/> 
+                <xse:seeAlso ref="CustomAction"/>
             </xs:appinfo>
             <xs:documentation>Use to sequence a custom action.</xs:documentation>
         </xs:annotation>
@@ -9331,7 +9405,7 @@
             </xs:documentation>
             <xs:appinfo>
                 <xse:msiRef table="Icon" href="http://msdn.microsoft.com/library/aa369210.aspx"/>
-                <xse:howtoRef href="configure_arp_appearance.htm">How To: Set your installer's icon in Add/Remove Programs</xse:howtoRef>                
+                <xse:howtoRef href="configure_arp_appearance.htm">How To: Set your installer's icon in Add/Remove Programs</xse:howtoRef>
                 <xse:howtoRef href="create_start_menu_shortcut.htm">How To: Create a shortcut on the Start Menu</xse:howtoRef>
             </xs:appinfo>
         </xs:annotation>
@@ -9458,7 +9532,7 @@
             <xs:attribute name="Id" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
-                        Unique identifier for embedded UI.If this attribute is not specified the Name attribute or the file name 
+                        Unique identifier for embedded UI.If this attribute is not specified the Name attribute or the file name
                         portion of the SourceFile attribute will be used.
                     </xs:documentation>
                 </xs:annotation>
@@ -9556,9 +9630,9 @@
             <xs:attribute name="Name" type="LongFileNameType">
                 <xs:annotation>
                     <xs:documentation>
-                        The name for the embedded UI DLL when it is extracted from the Product and executed. (Windows Installer 
-                        does not support the typical short filename and long filename combination for embedded UI files as it 
-                        does for other kinds of files.) If this attribute is not specified the file name portion of the SourceFile 
+                        The name for the embedded UI DLL when it is extracted from the Product and executed. (Windows Installer
+                        does not support the typical short filename and long filename combination for embedded UI files as it
+                        does for other kinds of files.) If this attribute is not specified the file name portion of the SourceFile
                         attribute will be used.
                     </xs:documentation>
                 </xs:annotation>
@@ -9598,8 +9672,8 @@
             <xs:attribute name="Name" type="LongFileNameType" use="required">
                 <xs:annotation>
                     <xs:documentation>
-                        The name for the resource when it is extracted from the Product for use by the embedded UI DLL. (Windows 
-                        Installer does not support the typical short filename and long filename combination for embedded UI files 
+                        The name for the resource when it is extracted from the Product for use by the embedded UI DLL. (Windows
+                        Installer does not support the typical short filename and long filename combination for embedded UI files
                         as it does for other kinds of files.) If this attribute is not specified the Id attribute will be used.
                     </xs:documentation>
                 </xs:annotation>
@@ -9906,7 +9980,7 @@
                 <xs:annotation><xs:documentation>This attribute is only valid for VolumeCostList Controls.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Sorted" type="YesNoType">
-                <xs:annotation><xs:documentation>This attribute is only valid for ListBox, ListView, and ComboBox Controls. Set 
+                <xs:annotation><xs:documentation>This attribute is only valid for ListBox, ListView, and ComboBox Controls. Set
                 the value of this attribute to "yes" to have entries appear in the order specified under the Control.
                 If the attribute value is "no" or absent the entries in the control will appear in alphabetical order.
                 </xs:documentation></xs:annotation>
@@ -10263,7 +10337,7 @@
             <xs:attribute name="Bitmap" type="xs:string">
                 <xs:annotation><xs:documentation>
                     This attribute defines the bitmap displayed with the radio button.  The value of the attribute creates a reference
-                    to a Binary element that represents the bitmap.  This attribute is mutually exclusive with the Icon and Text 
+                    to a Binary element that represents the bitmap.  This attribute is mutually exclusive with the Icon and Text
                     attributes.
                 </xs:documentation></xs:annotation>
             </xs:attribute>
@@ -10272,7 +10346,7 @@
             <xs:attribute name="Icon" type="xs:string">
                 <xs:annotation><xs:documentation>
                     This attribute defines the icon displayed with the radio button.  The value of the attribute creates a reference
-                    to a Binary element that represents the icon.  This attribute is mutually exclusive with the Bitmap and Text 
+                    to a Binary element that represents the icon.  This attribute is mutually exclusive with the Bitmap and Text
                     attributes.
                 </xs:documentation></xs:annotation>
             </xs:attribute>
@@ -10609,13 +10683,13 @@
             </xs:simpleContent>
         </xs:complexType>
     </xs:element>
-    
+
     <!-- EnsureTable element, for preserving empty tables -->
 
     <xs:element name="EnsureTable">
         <xs:annotation>
             <xs:documentation>
-                Use this element to ensure that a table appears in the installer database, even if its empty.  
+                Use this element to ensure that a table appears in the installer database, even if its empty.
             </xs:documentation>
             <xs:appinfo>
                 <xse:remarks>
@@ -10735,9 +10809,9 @@
 
                 The parent Product element must have valid UpgradeCode and Version attributes.
 
-                When the FindRelatedProducts action detects a related product installed on the system, 
-                it appends the product code to the property named WIX_UPGRADE_DETECTED. After the 
-                FindRelatedProducts action is run, the value of the WIX_UPGRADE_DETECTED property is a 
+                When the FindRelatedProducts action detects a related product installed on the system,
+                it appends the product code to the property named WIX_UPGRADE_DETECTED. After the
+                FindRelatedProducts action is run, the value of the WIX_UPGRADE_DETECTED property is a
                 list of product codes, separated by semicolons (;), detected on the system.
             </xs:documentation>
       <xs:appinfo>
@@ -10770,9 +10844,9 @@
                     yes to be detected.
 
                     Note that because MSI ignores the fourth product version field, setting this attribute to
-                    yes also allows downgrades when the first three product version fields are identical. 
+                    yes also allows downgrades when the first three product version fields are identical.
                     For example, product version 1.0.0.1 will "upgrade" 1.0.0.2998 because they're seen as the
-                    same version (1.0.0). That could reintroduce serious bugs so the safest choice is to change 
+                    same version (1.0.0). That could reintroduce serious bugs so the safest choice is to change
                     the first three version fields and omit this attribute to get the default of no.
 
                     This attribute cannot be "yes" when AllowDowngrades is also "yes" -- AllowDowngrades
@@ -11102,14 +11176,14 @@
             <xs:pattern value="[^\\\?|&gt;&lt;:/\*&quot;]{1,259}|([!$])\(loc\.[_A-Za-z][0-9A-Za-z_.]*\)"/>
         </xs:restriction>
     </xs:simpleType>
-    
+
     <xs:simpleType name="VersionType">
         <xs:annotation><xs:documentation>Values of this type will look like: "x.x.x.x" where x is an integer from 0 to 65534.</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
             <xs:pattern value="(\d{1,5}\.){3}\d{1,5}"/>
         </xs:restriction>
     </xs:simpleType>
-    
+
     <xs:simpleType name="WildCardShortFileNameType">
         <xs:annotation><xs:documentation>Values of this type will look like: "File?.*".  Only one period is allowed.  The following characters are not allowed: \ | > : / " + , ; = [ ] less-than, or whitespace.  The name cannot be longer than 8 characters and the extension cannot exceed 3 characters.  The value could also be a localization variable with the format !(loc.VARIABLE).</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">

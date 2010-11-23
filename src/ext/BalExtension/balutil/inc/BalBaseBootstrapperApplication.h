@@ -83,21 +83,21 @@ public: // IBurnUserExperience
         __in DWORD /*cPackages*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall OnDetectPriorBundle(
+    virtual STDMETHODIMP_(int) OnDetectPriorBundle(
         __in_z LPCWSTR /*wzBundleId*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectPackageBegin(
         __in_z LPCWSTR /*wzPackageId*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
@@ -107,7 +107,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDNOACTION;
+        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
@@ -118,7 +118,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         ) 
     {
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDNOACTION;
+        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectTargetMsiPackage(
@@ -127,7 +127,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_PACKAGE_STATE /*patchState*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectMsiFeature(
@@ -136,7 +136,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_FEATURE_STATE /*state*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(void) OnDetectPackageComplete(
@@ -157,15 +157,15 @@ public: // IBurnUserExperience
         __in DWORD /*cPackages*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall OnPlanRelatedBundle(
+    virtual STDMETHODIMP_(int) OnPlanRelatedBundle(
         __in_z LPCWSTR /*wzBundleId*/,
         __inout BOOTSTRAPPER_REQUEST_STATE* /*pRequestedState*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnPlanPackageBegin(
@@ -173,7 +173,7 @@ public: // IBurnUserExperience
         __inout BOOTSTRAPPER_REQUEST_STATE* /*pRequestState*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnPlanTargetMsiPackage(
@@ -182,7 +182,7 @@ public: // IBurnUserExperience
         __inout BOOTSTRAPPER_REQUEST_STATE* /*pRequestedState*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnPlanMsiFeature(
@@ -191,7 +191,7 @@ public: // IBurnUserExperience
         __inout BOOTSTRAPPER_FEATURE_STATE* /*pRequestedState*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(void) OnPlanPackageComplete(
@@ -213,17 +213,17 @@ public: // IBurnUserExperience
 
     virtual STDMETHODIMP_(int) OnApplyBegin()
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnElevate()
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnRegisterBegin()
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(void) OnRegisterComplete(
@@ -250,12 +250,12 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_APPLY_RESTART restart
         )
     {
-        return BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart ? IDRESTART : IDNOACTION;
+        return BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart ? IDRESTART : CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheBegin()
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCachePackageBegin(
@@ -264,7 +264,7 @@ public: // IBurnUserExperience
         __in DWORD64 /*dw64PackageCacheSize*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireBegin(
@@ -274,7 +274,7 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzSource*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireProgress(
@@ -285,7 +285,7 @@ public: // IBurnUserExperience
         __in DWORD /*dwOverallPercentage*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireComplete(
@@ -294,7 +294,7 @@ public: // IBurnUserExperience
         __in HRESULT /*hrStatus*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheVerifyBegin(
@@ -302,7 +302,7 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzPayloadId*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheVerifyComplete(
@@ -311,10 +311,10 @@ public: // IBurnUserExperience
         __in HRESULT /*hrStatus*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual void __stdcall OnCachePackageComplete(
+    virtual STDMETHODIMP_(void) OnCachePackageComplete(
         __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/
         )
@@ -331,7 +331,7 @@ public: // IBurnUserExperience
         __in DWORD /*cExecutingPackages*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageBegin(
@@ -339,7 +339,7 @@ public: // IBurnUserExperience
         __in BOOL /*fExecute*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnError(
@@ -349,7 +349,7 @@ public: // IBurnUserExperience
         __in DWORD /*dwUIHint*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnProgress(
@@ -357,41 +357,41 @@ public: // IBurnUserExperience
         __in DWORD /*dwOverallProgressPercentage*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall OnDownloadPayloadBegin(
+    virtual STDMETHODIMP_(int) OnDownloadPayloadBegin(
         __in_z LPCWSTR /*wzPayloadId*/,
         __in_z LPCWSTR /*wzPayloadFileName*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall OnDownloadPayloadComplete(
+    virtual STDMETHODIMP_(int) OnDownloadPayloadComplete(
         __in_z LPCWSTR /*wzPayloadId*/,
         __in_z LPCWSTR /*wzPayloadFileName*/,
         __in HRESULT /*hrStatus*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall OnDownloadProgress(
+    virtual STDMETHODIMP_(int) OnDownloadProgress(
         __in DWORD /*dwProgressPercentage*/,
         __in DWORD /*dwOverallProgressPercentage*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual int __stdcall  OnExecuteProgress(
+    virtual STDMETHODIMP_(int)  OnExecuteProgress(
         __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*dwProgressPercentage*/,
         __in DWORD /*dwOverallProgressPercentage*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecuteMsiMessage(
@@ -401,7 +401,7 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzMessage*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecuteMsiFilesInUse(
@@ -410,16 +410,16 @@ public: // IBurnUserExperience
         __in_ecount_z(cFiles) LPCWSTR* /*rgwzFiles*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageComplete(
         __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrExitCode*/,
-        __in BOOTSTRAPPER_APPLY_RESTART restart
+        __in BOOTSTRAPPER_APPLY_RESTART /*restart*/
         )
     {
-        return BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart ? IDRESTART : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(void) OnExecuteComplete(
@@ -428,25 +428,77 @@ public: // IBurnUserExperience
     {
     }
 
-    virtual int __stdcall OnResolveSource(
+    virtual STDMETHODIMP_(int) OnResolveSource(
         __in_z LPCWSTR /*wzPackageOrContainerId*/,
         __in_z_opt LPCWSTR /*wzPayloadId*/,
         __in_z LPCWSTR /*wzLocalSource*/,
         __in_z_opt LPCWSTR /*wzDownloadSource*/
         )
     {
-        return IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
 protected:
+    //
+    // PromptCancel - prompts the user to close (if not forced).
+    //
+    virtual BOOL PromptCancel(
+        __in HWND hWnd,
+        __in BOOL fForceCancel,
+        __in_z LPCWSTR wzMessage,
+        __in_z LPCWSTR wzCaption
+        )
+    {
+        ::EnterCriticalSection(&m_csCanceled);
+
+        // Only prompt the user to close if we have not canceled already.
+        if (!m_fCanceled)
+        {
+            if (fForceCancel)
+            {
+                m_fCanceled = TRUE;
+            }
+            else
+            {
+                m_fCanceled = (IDYES == ::MessageBoxW(hWnd, wzMessage, wzCaption, MB_YESNO | MB_ICONSTOP));
+            }
+        }
+
+        ::LeaveCriticalSection(&m_csCanceled);
+
+        return m_fCanceled;
+    }
+
+    //
+    // CheckCanceled - waits if the cancel dialog is up and checks to see if the user canceled the operation.
+    //
+    BOOL CheckCanceled()
+    {
+        ::EnterCriticalSection(&m_csCanceled);
+        ::LeaveCriticalSection(&m_csCanceled);
+        return m_fCanceled;
+    }
+
     CBalBaseBootstrapperApplication(
         __in BOOTSTRAPPER_RESTART restart
-        ) : m_cReferences(0)
+        )
     {
+        m_cReferences = 1;
         m_restart = restart;
+
+        ::InitializeCriticalSection(&m_csCanceled);
+        m_fCanceled = FALSE;
+    }
+
+    virtual ~CBalBaseBootstrapperApplication()
+    {
+        ::DeleteCriticalSection(&m_csCanceled);
     }
 
 protected:
     long m_cReferences;
     BOOTSTRAPPER_RESTART m_restart;
+
+    CRITICAL_SECTION m_csCanceled;
+    BOOL m_fCanceled;
 };

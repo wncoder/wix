@@ -726,7 +726,7 @@ static HRESULT FindExistingCertificate(
 
          // Next certificate in the store.
         PCCERT_CONTEXT pNext = ::CertFindCertificateInStore(hCertStore, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, pCertContext);
-        ::CertFreeCertificateContext(pCertContext);
+        // old pCertContext is freed by CertFindCertificateInStore
         pCertContext = pNext;
     }
 

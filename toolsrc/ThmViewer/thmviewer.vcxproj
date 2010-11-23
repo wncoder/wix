@@ -55,14 +55,15 @@
     <ClCompile Include="display.cpp" />
     <ClCompile Include="load.cpp" />
     <ClCompile Include="thmviewer.cpp" />
-    <None Include="Resources\thm.xml">
-      <DeploymentContent>true</DeploymentContent>
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="Resources\LoremIpsum.rtf" />
+    <None Include="Resources\thm.xml" />
     <None Include="thmviewer.build" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="thmviewer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="thmviewer.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

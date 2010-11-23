@@ -71,7 +71,7 @@ static HRESULT AcquireContainerOrPayload(
 static HRESULT LayoutOrCachePayload(
     __in BURN_USER_EXPERIENCE* pUX,
     __in_opt HANDLE hPipe,
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPath,
@@ -401,7 +401,7 @@ extern "C" HRESULT ApplyCache(
             break;
 
         case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
-            hr = LayoutOrCachePayload(pUX, NULL, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove);
+            hr = LayoutOrCachePayload(pUX, NULL, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove);
             ExitOnFailure(hr, "Failed to layout payload.");
             break;
 
@@ -653,6 +653,7 @@ static HRESULT LayoutBundle(
     LPWSTR sczBundlePath = NULL;
     LPWSTR wzBundleFileName = NULL;
     LPWSTR sczDestinationPath = NULL;
+    int nEquivalentPaths = 0;
     LONGLONG llBundleSize = 0;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
     BOOL fRetry = FALSE;
@@ -664,6 +665,15 @@ static HRESULT LayoutBundle(
 
     hr = PathConcat(wzLayoutDirectory, wzBundleFileName, &sczDestinationPath);
     ExitOnFailure(hr, "Failed to concat layout path for bundle.");
+
+    // If the destination path is the currently running bundle, bail.
+    hr = PathCompare(sczBundlePath, sczDestinationPath, &nEquivalentPaths);
+    ExitOnFailure(hr, "Failed to determine if layout bundle path was equivalent with current process path.");
+
+    if (CSTR_EQUAL == nEquivalentPaths)
+    {
+        ExitFunction1(hr = S_OK);
+    }
 
     hr = FileSize(sczBundlePath, &llBundleSize);
     ExitOnFailure1(hr, "Failed to get the size of the bundle: %ls", sczBundlePath);
@@ -702,10 +712,11 @@ static HRESULT AcquireContainerOrPayload(
     __inout DWORD64* pqwCacheProgress
     )
 {
-    AssertSz((pContainer || (pPackage && pPayload)) && !(pContainer && pPackage && pPayload), "Must provide a container or a package and a payload.");
+    AssertSz(pContainer || pPayload, "Must provide a container or a payload.");
 
     HRESULT hr = S_OK;
-    LPWSTR wzPackageOrContainerId = pContainer ? pContainer->sczId : pPackage->sczId;
+    int nEquivalentPaths = 0;
+    LPWSTR wzPackageOrContainerId = pContainer ? pContainer->sczId : pPackage ? pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pPayload ? pPayload->sczKey : NULL;
     LPWSTR sczSourceFullPath = NULL;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
@@ -739,6 +750,15 @@ static HRESULT AcquireContainerOrPayload(
         // If the file exists locally, copy it.
         if (FileExistsEx(sczSourceFullPath, NULL))
         {
+            // If the source path and destination path are the same, bail.
+            hr = PathCompare(sczSourceFullPath, wzDestinationPath, &nEquivalentPaths);
+            ExitOnFailure(hr, "Failed to determine if payload source path was equivalent to the destination path.");
+
+            if (CSTR_EQUAL == nEquivalentPaths)
+            {
+                ExitFunction1(hr = S_OK);
+            }
+
             hr = CopyPayload(&progress, sczSourceFullPath, wzDestinationPath, &fRetry);
             ExitOnFailure(hr, "Failed to copy payload.");
         }
@@ -772,7 +792,7 @@ LExit:
 static HRESULT LayoutOrCachePayload(
     __in BURN_USER_EXPERIENCE* pUX,
     __in_opt HANDLE hPipe,
-    __in BURN_PACKAGE* pPackage,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPath,
@@ -786,12 +806,14 @@ static HRESULT LayoutOrCachePayload(
     {
         fRetry = FALSE;
 
-        int nResult = pUX->pUserExperience->OnCacheVerifyBegin(pPackage->sczId, pPayload->sczKey);
+        int nResult = pUX->pUserExperience->OnCacheVerifyBegin(pPackage ? pPackage->sczId : NULL, pPayload->sczKey);
         hr = HRESULT_FROM_VIEW(nResult);
         ExitOnRootFailure(hr, "UX aborted cache verify begin.");
 
         if (hPipe)
         {
+            AssertSz(pPackage, "Package is required when doing elevated caching.");
+
             hr = ElevationCachePayload(hPipe, pPackage, pPayload, wzUnverifiedPath, fMove);
         }
         else
@@ -799,7 +821,7 @@ static HRESULT LayoutOrCachePayload(
             hr = CachePayload(pPackage, pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
         }
 
-        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage->sczId, pPayload->sczKey, hr);
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr);
         if (FAILED(hr) && IDRETRY == nResult)
         {
             fRetry = TRUE;
@@ -884,14 +906,14 @@ static HRESULT CopyPayload(
 
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_COPY, wzSourcePath);
     hr = HRESULT_FROM_VIEW(nResult);
-    ExitOnRootFailure(hr, "UX aborted cache acquire begin.");
+    ExitOnRootFailure(hr, "BA aborted cache acquire begin.");
 
     if (!::CopyFileExW(wzSourcePath, wzDestinationPath, CacheProgressRoutine, pProgress, &pProgress->fCancel, COPY_FILE_RESTARTABLE))
     {
         if (pProgress->fCancel)
         {
             hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
-            ExitOnRootFailure2(hr, "UX aborted copy of %s: %ls", pProgress->pPayload ? "payload" : pProgress->pPackage ? "package" : pProgress->pContainer ? "container" : "bundle", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
+            ExitOnRootFailure2(hr, "BA aborted copy of %s: %ls", pProgress->pPayload ? "payload" : pProgress->pPackage ? "package" : pProgress->pContainer ? "container" : "bundle", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
         }
         else
         {
@@ -926,7 +948,7 @@ static HRESULT DownloadPayload(
 
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_DOWNLOAD, pDownloadSource->sczUrl);
     hr = HRESULT_FROM_VIEW(nResult);
-    ExitOnRootFailure(hr, "UX aborted cache download payload begin.");
+    ExitOnRootFailure(hr, "BA aborted cache download payload begin.");
 
     callback.pfnProgress = CacheProgressRoutine;
     callback.pfnCancel = NULL; // TODO: set this

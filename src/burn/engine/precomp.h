@@ -38,6 +38,7 @@
 #include <softpub.h>
 #include <strsafe.h>
 #include <intsafe.h>
+#include <wuapi.h>
 
 #include <dutil.h>
 #include <buffutil.h>

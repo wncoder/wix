@@ -1998,10 +1998,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             WixGroupingOrdering groups = new WixGroupingOrdering(output, this);
 
             // Create UX payloads and Package payloads
-            groups.UseTypes(new string[] { "Container", "PackageGroup", "PayloadGroup", "Package" }, new string[] { "PackageGroup", "Package", "PayloadGroup", "Payload" });
+            groups.UseTypes(new string[] { "Container", "Layout", "PackageGroup", "PayloadGroup", "Package" }, new string[] { "PackageGroup", "Package", "PayloadGroup", "Payload" });
             groups.FlattenAndRewriteGroups("Package", false);
             groups.FlattenAndRewriteGroups("Container", false);
-            
+            groups.FlattenAndRewriteGroups("Layout", false);
+
             // Create Chain packages...
             groups.UseTypes(new string[] { "PackageGroup" }, new string[] { "Package", "PackageGroup" });
             groups.FlattenAndRewriteRows("PackageGroup", "WixChain", false);

@@ -44,6 +44,37 @@ LExit:
 }
 
 
+DAPI_(HRESULT) BalFormatString(
+    __in IBootstrapperEngine* pEngine,
+    __in_z LPCWSTR wzFormat,
+    __inout LPWSTR* psczOut
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD cch = 0;
+
+    if (*psczOut)
+    {
+        hr = StrMaxLength(*psczOut, reinterpret_cast<DWORD_PTR*>(&cch));
+        ExitOnFailure(hr, "Failed to determine length of value.");
+    }
+
+    hr = pEngine->FormatString(wzFormat, *psczOut, &cch);
+    if (E_MOREDATA == hr)
+    {
+        ++cch;
+
+        hr = StrAlloc(psczOut, cch);
+        ExitOnFailure(hr, "Failed to allocate value.");
+
+        hr = pEngine->FormatString(wzFormat, *psczOut, &cch);
+    }
+
+LExit:
+    return hr;
+}
+
+
 DAPI_(BOOL) BalStringVariableExists(
     __in IBootstrapperEngine* pEngine,
     __in_z LPCWSTR wzVariable
@@ -52,7 +83,7 @@ DAPI_(BOOL) BalStringVariableExists(
     HRESULT hr = S_OK;
     DWORD cch = 0;
 
-    hr = pEngine->GetVariableString(wzVariable, NULL, 0);
+    hr = pEngine->GetVariableString(wzVariable, NULL, &cch);
     return E_MOREDATA == hr; // string exists only if there are more than zero characters in the variable.
 }
 
@@ -68,14 +99,16 @@ DAPI_(HRESULT) BalGetStringVariable(
 
     if (*psczValue)
     {
-        hr = StrMaxLength(psczValue, reinterpret_cast<DWORD_PTR*>(&cch));
+        hr = StrMaxLength(*psczValue, reinterpret_cast<DWORD_PTR*>(&cch));
         ExitOnFailure(hr, "Failed to determine length of value.");
     }
 
     hr = pEngine->GetVariableString(wzVariable, *psczValue, &cch);
     if (E_MOREDATA == hr)
     {
-        hr = StrAlloc(psczValue, cch + 1);
+        ++cch;
+
+        hr = StrAlloc(psczValue, cch);
         ExitOnFailure(hr, "Failed to allocate value.");
 
         hr = pEngine->GetVariableString(wzVariable, *psczValue, &cch);

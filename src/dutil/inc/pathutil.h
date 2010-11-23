@@ -27,41 +27,92 @@ enum PATH_EXPAND
     PATH_EXPAND_FULLPATH    = 0x0002,
 };
 
-LPWSTR DAPI PathFile(
+/*******************************************************************
+ PathFile -  returns a pointer to the file part of the path.
+********************************************************************/
+DAPI_(LPWSTR) PathFile(
     __in_z LPCWSTR wzPath
     );
-LPCWSTR DAPI PathExtension(
+
+/*******************************************************************
+ PathExtension -  returns a pointer to the extension part of the path
+                  (including the dot).
+********************************************************************/
+DAPI_(LPCWSTR) PathExtension(
     __in_z LPCWSTR wzPath
     );
-HRESULT DAPI PathGetDirectory(
+
+/*******************************************************************
+ PathGetDirectory - extracts the directory from a path.
+********************************************************************/
+DAPI_(HRESULT) PathGetDirectory(
     __in_z LPCWSTR wzPath,
     __out LPWSTR *psczDirectory
     );
-HRESULT DAPI PathExpand(
+
+/*******************************************************************
+ PathExpand - gets the full path to a file resolving environment
+              variables along the way.
+********************************************************************/
+DAPI_(HRESULT) PathExpand(
     __out LPWSTR *psczFullPath,
     __in_z LPCWSTR wzRelativePath,
     __in DWORD dwResolveFlags
     );
-HRESULT DAPI PathPrefix(
+
+/*******************************************************************
+ PathPrefix - prefixes a full path with \\?\ or \\?\UNC as
+              appropriate.
+********************************************************************/
+DAPI_(HRESULT) PathPrefix(
     __inout LPWSTR *psczFullPath
     );
-HRESULT DAPI PathBackslashTerminate(
+
+/*******************************************************************
+ PathFixedBackslashTerminate - appends a \ if path does not have it
+                                 already, but fails if the buffer is
+                                 insufficient.
+********************************************************************/
+DAPI_(HRESULT) PathBackslashTerminate(
     __inout LPWSTR* psczPath
     );
-HRESULT DAPI PathFixedBackslashTerminate(
+
+/*******************************************************************
+ PathBackslashTerminate - appends a \ if path does not have it
+                                 already.
+********************************************************************/
+DAPI_(HRESULT) PathFixedBackslashTerminate(
     __inout_ecount_z(cchPath) LPWSTR wzPath,
     __in DWORD_PTR cchPath
     );
-HRESULT DAPI PathForCurrentProcess(
+
+/*******************************************************************
+ PathForCurrentProcess - gets the full path to the currently executing
+                         process or (optionally) a module inside the process.
+********************************************************************/
+DAPI_(HRESULT) PathForCurrentProcess(
     __inout LPWSTR *psczFullPath,
     __in_opt HMODULE hModule
     );
-HRESULT DAPI PathRelativeToModule(
+
+/*******************************************************************
+ PathRelativeToModule - gets the name of a file in the same 
+    directory as the current process or (optionally) a module inside 
+    the process
+********************************************************************/
+DAPI_(HRESULT) PathRelativeToModule(
     __inout LPWSTR *psczFullPath,
     __in_opt LPCWSTR wzFileName,
     __in_opt HMODULE hModule
     );
-HRESULT DAPI PathCreateTempFile(
+
+/*******************************************************************
+ PathCreateTempFile
+
+ Note: if wzDirectory is null, ::GetTempPath() will be used instead.
+       if wzFileNameTemplate is null, GetTempFileName() will be used instead.
+*******************************************************************/
+DAPI_(HRESULT) PathCreateTempFile(
     __in_opt LPCWSTR wzDirectory,
     __in_opt __format_string LPCWSTR wzFileNameTemplate,
     __in DWORD dwUniqueCount,
@@ -69,7 +120,12 @@ HRESULT DAPI PathCreateTempFile(
     __out_opt LPWSTR* psczTempFile,
     __out_opt HANDLE* phTempFile
     );
-HRESULT DAPI PathCreateTimeBasedTempFile(
+
+/*******************************************************************
+ PathCreateTimeBasedTempFile - creates an empty temp file based on current
+                           system time
+********************************************************************/
+DAPI_(HRESULT) PathCreateTimeBasedTempFile(
     __in_z_opt LPCWSTR wzDirectory,
     __in_z LPCWSTR wzPrefix,
     __in_z_opt LPCWSTR wzPostfix,
@@ -77,27 +133,64 @@ HRESULT DAPI PathCreateTimeBasedTempFile(
     __deref_opt_out_z LPWSTR* psczTempFile,
     __out_opt HANDLE* phTempFile
     );
-HRESULT DAPI PathCreateTempDirectory(
+
+/*******************************************************************
+ PathCreateTempDirectory
+
+ Note: if wzDirectory is null, ::GetTempPath() will be used instead.
+*******************************************************************/
+DAPI_(HRESULT) PathCreateTempDirectory(
     __in_opt LPCWSTR wzDirectory,
     __in __format_string LPCWSTR wzDirectoryNameTemplate,
     __in DWORD dwUniqueCount,
     __out LPWSTR* psczTempDirectory
     );
-HRESULT DAPI PathGetKnownFolder(
+
+/*******************************************************************
+ PathGetKnownFolder - returns the path to a well-known shell folder
+
+*******************************************************************/
+DAPI_(HRESULT) PathGetKnownFolder(
     __in int csidl,
     __out LPWSTR* psczKnownFolder
     );
-BOOL DAPI PathIsAbsolute(
+
+/*******************************************************************
+ PathIsAbsolute - returns true if the path is absolute; false 
+    otherwise.
+*******************************************************************/
+DAPI_(BOOL) PathIsAbsolute(
     __in_z LPCWSTR wzPath
     );
-HRESULT DAPI PathConcat(
+
+/*******************************************************************
+ PathConcat - like .NET's Path.Combine, lets you build up a path
+    one piece -- file or directory -- at a time.
+*******************************************************************/
+DAPI_(HRESULT) PathConcat(
     __in_opt LPCWSTR wzPath1,
     __in_opt LPCWSTR wzPath2,
     __deref_out_z LPWSTR* psczCombined
     );
-HRESULT DAPI PathEnsureQuoted(
+
+/*******************************************************************
+ PathEnsureQuoted - ensures that a path is quoted; optionally,
+     this function also terminates a directory with a backslash
+     if it is not already.
+*******************************************************************/
+DAPI_(HRESULT) PathEnsureQuoted(
     __inout LPWSTR* ppszPath,
     __in BOOL fDirectory
+    );
+
+/*******************************************************************
+ PathCompare - compares the fully expanded path of the two paths using
+               ::CompareStringW().
+*******************************************************************/
+DAPI_(HRESULT) PathCompare(
+    __in_z LPCWSTR wzPath1,
+    __in_z LPCWSTR wzPath2,
+    __out int* pnResult
     );
 
 #ifdef __cplusplus

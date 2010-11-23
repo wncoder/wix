@@ -320,6 +320,10 @@ extern "C" HRESULT DAPI UriProtocol(
     {
         *pProtocol = URI_PROTOCOL_HTTP;
     }
+    else if (L'h' == wzUri[0] && L't' == wzUri[1] && L't' == wzUri[2] && L'p' == wzUri[3] && L'S' == wzUri[4] && L':' == wzUri[5] && L'/' == wzUri[6] && L'/' == wzUri[7])
+    {
+        *pProtocol = URI_PROTOCOL_HTTPS;
+    }
     else
     {
         *pProtocol = URI_PROTOCOL_UNKNOWN;

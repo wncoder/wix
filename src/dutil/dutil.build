@@ -89,6 +89,7 @@
       <include name="rexutil.cpp" />
       <include name="rmutil.cpp" />
       <include name="rssutil.cpp" />
+      <include name="sceutil.cpp" />
       <include name="shelutil.cpp" />
       <include name="sqlutil.cpp" />
       <include name="strutil.cpp" />

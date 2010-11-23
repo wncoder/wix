@@ -3404,6 +3404,23 @@
                 <Parameter Type="System.String" Name="rollbackBoundaryId" />
             </Instance>
         </Message>
+        <Message Id="DeprecatedElement" Number="1130">
+            <Instance>
+                The {0} element has been deprecated.
+                <Parameter Type="System.String" Name="elementName" />
+            </Instance>
+            <Instance>
+                The {0} element has been deprecated.  Please use the {1} element instead.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="newElementName" />
+            </Instance>
+            <Instance>
+                The {0} element has been deprecated.  Please use the {1} or {2} element instead.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="newElementName1" />
+                <Parameter Type="System.String" Name="newElementName2" />
+            </Instance>
+        </Message>
     </Class>
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
         <Message Id="ImportBinaryStream" Number="9000" SourceLineNumbers="no">

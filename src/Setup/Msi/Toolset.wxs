@@ -226,6 +226,7 @@
                 <File Source="dictutil.h" />
                 <File Source="dirutil.h" />
                 <File Source="dutil.h" KeyPath="yes" />
+                <File Source="eseutil.h" />
                 <File Source="fileutil.h" />
                 <File Source="gdiputil.h" />
                 <File Source="inetutil.h" />
@@ -241,6 +242,7 @@
                 <File Source="resrutil.h" />
                 <File Source="reswutil.h" />
                 <File Source="rssutil.h" />
+                <File Source="sceutil.h" />
                 <File Source="sqlutil.h" />
                 <File Source="strutil.h" />
                 <File Source="thmutil.h" />
@@ -335,6 +337,10 @@
             <ComponentRef Id="WixUnitConfig" />
             <ComponentRef Id="WuiBinaries" />
             <ComponentRef Id="Microsoft.Deployment.WindowsInstaller.Wix" />
+
+            <Component Directory="BinDir">
+              <File Id="Microsoft.Deployment.Resources.Wix" Source="Microsoft.Deployment.Resources.dll" />
+            </Component>
         </ComponentGroup>
     </Fragment>
 </Wix>

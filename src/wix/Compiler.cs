@@ -6631,6 +6631,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "Binary":
                                 this.ParseBinaryElement(child);
                                 break;
+                            case "BootstrapperApplication":
+                                this.ParseBootstrapperApplicationElement(child);
+                                break;
+                            case "BootstrapperApplicationRef":
+                                this.ParseBootstrapperApplicationRefElement(child);
+                                break;
                             case "ComplianceCheck":
                                 this.ParseComplianceCheckElement(child);
                                 break;
@@ -19390,6 +19396,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "Name":
                             name = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
+                        case "SplashScreenSourceFile":
+                            splashScreenSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
                         case "UpdateUrl":
                             updateUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
@@ -19483,7 +19492,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.activeName = String.IsNullOrEmpty(name) ? Common.GenerateGuid() : name;
             this.core.CreateActiveSection(this.activeName, SectionType.Bundle, 0);
-            bool uxSeen = false;
+            bool baSeen = false;
             bool chainSeen = false;
             bool logSeen = false;
 
@@ -19495,6 +19504,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         switch (child.LocalName)
                         {
+                            case "BootstrapperApplication":
+                                if (baSeen)
+                                {
+                                    SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
+                                    this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name, "BootstrapperApplication"));
+                                }
+                                this.ParseBootstrapperApplicationElement(child);
+                                baSeen = true;
+                                break;
+                            case "BootstrapperApplicationRef":
+                                this.ParseBootstrapperApplicationRefElement(child);
+                                break;
                             case "Chain":
                                 if (chainSeen)
                                 {
@@ -19525,15 +19546,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 logVariablePrefixAndExtension = this.ParseLogElement(child, fileSystemSafeBundleName);
                                 logSeen = true;
                                 break;
-                            case "UX":
-                                if (uxSeen)
+                            case "PayloadGroup":
+                                this.ParsePayloadGroupElement(child, ComplexReferenceParentType.Layout, "BundleLayoutOnlyPayloads");
+                                break;
+                            case "PayloadGroupRef":
+                                this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Layout, "BundleLayoutOnlyPayloads", ComplexReferenceChildType.Unknown, null);
+                                break;
+                            case "UX": // deprecated
                                 {
                                     SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
-                                    this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name, "UX"));
+                                    this.core.OnMessage(WixWarnings.DeprecatedElement(childSourceLineNumbers, child.Name, "BootstrapperApplication"));
                                 }
-                                this.ParseUXElement(child, ref splashScreenSourceFile);
-                                uxSeen = true;
-                                break;
+                                goto case "BootstrapperApplication";
                             case "Variable":
                                 this.ParseVariableElement(child);
                                 break;
@@ -19547,11 +19571,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.core.ParseExtensionElement(sourceLineNumbers, (XmlElement)node, (XmlElement)child);
                     }
                 }
-            }
-
-            if (!uxSeen)
-            {
-                this.core.OnMessage(WixErrors.ExpectedElement(sourceLineNumbers, node.Name, "UX"));
             }
 
             if (!chainSeen)
@@ -19993,20 +20012,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Parse UX element.
+        /// Parse the BoostrapperApplication element.
         /// </summary>
         /// <param name="node">Element to parse</param>
-        private void ParseUXElement(XmlNode node, ref string splashScreenSourceFile)
+        private void ParseBootstrapperApplicationElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            string previousId = null;
             ComplexReferenceChildType previousType = ComplexReferenceChildType.Unknown;
-            // Delegate to the "Payload" attribute parsing code to parse
-            // and create a Payload entry.
 
-            string previousId = this.ParsePayloadElementAttributes(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, ComplexReferenceChildType.Unknown, null, false, ref splashScreenSourceFile);
-
-            if (null != previousId)
+            // The BootstrapperApplication element acts like a Payload element so delegate to the "Payload" attribute parsing code to parse and create a Payload entry.
+            id = this.ParsePayloadElementAttributes(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId, false);
+            if (null != id)
             {
+                previousId = id;
                 previousType = ComplexReferenceChildType.Payload;
             }
 
@@ -20046,13 +20066,88 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.ExpectedElement(sourceLineNumbers, node.Name, "Payload"));
             }
 
-            // Add the UX as an attached container.
+            // Add the application as an attached container and if an Id was provided add that too.
             if (!this.core.EncounteredError)
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "Container");
-                row[0] = "WixUXContainer";
+                row[0] = Compiler.BurnUXContainerId;
                 row[1] = "bundle-ux.cab";
                 row[2] = "attached";
+
+                if (!String.IsNullOrEmpty(id))
+                {
+                    row = this.core.CreateRow(sourceLineNumbers, "WixBootstrapperApplication");
+                    row[0] = id;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parse the BoostrapperApplicationRef element.
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        private void ParseBootstrapperApplicationRefElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            string previousId = null;
+            ComplexReferenceChildType previousType = ComplexReferenceChildType.Unknown;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        switch (child.LocalName)
+                        {
+                            case "Payload":
+                                previousId = this.ParsePayloadElement(child, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId);
+                                previousType = ComplexReferenceChildType.Payload;
+                                break;
+                            case "PayloadGroupRef":
+                                previousId = this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId);
+                                previousType = ComplexReferenceChildType.PayloadGroup;
+                                break;
+                            default:
+                                this.core.UnexpectedElement(node, child);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (String.IsNullOrEmpty(id))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+            else
+            {
+                this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixBootstrapperApplication", id);
             }
         }
 
@@ -20067,8 +20162,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PayloadGroup == previousType || ComplexReferenceChildType.Payload == previousType);
 
-            string splashScreenSourceFileIgnored = null;
-            string id = ParsePayloadElementAttributes(node, parentType, parentId, previousType, previousId, true, ref splashScreenSourceFileIgnored);
+            string id = ParsePayloadElementAttributes(node, parentType, parentId, previousType, previousId, true);
 
             foreach (XmlNode child in node.ChildNodes)
             {
@@ -20094,12 +20188,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="node">Element to parse</param>
         /// <param name="parentType">ComplexReferenceParentType of parent element.</param>
         /// <param name="parentId">Identifier of parent element.</param>
-        private string ParsePayloadElementAttributes(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required, ref string splashScreenSourceFile)
+        private string ParsePayloadElementAttributes(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required)
         {
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
 
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             YesNoDefaultType compressed = YesNoDefaultType.Default;
+            string id = null;
             string name = null;
             string sourceFile = null;
             string downloadUrl = null;
@@ -20110,6 +20205,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     switch (attrib.LocalName)
                     {
+                        case "Id":
+                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
                             break;
@@ -20121,9 +20219,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "DownloadUrl":
                             downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        case "SplashScreenSourceFile":
-                            splashScreenSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -20156,12 +20251,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 compressed = YesNoDefaultType.Yes;
             }
-            else // not the UX so there cannot be a splash screen.
-            {
-                splashScreenSourceFile = null;
-            }
 
-            string id = this.core.GenerateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);
+            if (String.IsNullOrEmpty(id))
+            {
+                id = this.core.GenerateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);
+            }
 
             CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed);
 
@@ -20181,7 +20275,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "Payload");
                 row[0] = id;
-                row[1] = name;
+                row[1] = String.IsNullOrEmpty(name) ? Path.GetFileName(sourceFile) : name;
                 row[2] = sourceFile;
                 row[3] = downloadUrl;
                 if (YesNoDefaultType.Default != compressed)
@@ -20201,7 +20295,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="parentId">Identifier of parent element.</param>
         private void ParsePayloadGroupElement(XmlNode node, ComplexReferenceParentType parentType, string parentId)
         {
-            Debug.Assert(ComplexReferenceParentType.Unknown == parentType || ComplexReferenceParentType.PayloadGroup == parentType);
+            Debug.Assert(ComplexReferenceParentType.Unknown == parentType || ComplexReferenceParentType.Layout == parentType || ComplexReferenceParentType.PayloadGroup == parentType);
 
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string id = null;
@@ -20278,7 +20372,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="parentId">Identifier of parent element.</param>
         private string ParsePayloadGroupRefElement(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId)
         {
-            Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
+            Debug.Assert(ComplexReferenceParentType.Layout == parentType || ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PayloadGroup == previousType || ComplexReferenceChildType.Payload == previousType);
 
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);

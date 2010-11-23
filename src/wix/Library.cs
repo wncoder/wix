@@ -165,13 +165,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 {
                                     string cabinetFileId = (index++).ToString(CultureInfo.InvariantCulture);
 
-                                    objectField.CabinetFileId = cabinetFileId;
-                                    fileIds.Add(cabinetFileId);
-
                                     // resolve wix variables
                                     string resolvedValue = wixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)objectField.Data, false);
+                                    files.Add(binderFileManager.ResolveFile(resolvedValue, table.Name, row.SourceLineNumbers));
 
-                                    files.Add(binderFileManager.ResolveFile(resolvedValue));
+                                    // File was successfully resolved so track this cabient file id.
+                                    objectField.CabinetFileId = cabinetFileId;
+                                    fileIds.Add(cabinetFileId);
                                 }
                                 else // clear out a previous cabinet file id value
                                 {

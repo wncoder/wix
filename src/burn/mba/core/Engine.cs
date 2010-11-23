@@ -67,7 +67,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
                     // Get the size of the buffer.
                     int ret = this.engine.GetVariableString(name, sb, ref capacity);
-                    if (NativeMethods.E_INSUFFICIENT_BUFFER == ret)
+                    if (NativeMethods.E_INSUFFICIENT_BUFFER == ret || NativeMethods.E_MOREDATA == ret)
                     {
                         sb.Capacity = ++capacity; // Add one for the null terminator.
                         ret = this.engine.GetVariableString(name, sb, ref capacity);
@@ -207,7 +207,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
             // Get the size of the buffer.
             int ret = this.engine.EscapeString(input, sb, ref capacity);
-            if (NativeMethods.E_INSUFFICIENT_BUFFER == ret)
+            if (NativeMethods.E_INSUFFICIENT_BUFFER == ret || NativeMethods.E_MOREDATA == ret)
             {
                 sb.Capacity = ++capacity; // Add one for the null terminator.
                 ret = this.engine.EscapeString(input, sb, ref capacity);
@@ -247,7 +247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
             // Get the size of the buffer.
             int ret = this.engine.FormatString(format, sb, ref capacity);
-            if (NativeMethods.E_INSUFFICIENT_BUFFER == ret)
+            if (NativeMethods.E_INSUFFICIENT_BUFFER == ret || NativeMethods.E_MOREDATA == ret)
             {
                 sb.Capacity = ++capacity; // Add one for the null terminator.
                 ret = this.engine.FormatString(format, sb, ref capacity);

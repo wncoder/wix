@@ -110,6 +110,18 @@ static HRESULT InitializeVariablePrivileged(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT InitializeVariableRebootPending(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeSystemLanguageID(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeUserLanguageID(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 
 
 // function definitions
@@ -147,13 +159,16 @@ extern "C" HRESULT VariableInitialize(
         //{L"ProgramFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesX64},
         {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
+        {L"RebootPending", InitializeVariableRebootPending, 0},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},
         {L"ServicePackLevel", InitializeVariableOsInfo, OS_INFO_VARIABLE_ServicePackLevel},
         {L"StartMenuFolder", InitializeVariableCsidlFolder, CSIDL_STARTMENU},
         {L"StartupFolder", InitializeVariableCsidlFolder, CSIDL_STARTUP},
         {L"SystemFolder", InitializeVariableCsidlFolder, CSIDL_SYSTEMX86},
+        {L"SystemLanguageID", InitializeSystemLanguageID, 0},
         {L"TempFolder", InitializeVariableTempFolder, CSIDL_TEMPLATES},
         {L"TemplateFolder", InitializeVariableCsidlFolder, CSIDL_TEMPLATES},
+        {L"UserLanguageID", InitializeUserLanguageID, 0},
         {L"VersionMsi", InitializeVariableVersionMsi, 0},
         {L"VersionNT", InitializeVariableOsInfo, OS_INFO_VARIABLE_VersionNT},
         {L"VersionNT64", InitializeVariableOsInfo, OS_INFO_VARIABLE_VersionNT64},
@@ -1287,6 +1302,85 @@ static HRESULT InitializeVariablePrivileged(
 
     // set value
     hr = BVariantSetNumeric(pValue, fPrivileged);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr; 
+}
+
+static HRESULT InitializeVariableRebootPending(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    UNREFERENCED_PARAMETER(dwpData);
+
+    HRESULT hr = S_OK;
+    BOOL fRebootPending = FALSE;
+    BOOL fComInitialized = FALSE;
+    ISystemInformation* pSystemInformation = NULL;
+    VARIANT_BOOL bRetVal;
+
+    // Do a best effort to ask WU if a reboot is required. If anything goes
+    // wrong then let's pretend a reboot is not required.
+    hr = ::CoInitialize(NULL);
+    if (SUCCEEDED(hr) || RPC_E_CHANGED_MODE == hr)
+    {
+        fComInitialized = TRUE;
+
+        hr = ::CoCreateInstance(__uuidof(SystemInformation), NULL, CLSCTX_INPROC_SERVER, __uuidof(ISystemInformation), reinterpret_cast<LPVOID*>(&pSystemInformation));
+        if (SUCCEEDED(hr))
+        {
+            hr = pSystemInformation->get_RebootRequired(&bRetVal);
+            if (SUCCEEDED(hr))
+            {
+                fRebootPending = (VARIANT_FALSE != bRetVal);
+            }
+        }
+    }
+
+    hr = BVariantSetNumeric(pValue, fRebootPending);
+    ExitOnFailure(hr, "Failed to set reboot pending variant value.");
+
+LExit:
+    ReleaseObject(pSystemInformation);
+
+    if (fComInitialized)
+    {
+        ::CoUninitialize();
+    }
+
+    return hr; 
+}
+
+static HRESULT InitializeSystemLanguageID(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    UNREFERENCED_PARAMETER(dwpData);
+  
+    HRESULT hr = S_OK;
+    LANGID langid = ::GetSystemDefaultLangID();
+
+    hr = BVariantSetNumeric(pValue, langid);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr; 
+}
+
+static HRESULT InitializeUserLanguageID(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    UNREFERENCED_PARAMETER(dwpData);
+  
+    HRESULT hr = S_OK;
+    LANGID langid = ::GetUserDefaultLangID();
+
+    hr = BVariantSetNumeric(pValue, langid);
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:

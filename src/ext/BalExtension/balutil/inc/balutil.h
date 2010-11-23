@@ -34,6 +34,17 @@ DAPI_(HRESULT) BalManifestLoad(
     );
 
 /*******************************************************************
+BalFormatString - formats a string using variables in the engine.
+
+ Note: Use StrFree() to release psczOut.
+********************************************************************/
+DAPI_(HRESULT) BalFormatString(
+    __in IBootstrapperEngine* pEngine,
+    __in_z LPCWSTR wzFormat,
+    __inout LPWSTR* psczOut
+    );
+
+/*******************************************************************
 BalStringVariableExists - checks if a string variable exists in the engine.
 
 ********************************************************************/

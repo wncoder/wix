@@ -18,6 +18,7 @@
 
         <!-- Copy the schema files into the VS2005 schemas directory -->
         <Component Id="VSSchema2005" Guid="7150C0A6-5626-48B6-AA4C-671754E22706" KeyPath="yes" Win64="no" Directory="TARGETDIR">
+            <CopyFile Id="CopyThmutilSchema2005" DestinationProperty="VS2005_SCHEMAS_DIR" FileId="thmutil.xsd" />
             <CopyFile Id="CopyWixSchema2005" DestinationProperty="VS2005_SCHEMAS_DIR" FileId="wix.xsd" />
             <CopyFile Id="CopyWixLocSchema2005" DestinationProperty="VS2005_SCHEMAS_DIR" FileId="wixloc.xsd" />
             <CopyFile Id="CopyExtensionXsdComplus2005" DestinationProperty="VS2005_SCHEMAS_DIR" FileId="complus.xsd" />
@@ -40,6 +41,7 @@
 
         <!-- Copy the schema files into the VS2008 schemas directory -->
         <Component Id="VSSchema2008" Guid="E6580580-99B6-4473-842D-689830655DA1" KeyPath="yes" Win64="no" Directory="TARGETDIR">
+            <CopyFile Id="CopyThmutilSchemas2008" DestinationProperty="VS90_SCHEMAS_DIR" FileId="thmutil.xsd" />
             <CopyFile Id="CopyWixSchemas2008" DestinationProperty="VS90_SCHEMAS_DIR" FileId="wix.xsd" />
             <CopyFile Id="CopyWixLocSchema2008" DestinationProperty="VS90_SCHEMAS_DIR" FileId="wixloc.xsd" />
             <CopyFile Id="CopyExtensionXsdComplus2008" DestinationProperty="VS90_SCHEMAS_DIR" FileId="complus.xsd" />
@@ -62,6 +64,7 @@
 
         <!-- Copy the schema files into the VS2010 schemas directory -->
         <Component Id="VSSchema2010" Guid="528BE30A-E6CC-4B95-8053-5C094863C2FB" KeyPath="yes" Win64="no" Directory="TARGETDIR">
+            <CopyFile Id="CopyThmutilSchemas2010" DestinationProperty="VS2010_SCHEMAS_DIR" FileId="thmutil.xsd" />
             <CopyFile Id="CopyWixSchemas2010" DestinationProperty="VS2010_SCHEMAS_DIR" FileId="wix.xsd" />
             <CopyFile Id="CopyWixLocSchema2010" DestinationProperty="VS2010_SCHEMAS_DIR" FileId="wixloc.xsd" />
             <CopyFile Id="CopyExtensionXsdDifxApp2010" DestinationProperty="VS2010_SCHEMAS_DIR" FileId="difxapp.xsd" />

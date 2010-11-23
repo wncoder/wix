@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "wininet.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +31,7 @@ enum URI_PROTOCOL
     URI_PROTOCOL_FILE,
     URI_PROTOCOL_FTP,
     URI_PROTOCOL_HTTP,
+    URI_PROTOCOL_HTTPS,
     URI_PROTOCOL_LOCAL,
     URI_PROTOCOL_UNC
 };

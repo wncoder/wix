@@ -25,13 +25,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir>$(ProjectDir)..\..\..\build\$(Configuration)\x86\</OutDir>
-    <IntDir>$(ProjectDir)..\..\..\build\obj\$(Configuration)\x86\$(ProjectName)\</IntDir>
+    <OutDir>$(ProjectDir)..\..\..\..\build\$(Configuration)\x86\</OutDir>
+    <IntDir>$(ProjectDir)..\..\..\..\build\obj\$(Configuration)\x86\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\dutil\inc;$(ProjectDir)..\inc;$(ProjectDir)inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\dutil\inc;$(ProjectDir)..\..\..\burn\inc;$(ProjectDir)inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
