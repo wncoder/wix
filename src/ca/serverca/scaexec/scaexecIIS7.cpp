@@ -209,6 +209,8 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     int iConfigElement = -1;
     int iAction = -1;
 
+    BOOL fRetryCommit;
+
     hr = ::CoInitialize(NULL);
     ExitOnFailure(hr, "Failed to initialize COM");
     fInitializedCom = TRUE;
@@ -357,15 +359,27 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
         }
         if( S_OK == hr )
         {
-            // commit config changes now to close out IIS Admin changes,
-            // the Rollback or Commit defered CAs will determine final commit status.
-            hr = pAdminMgr->CommitChanges();
-            for (int i = 100; i > 0 && HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr; i--)
+            do
             {
-                ::Sleep(300);
-                WcaLog(LOGMSG_VERBOSE, "Failed to Commit IIS changes, retrying %d more time(s)...", i);
+                fRetryCommit = FALSE;
+
+                // commit config changes now to close out IIS Admin changes,
+                // the Rollback or Commit defered CAs will determine final commit status.
                 hr = pAdminMgr->CommitChanges();
-            }
+                for (int i = 100; i > 0 && HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr; i--)
+                {
+                    ::Sleep(300);
+                    WcaLog(LOGMSG_VERBOSE, "Failed to Commit IIS changes, retrying %d more time(s)...", i);
+                    hr = pAdminMgr->CommitChanges();
+                }
+
+                // Still in use after retries, let the user choose if they want to cancel or try again
+                if (hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION))
+                {
+                    fRetryCommit = (IDRETRY == WcaErrorMessage(msierrIISFailedCommitInUse, hr, INSTALLMESSAGE_ERROR | MB_RETRYCANCEL, 0));
+                }
+            } while (fRetryCommit);
+
             ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
         }
     }

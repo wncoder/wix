@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
+    <String Id="ExitDialogDescription" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] is voltooid</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger} De wizard Setup van [ProductName] is voortijdig beëindigd</String>
-    <String Id="FatalErrorDescription1" Overridable="yes">De wizard Setup van [ProductName] is voortijdig beëindigd vanwege een fout. Uw systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatiewizard nogmaals uit.</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
+    <String Id="FatalErrorDescription1" Overridable="yes">De installatiewizard van [ProductName] is voortijdig beëindigd vanwege een fout. Het systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatiewizard nogmaals uit.</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="FeaturesDlgTree" Overridable="yes">Productonderdelen</String>
@@ -158,12 +158,12 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Met de wizard Setup kunt u de manier wijzigen waarop onderdelen van [ProductName] op uw computer worden geïnstalleerd of kunt u [ProductName] van uw computer verwijderen. Klik op Volgende om door te gaan of op Annuleren als u de wizard Setup wilt sluiten.</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">Met de installatiewizard kunt u de manier wijzigen waarop onderdelen van [ProductName] op uw computer worden geïnstalleerd of kunt u [ProductName] van uw computer verwijderen. Klik op Volgende om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="MsiRMFilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="MsiRMFilesInUseText" Overridable="yes">De volgende toepassingen gebruiken bestanden die moeten worden bijgewerkt door deze installatie. U kunt deze toepassingen met behulp van de wizard Setup sluiten en ze later opnieuw starten of u kunt de computer later opnieuw opstarten.</String>
+    <String Id="MsiRMFilesInUseText" Overridable="yes">De volgende toepassingen gebruiken bestanden die door deze installatie moeten worden bijgewerkt. U kunt deze toepassingen met behulp van de installatiewizard sluiten en ze later opnieuw starten of u kunt de computer later opnieuw opstarten.</String>
     <String Id="MsiRMFilesInUseDescription" Overridable="yes">Bepaalde bestanden die moeten worden bijgewerkt, zijn momenteel in gebruik.</String>
     <String Id="MsiRMFilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Bestanden in gebruik</String>
     <String Id="MsiRMFilesInUseUseRM" Overridable="yes">De toepassingen &amp;sluiten en opnieuw starten.</String>
@@ -186,7 +186,7 @@
 
     <String Id="PrepareDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="PrepareDlgDescription" Overridable="yes">De wizard Setup wordt voorbereid. Een ogenblik geduld.</String>
+    <String Id="PrepareDlgDescription" Overridable="yes">De installatiewizard wordt voorbereid. Een ogenblik geduld.</String>
     <String Id="PrepareDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}Wizard Setup van [ProductName]</String>
 
     <String Id="ProgressDlg_Title" Overridable="yes">[ProductName] Setup</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="ResumeDlgInstall" Overridable="yes">&amp;Installeren</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">De installatie van [ProductName] op uw computer wordt voltooid. Klik op Installeren om door te gaan of op Annuleren als u de wizard Setup wilt sluiten.</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">De installatie van [ProductName] op uw computer wordt voltooid. Klik op Installeren om door te gaan of op Annuleren als u de installatiewizard wilt sluiten.</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] hervatten</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] Setup</String>
@@ -227,8 +227,8 @@
     <String Id="UserExit_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}De wizard Setup van [ProductName] is onderbroken</String>
-    <String Id="UserExitDescription1" Overridable="yes">De installatie van [ProductName] is onderbroken. Uw systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatie opnieuw uit.</String>
-    <String Id="UserExitDescription2" Overridable="yes">Klik op de knop Voltooien om de wizard Setup af te sluiten.</String>
+    <String Id="UserExitDescription1" Overridable="yes">De installatie van [ProductName] is onderbroken. Het systeem is niet gewijzigd. Als u dit programma op een later tijdstip wilt installeren, voert u de installatie opnieuw uit.</String>
+    <String Id="UserExitDescription2" Overridable="yes">Klik op de knop Voltooien om de installatiewizard af te sluiten.</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] Setup</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>

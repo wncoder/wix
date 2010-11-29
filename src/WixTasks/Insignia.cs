@@ -77,6 +77,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             base.BuildCommandLine(commandLineBuilder);
 
             commandLineBuilder.AppendFileNamesIfNotNull(this.DatabaseFiles, " ");
+            commandLineBuilder.AppendTextIfNotNull(this.AdditionalOptions);
         }
     }
 }

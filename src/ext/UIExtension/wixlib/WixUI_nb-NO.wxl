@@ -192,13 +192,13 @@
     <String Id="ProgressDlg_Title" Overridable="yes">Installere [ProductName]</String>
     <String Id="ProgressDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="ProgressDlgTextInstalling" Overridable="yes">Vent mens installasjonsveiviseren installerer [ProductName].</String>
-    <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}installerer [ProductName]</String>
+    <String Id="ProgressDlgTitleInstalling" Overridable="yes">{\WixUI_Font_Title}Installerer [ProductName]</String>
     <String Id="ProgressDlgTextChanging" Overridable="yes">Vent mens installasjonsveiviseren endrer [ProductName].</String>
-    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}endrer [ProductName]</String>
+    <String Id="ProgressDlgTitleChanging" Overridable="yes">{\WixUI_Font_Title}Endrer [ProductName]</String>
     <String Id="ProgressDlgTextRepairing" Overridable="yes">Vent mens installasjonsveiviseren reparerer [ProductName].</String>
-    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}reparerer [ProductName]</String>
+    <String Id="ProgressDlgTitleRepairing" Overridable="yes">{\WixUI_Font_Title}Reparerer [ProductName]</String>
     <String Id="ProgressDlgTextRemoving" Overridable="yes">Vent mens installasjonsveiviseren fjerner [ProductName].</String>
-    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}fjerner [ProductName]</String>
+    <String Id="ProgressDlgTitleRemoving" Overridable="yes">{\WixUI_Font_Title}Fjerner [ProductName]</String>
     <String Id="ProgressDlgTextUpdating" Overridable="yes">Vent mens installasjonsveiviseren oppdaterer [ProductName].</String>
     <String Id="ProgressDlgTitleUpdating" Overridable="yes">{\WixUI_Font_Title}Oppdaterer [ProductName]</String>
     <String Id="ProgressDlgProgressBar" Overridable="yes">Fremdrift</String>

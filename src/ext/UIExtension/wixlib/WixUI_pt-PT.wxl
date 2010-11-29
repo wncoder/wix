@@ -79,7 +79,7 @@
     <String Id="ErrorDlg_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
     <String Id="ErrorDlgErrorText" Overridable="yes">Texto informativo</String>
     <String Id="ErrorDlgErrorIcon" Overridable="yes">WixUI_Ico_Info</String>
-    <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">ícone de informações</String>
+    <String Id="ErrorDlgErrorIconTooltip" Overridable="yes">Ícone de informações</String>
 
     <String Id="ExitDialog_Title" Overridable="yes">Programa de Configuração do [ProductName]</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -547,7 +547,7 @@
     <String Id="Error1928" Overridable="yes">Erro ao registar a Aplicação COM+. Contacte o suporte técnico para obter mais informações.</String>
     <String Id="Error1929" Overridable="yes">Erro ao anular o registo da Aplicação COM+. Contacte o suporte técnico para obter mais informações.</String>
     <String Id="Error1930" Overridable="yes">Não foi possível alterar a descrição do serviço'[2]' ([3]).</String>
-    <String Id="Error1931" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro de sistema [2] porque este está protegido pelo Windows. Poderá necessitar de actualizar o sistema operativo para que este programa funcione correctamente. {{Versão do pacote: [3], Versão protegida do Sistema Operativo: [4]}}</String>
+    <String Id="Error1931" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro de sistema [2] porque este está protegido pelo Windows. Poderá necessitar de actualizar o sistema operativo para que este programa funcione correctamente. {{Versão do pacote: [3], Versão protegida pelo Sistema Operativo: [4]}}</String>
     <String Id="Error1932" Overridable="yes">O serviço Windows Installer não consegue actualizar o ficheiro protegido do Windows [2]. {{Versão do pacote: [3], Versão protegida pelo Sistema Operativo: [4], Erro de SFP: [5]}}</String>
     <String Id="Error1933" Overridable="yes">O serviço Windows Installer não pode actualizar um ou mais ficheiros do Windows protegidos. {{Erro de SFP: [2]. Lista de ficheiros protegidos:\r\n[3]}}</String>
     <String Id="Error1934" Overridable="yes">As instalações de utilizador são desactivadas por política neste computador.</String>

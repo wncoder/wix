@@ -21,7 +21,7 @@
     <String Id="WixUIRetry" Overridable="yes">&amp;ลองใหม่</String>
     <String Id="WixUIIgnore" Overridable="yes">&amp;ละเว้น</String>
     <String Id="WixUIYes" Overridable="yes">&amp;ใช่</String>
-    <String Id="WixUINo" Overridable="yes">&amp;ไม่ใช่</String>
+    <String Id="WixUINo" Overridable="yes">&amp;ไม่</String>
     <String Id="WixUIOK" Overridable="yes">ตกลง</String>
     <String Id="WixUIPrint" Overridable="yes">&amp;พิมพ์</String>
 
@@ -182,7 +182,7 @@
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">เนื้อที่ดิสก์ที่ต้องการใช้สำหรับการติดตั้งนั้นมากเกินกว่าเนื้อที่ดิสก์ที่เหลืออยู่</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}เนื้อที่ดิสก์ไม่เพียงพอ</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">อีกทางเลือกหนึ่ง คุณสามารถเลือกปิดใช้งานการดำเนินการย้อนกลับของตัวติดตั้งได้ การปิดใช้งานการดำเนินการย้อนกลับป้องกันไม่ให้ตัวติดตั้งคืนค่าสถานะดั้งเดิมของคอมพิวเตอร์ของคุณหากตัวติดตั้งถูกขัดจังหวะไม่ว่าด้วยเหตุใด ให้คลิก ใช่ หากคุณต้องการยอมรับความเสี่ยงจากการปิดใช้งานการดำเนินการย้อนกลับ</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">อีกทางเลือกหนึ่ง คุณสามารถเลือกปิดใช้งานการดำเนินการย้อนกลับของโปรแกรมติดตั้งได้ การปิดใช้งานการดำเนินการย้อนกลับป้องกันไม่ให้โปรแกรมติดตั้งคืนค่าสถานะดั้งเดิมของคอมพิวเตอร์ของคุณหากโปรแกรมติดตั้งถูกขัดจังหวะไม่ว่าด้วยเหตุใด ให้คลิก ใช่ หากคุณต้องการยอมรับความเสี่ยงจากการปิดใช้งานการดำเนินการย้อนกลับ</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -250,7 +250,7 @@
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">การติดตั้ง [ProductName]</String>
     <String Id="WaitForCostingDlgReturn" Overridable="yes">&amp;กลับ</String>
-    <String Id="WaitForCostingDlgText" Overridable="yes">โปรดรอสักครู่ขณะตัวติดตั้งเสร็จสิ้นการกำหนดความต้องการเนื้อที่ดิสก์ของคุณ</String>
+    <String Id="WaitForCostingDlgText" Overridable="yes">โปรดรอสักครู่ขณะโปรแกรมติดตั้งเสร็จสิ้นการกำหนดความต้องการเนื้อที่ดิสก์ของคุณ</String>
     <String Id="WaitForCostingDlgIcon" Overridable="yes">WixUI_Ico_Exclam</String>
     <String Id="WaitForCostingDlgIconTooltip" Overridable="yes">ไอคอนเครื่องหมายอัศเจรีย์</String>
 
@@ -398,7 +398,7 @@
     <String Id="Error1" Overridable="yes">{{ข้อผิดพลาด [1] }}</String>
     <String Id="Error2" Overridable="yes">คำเตือน [1] </String>
     <String Id="Error4" Overridable="yes">ข้อมูล [1] </String>
-    <String Id="Error5" Overridable="yes">ตัวติดตั้งพบข้อผิดพลาดที่ไม่คาดคิดในการติดตั้งแพคเกจนี้ ซึ่งอาจชี้ให้เห็นถึงปัญหาที่เกิดขึ้นกับแพคเกจนี้ รหัสข้อผิดพลาดคือ [1] {{อาร์กิวเมนต์คือ: [2], [3], [4]}}</String>
+    <String Id="Error5" Overridable="yes">โปรแกรมติดตั้งพบข้อผิดพลาดที่ไม่คาดคิดในการติดตั้งแพคเกจนี้ ซึ่งอาจชี้ให้เห็นถึงปัญหาที่เกิดขึ้นกับแพคเกจนี้ รหัสข้อผิดพลาดคือ [1] {{อาร์กิวเมนต์คือ: [2], [3], [4]}}</String>
     <String Id="Error7" Overridable="yes">{{ดิสก์เต็ม: }}</String>
     <String Id="Error8" Overridable="yes">การกระทำ [Time]: [1]. [2]</String>
     <String Id="Error9" Overridable="yes">[ProductName]</String>
@@ -410,8 +410,8 @@
     <String Id="Error15" Overridable="yes">การกระทำสิ้นสุด [Time]: [1] ค่าที่ส่งกลับ [2]</String>
     <String Id="Error16" Overridable="yes">เวลาที่เหลือ: {[1] นาที }{[2] วินาที}</String>
     <String Id="Error17" Overridable="yes">หน่วยความจำไม่เพียงพอ ให้ปิดโปรแกรมประยุกต์อื่นๆ ก่อน แล้วลองใหม่อีกครั้ง</String>
-    <String Id="Error18" Overridable="yes">ตัวติดตั้งไม่ตอบสนองอีกต่อไป</String>
-    <String Id="Error19" Overridable="yes">ตัวติดตั้งหยุดทำงานก่อนกำหนด</String>
+    <String Id="Error18" Overridable="yes">โปรแกรมติดตั้งไม่ตอบสนองอีกต่อไป</String>
+    <String Id="Error19" Overridable="yes">โปรแกรมติดตั้งหยุดทำงานก่อนกำหนด</String>
     <String Id="Error20" Overridable="yes">โปรดรอขณะที่ Windows ทำการกำหนดค่า [ProductName]</String>
     <String Id="Error21" Overridable="yes">กำลังรวบรวมข้อมูลที่จำเป็น...</String>
     <String Id="Error22" Overridable="yes">กำลังเอารุ่นที่เก่ากว่าของโปรแกรมประยุกต์นี้ออก...</String>
@@ -421,7 +421,7 @@
     <String Id="Error1101" Overridable="yes">ข้อผิดพลาดในการอ่านจากแฟ้ม: [2] {{ ข้อผิดพลาดของระบบ [3]}} ให้ตรวจสอบว่ามีแฟ้มอยู่และคุณสามารถเข้าถึงได้</String>
     <String Id="Error1301" Overridable="yes">ไม่สามารถสร้างแฟ้ม '[2]' ได้ มีไดเรกทอรีที่มีชื่อนี้อยู่แล้ว ให้ยกเลิกการติดตั้งและลองติดตั้งไปที่ตำแหน่งที่ตั้งอื่น</String>
     <String Id="Error1302" Overridable="yes">โปรดใส่ดิสก์: [2]</String>
-    <String Id="Error1303" Overridable="yes">ตัวติดตั้งมีสิทธิ์ไม่เพียงพอที่จะเข้าถึงไดเรกทอรีนี้: [2] ไม่สามารถทำการติดตั้งต่อไปได้ ให้เข้าสู่ระบบในฐานะผู้ดูแล หรือติดต่อผู้ดูแลระบบของคุณ</String>
+    <String Id="Error1303" Overridable="yes">โปรแกรมติดตั้งมีสิทธิ์ไม่เพียงพอที่จะเข้าถึงไดเรกทอรีนี้: [2] ไม่สามารถทำการติดตั้งต่อไปได้ ให้เข้าสู่ระบบในฐานะผู้ดูแล หรือติดต่อผู้ดูแลระบบของคุณ</String>
     <String Id="Error1304" Overridable="yes">ข้อผิดพลาดในการเขียนไปยังแฟ้ม: [2] ให้ตรวจสอบว่าคุณสามารถเข้าถึงไดเรกทอรีนั้นได้</String>
     <String Id="Error1305" Overridable="yes">ข้อผิดพลาดในการอ่านจากแฟ้ม [2] {{ ข้อผิดพลาดของระบบ [3]}} ให้ตรวจสอบว่ามีแฟ้มอยู่และคุณสามารถเข้าถึงได้</String>
     <String Id="Error1306" Overridable="yes">โปรแกรมประยุกต์อีกโปรแกรมหนึ่งมีเอกสิทธิ์เฉพาะบุคคลในการเข้าถึงแฟ้ม '[2]' โปรดปิดโปรแกรมอื่นทั้งหมดก่อน จากนั้นคลิก ลองใหม่</String>
@@ -439,7 +439,7 @@
     <String Id="Error1318" Overridable="yes">เกิดข้อผิดพลาดเครือข่ายขณะพยายามสร้างไดเรกทอรี: [2]</String>
     <String Id="Error1319" Overridable="yes">เกิดข้อผิดพลาดเครือข่ายขณะพยายามเปิด cabinet ของแฟ้มต้นฉบับ: [2]</String>
     <String Id="Error1320" Overridable="yes">เส้นทางที่ระบุยาวเกินไป: [2]</String>
-    <String Id="Error1321" Overridable="yes">ตัวติดตั้งมีสิทธิ์ไม่เพียงพอที่จะปรับเปลี่ยนแฟ้มนี้: [2]</String>
+    <String Id="Error1321" Overridable="yes">โปรแกรมติดตั้งมีสิทธิ์ไม่เพียงพอที่จะปรับเปลี่ยนแฟ้มนี้: [2]</String>
     <String Id="Error1322" Overridable="yes">มีส่วนของเส้นทางโฟลเดอร์ '[2]' ที่ไม่ถูกต้อง ซึ่งอาจว่างเปล่าหรือมีความยาวเกินกว่าที่ระบบอนุญาต</String>
     <String Id="Error1323" Overridable="yes">เส้นทางโฟลเดอร์ '[2]' มีคำที่ไม่ถูกต้องอยู่ในเส้นทางโฟลเดอร์</String>
     <String Id="Error1324" Overridable="yes">เส้นทางโฟลเดอร์ '[2]' มีอักขระที่ไม่ถูกต้อง</String>
@@ -479,7 +479,7 @@
     <String Id="Error1608" Overridable="yes">ไม่พบผลิตภัณฑ์ที่เข้ากันได้ถูกติดตั้งไว้ก่อนหน้านี้บนเครื่องที่จะติดตั้งผลิตภัณฑ์นี้</String>
     <String Id="Error1609" Overridable="yes">เกิดข้อผิดพลาดขณะใช้การตั้งค่าความปลอดภัย [2] ไม่ใช่ผู้ใช้หรือกลุ่มที่ถูกต้อง อาจเป็นปัญหาที่เกิดขึ้นกับแพคเกจ หรือปัญหาที่เกี่ยวข้องกับตัวควบคุมโดเมนบนเครือข่าย ให้ตรวจสอบการเชื่อมต่อเครือข่ายของคุณ แล้วคลิก ลองใหม่ หรือ ยกเลิก เพื่อจบการติดตั้ง {{ไม่สามารถค้นหาตำแหน่ง SID ของผู้ใช้ ข้อผิดพลาดของระบบ [3]}}</String>
     <String Id="Error1701" Overridable="yes">คีย์ [2] ไม่ถูกต้อง ให้ตรวจสอบว่าคุณได้ใส่คีย์ที่ถูกต้อง</String>
-    <String Id="Error1702" Overridable="yes">ตัวติดตั้งต้องเริ่มการทำงานของระบบของคุณใหม่ ก่อนจึงจะสามารถกำหนดค่า [2] ต่อไปได้ คลิก ใช่ เพื่อเริ่มการทำงานใหม่เดี๋ยวนี้ หรือ ไม่ใช่ หากคุณวางแผนที่จะเริ่มการทำงานใหม่ด้วยตนเองในภายหลัง</String>
+    <String Id="Error1702" Overridable="yes">โปรแกรมติดตั้งต้องเริ่มการทำงานของระบบของคุณใหม่ ก่อนจึงจะสามารถกำหนดค่า [2] ต่อไปได้ คลิก ใช่ เพื่อเริ่มการทำงานใหม่เดี๋ยวนี้ หรือ ไม่ใช่ หากคุณวางแผนที่จะเริ่มการทำงานใหม่ด้วยตนเองในภายหลัง</String>
     <String Id="Error1703" Overridable="yes">คุณต้องเริ่มการทำงานของระบบของคุณใหม่เพื่อให้การเปลี่ยนแปลงการกำหนดค่าที่ทำไว้กับ [2] มีผล คลิก ใช่ เพื่อเริ่มการทำงานใหม่เดี๋ยวนี้ หรือ ไม่ใช่ หากคุณวางแผนที่จะเริ่มการทำงานใหม่ด้วยตนเองในภายหลัง</String>
     <String Id="Error1704" Overridable="yes">ในขณะนี้การติดตั้งสำหรับ [2] ถูกหยุดชั่วคราว คุณต้องเลิกทำการเปลี่ยนแปลงที่เกิดจากการติดตั้งนั้นจึงจะทำต่อไปได้ คุณต้องการเลิกทำการเปลี่ยนแปลงเหล่านั้นหรือไม่</String>
     <String Id="Error1705" Overridable="yes">การติดตั้งครั้งก่อนหน้าของผลิตภัณฑ์นี้ยังอยู่ในระหว่างการดำเนินการ คุณต้องเลิกทำการเปลี่ยนแปลงที่เกิดจากการติดตั้งนั้นก่อนจึงจะทำต่อไปได้ คุณต้องการเลิกทำการเปลี่ยนแปลงเหล่านั้นหรือไม่</String>

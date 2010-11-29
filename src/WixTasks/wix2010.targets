@@ -413,6 +413,15 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <LinkerVerboseOutput Condition=" '$(LinkerVerboseOutput)' == '' ">$(VerboseOutput)</LinkerVerboseOutput>
   </PropertyGroup>
 
+  <!-- Default Inscribe properties. -->
+  <PropertyGroup>
+    <InscribeNoLogo Condition=" '$(InscribeNoLogo)' == '' ">$(NoLogo)</InscribeNoLogo>
+    <InscribeSuppressAllWarnings Condition=" '$(InscribeSuppressAllWarnings)' == '' ">$(SuppressAllWarnings)</InscribeSuppressAllWarnings>
+    <InscribeSuppressSpecificWarnings Condition=" '$(InscribeSuppressSpecificWarnings)' == '' ">$(SuppressSpecificWarnings)</InscribeSuppressSpecificWarnings>
+    <InscribeTreatWarningsAsErrors Condition=" '$(InscribeTreatWarningsAsErrors)' == '' ">$(TreatWarningsAsErrors)</InscribeTreatWarningsAsErrors>
+    <InscribeTreatSpecificWarningsAsErrors Condition=" '$(InscribeTreatSpecificWarningsAsErrors)' == '' ">$(TreatSpecificWarningsAsErrors)</InscribeTreatSpecificWarningsAsErrors>
+    <InscribeVerboseOutput Condition=" '$(InscribeVerboseOutput)' == '' ">$(VerboseOutput)</InscribeVerboseOutput>
+  </PropertyGroup>
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1514,7 +1523,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       ProjectName="%(_AllHeatProjects.ProjectName)"
       Configuration="%(_AllHeatProjects.Configuration)"
       Platform="%(_AllHeatProjects.Platform)"
-      RunAsSeparateProcess="$(RunWixToolsOutOfProc)">
+      RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
+      GenerateWixVariables="$(HarvestProjectsGenerateWixVariables)"
+      AdditionalOptions="$(HarvestProjectsAdditionalOptions)">
 
       <Output TaskParameter="OutputFile" ItemName="Compile" />
       <Output TaskParameter="OutputFile" ItemName="FileWrites" />
@@ -1600,7 +1611,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       RunAsSeparateProcess="$(RunWixToolsOutOfProc)" 
       SuppressCom="%(HarvestDirectory.SuppressCom)"
       SuppressRootDirectory="%(HarvestDirectory.SuppressRootDirectory)"
-      SuppressRegistry="%(HarvestDirectory.SuppressRegistry)">
+      SuppressRegistry="%(HarvestDirectory.SuppressRegistry)"
+      AdditionalOptions="$(HarvestDirectoryAdditionalOptions)">
 
       <Output TaskParameter="OutputFile" ItemName="Compile" />
       <Output TaskParameter="OutputFile" ItemName="FileWrites" />
@@ -1674,7 +1686,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       RunAsSeparateProcess="$(RunWixToolsOutOfProc)" 
       SuppressCom="%(HarvestFile.SuppressCom)"
       SuppressRegistry="%(HarvestFile.SuppressRegistry)"
-      SuppressRootDirectory="%(HarvestFile.SuppressRootDirectory)">
+      SuppressRootDirectory="%(HarvestFile.SuppressRootDirectory)"
+      AdditionalOptions="$(HarvestFileAdditionalOptions)">
 
       <Output TaskParameter="OutputFile" ItemName="Compile" />
       <Output TaskParameter="OutputFile" ItemName="FileWrites" />
@@ -1857,7 +1870,15 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <Insignia
       DatabaseFiles="@(Inscribe)"
-      ToolPath="$(WixToolPath)">
+      ToolPath="$(WixToolPath)"
+      NoLogo="$(InscribeNoLogo)"
+      RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
+      SuppressAllWarnings="$(InscribeSuppressAllWarnings)"
+      SuppressSpecificWarnings="$(InscribeSuppressSpecificWarnings)"
+      TreatWarningsAsErrors="$(InscribeTreatWarningsAsErrors)"
+      TreatSpecificWarningsAsErrors="$(InscribeTreatSpecificWarningsAsErrors)"
+      VerboseOutput="$(InscribeVerboseOutput)"
+      AdditionalOptions="$(InscribeAdditionalOptions)">
     </Insignia>
   </Target>
 

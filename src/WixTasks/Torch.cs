@@ -34,19 +34,37 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
     {
         private const string TorchToolName = "Torch.exe";
 
+        private bool adminImage;
         private ITaskItem baselineFile;
+        private string binaryExtractionPath;
         private bool inputIsXml;
         private bool leaveTemporaryFiles;
         private bool outputAsXml;
         private ITaskItem outputFile;
         private bool preserveUnmodifiedContent;
+        private string suppressTransformErrorFlags;
+        private string transformValidationFlags;
+        private string transformValidationType;
         private ITaskItem updateFile;
+
+        public bool AdminImage
+        {
+            get { return this.adminImage; }
+            set { this.adminImage = value; }
+        }
+
 
         [Required]
         public ITaskItem BaselineFile
         {
             get { return this.baselineFile; }
             set { this.baselineFile = value; }
+        }
+
+        public string BinaryExtractionPath
+        {
+            get { return this.binaryExtractionPath; }
+            set { this.binaryExtractionPath = value; }
         }
 
         public bool LeaveTemporaryFiles
@@ -79,6 +97,24 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         {
             get { return this.outputFile; }
             set { this.outputFile = value; }
+        }
+
+        public string SuppressTransformErrorFlags
+        {
+            get { return this.suppressTransformErrorFlags; }
+            set { this.suppressTransformErrorFlags = value; }
+        }
+
+        public string TransformValidationType
+        {
+            get { return this.transformValidationType; }
+            set { this.transformValidationType = value; }
+        }
+
+        public string TransformValidationFlags
+        {
+            get { return this.transformValidationFlags; }
+            set { this.transformValidationFlags = value; }
         }
 
         [Required]
@@ -129,6 +165,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendFileNameIfNotNull(this.BaselineFile);
             commandLineBuilder.AppendFileNameIfNotNull(this.UpdateFile);
             commandLineBuilder.AppendSwitchIfNotNull("-out ", this.OutputFile);
+            commandLineBuilder.AppendIfTrue("-a", this.adminImage);
+            commandLineBuilder.AppendSwitchIfNotNull("-x", this.BinaryExtractionPath);
+            commandLineBuilder.AppendSwitchIfNotNull("-serr", this.SuppressTransformErrorFlags);
+            commandLineBuilder.AppendSwitchIfNotNull("-t", this.TransformValidationType);
+            commandLineBuilder.AppendSwitchIfNotNull("-val", this.TransformValidationFlags);
         }
     }
 }

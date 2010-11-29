@@ -92,7 +92,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
                     this.isDirty = value;
                     if (this.pageSite != null)
                     {
-                        this.pageSite.OnStatusChange((uint)(this.isDirty ? PropPageStatus.Dirty : PropPageStatus.Clean));
+                        this.pageSite.OnStatusChange((uint)(this.isDirty ? PropPageStatus.Dirty | PropPageStatus.Validate : PropPageStatus.Clean));
                     }
                 }
             }

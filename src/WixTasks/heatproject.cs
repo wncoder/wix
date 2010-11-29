@@ -25,6 +25,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         private string configuration;
         private string directoryIds;
         private string generateType;
+        private bool generateWixVariables;
         private string platform;
         private string project;
         private string projectName;
@@ -40,6 +41,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         {
             get { return this.directoryIds; }
             set { this.directoryIds = value; }
+        }
+
+        public bool GenerateWixVariables
+        {
+            get { return this.generateWixVariables; }
+            set { this.generateWixVariables = value; }
         }
 
         public string GenerateType
@@ -108,6 +115,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendSwitchIfNotNull("-platform ", this.Platform);
             commandLineBuilder.AppendArrayIfNotNull("-pog ", this.ProjectOutputGroups);
             commandLineBuilder.AppendSwitchIfNotNull("-projectname ", this.ProjectName);
+            commandLineBuilder.AppendIfTrue("-wixvar", this.GenerateWixVariables);
 
             base.BuildCommandLine(commandLineBuilder);
             return commandLineBuilder.ToString();

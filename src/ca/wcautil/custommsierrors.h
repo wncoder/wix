@@ -77,6 +77,7 @@
 #define msierrIISFailedDeleteKey               26106
 #define msierrIISFailedDeleteApp               26107
 #define msierrIISFailedDeleteValue             26108
+#define msierrIISFailedCommitInUse             26109
 
 #define msierrSQLFailedCreateDatabase          26201
 #define msierrSQLFailedDropDatabase            26202
