@@ -67,7 +67,7 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Mjesto:</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">Lokacija:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">Instalacija programa [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -469,7 +469,7 @@
     <String Id="Error1501" Overridable="yes">Pogreška prilikom pristupa osiguranim podacima. Provjerite je li Windows Installer pravilno konfiguriran i pokušajte ponoviti instalaciju.</String>
     <String Id="Error1502" Overridable="yes">Korisnik "[2]" već je započeo instalaciju proizvoda "[3]". Morat će ponovno pokrenuti instalaciju da bi mogao koristiti proizvod. Vaša će se trenutna instalacija sada nastaviti.</String>
     <String Id="Error1503" Overridable="yes">Korisnik "[2]" već je započeo instalaciju proizvoda "[3]". Morat će ponovno pokrenuti instalaciju da bi mogao koristiti proizvod.</String>
-    <String Id="Error1601" Overridable="yes">Nema dovoljno prostora na disku -- jedinica: '[2]'; potreban prostor: [3] kB; slobodan prostor: [4] KB. Oslobodite prostor na disku i pokušajte ponovno.</String>
+    <String Id="Error1601" Overridable="yes">Nema dovoljno prostora na disku -- jedinica: '[2]'; potreban prostor: [3] kB; slobodan prostor: [4] kB. Oslobodite prostor na disku i pokušajte ponovno.</String>
     <String Id="Error1602" Overridable="yes">Jeste li sigurni da želite odustati?</String>
     <String Id="Error1603" Overridable="yes">Datoteku [2][3] koristi{ sljedeći proces: naziv: [4], ID: [5], naslov prozora: "[6]"}. Zatvorite tu aplikaciju i pokušajte ponovno.</String>
     <String Id="Error1604" Overridable="yes">Proizvod "[2]" već je instaliran te onemogućuje instalaciju ovog proizvoda. Ta dva proizvoda nisu kompatibilna.</String>

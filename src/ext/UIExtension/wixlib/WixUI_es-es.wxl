@@ -23,7 +23,7 @@
     <String Id="WixUIYes" Overridable="yes">&amp;Sí</String>
     <String Id="WixUINo" Overridable="yes">&amp;No</String>
     <String Id="WixUIOK" Overridable="yes">Aceptar</String>
-    <String Id="WixUIPrint" Overridable="yes">&amp;Imprimir</String>
+    <String Id="WixUIPrint" Overridable="yes">I&amp;mprimir</String>
 
     <String Id="AdvancedWelcomeEulaDlg_Title" Overridable="yes">Instalación de [ProductName]</String>
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -31,7 +31,7 @@
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">&amp;Acepto los términos del Contrato de licencia</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">Haga clic en Instalar para instalar el producto con las opciones predeterminadas para todos los usuarios. Haga clic en Avanzada para cambiar las opciones de instalación.</String>
     <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">Haga clic en Instalar para instalar el producto con las opciones predeterminadas solo para el usuario actual. Haga clic en Avanzada para cambiar las opciones de instalación.</String>
-    <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">I&amp;nstalar</String>
+    <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">&amp;Instalar</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">A&amp;vanzada</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">8</String>
     <String Id="Advanced_Font_Bigger_Size" Overridable="yes">12</String>
@@ -560,42 +560,42 @@
     <String Id="UITextGB" Overridable="yes">GB</String>
     <String Id="UITextKB" Overridable="yes">KB</String>
     <String Id="UITextMB" Overridable="yes">MB</String>
-    <String Id="UITextMenuAbsent" Overridable="yes">La característica completa no estará disponible</String>
-    <String Id="UITextMenuAdvertise" Overridable="yes">La característica se instalará cuando se solicite</String>
-    <String Id="UITextMenuAllCD" Overridable="yes">La característica completa se instalará para ejecutarse desde el CD</String>
-    <String Id="UITextMenuAllLocal" Overridable="yes">La característica completa se instalará en la unidad de disco duro local</String>
-    <String Id="UITextMenuAllNetwork" Overridable="yes">La característica completa se instalará para ejecutarse desde la red</String>
-    <String Id="UITextMenuCD" Overridable="yes">Se instalará para ejecutarse desde el CD</String>
-    <String Id="UITextMenuLocal" Overridable="yes">Se instalará en la unidad de disco duro local</String>
-    <String Id="UITextMenuNetwork" Overridable="yes">Se instalará para ejecutarse desde la red</String>
+    <String Id="UITextMenuAbsent" Overridable="yes">La característica completa no estará disponible.</String>
+    <String Id="UITextMenuAdvertise" Overridable="yes">La característica se instalará cuando se solicite.</String>
+    <String Id="UITextMenuAllCD" Overridable="yes">La característica completa se instalará para ejecutarse desde el CD.</String>
+    <String Id="UITextMenuAllLocal" Overridable="yes">La característica completa se instalará en la unidad de disco duro local.</String>
+    <String Id="UITextMenuAllNetwork" Overridable="yes">La característica completa se instalará para ejecutarse desde la red.</String>
+    <String Id="UITextMenuCD" Overridable="yes">Se instalará para ejecutarse desde el CD.</String>
+    <String Id="UITextMenuLocal" Overridable="yes">Se instalará en la unidad de disco duro local.</String>
+    <String Id="UITextMenuNetwork" Overridable="yes">Se instalará para ejecutarse desde la red.</String>
     <String Id="UITextNewFolder" Overridable="yes">Carpeta|Carpeta nueva</String>
     <String Id="UITextScriptInProgress" Overridable="yes">Obteniendo información necesaria...</String>
-    <String Id="UITextSelAbsentAbsent" Overridable="yes">Esta característica no se instalará</String>
-    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Esta característica se configurará para instalarse cuando se solicite</String>
-    <String Id="UITextSelAbsentCD" Overridable="yes">Esta característica se instalará para ejecutarse desde el CD</String>
-    <String Id="UITextSelAbsentLocal" Overridable="yes">Esta característica se instalará en la unidad de disco duro local</String>
-    <String Id="UITextSelAbsentNetwork" Overridable="yes">Esta característica se instalará para ejecutarse desde la red</String>
-    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Esta característica dejará de estar disponible</String>
-    <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Se instalará cuando se solicite</String>
-    <String Id="UITextSelAdvertiseCD" Overridable="yes">Esta característica estará disponible para ejecutarse desde el CD</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Esta característica se instalará en la unidad de disco duro local</String>
-    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Esta característica estará disponible para ejecutarse desde la red</String>
-    <String Id="UITextSelCDAbsent" Overridable="yes">Esta característica se desinstalará por completo y no podrá ejecutarla desde el CD</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">Esta característica dejará de ejecutarse desde el CD y se instalará cuando se solicite</String>
-    <String Id="UITextSelCDCD" Overridable="yes">Esta característica continuará ejecutándose desde el CD</String>
-    <String Id="UITextSelCDLocal" Overridable="yes">Esta característica dejará de ejecutarse desde el CD y se instalará en la unidad de disco duro local</String>
+    <String Id="UITextSelAbsentAbsent" Overridable="yes">Esta característica no se instalará.</String>
+    <String Id="UITextSelAbsentAdvertise" Overridable="yes">Esta característica se configurará para instalarse cuando se solicite.</String>
+    <String Id="UITextSelAbsentCD" Overridable="yes">Esta característica se instalará para ejecutarse desde el CD.</String>
+    <String Id="UITextSelAbsentLocal" Overridable="yes">Esta característica se instalará en la unidad de disco duro local.</String>
+    <String Id="UITextSelAbsentNetwork" Overridable="yes">Esta característica se instalará para ejecutarse desde la red.</String>
+    <String Id="UITextSelAdvertiseAbsent" Overridable="yes">Esta característica dejará de estar disponible.</String>
+    <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">Se instalará cuando se solicite.</String>
+    <String Id="UITextSelAdvertiseCD" Overridable="yes">Esta característica estará disponible para ejecutarse desde el CD.</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">Esta característica se instalará en la unidad de disco duro local.</String>
+    <String Id="UITextSelAdvertiseNetwork" Overridable="yes">Esta característica estará disponible para ejecutarse desde la red.</String>
+    <String Id="UITextSelCDAbsent" Overridable="yes">Esta característica se desinstalará por completo y no podrá ejecutarla desde el CD.</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">Esta característica dejará de ejecutarse desde el CD y se instalará cuando se solicite.</String>
+    <String Id="UITextSelCDCD" Overridable="yes">Esta característica continuará ejecutándose desde el CD.</String>
+    <String Id="UITextSelCDLocal" Overridable="yes">Esta característica dejará de ejecutarse desde el CD y se instalará en la unidad de disco duro local.</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">Esta característica libera [1] del disco duro.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">Esta característica necesita [1] del disco duro.</String>
     <String Id="UITextSelCostPending" Overridable="yes">Calculando el espacio necesario para esta característica...</String>
-    <String Id="UITextSelLocalAbsent" Overridable="yes">Esta característica se quitará por completo</String>
-    <String Id="UITextSelLocalAdvertise" Overridable="yes">Esta característica se quitará del disco duro local, pero se configurará para instalarse cuando se solicite</String>
-    <String Id="UITextSelLocalCD" Overridable="yes">Esta característica se quitará de la unidad de disco duro local, pero podrá ejecutarse desde el CD</String>
-    <String Id="UITextSelLocalLocal" Overridable="yes">Esta característica permanecerá en la unidad de disco duro local</String>
-    <String Id="UITextSelLocalNetwork" Overridable="yes">Esta característica se quitará de la unidad de disco duro local, pero podrá ejecutarse desde la red</String>
-    <String Id="UITextSelNetworkAbsent" Overridable="yes">Esta característica se desinstalará por completo y no podrá ejecutarla desde la red</String>
-    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Esta característica dejará de ejecutarse desde la red y se instalará cuando se solicite</String>
-    <String Id="UITextSelNetworkLocal" Overridable="yes">Esta característica dejará de ejecutarse desde la red y se instalará en la unidad de disco duro local</String>
-    <String Id="UITextSelNetworkNetwork" Overridable="yes">Esta característica se podrá ejecutar desde la red</String>
+    <String Id="UITextSelLocalAbsent" Overridable="yes">Esta característica se quitará por completo.</String>
+    <String Id="UITextSelLocalAdvertise" Overridable="yes">Esta característica se quitará del disco duro local, pero se configurará para instalarse cuando se solicite.</String>
+    <String Id="UITextSelLocalCD" Overridable="yes">Esta característica se quitará de la unidad de disco duro local, pero podrá ejecutarse desde el CD.</String>
+    <String Id="UITextSelLocalLocal" Overridable="yes">Esta característica permanecerá en la unidad de disco duro local.</String>
+    <String Id="UITextSelLocalNetwork" Overridable="yes">Esta característica se quitará de la unidad de disco duro local, pero podrá ejecutarse desde la red.</String>
+    <String Id="UITextSelNetworkAbsent" Overridable="yes">Esta característica se desinstalará por completo y no podrá ejecutarla desde la red.</String>
+    <String Id="UITextSelNetworkAdvertise" Overridable="yes">Esta característica dejará de ejecutarse desde la red y se instalará cuando se solicite.</String>
+    <String Id="UITextSelNetworkLocal" Overridable="yes">Esta característica dejará de ejecutarse desde la red y se instalará en la unidad de disco duro local.</String>
+    <String Id="UITextSelNetworkNetwork" Overridable="yes">Esta característica se podrá ejecutar desde la red.</String>
     <String Id="UITextSelParentCostNegNeg" Overridable="yes">Esta característica libera [1] del disco duro. Tiene [2] de [3] subcaracterísticas seleccionadas. Las subcaracterísticas liberan [4] del disco duro.</String>
     <String Id="UITextSelParentCostNegPos" Overridable="yes">Esta característica libera [1] del disco duro. Tiene [2] de [3] subcaracterísticas seleccionadas. Las subcaracterísticas necesitan [4] del disco duro.</String>
     <String Id="UITextSelParentCostPosNeg" Overridable="yes">Esta característica necesita [1] del disco duro. Tiene [2] de [3] subcaracterísticas seleccionadas. Las subcaracterísticas liberan [4] del disco duro.</String>

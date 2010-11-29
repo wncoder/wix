@@ -15,7 +15,7 @@
     -->
 
     <String Id="WixUIBack" Overridable="yes">ال&amp;سابق</String>
-    <String Id="WixUINext" Overridable="yes">ال&amp;تالي</String>
+    <String Id="WixUINext" Overridable="yes">التا&amp;لي</String>
     <String Id="WixUICancel" Overridable="yes">إلغاء الأمر</String>
     <String Id="WixUIFinish" Overridable="yes">إ&amp;نهاء</String>
     <String Id="WixUIRetry" Overridable="yes">إ&amp;عادة المحاولة</String>
@@ -578,15 +578,15 @@
     <String Id="UITextSelAdvertiseAbsent" Overridable="yes">ستصبح هذه الميزة غير متوفرة</String>
     <String Id="UITextSelAdvertiseAdvertise" Overridable="yes">سيتم تثبيتها عند الحاجة</String>
     <String Id="UITextSelAdvertiseCD" Overridable="yes">‏‏ستتوفر هذه الميزة لتشغيلها من القرص المضغوط</String>
-    <String Id="UITextSelAdvertiseLocal" Overridable="yes">سيتم تثبيت هذه الميزة على محرك الأقراص المحلي</String>
+    <String Id="UITextSelAdvertiseLocal" Overridable="yes">سيتم تثبيت هذه الميزة على محرك الأقراص الثابت المحلي</String>
     <String Id="UITextSelAdvertiseNetwork" Overridable="yes">‏‏ستتوفر هذه الميزة لتشغيلها من الشبكة</String>
     <String Id="UITextSelCDAbsent" Overridable="yes">ستتم إزالة تثبيت هذه الميزة بشكل كامل، ولن تتمكن من تشغيلها من القرص المضغوط</String>
-    <String Id="UITextSelCDAdvertise" Overridable="yes">‏‏ستتغير هذه الميزة من حالة التشغيل من القرص المضغوط إلى تعيينها بحيث يتم تثبيتها عند الطلب</String>
+    <String Id="UITextSelCDAdvertise" Overridable="yes">سيتم تغيير تعيين هذه الميزة من حالة التشغيل من القرص المضغوط إلى التثبيت عند الطلب</String>
     <String Id="UITextSelCDCD" Overridable="yes">‏‏ستبقى هذه الميزة ليتم تشغيلها من القرص المضغوط</String>
     <String Id="UITextSelCDLocal" Overridable="yes">‏‏ستتغير هذه الميزة من حالة التشغيل من القرص المضغوط إلى التثبيت على محرك الأقراص الثابت المحلي</String>
     <String Id="UITextSelChildCostNeg" Overridable="yes">تحرر هذه الميزة [1] على محرك الأقراص الثابت.</String>
     <String Id="UITextSelChildCostPos" Overridable="yes">تتطلب هذه الميزة [1] على محرك الأقراص الثابت.</String>
-    <String Id="UITextSelCostPending" Overridable="yes">جارٍ حساب تكلفة الترجمة لهذه الميزة...</String>
+    <String Id="UITextSelCostPending" Overridable="yes">جارٍ حساب تكلفة هذه الميزة...</String>
     <String Id="UITextSelLocalAbsent" Overridable="yes">‏‏ستتم إزالة هذه الميزة بشكل كامل</String>
     <String Id="UITextSelLocalAdvertise" Overridable="yes">‏‏ستتم إزالة هذه الميزة من محرك الأقراص الثابت المحلي، ولكن سيتم تعيينها ليتم تثبيتها عند الطلب</String>
     <String Id="UITextSelLocalCD" Overridable="yes">‏‏ستتم إزالة هذه الميزة من محرك الأقراص الثابت المحلي، ولكنها ستبقى متوفرةً ليتم تشغيلها من القرص المضغوط</String>

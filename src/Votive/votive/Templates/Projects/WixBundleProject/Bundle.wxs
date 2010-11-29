@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Bundle Name="$wixsafeprojectname$" Version="1.0.0.0" Manufacturer="$wixsafeprojectname$" UpgradeCode="$guid1$">
-    <UX SourceFile="$(env.wix)\bin\stdux.dll" />
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
     <Chain>
       <!-- $loc_WXS_TODO$ -->
 

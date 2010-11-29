@@ -131,6 +131,9 @@
     <ClInclude Include="inc\xmlutil.h" />
     <ClInclude Include="precomp.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="xsd\thmutil.xsd" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -18,7 +18,7 @@
     <String Id="WixUINext" Overridable="yes">&amp;Avançar</String>
     <String Id="WixUICancel" Overridable="yes">Cancelar</String>
     <String Id="WixUIFinish" Overridable="yes">&amp;Concluir</String>
-    <String Id="WixUIRetry" Overridable="yes">&amp;Repetir</String>
+    <String Id="WixUIRetry" Overridable="yes">Tenta&amp;r Novamente</String>
     <String Id="WixUIIgnore" Overridable="yes">&amp;Ignorar</String>
     <String Id="WixUIYes" Overridable="yes">&amp;Sim</String>
     <String Id="WixUINo" Overridable="yes">&amp;Não</String>
@@ -105,12 +105,12 @@
     <String Id="FilesInUse_Title" Overridable="yes">Instalação do [ProductName]</String>
     <String Id="FilesInUseExit" Overridable="yes">Sai&amp;r</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">Os aplicativos a seguir estão usando arquivos que precisam ser atualizados por esta instalação. Feche os aplicativos e clique em &amp;Repetir para continuar a instalação ou em Sair para encerrá-la.</String>
+    <String Id="FilesInUseText" Overridable="yes">Os aplicativos a seguir estão usando arquivos que precisam ser atualizados por esta instalação. Feche os aplicativos e clique em Tenta&amp;r Novamente para continuar a instalação ou em Sair para encerrá-la.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Alguns arquivos que precisam ser atualizados estão em uso.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Arquivos em Uso</String>
 
     <String Id="InstallDirDlg_Title" Overridable="yes">Instalação do [ProductName]</String>
-    <String Id="InstallDirDlgChange" Overridable="yes">&amp;Alterar...</String>
+    <String Id="InstallDirDlgChange" Overridable="yes">A&amp;lterar...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}Pasta de Destino</String>
     <String Id="InstallDirDlgDescription" Overridable="yes">Clique em Avançar para instalar na pasta padrão ou clique em Alterar para escolher outra.</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -126,7 +126,7 @@
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Instalar para todos os usuários deste co&amp;mputador</String>
     <String Id="InstallScopeDlgPerMachineDescription" Overridable="yes">O [ProductName] será instalado em uma pasta por computador por padrão e estará disponível para todos os usuários. Você pode alterar a pasta de instalação padrão. É necessário ter privilégios de Administrador local.</String>
     <String Id="InstallScopeDlgFolderLabel" Overridable="yes">Pa&amp;sta de instalação:</String>
-    <String Id="InstallScopeDlgChange" Overridable="yes">&amp;Alterar...</String>
+    <String Id="InstallScopeDlgChange" Overridable="yes">A&amp;lterar...</String>
 
     <String Id="InvalidDirDlg_Title" Overridable="yes">Instalação do [ProductName]</String>
     <String Id="InvalidDirDlgText" Overridable="yes">O diretório de instalação deve estar em um disco rígido local.</String>
@@ -424,13 +424,13 @@
     <String Id="Error1303" Overridable="yes">O instalador não tem privilégios suficientes para acessar este diretório: [2]. Não é possível dar continuidade à instalação. Faça logon como administrador ou contate o administrador do sistema.</String>
     <String Id="Error1304" Overridable="yes">Erro ao gravar no arquivo: [2]. Verifique se você tem acesso a este diretório.</String>
     <String Id="Error1305" Overridable="yes">Erro ao ler do arquivo [2]. {{ Erro do sistema [3].}} Verifique se o arquivo existe e se você pode acessá-lo.</String>
-    <String Id="Error1306" Overridable="yes">Outro aplicativo tem acesso exclusivo ao arquivo '[2]'. Desligue todos os outros aplicativos e clique em Repetir.</String>
-    <String Id="Error1307" Overridable="yes">Não há espaço em disco suficiente para instalar este arquivo: [2]. Libere algum espaço em disco e clique em Repetir, ou clique em Cancelar para sair.</String>
+    <String Id="Error1306" Overridable="yes">Outro aplicativo tem acesso exclusivo ao arquivo '[2]'. Desligue todos os outros aplicativos e clique em Tentar Novamente.</String>
+    <String Id="Error1307" Overridable="yes">Não há espaço em disco suficiente para instalar este arquivo: [2]. Libere algum espaço em disco e clique em Tentar Novamente, ou clique em Cancelar para sair.</String>
     <String Id="Error1308" Overridable="yes">Arquivo de origem não encontrado: [2]. Verifique se o arquivo existe e se você pode acessá-lo.</String>
     <String Id="Error1309" Overridable="yes">Erro ao ler do arquivo: [3]. {{ Erro do sistema [2].}} Verifique se o arquivo existe e se você pode acessá-lo.</String>
     <String Id="Error1310" Overridable="yes">Erro ao gravar no arquivo: [3]. {{ Erro do sistema [2].}} Verifique se você tem acesso a esse diretório.</String>
     <String Id="Error1311" Overridable="yes">Arquivo de origem não encontrado{{(gabinete)}}: [2]. Verifique se o arquivo existe e se você pode acessá-lo.</String>
-    <String Id="Error1312" Overridable="yes">Não é possível criar o diretório '[2]'. Já existe um arquivo com este nome. Forneça um novo nome ou remova o arquivo e clique em Repetir, ou clique em Cancelar para sair.</String>
+    <String Id="Error1312" Overridable="yes">Não é possível criar o diretório '[2]'. Já existe um arquivo com este nome. Forneça um novo nome ou remova o arquivo e clique em Tentar Novamente, ou clique em Cancelar para sair.</String>
     <String Id="Error1313" Overridable="yes">O volume [2] não está disponível no momento. Selecione outro volume.</String>
     <String Id="Error1314" Overridable="yes">O caminho especificado '[2]' não está disponível.</String>
     <String Id="Error1315" Overridable="yes">Não é possível gravar na pasta especificada: [2].</String>
@@ -473,11 +473,11 @@
     <String Id="Error1602" Overridable="yes">Tem certeza de que deseja cancelar?</String>
     <String Id="Error1603" Overridable="yes">O arquivo [2][3] está em uso{ pelo seguinte processo: Nome: [4], ID: [5], Título da Janela: '[6]'}. Feche o aplicativo e tente novamente.</String>
     <String Id="Error1604" Overridable="yes">O produto '[2]' já foi instalado e isso impede a instalação deste produto. Os dois produtos são incompatíveis.</String>
-    <String Id="Error1605" Overridable="yes">Não há espaço suficiente em disco no volume '[2]' para continuar a instalação com recuperação habilitada. [3] KB são necessários, mas apenas [4] KB estão disponíveis. Clique em Ignorar para continuar a instalação sem salvar informações de recuperação, clique em Repetir para verificar o espaço disponível novamente ou clique em Cancelar para sair da instalação.</String>
+    <String Id="Error1605" Overridable="yes">Não há espaço suficiente em disco no volume '[2]' para continuar a instalação com recuperação habilitada. [3] KB são necessários, mas apenas [4] KB estão disponíveis. Clique em Ignorar para continuar a instalação sem salvar informações de recuperação, clique em Tentar Novamente para verificar o espaço disponível novamente ou clique em Cancelar para sair da instalação.</String>
     <String Id="Error1606" Overridable="yes">Não foi possível acessar o local da rede [2].</String>
     <String Id="Error1607" Overridable="yes">Os aplicativos a seguir devem ser fechados antes que a instalação continue:</String>
     <String Id="Error1608" Overridable="yes">Não foi possível localizar os produtos compatíveis instalados previamente no computador para a instalação deste produto.</String>
-    <String Id="Error1609" Overridable="yes">Erro ao aplicar configurações de segurança. [2] não é um usuário ou grupo válido. Isso pode ser um problema com o pacote ou de conexão com um controlador de domínio na rede. Verifique sua conexão de rede e clique em Repetir ou em Cancelar para encerrar a instalação. {{Não é possível localizar o SID de usuário, erro do sistema [3]}}</String>
+    <String Id="Error1609" Overridable="yes">Erro ao aplicar configurações de segurança. [2] não é um usuário ou grupo válido. Isso pode ser um problema com o pacote ou de conexão com um controlador de domínio na rede. Verifique sua conexão de rede e clique em Tentar Novamente ou em Cancelar para encerrar a instalação. {{Não é possível localizar o SID de usuário, erro do sistema [3]}}</String>
     <String Id="Error1701" Overridable="yes">A chave [2] não é válida. Verifique se você digitou a chave correta.</String>
     <String Id="Error1702" Overridable="yes">O instalador deve reiniciar o sistema para que a configuração do [2] possa continuar. Clique em Sim para reiniciar agora ou em Não se quiser reiniciar manualmente mais tarde.</String>
     <String Id="Error1703" Overridable="yes">Você deve reiniciar o sistema para que as alterações da configuração do [2] tenham efeito. Clique em Sim para reiniciar agora ou em Não se desejar reiniciá-lo manualmente mais tarde.</String>
@@ -488,7 +488,7 @@
     <String Id="Error1708" Overridable="yes">Falha na instalação.</String>
     <String Id="Error1709" Overridable="yes">Produto: [2] -- [3]</String>
     <String Id="Error1710" Overridable="yes">Você pode restaurar o computador ao seu estado anterior ou continuar a instalação mais tarde. Deseja restaurá-lo?</String>
-    <String Id="Error1711" Overridable="yes">Erro ao gravar as informações de instalação no disco. Verifique se o espaço disponível em disco é suficiente e clique em Repetir, ou clique em Cancelar para finalizar a instalação.</String>
+    <String Id="Error1711" Overridable="yes">Erro ao gravar as informações de instalação no disco. Verifique se o espaço disponível em disco é suficiente e clique em Tentar Novamente, ou clique em Cancelar para finalizar a instalação.</String>
     <String Id="Error1712" Overridable="yes">Não foi possível localizar um ou mais dos arquivos necessários para restaurar o computador ao estado anterior. A restauração não será realizada.</String>
     <String Id="Error1713" Overridable="yes">[2] não pode instalar um dos produtos necessários. Contate o grupo de suporte técnico. {{Erro do sistema: [3].}}</String>
     <String Id="Error1714" Overridable="yes">Não é possível remover a versão antiga do [2]. Contate o grupo de suporte técnico. {{Erro do sistema: [3].}}</String>
@@ -512,8 +512,8 @@
     <String Id="Error1732" Overridable="yes">Para concluir a instalação do [2], reinicie o computador. No momento, outros usuários estão conectados ao computador e a reinicialização poderá fazer com que eles percam seus trabalhos. Deseja reiniciar agora?</String>
     <String Id="Error1801" Overridable="yes">O caminho [2] não é válido. Especifique um caminho válido.</String>
     <String Id="Error1802" Overridable="yes">Memória insuficiente. Desligue outros aplicativos antes de tentar novamente.</String>
-    <String Id="Error1803" Overridable="yes">Não há nenhum disco na unidade [2]. Insira um disco e clique em Repetir ou em Cancelar para voltar ao volume selecionado anteriormente.</String>
-    <String Id="Error1804" Overridable="yes">Não há nenhum disco na unidade [2]. Insira um disco e clique em Repetir ou em Cancelar para retornar à caixa de procura e selecione um volume diferente.</String>
+    <String Id="Error1803" Overridable="yes">Não há nenhum disco na unidade [2]. Insira um disco e clique em Tentar Novamente ou em Cancelar para voltar ao volume selecionado anteriormente.</String>
+    <String Id="Error1804" Overridable="yes">Não há nenhum disco na unidade [2]. Insira um disco e clique em Tentar Novamente ou em Cancelar para retornar à caixa de procura e selecione um volume diferente.</String>
     <String Id="Error1805" Overridable="yes">A pasta [2] não existe. Especifique um caminho para uma pasta existente.</String>
     <String Id="Error1806" Overridable="yes">Você não tem privilégios suficientes para ler esta pasta.</String>
     <String Id="Error1807" Overridable="yes">Uma pasta de destino válida não pôde ser determinada para a instalação.</String>

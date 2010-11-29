@@ -47,6 +47,7 @@
     <String Id="msierrIISFailedCreateApp" Overridable="yes">Failed to create web application.  ([2]   [3]   [4]   [5])</String>
     <String Id="msierrIISFailedDeleteKey" Overridable="yes">Failed to delete metabase key.  ([2]   [3]   [4]   [5])</String>
     <String Id="msierrIISFailedDeleteValue" Overridable="yes">Failed to delete metabase value.  ([2]   [3]   [4]   [5])</String>
+    <String Id="msierrIISFailedCommitInUse" Overridable="yes">Failed to commit IIS transaction due to a sharing violation.  Some other application may be configuring IIS.</String>
 
     <String Id="ConfigureIIs" Overridable="yes">Configuring IIS</String>
     <String Id="ConfigureIIsExec" Overridable="yes">Executing IIS Configuration</String>

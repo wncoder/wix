@@ -36,6 +36,7 @@
 #include <msiquery.h>
 #include <psapi.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <gdiplus.h>
 #include <Tlhelp32.h>
 #include <lm.h>

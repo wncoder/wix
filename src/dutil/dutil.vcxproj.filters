@@ -264,4 +264,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="xsd\thmutil.xsd">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

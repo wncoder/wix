@@ -61,6 +61,7 @@
             <Error Id="$(var.msierrIISFailedCreateApp)">!(loc.msierrIISFailedCreateApp)</Error>
             <Error Id="$(var.msierrIISFailedDeleteKey)">!(loc.msierrIISFailedDeleteKey)</Error>
             <Error Id="$(var.msierrIISFailedDeleteValue)">!(loc.msierrIISFailedDeleteValue)</Error>
+            <Error Id="$(var.msierrIISFailedCommitInUse)">!(loc.msierrIISFailedCommitInUse)</Error>
 
             <ProgressText Action="ConfigureIIs">!(loc.ConfigureIIs)</ProgressText>
             <ProgressText Action="ConfigureIIsExec">!(loc.ConfigureIIsExec)</ProgressText>

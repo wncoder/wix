@@ -16,6 +16,8 @@
 #include "precomp.h"
 
 static const LPCWSTR WIXSTDBA_WINDOW_CLASS = L"WixStdBA";
+static const LPCWSTR WIXSTDBA_VARIABLE_OPTIONS_DLL_NAME = L"OptionsDll";
+static const LPCWSTR WIXSTDBA_VARIABLE_INSTALL_FOLDER = L"InstallFolder";
 static const LPCWSTR WIXSTDBA_VARIABLE_EULA_RTF_PATH = L"EulaFile";
 static const LPCWSTR WIXSTDBA_VARIABLE_EULA_LINK_TARGET = L"EulaHyperlinkTarget";
 static const LPCWSTR WIXSTDBA_VARIABLE_PROGRESS_ACTION = L"ProgressAction";
@@ -24,6 +26,7 @@ static const LPCWSTR WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH = L"LaunchTarget";
 
 enum WIXSTDBA_STATE
 {
+    WIXSTDBA_STATE_REFRESH,
     WIXSTDBA_STATE_INITIALIZING,
     WIXSTDBA_STATE_INITIALIZED,
     WIXSTDBA_STATE_DETECTING,
@@ -53,6 +56,7 @@ enum WIXSTDBA_PAGE
     WIXSTDBA_PAGE_LOADING,
     WIXSTDBA_PAGE_HELP,
     WIXSTDBA_PAGE_INSTALL,
+    WIXSTDBA_PAGE_OPTIONS,
     WIXSTDBA_PAGE_MODIFY,
     WIXSTDBA_PAGE_PROGRESS,
     WIXSTDBA_PAGE_PROGRESS_PASSIVE,
@@ -66,6 +70,7 @@ static LPCWSTR vrgwzPageNames[] = {
     L"Loading",
     L"Help",
     L"Install",
+    L"Options",
     L"Modify",
     L"Progress",
     L"ProgressPassive",
@@ -86,6 +91,12 @@ enum WIXSTDBA_CONTROL
     WIXSTDBA_CONTROL_EULA_LINK,
     WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX,
     WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON,
+
+    // Options page
+    WIXSTDBA_CONTROL_FOLDER_EDITBOX,
+    WIXSTDBA_CONTROL_BROWSE_BUTTON,
+    WIXSTDBA_CONTROL_OK_BUTTON,
+    WIXSTDBA_CONTROL_CANCEL_BUTTON,
 
     // Modify page
     WIXSTDBA_CONTROL_REPAIR_BUTTON,
@@ -122,6 +133,11 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_EULA_LINK, L"EulaHyperlink" },
     { WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX, L"EulaAcceptCheckbox" },
     { WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON, L"WelcomeCancelButton" },
+
+    { WIXSTDBA_CONTROL_FOLDER_EDITBOX, L"FolderEditbox" },
+    { WIXSTDBA_CONTROL_BROWSE_BUTTON, L"BrowseButton" },
+    { WIXSTDBA_CONTROL_OK_BUTTON, L"OptionsOkButton" },
+    { WIXSTDBA_CONTROL_CANCEL_BUTTON, L"OptionsCancelButton" },
 
     { WIXSTDBA_CONTROL_REPAIR_BUTTON, L"RepairButton" },
     { WIXSTDBA_CONTROL_UNINSTALL_BUTTON, L"UninstallButton" },
@@ -493,7 +509,7 @@ private: // privates
                 hr = E_UNEXPECTED;
                 ExitOnFailure(hr, "Unexpected return value from message pump.");
             }
-            else if (!::IsDialogMessageW(msg.hwnd, &msg))
+            else // TODO: bring this back when support loading a custom options dll, if (!::IsDialogMessageW(m_hwndOptionsDialog, &msg))
             {
                 if (!ThemeTranslateAccelerator(pThis->m_pTheme, msg.hwnd, &msg))
                 {
@@ -742,35 +758,51 @@ private: // privates
             {
             case WIXSTDBA_CONTROL_EULA_LINK:
                 pBA->OnClickEulaLink();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX:
                 pBA->OnClickAcceptCheckbox();
-                break;
+                return 0;
+
+            case WIXSTDBA_CONTROL_OPTIONS_BUTTON:
+                pBA->OnClickOptionsButton();
+                return 0;
+
+            case WIXSTDBA_CONTROL_BROWSE_BUTTON:
+                pBA->OnClickOptionsBrowseButton();
+                return 0;
+
+            case WIXSTDBA_CONTROL_OK_BUTTON:
+                pBA->OnClickOptionsOkButton();
+                return 0;
+
+            case WIXSTDBA_CONTROL_CANCEL_BUTTON:
+                pBA->OnClickOptionsCancelButton();
+                return 0;
 
             case WIXSTDBA_CONTROL_INSTALL_BUTTON:
                 pBA->OnClickInstallButton();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_REPAIR_BUTTON:
                 pBA->OnClickRepairButton();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_UNINSTALL_BUTTON:
                 pBA->OnClickUninstallButton();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_LAUNCH_BUTTON:
                 pBA->OnClickLaunchButton();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_RESTART_BUTTON:
                 pBA->OnClickRestartButton();
-                break;
+                return 0;
 
             case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON: // progress cancel is special because it will cause rollback.
                 pBA->OnClose();
-                break;
+                return 0;
 
             // The other cancel buttons just close the window.
             case WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON: __fallthrough;
@@ -779,12 +811,9 @@ private: // privates
             case WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_CLOSE_BUTTON:
                 pBA->OnClickCloseButton();
-                break;
-
-            default:
-                break;
+                return 0;
             }
-            return 0;
+            break;
         }
 
         return ThemeDefWindowProc(pBA ? pBA->m_pTheme : NULL, hWnd, uMsg, wParam, lParam);
@@ -938,6 +967,116 @@ private: // privates
 
 
     //
+    // OnClickOptionsButton - show the options page.
+    //
+    void OnClickOptionsButton()
+    {
+        HRESULT hr = S_OK;
+        LPWSTR sczOptionsDllName = NULL;
+        LPWSTR sczOptionsDllPath = NULL;
+
+        hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_OPTIONS_DLL_NAME, &sczOptionsDllName);
+        if (SUCCEEDED(hr))
+        {
+            hr = PathRelativeToModule(&sczOptionsDllPath, sczOptionsDllName, m_hModule);
+            ExitOnFailure(hr, "Failed to get options dialog path.");
+
+            // TODO: load options DLL and get window handle.
+        }
+        else
+        {
+            m_fShowOptionsPage = TRUE;
+            SetState(WIXSTDBA_STATE_REFRESH, S_OK);
+        }
+
+    LExit:
+        ReleaseStr(sczOptionsDllPath);
+        ReleaseStr(sczOptionsDllName);
+        return;
+    }
+
+    //
+    // OnClickOptionsBrowseButton - browse for install folder on the options page.
+    //
+    void OnClickOptionsBrowseButton()
+    {
+        WCHAR wzPath[MAX_PATH] = { };
+        BROWSEINFOW browseInfo = { };
+        PIDLIST_ABSOLUTE pidl = NULL;
+
+        browseInfo.hwndOwner = m_hWnd;
+        browseInfo.pszDisplayName = wzPath;
+        browseInfo.lpszTitle = m_pTheme->wzCaption;
+        browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_USENEWUI;
+        pidl = ::SHBrowseForFolderW(&browseInfo);
+        if (pidl && ::SHGetPathFromIDListW(pidl, wzPath))
+        {
+            ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, wzPath);
+        }
+
+        if (pidl)
+        {
+            ::CoTaskMemFree(pidl);
+        }
+
+        return;
+    }
+
+    //
+    // OnClickOptionsOkButton - accept the changes made by the options page.
+    //
+    void OnClickOptionsOkButton()
+    {
+        HRESULT hr = S_OK;
+        LPWSTR sczPath = NULL;
+        THEME_PAGE* pPage = NULL;
+
+        if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX))
+        {
+            hr = ThemeGetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, &sczPath);
+            ExitOnFailure(hr, "Failed to get text from folder edit box.");
+
+            // TODO: verify the path is valid.
+
+            hr = m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_INSTALL_FOLDER, sczPath);
+            ExitOnFailure(hr, "Failed to set the install folder.");
+        }
+
+        // Loop through all the checkbox controls with names and set a Burn variable
+        // with that name to true or false.
+        pPage = ThemeGetPage(m_pTheme, m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS]);
+        if (pPage)
+        {
+            for (DWORD i = 0; i < pPage->cControlIndices; ++i)
+            {
+                THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
+                if (THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
+                {
+                    BOOL bChecked = ThemeIsControlChecked(m_pTheme, pControl->wId);
+                    m_pEngine->SetVariableNumeric(pControl->wzName, bChecked ? 1 : 0);
+                }
+            }
+        }
+
+    LExit:
+        m_fShowOptionsPage = FALSE;
+        SetState(WIXSTDBA_STATE_REFRESH, S_OK);
+        return;
+    }
+
+
+    //
+    // OnClickOptionsCacelButton - discard the changes made by the options page.
+    //
+    void OnClickOptionsCancelButton()
+    {
+        m_fShowOptionsPage = FALSE;
+        SetState(WIXSTDBA_STATE_REFRESH, S_OK);
+        return;
+    }
+
+
+    //
     // OnClickInstallButton - start the install by planning the packages.
     //
     void OnClickInstallButton()
@@ -1047,6 +1186,9 @@ private: // privates
         DWORD dwOldPageId = 0;
         DWORD dwNewPageId = 0;
         LPWSTR sczText = NULL;
+        LPWSTR sczUnformattedText = NULL;
+
+        ::EnterCriticalSection(&m_csState);
 
         if (FAILED(hrStatus))
         {
@@ -1054,12 +1196,27 @@ private: // privates
             m_state = WIXSTDBA_STATE_FAILED;
         }
 
-        if (m_state != state)
+        if (WIXSTDBA_STATE_REFRESH == state || m_state != state)
         {
             DeterminePageId(m_state, &dwOldPageId);
             DeterminePageId(state, &dwNewPageId);
 
-            m_state = state;
+            if (WIXSTDBA_STATE_REFRESH == state)
+            {
+                if (m_fShowOptionsPage)
+                {
+                    dwNewPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
+                }
+                else
+                {
+                    dwNewPageId = dwOldPageId;
+                    dwOldPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
+                }
+            }
+            else
+            {
+                m_state = state;
+            }
 
             if (dwOldPageId != dwNewPageId)
             {
@@ -1068,6 +1225,19 @@ private: // privates
                 {
                     BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
+
+                    // If there is an "Options" page and the "Options" button exists then enable the button.
+                    BOOL fOptionsEnbaled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnbaled);
+                }
+                else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
+                {
+                    HRESULT hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_INSTALL_FOLDER, &sczUnformattedText);
+                    if (SUCCEEDED(hr))
+                    {
+                        BalFormatString(m_pEngine, sczUnformattedText, &sczText);
+                        ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, sczText);
+                    }
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the restart or launch button should be enabled.
                 {
@@ -1089,13 +1259,25 @@ private: // privates
                     }
                 }
 
-                // Format the text in each of the new page's controls.
+                // Process each control for special handling in the new page.
                 THEME_PAGE* pPage = ThemeGetPage(m_pTheme, dwNewPageId);
                 if (pPage)
                 {
                     for (DWORD i = 0; i < pPage->cControlIndices; ++i)
                     {
                         THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
+
+                        // If we are on the options page and this is a named checkbox control, try to set its default
+                        // state to the state of a matching named Burn variable.
+                        if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId && THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
+                        {
+                            LONGLONG llValue = 0;
+                            HRESULT hr = m_pEngine->GetVariableNumeric(pControl->wzName, &llValue);
+
+                            ThemeSendControlMessage(m_pTheme, pControl->wId, BM_SETCHECK, SUCCEEDED(hr) && llValue ? BST_CHECKED : BST_UNCHECKED, 0);
+                        }
+
+                        // Format the text in each of the new page's controls (if they have any text).
                         if (pControl->wzText && *pControl->wzText)
                         {
                             HRESULT hr = BalFormatString(m_pEngine, pControl->wzText, &sczText);
@@ -1112,7 +1294,10 @@ private: // privates
             }
         }
 
+        ::LeaveCriticalSection(&m_csState);
+
         ReleaseStr(sczText);
+        ReleaseStr(sczUnformattedText);
     }
 
 
@@ -1198,6 +1383,8 @@ public:
         m_fRegistered = FALSE;
         m_hWnd = NULL;
 
+        ::InitializeCriticalSection(&m_csState);
+        m_fShowOptionsPage = FALSE;
         m_state = WIXSTDBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
 
@@ -1220,6 +1407,8 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
+        ::DeleteCriticalSection(&m_csState);
+
         ReleaseStr(m_sczFamilyBundleId);
         ReleaseNullObject(m_pEngine);
     }
@@ -1235,6 +1424,8 @@ private:
     BOOL m_fRegistered;
     HWND m_hWnd;
 
+    CRITICAL_SECTION m_csState;
+    BOOL m_fShowOptionsPage;
     WIXSTDBA_STATE m_state;
     HRESULT m_hrFinal;
 

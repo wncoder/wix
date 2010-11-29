@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes">Namestitev programa [ProductName]</String>
     <String Id="FilesInUseExit" Overridable="yes">I&amp;zhod</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">Navedeni programi uporabljajo datoteke, ki jih je treba med to namestitvijo posodobiti. Če želite nadaljevati, zaprite te programe in kliknite »&amp;Poskusi znova«, če pa želite namestitev zapustiti, kliknite »Izhod«.</String>
+    <String Id="FilesInUseText" Overridable="yes">Te programi uporabljajo datoteke, ki jih je treba posodobiti pri tej namestitvi. Zaprite te programe in nato kliknite »&amp;Poskusi znova«, da nadaljujete z namestitvijo, ali »Izhod«, če jo želite zapreti.</String>
     <String Id="FilesInUseDescription" Overridable="yes">Nekatere datoteke, ki jih je treba posodobiti, so trenutno v uporabi.</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}Datoteke v uporabi</String>
 
@@ -278,7 +278,7 @@
     <String Id="ProgressTextCreateShortcuts" Overridable="yes">Ustvarjanje bližnjic</String>
     <String Id="ProgressTextCreateShortcutsTemplate" Overridable="yes">Bližnjica: [1]</String>
     <String Id="ProgressTextPublishComponents" Overridable="yes">Objavljanje kvalificiranih komponent</String>
-    <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">ID komponente: [1], Kvalifikator: [2]</String>
+    <String Id="ProgressTextPublishComponentsTemplate" Overridable="yes">ID komponente: [1], kvalifikator: [2]</String>
     <String Id="ProgressTextPublishFeatures" Overridable="yes">Objavljanje funkcij izdelka</String>
     <String Id="ProgressTextPublishFeaturesTemplate" Overridable="yes">Funkcija: [1]</String>
     <String Id="ProgressTextPublishProduct" Overridable="yes">Objavljanje informacij o izdelku</String>
@@ -470,12 +470,12 @@
     <String Id="Error1502" Overridable="yes">Uporabnik »[2]« je prej že sprožil namestitev izdelka »[3]«. Omenjeni uporabnik bo moral znova zagnati namestitev, če bo želel uporabljati ta izdelek. Trenutna namestitev se bo nadaljevala.</String>
     <String Id="Error1503" Overridable="yes">Uporabnik »[2]« je prej že sprožil namestitev izdelka »[3]«. Omenjeni uporabnik bo moral znova zagnati namestitev, če bo želel uporabljati ta izdelek.</String>
     <String Id="Error1601" Overridable="yes">Zmanjkalo je prostora na disku – Nosilec: »[2]«; Potreben prostor: [3] KB; prostor na voljo: [4] KB. Sprostite nekaj prostora na disku in poskusite znova.</String>
-    <String Id="Error1602" Overridable="yes">Ali ste prepričani, da želite preklicati?</String>
+    <String Id="Error1602" Overridable="yes">Ali ste prepričani, da ga želite preklicati?</String>
     <String Id="Error1603" Overridable="yes">Datoteko [2][3] uporablja{ ta proces: Ime: [4], ID: [5], Naslov okna: »[6]«}. Zaprite ta program in poskusite znova.</String>
     <String Id="Error1604" Overridable="yes">Izdelek »[2]« je že nameščen in preprečuje nameščanje tega izdelka. Izdelka nista združljiva.</String>
     <String Id="Error1605" Overridable="yes">Na nosilcu »[2]« ni dovolj prostora za nadaljevanje namestitve z omogočeno obnovitvijo. Potrebno je [3] KB, na voljo je le [4] KB. Kliknite »Prezri«, če želite nadaljevati namestitev, ne da bi shranili obnovitvene informacije; kliknite »Poskusi znova«, če želite znova preveriti, ali je na voljo prostor; kliknite »Prekliči«, če želite končati namestitev.</String>
     <String Id="Error1606" Overridable="yes">Dostop do omrežnega mesta [2] ni bil mogoč.</String>
-    <String Id="Error1607" Overridable="yes">Preden nadaljujete, morate zapreti te programe:</String>
+    <String Id="Error1607" Overridable="yes">Preden nadaljujete namestitev, zaprite te programe:</String>
     <String Id="Error1608" Overridable="yes">Za namestitev tega izdelka v računalniku ni bilo mogoče najti prej nameščenih ustreznih izdelkov.</String>
     <String Id="Error1609" Overridable="yes">Med uveljavljanjem varnostnih nastavitev je prišlo do napake. [2] ni veljaven uporabnik ali skupina. Težava je lahko s paketom oz. z vzpostavljanjem povezave s kontrolnikom domene v omrežju. Preverite povezavo z omrežjem in kliknite »Poskusi znova« oz. »Prekliči«, če želite končati namestitev. {{Ni mogoče najti uporabnikov SID, sistemska napaka [3]}}</String>
     <String Id="Error1701" Overridable="yes">Ključ [2] ni veljaven. Preverite, ali ste vnesli pravi ključ, in poskusite znova.</String>
@@ -521,7 +521,7 @@
     <String Id="Error1902" Overridable="yes">Razporejanje vnovičnega zagona: Preimenovanje datoteke [2] v [3]. Če želite dokončati postopek, znova zaženite računalnik.</String>
     <String Id="Error1903" Overridable="yes">Razporejanje vnovičnega zagona: brisanje datoteke [2]. Če želite dokončati postopek, znova zaženite računalnik.</String>
     <String Id="Error1904" Overridable="yes">Modula [2] ni bilo mogoče registrirati. HRESULT [3]. Obrnite se na osebje za podporo.</String>
-    <String Id="Error1905" Overridable="yes">Registracije modula [2] ni bilo mogoče preklicati. HRESULT [3].  Obrnite se na osebje za podporo.</String>
+    <String Id="Error1905" Overridable="yes">Registracije modula [2] ni bilo mogoče preklicati. HRESULT [3]. Obrnite se na osebje za podporo.</String>
     <String Id="Error1906" Overridable="yes">Predpomnjenje paketa [2] ni uspelo. Napaka: [3]. Obrnite se na osebje za podporo.</String>
     <String Id="Error1907" Overridable="yes">Pisave [2] ni mogoče registrirati. Preverite, ali imate ustrezna dovoljenja za namestitev pisav in ali sistem podpira to pisavo.</String>
     <String Id="Error1908" Overridable="yes">Pisave [2] ni bilo mogoče odstraniti iz registra. Preverite, ali imate ustrezna dovoljenja za odstranjevanje pisav.</String>

@@ -733,3 +733,17 @@ EricStJ: SFBUG: 3112388 click in error panel does not go to error
 
 WixBuild: Version 3.6.1122.0
 
+RobMen: SFBUG:3116827 - update Bundle template to new syntax.
+        Add built-in options dialog.
+
+EricStJ: SFBUG: 3112521 Changed marker does not always disappear on project properties
+
+CAraman: Update WixUI localization.
+
+EricStJ: SFBUG: 3103178 Adding missing parameters to wix tasks & exposing in targets
+
+EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with ERROR_SHARING_VIOLATION
+         Allow user to retry.
+
+WixBuild: Version 3.6.1125.0
+

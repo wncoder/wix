@@ -14,6 +14,15 @@
         <Button Name="WelcomeCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Close</Button>
         <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
     </Page>
+    <Page Name="Options">
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Options</Text>
+        <Text X="10" Y="55" Width="-10" Height="20" FontId="0">Install location</Text>
+        <Editbox Name="FolderEditbox" X="10" Y="75" Width="-100" Height="20" FontId="2" FileSystemAutoComplete="yes" />
+        <Button Name="BrowseButton" X="-10" Y="70" Width="80" Height="30" FontId="0">Browse</Button>
+        <Button Name="OptionsOkButton" X="-100" Y="-10" Width="80" Height="30" FontId="0">OK</Button>
+        <Button Name="OptionsCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Cancel</Button>
+        <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
+    </Page>
     <Page Name="Progress">
         <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Progress</Text>
         <Text X="10" Y="80" Width="-10" Height="20" FontId="2">[ProgressAction]: [ProgressPackageName]</Text>
@@ -29,7 +38,7 @@
         <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
     </Page>
     <Page Name="Finish">
-        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Succesful</Text>
+        <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Successful</Text>
         <Button Name="LaunchButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Launch</Button>
         <Button Name="RestartButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Restart</Button>
         <Button Name="FinishCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Finish</Button>

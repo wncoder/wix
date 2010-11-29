@@ -95,9 +95,10 @@ struct THEME_CONTROL
 
     HBITMAP hImage;
 
-    BOOL fHideWhenDisabled;
     DWORD dwStyle;
     DWORD dwExtendedStyle;
+    DWORD dwInternalStyle;
+
     DWORD dwFontId;
     DWORD dwFontHoverId;
     DWORD dwFontSelectedId;

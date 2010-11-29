@@ -30,6 +30,12 @@ static ULONG_PTR vgdiHookToken = 0;
 static HMODULE vhHyperlinkRegisteredModule = NULL;
 static HMODULE vhModuleRichEd = NULL;
 
+enum INTERNAL_CONTROL_STYLE
+{
+    INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED = 0x0001,
+    INTERNAL_CONTROL_STYLE_FILESYSTEM_AUTOCOMPLETE = 0x0002,
+};
+
 struct MEMBUFFER_FOR_RICHEDIT
 {
     BYTE* rgbData;
@@ -122,7 +128,7 @@ static HRESULT DrawProgressBar(
     __in DRAWITEMSTRUCT* pdis,
     __in const THEME_CONTROL* pControl
     );
-static void DrawHoverControl(
+static BOOL DrawHoverControl(
     __in HWND hWnd,
     __in BOOL fHover
     );
@@ -394,7 +400,7 @@ DAPI_(HRESULT) ThemeLoadControls(
 
         case THEME_CONTROL_TYPE_EDITBOX:
             wzWindowClass = WC_EDITW;
-            dwWindowBits |= WS_BORDER;
+            dwWindowBits |= ES_LEFT | ES_AUTOHSCROLL | WS_BORDER;
             break;
 
         case THEME_CONTROL_TYPE_HYPERLINK: // hyperlinks are basically just owner drawn buttons.
@@ -474,7 +480,14 @@ DAPI_(HRESULT) ThemeLoadControls(
 
             ::SetWindowLongPtrW(pControl->hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pControl));
 
-            if (THEME_CONTROL_TYPE_LISTVIEW == pControl->type)
+            if (THEME_CONTROL_TYPE_EDITBOX == pControl->type)
+            {
+                if (pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_FILESYSTEM_AUTOCOMPLETE)
+                {
+                    hr = ::SHAutoComplete(pControl->hWnd, SHACF_FILESYS_ONLY);
+                }
+            }
+            else if (THEME_CONTROL_TYPE_LISTVIEW == pControl->type)
             {
                 ::SendMessageW(pControl->hWnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, pControl->dwExtendedStyle);
 
@@ -841,12 +854,14 @@ DAPI_(void) ThemeShowPage(
             THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[i];
             HWND hWnd = pControl->hWnd;
 
-            if (pControl->fHideWhenDisabled && !::IsWindowEnabled(hWnd))
+            if ((pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED) && !::IsWindowEnabled(hWnd))
             {
-                nCmdShow = SW_HIDE;
+                ::ShowWindow(hWnd, SW_HIDE);
             }
-
-            ::ShowWindow(hWnd, nCmdShow);
+            else
+            {
+                ::ShowWindow(hWnd, nCmdShow);
+            }
 
             if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
             {
@@ -1028,8 +1043,7 @@ DAPI_(BOOL) ThemeHoverControl(
 
         if (pTheme->hwndHover && pTheme->hwndHover != hwndParent)
         {
-            DrawHoverControl(pTheme->hwndHover, TRUE);
-            fHovered = TRUE;
+            fHovered = DrawHoverControl(pTheme->hwndHover, TRUE);
         }
     }
 
@@ -1254,7 +1268,7 @@ DAPI_(HRESULT) ThemeGetTextControl(
     DWORD cchTextRead = 0;
 
     // Ensure the string has room for at least one character.
-    hr = StrMaxLength(psczText, reinterpret_cast<DWORD_PTR*>(&cchText));
+    hr = StrMaxLength(*psczText, reinterpret_cast<DWORD_PTR*>(&cchText));
     ExitOnFailure(hr, "Failed to get text buffer length.");
 
     if (0 == cchText)
@@ -1462,16 +1476,6 @@ static HRESULT ParseApplication(
     }
     ExitOnFailure(hr, "Failed to find application element.");
 
-    // Parse the optional window style.
-    hr = XmlGetAttributeNumberBase(pixn, L"HexStyle", 16, &pTheme->dwStyle);
-    ExitOnFailure(hr, "Failed to get theme window style (Window@HexStyle) attribute.");
-
-    if (S_FALSE == hr)
-    {
-        pTheme->dwStyle = WS_VISIBLE | WS_MINIMIZEBOX | WS_SYSMENU;
-        pTheme->dwStyle |= (0 <= pTheme->nSourceX && 0 <= pTheme->nSourceY) ? WS_POPUP : WS_OVERLAPPED;
-    }
-
     hr = XmlGetAttributeNumber(pixn, L"Width", reinterpret_cast<DWORD*>(&pTheme->nWidth));
     if (S_FALSE == hr)
     {
@@ -1571,6 +1575,16 @@ static HRESULT ParseApplication(
         }
     }
     ExitOnFailure(hr, "Failed to get application source Y attribute.");
+
+    // Parse the optional window style.
+    hr = XmlGetAttributeNumberBase(pixn, L"HexStyle", 16, &pTheme->dwStyle);
+    ExitOnFailure(hr, "Failed to get theme window style (Window@HexStyle) attribute.");
+
+    if (S_FALSE == hr)
+    {
+        pTheme->dwStyle = WS_VISIBLE | WS_MINIMIZEBOX | WS_SYSMENU;
+        pTheme->dwStyle |= (0 <= pTheme->nSourceX && 0 <= pTheme->nSourceY) ? WS_POPUP : WS_OVERLAPPED;
+    }
 
     hr = XmlGetAttributeNumber(pixn, L"StringId", reinterpret_cast<DWORD*>(&pTheme->uStringId));
     if (S_FALSE == hr)
@@ -2165,10 +2179,26 @@ static HRESULT ParseControl(
     }
     ExitOnFailure(hr, "Failed to tell if the control is visible.");
 
-    hr = XmlGetYesNoAttribute(pixn, L"HideWhenDisabled", &pControl->fHideWhenDisabled);
+    hr = XmlGetYesNoAttribute(pixn, L"HideWhenDisabled", &fValue);
     if (E_NOTFOUND != hr)
     {
         ExitOnFailure(hr, "Failed to parse if the control should be hidden when disabled.");
+
+        if (fValue)
+        {
+            pControl->dwInternalStyle |= INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED;
+        }
+    }
+
+    hr = XmlGetYesNoAttribute(pixn, L"FileSystemAutoComplete", &fValue);
+    if (E_NOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to parse if the control autocomplete.");
+
+        if (fValue)
+        {
+            pControl->dwInternalStyle |= INTERNAL_CONTROL_STYLE_FILESYSTEM_AUTOCOMPLETE;
+        }
     }
 
     hr = XmlGetAttributeNumber(pixn, L"StringId", reinterpret_cast<DWORD*>(&pControl->uStringId));
@@ -2646,24 +2676,33 @@ static HRESULT DrawProgressBar(
 }
 
 
-static void DrawHoverControl(
+static BOOL DrawHoverControl(
     __in HWND hWnd,
     __in BOOL fHover
     )
 {
+    BOOL fChangedHover = FALSE;
     THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
     AssertSz(pControl->hWnd == hWnd, "Expected control's window to be the same as the window's user data.");
 
-    if (fHover)
+    // Only hyperlinks and owner-drawn buttons have hover states.
+    if (THEME_CONTROL_TYPE_HYPERLINK == pControl->type ||
+        (THEME_CONTROL_TYPE_BUTTON == pControl->type && (pControl->hImage || pControl->nSourceX)))
     {
-        pControl->dwData |= THEME_CONTROL_DATA_HOVER;
-    }
-    else
-    {
-        pControl->dwData &= ~THEME_CONTROL_DATA_HOVER;
+        if (fHover)
+        {
+            pControl->dwData |= THEME_CONTROL_DATA_HOVER;
+        }
+        else
+        {
+            pControl->dwData &= ~THEME_CONTROL_DATA_HOVER;
+        }
+
+        ::InvalidateRect(pControl->hWnd, NULL, FALSE);
+        fChangedHover = TRUE;
     }
 
-    ::InvalidateRect(pControl->hWnd, NULL, FALSE);
+    return fChangedHover;
 }
 
 

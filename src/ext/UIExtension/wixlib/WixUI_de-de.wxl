@@ -151,9 +151,9 @@
     <String Id="MaintenanceTypeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Ändern, Reparieren oder Entfernen der Installation</String>
     <String Id="MaintenanceTypeDlgChangeText" Overridable="yes">Ermöglicht eine benutzerspezifische Anpassung der installierten Funktionen.</String>
     <String Id="MaintenanceTypeDlgChangeDisabledText" Overridable="yes">[ProductName] verfügt nicht über unabhängig voneinander auswählbare Funktionen.</String>
-    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Entfernt [ProductName] von Ihrem Computer.</String>
+    <String Id="MaintenanceTypeDlgRemoveText" Overridable="yes">Entfernt [ProductName] vom Computer.</String>
     <String Id="MaintenanceTypeDlgRemoveDisabledText" Overridable="yes">[ProductName] kann nicht entfernt werden.</String>
-    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repariert das zuletzt installierte Programm durch Berichtigen von fehlenden und beschädigten Dateien, Verknüpfungen und Registry-Einträgen.</String>
+    <String Id="MaintenanceTypeDlgRepairText" Overridable="yes">Repariert das zuletzt installierte Programm durch Berichtigen von fehlenden und beschädigten Dateien, Verknüpfungen und Registrierungseinträgen.</String>
     <String Id="MaintenanceTypeDlgRepairDisabledText" Overridable="yes">[ProductName] kann nicht repariert werden.</String>
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName]-Setup</String>
@@ -242,7 +242,7 @@
     <String Id="VerifyReadyDlgRepairText" Overridable="yes">Klicken Sie auf "Reparieren", um die Installation von [ProductName] zu reparieren. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Bereit zur Reparatur von [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">&amp;Entfernen</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klicken Sie auf "Entfernen", um [ProductName] von Ihrem Computer zu entfernen. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">Klicken Sie auf "Entfernen", um [ProductName] vom Computer zu entfernen. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Bereit zum Entfernen von [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">&amp;Aktualisieren</String>
     <String Id="VerifyReadyDlgUpdateText" Overridable="yes">Klicken Sie auf "Aktualisieren", um [ProductName] auf Ihrem Computer zu aktualisieren. Klicken Sie auf "Zurück", um die Installationseinstellungen zu prüfen oder zu ändern. Klicken Sie auf "Abbrechen", um den Assistenten zu beenden.</String>

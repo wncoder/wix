@@ -182,8 +182,7 @@
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">Дисковото пространство, необходимо за инсталирането, надвишава свободното дисково пространство.</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}Недостатъчно място на диска</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">Също така можете да забраните функцията за възстановяване на инсталиращата програма. Забраняването на възстановяването не позволява на инсталиращата програма да възстанови първоначалното състояние на компютъра, ако инсталацията бъде прекъсната по някакъв начин. 
-. Щракнете върху "Да", ако искате да рискувате със забраняване на възстановяването.</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">Също така можете да забраните функцията за възстановяване на инсталиращата програма. Забраняването на възстановяването не позволява на инсталиращата програма да възстанови първоначалното състояние на компютъра, ако инсталацията бъде прекъсната по някакъв начин. Щракнете върху "Да", ако искате да рискувате със забраняване на възстановяването.</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">Инсталиране на [ProductName]</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
