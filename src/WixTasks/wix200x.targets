@@ -1778,18 +1778,18 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
     </CreateItem>
 
-    <!-- If RelativeDir is not rooted and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
+    <!-- If RelativeDir is not rooted and not in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
     <CreateItem
       Include="@(Compile)"
-      Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(Compile.ObjectPath)' == '' "
+      Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(RelativeDir)%(FileName)%(Extension)' != '$(IntermediateOutputPath)%(FileName)%(Extension)' AND '%(Compile.ObjectPath)' == '' "
       AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)%(RelativeDir)">
       <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
     </CreateItem>
 
-    <!-- If RelativeDir is rooted and ObjectPath is undefined use IntermediateOutputPath -->
+    <!-- If RelativeDir is rooted or in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath -->
     <CreateItem
       Include="@(Compile)"
-      Condition=" '%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' AND '%(Compile.ObjectPath)' == '' "
+      Condition=" ('%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' OR '%(RelativeDir)%(FileName)%(Extension)' == '$(IntermediateOutputPath)%(FileName)%(Extension)') AND '%(Compile.ObjectPath)' == '' "
       AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)">
       <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
     </CreateItem>

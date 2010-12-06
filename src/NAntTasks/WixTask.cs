@@ -61,7 +61,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.NAntTasks
             this.ExeName = exeName;
 
             // Initialise the exeDirectory to InstallRoot of the WiX installation
-            using (RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Installer XML\3.0"))
+            using (RegistryKey regKey = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Installer XML\3.5"))
             {
                 if (null != regKey)
                 {

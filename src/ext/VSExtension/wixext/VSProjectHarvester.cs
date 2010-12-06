@@ -809,7 +809,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             }
             else
             {
-                Uri nextRelativeUri = new Uri(relativeUri.ToString().Substring(firstSubDirName.Length + 1), UriKind.Relative);
+                Uri nextRelativeUri = new Uri(Uri.UnescapeDataString(relativeUri.ToString()).Substring(firstSubDirName.Length + 1), UriKind.Relative);
                 return GetSubDirElement(subDir.ElementAsParent, nextRelativeUri);
             }
         }

@@ -754,7 +754,7 @@
     <if test="${BuildVC8 and (not directory::exists(dir.vs2005.bin.x64) or not directory::exists(dir.vs2005.lib.x64)
               or not file::exists(path::combine(dir.vs2005.bin.x64, 'cl.exe')))}">
       <echo message="The x64 components necessary for compilation were found in Visual Studio 2008, but not Visual Studio 2005. Visual Studio 2005-specific portions of the build will be excluded from the build." />
-      <property name="BuildVC8" value=""/>
+      <property name="BuildVC8" value="false"/>
     </if>
 
     <if test="${ia64 and

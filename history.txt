@@ -1444,3 +1444,14 @@ EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with ERROR_SHARING_VIOLATIO
 
 WixBuild: Version 3.5.2325.0
 
+RobMen: SFBUG:3123565 - update NAntTask to use correct registry key to find
+                        toolset.
+
+EricStJ: SFBUG:3123902 - Candle uses wrong object dir when item is in intermed. dir.
+
+RobMen: SFBUG:3124544 - fix project harvesting.
+
+RobMen: SFBUG:3125429 - fix VS2008 build when no VS2005 x64 not present.
+
+WixBuild: Version 3.5.2403.0
+
