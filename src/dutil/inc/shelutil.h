@@ -13,7 +13,7 @@
 // </copyright>
 // 
 // <summary>
-//    Header for proces helper functions.
+//    Header for shell helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

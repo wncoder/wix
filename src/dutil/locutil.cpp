@@ -56,6 +56,7 @@ extern "C" HRESULT DAPI LocLoadFromFile(
 
 LExit:
     ReleaseObject(pixd);
+
     return hr;
 }
 
@@ -69,7 +70,7 @@ extern "C" void DAPI LocFree(
 {
     if (pLocStringSet)
     {
-        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; idx++)
+        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
         {
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzID);
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
@@ -92,7 +93,7 @@ extern "C" HRESULT DAPI LocLocalizeString(
     Assert(ppwzInput && pLocStringSet);
     HRESULT hr = S_OK;
 
-    for (DWORD i = 0; i < pLocStringSet->cLocStrings; i++)
+    for (DWORD i = 0; i < pLocStringSet->cLocStrings; ++i)
     {
         hr = StrReplaceStringAll(ppwzInput, pLocStringSet->rgLocStrings[i].wzID, pLocStringSet->rgLocStrings[i].wzText);
         ExitOnFailure(hr, "Localizing string failed.");
@@ -145,7 +146,7 @@ static HRESULT ParseWxlStrings(
     IXMLDOMNodeList* pixnl = NULL;
     DWORD dwIdx = 0;
 
-    hr = pElement->get_childNodes(&pixnl);
+    hr = XmlSelectNodes(pElement, L"*", &pixnl);
     ExitOnLastError(hr, "Failed to get child nodes of Wxl File.");
 
     hr = pixnl->get_length(reinterpret_cast<long*>(&pLocStringSet->cLocStrings));
@@ -159,7 +160,7 @@ static HRESULT ParseWxlStrings(
         hr = ParseWxlString(pixn, dwIdx, pLocStringSet);
         ExitOnFailure(hr, "Failed to parse localization string.");
 
-        dwIdx++;
+        ++dwIdx;
         ReleaseNullObject(pixn);
     }
 
@@ -169,7 +170,7 @@ static HRESULT ParseWxlStrings(
 LExit:
     if (FAILED(hr) && pLocStringSet->rgLocStrings)
     {
-        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; idx++)
+        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
         {
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzID);
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
@@ -180,6 +181,7 @@ LExit:
 
     ReleaseObject(pixn);
     ReleaseObject(pixnl);
+
     return hr;
 }
 
@@ -224,5 +226,6 @@ static HRESULT ParseWxlString(
 
 LExit:
     ReleaseBSTR(bstrText);
+
     return hr;
 }

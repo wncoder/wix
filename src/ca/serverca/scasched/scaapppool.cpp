@@ -189,7 +189,7 @@ HRESULT ScaAppPoolRead(
         hr = WcaGetRecordString(hRec, apqManagedRuntimeVersion, &pwzData);
         ExitOnFailure(hr, "failed to get AppPool.ManagedRuntimeVersion");
         hr = ::StringCchCopyW(psap->wzManagedRuntimeVersion, countof(psap->wzManagedRuntimeVersion), pwzData);
-        ExitOnFailure1(hr, "failed to copy ManagedRuntimeVersion value: %S", pwzData);
+        ExitOnFailure1(hr, "failed to copy ManagedRuntimeVersion value: %ls", pwzData);
 
     }
 
@@ -257,7 +257,7 @@ static HRESULT AppPoolExists(
     HRESULT hr = S_OK;
     WCHAR wzSubKey[METADATA_MAX_NAME_LEN];
 
-    for (DWORD dwIndex = 0; SUCCEEDED(hr); dwIndex++)
+    for (DWORD dwIndex = 0; SUCCEEDED(hr); ++dwIndex)
     {
         hr = piMetabase->EnumKeys(METADATA_MASTER_ROOT_HANDLE, L"/LM/W3SVC/AppPools", wzSubKey, dwIndex);
         if (SUCCEEDED(hr) && 0 == lstrcmpW(wzSubKey, wzAppPool))
@@ -387,7 +387,7 @@ HRESULT ScaWriteAppPool(
         while (NULL != (wz = wcschr(wz, L',')))
         {
             *wz = L'\0';
-            wz++;
+            ++wz;
         }
 
         hr = ScaWriteMetabaseValue(piMetabase, psap->wzKey, NULL, MD_APPPOOL_PERIODIC_RESTART_SCHEDULE, METADATA_INHERIT, IIS_MD_UT_SERVER, MULTISZ_METADATA, (LPVOID)pwzValue);
@@ -422,7 +422,7 @@ HRESULT ScaWriteAppPool(
         ExitOnFailure(hr, "failed to set request queue limit value");
     }
 
-    if(*psap->wzCpuMon)
+    if (*psap->wzCpuMon)
     {
         hr = StrAllocString(&pwzValue, psap->wzCpuMon, 0);
         ExitOnFailure(hr, "failed to allocate CPUMonitor string");
@@ -438,11 +438,11 @@ HRESULT ScaWriteAppPool(
         }
         if (wz && L',' == *wz)
         {
-            wz++;
+            ++wz;
             dwRefreshMinutes = wcstoul(wz, &wz, 10);
             if (wz && L',' == *wz)
             {
-                wz++;
+                ++wz;
                 dwAction = wcstoul(wz, &wz, 10);
             }
         }

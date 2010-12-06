@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Restart Manager utility funtions.
+//    Restart Manager utility functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -213,7 +213,7 @@ extern "C" HRESULT DAPI RmuAddProcessesByName(
     hr = ProcFindAllIdsFromExeName(wzProcessName, &pdwProcessIds, &cProcessIds);
     ExitOnFailure1(hr, "Failed to enumerate all the processes by name %ls.", wzProcessName);
 
-    for (DWORD i = 0; i < cProcessIds; i++)
+    for (DWORD i = 0; i < cProcessIds; ++i)
     {
         hr = RmuAddProcessById(pSession, pdwProcessIds[i]);
         ExitOnFailure2(hr, "Failed to add process %ls (%d) to the Restart Manager session.", wzProcessName, pdwProcessIds[i]);

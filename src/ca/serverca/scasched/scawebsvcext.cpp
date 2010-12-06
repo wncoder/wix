@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scawebsvcext.h" company="Microsoft">
+// <copyright file="scawebsvcext.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -150,7 +150,7 @@ HRESULT __stdcall ScaWebSvcExtCommit(
     DWORD cbWebSvcExtList = 0;
     DWORD_PTR cchWebSvcExtList = 0;
 
-    if(!psWseList)
+    if (!psWseList)
     {
         WcaLog(LOGMSG_VERBOSE, "Skipping ScaWebSvcExtCommit() because there are no web service extensions in the list");
         ExitFunction();
@@ -318,11 +318,11 @@ static HRESULT ScaCheckWebSvcExtValue(
     mr.dwMDUserType  = IIS_MD_UT_SERVER;
 
     hr = piMetabase->GetData(METADATA_MASTER_ROOT_HANDLE, vcsWebSvcExtRoot, &mr, &cch);
-    if(HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) == hr)
+    if (HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) == hr)
     {
         hr = S_OK;
     }
-    else if(MD_ERROR_DATA_NOT_FOUND == hr)
+    else if (MD_ERROR_DATA_NOT_FOUND == hr)
     {
         hr = S_FALSE;
     }

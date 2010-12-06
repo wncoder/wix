@@ -87,12 +87,12 @@ HRESULT ScaPropertyRead(
         hr = WcaGetRecordString(hRec, pqProperty, &pwzData);
         ExitOnFailure(hr, "failed to get IIsProperty.Property");
         hr = ::StringCchCopyW(pss->wzProperty, countof(pss->wzProperty), pwzData);
-        ExitOnFailure1(hr, "failed to copy Property name: %S", pwzData);
+        ExitOnFailure1(hr, "failed to copy Property name: %ls", pwzData);
 
         hr = WcaGetRecordString(hRec, pqValue, &pwzData);
         ExitOnFailure(hr, "failed to get IIsProperty.Value");
         hr = ::StringCchCopyW(pss->wzValue, countof(pss->wzValue), pwzData);
-        ExitOnFailure1(hr, "failed to copy Property value: %S", pwzData);
+        ExitOnFailure1(hr, "failed to copy Property value: %ls", pwzData);
 
         hr = WcaGetRecordInteger(hRec, pqAttributes, &pss->iAttributes);
         ExitOnFailure(hr, "failed to get IIsProperty.Attributes");
@@ -100,7 +100,7 @@ HRESULT ScaPropertyRead(
         hr = WcaGetRecordString(hRec, pqComponent, &pwzData);
         ExitOnFailure(hr, "failed to get IIsProperty.Component");
         hr = ::StringCchCopyW(pss->wzComponent, countof(pss->wzComponent), pwzData);
-        ExitOnFailure1(hr, "failed to copy component name: %S", pwzData);
+        ExitOnFailure1(hr, "failed to copy component name: %ls", pwzData);
 
         hr = WcaGetRecordInteger(hRec, pqInstalled, (int *)&pss->isInstalled);
         ExitOnFailure(hr, "Failed to get Component installed state for filter");
@@ -139,7 +139,7 @@ HRESULT ScaPropertyInstall(
         if (WcaIsInstalling(psp->isInstalled, psp->isAction))
         {
             hr = ScaWriteProperty(piMetabase, psp);
-            ExitOnFailure1(hr, "failed to write Property '%S' to metabase", psp->wzProperty);
+            ExitOnFailure1(hr, "failed to write Property '%ls' to metabase", psp->wzProperty);
         }
     }
 
@@ -163,7 +163,7 @@ HRESULT ScaPropertyUninstall(
         if (WcaIsUninstalling(psp->isInstalled, psp->isAction))
         {
             hr = ScaRemoveProperty(piMetabase, psp);
-            ExitOnFailure1(hr, "Failed to remove Property '%S' from metabase", psp->wzProperty);
+            ExitOnFailure1(hr, "Failed to remove Property '%ls' from metabase", psp->wzProperty);
         }
     }
 

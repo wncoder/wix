@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scaweb.h" company="Microsoft">
+// <copyright file="scaweb.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -271,7 +271,7 @@ HRESULT ScaWebsRead(
                 if (S_FALSE == hr)
                     psw->swaExtraAddresses[psw->cExtraAddresses].fSecure = FALSE;
 
-                psw->cExtraAddresses++;
+                ++psw->cExtraAddresses;
             }
         }
 
@@ -658,7 +658,7 @@ static HRESULT ScaWebFindBase(
             mrCompare.pbMDData = NULL;
 
             // Loop through the "web keys" looking for the "IIsWebServer" key that matches our search criteria.
-            for (DWORD dwIndex = 0; SUCCEEDED(hr); dwIndex++)
+            for (DWORD dwIndex = 0; SUCCEEDED(hr); ++dwIndex)
             {
                 hr = piMetabase->EnumKeys(METADATA_MASTER_ROOT_HANDLE, L"/LM/W3SVC", wzSubkey, dwIndex);
                 if (SUCCEEDED(hr))
@@ -817,7 +817,7 @@ static HRESULT ScaWebFindFreeBase(
         ExitOnNull(prgdwSubKeys, hr, E_OUTOFMEMORY, "failed to allocate space for web site keys");
 
         // loop through the "web keys" looking for the "IIsWebServer" key that matches wzWeb
-        for (DWORD dwIndex = 0; SUCCEEDED(hr); dwIndex++)
+        for (DWORD dwIndex = 0; SUCCEEDED(hr); ++dwIndex)
         {
             hr = piMetabase->EnumKeys(METADATA_MASTER_ROOT_HANDLE, L"/LM/W3SVC", wzSubkey, dwIndex);
             if (SUCCEEDED(hr))
@@ -844,7 +844,7 @@ static HRESULT ScaWebFindFreeBase(
                     }
 
                     prgdwSubKeys[cSubKeysFilled] = wcstol(wzSubkey, NULL, 10);
-                    cSubKeysFilled++;
+                    ++cSubKeysFilled;
                     Sort(prgdwSubKeys, cSubKeysFilled);
                 }
             }
@@ -868,7 +868,7 @@ static HRESULT ScaWebFindFreeBase(
 
             // find the last slash in the web root because the root # is after it
             pcchSlash = NULL;
-            for (CONST WCHAR *pcch = psw->wzWebBase; pcch && *pcch; pcch++)
+            for (CONST WCHAR *pcch = psw->wzWebBase; pcch && *pcch; ++pcch)
             {
                 if (L'/' == *pcch)
                 {
@@ -879,7 +879,7 @@ static HRESULT ScaWebFindFreeBase(
             ExitOnNull1(pcchSlash, hr, E_INVALIDARG, "Failed to find a slash in the web root: %ls", psw->wzWebBase);
 
             prgdwSubKeys[cSubKeysFilled] = wcstol(pcchSlash + 1, NULL, 10);
-            cSubKeysFilled++;
+            ++cSubKeysFilled;
             Sort(prgdwSubKeys, cSubKeysFilled);
 
             if (cSubKeysFilled >= cSubKeys)
@@ -892,7 +892,7 @@ static HRESULT ScaWebFindFreeBase(
 
         // Find the lowest free web root.
         dwKey = (-1 == iSiteId) ? SiteIdFromDescription(wzDescription) : 1;
-        for (DWORD i = 0; i < cSubKeysFilled; i++)
+        for (DWORD i = 0; i < cSubKeysFilled; ++i)
         {
             if (dwKey == prgdwSubKeys[i])
             {
@@ -992,7 +992,7 @@ static HRESULT ScaWebWrite(
         cchPcchNext -= lstrlenW(wzBinding) + 1;
     }
 
-    for (ui = 0; ui < psw->cExtraAddresses; ui++)
+    for (ui = 0; ui < psw->cExtraAddresses; ++ui)
     {
         // set the IP address appropriately
         if (0 == lstrcmpW(psw->swaExtraAddresses[ui].wzIP, L"*"))
@@ -1042,7 +1042,7 @@ static HRESULT ScaWebWrite(
     ExitOnFailure(hr, "Failed to write description for Web");
 
     ui = psw->iConnectionTimeout;
-    if(MSI_NULL_INTEGER != ui)
+    if (MSI_NULL_INTEGER != ui)
     {
         hr = ScaWriteMetabaseValue(piMetabase, psw->wzWebBase, L"", MD_CONNECTION_TIMEOUT, METADATA_NO_ATTRIBUTES, IIS_MD_UT_SERVER, DWORD_METADATA, (LPVOID)((DWORD_PTR)ui));
         ExitOnFailure(hr, "Failed to write connection timeout for Web");
@@ -1188,7 +1188,7 @@ static void Sort(
     int i, j;
     DWORD dwData;
 
-    for (i = 1; i < cArray; i++)
+    for (i = 1; i < cArray; ++i)
     {
         dwData = dwArray[i];
 

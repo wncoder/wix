@@ -177,7 +177,7 @@ static HRESULT ParseRssDocument(
     )
 {
     Assert(pixd);
-    Assert (ppChannel);
+    Assert(ppChannel);
 
     HRESULT hr = S_OK;
     IXMLDOMElement *pRssElement = NULL;
@@ -241,7 +241,7 @@ static HRESULT ParseRssChannel(
     )
 {
     Assert(pixnChannel);
-    Assert (ppChannel);
+    Assert(ppChannel);
 
     HRESULT hr = S_OK;
     IXMLDOMNodeList *pNodeList = NULL;
@@ -313,12 +313,12 @@ static HRESULT ParseRssChannel(
             hr = ParseRssItem(pNode, cItems, pNewChannel);
             ExitOnFailure(hr, "Failed to parse RSS item.");
 
-            cItems++;
+            ++cItems;
         }
         else
         {
             hr = ParseRssUnknownElement(pNode, &pNewChannel->pUnknownElements);
-            ExitOnFailure1(hr, "Failed to parse unknown RSS channel element: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Failed to parse unknown RSS channel element: %ls", bstrNodeName);
         }
 
         ReleaseNullBSTR(bstrNodeValue);
@@ -438,7 +438,7 @@ static HRESULT ParseRssItem(
         else
         {
             hr = ParseRssUnknownElement(pNode, &pItem->pUnknownElements);
-            ExitOnFailure1(hr, "Failed to parse unknown RSS item element: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Failed to parse unknown RSS item element: %ls", bstrNodeName);
         }
 
         ReleaseNullBSTR(bstrNodeValue);

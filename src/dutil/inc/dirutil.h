@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Directory helper funtions.
+//    Directory helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

@@ -93,7 +93,7 @@ HRESULT ScaWebErrorRead(
 
         // If they've specified both a file and a URL, that's invalid
         if (*(pswe->wzFile) && *(pswe->wzURL))
-            ExitOnFailure2(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "Both File and URL specified for web error.  File: %S, URL: %S", pswe->wzFile, pswe->wzURL);
+            ExitOnFailure2(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "Both File and URL specified for web error.  File: %ls, URL: %ls", pswe->wzFile, pswe->wzURL);
     }
 
     if (E_NOMOREITEMS == hr)
@@ -214,7 +214,7 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
         // we can walk up key by key and look for custom errors to inherit
 
         hr = StrAllocConcat(&pwzSearchKey, wzRoot, 0);
-        ExitOnFailure1(hr, "Failed to copy root string: %S", wzRoot);
+        ExitOnFailure1(hr, "Failed to copy root string: %ls", wzRoot);
 
         pwz = pwzSearchKey + lstrlenW(pwzSearchKey);
 
@@ -233,7 +233,7 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
             hr = MetaGetValue(piMetabase, METADATA_MASTER_ROOT_HANDLE, pwzSearchKey, &mr);
             if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || MD_ERROR_DATA_NOT_FOUND == hr)
                 hr = S_FALSE;
-            ExitOnFailure1(hr, "failed to discover default error values to start with for web root: %S while walking up the tree", wzRoot);
+            ExitOnFailure1(hr, "failed to discover default error values to start with for web root: %ls while walking up the tree", wzRoot);
 
             if (S_OK == hr)
             {
@@ -250,12 +250,12 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
     {
         pwzErrors = reinterpret_cast<LPWSTR>(mr.pbMDData);
     }
-    ExitOnFailure1(hr, "failed to discover default error values to start with for web root: %S", wzRoot);
+    ExitOnFailure1(hr, "failed to discover default error values to start with for web root: %ls", wzRoot);
 
     // The above code should have come up with some value to start pwzErrors off with.  Make sure it did.
     if (NULL == pwzErrors)
     {
-        ExitOnFailure1(hr = E_UNEXPECTED, "failed to discover default error values to start with for web root: %S", wzRoot);
+        ExitOnFailure1(hr = E_UNEXPECTED, "failed to discover default error values to start with for web root: %ls", wzRoot);
     }
 
     // Loop through the web errors
@@ -277,7 +277,7 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
         }
 
         hr = MultiSzFindSubstring(pwzErrors, pwzCodeSubCode, &dwFoundCodeSubCodeIndex, &wzFoundCodeSubCode);
-        ExitOnFailure1(hr, "failed to find existing error code,subcode: %S", pwzCodeSubCode);
+        ExitOnFailure1(hr, "failed to find existing error code,subcode: %ls", pwzCodeSubCode);
 
         // If we didn't find this error code/sub code pair in the list already, make sure it's acceptable to add
         if (S_FALSE == hr)
@@ -292,11 +292,11 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
 
             // We don't care where it is, just whether it's there or not
             hr = MultiSzFindSubstring(pwzAcceptableErrors, pwzAcceptableCodeSubCode, NULL, NULL);
-            ExitOnFailure1(hr, "failed to find whether or not error code, subcode: %S is supported", pwzCodeSubCode);
+            ExitOnFailure1(hr, "failed to find whether or not error code, subcode: %ls is supported", pwzCodeSubCode);
 
             if (S_FALSE == hr)
             {
-                WcaLog(LOGMSG_VERBOSE, "Skipping error code, subcode: %S because it is not supported by the server.", pwzCodeSubCode);
+                WcaLog(LOGMSG_VERBOSE, "Skipping error code, subcode: %ls because it is not supported by the server.", pwzCodeSubCode);
                 continue;
             }
 
@@ -308,18 +308,18 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
         if (*(pswe->wzFile))
         {
             hr = StrAllocFormatted(&pwzNewError, L"%s,FILE,%s", pwzCodeSubCode, pswe->wzFile);
-            ExitOnFailure2(hr, "failed to create new error code string with code,subcode: %S, file: %S", pwzCodeSubCode, pswe->wzFile);
+            ExitOnFailure2(hr, "failed to create new error code string with code,subcode: %ls, file: %ls", pwzCodeSubCode, pswe->wzFile);
         }
         else if (*(pswe->wzURL))
         {
             hr = StrAllocFormatted(&pwzNewError, L"%s,URL,%s", pwzCodeSubCode, pswe->wzURL);
-            ExitOnFailure2(hr, "failed to create new error code string with code,subcode: %S, file: %S", pwzCodeSubCode, pswe->wzFile);
+            ExitOnFailure2(hr, "failed to create new error code string with code,subcode: %ls, file: %ls", pwzCodeSubCode, pswe->wzFile);
         }
         else if (fOldValueFound)
         {
             // If no File or URL was specified, they want a default error so remove the old value from the MULTISZ and move on
             hr = MultiSzRemoveString(&pwzErrors, dwFoundCodeSubCodeIndex);
-            ExitOnFailure1(hr, "failed to remove string for error code sub code: %S in order to make it 'default'", pwzCodeSubCode);
+            ExitOnFailure1(hr, "failed to remove string for error code sub code: %ls in order to make it 'default'", pwzCodeSubCode);
             continue;
         }
 
@@ -327,12 +327,12 @@ HRESULT ScaWriteWebError(IMSAdminBase* piMetabase, int iParentType, LPCWSTR wzRo
         if (fOldValueFound)
         {
             hr = MultiSzReplaceString(&pwzErrors, dwFoundCodeSubCodeIndex, pwzNewError);
-            ExitOnFailure1(hr, "failed to replace old error string with new error string for error code,subcode: %S", pwzCodeSubCode);
+            ExitOnFailure1(hr, "failed to replace old error string with new error string for error code,subcode: %ls", pwzCodeSubCode);
         }
         else
         {
             hr = MultiSzPrepend(&pwzErrors, NULL, pwzNewError);
-            ExitOnFailure1(hr, "failed to prepend new error string for error code,subcode: %S", pwzCodeSubCode);
+            ExitOnFailure1(hr, "failed to prepend new error string for error code,subcode: %ls", pwzCodeSubCode);
         }
     }
 
@@ -381,7 +381,7 @@ HRESULT ScaWebErrorCheckList(SCA_WEB_ERROR* psweList)
     
     while (psweList)
     {
-        WcaLog(LOGMSG_STANDARD, "WebError code: %d subcode: %d for parent: %S not used!", psweList->iErrorCode, psweList->iSubCode, psweList->wzParentValue);
+        WcaLog(LOGMSG_STANDARD, "WebError code: %d subcode: %d for parent: %ls not used!", psweList->iErrorCode, psweList->iSubCode, psweList->wzParentValue);
         psweList = psweList->psweNext;
     }
 

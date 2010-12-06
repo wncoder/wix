@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    ATOM helper funtions.
+//    ATOM helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

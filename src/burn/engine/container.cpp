@@ -239,7 +239,7 @@ extern "C" HRESULT ContainerOpen(
 
     // open container file
     pContext->hFile = ::CreateFileW(wzFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    ExitOnInvalidHandleWithLastError1(pContext->hFile, hr, "Failed to open file: %S", wzFilePath);
+    ExitOnInvalidHandleWithLastError1(pContext->hFile, hr, "Failed to open file: %ls", wzFilePath);
 
     // if it is a container attached to an executable, read container header
     if (pContainer->fAttached)
@@ -264,7 +264,7 @@ extern "C" HRESULT ContainerOpen(
     else
     {
         hr = FileSizeByHandle(pContext->hFile, (LONGLONG*)&pContext->qwSize);
-        ExitOnFailure1(hr, "Failed to check size of file %S by handle", wzFilePath);
+        ExitOnFailure1(hr, "Failed to check size of file %ls by handle", wzFilePath);
     }
 
     // open the archive

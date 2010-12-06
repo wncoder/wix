@@ -125,7 +125,7 @@ extern "C" HRESULT DAPI DictCreateWithEmbeddedKey(
     while (shHandle->dwBucketSizeIndex < (countof(MAX_BUCKET_SIZES)-1) &&
            MAX_BUCKET_SIZES[shHandle->dwBucketSizeIndex] < dwNumExpectedItems * MAX_ITEMS_TO_BUCKETS_RATIO)
     {
-        shHandle->dwBucketSizeIndex++;
+        ++shHandle->dwBucketSizeIndex;
     }
 
     // Finally, allocate our initial buckets
@@ -167,7 +167,7 @@ extern "C" HRESULT DAPI DictCreateStringList(
     while (shHandle->dwBucketSizeIndex < (countof(MAX_BUCKET_SIZES)-1) &&
            MAX_BUCKET_SIZES[shHandle->dwBucketSizeIndex] < dwNumExpectedItems * MAX_ITEMS_TO_BUCKETS_RATIO)
     {
-        shHandle->dwBucketSizeIndex++;
+        ++shHandle->dwBucketSizeIndex;
     }
 
     // Finally, allocate our initial buckets
@@ -201,8 +201,8 @@ extern "C" HRESULT DAPI DictAddKey(
     hr = GetInsertIndex(shHandle, pszString, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
-    shHandle->dwNumItems++;
-    shHandle->dwNumItemsInList++;
+    ++shHandle->dwNumItems;
+    ++shHandle->dwNumItemsInList;
     hr = MemEnsureArraySize(reinterpret_cast<void **>(&(shHandle->ppvItemList)), shHandle->dwNumItemsInList, sizeof(void *), 1000);
     ExitOnFailure(hr, "Failed to resize list of items in dictionary");
 
@@ -240,7 +240,7 @@ extern "C" HRESULT DAPI DictAddValue(
     hr = GetInsertIndex(shHandle, pszString, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
-    shHandle->dwNumItems++;
+    ++shHandle->dwNumItems;
     shHandle->ppvBuckets[dwIndex] = pvValue;
 
 LExit:
@@ -302,7 +302,7 @@ extern "C" void DAPI DictDestroy(
 
     if (DICT_STRING_LIST == shHandle->dtType)
     {
-        for (i = 0; i < shHandle->dwNumItemsInList; i++)
+        for (i = 0; i < shHandle->dwNumItemsInList; ++i)
         {
             ReleaseStr(reinterpret_cast<LPWSTR>(shHandle->ppvItemList[i]));
         }
@@ -407,7 +407,7 @@ static HRESULT GetInsertIndex(
     // If we collide, keep iterating forward from our intended position, even wrapping around to zero, until we find an empty bucket
     while (NULL != shHandle->ppvBuckets[dwIndexCandidate])
     {
-        dwIndexCandidate++;
+        ++dwIndexCandidate;
 
         // If we got to the end of the array, wrap around to zero index
         if (dwIndexCandidate >= MAX_BUCKET_SIZES[shHandle->dwBucketSizeIndex])
@@ -442,7 +442,7 @@ static HRESULT GetIndex(
 
     while (!IsMatchExact(shHandle, dwIndexCandidate, pszString))
     {
-        dwIndexCandidate++;
+        ++dwIndexCandidate;
 
         // If we got to the end of the array, wrap around to zero index
         if (dwIndexCandidate >= MAX_BUCKET_SIZES[shHandle->dwBucketSizeIndex])

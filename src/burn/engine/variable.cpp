@@ -181,7 +181,7 @@ extern "C" HRESULT VariableInitialize(
         BUILT_IN_VARIABLE_DECLARATION* pBuiltInVariable = &vrgBuiltInVariables[i];
 
         hr = AddBuiltInVariable(pVariables, pBuiltInVariable->wzVariable, pBuiltInVariable->pfnInitialize, pBuiltInVariable->dwpInitializeData);
-        ExitOnFailure1(hr, "Failed to add built-in variable: %S.", pBuiltInVariable->wzVariable);
+        ExitOnFailure1(hr, "Failed to add built-in variable: %ls.", pBuiltInVariable->wzVariable);
     }
 
 LExit:
@@ -249,7 +249,7 @@ extern "C" HRESULT VariablesParseFromXml(
         else
         {
             hr = E_INVALIDARG;
-            ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+            ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
         }
 
         // change value variant to correct type
@@ -307,10 +307,10 @@ extern "C" HRESULT VariableGetNumeric(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetNumeric(&pVariable->Value, pllValue);
-    ExitOnFailure1(hr, "Failed to get value as numeric for variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value as numeric for variable: %ls", wzVariable);
 
 LExit:
     ::LeaveCriticalSection(&pVariables->csAccess);
@@ -330,10 +330,10 @@ extern "C" HRESULT VariableGetString(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetString(&pVariable->Value, psczValue);
-    ExitOnFailure1(hr, "Failed to get value as string for variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value as string for variable: %ls", wzVariable);
 
 LExit:
     ::LeaveCriticalSection(&pVariables->csAccess);
@@ -353,10 +353,10 @@ extern "C" HRESULT VariableGetVersion(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetVersion(&pVariable->Value, pqwValue);
-    ExitOnFailure1(hr, "Failed to get value as version for variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value as version for variable: %ls", wzVariable);
 
 LExit:
     ::LeaveCriticalSection(&pVariables->csAccess);
@@ -376,10 +376,10 @@ extern "C" HRESULT VariableGetVariant(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    ExitOnFailure1(hr, "Failed to get value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantCopy(&pVariable->Value, pValue);
-    ExitOnFailure1(hr, "Failed to copy value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to copy value of variable: %ls", wzVariable);
 
 LExit:
     ::LeaveCriticalSection(&pVariables->csAccess);
@@ -399,19 +399,19 @@ extern "C" HRESULT VariableGetFormatted(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    ExitOnFailure1(hr, "Failed to get variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to get variable: %ls", wzVariable);
 
     // Non-builtin strings may need to get expanded... non-strings and builtin
     // variables are never expanded.
     if (BURN_VARIANT_TYPE_STRING == pVariable->Value.Type && !pVariable->fBuiltIn)
     {
         hr = VariableFormatString(pVariables, pVariable->Value.sczValue, psczValue, NULL);
-        ExitOnFailure2(hr, "Failed to format value '%S' of variable: %S", pVariable->Value.sczValue, wzVariable);
+        ExitOnFailure2(hr, "Failed to format value '%ls' of variable: %ls", pVariable->Value.sczValue, wzVariable);
     }
     else
     {
         hr = BVariantGetString(&pVariable->Value, psczValue);
-        ExitOnFailure1(hr, "Failed to get value as string for variable: %S", wzVariable);
+        ExitOnFailure1(hr, "Failed to get value as string for variable: %ls", wzVariable);
     }
 
 LExit:
@@ -480,23 +480,23 @@ extern "C" HRESULT VariableSetVariant(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = FindVariableIndexByName(pVariables, wzVariable, &iVariable);
-    ExitOnFailure1(hr, "Failed to find variable value '%S'.", wzVariable);
+    ExitOnFailure1(hr, "Failed to find variable value '%ls'.", wzVariable);
 
     // insert element if not found
     if (S_FALSE == hr)
     {
         hr = InsertVariable(pVariables, wzVariable, iVariable);
-        ExitOnFailure1(hr, "Failed to insert variable '%S'.", wzVariable);
+        ExitOnFailure1(hr, "Failed to insert variable '%ls'.", wzVariable);
     }
     else if (pVariables->rgVariables[iVariable].fBuiltIn)
     {
         hr = E_INVALIDARG;
-        ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %S", wzVariable);
+        ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
     }
 
     // update variable value
     hr = BVariantCopy(pVariant, &pVariables->rgVariables[iVariable].Value);
-    ExitOnFailure1(hr, "Failed to set value of variable: %S", wzVariable);
+    ExitOnFailure1(hr, "Failed to set value of variable: %ls", wzVariable);
 
 LExit:
     ::LeaveCriticalSection(&pVariables->csAccess);
@@ -926,7 +926,7 @@ static HRESULT GetVariable(
     BURN_VARIABLE* pVariable = NULL;
 
     hr = FindVariableIndexByName(pVariables, wzVariable, &iVariable);
-    ExitOnFailure1(hr, "Failed to find variable value '%S'.", wzVariable);
+    ExitOnFailure1(hr, "Failed to find variable value '%ls'.", wzVariable);
 
     if (S_FALSE == hr)
     {
@@ -939,7 +939,7 @@ static HRESULT GetVariable(
     if (BURN_VARIANT_TYPE_NONE == pVariable->Value.Type && pVariable->fBuiltIn)
     {
         hr = pVariable->pfnInitialize(pVariable->dwpInitializeData, &pVariable->Value);
-        ExitOnFailure1(hr, "Failed to initialize built-in variable value '%S'.", wzVariable);
+        ExitOnFailure1(hr, "Failed to initialize built-in variable value '%ls'.", wzVariable);
     }
 
     *ppVariable = pVariable;

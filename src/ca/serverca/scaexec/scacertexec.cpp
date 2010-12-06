@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scacertexec.h" company="Microsoft">
+// <copyright file="scacertexec.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -172,7 +172,7 @@ static HRESULT ExecuteCertificateOperation(
     hr = WcaGetProperty(L"CustomActionData", &pwzCaData);
     ExitOnFailure(hr, "Failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzCaData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzCaData);
 
     pwz = pwzCaData;
     hr = WcaReadStringFromCaData(&pwz, &pwzName);
@@ -192,7 +192,7 @@ static HRESULT ExecuteCertificateOperation(
 
     // Open the right store.
     hCertStore = ::CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, dwStoreLocation, pwzStore);
-    MessageExitOnNullWithLastError1(hCertStore, hr, msierrCERTFailedOpen, "Failed to open certificate store: %S", pwzStore);
+    MessageExitOnNullWithLastError1(hCertStore, hr, msierrCERTFailedOpen, "Failed to open certificate store: %ls", pwzStore);
 
     if (SCA_ACTION_INSTALL == saAction) // install operations need more data
     {
@@ -263,10 +263,10 @@ static HRESULT InstallCertificatePackage(
 
     if (!::CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob, CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, &dwEncodingType, &dwContentType, &dwFormatType, NULL, NULL, (LPCVOID*)&pCertContext))
     {
-        ExitWithLastError1(hr, "Failed to parse the certificate blob: %S", wzName);
+        ExitWithLastError1(hr, "Failed to parse the certificate blob: %ls", wzName);
     }
 
-    hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, iUniqueId++);
+    hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, ++iUniqueId);
     ExitOnFailure(hr, "Failed to format unique name");
 
     if (!pCertContext)
@@ -285,15 +285,15 @@ static HRESULT InstallCertificatePackage(
             ExitOnNullWithLastError(hPfxCertStore, hr, "Failed to open PFX file.");
 
             // Install all certificates in the PFX
-            for(pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext);
-                pCertContext;
-                pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext))
+            for (pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext);
+                 pCertContext;
+                 pCertContext = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContext))
             {
-                WcaLog(LOGMSG_STANDARD, "Adding certificate: %S", pwzUniqueName);
+                WcaLog(LOGMSG_STANDARD, "Adding certificate: %ls", pwzUniqueName);
                 hr = CertInstallSingleCertificate(hStore, pCertContext, pwzUniqueName);
                 MessageExitOnFailure(hr, msierrCERTFailedAdd, "Failed to add certificate to the store.");
 
-                hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, iUniqueId++);
+                hr = StrAllocFormatted(&pwzUniqueName, L"%s_wixCert_%d", wzName, ++iUniqueId);
                 ExitOnFailure(hr, "Failed to format unique name");
             }
         }
@@ -305,7 +305,7 @@ static HRESULT InstallCertificatePackage(
     }
     else
     {
-        WcaLog(LOGMSG_STANDARD, "Adding certificate: %S", pwzUniqueName);
+        WcaLog(LOGMSG_STANDARD, "Adding certificate: %ls", pwzUniqueName);
         hr = CertInstallSingleCertificate(hStore, pCertContext, pwzUniqueName);
         MessageExitOnFailure(hr, msierrCERTFailedAdd, "Failed to add certificate to the store.");
     }
@@ -352,7 +352,7 @@ static HRESULT UninstallCertificatePackage(
     ExitOnFailure(hr, "Failed to format unique name");
     ccUniquePrefix = ::lstrlenW(pwzUniquePrefix);
 
-    WcaLog(LOGMSG_STANDARD, "Deleting certificate that begin with friendly name: %S", pwzUniquePrefix);
+    WcaLog(LOGMSG_STANDARD, "Deleting certificate that begin with friendly name: %ls", pwzUniquePrefix);
 
     // Loop through all certificates in the store, deleting the ones that begin with our prefix.
     while (pCertContext = ::CertFindCertificateInStore(hStore, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, CERT_FIND_ANY, NULL, pCertContext))
@@ -398,7 +398,7 @@ static HRESULT UninstallCertificatePackage(
 
                 if (FAILED(hr))
                 {
-                    WcaLog(LOGMSG_STANDARD, "Failed to delete certificate with friendly name: %S, continuing anyway.  Error: 0x%x", wzFriendlyName, hr);
+                    WcaLog(LOGMSG_STANDARD, "Failed to delete certificate with friendly name: %ls, continuing anyway.  Error: 0x%x", wzFriendlyName, hr);
                 }
 
                 pCertContextDelete = NULL;

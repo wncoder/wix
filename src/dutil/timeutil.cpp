@@ -62,18 +62,18 @@ extern "C" HRESULT DAPI TimeFromString(
         if (L',' == *pwzEnd || L' ' == *pwzEnd || L':' == *pwzEnd)
         {
             *pwzEnd = L'\0'; // null terminate
-            pwzEnd++;
+            ++pwzEnd;
 
             while (L' ' == *pwzEnd)
             {
-                pwzEnd++; // and skip past the blank space
+                ++pwzEnd; // and skip past the blank space
             }
 
             switch (timeParser)
             {
                 case DayOfWeek:
                     hr = DayFromString(pwzStart, &sysTime.wDayOfWeek);
-                    ExitOnFailure1(hr, "Failed to convert string to day: %S", pwzStart);
+                    ExitOnFailure1(hr, "Failed to convert string to day: %ls", pwzStart);
                     break;
 
                 case DayOfMonth:
@@ -82,7 +82,7 @@ extern "C" HRESULT DAPI TimeFromString(
 
                 case MonthOfYear:
                     hr = MonthFromString(pwzStart, &sysTime.wMonth);
-                    ExitOnFailure1(hr, "Failed to convert to month: %S", pwzStart);
+                    ExitOnFailure1(hr, "Failed to convert to month: %ls", pwzStart);
                     break;
 
                 case Year:

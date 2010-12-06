@@ -333,7 +333,7 @@ HRESULT DAPI RegValueEnum(
     ExitOnWin32Error(er, hr, "Failed to get max size of value name under registry key.");
 
     // Add one for null terminator
-    cbValueName++;
+    ++cbValueName;
 
     hr = StrAlloc(psczName, cbValueName);
     ExitOnFailure(hr, "Failed to allocate array for registry value name");

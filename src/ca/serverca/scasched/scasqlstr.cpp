@@ -79,7 +79,7 @@ HRESULT ScaSqlStrsRead(
 
         er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzComponent, &isInstalled, &isAction);
         hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure1(hr, "Failed to get state for component: %S", pwzComponent);
+        ExitOnFailure1(hr, "Failed to get state for component: %ls", pwzComponent);
 
         // If we're doing install but the Component is not being installed or we're doing
         // uninstall but the Component is not being uninstalled, skip it.
@@ -98,28 +98,28 @@ HRESULT ScaSqlStrsRead(
         hr = WcaGetRecordString(hRec, ssqSqlString, &pwzData);
         ExitOnFailure(hr, "Failed to get SqlString.String");
         hr = ::StringCchCopyW(psss->wzKey, countof(psss->wzKey), pwzData);
-        ExitOnFailure1(hr, "Failed to copy SqlString.String: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy SqlString.String: %ls", pwzData);
 
         // find the database information for this string
         hr = WcaGetRecordString(hRec, ssqSqlDb, &pwzData);
-        ExitOnFailure1(hr, "Failed to get SqlString.SqlDb_ for SqlString '%S'", psss->wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlString.SqlDb_ for SqlString '%ls'", psss->wzKey);
         hr = ::StringCchCopyW(psss->wzSqlDb, countof(psss->wzSqlDb), pwzData);
-        ExitOnFailure1(hr, "Failed to copy SqlString.SqlDb_: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy SqlString.SqlDb_: %ls", pwzData);
 
         hr = WcaGetRecordInteger(hRec, ssqAttributes, &psss->iAttributes);
-        ExitOnFailure1(hr, "Failed to get SqlString.Attributes for SqlString '%S'", psss->wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlString.Attributes for SqlString '%ls'", psss->wzKey);
 
         //get the sequence number for the string (note that this will be sequenced with scripts too)
         hr = WcaGetRecordInteger(hRec, ssqSequence, &psss->iSequence);
-        ExitOnFailure1(hr, "Failed to get SqlString.Sequence for SqlString '%S'", psss->wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlString.Sequence for SqlString '%ls'", psss->wzKey);
 
         // execute SQL
         hr = WcaGetRecordFormattedString(hRec, ssqSQL, &pwzData);
-        ExitOnFailure1(hr, "Failed to get SqlString.SQL for SqlString '%S'", psss->wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlString.SQL for SqlString '%ls'", psss->wzKey);
 
         Assert(!psss->pwzSql);
         hr = StrAllocString(&psss->pwzSql, pwzData, 0);
-        ExitOnFailure1(hr, "Failed to alloc string for SqlString '%S'", psss->wzKey);
+        ExitOnFailure1(hr, "Failed to alloc string for SqlString '%ls'", psss->wzKey);
 
         *ppsssList = AddSqlStrToList(*ppsssList, psss);
         psss = NULL; // set the sss to NULL so it doesn't get freed below
@@ -197,7 +197,7 @@ HRESULT ScaSqlStrsReadScripts(
 
         er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzComponent, &isInstalled, &isAction);
         hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure1(hr, "Failed to get state for component: %S", pwzComponent);
+        ExitOnFailure1(hr, "Failed to get state for component: %ls", pwzComponent);
 
         // If we're doing install but the Component is not being installed or we're doing
         // uninstall but the Component is not being uninstalled, skip it.
@@ -215,31 +215,31 @@ HRESULT ScaSqlStrsReadScripts(
         hr = WcaGetRecordString(hRec, sscrqSqlScript, &pwzData);
         ExitOnFailure(hr, "Failed to get SqlScript.Script");
         hr = ::StringCchCopyW(sss.wzKey, countof(sss.wzKey), pwzData);
-        ExitOnFailure1(hr, "Failed to copy SqlScript.Script: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy SqlScript.Script: %ls", pwzData);
 
         // find the database information for this string
         hr = WcaGetRecordString(hRec, sscrqSqlDb, &pwzData);
-        ExitOnFailure1(hr, "Failed to get SqlScript.SqlDb_ for SqlScript '%S'", sss.wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlScript.SqlDb_ for SqlScript '%ls'", sss.wzKey);
         hr = ::StringCchCopyW(sss.wzSqlDb, countof(sss.wzSqlDb), pwzData);
-        ExitOnFailure1(hr, "Failed to copy SqlScritp.SqlDbb: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy SqlScritp.SqlDbb: %ls", pwzData);
 
         hr = WcaGetRecordInteger(hRec, sscrqAttributes, &sss.iAttributes);
-        ExitOnFailure1(hr, "Failed to get SqlScript.Attributes for SqlScript '%S'", sss.wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlScript.Attributes for SqlScript '%ls'", sss.wzKey);
 
         hr = WcaGetRecordInteger(hRec, sscrqSequence, &sss.iSequence);
-        ExitOnFailure1(hr, "Failed to get SqlScript.Sequence for SqlScript '%S'", sss.wzKey);
+        ExitOnFailure1(hr, "Failed to get SqlScript.Sequence for SqlScript '%ls'", sss.wzKey);
 
         // get the sql script out of the binary stream
         hr = WcaExecuteView(hViewBinary, hRec);
-        ExitOnFailure1(hr, "Failed to open SqlScript.BinaryScript_ for SqlScript '%S'", sss.wzKey);
+        ExitOnFailure1(hr, "Failed to open SqlScript.BinaryScript_ for SqlScript '%ls'", sss.wzKey);
         hr = WcaFetchSingleRecord(hViewBinary, &hRecBinary);
-        ExitOnFailure1(hr, "Failed to fetch SqlScript.BinaryScript_ for SqlScript '%S'", sss.wzKey);
+        ExitOnFailure1(hr, "Failed to fetch SqlScript.BinaryScript_ for SqlScript '%ls'", sss.wzKey);
 
         // Note: We need to allocate an extra character on the stream to NULL terminate the SQL script.
         //       The WcaGetRecordStream() function won't let us add extra space on the end of the stream
         //       so we'll read the stream "the old fashioned way".
         //hr = WcaGetRecordStream(hRecBinary, ssbsqData, (BYTE**)&pbScript, &cbScript);
-        //ExitOnFailure1(hr, "Failed to read SqlScript.BinaryScript_ for SqlScript '%S'", sss.wzKey);
+        //ExitOnFailure1(hr, "Failed to read SqlScript.BinaryScript_ for SqlScript '%ls'", sss.wzKey);
         er = ::MsiRecordReadStream(hRecBinary, ssbsqData, NULL, &cbRead);
         hr = HRESULT_FROM_WIN32(er);
         ExitOnFailure(hr, "failed to get size of stream");
@@ -286,8 +286,8 @@ HRESULT ScaSqlStrsReadScripts(
             // strip off leading whitespace
             while (cchScript && *pwzScript && iswspace(*pwzScript))
             {
-                pwzScript++;
-                cchScript--;
+                ++pwzScript;
+                --cchScript;
             }
 
             Assert(0 <= cchScript);
@@ -298,8 +298,8 @@ HRESULT ScaSqlStrsReadScripts(
                 // go until end of comment
                 while (cchScript && *pwzScript && *(pwzScript + 1) && !(L'*' == *pwzScript && L'/' == *(pwzScript + 1)))
                 {
-                    pwzScript++;
-                    cchScript--;
+                    ++pwzScript;
+                    --cchScript;
                 }
 
                 Assert(2 <= cchScript);
@@ -316,8 +316,8 @@ HRESULT ScaSqlStrsReadScripts(
                 // strip off any new leading whitespace
                 while (cchScript && *pwzScript && iswspace(*pwzScript))
                 {
-                    pwzScript++;
-                    cchScript--;
+                    ++pwzScript;
+                    --cchScript;
                 }
             }
 
@@ -326,16 +326,16 @@ HRESULT ScaSqlStrsReadScripts(
                 // go past the new line character
                 while (cchScript && *pwzScript && L'\n' != *pwzScript)
                 {
-                    pwzScript++;
-                    cchScript--;
+                    ++pwzScript;
+                    --cchScript;
                 }
 
                 Assert(0 <= cchScript);
 
                 if (cchScript && L'\n' == *pwzScript)
                 {
-                    pwzScript++;
-                    cchScript--;
+                    ++pwzScript;
+                    --cchScript;
                 }
 
                 Assert(0 <= cchScript);
@@ -343,8 +343,8 @@ HRESULT ScaSqlStrsReadScripts(
                 // strip off any new leading whitespace
                 while (cchScript && *pwzScript && iswspace(*pwzScript))
                 {
-                    pwzScript++;
-                    cchScript--;
+                    ++pwzScript;
+                    --cchScript;
                 }
             }
 
@@ -363,9 +363,9 @@ HRESULT ScaSqlStrsReadScripts(
                     // skip past chars until the new line character
                     while (cchScript && *pwz && (L'\n' != *pwz))
                     {
-                        pwz++;
-                        cch++;
-                        cchScript--;
+                        ++pwz;
+                        ++cch;
+                        --cchScript;
                     }
                 }
 
@@ -377,9 +377,9 @@ HRESULT ScaSqlStrsReadScripts(
                     // skip past chars until the new line character
                     while (cchScript && *pwz && *(pwz + 1) && !((L'*' == *pwz) && (L'/' == *(pwz + 1))))
                     {
-                        pwz++;
-                        cch++;
-                        cchScript--;
+                        ++pwz;
+                        ++cch;
+                        --cchScript;
                     }
 
                     if (2 <= cchScript)
@@ -394,32 +394,32 @@ HRESULT ScaSqlStrsReadScripts(
                 // Skip past strings that may be part of the SQL statement that might have a "go" in them
                 if ( cchScript && L'\'' == *pwz )
                 {
-                    pwz++;
-                    cch++;
-                    cchScript--;
+                    ++pwz;
+                    ++cch;
+                    --cchScript;
 
                     // Skip past chars until the end of the string
                     while ( cchScript && *pwz && !(L'\'' == *pwz) )
                     {
-                        pwz++;
-                        cch++;
-                        cchScript--;
+                        ++pwz;
+                        ++cch;
+                        --cchScript;
                     }
                 }
 
                 // Skip past strings that may be part of the SQL statement that might have a "go" in them
                 if ( cchScript && L'\"' == *pwz )
                 {
-                    pwz++;
-                    cch++;
-                    cchScript--;
+                    ++pwz;
+                    ++cch;
+                    --cchScript;
 
                     // Skip past chars until the end of the string
                     while ( cchScript && *pwz && !(L'\"' == *pwz) )
                     {
-                        pwz++;
-                        cch++;
-                        cchScript--;
+                        ++pwz;
+                        ++cch;
+                        --cchScript;
                     }
                 }
 
@@ -435,9 +435,9 @@ HRESULT ScaSqlStrsReadScripts(
                     break;   // found "GO" now add SQL string to list
                 }
 
-                pwz++;
-                cch++;
-                cchScript--;
+                ++pwz;
+                ++cch;
+                --cchScript;
             }
 
             Assert(0 <= cchScript);
@@ -475,7 +475,7 @@ HRESULT ScaSqlStrsReadScripts(
 
                 // cchRequired includes the NULL terminating char
                 hr = StrAllocString(&psss->pwzSql, pwzScript, 0);
-                ExitOnFailure1(hr, "Failed to allocate string for SQL script: '%S'", psss->wzKey);
+                ExitOnFailure1(hr, "Failed to allocate string for SQL script: '%ls'", psss->wzKey);
 
                 *ppsssList = AddSqlStrToList(*ppsssList, psss);
                 psss = NULL; // set the db NULL so it doesn't accidentally get freed below
@@ -657,7 +657,7 @@ static HRESULT ExecuteStrings(
                 const SCA_DB* psd = ScaDbsFindDatabase(psss->wzSqlDb, psdList);
                 if (!psd)
                 {
-                    ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "failed to find data for Database: %S", psss->wzSqlDb);
+                    ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND), "failed to find data for Database: %ls", psss->wzSqlDb);
                 }
 
                 if (-1 == iOldRollback)
@@ -682,48 +682,48 @@ static HRESULT ExecuteStrings(
                 Assert(!pwzCustomActionData  || (pwzCustomActionData && 0 == *pwzCustomActionData) && 0 == uiCost);
 
                 hr = WcaWriteStringToCaData(psd->wzKey, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Server Database String to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Server Database String to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = WcaWriteStringToCaData(psd->wzServer, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Server to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Server to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = WcaWriteStringToCaData(psd->wzInstance, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Instance to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Instance to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = WcaWriteStringToCaData(psd->wzDatabase, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Database to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Database to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = ::StringCchPrintfW(wzNumber, countof(wzNumber), L"%d", psd->iAttributes);
                 ExitOnFailure(hr, "Failed to format attributes integer value to string");
                 hr = WcaWriteStringToCaData(wzNumber, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Attributes to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Attributes to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = ::StringCchPrintfW(wzNumber, countof(wzNumber), L"%d", psd->fUseIntegratedAuth);
                 ExitOnFailure(hr, "Failed to format UseIntegratedAuth integer value to string");
                 hr = WcaWriteStringToCaData(wzNumber, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL IntegratedAuth flag to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL IntegratedAuth flag to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = WcaWriteStringToCaData(psd->scau.wzName, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL UserName to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL UserName to CustomActionData for Database String: %ls", psd->wzKey);
 
                 hr = WcaWriteStringToCaData(psd->scau.wzPassword, &pwzCustomActionData);
-                ExitOnFailure1(hr, "Failed to add SQL Password to CustomActionData for Database String: %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to add SQL Password to CustomActionData for Database String: %ls", psd->wzKey);
 
                 uiCost += COST_SQL_CONNECTDB;
 
                 wzOldDb = psss->wzSqlDb;
             }
 
-            WcaLog(LOGMSG_VERBOSE, "Scheduling SQL string: %S", psss->pwzSql);
+            WcaLog(LOGMSG_VERBOSE, "Scheduling SQL string: %ls", psss->pwzSql);
 
             hr = WcaWriteStringToCaData(psss->wzKey, &pwzCustomActionData);
-            ExitOnFailure1(hr, "Failed to add SQL Key to CustomActionData for SQL string: %S", psss->wzKey);
+            ExitOnFailure1(hr, "Failed to add SQL Key to CustomActionData for SQL string: %ls", psss->wzKey);
 
             hr = WcaWriteIntegerToCaData(psss->iAttributes, &pwzCustomActionData);
-            ExitOnFailure1(hr, "failed to add attributes to CustomActionData for SQL string: %S", psss->wzKey);
+            ExitOnFailure1(hr, "failed to add attributes to CustomActionData for SQL string: %ls", psss->wzKey);
 
             hr = WcaWriteStringToCaData(psss->pwzSql, &pwzCustomActionData);
-            ExitOnFailure1(hr, "Failed to to add SQL Query to CustomActionData for SQL string: %S", psss->wzKey);
+            ExitOnFailure1(hr, "Failed to to add SQL Query to CustomActionData for SQL string: %ls", psss->wzKey);
             uiCost += COST_SQL_STRING;
         }
     }

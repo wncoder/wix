@@ -140,7 +140,7 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"FileSearch", -1))
@@ -166,7 +166,7 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"RegistrySearch", -1))
@@ -188,7 +188,7 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Root: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Root: %ls", scz);
             }
 
             // @Key
@@ -246,13 +246,13 @@ extern "C" HRESULT SearchesParseFromXml(
                 else
                 {
                     hr = E_INVALIDARG;
-                    ExitOnFailure1(hr, "Invalid value for @VariableType: %S", scz);
+                    ExitOnFailure1(hr, "Invalid value for @VariableType: %ls", scz);
                 }
             }
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsiComponentSearch", -1))
@@ -289,7 +289,7 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsiProductSearch", -1))
@@ -323,7 +323,7 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsiFeatureSearch", -1))
@@ -349,13 +349,13 @@ extern "C" HRESULT SearchesParseFromXml(
             else
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @Type: %S", scz);
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
             }
         }
         else
         {
             hr = E_UNEXPECTED;
-            ExitOnFailure1(hr, "Unexpected element name: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Unexpected element name: %ls", bstrNodeName);
         }
 
         // prepare next iteration
@@ -391,11 +391,11 @@ extern "C" HRESULT SearchesExecute(
             hr = ConditionEvaluate(pVariables, pSearch->sczCondition, &f);
             if (E_INVALIDDATA == hr)
             {
-                TraceError2(hr, "Failed to parse search condition. Id = '%S', Condition = '%S'", pSearch->sczKey, pSearch->sczCondition);
+                TraceError2(hr, "Failed to parse search condition. Id = '%ls', Condition = '%ls'", pSearch->sczKey, pSearch->sczCondition);
                 hr = S_OK;
                 continue;
             }
-            ExitOnFailure2(hr, "Failed to evaluate search condition. Id = '%S', Condition = '%S'", pSearch->sczKey, pSearch->sczCondition);
+            ExitOnFailure2(hr, "Failed to evaluate search condition. Id = '%ls', Condition = '%ls'", pSearch->sczKey, pSearch->sczCondition);
 
             if (!f)
             {
@@ -455,7 +455,7 @@ extern "C" HRESULT SearchesExecute(
         }
         if (FAILED(hr))
         {
-            TraceError1(hr, "Search failed. Id = '%S'", pSearch->sczKey);
+            TraceError1(hr, "Search failed. Id = '%ls'", pSearch->sczKey);
             continue;
         }
     }
@@ -537,7 +537,7 @@ static HRESULT DirectorySearchExists(
         }
         else
         {
-            ExitOnWin32Error1(er, hr, "Failed get to file attributes. '%S'", pSearch->DirectorySearch.sczPath);
+            ExitOnWin32Error1(er, hr, "Failed get to file attributes. '%ls'", pSearch->DirectorySearch.sczPath);
         }
     }
     else if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -584,7 +584,7 @@ static HRESULT FileSearchExists(
         }
         else
         {
-            ExitOnWin32Error1(er, hr, "Failed get to file attributes. '%S'", pSearch->DirectorySearch.sczPath);
+            ExitOnWin32Error1(er, hr, "Failed get to file attributes. '%ls'", pSearch->DirectorySearch.sczPath);
         }
     }
     else if (FILE_ATTRIBUTE_DIRECTORY != (dwAttributes & FILE_ATTRIBUTE_DIRECTORY))

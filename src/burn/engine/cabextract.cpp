@@ -421,7 +421,7 @@ static INT_PTR DIAMONDAPI CabNotifyCallback(
     BURN_CONTAINER_CONTEXT* pContext = vpContext;
     INT_PTR ipResult = 0; // result to return on success
 
-    switch(iNotification)
+    switch (iNotification)
     {
     case fdintCOPY_FILE:
         ipResult = CopyFileCallback(pContext, pFDINotify);
@@ -488,7 +488,7 @@ static INT_PTR CopyFileCallback(
 
     // copy stream name
     hr = StrAllocStringAnsi(pContext->Cabinet.psczStreamName, pFDINotify->psz1, 0, CP_UTF8);
-    ExitOnFailure1(hr, "Failed to copy stream name: %S", pFDINotify->psz1);
+    ExitOnFailure1(hr, "Failed to copy stream name: %ls", pFDINotify->psz1);
 
     // set operation complete event
     if (!::SetEvent(pContext->Cabinet.hOperationCompleteEvent))
@@ -609,8 +609,8 @@ static INT_PTR CloseFileInfoCallback(
 
     //if (pContext->pfnProgress)
     //{
-    //    hr = StrAllocFormatted(&pwzPath, L"%s%S", pContext->wzRootPath, pFDINotify->psz1);
-    //    ExitOnFailure2(hr, "Failed to calculate file path from: %S and %s", pContext->wzRootPath, pFDINotify->psz1);
+    //    hr = StrAllocFormatted(&pwzPath, L"%s%ls", pContext->wzRootPath, pFDINotify->psz1);
+    //    ExitOnFailure2(hr, "Failed to calculate file path from: %ls and %s", pContext->wzRootPath, pFDINotify->psz1);
     //    if (SUCCEEDED(hr))
     //    {
     //        hr = pContext->pfnProgress(BOX_PROGRESS_DECOMPRESSION_END, pwzPath, 0, pContext->pvContext);
@@ -654,7 +654,7 @@ static INT_PTR FAR DIAMONDAPI CabOpen(
 
     // open file
     hFile = ::CreateFileW(pContext->Cabinet.sczFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    ExitOnInvalidHandleWithLastError1(hFile, hr, "Failed to open file: %S", pContext->Cabinet.sczFile);
+    ExitOnInvalidHandleWithLastError1(hFile, hr, "Failed to open file: %ls", pContext->Cabinet.sczFile);
 
     // seek to container offset
     li.QuadPart = (LONGLONG)pContext->qwOffset;

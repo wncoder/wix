@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Certificate helper funtions.
+//    Certificate helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -233,7 +233,7 @@ extern "C" HRESULT DAPI SetProvSecurityDesc(
     HRESULT hr = S_OK;
 
     // Set the new security descriptor.
-    if(!::CryptSetProvParam(
+    if (!::CryptSetProvParam(
                             hProv,
                             PP_KEYSET_SEC_DESCR,
                             (BYTE*)pSecurity,
@@ -294,7 +294,7 @@ extern "C" HRESULT DAPI CertInstallSingleCertificate(
 
     if (!::CertSetCertificateContextProperty(pCertContext, CERT_FRIENDLY_NAME_PROP_ID, 0, &blob))
     {
-        ExitWithLastError1(hr, "Failed to set the friendly name of the certificate: %S", wzName);
+        ExitWithLastError1(hr, "Failed to set the friendly name of the certificate: %ls", wzName);
     }
 
     if (!::CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL))

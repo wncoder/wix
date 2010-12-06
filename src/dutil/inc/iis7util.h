@@ -13,7 +13,7 @@
 // </copyright>
 // 
 // <summary>
-//  Time helper functions.
+//  IIS7 helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

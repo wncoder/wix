@@ -310,7 +310,7 @@ extern "C" HRESULT CacheRemovePackage(
     hFind = ::FindFirstFileW(sczFiles, &wfd);
     if (INVALID_HANDLE_VALUE == hFind)
     {
-        ExitOnLastError1(hr, "Failed to get first file in bundle directory: %S", sczDirectory);
+        ExitOnLastError1(hr, "Failed to get first file in bundle directory: %ls", sczDirectory);
     }
 
     do
@@ -334,7 +334,7 @@ extern "C" HRESULT CacheRemovePackage(
         {
             if (!::SetFileAttributesW(sczFile, FILE_ATTRIBUTE_NORMAL))
             {
-                ExitWithLastError1(hr, "Failed to remove attributes from file: %S", sczFile);
+                ExitWithLastError1(hr, "Failed to remove attributes from file: %ls", sczFile);
             }
         }
 
@@ -344,7 +344,7 @@ extern "C" HRESULT CacheRemovePackage(
     } while (::FindNextFileW(hFind, &wfd));
 
     hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
-    ExitOnFailure1(hr, "Failed to remove cached directory: %S", sczDirectory);
+    ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
 
 LExit:
     ReleaseFileFindHandle(hFind);

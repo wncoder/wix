@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scaiis.h" company="Microsoft">
+// <copyright file="scaiis.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -376,7 +376,7 @@ HRESULT ScaWriteMetabaseValue(IMSAdminBase* piMetabase, LPCWSTR wzRootKey,
                     break;
             }
 
-            pwz++;
+            ++pwz;
         }
 
         hr = WcaWriteStringToCaData((LPCWSTR)pvData, &pwzCustomActionData);

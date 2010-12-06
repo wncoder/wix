@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Path helper funtions.
+//    Path helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ DAPI_(LPWSTR) PathFile(
     }
 
     LPWSTR wzFile = const_cast<LPWSTR>(wzPath);
-    for (LPWSTR wz = wzFile; *wz; wz++)
+    for (LPWSTR wz = wzFile; *wz; ++wz)
     {
         // valid delineators 
         //     \ => Windows path
@@ -57,7 +57,7 @@ DAPI_(LPCWSTR) PathExtension(
 
     // Find the last dot in the last thing that could be a file.
     LPCWSTR wzExtension = NULL;
-    for (LPCWSTR wz = wzPath; *wz; wz++)
+    for (LPCWSTR wz = wzPath; *wz; ++wz)
     {
         if (L'\\' == *wz || L'/' == *wz || L':' == *wz)
         {
@@ -81,7 +81,7 @@ DAPI_(HRESULT) PathGetDirectory(
     HRESULT hr = S_OK;
     DWORD cchDirectory = DWORD_MAX;
 
-    for (LPCWSTR wz = wzPath; *wz; wz++)
+    for (LPCWSTR wz = wzPath; *wz; ++wz)
     {
         // valid delineators:
         //     \ => Windows path
@@ -135,7 +135,7 @@ DAPI_(HRESULT) PathExpand(
         cch = ::ExpandEnvironmentStringsW(wzRelativePath, sczExpandedPath, cchExpandedPath);
         if (0 == cch)
         {
-            ExitWithLastError1(hr, "Failed to expand environment variables in string: %S", wzRelativePath);
+            ExitWithLastError1(hr, "Failed to expand environment variables in string: %ls", wzRelativePath);
         }
         else if (cchExpandedPath < cch)
         {
@@ -146,7 +146,7 @@ DAPI_(HRESULT) PathExpand(
             cch = ::ExpandEnvironmentStringsW(wzRelativePath, sczExpandedPath, cchExpandedPath);
             if (0 == cch)
             {
-                ExitWithLastError1(hr, "Failed to expand environment variables in string: %S", wzRelativePath);
+                ExitWithLastError1(hr, "Failed to expand environment variables in string: %ls", wzRelativePath);
             }
             else if (cchExpandedPath < cch)
             {
@@ -184,7 +184,7 @@ DAPI_(HRESULT) PathExpand(
         cch = ::GetFullPathNameW(wzPath, cchFullPath, sczFullPath, &wzFileName);
         if (0 == cch)
         {
-            ExitWithLastError1(hr, "Failed to get full path for string: %S", wzPath);
+            ExitWithLastError1(hr, "Failed to get full path for string: %ls", wzPath);
         }
         else if (cchFullPath < cch)
         {
@@ -195,7 +195,7 @@ DAPI_(HRESULT) PathExpand(
             cch = ::GetFullPathNameW(wzPath, cchFullPath, sczFullPath, &wzFileName);
             if (0 == cch)
             {
-                ExitWithLastError1(hr, "Failed to get full path for string: %S", wzPath);
+                ExitWithLastError1(hr, "Failed to get full path for string: %ls", wzPath);
             }
             else if (cchFullPath < cch)
             {
@@ -435,7 +435,7 @@ DAPI_(HRESULT) PathCreateTempFile(
                 {
                     hr = S_OK;
                 }
-                ExitOnFailure1(hr, "Failed to create file: %S", sczTempFile);
+                ExitOnFailure1(hr, "Failed to create file: %ls", sczTempFile);
             }
         }
     }
@@ -455,7 +455,7 @@ DAPI_(HRESULT) PathCreateTempFile(
         hTempFile = ::CreateFileW(sczTempFile, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, dwFileAttributes, NULL);
         if (INVALID_HANDLE_VALUE == hTempFile)
         {
-            ExitWithLastError1(hr, "Failed to open new temp file: %S", sczTempFile);
+            ExitWithLastError1(hr, "Failed to open new temp file: %ls", sczTempFile);
         }
     }
 
@@ -606,7 +606,7 @@ DAPI_(HRESULT) PathCreateTempDirectory(
         ExitOnFailure(hr, "Failed to copy temp path.");
 
         hr = PathBackslashTerminate(&sczTempPath);
-        ExitOnFailure1(hr, "Failed to ensure path ends in backslash: %S", wzDirectory);
+        ExitOnFailure1(hr, "Failed to ensure path ends in backslash: %ls", wzDirectory);
     }
     else
     {

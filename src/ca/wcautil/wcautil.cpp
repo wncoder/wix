@@ -117,7 +117,7 @@ extern "C" HRESULT WIXAPI WcaInitialize(
 
     hr = FileVersion(wzCAFileName, &dwMajorVersion, &dwMinorVersion);
     ExitOnFailure(hr, "Failed to get file version of custom action dll");
-    WcaLog(LOGMSG_VERBOSE, "Entering %s in %S, version %u.%u.%u.%u", szCustomActionLogName, wzCAFileName, (DWORD)HIWORD(dwMajorVersion), (DWORD)LOWORD(dwMajorVersion), (DWORD)HIWORD(dwMinorVersion), (DWORD)LOWORD(dwMinorVersion));
+    WcaLog(LOGMSG_VERBOSE, "Entering %s in %ls, version %u.%u.%u.%u", szCustomActionLogName, wzCAFileName, (DWORD)HIWORD(dwMajorVersion), (DWORD)LOWORD(dwMajorVersion), (DWORD)HIWORD(dwMinorVersion), (DWORD)LOWORD(dwMinorVersion));
 
     Assert(s_hInstall);
 LExit:

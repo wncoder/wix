@@ -201,7 +201,7 @@ HRESULT AllocColumnCreateStruct(
     *ppjccColumnCreate = static_cast<JET_COLUMNCREATE*>(MemAlloc(cbAllocSize, TRUE));
     ExitOnNull(*ppjccColumnCreate, hr, E_OUTOFMEMORY, "Failed to allocate column create structure for database");
 
-    for (i = 0; i < ptsSchema->dwColumns; i++)
+    for (i = 0; i < ptsSchema->dwColumns; ++i)
     {
         (*ppjccColumnCreate)[i].cbStruct = sizeof(JET_COLUMNCREATE);
 
@@ -254,7 +254,7 @@ HRESULT FreeColumnCreateStruct(
     HRESULT hr = S_OK;
     DWORD i;
 
-    for (i = 0; i < dwColumns; i++)
+    for (i = 0; i < dwColumns; ++i)
     {
         ReleaseStr((pjccColumnCreate[i]).szColumnName);
     }
@@ -279,7 +279,7 @@ HRESULT AllocIndexCreateStruct(
     BOOL fKeyColumns = FALSE;
     DWORD_PTR i;
 
-    for (i=0; i < ptsSchema->dwColumns; i++)
+    for (i=0; i < ptsSchema->dwColumns; ++i)
     {
         if (ptsSchema->pcsColumns[i].fKey)
         {
@@ -325,7 +325,7 @@ HRESULT AllocIndexCreateStruct(
     ExitOnFailure(hr, "Failed to get size of keys string");
 
     // At this point convert all question marks to null characters
-    for (i = 0; i < dwSize; i++)
+    for (i = 0; i < dwSize; ++i)
     {
         if ('?' == pszMultiSzKeys[i])
         {
@@ -375,7 +375,7 @@ HRESULT EnsureSchema(
     ExitOnFailure(hr, "Failed to begin transaction to create tables");
     fTransaction = TRUE;
    
-    for (dwTable = 0;dwTable < pdsSchema->dwTables; dwTable++)
+    for (dwTable = 0;dwTable < pdsSchema->dwTables; ++dwTable)
     {
         // Don't free this pointer - it's just a shortcut to the current table's name within the struct
         LPCWSTR pwzTableName = pdsSchema->ptsTables[dwTable].pszName;
@@ -406,7 +406,7 @@ HRESULT EnsureSchema(
             pdsSchema->ptsTables[dwTable].jtTable = jtTableCreate.tableid;
 
             // Record the column IDs in our cache
-            for (dwColumn = 0; dwColumn < pdsSchema->ptsTables[dwTable].dwColumns; dwColumn++)
+            for (dwColumn = 0; dwColumn < pdsSchema->ptsTables[dwTable].dwColumns; ++dwColumn)
             {
                 pdsSchema->ptsTables[dwTable].pcsColumns[dwColumn].jcColumn = jtTableCreate.rgcolumncreate[dwColumn].columnid;
             }
@@ -421,7 +421,7 @@ HRESULT EnsureSchema(
         else
         {
             // If the table already exists, grab the column ids and put them into our cache
-            for (dwColumn = 0;dwColumn < pdsSchema->ptsTables[dwTable].dwColumns; dwColumn++)
+            for (dwColumn = 0;dwColumn < pdsSchema->ptsTables[dwTable].dwColumns; ++dwColumn)
             {
                 // Don't free this - it's just a shortcut to the current column within the struct
                 COLUMN_SCHEMA *pcsColumn = &(pdsSchema->ptsTables[dwTable].pcsColumns[dwColumn]);
@@ -1096,7 +1096,7 @@ HRESULT DAPI SetQueryColumn(
     }
 
     // Increment the number of total columns
-    peqHandle->dwColumns++;
+    ++peqHandle->dwColumns;
 
 LExit:
     return hr;
@@ -1294,7 +1294,7 @@ HRESULT DAPI EseRunQuery(
         // At this point we've already set our cursor to the beginning of the range of records to select.
         // Now we'll make a key pointing to the end of the range of records to select, so we can call JetSetIndexRange()
         // For a semi-explanation, see this doc page: http://msdn.microsoft.com/en-us/library/aa964799%28EXCHG.10%29.aspx
-        for (i = 0; i < peqHandle->dwColumns; i++)
+        for (i = 0; i < peqHandle->dwColumns; ++i)
         {
             if (i == 0)
             {

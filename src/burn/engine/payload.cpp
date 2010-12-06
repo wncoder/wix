@@ -97,7 +97,7 @@ extern "C" HRESULT PayloadsParseFromXml(
         else
         {
             hr = E_INVALIDARG;
-            ExitOnFailure1(hr, "Invalid value for @Packaging: %S", scz);
+            ExitOnFailure1(hr, "Invalid value for @Packaging: %ls", scz);
         }
 
         // @Container

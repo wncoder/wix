@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    IIS Metabase helper funtions.
+//    IIS Metabase helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -78,13 +78,13 @@ extern "C" HRESULT DAPI MetaFindWebBase(
     mrAddress.dwMDDataType = ALL_METADATA;
 
     // loop through the "web keys" looking for the "IIsWebServer" key that matches wzWeb
-    for (dwIndex = 0; SUCCEEDED(hr); dwIndex++)
+    for (dwIndex = 0; SUCCEEDED(hr); ++dwIndex)
     { 
         hr = piMetabase->EnumKeys(METADATA_MASTER_ROOT_HANDLE, L"/LM/W3SVC", wzSubkey, dwIndex); 
         if (FAILED(hr))
             break;
 
-        StringCchPrintfW(wzKey, countof(wzKey), L"/LM/W3SVC/%s", wzSubkey);
+        ::StringCchPrintfW(wzKey, countof(wzKey), L"/LM/W3SVC/%s", wzSubkey);
         hr = MetaGetValue(piMetabase, METADATA_MASTER_ROOT_HANDLE, wzKey, &mr);
         if (MD_ERROR_DATA_NOT_FOUND == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr)
         {
@@ -127,7 +127,7 @@ extern "C" HRESULT DAPI MetaFindWebBase(
             {
                 // if the passed in buffer wasn't big enough
                 hr = ::StringCchCopyW(wzWebBase, cchWebBase, wzKey);
-                ExitOnFailure1(hr, "failed to copy in web base: %S", wzKey);
+                ExitOnFailure1(hr, "failed to copy in web base: %ls", wzKey);
 
                 fFound = TRUE;
                 break;
@@ -184,13 +184,13 @@ extern "C" HRESULT DAPI MetaFindFreeWebBase(
     mr.dwMDDataType = STRING_METADATA;
 
     // loop through the "web keys" looking for the "IIsWebServer" key that matches wzWeb
-    for (dwIndex = 0; SUCCEEDED(hr); dwIndex++)
+    for (dwIndex = 0; SUCCEEDED(hr); ++dwIndex)
     { 
         hr = piMetabase->EnumKeys(METADATA_MASTER_ROOT_HANDLE, L"/LM/W3SVC", wzSubkey, dwIndex); 
         if (FAILED(hr))
             break;
 
-        StringCchPrintfW(wzKey, countof(wzKey), L"/LM/W3SVC/%s", wzSubkey);
+        ::StringCchPrintfW(wzKey, countof(wzKey), L"/LM/W3SVC/%s", wzSubkey);
 
         hr = MetaGetValue(piMetabase, METADATA_MASTER_ROOT_HANDLE, wzKey, &mr);
         if (MD_ERROR_DATA_NOT_FOUND == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr)
@@ -210,7 +210,7 @@ extern "C" HRESULT DAPI MetaFindFreeWebBase(
             }
 
             dwSubKeys[cSubKeys] = wcstol(wzSubkey, NULL, 10);
-            cSubKeys++;
+            ++cSubKeys;
             Sort(dwSubKeys, cSubKeys);
         }
     } 
@@ -221,7 +221,7 @@ extern "C" HRESULT DAPI MetaFindFreeWebBase(
 
     // find the lowest free web root
     dwKey  = 1;
-    for (i = 0; i < cSubKeys; i++)
+    for (i = 0; i < cSubKeys; ++i)
     {
         if (dwKey < dwSubKeys[i])
             break;
@@ -335,11 +335,8 @@ extern "C" void DAPI MetaFreeValue(
     )
 {
     Assert(pmr);
-    if (pmr->pbMDData)
-    {
-        MemFree(pmr->pbMDData);
-        pmr->pbMDData = NULL;
-    }
+
+    ReleaseNullMem(pmr->pbMDData);
 }
 
 
@@ -359,7 +356,7 @@ static void Sort(
     int i, j;
     DWORD dwData;
 
-    for (i = 1; i < cArray; i++)
+    for (i = 1; i < cArray; ++i)
     {
         dwData = dwArray[i];
 

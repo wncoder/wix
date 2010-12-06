@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scassl.h" company="Microsoft">
+// <copyright file="scassl.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -57,7 +57,7 @@ HRESULT ScaSslCertificateRead(
         ExitOnFailure(hr, "Failed to get hash for web ssl certificate.");
 
         hr = StrHexDecode(pwzData, pswsc->rgbSHA1Hash, countof(pswsc->rgbSHA1Hash));
-        ExitOnFailure2(hr, "Failed to decode certificate hash for web: %S, data: %S", wzWebId, pwzData);
+        ExitOnFailure2(hr, "Failed to decode certificate hash for web: %ls, data: %ls", wzWebId, pwzData);
     }
 
     if (E_NOMOREITEMS == hr)

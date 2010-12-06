@@ -104,14 +104,14 @@ HRESULT ScaDbsRead(
         ExitOnFailure(hr, "Failed to get SqlDatabase.SqlDb");
 
         hr = WcaGetRecordString(hRec, sdqComponent, &pwzComponent);
-        ExitOnFailure1(hr, "Failed to get Component for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Component for database: '%ls'", psd->wzKey);
         if (pwzComponent && *pwzComponent)
         {
             fHasComponent = TRUE;
 
             er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzComponent, &isInstalled, &isAction);
             hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure1(hr, "Failed to get state for component: %S", pwzComponent);
+            ExitOnFailure1(hr, "Failed to get state for component: %ls", pwzComponent);
 
             // If we're doing install but the Component is not being installed or we're doing
             // uninstall but the Component is not being uninstalled, skip it.
@@ -126,42 +126,42 @@ HRESULT ScaDbsRead(
         ExitOnFailure1(hr, "Failed to allocate memory for new database: %D", pwzId);
 
         hr = ::StringCchCopyW(psd->wzKey, countof(psd->wzKey), pwzId);
-        ExitOnFailure1(hr, "Failed to copy SqlDatabase.SqlDbL: %S", pwzId);
+        ExitOnFailure1(hr, "Failed to copy SqlDatabase.SqlDbL: %ls", pwzId);
 
         hr = ::StringCchCopyW(psd->wzComponent, countof(psd->wzComponent), pwzComponent);
-        ExitOnFailure1(hr, "Failed to copy SqlDatabase.Component_: %S", pwzComponent);
+        ExitOnFailure1(hr, "Failed to copy SqlDatabase.Component_: %ls", pwzComponent);
 
         psd->fHasComponent = fHasComponent;
         psd->isInstalled = isInstalled;
         psd->isAction = isAction;
 
         hr = WcaGetRecordFormattedString(hRec, sdqServer, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Server for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Server for database: '%ls'", psd->wzKey);
         hr = ::StringCchCopyW(psd->wzServer, countof(psd->wzServer), pwzData);
-        ExitOnFailure1(hr, "Failed to copy server string to database object:%S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy server string to database object:%ls", pwzData);
 
         hr = WcaGetRecordFormattedString(hRec, sdqInstance, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Instance for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Instance for database: '%ls'", psd->wzKey);
         hr = ::StringCchCopyW(psd->wzInstance, countof(psd->wzInstance), pwzData);
-        ExitOnFailure1(hr, "Failed to copy instance string to database object:%S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy instance string to database object:%ls", pwzData);
 
         hr = WcaGetRecordFormattedString(hRec, sdqDatabase, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Database for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Database for database: '%ls'", psd->wzKey);
         hr = ::StringCchCopyW(psd->wzDatabase, countof(psd->wzDatabase), pwzData);
-        ExitOnFailure1(hr, "Failed to copy database string to database object:%S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy database string to database object:%ls", pwzData);
 
         hr = WcaGetRecordInteger(hRec, sdqAttributes, &psd->iAttributes);
         ExitOnFailure(hr, "Failed to get SqlDatabase.Attributes");
 
         hr = WcaGetRecordFormattedString(hRec, sdqUser, &pwzData);
-        ExitOnFailure1(hr, "Failed to get User record for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get User record for database: '%ls'", psd->wzKey);
 
         // if a user was specified
         if (*pwzData)
         {
             psd->fUseIntegratedAuth = FALSE;
             hr = ScaGetUser(pwzData, &psd->scau);
-            ExitOnFailure1(hr, "Failed to get user information for database: '%S'", psd->wzKey);
+            ExitOnFailure1(hr, "Failed to get user information for database: '%ls'", psd->wzKey);
         }
         else
         {
@@ -170,13 +170,13 @@ HRESULT ScaDbsRead(
         }
 
         hr = WcaGetRecordString(hRec, sdqDbFileSpec, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Database FileSpec for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Database FileSpec for database: '%ls'", psd->wzKey);
 
         // if a database filespec was specified
         if (*pwzData)
         {
             hr = GetFileSpec(hViewFileSpec, pwzData, &psd->sfDb);
-            ExitOnFailure1(hr, "failed to get FileSpec for: %S", pwzData);
+            ExitOnFailure1(hr, "failed to get FileSpec for: %ls", pwzData);
             if (S_OK == hr)
             {
                 psd->fHasDbSpec = TRUE;
@@ -184,13 +184,13 @@ HRESULT ScaDbsRead(
         }
 
         hr = WcaGetRecordString(hRec, sdqLogFileSpec, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Log FileSpec for database: '%S'", psd->wzKey);
+        ExitOnFailure1(hr, "Failed to get Log FileSpec for database: '%ls'", psd->wzKey);
 
         // if a log filespec was specified
         if (*pwzData)
         {
             hr = GetFileSpec(hViewFileSpec, pwzData, &psd->sfLog);
-            ExitOnFailure1(hr, "failed to get FileSpec for: %S", pwzData);
+            ExitOnFailure1(hr, "failed to get FileSpec for: %ls", pwzData);
             if (S_OK == hr)
             {
                 psd->fHasLogSpec = TRUE;
@@ -255,7 +255,7 @@ HRESULT ScaDbsInstall(
                 ((psd->iAttributes & SCADB_DROP_ON_REINSTALL) && WcaIsReInstalling(psd->isInstalled, psd->isAction)))
             {
                 hr = SchedDropDatabase(psd->wzKey, psd->wzServer, psd->wzInstance, psd->wzDatabase, psd->iAttributes, psd->fUseIntegratedAuth, psd->scau.wzName, psd->scau.wzPassword);
-                ExitOnFailure1(hr, "Failed to drop database %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to drop database %ls", psd->wzKey);
             }
 
             // if installing this component
@@ -263,7 +263,7 @@ HRESULT ScaDbsInstall(
                 ((psd->iAttributes & SCADB_CREATE_ON_REINSTALL) && WcaIsReInstalling(psd->isInstalled, psd->isAction)))
             {
                 hr = SchedCreateDatabase(psd);
-                ExitOnFailure1(hr, "Failed to ensure database %S exists", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to ensure database %ls exists", psd->wzKey);
             }
         }
     }
@@ -288,14 +288,14 @@ HRESULT ScaDbsUninstall(
             if ((psd->iAttributes & SCADB_DROP_ON_UNINSTALL) && WcaIsUninstalling(psd->isInstalled, psd->isAction))
             {
                 hr = SchedDropDatabase(psd->wzKey, psd->wzServer, psd->wzInstance, psd->wzDatabase, psd->iAttributes, psd->fUseIntegratedAuth, psd->scau.wzName, psd->scau.wzPassword);
-                ExitOnFailure1(hr, "Failed to drop database %S", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to drop database %ls", psd->wzKey);
             }
 
             // install the db
             if ((psd->iAttributes & SCADB_CREATE_ON_UNINSTALL) && WcaIsUninstalling(psd->isInstalled, psd->isAction))
             {
                 hr = SchedCreateDatabase(psd);
-                ExitOnFailure1(hr, "Failed to ensure database %S exists", psd->wzKey);
+                ExitOnFailure1(hr, "Failed to ensure database %ls exists", psd->wzKey);
             }
         }
     }
@@ -530,42 +530,42 @@ HRESULT GetFileSpec(
     hRecFileSpec = ::MsiCreateRecord(1);
     if (!hRecFileSpec)
     {
-        ExitOnFailure1(hr = E_UNEXPECTED, "failed to create record for filespec: %S", wzKey);
+        ExitOnFailure1(hr = E_UNEXPECTED, "failed to create record for filespec: %ls", wzKey);
     }
     hr = WcaSetRecordString(hRecFileSpec, 1, wzKey);
-    ExitOnFailure1(hr, "failed to set record string for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "failed to set record string for filespec: %ls", wzKey);
 
     // get the FileSpec record
     hr = WcaExecuteView(hViewFileSpec, hRecFileSpec);
-    ExitOnFailure1(hr, "failed to execute view on SqlFileSpec table for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "failed to execute view on SqlFileSpec table for filespec: %ls", wzKey);
     hr = WcaFetchSingleRecord(hViewFileSpec, &hRec);
-    ExitOnFailure1(hr, "failed to get record for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "failed to get record for filespec: %ls", wzKey);
 
     // read the data out of the filespec record
     hr = WcaGetRecordFormattedString(hRec, sfsqName, &pwzData);
-    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Name for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Name for filespec: %ls", wzKey);
     hr = ::StringCchCopyW(psf->wzName, countof(psf->wzName), pwzData);
-    ExitOnFailure1(hr, "Failed to copy SqlFileSpec.Name string: %S", pwzData);
+    ExitOnFailure1(hr, "Failed to copy SqlFileSpec.Name string: %ls", pwzData);
 
     hr = WcaGetRecordFormattedString(hRec, sfsqFilename, &pwzData);
-    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Filename for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Filename for filespec: %ls", wzKey);
     if (*pwzData)
     {
         hr = ::StringCchCopyW(psf->wzFilename, countof(psf->wzFilename), pwzData);
-        ExitOnFailure1(hr, "Failed to copy filename to filespec object: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy filename to filespec object: %ls", pwzData);
     }
     else   // if there is no file, skip this FILESPEC
     {
-        WcaLog(LOGMSG_VERBOSE, "No filename specified, skipping FileSpec: %S", psf->wzName);
+        WcaLog(LOGMSG_VERBOSE, "No filename specified, skipping FileSpec: %ls", psf->wzName);
         ExitFunction1(hr = S_FALSE);
     }
 
     hr = WcaGetRecordFormattedString(hRec, sfsqSize, &pwzData);
-    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Size for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "Failed to get SqlFileSpec.Size for filespec: %ls", wzKey);
     if (*pwzData)
     {
         hr = ::StringCchCopyW(psf->wzSize, countof(psf->wzSize), pwzData);
-        ExitOnFailure1(hr, "Failed to copy size to filespec object: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy size to filespec object: %ls", pwzData);
     }
     else
     {
@@ -573,11 +573,11 @@ HRESULT GetFileSpec(
     }
 
     hr = WcaGetRecordFormattedString(hRec, sfsqMaxSize, &pwzData);
-    ExitOnFailure1(hr, "Failed to get SqlFileSpec.MaxSize for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "Failed to get SqlFileSpec.MaxSize for filespec: %ls", wzKey);
     if (*pwzData)
     {
         hr = ::StringCchCopyW(psf->wzMaxSize, countof(psf->wzMaxSize), pwzData);
-        ExitOnFailure1(hr, "Failed to copy max size to filespec object: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy max size to filespec object: %ls", pwzData);
     }
     else
     {
@@ -585,11 +585,11 @@ HRESULT GetFileSpec(
     }
 
     hr = WcaGetRecordFormattedString(hRec, sfsqGrowth, &pwzData);
-    ExitOnFailure1(hr, "Failed to get SqlFileSpec.GrowthSize for filespec: %S", wzKey);
+    ExitOnFailure1(hr, "Failed to get SqlFileSpec.GrowthSize for filespec: %ls", wzKey);
     if (*pwzData)
     {
         hr = ::StringCchCopyW(psf->wzGrow, countof(psf->wzGrow), pwzData);
-        ExitOnFailure1(hr, "Failed to copy growth size to filespec object: %S", pwzData);
+        ExitOnFailure1(hr, "Failed to copy growth size to filespec object: %ls", pwzData);
     }
     else
     {

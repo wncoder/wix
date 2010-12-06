@@ -12,7 +12,7 @@
 // </copyright>
 //
 // <summary>
-//    Time helper functions.
+//    IIS7 helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -32,14 +32,15 @@ extern "C" HRESULT DAPI Iis7PutPropertyVariant(
     ExitOnNull(bstrPropName, hr, E_OUTOFMEMORY, "failed SysAllocString");
 
     hr = pElement->GetPropertyByName(bstrPropName, &pProperty);
-    ExitOnFailure1(hr, "Failed to get property object for %S", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property object for %ls", wszPropName);
 
     hr = pProperty->put_Value(vtPut);
-    ExitOnFailure1(hr, "Failed to set property value for %S", wszPropName);
+    ExitOnFailure1(hr, "Failed to set property value for %ls", wszPropName);
+
 LExit:
-    ReleaseNullBSTR(bstrPropName);
-    // caller responsible vor cleaning up variant vtPut
-    ReleaseNullObject(pProperty);
+    ReleaseBSTR(bstrPropName);
+    // caller responsible for cleaning up variant vtPut
+    ReleaseObject(pProperty);
 
     return hr;
 }
@@ -57,7 +58,8 @@ extern "C" HRESULT DAPI Iis7PutPropertyString(
     vtPut.vt = VT_BSTR;
     vtPut.bstrVal = SysAllocString(wszString);
     hr = Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
-    VariantClear(&vtPut);
+    ReleaseVariant(vtPut);
+
     return hr;
 }
 
@@ -71,6 +73,7 @@ extern "C" HRESULT DAPI Iis7PutPropertyInteger(
     VariantInit(&vtPut);
     vtPut.vt = VT_I4;
     vtPut.lVal = dValue;
+
     return Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
 }
 
@@ -83,6 +86,7 @@ extern "C" HRESULT DAPI Iis7PutPropertyBool(
     VariantInit(&vtPut);
     vtPut.vt = VT_BOOL;
     vtPut.boolVal = (fValue == FALSE) ? VARIANT_FALSE : VARIANT_TRUE;
+
     return Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
 }
 
@@ -100,14 +104,15 @@ extern "C" HRESULT DAPI Iis7GetPropertyVariant(
     ExitOnNull(bstrPropName, hr, E_OUTOFMEMORY, "failed SysAllocString");
 
     hr = pElement->GetPropertyByName(bstrPropName, &pProperty);
-    ExitOnFailure1(hr, "Failed to get property object for %S", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property object for %ls", wszPropName);
 
     hr = pProperty->get_Value(vtGet);
-    ExitOnFailure1(hr, "Failed to get property value for %S", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property value for %ls", wszPropName);
+
 LExit:
-    ReleaseNullBSTR(bstrPropName);
-    // caller responsible vor cleaning up variant vtGet
-    ReleaseNullObject(pProperty);
+    ReleaseBSTR(bstrPropName);
+    // caller responsible for cleaning up variant vtGet
+    ReleaseObject(pProperty);
     return hr;
 }
 
@@ -127,7 +132,8 @@ extern "C" HRESULT DAPI Iis7GetPropertyString(
         Assert(VT_BSTR == vtGet.vt);
         hr = StrAllocString(pwzGet, vtGet.bstrVal, 0);
     }
-    VariantClear(&vtGet);
+    ReleaseVariant(vtGet);
+
     return hr;
 }
 
@@ -137,7 +143,7 @@ BOOL CompareVariantDefault(
     )
 {
     BOOL fEqual = FALSE;
-    switch(pVariant1->vt)
+    switch (pVariant1->vt)
     {
         // VarCmp doesn't work for unsigned ints
         // We'd like to allow signed/unsigned comparison as well since
@@ -176,6 +182,7 @@ BOOL CompareVariantDefault(
                                        LOCALE_NEUTRAL,
                                        NORM_IGNORECASE);
     }
+
     return fEqual;
 }
 
@@ -185,6 +192,7 @@ BOOL DAPI IsMatchingAppHostElementCallback(
     )
 {
     IIS7_APPHOSTELEMENTCOMPARISON* pComparison = (IIS7_APPHOSTELEMENTCOMPARISON*) pContext;
+
     return Iis7IsMatchingAppHostElement(pElement, pComparison);
 }
 
@@ -209,16 +217,17 @@ extern "C" BOOL DAPI Iis7IsMatchingAppHostElement(
     }
 
     hr = Iis7GetPropertyVariant(pElement, pComparison->pwzAttributeName, &vPropValue);
-    ExitOnFailure2(hr, "Failed to get value of %S attribute of %S element", pComparison->pwzAttributeName, pComparison->pwzElementName);
+    ExitOnFailure2(hr, "Failed to get value of %ls attribute of %ls element", pComparison->pwzAttributeName, pComparison->pwzElementName);
 
     if (TRUE == CompareVariantDefault(pComparison->pvAttributeValue, &vPropValue))
     {
         fResult = TRUE;
     }
+
 LExit:
-    ReleaseNullBSTR(bstrElementName);
-    VariantClear(&vPropValue);
-    ReleaseNullObject(pProperty);
+    ReleaseBSTR(bstrElementName);
+    ReleaseVariant(vPropValue);
+    ReleaseObject(pProperty);
     return fResult;
 }
 
@@ -233,12 +242,14 @@ BOOL DAPI IsMatchingAppHostMethod(
 
     hr = pMethod->get_Name(&bstrName);
     ExitOnFailure(hr, "Failed to get name of element");
+
     if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pwzMethodName, -1, bstrName, -1))
     {
         fResult = TRUE;
     }
+
 LExit:
-    ReleaseNullBSTR(bstrName);
+    ReleaseBSTR(bstrName);
     return fResult;
 }
 
@@ -265,7 +276,8 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementString(
                                        ppElement,
                                        pdwIndex);
 
-    VariantClear(&vtValue);
+    ReleaseVariant(vtValue);
+
     return hr;
 }
 
@@ -292,7 +304,8 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementInteger(
                                        ppElement,
                                        pdwIndex);
 
-    VariantClear(&vtValue);
+    ReleaseVariant(vtValue);
+
     return hr;
 }
 
@@ -345,7 +358,7 @@ extern "C" HRESULT DAPI Iis7EnumAppHostElements(
     ExitOnFailure(hr, "Failed get application IAppHostElementCollection count");
 
     vtIndex.vt = VT_UI4;
-    for( DWORD i = 0; i < dwElements; i++ )
+    for (DWORD i = 0; i < dwElements; ++i)
     {
         vtIndex.ulVal = i;
         hr = pCollection->get_Item(vtIndex , &pElement);
@@ -367,9 +380,10 @@ extern "C" HRESULT DAPI Iis7EnumAppHostElements(
 
         ReleaseNullObject(pElement);
     }
+
 LExit:
-    ReleaseNullObject(pElement);
-    VariantClear(&vtIndex);
+    ReleaseObject(pElement);
+    ReleaseVariant(vtIndex);
 
     return hr;
 }
@@ -401,7 +415,7 @@ extern "C" HRESULT DAPI Iis7FindAppHostMethod(
     ExitOnFailure(hr, "Failed get application IAppHostMethodCollection count");
 
     vtIndex.vt = VT_UI4;
-    for( DWORD i = 0; i < dwMethods; i++ )
+    for (DWORD i = 0; i < dwMethods; ++i)
     {
         vtIndex.ulVal = i;
         hr = pCollection->get_Item(vtIndex , &pMethod);
@@ -423,9 +437,10 @@ extern "C" HRESULT DAPI Iis7FindAppHostMethod(
 
         ReleaseNullObject(pMethod);
     }
+
 LExit:
-    ReleaseNullObject(pMethod);
-    VariantClear(&vtIndex);
+    ReleaseObject(pMethod);
+    ReleaseVariant(vtIndex);
 
     return hr;
 }

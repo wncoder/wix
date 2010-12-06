@@ -101,7 +101,7 @@ extern "C" UINT __stdcall ConfigurePerfmonManifestRegister(
         hr = StrAllocFormatted(&pwzCommand, L"\"lodctr.exe\" /m:\"%s\" \"%s\"", pwzFile, pwzResourceFilePath);
         ExitOnFailure(hr, "failed to copy string in PerfMonManifest");
                 
-        WcaLog(LOGMSG_VERBOSE, "RegisterPerfmonManifest's CustomActionData: '%S'", pwzCommand);
+        WcaLog(LOGMSG_VERBOSE, "RegisterPerfmonManifest's CustomActionData: '%ls'", pwzCommand);
         
         hr = WcaDoDeferredAction(L"RegisterPerfmonManifest", pwzCommand, COST_PERFMONMANIFEST_REGISTER);
         ExitOnFailure(hr, "failed to schedule RegisterPerfmonManifest action");
@@ -190,7 +190,7 @@ extern "C" UINT __stdcall ConfigurePerfmonManifestUnregister(
         hr = StrAllocFormatted(&pwzCommand, L"\"unlodctr.exe\" /m:\"%s\"", pwzFile);
         ExitOnFailure(hr, "failed to copy string in PerfMonManifest");
 
-        WcaLog(LOGMSG_VERBOSE, "UnRegisterPerfmonManifest's CustomActionData: '%S'", pwzCommand);
+        WcaLog(LOGMSG_VERBOSE, "UnRegisterPerfmonManifest's CustomActionData: '%ls'", pwzCommand);
         
         hr = WcaDoDeferredAction(L"UnregisterPerfmonManifest", pwzCommand, COST_PERFMONMANIFEST_UNREGISTER);
         ExitOnFailure(hr, "failed to schedule UnregisterPerfmonManifest action");
@@ -271,7 +271,7 @@ extern "C" UINT __stdcall ConfigureEventManifestRegister(
 
         hr = StrAllocFormatted(&pwzCommand, L"\"wevtutil.exe\" im \"%s\"", pwzFile);
         ExitOnFailure(hr, "failed to copy string in EventManifest");
-        WcaLog(LOGMSG_VERBOSE, "RegisterEventManifest's CustomActionData: '%S'", pwzCommand);
+        WcaLog(LOGMSG_VERBOSE, "RegisterEventManifest's CustomActionData: '%ls'", pwzCommand);
         
         hr = WcaDoDeferredAction(L"RegisterEventManifest", pwzCommand, COST_EVENTMANIFEST_REGISTER);
         ExitOnFailure(hr, "failed to schedule RegisterEventManifest action");
@@ -359,7 +359,7 @@ extern "C" UINT __stdcall ConfigureEventManifestUnregister(
         {
             hr = StrAllocFormatted(&pwzCommand, L"\"wevtutil.exe\" um \"%s\"", pwzFile);
             ExitOnFailure(hr, "failed to copy string in EventManifest");
-            WcaLog(LOGMSG_VERBOSE, "UnregisterEventManifest's CustomActionData: '%S'", pwzCommand);
+            WcaLog(LOGMSG_VERBOSE, "UnregisterEventManifest's CustomActionData: '%ls'", pwzCommand);
             
             hr = WcaDoDeferredAction(L"UnregisterEventManifest", pwzCommand, COST_PERFMONMANIFEST_UNREGISTER);
             ExitOnFailure(hr, "failed to schedule UnregisterEventManifest action");

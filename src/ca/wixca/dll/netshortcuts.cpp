@@ -83,7 +83,7 @@ extern "C" UINT __stdcall WixSchedInternetShortcuts(
         WCA_TODO todo = WcaGetComponentToDo(pwzComponent);
         if (WCA_TODO_UNKNOWN == todo)
         {
-            WcaLog(LOGMSG_VERBOSE, "Skipping shortcut for null-action component '%S'", pwzComponent);
+            WcaLog(LOGMSG_VERBOSE, "Skipping shortcut for null-action component '%ls'", pwzComponent);
             continue;
         }
 
@@ -91,11 +91,11 @@ extern "C" UINT __stdcall WixSchedInternetShortcuts(
         // than doing so in our deferred custom action, use the CreateFolder table to have MSI 
         // make (and remove) them on our behalf (including the correct cleanup of parent directories).
         MSIDBERROR dbError = MSIDBERROR_NOERROR;
-        WcaLog(LOGMSG_STANDARD, "Adding folder '%S', component '%S' to the CreateFolder table", pwzDirectory, pwzComponent);
+        WcaLog(LOGMSG_STANDARD, "Adding folder '%ls', component '%ls' to the CreateFolder table", pwzDirectory, pwzComponent);
         hr = WcaAddTempRecord(&hCreateFolderTable, &hCreateFolderColumns, L"CreateFolder", &dbError, 0, 2, pwzDirectory, pwzComponent);
         if (MSIDBERROR_DUPLICATEKEY == dbError)
         {
-            WcaLog(LOGMSG_STANDARD, "Folder '%S' already exists in the CreateFolder table; the above error is harmless", pwzDirectory);
+            WcaLog(LOGMSG_STANDARD, "Folder '%ls' already exists in the CreateFolder table; the above error is harmless", pwzDirectory);
             hr = S_OK;
         }
         ExitOnFailure(hr, "Couldn't add temporary CreateFolder row");
@@ -182,20 +182,20 @@ static HRESULT CreateUrl(
     IPersistFile* piPersistFile = NULL;
 
     // create an internet shortcut object
-    WcaLog(LOGMSG_STANDARD, "Creating IUniformResourceLocatorW shortcut '%S' target '%S'", wzShortcutPath, wzTarget);
+    WcaLog(LOGMSG_STANDARD, "Creating IUniformResourceLocatorW shortcut '%ls' target '%ls'", wzShortcutPath, wzTarget);
     hr = ::CoCreateInstance(CLSID_InternetShortcut, NULL, CLSCTX_ALL, IID_IUniformResourceLocatorW, (void**)&piURL);
     ExitOnFailure(hr, "failed to create an instance of IUniformResourceLocatorW");
 
     // set shortcut target
     hr = piURL->SetURL(wzTarget, 0);
-    ExitOnFailure2(hr, "failed to set shortcut '%S' target '%S'", wzShortcutPath, wzTarget);
+    ExitOnFailure2(hr, "failed to set shortcut '%ls' target '%ls'", wzShortcutPath, wzTarget);
 
     // get an IPersistFile and save the shortcut
     hr = piURL->QueryInterface(IID_IPersistFile, (void**)&piPersistFile);
-    ExitOnFailure1(hr, "failed to get IPersistFile for shortcut '%S'", wzShortcutPath);
+    ExitOnFailure1(hr, "failed to get IPersistFile for shortcut '%ls'", wzShortcutPath);
 
     hr = piPersistFile->Save(wzShortcutPath, TRUE);
-    ExitOnFailure1(hr, "failed to save shortcut '%S'", wzShortcutPath);
+    ExitOnFailure1(hr, "failed to save shortcut '%ls'", wzShortcutPath);
 
 LExit:
     ReleaseObject(piPersistFile);
@@ -219,20 +219,20 @@ static HRESULT CreateLink(
     IPersistFile* piPersistFile = NULL;
 
     // create an internet shortcut object
-    WcaLog(LOGMSG_STANDARD, "Creating IShellLinkW shortcut '%S' target '%S'", wzShortcutPath, wzTarget);
+    WcaLog(LOGMSG_STANDARD, "Creating IShellLinkW shortcut '%ls' target '%ls'", wzShortcutPath, wzTarget);
     hr = ::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_ALL, IID_IShellLinkW, (void**)&piShellLink);
     ExitOnFailure(hr, "failed to create an instance of IShellLinkW");
 
     // set shortcut target
     hr = piShellLink->SetPath(wzTarget);
-    ExitOnFailure2(hr, "failed to set shortcut '%S' target '%S'", wzShortcutPath, wzTarget);
+    ExitOnFailure2(hr, "failed to set shortcut '%ls' target '%ls'", wzShortcutPath, wzTarget);
 
     // get an IPersistFile and save the shortcut
     hr = piShellLink->QueryInterface(IID_IPersistFile, (void**)&piPersistFile);
-    ExitOnFailure1(hr, "failed to get IPersistFile for shortcut '%S'", wzShortcutPath);
+    ExitOnFailure1(hr, "failed to get IPersistFile for shortcut '%ls'", wzShortcutPath);
 
     hr = piPersistFile->Save(wzShortcutPath, TRUE);
-    ExitOnFailure1(hr, "failed to save shortcut '%S'", wzShortcutPath);
+    ExitOnFailure1(hr, "failed to save shortcut '%ls'", wzShortcutPath);
 
 LExit:
     ReleaseObject(piPersistFile);
@@ -296,7 +296,7 @@ extern "C" UINT __stdcall WixCreateInternetShortcuts(
 
         // tick the progress bar
         hr = WcaProgressMessage(COST_INTERNETSHORTCUT, FALSE);
-        ExitOnFailure1(hr, "failed to tick progress bar for shortcut: %S", pwzShortcutPath);
+        ExitOnFailure1(hr, "failed to tick progress bar for shortcut: %ls", pwzShortcutPath);
     }
 
 LExit:
@@ -348,7 +348,7 @@ extern "C" UINT __stdcall WixRollbackInternetShortcuts(
 
         // delete file
         hr = FileEnsureDelete(pwzShortcutPath);
-        ExitOnFailure1(hr, "failed to delete file '%S'", pwzShortcutPath);
+        ExitOnFailure1(hr, "failed to delete file '%ls'", pwzShortcutPath);
 
         // skip over the shortcut target and attributes
         hr = WcaReadStringFromCaData(&pwz, &pwzShortcutPath);

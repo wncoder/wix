@@ -580,7 +580,7 @@ extern "C" HRESULT RegistrationSessionBegin(
             // the burnstub executable and manifest data with fix-up for the
             // signature.
             hr = FileEnsureCopy(sczExecutablePath, pRegistration->sczCacheExecutablePath, TRUE);
-            ExitOnFailure2(hr, "Failed to cache burn from: '%S' to '%S'", sczExecutablePath, pRegistration->sczCacheExecutablePath);
+            ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", sczExecutablePath, pRegistration->sczCacheExecutablePath);
 
             // get base directory for executable
             hr = PathGetDirectory(sczExecutablePath, &sczExecutableDirectory);
@@ -601,7 +601,7 @@ extern "C" HRESULT RegistrationSessionBegin(
 
                     // copy payload file
                     hr = FileEnsureCopy(sczPayloadSourcePath, sczPayloadTargetPath, TRUE);
-                    ExitOnFailure2(hr, "Failed to copy UX payload from: '%S' to '%S'", sczPayloadSourcePath, sczPayloadTargetPath);
+                    ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
                 }
             }
         }
@@ -906,7 +906,7 @@ extern "C" HRESULT RegistrationSaveState(
 
     // write data to file
     hr = FileWrite(pRegistration->sczStateFile, FILE_ATTRIBUTE_NORMAL, pbBuffer, cbBuffer, NULL);
-    ExitOnFailure1(hr, "Failed to write state to file: %S", pRegistration->sczStateFile);
+    ExitOnFailure1(hr, "Failed to write state to file: %ls", pRegistration->sczStateFile);
 
 LExit:
     return hr;
@@ -926,7 +926,7 @@ extern "C" HRESULT RegistrationLoadState(
 
     // write data to file
     hr = FileRead(ppbBuffer, pcbBuffer, pRegistration->sczStateFile);
-    ExitOnFailure1(hr, "Failed to read state from file: %S", pRegistration->sczStateFile);
+    ExitOnFailure1(hr, "Failed to read state from file: %ls", pRegistration->sczStateFile);
 
 LExit:
     return hr;

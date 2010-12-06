@@ -147,7 +147,7 @@ HRESULT ScaFiltersInstall7(
     HRESULT hr = S_OK;
     SCA_FILTER* psf = psfList;
 
-    if(!psf)
+    if (!psf)
     {
         ExitFunction();
     }
@@ -229,7 +229,7 @@ HRESULT ScaFiltersUninstall7(
     HRESULT hr = S_OK;
     SCA_FILTER* psf = psfList;
 
-    if(!psf)
+    if (!psf)
     {
         ExitFunction1(hr = S_OK);
     }

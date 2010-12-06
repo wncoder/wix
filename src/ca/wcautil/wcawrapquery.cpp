@@ -198,7 +198,7 @@ HRESULT WIXAPI WcaWrapQuery(
     PMSIHANDLE hColumnTypes, hColumnNames;
     PMSIHANDLE hView, hRec;
 
-    WcaLog(LOGMSG_TRACEONLY, "Wrapping result of query: \"%S\"", pwzQuery);
+    WcaLog(LOGMSG_TRACEONLY, "Wrapping result of query: \"%ls\"", pwzQuery);
 
     // open the view
     hr = WcaOpenExecuteView(pwzQuery, &hView);
@@ -260,7 +260,7 @@ HRESULT WIXAPI WcaWrapQuery(
         ExitOnFailure1(hr, "Failed to get the column %d name", i+1);
 
         hr = WcaWriteStringToCaData(pwzData, &pwzColumnData);
-        ExitOnFailure2(hr, "Failed to write column %d name %S to custom action data", i+1, pwzData);
+        ExitOnFailure2(hr, "Failed to write column %d name %ls to custom action data", i+1, pwzData);
 
         hr = WcaGetRecordString(hColumnTypes, i+1, &pwzData);
         ExitOnFailure1(hr, "Failed to get the column type string for column %d", i+1);
@@ -270,7 +270,7 @@ HRESULT WIXAPI WcaWrapQuery(
         if (cdtUnknown == pcdtColumnTypeList[i])
         {
             hr = E_INVALIDARG;
-            ExitOnFailure2(hr, "Failed to recognize column %d type string: %S", i+1, pwzData);
+            ExitOnFailure2(hr, "Failed to recognize column %d type string: %ls", i+1, pwzData);
         }
 
         hr = WcaWriteIntegerToCaData(pcdtColumnTypeList[i], &pwzColumnData);
@@ -281,13 +281,13 @@ HRESULT WIXAPI WcaWrapQuery(
     if (fAddComponentState)
     {
         hr = WcaWriteStringToCaData(ISINSTALLEDCOLUMNNAME, &pwzColumnData);
-        ExitOnFailure2(hr, "Failed to write extra column %d name %S to custom action data", cViewColumns + 1, ISINSTALLEDCOLUMNNAME);
+        ExitOnFailure2(hr, "Failed to write extra column %d name %ls to custom action data", cViewColumns + 1, ISINSTALLEDCOLUMNNAME);
 
         hr = WcaWriteIntegerToCaData(cdtInt, &pwzColumnData);
         ExitOnFailure1(hr, "Failed to write extra column %d type to custom action data", cViewColumns + 1);
 
         hr = WcaWriteStringToCaData(ISACTIONCOLUMNNAME, &pwzColumnData);
-        ExitOnFailure2(hr, "Failed to write extra column %d name %S to custom action data", cViewColumns + 1, ISACTIONCOLUMNNAME);
+        ExitOnFailure2(hr, "Failed to write extra column %d name %ls to custom action data", cViewColumns + 1, ISACTIONCOLUMNNAME);
 
         hr = WcaWriteIntegerToCaData(cdtInt, &pwzColumnData);
         ExitOnFailure1(hr, "Failed to write extra column %d type to custom action data", cViewColumns + 1);
@@ -296,13 +296,13 @@ HRESULT WIXAPI WcaWrapQuery(
     if (fAddDirectoryPath)
     {
         hr = WcaWriteStringToCaData(SOURCEPATHCOLUMNNAME, &pwzColumnData);
-        ExitOnFailure2(hr, "Failed to write extra column %d name %S to custom action data", cViewColumns + 1, SOURCEPATHCOLUMNNAME);
+        ExitOnFailure2(hr, "Failed to write extra column %d name %ls to custom action data", cViewColumns + 1, SOURCEPATHCOLUMNNAME);
 
         hr = WcaWriteIntegerToCaData(cdtString, &pwzColumnData);
         ExitOnFailure1(hr, "Failed to write extra column %d type to custom action data", cViewColumns + 1);
 
         hr = WcaWriteStringToCaData(TARGETPATHCOLUMNNAME, &pwzColumnData);
-        ExitOnFailure2(hr, "Failed to write extra column %d name %S to custom action data", cViewColumns + 1, TARGETPATHCOLUMNNAME);
+        ExitOnFailure2(hr, "Failed to write extra column %d name %ls to custom action data", cViewColumns + 1, TARGETPATHCOLUMNNAME);
 
         hr = WcaWriteIntegerToCaData(cdtString, &pwzColumnData);
         ExitOnFailure1(hr, "Failed to write extra column %d type to custom action data", cViewColumns + 1);
@@ -381,7 +381,7 @@ HRESULT WIXAPI WcaWrapQuery(
                 // If we don't get the component state, that may be because the component ID was invalid, but isn't necessarily an error, so write NULL's
                 if (FAILED(HRESULT_FROM_WIN32(er)))
                 {
-                    ExitOnFailure1(hr, "Failed to get component state for component %S", pwzData);
+                    ExitOnFailure1(hr, "Failed to get component state for component %ls", pwzData);
                 }
             }
 
@@ -408,7 +408,7 @@ HRESULT WIXAPI WcaWrapQuery(
                     if (dwLen > countof(wzPath))
                     {
                         hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-                        ExitOnFailure1(hr, "Failed to record entire Source Path for Directory %S because its length was greater than MAX_PATH.", pwzData);
+                        ExitOnFailure1(hr, "Failed to record entire Source Path for Directory %ls because its length was greater than MAX_PATH.", pwzData);
                     }
 
                     if (SUCCEEDED(hrTemp))
@@ -434,7 +434,7 @@ HRESULT WIXAPI WcaWrapQuery(
                 if (dwLen > countof(wzPath))
                 {
                     hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-                    ExitOnFailure1(hr, "Failed to record entire Source Path for Directory %S because its length was greater than MAX_PATH.", pwzData);
+                    ExitOnFailure1(hr, "Failed to record entire Source Path for Directory %ls because its length was greater than MAX_PATH.", pwzData);
                 }
                 if (SUCCEEDED(hrTemp))
                 {
@@ -458,7 +458,7 @@ HRESULT WIXAPI WcaWrapQuery(
         hr = WcaWriteIntegerToCaData(static_cast<int>(wqaRowFinish), &pwzRecordData);
         ExitOnFailure(hr, "Failed to write row finish marker to custom action data");
 
-        dwNumRecords++;
+        ++dwNumRecords;
     }
 
     hr = WcaWriteIntegerToCaData(dwNumRecords, ppwzCustomActionData);
@@ -479,7 +479,7 @@ HRESULT WIXAPI WcaWrapQuery(
     hr = WcaWriteIntegerToCaData(static_cast<int>(wqaTableFinish), ppwzCustomActionData);
     ExitOnFailure(hr, "Failed to write table finish marker to custom action data");
 
-//  WcaLog(LOGMSG_TRACEONLY, "Finished wrapping result of query: \"%S\"", pwzQuery);
+//  WcaLog(LOGMSG_TRACEONLY, "Finished wrapping result of query: \"%ls\"", pwzQuery);
 
 LExit:
     ReleaseStr(pwzData);
@@ -568,7 +568,7 @@ HRESULT WIXAPI WcaBeginUnwrapQuery(
                 ExitOnFailure(hr, "Failed to read string from custom action data");
 
                 hr = WcaSetRecordString(hWrapQuery->phRecords[i], j+1, pwzData);
-                ExitOnFailure2(hr, "Failed to write string %S to record in column %d", pwzData, j+1);
+                ExitOnFailure2(hr, "Failed to write string %ls to record in column %d", pwzData, j+1);
                 break;
 
             case cdtInt:
@@ -656,7 +656,7 @@ HRESULT WIXAPI WcaFetchWrappedRecord(
     *phRec = hWrapQuery->phRecords[hWrapQuery->dwNextIndex];
 
     // Increment our next index variable
-    hWrapQuery->dwNextIndex++;
+    ++hWrapQuery->dwNextIndex;
 
     return S_OK;
 }
@@ -691,7 +691,7 @@ HRESULT WIXAPI WcaFetchWrappedRecordWhereString(
     // If we errored here but not because there were no records left, write an error to the log
     if (hr != E_NOMOREITEMS)
     {
-        ExitOnFailure2(hr, "Failed while searching for a wrapped record where column %d is set to %S", dwComparisonColumn, pwzExpectedValue);
+        ExitOnFailure2(hr, "Failed while searching for a wrapped record where column %d is set to %ls", dwComparisonColumn, pwzExpectedValue);
     }
 
 LExit:

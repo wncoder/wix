@@ -767,7 +767,8 @@ static HRESULT AcquireContainerOrPayload(
             LPCWSTR wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
 
             hr = PromptForSource(pUX, wzPackageOrContainerId, wzPayloadId, sczSourceFullPath, wzDownloadUrl, &fRetry, &fDownload);
-            ExitOnFailure(hr, "Failed while prompting for source.");
+            // Log the error
+            LogExitOnFailure1(hr, MSG_PAYLOAD_FILE_NOT_PRESENT, "Failed while prompting for source.", sczSourceFullPath);
 
             if (fDownload)
             {

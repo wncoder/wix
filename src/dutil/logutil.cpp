@@ -12,7 +12,7 @@
 // </copyright>
 //
 // <summary>
-//    Logging helper funtions.
+//    Logging helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -425,7 +425,7 @@ extern "C" HANDLE DAPI LogGetHandle()
 /********************************************************************
  LogString - write a string to the log
 
- NOTE: use printf formatting ("%S", "%d", etc.)
+ NOTE: use printf formatting ("%ls", "%d", etc.)
 ********************************************************************/
 extern "C" HRESULT DAPIV LogString(
     __in REPORT_LEVEL rl,
@@ -466,7 +466,7 @@ LExit:
 /********************************************************************
  LogStringLine - write a string plus LOGUTIL_NEWLINE to the log
 
- NOTE: use printf formatting ("%S", "%d", etc.)
+ NOTE: use printf formatting ("%ls", "%d", etc.)
 ********************************************************************/
 extern "C" HRESULT DAPIV LogStringLine(
     __in REPORT_LEVEL rl,
@@ -561,7 +561,7 @@ LExit:
 /********************************************************************
  LogError - write an error to the log
 
- NOTE: use printf formatting ("%S", "%d", etc.)
+ NOTE: use printf formatting ("%ls", "%d", etc.)
 ********************************************************************/
 extern "C" HRESULT DAPIV LogErrorString(
     __in HRESULT hrError,

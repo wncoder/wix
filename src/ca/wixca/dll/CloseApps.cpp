@@ -97,13 +97,13 @@ void SendApplicationCloseMessage(__in LPCWSTR wzApplication)
     DWORD cProcessIds = 0, iProcessId;
     HRESULT hr = S_OK;
 
-    WcaLog(LOGMSG_VERBOSE, "Checking App: %S ", wzApplication);
+    WcaLog(LOGMSG_VERBOSE, "Checking App: %ls ", wzApplication);
 
     hr = ProcFindAllIdsFromExeName(wzApplication, &prgProcessIds, &cProcessIds);
 
     if (SUCCEEDED(hr) && 0 < cProcessIds)
     {
-        WcaLog(LOGMSG_VERBOSE, "App: %S found running, %d processes, attempting to send close message.", wzApplication, cProcessIds);
+        WcaLog(LOGMSG_VERBOSE, "App: %ls found running, %d processes, attempting to send close message.", wzApplication, cProcessIds);
 
         for (iProcessId = 0; iProcessId < cProcessIds; ++iProcessId)
         {
@@ -130,13 +130,13 @@ void SetRunningProcessProperty(
     DWORD cProcessIds = 0;
     HRESULT hr = S_OK;
 
-    WcaLog(LOGMSG_VERBOSE, "Checking App: %S ", wzApplication);
+    WcaLog(LOGMSG_VERBOSE, "Checking App: %ls ", wzApplication);
 
     hr = ProcFindAllIdsFromExeName(wzApplication, &prgProcessIds, &cProcessIds);
 
     if (SUCCEEDED(hr) && 0 < cProcessIds)
     {
-        WcaLog(LOGMSG_VERBOSE, "App: %S found running, %d processes, setting '%S' property.", wzApplication, cProcessIds, wzProperty);
+        WcaLog(LOGMSG_VERBOSE, "App: %ls found running, %d processes, setting '%ls' property.", wzApplication, cProcessIds, wzProperty);
         WcaSetIntProperty(wzProperty, cProcessIds);
     }
 
@@ -201,7 +201,7 @@ extern "C" UINT __stdcall WixCloseApplications(
             if (MSICONDITION_ERROR == condition)
             {
                 hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "failed to process condition for WixCloseApplication '%S'", pwzId);
+                ExitOnFailure1(hr, "failed to process condition for WixCloseApplication '%ls'", pwzId);
             }
             else if (MSICONDITION_FALSE == condition)
             {
@@ -247,7 +247,7 @@ extern "C" UINT __stdcall WixCloseApplications(
             SetRunningProcessProperty(pwzTarget, pwzProperty);
         }
 
-        cCloseApps++;
+        ++cCloseApps;
     }
 
     // if we looped through all records all is well
@@ -348,7 +348,7 @@ extern "C" UINT __stdcall WixCloseApplicationsDeferred(
     hr = WcaGetProperty(L"CustomActionData", &pwzData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzData);
 
     pwz = pwzData;
 
@@ -362,7 +362,7 @@ extern "C" UINT __stdcall WixCloseApplicationsDeferred(
         hr = WcaReadIntegerFromCaData(&pwz, reinterpret_cast<int*>(&dwAttributes));
         ExitOnFailure(hr, "failed to processCustomActionData");
 
-        WcaLog(LOGMSG_VERBOSE, "Checking for App: %S Attributes: %d", pwzTarget, dwAttributes);
+        WcaLog(LOGMSG_VERBOSE, "Checking for App: %ls Attributes: %d", pwzTarget, dwAttributes);
 
         //
         // send WM_CLOSE to currently running applications
@@ -382,7 +382,7 @@ extern "C" UINT __stdcall WixCloseApplicationsDeferred(
         ProcFindAllIdsFromExeName(pwzTarget, &prgProcessIds, &cProcessIds);
         if ((0 < cProcessIds) && (dwAttributes & CLOSEAPP_ATTRIBUTE_REBOOTPROMPT))
         {
-            WcaLog(LOGMSG_VERBOSE, "App: %S found running, requiring a reboot.", pwzTarget);
+            WcaLog(LOGMSG_VERBOSE, "App: %ls found running, requiring a reboot.", pwzTarget);
 
             WcaDeferredActionRequiresReboot();
         }

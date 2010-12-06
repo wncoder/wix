@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="timeutil.cpp" company="Microsoft">
+// <copyright file="thmutil.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -491,7 +491,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             {
                 ::SendMessageW(pControl->hWnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, pControl->dwExtendedStyle);
 
-                for (DWORD j = 0; j < pControl->cColumns; j++)
+                for (DWORD j = 0; j < pControl->cColumns; ++j)
                 {
                     LVCOLUMNW lvc = { };
                     lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -509,7 +509,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             }
             else if (THEME_CONTROL_TYPE_TAB == pControl->type)
             {
-                for (DWORD j = 0; j < pControl->cTabs; j++)
+                for (DWORD j = 0; j < pControl->cTabs; ++j)
                 {
                     TCITEMW tci = { };
                     tci.mask = TCIF_TEXT | TCIF_IMAGE;
@@ -1629,7 +1629,6 @@ static HRESULT ParseFonts(
     BSTR bstrName = NULL;
     DWORD dwId = 0;
     LOGFONTW lf = { };
-    LOGBRUSH lb = { };
     COLORREF crForeground = THEME_INVISIBLE_COLORREF;
     COLORREF crBackground = THEME_INVISIBLE_COLORREF;
 
@@ -1648,7 +1647,6 @@ static HRESULT ParseFonts(
     ExitOnNull(pTheme->rgFonts, hr, E_OUTOFMEMORY, "Failed to allocate theme fonts.");
 
     lf.lfQuality = ANTIALIASED_QUALITY;
-    lb.lbStyle = BS_SOLID;
 
     while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
     {
@@ -1750,16 +1748,14 @@ static HRESULT ParseFonts(
         pFont->crForeground = crForeground;
         if (THEME_INVISIBLE_COLORREF != pFont->crForeground)
         {
-            lb.lbColor = pFont->crForeground;
-            pFont->hForeground = ::CreateBrushIndirect(&lb);
+            pFont->hForeground = ::CreateSolidBrush(pFont->crForeground);
             ExitOnNullWithLastError(pFont->hForeground, hr, "Failed to create text foreground brush.");
         }
 
         pFont->crBackground = crBackground;
         if (THEME_INVISIBLE_COLORREF != pFont->crBackground)
         {
-            lb.lbColor = pFont->crBackground;
-            pFont->hBackground = ::CreateBrushIndirect(&lb);
+            pFont->hBackground = ::CreateSolidBrush(pFont->crBackground);
             ExitOnNullWithLastError(pFont->hBackground, hr, "Failed to create text background brush.");
         }
 
@@ -2384,7 +2380,7 @@ static HRESULT ParseBillboards(
                 pControl->wBillboardUrls |= (1 << i);
             }
 
-            i++;
+            ++i;
             ReleaseNullBSTR(bstrText);
         }
     }
@@ -2440,7 +2436,7 @@ static HRESULT ParseColumns(
             hr = StrAllocString(&(pControl->ptcColumns[i].pszName), bstrText, 0);
             ExitOnFailure(hr, "Failed to copy column name");
 
-            i++;
+            ++i;
             ReleaseNullBSTR(bstrText);
         }
     }
@@ -2485,7 +2481,7 @@ static HRESULT ParseTabs(
             hr = StrAllocString(&(pControl->pttTabs[i].pszName), bstrText, 0);
             ExitOnFailure(hr, "Failed to copy tab name");
 
-            i++;
+            ++i;
             ReleaseNullBSTR(bstrText);
         }
     }
@@ -2737,17 +2733,17 @@ static void FreeControl(
             ::DeleteBitmap(pControl->hImage);
         }
 
-        for (DWORD i = 0; i < pControl->cBillboards; i++)
+        for (DWORD i = 0; i < pControl->cBillboards; ++i)
         {
             FreeBillboard(&(pControl->ptbBillboards[i]));
         }
 
-        for (DWORD i = 0; i < pControl->cColumns; i++)
+        for (DWORD i = 0; i < pControl->cColumns; ++i)
         {
             FreeColumn(&(pControl->ptcColumns[i]));
         }
 
-        for (DWORD i = 0; i < pControl->cTabs; i++)
+        for (DWORD i = 0; i < pControl->cTabs; ++i)
         {
             FreeTab(&(pControl->pttTabs[i]));
         }

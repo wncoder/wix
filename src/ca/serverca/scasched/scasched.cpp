@@ -88,7 +88,7 @@ extern "C" BOOL WINAPI DllMain(
     __in LPVOID
     )
 {
-    switch(ulReason)
+    switch (ulReason)
     {
     case DLL_PROCESS_ATTACH:
         WcaGlobalInitialize(hInst);

@@ -70,7 +70,7 @@ extern "C" BOOL WINAPI DllMain(
     IN LPVOID /* pvReserved */
     )
 {
-    switch(dwReason)
+    switch (dwReason)
     {
     case DLL_PROCESS_ATTACH:
         ::DisableThreadLibraryCalls(hInstance);

@@ -426,7 +426,7 @@ static HRESULT UpdateResumeOffset(
         do
         {
             // Ignore failure to write to the resume file as that should not prevent the download from happening.
-            if(!::WriteFile(hResumeFile, pdw64ResumeOffset + cbTotalWrittenResumeData, sizeof(DWORD64) - cbTotalWrittenResumeData, &cbWrittenResumeData, NULL))
+            if (!::WriteFile(hResumeFile, pdw64ResumeOffset + cbTotalWrittenResumeData, sizeof(DWORD64) - cbTotalWrittenResumeData, &cbWrittenResumeData, NULL))
             {
                 ExitOnFailure(hr, "Failed to seek to write to file.");
             }

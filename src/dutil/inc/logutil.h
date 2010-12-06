@@ -13,7 +13,7 @@
 // </copyright>
 // 
 // <summary>
-//    Header for string helper functions.
+//    Logging helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

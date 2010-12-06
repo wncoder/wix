@@ -77,6 +77,7 @@
     <ClCompile Include="reswutil.cpp" />
     <ClCompile Include="rexutil.cpp" />
     <ClCompile Include="rssutil.cpp" />
+    <ClCompile Include="sceutil.cpp" />
     <ClCompile Include="shelutil.cpp" />
     <ClCompile Include="sqlutil.cpp" />
     <ClCompile Include="strutil.cpp" />
@@ -119,6 +120,7 @@
     <ClInclude Include="inc\reswutil.h" />
     <ClInclude Include="inc\rexutil.h" />
     <ClInclude Include="inc\rssutil.h" />
+    <ClInclude Include="inc\sceutil.h" />
     <ClInclude Include="inc\shelutil.h" />
     <ClInclude Include="inc\sqlutil.h" />
     <ClInclude Include="inc\strutil.h" />

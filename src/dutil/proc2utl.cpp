@@ -61,7 +61,7 @@ extern "C" HRESULT DAPI ProcFindAllIdsFromExeName(
             }
             
             (*ppdwProcessIds)[*pcProcessIds] = peData.th32ProcessID;
-            (*pcProcessIds)++;
+            ++(*pcProcessIds);
         }
 
         fContinue = ::Process32NextW(hSnap, &peData);

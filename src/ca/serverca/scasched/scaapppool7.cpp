@@ -202,7 +202,7 @@ HRESULT ScaWriteAppPool7(
         hr = ScaWriteConfigInteger(psap->iQueueLimit);
         ExitOnFailure(hr, "failed to set request queue limit value");
     }
-    if(*psap->wzCpuMon)
+    if (*psap->wzCpuMon)
     {
 #pragma prefast(suppress:26037, "Source string is null terminated - it is populated as target of ::StringCchCopyW")
         hr = ::StrAllocString(&pwzValue, psap->wzCpuMon, 0);
@@ -219,11 +219,11 @@ HRESULT ScaWriteAppPool7(
         }
         if (wz && L',' == *wz)
         {
-            wz++;
+            ++wz;
             dwRefreshMinutes = wcstoul(wz, &wz, 10);
             if (wz && L',' == *wz)
             {
-                wz++;
+                ++wz;
                 dwAction = wcstoul(wz, &wz, 10);
             }
         }
@@ -366,7 +366,7 @@ HRESULT ScaWriteAppPool7(
         ExitOnFailure(hr, "failed to set app pool integrated mode");
     }
 
-    if(*psap->wzManagedRuntimeVersion)
+    if (*psap->wzManagedRuntimeVersion)
     {
         hr = ScaWriteConfigID(IIS_APPPOOL_MANAGED_RUNTIME_VERSION);
         ExitOnFailure(hr, "failed to set app pool managed runtime version mode");

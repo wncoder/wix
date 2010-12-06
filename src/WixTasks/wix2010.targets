@@ -1789,10 +1789,10 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <ItemGroup>
       <_CompileWithObjectPath Include="@(Compile)">
-        <!-- If RelativeDir is not rooted and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
-        <ObjectPath Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)%(RelativeDir)</ObjectPath>
-        <!-- If RelativeDir is rooted and ObjectPath is undefined use IntermediateOutputPath -->
-        <ObjectPath Condition=" '%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)</ObjectPath>
+        <!-- If RelativeDir is not rooted and not in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
+        <ObjectPath Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(RelativeDir)%(FileName)%(Extension)' != '$(IntermediateOutputPath)%(FileName)%(Extension)' AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)%(RelativeDir)</ObjectPath>
+        <!-- If RelativeDir is rooted or in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath -->
+        <ObjectPath Condition=" ('%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' OR '%(RelativeDir)%(FileName)%(Extension)' == '$(IntermediateOutputPath)%(FileName)%(Extension)') AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)</ObjectPath>
       </_CompileWithObjectPath>
     </ItemGroup>
 

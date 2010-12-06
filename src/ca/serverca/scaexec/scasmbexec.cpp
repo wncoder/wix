@@ -40,14 +40,14 @@ HRESULT AllocateAcl(SCA_SMBP* pssp, PACL* ppACL)
     cEA = pssp->dwUserPermissionCount + 1;
     if (cEA >= MAXSIZE_T / sizeof(EXPLICIT_ACCESSW))
     {
-        ExitOnFailure1(hr = E_OUTOFMEMORY, "Too many user permissions to allocate: %d", cEA);
+        ExitOnFailure1(hr = E_OUTOFMEMORY, "Too many user permissions to allocate: %u", cEA);
     }
 
     pEA = static_cast<EXPLICIT_ACCESSW*>(MemAlloc(cEA * sizeof(EXPLICIT_ACCESSW), TRUE));
     ExitOnNull(pEA, hr, E_OUTOFMEMORY, "failed to allocate memory for explicit access structure");
 
     // figure out how big the psid is
-    for (dwCounter = 0; dwCounter < pssp->dwUserPermissionCount; dwCounter++)
+    for (dwCounter = 0; dwCounter < pssp->dwUserPermissionCount; ++dwCounter)
     {
         wzUser = pssp->pUserPerms[dwCounter].wzUser;
         nPermissions = pssp->pUserPerms[dwCounter].nPermissions;
@@ -93,7 +93,7 @@ HRESULT AllocateAcl(SCA_SMBP* pssp, PACL* ppACL)
         {
             hr = AclGetAccountSid(NULL, wzUser, &psid);
         }
-        ExitOnFailure1(hr, "failed to get sid for account: %S", wzUser);
+        ExitOnFailure1(hr, "failed to get sid for account: %ls", wzUser);
 
         // we now have a valid pSid, fill in the EXPLICIT_ACCESS
 
@@ -122,10 +122,11 @@ HRESULT AllocateAcl(SCA_SMBP* pssp, PACL* ppACL)
 
 LExit:
     if (psid)
+    {
         AclFreeSid(psid);
+    }
 
-    if (pEA)
-        MemFree(pEA);
+    ReleaseMem(pEA);
 
     return hr;
 }
@@ -172,7 +173,7 @@ HRESULT DoesShareExist(__in LPWSTR wzShareName)
     SHARE_INFO_502* psi = NULL;
     s = ::NetShareGetInfo(NULL, wzShareName, 502, (BYTE**) &psi);
 
-    switch(s)
+    switch (s)
     {
         case NERR_Success:
             hr = S_OK;
@@ -242,9 +243,9 @@ HRESULT CreateShare(SCA_SMBP* pssp)
 
     // Fail if the directory doesn't exist
     if (!DirExists(pssp->wzDirectory, NULL))
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_OBJECT_NOT_FOUND), "Can't create a file share on directory that doesn't exist: %S.", pssp->wzDirectory);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(ERROR_OBJECT_NOT_FOUND), "Can't create a file share on directory that doesn't exist: %ls.", pssp->wzDirectory);
 
-    WcaLog(LOGMSG_VERBOSE, "Creating file share on directory \'%S\' named \'%S\'.", pssp->wzDirectory, pssp->wzKey);
+    WcaLog(LOGMSG_VERBOSE, "Creating file share on directory \'%ls\' named \'%ls\'.", pssp->wzDirectory, pssp->wzKey);
 
     if (!fShareExists)
     {
@@ -270,10 +271,11 @@ HRESULT CreateShare(SCA_SMBP* pssp)
 
 LExit:
     if (pACL)
+    {
         ::LocalFree(pACL);
+    }
 
-    if (pSD)
-        MemFree(pSD);
+    ReleaseMem(pSD);
 
     return hr;
 }
@@ -289,6 +291,7 @@ HRESULT ScaEnsureSmbExists(SCA_SMBP* pssp)
 
     // create the share
     hr = CreateShare(pssp);
+
     return hr;
 }
 
@@ -310,12 +313,12 @@ HRESULT ScaDropSmb(SCA_SMBP* pssp)
 
     if (E_FILENOTFOUND == hr)
     {
-        WcaLog(LOGMSG_VERBOSE, "Share doesn't exist, share removal skipped. (%S)", pssp->wzKey);
+        WcaLog(LOGMSG_VERBOSE, "Share doesn't exist, share removal skipped. (%ls)", pssp->wzKey);
         ExitFunction1(hr = S_OK);
 
     }
 
-    ExitOnFailure1(hr, "Unable to detect share. (%S)", pssp->wzKey);
+    ExitOnFailure1(hr, "Unable to detect share. (%ls)", pssp->wzKey);
 
     s = ::NetShareDel(NULL, pssp->wzKey, 0);
     if (NERR_Success != s)

@@ -180,18 +180,18 @@ HRESULT ScaSmbRead(SCA_SMB** ppssList)
         ExitOnFailure(hr, "Failed to copy share name string to smb object");
 
         hr = WcaGetRecordString(hRec, ssqComponent, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Component for FileShare: '%S'", pss->wzShareName);
+        ExitOnFailure1(hr, "Failed to get Component for FileShare: '%ls'", pss->wzShareName);
         hr = ::StringCchCopyW(pss->wzComponent, countof(pss->wzComponent), pwzData);
         ExitOnFailure(hr, "Failed to copy component string to smb object");
 
         hr = WcaGetRecordFormattedString(hRec, ssqDescription, &pwzData);
-        ExitOnFailure1(hr, "Failed to get Share Description for FileShare: '%S'", pss->wzShareName);
+        ExitOnFailure1(hr, "Failed to get Share Description for FileShare: '%ls'", pss->wzShareName);
         hr = ::StringCchCopyW(pss->wzDescription, countof(pss->wzDescription), pwzData);
         ExitOnFailure(hr, "Failed to copy description string to smb object");
 
         // get user info from the user table
         hr = WcaGetRecordFormattedString(hRec, ssqUser, &pwzData);
-        ExitOnFailure1(hr, "Failed to get User record for FileShare: '%S'", pss->wzShareName);
+        ExitOnFailure1(hr, "Failed to get User record for FileShare: '%ls'", pss->wzShareName);
 
         // get component install state
         er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pss->wzComponent, &pss->isInstalled, &pss->isAction);
@@ -204,7 +204,7 @@ HRESULT ScaSmbRead(SCA_SMB** ppssList)
             pss->fUseIntegratedAuth = FALSE;
             pss->fLegacyUserProvided = TRUE;
             hr = ScaGetUser(pwzData, &pss->scau);
-            ExitOnFailure1(hr, "Failed to get user information for fileshare: '%S'", pss->wzShareName);
+            ExitOnFailure1(hr, "Failed to get user information for fileshare: '%ls'", pss->wzShareName);
         }
         else
         {
@@ -216,7 +216,7 @@ HRESULT ScaSmbRead(SCA_SMB** ppssList)
 
         // get the share's directory
         hr = WcaGetRecordString(hRec, ssqDirectory, &pwzData);
-        ExitOnFailure1(hr, "Failed to get directory for FileShare: '%S'", pss->wzShareName);
+        ExitOnFailure1(hr, "Failed to get directory for FileShare: '%ls'", pss->wzShareName);
 
         WCHAR wzPath[MAX_PATH];
         DWORD dwLen;
@@ -315,8 +315,8 @@ HRESULT RetrieveFileShareUserPerm(SCA_SMB* pss, SCA_SMB_EX_USER_PERMS** ppExUser
 
     er = ::GetExplicitEntriesFromAclW(acl, &nCount, &pEA);
     hr = HRESULT_FROM_WIN32(er);
-    ExitOnFailure1(hr, "Failed to get  access entries from acl for file share %S", pss->wzShareName);
-    for(dwCounter = 0; dwCounter < nCount; dwCounter++)
+    ExitOnFailure1(hr, "Failed to get  access entries from acl for file share %ls", pss->wzShareName);
+    for (dwCounter = 0; dwCounter < nCount; ++dwCounter)
     {
         if (TRUSTEE_IS_SID == pEA[dwCounter].Trustee.TrusteeForm)
         {
@@ -331,7 +331,7 @@ HRESULT RetrieveFileShareUserPerm(SCA_SMB* pss, SCA_SMB_EX_USER_PERMS** ppExUser
             }
             pExUserPerms->nPermissions = pEA[dwCounter].grfAccessPermissions;
             pExUserPerms->accessMode = pEA[dwCounter].grfAccessMode;
-            dwUserPermsCount++;
+            ++dwUserPermsCount;
             nUserNameSize = MAX_DARWIN_COLUMN;
             nDomainNameSize = MAX_DARWIN_COLUMN;
         }
@@ -405,7 +405,7 @@ HRESULT SchedCreateSmb(SCA_SMB* pss)
     if (pss->nUserPermissionCount > 0)
     {
         nCounter = 0;
-        for(pExUserPermsList = pss->pExUserPerms; pExUserPermsList; pExUserPermsList = pExUserPermsList->pExUserPermsNext)
+        for (pExUserPermsList = pss->pExUserPerms; pExUserPermsList; pExUserPermsList = pExUserPermsList->pExUserPermsNext)
         {
             Assert(nCounter < pss->nUserPermissionCount);
 
@@ -419,7 +419,7 @@ HRESULT SchedCreateSmb(SCA_SMB* pss)
             
             hr = WcaWriteIntegerToCaData(pExUserPermsList->nPermissions, &pwzCustomActionData);
             ExitOnFailure(hr, "Failed to add permissions to CustomActionData");
-            nCounter++;
+            ++nCounter;
         }
         Assert(nCounter == pss->nUserPermissionCount);
     }
@@ -459,7 +459,7 @@ HRESULT ScaSmbInstall(SCA_SMB* pssList)
         if (WcaIsInstalling(pss->isInstalled, pss->isAction) )
         {
             hr = SchedCreateSmb(pss);
-            ExitOnFailure1(hr, "Failed to schedule the creation of the fileshare: %S", pss->wzShareName);
+            ExitOnFailure1(hr, "Failed to schedule the creation of the fileshare: %ls", pss->wzShareName);
         }
     }
 
@@ -503,7 +503,7 @@ HRESULT SchedDropSmb(SCA_SMB* pss)
     hr = WcaWriteIntegerToCaData((int)dwUserPermsCount, &pwzRollbackCustomActionData);
     ExitOnFailure(hr, "Failed to add additional user permission count to CustomActionData");
 
-    for(pExUserPerm = pExUserPermsList; pExUserPerm; pExUserPerm = pExUserPerm->pExUserPermsNext)
+    for (pExUserPerm = pExUserPermsList; pExUserPerm; pExUserPerm = pExUserPerm->pExUserPermsNext)
     {
         hr = UserBuildDomainUserName(wzDomainUser, countof(wzDomainUser), pExUserPerm->scau.wzName, pExUserPerm->scau.wzDomain);
         ExitOnFailure(hr, "Failed to build user and domain name for CustomActionData");
@@ -555,7 +555,7 @@ HRESULT ScaSmbUninstall(SCA_SMB* pssList)
         if (WcaIsUninstalling(pss->isInstalled, pss->isAction) )
         {
             hr = SchedDropSmb(pss);
-            ExitOnFailure1(hr, "Failed to remove file share %S", pss->wzShareName);
+            ExitOnFailure1(hr, "Failed to remove file share %ls", pss->wzShareName);
         }
     }
 
@@ -613,14 +613,14 @@ HRESULT ScaSmbExPermsRead(SCA_SMB* pss)
         hr = WcaGetRecordString(hRec, ssupqUser, &pwzData);
         ExitOnFailure(hr, "Failed to get FileSharePermissions.User");
         hr = ScaGetUser(pwzData, &pExUserPerms->scau);
-        ExitOnFailure1(hr, "Failed to get user information for fileshare: '%S'", pss->wzShareName);
+        ExitOnFailure1(hr, "Failed to get user information for fileshare: '%ls'", pss->wzShareName);
 
         hr = WcaGetRecordInteger(hRec, ssupqPermissions, &pExUserPerms->nPermissions);
         ExitOnFailure(hr, "Failed to get FileSharePermissions.Permissions");
         pExUserPerms->accessMode = SET_ACCESS;  // we only support SET_ACCESS here
 
         pExUserPermsList = AddExUserPermsSmbToList(pExUserPermsList, pExUserPerms);
-        nCounter++;
+        ++nCounter;
         pExUserPerms = NULL; // set the smb NULL so it doesn't accidentally get freed below
     }
 

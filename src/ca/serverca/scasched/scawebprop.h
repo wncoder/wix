@@ -1,6 +1,6 @@
 #pragma once
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scawebprop.cpp" company="Microsoft">
+// <copyright file="scawebprop.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the

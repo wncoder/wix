@@ -27,7 +27,7 @@ HRESULT ShellExec(
 
     // a reasonable working directory (not the system32 default from MSI) is the directory where the target lives
     hr = PathGetDirectory(wzTarget, &sczWorkingDirectory);
-    ExitOnFailure1(hr, "failed to get directory for target: %S", wzTarget);
+    ExitOnFailure1(hr, "failed to get directory for target: %ls", wzTarget);
     
     if (!DirExists(sczWorkingDirectory, NULL))
     {
@@ -93,7 +93,7 @@ extern "C" UINT __stdcall WixShellExec(
     hr = WcaGetFormattedProperty(L"WixShellExecTarget", &pwzTarget);
     ExitOnFailure(hr, "failed to get WixShellExecTarget");
 
-    WcaLog(LOGMSG_VERBOSE, "WixShellExecTarget is %S", pwzTarget);
+    WcaLog(LOGMSG_VERBOSE, "WixShellExecTarget is %ls", pwzTarget);
 
     if (!pwzTarget || !*pwzTarget)
     {
@@ -184,7 +184,7 @@ extern "C" UINT __stdcall WixShellExecBinary(
     hr = WcaGetFormattedProperty(L"WixShellExecBinaryId", &pwzBinary);
     ExitOnFailure(hr, "failed to get WixShellExecBinaryId");
 
-    WcaLog(LOGMSG_VERBOSE, "WixShellExecBinaryId is %S", pwzBinary);
+    WcaLog(LOGMSG_VERBOSE, "WixShellExecBinaryId is %ls", pwzBinary);
 
     if (!pwzBinary || !*pwzBinary)
     {
@@ -207,13 +207,13 @@ extern "C" UINT __stdcall WixShellExecBinary(
     hFile = ::CreateFileW(pwzFilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile)
     {
-        ExitWithLastError1(hr, "Failed to open new temp file: %S", pwzFilename);
+        ExitWithLastError1(hr, "Failed to open new temp file: %ls", pwzFilename);
     }
 
     DWORD cbWritten = 0;
     if (!::WriteFile(hFile, pbData, cbData, &cbWritten, NULL))
     {
-        ExitWithLastError1(hr, "Failed to write data to new temp file: %S", pwzFilename);
+        ExitWithLastError1(hr, "Failed to write data to new temp file: %ls", pwzFilename);
     }
 
     // close it
@@ -222,7 +222,7 @@ extern "C" UINT __stdcall WixShellExecBinary(
 
     // and run it
     hr = ShellExec(pwzFilename);
-    ExitOnFailure1(hr, "failed to launch target: %S", pwzFilename);
+    ExitOnFailure1(hr, "failed to launch target: %ls", pwzFilename);
 
 LExit:
     ReleaseStr(pwzBinary);

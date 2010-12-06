@@ -426,7 +426,7 @@ static HRESULT AddFilterToLoadOrder(
             if (0 <= iLoadOrder)
             {
                 pwz = wzLoadOrder;
-                for (int i = 0; i < iLoadOrder && pwz; i++)
+                for (int i = 0; i < iLoadOrder && pwz; ++i)
                 {
                     pwz = wcsstr(pwz, L",");
                 }

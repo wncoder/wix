@@ -12,7 +12,7 @@
 // </copyright>
 //
 // <summary>
-//    Shell helper funtions.
+//    Shell helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -176,10 +176,10 @@ extern "C" HRESULT DAPI ShelGetFolder(
     ExitOnFailure1(hr, "Failed to get folder path for CSIDL: %d", csidlFolder);
 
     hr = StrAllocString(psczFolderPath, wzPath, 0);
-    ExitOnFailure1(hr, "Failed to copy shell folder path: %S", wzPath);
+    ExitOnFailure1(hr, "Failed to copy shell folder path: %ls", wzPath);
 
     hr = PathBackslashTerminate(psczFolderPath);
-    ExitOnFailure1(hr, "Failed to backslash terminate shell folder path: %S", *psczFolderPath);
+    ExitOnFailure1(hr, "Failed to backslash terminate shell folder path: %ls", *psczFolderPath);
 
 LExit:
     return hr;
@@ -231,10 +231,10 @@ extern "C" HRESULT DAPI ShelGetKnownFolder(
     ExitOnFailure(hr, "Failed to get known folder path.");
 
     hr = StrAllocString(psczFolderPath, pwzPath, 0);
-    ExitOnFailure1(hr, "Failed to copy shell folder path: %S", pwzPath);
+    ExitOnFailure1(hr, "Failed to copy shell folder path: %ls", pwzPath);
 
     hr = PathBackslashTerminate(psczFolderPath);
-    ExitOnFailure1(hr, "Failed to backslash terminate shell folder path: %S", *psczFolderPath);
+    ExitOnFailure1(hr, "Failed to backslash terminate shell folder path: %ls", *psczFolderPath);
 
 LExit:
     if (pwzPath)

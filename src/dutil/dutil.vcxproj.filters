@@ -105,6 +105,9 @@
     <ClCompile Include="rssutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sceutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="shelutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -228,6 +231,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\rssutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\sceutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\shelutil.h">

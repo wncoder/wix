@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scaexec.cpp" company="Microsoft">
+// <copyright file="scaperfexec.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Entry points into several server custom actions.
+//    Server Performance Counter CustomAction.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -117,7 +117,7 @@ extern "C" UINT __stdcall RegisterPerfmon(
     hr = WcaGetProperty(L"CustomActionData", &pwzData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzData);
 
     // do the perfmon registration
     if (NULL == hMod)
@@ -132,7 +132,7 @@ extern "C" UINT __stdcall RegisterPerfmon(
     hr = StrAlloc(&pwzShortPath, cchShortPath);
     ExitOnFailure(hr, "failed to allocate string");
 
-    WcaLog(LOGMSG_VERBOSE, "Converting DLL path to short format: %S", pwzData);
+    WcaLog(LOGMSG_VERBOSE, "Converting DLL path to short format: %ls", pwzData);
     cchShortPathLength = ::GetShortPathNameW(pwzData, pwzShortPath, cchShortPath);
     if (cchShortPathLength > cchShortPath)
     {
@@ -145,18 +145,18 @@ extern "C" UINT __stdcall RegisterPerfmon(
 
     if (0 == cchShortPathLength)
     {
-        ExitOnLastError1(hr, "failed to get short path format of path: %S", pwzData);
+        ExitOnLastError1(hr, "failed to get short path format of path: %ls", pwzData);
     }
 
     hr = StrAllocFormatted(&pwzCommand, L"lodctr \"%s\"", pwzShortPath);
     ExitOnFailure(hr, "failed to format lodctr string");
 
-    WcaLog(LOGMSG_VERBOSE, "RegisterPerfmon running command: '%S'", pwzCommand);
+    WcaLog(LOGMSG_VERBOSE, "RegisterPerfmon running command: '%ls'", pwzCommand);
     dwRet = (*pfnPerfCounterTextString)(pwzCommand, TRUE);
     if (dwRet != ERROR_SUCCESS && dwRet != ERROR_ALREADY_EXISTS)
     {
         hr = HRESULT_FROM_WIN32(dwRet);
-        MessageExitOnFailure1(hr, msierrPERFMONFailedRegisterDLL, "failed to register with PerfMon, DLL: %S", pwzData);
+        MessageExitOnFailure1(hr, msierrPERFMONFailedRegisterDLL, "failed to register with PerfMon, DLL: %ls", pwzData);
     }
 
     hr = S_OK;
@@ -189,7 +189,7 @@ extern "C" UINT __stdcall UnregisterPerfmon(
     hr = WcaGetProperty(L"CustomActionData", &pwzData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzData);
 
     // do the perfmon unregistration
     hr = E_FAIL;
@@ -203,14 +203,14 @@ extern "C" UINT __stdcall UnregisterPerfmon(
     ExitOnNullWithLastError(pfnPerfCounterTextString, hr, "failed to get DLL function for PerfMon");
 
     hr = ::StringCchPrintfW(wz, countof(wz), L"unlodctr \"%s\"", pwzData);
-    ExitOnFailure1(hr, "Failed to format unlodctr string with: %S", pwzData);
-    WcaLog(LOGMSG_VERBOSE, "UnregisterPerfmon running command: '%S'", wz);
+    ExitOnFailure1(hr, "Failed to format unlodctr string with: %ls", pwzData);
+    WcaLog(LOGMSG_VERBOSE, "UnregisterPerfmon running command: '%ls'", wz);
     dwRet = (*pfnPerfCounterTextString)(wz, TRUE);
     // if the counters aren't registered, then OK to continue
     if (dwRet != ERROR_SUCCESS && dwRet != ERROR_FILE_NOT_FOUND && dwRet != ERROR_BADKEY)
     {
         hr = HRESULT_FROM_WIN32(dwRet);
-        MessageExitOnFailure1(hr, msierrPERFMONFailedUnregisterDLL, "failed to unregsister with PerfMon, DLL: %S", pwzData);
+        MessageExitOnFailure1(hr, msierrPERFMONFailedUnregisterDLL, "failed to unregsister with PerfMon, DLL: %ls", pwzData);
     }
 
     hr = S_OK;
@@ -270,7 +270,7 @@ static HRESULT ExecutePerfCounterData(
     hr = WcaGetProperty(L"CustomActionData", &pwzCustomActionData);
     ExitOnFailure(hr, "Failed to get CustomActionData.");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzCustomActionData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzCustomActionData);
 
     pwz = pwzCustomActionData;
 
@@ -288,10 +288,10 @@ static HRESULT ExecutePerfCounterData(
             ExitOnFailure(hr, "Failed to create temp directory.");
 
             hr = CreateDataFile(pwzTempFolder, pwzIniData, TRUE, &hIniData, &pwzIniFile);
-            ExitOnFailure1(hr, "Failed to create .ini file for performance counter category: %S", pwzName);
+            ExitOnFailure1(hr, "Failed to create .ini file for performance counter category: %ls", pwzName);
 
             hr = CreateDataFile(pwzTempFolder, pwzConstantData, FALSE, &hConstantData, NULL);
-            ExitOnFailure1(hr, "Failed to create .h file for performance counter category: %S", pwzName);
+            ExitOnFailure1(hr, "Failed to create .h file for performance counter category: %ls", pwzName);
 
             hr = StrAllocFormatted(&pwzExecute, L"%s \"%s\"", wzPrefix, pwzIniFile);
             ExitOnFailure(hr, "Failed to allocate string to execute.");
@@ -299,7 +299,7 @@ static HRESULT ExecutePerfCounterData(
             // Execute the install.
             er = (*pfnPerfCounterTextString)(pwzExecute, TRUE);
             hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure1(hr, "Failed to execute install of performance counter category: %S", pwzName);
+            ExitOnFailure1(hr, "Failed to execute install of performance counter category: %ls", pwzName);
 
             if (INVALID_HANDLE_VALUE != hIniData)
             {
@@ -328,7 +328,7 @@ static HRESULT ExecutePerfCounterData(
                 er = ERROR_SUCCESS;
             }
             hr = HRESULT_FROM_WIN32(er);
-            ExitOnFailure1(hr, "Failed to execute uninstall of performance counter category: %S", pwzName);
+            ExitOnFailure1(hr, "Failed to execute uninstall of performance counter category: %ls", pwzName);
         }
     }
 
@@ -404,12 +404,12 @@ static HRESULT CreateDataFile(
     hFile = ::CreateFileW(pwzFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile)
     {
-        ExitWithLastError1(hr, "Failed to open new temp file: %S", pwzFile);
+        ExitWithLastError1(hr, "Failed to open new temp file: %ls", pwzFile);
     }
 
     if (!::WriteFile(hFile, pszData, cbData, &cbWritten, NULL))
     {
-        ExitWithLastError1(hr, "Failed to write data to new temp file: %S", pwzFile);
+        ExitWithLastError1(hr, "Failed to write data to new temp file: %ls", pwzFile);
     }
 
     if (INVALID_HANDLE_VALUE != hFile)

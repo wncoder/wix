@@ -28,7 +28,7 @@ extern "C" BOOL WINAPI DllMain(
     __in ULONG ulReason,
     __in LPVOID)
 {
-    switch(ulReason)
+    switch (ulReason)
     {
     case DLL_PROCESS_ATTACH:
         WcaGlobalInitialize(hInst);
@@ -324,7 +324,7 @@ static HRESULT WriteMetabaseValue(__in LPWSTR* ppwzCustomActionData, __in IMSAdm
         {
         hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzTemp);
         mr.dwMDDataLen = (lstrlenW(pwzTemp) + 1) * sizeof(WCHAR);
-        for (LPWSTR pwzT = pwzTemp; *pwzT; pwzT++)
+        for (LPWSTR pwzT = pwzTemp; *pwzT; ++pwzT)
         {
             if (MAGIC_MULTISZ_CHAR == *pwzT)
             {
@@ -558,7 +558,7 @@ static HRESULT DeleteAspApp(__in LPWSTR* ppwzCustomActionData, __in IMSAdminBase
     // No need to check this too early, as we may not even need this to have successfully allocated
     ExitOnNull(bstrPropName, hr, E_OUTOFMEMORY, "failed to allocate memory for \"Deleteable\" string");
 
-    for (lIndex = 0; lIndex < lSize; lIndex++)
+    for (lIndex = 0; lIndex < lSize; ++lIndex)
     {
         hr = pApplicationCollection->get_Item(lIndex, reinterpret_cast<IDispatch**>(&pApplication));
         MessageExitOnFailure(hr, msierrIISFailedDeleteApp, "failed to get COM+ application while enumerating through COM+ applications");
@@ -1329,7 +1329,7 @@ extern "C" UINT __stdcall CreateSmb(MSIHANDLE hInstall)
         ExitOnNull(pUserPermsList, hr, E_OUTOFMEMORY, "failed to allocate memory for permissions structure");
 
         //Pull out all of the ExUserPerm strings
-        for (dwCounter = 0; dwCounter < dwExUserPerms; dwCounter++)
+        for (dwCounter = 0; dwCounter < dwExUserPerms; ++dwCounter)
         {
             hr = WcaReadStringFromCaData(&pwz, &pwzExUser); // user account
             ExitOnFailure(hr, "failed to read user account");

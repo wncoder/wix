@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="rssutil.cpp" company="Microsoft">
+// <copyright file="atomutil.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -262,7 +262,7 @@ static HRESULT ParseAtomDocument(
     )
 {
     Assert(pixd);
-    Assert (ppFeed);
+    Assert(ppFeed);
 
     HRESULT hr = S_OK;
     IXMLDOMElement *pFeedElement = NULL;
@@ -305,7 +305,7 @@ static HRESULT ParseAtomFeed(
     )
 {
     Assert(pixnFeed);
-    Assert (ppFeed);
+    Assert(ppFeed);
 
     HRESULT hr = S_OK;
     IXMLDOMNodeList *pNodeList = NULL;
@@ -384,33 +384,33 @@ static HRESULT ParseAtomFeed(
             hr = ParseAtomAuthor(pNode, &pNewFeed->rgAuthors[cAuthors]);
             ExitOnFailure(hr, "Failed to parse ATOM author.");
 
-            cAuthors++;
+            ++cAuthors;
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"category", -1))
         {
             hr = ParseAtomCategory(pNode, &pNewFeed->rgCategories[cCategories]);
             ExitOnFailure(hr, "Failed to parse ATOM category.");
 
-            cCategories++;
+            ++cCategories;
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"entry", -1))
         {
             hr = ParseAtomEntry(pNode, &pNewFeed->rgEntries[cEntries]);
             ExitOnFailure(hr, "Failed to parse ATOM entry.");
 
-            cEntries++;
+            ++cEntries;
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"link", -1))
         {
             hr = ParseAtomLink(pNode, &pNewFeed->rgLinks[cLinks]);
             ExitOnFailure(hr, "Failed to parse ATOM link.");
 
-            cLinks++;
+            ++cLinks;
         }
         else
         {
             hr = ParseAtomUnknownElement(pNode, &pNewFeed->pUnknownElements);
-            ExitOnFailure1(hr, "Failed to parse unknown ATOM feed element: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Failed to parse unknown ATOM feed element: %ls", bstrNodeName);
         }
 
         ReleaseNullBSTR(bstrNodeName);
@@ -466,12 +466,12 @@ template<class T> static HRESULT AllocateAtomType(
     T* prgT = NULL;
 
     hr = XmlSelectNodes(pixnParent, wzT, &pNodeList);
-    ExitOnFailure1(hr, "Failed to select all ATOM %S.", wzT);
+    ExitOnFailure1(hr, "Failed to select all ATOM %ls.", wzT);
 
     if (S_OK == hr)
     {
         hr = pNodeList->get_length(&cT);
-        ExitOnFailure1(hr, "Failed to count the number of ATOM %S.", wzT);
+        ExitOnFailure1(hr, "Failed to count the number of ATOM %ls.", wzT);
 
         prgT = static_cast<T*>(MemAlloc(sizeof(T) * cT, TRUE));
         ExitOnNull(prgT, hr, E_OUTOFMEMORY, "Failed to allocate ATOM.");
@@ -596,7 +596,7 @@ static HRESULT ParseAtomCategory(
     while (S_OK == (hr = XmlNextElement(pNodeList, &pNode, &bstrNodeName)))
     {
         hr = ParseAtomUnknownElement(pNode, &pCategory->pUnknownElements);
-        ExitOnFailure1(hr, "Failed to parse unknown ATOM category element: %S", bstrNodeName);
+        ExitOnFailure1(hr, "Failed to parse unknown ATOM category element: %ls", bstrNodeName);
 
         ReleaseNullBSTR(bstrNodeName);
         ReleaseNullObject(pNode);
@@ -660,7 +660,7 @@ static HRESULT ParseAtomContent(
     while (S_OK == (hr = XmlNextElement(pNodeList, &pNode, &bstrNodeName)))
     {
         hr = ParseAtomUnknownElement(pNode, &pContent->pUnknownElements);
-        ExitOnFailure1(hr, "Failed to parse unknown ATOM content element: %S", bstrNodeName);
+        ExitOnFailure1(hr, "Failed to parse unknown ATOM content element: %ls", bstrNodeName);
 
         ReleaseNullBSTR(bstrNodeName);
         ReleaseNullObject(pNode);
@@ -749,14 +749,14 @@ static HRESULT ParseAtomEntry(
             hr = ParseAtomAuthor(pNode, &pEntry->rgAuthors[cAuthors]);
             ExitOnFailure(hr, "Failed to parse ATOM entry author.");
 
-            cAuthors++;
+            ++cAuthors;
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"category", -1))
         {
             hr = ParseAtomCategory(pNode, &pEntry->rgCategories[cCategories]);
             ExitOnFailure(hr, "Failed to parse ATOM entry category.");
 
-            cCategories++;
+            ++cCategories;
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"content", -1))
         {
@@ -777,12 +777,12 @@ static HRESULT ParseAtomEntry(
             hr = ParseAtomLink(pNode, &pEntry->rgLinks[cLinks]);
             ExitOnFailure(hr, "Failed to parse ATOM entry link.");
 
-            cLinks++;
+            ++cLinks;
         }
         else
         {
             hr = ParseAtomUnknownElement(pNode, &pEntry->pUnknownElements);
-            ExitOnFailure1(hr, "Failed to parse unknown ATOM entry element: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Failed to parse unknown ATOM entry element: %ls", bstrNodeName);
         }
 
         ReleaseNullBSTR(bstrNodeName);
@@ -872,7 +872,7 @@ static HRESULT ParseAtomLink(
         else
         {
             hr = ParseAtomUnknownAttribute(pNode, &pLink->pUnknownAttributes);
-            ExitOnFailure1(hr, "Failed to parse unknown ATOM link attribute: %S", bstrNodeName);
+            ExitOnFailure1(hr, "Failed to parse unknown ATOM link attribute: %ls", bstrNodeName);
         }
 
         ReleaseNullBSTR(bstrNodeName);
@@ -887,7 +887,7 @@ static HRESULT ParseAtomLink(
     while (S_OK == (hr = XmlNextElement(pNodeList, &pNode, &bstrNodeName)))
     {
         hr = ParseAtomUnknownElement(pNode, &pLink->pUnknownElements);
-        ExitOnFailure1(hr, "Failed to parse unknown ATOM link element: %S", bstrNodeName);
+        ExitOnFailure1(hr, "Failed to parse unknown ATOM link element: %ls", bstrNodeName);
 
         ReleaseNullBSTR(bstrNodeName);
         ReleaseNullObject(pNode);

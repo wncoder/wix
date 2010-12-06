@@ -213,7 +213,7 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
     *phPipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
     if (INVALID_HANDLE_VALUE == *phPipe)
     {
-        ExitWithLastError1(hr, "Failed to create pipe: %S", sczFullPipeName);
+        ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullPipeName);
     }
 
     *psczPipeName = sczPipeName;
@@ -365,7 +365,7 @@ extern "C" HRESULT PipeChildConnect(
     hPipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hPipe)
     {
-        ExitWithLastError1(hr, "Failed to open parent pipe: %S", sczPipeName)
+        ExitWithLastError1(hr, "Failed to open parent pipe: %ls", sczPipeName)
     }
 
     // Read the verification token.
@@ -599,7 +599,7 @@ static HRESULT CreateChildProcess(
 
     if (!vpfnShellExecuteExW(&info))
     {
-        ExitWithLastError2(hr, "Failed to launch elevated process: %S %S", wzExecutable, sczParameters);
+        ExitWithLastError2(hr, "Failed to launch elevated process: %ls %ls", wzExecutable, sczParameters);
     }
 
     *phProcess = info.hProcess;

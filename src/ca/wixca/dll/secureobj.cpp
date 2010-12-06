@@ -122,19 +122,19 @@ static HRESULT StoreACLRollbackInfo(
             ExitFunction();
         }
 
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Unable to schedule rollback for object: %S", pwzObject);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Unable to schedule rollback for object: %ls", pwzObject);
 
         //Need to see if DACL is protected so getting Descriptor information
-        if(!::GetSecurityDescriptorControl(psd, &sdc, &dwRevision))
+        if (!::GetSecurityDescriptorControl(psd, &sdc, &dwRevision))
         {
-            ExitOnLastError1(hr, "Unable to schedule rollback for object (failed to get security descriptor control): %S", pwzObject);
+            ExitOnLastError1(hr, "Unable to schedule rollback for object (failed to get security descriptor control): %ls", pwzObject);
         }
 
         // Convert the security information to a string, and write this to the custom action data
         if (!::ConvertSecurityDescriptorToStringSecurityDescriptorW(psd,SDDL_REVISION_1,DACL_SECURITY_INFORMATION,&pwzSecurityInfo,NULL))
         {
             hr = E_UNEXPECTED;
-            ExitOnFailure1(hr, "Unable to schedule rollback for object (failed to convert security descriptor to a valid security descriptor string): %S", pwzObject);
+            ExitOnFailure1(hr, "Unable to schedule rollback for object (failed to convert security descriptor to a valid security descriptor string): %ls", pwzObject);
         }
 
         hr = WcaWriteStringToCaData(pwzObject, &pwzCustomActionData);
@@ -160,10 +160,10 @@ static HRESULT StoreACLRollbackInfo(
 
 #ifdef _WIN64
         hr = WcaDoDeferredAction(L"ExecSecureObjectsRollback_64", pwzCustomActionData, COST_SECUREOBJECT);
-        ExitOnFailure2(hr, "failed to schedule ExecSecureObjectsRollback_64 for item: %S of type: %S", pwzObject, pwzTable);
+        ExitOnFailure2(hr, "failed to schedule ExecSecureObjectsRollback_64 for item: %ls of type: %ls", pwzObject, pwzTable);
 #else
         hr = WcaDoDeferredAction(L"ExecSecureObjectsRollback", pwzCustomActionData, COST_SECUREOBJECT);
-        ExitOnFailure2(hr, "failed to schedule ExecSecureObjectsRollback for item: %S of type: %S", pwzObject, pwzTable);
+        ExitOnFailure2(hr, "failed to schedule ExecSecureObjectsRollback for item: %ls of type: %ls", pwzObject, pwzTable);
 #endif
 
         ReleaseStr(pwzCustomActionData);
@@ -172,7 +172,7 @@ static HRESULT StoreACLRollbackInfo(
     }
     else
     {
-        MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %S", pwzTable);
+        MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %ls", pwzTable);
     }
 LExit:
     ReleaseStr(pwzCustomActionData);
@@ -225,20 +225,20 @@ static HRESULT GetTargetPath(
         ExitOnFailure(hr, "failed to fetch ServiceInstall row for secure object");
 
         hr = WcaGetRecordFormattedString(hRecObject, QSSI_NAME, ppwzTargetPath);
-        ExitOnFailure1(hr, "failed to get service name for secure object: %S", pwzSecureObject);
+        ExitOnFailure1(hr, "failed to get service name for secure object: %ls", pwzSecureObject);
     }
     else if (OT_FOLDER == eType)
     {
         hr = WcaGetTargetPath(pwzSecureObject, ppwzTargetPath);
-        ExitOnFailure1(hr, "failed to get target path for directory id: %S", pwzSecureObject);
+        ExitOnFailure1(hr, "failed to get target path for directory id: %ls", pwzSecureObject);
     }
     else if (OT_FILE == eType)
     {
         hr = StrAllocFormatted(&pwzFormattedString, L"[#%s]", pwzSecureObject);
-        ExitOnFailure1(hr, "failed to create formatted string for securing file object: %S", pwzSecureObject);
+        ExitOnFailure1(hr, "failed to create formatted string for securing file object: %ls", pwzSecureObject);
 
         hr = WcaGetFormattedString(pwzFormattedString, ppwzTargetPath);
-        ExitOnFailure2(hr, "failed to get file path from formatted string: %S for secure object: %S", pwzFormattedString, pwzSecureObject);
+        ExitOnFailure2(hr, "failed to get file path from formatted string: %ls for secure object: %ls", pwzFormattedString, pwzSecureObject);
     }
     else if (OT_REGISTRY == eType)
     {
@@ -263,10 +263,10 @@ static HRESULT GetTargetPath(
         ExitOnFailure(hr, "failed to fetch Registry row for secure object");
 
         hr = WcaGetRecordInteger(hRecObject, QSOC_REGROOT, &iRoot);
-        ExitOnFailure1(hr, "Failed to get reg key root for secure object: %S", pwzSecureObject);
+        ExitOnFailure1(hr, "Failed to get reg key root for secure object: %ls", pwzSecureObject);
 
         hr = WcaGetRecordFormattedString(hRecObject, QSOC_REGKEY, &pwzKey);
-        ExitOnFailure1(hr, "Failed to get reg key for secure object: %S", pwzSecureObject);
+        ExitOnFailure1(hr, "Failed to get reg key for secure object: %ls", pwzSecureObject);
 
         // Decode the root value
         if (-1 == iRoot)
@@ -308,11 +308,11 @@ static HRESULT GetTargetPath(
         }
         else
         {
-            ExitOnFailure2(hr = E_UNEXPECTED, "Unknown registry key root specified for secure object: '%S' root: %d", pwzSecureObject, iRoot);
+            ExitOnFailure2(hr = E_UNEXPECTED, "Unknown registry key root specified for secure object: '%ls' root: %d", pwzSecureObject, iRoot);
         }
         
         hr = StrAllocConcat(ppwzTargetPath, pwzKey, 0);
-        ExitOnFailure2(hr, "Failed to concat key: %S for secure object: %S", pwzKey, pwzSecureObject);
+        ExitOnFailure2(hr, "Failed to concat key: %ls for secure object: %ls", pwzKey, pwzSecureObject);
     }
     else
     {
@@ -377,7 +377,7 @@ extern "C" UINT __stdcall SchedSecureObjects(
 
         if (OT_UNKNOWN == eType)
         {
-            ExitOnFailure1(hr = E_INVALIDARG, "unknown SecureObject.Table: %S", pwzTable);
+            ExitOnFailure1(hr = E_INVALIDARG, "unknown SecureObject.Table: %ls", pwzTable);
         }
 
         int iCompAttributes = 0;
@@ -404,7 +404,7 @@ extern "C" UINT __stdcall SchedSecureObjects(
         ExitOnFailure(hr, "failed to get name of object");
 
         hr = GetTargetPath(eType, pwzSecureObject, &pwzTargetPath);
-        ExitOnFailure1(hr, "failed to get target path of object '%S'", pwzSecureObject);
+        ExitOnFailure1(hr, "failed to get target path of object '%ls'", pwzSecureObject);
 
         hr = WcaGetRecordString(hRec, QSO_COMPONENT, &pwzData);
         ExitOnFailure(hr, "failed to get Component name for secure object");
@@ -413,7 +413,7 @@ extern "C" UINT __stdcall SchedSecureObjects(
         // if we are installing this Component
         //
         er = ::MsiGetComponentStateW(hInstall, pwzData, &isInstalled, &isAction);
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to get install state for Component: %S", pwzData);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to get install state for Component: %ls", pwzData);
 
         if (WcaIsInstalling(isInstalled, isAction))
         {
@@ -442,7 +442,7 @@ extern "C" UINT __stdcall SchedSecureObjects(
             hr = WcaWriteStringToCaData(pwzData, &pwzCustomActionData);
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
-            cObjects++;
+            ++cObjects;
         }
     }
 
@@ -526,7 +526,7 @@ extern "C" UINT __stdcall SchedSecureObjectsRollback(
 
         if (OT_UNKNOWN == eType)
         {
-            ExitOnFailure1(hr = E_INVALIDARG, "unknown SecureObject.Table: %S", pwzTable);
+            ExitOnFailure1(hr = E_INVALIDARG, "unknown SecureObject.Table: %ls", pwzTable);
         }
 
         int iCompAttributes = 0;
@@ -553,7 +553,7 @@ extern "C" UINT __stdcall SchedSecureObjectsRollback(
         ExitOnFailure(hr, "failed to get name of object");
 
         hr = GetTargetPath(eType, pwzSecureObject, &pwzTargetPath);
-        ExitOnFailure1(hr, "failed to get target path of object '%S' in order to schedule rollback", pwzSecureObject);
+        ExitOnFailure1(hr, "failed to get target path of object '%ls' in order to schedule rollback", pwzSecureObject);
 
         hr = StoreACLRollbackInfo(pwzTargetPath, pwzTable);
         if (FAILED(hr))
@@ -627,7 +627,7 @@ extern "C" UINT __stdcall ExecSecureObjects(
     hr = WcaGetProperty(L"CustomActionData", &pwzData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzData);
 
     pwz = pwzData;
 
@@ -648,7 +648,7 @@ extern "C" UINT __stdcall ExecSecureObjects(
         hr = WcaReadIntegerFromCaData(&pwz, reinterpret_cast<int*>(&dwPermissions));
         ExitOnFailure(hr, "failed to processCustomActionData");
 
-        WcaLog(LOGMSG_VERBOSE, "Securing Object: %S Type: %S User: %S", pwzObject, pwzTable, pwzUser);
+        WcaLog(LOGMSG_VERBOSE, "Securing Object: %ls Type: %ls User: %ls", pwzObject, pwzTable, pwzUser);
 
         //
         // create the appropriate SID
@@ -683,7 +683,7 @@ extern "C" UINT __stdcall ExecSecureObjects(
         {
             hr = AclGetWellKnownSid(WinBuiltinGuestsSid, &psid);
         }
-        else if(!*pwzDomain && 0 == lstrcmpW(pwzUser, L"CREATOR OWNER"))
+        else if (!*pwzDomain && 0 == lstrcmpW(pwzUser, L"CREATOR OWNER"))
         {
             hr = AclGetWellKnownSid(WinCreatorOwnerSid, &psid);
         }
@@ -691,7 +691,7 @@ extern "C" UINT __stdcall ExecSecureObjects(
         {
             hr = AclGetWellKnownSid(WinInteractiveSid, &psid);
         }
-        else if(!*pwzDomain && 0 == lstrcmpW(pwzUser, L"Users"))
+        else if (!*pwzDomain && 0 == lstrcmpW(pwzUser, L"Users"))
         {
             hr = AclGetWellKnownSid(WinBuiltinUsersSid, &psid);
         }
@@ -702,7 +702,7 @@ extern "C" UINT __stdcall ExecSecureObjects(
 
             hr = AclGetAccountSid(NULL, pwzAccount, &psid);
         }
-        ExitOnFailure3(hr, "failed to get sid for account: %S%S%S", pwzDomain, *pwzDomain ? L"\\" : L"", pwzUser);
+        ExitOnFailure3(hr, "failed to get sid for account: %ls%ls%ls", pwzDomain, *pwzDomain ? L"\\" : L"", pwzUser);
 
         //
         // build up the explicit access
@@ -737,19 +737,19 @@ extern "C" UINT __stdcall ExecSecureObjects(
         if (SE_UNKNOWN_OBJECT_TYPE != objectType)
         {
             er = ::GetNamedSecurityInfoW(pwzObject, objectType, DACL_SECURITY_INFORMATION, NULL, NULL, &pAclExisting, NULL, &psd);
-            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to get security info for object: %S", pwzObject);
+            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to get security info for object: %ls", pwzObject);
 
             //Need to see if DACL is protected so getting Descriptor information
             if (!::GetSecurityDescriptorControl(psd, &sdc, &dwRevision))
             {
-                ExitOnLastError1(hr, "failed to get security descriptor control for object: %S", pwzObject);
+                ExitOnLastError1(hr, "failed to get security descriptor control for object: %ls", pwzObject);
             }
 
 #pragma prefast(push)
 #pragma prefast(disable:25029)
             er = ::SetEntriesInAclW(1, &ea, pAclExisting, &pAclNew);
 #pragma prefast(pop)
-            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to add ACLs for object: %S", pwzObject);
+            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to add ACLs for object: %ls", pwzObject);
 
             if (sdc & SE_DACL_PROTECTED)
             {
@@ -760,11 +760,11 @@ extern "C" UINT __stdcall ExecSecureObjects(
                 si = DACL_SECURITY_INFORMATION;
             }
             er = ::SetNamedSecurityInfoW(pwzObject, objectType, si, NULL, NULL, pAclNew, NULL);
-            MessageExitOnFailure1(hr = HRESULT_FROM_WIN32(er), msierrSecureObjectsFailedSet, "failed to set security info for object: %S", pwzObject);
+            MessageExitOnFailure1(hr = HRESULT_FROM_WIN32(er), msierrSecureObjectsFailedSet, "failed to set security info for object: %ls", pwzObject);
         }
         else
         {
-            MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %S", pwzTable);
+            MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %ls", pwzTable);
         }
 
         hr = WcaProgressMessage(COST_SECUREOBJECT, FALSE);
@@ -834,7 +834,7 @@ extern "C" UINT __stdcall ExecSecureObjectsRollback(
     hr = WcaGetProperty(L"CustomActionData", &pwzData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzData);
 
     pwz = pwzData;
 
@@ -873,9 +873,9 @@ extern "C" UINT __stdcall ExecSecureObjectsRollback(
         }
 
         //Need to see if DACL is protected so getting Descriptor information
-        if(!::GetSecurityDescriptorControl(psd, &sdc, &dwRevision))
+        if (!::GetSecurityDescriptorControl(psd, &sdc, &dwRevision))
         {
-            ExitOnLastError1(hr, "failed to get security descriptor control for object: %S", pwzObject);
+            ExitOnLastError1(hr, "failed to get security descriptor control for object: %ls", pwzObject);
         }
 
         // Write a 1 if DACL is protected, 0 otherwise
@@ -896,11 +896,11 @@ extern "C" UINT __stdcall ExecSecureObjectsRollback(
         }
 
         er = ::SetNamedSecurityInfoW(pwzObject, objectType, si, NULL, NULL, pDacl, NULL);
-        ExitOnFailure2(hr = HRESULT_FROM_WIN32(er), "failed to set security info for object: %S error code: %d", pwzObject, GetLastError());
+        ExitOnFailure2(hr = HRESULT_FROM_WIN32(er), "failed to set security info for object: %ls error code: %d", pwzObject, GetLastError());
     }
     else
     {
-        MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %S", pwzTable);
+        MessageExitOnFailure1(hr = E_UNEXPECTED, msierrSecureObjectsUnknownType, "unknown object type: %ls", pwzTable);
     }
 
 LExit:

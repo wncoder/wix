@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scaiis.h" company="Microsoft">
+// <copyright file="scaiis7.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -12,7 +12,7 @@
 // </copyright>
 //
 // <summary>
-//    IIS functions for CustomActions
+//    IIS7 functions for CustomActions
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

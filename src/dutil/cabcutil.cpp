@@ -202,7 +202,7 @@ extern "C" HRESULT DAPI CabCBegin(
         {
             hr = ::StringCchCatW(wzPathBuffer, countof(wzPathBuffer), L"\\");
             ExitOnFailure(hr, "Failed to cat \\ to end of buffer");
-            cchPathBuffer++;
+            ++cchPathBuffer;
         }
     }
 
@@ -273,10 +273,10 @@ extern "C" HRESULT DAPI CabCBegin(
 
     // Remember the path to the cabinet.
     hr= ::StringCchCopyW(pcd->wzCabinetPath, countof(pcd->wzCabinetPath), wzPathBuffer);
-    ExitOnFailure1(hr, "Failed to copy cabinet path from path: %S", wzPathBuffer);
+    ExitOnFailure1(hr, "Failed to copy cabinet path from path: %ls", wzPathBuffer);
 
     hr = ::StringCchCatW(pcd->wzCabinetPath, countof(pcd->wzCabinetPath), wzCab);
-    ExitOnFailure1(hr, "Failed to concat to cabinet path cabinet name: %S", wzCab);
+    ExitOnFailure1(hr, "Failed to concat to cabinet path cabinet name: %ls", wzCab);
 
     // Get the empty file to use as the blank marker for duplicates.
     if (!::GetTempPathW(countof(wzTempPath), wzTempPath))
@@ -380,31 +380,31 @@ extern "C" HRESULT DAPI CabCAddFile(
     PMSIFILEHASHINFO pmfLocalHash = pmfHash;
 
     hr = StrAllocString(&sczUpperCaseFile, wzFile, 0);
-    ExitOnFailure1(hr, "Failed to allocate new string for file %S", wzFile);
+    ExitOnFailure1(hr, "Failed to allocate new string for file %ls", wzFile);
 
     // Modifies the string in-place
     StrStringToUpper(sczUpperCaseFile);
 
     // Store file size, primarily used to determine which files to hash for duplicates
     hr = FileSize(wzFile, &llFileSize);
-    ExitOnFailure1(hr, "Failed to check size of file %S", wzFile);
+    ExitOnFailure1(hr, "Failed to check size of file %ls", wzFile);
 
     hr = CheckForDuplicateFile(pcd, &pcfDuplicate, sczUpperCaseFile, &pmfLocalHash, llFileSize);
-    ExitOnFailure1(hr, "Failed while checking for duplicate of file: %S", wzFile);
+    ExitOnFailure1(hr, "Failed while checking for duplicate of file: %ls", wzFile);
 
     if (pcfDuplicate)
     {
         DWORD index;
         hr = ::PtrdiffTToDWord(pcfDuplicate - pcd->prgFiles, &index);
-        ExitOnFailure1(hr, "Failed to calculate index of file name: %S", pcfDuplicate->pwzSourcePath);
+        ExitOnFailure1(hr, "Failed to calculate index of file name: %ls", pcfDuplicate->pwzSourcePath);
 
         hr = AddDuplicateFile(pcd, index, wzToken, pcd->dwLastFileIndex);
-        ExitOnFailure1(hr, "Failed to add duplicate of file name: %S", pcfDuplicate->pwzSourcePath);
+        ExitOnFailure1(hr, "Failed to add duplicate of file name: %ls", pcfDuplicate->pwzSourcePath);
     }
     else
     {
         hr = AddNonDuplicateFile(pcd, sczUpperCaseFile, wzToken, pmfLocalHash, llFileSize, pcd->dwLastFileIndex);
-        ExitOnFailure1(hr, "Failed to add non-duplicated file: %S", wzFile);
+        ExitOnFailure1(hr, "Failed to add non-duplicated file: %ls", wzFile);
     }
 
     ++pcd->dwLastFileIndex;
@@ -465,7 +465,7 @@ extern "C" HRESULT DAPI CabCFinish(
     DictDestroy(pcd->shDictHandle);
 
     // We need to go through all the files, duplicates and non-duplicates, sequentially in the order they were added
-    for (dwCabFileIndex = 0; dwCabFileIndex < pcd->dwLastFileIndex; dwCabFileIndex++)
+    for (dwCabFileIndex = 0; dwCabFileIndex < pcd->dwLastFileIndex; ++dwCabFileIndex)
     {
         if (dwArrayFileIndex < pcd->cMaxFilePaths && pcd->prgFiles[dwArrayFileIndex].dwCabFileIndex == dwCabFileIndex) // If it's a non-duplicate file
         {
@@ -479,13 +479,13 @@ extern "C" HRESULT DAPI CabCFinish(
             {
                 LPCWSTR pwzTemp = pcd->prgFiles[dwArrayFileIndex].pwzToken;
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
-                ExitOnFailure1(hr, "failed to convert file token to ANSI: %S", pwzTemp);
+                ExitOnFailure1(hr, "failed to convert file token to ANSI: %ls", pwzTemp);
             }
             else
             {
                 LPCWSTR pwzTemp = FileFromPath(pcd->prgFiles[dwArrayFileIndex].pwzSourcePath);
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
-                ExitOnFailure1(hr, "failed to convert file name to ANSI: %S", pwzTemp);
+                ExitOnFailure1(hr, "failed to convert file name to ANSI: %ls", pwzTemp);
             }
 
             if (pcd->prgFiles[dwArrayFileIndex].fHasDuplicates)
@@ -495,7 +495,7 @@ extern "C" HRESULT DAPI CabCFinish(
 
             llFileSize = pcd->prgFiles[dwArrayFileIndex].llFileSize;
 
-            dwArrayFileIndex++; // Increment into the non-duplicate array
+            ++dwArrayFileIndex; // Increment into the non-duplicate array
         }
         else if (dwDupeArrayFileIndex < pcd->cMaxDuplicates && pcd->prgDuplicates[dwDupeArrayFileIndex].dwDuplicateCabFileIndex == dwCabFileIndex) // If it's a duplicate file
         {
@@ -505,13 +505,13 @@ extern "C" HRESULT DAPI CabCFinish(
             {
                 LPCWSTR pwzTemp = pcd->prgDuplicates[dwDupeArrayFileIndex].pwzToken;
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
-                ExitOnFailure1(hr, "failed to convert duplicate file token to ANSI: %S", pwzTemp);
+                ExitOnFailure1(hr, "failed to convert duplicate file token to ANSI: %ls", pwzTemp);
             }
             else
             {
                 LPCWSTR pwzTemp = FileFromPath(wzFile);
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
-                ExitOnFailure1(hr, "failed to convert duplicate file name to ANSI: %S", pwzTemp);
+                ExitOnFailure1(hr, "failed to convert duplicate file name to ANSI: %ls", pwzTemp);
             }
 
             // For duplicate files, we point them at our empty (zero-byte) file so it takes up no space
@@ -534,7 +534,7 @@ extern "C" HRESULT DAPI CabCFinish(
             // We're just adding a 0-byte file, so set it appropriately
             llFileSize = 0;
 
-            dwDupeArrayFileIndex++; // Increment into the duplicate array
+            ++dwDupeArrayFileIndex; // Increment into the duplicate array
         }
         else // If it's neither duplicate nor non-duplicate, throw an error
         {
@@ -610,7 +610,7 @@ extern "C" HRESULT DAPI CabCFinish(
     if (pcd->fGoodCab && pcd->cDuplicates)
     {
         hr = UpdateDuplicateFiles(pcd);
-        ExitOnFailure1(hr, "Failed to update duplicates in cabinet: %S", pcd->wzCabinetPath);
+        ExitOnFailure1(hr, "Failed to update duplicates in cabinet: %ls", pcd->wzCabinetPath);
     }
 
 LExit:
@@ -711,7 +711,7 @@ static HRESULT CheckForDuplicateFile(
                 pcd->prgFiles[i].pmfHash->dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
                 er = ::MsiGetFileHashW(pcd->prgFiles[i].pwzSourcePath, 0, pcd->prgFiles[i].pmfHash);
                 hr = HRESULT_FROM_WIN32(er);
-                ExitOnFailure1(hr, "Failed while getting MSI file hash of candidate duplicate file: %S", pcd->prgFiles[i].pwzSourcePath);
+                ExitOnFailure1(hr, "Failed while getting MSI file hash of candidate duplicate file: %ls", pcd->prgFiles[i].pwzSourcePath);
             }
 
             // If our own file hasn't yet been hashed, hash it
@@ -723,7 +723,7 @@ static HRESULT CheckForDuplicateFile(
                 (*ppmfHash)->dwFileHashInfoSize = sizeof(MSIFILEHASHINFO);
                 er = ::MsiGetFileHashW(wzFileName, 0, *ppmfHash);
                 hr = HRESULT_FROM_WIN32(er);
-                ExitOnFailure1(hr, "Failed while getting MSI file hash of file: %S", pcd->prgFiles[i].pwzSourcePath);
+                ExitOnFailure1(hr, "Failed while getting MSI file hash of file: %ls", pcd->prgFiles[i].pwzSourcePath);
             }
 
             // If the two file hashes are both of the expected size, and they match, we've got a match, so return it!
@@ -790,7 +790,7 @@ static HRESULT AddDuplicateFile(
     if (wzToken && *wzToken)
     {
         hr = StrAllocString(&pcd->prgDuplicates[pcd->cDuplicates].pwzToken, wzToken, 0);
-        ExitOnFailure1(hr, "Failed to copy duplicate file token: %S", wzToken);
+        ExitOnFailure1(hr, "Failed to copy duplicate file token: %ls", wzToken);
     }
 
     ++pcd->cDuplicates;
@@ -850,12 +850,12 @@ static HRESULT AddNonDuplicateFile(
     }
 
     hr = StrAllocString(&pcf->pwzSourcePath, wzFile, 0);
-    ExitOnFailure1(hr, "Failed to copy file path: %S", wzFile);
+    ExitOnFailure1(hr, "Failed to copy file path: %ls", wzFile);
 
     if (wzToken && *wzToken)
     {
         hr = StrAllocString(&pcf->pwzToken, wzToken, 0);
-        ExitOnFailure1(hr, "Failed to copy file token: %S", wzToken);
+        ExitOnFailure1(hr, "Failed to copy file token: %ls", wzToken);
     }
 
     ++pcd->cFilePaths;
@@ -884,14 +884,14 @@ static HRESULT UpdateDuplicateFiles(
     hCabinet = ::CreateFileW(pcd->wzCabinetPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hCabinet)
     {
-        ExitWithLastError1(hr, "Failed to open cabinet: %S", pcd->wzCabinetPath);
+        ExitWithLastError1(hr, "Failed to open cabinet: %ls", pcd->wzCabinetPath);
     }
 
     // Shouldn't need more than 16 MB to get the whole cabinet header into memory so use that as
     // the upper bound for the memory map.
     if (!::GetFileSizeEx(hCabinet, &liCabinetSize))
     {
-        ExitWithLastError1(hr, "Failed to get size of cabinet: %S", pcd->wzCabinetPath);
+        ExitWithLastError1(hr, "Failed to get size of cabinet: %ls", pcd->wzCabinetPath);
     }
 
     if (0 == liCabinetSize.HighPart && liCabinetSize.LowPart < MAX_CABINET_HEADER_SIZE)
@@ -907,11 +907,11 @@ static HRESULT UpdateDuplicateFiles(
     hCabinetMapping = ::CreateFileMappingW(hCabinet, NULL, PAGE_READWRITE | SEC_COMMIT, 0, cbCabinet, NULL);
     if (NULL == hCabinetMapping || INVALID_HANDLE_VALUE == hCabinetMapping)
     {
-        ExitWithLastError1(hr, "Failed to memory map cabinet file: %S", pcd->wzCabinetPath);
+        ExitWithLastError1(hr, "Failed to memory map cabinet file: %ls", pcd->wzCabinetPath);
     }
 
     pv = ::MapViewOfFile(hCabinetMapping, FILE_MAP_WRITE, 0, 0, 0);
-    ExitOnNullWithLastError1(pv, hr, "Failed to map view of cabinet file: %S", pcd->wzCabinetPath);
+    ExitOnNullWithLastError1(pv, hr, "Failed to map view of cabinet file: %ls", pcd->wzCabinetPath);
 
     pCabinetHeader = static_cast<MS_CABINET_HEADER*>(pv);
 
@@ -1328,7 +1328,7 @@ static __callback BOOL DIAMONDAPI CabCGetTempFile(
     szFile[0] = '?';
 
     hr = ::StringCbCopyW((LPWSTR)(szFile + 1), cbFile - 1, pwzTempFile);
-    ExitOnFailure1(hr, "failed to copy to out parameter filename: %S", pwzTempFile);
+    ExitOnFailure1(hr, "failed to copy to out parameter filename: %ls", pwzTempFile);
 
 LExit:
     ReleaseStr(pwzTempFile);

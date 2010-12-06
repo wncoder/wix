@@ -1,6 +1,6 @@
 #pragma once
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scasmbexec.cpp" company="Microsoft">
+// <copyright file="scasmbexec.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the

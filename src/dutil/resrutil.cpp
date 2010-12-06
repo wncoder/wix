@@ -49,7 +49,7 @@ extern "C" HRESULT DAPI ResGetStringLangId(
     if (wzPath && *wzPath)
     {
         hModule = LoadLibraryExW(wzPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-        ExitOnNullWithLastError1(hModule, hr, "Failed to open resource file: %S", wzPath);
+        ExitOnNullWithLastError1(hModule, hr, "Failed to open resource file: %ls", wzPath);
     }
 
     if (!::EnumResourceLanguages(hModule, RT_STRING, MAKEINTRESOURCE(dwBlockId), static_cast<ENUMRESLANGPROC>(EnumLangIdProc), reinterpret_cast<LONG_PTR>(&wFoundLangId)))
@@ -219,13 +219,13 @@ extern "C" HRESULT DAPI ResExportDataToFile(
     hFile = ::CreateFileW(wzTargetFile, GENERIC_WRITE, 0, NULL, dwCreationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile)
     {
-        ExitWithLastError1(hr, "Failed to CreateFileW for %S.", wzTargetFile);
+        ExitWithLastError1(hr, "Failed to CreateFileW for %ls.", wzTargetFile);
     }
     bCreatedFile = TRUE;
 
     if (!::WriteFile(hFile, pData, cbData, &cbWritten, NULL))
     {
-        ExitWithLastError1(hr, "Failed to ::WriteFile for %S.", wzTargetFile);
+        ExitWithLastError1(hr, "Failed to ::WriteFile for %ls.", wzTargetFile);
     }
 
 LExit:

@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------
-// <copyright file="SfxUtil.cpp" company="Microsoft">
+// <copyright file="SfxUtil.h" company="Microsoft">
 // Copyright © 2005-2008 Microsoft Corporation. All rights reserved.
 // </copyright>
 // <summary>

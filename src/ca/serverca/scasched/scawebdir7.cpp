@@ -82,7 +82,7 @@ UINT __stdcall ScaWebDirsRead7(
 
         // get the web key
         hr = ScaWebsGetBase7(pswList, pwzData, pswd->wzWebSite, countof(pswd->wzWebSite));
-        if(S_FALSE == hr)
+        if (S_FALSE == hr)
         {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
             ExitOnFailure(hr, "Failed to get base of web for WebDir");

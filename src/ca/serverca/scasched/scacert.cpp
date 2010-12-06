@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scacert.h" company="Microsoft">
+// <copyright file="scacert.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -204,13 +204,13 @@ static HRESULT ConfigureCertificates(
 
         er = ::MsiGetComponentStateW(WcaGetInstallHandle(), pwzComponent, &isInstalled, &isAction);
         hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure1(hr, "failed to get state for component: %S", pwzComponent);
+        ExitOnFailure1(hr, "failed to get state for component: %ls", pwzComponent);
 
         if (!(WcaIsInstalling(isInstalled, isAction) && SCA_ACTION_INSTALL == saAction) &&
             !(WcaIsUninstalling(isInstalled, isAction) && SCA_ACTION_UNINSTALL == saAction) &&
             !(WcaIsReInstalling(isInstalled, isAction)))
         {
-            WcaLog(LOGMSG_VERBOSE, "Skipping non-action certificate: %S", pwzId);
+            WcaLog(LOGMSG_VERBOSE, "Skipping non-action certificate: %ls", pwzId);
             continue;
         }
 
@@ -275,7 +275,7 @@ static HRESULT ConfigureCertificates(
         {
             // Find an existing certificate one (if there is one) to so we have it for rollback.
             hr = FindExistingCertificate(pwzName, dwStoreLocation, pwzStoreName, &pbCertificate, &cbCertificate);
-            ExitOnFailure1(hr, "Failed to search for existing certificate with friendly name: %S", pwzName);
+            ExitOnFailure1(hr, "Failed to search for existing certificate with friendly name: %ls", pwzName);
 
             if (pbCertificate)
             {
@@ -309,7 +309,7 @@ static HRESULT ConfigureCertificates(
         {
             // Actually get the certificate, resolve it to a blob, and get the blob's hash.
             hr = ResolveCertificate(pwzId, pwzName, dwStoreLocation, pwzStoreName, dwAttributes, pwzData, pwzPFXPassword, &pbCertificate, &cbCertificate);
-            ExitOnFailure1(hr, "Failed to resolve certificate: %S", pwzId);
+            ExitOnFailure1(hr, "Failed to resolve certificate: %ls", pwzId);
 
             hr = WcaWriteStreamToCaData(pbCertificate, cbCertificate, &pwzCaData);
             ExitOnFailure(hr, "Failed to pass Certificate.Data to deferred CustomAction.");
@@ -334,11 +334,11 @@ static HRESULT ConfigureCertificates(
         if (wzRollbackAction)
         {
             hr = WcaDoDeferredAction(wzRollbackAction, pwzRollbackCaData, dwCost);
-            ExitOnFailure2(hr, "Failed to schedule rollback certificate action '%S' for: %S", wzRollbackAction, pwzId);
+            ExitOnFailure2(hr, "Failed to schedule rollback certificate action '%ls' for: %ls", wzRollbackAction, pwzId);
         }
 
         hr = WcaDoDeferredAction(wzAction, pwzCaData, dwCost);
-        ExitOnFailure2(hr, "Failed to schedule certificate action '%S' for: %S", wzAction, pwzId);
+        ExitOnFailure2(hr, "Failed to schedule certificate action '%ls' for: %ls", wzAction, pwzId);
 
         // Clean up for the next certificate.
         ReleaseNullMem(pbCertificate);
@@ -508,7 +508,7 @@ static HRESULT ResolveCertificate(
 
         // Update the CertificateHash table.
         hr = WcaAddTempRecord(&hCertificateHashView, &hCertificateHashColumns, L"CertificateHash", NULL, 0, 2, wzId, wzEncodedCertificateHash);
-        ExitOnFailure1(hr, "Failed to add encoded has for certificate: %S", wzId);
+        ExitOnFailure1(hr, "Failed to add encoded has for certificate: %ls", wzId);
     }
 
     *ppbCertificate = pbData;
@@ -550,14 +550,14 @@ static HRESULT ReadCertificateFile(
 
     if (!::CryptQueryObject(CERT_QUERY_OBJECT_FILE, reinterpret_cast<LPCVOID>(wzPath), CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, &dwContentType, NULL, NULL, NULL, (LPCVOID*)&pCertContext))
     {
-        ExitOnFailure1(hr, "Failed to read certificate from file: %S", wzPath);
+        ExitOnFailure1(hr, "Failed to read certificate from file: %ls", wzPath);
     }
 
     if (pCertContext)
     {
         cbData = pCertContext->cbCertEncoded;
         pbData = static_cast<BYTE*>(MemAlloc(cbData, FALSE));
-        ExitOnNull1(pbData, hr, E_OUTOFMEMORY, "Failed to allocate memory to read certificate from file: %S", wzPath);
+        ExitOnNull1(pbData, hr, E_OUTOFMEMORY, "Failed to allocate memory to read certificate from file: %ls", wzPath);
 
         CopyMemory(pbData, pCertContext->pbCertEncoded, pCertContext->cbCertEncoded);
     }
@@ -567,7 +567,7 @@ static HRESULT ReadCertificateFile(
         if (dwContentType & CERT_QUERY_CONTENT_PFX)
         {
             hr = FileRead(&pbData, &cbData, wzPath);
-            ExitOnFailure1(hr, "Failed to read PFX file: %S", wzPath);
+            ExitOnFailure1(hr, "Failed to read PFX file: %ls", wzPath);
         }
         else
         {
@@ -630,9 +630,9 @@ static HRESULT CertificateToHash(
             ExitOnNullWithLastError(hPfxCertStore, hr, "Failed to open PFX file.");
 
             // Find the first cert with a private key, or just use the last one
-            for(pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum);
-                pCertContextEnum;
-                pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum))
+            for (pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum);
+                 pCertContextEnum;
+                 pCertContextEnum = ::CertEnumCertificatesInStore(hPfxCertStore, pCertContextEnum))
             {
                 pCertContext = pCertContextEnum;
 
@@ -737,7 +737,7 @@ static HRESULT FindExistingCertificate(
 LExit:
     ReleaseMem(pbCertificate);
 
-    if(pCertContext)
+    if (pCertContext)
     {
         ::CertFreeCertificateContext(pCertContext);
     }
@@ -896,24 +896,26 @@ VOID ParseCertificateAuthority(__in LPCWSTR wzCertificateAuthorityOrig, __out LP
     // determine the number of strings in the field
     int iCAArray = 1;
     int i;
-    for (i = 0;  i < cchCA;  i++)
+    for (i = 0; i < cchCA; ++i)
     {
         if (wzBuffer[i] == wchDelimiter)
-            iCAArray++;
+            ++iCAArray;
     }
     LPWSTR *pwzCAArray = (LPWSTR*) new BYTE[iCAArray * sizeof(LPWSTR)];
     if (!pwzCAArray)
+    {
         return;
+    }
 
     pwzCAArray[0] = wzBuffer;
     iCAArray = 0;
-    for (i = 0;  i < cchCA;  i++)
+    for (i = 0; i < cchCA; ++i)
     {
         if (wzBuffer[i] != wchDelimiter)
             continue;
         wzBuffer[i] = 0; // convert buffer into MULTISZ
         pwzCAArray[iCAArray] = &wzBuffer[i+1];
-        iCAArray++;
+        ++iCAArray;
     }
 
     *pwzBuffer = wzBuffer;
@@ -1021,7 +1023,7 @@ HRESULT ScaSslExistingCertificateByName(LPCWSTR pwzName, INT iStore, INT iStoreL
                 // always remove it
                 {
                     PCCERT_CONTEXT pDupCertContext = CertDuplicateCertificateContext(pTargetCert);
-                    if(pDupCertContext && CertDeleteCertificateFromStore(pDupCertContext))
+                    if (pDupCertContext && CertDeleteCertificateFromStore(pDupCertContext))
                     {
                         WcaLog(LOGMSG_STANDARD, "A SSL certificate has removed");
                     }
@@ -1066,12 +1068,12 @@ HRESULT ScaSslExistingCertificateByName(LPCWSTR pwzName, INT iStore, INT iStoreL
 
 LExit:
     // Clean up memory and quit.
-    if(pTargetCert)
+    if (pTargetCert)
     {
         CertFreeCertificateContext(pTargetCert);
         pTargetCert = NULL;
     }
-    if(hSystemStore)
+    if (hSystemStore)
     {
         CertCloseStore(hSystemStore, CERT_CLOSE_STORE_CHECK_FLAG);
         hSystemStore = NULL;
@@ -1097,11 +1099,11 @@ HRESULT ScaSslNewCertificate(LPCWSTR pwzName, INT iStore, INT iStoreLocation, LP
     ParseCertificateAuthority(wzCertificateAuthorityOrig, &wzCABuffer, &wzCAArray, &iCAArray);
 
     // try each authority three times
-    for (int i = 0;  i < 3 * iCAArray;  i++)
+    for (int i = 0; i < 3 * iCAArray; ++i)
     {
         LPCWSTR wzCA = wzCAArray[i % iCAArray];
         if (NULL == wzCA || NULL == wzCA[0]) continue;
-        WcaLog(LOGMSG_STANDARD, "Requesting SSL certificate from %S", wzCA);
+        WcaLog(LOGMSG_STANDARD, "Requesting SSL certificate from %ls", wzCA);
         hr = RequestCertificate(pwzName, iStore, iStoreLocation, wzComputerName, wzDistinguishedName, wzCA, pbstrCertificate);
         if (hr == S_OK && pbstrCertificate)
         {
@@ -1164,9 +1166,14 @@ HRESULT ScaSslNewCertificate(LPCWSTR pwzName, INT iStore, INT iStoreLocation, LP
 
 LExit:
     if (wzCABuffer)
+    {
         delete wzCABuffer;
+    }
     if (wzCAArray)
+    {
         delete wzCAArray;
+    }
+
     return hr;
 }
 
@@ -1202,7 +1209,7 @@ HRESULT ScaGetCertificateByRequest(LPCWSTR pwzName, BOOL fIsInstalling, BOOL fIs
         if (!fIsUninstalling && fIsInstalling)
         {
             // if no existing cert and not on uninstall, hit the authority
-            WcaLog(LOGMSG_STANDARD, "Adding certificate: requested, %S", wzDistinguishedName);
+            WcaLog(LOGMSG_STANDARD, "Adding certificate: requested, %ls", wzDistinguishedName);
             hr = ScaSslNewCertificate(pwzName, iStore, iStoreLocation, wzComputerName, wzDistinguishedName, wzCA,
                 pbstrCertificate, pcbCertificate, pbaHashBuffer);
             ExitOnFailure(hr, "Failed ScaSslNewCertificate");
@@ -1216,6 +1223,7 @@ HRESULT ScaGetCertificateByRequest(LPCWSTR pwzName, BOOL fIsInstalling, BOOL fIs
 
 LExit:
     ReleaseStr(pwzData);
+
     return hr;
 }
 
@@ -1256,6 +1264,7 @@ LExit:
         CertCloseStore(hCertStore, 0);
         hCertStore = NULL;
     }
+
     return hr;
 }
 
@@ -1424,7 +1433,7 @@ HRESULT ScaInstallCertificateByBinaryData(BOOL fAddCert, INT iStore, INT iStoreL
     if (fAddCert)
     {
         // Add
-        WcaLog(LOGMSG_STANDARD, "Adding certificate: binary name, %S", wzName);
+        WcaLog(LOGMSG_STANDARD, "Adding certificate: binary name, %ls", wzName);
         if (!CertAddCertificateContextToStore(
             hCertStore,
             pCertCtx,
@@ -1438,7 +1447,7 @@ HRESULT ScaInstallCertificateByBinaryData(BOOL fAddCert, INT iStore, INT iStoreL
     else
     {
         // Delete
-        WcaLog(LOGMSG_STANDARD, "Deleting certificate provided: binary name, %S", wzName);
+        WcaLog(LOGMSG_STANDARD, "Deleting certificate provided: binary name, %ls", wzName);
         pCertCtxExisting = CertFindCertificateInStore(
             hCertStore,
             PKCS_7_ASN_ENCODING | X509_ASN_ENCODING,
@@ -1482,6 +1491,7 @@ LExit:
         CertCloseStore(hPfxCertStore, 0);
         hPfxCertStore = NULL;
     }
+
     return hr;
 }
 */

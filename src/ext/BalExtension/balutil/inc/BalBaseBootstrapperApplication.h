@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="BalBaseBootstrapperApplication.cpp" company="Microsoft">
+// <copyright file="BalBaseBootstrapperApplication.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the

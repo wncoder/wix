@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    SQL helper funtions.
+//    SQL helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -90,7 +90,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
     ::VariantInit(&rgdbpInit[cProperties].vValue);
     rgdbpInit[cProperties].vValue.vt = VT_BSTR;
     rgdbpInit[cProperties].vValue.bstrVal = ::SysAllocString(pwzServerInstance);
-    cProperties++;
+    ++cProperties;
 
     // database
     rgdbpInit[cProperties].dwPropertyID = DBPROP_INIT_CATALOG;
@@ -99,7 +99,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
     ::VariantInit(&rgdbpInit[cProperties].vValue);
     rgdbpInit[cProperties].vValue.vt = VT_BSTR;
     rgdbpInit[cProperties].vValue.bstrVal= ::SysAllocString(wzDatabase);
-    cProperties++;
+    ++cProperties;
 
     if (fIntegratedAuth)
     {
@@ -110,7 +110,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
         ::VariantInit(&rgdbpInit[cProperties].vValue);
         rgdbpInit[cProperties].vValue.vt = VT_BSTR;
         rgdbpInit[cProperties].vValue.bstrVal = ::SysAllocString(L"SSPI");   // default windows authentication
-        cProperties++;
+        ++cProperties;
     }
     else
     {
@@ -121,7 +121,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
         ::VariantInit(&rgdbpInit[cProperties].vValue);
         rgdbpInit[cProperties].vValue.vt = VT_BSTR;
         rgdbpInit[cProperties].vValue.bstrVal = ::SysAllocString(wzUser);
-        cProperties++;
+        ++cProperties;
 
         // password
         rgdbpInit[cProperties].dwPropertyID = DBPROP_AUTH_PASSWORD;
@@ -130,7 +130,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
         ::VariantInit(&rgdbpInit[cProperties].vValue);
         rgdbpInit[cProperties].vValue.vt = VT_BSTR;
         rgdbpInit[cProperties].vValue.bstrVal = ::SysAllocString(wzPassword);
-        cProperties++;
+        ++cProperties;
     }
 
     // put the properties into a set
@@ -146,7 +146,7 @@ extern "C" HRESULT DAPI SqlConnectDatabase(
 
     //initialize connection to datasource
     hr = pidbInitialize->Initialize();
-    ExitOnFailure1(hr, "failed to initialize connection to database: %S", wzDatabase);
+    ExitOnFailure1(hr, "failed to initialize connection to database: %ls", wzDatabase);
 
     hr = pidbInitialize->QueryInterface(IID_IDBCreateSession, (LPVOID*)ppidbSession);
 
@@ -247,7 +247,7 @@ extern "C" HRESULT DAPI SqlDatabaseExists(
     IDBCreateSession* pidbSession = NULL;
 
     hr = SqlConnectDatabase(wzServer, wzInstance, L"master", fIntegratedAuth, wzUser, wzPassword, &pidbSession);
-    ExitOnFailure1(hr, "failed to connect to 'master' database on server %S", wzServer);
+    ExitOnFailure1(hr, "failed to connect to 'master' database on server %ls", wzServer);
 
     hr = SqlSessionDatabaseExists(pidbSession, wzDatabase, pbstrErrorDescription);
 
@@ -340,10 +340,10 @@ extern "C" HRESULT DAPI SqlDatabaseEnsureExists(
     // connect to the master database to create the new database
     //
     hr = SqlConnectDatabase(wzServer, wzInstance, L"master", fIntegratedAuth, wzUser, wzPassword, &pidbSession);
-    ExitOnFailure1(hr, "failed to connect to 'master' database on server %S", wzServer);
+    ExitOnFailure1(hr, "failed to connect to 'master' database on server %ls", wzServer);
 
     hr = SqlSessionDatabaseEnsureExists(pidbSession, wzDatabase, psfDatabase, psfLog, pbstrErrorDescription);
-    ExitOnFailure1(hr, "failed to create database: %S", wzDatabase);
+    ExitOnFailure1(hr, "failed to create database: %ls", wzDatabase);
 
     Assert(S_OK == hr);
 LExit:
@@ -371,7 +371,7 @@ extern "C" HRESULT DAPI SqlSessionDatabaseEnsureExists(
     HRESULT hr = S_OK;
 
     hr = SqlSessionDatabaseExists(pidbSession, wzDatabase, pbstrErrorDescription);
-    ExitOnFailure1(hr, "failed to determine if exists, database: %S", wzDatabase);
+    ExitOnFailure1(hr, "failed to determine if exists, database: %ls", wzDatabase);
 
     if (S_FALSE == hr)
     {
@@ -414,10 +414,10 @@ extern "C" HRESULT DAPI SqlCreateDatabase(
     // connect to the master database to create the new database
     //
     hr = SqlConnectDatabase(wzServer, wzInstance, L"master", fIntegratedAuth, wzUser, wzPassword, &pidbSession);
-    ExitOnFailure1(hr, "failed to connect to 'master' database on server %S", wzServer);
+    ExitOnFailure1(hr, "failed to connect to 'master' database on server %ls", wzServer);
 
     hr = SqlSessionCreateDatabase(pidbSession, wzDatabase, psfDatabase, psfLog, pbstrErrorDescription);
-    ExitOnFailure1(hr, "failed to create database: %S", wzDatabase);
+    ExitOnFailure1(hr, "failed to create database: %ls", wzDatabase);
 
     Assert(S_OK == hr);
 LExit:
@@ -462,10 +462,10 @@ extern "C" HRESULT DAPI SqlSessionCreateDatabase(
     ExitOnFailure(hr, "failed to escape database string");
 
     hr = StrAllocFormatted(&pwzQuery, L"CREATE DATABASE %s %s%s %s%s", pwzDatabaseEscaped, pwzDbFile ? L"ON " : L"", pwzDbFile ? pwzDbFile : L"", pwzLogFile ? L"LOG ON " : L"", pwzLogFile ? pwzLogFile : L"");
-    ExitOnFailure1(hr, "failed to allocate query to create database: %S", pwzDatabaseEscaped);    
+    ExitOnFailure1(hr, "failed to allocate query to create database: %ls", pwzDatabaseEscaped);    
 
     hr = SqlSessionExecuteQuery(pidbSession, pwzQuery, NULL, NULL, pbstrErrorDescription);
-    ExitOnFailure2(hr, "failed to create database: %S, Query: %S", pwzDatabaseEscaped, pwzQuery);
+    ExitOnFailure2(hr, "failed to create database: %ls, Query: %ls", pwzDatabaseEscaped, pwzQuery);
 
 LExit:
     ReleaseStr(pwzQuery);
@@ -531,7 +531,7 @@ extern "C" HRESULT DAPI SqlSessionDropDatabase(
     LPWSTR pwzDatabaseEscaped = NULL;
 
     hr = SqlSessionDatabaseExists(pidbSession, wzDatabase, pbstrErrorDescription);
-    ExitOnFailure1(hr, "failed to determine if exists, database: %S", wzDatabase);
+    ExitOnFailure1(hr, "failed to determine if exists, database: %ls", wzDatabase);
     
     hr = EscapeSqlIdentifier(wzDatabase, &pwzDatabaseEscaped);
     ExitOnFailure(hr, "failed to escape database string");
@@ -539,7 +539,7 @@ extern "C" HRESULT DAPI SqlSessionDropDatabase(
     if (S_OK == hr)
     {
         hr = StrAllocFormatted(&pwzQuery, L"DROP DATABASE %s", pwzDatabaseEscaped);
-        ExitOnFailure1(hr, "failed to allocate query to drop database: %S", pwzDatabaseEscaped);
+        ExitOnFailure1(hr, "failed to allocate query to drop database: %ls", pwzDatabaseEscaped);
 
         hr = SqlSessionExecuteQuery(pidbSession, pwzQuery, NULL, NULL, pbstrErrorDescription);
         ExitOnFailure(hr, "Failed to drop database");
@@ -593,13 +593,13 @@ extern "C" HRESULT DAPI SqlSessionExecuteQuery(
     hr = picmd->QueryInterface(IID_ICommandText, (LPVOID*)&picmdText);
     ExitOnFailure(hr, "failed to get command text object for command");
     hr = picmdText->SetCommandText(DBGUID_DEFAULT , wzSql);
-    ExitOnFailure1(hr, "failed to set SQL string: %S", wzSql);
+    ExitOnFailure1(hr, "failed to set SQL string: %ls", wzSql);
 
     //
     // execute the command
     //
     hr = picmd->Execute(NULL, (ppirs) ? IID_IRowset : IID_NULL, NULL, &cRows, reinterpret_cast<IUnknown**>(ppirs));
-    ExitOnFailure1(hr, "failed to execute SQL string: %S", wzSql);
+    ExitOnFailure1(hr, "failed to execute SQL string: %ls", wzSql);
 
     if (DB_S_ERRORSOCCURRED == hr)
     {
@@ -618,7 +618,7 @@ LExit:
         HRESULT hrGetErrors = SqlGetErrorInfo(picmd, IID_ICommandText, 0x409, NULL, pbstrErrorDescription); // TODO: use current locale instead of always American-English
         if (FAILED(hrGetErrors))
         {
-            ReleaseNullBSTR(*pbstrErrorDescription);
+            ReleaseBSTR(*pbstrErrorDescription);
         }
     }
 
@@ -666,13 +666,13 @@ extern "C" HRESULT DAPI SqlCommandExecuteQuery(
     hr = picmd->QueryInterface(IID_ICommandText, (LPVOID*)&picmdText);
     ExitOnFailure(hr, "failed to get command text object for command");
     hr = picmdText->SetCommandText(DBGUID_DEFAULT , wzSql);
-    ExitOnFailure1(hr, "failed to set SQL string: %S", wzSql);
+    ExitOnFailure1(hr, "failed to set SQL string: %ls", wzSql);
 
     //
     // execute the command
     //
     hr = picmd->Execute(NULL, (ppirs) ? IID_IRowset : IID_NULL, NULL, &cRows, reinterpret_cast<IUnknown**>(ppirs));
-    ExitOnFailure1(hr, "failed to execute SQL string: %S", wzSql);
+    ExitOnFailure1(hr, "failed to execute SQL string: %ls", wzSql);
 
     if (DB_S_ERRORSOCCURRED == hr)
     {
@@ -735,7 +735,7 @@ extern "C" HRESULT DAPI SqlGetErrorInfo(
             pIErrorRecords->GetRecordCount(&cErrors);
 
             // get the error information for each record
-            for (ULONG i = 0; i < cErrors; i++)
+            for (ULONG i = 0; i < cErrors; ++i)
             {
                 hr = pIErrorRecords->GetErrorInfo(i, dwLocaleId, &pIErrorInfoRecord);
                 if (SUCCEEDED(hr))
@@ -809,10 +809,10 @@ static HRESULT FileSpecToString(
     ExitOnNull(*psf->wzFilename, hr, E_INVALIDARG, "filename not specified in database file info");
 
     hr = StrAllocFormatted(&pwz, L"%sNAME=%s", pwz, psf->wzName);
-    ExitOnFailure1(hr, "failed to format database file info name: %S", psf->wzName);
+    ExitOnFailure1(hr, "failed to format database file info name: %ls", psf->wzName);
 
     hr = StrAllocFormatted(&pwz, L"%s, FILENAME='%s'", pwz, psf->wzFilename);
-    ExitOnFailure1(hr, "failed to format database file info filename: %S", psf->wzFilename);
+    ExitOnFailure1(hr, "failed to format database file info filename: %ls", psf->wzFilename);
 
     if (0 != psf->wzSize[0])
     {
@@ -866,13 +866,13 @@ static HRESULT EscapeSqlIdentifier(
     if (cchIdentifier == 0 || (wzIdentifier[0] == '[' && wzIdentifier[cchIdentifier-1] == ']'))
     {
         hr = StrAllocString(&pwz, wzIdentifier, 0);
-        ExitOnFailure1(hr, "failed to format database name: %S", wzIdentifier);
+        ExitOnFailure1(hr, "failed to format database name: %ls", wzIdentifier);
     }
     else
     {
         //escape it
         hr = StrAllocFormatted(&pwz, L"[%s]", wzIdentifier);
-        ExitOnFailure1(hr, "failed to format escaped database name: %S", wzIdentifier);
+        ExitOnFailure1(hr, "failed to format escaped database name: %ls", wzIdentifier);
     }
 
     *ppwz = pwz;

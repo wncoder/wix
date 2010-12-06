@@ -34,7 +34,7 @@ HRESULT __stdcall ScaWebSvcExtCommit7(
 {
     HRESULT hr = S_OK;
 
-    if(!psWseList)
+    if (!psWseList)
     {
         WcaLog(LOGMSG_VERBOSE, "Skipping ScaWebSvcExtCommit() because there are no web service extensions in the list");
         ExitFunction();

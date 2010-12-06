@@ -156,7 +156,7 @@ HRESULT ScaMimeMapCheckList(SCA_MIMEMAP* psmmList)
     
     while (psmmList)
     {
-        WcaLog(LOGMSG_STANDARD, "MimeMapping of %S with ParentType=%d and ParentValue=%S not used!", psmmList->wzMimeMap, psmmList->iParentType, psmmList->wzParentValue);
+        WcaLog(LOGMSG_STANDARD, "MimeMapping of %ls with ParentType=%d and ParentValue=%ls not used!", psmmList->wzMimeMap, psmmList->iParentType, psmmList->wzParentValue);
         psmmList = psmmList->psmmNext;
     }
 

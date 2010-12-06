@@ -939,7 +939,7 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
     case 0: // master progress reset
         if (4 > cFields)
         {
-            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%S'", cFields, wzMessage);
+            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%ls'", cFields, wzMessage);
             ExitFunction();
         }
         //Trace3(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - MASTER RESET - %d, %d, %d", iFields[1], iFields[2], iFields[3]);
@@ -984,7 +984,7 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
     case 1: // action info
         if (3 > cFields)
         {
-            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%S'", cFields, wzMessage);
+            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%ls'", cFields, wzMessage);
             ExitFunction();
         }
         //Trace3(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - ACTION INFO - %d, %d, %d", iFields[1], iFields[2], iFields[3]);
@@ -1003,7 +1003,7 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
     case 2: // progress report
         if (2 > cFields)
         {
-            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%S'", cFields, wzMessage);
+            Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%ls'", cFields, wzMessage);
             break;
         }
         //Trace3(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - PROGRESS REPORT - %d, %d, %d", iFields[1], iFields[2], iFields[3]);

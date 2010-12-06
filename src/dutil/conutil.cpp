@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Console helper funtions.
+//    Console helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -167,7 +167,7 @@ extern "C" void DAPI ConsoleNormal()
 /********************************************************************
  ConsoleWrite - full color printfA without libc
 
- NOTE: use FormatMessage formatting ("%1" or "%1!d!") not plain printf formatting ("%S" or "%d")
+ NOTE: use FormatMessage formatting ("%1" or "%1!d!") not plain printf formatting ("%ls" or "%d")
        assumes already in normal color and resets the screen to normal color
 ********************************************************************/
 extern "C" HRESULT DAPI ConsoleWrite(
@@ -224,7 +224,7 @@ LExit:
 /********************************************************************
  ConsoleWriteLine - full color printfA plus newline without libc
 
- NOTE: use FormatMessage formatting ("%1" or "%1!d!") not plain printf formatting ("%S" or "%d")
+ NOTE: use FormatMessage formatting ("%1" or "%1!d!") not plain printf formatting ("%ls" or "%d")
        assumes already in normal color and resets the screen to normal color
 ********************************************************************/
 extern "C" HRESULT DAPI ConsoleWriteLine(
@@ -466,7 +466,7 @@ extern "C" HRESULT DAPI ConsoleReadNonBlockingW(
                     break;
                 }
 
-                dwIndex++;
+                ++dwIndex;
                 cchTotal--;
             }
         }
@@ -535,18 +535,18 @@ extern "C" HRESULT DAPI ConsoleReadStringA(
 {
     AssertSz(INVALID_HANDLE_VALUE != vhStdIn, "ConsoleInitialize() has not been called");
     HRESULT hr = S_OK;
-    if(ppszCharBuffer && (pcchNumCharReturn || cchCharBuffer < 2))
+    if (ppszCharBuffer && (pcchNumCharReturn || cchCharBuffer < 2))
     {
         DWORD iRead = 1;
         DWORD iReadCharTotal = 0;
-        if(ppszCharBuffer && *ppszCharBuffer == NULL)
+        if (ppszCharBuffer && *ppszCharBuffer == NULL)
         {
             do
             {
                 hr = StrAnsiAlloc(ppszCharBuffer, cchCharBuffer * iRead);
                 ExitOnFailure(hr, "failed to allocate memory for ConsoleReadStringW");
                 // ReadConsoleW will not return until <Return>, the last two chars are 13 and 10.
-                if(!::ReadConsoleA(vhStdIn, *ppszCharBuffer + iReadCharTotal, cchCharBuffer, pcchNumCharReturn, NULL) || *pcchNumCharReturn == 0)
+                if (!::ReadConsoleA(vhStdIn, *ppszCharBuffer + iReadCharTotal, cchCharBuffer, pcchNumCharReturn, NULL) || *pcchNumCharReturn == 0)
                 {
                     ExitOnLastError(hr, "failed to read string from console");
                 }
@@ -558,12 +558,12 @@ extern "C" HRESULT DAPI ConsoleReadStringA(
         }
         else
         {
-            if(!::ReadConsoleA(vhStdIn, *ppszCharBuffer, cchCharBuffer, pcchNumCharReturn, NULL) ||
+            if (!::ReadConsoleA(vhStdIn, *ppszCharBuffer, cchCharBuffer, pcchNumCharReturn, NULL) ||
                 *pcchNumCharReturn > cchCharBuffer || *pcchNumCharReturn == 0)
             {
                 ExitOnLastError(hr, "failed to read string from console");
             }
-            if((*ppszCharBuffer)[*pcchNumCharReturn - 1] != 10 ||
+            if ((*ppszCharBuffer)[*pcchNumCharReturn - 1] != 10 ||
                 (*ppszCharBuffer)[*pcchNumCharReturn - 2] != 13)
             {
                 // need read more
@@ -592,18 +592,18 @@ extern "C" HRESULT DAPI ConsoleReadStringW(
 {
     AssertSz(INVALID_HANDLE_VALUE != vhStdIn, "ConsoleInitialize() has not been called");
     HRESULT hr = S_OK;
-    if(ppwzCharBuffer && (pcchNumCharReturn || cchCharBuffer < 2))
+    if (ppwzCharBuffer && (pcchNumCharReturn || cchCharBuffer < 2))
     {
         DWORD iRead = 1;
         DWORD iReadCharTotal = 0;
-        if(*ppwzCharBuffer == NULL)
+        if (*ppwzCharBuffer == NULL)
         {
             do
             {
                 hr = StrAlloc(ppwzCharBuffer, cchCharBuffer * iRead);
                 ExitOnFailure(hr, "failed to allocate memory for ConsoleReadStringW");
                 // ReadConsoleW will not return until <Return>, the last two chars are 13 and 10.
-                if(!::ReadConsoleW(vhStdIn, *ppwzCharBuffer + iReadCharTotal, cchCharBuffer, pcchNumCharReturn, NULL) || *pcchNumCharReturn == 0)
+                if (!::ReadConsoleW(vhStdIn, *ppwzCharBuffer + iReadCharTotal, cchCharBuffer, pcchNumCharReturn, NULL) || *pcchNumCharReturn == 0)
                 {
                     ExitOnLastError(hr, "failed to read string from console");
                 }
@@ -615,12 +615,12 @@ extern "C" HRESULT DAPI ConsoleReadStringW(
         }
         else
         {
-            if(!::ReadConsoleW(vhStdIn, *ppwzCharBuffer, cchCharBuffer, pcchNumCharReturn, NULL) ||
+            if (!::ReadConsoleW(vhStdIn, *ppwzCharBuffer, cchCharBuffer, pcchNumCharReturn, NULL) ||
                 *pcchNumCharReturn > cchCharBuffer || *pcchNumCharReturn == 0)
             {
                 ExitOnLastError(hr, "failed to read string from console");
             }
-            if((*ppwzCharBuffer)[*pcchNumCharReturn - 1] != 10 ||
+            if ((*ppwzCharBuffer)[*pcchNumCharReturn - 1] != 10 ||
                 (*ppwzCharBuffer)[*pcchNumCharReturn - 2] != 13)
             {
                 // need read more
@@ -646,7 +646,7 @@ extern "C" HRESULT DAPI ConsoleSetReadHidden(void)
     AssertSz(INVALID_HANDLE_VALUE != vhStdIn, "ConsoleInitialize() has not been called");
     HRESULT hr = S_OK;
     ::FlushConsoleInputBuffer(vhStdIn);
-    if(!::SetConsoleMode(vhStdIn, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT))
+    if (!::SetConsoleMode(vhStdIn, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT))
     {
         ExitOnLastError(hr, "failed to set console input mode to be hidden");
     }
@@ -663,7 +663,7 @@ extern "C" HRESULT DAPI ConsoleSetReadNormal(void)
 {
     AssertSz(INVALID_HANDLE_VALUE != vhStdIn, "ConsoleInitialize() has not been called");
     HRESULT hr = S_OK;
-    if(!::SetConsoleMode(vhStdIn, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT))
+    if (!::SetConsoleMode(vhStdIn, ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_MOUSE_INPUT))
     {
         ExitOnLastError(hr, "failed to set console input mode to be normal");
     }

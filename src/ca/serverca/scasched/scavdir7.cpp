@@ -87,7 +87,7 @@ HRESULT __stdcall ScaVirtualDirsRead7(
         ExitOnFailure(hr, "Failed to get Web for VirtualDir");
 
         hr = ScaWebsGetBase7(pswList, pwzData, pvdir->wzWebName , countof(pvdir->wzWebName));
-        if(S_FALSE == hr)
+        if (S_FALSE == hr)
         {
             hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
             ExitOnFailure(hr, "Failed to get Web Base for VirtualDir");
@@ -200,7 +200,7 @@ HRESULT ScaVirtualDirsInstall7(
         if (WcaIsInstalling(psvd->isInstalled, psvd->isAction))
         {
             // First write all applications, this is necessary since vdirs must be nested under the applications.
-            if( psvd->fHasApplication )
+            if (psvd->fHasApplication)
             {
                 //create the application for this vdir application
                 hr = ScaWriteConfigID(IIS_APPLICATION);
@@ -315,7 +315,7 @@ HRESULT ScaVirtualDirsUninstall7(
             hr = StrAllocFormatted(&wzPath, L"/%s", psvd->wzVDirRoot);
             ExitOnFailure(hr, "Failed to create vdir path");
 
-            if( psvd->fHasApplication )
+            if (psvd->fHasApplication)
             {
                 //delete Application
                 hr = ScaWriteConfigID(IIS_APPLICATION);

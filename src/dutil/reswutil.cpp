@@ -74,7 +74,7 @@ extern "C" HRESULT DAPI ResWriteString(
     DWORD dwStringId = (dwDataId % RES_STRINGS_PER_BLOCK);
 
     hModule = LoadLibraryExW(wzResourceFile, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-    ExitOnNullWithLastError1(hModule, hr, "Failed to load library: %S", wzResourceFile);
+    ExitOnNullWithLastError1(hModule, hr, "Failed to load library: %ls", wzResourceFile);
 
     hr = StringBlockInitialize(hModule, dwBlockId, wLangId, &StrBlock);
     ExitOnFailure(hr, "Failed to get string block to update.");
@@ -185,23 +185,23 @@ extern "C" HRESULT DAPI ResImportDataFromFile(
     hFile = ::CreateFileW(wzSourceFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hFile)
     {
-        ExitWithLastError1(hr, "Failed to CreateFileW for %S.", wzSourceFile);
+        ExitWithLastError1(hr, "Failed to CreateFileW for %ls.", wzSourceFile);
     }
 
     cbFile = ::GetFileSize(hFile, NULL);
     if (!cbFile)
     {
-        ExitWithLastError1(hr, "Failed to GetFileSize for %S.", wzSourceFile);
+        ExitWithLastError1(hr, "Failed to GetFileSize for %ls.", wzSourceFile);
     }
 
     hMap = ::CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-    ExitOnNullWithLastError1(hMap, hr, "Failed to CreateFileMapping for %S.", wzSourceFile);
+    ExitOnNullWithLastError1(hMap, hr, "Failed to CreateFileMapping for %ls.", wzSourceFile);
 
     pv = ::MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, cbFile);
-    ExitOnNullWithLastError1(pv, hr, "Failed to MapViewOfFile for %S.", wzSourceFile);
+    ExitOnNullWithLastError1(pv, hr, "Failed to MapViewOfFile for %ls.", wzSourceFile);
 
     hr = ResWriteData(wzTargetFile, szDataName, pv, cbFile);
-    ExitOnFailure2(hr, "Failed to ResSetData %s on file %S.", szDataName, wzTargetFile);
+    ExitOnFailure2(hr, "Failed to ResSetData %s on file %ls.", szDataName, wzTargetFile);
 
 LExit:
     if (pv)
@@ -312,7 +312,7 @@ static HRESULT StringBlockConvertToResourceData(
     LPVOID pvData = NULL;
     WCHAR* pwz = NULL;
 
-    for(DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
+    for (DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
     {
         cbData += (lstrlenW(pStrBlock->rgwz[i]) + 1);
     }
@@ -322,14 +322,14 @@ static HRESULT StringBlockConvertToResourceData(
     ExitOnNull(pvData, hr, E_OUTOFMEMORY, "Failed to allocate buffer to convert string block.");
 
     pwz = static_cast<LPWSTR>(pvData);
-    for(DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
+    for (DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
     {
         DWORD cch = lstrlenW(pStrBlock->rgwz[i]);
 
         *pwz = static_cast<WCHAR>(cch);
         ++pwz;
 
-        for(DWORD j = 0; j < cch; ++j)
+        for (DWORD j = 0; j < cch; ++j)
         {
             *pwz = pStrBlock->rgwz[i][j];
             ++pwz;
@@ -357,7 +357,7 @@ static HRESULT StringBlockConvertFromResourceData(
     HRESULT hr = S_OK;
     LPCWSTR pwzParse = static_cast<LPCWSTR>(pvData);
 
-    for(DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
+    for (DWORD i = 0; i < RES_STRINGS_PER_BLOCK; ++i)
     {
         DWORD cchParse = static_cast<DWORD>(*pwzParse);
         ++pwzParse;

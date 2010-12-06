@@ -97,7 +97,7 @@ static UINT SchedFirewallExceptions(
         WCA_TODO todoComponent = WcaGetComponentToDo(pwzComponent);
         if ((WCA_TODO_REINSTALL == todoComponent ? WCA_TODO_INSTALL : todoComponent) != todoSched)
         {
-            WcaLog(LOGMSG_STANDARD, "Component '%S' action state (%d) doesn't match request (%d)", pwzComponent, todoComponent, todoSched);
+            WcaLog(LOGMSG_STANDARD, "Component '%ls' action state (%d) doesn't match request (%d)", pwzComponent, todoComponent, todoSched);
             continue;
         }
 
@@ -151,7 +151,7 @@ static UINT SchedFirewallExceptions(
     // schedule ExecFirewallExceptions if there's anything to do
     if (pwzCustomActionData && *pwzCustomActionData)
     {
-        WcaLog(LOGMSG_STANDARD, "Scheduling firewall exception (%S)", pwzCustomActionData);
+        WcaLog(LOGMSG_STANDARD, "Scheduling firewall exception (%ls)", pwzCustomActionData);
 
         if (WCA_TODO_INSTALL == todoSched)
         {
@@ -585,7 +585,7 @@ static HRESULT AddPortException(
         if (bstrRemoteAddresses && *bstrRemoteAddresses)
         {
             hr = pNetFwRule->put_RemoteAddresses(bstrRemoteAddresses);
-            ExitOnFailure1(hr, "failed to set exception remote addresses '%S'", bstrRemoteAddresses);
+            ExitOnFailure1(hr, "failed to set exception remote addresses '%ls'", bstrRemoteAddresses);
         }
 
         // enable it
@@ -653,7 +653,7 @@ static HRESULT AddPortExceptionOnCurrentProfile(
     if (bstrRemoteAddresses && *bstrRemoteAddresses)
     {
         hr = pfwPort->put_RemoteAddresses(bstrRemoteAddresses);
-        ExitOnFailure1(hr, "failed to set exception remote addresses '%S'", bstrRemoteAddresses);
+        ExitOnFailure1(hr, "failed to set exception remote addresses '%ls'", bstrRemoteAddresses);
     }
 
     hr = pfwPort->put_Name(bstrName);
@@ -908,7 +908,7 @@ extern "C" UINT __stdcall ExecFirewallExceptions(
 
     hr = WcaGetProperty( L"CustomActionData", &pwzCustomActionData);
     ExitOnFailure(hr, "failed to get CustomActionData");
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzCustomActionData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzCustomActionData);
 
     hr = ::CoInitialize(NULL);
     ExitOnFailure(hr, "failed to initialize COM");
@@ -963,15 +963,15 @@ extern "C" UINT __stdcall ExecFirewallExceptions(
             {
             case WCA_TODO_INSTALL:
             case WCA_TODO_REINSTALL:
-                WcaLog(LOGMSG_STANDARD, "Installing firewall exception2 %S on port %S, protocol %d", pwzName, pwzPort, iProtocol);
+                WcaLog(LOGMSG_STANDARD, "Installing firewall exception2 %ls on port %ls, protocol %d", pwzName, pwzPort, iProtocol);
                 hr = AddPortException(fSupportProfiles, pwzName, iProfile, pwzRemoteAddresses, fIgnoreFailures, pwzPort, iProtocol);
-                ExitOnFailure3(hr, "failed to add/update port exception for name '%S' on port %S, protocol %d", pwzName, pwzPort, iProtocol);
+                ExitOnFailure3(hr, "failed to add/update port exception for name '%ls' on port %ls, protocol %d", pwzName, pwzPort, iProtocol);
                 break;
 
             case WCA_TODO_UNINSTALL:
-                WcaLog(LOGMSG_STANDARD, "Uninstalling firewall exception2 %S on port %S, protocol %d", pwzName, pwzPort, iProtocol);
+                WcaLog(LOGMSG_STANDARD, "Uninstalling firewall exception2 %ls on port %ls, protocol %d", pwzName, pwzPort, iProtocol);
                 hr = RemovePortException(fSupportProfiles, pwzName, pwzPort, iProtocol, fIgnoreFailures);
-                ExitOnFailure3(hr, "failed to remove port exception for name '%S' on port %S, protocol %d", pwzName, pwzPort, iProtocol);
+                ExitOnFailure3(hr, "failed to remove port exception for name '%ls' on port %ls, protocol %d", pwzName, pwzPort, iProtocol);
                 break;
             }
             break;
@@ -984,15 +984,15 @@ extern "C" UINT __stdcall ExecFirewallExceptions(
             {
             case WCA_TODO_INSTALL:
             case WCA_TODO_REINSTALL:
-                WcaLog(LOGMSG_STANDARD, "Installing firewall exception2 %S (%S)", pwzName, pwzFile);
+                WcaLog(LOGMSG_STANDARD, "Installing firewall exception2 %ls (%ls)", pwzName, pwzFile);
                 hr = AddApplicationException(fSupportProfiles, pwzFile, pwzName, iProfile, pwzRemoteAddresses, fIgnoreFailures);
-                ExitOnFailure2(hr, "failed to add/update application exception for name '%S', file '%S'", pwzName, pwzFile);
+                ExitOnFailure2(hr, "failed to add/update application exception for name '%ls', file '%ls'", pwzName, pwzFile);
                 break;
 
             case WCA_TODO_UNINSTALL:
-                WcaLog(LOGMSG_STANDARD, "Uninstalling firewall exception2 %S (%S)", pwzName, pwzFile);
+                WcaLog(LOGMSG_STANDARD, "Uninstalling firewall exception2 %ls (%ls)", pwzName, pwzFile);
                 hr = RemoveApplicationException(fSupportProfiles, pwzName, pwzFile, fIgnoreFailures);
-                ExitOnFailure2(hr, "failed to remove application exception for name '%S', file '%S'", pwzName, pwzFile);
+                ExitOnFailure2(hr, "failed to remove application exception for name '%ls', file '%ls'", pwzName, pwzFile);
                 break;
             }
             break;

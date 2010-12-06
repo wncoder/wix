@@ -13,7 +13,7 @@
 // </copyright>
 // 
 // <summary>
-//    User helper funtions.
+//    User helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

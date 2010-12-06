@@ -156,7 +156,7 @@ extern "C" HRESULT RexExtract(
     //
     //if (!::WideCharToMultiByte(CP_ACP, 0, wzResource, -1, vszResource, countof(vszResource), NULL, NULL))
     //{
-    //    ExitOnLastError1(hr, "failed to convert cabinet resource name to ASCII: %S", wzResource);
+    //    ExitOnLastError1(hr, "failed to convert cabinet resource name to ASCII: %ls", wzResource);
     //}
 
     hr = ::StringCchCopyA(vszResource, countof(vszResource), szResource);
@@ -213,7 +213,7 @@ static __callback INT_PTR FAR DIAMONDAPI RexOpen(__in_z char FAR *pszFile, int o
     }
 
     // find an empty spot in the fake file table
-    for (i = 0; i < FILETABLESIZE; i++)
+    for (i = 0; i < FILETABLESIZE; ++i)
     {
         if (!vrgffFileTable[i].fUsed)
         {
@@ -442,7 +442,7 @@ static __callback INT_PTR DIAMONDAPI RexCallback(FDINOTIFICATIONTYPE iNotificati
     FILETIME ft;
     int i = 0;
 
-    switch(iNotification)
+    switch (iNotification)
     {
     case fdintCOPY_FILE:  // beGIN extracting a resource from cabinet
         Assert(pFDINotify->psz1);
@@ -473,25 +473,25 @@ static __callback INT_PTR DIAMONDAPI RexCallback(FDINOTIFICATIONTYPE iNotificati
             // get the created date for the resource in the cabinet
             if (!::DosDateTimeToFileTime(pFDINotify->date, pFDINotify->time, &ft))
             {
-                ExitWithLastError1(hr, "failed to get time for resource: %S", wz);
+                ExitWithLastError1(hr, "failed to get time for resource: %ls", wz);
             }
 
             WCHAR wzPath[MAX_PATH];
 
             hr = ::StringCchCopyW(wzPath, countof(wzPath), prcs->pwzExtractDir);
-            ExitOnFailure2(hr, "failed to copy extract directory: %S for file: %S", prcs->pwzExtractDir, wz);
+            ExitOnFailure2(hr, "failed to copy extract directory: %ls for file: %ls", prcs->pwzExtractDir, wz);
 
             if (L'*' == *prcs->pwzExtract)
             {
                 hr = ::StringCchCatW(wzPath, countof(wzPath), wz);
-                ExitOnFailure2(hr, "failed to concat onto path: %S file: %S", wzPath, wz);
+                ExitOnFailure2(hr, "failed to concat onto path: %ls file: %ls", wzPath, wz);
             }
             else
             {
                 Assert(*prcs->pwzExtractName);
 
                 hr = ::StringCchCatW(wzPath, countof(wzPath), prcs->pwzExtractName);
-                ExitOnFailure2(hr, "failed to concat onto path: %S file: %S", wzPath, prcs->pwzExtractName);
+                ExitOnFailure2(hr, "failed to concat onto path: %ls file: %ls", wzPath, prcs->pwzExtractName);
             }
 
             // Quickly chop off the file name part of the path to ensure the path exists
@@ -502,7 +502,7 @@ static __callback INT_PTR DIAMONDAPI RexCallback(FDINOTIFICATIONTYPE iNotificati
             *wzFile = L'\0';
 
             hr = DirEnsureExists(wzPath, NULL);
-            ExitOnFailure1(hr, "failed to ensure directory: %S", wzPath);
+            ExitOnFailure1(hr, "failed to ensure directory: %ls", wzPath);
 
             hr = S_OK;
 
@@ -528,7 +528,7 @@ static __callback INT_PTR DIAMONDAPI RexCallback(FDINOTIFICATIONTYPE iNotificati
             hFile = ::CreateFileW(wzPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
             if (INVALID_HANDLE_VALUE == hFile)
             {
-                ExitWithLastError1(hr, "failed to open file: %S", wzPath);
+                ExitWithLastError1(hr, "failed to open file: %ls", wzPath);
             }
 
             vrgffFileTable[i].fUsed = TRUE;

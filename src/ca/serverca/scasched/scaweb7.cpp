@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scaweb7.h" company="Microsoft">
+// <copyright file="scaweb7.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -236,7 +236,7 @@ HRESULT ScaWebsRead7(
                     psw->swaExtraAddresses[psw->cExtraAddresses].fSecure = FALSE;
                 }
 
-                psw->cExtraAddresses++;
+                ++psw->cExtraAddresses;
             }
         }
 
@@ -854,7 +854,7 @@ static HRESULT ScaWebWrite7(
     hr = ScaWriteConfigString(wzBinding) ;            //binding info
     ExitOnFailure(hr, "Failed to create web bindings");
 
-    for (ui = 0;(ui < MAX_ADDRESSES_PER_WEB) && (ui < psw->cExtraAddresses); ui++)
+    for (ui = 0; (ui < MAX_ADDRESSES_PER_WEB) && (ui < psw->cExtraAddresses); ++ui)
     {
         // set the IP address appropriately
         if (0 == wcscmp(psw->swaExtraAddresses[ui].wzIP, L"*"))

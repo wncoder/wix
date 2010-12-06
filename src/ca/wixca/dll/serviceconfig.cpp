@@ -111,7 +111,7 @@ extern "C" UINT __stdcall SchedServiceConfig(
         ExitOnFailure(hr, "Failed to get component name");
 
         hr = ::MsiGetComponentStateW(hInstall, pwzData, &isInstalled, &isAction);
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(hr), "Failed to get install state for Component: %S", pwzData);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(hr), "Failed to get install state for Component: %ls", pwzData);
 
         if (WcaIsInstalling(isInstalled, isAction))
         {
@@ -142,7 +142,7 @@ extern "C" UINT __stdcall SchedServiceConfig(
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
             hr = WcaGetRecordInteger(hRec, QSC_RESETPERIODINDAYS, &iData);
-            if (hr == S_FALSE) // deal w/ possible null value
+            if (S_FALSE == hr) // deal w/ possible null value
             {
                 iData = 0;
             }
@@ -151,7 +151,7 @@ extern "C" UINT __stdcall SchedServiceConfig(
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
             hr = WcaGetRecordInteger(hRec, QSC_RESTARTSERVICEDELAYINSECONDS, &iData);
-            if (hr == S_FALSE) // deal w/ possible null value
+            if (S_FALSE == hr) // deal w/ possible null value
             {
                 iData = 0;
             }
@@ -169,7 +169,7 @@ extern "C" UINT __stdcall SchedServiceConfig(
             hr = WcaWriteStringToCaData(pwzData, &pwzCustomActionData);
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
-            cServices++;
+            ++cServices;
         }
     }
 
@@ -247,7 +247,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
 
     // Open the Services Control Manager up front.
     hSCM = ::OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
-    if (hSCM == NULL)
+    if (NULL == hSCM)
     {
         er = ::GetLastError();
         hr = HRESULT_FROM_WIN32(er);
@@ -257,7 +257,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
         ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, er, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 #pragma prefast(pop)
 
-        ExitOnFailure1(hr, "Failed to get handle to SCM. Error: %S", (LPWSTR)lpMsgBuf);
+        ExitOnFailure1(hr, "Failed to get handle to SCM. Error: %ls", (LPWSTR)lpMsgBuf);
     }
 
     // First, get the script key out of the CustomActionData and
@@ -265,7 +265,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
     hr = WcaGetProperty( L"CustomActionData", &pwzCustomActionData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzCustomActionData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzCustomActionData);
 
     pwz = pwzCustomActionData;
 
@@ -303,14 +303,14 @@ extern "C" UINT __stdcall ExecServiceConfig(
         hr = WcaReadStringFromCaData(&pwz, &pwzRebootMessage);
         ExitOnFailure(hr, "failed to process CustomActionData");
 
-        WcaLog(LOGMSG_VERBOSE, "Configuring Service: %S", pwzServiceName);
+        WcaLog(LOGMSG_VERBOSE, "Configuring Service: %ls", pwzServiceName);
 
         // Open the handle with all the permissions we might need:
         //  SERVICE_QUERY_CONFIG is needed for QueryServiceConfig2().
         //  SERVICE_CHANGE_CONFIG is needed for ChangeServiceConfig2().
         //  SERVICE_START is required in order to handle SC_ACTION_RESTART action.
         hr = GetService(hSCM, pwzServiceName, SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | SERVICE_START, &hService);
-        ExitOnFailure1(hr, "Failed to get service: %S", pwzServiceName);
+        ExitOnFailure1(hr, "Failed to get service: %ls", pwzServiceName);
 
         // If we are configuring a service that existed on the machine, we need to
         // read the existing service configuration and write it out to the rollback
@@ -318,7 +318,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
         if (!fNewService)
         {
             // First, read the existing service config.
-            if(!::QueryServiceConfig2W(hService, SERVICE_CONFIG_FAILURE_ACTIONS, NULL, 0, &cbExistingServiceConfig) && ERROR_INSUFFICIENT_BUFFER != ::GetLastError())
+            if (!::QueryServiceConfig2W(hService, SERVICE_CONFIG_FAILURE_ACTIONS, NULL, 0, &cbExistingServiceConfig) && ERROR_INSUFFICIENT_BUFFER != ::GetLastError())
             {
                 ExitWithLastError(hr, "Failed to get current service config info.");
             }
@@ -336,7 +336,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
             ExitOnFailure(hr, "Failed to add service name to Rollback Log");
 
             // If this service struct is empty, fill in default values
-            if(psfa->cActions < 3)
+            if (3 > psfa->cActions)
             {
                 hr = WcaCaScriptWriteString(hRollbackScript, c_wzActionTypeNone);
                 ExitOnFailure(hr, "failed to add data to Rollback CustomActionData");
@@ -372,7 +372,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
             // Handle the null cases.
-            if(!psfa->lpCommand)
+            if (!psfa->lpCommand)
             {
                 psfa->lpCommand = L"";
             }
@@ -380,7 +380,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
             ExitOnFailure(hr, "failed to add data to Rollback CustomActionData");
 
             // Handle the null cases.
-            if(!psfa->lpRebootMsg)
+            if (!psfa->lpRebootMsg)
             {
                 psfa->lpRebootMsg = L"";
             }
@@ -395,7 +395,7 @@ extern "C" UINT __stdcall ExecServiceConfig(
 
         hr = ConfigureService(hSCM, hService, pwzServiceName, dwRestartServiceDelayInSeconds, pwzFirstFailureActionType,
                               pwzSecondFailureActionType, pwzThirdFailureActionType, dwResetPeriodInDays, pwzRebootMessage, pwzProgramCommandLine);
-        ExitOnFailure1(hr, "Failed to configure service: %S", pwzServiceName);
+        ExitOnFailure1(hr, "Failed to configure service: %ls", pwzServiceName);
 
         hr = WcaProgressMessage(COST_SERVICECONFIG, FALSE);
         ExitOnFailure(hr, "failed to send progress message");
@@ -425,7 +425,7 @@ LExit:
         ::CloseServiceHandle(hSCM);
     }
 
-    ReleaseNullMem(psfa);
+    ReleaseMem(psfa);
 
     ReleaseStr(pwzRebootMessage);
     ReleaseStr(pwzProgramCommandLine);
@@ -480,7 +480,7 @@ extern "C" UINT __stdcall RollbackServiceConfig(
 
     // Open the Services Control Manager up front.
     hSCM = ::OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
-    if (hSCM == NULL)
+    if (NULL == hSCM)
     {
         er = ::GetLastError();
         hr = HRESULT_FROM_WIN32(er);
@@ -490,7 +490,7 @@ extern "C" UINT __stdcall RollbackServiceConfig(
         ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, er, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 #pragma prefast(pop)
 
-        ExitOnFailure1(hr, "Failed to get handle to SCM. Error: %S", (LPWSTR)lpMsgBuf);
+        ExitOnFailure1(hr, "Failed to get handle to SCM. Error: %ls", (LPWSTR)lpMsgBuf);
 
         // Make sure we still abort, in case hSCM was NULL but no error was returned from GetLastError
         ExitOnNull(hSCM, hr, E_POINTER, "Getting handle to SCM reported success, but no handle was returned.");
@@ -503,7 +503,7 @@ extern "C" UINT __stdcall RollbackServiceConfig(
     hr = WcaGetProperty( L"CustomActionData", &pwzCustomActionData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
-    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %S", pwzCustomActionData);
+    WcaLog(LOGMSG_TRACEONLY, "CustomActionData: %ls", pwzCustomActionData);
 
     pwz = pwzCustomActionData;
 
@@ -543,17 +543,17 @@ extern "C" UINT __stdcall RollbackServiceConfig(
         hr = WcaReadStringFromCaData(&pwz, &pwzRebootMessage);
         ExitOnFailure(hr, "failed to process CustomActionData");
 
-        WcaLog(LOGMSG_VERBOSE, "Reconfiguring Service: %S", pwzServiceName);
+        WcaLog(LOGMSG_VERBOSE, "Reconfiguring Service: %ls", pwzServiceName);
 
         // Open the handle with all the permissions we might need.
         //  SERVICE_CHANGE_CONFIG is needed for ChangeServiceConfig2().
         //  SERVICE_START is required in order to handle SC_ACTION_RESTART action.
         hr = GetService(hSCM, pwzServiceName, SERVICE_CHANGE_CONFIG | SERVICE_START, &hService);
-        ExitOnFailure1(hr, "Failed to get service: %S", pwzServiceName);
+        ExitOnFailure1(hr, "Failed to get service: %ls", pwzServiceName);
 
         hr = ConfigureService(hSCM, hService, pwzServiceName, dwRestartServiceDelayInSeconds, pwzFirstFailureActionType,
                               pwzSecondFailureActionType, pwzThirdFailureActionType, dwResetPeriodInDays, pwzRebootMessage, pwzProgramCommandLine);
-        ExitOnFailure1(hr, "Failed to configure service: %S", pwzServiceName);
+        ExitOnFailure1(hr, "Failed to configure service: %ls", pwzServiceName);
 
         hr = WcaProgressMessage(COST_SERVICECONFIG, FALSE);
         ExitOnFailure(hr, "failed to send progress message");
@@ -639,7 +639,7 @@ static HRESULT GetSCActionTypeString(
 {
     HRESULT hr = S_OK;
 
-    switch(type)
+    switch (type)
     {
     case SC_ACTION_REBOOT:
         hr = StringCchCopyW(wzActionTypeString, cchActionTypeString, c_wzActionTypeReboot);
@@ -682,9 +682,9 @@ static HRESULT GetService(
     {
         er = ::GetLastError();
         hr = HRESULT_FROM_WIN32(er);
-        if (er == ERROR_SERVICE_DOES_NOT_EXIST)
+        if (ERROR_SERVICE_DOES_NOT_EXIST == er)
         {
-            ExitOnFailure1(hr, "Service '%S' does not exist on this system.", wzService);
+            ExitOnFailure1(hr, "Service '%ls' does not exist on this system.", wzService);
         }
         else
         {
@@ -693,7 +693,7 @@ static HRESULT GetService(
             ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, er, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 #pragma prefast(pop)
 
-            ExitOnFailure2(hr, "Failed to get handle to the service '%S'. Error: %S", wzService, (LPWSTR)lpMsgBuf);
+            ExitOnFailure2(hr, "Failed to get handle to the service '%ls'. Error: %ls", wzService, (LPWSTR)lpMsgBuf);
         }
     }
 
@@ -806,11 +806,11 @@ static HRESULT ConfigureService(
 #pragma prefast(pop)
 
         // Check if this is a service that can't be modified.
-        if(ERROR_CANNOT_DETECT_PROCESS_ABORT == er)
+        if (ERROR_CANNOT_DETECT_PROCESS_ABORT == er)
         {
-            WcaLog(LOGMSG_STANDARD, "WARNING: Service \"%S\" is not configurable on this server and will not be set.", wzServiceName);
+            WcaLog(LOGMSG_STANDARD, "WARNING: Service \"%ls\" is not configurable on this server and will not be set.", wzServiceName);
         }
-        ExitOnFailure1(hr, "Cannot change service configuration. Error: %S", (LPWSTR)lpMsgBuf);
+        ExitOnFailure1(hr, "Cannot change service configuration. Error: %ls", (LPWSTR)lpMsgBuf);
 
         if (lpMsgBuf)
         {
@@ -831,11 +831,7 @@ LExit:
     }
 
     ReleaseMem(pPrevPriv);
-
-    if (hToken)
-    {
-        ::CloseHandle(hToken);
-    }
+    ReleaseHandle(hToken);
 
     return hr;
 }

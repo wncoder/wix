@@ -136,7 +136,7 @@ static HRESULT LogOutput(
     while (0 != dwBytes)
     {
         ::ZeroMemory(pBuffer, OUTPUT_BUFFER);
-        if(!::ReadFile(hRead, pBuffer, OUTPUT_BUFFER - 1, &dwBytes, NULL) && GetLastError() != ERROR_BROKEN_PIPE)
+        if (!::ReadFile(hRead, pBuffer, OUTPUT_BUFFER - 1, &dwBytes, NULL) && GetLastError() != ERROR_BROKEN_PIPE)
         {
             ExitOnLastError(hr, "Failed to read from handle.");
         }
@@ -180,10 +180,10 @@ static HRESULT LogOutput(
         {
             // Find beginning of next line
             pEnd[0] = 0;
-            pEnd++;
+            ++pEnd;
             if ((pEnd[0] == L'\r') || (pEnd[0] == L'\n'))
             {
-                pEnd++;
+                ++pEnd;
             }
 
             // Log output
@@ -265,7 +265,7 @@ HRESULT WIXAPI QuietExec(
     oStartInfo.hStdOutput = hOutWrite;
     oStartInfo.hStdError = hErrWrite;
 
-    WcaLog(LOGMSG_VERBOSE, "%S", wzCommand);
+    WcaLog(LOGMSG_VERBOSE, "%ls", wzCommand);
 
 #pragma prefast(suppress:25028)
     if (::CreateProcessW(NULL,

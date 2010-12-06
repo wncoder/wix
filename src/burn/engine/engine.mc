@@ -60,6 +60,13 @@ Language=English
 Bundle global condition check didn't succeed - aborting without loading application.
 .
 
+MessageId=54
+Severity=Error
+SymbolicName=MSG_PAYLOAD_FILE_NOT_PRESENT
+Language=English
+Failed to resolve source for file: %2!ls!, error: %1!ls!.
+.
+
 MessageId=100
 Severity=Success
 SymbolicName=MSG_DETECT_BEGIN

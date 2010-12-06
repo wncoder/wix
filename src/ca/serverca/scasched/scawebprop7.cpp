@@ -79,7 +79,7 @@ HRESULT ScaWriteWebDirProperties7(
         hr = ScaWriteConfigString(pswp->scau.wzPassword);
         ExitOnFailure(hr, "Failed to write anonymous user password for Web");
 
-        if(pswp->fIIsControlledPassword)
+        if (pswp->fIIsControlledPassword)
         {
             //Not Supported by IIS7 : pswp->fIIsControlledPassword
             WcaLog(LOGMSG_VERBOSE, "Not supported by IIS7: WebDirProperties.IIsControlledPassword, ignoring");

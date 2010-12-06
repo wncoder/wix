@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="scawebprop.h" company="Microsoft">
+// <copyright file="scawebprop.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -161,7 +161,7 @@ HRESULT ScaGetWebDirProperties(
 
         hr = WcaGetRecordString(hRec, wpqAuthenticationProviders, &pwzData);
         ExitOnFailure(hr, "Failed to get IIsWebDirProperties.AuthenticationProviders");
-        if(pwzData && *pwzData)
+        if (pwzData && *pwzData)
         {
             hr = ::StringCchCopyW(pswp->wzAuthenticationProviders, countof(pswp->wzAuthenticationProviders), pwzData);
             ExitOnFailure(hr, "Failed to copy authentication providers string to webdirproperties object");

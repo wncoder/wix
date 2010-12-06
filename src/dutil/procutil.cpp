@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Process helper funtions.
+//    Process helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

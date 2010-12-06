@@ -1086,7 +1086,7 @@ static HRESULT EnsureSchema(
     ExitOnFailure(hr, "Failed to start transaction for ensuring schema");
     fInTransaction = TRUE;
 
-    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; dwTable++)
+    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
     {
         // Don't free this pointer - it's just a shortcut to the current table's name within the struct
         LPCWSTR pwzTableName = pdsSchema->rgTables[dwTable].sczName;

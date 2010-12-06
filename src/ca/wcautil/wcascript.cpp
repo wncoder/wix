@@ -72,7 +72,7 @@ extern "C" HRESULT WIXAPI WcaCaScriptCreate(
     hScriptFile = ::CreateFileW(pwzScriptPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, fAppend ? OPEN_ALWAYS : CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if (INVALID_HANDLE_VALUE == hScriptFile)
     {
-        ExitWithLastError1(hr, "Failed to open CaScript: %S", pwzScriptPath);
+        ExitWithLastError1(hr, "Failed to open CaScript: %ls", pwzScriptPath);
     }
 
     if (fAppend && INVALID_SET_FILE_POINTER == ::SetFilePointer(hScriptFile, 0, NULL, FILE_END))
@@ -122,7 +122,7 @@ extern "C" HRESULT WIXAPI WcaCaScriptOpen(
     hScriptFile = ::CreateFileW(pwzScriptPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     if (INVALID_HANDLE_VALUE == hScriptFile)
     {
-        ExitWithLastError1(hr, "Failed to open CaScript: %S", pwzScriptPath);
+        ExitWithLastError1(hr, "Failed to open CaScript: %ls", pwzScriptPath);
     }
 
     *phScript = static_cast<WCA_CASCRIPT_HANDLE>(MemAlloc(sizeof(WCA_CASCRIPT_HANDLE), TRUE));
@@ -379,7 +379,7 @@ extern "C" void WIXAPI WcaCaScriptCleanup(
     hff = ::FindFirstFileW(pwzWildCardPath, &fd);
     if (INVALID_HANDLE_VALUE == hff)
     {
-        ExitWithLastError1(hr, "Failed to find files with pattern: %S", pwzWildCardPath);
+        ExitWithLastError1(hr, "Failed to find files with pattern: %ls", pwzWildCardPath);
     }
 
     do
@@ -390,12 +390,12 @@ extern "C" void WIXAPI WcaCaScriptCleanup(
             if (!::DeleteFileW(pwzDeletePath))
             {
                 DWORD er = ::GetLastError();
-                WcaLog(LOGMSG_VERBOSE, "Failed to clean up CAScript file: %S, er: %d", fd.cFileName, er);
+                WcaLog(LOGMSG_VERBOSE, "Failed to clean up CAScript file: %ls, er: %d", fd.cFileName, er);
             }
         }
         else
         {
-            WcaLog(LOGMSG_VERBOSE, "Failed to allocate path to clean up CAScript file: %S, hr: 0x%x", fd.cFileName, hr);
+            WcaLog(LOGMSG_VERBOSE, "Failed to allocate path to clean up CAScript file: %ls, hr: 0x%x", fd.cFileName, hr);
         }
     } while(::FindNextFileW(hff, &fd));
 

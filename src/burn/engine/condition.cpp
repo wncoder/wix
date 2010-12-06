@@ -501,7 +501,7 @@ static HRESULT NextSymbol(
         {
             break; // no blank, done
         }
-        pContext->wzRead++;
+        ++pContext->wzRead;
     }
     iPosition = (DWORD)(pContext->wzRead - pContext->wzCondition);
 
@@ -571,7 +571,7 @@ static HRESULT NextSymbol(
             {
                 // error
                 pContext->fError = TRUE;
-                Trace2(REPORT_STANDARD, "Failed to parse condition \"%S\". Unterminated literal at position %d.", pContext->wzCondition, iPosition);
+                Trace2(REPORT_STANDARD, "Failed to parse condition \"%ls\". Unterminated literal at position %d.", pContext->wzCondition, iPosition);
                 ExitFunction1(hr = E_INVALIDDATA);
             }
         } while (L'"' != pContext->wzRead[n]);
@@ -593,7 +593,7 @@ static HRESULT NextSymbol(
                     // error, identifier cannot start with a digit
                     pContext->fError = TRUE;
                     hr = E_INVALIDDATA;
-                    ExitOnRootFailure2(hr, "Failed to parse condition \"%S\". Identifier cannot start at a digit, at position %d.", pContext->wzCondition, iPosition);
+                    ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Identifier cannot start at a digit, at position %d.", pContext->wzCondition, iPosition);
                 }
             } while (C1_DIGIT & charType);
 
@@ -606,7 +606,7 @@ static HRESULT NextSymbol(
             {
                 pContext->fError = TRUE;
                 hr = E_INVALIDDATA;
-                ExitOnRootFailure2(hr, "Failed to parse condition \"%S\". Constant too big, at position %d.", pContext->wzCondition, iPosition);
+                ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Constant too big, at position %d.", pContext->wzCondition, iPosition);
             }
 
             hr = BVariantSetNumeric(&pContext->NextSymbol.Value, ll);
@@ -630,7 +630,7 @@ static HRESULT NextSymbol(
                             // error, too many parts in version
                             pContext->fError = TRUE;
                             hr = E_INVALIDDATA;
-                            ExitOnRootFailure2(hr, "Failed to parse condition \"%S\". Version can have a maximum of 4 parts, at position %d.", pContext->wzCondition, iPosition);
+                            ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Version can have a maximum of 4 parts, at position %d.", pContext->wzCondition, iPosition);
                         }
                     }
                     else
@@ -648,7 +648,7 @@ static HRESULT NextSymbol(
                 {
                     pContext->fError = TRUE;
                     hr = E_INVALIDDATA;
-                    ExitOnRootFailure2(hr, "Failed to parse condition \"%S\". Invalid version format, at position %d.", pContext->wzCondition, iPosition);
+                    ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Invalid version format, at position %d.", pContext->wzCondition, iPosition);
                 }
 
                 pContext->NextSymbol.Value.Type = BURN_VARIANT_TYPE_VERSION;
@@ -691,7 +691,7 @@ static HRESULT NextSymbol(
             // error, unexpected character
             pContext->fError = TRUE;
             hr = E_INVALIDDATA;
-            ExitOnRootFailure2(hr, "Failed to parse condition \"%S\". Unexpected character at position %d.", pContext->wzCondition, iPosition);
+            ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Unexpected character at position %d.", pContext->wzCondition, iPosition);
         }
     }
     pContext->NextSymbol.iPosition = iPosition;

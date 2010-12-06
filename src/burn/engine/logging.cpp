@@ -38,12 +38,16 @@ extern "C" HRESULT LoggingOpen(
 {
     HRESULT hr = S_OK;
     LPWSTR sczExePath = NULL;
+    LPWSTR sczExeDir = NULL;
 
     PathForCurrentProcess(&sczExePath, NULL); // Ignore failure.
 
+    hr = PathGetDirectory(sczExePath, &sczExeDir);
+    ExitOnFailure(hr, "Failed to get directory bundle executable is in");
+
     if (pLog->sczPath && *pLog->sczPath)
     {
-        hr = LogOpen(sczExePath, pLog->sczPath, NULL, NULL, pLog->fAppend, FALSE, &pLog->sczPath);
+        hr = LogOpen(sczExeDir, pLog->sczPath, NULL, NULL, pLog->fAppend, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
@@ -84,6 +88,8 @@ extern "C" HRESULT LoggingOpen(
 
 LExit:
     ReleaseStr(sczExePath);
+    ReleaseStr(sczExeDir);
+
     return hr;
 }
 

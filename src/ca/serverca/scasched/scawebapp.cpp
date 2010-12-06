@@ -50,13 +50,13 @@ HRESULT ScaGetWebApplication(MSIHANDLE hViewApplications,
         if (HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) == hr)
         {
             // The application name is sometimes truncated to IIS's supported length, so ignore insufficient buffer errors here
-            WcaLog(LOGMSG_VERBOSE, "Application name \"%S\" truncated to fit IIS's supported %d-character length", pwzData, MAX_APP_NAME);
+            WcaLog(LOGMSG_VERBOSE, "Application name \"%ls\" truncated to fit IIS's supported %d-character length", pwzData, MAX_APP_NAME);
             hr = S_OK;
         }
         ExitOnFailure(hr, "Failed to copy name string to webapp object");
 
         hr = WcaGetRecordInteger(hRec, wappqIsolation, &pswapp->iIsolation);
-        ExitOnFailure1(hr, "Failed to get App isolation: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to get App isolation: '%ls'", pswapp->wzName);
 
         hr = WcaGetRecordInteger(hRec, wappqAllowSession, &pswapp->fAllowSessionState);
 
@@ -67,13 +67,13 @@ HRESULT ScaGetWebApplication(MSIHANDLE hViewApplications,
         hr = WcaGetRecordInteger(hRec, wappqParentPaths, &pswapp->fParentPaths);
 
         hr = WcaGetRecordString(hRec, wappqDefaultScript, &pwzData);
-        ExitOnFailure1(hr, "Failed to get default scripting language for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to get default scripting language for App: '%ls'", pswapp->wzName);
         hr = ::StringCchCopyW(pswapp->wzDefaultScript, countof(pswapp->wzDefaultScript), pwzData);
         ExitOnFailure(hr, "Failed to copy default script string to webapp object");
 
         // asp script timeout
         hr = WcaGetRecordInteger(hRec, wappqScriptTimeout, &pswapp->iScriptTimeout);
-        ExitOnFailure1(hr, "Failed to get scripting timeout for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to get scripting timeout for App: '%ls'", pswapp->wzName);
 
         // asp server-side script debugging
         hr = WcaGetRecordInteger(hRec, wappqServerDebugging, &pswapp->fServerDebugging);
@@ -82,19 +82,19 @@ HRESULT ScaGetWebApplication(MSIHANDLE hViewApplications,
         hr = WcaGetRecordInteger(hRec, wappqClientDebugging, &pswapp->fClientDebugging);
 
         hr = WcaGetRecordString(hRec, wappqAppPool, &pwzData);
-        ExitOnFailure1(hr, "Failed to get AppPool for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to get AppPool for App: '%ls'", pswapp->wzName);
         hr = ::StringCchCopyW(pswapp->wzAppPool, countof(pswapp->wzAppPool), pwzData);
-        ExitOnFailure2(hr, "failed to copy AppPool: '%S' for App: '%S'", pwzData, pswapp->wzName);
+        ExitOnFailure2(hr, "failed to copy AppPool: '%ls' for App: '%ls'", pwzData, pswapp->wzName);
 
         // app extensions
          hr = ScaWebAppExtensionsRead(pwzApplication, hWebAppExtQuery, &pswapp->pswappextList);
-        ExitOnFailure1(hr, "Failed to read AppExtensions for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to read AppExtensions for App: '%ls'", pswapp->wzName);
 
         hr = S_OK;
     }
     else if (E_NOMOREITEMS == hr)
     {
-        WcaLog(LOGMSG_STANDARD, "Error: Cannot locate IIsWebApplication.Application='%S'", pwzApplication);
+        WcaLog(LOGMSG_STANDARD, "Error: Cannot locate IIsWebApplication.Application='%ls'", pwzApplication);
         hr = E_FAIL;
     }
     else
@@ -127,82 +127,82 @@ HRESULT ScaWriteWebApplication(IMSAdminBase* piMetabase, LPCWSTR wzRootOfWeb,
     if (2 == pswapp->iIsolation)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_APP_ISOLATED, METADATA_INHERIT, IIS_MD_UT_WAM, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->iIsolation));
-        ExitOnFailure1(hr, "Failed to write isolation value for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write isolation value for App: '%ls'", pswapp->wzName);
     }
 
     // application name
     hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_APP_FRIENDLY_NAME, METADATA_INHERIT, IIS_MD_UT_WAM, STRING_METADATA, pswapp->wzName);
-    ExitOnFailure1(hr, "Failed to write Name of App: '%S'", pswapp->wzName);
+    ExitOnFailure1(hr, "Failed to write Name of App: '%ls'", pswapp->wzName);
 
     // allow session state
     if (MSI_NULL_INTEGER != pswapp->fAllowSessionState)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_ALLOWSESSIONSTATE, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->fAllowSessionState));
-        ExitOnFailure1(hr, "Failed to write allow session information for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write allow session information for App: '%ls'", pswapp->wzName);
     }
 
     // session timeout
     if (MSI_NULL_INTEGER != pswapp->iSessionTimeout)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_SESSIONTIMEOUT, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->iSessionTimeout));
-        ExitOnFailure1(hr, "Failed to write session timeout for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write session timeout for App: '%ls'", pswapp->wzName);
     }
 
     // asp buffering
     if (MSI_NULL_INTEGER != pswapp->fBuffer)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_BUFFERINGON, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->fBuffer));
-        ExitOnFailure1(hr, "Failed to write buffering flag for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write buffering flag for App: '%ls'", pswapp->wzName);
     }
 
     // asp parent paths
     if (MSI_NULL_INTEGER != pswapp->fParentPaths)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_ENABLEPARENTPATHS, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->fParentPaths));
-        ExitOnFailure1(hr, "Failed to write parent paths flag for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write parent paths flag for App: '%ls'", pswapp->wzName);
     }
 
     // default scripting language
     if (*pswapp->wzDefaultScript)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_SCRIPTLANGUAGE, METADATA_INHERIT, ASP_MD_UT_APP, STRING_METADATA, pswapp->wzDefaultScript);
-        ExitOnFailure1(hr, "Failed to write default scripting language for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write default scripting language for App: '%ls'", pswapp->wzName);
     }
 
     // asp script timeout
     if (MSI_NULL_INTEGER != pswapp->iScriptTimeout)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_SCRIPTTIMEOUT, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->iScriptTimeout));
-        ExitOnFailure1(hr, "Failed to write script timeout for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write script timeout for App: '%ls'", pswapp->wzName);
     }
 
     // asp server-side script debugging
     if (MSI_NULL_INTEGER != pswapp->fServerDebugging)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_ENABLESERVERDEBUG, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->fServerDebugging));
-        ExitOnFailure1(hr, "Failed to write ASP server-side script debugging flag for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write ASP server-side script debugging flag for App: '%ls'", pswapp->wzName);
     }
 
     // asp server-side script debugging
     if (MSI_NULL_INTEGER != pswapp->fClientDebugging)
     {
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_ASP_ENABLECLIENTDEBUG, METADATA_INHERIT, ASP_MD_UT_APP, DWORD_METADATA, (LPVOID)((DWORD_PTR)pswapp->fClientDebugging));
-        ExitOnFailure1(hr, "Failed to write ASP client-side script debugging flag for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write ASP client-side script debugging flag for App: '%ls'", pswapp->wzName);
     }
 
     // AppPool
     if (*pswapp->wzAppPool && NULL != psapList)
     {
         hr = ScaFindAppPool(piMetabase, pswapp->wzAppPool, wzAppPoolName, countof(wzAppPoolName), psapList);
-        ExitOnFailure1(hr, "failed to find app pool: %S", pswapp->wzAppPool);
+        ExitOnFailure1(hr, "failed to find app pool: %ls", pswapp->wzAppPool);
         hr = ScaWriteMetabaseValue(piMetabase, wzRootOfWeb, NULL, MD_APP_APPPOOL_ID, METADATA_INHERIT, IIS_MD_UT_SERVER, STRING_METADATA, wzAppPoolName);
-        ExitOnFailure1(hr, "Failed to write default AppPool for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write default AppPool for App: '%ls'", pswapp->wzName);
     }
 
     if (pswapp->pswappextList)
     {
         hr = ScaWebAppExtensionsWrite(piMetabase, wzRootOfWeb, pswapp->pswappextList);
-        ExitOnFailure1(hr, "Failed to write AppExtensions for App: '%S'", pswapp->wzName);
+        ExitOnFailure1(hr, "Failed to write AppExtensions for App: '%ls'", pswapp->wzName);
     }
 
 LExit:

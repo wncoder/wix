@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-//    Performance helper funtions.
+//    Performance helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
