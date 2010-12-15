@@ -67,7 +67,7 @@
     <String Id="CustomizeDlgItemDescription" Overridable="yes">CustomizeDlgItemDescription-CustomizeDlgItemDescription</String>
     <String Id="CustomizeDlgItemSize" Overridable="yes">CustomizeDlgItemSize-CustomizeDlgItemSize</String>
     <String Id="CustomizeDlgLocation" Overridable="yes">CustomizeDlgLocation-CustomizeDlgLocation</String>
-    <String Id="CustomizeDlgLocationLabel" Overridable="yes">מיקום:‬</String>
+    <String Id="CustomizeDlgLocationLabel" Overridable="yes">מיקום:</String>
 
     <String Id="DiskCostDlg_Title" Overridable="yes">תוכנית ההתקנה של [ProductName]</String>
     <String Id="DiskCostDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
@@ -400,7 +400,7 @@
     <String Id="Error4" Overridable="yes">‏‏מידע [1]. </String>
     <String Id="Error5" Overridable="yes">‏‏המתקין נתקל בשגיאה בלתי צפויה בהתקנת חבילה זו. ייתכן ששגיאה זו מצביעה על בעיה בחבילה. קוד השגיאה הוא [1]. {{הארגומנטים הם: [2], [3], [4]}}</String>
     <String Id="Error7" Overridable="yes">{{הדיסק מלא: }}</String>
-    <String Id="Error8" Overridable="yes">פעולה [שעה]: [1]. [2]‏</String>
+    <String Id="Error8" Overridable="yes">פעולה [Time]: [1]. [2]‏</String>
     <String Id="Error9" Overridable="yes">[ProductName]</String>
     <String Id="Error10" Overridable="yes">{[2]}{, [3]}{, [4]}</String>
     <String Id="Error11" Overridable="yes">סוג הודעה: [1], ארגומנט: [2]‏</String>

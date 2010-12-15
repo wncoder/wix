@@ -175,7 +175,7 @@
         <UIRef Id="SecureObjectsErrors"/>
 
         <CustomAction Id="SchedSecureObjects_x64" BinaryKey="WixCA_x64" DllEntry="SchedSecureObjects" Execute="immediate" Return="check" SuppressModularization="yes" />
-        <CustomAction Id="SchedSecureObjectsRollback_x64" BinaryKey="WixCA" DllEntry="SchedSecureObjectsRollback" Execute="immediate" Return="check" SuppressModularization="yes" />
+        <CustomAction Id="SchedSecureObjectsRollback_x64" BinaryKey="WixCA_x64" DllEntry="SchedSecureObjectsRollback" Execute="immediate" Return="check" SuppressModularization="yes" />
         <CustomAction Id="ExecSecureObjects_64" BinaryKey="WixCA_x64" DllEntry="ExecSecureObjects" Execute="deferred" Impersonate="no" Return="check" SuppressModularization="yes" />
         <CustomAction Id="ExecSecureObjectsRollback_64" BinaryKey="WixCA_x64" DllEntry="ExecSecureObjectsRollback" Execute="rollback" Impersonate="no" Return="check" SuppressModularization="yes" />
 
@@ -191,7 +191,7 @@
             <UIRef Id="SecureObjectsErrors"/>
 
             <CustomAction Id="SchedSecureObjects_ia64" BinaryKey="WixCA_ia64" DllEntry="SchedSecureObjects" Execute="immediate" Return="check" SuppressModularization="yes" />
-            <CustomAction Id="SchedSecureObjectsRollback_ia64" BinaryKey="WixCA" DllEntry="SchedSecureObjectsRollback" Execute="immediate" Return="check" SuppressModularization="yes" />
+            <CustomAction Id="SchedSecureObjectsRollback_ia64" BinaryKey="WixCA_ia64" DllEntry="SchedSecureObjectsRollback" Execute="immediate" Return="check" SuppressModularization="yes" />
             <CustomAction Id="ExecSecureObjects_64" BinaryKey="WixCA_ia64" DllEntry="ExecSecureObjects" Execute="deferred" Impersonate="no" Return="check" SuppressModularization="yes" />
             <CustomAction Id="ExecSecureObjectsRollback_64" BinaryKey="WixCA_ia64" DllEntry="ExecSecureObjectsRollback" Execute="rollback" Impersonate="no" Return="check" SuppressModularization="yes" />
 

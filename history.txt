@@ -1449,9 +1449,28 @@ RobMen: SFBUG:3123565 - update NAntTask to use correct registry key to find
 
 EricStJ: SFBUG:3123902 - Candle uses wrong object dir when item is in intermed. dir.
 
+EricStJ: SFBUG:3123277 - (undo) SFBUG:3112521 to prevent crash.
+
 RobMen: SFBUG:3124544 - fix project harvesting.
 
 RobMen: SFBUG:3125429 - fix VS2008 build when no VS2005 x64 not present.
 
 WixBuild: Version 3.5.2403.0
+
+RobMen: SFBUG:3132994,3132997,3133002 - fix localization errors.
+
+RobMen: SFBUG:3135074 - fix some documentation links when pages moved.
+
+EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with ERROR_SHARING_VIOLATION 
+         when it is interrupted by another transaction.  Create a new AdminManager
+         and restart from right after the last commit.
+
+EricStJ: WixUI Customize dialog for he-IL does not link.
+
+MiCarls: Fix a bad bug when 64-bit secureobjects custom actions roll back.
+
+MikeHo: Fix bug where clicking back on Ready to Install page doesn't go to the proper
+        page during patching
+
+WixBuild: Version 3.5.2415.0
 
