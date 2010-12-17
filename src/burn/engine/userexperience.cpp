@@ -138,7 +138,17 @@ extern "C" HRESULT UserExperienceUnload(
         pUserExperience->hUXModule = NULL;
     }
 
-    // remove temporary UX directory
+//LExit:
+    return hr;
+}
+
+extern "C" HRESULT UserExperienceRemove(
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    )
+{
+    HRESULT hr = S_OK;
+
+    // Remove temporary UX directory
     if (pUserExperience->sczTempDirectory)
     {
         hr = DirEnsureDeleteEx(pUserExperience->sczTempDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);

@@ -20,8 +20,25 @@
 
 LPCWSTR BAL_MANIFEST_FILENAME = L"BootstrapperApplicationData.xml";
 const DWORD VARIABLE_GROW_FACTOR = 80;
+static IBootstrapperEngine* vpEngine = NULL;
 
 // prototypes
+
+DAPI_(void) BalInitialize(
+    __in IBootstrapperEngine* pEngine
+    )
+{
+    pEngine->AddRef();
+
+    ReleaseObject(vpEngine);
+    vpEngine = pEngine;
+}
+
+
+DAPI_(void) BalUninitialize()
+{
+    ReleaseNullObject(vpEngine);
+}
 
 
 DAPI_(HRESULT) BalManifestLoad(
@@ -45,7 +62,6 @@ LExit:
 
 
 DAPI_(HRESULT) BalFormatString(
-    __in IBootstrapperEngine* pEngine,
     __in_z LPCWSTR wzFormat,
     __inout LPWSTR* psczOut
     )
@@ -53,13 +69,19 @@ DAPI_(HRESULT) BalFormatString(
     HRESULT hr = S_OK;
     DWORD cch = 0;
 
+    if (!vpEngine)
+    {
+        hr = E_POINTER;
+        ExitOnRootFailure(hr, "BalInitialize() must be called first.");
+    }
+
     if (*psczOut)
     {
         hr = StrMaxLength(*psczOut, reinterpret_cast<DWORD_PTR*>(&cch));
         ExitOnFailure(hr, "Failed to determine length of value.");
     }
 
-    hr = pEngine->FormatString(wzFormat, *psczOut, &cch);
+    hr = vpEngine->FormatString(wzFormat, *psczOut, &cch);
     if (E_MOREDATA == hr)
     {
         ++cch;
@@ -67,7 +89,7 @@ DAPI_(HRESULT) BalFormatString(
         hr = StrAlloc(psczOut, cch);
         ExitOnFailure(hr, "Failed to allocate value.");
 
-        hr = pEngine->FormatString(wzFormat, *psczOut, &cch);
+        hr = vpEngine->FormatString(wzFormat, *psczOut, &cch);
     }
 
 LExit:
@@ -76,20 +98,26 @@ LExit:
 
 
 DAPI_(BOOL) BalStringVariableExists(
-    __in IBootstrapperEngine* pEngine,
     __in_z LPCWSTR wzVariable
     )
 {
     HRESULT hr = S_OK;
     DWORD cch = 0;
 
-    hr = pEngine->GetVariableString(wzVariable, NULL, &cch);
+    if (!vpEngine)
+    {
+        hr = E_POINTER;
+        ExitOnRootFailure(hr, "BalInitialize() must be called first.");
+    }
+
+    hr = vpEngine->GetVariableString(wzVariable, NULL, &cch);
+
+LExit:
     return E_MOREDATA == hr; // string exists only if there are more than zero characters in the variable.
 }
 
 
 DAPI_(HRESULT) BalGetStringVariable(
-    __in IBootstrapperEngine* pEngine,
     __in_z LPCWSTR wzVariable,
     __inout LPWSTR* psczValue
     )
@@ -97,13 +125,19 @@ DAPI_(HRESULT) BalGetStringVariable(
     HRESULT hr = S_OK;
     DWORD cch = 0;
 
+    if (!vpEngine)
+    {
+        hr = E_POINTER;
+        ExitOnRootFailure(hr, "BalInitialize() must be called first.");
+    }
+
     if (*psczValue)
     {
         hr = StrMaxLength(*psczValue, reinterpret_cast<DWORD_PTR*>(&cch));
         ExitOnFailure(hr, "Failed to determine length of value.");
     }
 
-    hr = pEngine->GetVariableString(wzVariable, *psczValue, &cch);
+    hr = vpEngine->GetVariableString(wzVariable, *psczValue, &cch);
     if (E_MOREDATA == hr)
     {
         ++cch;
@@ -111,7 +145,7 @@ DAPI_(HRESULT) BalGetStringVariable(
         hr = StrAlloc(psczValue, cch);
         ExitOnFailure(hr, "Failed to allocate value.");
 
-        hr = pEngine->GetVariableString(wzVariable, *psczValue, &cch);
+        hr = vpEngine->GetVariableString(wzVariable, *psczValue, &cch);
     }
 
 LExit:
@@ -120,7 +154,6 @@ LExit:
 
 
 DAPIV_(HRESULT) BalLog(
-    __in IBootstrapperEngine* pEngine,
     __in BOOTSTRAPPER_LOG_LEVEL level,
     __in_z __format_string LPCSTR szFormat,
     ...
@@ -131,6 +164,12 @@ DAPIV_(HRESULT) BalLog(
     LPSTR sczFormattedAnsi = NULL;
     LPWSTR sczMessage = NULL;
 
+    if (!vpEngine)
+    {
+        hr = E_POINTER;
+        ExitOnRootFailure(hr, "BalInitialize() must be called first.");
+    }
+
     va_start(args, szFormat);
     hr = StrAnsiAllocFormattedArgs(&sczFormattedAnsi, szFormat, args);
     va_end(args);
@@ -139,7 +178,41 @@ DAPIV_(HRESULT) BalLog(
     hr = StrAllocStringAnsi(&sczMessage, sczFormattedAnsi, 0, CP_UTF8);
     ExitOnFailure(hr, "Failed to convert log string to Unicode.");
 
-    hr = pEngine->Log(level, sczMessage);
+    hr = vpEngine->Log(level, sczMessage);
+
+LExit:
+    ReleaseStr(sczMessage);
+    ReleaseStr(sczFormattedAnsi);
+    return hr;
+}
+
+
+DAPIV_(HRESULT) BalLogError(
+    __in HRESULT hrError,
+    __in_z __format_string LPCSTR szFormat,
+    ...
+    )
+{
+    HRESULT hr = S_OK;
+    va_list args;
+    LPSTR sczFormattedAnsi = NULL;
+    LPWSTR sczMessage = NULL;
+
+    if (!vpEngine)
+    {
+        hr = E_POINTER;
+        ExitOnRootFailure(hr, "BalInitialize() must be called first.");
+    }
+
+    va_start(args, szFormat);
+    hr = StrAnsiAllocFormattedArgs(&sczFormattedAnsi, szFormat, args);
+    va_end(args);
+    ExitOnFailure(hr, "Failed to format error log string.");
+
+    hr = StrAllocFormatted(&sczMessage, L"Error 0x%08x: %S", hrError, sczFormattedAnsi);
+    ExitOnFailure(hr, "Failed to prepend error number to error log string.");
+
+    hr = vpEngine->Log(BOOTSTRAPPER_LOG_LEVEL_ERROR, sczMessage);
 
 LExit:
     ReleaseStr(sczMessage);

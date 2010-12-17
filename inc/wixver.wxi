@@ -8,7 +8,7 @@
   <?ifdef WixBuildNum?>
     <?error WixBuildNum variable is already defined?>
   <?endif?>
-  <?define WixBuildNum = "1203" ?>
+  <?define WixBuildNum = "1217" ?>
   <?ifdef WixVersion?>
     <?error WixVersion variable is already defined?>
   <?endif?>

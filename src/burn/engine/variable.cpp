@@ -50,6 +50,7 @@ enum OS_INFO_VARIABLE
     OS_INFO_VARIABLE_NTSuiteSmallBusinessRestricted,
     OS_INFO_VARIABLE_NTSuiteWebServer,
     OS_INFO_VARIABLE_CompatibilityMode,
+    OS_INFO_VARIABLE_TerminalServer,
 };
 
 
@@ -168,6 +169,7 @@ extern "C" HRESULT VariableInitialize(
         {L"SystemLanguageID", InitializeSystemLanguageID, 0},
         {L"TempFolder", InitializeVariableTempFolder, CSIDL_TEMPLATES},
         {L"TemplateFolder", InitializeVariableCsidlFolder, CSIDL_TEMPLATES},
+        {L"TerminalServer", InitializeVariableOsInfo, OS_INFO_VARIABLE_TerminalServer},
         {L"UserLanguageID", InitializeUserLanguageID, 0},
         {L"VersionMsi", InitializeVariableVersionMsi, 0},
         {L"VersionNT", InitializeVariableOsInfo, OS_INFO_VARIABLE_VersionNT},
@@ -1141,6 +1143,10 @@ static HRESULT InitializeVariableOsInfo(
             value.llValue = ::VerifyVersionInfoW(&ovix, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR, dwlConditionMask);
             value.Type = BURN_VARIANT_TYPE_NUMERIC;
         }
+        break;
+    case OS_INFO_VARIABLE_TerminalServer:
+        value.llValue = (VER_SUITE_TERMINAL == (ovix.wSuiteMask & VER_SUITE_TERMINAL)) && (VER_SUITE_SINGLEUSERTS != (ovix.wSuiteMask & VER_SUITE_SINGLEUSERTS)) ? 1 : 0;
+        value.Type = BURN_VARIANT_TYPE_NUMERIC;
         break;
     }
 

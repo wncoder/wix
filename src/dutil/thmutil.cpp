@@ -52,7 +52,11 @@ static HRESULT ParseTheme(
     __in IXMLDOMDocument* pixd,
     __out THEME** ppTheme
     );
-HRESULT ParseImage(
+static HRESULT LocalizeTheme(
+    __in THEME *pTheme,
+    __in LOC_STRINGSET *pLocStringSet
+    );
+static HRESULT ParseImage(
     __in_opt HMODULE hModule,
     __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pElement,
@@ -258,6 +262,7 @@ DAPI_(HRESULT) ThemeLoadFromFile(
 LExit:
     ReleaseStr(sczRelativePath);
     ReleaseObject(pixd);
+
     return hr;
 }
 
@@ -271,23 +276,14 @@ DAPI_(HRESULT) ThemeLoadFromResource(
     HRESULT hr = S_OK;
     LPVOID pvResource = NULL;
     DWORD cbResource = 0;
-    LPVOID pvXml = NULL;
-    DWORD cbXml = 0;
     LPWSTR sczXml = NULL;
     IXMLDOMDocument* pixd = NULL;
 
     hr = ResReadData(hModule, szResource, &pvResource, &cbResource);
     ExitOnFailure(hr, "Failed to read theme from resource.");
 
-    cbXml = cbResource + sizeof(WCHAR); // allocate enough space for the resource data plus a null terminator.
-
-    pvXml = MemAlloc(cbXml, TRUE);
-    ExitOnNull(pvXml, hr, E_OUTOFMEMORY, "Failed to allocate memory to duplicate theme resource.");
-
-    memcpy_s(pvXml, cbXml, pvResource, cbResource);
-
-    hr = StrAllocStringAnsi(&sczXml, reinterpret_cast<LPCSTR>(pvXml), 0, CP_UTF8);
-    ExitOnFailure(hr, "Failed to convert xml document data to unicode string.");
+    hr = StrAllocStringAnsi(&sczXml, reinterpret_cast<LPCSTR>(pvResource), cbResource, CP_UTF8);
+    ExitOnFailure(hr, "Failed to convert XML document data from UTF-8 to unicode string.");
 
     hr = XmlLoadDocument(sczXml, &pixd);
     ExitOnFailure(hr, "Failed to load theme resource as XML document.");
@@ -297,8 +293,8 @@ DAPI_(HRESULT) ThemeLoadFromResource(
 
 LExit:
     ReleaseObject(pixd);
-    ReleaseMem(pvXml);
     ReleaseStr(sczXml);
+
     return hr;
 }
 
@@ -569,28 +565,8 @@ DAPI_(HRESULT) ThemeLoadLocFromFile(
     hr = LocLoadFromFile(sczFileFullPath, &pLocStringSet);
     ExitOnFailure(hr, "Failed to load WXL file.");
 
-    hr = LocLocalizeString(pLocStringSet, &pTheme->wzCaption);
-    ExitOnFailure(hr, "Failed to localize theme caption.");
-
-    for (DWORD i = 0; i < pTheme->cControls; ++i)
-    {
-        THEME_CONTROL* pControl = pTheme->rgControls + i;
-
-        hr = LocLocalizeString(pLocStringSet, &pControl->wzText);
-        ExitOnFailure(hr, "Failed to localize control text.");
-
-        for (DWORD j = 0; j < pControl->cColumns; ++j)
-        {
-            hr = LocLocalizeString(pLocStringSet, &pControl->ptcColumns[j].pszName);
-            ExitOnFailure(hr, "Failed to localize column text.");
-        }
-
-        for (DWORD j = 0; j < pControl->cTabs; ++j)
-        {
-            hr = LocLocalizeString(pLocStringSet, &pControl->pttTabs[j].pszName);
-            ExitOnFailure(hr, "Failed to localize tab text.");
-        }
-    }
+    hr = LocalizeTheme(pTheme, pLocStringSet);
+    ExitOnFailure(hr, "Failed to localize theme");
 
 LExit:
     LocFree(pLocStringSet);
@@ -599,6 +575,29 @@ LExit:
     return hr;
 }
 
+
+DAPI_(HRESULT) ThemeLoadLocFromResource(
+    __in THEME* pTheme,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    )
+{
+    HRESULT hr = S_OK;
+    LOC_STRINGSET* pLocStringSet = NULL;
+
+    ExitOnNull(pTheme, hr, S_FALSE, "Theme must be loaded first.");
+
+    hr = LocLoadFromResource(hModule, szResourceName, &pLocStringSet);
+    ExitOnFailure(hr, "Failed to load WXL file from resource.");
+
+    hr = LocalizeTheme(pTheme, pLocStringSet);
+    ExitOnFailure(hr, "Failed to localize theme");
+
+LExit:
+    LocFree(pLocStringSet);
+
+    return hr;
+}
 
 /********************************************************************
  ThemeLoadStrings - Loads string resources.
@@ -688,6 +687,7 @@ DAPI_(HRESULT) ThemeLoadRichEditFromFile(
 LExit:
     ReleaseStr(sczFile);
     ReleaseFile(hFile);
+
     return hr;
 }
 
@@ -1382,7 +1382,7 @@ LExit:
     return hr;
 }
 
-HRESULT ParseImage(
+static HRESULT ParseImage(
     __in_opt HMODULE hModule,
     __in_opt LPCWSTR wzRelativePath,
     __in IXMLDOMNode* pElement,
@@ -1456,6 +1456,39 @@ LExit:
     return hr;
 }
 
+static HRESULT LocalizeTheme(
+    __in THEME *pTheme,
+    __in LOC_STRINGSET *pLocStringSet
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = LocLocalizeString(pLocStringSet, &pTheme->wzCaption);
+    ExitOnFailure(hr, "Failed to localize theme caption.");
+
+    for (DWORD i = 0; i < pTheme->cControls; ++i)
+    {
+        THEME_CONTROL* pControl = pTheme->rgControls + i;
+
+        hr = LocLocalizeString(pLocStringSet, &pControl->wzText);
+        ExitOnFailure(hr, "Failed to localize control text.");
+
+        for (DWORD j = 0; j < pControl->cColumns; ++j)
+        {
+            hr = LocLocalizeString(pLocStringSet, &pControl->ptcColumns[j].pszName);
+            ExitOnFailure(hr, "Failed to localize column text.");
+        }
+
+        for (DWORD j = 0; j < pControl->cTabs; ++j)
+        {
+            hr = LocLocalizeString(pLocStringSet, &pControl->pttTabs[j].pszName);
+            ExitOnFailure(hr, "Failed to localize tab text.");
+        }
+    }
+
+LExit:
+    return hr;
+}
 
 static HRESULT ParseApplication(
     __in_opt HMODULE hModule,
@@ -1614,6 +1647,7 @@ LExit:
     ReleaseStr(sczIconFile);
     ReleaseBSTR(bstr);
     ReleaseObject(pixn);
+
     return hr;
 }
 
@@ -1773,6 +1807,7 @@ LExit:
     ReleaseBSTR(bstrName);
     ReleaseObject(pixn);
     ReleaseObject(pixnl);
+
     return hr;
 }
 
@@ -1832,6 +1867,7 @@ static HRESULT ParsePages(
 
 LExit:
     ReleaseBSTR(bstrType);
+
     return hr;
 }
 
@@ -1987,6 +2023,7 @@ LExit:
     ReleaseBSTR(bstrType);
     ReleaseObject(pixn);
     ReleaseObject(pixnl);
+
     return hr;
 }
 

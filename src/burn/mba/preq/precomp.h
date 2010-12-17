@@ -29,6 +29,7 @@
 #include <thmutil.h>
 
 #include "BalBaseBootstrapperApplication.h"
+#include "balutil.h"
 
 HRESULT CreateBootstrapperApplication(
     __in HMODULE hModule,

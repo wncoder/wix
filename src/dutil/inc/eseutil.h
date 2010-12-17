@@ -21,10 +21,10 @@
 extern "C" {
 #endif
 
-#define ReleaseQuery(pqh) if (pqh) { EseFinishQuery(pqh); }
-#define ReleaseNullQuery(pqh) if (pqh) { EseFinishQuery(pqh); pqh = NULL; }
+#define ReleaseEseQuery(pqh) if (pqh) { EseFinishQuery(pqh); }
+#define ReleaseNullEseQuery(pqh) if (pqh) { EseFinishQuery(pqh); pqh = NULL; }
 
-struct COLUMN_SCHEMA
+struct ESE_COLUMN_SCHEMA
 {
     JET_COLUMNID jcColumn;
     LPCWSTR pszName;
@@ -35,25 +35,25 @@ struct COLUMN_SCHEMA
     BOOL fAutoIncrement;
 };
 
-struct TABLE_SCHEMA
+struct ESE_TABLE_SCHEMA
 {
     JET_TABLEID jtTable;
     LPCWSTR pszName;
     DWORD dwColumns;
-    COLUMN_SCHEMA *pcsColumns;
+    ESE_COLUMN_SCHEMA *pcsColumns;
 };
 
-struct DATABASE_SCHEMA
+struct ESE_DATABASE_SCHEMA
 {
     DWORD dwTables;
-    TABLE_SCHEMA *ptsTables;
+    ESE_TABLE_SCHEMA *ptsTables;
 };
 
-enum QUERY_TYPE
+enum ESE_QUERY_TYPE
 {
-    QUERY_EXACT,
-    QUERY_FROM_TOP,
-    QUERY_FROM_BOTTOM
+    ESE_QUERY_EXACT,
+    ESE_QUERY_FROM_TOP,
+    ESE_QUERY_FROM_BOTTOM
 };
 
 typedef void* ESE_QUERY_HANDLE;
@@ -71,7 +71,7 @@ HRESULT DAPI EseEndSession(
 HRESULT DAPI EseEnsureDatabase(
     __in JET_SESID jsSession,
     __in_z LPCWSTR pszFile,
-    __in DATABASE_SCHEMA *pdsSchema,
+    __in ESE_DATABASE_SCHEMA *pdsSchema,
     __out JET_DBID* pjdbDb,
     __in BOOL fExclusive,
     __in BOOL fReadonly
@@ -143,56 +143,56 @@ HRESULT DAPI EseFinishUpdate(
     );
 HRESULT DAPI EseSetColumnBinary(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in_bcount(cbBuffer) const BYTE* pbBuffer,
     __in SIZE_T cbBuffer
     );
 HRESULT DAPI EseSetColumnDword(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in DWORD dwValue
     );
 HRESULT DAPI EseSetColumnBool(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in BOOL fValue
     );
 HRESULT DAPI EseSetColumnString(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in_z LPCWSTR pszValue
     );
 HRESULT DAPI EseSetColumnEmpty(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn
     );
 HRESULT DAPI EseGetColumnBinary(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __deref_out_bcount(*piBuffer) BYTE** ppbBuffer,
     __inout SIZE_T* piBuffer
     );
 HRESULT DAPI EseGetColumnDword(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out DWORD *pdwValue
     );
 HRESULT DAPI EseGetColumnBool(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out BOOL *pfValue
     );
 HRESULT DAPI EseGetColumnString(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out LPWSTR *ppszValue
     );
@@ -201,7 +201,7 @@ HRESULT DAPI EseGetColumnString(
 HRESULT DAPI EseBeginQuery(
     __in JET_SESID jsSession,
     __in JET_TABLEID jtTable,
-    __in QUERY_TYPE qtQueryType,
+    __in ESE_QUERY_TYPE qtQueryType,
     __out ESE_QUERY_HANDLE *peqhHandle
     );
 HRESULT DAPI EseSetQueryColumnBinary(

@@ -492,21 +492,29 @@ extern "C" HRESULT ApplyExecute(
             ExitFunction();
         }
 
-        if (FAILED(hr) && !pEngineState->fDisableRollback)
+        if (FAILED(hr))
         {
-            // If the action failed, roll back to previous rollback boundary.
-            HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pRestart);
-            UNREFERENCED_PARAMETER(hrRollback);
-
-            // If the rollback boundary is vital, end execution here.
-            if (pRollbackBoundary && pRollbackBoundary->fVital)
+            // If we failed, but rollback is disabled just bail with our error code.
+            if (pEngineState->fDisableRollback)
             {
-                *pfRollback = TRUE;
-                ExitFunction();
+                // TODO: should *pfRollback be set to true?
+                break;
             }
+            else // the action failed, roll back to previous rollback boundary.
+            {
+                HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pRestart);
+                UNREFERENCED_PARAMETER(hrRollback);
 
-            // Move forward to next rollback boundary.
-            fSeekNextRollbackBoundary = TRUE;
+                // If the rollback boundary is vital, end execution here.
+                if (pRollbackBoundary && pRollbackBoundary->fVital)
+                {
+                    *pfRollback = TRUE;
+                    ExitFunction();
+                }
+
+                // Move forward to next rollback boundary.
+                fSeekNextRollbackBoundary = TRUE;
+            }
         }
     }
 

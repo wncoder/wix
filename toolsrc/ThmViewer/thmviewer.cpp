@@ -100,8 +100,29 @@ int WINAPI wWinMain(
 
     if (!sczThemeFile)
     {
-        ::MessageBoxW(hWnd, L"Must specify a path to theme file on the command line.", vpTheme->wzCaption, MB_OK | MB_ICONERROR);
-        ExitFunction1(hr = E_INVALIDARG);
+        // Prompt for a path to the theme file.
+        OPENFILENAMEW ofn = { };
+        WCHAR wzFile[MAX_PATH] = { };
+
+        ofn.lStructSize = sizeof(ofn);
+        ofn.hwndOwner = hWnd;
+        ofn.lpstrFile = wzFile;
+        ofn.nMaxFile = countof(wzFile);
+        ofn.lpstrFilter = L"Theme Files\0*.thm\0XML Files\0*.xml\0All Files\0*.*\0";
+        ofn.nFilterIndex = 1;
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+        ofn.lpstrTitle = vpTheme->wzCaption;
+
+        if (::GetOpenFileNameW(&ofn))
+        {
+            hr = StrAllocString(&sczThemeFile, wzFile, 0);
+            ExitOnFailure(hr, "Failed to copy opened file to theme file.");
+        }
+        else
+        {
+            ::MessageBoxW(hWnd, L"Must specify a path to theme file.", vpTheme->wzCaption, MB_OK | MB_ICONERROR);
+            ExitFunction1(hr = E_INVALIDARG);
+        }
     }
 
     hr = DisplayStart(hInstance, hWnd, &hDisplayThread, &vdwDisplayThreadId);

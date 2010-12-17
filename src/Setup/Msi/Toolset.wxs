@@ -339,6 +339,10 @@
             <ComponentRef Id="Microsoft.Deployment.WindowsInstaller.Wix" />
 
             <Component Directory="BinDir">
+                <File Source="ThmViewer.exe" />
+            </Component>
+
+            <Component Directory="BinDir">
               <File Id="Microsoft.Deployment.Resources.Wix" Source="Microsoft.Deployment.Resources.dll" />
             </Component>
         </ComponentGroup>

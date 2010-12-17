@@ -40,7 +40,7 @@
   <target name="mbapreq.build" description="Peforms a full rebuild (clean then build)" depends="mbapreq.clean, mbapreq.inc" />
 
   <!-- Clean -->
-  <target name="mbapreq.clean" description="Cleans the build" depends="balutil.clean">
+  <target name="mbapreq.clean" description="Cleans the build">
     <delete dir="${dir.build.burn.mba.preq}" failonerror="false" if="${directory::exists(dir.build.burn.mba.preq)}" />
     <delete file="${preq.file.dll.target}" failonerror="false" if="${file::exists(preq.file.dll.target)}" />
     <delete file="${preq.file.dll.targetpdb}" failonerror="false" if="${file::exists(preq.file.dll.targetpdb)}" />

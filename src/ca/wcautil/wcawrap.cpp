@@ -1226,6 +1226,32 @@ static LPWSTR BreakDownCustomActionData(
 
 
 /********************************************************************
+RevertCustomActionData() - Reverts custom action data changes made
+                           by BreakDownCustomActionData;
+
+NOTE: this modifies the passed in data
+********************************************************************/
+extern "C" void WIXAPI RevertCustomActionData(
+    __in LPWSTR wzRevertTo,
+    __in LPCWSTR wzRevertFrom
+    )
+{
+    if (!wzRevertTo)
+        return;
+    if (!wzRevertFrom)
+        return;
+    // start at the revert point and replace all \0 with MAGIC_MULTISZ_DELIM
+    for(LPWSTR wzIndex = wzRevertTo; wzIndex < wzRevertFrom; wzIndex++)
+    {
+        if (0 == *wzIndex)
+        {
+            *wzIndex = MAGIC_MULTISZ_DELIM;
+        }
+    }
+    return;
+}
+
+/********************************************************************
 WcaReadStringFromCaData() - reads a string out of the CustomActionData
 
 NOTE: this modifies the passed in ppwzCustomActionData variable

@@ -16,37 +16,74 @@
 
 
 static const LPCWSTR PREQ_WINDOW_CLASS = L"WixBurnMbaPreq";
+static const LPCWSTR PREQ_NETFX_PACKAGE_ID = L"MbaNetfxPackageId";
 
-enum PREQ_STATE
+enum PREQBA_STATE
 {
-    PREQ_STATE_INITIALIZING,
-    PREQ_STATE_DETECTING,
-    PREQ_STATE_DETECTED,
-    PREQ_STATE_PLANNING,
-    PREQ_STATE_PLANNED,
-    PREQ_STATE_APPLYING,
-    PREQ_STATE_APPLIED,
+    PREQBA_STATE_INITIALIZING,
+    PREQBA_STATE_INITIALIZED,
+    PREQBA_STATE_DETECTING,
+    PREQBA_STATE_DETECTED,
+    PREQBA_STATE_PLANNING,
+    PREQBA_STATE_PLANNED,
+    PREQBA_STATE_APPLYING,
+    PREQBA_STATE_APPLIED,
+    PREQBA_STATE_FAILED,
 };
 
-enum PREQ_CONTROL
+enum WM_PREQBA
 {
-    PREQ_CONTROL_INTRODUCTION_TEXT,
-    PREQ_CONTROL_EULA_LABEL_TEXT,
-    PREQ_CONTROL_EULA_LINK,
-    PREQ_CONTROL_PROGRESS_TEXT,
-    PREQ_CONTROL_PERCENTAGE_TEXT,
-
-    PREQ_CONTROL_INSTALL_BUTTON,
-    PREQ_CONTROL_CLOSE_BUTTON,
+    WM_PREQBA_DETECT_PACKAGES = WM_APP + 1,
+    WM_PREQBA_PLAN_PACKAGES,
+    WM_PREQBA_APPLY_PACKAGES,
 };
 
-enum WM_PREQ
+// This enum must be kept in the same order as the vrgwzPageNames array.
+enum PREQBA_PAGE
 {
-    WM_PREQ_DETECT_PACKAGES = WM_APP + 1,
-    WM_PREQ_PLAN_PACKAGES,
-    WM_PREQ_APPLY_PACKAGES,
+    PREQBA_PAGE_WELCOME,
+    PREQBA_PAGE_PROGRESS,
+    PREQBA_PAGE_FAILURE,
+    COUNT_PREQBA_PAGE,
 };
 
+// This array must be kept in the same order as the PREQBA_PAGE enum.
+static LPCWSTR vrgwzPageNames[] = {
+    L"Welcome",
+    L"Progress",
+    L"Failure",
+};
+
+enum PREQBA_CONTROL
+{
+    PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX = THEME_FIRST_ASSIGN_CONTROL_ID,
+    PREQBA_CONTROL_WELCOME_EULA_LINK,
+    PREQBA_CONTROL_WELCOME_INSTALL_BUTTON,
+    PREQBA_CONTROL_WELCOME_CANCEL_BUTTON,
+
+    PREQBA_CONTROL_PROGRESS_BAR,
+    PREQBA_CONTROL_PROGRESS_PACKAGE_NAME,
+    PREQBA_CONTROL_PROGRESS_CANCEL_BUTTON,
+
+    PREQBA_CONTROL_FAILED_TEXT,
+    PREQBA_CONTROL_FAILED_LOG_LINK,
+    PREQBA_CONTROL_FAILED_CANCEL_BUTTON,
+};
+
+static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
+    { PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX, L"EulaAcceptCheckbox" },
+    { PREQBA_CONTROL_WELCOME_EULA_LINK, L"EulaHyperlink" },
+    { PREQBA_CONTROL_WELCOME_INSTALL_BUTTON, L"InstallButton" },
+    { PREQBA_CONTROL_WELCOME_CANCEL_BUTTON, L"WelcomeCancelButton" },
+
+    { PREQBA_CONTROL_PROGRESS_BAR, L"ProgressBar" },
+    { PREQBA_CONTROL_PROGRESS_PACKAGE_NAME, L"ProgressPackageName" },
+    { PREQBA_CONTROL_PROGRESS_CANCEL_BUTTON, L"ProgressCancelButton" },
+
+    { PREQBA_CONTROL_FAILED_TEXT, L"FailureText" },
+    { PREQBA_CONTROL_FAILED_LOG_LINK, L"FailureLogHyperlink" },
+    { PREQBA_CONTROL_FAILED_CANCEL_BUTTON, L"FailureCancelButton" },
+};
 
 class CPreqUserExperience : public CBalBaseBootstrapperApplication
 {
@@ -55,8 +92,8 @@ public: // IBootstrapperApplication overrides
     {
         HRESULT hr = S_OK;
 
-        hr = ReadNetfxPackageId();
-        ExitOnFailure(hr, "Failed to read the NETFX Package identifier from engine variable.");
+        hr = BalGetStringVariable(PREQ_NETFX_PACKAGE_ID, &this->m_sczNetfxPackageId);
+        BalExitOnFailure(hr, "Failed to read the NETFX Package identifier from engine variable.");
 
         // Create UI thread.
         m_hUiThread = ::CreateThread(NULL, 0, UiThreadProc, this, 0, &m_dwThreadId);
@@ -71,6 +108,8 @@ public: // IBootstrapperApplication overrides
 
     virtual STDMETHODIMP_(int) OnShutdown()
     {
+        int nResult = IDNOACTION;
+
         // Wait for UX thread to terminate.
         if (m_hUiThread)
         {
@@ -78,7 +117,35 @@ public: // IBootstrapperApplication overrides
             ::CloseHandle(m_hUiThread);
         }
 
-        return IDNOACTION;
+        // If a restart was required.
+        if (m_fRestartRequired)
+        {
+            // If the user allowed the restart then obviously we should take the
+            // restart. If we did not show UI to ask the user then assume the restart
+            // is allowed. Finally, if the command-line said take a reboot automatically
+            // then take it because we need it.
+            if (BOOTSTRAPPER_RESTART_NEVER != m_command.restart &&
+                (m_fAllowRestart || BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_RESTART_PROMPT < m_command.restart))
+            {
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "The prerequisites scheduled a restart. The bootstrapper application will be reloaded after the computer is restarted.");
+                nResult = IDRESTART;
+            }
+            else
+            {
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "A restart was required by the prerequisites. The bootstrapper application will be reloaded after the computer is restarted.");
+            }
+        }
+        else if (m_fInstalledPrereqs)
+        {
+            BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "The prerequisites were successfully installed. The bootstrapper application will be reloaded.");
+            nResult = IDRELOAD_BOOTSTRAPPER;
+        }
+        else
+        {
+            BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "The prerequisites were not successfully installed, error: 0x%x. The bootstrapper application will be not reloaded.", m_hrFinal);
+        }
+
+        return nResult;
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
@@ -88,7 +155,7 @@ public: // IBootstrapperApplication overrides
         __in BOOTSTRAPPER_RELATED_OPERATION /*operation*/
         )
     {
-        return IDNOACTION; // Ignore the related bundles since we're only interested in NETFX.
+        return CheckCanceled() ? IDCANCEL : IDNOACTION; // Ignore the related bundles since we're only interested in pre-reqs.
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
@@ -99,7 +166,7 @@ public: // IBootstrapperApplication overrides
         __in BOOTSTRAPPER_RELATED_OPERATION /*operation*/
         )
     {
-        return IDNOACTION; // Ignore the related packages since we're only interested in NETFX.
+        return CheckCanceled() ? IDCANCEL : IDNOACTION; // Ignore the related packages since we're only interested in pre-reqs.
     }
 
     virtual STDMETHODIMP_(void) OnDetectPackageComplete(
@@ -108,21 +175,20 @@ public: // IBootstrapperApplication overrides
         __in BOOTSTRAPPER_PACKAGE_STATE state
         )
     {
-        // TODO: Handle case where NETFX is actually on the machine. This bootstrapper application shouldn't be loaded if things were okay...
+        // TODO: Handle case where pre-reqs are actually on the machine. This bootstrapper application shouldn't be loaded if things were okay...
     }
 
     virtual STDMETHODIMP_(void) OnDetectComplete(
         __in HRESULT hrStatus
         )
     {
-        if (SUCCEEDED(hrStatus))
+        SetState(PREQBA_STATE_DETECTED, hrStatus);
+
+        // If we succeeded and we're not showing UI (where the user can click the Install button) then
+        // go start the install automatically.
+        if (SUCCEEDED(hrStatus) && BOOTSTRAPPER_DISPLAY_FULL != m_command.display)
         {
-            SetState(PREQ_STATE_DETECTED);
-            // TODO: only do this in quiet mode, ::PostMessageW(m_hWnd, WM_PREQ_PLAN_PACKAGES, 0, BOOTSTRAPPER_ACTION_INSTALL);
-        }
-        else
-        {
-            // TODO: handle error.
+            ::PostMessageW(m_hWnd, WM_PREQBA_PLAN_PACKAGES, 0, m_command.action);
         }
     }
 
@@ -131,8 +197,8 @@ public: // IBootstrapperApplication overrides
         __inout_z BOOTSTRAPPER_REQUEST_STATE* pRequestedState
         )
     {
-        *pRequestedState = BOOTSTRAPPER_REQUEST_STATE_NONE; // Do not touch related bundles since we're only installing NETFX.
-        return IDOK;
+        *pRequestedState = BOOTSTRAPPER_REQUEST_STATE_NONE; // do not touch related bundles since we're only installing pre-reqs.
+        return CheckCanceled() ? IDCANCEL : IDOK;
     }
 
     virtual STDMETHODIMP_(int) OnPlanPackageBegin(
@@ -140,8 +206,8 @@ public: // IBootstrapperApplication overrides
         __inout BOOTSTRAPPER_REQUEST_STATE *pRequestState
         )
     {
-        // If we're planning NETFX, install it. Skip everything else.
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, this->m_sczNetfxPackageId, -1))
+        // If we're planning to install a pre-req, install it. Skip everything else.
+        if (BOOTSTRAPPER_ACTION_INSTALL == m_command.action && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, this->m_sczNetfxPackageId, -1))
         {
             *pRequestState = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
         }
@@ -150,44 +216,21 @@ public: // IBootstrapperApplication overrides
             *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
         }
 
-        return IDOK;
+        return CheckCanceled() ? IDCANCEL : IDOK;
     }
 
     virtual STDMETHODIMP_(void) OnPlanComplete(
         __in HRESULT hrStatus
         )
     {
+        SetState(PREQBA_STATE_PLANNED, hrStatus);
+
         if (SUCCEEDED(hrStatus))
         {
-            SetState(PREQ_STATE_PLANNED);
-            ::PostMessageW(m_hWnd, WM_PREQ_APPLY_PACKAGES, 0, 0);
-        }
-        else
-        {
-            // TODO: handle error.
-        }
-    }
+            ThemeSetProgressControl(m_pTheme, PREQBA_CONTROL_PROGRESS_BAR, 0);
 
-    virtual STDMETHODIMP_(int) OnApplyBegin()
-    {
-        HRESULT hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PROGRESS_TEXT, L"Initializing...");
-        if (SUCCEEDED(hr))
-        {
-            hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PERCENTAGE_TEXT, L"");
+            ::PostMessageW(m_hWnd, WM_PREQBA_APPLY_PACKAGES, 0, 0);
         }
-
-        return FAILED(hr) ? IDERROR : IDNOACTION;
-    }
-
-    virtual STDMETHODIMP_(int) OnCacheBegin()
-    {
-        HRESULT hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PROGRESS_TEXT, L"Downloading...");
-        if (SUCCEEDED(hr))
-        {
-            hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PERCENTAGE_TEXT, L"0%");
-        }
-
-        return FAILED(hr) ? IDERROR : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireProgress(
@@ -195,32 +238,23 @@ public: // IBootstrapperApplication overrides
         __in_z_opt LPCWSTR /*wzPayloadId*/,
         __in DWORD64 /*dw64Progress*/,
         __in DWORD64 /*dw64Total*/,
-        __in DWORD dwOverallPercentage
+        __in DWORD dwOverallProgressPercentage
         )
     {
-        HRESULT hr = S_OK;
-        WCHAR wzProgress[5] = { };
+    //    HRESULT hr = S_OK;
+    //    WCHAR wzProgress[5] = { };
 
-        hr = ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallPercentage);
-        if (SUCCEEDED(hr))
-        {
-            hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PERCENTAGE_TEXT, wzProgress);
-        }
+    //    hr = ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallPercentage);
+    //    if (SUCCEEDED(hr))
+    //    {
+    //        hr = ThemeSetTextControl(m_pTheme, PREQBA_CONTROL_PERCENTAGE_TEXT, wzProgress);
+    //    }
+    //    BalExitOnFailure(hr, "Failed to update cache percentage text.");
 
-        return FAILED(hr) ? IDERROR : IDNOACTION;
-    }
+    //LExit:
+        ThemeSetProgressControl(m_pTheme, PREQBA_CONTROL_PROGRESS_BAR, dwOverallProgressPercentage / 2);
 
-    virtual STDMETHODIMP_(int) OnExecuteBegin(
-        __in DWORD cExecutingPackages
-        )
-    {
-        HRESULT hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PROGRESS_TEXT, L"Installing...");
-        if (SUCCEEDED(hr))
-        {
-            hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PERCENTAGE_TEXT, L"0%");
-        }
-
-        return FAILED(hr) ? IDERROR : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnExecuteProgress(
@@ -229,16 +263,20 @@ public: // IBootstrapperApplication overrides
         __in DWORD dwOverallProgressPercentage
         )
     {
-        HRESULT hr = S_OK;
-        WCHAR wzProgress[5] = { };
+    //    HRESULT hr = S_OK;
+    //    WCHAR wzProgress[5] = { };
 
-        hr = ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallProgressPercentage);
-        if (SUCCEEDED(hr))
-        {
-            hr = ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PERCENTAGE_TEXT, wzProgress);
-        }
+    //    hr = ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallProgressPercentage);
+    //    if (SUCCEEDED(hr))
+    //    {
+    //        hr = ThemeSetTextControl(m_pTheme, PREQBA_CONTROL_PERCENTAGE_TEXT, wzProgress);
+    //    }
+    //    BalExitOnFailure(hr, "Failed to update execute percentage text.");
 
-        return IDNOACTION;
+    //LExit:
+        ThemeSetProgressControl(m_pTheme, PREQBA_CONTROL_PROGRESS_BAR, 50 + dwOverallProgressPercentage / 2);
+
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnError(
@@ -252,41 +290,34 @@ public: // IBootstrapperApplication overrides
         return IDERROR;
     }
 
-    virtual STDMETHODIMP_(int) OnExecutePackageComplete(
-        __in LPCWSTR /*wzPackageId*/,
-        __in HRESULT /*hrExitCode*/,
-        __in BOOTSTRAPPER_APPLY_RESTART /*restart*/
-        )
-    {
-        return IDNOACTION; // Always return no action here and we'll force the reboot later.
-    }
-
     virtual STDMETHODIMP_(int) OnApplyComplete(
         __in HRESULT hrStatus,
         __in BOOTSTRAPPER_APPLY_RESTART restart
         )
     {
-        BOOL fRestart = FALSE;
+        m_fRestartRequired = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart);
 
-        ThemeSetTextControl(m_pTheme, PREQ_CONTROL_PROGRESS_TEXT, L"Installed");
-        SetState(PREQ_STATE_APPLIED);
-
-        // Failure or quiet or passive display just close at the end, no questions asked.
-        if (BOOTSTRAPPER_DISPLAY_NONE == m_command.display || BOOTSTRAPPER_DISPLAY_PASSIVE == m_command.display)
+        //ThemeSetTextControl(m_pTheme, PREQBA_CONTROL_PROGRESS_TEXT, L"Installed");
+        if (SUCCEEDED(hrStatus))
         {
-            fRestart = (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart);
-        }
-        else if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
-        {
-            int nResult = ::MessageBoxW(m_hWnd, L"A restart is required to continue the installation. Restart now?", L"Restart Required", MB_YESNO | MB_ICONQUESTION);
-            fRestart = (IDYES == nResult);
+            ThemeSetProgressControl(m_pTheme, PREQBA_CONTROL_PROGRESS_BAR, 100);
+            m_fInstalledPrereqs = TRUE;
         }
 
-        // Save this to enable us to detect failed apply phase
-        m_hrFinal = hrStatus;
+        SetState(PREQBA_STATE_APPLIED, hrStatus);
 
-        ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
-        return fRestart ? IDRESTART : IDOK;
+        if (m_fRestartRequired && BOOTSTRAPPER_DISPLAY_FULL == m_command.display && BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
+        {
+            int nResult = ::MessageBoxW(m_hWnd, L"A restart is required to continue the installation. Restart now?", L"Restart Required", MB_YESNO | MB_ICONEXCLAMATION);
+            m_fAllowRestart = (IDYES == nResult);
+        }
+
+        if (PREQBA_STATE_FAILED != m_state)
+        {
+            ::SendMessageW(m_hWnd, WM_CLOSE, 0, 0);
+        }
+
+        return IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnResolveSource(
@@ -331,7 +362,7 @@ public: // IBootstrapperApplication overrides
 
             if (::GetOpenFileNameW(&ofn))
             {
-                HRESULT hr = m_pCore->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
+                HRESULT hr = m_pEngine->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
                 nResult = SUCCEEDED(hr) ? IDRETRY : IDERROR;
             }
             else
@@ -358,12 +389,20 @@ private: // privates
 
         // initialize COM
         hr = ::CoInitialize(NULL);
-        ExitOnFailure(hr, "Failed to initialize COM.");
+        BalExitOnFailure(hr, "Failed to initialize COM.");
         fComInitialized = TRUE;
+
+        // initialize theme util
+        hr = ThemeInitialize(pThis->m_hModule);
+        BalExitOnFailure(hr, "Failed to initialize theme manager.");
 
         // create main window
         hr = pThis->CreateMainWindow();
-        ExitOnFailure(hr, "Failed to create main window.");
+        BalExitOnFailure(hr, "Failed to create main window.");
+
+        // Okay, we're ready for packages now.
+        pThis->SetState(PREQBA_STATE_INITIALIZED, hr);
+        ::PostMessageW(pThis->m_hWnd, WM_PREQBA_DETECT_PACKAGES, 0, 0);
 
         // message pump
         while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
@@ -371,9 +410,9 @@ private: // privates
             if (-1 == fRet)
             {
                 hr = E_UNEXPECTED;
-                ExitOnFailure(hr, "Unexpected return value from message pump.");
+                BalExitOnFailure(hr, "Unexpected return value from message pump.");
             }
-            else if (!::IsDialogMessageW(pThis->m_hWnd, &msg))
+            else
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessageW(&msg);
@@ -381,11 +420,18 @@ private: // privates
         }
 
     LExit:
+        if (FAILED(hr) && SUCCEEDED(pThis->m_hrFinal))
+        {
+            pThis->m_hrFinal = hr;
+        }
+
         // destroy main window
         pThis->DestroyMainWindow();
 
         // initiate engine shutdown
-        pThis->m_pCore->Quit(pThis->m_hrFinal);
+        pThis->m_pEngine->Quit(pThis->m_hrFinal);
+
+        ThemeUninitialize();
 
         // uninitialize COM
         if (fComInitialized)
@@ -393,28 +439,6 @@ private: // privates
             ::CoUninitialize();
         }
 
-        return hr;
-    }
-
-    HRESULT ReadNetfxPackageId()
-    {
-        HRESULT hr = S_OK;
-        DWORD cchNetfxPackageId = 20;
-
-        hr = StrAlloc(&this->m_sczNetfxPackageId, cchNetfxPackageId);
-        ExitOnFailure(hr, "Failed to allocate string for NETFX package id.");
-
-        hr = m_pCore->GetVariableString(L"MbaNetfxPackageId", this->m_sczNetfxPackageId, &cchNetfxPackageId);
-        if (STRSAFE_E_INSUFFICIENT_BUFFER == hr)
-        {
-            hr = StrAlloc(&this->m_sczNetfxPackageId, cchNetfxPackageId);
-            ExitOnFailure(hr, "Failed to allocate string for NETFX package id.");
-
-            hr = m_pCore->GetVariableString(L"MbaNetfxPackageId", this->m_sczNetfxPackageId, &cchNetfxPackageId);
-        }
-        ExitOnRootFailure(hr, "Failed to get NETFX package id from engine.");
-
-    LExit:
         return hr;
     }
 
@@ -427,20 +451,20 @@ private: // privates
 
         // load theme relative to mbapreq.dll.
         hr = PathRelativeToModule(&sczThemePath, L"preqthm.xml", m_hModule);
-        ExitOnFailure(hr, "Failed to combine module path with preqthm.xml.");
+        BalExitOnFailure(hr, "Failed to combine module path with preqthm.xml.");
 
         hr = ThemeLoadFromFile(sczThemePath, &m_pTheme);
-        ExitOnFailure(hr, "Failed to load theme from preqthm.xml.");
+        BalExitOnFailure(hr, "Failed to load theme from preqthm.xml.");
 
         // Parse any command line arguments that the engine did not process.
         if (m_command.wzCommandLine && *m_command.wzCommandLine)
         {
             hr = ProcessCommandLine(m_command.wzCommandLine);
-            ExitOnFailure(hr, "Unknown commandline parameters.");
+            BalExitOnFailure(hr, "Unknown commandline parameters.");
         }
 
         hr = ThemeLoadLocFromFile(m_pTheme, L"preq_en-us.wxl", m_hModule);
-        ExitOnFailure(hr, "Failed to localize from default language.");
+        BalExitOnFailure(hr, "Failed to localize from default language.");
 
         // Register the window class and create the window.
         wc.style = 0;
@@ -472,11 +496,6 @@ private: // privates
 
     LExit:
         ReleaseStr(sczThemePath);
-
-        if (FAILED(hr))
-        {
-            DestroyMainWindow();
-        }
 
         return hr;
     }
@@ -530,7 +549,6 @@ private: // privates
         __in LPARAM lParam
         )
     {
-        LRESULT lres = 0;
 #pragma warning(suppress:4312)
         CPreqUserExperience* pUX = reinterpret_cast<CPreqUserExperience*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
 
@@ -545,17 +563,12 @@ private: // privates
             }
             break;
 
-        case WM_NCHITTEST:
-            if (pUX->m_pTheme->dwStyle & WS_POPUP)
-            {
-                return HTCAPTION; // allow pop-up windows to be moved by grabbing any non-control.
-            }
-            break;
-
         case WM_NCDESTROY:
-            lres = ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
+            {
+            LRESULT lres = ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
             ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, 0);
             return lres;
+            }
 
         case WM_CREATE:
             if (!pUX->OnCreate(hWnd))
@@ -573,77 +586,48 @@ private: // privates
             break;
 
         case WM_CLOSE:
-            if (PREQ_STATE_APPLIED > pUX->m_state)
+            // If the user chose not to close, do not let the default window proc handle the message.
+            if (!pUX->OnClose())
             {
-                // Check with the user to verify they want to cancel.
-                //pUX->PromptCancel(hWnd);
+                return 0;
             }
-            pUX->m_fCanceled = TRUE; // TODO: let the prompt set this instead.
-
-            if (pUX->m_fCanceled)
-            {
-                ::DestroyWindow(hWnd);
-            }
-            return 0;
+            break;
 
         case WM_DESTROY:
             ::PostQuitMessage(0);
             break;
 
-        case WM_DRAWITEM:
-            ThemeDrawControl(pUX->m_pTheme, reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
-            return TRUE;
-
-        case WM_CTLCOLORSTATIC:
-            {
-            HBRUSH hBrush = NULL;
-            if (ThemeSetControlColor(pUX->m_pTheme, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(hWnd), &hBrush))
-            {
-                return reinterpret_cast<LRESULT>(hBrush);
-            }
-            }
-            break;
-
-        case WM_SETCURSOR:
-            ThemeHoverControl(pUX->m_pTheme, hWnd, reinterpret_cast<HWND>(wParam));
-            break;
-
-        case WM_PAINT:
-            // If there is anything to update, do so.
-            if (::GetUpdateRect(hWnd, NULL, FALSE))
-            {
-                PAINTSTRUCT ps;
-                ::BeginPaint(hWnd, &ps);
-                ThemeDrawBackground(pUX->m_pTheme, &ps);
-                ::EndPaint(hWnd, &ps);
-            }
-            return 0;
-
-        case WM_PREQ_DETECT_PACKAGES:
+        case WM_PREQBA_DETECT_PACKAGES:
             pUX->OnDetect();
             return 0;
 
-        case WM_PREQ_PLAN_PACKAGES:
+        case WM_PREQBA_PLAN_PACKAGES:
             pUX->OnPlan(static_cast<BOOTSTRAPPER_ACTION>(lParam));
             return 0;
 
-        case WM_PREQ_APPLY_PACKAGES:
+        case WM_PREQBA_APPLY_PACKAGES:
             pUX->OnApply();
             return 0;
 
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
-            case PREQ_CONTROL_EULA_LINK:
+            case PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX:
+                pUX->OnClickAcceptCheckbox();
+                return 0;
+
+            case PREQBA_CONTROL_WELCOME_EULA_LINK:
                 pUX->OnClickEula();
                 break;
 
-            case PREQ_CONTROL_INSTALL_BUTTON:
+            case PREQBA_CONTROL_WELCOME_INSTALL_BUTTON:
                 pUX->OnClickInstallButton();
                 break;
 
-            case PREQ_CONTROL_CLOSE_BUTTON:
-                pUX->OnClickCloseButton();
+            case PREQBA_CONTROL_WELCOME_CANCEL_BUTTON: __fallthrough;
+            case PREQBA_CONTROL_PROGRESS_CANCEL_BUTTON: __fallthrough;
+            case PREQBA_CONTROL_FAILED_CANCEL_BUTTON: __fallthrough;
+                ::SendMessageW(hWnd, WM_CLOSE, 0, 0);
                 break;
 
             default:
@@ -652,7 +636,7 @@ private: // privates
             return 0;
         }
 
-        return ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
+        return ThemeDefWindowProc(pUX ? pUX->m_pTheme : NULL, hWnd, uMsg, wParam, lParam);
     }
 
     BOOL OnCreate(
@@ -661,11 +645,13 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        hr = ThemeLoadControls(m_pTheme, hWnd, NULL, 0);
-        ExitOnFailure(hr, "Failed to load theme controls.");
+        hr = ThemeLoadControls(m_pTheme, hWnd, vrgInitControls, countof(vrgInitControls));
+        BalExitOnFailure(hr, "Failed to load theme controls.");
 
-        // Okay, we're ready for packages now.
-        ::PostMessageW(hWnd, WM_PREQ_DETECT_PACKAGES, 0, 0);
+        C_ASSERT(COUNT_PREQBA_PAGE == countof(vrgwzPageNames));
+        C_ASSERT(countof(m_rgdwPageIds) == countof(vrgwzPageNames));
+
+        ThemeGetPageIds(m_pTheme, vrgwzPageNames, m_rgdwPageIds, countof(m_rgdwPageIds));
 
     LExit:
         return SUCCEEDED(hr);
@@ -676,12 +662,11 @@ private: // privates
         HRESULT hr = S_OK;
 
         // Tell the core we're ready for the packages to be processed now.
-        hr = m_pCore->Detect();
-        ExitOnFailure(hr, "Failed to start detecting chain.");
-
-        SetState(PREQ_STATE_DETECTING);
+        hr = m_pEngine->Detect();
+        BalExitOnFailure(hr, "Failed to start detecting chain.");
 
     LExit:
+        SetState(PREQBA_STATE_DETECTING, hr);
         return;
     }
 
@@ -691,12 +676,11 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        hr = m_pCore->Plan(action);
-        ExitOnFailure(hr, "Failed to start planning packages.");
-
-        SetState(PREQ_STATE_PLANNING);
+        hr = m_pEngine->Plan(action);
+        BalExitOnFailure(hr, "Failed to start planning packages.");
 
     LExit:
+        SetState(PREQBA_STATE_PLANNING, hr);
         return;
     }
 
@@ -704,13 +688,18 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        hr = m_pCore->Apply(m_hWnd);
-        ExitOnFailure(hr, "Failed to start applying packages.");
-
-        SetState(PREQ_STATE_APPLYING);
+        hr = m_pEngine->Apply(m_hWnd);
+        BalExitOnFailure(hr, "Failed to start applying packages.");
 
     LExit:
+        SetState(PREQBA_STATE_APPLYING, hr);
         return;
+    }
+
+    void OnClickAcceptCheckbox()
+    {
+        BOOL fAcceptedLicense = ThemeIsControlChecked(m_pTheme, PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX);
+        ThemeControlEnable(m_pTheme, PREQBA_CONTROL_WELCOME_INSTALL_BUTTON, fAcceptedLicense);
     }
 
     void OnClickEula()
@@ -719,10 +708,10 @@ private: // privates
         LPWSTR sczEulaPath = NULL;
 
         hr = PathRelativeToModule(&sczEulaPath, L"eula.rtf", m_hModule);
-        ExitOnFailure(hr, "Failed to create path to EULA.");
+        BalExitOnFailure(hr, "Failed to create path to EULA.");
 
         hr = ShelExec(sczEulaPath, NULL, L"open", NULL, SW_SHOWNORMAL, NULL);
-        ExitOnFailure(hr, "Failed to launch EULA.");
+        BalExitOnFailure(hr, "Failed to launch EULA.");
 
     LExit:
         ReleaseStr(sczEulaPath);
@@ -731,38 +720,94 @@ private: // privates
 
     void OnClickInstallButton()
     {
-        ::PostMessageW(m_hWnd, WM_PREQ_PLAN_PACKAGES, 0, BOOTSTRAPPER_ACTION_INSTALL);
+        ::PostMessageW(m_hWnd, WM_PREQBA_PLAN_PACKAGES, 0, BOOTSTRAPPER_ACTION_INSTALL);
     }
 
     void OnClickCloseButton()
     {
-        m_fCanceled = TRUE;
-        ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
+        ::SendMessageW(m_hWnd, WM_CLOSE, 0, 0);
+    }
+
+    BOOL OnClose()
+    {
+        // Force the cancel if we are not showing UI or we're already on the success or failure page.
+        // TODO: make prompt localizable string.
+        BOOL fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display || PREQBA_STATE_APPLIED <= m_state, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
+        if (fClose)
+        {
+            // TODO: disable all the cancel buttons.
+        }
+
+        return fClose;
     }
 
     void SetState(
-        __in PREQ_STATE state
+        __in PREQBA_STATE state,
+        __in HRESULT hrStatus
         )
     {
+        DWORD dwOldPageId = 0;
+        DWORD dwNewPageId = 0;
+
+        if (FAILED(hrStatus))
+        {
+            m_hrFinal = hrStatus;
+        }
+
+        if (FAILED(m_hrFinal))
+        {
+            state = PREQBA_STATE_FAILED;
+        }
+
         if (m_state != state)
         {
+            DeterminePageId(m_state, &dwOldPageId);
+            DeterminePageId(state, &dwNewPageId);
+
             m_state = state;
 
-            int nShowEula = (PREQ_STATE_PLANNING > m_state ) ? SW_SHOW : SW_HIDE;
-            int nShowInstall = (PREQ_STATE_PLANNING > m_state) ? SW_SHOW : SW_HIDE;
-            int nShowProgress = (PREQ_STATE_DETECTED < m_state) ? SW_SHOW : SW_HIDE;
-            int nShowPercentage = (PREQ_STATE_DETECTED < m_state && PREQ_STATE_APPLIED != m_state) ? SW_SHOW : SW_HIDE;
-            int nShowClose = SW_SHOW;
+            if (dwOldPageId != dwNewPageId)
+            {
+                // Enable disable controls per-page.
+                if (m_rgdwPageIds[PREQBA_PAGE_WELCOME] == dwNewPageId) // on the "Welcome" page, ensure the install button is enabled/disabled correctly.
+                {
+                    BOOL fAcceptedLicense = ThemeIsControlChecked(m_pTheme, PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX);
+                    ThemeControlEnable(m_pTheme, PREQBA_CONTROL_WELCOME_INSTALL_BUTTON, fAcceptedLicense);
+                }
 
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_INTRODUCTION_TEXT].hWnd, nShowEula);
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_EULA_LABEL_TEXT].hWnd, nShowEula);
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_EULA_LINK].hWnd, nShowEula);
+                ThemeShowPage(m_pTheme, dwOldPageId, SW_HIDE);
+                ThemeShowPage(m_pTheme, dwNewPageId, SW_SHOW);
+            }
+        }
+    }
 
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_PROGRESS_TEXT].hWnd, nShowProgress);
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_PERCENTAGE_TEXT].hWnd, nShowPercentage);
+    void DeterminePageId(
+        __in PREQBA_STATE state,
+        __out DWORD* pdwPageId
+        )
+    {
+        switch (state)
+        {
+        case PREQBA_STATE_INITIALIZING:
+            *pdwPageId = 0;
+            break;
 
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_INSTALL_BUTTON].hWnd, nShowInstall);
-            ::ShowWindow(m_pTheme->rgControls[PREQ_CONTROL_CLOSE_BUTTON].hWnd, nShowClose);
+        case PREQBA_STATE_INITIALIZED: __fallthrough;
+        case PREQBA_STATE_DETECTING: __fallthrough;
+        case PREQBA_STATE_DETECTED:
+            *pdwPageId = m_rgdwPageIds[PREQBA_PAGE_WELCOME];
+            break;
+
+        case PREQBA_STATE_PLANNING: __fallthrough;
+        case PREQBA_STATE_PLANNED: __fallthrough;
+        case PREQBA_STATE_APPLYING: __fallthrough;
+        case PREQBA_STATE_APPLIED:
+            *pdwPageId = m_rgdwPageIds[PREQBA_PAGE_PROGRESS];
+            break;
+
+        case PREQBA_STATE_FAILED:
+            *pdwPageId = m_rgdwPageIds[PREQBA_PAGE_FAILURE];
+            break;
         }
     }
 
@@ -772,7 +817,7 @@ public:
         __in HMODULE hModule,
         __in IBootstrapperEngine* pEngine,
         __in const BOOTSTRAPPER_COMMAND* pCommand
-        ) : CBalBaseBootstrapperApplication(pCommand->restart)
+        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart)
     {
         m_hUiThread = NULL;
         m_dwThreadId = 0;
@@ -781,18 +826,23 @@ public:
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));
 
         m_pTheme = NULL;
+        memset(m_rgdwPageIds, 0, sizeof(m_rgdwPageIds));
         m_fRegistered = FALSE;
         m_hWnd = NULL;
         m_hwndHover = NULL;
 
         m_fCanceled = FALSE;
-        m_state = PREQ_STATE_INITIALIZING;
+        m_state = PREQBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
+
+        m_fInstalledPrereqs = FALSE;
+        m_fRestartRequired = FALSE;
+        m_fAllowRestart = FALSE;
 
         m_sczNetfxPackageId = NULL;
 
         pEngine->AddRef();
-        m_pCore = pEngine;
+        m_pEngine = pEngine;
     }
 
     ~CPreqUserExperience()
@@ -806,7 +856,7 @@ public:
         }
 
         ReleaseNullStr(m_sczNetfxPackageId);
-        ReleaseObject(m_pCore);
+        ReleaseObject(m_pEngine);
     }
 
 private:
@@ -815,15 +865,20 @@ private:
 
     HMODULE m_hModule;
     BOOTSTRAPPER_COMMAND m_command;
-    IBootstrapperEngine* m_pCore;
+    IBootstrapperEngine* m_pEngine;
     THEME* m_pTheme;
+    DWORD m_rgdwPageIds[countof(vrgwzPageNames)];
     BOOL m_fRegistered;
     HWND m_hWnd;
     HWND m_hwndHover;
 
     BOOL m_fCanceled;
-    PREQ_STATE m_state;
+    PREQBA_STATE m_state;
     HRESULT m_hrFinal;
+
+    BOOL m_fInstalledPrereqs;
+    BOOL m_fRestartRequired;
+    BOOL m_fAllowRestart;
 
     LPWSTR m_sczNetfxPackageId;
 };

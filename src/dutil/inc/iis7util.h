@@ -129,43 +129,43 @@ typedef BOOL (CALLBACK* ENUMAPHOSTELEMENTPROC)(IAppHostElement*, LPVOID pContext
 
 HRESULT DAPI Iis7PutPropertyVariant(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in VARIANT vtPut
     );
 
 HRESULT DAPI Iis7PutPropertyInteger(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in DWORD dValue
     );
 
 HRESULT DAPI Iis7PutPropertyString(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
-    __in LPCWSTR wszString
+    __in LPCWSTR wzPropName,
+    __in LPCWSTR wzString
     );
 
 HRESULT DAPI Iis7PutPropertyBool(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in BOOL fValue);
 
 HRESULT DAPI Iis7GetPropertyVariant(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in VARIANT* vtGet
     );
 
 HRESULT DAPI Iis7GetPropertyString(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
-    __in LPWSTR* pwzGet
+    __in LPCWSTR wzPropName,
+    __in LPWSTR* psczGet
     );
 
 struct IIS7_APPHOSTELEMENTCOMPARISON
 {
-    LPCWSTR pwzElementName;
-    LPCWSTR pwzAttributeName;
+    LPCWSTR sczElementName;
+    LPCWSTR sczAttributeName;
     VARIANT* pvAttributeValue;
 };
 
@@ -176,17 +176,17 @@ BOOL DAPI Iis7IsMatchingAppHostElement(
 
 HRESULT DAPI Iis7FindAppHostElementString( 
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
-    __in LPCWSTR pwzAttributeValue,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
+    __in LPCWSTR wzAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
     );
 
 HRESULT DAPI Iis7FindAppHostElementInteger( 
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
     __in DWORD dwAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
@@ -194,8 +194,8 @@ HRESULT DAPI Iis7FindAppHostElementInteger(
 
 HRESULT DAPI Iis7FindAppHostElementVariant( 
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
     __in VARIANT* pvAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
@@ -211,7 +211,7 @@ HRESULT DAPI Iis7EnumAppHostElements(
 
 HRESULT DAPI Iis7FindAppHostMethod(
     __in IAppHostMethodCollection *pCollection,
-    __in LPCWSTR pwzMethodName,
+    __in LPCWSTR wzMethodName,
     __out IAppHostMethod** ppMethod,
     __out DWORD* pdwIndex
     );

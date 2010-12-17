@@ -68,6 +68,9 @@ HRESULT UserExperienceLoad(
 HRESULT UserExperienceUnload(
     __in BURN_USER_EXPERIENCE* pUserExperience
     );
+HRESULT UserExperienceRemove(
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    );
 HRESULT UserExperienceActivateEngine(
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __out_opt BOOL* pfActivated

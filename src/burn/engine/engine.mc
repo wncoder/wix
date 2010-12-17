@@ -167,7 +167,7 @@ Apply complete, result: 0x%1!x! restart: %2
 
 MessageId=500
 Severity=Success
-SymbolicName=MSG_SHUTDOWN
+SymbolicName=MSG_QUIT
 Language=English
-Shutdown, exit code: 0x%1!x!
+Shutting down, exit code: 0x%1!x!
 .

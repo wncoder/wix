@@ -20,7 +20,7 @@
 
 struct ESE_QUERY
 {
-    QUERY_TYPE qtQueryType;
+    ESE_QUERY_TYPE qtQueryType;
     BOOL fIndexRangeSet;
 
     JET_SESID jsSession;
@@ -187,7 +187,7 @@ LExit:
 
 // Utility function used by EnsureSchema()
 HRESULT AllocColumnCreateStruct(
-    __in const TABLE_SCHEMA *ptsSchema,
+    __in const ESE_TABLE_SCHEMA *ptsSchema,
     __deref_out JET_COLUMNCREATE **ppjccColumnCreate
     )
 {
@@ -268,7 +268,7 @@ LExit:
 
 // Utility function used by EnsureSchema()
 HRESULT AllocIndexCreateStruct(
-    __in const TABLE_SCHEMA *ptsSchema,
+    __in const ESE_TABLE_SCHEMA *ptsSchema,
     __deref_out JET_INDEXCREATE **ppjicIndexCreate
     )
 {
@@ -355,7 +355,7 @@ LExit:
 HRESULT EnsureSchema(
     __in JET_DBID jdbDb,
     __in JET_SESID jsSession,
-    __in DATABASE_SCHEMA *pdsSchema
+    __in ESE_DATABASE_SCHEMA *pdsSchema
     )
 {
     HRESULT hr = S_OK;
@@ -424,7 +424,7 @@ HRESULT EnsureSchema(
             for (dwColumn = 0;dwColumn < pdsSchema->ptsTables[dwTable].dwColumns; ++dwColumn)
             {
                 // Don't free this - it's just a shortcut to the current column within the struct
-                COLUMN_SCHEMA *pcsColumn = &(pdsSchema->ptsTables[dwTable].pcsColumns[dwColumn]);
+                ESE_COLUMN_SCHEMA *pcsColumn = &(pdsSchema->ptsTables[dwTable].pcsColumns[dwColumn]);
                 ULONG ulColumnSize = 0;
                 BOOL fNullable = pcsColumn->fNullable;
 
@@ -472,7 +472,7 @@ LExit:
 HRESULT DAPI EseEnsureDatabase(
     __in JET_SESID jsSession,
     __in_z LPCWSTR pszFile,
-    __in DATABASE_SCHEMA *pdsSchema,
+    __in ESE_DATABASE_SCHEMA *pdsSchema,
     __out JET_DBID* pjdbDb,
     __in BOOL fExclusive,
     __in BOOL fReadonly
@@ -832,7 +832,7 @@ LExit:
 
 HRESULT DAPI EseSetColumnBinary(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in_bcount(cbBuffer) const BYTE* pbBuffer,
     __in SIZE_T cbBuffer
@@ -850,7 +850,7 @@ LExit:
 
 HRESULT DAPI EseSetColumnDword(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in DWORD dwValue
     )
@@ -867,7 +867,7 @@ LExit:
 
 HRESULT DAPI EseSetColumnBool(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in BOOL fValue
     )
@@ -885,7 +885,7 @@ LExit:
 
 HRESULT DAPI EseSetColumnString(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __in_z LPCWSTR pwzValue
     )
@@ -903,7 +903,7 @@ LExit:
 
 HRESULT DAPI EseSetColumnEmpty(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn
     )
 {
@@ -919,7 +919,7 @@ LExit:
 
 HRESULT DAPI EseGetColumnBinary(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __deref_out_bcount(*piBuffer) BYTE** ppbBuffer,
     __inout SIZE_T* piBuffer
@@ -963,7 +963,7 @@ LExit:
 
 HRESULT DAPI EseGetColumnDword(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out DWORD *pdwValue
     )
@@ -980,7 +980,7 @@ LExit:
 
 HRESULT DAPI EseGetColumnBool(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out BOOL *pfValue
     )
@@ -1007,7 +1007,7 @@ LExit:
 
 HRESULT DAPI EseGetColumnString(
     __in JET_SESID jsSession,
-    __in TABLE_SCHEMA tsTable,
+    __in ESE_TABLE_SCHEMA tsTable,
     __in DWORD dwColumn,
     __out LPWSTR *ppszValue
     )
@@ -1036,7 +1036,7 @@ LExit:
 HRESULT DAPI EseBeginQuery(
     __in JET_SESID jsSession,
     __in JET_TABLEID jtTable,
-    __in QUERY_TYPE qtQueryType,
+    __in ESE_QUERY_TYPE qtQueryType,
     __out ESE_QUERY_HANDLE *peqhHandle
     )
 {
@@ -1085,7 +1085,7 @@ HRESULT DAPI SetQueryColumn(
     ExitOnJetFailure(jEr, hr, "Failed to begin new query");
 
     // If the query is wildcard, setup the cached copy of pvData
-    if (QUERY_EXACT != peqHandle->qtQueryType)
+    if (ESE_QUERY_EXACT != peqHandle->qtQueryType)
     {
         peqHandle->pvData[peqHandle->dwColumns] = MemAlloc(cbData, FALSE);
         ExitOnNull(peqHandle->pvData[peqHandle->dwColumns], hr, E_OUTOFMEMORY, "Failed to allocate memory");
@@ -1120,11 +1120,11 @@ HRESULT DAPI EseSetQueryColumnBinary(
 
     if (fFinal)
     {
-        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        if (ESE_QUERY_FROM_TOP == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnStartLimit;
         }
-        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        else if (ESE_QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnEndLimit;
         }
@@ -1149,11 +1149,11 @@ HRESULT DAPI EseSetQueryColumnDword(
 
     if (fFinal)
     {
-        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        if (ESE_QUERY_FROM_TOP == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnStartLimit;
         }
-        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        else if (ESE_QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnEndLimit;
         }
@@ -1179,11 +1179,11 @@ HRESULT DAPI EseSetQueryColumnBool(
 
     if (fFinal)
     {
-        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        if (ESE_QUERY_FROM_TOP == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnStartLimit;
         }
-        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        else if (ESE_QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnEndLimit;
         }
@@ -1212,11 +1212,11 @@ HRESULT DAPI EseSetQueryColumnString(
 
     if (fFinal)
     {
-        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        if (ESE_QUERY_FROM_TOP == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnStartLimit;
         }
-        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        else if (ESE_QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
         {
             jGrb = jGrb | JET_bitFullColumnEndLimit;
         }
@@ -1269,18 +1269,18 @@ HRESULT DAPI EseRunQuery(
 
     ESE_QUERY *peqHandle = static_cast<ESE_QUERY *>(eqhHandle);
 
-    if (QUERY_EXACT == peqHandle->qtQueryType)
+    if (ESE_QUERY_EXACT == peqHandle->qtQueryType)
     {
         jEr = JetSeek(peqHandle->jsSession, peqHandle->jtTable, JET_bitSeekEQ);
         ExitOnJetFailure(jEr, hr, "Failed to seek EQ within jet table");
     }
     else
     {
-        if (QUERY_FROM_TOP == peqHandle->qtQueryType)
+        if (ESE_QUERY_FROM_TOP == peqHandle->qtQueryType)
         {
             jGrbSeekType = JET_bitSeekGE;
         }
-        else if (QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
+        else if (ESE_QUERY_FROM_BOTTOM == peqHandle->qtQueryType)
         {
             jGrbSeekType = JET_bitSeekLE;
         }

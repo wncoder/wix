@@ -320,25 +320,30 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     IAppHostWritableAdminManager *pAdminMgr = NULL;
 
     LPWSTR pwz = NULL;
+    LPWSTR pwzLast = NULL;
     int iConfigElement = -1;
     int iAction = -1;
 
-    BOOL fRetryCommit;
+    int iRetryCount = 0;
 
     hr = ::CoInitialize(NULL);
     ExitOnFailure(hr, "Failed to initialize COM");
     fInitializedCom = TRUE;
 
-    hr = ::CoCreateInstance( __uuidof(AppHostWritableAdminManager),
-                            NULL,
-                            CLSCTX_INPROC_SERVER,
-                            __uuidof(IAppHostWritableAdminManager),
-                            reinterpret_cast<void**> (&pAdminMgr));
-    ExitOnFailure(hr , "Failed to open AppHostWritableAdminManager to configure IIS7");
 
-    pwz = pwzData;
+    pwz = pwzLast = pwzData;
     while (S_OK == (hr = WcaReadIntegerFromCaData(&pwz, &iAction)))
     {
+        if (NULL == pAdminMgr)
+        {
+            hr = ::CoCreateInstance( __uuidof(AppHostWritableAdminManager),
+                                    NULL,
+                                    CLSCTX_INPROC_SERVER,
+                                    __uuidof(IAppHostWritableAdminManager),
+                                    reinterpret_cast<void**> (&pAdminMgr));
+            ExitOnFailure(hr , "Failed to open AppHostWritableAdminManager to configure IIS7");
+        }
+
         switch (iAction)
         {
         case IIS_SITE:
@@ -473,28 +478,41 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
         }
         if (S_OK == hr)
         {
-            do
+            // commit config changes now to close out IIS Admin changes,
+            // the Rollback or Commit defered CAs will determine final commit status.
+            hr = pAdminMgr->CommitChanges();
+
+            // Our transaction may have been interrupted.
+            if (hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION))
             {
-                fRetryCommit = FALSE;
-
-                // commit config changes now to close out IIS Admin changes,
-                // the Rollback or Commit defered CAs will determine final commit status.
-                hr = pAdminMgr->CommitChanges();
-                for (int i = 100; i > 0 && HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr; i--)
+                if (++iRetryCount > 30)
                 {
-                    ::Sleep(300);
-                    WcaLog(LOGMSG_VERBOSE, "Failed to Commit IIS changes, retrying %d more time(s)...", i);
-                    hr = pAdminMgr->CommitChanges();
+                    if (IDRETRY == WcaErrorMessage(msierrIISFailedCommitInUse, hr, INSTALLMESSAGE_ERROR | MB_RETRYCANCEL, 0))
+                    {
+                        iRetryCount = 0;
+                    }
+                    else
+                    {
+                        ExitOnFailure(hr, "Failed to Commit IIS Config Changes, user has chosen to cancel");
+                    }
                 }
 
-                // Still in use after retries, let the user choose if they want to cancel or try again
-                if (hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION))
-                {
-                    fRetryCommit = (IDRETRY == WcaErrorMessage(msierrIISFailedCommitInUse, hr, INSTALLMESSAGE_ERROR | MB_RETRYCANCEL, 0));
-                }
-            } while (fRetryCommit);
+                // Throw away the changes since IIS has no way to remove uncommited changes from an AdminManager.
+                ReleaseNullObject(pAdminMgr);
 
-            ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
+                // Rollback our CA data
+                RevertCustomActionData(pwzLast, pwz);
+                pwz = pwzLast;
+            }
+            else if (FAILED(hr))
+            {
+                ExitOnFailure(hr , "Failed to Commit IIS Config Changes");
+            }
+            else
+            {
+                // store a pointer to the last place that we successfully commited changes.
+                pwzLast = pwz;
+            }
         }
     }
     if (E_NOMOREITEMS == hr) // If there are no more items, all is well
@@ -3437,8 +3455,8 @@ static HRESULT CreateSslBinding( IAppHostElement *pSiteElem, LPCWSTR pwzStoreNam
     hr = pBindingsElement->get_Collection(&pBindingsCollection);
     ExitOnFailure(hr, "Failed get bindings collection");
 
-    bindingInfo.comparison.pwzElementName = IIS_CONFIG_BINDING;
-    bindingInfo.comparison.pwzAttributeName = IIS_CONFIG_PROTOCOL;
+    bindingInfo.comparison.sczElementName = IIS_CONFIG_BINDING;
+    bindingInfo.comparison.sczAttributeName = IIS_CONFIG_PROTOCOL;
     vtProp.vt = VT_BSTR;
     vtProp.bstrVal = ::SysAllocString(L"https");
     bindingInfo.comparison.pvAttributeValue = &vtProp;

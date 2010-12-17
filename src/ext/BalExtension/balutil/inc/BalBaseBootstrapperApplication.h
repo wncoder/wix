@@ -18,7 +18,6 @@
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 
-
 class CBalBaseBootstrapperApplication : public IBootstrapperApplication
 {
 public: // IUnknown
@@ -460,7 +459,7 @@ protected:
             }
             else
             {
-                m_fCanceled = (IDYES == ::MessageBoxW(hWnd, wzMessage, wzCaption, MB_YESNO | MB_ICONSTOP));
+                m_fCanceled = (IDYES == ::MessageBoxW(hWnd, wzMessage, wzCaption, MB_YESNO | MB_ICONEXCLAMATION));
             }
         }
 
@@ -480,6 +479,7 @@ protected:
     }
 
     CBalBaseBootstrapperApplication(
+        __in IBootstrapperEngine* /*pEngine*/,
         __in BOOTSTRAPPER_RESTART restart
         )
     {

@@ -167,6 +167,7 @@
       <XmlSchema SourceFile="..\ext\SqlExtension\wixext\Xsd\sql.xsd"/>
       <XmlSchema SourceFile="..\ext\UtilExtension\wixext\Xsd\util.xsd"/>
       <XmlSchema SourceFile="..\ext\VSExtension\wixext\Xsd\vs.xsd"/>
+      <XmlSchema SourceFile="..\ext\BalExtension\wixext\Xsd\bal.xsd"/>
     </Topic>
     <Topic Title="Developing for WiX" SourceFile="html\wixdev.htm">
       <Topic Title="How to be a Windows Installer XML Developer" SourceFile="html\wixdev_getting_started.htm"/>

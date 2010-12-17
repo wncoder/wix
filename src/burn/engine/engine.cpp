@@ -39,6 +39,10 @@ static HRESULT RunEmbedded(
 static HRESULT RunUncache(
     __in BURN_ENGINE_STATE* pEngineState
     );
+static HRESULT RunApplication(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __out BOOL* pfReloadApp
+    );
 static HRESULT ProcessMessage(
     __in BURN_ENGINE_STATE* pEngineState,
     __in const MSG* pmsg
@@ -189,17 +193,14 @@ static HRESULT RunNormal(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwThreadId = 0;
-    IBootstrapperEngine* pEngineForApplication = NULL;
-    BOOL fStartupCalled = FALSE;
-    BOOL fRet = FALSE;
     BOOL fContinueExecution = TRUE;
-    MSG msg = { };
+    BOOL fReloadApp = FALSE;
 
-    // Initialize logging and the thread's message queue.
+    // Initialize logging.
     hr = LoggingOpen(&pEngineState->log, wzCommandLine, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to open log.");
 
+    // Ensure we're on a supported operating system.
     hr = ConditionGlobalCheck(&pEngineState->variables, &pEngineState->condition, pEngineState->command.display, &pEngineState->userExperience.dwExitCode, &fContinueExecution);
     ExitOnFailure(hr, "Failed to check global conditions");
 
@@ -211,9 +212,6 @@ static HRESULT RunNormal(
         ExitFunction1(hr = S_OK);
     }
 
-    ::PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
-    dwThreadId = ::GetCurrentThreadId();
-
     if (pEngineState->userExperience.fSplashScreen && BOOTSTRAPPER_DISPLAY_NONE < pEngineState->command.display)
     {
         SplashScreenCreate(hInstance, NULL, &pEngineState->command.hwndSplashScreen);
@@ -223,64 +221,32 @@ static HRESULT RunNormal(
     hr = CoreQueryRegistration(pEngineState);
     ExitOnFailure(hr, "Failed to query registration.");
 
-    // Load the bootstrapper application.
-    hr = EngineForApplicationCreate(pEngineState, dwThreadId, &pEngineForApplication);
-    ExitOnFailure(hr, "Failed to create engine for UX.");
-
-    hr = UserExperienceLoad(&pEngineState->userExperience, pEngineForApplication, &pEngineState->command);
-    ExitOnFailure(hr, "Failed to load UX.");
-
     // Set resume commandline
     hr = RegistrationSetResumeCommand(&pEngineState->registration, &pEngineState->command, &pEngineState->log);
     ExitOnFailure(hr, "Failed to set resume command");
 
-    fStartupCalled = TRUE;
-    hr = pEngineState->userExperience.pUserExperience->OnStartup();
-    ExitOnFailure(hr, "Failed to start bootstrapper application.");
-
-    // Enter the message pump.
-    while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
+    do
     {
-        if (-1 == fRet)
-        {
-            hr = E_UNEXPECTED;
-            ExitOnRootFailure(hr, "Unexpected return value from message pump.");
-        }
-        else
-        {
-            ProcessMessage(pEngineState, &msg);
-        }
-    }
+        fReloadApp = FALSE;
 
-    // get exit code
-    pEngineState->userExperience.dwExitCode = (DWORD)msg.wParam;
+        hr = RunApplication(pEngineState, &fReloadApp);
+        ExitOnFailure(hr, "Failed while running ");
+    } while (fReloadApp);
 
 LExit:
-    if (fStartupCalled)
-    {
-        int nResult = pEngineState->userExperience.pUserExperience->OnShutdown();
-        if (IDRESTART == nResult)
-        {
-            pEngineState->fRestart = TRUE;
-        }
-    }
-
-    // unload UX
-    UserExperienceUnload(&pEngineState->userExperience);
-
     // end per-machine process if running
     if (pEngineState->hElevatedProcess && INVALID_HANDLE_VALUE != pEngineState->hElevatedPipe)
     {
         PipeTerminateChildProcess(pEngineState->hElevatedProcess, pEngineState->hElevatedPipe);
     }
 
-    ReleaseObject(pEngineForApplication);
-
     // If the splash screen is still around, close it.
     if (::IsWindow(pEngineState->command.hwndSplashScreen))
     {
         ::PostMessageW(pEngineState->command.hwndSplashScreen, WM_CLOSE, 0, 0);
     }
+
+    UserExperienceRemove(&pEngineState->userExperience);
 
     return hr;
 }
@@ -355,6 +321,71 @@ static HRESULT RunUncache(
     }
 
     hr = S_OK;
+
+    return hr;
+}
+
+static HRESULT RunApplication(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __out BOOL* pfReloadApp
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD dwThreadId = 0;
+    IBootstrapperEngine* pEngineForApplication = NULL;
+    BOOL fStartupCalled = FALSE;
+    BOOL fRet = FALSE;
+    MSG msg = { };
+
+    ::PeekMessageW(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+    dwThreadId = ::GetCurrentThreadId();
+
+    // Load the bootstrapper application.
+    hr = EngineForApplicationCreate(pEngineState, dwThreadId, &pEngineForApplication);
+    ExitOnFailure(hr, "Failed to create engine for UX.");
+
+    hr = UserExperienceLoad(&pEngineState->userExperience, pEngineForApplication, &pEngineState->command);
+    ExitOnFailure(hr, "Failed to load UX.");
+
+    fStartupCalled = TRUE;
+    hr = pEngineState->userExperience.pUserExperience->OnStartup();
+    ExitOnFailure(hr, "Failed to start bootstrapper application.");
+
+    // Enter the message pump.
+    while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
+    {
+        if (-1 == fRet)
+        {
+            hr = E_UNEXPECTED;
+            ExitOnRootFailure(hr, "Unexpected return value from message pump.");
+        }
+        else
+        {
+            ProcessMessage(pEngineState, &msg);
+        }
+    }
+
+    // get exit code
+    pEngineState->userExperience.dwExitCode = (DWORD)msg.wParam;
+
+LExit:
+    if (fStartupCalled)
+    {
+        int nResult = pEngineState->userExperience.pUserExperience->OnShutdown();
+        if (IDRESTART == nResult)
+        {
+            pEngineState->fRestart = TRUE;
+        }
+        else if (IDRELOAD_BOOTSTRAPPER == nResult)
+        {
+            *pfReloadApp = TRUE;
+        }
+    }
+
+    // unload UX
+    UserExperienceUnload(&pEngineState->userExperience);
+
+    ReleaseObject(pEngineForApplication);
 
     return hr;
 }

@@ -15,6 +15,9 @@ if ""=="%_B%" goto SkipBurn
 pushd ..\dutil
 nant dutil.build %_S%
 popd
+pushd ..\ext\BalExtension
+nant balextension.build %_S%
+popd
 pushd ..\burn
 nant burn.build %_S%
 popd

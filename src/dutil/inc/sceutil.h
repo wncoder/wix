@@ -154,7 +154,7 @@ HRESULT DAPI SceSetColumnEmpty(
 HRESULT DAPI SceGetColumnBinary(
     __in SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
-    __out BYTE **ppbBuffer,
+    __out_opt BYTE **ppbBuffer,
     __inout SIZE_T *pcbBuffer
     );
 HRESULT DAPI SceGetColumnDword(
@@ -180,13 +180,11 @@ HRESULT DAPI SceBeginQuery(
     );
 HRESULT DAPI SceSetQueryColumnDword(
     __in SCE_QUERY_HANDLE sqhHandle,
-    __in const DWORD dwValue,
-    __in BOOL fFinal
+    __in const DWORD dwValue
     );
 HRESULT DAPI SceSetQueryColumnString(
     __in SCE_QUERY_HANDLE sqhHandle,
-    __in_z LPCWSTR pszString,
-    __in BOOL fFinal
+    __in_z LPCWSTR pszString
     );
 HRESULT DAPI SceRunQueryExact(
     __in SCE_QUERY_HANDLE *psqhHandle,

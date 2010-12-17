@@ -21,6 +21,9 @@
 extern "C" {
 #endif
 
+#define ReleaseDict(sdh) if (sdh) { DictDestroy(sdh); }
+#define ReleaseNullDict(sdh) if (sdh) { DictDestroy(sdh); sdh = NULL; }
+
 typedef void* STRINGDICT_HANDLE;
 
 HRESULT DAPI DictCreateWithEmbeddedKey(

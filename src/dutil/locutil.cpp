@@ -23,12 +23,10 @@ static HRESULT ParseWxl(
     __in IXMLDOMDocument* pixd,
     __out LOC_STRINGSET** ppLocStringSet
     );
-
 static HRESULT ParseWxlStrings(
     __in IXMLDOMElement* pElement,
     __in LOC_STRINGSET* pLocStringSet
     );
-
 static HRESULT ParseWxlString(
     __in IXMLDOMNode* pixn,
     __in DWORD dwIdx,
@@ -56,6 +54,42 @@ extern "C" HRESULT DAPI LocLoadFromFile(
 
 LExit:
     ReleaseObject(pixd);
+
+    return hr;
+}
+
+/********************************************************************
+ LocLoadFromFile - Loads a localization file from a module's data resource.
+
+ NOTE: The resource data must be UTF-8 encoded.
+*******************************************************************/
+HRESULT DAPI LocLoadFromResource(
+    __in HMODULE hModule,
+    __in_z LPCSTR szResource,
+    __out LOC_STRINGSET** ppLocStringSet
+    )
+{
+    HRESULT hr = S_OK;
+    LPVOID pvResource = NULL;
+    DWORD cbResource = 0;
+    LPWSTR sczXml = NULL;
+    IXMLDOMDocument* pixd = NULL;
+
+    hr = ResReadData(hModule, szResource, &pvResource, &cbResource);
+    ExitOnFailure(hr, "Failed to read theme from resource.");
+
+    hr = StrAllocStringAnsi(&sczXml, reinterpret_cast<LPCSTR>(pvResource), 0, CP_UTF8);
+    ExitOnFailure(hr, "Failed to convert XML document data from UTF-8 to unicode string.");
+
+    hr = XmlLoadDocument(sczXml, &pixd);
+    ExitOnFailure(hr, "Failed to load theme resource as XML document.");
+
+    hr = ParseWxl(pixd, ppLocStringSet);
+    ExitOnFailure(hr, "Failed to parse WXL.");
+
+LExit:
+    ReleaseObject(pixd);
+    ReleaseStr(sczXml);
 
     return hr;
 }

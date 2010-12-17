@@ -446,6 +446,7 @@ namespace Bootstrapper
                 VariableGetNumericHelper(&variables, L"CompatibilityMode");
                 VariableGetNumericHelper(&variables, L"Privileged");
                 VariableGetNumericHelper(&variables, L"SystemLanguageID");
+                VariableGetNumericHelper(&variables, L"TerminalServer");
                 VariableGetNumericHelper(&variables, L"UserLanguageID");
 
                 // known folders

@@ -18,7 +18,7 @@
 
 #include "precomp.h"
 
-HINSTANCE vhInstance = NULL;
+static HINSTANCE vhInstance = NULL;
 
 extern "C" BOOL WINAPI DllMain(
     IN HINSTANCE hInstance,
@@ -49,20 +49,11 @@ extern "C" HRESULT WINAPI BootstrapperApplicationCreate(
     )
 {
     HRESULT hr = S_OK;
-    INITCOMMONCONTROLSEX icc = { };
 
-    // Initialize common controls.
-    icc.dwSize = sizeof(icc);
-    icc.dwICC = ICC_PROGRESS_CLASS /* | ICC_STANDARD_CLASSES (requires 0x0501 == _WIN32_WINNT*/;
-    ::InitCommonControlsEx(&icc);
+    BalInitialize(pEngine);
 
-    // initialize theme util
-    hr = ThemeInitialize(vhInstance);
-    ExitOnFailure(hr, "Failed to initialize theme manager.");
-
-    // create user experience interface
     hr = CreateBootstrapperApplication(vhInstance, pEngine, pCommand, ppApplication);
-    ExitOnFailure(hr, "Failed to create bootstrapper application interface.");
+    BalExitOnFailure(hr, "Failed to create bootstrapper application interface.");
 
 LExit:
     return hr;
@@ -71,5 +62,5 @@ LExit:
 
 extern "C" void WINAPI BootstrapperApplicationDestroy()
 {
-    ThemeUninitialize();
+    BalUninitialize();
 }

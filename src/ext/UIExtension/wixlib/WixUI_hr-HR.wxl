@@ -463,7 +463,7 @@
     <String Id="Error1406" Overridable="yes">Nije moguće zapisati vrijednost [2] u ključ [3]. {{ Sistemska pogreška [4].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
     <String Id="Error1407" Overridable="yes">Nije moguće dohvatiti nazive vrijednosti za ključ [2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
     <String Id="Error1408" Overridable="yes">Nije moguće dohvatiti nazive potključeva za ključ [2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
-    <String Id="Error1409" Overridable="yes">Nije moguće pročitati sigurnosne informacije za ključ 2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
+    <String Id="Error1409" Overridable="yes">Nije moguće pročitati sigurnosne informacije za ključ [2]. {{ Sistemska pogreška [3].}} Provjerite imate li potreban pristup tom ključu ili se obratite osoblju za podršku.</String>
     <String Id="Error1410" Overridable="yes">Nije moguće povećati slobodan prostor registra. Za instalaciju aplikacije potrebno je najmanje [2] kB slobodnog prostora u registru.</String>
     <String Id="Error1500" Overridable="yes">U tijeku je druga instalacija. Morate dovršiti tu instalaciju prije nastavka ove.</String>
     <String Id="Error1501" Overridable="yes">Pogreška prilikom pristupa osiguranim podacima. Provjerite je li Windows Installer pravilno konfiguriran i pokušajte ponoviti instalaciju.</String>

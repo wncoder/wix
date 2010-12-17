@@ -360,7 +360,7 @@ public: // IBootstrapperApplication
         if (BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
         {
             hr = m_pEngine->SendEmbeddedProgress(dwProgressPercentage, dwOverallProgressPercentage, &nResult);
-            ExitOnFailure(hr, "Failed to send embedded progress.");
+            BalExitOnFailure(hr, "Failed to send embedded progress.");
         }
         else
         {
@@ -487,15 +487,15 @@ private: // privates
 
         // Initialize COM and theme.
         hr = ::CoInitialize(NULL);
-        ExitOnFailure(hr, "Failed to initialize COM.");
+        BalExitOnFailure(hr, "Failed to initialize COM.");
         fComInitialized = TRUE;
 
         hr = ThemeInitialize(pThis->m_hModule);
-        ExitOnFailure(hr, "Failed to initialize theme manager.");
+        BalExitOnFailure(hr, "Failed to initialize theme manager.");
 
         // Create main window.
         hr = pThis->CreateMainWindow();
-        ExitOnFailure(hr, "Failed to create main window.");
+        BalExitOnFailure(hr, "Failed to create main window.");
 
         // Okay, we're ready for packages now.
         pThis->SetState(WIXSTDBA_STATE_INITIALIZED, hr);
@@ -507,7 +507,7 @@ private: // privates
             if (-1 == fRet)
             {
                 hr = E_UNEXPECTED;
-                ExitOnFailure(hr, "Unexpected return value from message pump.");
+                BalExitOnFailure(hr, "Unexpected return value from message pump.");
             }
             else // TODO: bring this back when support loading a custom options dll, if (!::IsDialogMessageW(m_hwndOptionsDialog, &msg))
             {
@@ -551,23 +551,23 @@ private: // privates
 
         // load theme relative to stdux.dll.
         hr = PathRelativeToModule(&sczThemePath, L"thm.xml", m_hModule);
-        ExitOnFailure(hr, "Failed to combine module path with thm.xml.");
+        BalExitOnFailure(hr, "Failed to combine module path with thm.xml.");
 
         hr = ThemeLoadFromFile(sczThemePath, &m_pTheme);
-        ExitOnFailure(hr, "Failed to load theme from thm.xml.");
+        BalExitOnFailure(hr, "Failed to load theme from thm.xml.");
 
         hr = ProcessCommandLine();
-        ExitOnFailure(hr, "Unknown commandline parameters.");
+        BalExitOnFailure(hr, "Unknown commandline parameters.");
 
         if (NULL != m_sczLanguage)
         {
             hr = ThemeLoadLocFromFile(m_pTheme, m_sczLanguage, m_hModule);
-            ExitOnFailure(hr, "Failed to localize from /lang.");
+            BalExitOnFailure(hr, "Failed to localize from /lang.");
         }
         else
         {
             hr = ThemeLoadLocFromFile(m_pTheme, L"thm.wxl", m_hModule);
-            ExitOnFailure(hr, "Failed to localize from fallback language.");
+            BalExitOnFailure(hr, "Failed to localize from fallback language.");
         }
 
         // Register the window class and create the window.
@@ -593,7 +593,7 @@ private: // privates
         }
 
         // Update the caption if there are any formated strings in it.
-        hr = BalFormatString(m_pEngine, m_pTheme->wzCaption, &sczCaption);
+        hr = BalFormatString(m_pTheme->wzCaption, &sczCaption);
         if (SUCCEEDED(hr))
         {
             ThemeUpdateCaption(m_pTheme, sczCaption);
@@ -671,10 +671,10 @@ private: // privates
                         ++i;
 
                         hr = StrAllocString(&m_sczLanguage, &argv[i][0], 0);
-                        ExitOnFailure(hr, "Failed to copy language.");
+                        BalExitOnFailure(hr, "Failed to copy language.");
 
                         hr = StrAllocConcat(&m_sczLanguage, L".wxl", 0);
-                        ExitOnFailure(hr, "Failed to concatenate wxl extension.");
+                        BalExitOnFailure(hr, "Failed to concatenate wxl extension.");
                     }
                 }
             }
@@ -728,9 +728,15 @@ private: // privates
             }
             break;
 
+        case WM_QUERYENDSESSION:
+            if (ENDSESSION_CLOSEAPP == static_cast<DWORD>(lParam)) // deny Restart Manager requests to shutdown.
+            {
+                return FALSE;
+            }
+            break;
+
         case WM_CLOSE:
-            // If the user chose not to close, do not let the default window proc
-            // handle the message.
+            // If the user chose not to close, do *not* let the default window proc handle the message.
             if (!pBA->OnClose())
             {
                 return 0;
@@ -831,7 +837,7 @@ private: // privates
         LPWSTR sczLicensePath = NULL;
 
         hr = ThemeLoadControls(m_pTheme, hWnd, vrgInitControls, countof(vrgInitControls));
-        ExitOnFailure(hr, "Failed to load theme controls.");
+        BalExitOnFailure(hr, "Failed to load theme controls.");
 
         C_ASSERT(COUNT_WIXSTDBA_PAGE == countof(vrgwzPageNames));
         C_ASSERT(countof(m_rgdwPageIds) == countof(vrgwzPageNames));
@@ -840,16 +846,16 @@ private: // privates
 
         if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK))
         {
-            BOOL fEulaLink = BalStringVariableExists(m_pEngine, WIXSTDBA_VARIABLE_EULA_LINK_TARGET);
+            BOOL fEulaLink = BalStringVariableExists(WIXSTDBA_VARIABLE_EULA_LINK_TARGET);
             if (!fEulaLink)
             {
-                BalLog(m_pEngine, BOOTSTRAPPER_LOG_LEVEL_ERROR, "Failed to find EULA hyperlink control target from variable '%ls'", WIXSTDBA_VARIABLE_EULA_LINK_TARGET);
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "Failed to find EULA hyperlink control target from variable '%ls'", WIXSTDBA_VARIABLE_EULA_LINK_TARGET);
             }
         }
 
         if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT))
         {
-            hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_EULA_RTF_PATH, &sczLicensePath);
+            hr = BalGetStringVariable(WIXSTDBA_VARIABLE_EULA_RTF_PATH, &sczLicensePath);
             if (SUCCEEDED(hr))
             {
                 hr = ThemeLoadRichEditFromFile(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT, sczLicensePath, m_hModule);
@@ -857,7 +863,7 @@ private: // privates
 
             if (FAILED(hr))
             {
-                BalLog(m_pEngine, BOOTSTRAPPER_LOG_LEVEL_ERROR, "Failed to load file into EULA richedit control from variable '%ls' value: %ls", WIXSTDBA_VARIABLE_EULA_RTF_PATH, sczLicensePath);
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "Failed to load file into EULA richedit control from variable '%ls' value: %ls", WIXSTDBA_VARIABLE_EULA_RTF_PATH, sczLicensePath);
                 hr = S_OK;
             }
         }
@@ -883,7 +889,7 @@ private: // privates
 
         // Tell the core we're ready for the packages to be processed now.
         hr = m_pEngine->Detect();
-        ExitOnFailure(hr, "Failed to start detecting chain.");
+        BalExitOnFailure(hr, "Failed to start detecting chain.");
 
     LExit:
         SetState(WIXSTDBA_STATE_DETECTING, hr);
@@ -915,7 +921,7 @@ private: // privates
         }
 
         hr = m_pEngine->Plan(action);
-        ExitOnFailure(hr, "Failed to start planning packages.");
+        BalExitOnFailure(hr, "Failed to start planning packages.");
 
     LExit:
         SetState(WIXSTDBA_STATE_PLANNING, hr);
@@ -931,7 +937,7 @@ private: // privates
         HRESULT hr = S_OK;
 
         hr = m_pEngine->Apply(m_hWnd);
-        ExitOnFailure(hr, "Failed to start applying packages.");
+        BalExitOnFailure(hr, "Failed to start applying packages.");
 
     LExit:
         SetState(WIXSTDBA_STATE_APPLYING, hr);
@@ -975,11 +981,11 @@ private: // privates
         LPWSTR sczOptionsDllName = NULL;
         LPWSTR sczOptionsDllPath = NULL;
 
-        hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_OPTIONS_DLL_NAME, &sczOptionsDllName);
+        hr = BalGetStringVariable(WIXSTDBA_VARIABLE_OPTIONS_DLL_NAME, &sczOptionsDllName);
         if (SUCCEEDED(hr))
         {
             hr = PathRelativeToModule(&sczOptionsDllPath, sczOptionsDllName, m_hModule);
-            ExitOnFailure(hr, "Failed to get options dialog path.");
+            BalExitOnFailure(hr, "Failed to get options dialog path.");
 
             // TODO: load options DLL and get window handle.
         }
@@ -1122,8 +1128,8 @@ private: // privates
         LPWSTR sczLicensePath = NULL;
         URI_PROTOCOL protocol = URI_PROTOCOL_UNKNOWN;
 
-        hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_EULA_LINK_TARGET, &sczLicenseUrl);
-        ExitOnFailure(hr, "Failed to get URL to EULA.");
+        hr = BalGetStringVariable(WIXSTDBA_VARIABLE_EULA_LINK_TARGET, &sczLicenseUrl);
+        BalExitOnFailure(hr, "Failed to get URL to EULA.");
 
         hr = UriProtocol(sczLicenseUrl, &protocol);
         if (FAILED(hr) || URI_PROTOCOL_UNKNOWN == protocol)
@@ -1132,7 +1138,7 @@ private: // privates
         }
 
         hr = ShelExec(sczLicensePath ? sczLicensePath : sczLicenseUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
-        ExitOnFailure(hr, "Failed to launch URL to EULA.");
+        BalExitOnFailure(hr, "Failed to launch URL to EULA.");
 
     LExit:
         ReleaseStr(sczLicensePath);
@@ -1149,11 +1155,11 @@ private: // privates
         HRESULT hr = S_OK;
         LPWSTR sczLaunchTarget = NULL;
 
-        hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH, &sczLaunchTarget);
-        ExitOnFailure1(hr, "Failed to get launch target variable '%ls'.", WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
+        hr = BalGetStringVariable(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH, &sczLaunchTarget);
+        BalExitOnFailure1(hr, "Failed to get launch target variable '%ls'.", WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
 
         hr = ShelExec(sczLaunchTarget, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
-        ExitOnFailure1(hr, "Failed to launch target: %ls", sczLaunchTarget);
+        BalExitOnFailure1(hr, "Failed to launch target: %ls", sczLaunchTarget);
 
         ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
 
@@ -1193,7 +1199,11 @@ private: // privates
         if (FAILED(hrStatus))
         {
             m_hrFinal = hrStatus;
-            m_state = WIXSTDBA_STATE_FAILED;
+        }
+
+        if (FAILED(m_hrFinal))
+        {
+            state = WIXSTDBA_STATE_FAILED;
         }
 
         if (WIXSTDBA_STATE_REFRESH == state || m_state != state)
@@ -1232,10 +1242,10 @@ private: // privates
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
                 {
-                    HRESULT hr = BalGetStringVariable(m_pEngine, WIXSTDBA_VARIABLE_INSTALL_FOLDER, &sczUnformattedText);
+                    HRESULT hr = BalGetStringVariable(WIXSTDBA_VARIABLE_INSTALL_FOLDER, &sczUnformattedText);
                     if (SUCCEEDED(hr))
                     {
-                        BalFormatString(m_pEngine, sczUnformattedText, &sczText);
+                        BalFormatString(sczUnformattedText, &sczText);
                         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, sczText);
                     }
                 }
@@ -1254,7 +1264,7 @@ private: // privates
                     }
                     else if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
                     {
-                        BOOL fLaunchTargetExists = BalStringVariableExists(m_pEngine, WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
+                        BOOL fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
                         ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
                     }
                 }
@@ -1280,7 +1290,7 @@ private: // privates
                         // Format the text in each of the new page's controls (if they have any text).
                         if (pControl->wzText && *pControl->wzText)
                         {
-                            HRESULT hr = BalFormatString(m_pEngine, pControl->wzText, &sczText);
+                            HRESULT hr = BalFormatString(pControl->wzText, &sczText);
                             if (SUCCEEDED(hr))
                             {
                                 ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
@@ -1372,7 +1382,7 @@ public:
         __in HMODULE hModule,
         __in IBootstrapperEngine* pEngine,
         __in const BOOTSTRAPPER_COMMAND* pCommand
-        ) : CBalBaseBootstrapperApplication(pCommand->restart)
+        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart)
     {
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));

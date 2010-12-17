@@ -36,7 +36,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\build\obj\$(Configuration)\x86\core;$(ProjectDir)..\..\inc;$(ProjectDir)\..\..\engine\inc;$(ProjectDir)\..\..\..\dutil\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\build\obj\$(Configuration)\x86\core;$(ProjectDir)..\..\inc;$(ProjectDir)\..\..\engine\inc;$(ProjectDir)\..\..\..\dutil\inc;$(ProjectDir)..\..\..\ext\BalExtension\balutil\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;WIN32;_DEBUG;_WINDOWS;_USRDLL;HOST_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -50,7 +50,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>mscoree.lib;shlwapi.lib;dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mscoree.lib;shlwapi.lib;dutil_2010.lib;balutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\build\$(Configuration)\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>host.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

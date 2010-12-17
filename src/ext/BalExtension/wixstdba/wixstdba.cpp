@@ -50,8 +50,10 @@ extern "C" HRESULT WINAPI BootstrapperApplicationCreate(
 {
     HRESULT hr = S_OK;
 
+    BalInitialize(pEngine);
+
     hr = CreateBootstrapperApplication(vhInstance, pEngine, pCommand, ppApplication);
-    ExitOnFailure(hr, "Failed to create bootstrapper application interface.");
+    BalExitOnFailure(hr, "Failed to create bootstrapper application interface.");
 
 LExit:
     return hr;
@@ -60,4 +62,5 @@ LExit:
 
 extern "C" void WINAPI BootstrapperApplicationDestroy()
 {
+    BalUninitialize();
 }

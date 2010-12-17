@@ -35,7 +35,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\dutil\inc;$(ProjectDir)..\..\inc;$(ProjectDir)..\..\balutil\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\dutil\inc;$(ProjectDir)..\..\inc;$(ProjectDir)..\..\..\ext\BalExtension\balutil\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -51,7 +51,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;gdiplus.lib;shlwapi.lib;dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;gdiplus.lib;shlwapi.lib;dutil_2010.lib;balutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\build\$(Configuration)\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>preq.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>

@@ -416,7 +416,7 @@
     <String Id="Error21" Overridable="yes">Събиране на необходимата информация...</String>
     <String Id="Error22" Overridable="yes">Премахване на по-старите версии на това приложение...</String>
     <String Id="Error23" Overridable="yes">Подготовка за премахване на по-старите версии на това приложение...</String>
-    <String Id="Error32" Overridable="yes">Инсталирането на {[ProductName] завърши успешно.</String>
+    <String Id="Error32" Overridable="yes">Инсталирането на [ProductName] завърши успешно.</String>
     <String Id="Error33" Overridable="yes">Инсталирането на {[ProductName] } е неуспешно.</String>
     <String Id="Error1101" Overridable="yes">Грешка при четене от файл: [2]. {{ Системна грешка [3].}} Проверете дали файлът съществува и дали имате достъп до него.</String>
     <String Id="Error1301" Overridable="yes">Файлът "[2]" не може да се създаде. Вече съществува директория с това име. Отменете инсталирането, след което опитайте да инсталирате на друго местоположение.</String>

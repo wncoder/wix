@@ -24,6 +24,7 @@
 #define IDDOWNLOAD 101 // Only valid as a return code from OnResolveSource() to instruct the engine to use the download source.
 #define IDRESTART  102
 #define IDSUSPEND  103
+#define IDRELOAD_BOOTSTRAPPER 104
 
 enum BOOTSTRAPPER_ACTION
 {

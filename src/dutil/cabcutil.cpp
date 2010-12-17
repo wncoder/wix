@@ -462,7 +462,7 @@ extern "C" HRESULT DAPI CabCFinish(
     BOOL fFlushBefore = FALSE;
     BOOL fFlushAfter = FALSE;
 
-    DictDestroy(pcd->shDictHandle);
+    ReleaseDict(pcd->shDictHandle);
 
     // We need to go through all the files, duplicates and non-duplicates, sequentially in the order they were added
     for (dwCabFileIndex = 0; dwCabFileIndex < pcd->dwLastFileIndex; ++dwCabFileIndex)

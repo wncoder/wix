@@ -20,7 +20,7 @@
 
 extern "C" HRESULT DAPI Iis7PutPropertyVariant(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in VARIANT vtPut
     )
 {
@@ -28,14 +28,14 @@ extern "C" HRESULT DAPI Iis7PutPropertyVariant(
     IAppHostProperty *pProperty = NULL;
     BSTR bstrPropName = NULL;
 
-    bstrPropName = ::SysAllocString(wszPropName);
+    bstrPropName = ::SysAllocString(wzPropName);
     ExitOnNull(bstrPropName, hr, E_OUTOFMEMORY, "failed SysAllocString");
 
     hr = pElement->GetPropertyByName(bstrPropName, &pProperty);
-    ExitOnFailure1(hr, "Failed to get property object for %ls", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property object for %ls", wzPropName);
 
     hr = pProperty->put_Value(vtPut);
-    ExitOnFailure1(hr, "Failed to set property value for %ls", wszPropName);
+    ExitOnFailure1(hr, "Failed to set property value for %ls", wzPropName);
 
 LExit:
     ReleaseBSTR(bstrPropName);
@@ -47,17 +47,21 @@ LExit:
 
 extern "C" HRESULT DAPI Iis7PutPropertyString(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
-    __in LPCWSTR wszString
+    __in LPCWSTR wzPropName,
+    __in LPCWSTR wzString
     )
 {
     HRESULT hr = S_OK;
     VARIANT vtPut;
 
-    VariantInit(&vtPut);
+    ::VariantInit(&vtPut);
     vtPut.vt = VT_BSTR;
-    vtPut.bstrVal = SysAllocString(wszString);
-    hr = Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
+    vtPut.bstrVal = ::SysAllocString(wzString);
+    ExitOnNull(vtPut.bstrVal, hr, E_OUTOFMEMORY, "failed SysAllocString");
+
+    hr = Iis7PutPropertyVariant(pElement, wzPropName, vtPut);
+
+LExit:
     ReleaseVariant(vtPut);
 
     return hr;
@@ -65,34 +69,34 @@ extern "C" HRESULT DAPI Iis7PutPropertyString(
 
 extern "C" HRESULT DAPI Iis7PutPropertyInteger(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in DWORD dValue
     )
 {
     VARIANT vtPut;
-    VariantInit(&vtPut);
+
+    ::VariantInit(&vtPut);
     vtPut.vt = VT_I4;
     vtPut.lVal = dValue;
-
-    return Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
+    return Iis7PutPropertyVariant(pElement, wzPropName, vtPut);
 }
 
 extern "C" HRESULT DAPI Iis7PutPropertyBool(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in BOOL fValue)
 {
     VARIANT vtPut;
-    VariantInit(&vtPut);
+
+    ::VariantInit(&vtPut);
     vtPut.vt = VT_BOOL;
     vtPut.boolVal = (fValue == FALSE) ? VARIANT_FALSE : VARIANT_TRUE;
-
-    return Iis7PutPropertyVariant(pElement, wszPropName, vtPut);
+    return Iis7PutPropertyVariant(pElement, wzPropName, vtPut);
 }
 
 extern "C" HRESULT DAPI Iis7GetPropertyVariant(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
+    __in LPCWSTR wzPropName,
     __in VARIANT* vtGet
     )
 {
@@ -100,38 +104,45 @@ extern "C" HRESULT DAPI Iis7GetPropertyVariant(
     IAppHostProperty *pProperty = NULL;
     BSTR bstrPropName = NULL;
 
-    bstrPropName = ::SysAllocString(wszPropName);
+    bstrPropName = ::SysAllocString(wzPropName);
     ExitOnNull(bstrPropName, hr, E_OUTOFMEMORY, "failed SysAllocString");
 
     hr = pElement->GetPropertyByName(bstrPropName, &pProperty);
-    ExitOnFailure1(hr, "Failed to get property object for %ls", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property object for %ls", wzPropName);
 
     hr = pProperty->get_Value(vtGet);
-    ExitOnFailure1(hr, "Failed to get property value for %ls", wszPropName);
+    ExitOnFailure1(hr, "Failed to get property value for %ls", wzPropName);
 
 LExit:
     ReleaseBSTR(bstrPropName);
     // caller responsible for cleaning up variant vtGet
     ReleaseObject(pProperty);
+
     return hr;
 }
 
 extern "C" HRESULT DAPI Iis7GetPropertyString(
     __in IAppHostElement *pElement,
-    __in LPCWSTR wszPropName,
-    __in LPWSTR* pwzGet
+    __in LPCWSTR wzPropName,
+    __in LPWSTR* psczGet
     )
 {
     HRESULT hr = S_OK;
     VARIANT vtGet;
 
-    VariantInit(&vtGet);
-    hr = Iis7GetPropertyVariant(pElement, wszPropName, &vtGet);
-    if (SUCCEEDED(hr))
+    ::VariantInit(&vtGet);
+    hr = Iis7GetPropertyVariant(pElement, wzPropName, &vtGet);
+    ExitOnFailure1(hr, "Failed to get iis7 property variant with name: %ls", wzPropName);
+
+    if (VT_BSTR != vtGet.vt && VT_LPWSTR != vtGet.vt)
     {
-        Assert(VT_BSTR == vtGet.vt);
-        hr = StrAllocString(pwzGet, vtGet.bstrVal, 0);
+        hr = E_UNEXPECTED;
+        ExitOnFailure1(hr, "Tried to get property as a string, but type was %d instead.", vtGet.vt);
     }
+
+    hr = StrAllocString(psczGet, vtGet.bstrVal, 0);
+
+LExit:
     ReleaseVariant(vtGet);
 
     return hr;
@@ -143,6 +154,7 @@ BOOL CompareVariantDefault(
     )
 {
     BOOL fEqual = FALSE;
+
     switch (pVariant1->vt)
     {
         // VarCmp doesn't work for unsigned ints
@@ -207,17 +219,17 @@ extern "C" BOOL DAPI Iis7IsMatchingAppHostElement(
     BSTR bstrElementName = NULL;
 
     VARIANT vPropValue;
-    VariantInit(&vPropValue);
+    ::VariantInit(&vPropValue);
 
     hr = pElement->get_Name(&bstrElementName);
     ExitOnFailure(hr, "Failed to get name of element");
-    if (CSTR_EQUAL != ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pComparison->pwzElementName, -1, bstrElementName, -1))
+    if (CSTR_EQUAL != ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pComparison->sczElementName, -1, bstrElementName, -1))
     {
         ExitFunction();
     }
 
-    hr = Iis7GetPropertyVariant(pElement, pComparison->pwzAttributeName, &vPropValue);
-    ExitOnFailure2(hr, "Failed to get value of %ls attribute of %ls element", pComparison->pwzAttributeName, pComparison->pwzElementName);
+    hr = Iis7GetPropertyVariant(pElement, pComparison->sczAttributeName, &vPropValue);
+    ExitOnFailure2(hr, "Failed to get value of %ls attribute of %ls element", pComparison->sczAttributeName, pComparison->sczElementName);
 
     if (TRUE == CompareVariantDefault(pComparison->pvAttributeValue, &vPropValue))
     {
@@ -228,12 +240,13 @@ LExit:
     ReleaseBSTR(bstrElementName);
     ReleaseVariant(vPropValue);
     ReleaseObject(pProperty);
+
     return fResult;
 }
 
 BOOL DAPI IsMatchingAppHostMethod(
     __in IAppHostMethod *pMethod,
-    __in LPCWSTR pwzMethodName
+    __in LPCWSTR wzMethodName
    )
 {
     HRESULT hr = S_OK;
@@ -243,39 +256,42 @@ BOOL DAPI IsMatchingAppHostMethod(
     hr = pMethod->get_Name(&bstrName);
     ExitOnFailure(hr, "Failed to get name of element");
 
-    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pwzMethodName, -1, bstrName, -1))
+    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, wzMethodName, -1, bstrName, -1))
     {
         fResult = TRUE;
     }
 
 LExit:
     ReleaseBSTR(bstrName);
+
     return fResult;
 }
 
 extern "C" HRESULT DAPI Iis7FindAppHostElementString(
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
-    __in LPCWSTR pwzAttributeValue,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
+    __in LPCWSTR wzAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
     )
 {
     HRESULT hr = S_OK;
     VARIANT vtValue;
-    VariantInit(&vtValue);
+    ::VariantInit(&vtValue);
 
     vtValue.vt = VT_BSTR;
-    vtValue.bstrVal = ::SysAllocString(pwzAttributeValue);
+    vtValue.bstrVal = ::SysAllocString(wzAttributeValue);
+    ExitOnNull(vtValue.bstrVal, hr, E_OUTOFMEMORY, "failed SysAllocString");
 
     hr = Iis7FindAppHostElementVariant(pCollection,
-                                       pwzElementName,
-                                       pwzAttributeName,
+                                       wzElementName,
+                                       wzAttributeName,
                                        &vtValue,
                                        ppElement,
                                        pdwIndex);
 
+LExit:
     ReleaseVariant(vtValue);
 
     return hr;
@@ -283,8 +299,8 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementString(
 
 extern "C" HRESULT DAPI Iis7FindAppHostElementInteger(
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
     __in DWORD dwAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
@@ -292,14 +308,14 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementInteger(
 {
     HRESULT hr = S_OK;
     VARIANT vtValue;
-    VariantInit(&vtValue);
+    ::VariantInit(&vtValue);
 
     vtValue.vt = VT_UI4;
     vtValue.ulVal = dwAttributeValue;
 
     hr = Iis7FindAppHostElementVariant(pCollection,
-                                       pwzElementName,
-                                       pwzAttributeName,
+                                       wzElementName,
+                                       wzAttributeName,
                                        &vtValue,
                                        ppElement,
                                        pdwIndex);
@@ -311,16 +327,16 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementInteger(
 
 extern "C" HRESULT DAPI Iis7FindAppHostElementVariant(
     __in IAppHostElementCollection *pCollection,
-    __in LPCWSTR pwzElementName,
-    __in LPCWSTR pwzAttributeName,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
     __in VARIANT* pvAttributeValue,
     __out IAppHostElement** ppElement,
     __out DWORD* pdwIndex
     )
 {
     IIS7_APPHOSTELEMENTCOMPARISON comparison = { };
-    comparison.pwzElementName = pwzElementName;
-    comparison.pwzAttributeName = pwzAttributeName;
+    comparison.sczElementName = wzElementName;
+    comparison.sczAttributeName = wzAttributeName;
     comparison.pvAttributeValue = pvAttributeValue;
 
     return Iis7EnumAppHostElements(pCollection,
@@ -343,7 +359,7 @@ extern "C" HRESULT DAPI Iis7EnumAppHostElements(
     DWORD dwElements = 0;
 
     VARIANT vtIndex;
-    VariantInit(&vtIndex);
+    ::VariantInit(&vtIndex);
 
     if (NULL != ppElement)
     {
@@ -390,7 +406,7 @@ LExit:
 
 extern "C" HRESULT DAPI Iis7FindAppHostMethod(
     __in IAppHostMethodCollection *pCollection,
-    __in LPCWSTR pwzMethodName,
+    __in LPCWSTR wzMethodName,
     __out IAppHostMethod** ppMethod,
     __out DWORD* pdwIndex
     )
@@ -400,7 +416,7 @@ extern "C" HRESULT DAPI Iis7FindAppHostMethod(
     DWORD dwMethods = 0;
 
     VARIANT vtIndex;
-    VariantInit(&vtIndex);
+    ::VariantInit(&vtIndex);
 
     if (NULL != ppMethod)
     {
@@ -421,7 +437,7 @@ extern "C" HRESULT DAPI Iis7FindAppHostMethod(
         hr = pCollection->get_Item(vtIndex , &pMethod);
         ExitOnFailure(hr, "Failed get IAppHostMethod element");
 
-        if (IsMatchingAppHostMethod(pMethod, pwzMethodName))
+        if (IsMatchingAppHostMethod(pMethod, wzMethodName))
         {
             if (NULL != ppMethod)
             {

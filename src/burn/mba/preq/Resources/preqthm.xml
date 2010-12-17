@@ -5,40 +5,38 @@
   <Font id="2" Height="-16" Weight="700" Foreground="00ff00" Background="ffffff" Underline="no">Consolas</Font>
   <Font id="3" Height="-16" Weight="700" Foreground="ff0000" Background="ffffff" Underline="yes">Consolas</Font>
   <Font id="4" Height="-16" Weight="700" Foreground="0000ff" >Segoe UI</Font>
-  <Button Name="MinimizeButton" X="-30" Y="5" Width="12" Height="12" FontId="0">_</Button>
-  <Button Name="CloseButton" X="-15" Y="5" Width="12" Height="12" FontId="0">X</Button>
   <Page Name="Welcome">
     <Text Name="Title" x="10" y="10" Width="400" Height="40" FontId="0" >The .NET Framework 4.0 is required by [BundleName] to install.</Text>
     <!--Branding-->
     <!--<Image Name=".NET Brand image" x="10" y="10" Width="30" Height="30">Placeholder.ico</Image>-->
     <!--co-Branding-->
     <!--<Image Name="[bundle] Brand image" x="10" y="10" Width="30" Height="30">Placeholder.ico</Image>-->
-    
+
     <!--EULA Controls-->
     <Checkbox Name="EulaAcceptCheckbox" X="10" Y="65" Width="200" Height="20" FontId="1">Accept terms of use.</Checkbox>
     <Hyperlink Name="EulaHyperlink" X="10" Y="90" Width="-10" Height="24" FontId="3" HoverFontId="2" SelectedFontId="1">Click here for End User License Agreement</Hyperlink>
-    
+
     <!--Action Buttons-->
     <Button Name="InstallButton" x="-130" y="-10" Width="60" Height="24" FontId="0" >Install</Button>
     <Button Name="WelcomeCancelButton" X="-210" Y="-10" Width="60" Height="24" FontId="0">Cancel</Button>
   </Page>
   <Page Name="Progress">
     <Progressbar Name="ProgressBar" x="10" y="60" Height="20" Width="-10"/>
-    <Text Name="InstallingText" x="10" y="30" Width="300" Height="20" FontId="0" >Installing:</Text>
-    <Text Name="InstallingPackageText" x="190" y="90" Width="200" Height="20" FontId="0" >Package Name</Text>
+    <Text x="10" y="30" Width="300" Height="20" FontId="0" >Installing:</Text>
+    <Text Name="ProgressPackageName" x="190" y="90" Width="200" Height="20" FontId="0" >Package Name</Text>
     <!--<Text Name="Progress" x="310" y="90" Width="60" Height="20" FontId="0" >100%</Text>-->
     <Button Name="ProgressCancelButton" X="170" Y="-10" Width="60" Height="24" FontId="0">Cancel</Button>
 
   </Page>
   <Page Name="Failure">
-    <Text Name="InstallFailed" x="120" y="10" Width="-95" Height="30" FontId="4">Installation Failed.</Text>
+    <Text x="120" y="10" Width="-95" Height="30" FontId="4">Installation Failed.</Text>
     <!--add failure icon-->
-    <Text Name="InstallingText" x="10" y="50" Width="300" Height="20" FontId="0">--Failure Message--</Text>
-    
+    <Text Name="FailureText" x="10" y="50" Width="300" Height="20" FontId="0">--Failure Message--</Text>
+
     <!--Log-->
-    <Text Name="InstallingText" x="10" y="80" Width="110" Height="20" FontId="0">Please see the</Text>
-    <Hyperlink Name="EulaHyperlink" X="120" Y="80" Width="50" Height="20" FontId="3" HoverFontId="2" SelectedFontId="1">log.</Hyperlink>
-    
-    <Button Name="ProgressCancelButton" X="170" Y="-10" Width="60" Height="24" FontId="0">Close</Button>    
+    <Text x="10" y="80" Width="110" Height="20" FontId="0">Please see the</Text>
+    <Hyperlink Name="FailureLogHyperlink" X="120" Y="80" Width="50" Height="20" FontId="3" HoverFontId="2" SelectedFontId="1">log.</Hyperlink>
+
+    <Button Name="FailureCancelButton" X="170" Y="-10" Width="60" Height="24" FontId="0">Close</Button>
   </Page>
 </Theme>

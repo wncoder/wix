@@ -38,6 +38,11 @@ HRESULT DAPI LocLoadFromFile(
     __in_z LPCWSTR wzWxlFile,
     __out LOC_STRINGSET** ppLocStringSet
     );
+HRESULT DAPI LocLoadFromResource(
+    __in HMODULE hModule,
+    __in_z LPCSTR szResource,
+    __out LOC_STRINGSET** ppLocStringSet
+    );
 
 HRESULT DAPI LocLocalizeString(
     __in const LOC_STRINGSET* pLocStringSet,

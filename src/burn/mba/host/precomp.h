@@ -31,3 +31,5 @@
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 #include "IBootstrapperApplicationFactory.h"
+
+#include "balutil.h"

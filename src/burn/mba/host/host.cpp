@@ -95,16 +95,22 @@ extern "C" HRESULT WINAPI BootstrapperApplicationCreate(
    HRESULT hr = S_OK; 
     _AppDomain* pAppDomain = NULL;
 
+    BalInitialize(pEngine);
+
     hr = GetAppDomain(&pAppDomain);
     if (SUCCEEDED(hr))
     {
+        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Loading managed bootstrapper application.");
+
         hr = CreateManagedBootstrapperApplication(pAppDomain, pEngine, pCommand, ppUX);
-        ExitOnFailure(hr, "Failed to create the managed UX.");
+        BalExitOnFailure(hr, "Failed to create the managed UX.");
     }
     else // fallback to the pre-requisite UX.
     {
+        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Loading prerequisite bootstrapper application because managed host could not be loaded, error: 0x%08x.", hr);
+
         hr = CreatePrerequisiteUX(pEngine, pCommand, ppUX);
-        ExitOnFailure(hr, "Failed to create the pre-requisite UX.");
+        BalExitOnFailure(hr, "Failed to create the pre-requisite UX.");
     }
 
 LExit:
@@ -128,6 +134,8 @@ extern "C" void WINAPI BootstrapperApplicationDestroy()
         ::FreeLibrary(vhPrequxModule);
         vhPrequxModule = NULL;
     }
+
+    BalUninitialize();
 }
 
 // Gets the custom AppDomain for loading managed UX.

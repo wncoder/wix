@@ -248,6 +248,18 @@ DAPI_(HRESULT) ThemeLoadLocFromFile(
     __in HMODULE hModule
     );
 
+/********************************************************************
+ ThemeLoadLocFromResource - Loads a wxl file from a module's data
+ resource and localizes strings. Must be called after loading a theme.
+
+ NOTE: The resource data must be UTF-8 encoded.
+*******************************************************************/
+DAPI_(HRESULT) ThemeLoadLocFromResource(
+    __in THEME* pTheme,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    );
+
 DAPI_(HRESULT) ThemeLoadStrings(
     __in THEME* pTheme,
     __in HMODULE hResModule

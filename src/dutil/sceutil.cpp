@@ -21,6 +21,9 @@
 // This conflicts with some of SQLUtil's includes, so best to keep it out of precomp
 #include <sqlce_err.h>
 
+// Limit is documented as 4 GB, but for some reason the API's don't let us specify anything above 4091 MB.
+#define MAX_SQLCE_DATABASE_SIZE 4091
+
 // structs
 struct SCE_DATABASE_INTERNAL
 {
@@ -87,7 +90,7 @@ static HRESULT SetColumnValue(
 static HRESULT GetColumnValue(
     __in SCE_ROW *pRow,
     __in DWORD dwColumnIndex,
-    __out BYTE **ppbData,
+    __out_opt BYTE **ppbData,
     __out SIZE_T *cbSize
     );
 static HRESULT GetColumnValueFixed(
@@ -95,6 +98,9 @@ static HRESULT GetColumnValueFixed(
     __in DWORD dwColumnIndex,
     __in DWORD cbSize,
     __out BYTE *pbData
+    );
+static HRESULT SetDataSourceProperties(
+    __in ISessionProperties *pISessionProperties
     );
 static HRESULT SetSessionProperties(
     __in ISessionProperties *pISessionProperties
@@ -118,8 +124,9 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
     IUnknown *pIUnknownSession = NULL;
     IDBDataSourceAdmin *pIDBDataSourceAdmin = NULL; 
-    DBPROPSET rgdbpDataSourcePropSet[1];
-    DBPROP rgdbpDataSourceProp[2];
+    DBPROPSET rgdbpDataSourcePropSet[2];
+    DBPROP rgdbpDataSourceProp[1];
+    DBPROP rgdbpDataSourceSsceProp[1];
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
     ExitOnNull(pNewSceDatabase, hr, E_OUTOFMEMORY, "Failed to allocate SCE_DATABASE struct");
@@ -144,19 +151,23 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     rgdbpDataSourceProp[0].dwPropertyID = DBPROP_INIT_DATASOURCE;
     rgdbpDataSourceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
     rgdbpDataSourceProp[0].vValue.vt = VT_BSTR;
-    rgdbpDataSourceProp[0].vValue.bstrVal = SysAllocString(sczFile);
+    rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(sczFile);
 
-    // Never allow any automatic UI prompts for more info
-    rgdbpDataSourceProp[1].dwPropertyID = DBPROP_INIT_PROMPT;
-    rgdbpDataSourceProp[1].dwOptions = DBPROPOPTIONS_REQUIRED;
-    rgdbpDataSourceProp[1].vValue.vt = VT_I2;
-    rgdbpDataSourceProp[1].vValue.iVal = DBPROMPT_NOPROMPT;
-
+    // SQL CE doesn't seem to allow us to specify DBPROP_INIT_PROMPT if we include any properties from DBPROPSET_SSCE_DBINIT 
     rgdbpDataSourcePropSet[0].guidPropertySet = DBPROPSET_DBINIT;
     rgdbpDataSourcePropSet[0].rgProperties = rgdbpDataSourceProp;
-    rgdbpDataSourcePropSet[0].cProperties = sizeof(rgdbpDataSourceProp)/sizeof(rgdbpDataSourceProp[0]);
+    rgdbpDataSourcePropSet[0].cProperties = _countof(rgdbpDataSourceProp);
 
-    hr = pIDBDataSourceAdmin->CreateDataSource(1, rgdbpDataSourcePropSet, NULL, IID_IUnknown, &pIUnknownSession);
+    rgdbpDataSourceSsceProp[0].dwPropertyID = DBPROP_SSCE_MAX_DATABASE_SIZE;
+    rgdbpDataSourceSsceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
+    rgdbpDataSourceSsceProp[0].vValue.vt = VT_I4;
+    rgdbpDataSourceSsceProp[0].vValue.intVal = MAX_SQLCE_DATABASE_SIZE;
+
+    rgdbpDataSourcePropSet[1].guidPropertySet = DBPROPSET_SSCE_DBINIT;
+    rgdbpDataSourcePropSet[1].rgProperties = rgdbpDataSourceSsceProp;
+    rgdbpDataSourcePropSet[1].cProperties = _countof(rgdbpDataSourceSsceProp);
+
+    hr = pIDBDataSourceAdmin->CreateDataSource(_countof(rgdbpDataSourcePropSet), rgdbpDataSourcePropSet, NULL, IID_IUnknown, &pIUnknownSession);
     ExitOnFailure(hr, "Failed to create data source");
 
     hr = pNewSceDatabaseInternal->pIDBInitialize->QueryInterface(IID_IDBProperties, reinterpret_cast<void **>(&pNewSceDatabaseInternal->pIDBProperties));
@@ -177,20 +188,15 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     hr = pNewSceDatabaseInternal->pISessionProperties->QueryInterface(IID_ITransactionLocal, reinterpret_cast<void **>(&pNewSceDatabaseInternal->pITransactionLocal));
     ExitOnFailure(hr, "Failed to get ITransactionLocal interface");
 
+    *ppDatabase = pNewSceDatabase;
+    pNewSceDatabase = NULL;
+
 LExit:
     ReleaseStr(sczDirectory);
     ReleaseObject(pIUnknownSession);
     ReleaseObject(pIDBDataSourceAdmin);
     ReleaseVariant(rgdbpDataSourceProp[0].vValue);
-
-    if (FAILED(hr))
-    {
-        ReleaseDatabase(pNewSceDatabase);
-    }
-    else
-    {
-        *ppDatabase = pNewSceDatabase;
-    }
+    ReleaseDatabase(pNewSceDatabase);
 
     return hr;
 }
@@ -203,8 +209,9 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     HRESULT hr = S_OK;
     SCE_DATABASE *pNewSceDatabase = NULL;
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
-    DBPROPSET rgdbpDataSourcePropSet[1];
+    DBPROPSET rgdbpDataSourcePropSet[2];
     DBPROP rgdbpDataSourceProp[1];
+    DBPROP rgdbpDataSourceSsceProp[1];
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
     ExitOnNull(pNewSceDatabase, hr, E_OUTOFMEMORY, "Failed to allocate SCE_DATABASE struct");
@@ -223,13 +230,23 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     rgdbpDataSourceProp[0].dwPropertyID = DBPROP_INIT_DATASOURCE;
     rgdbpDataSourceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
     rgdbpDataSourceProp[0].vValue.vt = VT_BSTR;
-    rgdbpDataSourceProp[0].vValue.bstrVal = SysAllocString(sczFile);
+    rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(sczFile);
 
+    // SQL CE doesn't seem to allow us to specify DBPROP_INIT_PROMPT if we include any properties from DBPROPSET_SSCE_DBINIT 
     rgdbpDataSourcePropSet[0].guidPropertySet = DBPROPSET_DBINIT;
     rgdbpDataSourcePropSet[0].rgProperties = rgdbpDataSourceProp;
-    rgdbpDataSourcePropSet[0].cProperties = sizeof(rgdbpDataSourceProp)/sizeof(rgdbpDataSourceProp[0]);
+    rgdbpDataSourcePropSet[0].cProperties = _countof(rgdbpDataSourceProp);
 
-    hr = pNewSceDatabaseInternal->pIDBProperties->SetProperties(1, rgdbpDataSourcePropSet);
+    rgdbpDataSourceSsceProp[0].dwPropertyID = DBPROP_SSCE_MAX_DATABASE_SIZE;
+    rgdbpDataSourceSsceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
+    rgdbpDataSourceSsceProp[0].vValue.vt = VT_I4;
+    rgdbpDataSourceSsceProp[0].vValue.lVal = MAX_SQLCE_DATABASE_SIZE;
+
+    rgdbpDataSourcePropSet[1].guidPropertySet = DBPROPSET_SSCE_DBINIT;
+    rgdbpDataSourcePropSet[1].rgProperties = rgdbpDataSourceSsceProp;
+    rgdbpDataSourcePropSet[1].cProperties = _countof(rgdbpDataSourceSsceProp);
+
+    hr = pNewSceDatabaseInternal->pIDBProperties->SetProperties(_countof(rgdbpDataSourcePropSet), rgdbpDataSourcePropSet);
     ExitOnFailure(hr, "Failed to set initial properties to open database");
 
     hr = pNewSceDatabaseInternal->pIDBInitialize->Initialize();
@@ -250,15 +267,11 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     hr = pNewSceDatabaseInternal->pISessionProperties->QueryInterface(IID_ITransactionLocal, reinterpret_cast<void **>(&pNewSceDatabaseInternal->pITransactionLocal));
     ExitOnFailure(hr, "Failed to get ITransactionLocal interface");
 
+    *ppDatabase = pNewSceDatabase;
+    pNewSceDatabase = NULL;
+
 LExit:
-    if (FAILED(hr))
-    {
-        ReleaseDatabase(pNewSceDatabase);
-    }
-    else
-    {
-        *ppDatabase = pNewSceDatabase;
-    }
+    ReleaseDatabase(pNewSceDatabase);
 
     return hr;
 }
@@ -296,7 +309,6 @@ extern "C" HRESULT DAPI SceIsTableEmpty(
     )
 {
     HRESULT hr = S_OK;
-    DBCOUNTITEM cRowsObtained = 0;
     SCE_ROW_HANDLE row = NULL;
 
     hr = SceGetFirstRow(pDatabase, dwTableIndex, &row);
@@ -473,7 +485,6 @@ extern "C" HRESULT DAPI ScePrepareInsert(
     )
 {
     HRESULT hr = S_OK;
-    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
     SCE_ROW *pRow = NULL;
 
     pRow = reinterpret_cast<SCE_ROW *>(MemAlloc(sizeof(SCE_ROW), TRUE));
@@ -485,15 +496,11 @@ extern "C" HRESULT DAPI ScePrepareInsert(
     pRow->pIRowset->AddRef();
     pRow->fInserting = TRUE;
 
+    *pRowHandle = reinterpret_cast<SCE_ROW_HANDLE>(pRow);
+    pRow = NULL;
+
 LExit:
-    if (FAILED(hr))
-    {
-        ReleaseMem(pRow);
-    }
-    else
-    {
-        *pRowHandle = reinterpret_cast<SCE_ROW_HANDLE>(pRow);
-    }
+    ReleaseMem(pRow);
 
     return hr;
 }
@@ -660,7 +667,7 @@ LExit:
 extern "C" HRESULT DAPI SceGetColumnBinary(
     __in SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
-    __out BYTE **ppbBuffer,
+    __out_opt BYTE **ppbBuffer,
     __inout SIZE_T *pcbBuffer
     )
 {
@@ -771,14 +778,13 @@ extern "C" HRESULT DAPI SceBeginQuery(
     ExitOnNull(psq, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for new sce query");
 
     *psqhHandle = static_cast<SCE_QUERY_HANDLE>(psq);
+    psq = NULL;
+
 LExit:
-    if (FAILED(hr))
+    if (psq != NULL)
     {
-        if (psq != NULL)
-        {
-            ReleaseMem(psq->rgBinding);
-            ReleaseMem(psq);
-        }
+        ReleaseMem(psq->rgBinding);
+        ReleaseMem(psq);
     }
 
     return hr;
@@ -786,8 +792,7 @@ LExit:
 
 HRESULT DAPI SceSetQueryColumnDword(
     __in SCE_QUERY_HANDLE sqhHandle,
-    __in const DWORD dwValue,
-    __in BOOL fFinal
+    __in const DWORD dwValue
     )
 {
     HRESULT hr = S_OK;
@@ -804,8 +809,7 @@ LExit:
 
 HRESULT DAPI SceSetQueryColumnString(
     __in SCE_QUERY_HANDLE sqhHandle,
-    __in_z LPCWSTR pszString,
-    __in BOOL fFinal
+    __in_z LPCWSTR pszString
     )
 {
     HRESULT hr = S_OK;
@@ -875,6 +879,8 @@ extern "C" HRESULT DAPI SceGetNextResultRow(
     SCE_ROW *pRow = NULL;
     SCE_QUERY_RESULTS *pQueryResults = reinterpret_cast<SCE_QUERY_RESULTS *>(sqrhHandle);
 
+    Assert(pRowHandle && (*pRowHandle == NULL));
+
     hr = pQueryResults->pIRowset->GetNextRows(DB_NULL_HCHAPTER, 0, 1, &cRowsObtained, &phRow);
     if (DB_S_ENDOFROWSET == hr)
     {
@@ -891,16 +897,15 @@ extern "C" HRESULT DAPI SceGetNextResultRow(
     pRow->pIRowset->AddRef();
 
     *pRowHandle = reinterpret_cast<SCE_ROW_HANDLE>(pRow);
+    pRow = NULL;
+    hRow = DB_NULL_HROW;
 
 LExit:
-    if (FAILED(hr))
+    if (DB_NULL_HROW != hRow)
     {
-        if (DB_NULL_HROW != hRow)
-        {
-            pQueryResults->pIRowset->ReleaseRows(1, &hRow, NULL, NULL, NULL);
-        }
-        ReleaseMem(pRow);
+        pQueryResults->pIRowset->ReleaseRows(1, &hRow, NULL, NULL, NULL);
     }
+    ReleaseMem(pRow);
 
     return hr;
 }
@@ -1283,7 +1288,7 @@ LExit:
 static HRESULT GetColumnValue(
     __in SCE_ROW *pRow,
     __in DWORD dwColumnIndex,
-    __out BYTE **ppbData,
+    __out_opt BYTE **ppbData,
     __out SIZE_T *cbSize
     )
 {
@@ -1312,40 +1317,42 @@ static HRESULT GetColumnValue(
     hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorLength, reinterpret_cast<void *>(&dwDataSize));
     ExitOnFailure(hr, "Failed to get size of data");
 
-    dbBinding.dwPart = DBPART_VALUE;
-    dbBinding.cbMaxLen = dwDataSize;
-
-    hr = pIAccessor->CreateAccessor(DBACCESSOR_ROWDATA, 1, &dbBinding, 0, &hAccessorValue, &dbBindStatus);
-    ExitOnFailure(hr, "Failed to create accessor");
-
-    if (DBBINDSTATUS_OK != dbBindStatus)
+    if (NULL != ppbData)
     {
-        hr = E_INVALIDARG;
-        ExitOnFailure(hr, "Bad bind status while creating accessor to get value");
+        dbBinding.dwPart = DBPART_VALUE;
+        dbBinding.cbMaxLen = dwDataSize;
+
+        hr = pIAccessor->CreateAccessor(DBACCESSOR_ROWDATA, 1, &dbBinding, 0, &hAccessorValue, &dbBindStatus);
+        ExitOnFailure(hr, "Failed to create accessor");
+
+        if (DBBINDSTATUS_OK != dbBindStatus)
+        {
+            hr = E_INVALIDARG;
+            ExitOnFailure(hr, "Bad bind status while creating accessor to get value");
+        }
+
+        if (DBTYPE_WSTR == dbBinding.wType)
+        {
+            hr = StrAlloc(reinterpret_cast<LPWSTR *>(&pvRawData), dwDataSize);
+            ExitOnFailure1(hr, "Failed to allocate space for string data while reading column %u", dwColumnIndex);
+        }
+        else
+        {
+            pvRawData = MemAlloc(dwDataSize, TRUE);
+            ExitOnNull1(pvRawData, hr, E_OUTOFMEMORY, "Failed to allocate space for data while reading column %u", dwColumnIndex);
+        }
+
+        hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorValue, pvRawData);
+        ExitOnFailure(hr, "Failed to read data value");
+
+        *ppbData = reinterpret_cast<BYTE *>(pvRawData);
+        pvRawData = NULL;
     }
 
-    if (DBTYPE_WSTR == dbBinding.wType)
-    {
-        hr = StrAlloc(reinterpret_cast<LPWSTR *>(&pvRawData), dwDataSize);
-        ExitOnFailure1(hr, "Failed to allocate space for string data while reading column %u", dwColumnIndex);
-    }
-    else
-    {
-        pvRawData = MemAlloc(dwDataSize, TRUE);
-        ExitOnNull1(pvRawData, hr, E_OUTOFMEMORY, "Failed to allocate space for data while reading column %u", dwColumnIndex);
-    }
-
-    hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorValue, pvRawData);
-    ExitOnFailure(hr, "Failed to read data value");
-
-    *ppbData = reinterpret_cast<BYTE *>(pvRawData);
     *cbSize = dwDataSize;
 
 LExit:
-    if (FAILED(hr))
-    {
-        ReleaseMem(pvRawData);
-    }
+    ReleaseMem(pvRawData);
 
     if (DB_NULL_HACCESSOR != hAccessorLength)
     {
@@ -1404,7 +1411,6 @@ static HRESULT GetColumnValueFixed(
 
     dbBinding.dwPart = DBPART_VALUE;
     dbBinding.cbMaxLen = cbSize;
-    DWORD64 cha = 0;
 
     hr = pIAccessor->CreateAccessor(DBACCESSOR_ROWDATA, 1, &dbBinding, 0, &hAccessorValue, &dbBindStatus);
     ExitOnFailure(hr, "Failed to create accessor");
@@ -1460,7 +1466,7 @@ static void ReleaseDatabase(
     SCE_DATABASE *pDatabase
     )
 {
-    if (NULL != pDatabase->sdbHandle)
+    if (NULL != pDatabase && NULL != pDatabase->sdbHandle)
     {
         ReleaseDatabaseInternal(reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle));
     }
