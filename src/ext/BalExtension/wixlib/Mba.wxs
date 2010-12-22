@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+   <!--
+     Copyright (c) Microsoft Corporation.  All rights reserved.
+
+     Mba.wxs - Managed UX resources.
+   -->
+   <Fragment>
+      <BootstrapperApplication Id='ManagedBootstrapperApplicationHost' SourceFile='mbahost.dll'>
+         <PayloadGroupRef Id='Mba' />
+         <PayloadGroupRef Id='MbaPreq' />
+      </BootstrapperApplication>
+   </Fragment>
+
+   <Fragment>
+      <PayloadGroup Id='Mba'>
+          <Payload SourceFile='BootstrapperCore.dll' />
+      </PayloadGroup>
+   </Fragment>
+
+   <Fragment>
+      <PayloadGroup Id='MbaPreq'>
+          <Payload SourceFile='mbapreq.dll' />
+          <Payload Name='mbapreq.thm' SourceFile='!(wix.PreqbaThemeXml=SourceDir\MbaPreqResources\mbapreq.thm)' />
+          <Payload Name='mbapreq.wxl' SourceFile='!(wix.PreqbaThemeWxl=SourceDir\MbaPreqResources\mbapreq.wxl)' />
+          <Payload Name='mbapreq.bmp' SourceFile='!(wix.PreqbaLogo=SourceDir\MbaPreqResources\mbapreq.bmp)' />
+      </PayloadGroup>
+   </Fragment>
+</Wix>

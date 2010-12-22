@@ -59,7 +59,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             try
             {
                 XslCompiledTransform xslt = new XslCompiledTransform();
-                xslt.Load(this.transform);
+                xslt.Load(this.transform, XsltSettings.TrustedXslt, new XmlUrlResolver());
 
                 using (XmlTextReader xmlReader = new XmlTextReader(new StringReader(wixString)))
                 {

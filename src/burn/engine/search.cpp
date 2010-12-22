@@ -971,8 +971,21 @@ static HRESULT MsiProductSearch(
         LogStringLine(REPORT_STANDARD, "Product not found: %ls", sczProductCode);
 
         // set value to indicate absent
-        value.Type = BURN_VARIANT_TYPE_NUMERIC;
-        value.llValue = INSTALLSTATE_ABSENT;
+        switch (pSearch->MsiProductSearch.Type)
+        {
+        case BURN_MSI_PRODUCT_SEARCH_TYPE_ASSIGNMENT: __fallthrough;
+        case BURN_MSI_PRODUCT_SEARCH_TYPE_VERSION:
+            value.Type = BURN_VARIANT_TYPE_NUMERIC;
+            value.llValue = 0;
+            break;
+        case BURN_MSI_PRODUCT_SEARCH_TYPE_LANGUAGE:
+            // is supposed to remain empty
+            break;
+        case BURN_MSI_PRODUCT_SEARCH_TYPE_STATE:
+            value.Type = BURN_VARIANT_TYPE_NUMERIC;
+            value.llValue = INSTALLSTATE_ABSENT;
+            break;
+        }
 
         hr = S_OK;
     }

@@ -176,22 +176,23 @@
     </exec>
   </target>
 
-  <target name="ambient" depends="toolsrc, trustmsbuildfiles, appsynup.inc" />
-  <target name="chm" depends="toolsrc, trustmsbuildfiles, core, ext, chm.inc" />
+  <target name="first" depends="trustmsbuildfiles" />
+  <target name="ambient" depends="first, appsynup.inc" />
+  <target name="chm" depends="core, ext, chm.inc" />
   <target name="core" depends="winterop, core.inc" />
-  <target name="dtf" depends="dtf.inc" />
+  <target name="dtf" depends="first, dtf.inc" />
   <target name="dutil" depends="dutil.inc" />
-  <target name="burn" depends="core, dutil, ext, burn.inc" />
+  <target name="burn" depends="first, dutil, burn.inc" />
   <target name="ext" depends="ambient, serverca, setupbld.inc, setupexe.inc, updateexe.inc, ext.inc, core, ext.sln.inc" />
   <target name="serverca" depends="wcautil, wixca, serverca.inc" />
   <target name="setup" depends="chm, core, ext, votive, setup.inc" />
-  <target name="toolsrc" depends="dutil, snskip, toolsrc.inc" />
+  <target name="toolsrc" depends="dutil, toolsrc.inc" />
   <target name="votive" depends="votive2005, votive2008, votive2010" />
   <target name="votive2005" depends="chm, core, ext, votive2005.inc" />
   <target name="votive2008" depends="chm, core, ext, votive2008.inc" />
   <target name="votive2010" depends="chm, core, ext, votive2010.inc" />
-  <target name="wcautil" depends="toolsrc, trustmsbuildfiles, wcautil.inc" />
-  <target name="winterop" depends="toolsrc, trustmsbuildfiles, winterop.inc" />
+  <target name="wcautil" depends="first, wcautil.inc" />
+  <target name="winterop" depends="first, winterop.inc" />
   <target name="wixca" depends="wcautil, wixca.inc" />
   <target name="zip" depends="setup, zip.inc" />
 

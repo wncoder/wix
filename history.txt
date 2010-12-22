@@ -795,3 +795,12 @@ RobMen: SFBUG:3076755 - preqba can now reload managed BA after installing NETFX.
 
 WixBuild: Version 3.6.1217.0
 
+RobMen: SFBUG:3107297 - center splash screen the same way WPF does.
+        Update WiX v3.6 install, icon, ARP info, splash screen.
+
+BMurri: SFBUG:3024936 - Remove unneeded restrictions on XSLT security.
+
+RobMen: SFBUG:3139522 - add MakeSfxCA.exe.config to binaries.zip file.
+
+WixBuild: Version 3.6.1222.0
+

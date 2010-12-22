@@ -23,9 +23,10 @@
 
 // struct
 
-struct SPLASHSCREEN_IMAGE
+struct SPLASHSCREEN_INFO
 {
     HBITMAP hBitmap;
+    POINT pt;
     SIZE size;
 };
 
@@ -48,6 +49,10 @@ static LRESULT CALLBACK WndProc(
     __in UINT uMsg,
     __in WPARAM wParam,
     __in LPARAM lParam
+    );
+static HRESULT LoadSplashScreen(
+    __in HMODULE hInstance,
+    __in SPLASHSCREEN_INFO* pSplashScreen
     );
 
 
@@ -94,8 +99,7 @@ static DWORD WINAPI ThreadProc(
     HRESULT hr = S_OK;
     SPLASHSCREEN_CONTEXT* pContext = static_cast<SPLASHSCREEN_CONTEXT*>(pvContext);
 
-    SPLASHSCREEN_IMAGE image = { };
-    BITMAP bmp = { };
+    SPLASHSCREEN_INFO splashScreenInfo = { };
 
     WNDCLASSW wc = { };
     BOOL fRegistered = TRUE;
@@ -104,12 +108,8 @@ static DWORD WINAPI ThreadProc(
     BOOL fRet = FALSE;
     MSG msg = { };
 
-    image.hBitmap = ::LoadBitmapW(pContext->hInstance, MAKEINTRESOURCEW(IDB_SPLASHSCREEN));
-    ExitOnNullWithLastError(image.hBitmap, hr, "Failed to load splash screen bitmap.");
-
-    ::GetObject(image.hBitmap, sizeof(bmp), static_cast<void*>(&bmp));
-    image.size.cx = bmp.bmWidth;
-    image.size.cy = bmp.bmHeight;
+    hr = LoadSplashScreen(pContext->hInstance, &splashScreenInfo);
+    ExitOnFailure(hr, "Failed to load splash screen.");
 
     // Register the window class and create the window.
     wc.lpfnWndProc = WndProc;
@@ -123,7 +123,7 @@ static DWORD WINAPI ThreadProc(
 
     fRegistered = TRUE;
 
-    hWnd = ::CreateWindowExW(0, wc.lpszClassName, pContext->wzCaption, WS_POPUP | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, image.size.cx, image.size.cy, HWND_DESKTOP, NULL, pContext->hInstance, &image);
+    hWnd = ::CreateWindowExW(0, wc.lpszClassName, pContext->wzCaption, WS_POPUP | WS_VISIBLE, splashScreenInfo.pt.x, splashScreenInfo.pt.y, splashScreenInfo.size.cx, splashScreenInfo.size.cy, HWND_DESKTOP, NULL, pContext->hInstance, &splashScreenInfo);
     ExitOnNullWithLastError(hWnd, hr, "Failed to create window.");
 
     // Return the splash screen window and free the main thread waiting for us to be initialized.
@@ -151,9 +151,9 @@ LExit:
         ::UnregisterClassW(BURN_SPLASHSCREEN_CLASS_WINDOW, pContext->hInstance);
     }
 
-    if (image.hBitmap)
+    if (splashScreenInfo.hBitmap)
     {
-        ::DeleteObject(image.hBitmap);
+        ::DeleteObject(splashScreenInfo.hBitmap);
     }
 
     return hr;
@@ -167,7 +167,7 @@ static LRESULT CALLBACK WndProc(
     )
 {
     LRESULT lres = 0;
-    SPLASHSCREEN_IMAGE* pImage = reinterpret_cast<SPLASHSCREEN_IMAGE*>(::GetWindowLongW(hWnd, GWLP_USERDATA));
+    SPLASHSCREEN_INFO* pImage = reinterpret_cast<SPLASHSCREEN_INFO*>(::GetWindowLongW(hWnd, GWLP_USERDATA));
 
     switch (uMsg)
     {
@@ -203,4 +203,43 @@ static LRESULT CALLBACK WndProc(
     }
 
     return ::DefWindowProcW(hWnd, uMsg, wParam, lParam);
+}
+
+static HRESULT LoadSplashScreen(
+    __in HMODULE hInstance,
+    __in SPLASHSCREEN_INFO* pSplashScreen
+    )
+{
+    HRESULT hr = S_OK;
+    BITMAP bmp = { };
+    POINT ptCursor = { };
+    HMONITOR hMonitor = NULL;
+    MONITORINFO mi = { };
+
+    pSplashScreen->hBitmap = ::LoadBitmapW(hInstance, MAKEINTRESOURCEW(IDB_SPLASHSCREEN));
+    ExitOnNullWithLastError(pSplashScreen->hBitmap, hr, "Failed to load splash screen bitmap.");
+
+    ::GetObject(pSplashScreen->hBitmap, sizeof(bmp), static_cast<void*>(&bmp));
+    pSplashScreen->pt.x = CW_USEDEFAULT;
+    pSplashScreen->pt.y = CW_USEDEFAULT;
+    pSplashScreen->size.cx = bmp.bmWidth;
+    pSplashScreen->size.cy = bmp.bmHeight;
+
+    // Center the window on the monitor with the mouse.
+    if (::GetCursorPos(&ptCursor))
+    {
+        hMonitor = ::MonitorFromPoint(ptCursor, MONITOR_DEFAULTTONEAREST);
+        if (hMonitor)
+        {
+            mi.cbSize = sizeof(mi);
+            if (::GetMonitorInfoW(hMonitor, &mi))
+            {
+                pSplashScreen->pt.x = mi.rcWork.left + (mi.rcWork.right  - mi.rcWork.left - pSplashScreen->size.cx) / 2;
+                pSplashScreen->pt.y = mi.rcWork.top  + (mi.rcWork.bottom - mi.rcWork.top  - pSplashScreen->size.cy) / 2;
+            }
+        }
+    }
+
+LExit:
+    return hr;
 }

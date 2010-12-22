@@ -185,6 +185,8 @@ DECLARE_INTERFACE_IID_(IBootstrapperEngine, IUnknown, "6480D616-27A0-44D7-905B-8
         __in DWORD64 qwValue
         ) = 0;
 
+    STDMETHOD(CloseSplashScreen)() = 0;
+
     STDMETHOD(Detect)() = 0;
 
     STDMETHOD(Plan)(

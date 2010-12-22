@@ -161,10 +161,6 @@
   <property name="dir.src.burn" value="${dir.wixroot.src}\burn" readonly="true" />
   <property name="dir.src.burn.engine" value="${dir.src.burn}\engine" readonly="true" />
   <property name="dir.src.burn.test" value="${dir.wixroot.test}\src\Bootstrapper" readonly="true" />
-  <property name="dir.src.burn.mba" value="${dir.src.burn}\mba" readonly="true" />
-  <property name="dir.src.burn.mba.core" value="${dir.src.burn.mba}\core" readonly="true" />
-  <property name="dir.src.burn.mba.host" value="${dir.src.burn.mba}\host" readonly="true" />
-  <property name="dir.src.burn.mba.preq" value="${dir.src.burn.mba}\preq" readonly="true" />
   <property name="dir.src.ca" value="${dir.wixroot.src}\ca" readonly="true" />
   <property name="dir.src.ca.serverca" value="${dir.wixroot.src}\ca\serverca" readonly="true" />
   <property name="dir.src.ca.wcautil" value="${dir.wixroot.src}\ca\wcautil" readonly="true" />
@@ -184,6 +180,10 @@
   <property name="dir.src.ext" value="${dir.wixroot.src}\ext" readonly="true" />
   <property name="dir.src.balextension" value="${dir.src.ext}\BalExtension" readonly="true" />
   <property name="dir.src.balutil" value="${dir.src.balextension}\balutil" readonly="true" />
+  <property name="dir.src.burn.mba" value="${dir.src.balextension}\mba" readonly="true" />
+  <property name="dir.src.burn.mba.core" value="${dir.src.burn.mba}\core" readonly="true" />
+  <property name="dir.src.burn.mba.host" value="${dir.src.burn.mba}\host" readonly="true" />
+  <property name="dir.src.burn.mba.preq" value="${dir.src.burn.mba}\preq" readonly="true" />
   <property name="dir.src.heat" value="${dir.wixroot.src}\heat" readonly="true" />
   <property name="dir.src.insignia" value="${dir.wixroot.src}\insignia" readonly="true" />
   <property name="dir.src.light" value="${dir.wixroot.src}\light" readonly="true" />

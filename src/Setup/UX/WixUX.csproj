@@ -117,7 +117,7 @@
     <Resource Include="Resources\appbar.refresh.rest.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\burn\mba\core\core.csproj">
+    <ProjectReference Include="..\..\ext\BalExtension\mba\core\core.csproj">
       <Project>{015AA197-3CEC-4B06-B635-953B1A9619CF}</Project>
       <Name>core</Name>
     </ProjectReference>

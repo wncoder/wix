@@ -18,9 +18,11 @@
 
   <ItemGroup>
     <Compile Include="Bundle.wxs" />
-    <Compile Include="Mba.wxs" />
     <Compile Include="Netfx.wxs" />
     <None Include="License.rtf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="SplashScreen.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

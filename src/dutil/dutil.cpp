@@ -433,11 +433,11 @@ extern "C" HRESULT DAPI LoadSystemLibrary(
     if (L'\\' != wzPath[cch - 1])
     {
         hr = ::StringCchCatNW(wzPath, MAX_PATH, L"\\", 1);
-        ExitOnFailure(hr, "Failed to terminate the string with a backslash.");
+        ExitOnRootFailure(hr, "Failed to terminate the string with a backslash.");
     }
 
     hr = ::StringCchCatW(wzPath, MAX_PATH, wzModuleName);
-    ExitOnFailure1(hr, "Failed to create the fully-qualified path to %ls.", wzModuleName);
+    ExitOnRootFailure1(hr, "Failed to create the fully-qualified path to %ls.", wzModuleName);
 
     *phModule = ::LoadLibraryW(wzPath);
     ExitOnNullWithLastError1(*phModule, hr, "Failed to load the library %ls.", wzModuleName);

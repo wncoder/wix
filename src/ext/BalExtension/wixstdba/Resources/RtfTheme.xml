@@ -36,11 +36,11 @@
         <Button Name="ModifyCancelButton" X="-10" Y="-10" Width="100" Height="30" FontId="0">Close</Button>
         <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
     </Page>
-    <Page Name="Finish">
+    <Page Name="Success">
         <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Successful</Text>
         <Button Name="LaunchButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Launch</Button>
         <Button Name="RestartButton" X="-100" Y="-10" Width="80" Height="30" FontId="0" HideWhenDisabled="yes">Restart</Button>
-        <Button Name="FinishCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Finish</Button>
+        <Button Name="SuccessCancelButton" X="-10" Y="-10" Width="80" Height="30" FontId="0">Finish</Button>
         <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
     </Page>
     <Page Name="Failure">

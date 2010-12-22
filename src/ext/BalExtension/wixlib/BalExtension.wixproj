@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Compile Include="BalExtension.wxs" />
+    <Compile Include="Mba.wxs" />
     <Compile Include="wixstdba.wxs" />
   </ItemGroup>
   <ItemGroup>

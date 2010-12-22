@@ -30,6 +30,7 @@
   -->
 
   <include buildfile="balutil\balutil.build" unless="${property::exists('balutil.properties.defined')}" />
+  <include buildfile="mba\mba.build"  unless="${property::exists('mba.properties.defined')}" />
   <include buildfile="wixstdba\wixstdba.build" unless="${property::exists('wixstdba.properties.defined')}" />
 
   <!--
@@ -50,14 +51,15 @@
 
   <!-- Clean -->
   <target name="balextension.clean" description="Cleans the build"
-          depends="balutil.clean, wixstdba.clean">
+          depends="balutil.clean, mba.clean, wixstdba.clean">
     <delete dir="${dir.build.ext.balextension}" failonerror="false" if="${directory::exists(dir.build.ext.balextension)}" />
   </target>
 
   <!-- Inc -->
-  <target name="balextension.inc" description="Performs an incremental build" depends="balutil, wixstdba" />
+  <target name="balextension.inc" description="Performs an incremental build" depends="balutil, mba, wixstdba" />
 
   <target name="balutil" depends="balutil.inc" />
+  <target name="mba" depends="balutil, mba.inc" />
   <target name="wixstdba" depends="balutil, wixstdba.inc" />
 
   <!-- This prevents this file from being included more than once (by convention, not by syntax) -->

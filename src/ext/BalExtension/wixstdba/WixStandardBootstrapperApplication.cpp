@@ -881,11 +881,7 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
-        // If the splash screen is still around, close it since if there is a UI it's showing by now.
-        if (::IsWindow(m_command.hwndSplashScreen))
-        {
-             ::PostMessageW(m_command.hwndSplashScreen, WM_CLOSE, 0, 0);
-        }
+        m_pEngine->CloseSplashScreen();
 
         // Tell the core we're ready for the packages to be processed now.
         hr = m_pEngine->Detect();
@@ -1251,22 +1247,22 @@ private: // privates
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the restart or launch button should be enabled.
                 {
+                    BOOL fShowRestartButton = FALSE;
+                    BOOL fLaunchTargetExists = FALSE;
                     if (m_fRestartRequired)
                     {
-                        BOOL fShowRestartButton = FALSE;
                         if (BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
                         {
                             fShowRestartButton = TRUE;
                         }
-
-                        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton);
-                        ThemeShowControl(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton ? SW_SHOW : SW_HIDE);
                     }
                     else if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
                     {
-                        BOOL fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
-                        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                        fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
                     }
+
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton);
                 }
 
                 // Process each control for special handling in the new page.

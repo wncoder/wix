@@ -32,7 +32,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUX", "..\..\test\src\Bu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WixUX", "..\Setup\UX\WixUX.csproj", "{7C27518B-84AD-4679-8EF4-29DF552CF1AC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host", "mba\host\host.vcxproj", "{12C87C77-3547-44F8-8134-29BC915CB19D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host", "..\ext\BalExtension\mba\host\host.vcxproj", "{12C87C77-3547-44F8-8134-29BC915CB19D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "engine", "engine\engine.vcxproj", "{A1141964-22B1-A0B3-DE96-9875D04C7AE6}"
 EndProject
@@ -40,9 +40,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "balutil", "..\ext\BalExtens
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "mba", "mba", "{6928BF4D-7DCB-4AA3-9DD6-6A65678DD1F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "core", "mba\core\core.csproj", "{015AA197-3CEC-4B06-B635-953B1A9619CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "core", "..\ext\BalExtension\mba\core\core.csproj", "{015AA197-3CEC-4B06-B635-953B1A9619CF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "preq", "mba\preq\preq.vcxproj", "{F0442517-458D-457C-9A10-D84B2F7304F8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "preq", "..\ext\BalExtension\mba\preq\preq.vcxproj", "{F0442517-458D-457C-9A10-D84B2F7304F8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wixstdba", "..\ext\BalExtension\wixstdba\wixstdba.vcxproj", "{41085A22-E6AA-4E8B-AB1B-DDEE0DC89DFA}"
 	ProjectSection(ProjectDependencies) = postProject

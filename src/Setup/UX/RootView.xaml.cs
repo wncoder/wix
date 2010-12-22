@@ -37,6 +37,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         {
             this.DataContext = viewModel;
 
+            this.Loaded += (sender, e) => WixUX.Model.Engine.CloseSplashScreen();
             this.Closed += (sender, e) => this.Dispatcher.InvokeShutdown(); // shutdown dispatcher when the window is closed.
 
             this.InitializeComponent();

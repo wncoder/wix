@@ -30,6 +30,7 @@
   <property name="version.wixmajor" value="36" readonly="true" />
   <property name="dir.target.zips" value="${dir.target.wix}\release\${wixver}" readonly="true" />
   <property name="file.target.binaries.zip" value="${dir.target.zips}\wix${version.wixmajor}-binaries.zip" readonly="true" />
+  <property name="file.target.pdbs.zip" value="${dir.target.zips}\wix${version.wixmajor}-pdbs.zip" readonly="true" />
   <property name="file.target.sources.zip" value="${dir.target.zips}\wix${version.wixmajor}-sources.zip" readonly="true" />
   <property name="zip" value="${ship}" />
 
@@ -265,6 +266,7 @@
         <include name="Microsoft.Deployment.WindowsInstaller.Package.dll" />
         <include name="Microsoft.Deployment.WindowsInstaller.Package.xml" />
         <include name="MakeSfxCA.exe" />
+        <include name="MakeSfxCA.exe.config" />
       </fileset>
 
       <fileset prefix="sdk/x86" basedir="${dir.target.wix}">
@@ -421,6 +423,7 @@
 
         <!-- skip the files we don't want that match one of the above extensions -->
         <exclude name="doc/**/*" />
+        <exclude name="examples/**/*" />
         <exclude name="test/**/*" />
         <exclude name="**/*proj.FileList.txt" />
 
@@ -445,6 +448,68 @@
         <!-- skip the externals and the intermediate build files -->
         <exclude name="external/**/*" />
         <exclude name="build/**/*" />
+      </fileset>
+    </zip>
+
+    <zip zipfile="${file.target.pdbs.zip}">
+      <fileset basedir="${dir.target.wix.x86}">
+        <include name="*.pdb" />
+
+        <!-- skip pdbs that probably are not necessary for debugging -->
+        <exclude name="ambient.pdb" />
+        <exclude name="nit.pdb" />
+        <exclude name="directx.pdb" />
+        <exclude name="DocCompiler.pdb" />
+        <exclude name="firewall.pdb" />
+        <exclude name="FlattenXml.pdb" />
+        <exclude name="gaming.pdb" />
+        <exclude name="GenerateWixInclude.pdb" />
+        <exclude name="Inventory.pdb" />
+        <exclude name="lux.pdb" />
+        <exclude name="LuxCustomActions.pdb" />
+        <exclude name="LuxTasks.pdb" />
+        <exclude name="MakeSfxCA.pdb" />
+        <exclude name="melt.pdb" />
+        <exclude name="MigrateQTests.pdb" />
+        <exclude name="MsgGen.pdb" />
+        <exclude name="netfxca.pdb" />
+        <exclude name="nit.pdb" />
+        <exclude name="PrintEula.pdb" />
+        <exclude name="ResIdGen.pdb" />
+        <exclude name="sconce2005.pdb" />
+        <exclude name="sconce2008.pdb" />
+        <exclude name="setup.pdb" />
+        <exclude name="setupbld.pdb" />
+        <exclude name="SetupBuilder.pdb" />
+        <exclude name="sfxca.pdb" />
+        <exclude name="smoke.pdb" />
+        <exclude name="stdux.pdb" />
+        <exclude name="TestUX.pdb" />
+        <exclude name="UnitTest.pdb" />
+        <exclude name="update.pdb" />
+        <exclude name="votive2005.pdb" />
+        <exclude name="votive2008.pdb" />
+        <exclude name="VotivePP.pdb" />
+        <exclude name="WiFile.pdb" />
+        <exclude name="WixBuild.pdb" />
+        <exclude name="WixCop.pdb" />
+        <exclude name="WixTests.pdb" />
+        <exclude name="WixTestTools.pdb" />
+        <exclude name="WixUnit.pdb" />
+        <exclude name="WixValidatorExampleExtension.pdb" />
+        <exclude name="wui.pdb" />
+        <exclude name="XPack.pdb" />
+        <exclude name="XsdGen.pdb" />
+        <exclude name="XsdStitch.pdb" />
+      </fileset>
+
+      <fileset prefix="x64" basedir="${dir.target.wix.x64}">
+        <include name="wixca_x64.pdb" />
+        <include name="sfxca.pdb" />
+      </fileset>
+
+      <fileset prefix="ia64" basedir="${dir.target.wix.ia64}">
+        <include name="wixca_ia64.pdb" if="${ia64}" />
       </fileset>
     </zip>
   </target>

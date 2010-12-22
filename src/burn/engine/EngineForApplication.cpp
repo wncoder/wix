@@ -187,18 +187,21 @@ public: // IBootstrapperEngine
         if (wzIn && *wzIn && pcchOut)
         {
             hr = VariableFormatString(&m_pEngineState->variables, wzIn, &sczValue, &cchValue);
-            if (wzOut)
+            if (SUCCEEDED(hr))
             {
-                hr = ::StringCchCopyExW(wzOut, *pcchOut, sczValue, NULL, NULL, STRSAFE_FILL_BEHIND_NULL);
-                if (FAILED(hr))
+                if (wzOut)
                 {
+                    hr = ::StringCchCopyExW(wzOut, *pcchOut, sczValue, NULL, NULL, STRSAFE_FILL_BEHIND_NULL);
+                    if (FAILED(hr))
+                    {
+                        *pcchOut = cchValue;
+                    }
+                }
+                else
+                {
+                    hr = E_MOREDATA;
                     *pcchOut = cchValue;
                 }
-            }
-            else
-            {
-                hr = E_MOREDATA;
-                *pcchOut = cchValue;
             }
         }
         else
@@ -596,6 +599,17 @@ public: // IBootstrapperEngine
 
     LExit:
         return hr;
+    }
+
+    virtual STDMETHODIMP CloseSplashScreen()
+    {
+        // If the splash screen is still around, close it.
+        if (::IsWindow(m_pEngineState->command.hwndSplashScreen))
+        {
+            ::PostMessageW(m_pEngineState->command.hwndSplashScreen, WM_CLOSE, 0, 0);
+        }
+
+        return S_OK;
     }
 
     virtual STDMETHODIMP Detect()

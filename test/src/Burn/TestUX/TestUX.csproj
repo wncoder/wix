@@ -23,7 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <ProjectReference Include="..\..\..\..\src\burn\mba\core\core.csproj">
+    <ProjectReference Include="..\..\..\..\src\ext\BalExtension\mba\core\core.csproj">
       <Project>{B3887367-D8D7-4FA4-94A7-02A67409905D}</Project>
     </ProjectReference>
   </ItemGroup>
