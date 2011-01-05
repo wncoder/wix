@@ -1474,3 +1474,11 @@ MikeHo: Fix bug where clicking back on Ready to Install page doesn't go to the p
 
 WixBuild: Version 3.5.2415.0
 
+RobMen: SFBUG:3139522 - add MakeSfxCA.exe.config to binaries.zip file.
+
+BobArnso: SFFeature:3130590 - Update DifxApp DLLs in DifxApp .wixlibs to 
+          version shipped in DDK 7600.16385.1.
+
+EricStJ: SFBUG:3147256 Votive 2005/2008 corrupts binary files in templates
+
+WixBuild: Version 3.5.2430.0

@@ -236,6 +236,7 @@
         <include name="Microsoft.Deployment.WindowsInstaller.Package.dll" />
         <include name="Microsoft.Deployment.WindowsInstaller.Package.xml" />
         <include name="MakeSfxCA.exe" />
+        <include name="MakeSfxCA.exe.config" />
       </fileset>
 
       <fileset prefix="sdk/x86" basedir="${dir.target.wix}">
