@@ -27,6 +27,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public sealed class HostSection : ConfigurationSection
     {
         private static readonly ConfigurationProperty assemblyNameProperty = new ConfigurationProperty("assemblyName", typeof(string), null, ConfigurationPropertyOptions.IsRequired);
+        private static readonly ConfigurationProperty supportedFrameworksProperty = new ConfigurationProperty("", typeof(SupportedFrameworkElementCollection), null, ConfigurationPropertyOptions.IsDefaultCollection);
 
         /// <summary>
         /// Creates a new instance of the <see cref="HostSection"/> class.
@@ -47,6 +48,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             get { return (string)base[assemblyNameProperty]; }
             set { base[assemblyNameProperty] = value; }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="SupportedFrameworkElementCollection"/> of supported frameworks for the host configuration.
+        /// </summary>
+        [ConfigurationProperty("", IsDefaultCollection = true)]
+        [ConfigurationCollection(typeof(SupportedFrameworkElement))]
+        public SupportedFrameworkElementCollection SupportedFrameworks
+        {
+            get { return (SupportedFrameworkElementCollection)base[supportedFrameworksProperty]; }
         }
     }
 }

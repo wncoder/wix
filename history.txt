@@ -804,3 +804,34 @@ RobMen: SFBUG:3139522 - add MakeSfxCA.exe.config to binaries.zip file.
 
 WixBuild: Version 3.6.1222.0
 
+RobMen: Remove unnecessary Action="createAndRemoveOnUninstall" so we do as we
+        tell others they should.
+
+RobMen: Hide Burn splash screen from task bar and Alt-Tab like most splash
+        screens do.
+
+RobMen: Fix potential hang in wixstdba due to SendMessage() on non-UI thread.
+        Return user exit error code when user cancels setup in wixstdba.
+        Support the -layout switch in wixstdba.
+
+RobMen: Bundle an MSI's external files.
+
+BobArnso: SFFeature:3130590 - Update DifxApp DLLs in DifxApp .wixlibs to 
+          version shipped in DDK 7600.16385.1.
+
+EricStJ: SFBUG:3147256 Votive 2005/2008 corrupts binary files in templates
+
+WixBuild: Version 3.6.1230.0
+
+RobMen: SFBUG:3107296 - allow BootstrapperCore.config to specify supported
+        framework versions (mainly to detect NETFX 3.0 and 3.5).
+        Clean up MBA code a bit.
+
+RobMen: Add Burn documentation on basics and wixstdba.
+
+WixBuild: Version 3.6.1307.0
+
+RobMen: Fix supportedFrameworks in Burn.
+
+WixBuild: Version 3.6.1308.0
+

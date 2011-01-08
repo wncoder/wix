@@ -123,7 +123,7 @@ static DWORD WINAPI ThreadProc(
 
     fRegistered = TRUE;
 
-    hWnd = ::CreateWindowExW(0, wc.lpszClassName, pContext->wzCaption, WS_POPUP | WS_VISIBLE, splashScreenInfo.pt.x, splashScreenInfo.pt.y, splashScreenInfo.size.cx, splashScreenInfo.size.cy, HWND_DESKTOP, NULL, pContext->hInstance, &splashScreenInfo);
+    hWnd = ::CreateWindowExW(WS_EX_TOOLWINDOW, wc.lpszClassName, pContext->wzCaption, WS_POPUP | WS_VISIBLE, splashScreenInfo.pt.x, splashScreenInfo.pt.y, splashScreenInfo.size.cx, splashScreenInfo.size.cy, HWND_DESKTOP, NULL, pContext->hInstance, &splashScreenInfo);
     ExitOnNullWithLastError(hWnd, hr, "Failed to create window.");
 
     // Return the splash screen window and free the main thread waiting for us to be initialized.

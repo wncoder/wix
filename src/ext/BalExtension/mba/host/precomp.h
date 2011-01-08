@@ -26,7 +26,9 @@
 
 #include <dutil.h>
 #include <pathutil.h>
+#include <regutil.h>
 #include <strutil.h>
+#include <xmlutil.h>
 
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"

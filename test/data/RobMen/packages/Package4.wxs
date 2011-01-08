@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="311536AE-F115-45F1-8009-2718F1B61C37" Name="Burn Test Package #4" Language="1033" Version="4.1.2.3"
+             Manufacturer="Microsoft Corporation" UpgradeCode="311536AE-F115-45F1-8009-2718F1B61C37">
+        <Package InstallScope="perUser" Description="Burn Test Package #4" InstallerVersion="200" />
+        <Media Id="1" />
+
+        <InstallExecuteSequence>
+            <Custom Action="WixFailWhenDeferred" Before="InstallFinalize">
+                FAIL=1
+            </Custom>
+        </InstallExecuteSequence>
+
+        <Feature Id="Test4" Title="Test4" Level="1">
+            <ComponentRef Id="MyComp" />
+        </Feature>
+    </Product>
+
+    <Fragment>
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="LocalAppDataFolder">
+                <Directory Id="MyFolder" Name="~WiX Burn Test 4" FileSource="$(sys.SOURCEFILEDIR)">
+                    <Component Id="MyComp" Guid="*">
+                        <File Id="MyFile" Name="Package4.wxs" KeyPath="yes" />
+
+                        <RegistryKey Root="HKCU" Key="SOFTWARE\Microsoft\WiX_Burn">
+                            <RegistryValue Name="Test4" Value="true" Type="string" />
+                        </RegistryKey>
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+    </Fragment>
+</Wix>

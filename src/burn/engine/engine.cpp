@@ -26,7 +26,7 @@
 static HRESULT RunNormal(
     __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_z LPCWSTR wzCommandLine
+    __in_z_opt LPCWSTR wzCommandLine
     );
 static HRESULT RunElevated(
     __in BURN_ENGINE_STATE* pEngineState
@@ -34,7 +34,7 @@ static HRESULT RunElevated(
 static HRESULT RunEmbedded(
     __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_z LPCWSTR wzCommandLine
+    __in_z_opt LPCWSTR wzCommandLine
     );
 static HRESULT RunUncache(
     __in BURN_ENGINE_STATE* pEngineState
@@ -141,8 +141,6 @@ extern "C" HRESULT EngineRun(
     fRestart = engineState.fRestart;
 
 LExit:
-    CoreUninitialize(&engineState);
-
     if (fLogInitialized)
     {
         // If anything went wrong but the log was never open, try to open a "failure" log
@@ -154,6 +152,8 @@ LExit:
 
         LogUninitialize(FALSE);
     }
+
+    CoreUninitialize(&engineState);
 
     if (fXmlInitialized)
     {
@@ -189,7 +189,7 @@ LExit:
 static HRESULT RunNormal(
     __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_z LPCWSTR wzCommandLine
+    __in_z_opt LPCWSTR wzCommandLine
     )
 {
     HRESULT hr = S_OK;
@@ -278,7 +278,7 @@ LExit:
 static HRESULT RunEmbedded(
     __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_z LPCWSTR wzCommandLine
+    __in_z_opt LPCWSTR wzCommandLine
     )
 {
     HRESULT hr = S_OK;

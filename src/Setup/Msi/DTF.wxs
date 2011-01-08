@@ -35,8 +35,7 @@
             <Component Id="Microsoft.Deployment.WindowsInstaller" Guid="6B3BD9A5-C29D-44A7-9246-D31CC5E51364" Win64="no">
                 <File Source="Microsoft.Deployment.WindowsInstaller.dll" KeyPath="yes" Vital="yes" />
                 <File Source="Microsoft.Deployment.WindowsInstaller.xml" Vital="yes" />
-                <RegistryKey Id="WixAssemblyFoldersReg" Action="createAndRemoveOnUninstall"
-                 Root="HKLM" Key="SOFTWARE\Microsoft\.NETFramework\AssemblyFolders\WiX $(var.WixMajorMinor)">
+                <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\.NETFramework\AssemblyFolders\WiX $(var.WixMajorMinor)">
                   <RegistryValue Id="WixAssemblyFoldersRegValue" Type="string" Value="[SdkDir]" />
                 </RegistryKey>
             </Component>

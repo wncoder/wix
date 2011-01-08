@@ -307,7 +307,16 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
 
         if (!::RemoveDirectoryW(wzPath))
         {
-            ExitWithLastError1(hr, "Failed to remove directory: %ls", wzPath);
+            hr = HRESULT_FROM_WIN32(::GetLastError());
+            if (HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr && fScheduleDelete)
+            {
+                if (::MoveFileExW(wzPath, NULL, MOVEFILE_DELAY_UNTIL_REBOOT))
+                {
+                    hr = S_OK;
+                }
+            }
+
+            ExitOnRootFailure1(hr, "Failed to remove directory: %ls", wzPath);
         }
     }
     else

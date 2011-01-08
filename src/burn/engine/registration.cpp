@@ -626,8 +626,8 @@ extern "C" HRESULT RegistrationSessionBegin(
                 hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
                 ExitOnFailure(hr, "Failed to write BundleVersion value.");
 
-                // DisplayIcon: [path to exe],1
-                hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,1", pRegistration->sczCacheExecutablePath);
+                // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
+                hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
                 ExitOnFailure(hr, "Failed to write DisplayIcon value.");
 
                 // DisplayName: provided by UI
@@ -730,8 +730,8 @@ extern "C" HRESULT RegistrationSessionBegin(
                 hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%s\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
                 ExitOnFailure(hr, "Failed to write QuietUninstallString value.");
 
-                // UninstallString, [path to exe] /uninstall
-                hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%s\" /uninstall", pRegistration->sczCacheExecutablePath);
+                // UninstallString, [path to exe] /uninstall /passive
+                hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%s\" /uninstall /passive", pRegistration->sczCacheExecutablePath);
                 ExitOnFailure(hr, "Failed to write UninstallString value.");
             }
 

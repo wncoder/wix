@@ -43,8 +43,8 @@ typedef struct _BURN_VARIABLE
 
     // used for late initialization of built-in variables
     BOOL fBuiltIn;
-    DWORD_PTR dwpInitializeData;
     PFN_INITIALIZEVARIABLE pfnInitialize;
+    DWORD_PTR dwpInitializeData;
 } BURN_VARIABLE;
 
 typedef struct _BURN_VARIABLES

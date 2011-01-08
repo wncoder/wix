@@ -53,7 +53,7 @@ typedef struct _BURN_LOGGING
 
 HRESULT LoggingOpen(
     __in BURN_LOGGING* pLog,
-    __in_z LPCWSTR wzCommandLine,
+    __in_z_opt LPCWSTR wzCommandLine,
     __in BURN_VARIABLES* pVariables
     );
 

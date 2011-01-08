@@ -12,7 +12,7 @@
 // </copyright>
 // 
 // <summary>
-// Source for the UX host class.
+// Source for the managed bootstrapper application host.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ extern "C" typedef HRESULT (WINAPI *PFN_CORBINDTOCURRENTRUNTIME)(
 
 static HINSTANCE vhInstance = NULL;
 static ICorRuntimeHost *vpCLRHost = NULL;
-static HMODULE vhPrequxModule = NULL;
+static HMODULE vhMbapreqModule = NULL;
 
 
 // internal function declarations
@@ -40,6 +40,9 @@ static HRESULT GetAppDomain(
     );
 static HRESULT GetAppBase(
     __out LPWSTR* psczAppBase
+    );
+static HRESULT CheckSupportedFrameworks(
+    __in LPCWSTR wzConfigPath
     );
 static HRESULT GetCLRHost(
     __in LPCWSTR wzConfigPath,
@@ -55,7 +58,7 @@ static HRESULT CreateManagedBootstrapperApplicationFactory(
     __in _AppDomain* pAppDomain,
     __out IBootstrapperApplicationFactory** ppAppFactory
     );
-static HRESULT CreatePrerequisiteUX(
+static HRESULT CreatePrerequisiteBA(
     __in IBootstrapperEngine* pEngine,
     __in const BOOTSTRAPPER_COMMAND* pCommand,
     __out IBootstrapperApplication** ppApplication
@@ -89,7 +92,7 @@ extern "C" BOOL WINAPI DllMain(
 extern "C" HRESULT WINAPI BootstrapperApplicationCreate(
     __in IBootstrapperEngine* pEngine,
     __in const BOOTSTRAPPER_COMMAND* pCommand,
-    __out IBootstrapperApplication** ppUX
+    __out IBootstrapperApplication** ppBA
     )
 {
    HRESULT hr = S_OK; 
@@ -102,15 +105,15 @@ extern "C" HRESULT WINAPI BootstrapperApplicationCreate(
     {
         BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Loading managed bootstrapper application.");
 
-        hr = CreateManagedBootstrapperApplication(pAppDomain, pEngine, pCommand, ppUX);
-        BalExitOnFailure(hr, "Failed to create the managed UX.");
+        hr = CreateManagedBootstrapperApplication(pAppDomain, pEngine, pCommand, ppBA);
+        BalExitOnFailure(hr, "Failed to create the managed bootstrapper application.");
     }
-    else // fallback to the pre-requisite UX.
+    else // fallback to the pre-requisite BA.
     {
         BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Loading prerequisite bootstrapper application because managed host could not be loaded, error: 0x%08x.", hr);
 
-        hr = CreatePrerequisiteUX(pEngine, pCommand, ppUX);
-        BalExitOnFailure(hr, "Failed to create the pre-requisite UX.");
+        hr = CreatePrerequisiteBA(pEngine, pCommand, ppBA);
+        BalExitOnFailure(hr, "Failed to create the pre-requisite bootstrapper application.");
     }
 
 LExit:
@@ -123,22 +126,22 @@ extern "C" void WINAPI BootstrapperApplicationDestroy()
 {
     ReleaseNullObject(vpCLRHost);
 
-    if (vhPrequxModule)
+    if (vhMbapreqModule)
     {
-        PFN_BOOTSTRAPPER_APPLICATION_DESTROY pfnDestroy = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_DESTROY>(::GetProcAddress(vhPrequxModule, "BootstrapperApplicationDestroy"));
+        PFN_BOOTSTRAPPER_APPLICATION_DESTROY pfnDestroy = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_DESTROY>(::GetProcAddress(vhMbapreqModule, "BootstrapperApplicationDestroy"));
         if (pfnDestroy)
         {
             (*pfnDestroy)();
         }
 
-        ::FreeLibrary(vhPrequxModule);
-        vhPrequxModule = NULL;
+        ::FreeLibrary(vhMbapreqModule);
+        vhMbapreqModule = NULL;
     }
 
     BalUninitialize();
 }
 
-// Gets the custom AppDomain for loading managed UX.
+// Gets the custom AppDomain for loading managed BA.
 static HRESULT GetAppDomain(
     __out _AppDomain **ppAppDomain
     )
@@ -158,12 +161,13 @@ static HRESULT GetAppDomain(
     hr = PathConcat(sczAppBase, L"BootstrapperCore.config", &sczConfigPath);
     ExitOnFailure(hr, "Failed to get the full path to the application configuration file.");
 
-    // The CLR must first be loaded.
+    // Check that the supported framework is installed.
+    hr = CheckSupportedFrameworks(sczConfigPath);
+    ExitOnFailure(hr, "Failed to find supported framework.");
+
+    // Load the CLR.
     hr = GetCLRHost(sczConfigPath, &pCLRHost);
     ExitOnFailure(hr, "Failed to create the CLR host.");
-
-    // Add an additional reference to keep the CLR host alive even after we release it below.
-    pCLRHost->AddRef();
 
     hr = pCLRHost->Start();
     ExitOnRootFailure(hr, "Failed to start the CLR host.");
@@ -190,8 +194,8 @@ static HRESULT GetAppDomain(
     ExitOnRootFailure(hr, "Failed to set the configuration file path for the AppDomainSetup.");
 
     // Create the AppDomain to load the factory type.
-    hr = pCLRHost->CreateDomainEx(L"MUX", pAppDomainSetup, NULL, &pUnk);
-    ExitOnRootFailure(hr, "Failed to create the MUX AppDomain.");
+    hr = pCLRHost->CreateDomainEx(L"MBA", pAppDomainSetup, NULL, &pUnk);
+    ExitOnRootFailure(hr, "Failed to create the MBA AppDomain.");
 
     hr = pUnk->QueryInterface(__uuidof(_AppDomain), reinterpret_cast<LPVOID*>(ppAppDomain));
     ExitOnRootFailure(hr, "Failed to query for the _AppDomain interface.");
@@ -226,6 +230,78 @@ LExit:
     return hr;
 }
 
+// Checks whether at least one of required supported frameworks is installed via the NETFX registry keys.
+static HRESULT CheckSupportedFrameworks(
+    __in LPCWSTR wzConfigPath
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMDocument* pixdManifest = NULL;
+    IXMLDOMNodeList* pNodeList = NULL;
+    IXMLDOMNode* pNode = NULL;
+    DWORD cSupportedFrameworks = 0;
+    LPWSTR sczSupportedFrameworkVersion = NULL;
+    LPWSTR sczFrameworkRegistryKey = NULL;
+    HKEY hkFramework = NULL;
+    DWORD dwFrameworkInstalled = 0;
+
+    hr = XmlInitialize();
+    ExitOnFailure(hr, "Failed to initialize XML.");
+
+    hr = XmlLoadDocumentFromFile(wzConfigPath, &pixdManifest);
+    ExitOnFailure1(hr, "Failed to load bootstrapper config file from path: %ls", wzConfigPath);
+
+    hr = XmlSelectNodes(pixdManifest, L"/configuration/wix.bootstrapper/host/supportedFramework", &pNodeList);
+    ExitOnFailure(hr, "Failed to select all supportedFramework elements.");
+
+    hr = pNodeList->get_length(reinterpret_cast<long*>(&cSupportedFrameworks));
+    ExitOnFailure(hr, "Failed to get the supported framework count.");
+
+    if (cSupportedFrameworks)
+    {
+        while (S_OK == (hr = XmlNextElement(pNodeList, &pNode, NULL)))
+        {
+            hr = XmlGetAttributeEx(pNode, L"version", &sczSupportedFrameworkVersion);
+            ExitOnFailure(hr, "Failed to get supportedFramework/@version.");
+
+            hr = StrAllocFormatted(&sczFrameworkRegistryKey, L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\%ls", sczSupportedFrameworkVersion);
+            ExitOnFailure(hr, "Failed to allocate path to supported framework Install registry key.");
+
+            hr = RegOpen(HKEY_LOCAL_MACHINE, sczFrameworkRegistryKey, KEY_READ, &hkFramework);
+            if (SUCCEEDED(hr))
+            {
+                hr = RegReadNumber(hkFramework, L"Install", &dwFrameworkInstalled);
+                if (dwFrameworkInstalled)
+                {
+                    hr = S_OK;
+                    break;
+                }
+            }
+
+            ReleaseNullObject(pNode);
+        }
+
+        // If we looped through all the supported frameworks but didn't find anything, ensure we return a failure.
+        if (S_FALSE == hr)
+        {
+            hr = E_NOTFOUND;
+        }
+    }
+    // else no supported frameworks specified, so the startup/supportedRuntime must be enough.
+
+LExit:
+    ReleaseRegKey(hkFramework);
+    ReleaseStr(sczFrameworkRegistryKey);
+    ReleaseStr(sczSupportedFrameworkVersion);
+    ReleaseObject(pNode);
+    ReleaseObject(pNodeList);
+    ReleaseObject(pixdManifest);
+
+    XmlUninitialize();
+
+    return hr;
+}
+
 // Gets the CLR host and caches it.
 static HRESULT GetCLRHost(
     __in LPCWSTR wzConfigPath,
@@ -252,12 +328,11 @@ static HRESULT GetCLRHost(
         pfnCorBindToCurrentRuntime = reinterpret_cast<PFN_CORBINDTOCURRENTRUNTIME>(::GetProcAddress(hModule, "CorBindToCurrentRuntime"));
         ExitOnNullWithLastError(pfnCorBindToCurrentRuntime, hr, "Failed to get procedure address for CorBindToCurrentRuntime.");
 
-        // The 2.0 hosting APIs are our baseline but are deprecated with 4.0,
-        // but will not be removed from mscoree.dll for compatibility.
         hr = pfnCorBindToCurrentRuntime(wzConfigPath, CLSID_CorRuntimeHost, IID_ICorRuntimeHost, reinterpret_cast<LPVOID*>(&vpCLRHost));
         ExitOnRootFailure(hr, "Failed to create the CLR host using the application configuration file path.");
     }
 
+    vpCLRHost->AddRef();
     *ppCLRHost = vpCLRHost;
 
 LExit:
@@ -284,10 +359,10 @@ static HRESULT CreateManagedBootstrapperApplication(
     IBootstrapperApplicationFactory* pAppFactory = NULL;
 
     hr = CreateManagedBootstrapperApplicationFactory(pAppDomain, &pAppFactory);
-    ExitOnFailure(hr, "Failed to create the UX factory to create the UX.");
+    ExitOnFailure(hr, "Failed to create the factory to create the bootstrapper application.");
 
     hr = pAppFactory->Create(pEngine, pCommand, ppApplication);
-    ExitOnFailure(hr, "Failed to create the UX.");
+    ExitOnFailure(hr, "Failed to create the bootstrapper application.");
 
 LExit:
     ReleaseNullObject(pAppFactory);
@@ -305,28 +380,28 @@ static HRESULT CreateManagedBootstrapperApplicationFactory(
     BSTR bstrAssemblyName = NULL;
     BSTR bstrTypeName = NULL;
     _ObjectHandle* pObj = NULL;
-    VARIANT vtUXFactory;
+    VARIANT vtBAFactory;
 
-    ::VariantInit(&vtUXFactory);
+    ::VariantInit(&vtBAFactory);
 
     bstrAssemblyName = ::SysAllocString(MUX_ASSEMBLY_FULL_NAME);
-    ExitOnNull(bstrAssemblyName, hr, E_OUTOFMEMORY, "Failed to allocate the full assembly name for the UX factory.");
+    ExitOnNull(bstrAssemblyName, hr, E_OUTOFMEMORY, "Failed to allocate the full assembly name for the bootstrapper application factory.");
 
     bstrTypeName = ::SysAllocString(L"Microsoft.Tools.WindowsInstallerXml.Bootstrapper.BootstrapperApplicationFactory");
-    ExitOnNull(bstrTypeName, hr, E_OUTOFMEMORY, "Failed to allocate the full type name for the UX factory.");
+    ExitOnNull(bstrTypeName, hr, E_OUTOFMEMORY, "Failed to allocate the full type name for the BA factory.");
 
     hr = pAppDomain->CreateInstance(bstrAssemblyName, bstrTypeName, &pObj);
-    ExitOnRootFailure(hr, "Failed to create the UX factory object.");
+    ExitOnRootFailure(hr, "Failed to create the BA factory object.");
 
-    hr = pObj->Unwrap(&vtUXFactory);
-    ExitOnRootFailure(hr, "Failed to unwrap the UX factory object into the host domain.");
-    ExitOnNull(vtUXFactory.punkVal, hr, E_UNEXPECTED, "The variant did not contain the expected IUnknown pointer.");
+    hr = pObj->Unwrap(&vtBAFactory);
+    ExitOnRootFailure(hr, "Failed to unwrap the BA factory object into the host domain.");
+    ExitOnNull(vtBAFactory.punkVal, hr, E_UNEXPECTED, "The variant did not contain the expected IUnknown pointer.");
 
-    hr = vtUXFactory.punkVal->QueryInterface(__uuidof(IBootstrapperApplicationFactory), reinterpret_cast<LPVOID*>(ppAppFactory));
+    hr = vtBAFactory.punkVal->QueryInterface(__uuidof(IBootstrapperApplicationFactory), reinterpret_cast<LPVOID*>(ppAppFactory));
     ExitOnRootFailure(hr, "Failed to query for the bootstrapper app factory interface.");
 
 LExit:
-    ReleaseVariant(vtUXFactory);
+    ReleaseVariant(vtBAFactory);
     ReleaseNullObject(pObj);
     ReleaseBSTR(bstrTypeName);
     ReleaseBSTR(bstrAssemblyName);
@@ -334,30 +409,30 @@ LExit:
     return hr;
 }
 
-static HRESULT CreatePrerequisiteUX(
+static HRESULT CreatePrerequisiteBA(
     __in IBootstrapperEngine* pEngine,
     __in const BOOTSTRAPPER_COMMAND* pCommand,
     __out IBootstrapperApplication** ppApplication
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczPrequxPath = NULL;
+    LPWSTR sczMbapreqPath = NULL;
     HMODULE hModule = NULL;
     IBootstrapperApplication* pApp = NULL;
 
-    hr = PathRelativeToModule(&sczPrequxPath, L"mbapreq.dll", vhInstance);
-    ExitOnFailure(hr, "Failed to get path to pre-requisite UX.");
+    hr = PathRelativeToModule(&sczMbapreqPath, L"mbapreq.dll", vhInstance);
+    ExitOnFailure(hr, "Failed to get path to pre-requisite BA.");
 
-    hModule = ::LoadLibraryW(sczPrequxPath);
-    ExitOnNullWithLastError(hModule, hr, "Failed to load pre-requisite UX DLL.");
+    hModule = ::LoadLibraryW(sczMbapreqPath);
+    ExitOnNullWithLastError(hModule, hr, "Failed to load pre-requisite BA DLL.");
 
     PFN_BOOTSTRAPPER_APPLICATION_CREATE pfnCreate = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_CREATE>(::GetProcAddress(hModule, "BootstrapperApplicationCreate"));
-    ExitOnNullWithLastError1(pfnCreate, hr, "Failed to get BootstrapperApplicationCreate entry-point from: %ls", sczPrequxPath);
+    ExitOnNullWithLastError1(pfnCreate, hr, "Failed to get BootstrapperApplicationCreate entry-point from: %ls", sczMbapreqPath);
 
     hr = pfnCreate(pEngine, pCommand, &pApp);
     ExitOnFailure(hr, "Failed to create prequisite bootstrapper app.");
 
-    vhPrequxModule = hModule;
+    vhMbapreqModule = hModule;
     hModule = NULL;
 
     *ppApplication = pApp;
@@ -369,7 +444,7 @@ LExit:
     {
         ::FreeLibrary(hModule);
     }
-    ReleaseStr(sczPrequxPath);
+    ReleaseStr(sczMbapreqPath);
 
     return hr;
 }

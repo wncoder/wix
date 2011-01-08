@@ -32,7 +32,7 @@
 
 extern "C" HRESULT LoggingOpen(
     __in BURN_LOGGING* pLog,
-    __in_z LPCWSTR wzCommandLine,
+    __in_z_opt LPCWSTR wzCommandLine,
     __in BURN_VARIABLES* pVariables
     )
 {
@@ -69,7 +69,7 @@ extern "C" HRESULT LoggingOpen(
     // the log name so future logs are opened with the same pattern.
     if (BURN_LOGGING_STATE_OPEN == pLog->state)
     {
-        LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, sczExePath, wzCommandLine);
+        LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, sczExePath, wzCommandLine ? wzCommandLine : L"");
 
         LPCWSTR wzExtension = PathExtension(pLog->sczPath);
         ExitOnNull1(wzExtension, hr, E_UNEXPECTED, "Failed to find extension on log path: %ls", pLog->sczPath);

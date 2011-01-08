@@ -47,7 +47,7 @@ enum WM_WIXSTDBA
     WM_WIXSTDBA_DETECT_PACKAGES = WM_APP + 100,
     WM_WIXSTDBA_PLAN_PACKAGES,
     WM_WIXSTDBA_APPLY_PACKAGES,
-    WM_WIXSTDBA_MODAL_ERROR,
+    WM_WIXSTDBA_CHANGE_STATE,
 };
 
 // This enum must be kept in the same order as the vrgwzPageNames array.
@@ -238,7 +238,9 @@ public: // IBootstrapperApplication
     {
         SetState(WIXSTDBA_STATE_DETECTED, hrStatus);
 
-        if (BOOTSTRAPPER_DISPLAY_FULL > m_command.display)
+        // If we're not interacting with the user or we're doing a layout then automatically
+        // start planning
+        if (BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_ACTION_LAYOUT == m_command.action)
         {
             if (SUCCEEDED(hrStatus))
             {
@@ -519,12 +521,23 @@ private: // privates
             }
         }
 
+        // Succeeded thus far, check to see if anything went wrong while actually
+        // executing changes.
+        if (FAILED(pThis->m_hrFinal))
+        {
+            hr = pThis->m_hrFinal;
+        }
+        else if (pThis->CheckCanceled())
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
+        }
+
     LExit:
         // destroy main window
         pThis->DestroyMainWindow();
 
         // initiate engine shutdown
-        pThis->m_pEngine->Quit(FAILED(hr) ? hr : pThis->m_hrFinal);
+        pThis->m_pEngine->Quit(hr);
 
         ThemeUninitialize();
 
@@ -608,11 +621,6 @@ private: // privates
         ReleaseStr(sczCaption);
         ReleaseStr(sczThemePath);
         ReleaseStr(m_sczLanguage);
-
-        if (FAILED(hr))
-        {
-            DestroyMainWindow();
-        }
 
         return hr;
     }
@@ -759,6 +767,10 @@ private: // privates
             pBA->OnApply();
             return 0;
 
+        case WM_WIXSTDBA_CHANGE_STATE:
+            pBA->OnChangeState(static_cast<WIXSTDBA_STATE>(lParam));
+            return 0;
+
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
@@ -806,13 +818,9 @@ private: // privates
                 pBA->OnClickRestartButton();
                 return 0;
 
-            case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON: // progress cancel is special because it will cause rollback.
-                pBA->OnClose();
-                return 0;
-
-            // The other cancel buttons just close the window.
             case WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_MODIFY_CANCEL_BUTTON: __fallthrough;
+            case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_CLOSE_BUTTON:
@@ -881,6 +889,8 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
+        SetState(WIXSTDBA_STATE_DETECTING, hr);
+
         m_pEngine->CloseSplashScreen();
 
         // Tell the core we're ready for the packages to be processed now.
@@ -888,7 +898,11 @@ private: // privates
         BalExitOnFailure(hr, "Failed to start detecting chain.");
 
     LExit:
-        SetState(WIXSTDBA_STATE_DETECTING, hr);
+        if (FAILED(hr))
+        {
+            SetState(WIXSTDBA_STATE_DETECTING, hr);
+        }
+
         return;
     }
 
@@ -901,6 +915,8 @@ private: // privates
         )
     {
         HRESULT hr = S_OK;
+
+        SetState(WIXSTDBA_STATE_PLANNING, hr);
 
         // TODO: need to localize the following strings eventually.
         switch (action)
@@ -920,7 +936,11 @@ private: // privates
         BalExitOnFailure(hr, "Failed to start planning packages.");
 
     LExit:
-        SetState(WIXSTDBA_STATE_PLANNING, hr);
+        if (FAILED(hr))
+        {
+            SetState(WIXSTDBA_STATE_PLANNING, hr);
+        }
+
         return;
     }
 
@@ -932,12 +952,130 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
+        SetState(WIXSTDBA_STATE_APPLYING, hr);
+
         hr = m_pEngine->Apply(m_hWnd);
         BalExitOnFailure(hr, "Failed to start applying packages.");
 
     LExit:
-        SetState(WIXSTDBA_STATE_APPLYING, hr);
+        if (FAILED(hr))
+        {
+            SetState(WIXSTDBA_STATE_APPLYING, hr);
+        }
+
         return;
+    }
+
+
+    //
+    // OnChangeState - change state.
+    //
+    void OnChangeState(
+        __in WIXSTDBA_STATE state
+        )
+    {
+        DWORD dwOldPageId = 0;
+        DWORD dwNewPageId = 0;
+        LPWSTR sczText = NULL;
+        LPWSTR sczUnformattedText = NULL;
+
+        DeterminePageId(m_state, &dwOldPageId);
+        DeterminePageId(state, &dwNewPageId);
+
+        if (WIXSTDBA_STATE_REFRESH == state)
+        {
+            if (m_fShowOptionsPage)
+            {
+                dwNewPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
+            }
+            else
+            {
+                dwNewPageId = dwOldPageId;
+                dwOldPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
+            }
+        }
+        else
+        {
+            m_state = state;
+        }
+
+        if (dwOldPageId != dwNewPageId)
+        {
+            // Enable disable controls per-page.
+            if (m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL] == dwNewPageId) // on the "Install" page, ensure the install button is enabled/disabled correctly.
+            {
+                BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
+                ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
+
+                // If there is an "Options" page and the "Options" button exists then enable the button.
+                BOOL fOptionsEnbaled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
+                ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnbaled);
+            }
+            else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
+            {
+                HRESULT hr = BalGetStringVariable(WIXSTDBA_VARIABLE_INSTALL_FOLDER, &sczUnformattedText);
+                if (SUCCEEDED(hr))
+                {
+                    BalFormatString(sczUnformattedText, &sczText);
+                    ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, sczText);
+                }
+            }
+            else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the restart or launch button should be enabled.
+            {
+                BOOL fShowRestartButton = FALSE;
+                BOOL fLaunchTargetExists = FALSE;
+                if (m_fRestartRequired)
+                {
+                    if (BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
+                    {
+                        fShowRestartButton = TRUE;
+                    }
+                }
+                else if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
+                {
+                    fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
+                }
+
+                ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton);
+            }
+
+            // Process each control for special handling in the new page.
+            THEME_PAGE* pPage = ThemeGetPage(m_pTheme, dwNewPageId);
+            if (pPage)
+            {
+                for (DWORD i = 0; i < pPage->cControlIndices; ++i)
+                {
+                    THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
+
+                    // If we are on the options page and this is a named checkbox control, try to set its default
+                    // state to the state of a matching named Burn variable.
+                    if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId && THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
+                    {
+                        LONGLONG llValue = 0;
+                        HRESULT hr = m_pEngine->GetVariableNumeric(pControl->wzName, &llValue);
+
+                        ThemeSendControlMessage(m_pTheme, pControl->wId, BM_SETCHECK, SUCCEEDED(hr) && llValue ? BST_CHECKED : BST_UNCHECKED, 0);
+                    }
+
+                    // Format the text in each of the new page's controls (if they have any text).
+                    if (pControl->wzText && *pControl->wzText)
+                    {
+                        HRESULT hr = BalFormatString(pControl->wzText, &sczText);
+                        if (SUCCEEDED(hr))
+                        {
+                            ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
+                        }
+                    }
+                }
+            }
+
+            ThemeShowPage(m_pTheme, dwOldPageId, SW_HIDE);
+            ThemeShowPage(m_pTheme, dwNewPageId, SW_SHOW);
+        }
+
+        ReleaseStr(sczText);
+        ReleaseStr(sczUnformattedText);
     }
 
 
@@ -946,12 +1084,22 @@ private: // privates
     //
     BOOL OnClose()
     {
-        // Force the cancel if we are not showing UI or we're already on the success or failure page.
-        // TODO: make prompt localizable string.
-        BOOL fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display || WIXSTDBA_STATE_APPLIED <= m_state, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
-        if (fClose)
+        BOOL fClose = FALSE;
+
+        // If we've already succeeded or failed, just close (prompts are annoying if the bootstrapper is done).
+        if (WIXSTDBA_STATE_APPLIED <= m_state)
         {
-            // TODO: disable all the cancel buttons.
+            fClose = TRUE;
+        }
+        else
+        {
+            // Force the cancel if we are not showing UI.
+            // TODO: make prompt localizable string.
+            fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
+            if (fClose)
+            {
+                // TODO: disable all the cancel buttons.
+            }
         }
 
         return fClose;
@@ -1068,7 +1216,7 @@ private: // privates
 
 
     //
-    // OnClickOptionsCacelButton - discard the changes made by the options page.
+    // OnClickOptionsCancelButton - discard the changes made by the options page.
     //
     void OnClickOptionsCancelButton()
     {
@@ -1185,13 +1333,6 @@ private: // privates
         __in HRESULT hrStatus
         )
     {
-        DWORD dwOldPageId = 0;
-        DWORD dwNewPageId = 0;
-        LPWSTR sczText = NULL;
-        LPWSTR sczUnformattedText = NULL;
-
-        ::EnterCriticalSection(&m_csState);
-
         if (FAILED(hrStatus))
         {
             m_hrFinal = hrStatus;
@@ -1202,108 +1343,10 @@ private: // privates
             state = WIXSTDBA_STATE_FAILED;
         }
 
-        if (WIXSTDBA_STATE_REFRESH == state || m_state != state)
+        if (WIXSTDBA_STATE_REFRESH == state || m_state < state)
         {
-            DeterminePageId(m_state, &dwOldPageId);
-            DeterminePageId(state, &dwNewPageId);
-
-            if (WIXSTDBA_STATE_REFRESH == state)
-            {
-                if (m_fShowOptionsPage)
-                {
-                    dwNewPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
-                }
-                else
-                {
-                    dwNewPageId = dwOldPageId;
-                    dwOldPageId = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS];
-                }
-            }
-            else
-            {
-                m_state = state;
-            }
-
-            if (dwOldPageId != dwNewPageId)
-            {
-                // Enable disable controls per-page.
-                if (m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL] == dwNewPageId) // on the "Install" page, ensure the install button is enabled/disabled correctly.
-                {
-                    BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
-
-                    // If there is an "Options" page and the "Options" button exists then enable the button.
-                    BOOL fOptionsEnbaled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnbaled);
-                }
-                else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
-                {
-                    HRESULT hr = BalGetStringVariable(WIXSTDBA_VARIABLE_INSTALL_FOLDER, &sczUnformattedText);
-                    if (SUCCEEDED(hr))
-                    {
-                        BalFormatString(sczUnformattedText, &sczText);
-                        ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FOLDER_EDITBOX, sczText);
-                    }
-                }
-                else if (m_rgdwPageIds[WIXSTDBA_PAGE_SUCCESS] == dwNewPageId) // on the "Success" page, check if the restart or launch button should be enabled.
-                {
-                    BOOL fShowRestartButton = FALSE;
-                    BOOL fLaunchTargetExists = FALSE;
-                    if (m_fRestartRequired)
-                    {
-                        if (BOOTSTRAPPER_RESTART_PROMPT == m_command.restart)
-                        {
-                            fShowRestartButton = TRUE;
-                        }
-                    }
-                    else if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON))
-                    {
-                        fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
-                    }
-
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_RESTART_BUTTON, fShowRestartButton);
-                }
-
-                // Process each control for special handling in the new page.
-                THEME_PAGE* pPage = ThemeGetPage(m_pTheme, dwNewPageId);
-                if (pPage)
-                {
-                    for (DWORD i = 0; i < pPage->cControlIndices; ++i)
-                    {
-                        THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
-
-                        // If we are on the options page and this is a named checkbox control, try to set its default
-                        // state to the state of a matching named Burn variable.
-                        if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId && THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
-                        {
-                            LONGLONG llValue = 0;
-                            HRESULT hr = m_pEngine->GetVariableNumeric(pControl->wzName, &llValue);
-
-                            ThemeSendControlMessage(m_pTheme, pControl->wId, BM_SETCHECK, SUCCEEDED(hr) && llValue ? BST_CHECKED : BST_UNCHECKED, 0);
-                        }
-
-                        // Format the text in each of the new page's controls (if they have any text).
-                        if (pControl->wzText && *pControl->wzText)
-                        {
-                            HRESULT hr = BalFormatString(pControl->wzText, &sczText);
-                            if (SUCCEEDED(hr))
-                            {
-                                ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
-                            }
-                        }
-                    }
-                }
-
-                ThemeShowPage(m_pTheme, dwOldPageId, SW_HIDE);
-                ThemeShowPage(m_pTheme, dwNewPageId, SW_SHOW);
-            }
+            ::PostMessageW(m_hWnd, WM_WIXSTDBA_CHANGE_STATE, 0, state);
         }
-
-        ::LeaveCriticalSection(&m_csState);
-
-        ReleaseStr(sczText);
-        ReleaseStr(sczUnformattedText);
     }
 
 
@@ -1389,7 +1432,6 @@ public:
         m_fRegistered = FALSE;
         m_hWnd = NULL;
 
-        ::InitializeCriticalSection(&m_csState);
         m_fShowOptionsPage = FALSE;
         m_state = WIXSTDBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
@@ -1413,8 +1455,6 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
-        ::DeleteCriticalSection(&m_csState);
-
         ReleaseStr(m_sczFamilyBundleId);
         ReleaseNullObject(m_pEngine);
     }
@@ -1430,7 +1470,6 @@ private:
     BOOL m_fRegistered;
     HWND m_hWnd;
 
-    CRITICAL_SECTION m_csState;
     BOOL m_fShowOptionsPage;
     WIXSTDBA_STATE m_state;
     HRESULT m_hrFinal;

@@ -203,6 +203,7 @@ extern "C" HRESULT MspEngineDetectPackage(
                 pTargetProduct->patchPackageState = BOOTSTRAPPER_PACKAGE_STATE_ABSENT;
                 hr = S_OK;
             }
+            ExitOnFailure2(hr, "Failed to get patch information for patch code: %ls, target product code: %ls", pPackage->Msp.sczPatchCode, pTargetProduct->wzTargetProductCode);
 
             if (pPackage->currentState > pTargetProduct->patchPackageState)
             {

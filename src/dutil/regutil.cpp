@@ -363,12 +363,12 @@ HRESULT DAPI RegReadBinary(
     DWORD cb = 0;
     DWORD dwType = 0;
 
-    vpfnRegQueryValueExW(hk, wzName, 0, &dwType, NULL, &cb);
+    vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, NULL, &cb);
 
     pbBuffer = static_cast<LPBYTE>(MemAlloc(cb, FALSE));
     ExitOnNull(pbBuffer, hr, E_OUTOFMEMORY, "Failed to allocate buffer for binary registry value.");
 
-    er = vpfnRegQueryValueExW(hk, wzName, 0, &dwType, pbBuffer, &cb);
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, pbBuffer, &cb);
     ExitOnWin32Error(er, hr, "Failed to read registry key.");
 
     if (REG_BINARY == dwType)
@@ -422,14 +422,14 @@ extern "C" HRESULT DAPI RegReadString(
     }
 
     cb = sizeof(WCHAR) * (cch - 1); // subtract one to ensure there will be a space at the end of the string for the null terminator.
-    er = vpfnRegQueryValueExW(hk, wzName, 0, &dwType, reinterpret_cast<LPBYTE>(*psczValue), &cb);
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(*psczValue), &cb);
     if (ERROR_MORE_DATA == er)
     {
         cch = cb / sizeof(WCHAR) + 1; // add one to ensure there will be space at the end for the null terminator
         hr = StrAlloc(psczValue, cch);
         ExitOnFailure(hr, "Failed to allocate string bigger for registry value.");
 
-        er = vpfnRegQueryValueExW(hk, wzName, 0, &dwType, reinterpret_cast<LPBYTE>(*psczValue), &cb);
+        er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(*psczValue), &cb);
     }
     ExitOnWin32Error(er, hr, "Failed to read registry key.");
 
@@ -455,6 +455,90 @@ extern "C" HRESULT DAPI RegReadString(
 
 LExit:
     ReleaseStr(sczExpand);
+
+    return hr;
+}
+
+
+/********************************************************************
+ RegReadStringArray - reads a registry key value REG_MULTI_SZ value as a string array.
+
+*********************************************************************/
+HRESULT DAPI RegReadStringArray(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __deref_out_ecount(pcStrings) LPWSTR** prgsczStrings,
+    __out DWORD *pcStrings
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    DWORD dwNullCharacters = 0;
+    DWORD dwType = 0;
+    DWORD cb = 0;
+    DWORD cch = 0;
+    LPWSTR wzSource = NULL;
+    LPWSTR sczValue = NULL;
+
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(sczValue), &cb);
+    if (0 < cb)
+    {
+        cch = cb / sizeof(WCHAR);
+        hr = StrAlloc(&sczValue, cch);
+        ExitOnFailure(hr, "Failed to allocate string for registry value.");
+
+        er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(sczValue), &cb);
+    }
+    ExitOnWin32Error(er, hr, "Failed to read registry key.");
+
+    if (REG_MULTI_SZ != dwType)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE);
+        ExitOnFailure1(hr, "Tried to read string array, but registry value %ls is of an incorrect type", wzName);
+    }
+
+    // Value exists, but is empty, so no strings to return.
+    if (2 > cch)
+    {
+        *prgsczStrings = NULL;
+        *pcStrings = 0;
+        ExitFunction1(hr = S_OK);
+    }
+
+    // The docs specifically say if the value was written without double-null-termination, it'll get read back without it too.
+    if (L'\0' != sczValue[cch-1] || L'\0' != sczValue[cch-2])
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure1(hr, "Tried to read string array, but registry value %ls is invalid (isn't double-null-terminated)", wzName);
+    }
+
+    cch = cb / sizeof(WCHAR);
+    for (DWORD i = 0; i < cch; ++i)
+    {
+        if (L'\0' == sczValue[i])
+        {
+            ++dwNullCharacters;
+        }
+    }
+
+    // There's one string for every null character encountered (except the extra 1 at the end of the string)
+    *pcStrings = dwNullCharacters - 1;
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID *>(prgsczStrings), *pcStrings, sizeof(LPWSTR), 0);
+    ExitOnFailure(hr, "Failed to resize array while reading REG_MULTI_SZ value");
+
+    wzSource = sczValue;
+    for (DWORD i = 0; i < *pcStrings; ++i)
+    {
+        hr = StrAllocString(&(*prgsczStrings)[i], wzSource, 0);
+        ExitOnFailure(hr, "Failed to allocate copy of string");
+
+        // Skip past this string
+        wzSource += lstrlenW(wzSource) + 1;
+    }
+
+LExit:
+    ReleaseStr(sczValue);
+
     return hr;
 }
 
@@ -476,7 +560,7 @@ extern "C" HRESULT DAPI RegReadVersion(
     LPWSTR sczVersion = NULL;
 
     cb = sizeof(DWORD64);
-    er = vpfnRegQueryValueExW(hk, wzName, 0, &dwType, reinterpret_cast<LPBYTE>(*pdw64Version), &cb);
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(*pdw64Version), &cb);
     if (REG_SZ == dwType || REG_EXPAND_SZ == dwType)
     {
         hr = RegReadString(hk, wzName, &sczVersion);
@@ -497,6 +581,7 @@ extern "C" HRESULT DAPI RegReadVersion(
 
 LExit:
     ReleaseStr(sczVersion);
+
     return hr;
 }
 
@@ -614,9 +699,75 @@ extern "C" HRESULT DAPI RegWriteStringFormatted(
 
 LExit:
     ReleaseStr(sczValue);
+
     return hr;
 }
 
+
+/********************************************************************
+ RegWriteStringArray - writes an array of strings as a REG_MULTI_SZ value
+
+*********************************************************************/
+HRESULT DAPI RegWriteStringArray(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in_ecount(cValues) LPWSTR *rgwzValues,
+    __in DWORD cValues
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    LPWSTR wzCopyDestination = NULL;
+    LPWSTR wzWriteValue = NULL;
+    LPWSTR sczWriteValue = NULL;
+    DWORD dwTotalStringSize = 0;
+    DWORD cbTotalStringSize = 0;
+    DWORD dwTemp = 0;
+
+    if (0 == cValues)
+    {
+        wzWriteValue = L"\0";
+    }
+    else
+    {
+        // Add space for the null terminator
+        dwTotalStringSize = 1;
+
+        for (DWORD i = 0; i < cValues; ++i)
+        {
+            dwTemp = dwTotalStringSize;
+            hr = ::DWordAdd(dwTemp, 1 + lstrlenW(rgwzValues[i]), &dwTotalStringSize);
+            ExitOnFailure(hr, "DWORD Overflow while adding length of string to write REG_MULTI_SZ");
+        }
+
+        hr = StrAlloc(&sczWriteValue, dwTotalStringSize);
+        ExitOnFailure(hr, "Failed to allocate space for string while writing REG_MULTI_SZ");
+
+        wzCopyDestination = sczWriteValue;
+        dwTemp = dwTotalStringSize;
+        for (DWORD i = 0; i < cValues; ++i)
+        {
+            hr = ::StringCchCopyW(wzCopyDestination, dwTotalStringSize, rgwzValues[i]);
+            ExitOnFailure1(hr, "failed to copy string: %ls", rgwzValues[i]);
+            
+            dwTemp -= lstrlenW(rgwzValues[i]) + 1;
+            wzCopyDestination += lstrlenW(rgwzValues[i]) + 1;
+        }
+
+        wzWriteValue = sczWriteValue;
+    }
+
+    hr = ::DWordMult(dwTotalStringSize, sizeof(WCHAR), &cbTotalStringSize);
+    ExitOnFailure(hr, "Failed to get total string size in bytes");
+
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_MULTI_SZ, reinterpret_cast<PBYTE>(wzWriteValue), cbTotalStringSize);
+    ExitOnWin32Error1(er, hr, "Failed to set registry value to array of strings (first string of which is): %ls", wzWriteValue);
+
+LExit:
+    ReleaseStr(sczWriteValue);
+
+    return hr;
+}
 
 /********************************************************************
  RegWriteNumber - writes a registry key value as a number.

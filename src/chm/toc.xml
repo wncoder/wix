@@ -39,7 +39,7 @@
         </Topic>
       </Topic>
     </Topic>
-    <Topic Title="Building Chained Installation Packages" SourceFile="html\authoring_bundle_intro.htm">
+    <Topic Title="Building Installation Package Bundles" SourceFile="html\authoring_bundle_intro.htm">
       <Topic Title="Create the Skeleton Bundle Authoring" SourceFile="html\authoring_bundle_skeleton.htm" />
       <Topic Title="Author Bootstrapper Application for a Bundle" SourceFile="html\authoring_bundle_application.htm" />
       <Topic Title="Author a Bundle Package Manifest" SourceFile="html\authoring_bundle_package_manifest.htm" />
@@ -47,9 +47,16 @@
       <Topic Title="Define Searches Using Variables" SourceFile="html\bundle_define_searches.htm" />
       <Topic Title="Chain Packages into a Bundle" SourceFile="html\bundle_author_chain.htm" />
       <Topic Title="Add files to the Setup Layout" SourceFile="html\bundle_author_layoutdirectory.htm" />
-    </Topic>
-    <Topic Title="Building Bootstrapper Application" SourceFile="html\bootstrapper_application.htm">
-      <Topic Title="Bootstrapper Application Interface" SourceFile="html\bootstrapper_application_interface.htm" />
+
+      <Topic Title="Working with WiX Standard Bootstrapper Application" SourceFile="html\wixstdba_intro.htm">
+        <Topic Title="Specifying the WiX Standard Bootstrapper Application License" SourceFile="html\wixstdba_license.htm" />
+        <Topic Title="Changing the WiX Standard Bootstrapper Application Branding" SourceFile="html\wixstdba_branding.htm" />
+        <Topic Title="Completely Customizing the WiX Standard Bootstrapper Application" SourceFile="html\wixstdba_foundation_customization.htm" />
+      </Topic>
+
+      <Topic Title="Building a Bootstrapper Applications for Burn" SourceFile="html\bootstrapper_application.htm">
+        <Topic Title="Native Bootstrapper Application Interface" SourceFile="html\bootstrapper_application_interface.htm" />
+      </Topic>
     </Topic>
     <Topic Title="Working in Visual Studio" SourceFile="html\votive.htm">
       <Topic Title="WiX Project Types" SourceFile="html\votive_project_templates.htm"/>

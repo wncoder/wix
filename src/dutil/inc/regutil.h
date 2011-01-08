@@ -179,6 +179,12 @@ HRESULT DAPI RegReadString(
     __in_z_opt LPCWSTR wzName,
     __deref_out_z LPWSTR* psczValue
     );
+HRESULT DAPI RegReadStringArray(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __deref_out_ecount(pcStrings) LPWSTR** prgsczStrings,
+    __out DWORD *pcStrings
+    );
 HRESULT DAPI RegReadVersion(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
@@ -199,6 +205,12 @@ HRESULT DAPI RegWriteString(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
     __in_z_opt LPWSTR wzValue
+    );
+HRESULT DAPI RegWriteStringArray(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in_ecount(cValues) LPWSTR *rgwzStrings,
+    __in DWORD cStrings
     );
 HRESULT DAPI RegWriteStringFormatted(
     __in HKEY hk,

@@ -37,55 +37,24 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Locates the <see cref="BootstrapperApplicationAttribute"/> and returns the specified type.
+        /// Loads the bootstrapper application assembly and creates an instance of the IBootstrapperApplication.
         /// </summary>
-        /// <param name="assemblyName">The assembly that defines the user experience class.</param>
-        /// <returns>The user experience <see cref="Type"/>, or null if not found.</returns>
+        /// <param name="pEngine">IBootstrapperEngine provided for the bootstrapper application.</param>
+        /// <param name="command">Command line for the bootstrapper application.</param>
+        /// <returns>Bootstrapper application via <see cref="IBootstrapperApplication"/> interface.</returns>
         /// <exception cref="MissingAttributeException">The assembly specified by <paramref name="assemblyName"/>
         /// does not define the <see cref="BootstrapperApplicationAttribute"/>.</exception>
-        private static Type GetBootstrapperApplicationTypeFromAssembly(string assemblyName)
+        public IBootstrapperApplication Create(IBootstrapperEngine pEngine, ref Command command)
         {
-            // Load the requested assembly.
-            if (!String.IsNullOrEmpty(assemblyName))
-            {
-                Assembly asm = AppDomain.CurrentDomain.Load(assemblyName);
-
-                // If an assembly was loaded and is not the current assembly, check for the required attribute.
-                // This is done to avoid using the BootstrapperApplicationAttribute which we use at build time
-                // to specify the BootstrapperApplication assembly in the manifest. This attribute is for custom
-                // BootstrapperApplication assemblies.
-                if (!Assembly.GetExecutingAssembly().Equals(asm))
-                {
-                    // There must be one and only one BootstrapperApplicationAttribute. The attribute prevents multiple declarations already.
-                    BootstrapperApplicationAttribute[] attrs = (BootstrapperApplicationAttribute[])asm.GetCustomAttributes(typeof(BootstrapperApplicationAttribute), false);
-                    if (null != attrs)
-                    {
-                        return attrs[0].BootstrapperApplicationType;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        IBootstrapperApplication IBootstrapperApplicationFactory.Create(IBootstrapperEngine pEngine, ref Command command)
-        {
-            Type baType = null;
-
-            // Get the wix.boostrapper section group to load the mux handler.
+            // Get the wix.boostrapper section group to get the name of the bootstrapper application assembly to host.
             HostSection section = ConfigurationManager.GetSection("wix.bootstrapper/host") as HostSection;
-            if (null != section)
+            if (null == section)
             {
-                baType = BootstrapperApplicationFactory.GetBootstrapperApplicationTypeFromAssembly(section.AssemblyName);
+                throw new MissingAttributeException(); // TODO: throw a more specific exception than this.
             }
 
-            // A derived managed BootstrapperApplication is required.
-            if (null == baType)
-            {
-                throw new MissingAttributeException();
-            }
-
-            // Create the UX and make sure it extends BootstrapperApplication.
+            // Load the BA and make sure it extends BootstrapperApplication.
+            Type baType = BootstrapperApplicationFactory.GetBootstrapperApplicationTypeFromAssembly(section.AssemblyName);
             BootstrapperApplication ba = Activator.CreateInstance(baType) as BootstrapperApplication;
             if (null == ba)
             {
@@ -95,6 +64,40 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             ba.Engine = new Engine(pEngine);
             ba.Command = command;
             return ba;
+        }
+
+        /// <summary>
+        /// Locates the <see cref="BootstrapperApplicationAttribute"/> and returns the specified type.
+        /// </summary>
+        /// <param name="assemblyName">The assembly that defines the user experience class.</param>
+        /// <returns>The bootstrapper application <see cref="Type"/>.</returns>
+        private static Type GetBootstrapperApplicationTypeFromAssembly(string assemblyName)
+        {
+            Type baType = null;
+
+            // Load the requested assembly.
+            Assembly asm = AppDomain.CurrentDomain.Load(assemblyName);
+
+            // If an assembly was loaded and is not the current assembly, check for the required attribute.
+            // This is done to avoid using the BootstrapperApplicationAttribute which we use at build time
+            // to specify the BootstrapperApplication assembly in the manifest. This attribute is for custom
+            // BootstrapperApplication assemblies.
+            if (!Assembly.GetExecutingAssembly().Equals(asm))
+            {
+                // There must be one and only one BootstrapperApplicationAttribute. The attribute prevents multiple declarations already.
+                BootstrapperApplicationAttribute[] attrs = (BootstrapperApplicationAttribute[])asm.GetCustomAttributes(typeof(BootstrapperApplicationAttribute), false);
+                if (null != attrs)
+                {
+                    baType = attrs[0].BootstrapperApplicationType;
+                }
+            }
+
+            if (null == baType)
+            {
+                throw new MissingAttributeException();
+            }
+
+            return baType;
         }
     }
 }

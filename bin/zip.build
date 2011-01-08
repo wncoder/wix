@@ -31,6 +31,7 @@
   <property name="dir.target.zips" value="${dir.target.wix}\release\${wixver}" readonly="true" />
   <property name="file.target.binaries.zip" value="${dir.target.zips}\wix${version.wixmajor}-binaries.zip" readonly="true" />
   <property name="file.target.pdbs.zip" value="${dir.target.zips}\wix${version.wixmajor}-pdbs.zip" readonly="true" />
+  <property name="file.target.otherpdbs.zip" value="${dir.target.zips}\wix${version.wixmajor}-other-pdbs.zip" readonly="true" />
   <property name="file.target.sources.zip" value="${dir.target.zips}\wix${version.wixmajor}-sources.zip" readonly="true" />
   <property name="zip" value="${ship}" />
 
@@ -481,7 +482,6 @@
         <exclude name="setup.pdb" />
         <exclude name="setupbld.pdb" />
         <exclude name="SetupBuilder.pdb" />
-        <exclude name="sfxca.pdb" />
         <exclude name="smoke.pdb" />
         <exclude name="stdux.pdb" />
         <exclude name="TestUX.pdb" />
@@ -510,6 +510,55 @@
 
       <fileset prefix="ia64" basedir="${dir.target.wix.ia64}">
         <include name="wixca_ia64.pdb" if="${ia64}" />
+      </fileset>
+    </zip>
+
+    <zip zipfile="${file.target.otherpdbs.zip}">
+      <fileset basedir="${dir.target.wix.x86}">
+        <include name="ambient.pdb" />
+        <include name="nit.pdb" />
+        <include name="directx.pdb" />
+        <include name="DocCompiler.pdb" />
+        <include name="firewall.pdb" />
+        <include name="FlattenXml.pdb" />
+        <include name="gaming.pdb" />
+        <include name="GenerateWixInclude.pdb" />
+        <include name="Inventory.pdb" />
+        <include name="lux.pdb" />
+        <include name="LuxCustomActions.pdb" />
+        <include name="LuxTasks.pdb" />
+        <include name="MakeSfxCA.pdb" />
+        <include name="melt.pdb" />
+        <include name="MigrateQTests.pdb" />
+        <include name="MsgGen.pdb" />
+        <include name="netfxca.pdb" />
+        <include name="nit.pdb" />
+        <include name="PrintEula.pdb" />
+        <include name="ResIdGen.pdb" />
+        <include name="sconce2005.pdb" />
+        <include name="sconce2008.pdb" />
+        <include name="setup.pdb" />
+        <include name="setupbld.pdb" />
+        <include name="SetupBuilder.pdb" />
+        <include name="smoke.pdb" />
+        <include name="stdux.pdb" />
+        <include name="TestUX.pdb" />
+        <include name="UnitTest.pdb" />
+        <include name="update.pdb" />
+        <include name="votive2005.pdb" />
+        <include name="votive2008.pdb" />
+        <include name="VotivePP.pdb" />
+        <include name="WiFile.pdb" />
+        <include name="WixBuild.pdb" />
+        <include name="WixCop.pdb" />
+        <include name="WixTests.pdb" />
+        <include name="WixTestTools.pdb" />
+        <include name="WixUnit.pdb" />
+        <include name="WixValidatorExampleExtension.pdb" />
+        <include name="wui.pdb" />
+        <include name="XPack.pdb" />
+        <include name="XsdGen.pdb" />
+        <include name="XsdStitch.pdb" />
       </fileset>
     </zip>
   </target>

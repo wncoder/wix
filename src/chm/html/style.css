@@ -11,10 +11,10 @@
 	.pop		{text-decoration: none; }
 
 /* LISTS */ 
-    ol, ul      {margin-top: .2em; margin-bottom: .2em;}
-    ol ul, ul ul{list-style: disc;}
-    li          {margin-bottom: .2em;}
-    
+	ol, ul      {margin-top: .2em; margin-bottom: .2em;}
+	ol ul, ul ul{list-style: disc;}
+	li          {margin-bottom: .2em;}
+
 /* PREFORMATTING - CODE */ 
 	pre
 	{
@@ -24,6 +24,9 @@
 	}
 
 	pre, code		{font-family: Consolas, "Courier New", courier;}
+
+	.highlight		{ color: #0000FF; }
+
 
 /* TABLES */
 	table   {margin-top: 1em; margin-top: .5em; margin-bottom: 0em;}

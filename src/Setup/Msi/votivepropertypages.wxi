@@ -26,14 +26,14 @@
         </RegistryKey>
 
         <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\InstalledProducts\WiX -->
-        <RegistryKey Key="InstalledProducts\WiX" Action="createAndRemoveOnUninstall">
+        <RegistryKey Key="InstalledProducts\WiX">
             <RegistryValue Name="Package" Value="$(var.WixVsPackageGuid)" Type="string" />
             <RegistryValue Name="ToolsDirectory" Value="[BinDir]" Type="string" />
             <RegistryValue Name="UseInterface" Value="1" Type="integer" />
         </RegistryKey>
 
         <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\NewProjectTemplates\TemplateDirs\<Package GUID>\/1 -->
-        <RegistryKey Key="NewProjectTemplates\TemplateDirs\$(var.WixVsPackageGuid)" Action="createAndRemoveOnUninstall">
+        <RegistryKey Key="NewProjectTemplates\TemplateDirs\$(var.WixVsPackageGuid)">
             <RegistryKey Key="/1">
                 <RegistryValue Value="Windows Installer XML" Type="string" />
                 <RegistryValue Name="SortPriority" Value="30" Type="integer" />
@@ -42,7 +42,7 @@
         </RegistryKey>
 
         <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\Packages\<Package GUID> -->
-        <RegistryKey Key="Packages\$(var.WixVsPackageGuid)" Action="createAndRemoveOnUninstall">
+        <RegistryKey Key="Packages\$(var.WixVsPackageGuid)">
             <RegistryValue Value="WiX Project Package" Type="string" />
 
             <RegistryValue Name="Assembly" Type="string" Value="" />
@@ -57,7 +57,7 @@
         </RegistryKey>
 
         <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\Projects\<Project GUID> -->
-        <RegistryKey Key="Projects\$(var.WixVsProjectGuid)" Action="createAndRemoveOnUninstall">
+        <RegistryKey Key="Projects\$(var.WixVsProjectGuid)">
             <RegistryValue Value="WixProjectFactory" Type="string" />
             <RegistryValue Name="DefaultProjectExtensions" Value="wixproj" Type="string" />
             <RegistryValue Name="DisplayName" Value="WiX" Type="string" />

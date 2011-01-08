@@ -16,9 +16,9 @@
 <?include WixVer.wxi ?>
 <?include WixDistribution.wxi?>
 <?define ProductDirectoryName = "Windows Installer XML v3.6" ?>
-<?define ProductName = "Windows Installer XML Toolset 3.6" ?>
+<?define ProductName = "WiX Toolset v$(var.WixVersion)" ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="*" Name="$(var.ProductName)" Language="1033" Manufacturer="Microsoft Corporation" Version="$(var.WixVersion)" UpgradeCode="3618724B-2523-44F9-A908-866AA619504D">
+    <Product Id="*" Name="$(var.ProductName) MSI Package" Language="1033" Manufacturer="Microsoft Corporation" Version="$(var.WixVersion)" UpgradeCode="3618724B-2523-44F9-A908-866AA619504D">
 
         <Package Platform="$(var.Platform)" Manufacturer="Microsoft Corporation" Description="Windows Installer XML Toolset Visual Studio Package" Comments="Windows Installer XML Toolset Visual Studio Package" Compressed="yes" InstallerVersion="200" Languages="1033" Keywords="Database, Installer" ShortNames="no" SummaryCodepage="1252" />
 
@@ -61,7 +61,7 @@
             <Component Id="ProductInformation" Directory="APPLICATIONFOLDER" Guid="8A0EC6E0-5AAF-439B-99BF-A8997BFA8BC8" Win64="no">
                 <RemoveFolder Id="CleanupShortcutFolder" Directory="WixShortcutFolder" On="uninstall" />
 
-                <RegistryKey Root="HKLM" Key="$(var.WixKeyRoot)\$(var.WixMajorMinor)" Action="createAndRemoveOnUninstall">
+                <RegistryKey Root="HKLM" Key="$(var.WixKeyRoot)\$(var.WixMajorMinor)">
                     <RegistryValue Name="InstallRoot" Value="[BinDir]" Type="string" KeyPath="yes"/>
                     <RegistryValue Name="ProductVersion" Value="[ProductVersion]" Type="string" />
                 </RegistryKey>

@@ -30,7 +30,7 @@
 
         <DirectoryRef Id="WixShortcutFolder">
             <Component Id="ClickThroughShortcutComponent" Guid="15C5BC7B-A578-4FB3-842F-A0E14D44DEE2" Win64="no">
-                <RegistryKey Root="HKCU" Key="Software\Windows Installer XML 3\ClickThrough" Action="createAndRemoveOnUninstall">
+                <RegistryKey Root="HKCU" Key="Software\Windows Installer XML 3\ClickThrough">
                     <RegistryValue Name="Installed" Value="[BinDir]" Type="string" KeyPath="yes"/>
                 </RegistryKey>
             </Component>

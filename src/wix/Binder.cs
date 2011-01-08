@@ -931,7 +931,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         name = name.ToLower(CultureInfo.InvariantCulture);
                     }
 
-                    if (null == resolvedDirectory.DirectoryParent)
+                    if (String.IsNullOrEmpty(resolvedDirectory.DirectoryParent))
                     {
                         resolvedDirectory.Path = name;
                     }
@@ -952,6 +952,41 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             return resolvedDirectory.Path;
+        }
+
+        /// <summary>
+        /// Gets the source path of a file.
+        /// </summary>
+        /// <param name="directories">All cached directories in <see cref="ResolvedDirectory"/>.</param>
+        /// <param name="directoryId">Parent directory identifier.</param>
+        /// <param name="fileName">File name (in long|source format).</param>
+        /// <param name="compressed">Specifies the package is compressed.</param>
+        /// <param name="useLongName">Specifies the package uses long file names.</param>
+        /// <returns>Source path of file relative to package directory.</returns>
+        private static string GetFileSourcePath(Hashtable directories, string directoryId, string fileName, bool compressed, bool useLongName)
+        {
+            string fileSourcePath = Installer.GetName(fileName, true, useLongName);
+
+            if (compressed)
+            {
+                // Use just the file name of the file since all uncompressed files must appear
+                // in the root of the image in a compressed package.
+            }
+            else
+            {
+                // Get the relative path of where we want the file to be layed out as specified
+                // in the Directory table.
+                string directoryPath = Binder.GetDirectoryPath(directories, null, directoryId, false);
+                fileSourcePath = Path.Combine(directoryPath, fileSourcePath);
+            }
+
+            // Strip off "SourceDir" if it's still on there.
+            if (fileSourcePath.StartsWith("SourceDir\\", StringComparison.Ordinal))
+            {
+                fileSourcePath = fileSourcePath.Substring(10);
+            }
+
+            return fileSourcePath;
         }
 
         /// <summary>
@@ -5693,27 +5728,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     throw new WixException(WixErrors.FileIdentifierNotFound(fileRow.SourceLineNumbers, fileRow.File));
                                 }
 
-                                string fileName = Installer.GetName(fileRecord[2], true, longNamesInImage);
-
-                                if (compressed)
-                                {
-                                    // use just the file name of the file since all uncompressed files must appear
-                                    // in the root of the image in a compressed package
-                                    relativeFileLayoutPath = fileName;
-                                }
-                                else
-                                {
-                                    // get the relative path of where we want the file to be layed out as specified
-                                    // in the Directory table
-                                    string directoryPath = GetDirectoryPath(directories, null, fileRecord[1], false);
-                                    relativeFileLayoutPath = Path.Combine(directoryPath, fileName);
-                                }
-                            }
-
-                            // strip off "SourceDir" if it's still on there
-                            if (relativeFileLayoutPath.StartsWith("SourceDir\\", StringComparison.Ordinal))
-                            {
-                                relativeFileLayoutPath = relativeFileLayoutPath.Substring(10);
+                                relativeFileLayoutPath = Binder.GetFileSourcePath(directories, fileRecord[1], fileRecord[2], compressed, longNamesInImage);
                             }
 
                             // finally put together the base media layout path and the relative file layout path
@@ -6450,11 +6465,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads)
             {
                 string sourcePath = this.PackagePayload.FileInfo.FullName;
+                bool longNamesInImage = false;
+                bool compressed = false;
                 try
                 {
                     // Read data out of the msi database...
                     using (Microsoft.Deployment.WindowsInstaller.SummaryInfo sumInfo = new Microsoft.Deployment.WindowsInstaller.SummaryInfo(sourcePath, false))
                     {
+                        // 1 is the Word Count summary information stream bit that means
+                        // the MSI uses short file names when set. We care about long file
+                        // names so check when the bit is not set.
+                        longNamesInImage = 0 == (sumInfo.WordCount & 1);
+
+                        // 2 is the Word Count summary information stream bit that means
+                        // files are compressed in the MSI by default when the bit is set.
+                        compressed = 2 == (sumInfo.WordCount & 2);
+
                         // 8 is the Word Count summary information stream bit that means
                         // "Elevated privileges are not required to install this package."
                         // in MSI 4.5 and below, if this bit is 0, elevation is required.
@@ -6535,36 +6561,88 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                         }
 
-                        // add all external cabinets as package resources
-                        // TODO: We need to add loose files.
-                        foreach (string cabinet in db.ExecuteStringQuery("SELECT `Cabinet` FROM `Media`"))
+                        // Add all external cabinets as package payloads.
+                        if (db.Tables.Contains("Media"))
                         {
-                            if (!String.IsNullOrEmpty(cabinet) && !cabinet.StartsWith("#", StringComparison.Ordinal))
+                            foreach (string cabinet in db.ExecuteStringQuery("SELECT `Cabinet` FROM `Media`"))
                             {
-                                // Before adding the external file as another payload, we have to check to
-                                // see if it's already in the payload list. To do this, we have to match the
-                                // expected relative location of the external file specified in the MSI with
-                                // the destination @Name of the payload... the @SourceFile path on the payload
-                                // may be something completely different!
-                                bool foundPayload = false;
-                                foreach (PayloadInfo payload in this.Payloads)
+                                if (!String.IsNullOrEmpty(cabinet) && !cabinet.StartsWith("#", StringComparison.Ordinal))
                                 {
-                                    if (String.Equals(cabinet, payload.FileName, StringComparison.OrdinalIgnoreCase))
+                                    // Before adding the external file as another payload, we have to check to
+                                    // see if it's already in the payload list. To do this, we have to match the
+                                    // expected relative location of the external file specified in the MSI with
+                                    // the destination @Name of the payload... the @SourceFile path on the payload
+                                    // may be something completely different!
+                                    bool foundPayload = false;
+                                    foreach (PayloadInfo payload in this.Payloads)
                                     {
-                                        payload.ParentPackagePayload = this.PackagePayload;
-                                        foundPayload = true;
-                                        break;
+                                        if (cabinet.Equals(payload.FileName, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            payload.ParentPackagePayload = this.PackagePayload;
+                                            foundPayload = true;
+                                            break;
+                                        }
+                                    }
+
+                                    // If we didn't find the Payload as an existing child of the package, we need to
+                                    // add it.  We expect the file to exist on-disk in the same relative location as
+                                    // the MSI expects to find it...
+                                    if (!foundPayload)
+                                    {
+                                        string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
+                                        string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), cabinet);
+                                        string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
+
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        payloadNew.ParentPackagePayload = this.PackagePayload;
+                                        if (null != payloadNew.Container)
+                                        {
+                                            payloadNew.Container.Payloads.Add(payloadNew);
+                                        }
+
+                                        this.Payloads.Add(payloadNew);
+                                        allPayloads.Add(payloadNew.Id, payloadNew);
+
+                                        this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
                                     }
                                 }
+                            }
+                        }
 
-                                // If we didn't find the Payload as an existing child of the package, we need to
-                                // add it.  We expect the file to exist on-disk in the same relative location as
-                                // the MSI expects to find it...
-                                if (!foundPayload)
+                        // Add all external files as package payloads and calculate the total install size as the rollup of
+                        // File table's sizes.
+                        this.InstallSize = 0;
+                        if (db.Tables.Contains("Component") && db.Tables.Contains("Directory") && db.Tables.Contains("File"))
+                        {
+                            Hashtable directories = new Hashtable();
+                            Microsoft.Deployment.WindowsInstaller.Record record;
+                            Microsoft.Deployment.WindowsInstaller.View view;
+
+                            // Load up the directory hash table so we will be able to resolve source paths
+                            // for files in the MSI database.
+                            view = db.OpenView("SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`");
+                            view.Execute();
+                            while (null != (record = view.Fetch()))
+                            {
+                                string sourceName = Installer.GetName(record.GetString(3), true, longNamesInImage);
+                                directories.Add(record.GetString(1), new ResolvedDirectory(record.GetString(2), sourceName));
+                            }
+
+                            // Resolve the source paths to external files and add each file size to the total
+                            // install size of the package.
+                            view = db.OpenView("SELECT `Directory_`, `File`, `FileName`, `File`.`Attributes`, `FileSize` FROM `Component`, `File` WHERE `Component`.`Component`=`File`.`Component_`");
+                            view.Execute();
+                            while (null != (record = view.Fetch()))
+                            {
+                                // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
+                                // explicitly marked compressed then this is an external file.
+                                if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
+                                    (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
                                 {
-                                    string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
-                                    string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), cabinet);
-                                    string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
+                                    string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
+                                    string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
+                                    string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), fileSourcePath);
+                                    string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
 
                                     PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                     payloadNew.ParentPackagePayload = this.PackagePayload;
@@ -6578,16 +6656,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                     this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
                                 }
-                            }
-                        }
 
-                        // Calculate the total install size as the rollup of File table's sizes.
-                        this.InstallSize = 0;
-                        if (db.Tables.Contains("File"))
-                        {
-                            foreach (int fileSize in db.ExecuteIntegerQuery("SELECT `FileSize` FROM `File`"))
-                            {
-                                this.InstallSize += fileSize;
+                                this.InstallSize += record.GetInteger(5);
                             }
                         }
                     }
