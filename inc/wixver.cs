@@ -11,4 +11,4 @@ using System.Reflection;
 //
 
 [assembly: AssemblyVersion("3.0.0.0")]
-[assembly: AssemblyFileVersion("3.5.2430.0")]
+[assembly: AssemblyFileVersion("3.5.2519.0")]
