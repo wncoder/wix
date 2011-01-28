@@ -71,6 +71,7 @@
 
     <zip zipfile="${file.target.binaries.zip}">
       <fileset basedir="${dir.target.wix}">
+        <include name="burnstub.exe" />
         <include name="candle.exe" />
         <include name="candle.exe.config" />
         <include name="${dir.root}\CPL.TXT" />
@@ -170,17 +171,6 @@
         <include name="CustomActionVB.zip" />
         <include name="CustomActionCPP_2005.zip" />
         <include name="CustomActionCPP_2008.zip" />
-        
-        <!-- Burn -->
-        <include name="burnstub.exe" />
-        <include name="stdux.dll" />
-        <include name="stdux.png" />
-        <include name="tou.htm" />
-        <include name="BootstrapperCore.dll" />
-        <include name="mbahost.dll" />
-        <include name="mbapreq.dll" />
-        <include name="StduxResources\thm.xml" />
-        <include name="StduxResources\en-us.wxl" />
 
         <!-- Lux -->
         <include name="lux.exe" />
@@ -249,7 +239,11 @@
         <include name="XsdGen.exe" />
         <include name="DocCompiler.exe" />
         <include name="XsdStitch.exe" />
-        
+
+        <!-- Burn binaries -->
+        <include name="BootstrapperCore.dll" />
+        <include name="BootstrapperCore.config" />
+
         <!-- DTF binaries -->
         <include name="wix.ca.targets" />
         <include name="Microsoft.Deployment.Compression.dll" />
@@ -403,6 +397,7 @@
         <include name="**/*.sln" />
         <include name="**/*.targets" />
         <include name="**/*.testrunconfig" />
+        <include name="**/*.thm" />
         <include name="**/*.txt" />
         <include name="**/*.wixproj" />
         <include name="**/*.wxl" />
@@ -453,112 +448,16 @@
     </zip>
 
     <zip zipfile="${file.target.pdbs.zip}">
-      <fileset basedir="${dir.target.wix.x86}">
+      <fileset prefix="x86" basedir="${dir.target.wix.x86}">
         <include name="*.pdb" />
-
-        <!-- skip pdbs that probably are not necessary for debugging -->
-        <exclude name="ambient.pdb" />
-        <exclude name="nit.pdb" />
-        <exclude name="directx.pdb" />
-        <exclude name="DocCompiler.pdb" />
-        <exclude name="firewall.pdb" />
-        <exclude name="FlattenXml.pdb" />
-        <exclude name="gaming.pdb" />
-        <exclude name="GenerateWixInclude.pdb" />
-        <exclude name="Inventory.pdb" />
-        <exclude name="lux.pdb" />
-        <exclude name="LuxCustomActions.pdb" />
-        <exclude name="LuxTasks.pdb" />
-        <exclude name="MakeSfxCA.pdb" />
-        <exclude name="melt.pdb" />
-        <exclude name="MigrateQTests.pdb" />
-        <exclude name="MsgGen.pdb" />
-        <exclude name="netfxca.pdb" />
-        <exclude name="nit.pdb" />
-        <exclude name="PrintEula.pdb" />
-        <exclude name="ResIdGen.pdb" />
-        <exclude name="sconce2005.pdb" />
-        <exclude name="sconce2008.pdb" />
-        <exclude name="setup.pdb" />
-        <exclude name="setupbld.pdb" />
-        <exclude name="SetupBuilder.pdb" />
-        <exclude name="smoke.pdb" />
-        <exclude name="stdux.pdb" />
-        <exclude name="TestUX.pdb" />
-        <exclude name="UnitTest.pdb" />
-        <exclude name="update.pdb" />
-        <exclude name="votive2005.pdb" />
-        <exclude name="votive2008.pdb" />
-        <exclude name="VotivePP.pdb" />
-        <exclude name="WiFile.pdb" />
-        <exclude name="WixBuild.pdb" />
-        <exclude name="WixCop.pdb" />
-        <exclude name="WixTests.pdb" />
-        <exclude name="WixTestTools.pdb" />
-        <exclude name="WixUnit.pdb" />
-        <exclude name="WixValidatorExampleExtension.pdb" />
-        <exclude name="wui.pdb" />
-        <exclude name="XPack.pdb" />
-        <exclude name="XsdGen.pdb" />
-        <exclude name="XsdStitch.pdb" />
       </fileset>
 
       <fileset prefix="x64" basedir="${dir.target.wix.x64}">
-        <include name="wixca_x64.pdb" />
-        <include name="sfxca.pdb" />
+        <include name="*.pdb" />
       </fileset>
 
       <fileset prefix="ia64" basedir="${dir.target.wix.ia64}">
-        <include name="wixca_ia64.pdb" if="${ia64}" />
-      </fileset>
-    </zip>
-
-    <zip zipfile="${file.target.otherpdbs.zip}">
-      <fileset basedir="${dir.target.wix.x86}">
-        <include name="ambient.pdb" />
-        <include name="nit.pdb" />
-        <include name="directx.pdb" />
-        <include name="DocCompiler.pdb" />
-        <include name="firewall.pdb" />
-        <include name="FlattenXml.pdb" />
-        <include name="gaming.pdb" />
-        <include name="GenerateWixInclude.pdb" />
-        <include name="Inventory.pdb" />
-        <include name="lux.pdb" />
-        <include name="LuxCustomActions.pdb" />
-        <include name="LuxTasks.pdb" />
-        <include name="MakeSfxCA.pdb" />
-        <include name="melt.pdb" />
-        <include name="MigrateQTests.pdb" />
-        <include name="MsgGen.pdb" />
-        <include name="netfxca.pdb" />
-        <include name="nit.pdb" />
-        <include name="PrintEula.pdb" />
-        <include name="ResIdGen.pdb" />
-        <include name="sconce2005.pdb" />
-        <include name="sconce2008.pdb" />
-        <include name="setup.pdb" />
-        <include name="setupbld.pdb" />
-        <include name="SetupBuilder.pdb" />
-        <include name="smoke.pdb" />
-        <include name="stdux.pdb" />
-        <include name="TestUX.pdb" />
-        <include name="UnitTest.pdb" />
-        <include name="update.pdb" />
-        <include name="votive2005.pdb" />
-        <include name="votive2008.pdb" />
-        <include name="VotivePP.pdb" />
-        <include name="WiFile.pdb" />
-        <include name="WixBuild.pdb" />
-        <include name="WixCop.pdb" />
-        <include name="WixTests.pdb" />
-        <include name="WixTestTools.pdb" />
-        <include name="WixUnit.pdb" />
-        <include name="WixValidatorExampleExtension.pdb" />
-        <include name="wui.pdb" />
-        <include name="XPack.pdb" />
-        <include name="XsdGen.pdb" />
-        <include name="XsdStitch.pdb" />
+        <include name="*.pdb" if="${ia64}" />
       </fileset>
     </zip>
   </target>

@@ -49,6 +49,7 @@ HRESULT MsiEnginePlanPackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction

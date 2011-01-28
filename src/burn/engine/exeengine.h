@@ -44,6 +44,7 @@ HRESULT ExeEnginePlanPackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
     );
@@ -52,6 +53,8 @@ HRESULT ExeEngineExecutePackage(
     __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
 

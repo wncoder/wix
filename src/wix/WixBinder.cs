@@ -445,7 +445,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string Type;
 
             /// <summary>
-            /// Basic constructor for struct
+            /// Prefer the TryCreate() method to create FileTransfer objects.
             /// </summary>
             /// <param name="source">Source path to file.</param>
             /// <param name="destination">Destination path for file.</param>
@@ -456,13 +456,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             /// <summary>
-            /// Basic constructor for struct
+            /// Prefer the TryCreate() method to create FileTransfer objects.
             /// </summary>
             /// <param name="source">Source path to file.</param>
             /// <param name="destination">Destination path for file.</param>
             /// <param name="move">File if file should be moved (optimal).</param>
             /// <param name="type">Optional type of file this transfer is transferring.</param>
-            /// <param name="move">Optional source line numbers wher this transfer originated.</param>
+            /// <param name="sourceLineNumbers">Optional source line numbers wher this transfer originated.</param>
             public FileTransfer(string source, string destination, bool move, string type, SourceLineNumberCollection sourceLineNumbers)
             {
                 this.Source = source;
@@ -471,6 +471,61 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.Type = type;
                 this.SourceLineNumbers = sourceLineNumbers;
+            }
+
+            /// <summary>
+            /// Creates a file transfer if the source and destination are different.
+            /// </summary>
+            /// <param name="source">Source path to file.</param>
+            /// <param name="destination">Destination path for file.</param>
+            /// <param name="move">File if file should be moved (optimal).</param>
+            /// <param name="type">Optional type of file this transfer is transferring.</param>
+            /// <param name="sourceLineNumbers">Optional source line numbers wher this transfer originated.</param>
+            /// <returns>true if the source and destination are the different, false if no file transfer is created.</returns>
+            public static bool TryCreate(string source, string destination, bool move, string type, SourceLineNumberCollection sourceLineNumbers, out FileTransfer transfer)
+            {
+                string sourceFullPath = null;
+                string fileLayoutFullPath = null;
+
+                try
+                {
+                    sourceFullPath = Path.GetFullPath(source);
+                }
+                catch (System.ArgumentException)
+                {
+                    throw new WixException(WixErrors.InvalidFileName(sourceLineNumbers, source));
+                }
+                catch (System.IO.PathTooLongException)
+                {
+                    throw new WixException(WixErrors.PathTooLong(sourceLineNumbers, source));
+                }
+
+                try
+                {
+                    fileLayoutFullPath = Path.GetFullPath(destination);
+                }
+                catch (System.ArgumentException)
+                {
+                    throw new WixException(WixErrors.InvalidFileName(sourceLineNumbers, destination));
+                }
+                catch (System.IO.PathTooLongException)
+                {
+                    throw new WixException(WixErrors.PathTooLong(sourceLineNumbers, destination));
+                }
+
+                // if the current source path (where we know that the file already exists) and the resolved
+                // path as dictated by the Directory table are not the same, then propagate the file.  The
+                // image that we create may have already been done by some other process other than the linker, so 
+                // there is no reason to copy the files to the resolved source if they are already there.
+                if (String.Equals(sourceFullPath, fileLayoutFullPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    // TODO: would prefer to return null here.
+                    transfer = new FileTransfer(); // create an empty transfer because we must.
+                    return false;
+                }
+
+                transfer = new FileTransfer(source, destination, move, type, sourceLineNumbers);
+                return true;
             }
         }
 

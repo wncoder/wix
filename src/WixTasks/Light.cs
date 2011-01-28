@@ -466,7 +466,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendIfTrue("-sui", this.SuppressDefaultUISequenceActions);
             commandLineBuilder.AppendIfTrue("-sv", this.SuppressIntermediateFileVersionMatching);
             commandLineBuilder.AppendIfTrue("-sval", this.SuppressValidation);
-            commandLineBuilder.AppendSwitchIfNotNull("-usf", this.UnreferencedSymbolsFile);
+            commandLineBuilder.AppendSwitchIfNotNull("-usf ", this.UnreferencedSymbolsFile);
             commandLineBuilder.AppendIfTrue("-xo", this.OutputAsXml);
             commandLineBuilder.AppendTextIfNotNull(this.AdditionalOptions);
 

@@ -58,6 +58,7 @@
         <Feature Id="Feature_WiX" Title="WiX Toolset" Description="Windows Installer XML toolset" AllowAdvertise="no" Display="expand" InstallDefault="local" Level="1" Absent="disallow">
             <ComponentGroupRef Id="Toolset" />
             <ComponentGroupRef Id="Extensions" />
+            <ComponentGroupRef Id="SetupExeComponents" />
             <Component Id="ProductInformation" Directory="APPLICATIONFOLDER" Guid="8A0EC6E0-5AAF-439B-99BF-A8997BFA8BC8" Win64="no">
                 <RemoveFolder Id="CleanupShortcutFolder" Directory="WixShortcutFolder" On="uninstall" />
 
@@ -137,6 +138,7 @@
             <ComponentRef Id="XsdStitch" />
             <ComponentGroupRef Id="SdkLibs" />
             <ComponentRef Id="SdkHeaders" />
+            <ComponentGroupRef Id="BurnSdkComponents" />
             <ComponentGroupRef Id="DtfComponents" />
             <ComponentGroupRef Id="DtfCATemplates" />
             <ComponentGroupRef Id="LuxComponentGroup" />

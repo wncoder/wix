@@ -292,11 +292,11 @@ extern "C" HRESULT DAPI RegKeyEnum(
     if (ERROR_MORE_DATA == er)
     {
         er = vpfnRegQueryInfoKeyW(hk, NULL, NULL, NULL, NULL, &cch, NULL, NULL, NULL, NULL, NULL, NULL);
-        ExitOnWin32Error(er, hr, "Failed to get max size of value name under registry key.");
+        ExitOnWin32Error(er, hr, "Failed to get max size of subkey name under registry key.");
 
         ++cch; // add one because RegQueryInfoKeyW() returns the length of the subkeys without the null terminator.
         hr = StrAlloc(psczKey, cch);
-        ExitOnFailure(hr, "Failed to allocate string bigger for enum registry value.");
+        ExitOnFailure(hr, "Failed to allocate string bigger for enum registry key.");
 
         er = vpfnRegEnumKeyExW(hk, dwIndex, *psczKey, &cch, NULL, NULL, NULL, NULL);
     }
@@ -339,6 +339,10 @@ HRESULT DAPI RegValueEnum(
     ExitOnFailure(hr, "Failed to allocate array for registry value name");
 
     er = vpfnRegEnumValueW(hk, dwIndex, *psczName, &cbValueName, NULL, pdwType, NULL, NULL);
+    if (ERROR_NO_MORE_ITEMS == er)
+    {
+        ExitFunction1(hr = E_NOMOREITEMS);
+    }
     ExitOnWin32Error(er, hr, "Failed to enumerate registry value");
 
 LExit:
@@ -363,13 +367,22 @@ HRESULT DAPI RegReadBinary(
     DWORD cb = 0;
     DWORD dwType = 0;
 
-    vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, NULL, &cb);
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, NULL, &cb);
+    ExitOnWin32Error(er, hr, "Failed to get size of registry value.");
 
-    pbBuffer = static_cast<LPBYTE>(MemAlloc(cb, FALSE));
-    ExitOnNull(pbBuffer, hr, E_OUTOFMEMORY, "Failed to allocate buffer for binary registry value.");
+    // Zero-length binary values can exist
+    if (0 < cb)
+    {
+        pbBuffer = static_cast<LPBYTE>(MemAlloc(cb, FALSE));
+        ExitOnNull(pbBuffer, hr, E_OUTOFMEMORY, "Failed to allocate buffer for binary registry value.");
 
-    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, pbBuffer, &cb);
-    ExitOnWin32Error(er, hr, "Failed to read registry key.");
+        er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, pbBuffer, &cb);
+        if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+        {
+            ExitFunction1(hr = E_FILENOTFOUND);
+        }
+        ExitOnWin32Error(er, hr, "Failed to read registry value.");
+    }
 
     if (REG_BINARY == dwType)
     {
@@ -431,6 +444,10 @@ extern "C" HRESULT DAPI RegReadString(
 
         er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(*psczValue), &cb);
     }
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
+    }
     ExitOnWin32Error(er, hr, "Failed to read registry key.");
 
     if (REG_SZ == dwType || REG_EXPAND_SZ == dwType)
@@ -488,6 +505,10 @@ HRESULT DAPI RegReadStringArray(
         ExitOnFailure(hr, "Failed to allocate string for registry value.");
 
         er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(sczValue), &cb);
+    }
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
     }
     ExitOnWin32Error(er, hr, "Failed to read registry key.");
 
@@ -561,6 +582,10 @@ extern "C" HRESULT DAPI RegReadVersion(
 
     cb = sizeof(DWORD64);
     er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(*pdw64Version), &cb);
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
+    }
     if (REG_SZ == dwType || REG_EXPAND_SZ == dwType)
     {
         hr = RegReadString(hk, wzName, &sczVersion);
@@ -602,6 +627,10 @@ extern "C" HRESULT DAPI RegReadNumber(
     DWORD cb = sizeof(DWORD);
 
     er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(pdwValue), &cb);
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
+    }
     ExitOnWin32Error(er, hr, "Failed to query registry key value.");
 
     if (REG_DWORD != dwType)

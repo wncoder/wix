@@ -85,6 +85,8 @@ HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
 HRESULT ElevationExecuteMsiPackage(
@@ -108,6 +110,8 @@ HRESULT ElevationExecuteMspPackage(
 HRESULT ElevationExecuteMsuPackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
 HRESULT ElevationLaunchElevatedChild(
@@ -123,7 +127,7 @@ HRESULT ElevationCleanBundle(
     );
 HRESULT ElevationCleanPackage(
     __in HANDLE hPipe,
-    __in BURN_CLEAN_ACTION* pCleanAction
+    __in BURN_PACKAGE* pPackage
     );
 
 // Child (per-machine process) side functions.

@@ -103,6 +103,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             TypeMask = 0xf,
         }
 
+        internal enum WixRemoveFolderExOn
+        {
+          Install = 1,
+          Uninstall = 2,
+          Both = 3,
+        }
+
         private static readonly Regex FindPropertyBrackets = new Regex(@"\[(?!\\|\])|(?<!\[\\\]|\[\\|\\\[)\]", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         private XmlSchema schema;
@@ -211,6 +218,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             break;
                         case "PerformanceCategory":
                             this.ParsePerformanceCategoryElement(element, componentId);
+                            break;
+                        case "RemoveFolderEx":
+                            this.ParseRemoveFolderExElement(element, componentId);
                             break;
                         case "RestartResource":
                             this.ParseRestartResourceElement(element, componentId);
@@ -442,9 +452,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             {
                                 this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
                                     resultValue,
-                                    Util.ComponentSearch.ResultType.Directory.ToString(),
-                                    Util.ComponentSearch.ResultType.State.ToString(),
-                                    Util.ComponentSearch.ResultType.KeyPath.ToString()));
+                                    Util.ComponentSearch.ResultType.directory.ToString(),
+                                    Util.ComponentSearch.ResultType.state.ToString(),
+                                    Util.ComponentSearch.ResultType.keyPath.ToString()));
                             }
                             break;
                         default:
@@ -501,13 +511,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 WixComponentSearchAttributes attributes = WixComponentSearchAttributes.KeyPath;
                 switch (result)
                 {
-                    case Util.ComponentSearch.ResultType.Directory:
+                    case Util.ComponentSearch.ResultType.directory:
                         attributes |= WixComponentSearchAttributes.WantDirectory;
                         break;
-                    case Util.ComponentSearch.ResultType.KeyPath:
+                    case Util.ComponentSearch.ResultType.keyPath:
                         attributes |= WixComponentSearchAttributes.KeyPath;
                         break;
-                    case Util.ComponentSearch.ResultType.State:
+                    case Util.ComponentSearch.ResultType.state:
                         attributes |= WixComponentSearchAttributes.State;
                         break;
                 }
@@ -841,7 +851,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             if (!Util.DirectorySearch.TryParseResultType(resultValue, out result))
                             {
                                 this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
-                                    resultValue, Util.DirectorySearch.ResultType.Exists.ToString()));
+                                    resultValue, Util.DirectorySearch.ResultType.exists.ToString()));
                             }
                             break;
                         default:
@@ -898,7 +908,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 WixFileSearchAttributes attributes = WixFileSearchAttributes.IsDirectory;
                 switch (result)
                 {
-                    case Util.DirectorySearch.ResultType.Exists:
+                    case Util.DirectorySearch.ResultType.exists:
                         attributes |= WixFileSearchAttributes.WantExists;
                         break;
                 }
@@ -942,8 +952,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             {
                                 this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
                                     resultValue,
-                                    Util.FileSearch.ResultType.Exists.ToString(),
-                                    Util.FileSearch.ResultType.Version.ToString()));
+                                    Util.FileSearch.ResultType.exists.ToString(),
+                                    Util.FileSearch.ResultType.version.ToString()));
                             }
                             break;
                         default:
@@ -1000,10 +1010,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 WixFileSearchAttributes attributes = WixFileSearchAttributes.Default;
                 switch (result)
                 {
-                    case Util.FileSearch.ResultType.Exists:
+                    case Util.FileSearch.ResultType.exists:
                         attributes |= WixFileSearchAttributes.WantExists;
                         break;
-                    case Util.FileSearch.ResultType.Version:
+                    case Util.FileSearch.ResultType.version:
                         attributes |= WixFileSearchAttributes.WantVersion;
                         break;
                 }
@@ -2221,11 +2231,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null == resourceFileDirectory)
-            {
-                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "ResourceFileDirectory"));
-            }
-
             // find unexpected child elements
             foreach (XmlNode child in node.ChildNodes)
             {
@@ -2530,10 +2535,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             {
                                 this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
                                     resultValue,
-                                    Util.ProductSearch.ResultType.Version.ToString(),
-                                    Util.ProductSearch.ResultType.Language.ToString(),
-                                    Util.ProductSearch.ResultType.State.ToString(),
-                                    Util.ProductSearch.ResultType.Assignment.ToString()));
+                                    Util.ProductSearch.ResultType.version.ToString(),
+                                    Util.ProductSearch.ResultType.language.ToString(),
+                                    Util.ProductSearch.ResultType.state.ToString(),
+                                    Util.ProductSearch.ResultType.assignment.ToString()));
                             }
                             break;
                         default:
@@ -2590,16 +2595,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 WixProductSearchAttributes attributes = WixProductSearchAttributes.Version;
                 switch (result)
                 {
-                    case Util.ProductSearch.ResultType.Version:
+                    case Util.ProductSearch.ResultType.version:
                         attributes = WixProductSearchAttributes.Version;
                         break;
-                    case Util.ProductSearch.ResultType.Language:
+                    case Util.ProductSearch.ResultType.language:
                         attributes = WixProductSearchAttributes.Language;
                         break;
-                    case Util.ProductSearch.ResultType.State:
+                    case Util.ProductSearch.ResultType.state:
                         attributes = WixProductSearchAttributes.State;
                         break;
-                    case Util.ProductSearch.ResultType.Assignment:
+                    case Util.ProductSearch.ResultType.assignment:
                         attributes = WixProductSearchAttributes.Assignment;
                         break;
                 }
@@ -2662,7 +2667,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             if (!Util.RegistrySearch.TryParseResultType(resultValue, out result))
                             {
                                 this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
-                                    resultValue, Util.RegistrySearch.ResultType.Exists.ToString(), Util.RegistrySearch.ResultType.Value.ToString()));
+                                    resultValue, Util.RegistrySearch.ResultType.exists.ToString(), Util.RegistrySearch.ResultType.value.ToString()));
                             }
                             break;
                         case "Win64":
@@ -2696,7 +2701,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (Util.RegistrySearch.ResultType.NotSet == result)
             {
-                result = Util.RegistrySearch.ResultType.Value;
+                result = Util.RegistrySearch.ResultType.value;
             }
 
             if (null == id)
@@ -2731,10 +2736,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             switch (result)
             {
-                case Util.RegistrySearch.ResultType.Exists:
+                case Util.RegistrySearch.ResultType.exists:
                     attributes |= WixRegistrySearchAttributes.WantExists;
                     break;
-                case Util.RegistrySearch.ResultType.Value:
+                case Util.RegistrySearch.ResultType.value:
                     attributes |= WixRegistrySearchAttributes.WantValue;
                     break;
             }
@@ -2789,6 +2794,105 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             }
         }
 
+        /// <summary>
+        /// Parses a RemoveFolderEx element.
+        /// </summary>
+        /// <param name="node">Element to parse.</param>
+        /// <param name="componentId">Identifier of parent component.</param>
+        private void ParseRemoveFolderExElement(XmlNode node, string componentId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            int on = (int)WixRemoveFolderExOn.Uninstall;
+            string property = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "On":
+                            string onValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            if (onValue.Length == 0)
+                            {
+                                on = CompilerCore.IllegalInteger;
+                            }
+                            else
+                            {
+                                switch (onValue)
+                                {
+                                    case "install":
+                                        on = (int)WixRemoveFolderExOn.Install;
+                                        break;
+                                    case "uninstall":
+                                        on = (int)WixRemoveFolderExOn.Uninstall;
+                                        break;
+                                    case "both":
+                                        on = (int)WixRemoveFolderExOn.Both;
+                                        break;
+                                    default:
+                                        this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "On", onValue, "install", "uninstall", "both"));
+                                        on = CompilerCore.IllegalInteger;
+                                        break;
+                                }
+                            }
+                            break;
+                        case "Property":
+                            property = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (String.IsNullOrEmpty(property))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Property"));
+            }
+
+            if (String.IsNullOrEmpty(id))
+            {
+                id = this.Core.GenerateIdentifier("wrf", componentId, property, on.ToString(CultureInfo.InvariantCulture.NumberFormat));
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.Core.EncounteredError)
+            {
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRemoveFolderEx");
+                row[0] = id;
+                row[1] = componentId;
+                row[2] = property;
+                row[3] = on;
+
+                this.Core.EnsureTable(sourceLineNumbers, "RemoveFile");
+                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixRemoveFoldersEx");
+            }
+        }
+        
         /// <summary>
         /// Parses a RestartResource element.
         /// </summary>

@@ -23,6 +23,12 @@
 
 // struct
 
+typedef struct _BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT
+{
+    PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress;
+    LPVOID pvContext;
+} BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT;
+
 typedef struct _BURN_ELEVATION_MSI_MESSAGE_CONTEXT
 {
     PFN_MSIEXECUTEMESSAGEHANDLER pfnMessageHandler;
@@ -42,6 +48,11 @@ typedef struct _BURN_ELEVATION_CHILD_MESSAGE_CONTEXT
 
 // internal function declarations
 
+static HRESULT ProcessGenericExecuteProgressMessages(
+    __in BURN_PIPE_MESSAGE* pMsg,
+    __in_opt LPVOID pvContext,
+    __out DWORD* pdwResult
+    );
 static HRESULT ProcessMsiPackageMessages(
     __in BURN_PIPE_MESSAGE* pMsg,
     __in_opt LPVOID pvContext,
@@ -96,6 +107,7 @@ static HRESULT OnCachePayload(
     __in DWORD cbData
     );
 static HRESULT OnExecuteExePackage(
+    __in HANDLE hPipe,
     __in BURN_PACKAGES* pPackages,
     __in BURN_VARIABLES* pVariables,
     __in BYTE* pbData,
@@ -115,14 +127,20 @@ static HRESULT OnExecuteMspPackage(
     __in BYTE* pbData,
     __in DWORD cbData
     );
-static int MsiExecuteMessageHandler(
-    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
-    __in_opt LPVOID pvContext
-    );
 static HRESULT OnExecuteMsuPackage(
+    __in HANDLE hPipe,
     __in BURN_PACKAGES* pPackages,
     __in BYTE* pbData,
     __in DWORD cbData
+    );
+static int GenericExecuteProgressHandler(
+    __in LPVOID pvContext,
+    __in DWORD dwProgress,
+    __in DWORD dwTotal
+    );
+static int MsiExecuteMessageHandler(
+    __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
+    __in_opt LPVOID pvContext
     );
 static HRESULT OnLaunchElevatedEmbeddedChild(
     __in BURN_PACKAGES* pPackages,
@@ -355,12 +373,15 @@ extern "C" HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
     HRESULT hr = S_OK;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
+    BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT context = { };
     DWORD dwResult = 0;
 
     // serialize message data
@@ -374,7 +395,10 @@ extern "C" HRESULT ElevationExecuteExePackage(
     ExitOnFailure(hr, "Failed to write variables.");
 
     // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE, pbData, cbData, NULL, NULL, &dwResult);
+    context.pfnGenericExecuteProgress = pfnGenericExecuteProgress;
+    context.pvContext = pvContext;
+
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE, pbData, cbData, ProcessGenericExecuteProgressMessages, &context, &dwResult);
     ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE message to per-machine process.");
 
     hr = ProcessResult(dwResult, pRestart);
@@ -519,12 +543,15 @@ LExit:
 extern "C" HRESULT ElevationExecuteMsuPackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
     HRESULT hr = S_OK;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
+    BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT context = { };
     DWORD dwResult = 0;
 
     // serialize message data
@@ -538,7 +565,10 @@ extern "C" HRESULT ElevationExecuteMsuPackage(
     ExitOnFailure(hr, "Failed to write action to message buffer.");
 
     // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE, pbData, cbData, NULL, NULL, &dwResult);
+    context.pfnGenericExecuteProgress = pfnGenericExecuteProgress;
+    context.pvContext = pvContext;
+
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE, pbData, cbData, ProcessGenericExecuteProgressMessages, &context, &dwResult);
     ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE message to per-machine process.");
 
     hr = ProcessResult(dwResult, pRestart);
@@ -627,18 +657,16 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT ElevationCleanPackage(
     __in HANDLE hPipe,
-    __in BURN_CLEAN_ACTION* pCleanAction
+    __in BURN_PACKAGE* pPackage
     )
 {
-    Assert(BURN_CLEAN_ACTION_TYPE_PACKAGE == pCleanAction->type);
-
     HRESULT hr = S_OK;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
     DWORD dwResult = 0;
 
     // serialize message data
-    hr = BuffWriteString(&pbData, &cbData, pCleanAction->package.pPackage->sczId);
+    hr = BuffWriteString(&pbData, &cbData, pPackage->sczId);
     ExitOnFailure(hr, "Failed to write clean package id to message buffer.");
 
     // send message
@@ -688,6 +716,46 @@ LExit:
 
 
 // internal function definitions
+
+static HRESULT ProcessGenericExecuteProgressMessages(
+    __in BURN_PIPE_MESSAGE* pMsg,
+    __in_opt LPVOID pvContext,
+    __out DWORD* pdwResult
+    )
+{
+    HRESULT hr = S_OK;
+    SIZE_T iData = 0;
+    BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT* pContext = static_cast<BURN_ELEVATION_GENERIC_PROGRESS_CONTEXT*>(pvContext);
+    DWORD dwProgress = 0;
+    DWORD dwTotal = 0;
+    DWORD dwResult = 0;
+
+    // Process the message.
+    switch (pMsg->dwMessage)
+    {
+    case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS:
+        // read message parameters
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwProgress);
+        ExitOnFailure(hr, "Failed to read progress.");
+
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwTotal);
+        ExitOnFailure(hr, "Failed to read total.");
+
+        // send message
+        dwResult = (DWORD)pContext->pfnGenericExecuteProgress(pContext->pvContext, dwProgress, dwTotal);
+        break;
+
+    default:
+        hr = E_INVALIDARG;
+        ExitOnRootFailure(hr, "Invalid package message.");
+        break;
+    }
+
+    *pdwResult = dwResult;
+
+LExit:
+    return hr;
+}
 
 static HRESULT ProcessMsiPackageMessages(
     __in BURN_PIPE_MESSAGE* pMsg,
@@ -808,7 +876,7 @@ static HRESULT ProcessElevatedChildMessage(
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE:
-        hrResult = OnExecuteExePackage(pContext->pPackages, pContext->pVariables, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnExecuteExePackage(pContext->hPipe, pContext->pPackages, pContext->pVariables, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE:
@@ -820,7 +888,7 @@ static HRESULT ProcessElevatedChildMessage(
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE:
-        hrResult = OnExecuteMsuPackage(pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnExecuteMsuPackage(pContext->hPipe, pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD:
@@ -1075,6 +1143,7 @@ LExit:
 }
 
 static HRESULT OnExecuteExePackage(
+    __in HANDLE hPipe,
     __in BURN_PACKAGES* pPackages,
     __in BURN_VARIABLES* pVariables,
     __in BYTE* pbData,
@@ -1103,7 +1172,7 @@ static HRESULT OnExecuteExePackage(
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // execute EXE package
-    hr = ExeEngineExecutePackage(NULL, INVALID_HANDLE_VALUE, &executeAction, pVariables, &exeRestart);
+    hr = ExeEngineExecutePackage(NULL, INVALID_HANDLE_VALUE, &executeAction, pVariables, GenericExecuteProgressHandler, hPipe, &exeRestart);
     ExitOnFailure(hr, "Failed to execute EXE package.");
 
 LExit:
@@ -1283,6 +1352,86 @@ LExit:
     return hr;
 }
 
+static HRESULT OnExecuteMsuPackage(
+    __in HANDLE hPipe,
+    __in BURN_PACKAGES* pPackages,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    )
+{
+    HRESULT hr = S_OK;
+    SIZE_T iData = 0;
+    LPWSTR sczPackage = NULL;
+    BURN_EXECUTE_ACTION executeAction = { };
+    BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
+
+    executeAction.type = BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE;
+
+    // deserialize message data
+    hr = BuffReadString(pbData, cbData, &iData, &sczPackage);
+    ExitOnFailure(hr, "Failed to read package id.");
+
+    hr = BuffReadString(pbData, cbData, &iData, &executeAction.msuPackage.sczLogPath);
+    ExitOnFailure(hr, "Failed to read package log.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, reinterpret_cast<DWORD*>(&executeAction.msuPackage.action));
+    ExitOnFailure(hr, "Failed to read action.");
+
+    hr = PackageFindById(pPackages, sczPackage, &executeAction.msuPackage.pPackage);
+    ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
+
+    // execute MSU package
+    hr = MsuEngineExecutePackage(&executeAction, GenericExecuteProgressHandler, hPipe, &restart);
+    ExitOnFailure(hr, "Failed to execute MSU package.");
+
+LExit:
+    ReleaseStr(sczPackage);
+    PlanUninitializeExecuteAction(&executeAction);
+
+    if (SUCCEEDED(hr))
+    {
+        if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED);
+        }
+        else if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED);
+        }
+    }
+
+    return hr;
+}
+
+static int GenericExecuteProgressHandler(
+    __in LPVOID pvContext,
+    __in DWORD dwProgress,
+    __in DWORD dwTotal
+    )
+{
+    HRESULT hr = S_OK;
+    int nResult = IDOK;
+    HANDLE hPipe = (HANDLE)pvContext;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+
+    // serialize message data
+    hr = BuffWriteNumber(&pbData, &cbData, dwProgress);
+    ExitOnFailure(hr, "Failed to write progress percentage to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, dwTotal);
+    ExitOnFailure(hr, "Failed to write progress total to message buffer.");
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS, pbData, cbData, NULL, NULL, reinterpret_cast<DWORD*>(&nResult));
+    ExitOnFailure(hr, "Failed to send message to per-user process.");
+
+LExit:
+    ReleaseBuffer(pbData);
+
+    return nResult;
+}
+
 static int MsiExecuteMessageHandler(
     __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
     __in_opt LPVOID pvContext
@@ -1364,56 +1513,6 @@ LExit:
     ReleaseBuffer(pbData);
 
     return nResult;
-}
-
-static HRESULT OnExecuteMsuPackage(
-    __in BURN_PACKAGES* pPackages,
-    __in BYTE* pbData,
-    __in DWORD cbData
-    )
-{
-    HRESULT hr = S_OK;
-    SIZE_T iData = 0;
-    LPWSTR sczPackage = NULL;
-    BURN_EXECUTE_ACTION executeAction = { };
-    BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
-
-    executeAction.type = BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE;
-
-    // deserialize message data
-    hr = BuffReadString(pbData, cbData, &iData, &sczPackage);
-    ExitOnFailure(hr, "Failed to read package id.");
-
-    hr = BuffReadString(pbData, cbData, &iData, &executeAction.msuPackage.sczLogPath);
-    ExitOnFailure(hr, "Failed to read package log.");
-
-    hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.msuPackage.action);
-    ExitOnFailure(hr, "Failed to read action.");
-
-    hr = PackageFindById(pPackages, sczPackage, &executeAction.msuPackage.pPackage);
-    ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
-
-    // execute MSU package
-    hr = MsuEngineExecutePackage(&executeAction, &restart);
-    ExitOnFailure(hr, "Failed to execute MSU package.");
-
-LExit:
-    ReleaseStr(sczPackage);
-    PlanUninitializeExecuteAction(&executeAction);
-
-    if (SUCCEEDED(hr))
-    {
-        if (BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED);
-        }
-        else if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED);
-        }
-    }
-
-    return hr;
 }
 
 static HRESULT OnLaunchElevatedEmbeddedChild(

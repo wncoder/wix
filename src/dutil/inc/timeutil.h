@@ -34,6 +34,11 @@ HRESULT DAPI TimeCurrentDateTime(
     __deref_out_z LPWSTR* ppwz,
     __in BOOL fGMT
     );
+HRESULT DAPI TimeSystemDateTime(
+    __deref_out_z LPWSTR* ppwz,
+    __in SYSTEMTIME *pst,
+    __in BOOL fGMT
+    );
 
 #ifdef __cplusplus
 }

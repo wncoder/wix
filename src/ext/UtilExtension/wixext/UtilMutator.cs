@@ -598,7 +598,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     product.AddChild(targetDir);
 
                     Wix.Media media = new Wix.Media();
-                    media.Id = 1;
+                    media.Id = "1";
                     media.Cabinet = "product.cab";
                     media.EmbedCab = Wix.YesNoType.yes;
                     product.AddChild(media);

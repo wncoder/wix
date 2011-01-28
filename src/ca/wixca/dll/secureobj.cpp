@@ -363,6 +363,13 @@ extern "C" UINT __stdcall SchedSecureObjects(
     hr = WcaInitialize(hInstall, "SchedSecureObjects");
     ExitOnFailure(hr, "failed to initialize");
 
+    // anything to do?
+    if (S_OK != WcaTableExists(L"SecureObjects"))
+    {
+        WcaLog(LOGMSG_STANDARD, "SecureObjects table doesn't exist, so there are no objects to secure.");
+        ExitFunction();
+    }
+
     //
     // loop through all the objects to be secured
     //
@@ -912,10 +919,6 @@ LExit:
     if (psd)
     {
         ::LocalFree(psd);
-    }
-    if (pDacl)
-    {
-        ::LocalFree(pDacl);
     }
 
     if (FAILED(hr))

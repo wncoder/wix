@@ -158,6 +158,20 @@ Language=English
 Applying non-vital package: %1!ls!, encountered error: 0x%2!x!. Continuing...
 .
 
+MessageId=351
+Severity=Success
+SymbolicName=MSG_UNCACHE_PACKAGE
+Language=English
+Removing cached package: %1!ls!, from path: %2!ls!
+.
+
+MessageId=352
+Severity=Success
+SymbolicName=MSG_UNCACHE_BUNDLE
+Language=English
+Removing cached bundle: %1!ls!, from path: %2!ls!
+.
+
 MessageId=399
 Severity=Success
 SymbolicName=MSG_APPLY_COMPLETE

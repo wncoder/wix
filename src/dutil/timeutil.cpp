@@ -167,22 +167,36 @@ extern "C" HRESULT DAPI TimeCurrentDateTime(
     )
 {
     SYSTEMTIME st;
+
+    ::GetSystemTime(&st);
+
+    return TimeSystemDateTime(ppwz, &st, fGMT);
+}
+
+
+/****************************************************************************
+TimeSystemDateTime - converts the provided system time struct to string format,
+  per format described in RFC 3339
+****************************************************************************/
+extern "C" HRESULT DAPI TimeSystemDateTime(
+    __deref_out_z LPWSTR* ppwz,
+    __in SYSTEMTIME *pst,
+    __in BOOL fGMT
+    )
+{
     DWORD dwAbsBias = 0;
 
     if (fGMT)
     {
-        ::GetSystemTime(&st);
-
-        return StrAllocFormatted(ppwz, L"%04hu-%02hu-%02huT%02hu:%02hu:%02huZ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+        return StrAllocFormatted(ppwz, L"%04hu-%02hu-%02huT%02hu:%02hu:%02huZ", pst->wYear, pst->wMonth, pst->wDay, pst->wHour, pst->wMinute, pst->wSecond);
     }
     else
     {
-        SYSTEMTIME stGMT;
+        SYSTEMTIME st;
         TIME_ZONE_INFORMATION tzi;
 
         ::GetTimeZoneInformation(&tzi);
-        ::GetSystemTime(&stGMT);
-        ::SystemTimeToTzSpecificLocalTime(&tzi, &stGMT, &st);
+        ::SystemTimeToTzSpecificLocalTime(&tzi, pst, &st);
         dwAbsBias = abs(tzi.Bias);
 
         return StrAllocFormatted(ppwz, L"%04hu-%02hu-%02huT%02hu:%02hu:%02hu%c%02u:%02u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, 0 >= tzi.Bias ? L'+' : L'-', dwAbsBias / 60, dwAbsBias % 60);

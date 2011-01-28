@@ -83,14 +83,14 @@
 
     <String Id="ExitDialog_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="ExitDialogBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ExitDialogDescription" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="ExitDialogDescription" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
     <String Id="ExitDialogTitle" Overridable="yes">{\WixUI_Font_Bigger}已完成 [ProductName] 安裝精靈</String>
 
     <String Id="FatalError_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FatalErrorBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="FatalErrorTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 安裝精靈提前結束</String>
     <String Id="FatalErrorDescription1" Overridable="yes">[ProductName] 安裝精靈因發生錯誤而提前結束，您的系統尚未被修改。若要稍後再安裝此程式，請再執行一次安裝精靈。</String>
-    <String Id="FatalErrorDescription2" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="FatalErrorDescription2" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
 
     <String Id="FeaturesDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FeaturesDlgTree" Overridable="yes">產品功能</String>
@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="FilesInUseExit" Overridable="yes">結束(&amp;X)</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。請按 [結束] 結束，或關閉這些應用程式，然後按一下 [重試] 繼續進行安裝(&amp;R)</String>
+    <String Id="FilesInUseText" Overridable="yes">下列應用程式正在使用要由此安裝程式更新的檔案。請按 [\[]結束[\]] 結束，或關閉這些應用程式，然後按一下 [\[]重試[\]] 繼續進行安裝(&amp;R)</String>
     <String Id="FilesInUseDescription" Overridable="yes">有些需要更新的檔案目前正在使用中。</String>
     <String Id="FilesInUseTitle" Overridable="yes">{\WixUI_Font_Title}檔案使用中</String>
 
@@ -158,7 +158,7 @@
 
     <String Id="MaintenanceWelcomeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="MaintenanceWelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">安裝精靈可以讓您變更 [ProductName] 功能安裝在電腦上的方式，或從電腦移除它們。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="MaintenanceWelcomeDlgDescription" Overridable="yes">安裝精靈可以讓您變更 [ProductName] 功能安裝在電腦上的方式，或從電腦移除它們。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="MaintenanceWelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}歡迎使用 [ProductName] 安裝精靈</String>
 
     <String Id="MsiRMFilesInUse_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -182,7 +182,7 @@
     <String Id="OutOfRbDiskDlgDescription" Overridable="yes">安裝作業所需的磁碟空間超過可用的磁碟空間。</String>
     <String Id="OutOfRbDiskDlgTitle" Overridable="yes">{\WixUI_Font_Title}磁碟空間不足</String>
     <String Id="OutOfRbDiskDlgVolumeList" Overridable="yes">{120}{70}{70}{70}{70}</String>
-    <String Id="OutOfRbDiskDlgText2" Overridable="yes">或者，您可以選擇停用安裝程式的復原功能。停用復原會阻礙安裝程式在安裝受到任何形式的中斷時，將電腦還原成原先的狀態。如果您願意承擔停用復原功能的風險，請按一下 [是]。</String>
+    <String Id="OutOfRbDiskDlgText2" Overridable="yes">或者，您可以選擇停用安裝程式的復原功能。停用復原會阻礙安裝程式在安裝受到任何形式的中斷時，將電腦還原成原先的狀態。如果您願意承擔停用復原功能的風險，請按一下 [\[]是[\]]。</String>
 
     <String Id="PrepareDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="PrepareDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
@@ -207,7 +207,7 @@
     <String Id="ResumeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="ResumeDlgInstall" Overridable="yes">安裝(&amp;I)</String>
     <String Id="ResumeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="ResumeDlgDescription" Overridable="yes">安裝精靈即將完成在您的電腦上安裝 [ProductName]。請按 [安裝] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="ResumeDlgDescription" Overridable="yes">安裝精靈即將完成在您的電腦上安裝 [ProductName]。請按 [\[]安裝[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="ResumeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}繼續執行 [ProductName] 安裝精靈</String>
 
     <String Id="SetupTypeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -228,24 +228,24 @@
     <String Id="UserExitBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
     <String Id="UserExitTitle" Overridable="yes">{\WixUI_Font_Bigger}[ProductName] 安裝精靈已中斷</String>
     <String Id="UserExitDescription1" Overridable="yes">[ProductName] 安裝程式已中斷。您的系統尚未被修改。若要稍後再安裝此程式，請再執行一次安裝精靈。</String>
-    <String Id="UserExitDescription2" Overridable="yes">按一下 [完成] 按鈕結束安裝精靈。</String>
+    <String Id="UserExitDescription2" Overridable="yes">按一下 [\[]完成[\]] 按鈕結束安裝精靈。</String>
 
     <String Id="VerifyReadyDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="VerifyReadyDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="VerifyReadyDlgInstall" Overridable="yes">安裝(&amp;I)</String>
-    <String Id="VerifyReadyDlgInstallText" Overridable="yes">按一下 [安裝] 即可開始安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgInstallText" Overridable="yes">按一下 [\[]安裝[\]] 即可開始安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgInstallTitle" Overridable="yes">{\WixUI_Font_Title}準備安裝 [ProductName]</String>
     <String Id="VerifyReadyDlgChange" Overridable="yes">變更(&amp;C)</String>
-    <String Id="VerifyReadyDlgChangeText" Overridable="yes">按一下 [變更] 即可開始安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgChangeText" Overridable="yes">按一下 [\[]變更[\]] 即可開始安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgChangeTitle" Overridable="yes">{\WixUI_Font_Title}準備變更 [ProductName]</String>
     <String Id="VerifyReadyDlgRepair" Overridable="yes">修復(&amp;P)</String>
-    <String Id="VerifyReadyDlgRepairText" Overridable="yes">按一下 [修復] 即可修復 [ProductName] 的安裝。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgRepairText" Overridable="yes">按一下 [\[]修復[\]] 即可修復 [ProductName] 的安裝。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}準備修復 [ProductName]</String>
     <String Id="VerifyReadyDlgRemove" Overridable="yes">移除(&amp;R)</String>
-    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">按一下 [移除] 即可從電腦移除 [ProductName]。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgRemoveText" Overridable="yes">按一下 [\[]移除[\]] 即可從電腦移除 [ProductName]。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}準備移除 [ProductName]</String>
     <String Id="VerifyReadyDlgUpdate" Overridable="yes">更新(&amp;U)</String>
-    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">按一下 [更新] 即可更新您電腦中的 [ProductName]。按一下 [上一步] 可檢閱或變更您的任何安裝設定。按一下 [取消] 可結束此精靈。</String>
+    <String Id="VerifyReadyDlgUpdateText" Overridable="yes">按一下 [\[]更新[\]] 即可更新您電腦中的 [ProductName]。按一下 [\[]上一步[\]] 可檢閱或變更您的任何安裝設定。按一下 [\[]取消[\]] 可結束此精靈。</String>
     <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}準備更新 [ProductName]</String>
 
     <String Id="WaitForCostingDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
@@ -256,8 +256,8 @@
 
     <String Id="WelcomeDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="WelcomeDlgBitmap" Overridable="yes">WixUI_Bmp_Dialog</String>
-    <String Id="WelcomeDlgDescription" Overridable="yes">安裝精靈將在您的電腦上安裝 [ProductName]。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
-    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">安裝精靈將更新您電腦上的 [ProductName]。請按 [下一步] 繼續進行，或按 [取消] 結束安裝精靈。</String>
+    <String Id="WelcomeDlgDescription" Overridable="yes">安裝精靈將在您的電腦上安裝 [ProductName]。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
+    <String Id="WelcomeUpdateDlgDescriptionUpdate" Overridable="yes">安裝精靈將更新您電腦上的 [ProductName]。請按 [\[]下一步[\]] 繼續進行，或按 [\[]取消[\]] 結束安裝精靈。</String>
     <String Id="WelcomeDlgTitle" Overridable="yes">{\WixUI_Font_Bigger}歡迎使用 [ProductName] 安裝精靈</String>
 
     <String Id="WelcomeEulaDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>

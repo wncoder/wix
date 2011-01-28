@@ -85,7 +85,9 @@
                 <xs:element ref="PayloadGroupRef"/>
                 <xs:element ref="LayoutDirectory"/>
                 <xs:element ref="LayoutDirectoryRef"/>
+                <xs:element ref="RelatedBundle"/>
                 <xs:element ref="Variable"/>
+                <xs:element ref="WixVariable"/>
                 <xs:any namespace="##other" processContents="lax">
                     <xs:annotation>
                         <xs:documentation>
@@ -632,12 +634,20 @@
         </xs:attribute>
         <xs:attribute name="After" type="xs:string">
             <xs:annotation>
-                <xs:documentation>The identifier of another package that this one should be installed after.</xs:documentation>
+                <xs:documentation>
+                    The identifier of another package that this one should be installed after. By default the After
+                    attribute is set to the previous sibling package in the Chain or PackageGroup element. If this
+                    attribute is specified ensure that a cycle is not created explicitly or implicitly.
+                </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="InstallSize" type="xs:string">
             <xs:annotation>
-                <xs:documentation>The size this package will take on disk after it is installed.</xs:documentation>
+                <xs:documentation>
+                    The size this package will take on disk after it is installed. By default, the binder will
+                    calculate the install size by scanning the package (File table for MSIs, Payloads for EXEs)
+                    and use the total for the install size of the package.
+                </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="InstallCondition" type="xs:string">
@@ -1009,6 +1019,34 @@
                 <xs:annotation>
                     <xs:documentation>The destination path and file name for this file. The default is the source file name.</xs:documentation>
                 </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="RelatedBundle">
+        <xs:annotation>
+            <xs:documentation>Create a RelatedBundle element.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="Id" type="Guid" use="required">
+                <xs:annotation>
+                    <xs:documentation>The identifier of the RelatedBundle group.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Action" use="optional">
+                <xs:annotation>
+                    <xs:documentation>The action to take on bundles related to this one. Detect is the default.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                      <xs:enumeration value="Detect"/>
+                      <xs:enumeration value="Upgrade"/>
+                      <xs:enumeration value="Addon"/>
+                    </xs:restriction>
+                </xs:simpleType>
             </xs:attribute>
         </xs:complexType>
     </xs:element>
@@ -1867,7 +1905,7 @@
             </xs:attribute>
             <xs:attribute name="Comments" type="xs:string">
                 <xs:annotation>
-					<xs:documentation>General purpose of the patch package. For example, "This patch contains the logic and data required to install <html:i>&lt;product&gt;</html:i>."</xs:documentation>
+                    <xs:documentation>General purpose of the patch package. For example, "This patch contains the logic and data required to install <html:i>&lt;product&gt;</html:i>."</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="ReadOnly" type="YesNoDefaultType">
@@ -2495,16 +2533,22 @@
                 <xs:annotation>
                     <xs:documentation>
                         The list of platforms supported by the package. This attribute has been deprecated.
-                        Use the Platform attribute instead.
+                        Use the -arch switch to candle.exe.
                     </xs:documentation>
                     <xs:appinfo>
-                        <xse:deprecated ref="Platform" />
+                        <xse:deprecated />
                     </xs:appinfo>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="Platform">
                 <xs:annotation>
-                    <xs:documentation>The platform supported by the package.</xs:documentation>
+                    <xs:documentation>
+                        The platform supported by the package. This attribute has been deprecated.
+                        Use the -arch switch to candle.exe.
+                    </xs:documentation>
+                    <xs:appinfo>
+                        <xse:deprecated />
+                    </xs:appinfo>
                 </xs:annotation>
                 <xs:simpleType>
                     <xs:restriction base="xs:NMTOKEN">
@@ -6986,7 +7030,7 @@
         <xs:annotation><xs:documentation>Data to use as input to a configurable merge module.</xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:attribute name="Name" type="xs:string" use="required">
-                <xs:annotation><xs:documentation>Key into the ModuleConfiguration table.</xs:documentation></xs:annotation>
+                <xs:annotation><xs:documentation>Name of the item in the ModuleConfiguration table.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Value" type="xs:string" use="required">
                 <xs:annotation><xs:documentation>Value to be passed to configurable merge module.</xs:documentation></xs:annotation>
@@ -7634,7 +7678,7 @@
                     <xs:element ref="SymbolPath"/>
                 </xs:choice>
             </xs:sequence>
-            <xs:attribute name="Id" type="xs:integer" use="required">
+            <xs:attribute name="Id" type="DiskIdType" use="required">
                 <xs:annotation><xs:documentation>Disk identifier for Media table. This number must be equal to or greater than 1.</xs:documentation></xs:annotation>
             </xs:attribute>
             <xs:attribute name="Cabinet" type="xs:string">

@@ -2709,7 +2709,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentUICulture, WixStrings.EXP_FoundActionRowWinNonExistentAction, (after ? "After" : "Before")));
+                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentUICulture, WixStrings.EXP_FoundActionRowWinNonExistentAction, (after ? "After" : "Before"), parentActionName));
                 }
             }
             else if (actionRow == parentActionRow || actionRow.ContainsChildActionRow(parentActionRow)) // cycle detected

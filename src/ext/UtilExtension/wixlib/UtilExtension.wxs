@@ -280,6 +280,14 @@
         </InstallExecuteSequence>
     </Fragment>
 
+    <Fragment>
+        <CustomAction Id="WixRemoveFoldersEx" BinaryKey="WixCA" DllEntry="WixRemoveFoldersEx" Execute="immediate" Return="ignore" />
+        
+        <InstallExecuteSequence>
+            <Custom Action="WixRemoveFoldersEx" Before="CostInitialize" />
+        </InstallExecuteSequence>
+    </Fragment>
+
     <!-- WiX Custom Action DLL Definitions -->
 
     <Fragment>

@@ -26,6 +26,9 @@
 
 // internal function declarations
 
+static void CheckLoggingPolicy(
+    __out DWORD *pdwAttributes
+    );
 
 
 // function definitions
@@ -45,9 +48,30 @@ extern "C" HRESULT LoggingOpen(
     hr = PathGetDirectory(sczExePath, &sczExeDir);
     ExitOnFailure(hr, "Failed to get directory bundle executable is in");
 
+    // Check if the logging policy is set and configure the logging appropriately.
+    CheckLoggingPolicy(&pLog->dwAttributes);
+
+    if (pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_VERBOSE || pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_EXTRADEBUG)
+    {
+        if (pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_EXTRADEBUG)
+        {
+            LogSetLevel(REPORT_DEBUG, FALSE);
+        }
+        else if (pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_VERBOSE)
+        {
+            LogSetLevel(REPORT_VERBOSE, FALSE);
+        }
+
+        if ((!pLog->sczPath || !*pLog->sczPath) && (!pLog->sczPrefix || !*pLog->sczPrefix))
+        {
+            PathCreateTimeBasedTempFile(NULL, L"Setup", NULL, L"log", &pLog->sczPath, NULL);
+        }
+    }
+
+    // Open the log approriately.
     if (pLog->sczPath && *pLog->sczPath)
     {
-        hr = LogOpen(sczExeDir, pLog->sczPath, NULL, NULL, pLog->fAppend, FALSE, &pLog->sczPath);
+        hr = LogOpen(sczExeDir, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
@@ -290,4 +314,42 @@ extern "C" LPCSTR LoggingVersionToString(
     }
 
     return szVersion;
+}
+
+
+// internal function declarations
+
+static void CheckLoggingPolicy(
+    __out DWORD *pdwAttributes
+    )
+{
+    HRESULT hr = S_OK;
+    HKEY hk = NULL;
+    LPWSTR sczLoggingPolicy = NULL;
+
+    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Policies\\Microsoft\\Windows\\Installer", KEY_READ, &hk);
+    if (SUCCEEDED(hr))
+    {
+        hr = RegReadString(hk, L"Logging", &sczLoggingPolicy);
+        if (SUCCEEDED(hr))
+        {
+            LPWSTR wz = sczLoggingPolicy;
+            while (*wz)
+            {
+                if (L'v' == *wz || L'V' == *wz)
+                {
+                    *pdwAttributes |= BURN_LOGGING_ATTRIBUTE_VERBOSE;
+                }
+                else if (L'x' == *wz || L'X' == *wz)
+                {
+                    *pdwAttributes |= BURN_LOGGING_ATTRIBUTE_EXTRADEBUG;
+                }
+
+                ++wz;
+            }
+        }
+    }
+
+    ReleaseStr(sczLoggingPolicy);
+    ReleaseRegKey(hk);
 }

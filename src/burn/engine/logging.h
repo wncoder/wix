@@ -33,6 +33,13 @@ enum BURN_LOGGING_STATE
     BURN_LOGGING_STATE_DISABLED,
 };
 
+enum BURN_LOGGING_ATTRIBUTE
+{
+    BURN_LOGGING_ATTRIBUTE_APPEND = 0x1,
+    BURN_LOGGING_ATTRIBUTE_VERBOSE = 0x2,
+    BURN_LOGGING_ATTRIBUTE_EXTRADEBUG = 0x4,
+};
+
 
 // structs
 
@@ -41,7 +48,7 @@ typedef struct _BURN_LOGGING
     BURN_LOGGING_STATE state;
     LPWSTR sczPathVariable;
 
-    BOOL fAppend;
+    DWORD dwAttributes;
     LPWSTR sczPath;
     LPWSTR sczPrefix;
     LPWSTR sczExtension;

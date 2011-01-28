@@ -22,16 +22,16 @@
 
    <Fragment>
       <PayloadGroup Id='Mba'>
-          <Payload SourceFile='BootstrapperCore.dll' />
+          <Payload Compressed='yes' SourceFile='BootstrapperCore.dll' />
       </PayloadGroup>
    </Fragment>
 
    <Fragment>
       <PayloadGroup Id='MbaPreq'>
-          <Payload SourceFile='mbapreq.dll' />
-          <Payload Name='mbapreq.thm' SourceFile='!(wix.PreqbaThemeXml=SourceDir\MbaPreqResources\mbapreq.thm)' />
-          <Payload Name='mbapreq.wxl' SourceFile='!(wix.PreqbaThemeWxl=SourceDir\MbaPreqResources\mbapreq.wxl)' />
-          <Payload Name='mbapreq.bmp' SourceFile='!(wix.PreqbaLogo=SourceDir\MbaPreqResources\mbapreq.bmp)' />
+          <Payload Compressed='yes' SourceFile='mbapreq.dll' />
+          <Payload Name='mbapreq.thm' Compressed='yes' SourceFile='!(wix.PreqbaThemeXml=SourceDir\MbaPreqResources\mbapreq.thm)' />
+          <Payload Name='mbapreq.wxl' Compressed='yes' SourceFile='!(wix.PreqbaThemeWxl=SourceDir\MbaPreqResources\mbapreq.wxl)' />
+          <Payload Name='mbapreq.bmp' Compressed='yes' SourceFile='!(wix.PreqbaLogo=SourceDir\MbaPreqResources\mbapreq.bmp)' />
       </PayloadGroup>
    </Fragment>
 </Wix>

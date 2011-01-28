@@ -29,9 +29,11 @@ extern "C" {
 enum BURN_CACHE_ACTION_TYPE
 {
     BURN_CACHE_ACTION_TYPE_NONE,
+    BURN_CACHE_ACTION_TYPE_CHECKPOINT,
     BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE,
     BURN_CACHE_ACTION_TYPE_PACKAGE_START,
     BURN_CACHE_ACTION_TYPE_PACKAGE_STOP,
+    BURN_CACHE_ACTION_TYPE_ROLLBACK_PACKAGE,
     BURN_CACHE_ACTION_TYPE_SYNCPOINT,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER,
     BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER,
@@ -46,6 +48,7 @@ enum BURN_EXECUTE_ACTION_TYPE
     BURN_EXECUTE_ACTION_TYPE_NONE,
     BURN_EXECUTE_ACTION_TYPE_CHECKPOINT,
     BURN_EXECUTE_ACTION_TYPE_SYNCPOINT,
+    BURN_EXECUTE_ACTION_TYPE_UNCACHE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSP_TARGET,
@@ -79,6 +82,10 @@ typedef struct _BURN_CACHE_ACTION
     {
         struct
         {
+            DWORD dwId;
+        } checkpoint;
+        struct
+        {
             LPWSTR sczLayoutDirectory;
         } bundleLayout;
         struct
@@ -91,6 +98,10 @@ typedef struct _BURN_CACHE_ACTION
         {
             BURN_PACKAGE* pPackage;
         } packageStop;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
+        } rollbackPackage;
         struct
         {
             HANDLE hEvent;
@@ -159,6 +170,10 @@ typedef struct _BURN_EXECUTE_ACTION
         struct
         {
             BURN_PACKAGE* pPackage;
+        } uncachePackage;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
             BOOTSTRAPPER_ACTION_STATE action;
         } exePackage;
         struct
@@ -166,6 +181,7 @@ typedef struct _BURN_EXECUTE_ACTION
             BURN_PACKAGE* pPackage;
             LPWSTR sczProductCode;
             LPWSTR sczLogPath;
+            DWORD dwLoggingAttributes;
             BOOTSTRAPPER_ACTION_STATE action;
 
             BOOTSTRAPPER_FEATURE_ACTION* rgFeatures;
@@ -229,6 +245,9 @@ typedef struct _BURN_PLAN
     BURN_CACHE_ACTION* rgCacheActions;
     DWORD cCacheActions;
 
+    BURN_CACHE_ACTION* rgRollbackCacheActions;
+    DWORD cRollbackCacheActions;
+
     BURN_EXECUTE_ACTION* rgExecuteActions;
     DWORD cExecuteActions;
 
@@ -282,10 +301,14 @@ HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
     );
-DWORD PlanGetNextCheckpointId();
-HRESULT PlanAppendCacheAction(
+HRESULT PlanExecuteCacheSyncAndRollback(
     __in BURN_PLAN* pPlan,
-    __out BURN_CACHE_ACTION** ppCacheAction
+    __in BURN_PACKAGE* pPackage,
+    __in HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback
+    );
+HRESULT PlanExecuteCheckpoint(
+    __in BURN_PLAN* pPlan
     );
 HRESULT PlanAppendExecuteAction(
     __in BURN_PLAN* pPlan,
@@ -294,6 +317,15 @@ HRESULT PlanAppendExecuteAction(
 HRESULT PlanAppendRollbackAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction
+    );
+HRESULT PlanRollbackBoundaryBegin(
+    __in BURN_PLAN* pPlan,
+    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
+    __out HANDLE* phEvent
+    );
+HRESULT PlanRollbackBoundaryComplete(
+    __in BURN_PLAN* pPlan,
+    __in HANDLE hEvent
     );
 //HRESULT AppendExecuteWaitAction(
 //    __in BURN_PLAN* pPlan,

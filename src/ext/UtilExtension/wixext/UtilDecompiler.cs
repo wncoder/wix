@@ -134,6 +134,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 case "WixCloseApplication":
                     this.DecompileWixCloseApplicationTable(table);
                     break;
+                case "WixRemoveFolderEx":
+                    this.DecompileWixRemoveFolderExTable(table);
+                    break;
                 case "WixRestartResource":
                     this.DecompileWixRestartResourceTable(table);
                     break;
@@ -246,6 +249,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 this.Core.RootElement.AddChild(closeApplication);
+            }
+        }
+
+        /// <summary>
+        /// Decompile the WixRemoveFolderEx table.
+        /// </summary>
+        /// <param name="table">The table to decompile.</param>
+        private void DecompileWixRemoveFolderExTable(Table table)
+        {
+            foreach (Row row in table.Rows)
+            {
+                // Set the Id even if auto-generated previously.
+                Util.RemoveFolderEx removeFolder = new Util.RemoveFolderEx();
+                removeFolder.Id = (string)row[0];
+                removeFolder.Property = (string)row[2];
+
+                int installMode = (int)row[3];
+                switch ((UtilCompiler.WixRemoveFolderExOn)installMode)
+                {
+                    case UtilCompiler.WixRemoveFolderExOn.Install:
+                        removeFolder.On = Util.RemoveFolderEx.OnType.install;
+                        break;
+                      
+                    case UtilCompiler.WixRemoveFolderExOn.Uninstall:
+                        removeFolder.On = Util.RemoveFolderEx.OnType.uninstall;
+                        break;
+                      
+                    case UtilCompiler.WixRemoveFolderExOn.Both:
+                        removeFolder.On = Util.RemoveFolderEx.OnType.both;
+                        break;
+
+                    default:
+                        this.Core.OnMessage(WixWarnings.UnrepresentableColumnValue(row.SourceLineNumbers, table.Name, "InstallMode", installMode));
+                        break;
+                }
+
+                // Add to the appropriate Component or section element.
+                string componentId = (string)row[1];
+                Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", componentId);
+                if (null != component)
+                {
+                    component.AddChild(removeFolder);
+                }
+                else
+                {
+                    this.Core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, table.Name, row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", componentId, "Component"));
+                }
             }
         }
 

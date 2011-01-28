@@ -664,6 +664,39 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT DAPI SceSetColumnSystemTime(
+    __in SCE_ROW_HANDLE rowHandle,
+    __in DWORD dwColumnIndex,
+    __in const SYSTEMTIME *pst
+    )
+{
+    HRESULT hr = S_OK;
+    DBTIMESTAMP dbTimeStamp = { };
+
+    SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    if (NULL == pRow->rgBinding)
+    {
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
+    }
+
+    dbTimeStamp.year = pst->wYear;
+    dbTimeStamp.month = pst->wMonth;
+    dbTimeStamp.day = pst->wDay;
+    dbTimeStamp.hour = pst->wHour;
+    dbTimeStamp.minute = pst->wMinute;
+    dbTimeStamp.second = pst->wSecond;
+    // fraction represents nanoseconds (millionths of a second) - so multiply milliseconds by 1 million to get there
+    dbTimeStamp.fraction = pst->wMilliseconds * 1000000;
+
+    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<BYTE *>(&dbTimeStamp), sizeof(dbTimeStamp), &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
+    ExitOnFailure(hr, "Failed to set column value as DBTIMESTAMPOFFSET");
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT DAPI SceGetColumnBinary(
     __in SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
@@ -675,6 +708,10 @@ extern "C" HRESULT DAPI SceGetColumnBinary(
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
 
     hr = GetColumnValue(pRow, dwColumnIndex, ppbBuffer, pcbBuffer);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to get binary data out of column");
 
 LExit:
@@ -691,6 +728,10 @@ extern "C" HRESULT DAPI SceGetColumnDword(
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
 
     hr = GetColumnValueFixed(pRow, dwColumnIndex, 4, reinterpret_cast<BYTE *>(pdwValue));
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to get dword data out of column");
 
 LExit:
@@ -708,6 +749,10 @@ extern "C" HRESULT DAPI SceGetColumnBool(
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
 
     hr = GetColumnValueFixed(pRow, dwColumnIndex, 2, reinterpret_cast<BYTE *>(&sValue));
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to get data out of column");
 
     if (sValue == 0x0000)
@@ -734,7 +779,41 @@ extern "C" HRESULT DAPI SceGetColumnString(
     SIZE_T cbSize = 0;
 
     hr = GetColumnValue(pRow, dwColumnIndex, reinterpret_cast<BYTE **>(ppszValue), &cbSize);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to get string data out of column");
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT DAPI SceGetColumnSystemTime(
+    __in SCE_ROW_HANDLE rowReadHandle,
+    __in DWORD dwColumnIndex,
+    __out SYSTEMTIME *pst
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
+    DBTIMESTAMP dbTimeStamp = { };
+
+    hr = GetColumnValueFixed(pRow, dwColumnIndex, sizeof(dbTimeStamp), reinterpret_cast<BYTE *>(&dbTimeStamp));
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
+    ExitOnFailure(hr, "Failed to get string data out of column");
+
+    pst->wYear = dbTimeStamp.year;
+    pst->wMonth = dbTimeStamp.month;
+    pst->wDay = dbTimeStamp.day;
+    pst->wHour = dbTimeStamp.hour;
+    pst->wMinute = dbTimeStamp.minute;
+    pst->wSecond = dbTimeStamp.second;
+    // fraction represents nanoseconds (millionths of a second) - so divide fraction by 1 million to get to milliseconds
+    pst->wMilliseconds = static_cast<WORD>(dbTimeStamp.fraction / 1000000);
 
 LExit:
     return hr;
@@ -1317,6 +1396,12 @@ static HRESULT GetColumnValue(
     hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorLength, reinterpret_cast<void *>(&dwDataSize));
     ExitOnFailure(hr, "Failed to get size of data");
 
+    // For variable-length columns, zero data returned means NULL
+    if (0 == dwDataSize)
+    {
+        ExitFunction1(hr = E_NOTFOUND);
+    }
+
     if (NULL != ppbData)
     {
         dbBinding.dwPart = DBPART_VALUE;
@@ -1387,7 +1472,6 @@ static HRESULT GetColumnValueFixed(
     dbBinding.dwMemOwner = DBMEMOWNER_CLIENTOWNED;
     dbBinding.dwPart = DBPART_LENGTH;
     dbBinding.wType = pTable->rgColumns[dwColumnIndex].dbtColumnType;
-    dbBinding.cbMaxLen = 4;
 
     pRow->pIRowset->QueryInterface(IID_IAccessor, reinterpret_cast<void **>(&pIAccessor));
     ExitOnFailure(hr, "Failed to get IAccessor interface");
@@ -1404,9 +1488,9 @@ static HRESULT GetColumnValueFixed(
     hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorLength, reinterpret_cast<void *>(&dwDataSize));
     ExitOnFailure(hr, "Failed to get size of data");
 
-    if (cbSize != dwDataSize)
+    if (0 == dwDataSize)
     {
-        ExitFunction1(hr = E_INVALIDARG);
+        ExitFunction1(hr = E_NOTFOUND);
     }
 
     dbBinding.dwPart = DBPART_VALUE;

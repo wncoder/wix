@@ -48,7 +48,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
                 delegate(string name)
                 {
                     long value;
-                    this.engine.GetVariableNumeric(name, out value);
+                    int ret = this.engine.GetVariableNumeric(name, out value);
+                    if (NativeMethods.S_OK != ret)
+                    {
+                        throw new Win32Exception(ret);
+                    }
 
                     return value;
                 },
@@ -91,7 +95,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
                 delegate(string name)
                 {
                     long value;
-                    this.engine.GetVariableVersion(name, out value);
+                    int ret = this.engine.GetVariableVersion(name, out value);
+                    if (NativeMethods.S_OK != ret)
+                    {
+                        throw new Win32Exception(ret);
+                    }
 
                     int major = (int)((value & ((long)0xffff << 48)) >> 48);
                     int minor = (int)((value & ((long)0xffff << 32)) >> 32);

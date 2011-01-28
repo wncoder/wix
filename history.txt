@@ -612,8 +612,8 @@ HeathS: Secured calls to LoadLibrary.
 
 MiCarls: SFBUG: 3094739 - Fix a DARK0001 error
 
-EricStJ: SFBUG: 3095961 IIS config fails when IIS feature does not exist and all 
-         components are conditioned to not installh
+EricStJ: SFBUG: 3095961 IIS config fails when IIS feature does not exist and
+         all components are conditioned to not install.
          Fix regression, Failure to install multiple app pools.
 
 HeathS: Added process support to the Restart Manager CA.
@@ -714,7 +714,8 @@ JaredR: Prevent Packages and Containers from propagating ordering information
 AaronSte: Adding a link to make WixUI topics accessible from the
           web-based documentation set.
 
-EricStJ: SFBUG: 3109991, 3106809 Source file with identical name is not properly linked
+EricStJ: SFBUG: 3109991, 3106809 Source file with identical name is not properly
+         linked
          Fixing a double free in IIS7 custom action.
 
 EricStJ: SFBUG: 3105643 Cert uninstall fails with AV
@@ -740,10 +741,11 @@ EricStJ: SFBUG: 3112521 Changed marker does not always disappear on project prop
 
 CAraman: Update WixUI localization.
 
-EricStJ: SFBUG: 3103178 Adding missing parameters to wix tasks & exposing in targets
+EricStJ: SFBUG: 3103178 Adding missing parameters to wix tasks & exposing in
+         targets
 
-EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with ERROR_SHARING_VIOLATION
-         Allow user to retry.
+EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with
+         ERROR_SHARING_VIOLATION Allow user to retry.
 
 WixBuild: Version 3.6.1125.0
 
@@ -754,7 +756,8 @@ MiCarls: SFBUG: 3105527 - Make burn log missing payload files
 RobMen: SFBUG:3123565 - update NAntTask to use correct registry key to find
                         toolset.
 
-EricStJ: SFBUG:3123902 - Candle uses wrong object dir when item is in intermed. dir.
+EricStJ: SFBUG:3123902 - Candle uses wrong object dir when item is in
+         intermed. dir.
 
 EricStJ: SFBUG:3123277 - (undo) SFBUG:3112521 to prevent crash.
 
@@ -779,16 +782,16 @@ WixBuild: Version 3.6.1210.0
 
 RobMen: SFBUG:3135074 - fix some documentation links when pages moved.
 
-EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with ERROR_SHARING_VIOLATION 
-         when it is interrupted by another transaction.  Create a new AdminManager
-         and restart from right after the last commit.
+EricStJ: SFBUG: 3110965 WriteIIS7ConfigChanges fails with
+         ERROR_SHARING_VIOLATION when it is interrupted by another transaction.
+         Create a new AdminManager and restart from right after the last commit.
 
 EricStJ: WixUI Customize dialog for he-IL does not link.
 
 MiCarls: Fix a bad bug when 64-bit secureobjects custom actions roll back.
 
-MikeHo: Fix bug where clicking back on Ready to Install page doesn't go to the proper
-        page during patching
+MikeHo: Fix bug where clicking back on Ready to Install page doesn't go to the
+        proper page during patching
 
 RobMen: SFBUG:3076755 - preqba can now reload managed BA after installing NETFX.
         Other small fixes to bootstrapper applications and their logging.
@@ -834,4 +837,71 @@ WixBuild: Version 3.6.1307.0
 RobMen: Fix supportedFrameworks in Burn.
 
 WixBuild: Version 3.6.1308.0
+
+RobMen: Dark now will decompile BBControl table.
+
+RobMen: SFBUG:3013511 - allow RegistrySearch/@Result to specify "value".
+        Correctly camelCase attributes for WixUtilExtension search @Results.
+
+RobMen: SFBUG:2980315 - correctly detect version Variables.
+        SFBUG:2980325 - provide more documenation about default behavior of
+                        *Package/After attribute.
+        Fix documentation typo "HyperlinkLicnese".
+
+RobMen: SFBUG:3155725 - release Burn SDK files.
+
+RobMen: SFBUG:2993168 - support Windows installer logging policy in Burn.
+
+RobMen: SFBUG:3103337 - use full path for all file transfers.
+
+RobMen: SFBUG:3102971 - support preproc variables in Media/@Id.
+        SFBUG:3103010 - deprecate Package/@Platform in documentation.
+
+RobMen: SFBUG:3147758 - Remove ARP entry after cache failure during Apply.
+        SFBUG:3151890 - Burn no longer plans uncache of uncached package.
+        SFBUG:3030733 - fixed Burn planning of related bundle removal.
+
+RobMen: Remove the "Package Cache" directory when it is empty.
+        Add a bit of logging when packages are being removed from cache.
+
+WixBuild: Version 3.6.1314.0
+
+RobMen: Fix backwards compatibility break in BinderFileManager ResolvePath().
+
+RobMen: Ensure MBA & wixstdba files are always compressed in BA container.
+
+BobArnso: Add RemoveFolderEx custom action to WixUtilExtension: 
+          Recursively delete whole directory trees.
+
+RobMen: SFBUG:3157773 - re-include setupbld in WiX v3.5 MSI.
+        SFBUG:3156098 - fix bug in localization of zh-HK WixUI.
+
+WixBuild: Version 3.6.1321.0
+
+BobArnso: Burn: Plan superseded packages being uninstalled for removal.
+
+RobMen: SFBUG:3141429 - only set BurnLayoutDirectory if specified from
+        command-line. Otherwise BA can control it.
+
+HeathS: Support binder variable resolution for properties.
+
+EricStJ: SFBUG:3139749 clarify ConfigurationData docs
+         SFBUG:3141025 allow PerfCounterManifest without ResourceFileDirectory
+         SFBUG:3083252 update wix integration doc
+
+EricStJ: SFBUG:3148161 torch and light task don't pass all params correctly
+
+RobMen: SFBUG:3141379 - don't log errors when querying for non-existent Burn
+        variables.
+
+EricStJ: SFBUG:3147525 run IIS CAs when AppPool is the only table present
+
+EricStJ: SFBUG:3133804 SchedSecureObjects should not fail when table is absent
+
+CAraman: Fix heap corruption in ExecSecureObjectsRollback.
+
+RobMen: Send heartbeat for ExePackages and MsuPackages so they can be
+        "canceled".
+
+WixBuild: Version 3.6.1328.0
 

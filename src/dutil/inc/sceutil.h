@@ -147,6 +147,11 @@ HRESULT DAPI SceSetColumnString(
     __in DWORD dwColumnIndex,
     __in_z LPCWSTR pszValue
     );
+HRESULT DAPI SceSetColumnSystemTime(
+    __in SCE_ROW_HANDLE rowHandle,
+    __in DWORD dwColumnIndex,
+    __in const SYSTEMTIME *pst
+    );
 HRESULT DAPI SceSetColumnEmpty(
     __in SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex
@@ -171,6 +176,11 @@ HRESULT DAPI SceGetColumnString(
     __in SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __out LPWSTR *ppszValue
+    );
+HRESULT DAPI SceGetColumnSystemTime(
+    __in SCE_ROW_HANDLE rowReadHandle,
+    __in DWORD dwColumnIndex,
+    __out SYSTEMTIME *pst
     );
 HRESULT DAPI SceBeginQuery(
     __in SCE_DATABASE *pDatabase,

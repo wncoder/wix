@@ -28,6 +28,15 @@ static HRESULT GetActionDefaultRequestState(
     __in BOOTSTRAPPER_ACTION action,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     );
+static DWORD GetNextCheckpointId();
+static HRESULT AppendCacheAction(
+    __in BURN_PLAN* pPlan,
+    __out BURN_CACHE_ACTION** ppCacheAction
+    );
+static HRESULT AppendRollbackCacheAction(
+    __in BURN_PLAN* pPlan,
+    __out BURN_CACHE_ACTION** ppCacheAction
+    );
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
     __in_opt BURN_PACKAGE* pPackage,
@@ -130,7 +139,8 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_CACHE;
     }
-    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState) // the package is superseded then default to doing nothing.
+    // the package is superseded then default to doing nothing except during uninstall.
+    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && BOOTSTRAPPER_ACTION_UNINSTALL != action)
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
     }
@@ -166,7 +176,7 @@ extern "C" HRESULT PlanLayoutBundle(
     HRESULT hr = S_OK;
     BURN_CACHE_ACTION* pCacheAction = NULL;
 
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append bundle start action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE;
@@ -205,7 +215,7 @@ extern "C" HRESULT PlanLayoutPackage(
     BURN_CACHE_ACTION* pCacheAction = NULL;
     DWORD iPackageStartAction = 0;
 
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append package start action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_START;
@@ -229,7 +239,7 @@ extern "C" HRESULT PlanLayoutPackage(
     }
 
     // Create package stop action.
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append cache action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_STOP;
@@ -251,17 +261,44 @@ extern "C" HRESULT PlanCachePackage(
 
     HRESULT hr = S_OK;
     BURN_CACHE_ACTION* pCacheAction = NULL;
+    DWORD dwCheckpoint = 0;
     DWORD iPackageStartAction = 0;
 
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    // Cache checkpoints happen before the package is cached because downloading packages'
+    // payloads will not roll themselves back the way installation packages rollback on
+    // failure automatically.
+    dwCheckpoint = GetNextCheckpointId();
+
+    hr = AppendCacheAction(pPlan, &pCacheAction);
+    ExitOnFailure(hr, "Failed to append package start action.");
+
+    pCacheAction->type = BURN_CACHE_ACTION_TYPE_CHECKPOINT;
+    pCacheAction->checkpoint.dwId = dwCheckpoint;
+
+    hr = AppendRollbackCacheAction(pPlan, &pCacheAction);
+    ExitOnFailure(hr, "Failed to append rollback cache action.");
+
+    pCacheAction->type = BURN_CACHE_ACTION_TYPE_CHECKPOINT;
+    pCacheAction->checkpoint.dwId = dwCheckpoint;
+
+    // Plan the package start.
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append package start action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_START;
     pCacheAction->packageStart.pPackage = pPackage;
 
     // Remember the index for the package start action (which is now the last in the cache
-    // actions array) because the array may be resized later and move around in memory.
+    // actions array) because we have to update this action after processing all the payloads
+    // and the array may be resized later which would move a pointer around in memory.
     iPackageStartAction = pPlan->cCacheActions - 1;
+
+    // Create a package cache rollback action.
+    hr = AppendRollbackCacheAction(pPlan, &pCacheAction);
+    ExitOnFailure(hr, "Failed to append rollback cache action.");
+
+    pCacheAction->type = BURN_CACHE_ACTION_TYPE_ROLLBACK_PACKAGE;
+    pCacheAction->rollbackPackage.pPackage = pPackage;
 
     // If any of the package payloads are not cached, add them to the plan.
     for (DWORD i = 0; i < pPackage->cPayloads; ++i)
@@ -271,7 +308,7 @@ extern "C" HRESULT PlanCachePackage(
         if (!pPackagePayload->fCached)
         {
             hr = AppendCacheOrLayoutPayloadAction(pPlan, pPackage, pPackagePayload->pPayload, NULL);
-            ExitOnFailure(hr, "Failed to append cache action.");
+            ExitOnFailure(hr, "Failed to append payload cache action.");
 
             Assert(BURN_CACHE_ACTION_TYPE_PACKAGE_START == pPlan->rgCacheActions[iPackageStartAction].type);
             ++pPlan->rgCacheActions[iPackageStartAction].packageStart.cCachePayloads;
@@ -287,14 +324,14 @@ extern "C" HRESULT PlanCachePackage(
     }
 
     // Create package stop action.
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append cache action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_STOP;
     pCacheAction->packageStop.pPackage = pPackage;
 
     // Create syncpoint action.
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append cache action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_SYNCPOINT;
@@ -351,24 +388,59 @@ LExit:
     return hr;
 }
 
-extern "C" DWORD PlanGetNextCheckpointId()
-{
-    static DWORD dwCounter = 0;
-    return ++dwCounter;
-}
-
-extern "C" HRESULT PlanAppendCacheAction(
+extern "C" HRESULT PlanExecuteCacheSyncAndRollback(
     __in BURN_PLAN* pPlan,
-    __out BURN_CACHE_ACTION** ppCacheAction
+    __in BURN_PACKAGE* pPackage,
+    __in HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback
     )
 {
     HRESULT hr = S_OK;
+    BURN_EXECUTE_ACTION* pAction = NULL;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCacheActions), pPlan->cCacheActions, sizeof(BURN_CACHE_ACTION), 5);
-    ExitOnFailure(hr, "Failed to grow plan's array of cache actions.");
+    hr = PlanAppendExecuteAction(pPlan, &pAction);
+    ExitOnFailure(hr, "Failed to append wait action for caching.");
 
-    *ppCacheAction = pPlan->rgCacheActions + pPlan->cCacheActions;
-    ++pPlan->cCacheActions;
+    pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
+    pAction->syncpoint.hEvent = hCacheEvent;
+
+    if (fPlanPackageCacheRollback)
+    {
+        hr = PlanAppendRollbackAction(pPlan, &pAction);
+        ExitOnFailure(hr, "Failed to append rollback action.");
+
+        pAction->type = BURN_EXECUTE_ACTION_TYPE_UNCACHE_PACKAGE;
+        pAction->uncachePackage.pPackage = pPackage;
+
+        hr = PlanExecuteCheckpoint(pPlan);
+        ExitOnFailure(hr, "Failed to append execute checkpoint for cache rollback.");
+    }
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanExecuteCheckpoint(
+    __in BURN_PLAN* pPlan
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_EXECUTE_ACTION* pAction = NULL;
+    DWORD dwCheckpointId = GetNextCheckpointId();
+
+    // execute checkpoint
+    hr = PlanAppendExecuteAction(pPlan, &pAction);
+    ExitOnFailure(hr, "Failed to append execute action.");
+
+    pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
+    pAction->checkpoint.dwId = dwCheckpointId;
+
+    // rollback checkpoint
+    hr = PlanAppendRollbackAction(pPlan, &pAction);
+    ExitOnFailure(hr, "Failed to append rollback action.");
+
+    pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
+    pAction->checkpoint.dwId = dwCheckpointId;
 
 LExit:
     return hr;
@@ -403,6 +475,80 @@ extern "C" HRESULT PlanAppendRollbackAction(
 
     *ppRollbackAction = pPlan->rgRollbackActions + pPlan->cRollbackActions;
     ++pPlan->cRollbackActions;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanRollbackBoundaryBegin(
+    __in BURN_PLAN* pPlan,
+    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
+    __out HANDLE* phEvent
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_EXECUTE_ACTION* pExecuteAction = NULL;
+
+    // Create sync event.
+    *phEvent = ::CreateEventW(NULL, TRUE, FALSE, NULL);
+    ExitOnNullWithLastError(*phEvent, hr, "Failed to create event.");
+
+    // Add begin rollback boundary to execute plan.
+    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
+    ExitOnFailure(hr, "Failed to append rollback boundary begin action.");
+
+    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY;
+    pExecuteAction->rollbackBoundary.pRollbackBoundary = pRollbackBoundary;
+
+    // Add begin rollback boundary to rollback plan.
+    hr = PlanAppendRollbackAction(pPlan, &pExecuteAction);
+    ExitOnFailure(hr, "Failed to append rollback boundary begin action.");
+
+    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY;
+    pExecuteAction->rollbackBoundary.pRollbackBoundary = pRollbackBoundary;
+
+    // Add execute sync-point.
+    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
+    ExitOnFailure(hr, "Failed to append wait for rollback boundary action.");
+
+    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
+    pExecuteAction->syncpoint.hEvent = *phEvent;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanRollbackBoundaryComplete(
+    __in BURN_PLAN* pPlan,
+    __in HANDLE hEvent
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_CACHE_ACTION* pCacheAction = NULL;
+    BURN_EXECUTE_ACTION* pExecuteAction = NULL;
+    DWORD dwCheckpointId = 0;
+
+    // Add cache sync-point.
+    hr = AppendCacheAction(pPlan, &pCacheAction);
+    ExitOnFailure(hr, "Failed to add syncpoint to cache plan.");
+
+    pCacheAction->type = BURN_CACHE_ACTION_TYPE_SYNCPOINT;
+    pCacheAction->syncpoint.hEvent = hEvent;
+
+    // Add checkpoints.
+    dwCheckpointId = GetNextCheckpointId();
+
+    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
+    ExitOnFailure(hr, "Failed to append execute action.");
+
+    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
+    pExecuteAction->checkpoint.dwId = dwCheckpointId;
+
+    hr = PlanAppendRollbackAction(pPlan, &pExecuteAction);
+    ExitOnFailure(hr, "Failed to append rollback action.");
+
+    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
+    pExecuteAction->checkpoint.dwId = dwCheckpointId;
 
 LExit:
     return hr;
@@ -473,6 +619,46 @@ LExit:
         return hr;
 }
 
+static DWORD GetNextCheckpointId()
+{
+    static DWORD dwCounter = 0;
+    return ++dwCounter;
+}
+
+static HRESULT AppendCacheAction(
+    __in BURN_PLAN* pPlan,
+    __out BURN_CACHE_ACTION** ppCacheAction
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCacheActions), pPlan->cCacheActions, sizeof(BURN_CACHE_ACTION), 5);
+    ExitOnFailure(hr, "Failed to grow plan's array of cache actions.");
+
+    *ppCacheAction = pPlan->rgCacheActions + pPlan->cCacheActions;
+    ++pPlan->cCacheActions;
+
+LExit:
+    return hr;
+}
+
+static HRESULT AppendRollbackCacheAction(
+    __in BURN_PLAN* pPlan,
+    __out BURN_CACHE_ACTION** ppCacheAction
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgRollbackCacheActions), pPlan->cRollbackCacheActions, sizeof(BURN_CACHE_ACTION), 5);
+    ExitOnFailure(hr, "Failed to grow plan's array of rollback cache actions.");
+
+    *ppCacheAction = pPlan->rgRollbackCacheActions + pPlan->cRollbackCacheActions;
+    ++pPlan->cRollbackCacheActions;
+
+LExit:
+    return hr;
+}
+
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
     __in_opt BURN_PACKAGE* pPackage,
@@ -510,7 +696,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
     }
     else // add a payload acquire action to the plan.
     {
-        hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+        hr = AppendCacheAction(pPlan, &pCacheAction);
         ExitOnFailure(hr, "Failed to append cache action to acquire payload.");
 
         pCacheAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD;
@@ -522,7 +708,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
         pCacheAction = NULL;
     }
 
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
+    hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append cache action to cache payload.");
 
     pPlan->qwCacheSizeTotal += pPayload->qwFileSize;
@@ -616,7 +802,7 @@ static HRESULT CreateOrFindContainerExtractAction(
         hr = CacheCaclulateContainerUnverifiedPath(pContainer, &sczUnverifiedPath);
         ExitOnFailure(hr, "Failed to calculate unverified path for container.");
 
-        hr = PlanAppendCacheAction(pPlan, &pAcquireContainerAction);
+        hr = AppendCacheAction(pPlan, &pAcquireContainerAction);
         ExitOnFailure(hr, "Failed to append acquire container action to plan.");
 
         pAcquireContainerAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER;
@@ -631,7 +817,7 @@ static HRESULT CreateOrFindContainerExtractAction(
     // container, create it now.
     if (!*ppContainerExtractAction)
     {
-        hr = PlanAppendCacheAction(pPlan, ppContainerExtractAction);
+        hr = AppendCacheAction(pPlan, ppContainerExtractAction);
         ExitOnFailure(hr, "Failed to append cache action to extract payloads from container.");
 
         (*ppContainerExtractAction)->type = BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER;

@@ -222,7 +222,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>Should return a valid path for the stream to be imported.</returns>
         public virtual string ResolveFile(string source)
         {
-            return this.ResolveFile(source, null, null);
+            return null;
         }
 
         /// <summary>
@@ -239,6 +239,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 throw new ArgumentNullException("source");
             }
 
+            // Call the original override function first. If it returns an answer then return that,
+            // otherwise do this code with better error messages.
+            string filePath = this.ResolveFile(source);
+            if (!String.IsNullOrEmpty(filePath))
+            {
+                return filePath;
+            }
+
             // If the path is rooted, it better exist or we're not going to find it.
             if (Path.IsPathRooted(source))
             {
@@ -249,7 +257,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
             else // not a rooted path so let's try applying all the different source resolution options.
             {
-                string filePath = null;
                 const string bindPathOpenString = "!(bindpath.";
 
                 if (source.StartsWith(bindPathOpenString, StringComparison.Ordinal) && source.IndexOf(')') != -1)

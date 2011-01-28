@@ -154,8 +154,7 @@ extern "C" HRESULT DAPI ProcWaitForCompletion(
     }
     else if (WAIT_TIMEOUT == er)
     {
-        hr = HRESULT_FROM_WIN32(er);
-        ExitOnFailure(hr, "Timed out while waiting for process to complete.");
+        ExitFunction1(hr = HRESULT_FROM_WIN32(er));
     }
 
     if (!::GetExitCodeProcess(hProcess, &er))

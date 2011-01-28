@@ -309,6 +309,10 @@ extern "C" HRESULT VariableGetNumeric(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetNumeric(&pVariable->Value, pllValue);
@@ -332,6 +336,10 @@ extern "C" HRESULT VariableGetString(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetString(&pVariable->Value, psczValue);
@@ -355,6 +363,10 @@ extern "C" HRESULT VariableGetVersion(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantGetVersion(&pVariable->Value, pqwValue);
@@ -378,6 +390,10 @@ extern "C" HRESULT VariableGetVariant(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure1(hr, "Failed to get value of variable: %ls", wzVariable);
 
     hr = BVariantCopy(&pVariable->Value, pValue);
@@ -401,6 +417,10 @@ extern "C" HRESULT VariableGetFormatted(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure1(hr, "Failed to get variable: %ls", wzVariable);
 
     // Non-builtin strings may need to get expanded... non-strings and builtin

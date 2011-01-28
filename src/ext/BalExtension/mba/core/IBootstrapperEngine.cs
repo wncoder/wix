@@ -36,7 +36,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.U4)] out int pcPackages
             );
 
-        void GetVariableNumeric(
+        [PreserveSig]
+        int GetVariableNumeric(
             [MarshalAs(UnmanagedType.LPWStr)] string wzVariable,
             out long pllValue
             );
@@ -48,7 +49,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.U4)] ref int pcchValue
             );
 
-        void GetVariableVersion(
+        [PreserveSig]
+        int GetVariableVersion(
             [MarshalAs(UnmanagedType.LPWStr)] string wzVariable,
             [MarshalAs(UnmanagedType.U8)] out long pqwValue
             );

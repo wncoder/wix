@@ -35,6 +35,10 @@ static HRESULT UpdateResumeMode(
     __in BURN_RESUME_MODE resumeMode,
     __in BOOL fPerMachineProcess
     );
+static HRESULT ParseRelatedCodes(
+    __in BURN_REGISTRATION* pRegistration,
+    __in IXMLDOMNode* pixnBundle
+    );
 
 
 // function definitions
@@ -65,9 +69,8 @@ extern "C" HRESULT RegistrationParseFromXml(
     hr = XmlGetAttributeEx(pixnRegistrationNode, L"Id", &pRegistration->sczId);
     ExitOnFailure(hr, "Failed to get @Id.");
 
-    // @UpgradeCode
-    hr = XmlGetAttributeEx(pixnRegistrationNode, L"UpgradeCode", &pRegistration->sczUpgradeCode);
-    ExitOnFailure(hr, "Failed to get @UpgradeCode.");
+    hr = ParseRelatedCodes(pRegistration, pixnBundle);
+    ExitOnFailure(hr, "Failed to parse related bundles");
 
     // @Version
     hr = XmlGetAttributeEx(pixnRegistrationNode, L"Version", &scz);
@@ -199,7 +202,11 @@ extern "C" void RegistrationUninitialize(
     )
 {
     ReleaseStr(pRegistration->sczId);
-    ReleaseStr(pRegistration->sczUpgradeCode);
+
+    for (DWORD i = 0; i < pRegistration->cUpgradeCodes; ++i)
+    {
+        ReleaseStr(pRegistration->rgsczUpgradeCodes[i]);
+    }
     ReleaseStr(pRegistration->sczExecutableName);
 
     ReleaseStr(pRegistration->sczRegistrationKey);
@@ -490,7 +497,8 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     HRESULT hr = S_OK;
     LPWSTR sczBundleKey = NULL;
     HKEY hkBundleId = NULL;
-    LPWSTR sczUpgradeCode = NULL;
+    LPWSTR *rgsczUpgradeCodes = NULL;
+    DWORD cUpgradeCodes = 0;
     LPWSTR sczCachePath = NULL;
     DWORD64 dw64Version = 0;
 
@@ -501,42 +509,70 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     ExitOnFailure1(hr, "Failed to open bundle registry key: %ls", sczBundleKey);
 
     // If there is a bundle upgrade code, then it probably is another Burn.
-    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &sczUpgradeCode);
+    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes, &cUpgradeCodes);
+    if (HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE) == hr)
+    {
+        TraceError(hr, "Failed to read upgrade code as REG_MULTI_SZ - trying again as REG_SZ in case of older products");
+
+        rgsczUpgradeCodes = reinterpret_cast<LPWSTR *>(MemAlloc(sizeof(LPWSTR), TRUE));
+        ExitOnNull(rgsczUpgradeCodes, hr, E_OUTOFMEMORY, "Failed to allocate list for a single upgrade code from older registry format");
+
+        hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes[0]);
+        if (SUCCEEDED(hr))
+        {
+            cUpgradeCodes = 1;
+        }
+    }
+
     if (SUCCEEDED(hr))
     {
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, sczUpgradeCode, -1, pRegistration->sczUpgradeCode, -1))
+        // We have to check every one of our upgrade codes against every one of the other product's upgrade codes.
+        // If even a single one matches, then we are going to upgrade this product, and have no need to check
+        // against any of the remaining upgrade codes
+        for (DWORD i = 0; i < pRegistration->cUpgradeCodes; ++i)
         {
-            hr = RegReadVersion(hkBundleId, REGISTRY_BUNDLE_VERSION, &dw64Version);
-            ExitOnFailure1(hr, "Failed to read version from registry for bundle: %ls", sczBundleId);
+            for (DWORD j = 0; j < cUpgradeCodes; ++j)
+            {
+                if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, rgsczUpgradeCodes[j], -1, pRegistration->rgsczUpgradeCodes[i], -1))
+                {
+                    hr = RegReadVersion(hkBundleId, REGISTRY_BUNDLE_VERSION, &dw64Version);
+                    ExitOnFailure1(hr, "Failed to read version from registry for bundle: %ls", sczBundleId);
 
-            hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
-            ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", sczBundleId);
+                    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
+                    ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", sczBundleId);
 
-            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgRelatedBundles), pRegistration->cRelatedBundles, sizeof(BURN_RELATED_BUNDLE), 5);
-            ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
+                    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgRelatedBundles), pRegistration->cRelatedBundles, sizeof(BURN_RELATED_BUNDLE), 5);
+                    ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
 
-            BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
-            ++pRegistration->cRelatedBundles;
+                    BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
+                    ++pRegistration->cRelatedBundles;
 
-            pRelatedBundle->fPerMachine = pRegistration->fPerMachine;
-            hr = StrAllocString(&pRelatedBundle->sczId, sczBundleId, 0);
-            ExitOnFailure(hr, "Failed to copy related bundle id.");
+                    pRelatedBundle->fPerMachine = pRegistration->fPerMachine;
+                    hr = StrAllocString(&pRelatedBundle->sczId, sczBundleId, 0);
+                    ExitOnFailure(hr, "Failed to copy related bundle id.");
 
-            pRelatedBundle->qwVersion = dw64Version;
-            pRelatedBundle->sczCachePath = sczCachePath;
-            sczCachePath = NULL;
+                    pRelatedBundle->qwVersion = dw64Version;
+                    pRelatedBundle->sczCachePath = sczCachePath;
+                    sczCachePath = NULL;
+
+                    ExitFunction1(hr = S_OK);
+                }
+            }
         }
-        else
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_NO_MATCH);
-        }
+
+        hr = HRESULT_FROM_WIN32(ERROR_NO_MATCH);
     }
 
 LExit:
     ReleaseStr(sczCachePath);
-    ReleaseStr(sczUpgradeCode);
+    for (DWORD i = 0; i < cUpgradeCodes; ++i)
+    {
+        ReleaseStr(rgsczUpgradeCodes[i]);
+    }
+    ReleaseMem(rgsczUpgradeCodes);
     ReleaseRegKey(hkBundleId);
     ReleaseStr(sczBundleKey);
+
     return hr;
 }
 
@@ -620,7 +656,7 @@ extern "C" HRESULT RegistrationSessionBegin(
                 hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_CACHE_PATH, pRegistration->sczCacheExecutablePath);
                 ExitOnFailure(hr, "Failed to write BundleUpgradeCommand value.");
 
-                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->sczUpgradeCode);
+                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->rgsczUpgradeCodes, pRegistration->cUpgradeCodes);
                 ExitOnFailure(hr, "Failed to write BundleUpgradeCode value.");
 
                 hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
@@ -836,6 +872,7 @@ extern "C" HRESULT RegistrationSessionEnd(
     HRESULT hr = S_OK;
     BURN_RESUME_MODE resumeMode = BURN_RESUME_MODE_NONE;
     HKEY hkRegistration = NULL;
+    LPWSTR sczRootCacheDirectory = NULL;
 
     // If we are ARP registered, and not uninstalling, then set resume mode to "ARP".
     if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
@@ -864,11 +901,18 @@ extern "C" HRESULT RegistrationSessionEnd(
                 ExitOnFailure1(hr, "Failed to delete registration key: %ls", pRegistration->sczRegistrationKey);
             }
 
-            LogStringLine(REPORT_STANDARD, "Removing bundle cache: %ls", pRegistration->sczCacheDirectory);
+            LogId(REPORT_STANDARD, MSG_UNCACHE_BUNDLE, pRegistration->sczId, pRegistration->sczCacheDirectory);
 
             // Delete cache directory.
             hr = DirEnsureDeleteEx(pRegistration->sczCacheDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
             ExitOnFailure1(hr, "Failed to remove bundle directory: %ls", pRegistration->sczCacheDirectory);
+
+            // Try to remove root package cache in the off chance it is now empty.
+            HRESULT hrIgnored = CacheGetCompletedPath(pRegistration->fPerMachine, L"", &sczRootCacheDirectory);
+            if (SUCCEEDED(hrIgnored))
+            {
+                ::RemoveDirectoryW(sczRootCacheDirectory);
+            }
         }
     }
 
@@ -883,6 +927,7 @@ extern "C" HRESULT RegistrationSessionEnd(
     }
 
 LExit:
+    ReleaseStr(sczRootCacheDirectory);
     ReleaseRegKey(hkRegistration);
 
     return hr;
@@ -1006,6 +1051,60 @@ static HRESULT UpdateResumeMode(
 LExit:
     ReleaseRegKey(hkRebootRequired);
     ReleaseRegKey(hkRun);
+
+    return hr;
+}
+
+static HRESULT ParseRelatedCodes(
+    __in BURN_REGISTRATION* pRegistration,
+    __in IXMLDOMNode* pixnBundle
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNodeList* pixnNodes = NULL;
+    IXMLDOMNode* pixnElement = NULL;
+    LPWSTR sczAction = NULL;
+    LPWSTR sczId = NULL;
+    DWORD cElements = 0;
+
+    hr = XmlSelectNodes(pixnBundle, L"RelatedBundle", &pixnNodes);
+    ExitOnFailure(hr, "Failed to get RelatedBundle nodes");
+
+    hr = pixnNodes->get_length((long*)&cElements);
+    ExitOnFailure(hr, "Failed to get RelatedBundle element count.");
+
+    for (DWORD i = 0; i < cElements; ++i)
+    {
+        hr = XmlNextElement(pixnNodes, &pixnElement, NULL);
+        ExitOnFailure(hr, "Failed to get next RelatedBundle element.");
+
+        hr = XmlGetAttributeEx(pixnElement, L"Action", &sczAction);
+        ExitOnFailure(hr, "Failed to get @Action.");
+
+        hr = XmlGetAttributeEx(pixnElement, L"Id", &sczId);
+        ExitOnFailure(hr, "Failed to get @Id.");
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, sczAction, -1, L"Upgrade", -1))
+        {
+            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes, sizeof(LPWSTR), 5);
+            ExitOnFailure(hr, "Failed to resize upgrade code array in registration");
+
+            pRegistration->rgsczUpgradeCodes[pRegistration->cUpgradeCodes] = sczId;
+            sczId = NULL;
+            ++pRegistration->cUpgradeCodes;
+        }
+        else
+        {
+            hr = E_INVALIDARG;
+            ExitOnFailure1(hr, "Invalid value for @Action: %ls", sczAction);
+        }
+    }
+
+LExit:
+    ReleaseObject(pixnNodes);
+    ReleaseObject(pixnElement);
+    ReleaseStr(sczAction);
+    ReleaseStr(sczId);
 
     return hr;
 }

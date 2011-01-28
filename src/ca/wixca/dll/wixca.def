@@ -22,6 +22,8 @@ EXPORTS
 ; qtexecca.cpp
     CAQuietExec
     CAQuietExec64
+; RemoveFolders.cpp
+    WixRemoveFoldersEx
 ; RestartManager.cpp
     WixRegisterRestartResources
 ; secureobjects.cpp

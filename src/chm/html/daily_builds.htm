@@ -18,20 +18,14 @@
   <p>To avoid having to install WiX on build machines you can check all the tools necessary to build WiX projects into your source code control system. Here's how:</p>
 
   <ol>
-    <li>Install WiX on a developer machine using the WiX installer that's appropriate for the machine's architecture (x86 or x64).</li>
+    <li>Create a directory in your source code control system to hold the WiX tools. It's common to create a numbered subdirectory matching the version of WiX that you're checking in. Ex: <strong>wix\[[Version]]</strong></li>
 
-    <li>Create a directory in your source code control system to hold the WiX tools. It's common to create a numbered subdirectory matching the version of WiX that you're checking in.</li>
+    <li>Unzip the contents of <strong>wix[[Version.Major]][[Version.Minor]]-binaries.zip\*</strong> into the directory created in step 1.</li>
 
-    <li>Copy the contents of <strong>c:\Program Files\Windows Installer XML v3\bin</strong> into the directory created in step 2.</li>
+    <li>If you use Deployment Tools Foundation or the WiX SDK header files and libraries, create a parallel directory tree to the one you created in step 1 and copy the contents of <strong>wix[[Version.Major]][[Version.Minor]]-binaries.zip\sdk\*</strong> into that directory.</li>
 
-    <li>Copy the contents of <strong>c:\Program Files\MSBuild\Microsoft\WiX\v[[Version.Major]].[[Version.Minor]]</strong> into the directory created in step 2.</li>
-
-    <li>If you use Deployment Tools Foundation or the WiX SDK header files and libraries, create a parallel directory tree to the one you created in step 2 and copy the contents of <strong>c:\Program Files\Windows Installer XML v3\sdk</strong> into that directory.</li>
-
-    <li>Add and check in the files from steps 3 through 5.</li>
+    <li>Add and check in the files from steps 1 through 3.</li>
   </ol>
-
-  <p>The actual file locations in steps 3 through 5 will vary depending on where you installed WiX. On 64-bit operating systems, the files will be located under <strong>c:\Program Files (x86)</strong> by default.</p>
 
   <h2>Step 2: Modify Your .wixproj File</h2>
 

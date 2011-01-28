@@ -1566,6 +1566,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ArrayList delayedFields = new ArrayList();
             this.ResolveFields(output.Tables, cabinets, delayedFields);
 
+            // if there are any fields to resolve later, create the cache to populate during bind
+            IDictionary<string, string> variableCache = null;
+            if (delayedFields.Count != 0)
+            {
+                variableCache = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            }
+
             // process the summary information table before the other tables
             string modularizationGuid = this.BindDatabaseSummaryInfo(output, out longNames, out compressed);
 
@@ -1704,13 +1711,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
-            // set the ProductCode if its generated
+            // add binder variables for all properties
             Table propertyTable = output.Tables["Property"];
-            if (null != propertyTable && OutputType.Product == output.Type)
+            if (null != propertyTable)
             {
                 foreach (Row propertyRow in propertyTable.Rows)
                 {
-                    if ("ProductCode" == propertyRow[0].ToString() && "*" == propertyRow[1].ToString())
+                    string property = propertyRow[0].ToString();
+
+                    // set the ProductCode if its generated
+                    if (OutputType.Product == output.Type && "ProductCode" == property && "*" == propertyRow[1].ToString())
                     {
                         propertyRow[1] = Common.GenerateGuid();
 
@@ -1736,6 +1746,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                         break;
                     }
+
+                    // add the property name and value to the variableCache
+                    if (delayedFields.Count != 0)
+                    {
+                        string key = String.Concat("property.", Demodularize(output, modularizationGuid, property));
+                        variableCache[key] = (string)propertyRow[1];
+                    }
                 }
             }
 
@@ -1759,20 +1776,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
-            IDictionary<string, string> fileInformationCache = null;
-            if (delayedFields.Count != 0)
-            {
-                fileInformationCache = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            }
-
             // update file version, hash, assembly, etc.. information
             this.core.OnMessage(WixVerboses.UpdatingFileInformation());
-            this.UpdateFileInformation(output, fileRows, mediaRows, fileInformationCache, modularizationGuid);
+            this.UpdateFileInformation(output, fileRows, mediaRows, variableCache, modularizationGuid);
             this.UpdateControlText(output);
 
             if (delayedFields.Count != 0)
             {
-                this.ResolveDelayedFields(delayedFields, fileInformationCache);
+                this.ResolveDelayedFields(output, delayedFields, variableCache, modularizationGuid);
             }
 
             // stop processing if an error previously occurred
@@ -1836,7 +1847,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.core.OnMessage(WixVerboses.GeneratingDatabase());
             string tempDatabaseFile = Path.Combine(this.TempFilesLocation, Path.GetFileName(databaseFile));
             this.GenerateDatabase(output, tempDatabaseFile, false, false);
-            fileTransfers.Add(new FileTransfer(tempDatabaseFile, databaseFile, true, output.Type.ToString(), null)); // note where this database needs to move in the future
+
+            FileTransfer transfer;
+            if (FileTransfer.TryCreate(tempDatabaseFile, databaseFile, true, output.Type.ToString(), null, out transfer)) // note where this database needs to move in the future
+            {
+                fileTransfers.Add(transfer);
+            }
 
             // stop processing if an error previously occurred
             if (this.core.EncounteredError)
@@ -2122,15 +2138,50 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// Resolves the fields which had variables that needed to be resolved after the file information
         /// was loaded.
         /// </summary>
+        /// <param name="output">Internal representation of the msi database to operate upon.</param>
         /// <param name="delayedFields">The fields which had resolution delayed.</param>
-        /// <param name="fileInformationCache">The file information to use when resolving variables.</param>
-        private void ResolveDelayedFields(ArrayList delayedFields, IDictionary<string, string> fileInformationCache)
+        /// <param name="variableCache">The file information to use when resolving variables.</param>
+        /// <param name="modularizationGuid">The modularization guid (used in case of a merge module).</param>
+        private void ResolveDelayedFields(Output output, ArrayList delayedFields, IDictionary<string, string> variableCache, string modularizationGuid)
         {
+            List<DelayedField> deferredFields = new List<DelayedField>();
+
             foreach (DelayedField delayedField in delayedFields)
             {
                 try
                 {
-                    delayedField.Field.Data = WixVariableResolver.ResolveDelayedVariables(delayedField.Row.SourceLineNumbers, (string)delayedField.Field.Data, fileInformationCache);
+                    Row propertyRow = delayedField.Row;
+
+                    // process properties first in case they refer to other binder variables
+                    if ("Property" == propertyRow.Table.Name)
+                    {
+                        string value = WixVariableResolver.ResolveDelayedVariables(propertyRow.SourceLineNumbers, (string)delayedField.Field.Data, variableCache);
+
+                        // update the variable cache with the new value
+                        string key = String.Concat("property.", Demodularize(output, modularizationGuid, (string)propertyRow[0]));
+                        variableCache[key] = value;
+
+                        // update the field data
+                        delayedField.Field.Data = value;
+                    }
+                    else
+                    {
+                        deferredFields.Add(delayedField);
+                    }
+                }
+                catch (WixException we)
+                {
+                    this.core.OnMessage(we.Error);
+                    continue;
+                }
+            }
+
+            // process the remaining fields in case they refer to property binder variables
+            foreach (DelayedField delayedField in deferredFields)
+            {
+                try
+                {
+                    delayedField.Field.Data = WixVariableResolver.ResolveDelayedVariables(delayedField.Row.SourceLineNumbers, (string)delayedField.Field.Data, variableCache);
                 }
                 catch (WixException we)
                 {
@@ -2740,6 +2791,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
+            Table relatedBundleTable = bundle.Tables["RelatedBundle"];
+            List<RelatedBundleInfo> allRelatedBundles = new List<RelatedBundleInfo>();
+            if (null != relatedBundleTable && 0 < relatedBundleTable.Rows.Count)
+            {
+                foreach (Row row in relatedBundleTable.Rows)
+                {
+                    allRelatedBundles.Add(new RelatedBundleInfo(row));
+                }
+            }
+
             // To make lookups easier, we load the constituent data bottom-up, so
             // that we can index by ID.
             Table variableTable = bundle.Tables["Variable"];
@@ -2919,7 +2980,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        fileTransfers.Add(new FileTransfer(payload.FileInfo.FullName, Path.Combine(layoutDirectory, payload.FileName), false, "Payload", payload.SourceLineNumbers));
+                        FileTransfer transfer;
+                        if (FileTransfer.TryCreate(payload.FileInfo.FullName, Path.Combine(layoutDirectory, payload.FileName), false, "Payload", payload.SourceLineNumbers, out transfer))
+                        {
+                            fileTransfers.Add(transfer);
+                        }
                     }
                 }
             }
@@ -3069,7 +3134,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             string manifestPath = Path.Combine(this.TempFilesLocation, "bundle-manifest.xml");
-            this.CreateBurnManifest(bundleInfo, manifestPath, allVariables, orderedSearches, allPayloads, chain, containers);
+            this.CreateBurnManifest(bundleInfo, manifestPath, allRelatedBundles, allVariables, orderedSearches, allPayloads, chain, containers);
 
             this.UpdateBurnResources(bundleInfo);
 
@@ -3111,7 +3176,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if ("detached" == container.Type)
                 {
-                    fileTransfers.Add(new FileTransfer(Path.Combine(this.TempFilesLocation, container.Name), Path.Combine(layoutDirectory, container.Name), true, "Container", container.SourceLineNumbers));
+                    FileTransfer transfer;
+                    if (FileTransfer.TryCreate(Path.Combine(this.TempFilesLocation, container.Name), Path.Combine(layoutDirectory, container.Name), true, "Container", container.SourceLineNumbers, out transfer))
+                    {
+                        fileTransfers.Add(transfer);
+                    }
                 }
             }
 
@@ -3233,7 +3302,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfo> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers)
+        private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfo> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers)
         {
             using (XmlTextWriter writer = new XmlTextWriter(path, Encoding.UTF8))
             {
@@ -3258,6 +3327,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("Prefix", bundleInfo.LogPrefix);
                     writer.WriteAttributeString("Extension", bundleInfo.LogExtension);
                     writer.WriteEndElement();
+                }
+
+                // Write the RelatedBundle elements
+                foreach (RelatedBundleInfo relatedBundle in allRelatedBundles)
+                {
+                    relatedBundle.WriteXml(writer);
                 }
 
                 // Write the variables
@@ -3336,7 +3411,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("ExecutableName", Path.GetFileName(bundleInfo.Path));
                 writer.WriteAttributeString("PerMachine", bundleInfo.PerMachine ? "yes" : "no");
                 writer.WriteAttributeString("Version", bundleInfo.Version);
-                writer.WriteAttributeString("UpgradeCode", bundleInfo.UpgradeCode);
 
                 if (null != bundleInfo.RegistrationInfo)
                 {
@@ -5537,7 +5611,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (String.Equals(row[1].ToString(), thisDir[0].ToString(), StringComparison.Ordinal))
                     {
-                        fileTransfers.Add(new FileTransfer(row[3].ToString(), Path.Combine(currentDir, row[2].ToString()), false, "LayoutFile", row.SourceLineNumbers));
+                        FileTransfer transfer;
+                        if (FileTransfer.TryCreate(row[3].ToString(), Path.Combine(currentDir, row[2].ToString()), false, "LayoutFile", row.SourceLineNumbers, out transfer))
+                        {
+                            fileTransfers.Add(transfer);
+                        }
                     }
                 }
             }
@@ -5664,7 +5742,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             else
             {
                 string destinationPath = Path.Combine(cabinetDir, mediaRow.Cabinet);
-                fileTransfers.Add(new FileTransfer(tempCabinetFile, destinationPath, CabinetBuildOption.BuildAndMove == cabinetBuildOption, "Cabinet", mediaRow.SourceLineNumbers));
+                FileTransfer transfer;
+                if (FileTransfer.TryCreate(tempCabinetFile, destinationPath, CabinetBuildOption.BuildAndMove == cabinetBuildOption, "Cabinet", mediaRow.SourceLineNumbers, out transfer))
+                {
+                    fileTransfers.Add(transfer);
+                }
             }
 
             return cabinetWorkItem;
@@ -5733,43 +5815,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                             // finally put together the base media layout path and the relative file layout path
                             string fileLayoutPath = Path.Combine(mediaLayoutDirectory, relativeFileLayoutPath);
-                            string sourceFullPath = null;
-                            string fileLayoutFullPath = null;
-
-                            try
+                            FileTransfer transfer;
+                            if (FileTransfer.TryCreate(fileRow.Source, fileLayoutPath, false, "File", fileRow.SourceLineNumbers, out transfer))
                             {
-                                sourceFullPath = Path.GetFullPath(fileRow.Source);
-                            }
-                            catch (System.ArgumentException)
-                            {
-                                throw new WixException(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
-                            }
-                            catch (System.IO.PathTooLongException)
-                            {
-                                throw new WixException(WixErrors.PathTooLong(fileRow.SourceLineNumbers, fileRow.Source));
-                            }
-
-                            try
-                            {
-                                fileLayoutFullPath = Path.GetFullPath(fileLayoutPath);
-                            }
-                            catch (System.ArgumentException)
-                            {
-                                throw new WixException(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileLayoutPath));
-                            }
-                            catch (System.IO.PathTooLongException)
-                            {
-                                throw new WixException(WixErrors.PathTooLong(fileRow.SourceLineNumbers, fileLayoutPath));
-                            }
-
-                            // if the current source path (where we know that the file already exists) and the resolved
-                            // path as dictated by the Directory table are not the same, then propagate the file.  The
-                            // image that we create may have already been done by some other process other than the linker, so 
-                            // there is no reason to copy the files to the resolved source if they are already there.
-                            if (!String.Equals(sourceFullPath, fileLayoutFullPath, StringComparison.OrdinalIgnoreCase))
-                            {
-                                // just put the file in the transfers array, how anti-climatic
-                                fileTransfers.Add(new FileTransfer(fileRow.Source, fileLayoutPath, false, "File", fileRow.SourceLineNumbers));
+                                fileTransfers.Add(transfer);
                             }
                         }
                     }
@@ -6105,7 +6154,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public BundleInfo(string bundleFile, Row row)
             {
                 this.Id = Guid.NewGuid();
-                this.Path = bundleFile;
+                this.Path = System.IO.Path.GetFullPath(bundleFile);
                 this.PerMachine = true; // default to per-machine but the first-per user package would flip it.
 
                 this.SourceLineNumbers = row.SourceLineNumbers;
@@ -6126,21 +6175,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.RegistrationInfo.UpdateUrl = (string)row[10];
                 }
 
-                Guid upgradeCode = this.Id; // default UpgradeCode to the Bundle Id.
                 if (null != row[11])
                 {
-                    upgradeCode = new Guid((string)row[11]);
+                    Compressed = (1 == (int)row[11]) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
                 }
-                this.UpgradeCode = upgradeCode.ToString("B");
 
                 if (null != row[12])
                 {
-                    Compressed = (1 == (int)row[12]) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
-                }
-
-                if (null != row[13])
-                {
-                    string[] logVariableAndPrefixExtension = ((string)row[13]).Split(':');
+                    string[] logVariableAndPrefixExtension = ((string)row[12]).Split(':');
                     this.LogPathVariable = logVariableAndPrefixExtension[0];
 
                     string logPrefixAndExtension = logVariableAndPrefixExtension[1];
@@ -6149,17 +6191,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.LogExtension = logPrefixAndExtension.Substring(extensionIndex + 1);
                 }
 
+                if (null != row[13])
+                {
+                    this.IconPath = (string)row[13];
+                }
+
                 if (null != row[14])
                 {
-                    this.IconPath = (string)row[14];
+                    this.SplashScreenBitmapPath = (string)row[14];
                 }
 
-                if (null != row[15])
-                {
-                    this.SplashScreenBitmapPath = (string)row[15];
-                }
-
-                this.Condition = (string)row[16];
+                this.Condition = (string)row[15];
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
@@ -6185,7 +6227,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Version { get; private set; }
-            public string UpgradeCode { get; private set; }
         }
 
         /// <summary>
@@ -6836,6 +6877,47 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string PackageId { get; private set; }
             public string Name { get; private set; }
             public string Value { get; private set; }
+        }
+
+        /// <summary>
+        /// Utility class for Burn RelatedBundle information.
+        /// </summary>
+        private class RelatedBundleInfo
+        {
+            public enum RelatedBundleActionType
+            {
+                Detect,
+                Upgrade,
+                Addon,
+            }
+
+            public RelatedBundleInfo(Row row)
+                : this((string)row[0], (int)row[1])
+            {
+            }
+
+            public RelatedBundleInfo(string id, int action)
+            {
+                this.Id = id;
+                this.Action = (RelatedBundleActionType)action;
+            }
+
+            public string Id { get; private set; }
+            public RelatedBundleActionType Action { get; private set; }
+
+            /// <summary>
+            /// Generates Burn manifest element for a RelatedBundle.
+            /// </summary>
+            /// <param name="writer"></param>
+            public void WriteXml(XmlTextWriter writer)
+            {
+                string actionString = this.Action.ToString();
+
+                writer.WriteStartElement("RelatedBundle");
+                writer.WriteAttributeString("Id", this.Id);
+                writer.WriteAttributeString("Action", Convert.ToString(this.Action));
+                writer.WriteEndElement();
+            }
         }
 
         /// <summary>

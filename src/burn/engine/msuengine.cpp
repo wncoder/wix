@@ -95,6 +95,7 @@ extern "C" HRESULT MsuEnginePlanPackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
     )
@@ -188,11 +189,8 @@ extern "C" HRESULT MsuEnginePlanPackage(
     // add wait for cache
     if (hCacheEvent)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append wait action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-        pAction->syncpoint.hEvent = hCacheEvent;
+        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
+        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
     }
 
     // add execute action
@@ -224,21 +222,8 @@ extern "C" HRESULT MsuEnginePlanPackage(
     // add checkpoints
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
     {
-        DWORD dwCheckpointId = PlanGetNextCheckpointId();
-
-        // execute checkpoint
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
-
-        // rollback checkpoint
-        hr = PlanAppendRollbackAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append rollback action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
+        hr = PlanExecuteCheckpoint(pPlan);
+        ExitOnFailure(hr, "Failed to append execute checkpoint.");
     }
 
     // return values
@@ -251,10 +236,13 @@ LExit:
 
 extern "C" HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
     HRESULT hr = S_OK;
+    int nResult = IDNOACTION;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczMsuPath = NULL;
     LPWSTR sczSystemPath = NULL;
@@ -321,12 +309,19 @@ extern "C" HRESULT MsuEngineExecutePackage(
         ExitWithLastError1(hr, "Failed to CreateProcess on path: %ls", sczWusaPath);
     }
 
-    // wait for process to terminate
-    if (WAIT_OBJECT_0 != ::WaitForSingleObject(pi.hProcess, INFINITE))
+    do
     {
-        hr = E_UNEXPECTED;
-        ExitOnFailure1(hr, "Unexpected terminated process: %ls", sczWusaPath);
-    }
+        nResult = pfnGenericExecuteProgress(pvContext, 1, 2);
+        hr = HRESULT_FROM_VIEW(nResult);
+        ExitOnRootFailure(hr, "Bootstrapper application aborted during MSU progress.");
+
+        // wait for process to terminate
+        hr = ProcWaitForCompletion(pi.hProcess, 500, &dwExitCode);
+        if (HRESULT_FROM_WIN32(WAIT_TIMEOUT) != hr)
+        {
+            ExitOnFailure1(hr, "Failed to wait for executable to complete: %ls", sczWusaPath);
+        }
+    } while (HRESULT_FROM_WIN32(WAIT_TIMEOUT) == hr);
 
     // get process exit code
     if (!::GetExitCodeProcess(pi.hProcess, &dwExitCode))

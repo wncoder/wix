@@ -217,6 +217,7 @@ extern "C" HRESULT ExeEnginePlanPackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
     )
@@ -320,11 +321,8 @@ extern "C" HRESULT ExeEnginePlanPackage(
     // add wait for cache
     if (hCacheEvent)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append wait action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-        pAction->syncpoint.hEvent = hCacheEvent;
+        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
+        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
     }
 
     // add execute action
@@ -356,21 +354,8 @@ extern "C" HRESULT ExeEnginePlanPackage(
     // add checkpoints
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
     {
-        DWORD dwCheckpointId = PlanGetNextCheckpointId();
-
-        // execute checkpoint
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
-
-        // rollback checkpoint
-        hr = PlanAppendRollbackAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append rollback action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
+        hr = PlanExecuteCheckpoint(pPlan);
+        ExitOnFailure(hr, "Failed to append execute checkpoint.");
     }
 
     // return values
@@ -386,10 +371,13 @@ extern "C" HRESULT ExeEngineExecutePackage(
     __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
     HRESULT hr = S_OK;
+    int nResult = IDNOACTION;
     LPCWSTR wzArguments = NULL;
     LPWSTR sczArgumentsFormatted = NULL;
     LPWSTR sczCachedDirectory = NULL;
@@ -447,18 +435,31 @@ extern "C" HRESULT ExeEngineExecutePackage(
     {
         hr = EmbeddedLaunchChildProcess(pExecuteAction->exePackage.pPackage, pUX, hElevatedPipe, sczExecutablePath, sczCommand, &pi.hProcess);
         ExitOnFailure1(hr, "Failed to launch executable as embedded from path: %ls", sczExecutablePath);
+
+        hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
+        ExitOnFailure1(hr, "Failed to wait for embedded executable to complete: %ls", sczExecutablePath);
     }
-    else // create and wait for the executable process like normal.
+    else // create and wait for the executable process while sending fake progress to allow cancel.
     {
         si.cb = sizeof(si); // TODO: hookup the stdin/stdout/stderr pipes for logging purposes?
         if (!::CreateProcessW(sczExecutablePath, sczCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
         {
             ExitWithLastError1(hr, "Failed to CreateProcess on path: %ls", sczExecutablePath);
         }
-    }
 
-    hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
-    ExitOnFailure1(hr, "Failed to wait for executable to complete: %ls", sczExecutablePath);
+        do
+        {
+            nResult = pfnGenericExecuteProgress(pvContext, 1, 2);
+            hr = HRESULT_FROM_VIEW(nResult);
+            ExitOnRootFailure(hr, "Bootstrapper application aborted during EXE progress.");
+
+            hr = ProcWaitForCompletion(pi.hProcess, 500, &dwExitCode);
+            if (HRESULT_FROM_WIN32(WAIT_TIMEOUT) != hr)
+            {
+                ExitOnFailure1(hr, "Failed to wait for executable to complete: %ls", sczExecutablePath);
+            }
+        } while (HRESULT_FROM_WIN32(WAIT_TIMEOUT) == hr);
+    }
 
     hr = HandleExitCode(pExecuteAction->exePackage.pPackage, dwExitCode, pRestart);
     ExitOnRootFailure1(hr, "Process returned error: %u", dwExitCode);

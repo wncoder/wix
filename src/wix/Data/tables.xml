@@ -1595,7 +1595,6 @@
         <columnDefinition name="HelpUrl" type="string" length="0" nullable="yes" />
         <columnDefinition name="Manufacturer" type="string" length="0" nullable="yes" />
         <columnDefinition name="UpdateUrl" type="string" length="0" nullable="yes" />
-        <columnDefinition name="UpgradeCode" type="string" length="38" nullable="yes" />
         <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="LogPrefixAndExtension" type="string" length="0" nullable="yes" />
         <columnDefinition name="IconSourceFile" type="object" length="0" nullable="yes" />
@@ -1638,6 +1637,10 @@
                 keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
         <columnDefinition name="Name" type="string" length="0" category="identifier" primaryKey="yes" />
         <columnDefinition name="Value" type="string" length="0" />
+    </tableDefinition>
+    <tableDefinition name="RelatedBundle" createSymbols="yes" unreal="yes">
+        <columnDefinition name="Id" type="string" length="38" category="guid" primaryKey="yes" />
+        <columnDefinition name="Action" type="number" length="4" />
     </tableDefinition>
     <tableDefinition name="Variable" createSymbols="yes" unreal="yes">
         <columnDefinition name="Variable" type="string" length="0" category="identifier" primaryKey="yes" />

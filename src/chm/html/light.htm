@@ -739,6 +739,42 @@ light.exe [-?] [-b basePath] [-nologo] [-out outputFile] objectFile [objectFile 
     </tr>
   </table>
 
+  <h4>Properties</h4>
+
+  <p>You can also reference property values from the Property table at bind time; however, you cannot reference properties as binder variables
+  within other properties, including the attributes on the Product element - many of which are compiled into the Property table. You can reference
+  other binder variables like file information above in properties, or even localization and custom binder variables documented below.</p>
+
+  <table border="1" cellspacing="0" cellpadding="2">
+    <tr>
+      <td>
+        <p><b>Variable name</b></p>
+      </td>
+
+      <td>
+        <p><b>Example usage</b></p>
+      </td>
+
+      <td>
+        <p><b>Example value</b></p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.property.<i>Property</i></p>
+      </td>
+
+      <td>
+        <p>!(bind.property.ProductVersion)</p>
+      </td>
+
+      <td>
+        <p>1.0.0.0</p>
+      </td>
+    </tr>
+  </table>
+
   <h3>Localization Variables</h3>
 
   <p>Variables can be passed in before binding the output file from a WiX localization file, or .wxl file. This process allows the developer to link one or more .wixobj files together with diferent .wxl files to produce different localized packages.</p>

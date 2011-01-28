@@ -24,6 +24,13 @@ extern "C" {
 #endif
 
 
+typedef int (*PFN_GENERICEXECUTEPROGRESS)(
+    __in LPVOID pvContext,
+    __in DWORD dwProgress,
+    __in DWORD dwTotal
+    );
+
+
 HRESULT ApplyElevate(
     __in BURN_ENGINE_STATE* pEngineState,
     __in HWND hwndParent,
@@ -43,7 +50,8 @@ HRESULT ApplyCache(
     __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_PLAN* pPlan,
     __in HANDLE hPipe,
-    __inout DWORD* pcOverallProgressTicks
+    __inout DWORD* pcOverallProgressTicks,
+    __out BOOL* pfRollback
     );
 HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,

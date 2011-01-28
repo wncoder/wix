@@ -67,7 +67,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
         public string Type
         {
-            get { return (string)this.Fields[2].Data; }
+            get { return Convert.ToString(this.Fields[2].Data); }
             set { this.Fields[2].Data = value; }
         }
 
@@ -77,7 +77,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>X location of the BBControl.</value>
         public string X
         {
-            get { return (string)this.Fields[3].Data; }
+            get { return Convert.ToString(this.Fields[3].Data); }
             set { this.Fields[3].Data = value; }
         }
 
@@ -87,7 +87,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>Y location of the BBControl.</value>
         public string Y
         {
-            get { return (string)this.Fields[4].Data; }
+            get { return Convert.ToString(this.Fields[4].Data); }
             set { this.Fields[4].Data = value; }
         }
 
@@ -97,7 +97,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>Width of the BBControl.</value>
         public string Width
         {
-            get { return (string)this.Fields[5].Data; }
+            get { return Convert.ToString(this.Fields[5].Data); }
             set { this.Fields[5].Data = value; }
         }
 
@@ -107,7 +107,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>Height of the BBControl.</value>
         public string Height
         {
-            get { return (string)this.Fields[6].Data; }
+            get { return Convert.ToString(this.Fields[6].Data); }
             set { this.Fields[6].Data = value; }
         }
 

@@ -51,7 +51,10 @@ typedef struct _BURN_REGISTRATION
     BOOL fPerMachine;
     BOOL fRegisterArp;
     LPWSTR sczId;
-    LPWSTR sczUpgradeCode;
+
+    LPWSTR *rgsczUpgradeCodes;
+    DWORD cUpgradeCodes;
+
     DWORD64 qwVersion;
     LPWSTR sczExecutableName;
 

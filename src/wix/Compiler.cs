@@ -19552,6 +19552,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "PayloadGroupRef":
                                 this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Layout, "BundleLayoutOnlyPayloads", ComplexReferenceChildType.Unknown, null);
                                 break;
+                            case "RelatedBundle":
+                                this.ParseRelatedBundleElement(child);
+                                break;
                             case "UX": // deprecated
                                 {
                                     SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
@@ -19560,6 +19563,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 goto case "BootstrapperApplication";
                             case "Variable":
                                 this.ParseVariableElement(child);
+                                break;
+                            case "WixVariable":
+                                this.ParseWixVariableElement(child);
                                 break;
                             default:
                                 this.core.UnexpectedElement(node, child);
@@ -19580,6 +19586,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!this.core.EncounteredError)
             {
+                if (null != upgradeCode)
+                {
+                    Row relatedBundleRow = this.core.CreateRow(sourceLineNumbers, "RelatedBundle");
+                    relatedBundleRow[0] = upgradeCode;
+                    relatedBundleRow[1] = (int)Wix.RelatedBundle.ActionType.Upgrade;
+                }
+
                 Row row = this.core.CreateRow(sourceLineNumbers, "WixBundle");
                 row[0] = version;
                 row[1] = copyright;
@@ -19601,16 +19614,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[8] = helpUrl;
                 row[9] = manufacturer;
                 row[10] = updateUrl;
-                row[11] = upgradeCode;
                 if (YesNoDefaultType.Default != compressed)
                 {
-                    row[12] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
+                    row[11] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
                 }
 
-                row[13] = logVariablePrefixAndExtension;
-                row[14] = iconSourceFile;
-                row[15] = splashScreenSourceFile;
-                row[16] = condition;
+                row[12] = logVariablePrefixAndExtension;
+                row[13] = iconSourceFile;
+                row[14] = splashScreenSourceFile;
+                row[15] = condition;
             }
         }
 
@@ -21300,6 +21312,85 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
 
         /// <summary>
+        /// Parse RelatedBundle element
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        private void ParseRelatedBundleElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            string action = null;
+            Wix.RelatedBundle.ActionType actionType = Wix.RelatedBundle.ActionType.Detect;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
+                            break;
+                        case "Action":
+                            action = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (null == id)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+
+            if (!String.IsNullOrEmpty(action))
+            {
+                actionType = Wix.RelatedBundle.ParseActionType(action);
+                switch (actionType)
+                {
+                    case Wix.RelatedBundle.ActionType.Detect:
+                        break;
+                    case Wix.RelatedBundle.ActionType.Upgrade:
+                        break;
+                    case Wix.RelatedBundle.ActionType.Addon:
+                        break;
+                    default:
+                        this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Action", action, "Detect", "Upgrade", "Addon"));
+                        break;
+                }
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "RelatedBundle");
+                row[0] = id;
+                row[1] = (int)actionType;
+            }
+        }
+
+        /// <summary>
         /// Parse Variable element
         /// </summary>
         /// <param name="node">Element to parse</param>
@@ -21348,14 +21439,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (null == type)
             {
-                // Infer the type from the current value... sadly, Version doesn't have
-                // a TryParse() method, so we have to try/catch to see if it parses.
-                try
+                // Infer the type from the current value... 
+                if (value.StartsWith("v", StringComparison.OrdinalIgnoreCase))
                 {
-                    Version version = new Version(value);
-                    type = "version";
+                    // Version constructor does not support simple "v#" syntax so check to see if the value is
+                    // non-negative real quick.
+                    Int32 number;
+                    if (Int32.TryParse(value.Substring(1), NumberStyles.None, CultureInfo.InvariantCulture.NumberFormat, out number))
+                    {
+                        type = "version";
+                    }
+                    else
+                    {
+                        // Sadly, Version doesn't have a TryParse() method, so we have to try/catch to see if it parses.
+                        try
+                        {
+                            Version version = new Version(value.Substring(1));
+                            type = "version";
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
                 }
-                catch (Exception)
+
+                // Not a version, check for numeric.
+                if (null == type)
                 {
                     Int64 number;
                     if (Int64.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture.NumberFormat, out number))

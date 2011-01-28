@@ -26,6 +26,7 @@ struct BURN_CACHE_THREAD_CONTEXT
 {
     BURN_ENGINE_STATE* pEngineState;
     DWORD* pcOverallProgressTicks;
+    BOOL* pfRollback;
 };
 
 
@@ -35,7 +36,7 @@ static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
     __out BURN_MODE* pMode,
-    __out BOOL *pfAppend,
+    __out DWORD *pdwLoggingAttributes,
     __inout_z LPWSTR* psczLogFile,
     __inout_z LPWSTR* psczParentPipeName,
     __inout_z LPWSTR* psczParentToken,
@@ -46,15 +47,6 @@ static HRESULT DetectPackagePayloadsCached(
     );
 static DWORD WINAPI CacheThreadProc(
     __in LPVOID lpThreadParameter
-    );
-static HRESULT PlanRollbackBoundaryBegin(
-    __in BURN_PLAN* pPlan,
-    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
-    __out HANDLE* phEvent
-    );
-static HRESULT PlanRollbackBoundaryComplete(
-    __in BURN_PLAN* pPlan,
-    __in HANDLE hEvent
     );
 
 
@@ -79,7 +71,7 @@ extern "C" HRESULT CoreInitialize(
     pEngineState->hElevatedPipe = INVALID_HANDLE_VALUE;
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->mode, &pEngineState->log.fAppend, &pEngineState->log.sczPath, &pEngineState->sczParentPipeName, &pEngineState->sczParentToken, &sczLayoutDirectory);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->mode, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczParentPipeName, &pEngineState->sczParentToken, &sczLayoutDirectory);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     pEngineState->command.nCmdShow = nCmdShow;
@@ -106,6 +98,7 @@ extern "C" HRESULT CoreInitialize(
     hr = RegistrationSetPaths(&pEngineState->registration);
     ExitOnFailure(hr, "Failed to set registration paths.");
 
+    // If a layout directory was specified on the command-line, set it as a well-known variable.
     if (sczLayoutDirectory)
     {
         hr = VariableSetString(&pEngineState->variables, L"BurnLayoutDirectory", sczLayoutDirectory);
@@ -362,6 +355,11 @@ extern "C" HRESULT CorePlan(
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
         hr = VariableGetString(&pEngineState->variables, L"BurnLayoutDirectory", &sczLayoutDirectory);
+        if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
+        {
+            hr = DirGetCurrent(&sczLayoutDirectory);
+            ExitOnFailure(hr, "Failed to get current directory as layout directory.");
+        }
         ExitOnFailure(hr, "Failed to get BurnLayoutDirectory property.");
 
         hr = PathBackslashTerminate(&sczLayoutDirectory);
@@ -371,7 +369,7 @@ extern "C" HRESULT CorePlan(
         hr = PlanLayoutBundle(&pEngineState->plan, sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to plan the layout of the bundle.");
 
-        // Plan the layout of layout only payloads.
+        // Plan the layout of layout-only payloads.
         for (DWORD i = 0; i < pEngineState->payloads.cPayloads; ++i)
         {
             BURN_PAYLOAD* pPayload = pEngineState->payloads.rgPayloads + i;
@@ -450,19 +448,19 @@ extern "C" HRESULT CorePlan(
                 switch (pPackage->type)
                 {
                 case BURN_PACKAGE_TYPE_EXE:
-                    hr = ExeEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, &executeAction, &rollbackAction);
+                    hr = ExeEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSI:
-                    hr = MsiEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, &pEngineState->userExperience, &executeAction, &rollbackAction);
+                    hr = MsiEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSP:
-                    hr = MspEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, &pEngineState->userExperience, &executeAction, &rollbackAction);
+                    hr = MspEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSU:
-                    hr = MsuEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, &executeAction, &rollbackAction);
+                    hr = MsuEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
                     break;
 
                 default:
@@ -485,10 +483,9 @@ extern "C" HRESULT CorePlan(
                     }
                 }
 
-                // On removal of the package add the package to the list to be cleaned up. Also, if the package
-                // is scheduled to be cached or is somehow already cached but it is not supposed to stay cached
-                // then clean up.
-                if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested || ((fPlannedCachePackage || pPackage->fCached) && !pPackage->fCache))
+                // If the package is scheduled to be cached or is already cached but we are removing it or the package 
+                // is not supposed to stay cached then ensure the package is cleaned up.
+                if ((fPlannedCachePackage || pPackage->fCached) && (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested || !pPackage->fCache))
                 {
                     hr = PlanCleanPackage(&pEngineState->plan, pPackage);
                     ExitOnFailure(hr, "Failed to plan clean package.");
@@ -600,6 +597,7 @@ extern "C" HRESULT CoreApply(
     {
         cacheThreadContext.pEngineState = pEngineState;
         cacheThreadContext.pcOverallProgressTicks = &cOverallProgressTicks;
+        cacheThreadContext.pfRollback = &fRollback;
 
         // create extraction thread
         hCacheThread = ::CreateThread(NULL, 0, CacheThreadProc, &cacheThreadContext, 0, NULL);
@@ -607,7 +605,7 @@ extern "C" HRESULT CoreApply(
     }
     else
     {
-        hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, &cOverallProgressTicks);
+        hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, &cOverallProgressTicks, &fRollback);
         ExitOnFailure(hr, "Failed to cache packages.");
     }
 
@@ -618,7 +616,7 @@ extern "C" HRESULT CoreApply(
         ExitOnFailure(hr, "Failed to execute apply.");
     }
 
-    // wait for cache thread to terminate
+    // Wait for cache thread to terminate.
     if (hCacheThread)
     {
         if (WAIT_OBJECT_0 != ::WaitForSingleObject(hCacheThread, INFINITE))
@@ -630,9 +628,10 @@ extern "C" HRESULT CoreApply(
         {
             ExitWithLastError(hr, "Failed to get cache thread exit code.");
         }
+        ExitOnFailure(hr, "Failed to cache packages on a parallel thread.");
     }
 
-    if (fSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+    if (fRollback || fSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
     {
         ExitFunction();
     }
@@ -722,7 +721,7 @@ static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
     __out BURN_MODE* pMode,
-    __out BOOL *pfAppend,
+    __out DWORD *pdwLoggingAttributes,
     __inout_z LPWSTR* psczLogFile,
     __inout_z LPWSTR* psczParentPipeName,
     __inout_z LPWSTR* psczParentToken,
@@ -749,7 +748,7 @@ static HRESULT ParseCommandLine(
             if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"l", -1) ||
                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"log", -1))
             {
-                *pfAppend = FALSE;
+                *pdwLoggingAttributes &= ~BURN_LOGGING_ATTRIBUTE_APPEND;
 
                 if (i + 1 >= argc)
                 {
@@ -815,11 +814,6 @@ static HRESULT ParseCommandLine(
                     hr = PathExpand(psczLayoutDirectory, argv[i], PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
                     ExitOnFailure(hr, "Failed to copy path for layout directory.");
                 }
-                else // use the current directory as the layout directory.
-                {
-                    hr = DirGetCurrent(psczLayoutDirectory);
-                    ExitOnFailure(hr, "Failed to get current directory for layout directory.");
-                }
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"uninstall", -1))
             {
@@ -855,7 +849,7 @@ static HRESULT ParseCommandLine(
                 hr = StrAllocString(psczLogFile, argv[i], 0);
                 ExitOnFailure(hr, "Failed to copy append log file path.");
 
-                *pfAppend = TRUE;
+                *pdwLoggingAttributes |= BURN_LOGGING_ATTRIBUTE_APPEND;
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_ELEVATED, -1))
             {
@@ -1015,6 +1009,7 @@ static DWORD WINAPI CacheThreadProc(
     BURN_CACHE_THREAD_CONTEXT* pContext = reinterpret_cast<BURN_CACHE_THREAD_CONTEXT*>(lpThreadParameter);
     BURN_ENGINE_STATE* pEngineState = pContext->pEngineState;
     DWORD* pcOverallProgressTicks = pContext->pcOverallProgressTicks;
+    BOOL* pfRollback = pContext->pfRollback;
     BOOL fComInitialized = FALSE;
 
     // initialize COM
@@ -1023,7 +1018,7 @@ static DWORD WINAPI CacheThreadProc(
     fComInitialized = TRUE;
 
     // cache packages
-    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, pcOverallProgressTicks);
+    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, pcOverallProgressTicks, pfRollback);
     ExitOnFailure(hr, "Failed to cache packages.");
 
 LExit:
@@ -1033,78 +1028,4 @@ LExit:
     }
 
     return (DWORD)hr;
-}
-
-static HRESULT PlanRollbackBoundaryBegin(
-    __in BURN_PLAN* pPlan,
-    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
-    __out HANDLE* phEvent
-    )
-{
-    HRESULT hr = S_OK;
-    BURN_EXECUTE_ACTION* pExecuteAction = NULL;
-
-    // Create sync event.
-    *phEvent = ::CreateEventW(NULL, TRUE, FALSE, NULL);
-    ExitOnNullWithLastError(*phEvent, hr, "Failed to create event.");
-
-    // Add begin rollback boundary to execute plan.
-    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append rollback boundary begin action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY;
-    pExecuteAction->rollbackBoundary.pRollbackBoundary = pRollbackBoundary;
-
-    // Add begin rollback boundary to rollback plan.
-    hr = PlanAppendRollbackAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append rollback boundary begin action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY;
-    pExecuteAction->rollbackBoundary.pRollbackBoundary = pRollbackBoundary;
-
-    // Add execute sync-point.
-    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append syncpoint action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-    pExecuteAction->syncpoint.hEvent = *phEvent;
-
-LExit:
-    return hr;
-}
-
-static HRESULT PlanRollbackBoundaryComplete(
-    __in BURN_PLAN* pPlan,
-    __in HANDLE hEvent
-    )
-{
-    HRESULT hr = S_OK;
-    BURN_CACHE_ACTION* pCacheAction = NULL;
-    BURN_EXECUTE_ACTION* pExecuteAction = NULL;
-    DWORD dwCheckpointId = 0;
-
-    // Add cache sync-point.
-    hr = PlanAppendCacheAction(pPlan, &pCacheAction);
-    ExitOnFailure(hr, "Failed to add syncpoint to cache plan.");
-
-    pCacheAction->type = BURN_CACHE_ACTION_TYPE_SYNCPOINT;
-    pCacheAction->syncpoint.hEvent = hEvent;
-
-    // Add checkpoints.
-    dwCheckpointId = PlanGetNextCheckpointId();
-
-    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append execute action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-    pExecuteAction->checkpoint.dwId = dwCheckpointId;
-
-    hr = PlanAppendRollbackAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append rollback action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-    pExecuteAction->checkpoint.dwId = dwCheckpointId;
-
-LExit:
-    return hr;
 }

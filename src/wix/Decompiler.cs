@@ -6378,7 +6378,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Wix.Media media = new Wix.Media();
 
-                media.Id = mediaRow.DiskId;
+                media.Id = Convert.ToString(mediaRow.DiskId);
 
                 if (null != mediaRow.DiskPrompt)
                 {

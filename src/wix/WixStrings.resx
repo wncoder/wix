@@ -166,7 +166,7 @@
     <value>Expected ComplexReference type.</value>
   </data>
   <data name="EXP_FoundActionRowWinNonExistentAction" xml:space="preserve">
-    <value>Found an ActionRow with a non-existent {0} action.</value>
+    <value>Found an ActionRow with a non-existent {0} action: {1}.</value>
   </data>
   <data name="EXP_FoundActionRowWithNoSequenceBeforeOrAfterColumnSet" xml:space="preserve">
     <value>Found an ActionRow with no Sequence, Before, or After column set.</value>

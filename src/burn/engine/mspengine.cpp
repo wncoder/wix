@@ -232,6 +232,7 @@ extern "C" HRESULT MspEnginePlanPackage(
     __in BURN_LOGGING* /*pLog*/,
     __in BURN_VARIABLES* /*pVariables*/,
     __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
@@ -239,18 +240,14 @@ extern "C" HRESULT MspEnginePlanPackage(
 {
     HRESULT hr = S_OK;
     int nResult = IDNOACTION;
-    BURN_EXECUTE_ACTION* pAction = NULL;
 
     // TODO: need to handle the case where this patch adds itself to an earlier patch's list of target products. That would
     //       essentially bump this patch earlier in the plan and we need to make sure this patch is downloaded.
     // add wait for cache
     if (hCacheEvent)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append wait action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-        pAction->syncpoint.hEvent = hCacheEvent;
+        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
+        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
     }
 
     for (DWORD i = 0; i < pPackage->Msp.cTargetProductCodes; ++i)

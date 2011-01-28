@@ -287,6 +287,7 @@ extern "C" HRESULT CacheRemovePackage(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczRootCacheDirectory = NULL;
     LPWSTR sczDirectory = NULL;
     LPWSTR sczFiles = NULL;
     HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -296,8 +297,13 @@ extern "C" HRESULT CacheRemovePackage(
     WCHAR wzTempDirectory[MAX_PATH];
     WCHAR wzTempPath[MAX_PATH];
 
-    hr = CacheGetCompletedPath(fPerMachine, wzPackageId, &sczDirectory);
-    ExitOnFailure(hr, "Failed to get bundle cache path.");
+    hr = CacheGetCompletedPath(fPerMachine, L"", &sczRootCacheDirectory);
+    ExitOnFailure(hr, "Failed to calculate root cache path.");
+
+    hr = PathConcat(sczRootCacheDirectory, wzPackageId, &sczDirectory);
+    ExitOnFailure(hr, "Failed to combine package id to root cache path.");
+
+    LogId(REPORT_STANDARD, MSG_UNCACHE_PACKAGE, wzPackageId, sczDirectory);
 
     hr = PathConcat(sczDirectory, L"*.*", &sczFiles);
     ExitOnFailure(hr, "Failed to allocate path to all files in bundle directory.");
@@ -346,11 +352,15 @@ extern "C" HRESULT CacheRemovePackage(
     hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
     ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
 
+    // Try to remove root package cache in the off chance it is now empty.
+    ::RemoveDirectoryW(sczRootCacheDirectory);
+
 LExit:
     ReleaseFileFindHandle(hFind);
     ReleaseStr(sczFile);
     ReleaseStr(sczFiles);
     ReleaseStr(sczDirectory);
+    ReleaseStr(sczRootCacheDirectory);
 
     return hr;
 }

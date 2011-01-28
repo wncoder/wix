@@ -507,6 +507,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
@@ -609,6 +610,10 @@ extern "C" HRESULT MsiEnginePlanPackage(
         {
             execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
         }
+        else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == pPackage->currentState && BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested && pPackage->fUninstallable)
+        {
+            execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+        }
         else
         {
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -621,7 +626,8 @@ extern "C" HRESULT MsiEnginePlanPackage(
     }
 
     // rollback action
-    switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
+    BOOTSTRAPPER_PACKAGE_STATE state = BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState;
+    switch (state)
     {
     case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
         switch (pPackage->requested)
@@ -651,7 +657,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
             rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+            rollback = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == state ? BOOTSTRAPPER_ACTION_STATE_INSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         default:
             rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -667,11 +673,8 @@ extern "C" HRESULT MsiEnginePlanPackage(
     // add wait for cache
     if (hCacheEvent)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append wait action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-        pAction->syncpoint.hEvent = hCacheEvent;
+        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
+        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
     }
 
     // add execute action
@@ -687,6 +690,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
         rgFeatureActions = NULL;
 
         LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
 
     // add rollback action
@@ -702,26 +706,14 @@ extern "C" HRESULT MsiEnginePlanPackage(
         rgRollbackFeatureActions = NULL;
 
         LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
 
     // add checkpoints
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
     {
-        DWORD dwCheckpointId = PlanGetNextCheckpointId();
-
-        // execute checkpoint
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
-
-        // rollback checkpoint
-        hr = PlanAppendRollbackAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append rollback action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_CHECKPOINT;
-        pAction->checkpoint.dwId = dwCheckpointId;
+        hr = PlanExecuteCheckpoint(pPlan);
+        ExitOnFailure(hr, "Failed to append execute checkpoint.");
     }
 
     // return values
@@ -752,8 +744,13 @@ extern "C" HRESULT MsiEngineExecutePackage(
     LPWSTR sczMsiPath = NULL;
     LPWSTR sczProperties = NULL;
 
-    // default to "verbose" logging
-    DWORD dwLogMode = WIU_LOG_DEFAULT | INSTALLLOGMODE_VERBOSE;
+    // Default to "verbose" logging and set extra debug mode only if explicitly required.
+    DWORD dwLogMode = INSTALLLOGMODE_VERBOSE;
+
+    if (pExecuteAction->msiPackage.dwLoggingAttributes & BURN_LOGGING_ATTRIBUTE_EXTRADEBUG)
+    {
+        dwLogMode |= INSTALLLOGMODE_EXTRADEBUG;
+    }
 
     // get cached MSI path
     hr = CacheGetCompletedPath(pExecuteAction->msiPackage.pPackage->fPerMachine, pExecuteAction->msiPackage.pPackage->sczCacheId, &sczCachedDirectory);
@@ -765,11 +762,6 @@ extern "C" HRESULT MsiEngineExecutePackage(
     // Wire up the external UI handler and logging.
     hr = WiuInitializeExternalUI(pfnMessageHandler, pvContext, fRollback, &context);
     ExitOnFailure(hr, "Failed to initialize external UI handler.");
-
-    //if (BURN_LOGGING_LEVEL_DEBUG == logLevel)
-    //{
-    //    dwLogMode | INSTALLLOGMODE_EXTRADEBUG;
-    //}
 
     if (pExecuteAction->msiPackage.sczLogPath && *pExecuteAction->msiPackage.sczLogPath)
     {

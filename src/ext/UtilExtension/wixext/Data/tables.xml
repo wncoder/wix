@@ -29,6 +29,16 @@
         <columnDefinition name="Property" type="string" length="72" nullable="yes" localizable="yes" modularize="property"
                 category="identifier" description="Optional property that is set to the number of running instances of the app."/>
     </tableDefinition>
+    <tableDefinition name="WixRemoveFolderEx" createSymbols="yes">
+        <columnDefinition name="WixRemoveFolderEx" type="string" length="72" primaryKey="yes" modularize="column"
+                category="identifier" description="Identifier for the WixRemoveFolderEx row in the package."/>
+        <columnDefinition name="Component_" type="string" length="72" modularize="column"
+                keyTable="Component" keyColumn="1" category="identifier" description="Foreign key into the Component table used to determine install state"/>
+        <columnDefinition name="Property" type="string" length="72" modularize="property"
+                category="identifier" description="Name of Property that contains the root of the directory tree to remove."/>
+        <columnDefinition name="InstallMode" type="number" length="2"
+                minValue="1" maxValue="3" description="1 == Remove only when the associated component is being installed (msiInstallStateLocal or msiInstallStateSource), 2 == Remove only when the associated component is being removed (msiInstallStateAbsent), 3 = Remove in either of the above cases."/>
+    </tableDefinition>
     <tableDefinition name="WixRestartResource">
         <columnDefinition name="WixRestartResource" type="string" length="72" primaryKey="yes" modularize="column"
                 category="identifier" description="Primary key, non-localized identifier."/>

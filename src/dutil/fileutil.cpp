@@ -646,6 +646,7 @@ extern "C" HRESULT DAPI FileReadPartial(
 {
     HRESULT hr = S_OK;
 
+    UINT er = ERROR_SUCCESS;
     HANDLE hFile = INVALID_HANDLE_VALUE;
     LARGE_INTEGER liFileSize = { };
     DWORD cbData = 0;
@@ -657,7 +658,15 @@ extern "C" HRESULT DAPI FileReadPartial(
     ExitOnNull(*wzSrcPath, hr, E_INVALIDARG, "*wzSrcPath is null");
 
     hFile = ::CreateFileW(wzSrcPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    ExitOnInvalidHandleWithLastError1(hFile, hr, "Failed to open file: %ls", wzSrcPath);
+    if (INVALID_HANDLE_VALUE == hFile)
+    {
+        er = ::GetLastError();
+        if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+        {
+            ExitFunction1(hr = E_FILENOTFOUND);
+        }
+        ExitOnWin32Error1(er, hr, "Failed to open file: %ls", wzSrcPath);
+    }
 
     if (!::GetFileSizeEx(hFile, &liFileSize))
     {

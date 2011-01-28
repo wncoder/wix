@@ -98,9 +98,17 @@ extern "C" UINT __stdcall ConfigurePerfmonManifestRegister(
         hr = WcaDoDeferredAction(L"RollbackRegisterPerfmonManifest", pwzCommand, COST_PERFMONMANIFEST_UNREGISTER);
         ExitOnFailure(hr, "failed to schedule RollbackRegisterPerfmonManifest action");
 
-        hr = StrAllocFormatted(&pwzCommand, L"\"lodctr.exe\" /m:\"%s\" \"%s\"", pwzFile, pwzResourceFilePath);
-        ExitOnFailure(hr, "failed to copy string in PerfMonManifest");
-                
+        if ( *pwzResourceFilePath )
+        {
+            hr = StrAllocFormatted(&pwzCommand, L"\"lodctr.exe\" /m:\"%s\" \"%s\"", pwzFile, pwzResourceFilePath);
+            ExitOnFailure(hr, "failed to copy string in PerfMonManifest");
+        }
+        else
+        {
+            hr = StrAllocFormatted(&pwzData, L"\"lodctr.exe\" /m:\"%s\"", pwzFile);
+            ExitOnFailure(hr, "failed to copy string in PerfMonManifest");
+        }
+        
         WcaLog(LOGMSG_VERBOSE, "RegisterPerfmonManifest's CustomActionData: '%ls'", pwzCommand);
         
         hr = WcaDoDeferredAction(L"RegisterPerfmonManifest", pwzCommand, COST_PERFMONMANIFEST_REGISTER);

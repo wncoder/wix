@@ -123,9 +123,10 @@ extern "C" UINT __stdcall ConfigureIIs(
     ExitOnFailure(hr, "Failed to initialize");
 
     // check for the prerequsite tables
-    if (S_OK != WcaTableExists(L"IIsWebSite") && S_OK != WcaTableExists(L"IIsFilter") && S_OK != WcaTableExists(L"IIsProperty") && S_OK != WcaTableExists(L"IIsWebServiceExtension"))
+    if (S_OK != WcaTableExists(L"IIsWebSite") && S_OK != WcaTableExists(L"IIsFilter") && S_OK != WcaTableExists(L"IIsProperty") && 
+        S_OK != WcaTableExists(L"IIsWebServiceExtension") && S_OK != WcaTableExists(L"IIsAppPool"))
     {
-        WcaLog(LOGMSG_VERBOSE, "skipping IIs CustomAction, no IIsWebSite table, no IIsFilter table, no IIsProperty table, and no IIsWebServiceExtension table");
+        WcaLog(LOGMSG_VERBOSE, "skipping IIs CustomAction, no IIsWebSite table, no IIsFilter table, no IIsProperty table, no IIsWebServiceExtension, and no IIsAppPool table");
         ExitFunction1(hr = S_FALSE);
     }
 

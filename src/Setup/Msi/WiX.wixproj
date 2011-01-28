@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="BurnSdk.wxs" />
     <Compile Include="ClickThrough.wxs" />
     <Compile Include="DTF.wxs" />
     <Compile Include="Extensions.wxs" />

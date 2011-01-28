@@ -166,10 +166,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendFileNameIfNotNull(this.UpdateFile);
             commandLineBuilder.AppendSwitchIfNotNull("-out ", this.OutputFile);
             commandLineBuilder.AppendIfTrue("-a", this.adminImage);
-            commandLineBuilder.AppendSwitchIfNotNull("-x", this.BinaryExtractionPath);
-            commandLineBuilder.AppendSwitchIfNotNull("-serr", this.SuppressTransformErrorFlags);
-            commandLineBuilder.AppendSwitchIfNotNull("-t", this.TransformValidationType);
-            commandLineBuilder.AppendSwitchIfNotNull("-val", this.TransformValidationFlags);
+            commandLineBuilder.AppendSwitchIfNotNull("-x ", this.BinaryExtractionPath);
+            commandLineBuilder.AppendSwitchIfNotNull("-serr ", this.SuppressTransformErrorFlags);
+            commandLineBuilder.AppendSwitchIfNotNull("-t ", this.TransformValidationType);
+            commandLineBuilder.AppendSwitchIfNotNull("-val ", this.TransformValidationFlags);
         }
     }
 }
