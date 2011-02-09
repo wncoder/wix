@@ -41,7 +41,6 @@ HRESULT DAPI DictAddKey(
     );
 HRESULT DAPI DictAddValue(
     __in STRINGDICT_HANDLE sdHandle,
-    __in_z LPCWSTR szString,
     __in void *pvValue
     );
 HRESULT DAPI DictKeyExists(

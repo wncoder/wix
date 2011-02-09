@@ -2478,6 +2478,10 @@
             <Instance>
                 The harvest type was not found in the list of loaded Heat extensions.
             </Instance>
+            <Instance>
+                The harvest type '{0}' was specified. Harvest types cannot start with a '-'. Remove the '-' to specify a valid harvest type.
+                <Parameter Type="System.String" Name="harvestType" />
+            </Instance>
         </Message>
         <Message Id="BothUpgradeCodesRequired" Number="322" SourceLineNumbers="no">
             <Instance>

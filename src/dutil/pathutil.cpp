@@ -99,6 +99,12 @@ DAPI_(HRESULT) PathGetDirectory(
         return S_FALSE;
     }
 
+    if (wzPath[0] == L'\"')
+    {
+        ++wzPath;
+        --cchDirectory;
+    }
+
     hr = StrAllocString(psczDirectory, wzPath, cchDirectory);
     ExitOnFailure(hr, "Failed to copy directory.");
 
@@ -262,7 +268,7 @@ DAPI_(HRESULT) PathPrefix(
     else
     {
         hr = E_INVALIDARG;
-        ExitOnFailure(hr, "Invalid path provided to prefix.");
+        ExitOnFailure1(hr, "Invalid path provided to prefix: %ls.", wzFullPath);
     }
 
 LExit:

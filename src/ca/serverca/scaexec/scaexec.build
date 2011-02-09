@@ -57,7 +57,7 @@
     <property name="compileCpp.file.rc" value="${dir.src.ca.serverca}\scaexec\scaexec.rc" />
     <property name="makeNativeDll.file.target" value="${file.target.scaexec}" />
     <property name="makeNativeDll.file.def" value="${dir.src.ca.serverca}\scaexec\scaexec.def" />
-    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.wcautil}&quot; &quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\activeds.lib&quot; &quot;${dir.platformsdk.lib}\adsiid.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\netapi32.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot;" dynamic="true" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.wcautil}&quot; &quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\activeds.lib&quot; &quot;${dir.platformsdk.lib}\adsiid.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\netapi32.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\Ws2_32.lib&quot;" dynamic="true" />
 
     <!-- Make scaexec.dll -->
     <call target="makeNativeDll" />

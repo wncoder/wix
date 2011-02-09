@@ -597,6 +597,28 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT DAPI SceSetColumnQword(
+    __in SCE_ROW_HANDLE rowHandle,
+    __in DWORD dwColumnIndex,
+    __in const DWORD64 qwValue
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    if (NULL == pRow->rgBinding)
+    {
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
+    }
+
+    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<const BYTE *>(&qwValue), 8, &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
+    ExitOnFailure(hr, "Failed to set column value as qword");
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT DAPI SceSetColumnBool(
     __in SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
@@ -733,6 +755,26 @@ extern "C" HRESULT DAPI SceGetColumnDword(
         ExitFunction();
     }
     ExitOnFailure(hr, "Failed to get dword data out of column");
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT DAPI SceGetColumnQword(
+    __in SCE_ROW_HANDLE rowReadHandle,
+    __in DWORD dwColumnIndex,
+    __in DWORD64 *pqwValue
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
+
+    hr = GetColumnValueFixed(pRow, dwColumnIndex, 8, reinterpret_cast<BYTE *>(pqwValue));
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
+    ExitOnFailure(hr, "Failed to get qword data out of column");
 
 LExit:
     return hr;
@@ -878,7 +920,42 @@ HRESULT DAPI SceSetQueryColumnDword(
     SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
 
     hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(&dwValue), 4, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
-    ExitOnFailure(hr, "Failed to set column value as binary");
+    ExitOnFailure(hr, "Failed to set query column value as dword");
+
+    ++(pQuery->dwBindingIndex);
+
+LExit:
+    return hr;
+}
+
+HRESULT DAPI SceSetQueryColumnQword(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in const DWORD64 qwValue
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
+
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(&qwValue), 8, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    ExitOnFailure(hr, "Failed to set query column value as qword");
+
+    ++(pQuery->dwBindingIndex);
+
+LExit:
+    return hr;
+}
+
+HRESULT DAPI SceSetQueryColumnBool(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in const BOOL fValue
+    )
+{
+    HRESULT hr = S_OK;
+    short int sValue = fValue ? 1 : 0;
+    SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
+
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(&sValue), 2, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    ExitOnFailure(hr, "Failed to set query column value as boolean");
 
     ++(pQuery->dwBindingIndex);
 
@@ -896,7 +973,7 @@ HRESULT DAPI SceSetQueryColumnString(
     SIZE_T cbSize = (lstrlenW(pszString) + 1) * sizeof(WCHAR);
 
     hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(pszString), cbSize, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
-    ExitOnFailure(hr, "Failed to set column value as binary");
+    ExitOnFailure(hr, "Failed to set query column value as string");
 
     ++(pQuery->dwBindingIndex);
 
@@ -913,6 +990,10 @@ HRESULT DAPI SceRunQueryExact(
     SCE_QUERY_RESULTS *pQueryResults = NULL;
 
     hr = RunQuery(FALSE, *psqhHandle, &pQueryResults);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to run query exact");
 
     hr = SceGetNextResultRow(reinterpret_cast<SCE_QUERY_RESULTS_HANDLE>(pQueryResults), pRowHandle);
@@ -938,6 +1019,10 @@ extern "C" HRESULT DAPI SceRunQueryRange(
     SCE_QUERY_RESULTS **ppQueryResults = reinterpret_cast<SCE_QUERY_RESULTS **>(psqrhHandle);
 
     hr = RunQuery(TRUE, *psqhHandle, ppQueryResults);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to run query for range");
 
 LExit:
@@ -1085,7 +1170,7 @@ static HRESULT RunQuery(
     else
     {
         hr = pIRowsetIndex->SetRange(hAccessor, pQuery->dwBindingIndex, pQuery->pbData, 0, NULL, DBRANGE_MATCH);
-        if (DB_E_NOTFOUND == hr)
+        if (DB_E_NOTFOUND == hr || E_NOTFOUND == hr)
         {
             ExitFunction1(hr = E_NOTFOUND);
         }
@@ -1123,6 +1208,7 @@ static HRESULT EnsureSchema(
 {
     HRESULT hr = S_OK;
     BOOL fInTransaction = FALSE;
+    BOOL fFixedSize = FALSE;
     DBID tableID = { };
     DBID indexID = { };
     DBPROPSET rgdbpRowSetPropset[1];
@@ -1133,6 +1219,7 @@ static HRESULT EnsureSchema(
     DWORD dwColumnPropertyIndex = 0;
     DBCOLUMNDESC *rgColumnDescriptions = NULL;
     DBINDEXCOLUMNDESC *rgIndexColumnDescriptions = NULL;
+    DWORD cIndexColumnDescriptions = 0;
     SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
     ITableDefinition *pTableDefinition = NULL;
     IIndexDefinition *pIndexDefinition = NULL;
@@ -1195,11 +1282,14 @@ static HRESULT EnsureSchema(
                 rgColumnDescriptions[i].ulColumnSize = pdsSchema->rgTables[dwTable].rgColumns[i].dwLength;
                 if (0 == rgColumnDescriptions[i].ulColumnSize && (DBTYPE_WSTR == rgColumnDescriptions[i].wType || DBTYPE_BYTES == rgColumnDescriptions[i].wType))
                 {
-                    // TODO: what exactly is the right size here?
-                    rgColumnDescriptions[i].ulColumnSize = 255;
+                    fFixedSize = FALSE;
+                }
+                else
+                {
+                    fFixedSize = TRUE;
                 }
 
-                dwColumnProperties = 0;
+                dwColumnProperties = 1;
                 if (pdsSchema->rgTables[dwTable].rgColumns[i].fAutoIncrement)
                 {
                     ++dwColumnProperties;
@@ -1238,6 +1328,13 @@ static HRESULT EnsureSchema(
                         rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].vValue.boolVal = VARIANT_FALSE;
                         ++dwColumnPropertyIndex;
                     }
+
+                    rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].dwPropertyID = DBPROP_COL_FIXEDLENGTH;
+                    rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].dwOptions = DBPROPOPTIONS_REQUIRED;
+                    rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].colid = DB_NULLID;
+                    rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].vValue.vt = VT_BOOL;
+                    rgColumnDescriptions[i].rgPropertySets[0].rgProperties[dwColumnPropertyIndex].vValue.boolVal = fFixedSize ? VARIANT_TRUE : VARIANT_FALSE;
+                    ++dwColumnPropertyIndex;
                 }
             }
 
@@ -1273,8 +1370,9 @@ static HRESULT EnsureSchema(
 
                 rgIndexColumnDescriptions = reinterpret_cast<DBINDEXCOLUMNDESC *>(MemAlloc(sizeof(DBINDEXCOLUMNDESC) * pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns, TRUE));
                 ExitOnNull(rgIndexColumnDescriptions, hr, E_OUTOFMEMORY, "Failed to allocate structure to hold index column descriptions");
+                cIndexColumnDescriptions = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns;
 
-                for (DWORD dwColumnIndex = 0; dwColumnIndex < pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns; ++dwColumnIndex)
+                for (DWORD dwColumnIndex = 0; dwColumnIndex < cIndexColumnDescriptions; ++dwColumnIndex)
                 {
                     rgIndexColumnDescriptions[dwColumnIndex].pColumnID = reinterpret_cast<DBID *>(MemAlloc(sizeof(DBID), TRUE));
                     rgIndexColumnDescriptions[dwColumnIndex].pColumnID->eKind = DBKIND_NAME;
@@ -1290,6 +1388,12 @@ static HRESULT EnsureSchema(
                 }
                 ExitOnFailure2(hr, "Failed to create index named %ls into table named %ls", pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].sczName, pwzTableName);
 
+                for (DWORD i = 0; i < cIndexColumnDescriptions; ++i)
+                {
+                    ReleaseMem(rgIndexColumnDescriptions[i].pColumnID);
+                }
+
+                cIndexColumnDescriptions = 0;
                 ReleaseNullMem(rgIndexColumnDescriptions);
             }
 
@@ -1313,6 +1417,11 @@ LExit:
     if (fInTransaction)
     {
         SceRollbackTransaction(pDatabase);
+    }
+
+    for (DWORD i = 0; i < cIndexColumnDescriptions; ++i)
+    {
+        ReleaseMem(rgIndexColumnDescriptions[i].pColumnID);
     }
 
     ReleaseMem(rgIndexColumnDescriptions);
@@ -1342,7 +1451,7 @@ static HRESULT SetColumnValue(
     pBinding->obValue = cbNewOffset;
     cbNewOffset += cbSize;
     pBinding->wType = pTableSchema->rgColumns[dwColumnIndex].dbtColumnType;
-    pBinding->cbMaxLen = 4 * 1024 * 1024;
+    pBinding->cbMaxLen = cbSize;
 
     if (NULL == *ppbBuffer)
     {
@@ -1385,7 +1494,6 @@ static HRESULT GetColumnValue(
     dbBinding.dwMemOwner = DBMEMOWNER_CLIENTOWNED;
     dbBinding.dwPart = DBPART_LENGTH;
     dbBinding.wType = pTable->rgColumns[dwColumnIndex].dbtColumnType;
-    dbBinding.cbMaxLen = 4;
 
     pRow->pIRowset->QueryInterface(IID_IAccessor, reinterpret_cast<void **>(&pIAccessor));
     ExitOnFailure(hr, "Failed to get IAccessor interface");
@@ -1418,7 +1526,7 @@ static HRESULT GetColumnValue(
 
         if (DBTYPE_WSTR == dbBinding.wType)
         {
-            hr = StrAlloc(reinterpret_cast<LPWSTR *>(&pvRawData), dwDataSize);
+            hr = StrAlloc(reinterpret_cast<LPWSTR *>(&pvRawData), dwDataSize / sizeof(WCHAR));
             ExitOnFailure1(hr, "Failed to allocate space for string data while reading column %u", dwColumnIndex);
         }
         else
@@ -1430,6 +1538,7 @@ static HRESULT GetColumnValue(
         hr = pRow->pIRowset->GetData(pRow->hRow, hAccessorValue, pvRawData);
         ExitOnFailure(hr, "Failed to read data value");
 
+        ReleaseMem(*ppbData);
         *ppbData = reinterpret_cast<BYTE *>(pvRawData);
         pvRawData = NULL;
     }

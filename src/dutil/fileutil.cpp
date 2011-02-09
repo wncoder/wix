@@ -708,6 +708,13 @@ extern "C" HRESULT DAPI FileReadPartial(
 
     if (*ppbDest)
     {
+        if (0 == cbData)
+        {
+            ReleaseNullMem(*ppbDest);
+            *pcbDest = 0;
+            ExitFunction1(hr = S_OK);
+        }
+
         LPVOID pv = MemReAlloc(*ppbDest, cbData, TRUE);
         ExitOnNull1(pv, hr, E_OUTOFMEMORY, "Failed to re-allocate memory to read in file: %ls", wzSrcPath);
 
@@ -715,6 +722,12 @@ extern "C" HRESULT DAPI FileReadPartial(
     }
     else
     {
+        if (0 == cbData)
+        {
+            *pcbDest = 0;
+            ExitFunction1(hr = S_OK);
+        }
+
         pbData = static_cast<BYTE*>(MemAlloc(cbData, TRUE));
         ExitOnNull1(pbData, hr, E_OUTOFMEMORY, "Failed to allocate memory to read in file: %ls", wzSrcPath);
     }

@@ -29,6 +29,7 @@
             <xs:choice maxOccurs="unbounded">
                 <xs:element ref="Window" />
                 <xs:element ref="Font" />
+                <xs:element ref="ImageList" />
                 <xs:element ref="Page" />
             </xs:choice>
             <xs:attribute name="ImageFile" type="xs:string">
@@ -144,6 +145,27 @@
         </xs:complexType>
     </xs:element>
 
+    <xs:element name="ImageList">
+        <xs:annotation>
+            <xs:documentation>List of images which can be shared between multiple controls.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://wixtoolset.org/schemas/thmutil/2010" ref="Theme" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:choice maxOccurs="unbounded">
+                <xs:element ref="Image" />
+            </xs:choice>
+            <xs:attribute name="Name" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Name of the ImageList, to be referenced by other controls.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
     <xs:element name="Page">
         <xs:annotation>
             <xs:documentation>Named set of controls that can be shown and hidden collectively.</xs:documentation>
@@ -158,6 +180,7 @@
                 <xs:element ref="Checkbox" />
                 <xs:element ref="Editbox" />
                 <xs:element ref="Hyperlink" />
+                <xs:element ref="ListView" />
                 <xs:element ref="Image" />
                 <xs:element ref="Progressbar" />
                 <xs:element ref="Richedit" />
@@ -388,6 +411,48 @@
                     <xs:documentation>Identifier that references image resource in the module. Mutually exclusive with ImageFile and SourceX and SourceY attributes.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="ListView">
+        <xs:annotation>
+            <xs:documentation>Defines a listview.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://wixtoolset.org/schemas/thmutil/2010" ref="Page" />
+                <xse:parent namespace="http://wixtoolset.org/schemas/thmutil/2010" ref="Theme" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="xs:string">
+                    <xs:attributeGroup ref="CommonControlAttributes" />
+                    <xs:attribute name="HexExtendedStyle" type="xs:hexBinary">
+                        <xs:annotation>
+                            <xs:documentation>Hexadecimal extended window style.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="ImageList" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The name of the Image List to assign to this listview with type LVSIL_NORMAL.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="ImageListSmall" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The name of the Image List to assign to this listview with type LVSIL_SMALL.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="ImageListState" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The name of the Image List to assign to this listview with type LVSIL_STATE.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="ImageListGroupHeader" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The name of the Image List to assign to this listview with type LVSIL_GROUPHEADER.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:simpleContent>
         </xs:complexType>
     </xs:element>
 

@@ -176,6 +176,10 @@ extern "C" HRESULT DAPI RegOpen(
     DWORD er = ERROR_SUCCESS;
 
     er = vpfnRegOpenKeyExW(hkRoot, wzSubKey, 0, dwAccess, phk);
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
+    }
     ExitOnWin32Error(er, hr, "Failed to open registry key.");
 
 LExit:
@@ -204,6 +208,10 @@ extern "C" HRESULT DAPI RegDelete(
     if (fDeleteTree)
     {
         hr = RegOpen(hkRoot, wzSubKey, KEY_READ, &hkKey);
+        if (E_FILENOTFOUND == hr)
+        {
+            ExitFunction1(hr = S_OK);
+        }
         ExitOnFailure1(hr, "Failed to open this key for enumerating subkeys", wzSubKey);
 
         // Yes, keep enumerating the 0th item, because we're deleting it every time
@@ -243,11 +251,19 @@ extern "C" HRESULT DAPI RegDelete(
     if (NULL != vpfnRegDeleteKeyExW)
     {
         er = vpfnRegDeleteKeyExW(hkRoot, wzSubKey, samDesired, 0);
+        if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+        {
+            ExitFunction1(hr = E_FILENOTFOUND);
+        }
         ExitOnWin32Error(er, hr, "Failed to delete registry key (ex).");
     }
     else
     {
         er = vpfnRegDeleteKeyW(hkRoot, wzSubKey);
+        if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+        {
+            ExitFunction1(hr = E_FILENOTFOUND);
+        }
         ExitOnWin32Error(er, hr, "Failed to delete registry key.");
     }
 
@@ -612,7 +628,7 @@ LExit:
 
 
 /********************************************************************
- RegReadNumber - reads a registry key value as a number.
+ RegReadNumber - reads a DWORD registry key value as a number.
 
 *********************************************************************/
 extern "C" HRESULT DAPI RegReadNumber(
@@ -634,6 +650,39 @@ extern "C" HRESULT DAPI RegReadNumber(
     ExitOnWin32Error(er, hr, "Failed to query registry key value.");
 
     if (REG_DWORD != dwType)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE);
+        ExitOnRootFailure1(hr, "Error reading version registry value due to unexpected data type: %u", dwType);
+    }
+
+LExit:
+    return hr;
+}
+
+
+/********************************************************************
+ RegReadQword - reads a QWORD registry key value as a number.
+
+*********************************************************************/
+extern "C" HRESULT DAPI RegReadQword(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __out DWORD64* pqwValue
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    DWORD dwType = 0;
+    DWORD cb = sizeof(DWORD64);
+
+    er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(pqwValue), &cb);
+    if (E_FILENOTFOUND == HRESULT_FROM_WIN32(er))
+    {
+        ExitFunction1(hr = E_FILENOTFOUND);
+    }
+    ExitOnWin32Error(er, hr, "Failed to query registry key value.");
+
+    if (REG_QWORD != dwType)
     {
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE);
         ExitOnRootFailure1(hr, "Error reading version registry value due to unexpected data type: %u", dwType);
@@ -812,6 +861,26 @@ extern "C" HRESULT DAPI RegWriteNumber(
     DWORD er = ERROR_SUCCESS;
 
     er = vpfnRegSetValueExW(hk, wzName, 0, REG_DWORD, reinterpret_cast<PBYTE>(&dwValue), sizeof(dwValue));
+    ExitOnWin32Error1(er, hr, "Failed to set %ls value.", wzName);
+
+LExit:
+    return hr;
+}
+
+/********************************************************************
+ RegWriteQword - writes a registry key value as a Qword.
+
+*********************************************************************/
+extern "C" HRESULT DAPI RegWriteQword(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in DWORD64 qwValue
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_QWORD, reinterpret_cast<PBYTE>(&qwValue), sizeof(qwValue));
     ExitOnWin32Error1(er, hr, "Failed to set %ls value.", wzName);
 
 LExit:

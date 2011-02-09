@@ -95,7 +95,7 @@ int WINAPI wWinMain(
     hr = CreateMainWindowClass(hInstance, vpTheme, &atom);
     ExitOnFailure(hr, "Failed to create main window.");
 
-    hWnd = ::CreateWindowExW(0, reinterpret_cast<LPCWSTR>(atom), vpTheme->wzCaption, vpTheme->dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, vpTheme->nWidth, vpTheme->nHeight, HWND_DESKTOP, NULL, hInstance, NULL);
+    hWnd = ::CreateWindowExW(0, reinterpret_cast<LPCWSTR>(atom), vpTheme->sczCaption, vpTheme->dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, vpTheme->nWidth, vpTheme->nHeight, HWND_DESKTOP, NULL, hInstance, NULL);
     ExitOnNullWithLastError(hWnd, hr, "Failed to create window.");
 
     if (!sczThemeFile)
@@ -111,7 +111,7 @@ int WINAPI wWinMain(
         ofn.lpstrFilter = L"Theme Files\0*.thm\0XML Files\0*.xml\0All Files\0*.*\0";
         ofn.nFilterIndex = 1;
         ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-        ofn.lpstrTitle = vpTheme->wzCaption;
+        ofn.lpstrTitle = vpTheme->sczCaption;
 
         if (::GetOpenFileNameW(&ofn))
         {
@@ -120,7 +120,7 @@ int WINAPI wWinMain(
         }
         else
         {
-            ::MessageBoxW(hWnd, L"Must specify a path to theme file.", vpTheme->wzCaption, MB_OK | MB_ICONERROR);
+            ::MessageBoxW(hWnd, L"Must specify a path to theme file.", vpTheme->sczCaption, MB_OK | MB_ICONERROR);
             ExitFunction1(hr = E_INVALIDARG);
         }
     }
@@ -402,13 +402,13 @@ static void OnNewTheme(
     for (DWORD i = 0; i < pNewTheme->cPages; ++i)
     {
         THEME_PAGE* pPage = pNewTheme->rgPages + i;
-        if (pPage->wzName && *pPage->wzName)
+        if (pPage->sczName && *pPage->sczName)
         {
-            tvi.item.pszText = pPage->wzName;
+            tvi.item.pszText = pPage->sczName;
             tvi.item.lParam = i + 1; //prgdwPageIds[i]; - TODO: do the right thing here by calling ThemeGetPageIds(), should not assume we know how the page ids will be calculated.
 
             HTREEITEM hti = reinterpret_cast<HTREEITEM>(ThemeSendControlMessage(pTheme, THMVWR_CONTROL_TREE, TVM_INSERTITEM, 0, reinterpret_cast<LPARAM>(&tvi)));
-            if (*wzSelectedPage && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pPage->wzName, -1, wzSelectedPage, -1))
+            if (*wzSelectedPage && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pPage->sczName, -1, wzSelectedPage, -1))
             {
                 htiSelected = hti;
             }

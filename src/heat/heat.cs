@@ -285,7 +285,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     }
                     else
                     {
-                        this.extensionType = arg;
+                        if (!arg.StartsWith("-"))
+                        {
+                            this.extensionType = arg;
+                        }
+                        else
+                        {
+                            this.messageHandler.Display(this, WixErrors.HarvestTypeNotFound(arg));
+                        }
                     }
                 }
                 else if (1 == i)

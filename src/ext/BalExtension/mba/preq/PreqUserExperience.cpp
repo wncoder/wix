@@ -491,7 +491,7 @@ private: // privates
             dwWindowStyle &= ~WS_VISIBLE;
         }
 
-        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->wzCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
+        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->sczCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
         ExitOnNullWithLastError(m_hWnd, hr, "Failed to create window.");
 
     LExit:
@@ -732,7 +732,7 @@ private: // privates
     {
         // Force the cancel if we are not showing UI or we're already on the success or failure page.
         // TODO: make prompt localizable string.
-        BOOL fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display || PREQBA_STATE_APPLIED <= m_state, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
+        BOOL fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display || PREQBA_STATE_APPLIED <= m_state, L"Are you sure you want to cancel?", m_pTheme->sczCaption);
         if (fClose)
         {
             // TODO: disable all the cancel buttons.

@@ -26,7 +26,7 @@
     <Page Name="Progress">
         <Text X="10" Y="10" Width="0" Height="23" FontId="1">Setup Progress</Text>
         <Text X="10" Y="80" Width="-10" Height="20" FontId="2">[ProgressAction]: [ProgressPackageName]</Text>
-        <Progressbar X="10" Y="110" Width="-10" Height="25" />
+        <Progressbar Name="OverallProgressbar" X="10" Y="110" Width="-10" Height="25" />
         <Button Name="ProgressCancelButton" X="-10" Y="-10" Width="100" Height="30" FontId="0">Cancel</Button>
         <Image X="5" Y="-5" Width="200" Height="80" ImageFile="logo.bmp" />
     </Page>

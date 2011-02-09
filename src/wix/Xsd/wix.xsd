@@ -454,6 +454,11 @@
                 </xs:any>
             </xs:choice>
             <xs:attributeGroup ref="ChainPackageCommonAttributes" />
+            <xs:attribute name="PerMachine" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>Indicates the package must be executed elevated. The default is "no".</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
 

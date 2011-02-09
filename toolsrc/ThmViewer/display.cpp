@@ -125,7 +125,7 @@ static DWORD WINAPI DisplayThreadProc(
                 y = rc.bottom + 20;
             }
 
-            hWnd = ::CreateWindowExW(0, wc.lpszClassName, pTheme->wzCaption, pTheme->dwStyle, x, y, pTheme->nWidth, pTheme->nHeight, hwndParent, NULL, hInstance, pCurrentHandle);
+            hWnd = ::CreateWindowExW(0, wc.lpszClassName, pTheme->sczCaption, pTheme->dwStyle, x, y, pTheme->nWidth, pTheme->nHeight, hwndParent, NULL, hInstance, pCurrentHandle);
             ExitOnNullWithLastError(hWnd, hr, "Failed to create display window.");
 
             fCreateIfNecessary = FALSE;

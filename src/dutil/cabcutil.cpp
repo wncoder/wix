@@ -860,7 +860,7 @@ static HRESULT AddNonDuplicateFile(
 
     ++pcd->cFilePaths;
 
-    hr = DictAddValue(pcd->shDictHandle, wzFile, pcf);
+    hr = DictAddValue(pcd->shDictHandle, pcf);
     ExitOnFailure(hr, "Failed to add file to dictionary of added files");
 
 LExit:

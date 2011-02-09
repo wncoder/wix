@@ -903,5 +903,13 @@ CAraman: Fix heap corruption in ExecSecureObjectsRollback.
 RobMen: Send heartbeat for ExePackages and MsuPackages so they can be
         "canceled".
 
-WixBuild: Version 3.6.1328.0
+JasonGin: ZIP decompression now allows inconsistent slashes (\ /) in ZIP
+            central directory, as found in some XAP packages.
+          ZIP compression automatically uses ZIP64 format for >64K files.
 
+PMarcu: SFBUG:3155943 Unclear message when '-' prepended on the harvest type.
+
+EricStJ: SFBUG: 3165776 AddSslCertificate fails with WSANOTINITIALISED for 
+         binding that has IP
+
+RobMen: Fix wixstbda so that the progress bar moves.

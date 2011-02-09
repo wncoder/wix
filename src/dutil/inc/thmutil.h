@@ -48,7 +48,7 @@ enum THEME_CONTROL_TYPE
 struct THEME_BILLBOARD
 {
     HBITMAP hImage;
-    LPWSTR wzUrl;
+    LPWSTR sczUrl;
 };
 
 
@@ -83,8 +83,8 @@ struct THEME_CONTROL
     WORD wId;
     WORD wPageId;
 
-    LPWSTR wzName; // optional name for control, only used to apply control id.
-    LPWSTR wzText;
+    LPWSTR sczName; // optional name for control, only used to apply control id.
+    LPWSTR sczText;
     int nX;
     int nY;
     int nHeight;
@@ -94,6 +94,9 @@ struct THEME_CONTROL
     UINT uStringId;
 
     HBITMAP hImage;
+
+    // Don't free these; it's just a handle to the central image lists stored in THEME. The handle is freed once, there.
+    HIMAGELIST rghImageList[4];
 
     DWORD dwStyle;
     DWORD dwExtendedStyle;
@@ -124,10 +127,17 @@ struct THEME_CONTROL
 };
 
 
+struct THEME_IMAGELIST
+{
+    LPWSTR sczName;
+
+    HIMAGELIST hImageList;
+};
+
 struct THEME_PAGE
 {
     WORD wId;
-    LPWSTR wzName;
+    LPWSTR sczName;
 
     DWORD cControlIndices;
     DWORD* rgdwControlIndices;
@@ -150,7 +160,7 @@ struct THEME
     DWORD dwStyle;
     DWORD dwFontId;
     HANDLE hIcon;
-    LPWSTR wzCaption;
+    LPWSTR sczCaption;
     int nHeight;
     int nWidth;
     int nSourceX;
@@ -164,6 +174,9 @@ struct THEME
 
     DWORD cPages;
     THEME_PAGE* rgPages;
+
+    DWORD cImageLists;
+    THEME_IMAGELIST* rgImageLists;
 
     DWORD cControls;
     THEME_CONTROL* rgControls;

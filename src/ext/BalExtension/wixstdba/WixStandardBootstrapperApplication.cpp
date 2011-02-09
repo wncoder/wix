@@ -339,7 +339,7 @@ public: // IBootstrapperApplication
         }
         else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
-            nResult = ::MessageBoxW(m_hWnd, wzError, m_pTheme->wzCaption, dwUIHint);
+            nResult = ::MessageBoxW(m_hWnd, wzError, m_pTheme->sczCaption, dwUIHint);
         }
         else // just cancel when quiet or passive.
         {
@@ -606,13 +606,13 @@ private: // privates
         }
 
         // Update the caption if there are any formated strings in it.
-        hr = BalFormatString(m_pTheme->wzCaption, &sczCaption);
+        hr = BalFormatString(m_pTheme->sczCaption, &sczCaption);
         if (SUCCEEDED(hr))
         {
             ThemeUpdateCaption(m_pTheme, sczCaption);
         }
 
-        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->wzCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
+        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->sczCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
         ExitOnNullWithLastError(m_hWnd, hr, "Failed to create window.");
 
         hr = S_OK;
@@ -1050,18 +1050,18 @@ private: // privates
 
                     // If we are on the options page and this is a named checkbox control, try to set its default
                     // state to the state of a matching named Burn variable.
-                    if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId && THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
+                    if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId && THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->sczName && *pControl->sczName)
                     {
                         LONGLONG llValue = 0;
-                        HRESULT hr = m_pEngine->GetVariableNumeric(pControl->wzName, &llValue);
+                        HRESULT hr = m_pEngine->GetVariableNumeric(pControl->sczName, &llValue);
 
                         ThemeSendControlMessage(m_pTheme, pControl->wId, BM_SETCHECK, SUCCEEDED(hr) && llValue ? BST_CHECKED : BST_UNCHECKED, 0);
                     }
 
                     // Format the text in each of the new page's controls (if they have any text).
-                    if (pControl->wzText && *pControl->wzText)
+                    if (pControl->sczText && *pControl->sczText)
                     {
-                        HRESULT hr = BalFormatString(pControl->wzText, &sczText);
+                        HRESULT hr = BalFormatString(pControl->sczText, &sczText);
                         if (SUCCEEDED(hr))
                         {
                             ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
@@ -1095,7 +1095,7 @@ private: // privates
         {
             // Force the cancel if we are not showing UI.
             // TODO: make prompt localizable string.
-            fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display, L"Are you sure you want to cancel?", m_pTheme->wzCaption);
+            fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display, L"Are you sure you want to cancel?", m_pTheme->sczCaption);
             if (fClose)
             {
                 // TODO: disable all the cancel buttons.
@@ -1156,7 +1156,7 @@ private: // privates
 
         browseInfo.hwndOwner = m_hWnd;
         browseInfo.pszDisplayName = wzPath;
-        browseInfo.lpszTitle = m_pTheme->wzCaption;
+        browseInfo.lpszTitle = m_pTheme->sczCaption;
         browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_USENEWUI;
         pidl = ::SHBrowseForFolderW(&browseInfo);
         if (pidl && ::SHGetPathFromIDListW(pidl, wzPath))
@@ -1200,10 +1200,10 @@ private: // privates
             for (DWORD i = 0; i < pPage->cControlIndices; ++i)
             {
                 THEME_CONTROL* pControl = m_pTheme->rgControls + pPage->rgdwControlIndices[i];
-                if (THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->wzName && *pControl->wzName)
+                if (THEME_CONTROL_TYPE_CHECKBOX == pControl->type && pControl->sczName && *pControl->sczName)
                 {
                     BOOL bChecked = ThemeIsControlChecked(m_pTheme, pControl->wId);
-                    m_pEngine->SetVariableNumeric(pControl->wzName, bChecked ? 1 : 0);
+                    m_pEngine->SetVariableNumeric(pControl->sczName, bChecked ? 1 : 0);
                 }
             }
         }

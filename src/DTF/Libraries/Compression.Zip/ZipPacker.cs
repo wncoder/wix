@@ -121,8 +121,9 @@ namespace Microsoft.Deployment.Compression.Zip
                         this.currentArchiveBytesProcessed = this.currentArchiveTotalBytes;
                     }
 
+                    bool zip64 = forceZip64 || this.totalFiles > UInt16.MaxValue;
+
                     // Write the central directory composed of all the file headers.
-                    bool zip64 = forceZip64;
                     uint centralDirStartArchiveNumber = 0;
                     long centralDirStartPosition = 0;
                     long centralDirSize = 0;
@@ -194,11 +195,8 @@ namespace Microsoft.Deployment.Compression.Zip
                         eocd.Write(archiveStream);
                         eocdl.Write(archiveStream);
 
-                        if (forceZip64)
-                        {
-                            eocd.dirOffset = UInt32.MaxValue;
-                            eocd.dirStartDiskNumber = UInt16.MaxValue;
-                        }
+                        eocd.dirOffset = UInt32.MaxValue;
+                        eocd.dirStartDiskNumber = UInt16.MaxValue;
                     }
 
                     eocd.zip64 = false;

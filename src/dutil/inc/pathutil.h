@@ -73,17 +73,17 @@ DAPI_(HRESULT) PathPrefix(
                                  already, but fails if the buffer is
                                  insufficient.
 ********************************************************************/
-DAPI_(HRESULT) PathBackslashTerminate(
-    __inout LPWSTR* psczPath
+DAPI_(HRESULT) PathFixedBackslashTerminate(
+    __inout_ecount_z(cchPath) LPWSTR wzPath,
+    __in DWORD_PTR cchPath
     );
 
 /*******************************************************************
  PathBackslashTerminate - appends a \ if path does not have it
                                  already.
 ********************************************************************/
-DAPI_(HRESULT) PathFixedBackslashTerminate(
-    __inout_ecount_z(cchPath) LPWSTR wzPath,
-    __in DWORD_PTR cchPath
+DAPI_(HRESULT) PathBackslashTerminate(
+    __inout LPWSTR* psczPath
     );
 
 /*******************************************************************

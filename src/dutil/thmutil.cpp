@@ -78,6 +78,12 @@ static HRESULT ParsePages(
     __in IXMLDOMElement* pElement,
     __in THEME* pTheme
     );
+static HRESULT ParseImageLists(
+    __in_opt HMODULE hModule,
+    __in_opt LPCWSTR wzRelativePath,
+    __in IXMLDOMElement* pElement,
+    __in THEME* pTheme
+    );
 static HRESULT ParseControls(
     __in_opt HMODULE hModule,
     __in_opt LPCWSTR wzRelativePath,
@@ -106,6 +112,11 @@ static HRESULT ParseColumns(
 static HRESULT ParseTabs(
     __in IXMLDOMNode* pixn,
     __in THEME_CONTROL* pControl
+    );
+static HRESULT FindImageList(
+    __in THEME* pTheme,
+    __in_z LPWSTR wzImageListName,
+    __out HIMAGELIST *phImageList
     );
 static HRESULT DrawBillboard(
     __in THEME* pTheme,
@@ -154,20 +165,23 @@ static void CALLBACK BillboardTimerProc(
     __in UINT_PTR idEvent,
     __in DWORD dwTime
     );
+static void FreeFont(
+    __in THEME_FONT* pFont
+    );
 static void FreePage(
     __in THEME_PAGE* pPage
     );
 static void FreeControl(
     __in THEME_CONTROL* pControl
     );
+static void FreeImageList(
+    __in THEME_IMAGELIST* pImageList
+    );
 static void FreeBillboard(
     __in THEME_BILLBOARD* pBillboard
     );
 static void FreeColumn(
     __in THEME_COLUMN* pColumn
-    );
-static void FreeFont(
-    __in THEME_FONT* pFont
     );
 static void FreeTab(
     __in THEME_TAB* pTab
@@ -305,19 +319,24 @@ DAPI_(void) ThemeFree(
 {
     if (pTheme)
     {
+        for (DWORD i = 0; i < pTheme->cFonts; ++i)
+        {
+            FreeFont(pTheme->rgFonts + i);
+        }
+
         for (DWORD i = 0; i < pTheme->cPages; ++i)
         {
             FreePage(pTheme->rgPages + i);
         }
 
+        for (DWORD i = 0; i < pTheme->cImageLists; ++i)
+        {
+            FreeImageList(pTheme->rgImageLists + i);
+        }
+
         for (DWORD i = 0; i < pTheme->cControls; ++i)
         {
             FreeControl(pTheme->rgControls + i);
-        }
-
-        for (DWORD i = 0; i < pTheme->cFonts; ++i)
-        {
-            FreeFont(pTheme->rgFonts + i);
         }
 
         ReleaseMem(pTheme->rgControls);
@@ -329,7 +348,7 @@ DAPI_(void) ThemeFree(
             ::DeleteBitmap(pTheme->hImage);
         }
 
-        ReleaseStr(pTheme->wzCaption);
+        ReleaseStr(pTheme->sczCaption);
         ReleaseMem(pTheme);
     }
 }
@@ -383,6 +402,11 @@ DAPI_(HRESULT) ThemeLoadControls(
             break;
 
         case THEME_CONTROL_TYPE_LISTVIEW:
+            // If thmutil is handling the image list for this listview, tell windows not to free it when the control is destroyed
+            if (NULL != pControl->rghImageList[0] || NULL != pControl->rghImageList[1] || NULL != pControl->rghImageList[2] || NULL != pControl->rghImageList[3])
+            {
+                pControl->dwStyle |= LVS_SHAREIMAGELISTS;
+            }
             wzWindowClass = WC_LISTVIEWW;
             break;
 
@@ -455,9 +479,9 @@ DAPI_(HRESULT) ThemeLoadControls(
             // Default control ids to the theme id and its index in the control array, unless there
             // is a specific id to assign to a named control.
             WORD wControlId = MAKEWORD(i, pTheme->wId);
-            for (DWORD iAssignControl = 0; pControl->wzName && iAssignControl < cAssignControlIds; ++iAssignControl)
+            for (DWORD iAssignControl = 0; pControl->sczName && iAssignControl < cAssignControlIds; ++iAssignControl)
             {
-                if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pControl->wzName, -1, rgAssignControlIds[iAssignControl].wzName, -1))
+                if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pControl->sczName, -1, rgAssignControlIds[iAssignControl].wzName, -1))
                 {
                     wControlId = rgAssignControlIds[iAssignControl].wId;
                     break;
@@ -471,7 +495,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             int x = pControl->nX < 0 ? rcParent.right + pControl->nX - w : pControl->nX;
             int y = pControl->nY < 0 ? rcParent.bottom + pControl->nY - h : pControl->nY;
 
-            pControl->hWnd = ::CreateWindowW(wzWindowClass, pControl->wzText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
+            pControl->hWnd = ::CreateWindowW(wzWindowClass, pControl->sczText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
             ExitOnNullWithLastError(pControl->hWnd, hr, "Failed to create window.");
 
             ::SetWindowLongPtrW(pControl->hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pControl));
@@ -500,6 +524,24 @@ DAPI_(HRESULT) ThemeLoadControls(
                     if (-1 == ::SendMessageW(pControl->hWnd, LVM_INSERTCOLUMNW, (WPARAM)(int)(j), (LPARAM)(const LV_COLUMNW *)(&lvc)))
                     {
                         ExitWithLastError1(hr, "Failed to insert listview column %u into tab control", j);
+                    }
+
+                    // Return value tells us old image list, we don't care
+                    if (NULL != pControl->rghImageList[0])
+                    {
+                        ::SendMessageW(pControl->hWnd, LVM_SETIMAGELIST, static_cast<WPARAM>(LVSIL_NORMAL), reinterpret_cast<LPARAM>(pControl->rghImageList[0]));
+                    }
+                    else if (NULL != pControl->rghImageList[1])
+                    {
+                        ::SendMessageW(pControl->hWnd, LVM_SETIMAGELIST, static_cast<WPARAM>(LVSIL_SMALL), reinterpret_cast<LPARAM>(pControl->rghImageList[1]));
+                    }
+                    else if (NULL != pControl->rghImageList[2])
+                    {
+                        ::SendMessageW(pControl->hWnd, LVM_SETIMAGELIST, static_cast<WPARAM>(LVSIL_STATE), reinterpret_cast<LPARAM>(pControl->rghImageList[2]));
+                    }
+                    else if (NULL != pControl->rghImageList[3])
+                    {
+                        ::SendMessageW(pControl->hWnd, LVM_SETIMAGELIST, static_cast<WPARAM>(LVSIL_GROUPHEADER), reinterpret_cast<LPARAM>(pControl->rghImageList[3]));
                     }
                 }
             }
@@ -614,7 +656,7 @@ DAPI_(HRESULT) ThemeLoadStrings(
 
     if (UINT_MAX != pTheme->uStringId)
     {
-        hr = ResReadString(hResModule, pTheme->uStringId, &pTheme->wzCaption);
+        hr = ResReadString(hResModule, pTheme->uStringId, &pTheme->sczCaption);
         ExitOnFailure(hr, "Failed to load theme caption.");
     }
 
@@ -624,7 +666,7 @@ DAPI_(HRESULT) ThemeLoadStrings(
 
         if (UINT_MAX != pControl->uStringId)
         {
-            hr = ResReadString(hResModule, pControl->uStringId, &pControl->wzText);
+            hr = ResReadString(hResModule, pControl->uStringId, &pControl->sczText);
             ExitOnFailure(hr, "Failed to load control text.");
 
             for (DWORD j = 0; j < pControl->cColumns; ++j)
@@ -811,7 +853,7 @@ DAPI_(void) ThemeGetPageIds(
         LPCWSTR wzFindName = rgwzFindNames[i];
         for (DWORD j = 0; j < pTheme->cPages; ++j)
         {
-            LPCWSTR wzPageName = pTheme->rgPages[j].wzName;
+            LPCWSTR wzPageName = pTheme->rgPages[j].sczName;
             if (wzPageName && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPageName, -1, wzFindName, -1))
             {
                 rgdwPageIds[i] = j + 1; // add one to make the page ids 1-based (so zero is invalid).
@@ -1309,7 +1351,7 @@ DAPI_(HRESULT) ThemeUpdateCaption(
 {
     HRESULT hr = S_OK;
 
-    hr = StrAllocString(&pTheme->wzCaption, wzCaption, 0);
+    hr = StrAllocString(&pTheme->sczCaption, wzCaption, 0);
     ExitOnFailure(hr, "Failed to update theme caption.");
 
 LExit:
@@ -1360,6 +1402,10 @@ static HRESULT ParseTheme(
     hr = ParseFonts(pThemeElement, pTheme);
     ExitOnFailure(hr, "Failed to parse theme fonts.");
 
+    // Parse any imagelists
+    hr = ParseImageLists(hModule, wzRelativePath, pThemeElement, pTheme);
+    ExitOnFailure(hr, "Failed to parse image lists.");
+
     // Parse the pages.
     hr = ParsePages(hModule, wzRelativePath, pThemeElement, pTheme);
     ExitOnFailure(hr, "Failed to parse theme pages.");
@@ -1393,6 +1439,7 @@ static HRESULT ParseImage(
     BSTR bstr = NULL;
     LPSTR pszId = NULL;
     LPWSTR sczImageFile = NULL;
+    int iResourceId = 0;
     Gdiplus::Bitmap* pBitmap = NULL;
 
     hr = XmlGetAttribute(pElement, L"ImageResource", &bstr);
@@ -1400,10 +1447,9 @@ static HRESULT ParseImage(
 
     if (S_OK == hr)
     {
-        hr = StrAnsiAllocString(&pszId, bstr, 0, CP_UTF8);
-        ExitOnFailure(hr, "Failed to convert image attribute to ANSI.");
+        iResourceId = wcstol(bstr, NULL, 10);
 
-        hr = GdipBitmapFromResource(hModule, pszId, &pBitmap);
+        hr = GdipBitmapFromResource(hModule, reinterpret_cast<LPSTR>(MAKEINTRESOURCE(iResourceId)), &pBitmap);
         //// don't fail
     }
 
@@ -1463,14 +1509,14 @@ static HRESULT LocalizeTheme(
 {
     HRESULT hr = S_OK;
 
-    hr = LocLocalizeString(pLocStringSet, &pTheme->wzCaption);
+    hr = LocLocalizeString(pLocStringSet, &pTheme->sczCaption);
     ExitOnFailure(hr, "Failed to localize theme caption.");
 
     for (DWORD i = 0; i < pTheme->cControls; ++i)
     {
         THEME_CONTROL* pControl = pTheme->rgControls + i;
 
-        hr = LocLocalizeString(pLocStringSet, &pControl->wzText);
+        hr = LocLocalizeString(pLocStringSet, &pControl->sczText);
         ExitOnFailure(hr, "Failed to localize control text.");
 
         for (DWORD j = 0; j < pControl->cColumns; ++j)
@@ -1639,7 +1685,7 @@ static HRESULT ParseApplication(
             ExitOnRootFailure(hr, "Failed to find application caption.");
         }
 
-        hr = StrAllocString(&pTheme->wzCaption, bstr, 0);
+        hr = StrAllocString(&pTheme->sczCaption, bstr, 0);
         ExitOnFailure(hr, "Failed to copy application caption.");
     }
 
@@ -1850,7 +1896,7 @@ static HRESULT ParsePages(
 
         pPage->wId = static_cast<WORD>(iPage + 1);
 
-        hr = XmlGetAttributeEx(pixn, L"Name", &pPage->wzName);
+        hr = XmlGetAttributeEx(pixn, L"Name", &pPage->sczName);
         if (E_NOTFOUND == hr)
         {
             hr = S_OK;
@@ -1867,6 +1913,108 @@ static HRESULT ParsePages(
 
 LExit:
     ReleaseBSTR(bstrType);
+    ReleaseObject(pixn);
+    ReleaseObject(pixnl);
+
+    return hr;
+}
+
+
+static HRESULT ParseImageLists(
+    __in_opt HMODULE /*hModule*/,
+    __in_opt LPCWSTR /*wzRelativePath*/,
+    __in IXMLDOMElement* pElement,
+    __in THEME* pTheme
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNodeList* pixnlImageLists = NULL;
+    IXMLDOMNode* pixnImageList = NULL;
+    IXMLDOMNodeList* pixnlImages = NULL;
+    IXMLDOMNode* pixnImage = NULL;
+    DWORD dwImageListIndex = 0;
+    DWORD dwImageCount = 0;
+    HBITMAP hBitmap = NULL;
+    BITMAP bm = { };
+    BSTR bstr = NULL;
+    DWORD i = 0;
+    int iRetVal = 0;
+
+    hr = XmlSelectNodes(pElement, L"ImageList", &pixnlImageLists);
+    if (S_FALSE == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to find ImageList elements.");
+
+    hr = pixnlImageLists->get_length(reinterpret_cast<long*>(&pTheme->cImageLists));
+    ExitOnFailure(hr, "Failed to count the number of image lists.");
+
+    if (0 == pTheme->cImageLists)
+    {
+        ExitFunction();
+    }
+
+    pTheme->rgImageLists = static_cast<THEME_IMAGELIST*>(MemAlloc(sizeof(THEME_IMAGELIST) * pTheme->cImageLists, TRUE));
+    ExitOnNull(pTheme->rgImageLists, hr, E_OUTOFMEMORY, "Failed to allocate theme image lists.");
+
+    while (S_OK == (hr = XmlNextElement(pixnlImageLists, &pixnImageList, NULL)))
+    {
+        hr = XmlGetAttribute(pixnImageList, L"Name", &bstr);
+        ExitOnFailure(hr, "Failed to get ImageList/@Name attribute.");
+
+        hr = StrAllocString(&pTheme->rgImageLists[dwImageListIndex].sczName, bstr, 0);
+        ExitOnFailure(hr, "Failed to make copy of ImageList name");
+
+        hr = XmlSelectNodes(pixnImageList, L"Image|i", &pixnlImages);
+        ExitOnFailure(hr, "Failed to select child Image|i nodes");
+
+        if (S_FALSE != hr)
+        {
+            hr = pixnlImages->get_length(reinterpret_cast<long*>(&dwImageCount));
+            ExitOnFailure(hr, "Failed to count the number of images in list.");
+
+            i = 0;
+            while (S_OK == (hr = XmlNextElement(pixnlImages, &pixnImage, NULL)))
+            {
+                if (NULL != hBitmap)
+                {
+                    ::DeleteObject(hBitmap);
+                    hBitmap = NULL;
+                }
+                hr = ParseImage(NULL, NULL, pixnImage, &hBitmap);
+                ExitOnFailure1(hr, "Failed to parse image: %u", i);
+
+                if (0 == i)
+                {
+                    ::GetObject(hBitmap, sizeof(BITMAP), &bm);
+
+                    pTheme->rgImageLists[dwImageListIndex].hImageList = ImageList_Create(bm.bmWidth, bm.bmHeight, ILC_COLOR24, dwImageCount, 0);
+                    ExitOnNullWithLastError(pTheme->rgImageLists[dwImageListIndex].hImageList, hr, "Failed to create image list");
+                }
+
+                iRetVal = ImageList_Add(pTheme->rgImageLists[dwImageListIndex].hImageList, hBitmap, NULL);
+                if (-1 == iRetVal)
+                {
+                    ExitWithLastError1(hr, "Failed to add image %u to image list", i);
+                }
+
+                ++i;
+            }
+        }
+        ++dwImageListIndex;
+    }
+
+LExit:
+    if (NULL != hBitmap)
+    {
+        ::DeleteObject(hBitmap);
+    }
+    ReleaseBSTR(bstr);
+    ReleaseObject(pixnlImageLists);
+    ReleaseObject(pixnImageList);
+    ReleaseObject(pixnlImages);
+    ReleaseObject(pixnImage);
 
     return hr;
 }
@@ -1903,7 +2051,7 @@ static HRESULT ParseControls(
     // the count.
     if (!pPage)
     {
-        cNewControls = cNewControls - pTheme->cFonts - pTheme->cPages - 1;
+        cNewControls = cNewControls - pTheme->cFonts - pTheme->cPages - pTheme->cImageLists - 1;
     }
 
     if (0 == cNewControls)
@@ -2066,7 +2214,7 @@ static HRESULT ParseControl(
 
     pControl->type = type;
 
-    hr = XmlGetAttributeEx(pixn, L"Name", &pControl->wzName);
+    hr = XmlGetAttributeEx(pixn, L"Name", &pControl->sczName);
     if (E_NOTFOUND == hr)
     {
         hr = S_OK;
@@ -2250,7 +2398,7 @@ static HRESULT ParseControl(
 
         if (S_OK == hr)
         {
-            hr = StrAllocString(&pControl->wzText, bstrText, 0);
+            hr = StrAllocString(&pControl->sczText, bstrText, 0);
             ExitOnFailure(hr, "Failed to copy control text.");
 
             ReleaseNullBSTR(bstrText);
@@ -2288,7 +2436,43 @@ static HRESULT ParseControl(
         {
             hr = XmlGetAttributeNumberBase(pixn, L"xs", 16, &pControl->dwExtendedStyle);
         }
-        ExitOnFailure(hr, "Failed to get theme window extended style (t@xs) attribute.");
+        ExitOnFailure(hr, "Failed to get theme ListView extended style (ListView/@HexExtendedStyle) attribute.");
+
+        hr = XmlGetAttribute(pixn, L"ImageList", &bstrText);
+        if (S_FALSE != hr)
+        {
+            ExitOnFailure(hr, "Failed to get theme ListView ImageList (ListView/@ImageList) attribute.");
+
+            hr = FindImageList(pTheme, bstrText, &pControl->rghImageList[0]);
+            ExitOnFailure(hr, "Failed to find image list %ls while setting imagelist for ListView");
+        }
+
+        hr = XmlGetAttribute(pixn, L"ImageListSmall", &bstrText);
+        if (S_FALSE != hr)
+        {
+            ExitOnFailure(hr, "Failed to get theme ListView ImageList (ListView/@ImageListSmall) attribute.");
+
+            hr = FindImageList(pTheme, bstrText, &pControl->rghImageList[1]);
+            ExitOnFailure(hr, "Failed to find image list %ls while setting imagelistsmall for ListView");
+        }
+
+        hr = XmlGetAttribute(pixn, L"ImageListState", &bstrText);
+        if (S_FALSE != hr)
+        {
+            ExitOnFailure(hr, "Failed to get theme ListView ImageList (ListView/@ImageListState) attribute.");
+
+            hr = FindImageList(pTheme, bstrText, &pControl->rghImageList[2]);
+            ExitOnFailure(hr, "Failed to find image list %ls while setting imageliststate for ListView");
+        }
+
+        hr = XmlGetAttribute(pixn, L"ImageListGroupHeader", &bstrText);
+        if (S_FALSE != hr)
+        {
+            ExitOnFailure(hr, "Failed to get theme ListView ImageList (ListView/@ImageListGroupHeader) attribute.");
+
+            hr = FindImageList(pTheme, bstrText, &pControl->rghImageList[3]);
+            ExitOnFailure(hr, "Failed to find image list %ls while setting imagelistgroupheader for ListView");
+        }
 
         hr = ParseColumns(pixn, pControl);
         ExitOnFailure(hr, "Failed to parse columns");
@@ -2411,7 +2595,7 @@ static HRESULT ParseBillboards(
 
             if (S_OK == hr && bstrText && *bstrText)
             {
-                hr = StrAllocString(&(pControl->ptbBillboards[i].wzUrl), bstrText, 0);
+                hr = StrAllocString(&(pControl->ptbBillboards[i].sczUrl), bstrText, 0);
                 ExitOnFailure(hr, "Failed to copy image URL.");
 
                 pControl->wBillboardUrls |= (1 << i);
@@ -2528,6 +2712,30 @@ LExit:
     ReleaseObject(pixnChild);
     ReleaseBSTR(bstrText);
 
+    return hr;
+}
+
+
+static HRESULT FindImageList(
+    __in THEME* pTheme,
+    __in_z LPWSTR wzImageListName,
+    __out HIMAGELIST *phImageList
+    )
+{
+    HRESULT hr = S_OK;
+
+    for (DWORD i = 0; i < pTheme->cImageLists; ++i)
+    {
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pTheme->rgImageLists[i].sczName, -1, wzImageListName, -1))
+        {
+            *phImageList = pTheme->rgImageLists[i].hImageList;
+            ExitFunction1(hr = S_OK);
+        }
+    }
+
+    hr = E_NOTFOUND;
+
+LExit:
     return hr;
 }
 
@@ -2745,10 +2953,22 @@ static void FreePage(
 {
     if (pPage)
     {
-        ReleaseStr(pPage->wzName);
+        ReleaseStr(pPage->sczName);
+        ReleaseMem(pPage->rgdwControlIndices);
     }
 }
 
+
+static void FreeImageList(
+    __in THEME_IMAGELIST* pImageList
+    )
+{
+    if (pImageList)
+    {
+        ReleaseStr(pImageList->sczName);
+        ImageList_Destroy(pImageList->hImageList);
+    }
+}
 
 static void FreeControl(
     __in THEME_CONTROL* pControl
@@ -2762,8 +2982,8 @@ static void FreeControl(
             pControl->hWnd = NULL;
         }
 
-        ReleaseStr(pControl->wzName);
-        ReleaseStr(pControl->wzText);
+        ReleaseStr(pControl->sczName);
+        ReleaseStr(pControl->sczText);
 
         if (pControl->hImage)
         {
@@ -2796,7 +3016,7 @@ static void FreeBillboard(
     __in THEME_BILLBOARD* pBillboard
     )
 {
-    ReleaseStr(pBillboard->wzUrl);
+    ReleaseStr(pBillboard->sczUrl);
     if (pBillboard->hImage)
     {
         ::DeleteBitmap(pBillboard->hImage);

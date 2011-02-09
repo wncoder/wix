@@ -792,6 +792,7 @@
   <xs:element name="RemoveFolderEx">
       <xs:annotation>
           <xs:appinfo>
+              <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Component" />
               <xse:msiRef table="RemoveFile" href="http://msdn.microsoft.com/library/aa371201.aspx"/>
               <xse:remarks>
                 <html:p>The custom action that implements RemoveFolderEx does so by writing temporary rows to the RemoveFile table
@@ -801,7 +802,7 @@
                 create properties for the Directory hierarchy in your package until later, in the CostFinalize action.</html:p>
                 <html:p>An easy workaround for a typical use case of removing a folder during uninstall is to write the directory
                 path to the registry and to load it during uninstall. See 
-                <html:a href="http://msdn.microsoft.com/en-us/library/aa368593.aspx">The WiX toolset's "Remember Property" pattern</html:a>
+                <html:a href="http://robmensching.com/blog/posts/2010/5/2/The-WiX-toolsets-Remember-Property-pattern">The WiX toolset's "Remember Property" pattern</html:a>
                 for an example.</html:p>
                 <html:p>If you use custom actions to set properties, ensure that they are scheduled before the WixRemoveFoldersEx custom action.</html:p>
               </xse:remarks>

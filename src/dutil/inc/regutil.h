@@ -195,6 +195,11 @@ HRESULT DAPI RegReadNumber(
     __in_z_opt LPCWSTR wzName,
     __out DWORD* pdwValue
     );
+HRESULT DAPI RegReadQword(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __out DWORD64* pqwValue
+    );
 HRESULT DAPI RegWriteBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
@@ -222,6 +227,11 @@ HRESULT DAPI RegWriteNumber(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
     __in DWORD dwValue
+    );
+HRESULT DAPI RegWriteQword(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __in DWORD64 qwValue
     );
 
 #ifdef __cplusplus

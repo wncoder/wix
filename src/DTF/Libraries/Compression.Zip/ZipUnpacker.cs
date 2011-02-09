@@ -180,7 +180,7 @@ namespace Microsoft.Deployment.Compression.Zip
 
                 ZipFileHeader localHeader = new ZipFileHeader();
                 if (!localHeader.Read(archiveStream, false) ||
-                    !localHeader.fileName.Equals(header.fileName))
+                    !ZipEngine.AreFilePathsEqual(localHeader.fileName, header.fileName))
                 {
                     string msg = "Could not read file: " + header.fileName;
                     throw new ZipException(msg);
@@ -228,6 +228,19 @@ namespace Microsoft.Deployment.Compression.Zip
                     this.currentArchiveNumber++;
                 }
             }
+        }
+
+        /// <summary>
+        /// Compares two internal file paths while ignoring case and slash differences.
+        /// </summary>
+        /// <param name="path1">The first path to compare.</param>
+        /// <param name="path2">The second path to compare.</param>
+        /// <returns>True if the paths are equivalent.</returns>
+        private static bool AreFilePathsEqual(string path1, string path2)
+        {
+            path1 = path1.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            path2 = path2.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            return String.Compare(path1, path2, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         private Stream OpenArchive(IUnpackStreamContext streamContext, int archiveNumber)

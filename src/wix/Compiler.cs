@@ -20824,7 +20824,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "PerMachine":
                             perMachine = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
-                            allowed = (packageType == ChainPackageType.Exe);
+                            allowed = (packageType == ChainPackageType.Exe || packageType == ChainPackageType.Msp);
                             break;
                         case "DetectCondition":
                             detectCondition = this.core.GetAttributeValue(sourceLineNumbers, attrib);

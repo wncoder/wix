@@ -137,6 +137,11 @@ HRESULT DAPI SceSetColumnDword(
     __in DWORD dwColumnIndex,
     __in const DWORD dwValue
     );
+HRESULT DAPI SceSetColumnQword(
+    __in SCE_ROW_HANDLE rowHandle,
+    __in DWORD dwColumnIndex,
+    __in const DWORD64 qwValue
+    );
 HRESULT DAPI SceSetColumnBool(
     __in SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
@@ -167,6 +172,11 @@ HRESULT DAPI SceGetColumnDword(
     __in DWORD dwColumnIndex,
     __out DWORD *pdwValue
     );
+HRESULT DAPI SceGetColumnQword(
+    __in SCE_ROW_HANDLE rowReadHandle,
+    __in DWORD dwColumnIndex,
+    __out DWORD64 *pqwValue
+    );
 HRESULT DAPI SceGetColumnBool(
     __in SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
@@ -191,6 +201,14 @@ HRESULT DAPI SceBeginQuery(
 HRESULT DAPI SceSetQueryColumnDword(
     __in SCE_QUERY_HANDLE sqhHandle,
     __in const DWORD dwValue
+    );
+HRESULT DAPI SceSetQueryColumnQword(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in const DWORD64 qwValue
+    );
+HRESULT DAPI SceSetQueryColumnBool(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in const BOOL fValue
     );
 HRESULT DAPI SceSetQueryColumnString(
     __in SCE_QUERY_HANDLE sqhHandle,

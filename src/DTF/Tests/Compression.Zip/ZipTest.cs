@@ -353,9 +353,8 @@
         [TestMethod]
         public void ZipUnpack()
         {
-            IList<ArchiveFileInfo> fileInfos;
-            //foreach (FileInfo zipFile in new DirectoryInfo("J:\\My Documents\\Downloads").GetFiles("*.zip"))
-            foreach (FileInfo zipFile in new DirectoryInfo("D:\\temp").GetFiles("*-jar.zip"))
+            IList<ZipFileInfo> fileInfos;
+            foreach (FileInfo zipFile in new DirectoryInfo("D:\\temp").GetFiles("*.zip"))
             {
                 Console.WriteLine("=====================================================");
                 Console.WriteLine(zipFile.FullName);

@@ -3394,6 +3394,19 @@ static BOOL AddSslCertificateToBindingCallback(IAppHostElement *pBindingElement,
     IAppHostMethod *pAddSslMethod = NULL;
     IAppHostMethodInstance *pAddSslMethodInstance = NULL;
     IAppHostElement *pAddSslInput = NULL;
+    int iWsaError = 0;
+    WSADATA wsaData = {};
+    BOOL fWsaInitialized = FALSE;
+
+    // IIS's AddSslCertificate doesn't initialize WinSock on 2008 before using it to parse the IP
+    // Initialize before calling to workaround the failure.
+    iWsaError = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (0 != iWsaError)
+    {
+        ExitOnWin32Error(iWsaError, hr, "Failed to initialize WinSock");
+    }
+
+    fWsaInitialized = TRUE;
 
     if (Iis7IsMatchingAppHostElement(pBindingElement, &pBindingInfo->comparison))
     {
@@ -3428,6 +3441,10 @@ LExit:
     ReleaseObject(pAddSslMethod);
     ReleaseObject(pAddSslMethodInstance);
     ReleaseObject(pAddSslInput);
+    if (fWsaInitialized)
+    {
+        WSACleanup();
+    }
 
     return FAILED(hr);
 }
