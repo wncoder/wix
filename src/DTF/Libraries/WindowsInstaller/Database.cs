@@ -922,7 +922,11 @@ namespace Microsoft.Deployment.WindowsInstaller
             return hDb;
         }
 
-        private string ExecutePropertyQuery(string property)
+        /// <summary>
+        /// Returns the value of the specified property.
+        /// </summary>
+        /// <param name="property">Name of the property to retrieve.</param>
+        public string ExecutePropertyQuery(string property)
         {
             IList<string> values = this.ExecuteStringQuery("SELECT `Value` FROM `Property` WHERE `Property` = '{0}'", property);
             return (values.Count > 0 ? values[0] : null);

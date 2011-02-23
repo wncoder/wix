@@ -55,6 +55,7 @@
     <fileset id="compileCpp.fileset.sources" basedir="${dir.src.balutil}">
       <include name="balutil.cpp" />
       <include name="balcondition.cpp" />
+      <include name="balretry.cpp" />
     </fileset>
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2010.x86}" dynamic="true" />

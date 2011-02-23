@@ -817,7 +817,7 @@ public:
         __in HMODULE hModule,
         __in IBootstrapperEngine* pEngine,
         __in const BOOTSTRAPPER_COMMAND* pCommand
-        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart)
+        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart, 3)
     {
         m_hUiThread = NULL;
         m_dwThreadId = 0;

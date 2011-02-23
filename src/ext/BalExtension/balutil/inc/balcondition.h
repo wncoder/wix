@@ -1,3 +1,4 @@
+#pragma once
 //-------------------------------------------------------------------------------------------------
 // <copyright file="balcondition.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -12,7 +13,7 @@
 // </copyright>
 //
 // <summary>
-// Bootstrapper Application Layer utility condition utility.
+// Bootstrapper Application Layer condition utility.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

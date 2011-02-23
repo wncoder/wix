@@ -151,6 +151,13 @@ Language=English
 Applying package: %1!ls!, action: %2, path: %3!ls!, arguments: '%4!ls!'
 .
 
+MessageId=349
+Severity=Warning
+SymbolicName=MSG_APPLY_RETRYING_PACKAGE
+Language=English
+Application requested retry of package: %1!ls!, encountered error: 0x%2!x!. Retrying...
+.
+
 MessageId=350
 Severity=Warning
 SymbolicName=MSG_APPLY_CONTINUING_NONVITAL_PACKAGE

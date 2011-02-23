@@ -425,6 +425,15 @@
                 </xs:any>
             </xs:choice>
             <xs:attributeGroup ref="ChainPackageCommonAttributes" />
+            <xs:attribute name="SuppressLooseFilePayloadGeneration" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>
+                        This attribute has been deprecated. When the value is "yes", the Binder will not read the MSI package
+                        to detect uncompressed files that would otherwise be automatically included in the Bundle as Payloads.
+                        The resulting Bundle may not be able to install the MSI package correctly. The default is "no".
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
 

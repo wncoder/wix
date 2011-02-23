@@ -20755,6 +20755,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string protocol = null;
             int installSize = CompilerCore.IntegerNotSet;
             string msuKB = null;
+            YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
 
             // This crazy list lets us evaluate extension attributes *after* all core attributes
@@ -20843,6 +20844,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
+                            break;
+                        case "SuppressLooseFilePayloadGeneration":
+                            this.core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
+
+                            suppressLooseFilePayloadGeneration = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
                             break;
                         default:
                             allowed = false;
@@ -21016,6 +21023,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[16] = rollbackPathVariable;
                 row[17] = protocol;
                 row[18] = installSize;
+                if (YesNoType.NotSet != suppressLooseFilePayloadGeneration)
+                {
+                    row[19] = (YesNoType.Yes == suppressLooseFilePayloadGeneration) ? 1 : 0;
+                }
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
             }

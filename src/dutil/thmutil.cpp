@@ -2421,7 +2421,7 @@ static HRESULT ParseControl(
         hr = XmlGetAttributeNumber(pixn, L"Interval", &dwValue);
         if (S_OK == hr && dwValue)
         {
-            pControl->wBillboardInterval = dwValue & 0xFFFF;
+            pControl->wBillboardInterval = static_cast<WORD>(dwValue & 0xFFFF);
         }
         ExitOnFailure(hr, "Failed to get Billboard/@Interval.");
 

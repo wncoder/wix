@@ -12,7 +12,7 @@
 // </copyright>
 //
 // <summary>
-// Bootstrapper Application Layer utility condition utility.
+// Bootstrapper Application Layer condition utility.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 

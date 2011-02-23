@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi' xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+
+    <Bundle Name='Burn Test Bundle' Version='0.1' UpgradeCode='0A190CA6-6D59-4F20-9BC3-B1021021F795'
+            IconSourceFile='$(env.WIX_ROOT)\src\Votive\votive2010\Templates\Projects\WixProject\WixProject.ico'
+            SplashScreenSourceFile='logo.bmp'>
+        <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+        <Variable Name='BundleName' Value='WiX Standard Bootstrapper Test' />
+        <Variable Name='InstallFolder' Value='[ProgramFilesFolder]\[BundleName]' />
+
+        <PayloadGroup Id='LayoutStuff'>
+            <Payload SourceFile='readme.html' />
+        </PayloadGroup>
+
+        <util:ProductSearch Variable="PS" Guid='AAAAAAAA-6D59-4F20-9BC3-B1021021F795' />
+
+<!--
+        <Variable Name="NotVersion" Value="1.0" />
+        <Variable Name="v1" Value="v1" />
+        <Variable Name="v1point0" Value="v1.0" />
+        <Variable Name="v1point0point1" Value="v1.0.1" />
+        <Variable Name="v1point0point1point2" Value="v1.0.1.2" />
+        <Variable Name="NotVersionByPoints" Value="v1.0.1.2.3" />
+-->
+
+        <Chain>
+            <ExePackage SourceFile="ExePkg.exe" Compressed="no" Vital="yes" PerMachine="yes" InstallCommand="-wait 60000 -install" UninstallCommand="-uninstall" />
+            <MsiPackage Id='Package4' Vital='yes' Compressed='no' SourceFile='Package4.msi' Cache='no'
+                        InstallCondition='NOT RebootPending'>
+                <!-- MsiProperty Name='TARGETDIR' Value='[InstallFolder]' / -->
+                <MsiProperty Name='FAIL' Value='1' />
+            </MsiPackage>
+        </Chain>
+    </Bundle>
+
+    <Fragment>
+        <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" Value="Install" Variable="Netfx2Installed" Result="value" />
+
+        <PackageGroup Id="Netfx">
+            <ExePackage Id="Netfx2" Cache="no" Compressed="no" PerMachine="yes" Permanent="yes" Vital="yes" SourceFile="dotnetfx.exe"
+                        DownloadUrl="http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe"
+                        DetectCondition="Netfx2Installed = 1" InstallCommand='/q:a /c:"install /l /q"' />
+        </PackageGroup>
+    </Fragment>
+
+</Wix>

@@ -42,7 +42,6 @@
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 
-#include "balutil.h"
 #include "BalBaseBootstrapperApplication.h"
 
 HRESULT CreateBootstrapperApplication(

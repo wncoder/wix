@@ -6336,7 +6336,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        (string)row[4], (string)row[5], (string)row[6],
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
-                       (string)row[15], (string)row[16], (string)row[17], (int)row[18],
+                       (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
                        wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
@@ -6346,7 +6346,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     string installCommand, string repairCommand, string uninstallCommand,
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
-                                    string logPathVariable, string rollbackPathVariable, string protocol, int installSize,
+                                    string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
                                     Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
@@ -6377,6 +6377,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (null != repairableData)
                 {
                     repairable = (1 == (int)repairableData) ? YesNoType.Yes : YesNoType.No;
+                }
+
+                YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
+                if (null != suppressLooseFilePayloadGenerationData)
+                {
+                    suppressLooseFilePayloadGeneration = (1 == (int)suppressLooseFilePayloadGenerationData) ? YesNoType.Yes : YesNoType.No;
                 }
 
                 this.Id = id;
@@ -6439,7 +6445,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (this.ChainPackageType)
                 {
                     case Compiler.ChainPackageType.Msi:
-                        this.ResolveMsiPackage(fileManager, core, allPayloads);
+                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration);
                         break;
                     case Compiler.ChainPackageType.Msp:
                         this.ResolveMspPackage(core);
@@ -6503,7 +6509,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// Initializes package state from the MSI contents.
             /// </summary>
             /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads)
+            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration)
             {
                 string sourcePath = this.PackagePayload.FileInfo.FullName;
                 bool longNamesInImage = false;
@@ -6675,27 +6681,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             view.Execute();
                             while (null != (record = view.Fetch()))
                             {
-                                // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
-                                // explicitly marked compressed then this is an external file.
-                                if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
-                                    (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
+                                // Skip adding the loose files as payloads if it was suppressed.
+                                if (suppressLooseFilePayloadGeneration != YesNoType.Yes)
                                 {
-                                    string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
-                                    string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
-                                    string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), fileSourcePath);
-                                    string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
-
-                                    PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
-                                    payloadNew.ParentPackagePayload = this.PackagePayload;
-                                    if (null != payloadNew.Container)
+                                    // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
+                                    // explicitly marked compressed then this is an external file.
+                                    if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
+                                        (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
                                     {
-                                        payloadNew.Container.Payloads.Add(payloadNew);
+                                        string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
+                                        string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
+                                        string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), fileSourcePath);
+                                        string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
+
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        payloadNew.ParentPackagePayload = this.PackagePayload;
+                                        if (null != payloadNew.Container)
+                                        {
+                                            payloadNew.Container.Payloads.Add(payloadNew);
+                                        }
+
+                                        this.Payloads.Add(payloadNew);
+                                        allPayloads.Add(payloadNew.Id, payloadNew);
+
+                                        this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
                                     }
-
-                                    this.Payloads.Add(payloadNew);
-                                    allPayloads.Add(payloadNew.Id, payloadNew);
-
-                                    this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
                                 }
 
                                 this.InstallSize += record.GetInteger(5);

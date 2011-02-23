@@ -18,6 +18,9 @@
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 
+#include "balutil.h"
+#include "balretry.h"
+
 class CBalBaseBootstrapperApplication : public IBootstrapperApplication
 {
 public: // IUnknown
@@ -334,20 +337,27 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageBegin(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in BOOL /*fExecute*/
+        __in_z LPCWSTR wzPackageId,
+        __in BOOL fExecute
         )
     {
+        // Only track retry on execution (not rollback).
+        if (fExecute)
+        {
+            BalRetryStartPackage(wzPackageId);
+        }
+
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnError(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in DWORD /*dwCode*/,
+        __in_z LPCWSTR wzPackageId,
+        __in DWORD dwCode,
         __in_z LPCWSTR /*wzError*/,
         __in DWORD /*dwUIHint*/
         )
     {
+        BalRetryOnError(wzPackageId, dwCode);
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -413,12 +423,12 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnExecutePackageComplete(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in HRESULT /*hrExitCode*/,
+        __in_z LPCWSTR wzPackageId,
+        __in HRESULT hrExitCode,
         __in BOOTSTRAPPER_APPLY_RESTART /*restart*/
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(wzPackageId, hrExitCode);
     }
 
     virtual STDMETHODIMP_(void) OnExecuteComplete(
@@ -480,7 +490,9 @@ protected:
 
     CBalBaseBootstrapperApplication(
         __in IBootstrapperEngine* /*pEngine*/,
-        __in BOOTSTRAPPER_RESTART restart
+        __in BOOTSTRAPPER_RESTART restart,
+        __in DWORD dwRetryCount = 0,
+        __in DWORD dwRetryTimeout = 1000
         )
     {
         m_cReferences = 1;
@@ -488,10 +500,13 @@ protected:
 
         ::InitializeCriticalSection(&m_csCanceled);
         m_fCanceled = FALSE;
+
+        BalRetryInitialize(dwRetryCount, dwRetryTimeout);
     }
 
     virtual ~CBalBaseBootstrapperApplication()
     {
+        BalRetryUninitialize();
         ::DeleteCriticalSection(&m_csCanceled);
     }
 

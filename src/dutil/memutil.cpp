@@ -63,7 +63,7 @@ extern "C" LPVOID DAPI MemReAlloc(
 
 
 extern "C" HRESULT DAPI MemEnsureArraySize(
-    __inout_ecount(cArray) LPVOID* ppvArray,
+    __deref_inout_ecount(cArray) LPVOID* ppvArray,
     __in DWORD cArray,
     __in SIZE_T cbArrayType,
     __in DWORD dwGrowthCount

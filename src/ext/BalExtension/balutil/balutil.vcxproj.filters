@@ -17,6 +17,9 @@
     <ClCompile Include="balutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="balretry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\balcondition.h">
@@ -29,6 +32,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\BalBaseBootstrapperApplication.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\balretry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

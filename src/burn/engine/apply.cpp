@@ -135,6 +135,7 @@ static HRESULT ExecuteExePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -143,6 +144,7 @@ static HRESULT ExecuteMsiPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -151,6 +153,7 @@ static HRESULT ExecuteMspPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -159,6 +162,7 @@ static HRESULT ExecuteMsuPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -185,7 +189,8 @@ static HRESULT ExecutePackageComplete(
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
-    __inout BOOTSTRAPPER_APPLY_RESTART* pRestart,
+    __out BOOTSTRAPPER_APPLY_RESTART* pRestart,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend
     );
 
@@ -789,6 +794,18 @@ static HRESULT AcquireContainerOrPayload(
             LPCWSTR wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
 
             hr = PromptForSource(pUX, wzPackageOrContainerId, wzPayloadId, sczSourceFullPath, wzDownloadUrl, &fRetry, &fDownload);
+
+            // If the BA requested download then ensure a download url is available (it may have been set
+            // during PromptForSource so we need to check again).
+            if (fDownload)
+            {
+                wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
+                if (!wzDownloadUrl || !*wzDownloadUrl)
+                {
+                    hr = E_INVALIDARG;
+                }
+            }
+
             // Log the error
             LogExitOnFailure1(hr, MSG_PAYLOAD_FILE_NOT_PRESENT, "Failed while prompting for source.", sczSourceFullPath);
 
@@ -879,14 +896,7 @@ static HRESULT PromptForSource(
         break;
 
     case IDDOWNLOAD:
-        if (wzDownloadSource && *wzDownloadSource)
-        {
-            *pfDownload = TRUE;
-        }
-        else
-        {
-            hr = E_INVALIDARG;
-        }
+        *pfDownload = TRUE;
         break;
 
     case IDNOACTION: __fallthrough;
@@ -1115,74 +1125,78 @@ static HRESULT DoExecuteAction(
     HRESULT hr = S_OK;
     HANDLE rghWait[2] = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
+    BOOL fRetry = FALSE;
 
-    switch (pExecuteAction->type)
+    do
     {
-    case BURN_EXECUTE_ACTION_TYPE_CHECKPOINT:
-        *pdwCheckpoint = pExecuteAction->checkpoint.dwId;
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_SYNCPOINT:
-        // wait for cache sync-point
-        rghWait[0] = pExecuteAction->syncpoint.hEvent;
-        rghWait[1] = hCacheThread;
-        switch (::WaitForMultipleObjects(rghWait[1] ? 2 : 1, rghWait, FALSE, INFINITE))
+        switch (pExecuteAction->type)
         {
-        case WAIT_OBJECT_0:
+        case BURN_EXECUTE_ACTION_TYPE_CHECKPOINT:
+            *pdwCheckpoint = pExecuteAction->checkpoint.dwId;
             break;
 
-        case WAIT_OBJECT_0 + 1:
-            if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
+        case BURN_EXECUTE_ACTION_TYPE_SYNCPOINT:
+            // wait for cache sync-point
+            rghWait[0] = pExecuteAction->syncpoint.hEvent;
+            rghWait[1] = hCacheThread;
+            switch (::WaitForMultipleObjects(rghWait[1] ? 2 : 1, rghWait, FALSE, INFINITE))
             {
-                ExitWithLastError(hr, "Failed to get cache thread exit code.");
-            }
-            if (SUCCEEDED(hr))
-            {
-                hr = E_UNEXPECTED;
-            }
-            ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
+            case WAIT_OBJECT_0:
+                break;
 
-        case WAIT_FAILED: __fallthrough;
+            case WAIT_OBJECT_0 + 1:
+                if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
+                {
+                    ExitWithLastError(hr, "Failed to get cache thread exit code.");
+                }
+                if (SUCCEEDED(hr))
+                {
+                    hr = E_UNEXPECTED;
+                }
+                ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
+
+            case WAIT_FAILED: __fallthrough;
+            default:
+                ExitWithLastError(hr, "Failed to wait for cache check-point.");
+            }
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
+            hr = ExecuteExePackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            ExitOnFailure(hr, "Failed to execute EXE package.");
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
+            hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            ExitOnFailure(hr, "Failed to execute MSI package.");
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
+            hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            ExitOnFailure(hr, "Failed to execute MSP package.");
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
+            hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            ExitOnFailure(hr, "Failed to execute MSU package.");
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
+            *ppRollbackBoundary = pExecuteAction->rollbackBoundary.pRollbackBoundary;
+            break;
+
+        case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
+        case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
         default:
-            ExitWithLastError(hr, "Failed to wait for cache check-point.");
+            hr = E_UNEXPECTED;
+            ExitOnFailure(hr, "Invalid execute action.");
         }
-        break;
 
-    case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
-        hr = ExecuteExePackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-        ExitOnFailure(hr, "Failed to execute EXE package.");
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-        hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-        ExitOnFailure(hr, "Failed to execute MSI package.");
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-        hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-        ExitOnFailure(hr, "Failed to execute MSP package.");
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
-        hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, pfSuspend, &restart);
-        ExitOnFailure(hr, "Failed to execute MSU package.");
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
-        *ppRollbackBoundary = pExecuteAction->rollbackBoundary.pRollbackBoundary;
-        break;
-
-    case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
-    case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
-    default:
-        hr = E_UNEXPECTED;
-        ExitOnFailure(hr, "Invalid execute action.");
-    }
-
-    if (*pRestart < restart)
-    {
-        *pRestart = restart;
-    }
+        if (*pRestart < restart)
+        {
+            *pRestart = restart;
+        }
+    } while (fRetry && *pRestart < BOOTSTRAPPER_APPLY_RESTART_INITIATED);
 
 LExit:
     return hr;
@@ -1197,6 +1211,7 @@ static HRESULT DoRollbackActions(
 {
     HRESULT hr = S_OK;
     DWORD iCheckpoint = 0;
+    BOOL fRetryIgnored = FALSE;
     BOOL fSuspendIgnored = FALSE;
 
     // scan to last checkpoint
@@ -1229,25 +1244,25 @@ static HRESULT DoRollbackActions(
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
-                hr = ExecuteExePackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
+                hr = ExecuteExePackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback EXE package.");
                 hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-                hr = ExecuteMsiPackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
+                hr = ExecuteMsiPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSI package.");
                 hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-                hr = ExecuteMspPackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
+                hr = ExecuteMspPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSP package.");
                 hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
-                hr = ExecuteMsuPackage(pEngineState, pRollbackAction, pContext, TRUE, &fSuspendIgnored, &restart);
+                hr = ExecuteMsuPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 ExitOnFailure(hr, "Failed to rollback MSU package.");
                 break;
 
@@ -1281,6 +1296,7 @@ static HRESULT ExecuteExePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -1324,7 +1340,7 @@ static HRESULT ExecuteExePackage(
     ExitOnRootFailure(hr, "UX aborted EXE package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->exePackage.pPackage, hr, hrExecute, pRestart, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->exePackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1333,6 +1349,7 @@ static HRESULT ExecuteMsiPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -1367,7 +1384,7 @@ static HRESULT ExecuteMsiPackage(
     ExitOnRootFailure(hr, "UX aborted MSI package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msiPackage.pPackage, hr, hrExecute, pRestart, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msiPackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1376,6 +1393,7 @@ static HRESULT ExecuteMspPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -1410,7 +1428,7 @@ static HRESULT ExecuteMspPackage(
     ExitOnRootFailure(hr, "UX aborted MSP package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, pRestart, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1419,6 +1437,7 @@ static HRESULT ExecuteMsuPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -1461,7 +1480,7 @@ static HRESULT ExecuteMsuPackage(
     ExitOnRootFailure(hr, "UX aborted MSU package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, pRestart, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1544,7 +1563,8 @@ static HRESULT ExecutePackageComplete(
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
-    __inout BOOTSTRAPPER_APPLY_RESTART* pRestart,
+    __out BOOTSTRAPPER_APPLY_RESTART* pRestart,
+    __out BOOL* pfRetry,
     __out BOOL* pfSuspend
     )
 {
@@ -1552,17 +1572,17 @@ static HRESULT ExecutePackageComplete(
 
     // send package execute complete to UX
     int nResult = pUX->pUserExperience->OnExecutePackageComplete(pPackage->sczId, hr, *pRestart);
-    if (IDRESTART == nResult)
-    {
-        *pRestart = BOOTSTRAPPER_APPLY_RESTART_INITIATED;
-    }
-    else if (IDSUSPEND == nResult)
-    {
-        *pfSuspend = TRUE;
-    }
+    *pRestart = (IDRESTART == nResult) ? BOOTSTRAPPER_APPLY_RESTART_INITIATED : BOOTSTRAPPER_APPLY_RESTART_NONE;
+    *pfRetry = (FAILED(hrExecute) && IDRETRY == nResult); // allow retry only on failures.
+    *pfSuspend = (IDSUSPEND == nResult);
 
-    // If we *only* failed to execute and this package is not vital, say everything is okay.
-    if (SUCCEEDED(hrOverall) && FAILED(hrExecute) && !pPackage->fVital)
+    // If we're retrying, leave a message in the log file and say everything is okay.
+    if (*pfRetry)
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_RETRYING_PACKAGE, pPackage->sczId, hrExecute);
+        hr = S_OK;
+    }
+    else if (SUCCEEDED(hrOverall) && FAILED(hrExecute) && !pPackage->fVital) // If we *only* failed to execute and this package is not vital, say everything is okay.
     {
         LogId(REPORT_STANDARD, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pPackage->sczId, hrExecute);
         hr = S_OK;

@@ -35,17 +35,21 @@ typedef void* SCE_QUERY_RESULTS_HANDLE;
 
 struct SCE_COLUMN_SCHEMA
 {
-    LPCWSTR sczName;
+    LPCWSTR wzName;
     DBTYPE dbtColumnType;
     DWORD dwLength;
-    BOOL fKey; // If this column is part of the key of the table's primary index
+    BOOL fPrimaryKey; // If this column is the primary key
     BOOL fNullable;
     BOOL fAutoIncrement;
+
+    LPWSTR wzRelationName;
+    DWORD dwForeignKeyTable;
+    DWORD dwForeignKeyColumn;
 };
 
 struct SCE_INDEX_SCHEMA
 {
-    LPWSTR sczName;
+    LPWSTR wzName;
 
     DWORD *rgColumns;
     DWORD cColumns;
@@ -53,7 +57,7 @@ struct SCE_INDEX_SCHEMA
 
 struct SCE_TABLE_SCHEMA
 {
-    LPCWSTR sczName;
+    LPCWSTR wzName;
     DWORD cColumns;
     SCE_COLUMN_SCHEMA *rgColumns;
 
@@ -198,6 +202,11 @@ HRESULT DAPI SceBeginQuery(
     __in DWORD dwIndex,
     __out SCE_QUERY_HANDLE *psqhHandle
     );
+HRESULT DAPI SceSetQueryColumnBinary(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer
+    );
 HRESULT DAPI SceSetQueryColumnDword(
     __in SCE_QUERY_HANDLE sqhHandle,
     __in const DWORD dwValue
@@ -211,6 +220,14 @@ HRESULT DAPI SceSetQueryColumnBool(
     __in const BOOL fValue
     );
 HRESULT DAPI SceSetQueryColumnString(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_z LPCWSTR pszString
+    );
+HRESULT DAPI SceSetQueryColumnSystemTime(
+    __in SCE_ROW_HANDLE rowHandle,
+    __in const SYSTEMTIME *pst
+    );
+HRESULT DAPI SceSetQueryColumnEmpty(
     __in SCE_QUERY_HANDLE sqhHandle,
     __in_z LPCWSTR pszString
     );

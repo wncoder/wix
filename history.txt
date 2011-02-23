@@ -913,3 +913,8 @@ EricStJ: SFBUG: 3165776 AddSslCertificate fails with WSANOTINITIALISED for
          binding that has IP
 
 RobMen: Fix wixstbda so that the progress bar moves.
+
+BobArnso: Expose DTF's Database.ExecutePropertyQuery method.
+
+RobMen: Support retrying package install in Burn.
+        Add balretry to convert common package errors to retry recommendations.

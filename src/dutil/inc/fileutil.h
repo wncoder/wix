@@ -106,13 +106,13 @@ HRESULT DAPI FileReadPartial(
 HRESULT DAPI FileWrite(
     __in_z LPCWSTR pwzFileName,
     __in DWORD dwFlagsAndAttributes,
-    __in_bcount(cbData) LPCBYTE pbData,
+    __in_bcount_opt(cbData) LPCBYTE pbData,
     __in DWORD cbData,
     __out_opt HANDLE* pHandle
     );
 HRESULT DAPI FileWriteHandle(
     __in HANDLE hFile,
-    __in_bcount(cbData) LPCBYTE pbData,
+    __in_bcount_opt(cbData) LPCBYTE pbData,
     __in DWORD cbData
     );
 HRESULT DAPI FileEnsureCopy(

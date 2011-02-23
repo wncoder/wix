@@ -15,7 +15,7 @@
 
             if (0 == args.Length)
             {
-                Console.WriteLine("usage: ExePkg.exe {-install|-uninstall|-repair}");
+                Console.WriteLine("usage: ExePkg.exe [-wait milliseconds] [-returnCode #] {-install|-uninstall|-repair}");
                 return 1;
             }
 

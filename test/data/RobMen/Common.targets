@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\..\..\WixBuild.Common.targets" />
+
+  <PropertyGroup>
+    <BuildDirectory>$(MSBuildThisFileDirectory)build\</BuildDirectory>
+
+    <OutputPath>$(BuildDirectory)$(MSBuildProjectName)</OutputPath>
+    <BindInputPaths>$(MSBuildThisFileDirectory)data;$(BuildDirectory)obj\packages</BindInputPaths>
+    <Pedantic>True</Pedantic>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

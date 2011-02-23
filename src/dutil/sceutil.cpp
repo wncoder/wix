@@ -79,9 +79,9 @@ static HRESULT EnsureSchema(
     __in SCE_DATABASE_SCHEMA *pDatabaseSchema
     );
 static HRESULT SetColumnValue(
-    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in const SCE_TABLE_SCHEMA *pTableSchema,
     __in DWORD dwColumnIndex,
-    __in const BYTE *pbData,
+    __in_bcount_opt(cbSize) const BYTE *pbData,
     __in SIZE_T cbSize,
     __inout DBBINDING *pBinding,
     __inout SIZE_T *cbOffset,
@@ -99,8 +99,17 @@ static HRESULT GetColumnValueFixed(
     __in DWORD cbSize,
     __out BYTE *pbData
     );
-static HRESULT SetDataSourceProperties(
-    __in ISessionProperties *pISessionProperties
+static HRESULT EnsureLocalColumnConstraints(
+    __in ITableDefinition *pTableDefinition,
+    __in DBID *pTableID,
+    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    );
+static HRESULT EnsureForeignColumnConstraints(
+    __in ITableDefinition *pTableDefinition,
+    __in DBID *pTableID,
+    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
     );
 static HRESULT SetSessionProperties(
     __in ISessionProperties *pISessionProperties
@@ -680,7 +689,7 @@ HRESULT DAPI SceSetColumnEmpty(
     }
 
     hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, NULL, 0, &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
-    ExitOnFailure(hr, "Failed to set column value as binary");
+    ExitOnFailure(hr, "Failed to set column value as empty value");
 
 LExit:
     return hr;
@@ -712,8 +721,8 @@ extern "C" HRESULT DAPI SceSetColumnSystemTime(
     // fraction represents nanoseconds (millionths of a second) - so multiply milliseconds by 1 million to get there
     dbTimeStamp.fraction = pst->wMilliseconds * 1000000;
 
-    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<BYTE *>(&dbTimeStamp), sizeof(dbTimeStamp), &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
-    ExitOnFailure(hr, "Failed to set column value as DBTIMESTAMPOFFSET");
+    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<const BYTE *>(&dbTimeStamp), sizeof(dbTimeStamp), &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
+    ExitOnFailure(hr, "Failed to set column value as DBTIMESTAMP");
 
 LExit:
     return hr;
@@ -911,6 +920,24 @@ LExit:
     return hr;
 }
 
+HRESULT DAPI SceSetQueryColumnBinary(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(cbBuffer) const BYTE* pbBuffer,
+    __in SIZE_T cbBuffer
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
+
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], pbBuffer, cbBuffer, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    ExitOnFailure1(hr, "Failed to set query column value as binary of size: %u", cbBuffer);
+
+    ++(pQuery->dwBindingIndex);
+
+LExit:
+    return hr;
+}
+
 HRESULT DAPI SceSetQueryColumnDword(
     __in SCE_QUERY_HANDLE sqhHandle,
     __in const DWORD dwValue
@@ -974,6 +1001,49 @@ HRESULT DAPI SceSetQueryColumnString(
 
     hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(pszString), cbSize, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
     ExitOnFailure(hr, "Failed to set query column value as string");
+
+    ++(pQuery->dwBindingIndex);
+
+LExit:
+    return hr;
+}
+
+HRESULT DAPI SceSetQueryColumnSystemTime(
+    __in SCE_QUERY_HANDLE sqhHandle,
+    __in const SYSTEMTIME *pst
+    )
+{
+    HRESULT hr = S_OK;
+    DBTIMESTAMP dbTimeStamp = { };
+    SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
+
+    dbTimeStamp.year = pst->wYear;
+    dbTimeStamp.month = pst->wMonth;
+    dbTimeStamp.day = pst->wDay;
+    dbTimeStamp.hour = pst->wHour;
+    dbTimeStamp.minute = pst->wMinute;
+    dbTimeStamp.second = pst->wSecond;
+    // fraction represents nanoseconds (millionths of a second) - so multiply milliseconds by 1 million to get there
+    dbTimeStamp.fraction = pst->wMilliseconds * 1000000;
+
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(&dbTimeStamp), sizeof(dbTimeStamp), &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    ExitOnFailure(hr, "Failed to set query column value as DBTIMESTAMP");
+
+    ++(pQuery->dwBindingIndex);
+
+LExit:
+    return hr;
+}
+
+HRESULT DAPI SceSetQueryColumnEmpty(
+    __in SCE_QUERY_HANDLE sqhHandle
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
+
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], NULL, 0, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    ExitOnFailure(hr, "Failed to set query column value as empty value");
 
     ++(pQuery->dwBindingIndex);
 
@@ -1141,10 +1211,10 @@ static HRESULT RunQuery(
     rgdbpIndexProp[0].vValue.boolVal     = VARIANT_TRUE;
 
     tableID.eKind = DBKIND_NAME;
-    tableID.uName.pwszName = const_cast<WCHAR *>(pQuery->pTableSchema->sczName);
+    tableID.uName.pwszName = const_cast<WCHAR *>(pQuery->pTableSchema->wzName);
 
     indexID.eKind = DBKIND_NAME;
-    indexID.uName.pwszName = const_cast<WCHAR *>(pQuery->pIndexSchema->sczName);
+    indexID.uName.pwszName = const_cast<WCHAR *>(pQuery->pIndexSchema->wzName);
 
     hr = pQuery->pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, &indexID, IID_IRowsetIndex, _countof(rgdbpIndexPropSet), rgdbpIndexPropSet, (IUnknown**) &pIRowsetIndex);
     ExitOnFailure(hr, "Failed to open IRowsetIndex");
@@ -1259,11 +1329,8 @@ static HRESULT EnsureSchema(
 
     for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
     {
-        // Don't free this pointer - it's just a shortcut to the current table's name within the struct
-        LPCWSTR pwzTableName = pdsSchema->rgTables[dwTable].sczName;
-
         tableID.eKind = DBKIND_NAME;
-        tableID.uName.pwszName = const_cast<WCHAR *>(pwzTableName);
+        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
 
         // First try to open the table - or if it doesn't exist, create it
         hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
@@ -1277,7 +1344,7 @@ static HRESULT EnsureSchema(
             for (DWORD i = 0; i < pdsSchema->rgTables[dwTable].cColumns; ++i)
             {
                 rgColumnDescriptions[i].dbcid.eKind = DBKIND_NAME;
-                rgColumnDescriptions[i].dbcid.uName.pwszName = (WCHAR *)pdsSchema->rgTables[dwTable].rgColumns[i].sczName;
+                rgColumnDescriptions[i].dbcid.uName.pwszName = (WCHAR *)pdsSchema->rgTables[dwTable].rgColumns[i].wzName;
                 rgColumnDescriptions[i].wType = pdsSchema->rgTables[dwTable].rgColumns[i].dbtColumnType;
                 rgColumnDescriptions[i].ulColumnSize = pdsSchema->rgTables[dwTable].rgColumns[i].dwLength;
                 if (0 == rgColumnDescriptions[i].ulColumnSize && (DBTYPE_WSTR == rgColumnDescriptions[i].wType || DBTYPE_BYTES == rgColumnDescriptions[i].wType))
@@ -1338,8 +1405,11 @@ static HRESULT EnsureSchema(
                 }
             }
 
-            hr = pTableDefinition->CreateTable(NULL, &tableID, pdsSchema->rgTables[dwTable].cColumns, rgColumnDescriptions, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, NULL, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
-            ExitOnFailure1(hr, "Failed to create table: %ls", pdsSchema->rgTables[dwTable].sczName);
+            hr = pTableDefinition->CreateTable(NULL, &tableID, pdsSchema->rgTables[dwTable].cColumns, rgColumnDescriptions, IID_IUnknown, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, NULL, NULL);
+            ExitOnFailure1(hr, "Failed to create table: %ls", pdsSchema->rgTables[dwTable].wzName);
+
+            hr = EnsureLocalColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
+            ExitOnFailure1(hr, "Failed to ensure local column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
 
             for (DWORD i = 0; i < pdsSchema->rgTables[dwTable].cColumns; ++i)
             {
@@ -1355,18 +1425,18 @@ static HRESULT EnsureSchema(
         else
         {
             ExitOnFailure(hr, "Failed to open table while ensuring schema");
+
+            // Close any rowset we opened
+            ReleaseNullObject(pdsSchema->rgTables[dwTable].pIRowset);
         }
 
         if (0 < pdsSchema->rgTables[dwTable].cIndexes)
         {
-            // Can't create an index while the table is open
-            ReleaseNullObject(pdsSchema->rgTables[dwTable].pIRowset);
-
             // Now create indexes for the table
             for (DWORD dwIndex = 0; dwIndex < pdsSchema->rgTables[dwTable].cIndexes; ++dwIndex)
             {
                 indexID.eKind = DBKIND_NAME;
-                indexID.uName.pwszName = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].sczName;
+                indexID.uName.pwszName = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].wzName;
 
                 rgIndexColumnDescriptions = reinterpret_cast<DBINDEXCOLUMNDESC *>(MemAlloc(sizeof(DBINDEXCOLUMNDESC) * pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns, TRUE));
                 ExitOnNull(rgIndexColumnDescriptions, hr, E_OUTOFMEMORY, "Failed to allocate structure to hold index column descriptions");
@@ -1376,7 +1446,7 @@ static HRESULT EnsureSchema(
                 {
                     rgIndexColumnDescriptions[dwColumnIndex].pColumnID = reinterpret_cast<DBID *>(MemAlloc(sizeof(DBID), TRUE));
                     rgIndexColumnDescriptions[dwColumnIndex].pColumnID->eKind = DBKIND_NAME;
-                    rgIndexColumnDescriptions[dwColumnIndex].pColumnID->uName.pwszName = const_cast<LPOLESTR>(pdsSchema->rgTables[dwTable].rgColumns[pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].rgColumns[dwColumnIndex]].sczName);
+                    rgIndexColumnDescriptions[dwColumnIndex].pColumnID->uName.pwszName = const_cast<LPOLESTR>(pdsSchema->rgTables[dwTable].rgColumns[pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].rgColumns[dwColumnIndex]].wzName);
                     rgIndexColumnDescriptions[dwColumnIndex].eIndexColOrder = DBINDEX_COL_ORDER_ASC;
                 }
 
@@ -1386,7 +1456,7 @@ static HRESULT EnsureSchema(
                     // If the index already exists, no worries
                     hr = S_OK;
                 }
-                ExitOnFailure2(hr, "Failed to create index named %ls into table named %ls", pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].sczName, pwzTableName);
+                ExitOnFailure2(hr, "Failed to create index named %ls into table named %ls", pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].wzName, pdsSchema->rgTables[dwTable].wzName);
 
                 for (DWORD i = 0; i < cIndexColumnDescriptions; ++i)
                 {
@@ -1396,18 +1466,37 @@ static HRESULT EnsureSchema(
                 cIndexColumnDescriptions = 0;
                 ReleaseNullMem(rgIndexColumnDescriptions);
             }
-
-            hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
-            ExitOnFailure(hr, "Failed to re-open table after ensuring all indexes are created");
         }
+    }
 
-        hr = pdsSchema->rgTables[dwTable].pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pdsSchema->rgTables[dwTable].pIRowsetChange));
-        ExitOnFailure1(hr, "Failed to get IRowsetChange object for table: %ls", pdsSchema->rgTables[dwTable].sczName);
+    // Now once all tables have been created, create foreign key relationships
+    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
+    {
+        tableID.eKind = DBKIND_NAME;
+        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
+
+        // Setup any constraints for the table's columns
+        hr = EnsureForeignColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
+        ExitOnFailure1(hr, "Failed to ensure foreign column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
     }
 
     hr = SceCommitTransaction(pDatabase);
     ExitOnFailure(hr, "Failed to commit transaction for ensuring schema");
     fInTransaction = FALSE;
+
+    // Finally, open all tables
+    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
+    {
+        tableID.eKind = DBKIND_NAME;
+        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
+
+        // And finally, open the table's standard interfaces
+        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
+        ExitOnFailure(hr, "Failed to re-open table after ensuring all indexes and constraints are created");
+
+        hr = pdsSchema->rgTables[dwTable].pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pdsSchema->rgTables[dwTable].pIRowsetChange));
+        ExitOnFailure1(hr, "Failed to get IRowsetChange object for table: %ls", pdsSchema->rgTables[dwTable].wzName);
+    }
 
 
 LExit:
@@ -1431,9 +1520,9 @@ LExit:
 }
 
 static HRESULT SetColumnValue(
-    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in const SCE_TABLE_SCHEMA *pTableSchema,
     __in DWORD dwColumnIndex,
-    __in const BYTE *pbData,
+    __in_bcount_opt(cbSize) const BYTE *pbData,
     __in SIZE_T cbSize,
     __inout DBBINDING *pBinding,
     __inout SIZE_T *cbOffset,
@@ -1481,7 +1570,7 @@ static HRESULT GetColumnValue(
     )
 {
     HRESULT hr = S_OK;
-    SCE_TABLE_SCHEMA *pTable = pRow->pTableSchema;
+    const SCE_TABLE_SCHEMA *pTable = pRow->pTableSchema;
     IAccessor *pIAccessor = NULL;
     HACCESSOR hAccessorLength = DB_NULL_HACCESSOR;
     HACCESSOR hAccessorValue = DB_NULL_HACCESSOR;
@@ -1569,7 +1658,7 @@ static HRESULT GetColumnValueFixed(
     )
 {
     HRESULT hr = S_OK;
-    SCE_TABLE_SCHEMA *pTable = pRow->pTableSchema;
+    const SCE_TABLE_SCHEMA *pTable = pRow->pTableSchema;
     IAccessor *pIAccessor = NULL;
     HACCESSOR hAccessorLength = DB_NULL_HACCESSOR;
     HACCESSOR hAccessorValue = DB_NULL_HACCESSOR;
@@ -1627,6 +1716,140 @@ LExit:
         pIAccessor->ReleaseAccessor(hAccessorValue, NULL);
     }
     ReleaseObject(pIAccessor);
+
+    return hr;
+}
+
+static HRESULT EnsureLocalColumnConstraints(
+    __in ITableDefinition *pTableDefinition,
+    __in DBID *pTableID,
+    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_COLUMN_SCHEMA *pCurrentColumn = NULL;
+    DBCONSTRAINTDESC dbcdConstraint = { };
+    DBID dbConstraintID = { };
+    DBID dbLocalColumnID = { };
+    DBID dbForeignTableID = { };
+    DBID dbForeignColumnID = { };
+    ITableDefinitionWithConstraints *pTableDefinitionWithConstraints = NULL;
+
+    hr = pTableDefinition->QueryInterface(IID_ITableDefinitionWithConstraints, reinterpret_cast<void **>(&pTableDefinitionWithConstraints));
+    ExitOnFailure(hr, "Failed to query for ITableDefinitionWithConstraints interface in order to create column constraints");
+
+    for (DWORD i = 0; i < pTableSchema->cColumns; ++i)
+    {
+        pCurrentColumn = pTableSchema->rgColumns + i;
+
+        // Add a primary key constraint for this column, if one exists
+        if (pCurrentColumn->fPrimaryKey)
+        {
+            // Setup DBID for new constraint
+            dbConstraintID.eKind = DBKIND_NAME;
+            dbConstraintID.uName.pwszName = const_cast<LPOLESTR>(L"PrimaryKey");
+            dbcdConstraint.pConstraintID = &dbConstraintID;
+
+            dbcdConstraint.ConstraintType = DBCONSTRAINTTYPE_PRIMARYKEY;
+
+            dbLocalColumnID.eKind = DBKIND_NAME;
+            dbLocalColumnID.uName.pwszName = const_cast<LPOLESTR>(pCurrentColumn->wzName);
+            dbcdConstraint.cColumns = 1;
+            dbcdConstraint.rgColumnList = &dbLocalColumnID;
+
+            dbcdConstraint.pReferencedTableID = NULL;
+            dbcdConstraint.cForeignKeyColumns = 0;
+            dbcdConstraint.rgForeignKeyColumnList = NULL;
+            dbcdConstraint.pwszConstraintText = NULL;
+            dbcdConstraint.UpdateRule = DBUPDELRULE_NOACTION;
+            dbcdConstraint.DeleteRule = DBUPDELRULE_NOACTION;
+            dbcdConstraint.MatchType = DBMATCHTYPE_NONE;
+            dbcdConstraint.Deferrability = 0;
+            dbcdConstraint.cReserved = 0;
+            dbcdConstraint.rgReserved = NULL;
+
+            hr = pTableDefinitionWithConstraints->AddConstraint(pTableID, &dbcdConstraint);
+            if (DB_E_DUPLICATECONSTRAINTID == hr)
+            {
+                hr = S_OK;
+            }
+            ExitOnFailure2(hr, "Failed to add primary key constraint for column %ls, table %ls", pCurrentColumn->wzName, pTableSchema->wzName);
+        }
+    }
+
+LExit:
+    ReleaseObject(pTableDefinitionWithConstraints);
+
+    return hr;
+}
+
+static HRESULT EnsureForeignColumnConstraints(
+    __in ITableDefinition *pTableDefinition,
+    __in DBID *pTableID,
+    __in SCE_TABLE_SCHEMA *pTableSchema,
+    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_COLUMN_SCHEMA *pCurrentColumn = NULL;
+    DBCONSTRAINTDESC dbcdConstraint = { };
+    DBID dbConstraintID = { };
+    DBID dbLocalColumnID = { };
+    DBID dbForeignTableID = { };
+    DBID dbForeignColumnID = { };
+    ITableDefinitionWithConstraints *pTableDefinitionWithConstraints = NULL;
+
+    hr = pTableDefinition->QueryInterface(IID_ITableDefinitionWithConstraints, reinterpret_cast<void **>(&pTableDefinitionWithConstraints));
+    ExitOnFailure(hr, "Failed to query for ITableDefinitionWithConstraints interface in order to create column constraints");
+
+    for (DWORD i = 0; i < pTableSchema->cColumns; ++i)
+    {
+        pCurrentColumn = pTableSchema->rgColumns + i;
+
+        // Add a foreign key constraint for this column, if one exists
+        if (NULL != pCurrentColumn->wzRelationName)
+        {
+            // Setup DBID for new constraint
+            dbConstraintID.eKind = DBKIND_NAME;
+            dbConstraintID.uName.pwszName = const_cast<LPOLESTR>(pCurrentColumn->wzRelationName);
+            dbcdConstraint.pConstraintID = &dbConstraintID;
+
+            dbcdConstraint.ConstraintType = DBCONSTRAINTTYPE_FOREIGNKEY;
+
+            dbForeignColumnID.eKind = DBKIND_NAME;
+            dbForeignColumnID.uName.pwszName = const_cast<LPOLESTR>(pDatabaseSchema->rgTables[pCurrentColumn->dwForeignKeyTable].rgColumns[pCurrentColumn->dwForeignKeyColumn].wzName);
+            dbcdConstraint.cColumns = 1;
+            dbcdConstraint.rgColumnList = &dbForeignColumnID;
+
+            dbForeignTableID.eKind = DBKIND_NAME;
+            dbForeignTableID.uName.pwszName = const_cast<LPOLESTR>(pDatabaseSchema->rgTables[pCurrentColumn->dwForeignKeyTable].wzName);
+            dbcdConstraint.pReferencedTableID = &dbForeignTableID;
+
+            dbLocalColumnID.eKind = DBKIND_NAME;
+            dbLocalColumnID.uName.pwszName = const_cast<LPOLESTR>(pCurrentColumn->wzName);
+            dbcdConstraint.cForeignKeyColumns = 1;
+            dbcdConstraint.rgForeignKeyColumnList = &dbLocalColumnID;
+
+            dbcdConstraint.pwszConstraintText = NULL;
+            dbcdConstraint.UpdateRule = DBUPDELRULE_NOACTION;
+            dbcdConstraint.DeleteRule = DBUPDELRULE_NOACTION;
+            dbcdConstraint.MatchType = DBMATCHTYPE_FULL;
+            dbcdConstraint.Deferrability = 0;
+            dbcdConstraint.cReserved = 0;
+            dbcdConstraint.rgReserved = NULL;
+
+            hr = pTableDefinitionWithConstraints->AddConstraint(pTableID, &dbcdConstraint);
+            if (DB_E_DUPLICATECONSTRAINTID == hr)
+            {
+                hr = S_OK;
+            }
+            ExitOnFailure2(hr, "Failed to add constraint named: %ls to table: %ls", pCurrentColumn->wzRelationName, pTableSchema->wzName);
+        }
+    }
+
+LExit:
+    ReleaseObject(pTableDefinitionWithConstraints);
 
     return hr;
 }

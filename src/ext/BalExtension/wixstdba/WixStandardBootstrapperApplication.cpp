@@ -321,7 +321,7 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnError(
-        __in LPCWSTR /*wzPackageId*/,
+        __in LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR wzError,
         __in DWORD dwUIHint
@@ -339,11 +339,13 @@ public: // IBootstrapperApplication
         }
         else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
+            BalRetryOnError(wzPackageId, dwCode);
+
             nResult = ::MessageBoxW(m_hWnd, wzError, m_pTheme->sczCaption, dwUIHint);
         }
-        else // just cancel when quiet or passive.
+        else // just take note of the error code and let things continue.
         {
-            nResult = IDABORT;
+            BalRetryOnError(wzPackageId, dwCode);
         }
 
         return nResult;
@@ -379,9 +381,14 @@ public: // IBootstrapperApplication
 
     virtual STDMETHODIMP_(int) OnExecutePackageBegin(
         __in_z LPCWSTR wzPackageId,
-        __in BOOL /*fExecute*/
+        __in BOOL fExecute
         )
     {
+        if (fExecute)
+        {
+            BalRetryStartPackage(wzPackageId);
+        }
+
         if (wzPackageId && *wzPackageId)
         {
             m_pEngine->SetVariableString(WIXSTDBA_VARIABLE_PROGRESS_PACKAGE_NAME, wzPackageId);
@@ -1421,7 +1428,7 @@ public:
         __in HMODULE hModule,
         __in IBootstrapperEngine* pEngine,
         __in const BOOTSTRAPPER_COMMAND* pCommand
-        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart)
+        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart, 3, 3000)
     {
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));
