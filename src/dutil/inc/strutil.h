@@ -35,14 +35,14 @@ HRESULT DAPI StrAlloc(
     __in DWORD_PTR cch
     );
 HRESULT DAPI StrTrimCapacity(
-    __deref_out LPWSTR* ppwz
+    __deref_out_z LPWSTR* ppwz
     );
 HRESULT DAPI StrAnsiAlloc(
     __deref_out_ecount_part(cch, 0) LPSTR* ppz,
     __in DWORD_PTR cch
     );
 HRESULT DAPI StrAnsiTrimCapacity(
-    __deref_out LPSTR* ppz
+    __deref_out_z LPSTR* ppz
     );
 HRESULT DAPI StrAllocString(
     __deref_out_ecount_z(cchSource+1) LPWSTR* ppwz,
@@ -152,7 +152,7 @@ HRESULT DAPI StrAllocHexDecode(
     );
 
 HRESULT DAPI StrAllocBase85Encode(
-    __in_bcount(cbSource) const BYTE* pbSource,
+    __in_bcount_opt(cbSource) const BYTE* pbSource,
     __in DWORD_PTR cbSource,
     __deref_out_z LPWSTR* pwzDest
     );
@@ -163,28 +163,28 @@ HRESULT DAPI StrAllocBase85Decode(
     );
 
 HRESULT DAPI MultiSzLen(
-    __in_z LPCWSTR pwzMultiSz,
+    __in_ecount(*pcch) __nullnullterminated LPCWSTR pwzMultiSz,
     __out DWORD_PTR* pcch
     );
 HRESULT DAPI MultiSzPrepend(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout_ecount(*pcchMultiSz) __nullnullterminated LPWSTR* ppwzMultiSz,
     __inout_opt DWORD_PTR *pcchMultiSz,
-    __in_z LPCWSTR pwzInsert
+    __in __nullnullterminated LPCWSTR pwzInsert
     );
 HRESULT DAPI MultiSzFindSubstring(
-    __in_z LPCWSTR pwzMultiSz,
-    __in_z LPCWSTR pwzSubstring,
+    __in __nullnullterminated LPCWSTR pwzMultiSz,
+    __in __nullnullterminated LPCWSTR pwzSubstring,
     __out_opt DWORD_PTR* pdwIndex,
     __deref_opt_out_z LPCWSTR* ppwzFoundIn
     );
 HRESULT DAPI MultiSzFindString(
-    __in_z LPCWSTR pwzMultiSz,
-    __in_z LPCWSTR pwzString,
+    __in __nullnullterminated LPCWSTR pwzMultiSz,
+    __in __nullnullterminated LPCWSTR pwzString,
     __out_opt DWORD_PTR* pdwIndex,
-    __deref_opt_out_z LPCWSTR* ppwzFound
+    __deref_opt_out __nullnullterminated LPCWSTR* ppwzFound
     );
 HRESULT DAPI MultiSzRemoveString(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout __nullnullterminated LPWSTR* ppwzMultiSz,
     __in DWORD_PTR dwIndex
     );
 HRESULT DAPI MultiSzInsertString(
@@ -194,7 +194,7 @@ HRESULT DAPI MultiSzInsertString(
     __in_z LPCWSTR pwzInsert
     );
 HRESULT DAPI MultiSzReplaceString(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout __nullnullterminated LPWSTR* ppwzMultiSz,
     __in DWORD_PTR dwIndex,
     __in_z LPCWSTR pwzString
     );
@@ -240,9 +240,19 @@ void DAPI StrStringToUpper(
 void DAPI StrStringToLower(
     __inout_z LPWSTR wzIn
     );
+HRESULT DAPI StrAllocStringToUpperInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource
+    );
+HRESULT DAPI StrAllocStringToLowerInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource
+    );
 
 HRESULT DAPI StrArrayAllocString(
-    __deref_inout_ecount(*pcStrArray) LPWSTR **prgsczStrArray,
+    __deref_inout_ecount_opt(*pcStrArray) LPWSTR **prgsczStrArray,
     __inout LPUINT pcStrArray,
     __in_z LPCWSTR wzSource,
     __in DWORD_PTR cchSource
@@ -251,6 +261,13 @@ HRESULT DAPI StrArrayAllocString(
 HRESULT DAPI StrArrayFree(
     __in_ecount(cStrArray) LPWSTR *rgsczStrArray,
     __in UINT cStrArray
+    );
+
+HRESULT DAPI StrSplitAllocArray(
+    __deref_inout_ecount_opt(*pcStrArray) LPWSTR **prgsczStrArray,
+    __inout LPUINT pcStrArray,
+    __in_z LPCWSTR wzSource,
+    __in_z LPCWSTR wzDelim
     );
 
 #ifdef __cplusplus

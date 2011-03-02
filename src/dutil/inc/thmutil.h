@@ -193,7 +193,7 @@ struct THEME
 
 *******************************************************************/
 DAPI_(HRESULT) ThemeInitialize(
-    __in HMODULE hModule
+    __in_opt HMODULE hModule
     );
 
 /********************************************************************
@@ -237,7 +237,7 @@ DAPI_(void) ThemeFree(
 DAPI_(HRESULT) ThemeLoadControls(
     __in THEME* pTheme,
     __in HWND hwndParent,
-    __in_ecount_opt(cAssignControlIds) THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
+    __in_ecount_opt(cAssignControlIds) const THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
     __in DWORD cAssignControlIds
     );
 
@@ -301,6 +301,17 @@ DAPI_(HRESULT) ThemeLoadRichEditFromResource(
     );
 
 /********************************************************************
+ ThemeLoadRichEditFromResourceToHWnd - Attach a richedit control (by 
+                                       HWND) to resource data.
+
+ *******************************************************************/
+DAPI_(HRESULT) ThemeLoadRichEditFromResourceToHWnd(
+    __in HWND hWnd,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    );
+
+/********************************************************************
  ThemeTranslateAccelerator - will translate the message using the active
                              accelerator table.
 
@@ -328,7 +339,7 @@ LRESULT CALLBACK ThemeDefWindowProc(
 
 *******************************************************************/
 DAPI_(void) ThemeGetPageIds(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in_ecount(cGetPages) LPCWSTR* rgwzFindNames,
     __in_ecount(cGetPages) DWORD* rgdwPageIds,
     __in DWORD cGetPages
@@ -339,7 +350,7 @@ DAPI_(void) ThemeGetPageIds(
 
  *******************************************************************/
 DAPI_(THEME_PAGE*) ThemeGetPage(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwPage
     );
 
@@ -348,7 +359,7 @@ DAPI_(THEME_PAGE*) ThemeGetPage(
 
  *******************************************************************/
 DAPI_(void) ThemeShowPage(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
     );
@@ -456,7 +467,7 @@ DAPI_(BOOL) ThemeSetControlColor(
        will be the start image.
 *******************************************************************/
 DAPI_(HRESULT) ThemeStartBillboard(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl,
     __in WORD iImage
     );
@@ -466,7 +477,7 @@ DAPI_(HRESULT) ThemeStartBillboard(
 
 *******************************************************************/
 DAPI_(HRESULT) ThemeStopBillboard(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl
     );
 

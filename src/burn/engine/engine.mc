@@ -95,6 +95,20 @@ Language=English
 Detected related package: %1!ls!, scope: %2, version: %3, operation: %4
 .
 
+MessageId=104
+Severity=Success
+SymbolicName=MSG_DETECTED_MSI_FEATURE
+Language=English
+Detected feature: %1!ls!, state: %2
+.
+
+MessageId=105
+Severity=Success
+SymbolicName=MSG_DETECT_MSI_FEATURES
+Language=English
+Detect %1!u! msi features for package: %2!ls!
+.
+
 MessageId=151
 Severity=Error
 SymbolicName=MSG_FAILED_DETECT_PACKAGE
@@ -128,6 +142,20 @@ Severity=Success
 SymbolicName=MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST
 Language=English
 Planned bundle: %1!ls!, UX requested state: %2 over default: %3
+.
+
+MessageId=203
+Severity=Success
+SymbolicName=MSG_PLANNED_MSI_FEATURE
+Language=English
+Planned feature: %1!ls!, state: %2, requested: %3, execute action: %4, rollback action: %5
+.
+
+MessageId=204
+Severity=Success
+SymbolicName=MSG_PLAN_MSI_FEATURES
+Language=English
+Plan %1!u! msi features for package: %2!ls!
 .
 
 MessageId=299

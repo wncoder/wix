@@ -323,7 +323,10 @@ extern "C" HRESULT DAPI RegKeyEnum(
     ExitOnWin32Error(er, hr, "Failed to enum registry key.");
 
     // Always ensure the registry key name is null terminated.
+#pragma prefast(push)
+#pragma prefast(disable:26018)
     (*psczKey)[cch] = L'\0'; // note that cch will always be one less than the size of the buffer because that's how RegEnumKeyExW() works.
+#pragma prefast(pop)
 
 LExit:
     return hr;
@@ -373,7 +376,7 @@ LExit:
 HRESULT DAPI RegReadBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __deref_out_bcount(*pcbBuffer) BYTE** ppbBuffer,
+    __deref_out_bcount_opt(*pcbBuffer) BYTE** ppbBuffer,
     __out DWORD *pcbBuffer
      )
 {
@@ -500,7 +503,7 @@ LExit:
 HRESULT DAPI RegReadStringArray(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __deref_out_ecount(pcStrings) LPWSTR** prgsczStrings,
+    __deref_out_ecount_opt(pcStrings) LPWSTR** prgsczStrings,
     __out DWORD *pcStrings
     )
 {
@@ -510,7 +513,7 @@ HRESULT DAPI RegReadStringArray(
     DWORD dwType = 0;
     DWORD cb = 0;
     DWORD cch = 0;
-    LPWSTR wzSource = NULL;
+    LPCWSTR wzSource = NULL;
     LPWSTR sczValue = NULL;
 
     er = vpfnRegQueryValueExW(hk, wzName, NULL, &dwType, reinterpret_cast<LPBYTE>(sczValue), &cb);
@@ -527,6 +530,12 @@ HRESULT DAPI RegReadStringArray(
         ExitFunction1(hr = E_FILENOTFOUND);
     }
     ExitOnWin32Error(er, hr, "Failed to read registry key.");
+
+    if (cb / sizeof(WCHAR) != cch)
+    {
+        hr = E_UNEXPECTED;
+        ExitOnFailure1(hr, "The size of registry value %ls unexpected changed between 2 reads", wzName);
+    }
 
     if (REG_MULTI_SZ != dwType)
     {
@@ -563,6 +572,8 @@ HRESULT DAPI RegReadStringArray(
     hr = MemEnsureArraySize(reinterpret_cast<LPVOID *>(prgsczStrings), *pcStrings, sizeof(LPWSTR), 0);
     ExitOnFailure(hr, "Failed to resize array while reading REG_MULTI_SZ value");
 
+#pragma prefast(push)
+#pragma prefast(disable:26010)
     wzSource = sczValue;
     for (DWORD i = 0; i < *pcStrings; ++i)
     {
@@ -572,6 +583,7 @@ HRESULT DAPI RegReadStringArray(
         // Skip past this string
         wzSource += lstrlenW(wzSource) + 1;
     }
+#pragma prefast(pop)
 
 LExit:
     ReleaseStr(sczValue);
@@ -700,7 +712,7 @@ LExit:
 HRESULT DAPI RegWriteBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __in_bcount(cBuffer) BYTE *pbBuffer,
+    __in_bcount(cBuffer) const BYTE *pbBuffer,
     __in DWORD cbBuffer
     )
 {
@@ -723,7 +735,7 @@ LExit:
 extern "C" HRESULT DAPI RegWriteString(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __in_z_opt LPWSTR wzValue
+    __in_z_opt LPCWSTR wzValue
     )
 {
     HRESULT hr = S_OK;
@@ -735,7 +747,7 @@ extern "C" HRESULT DAPI RegWriteString(
         hr = ::StringCbLengthW(wzValue, DWORD_MAX, reinterpret_cast<size_t*>(&cbValue));
         ExitOnFailure1(hr, "Failed to determine length of registry value: %ls", wzName);
 
-        er = vpfnRegSetValueExW(hk, wzName, 0, REG_SZ, reinterpret_cast<PBYTE>(wzValue), cbValue);
+        er = vpfnRegSetValueExW(hk, wzName, 0, REG_SZ, reinterpret_cast<const BYTE *>(wzValue), cbValue);
         ExitOnWin32Error1(er, hr, "Failed to set registry value: %ls", wzName);
     }
     else
@@ -796,7 +808,7 @@ HRESULT DAPI RegWriteStringArray(
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
     LPWSTR wzCopyDestination = NULL;
-    LPWSTR wzWriteValue = NULL;
+    LPCWSTR wzWriteValue = NULL;
     LPWSTR sczWriteValue = NULL;
     DWORD dwTotalStringSize = 0;
     DWORD cbTotalStringSize = 0;
@@ -838,7 +850,7 @@ HRESULT DAPI RegWriteStringArray(
     hr = ::DWordMult(dwTotalStringSize, sizeof(WCHAR), &cbTotalStringSize);
     ExitOnFailure(hr, "Failed to get total string size in bytes");
 
-    er = vpfnRegSetValueExW(hk, wzName, 0, REG_MULTI_SZ, reinterpret_cast<PBYTE>(wzWriteValue), cbTotalStringSize);
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_MULTI_SZ, reinterpret_cast<const BYTE *>(wzWriteValue), cbTotalStringSize);
     ExitOnWin32Error1(er, hr, "Failed to set registry value to array of strings (first string of which is): %ls", wzWriteValue);
 
 LExit:
@@ -860,7 +872,7 @@ extern "C" HRESULT DAPI RegWriteNumber(
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
 
-    er = vpfnRegSetValueExW(hk, wzName, 0, REG_DWORD, reinterpret_cast<PBYTE>(&dwValue), sizeof(dwValue));
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_DWORD, reinterpret_cast<const BYTE *>(&dwValue), sizeof(dwValue));
     ExitOnWin32Error1(er, hr, "Failed to set %ls value.", wzName);
 
 LExit:
@@ -880,7 +892,7 @@ extern "C" HRESULT DAPI RegWriteQword(
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
 
-    er = vpfnRegSetValueExW(hk, wzName, 0, REG_QWORD, reinterpret_cast<PBYTE>(&qwValue), sizeof(qwValue));
+    er = vpfnRegSetValueExW(hk, wzName, 0, REG_QWORD, reinterpret_cast<const BYTE *>(&qwValue), sizeof(qwValue));
     ExitOnWin32Error1(er, hr, "Failed to set %ls value.", wzName);
 
 LExit:

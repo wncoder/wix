@@ -157,6 +157,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 case "WixMedia":
                     row = new WixMediaRow(sourceLineNumbers, this);
                     break;
+                case "WixMediaTemplate":
+                    row = new WixMediaTemplateRow(sourceLineNumbers, this);
+                    break;
                 case "WixMerge":
                     row = new WixMergeRow(sourceLineNumbers, this);
                     break;

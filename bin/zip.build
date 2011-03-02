@@ -277,6 +277,7 @@
         <include name="${dir.inc.burn}\IBootstrapperApplication.h" />
         <include name="${dir.inc.balutil}\BalBaseBootstrapperApplication.h" />
         <include name="${dir.inc.balutil}\balcondition.h" />
+        <include name="${dir.inc.balutil}\balretry.h" />
         <include name="${dir.inc.balutil}\balutil.h" />
         <include name="${dir.inc.dutil}\aclutil.h" />
         <include name="${dir.inc.dutil}\apuputil.h" />

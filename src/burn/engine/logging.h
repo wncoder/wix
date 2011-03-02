@@ -93,6 +93,14 @@ LPCSTR LoggingPackageStateToString(
     __in BOOTSTRAPPER_PACKAGE_STATE packageState
     );
 
+LPCSTR LoggingMsiFeatureStateToString(
+    __in BOOTSTRAPPER_FEATURE_STATE featureState
+    );
+
+LPCSTR LoggingMsiFeatureActionToString(
+    __in BOOTSTRAPPER_FEATURE_ACTION featureAction
+    );
+
 LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
     );

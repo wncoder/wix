@@ -1309,11 +1309,11 @@ static HRESULT ExecuteExePackage(
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->exePackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute EXE package begin.");
 
     nResult = GenericExecuteProgress(pContext, fRollback ? 2 : 0, 2);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
     // Execute package. Per-machine packages that are not Burn based get elevated. Per-user packages don't need
@@ -1330,7 +1330,7 @@ static HRESULT ExecuteExePackage(
     }
 
     nResult = GenericExecuteProgress(pContext, fRollback ? 0 : 2, 2);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
     pContext->cExecutedPackages += fRollback ? -1 : 1;
@@ -1362,7 +1362,7 @@ static HRESULT ExecuteMsiPackage(
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->msiPackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute MSI package begin.");
 
     // execute package
@@ -1406,7 +1406,7 @@ static HRESULT ExecuteMspPackage(
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->mspTarget.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute MSP package begin.");
 
     // execute package
@@ -1450,11 +1450,11 @@ static HRESULT ExecuteMsuPackage(
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->msuPackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute MSU package begin.");
 
     nResult = GenericExecuteProgress(pContext, fRollback ? 2 : 0, 2);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
     // execute package
@@ -1470,7 +1470,7 @@ static HRESULT ExecuteMsuPackage(
     }
 
     nResult = GenericExecuteProgress(pContext, fRollback ? 0 : 2, 2);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
     pContext->cExecutedPackages += fRollback ? -1 : 1;

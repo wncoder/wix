@@ -36,7 +36,7 @@ HRESULT DAPI TimeCurrentDateTime(
     );
 HRESULT DAPI TimeSystemDateTime(
     __deref_out_z LPWSTR* ppwz,
-    __in SYSTEMTIME *pst,
+    __in const SYSTEMTIME *pst,
     __in BOOL fGMT
     );
 

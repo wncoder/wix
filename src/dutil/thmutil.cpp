@@ -54,7 +54,7 @@ static HRESULT ParseTheme(
     );
 static HRESULT LocalizeTheme(
     __in THEME *pTheme,
-    __in LOC_STRINGSET *pLocStringSet
+    __in const LOC_STRINGSET *pLocStringSet
     );
 static HRESULT ParseImage(
     __in_opt HMODULE hModule,
@@ -115,7 +115,7 @@ static HRESULT ParseTabs(
     );
 static HRESULT FindImageList(
     __in THEME* pTheme,
-    __in_z LPWSTR wzImageListName,
+    __in_z LPCWSTR wzImageListName,
     __out HIMAGELIST *phImageList
     );
 static HRESULT DrawBillboard(
@@ -149,13 +149,13 @@ static BOOL DrawHoverControl(
     );
 static DWORD CALLBACK RichEditStreamFromFileHandleCallback(
     __in DWORD_PTR dwCookie,
-    __in LPBYTE pbBuff,
+    __in_bcount(cb) LPBYTE pbBuff,
     __in LONG cb,
     __in LONG *pcb
     );
 static DWORD CALLBACK RichEditStreamFromMemoryCallback(
     __in DWORD_PTR dwCookie,
-    __in LPBYTE pbBuff,
+    __in_bcount(cb) LPBYTE pbBuff,
     __in LONG cb,
     __in LONG *pcb
     );
@@ -189,7 +189,7 @@ static void FreeTab(
 
 
 DAPI_(HRESULT) ThemeInitialize(
-    __in HMODULE hModule
+    __in_opt HMODULE hModule
     )
 {
     HRESULT hr = S_OK;
@@ -206,7 +206,10 @@ DAPI_(HRESULT) ThemeInitialize(
     }
 
     wcHyperlink.lpszClassName = THEME_WC_HYPERLINK;
-    wcHyperlink.hCursor = ::LoadCursor(NULL, IDC_HAND);
+#pragma prefast(push)
+#pragma prefast(disable:25068)
+    wcHyperlink.hCursor = ::LoadCursorA(NULL, IDC_HAND);
+#pragma prefast(pop)
 
     if (!::RegisterClassW(&wcHyperlink))
     {
@@ -296,6 +299,9 @@ DAPI_(HRESULT) ThemeLoadFromResource(
     hr = ResReadData(hModule, szResource, &pvResource, &cbResource);
     ExitOnFailure(hr, "Failed to read theme from resource.");
 
+    // Ensure returned resource buffer is null-terminated
+    reinterpret_cast<BYTE *>(pvResource)[cbResource - 1] = '\0';
+
     hr = StrAllocStringAnsi(&sczXml, reinterpret_cast<LPCSTR>(pvResource), cbResource, CP_UTF8);
     ExitOnFailure(hr, "Failed to convert XML document data from UTF-8 to unicode string.");
 
@@ -357,7 +363,7 @@ DAPI_(void) ThemeFree(
 DAPI_(HRESULT) ThemeLoadControls(
     __in THEME* pTheme,
     __in HWND hwndParent,
-    __in_ecount_opt(cAssignControlIds) THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
+    __in_ecount_opt(cAssignControlIds) const THEME_ASSIGN_CONTROL_ID* rgAssignControlIds,
     __in DWORD cAssignControlIds
     )
 {
@@ -741,8 +747,17 @@ DAPI_(HRESULT) ThemeLoadRichEditFromResource(
     __in HMODULE hModule
     )
 {
-    HRESULT hr = S_OK;
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    return ThemeLoadRichEditFromResourceToHWnd(hWnd, szResourceName, hModule);
+}
+
+DAPI_(HRESULT) ThemeLoadRichEditFromResourceToHWnd(
+    __in HWND hWnd,
+    __in_z LPCSTR szResourceName,
+    __in HMODULE hModule
+    )
+{
+    HRESULT hr = S_OK;
     MEMBUFFER_FOR_RICHEDIT buffer = { };
     EDITSTREAM es = { };
 
@@ -842,7 +857,7 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
 
 
 DAPI_(void) ThemeGetPageIds(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in_ecount(cGetPages) LPCWSTR* rgwzFindNames,
     __inout_ecount(cGetPages) DWORD* rgdwPageIds,
     __in DWORD cGetPages
@@ -865,7 +880,7 @@ DAPI_(void) ThemeGetPageIds(
 
 
 DAPI_(THEME_PAGE*) ThemeGetPage(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwPage
     )
 {
@@ -882,7 +897,7 @@ DAPI_(THEME_PAGE*) ThemeGetPage(
 
 
 DAPI_(void) ThemeShowPage(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
     )
@@ -890,10 +905,10 @@ DAPI_(void) ThemeShowPage(
     DWORD iPage = dwPage - 1;
     if (iPage < pTheme->cPages)
     {
-        THEME_PAGE* pPage = pTheme->rgPages + iPage;
+        const THEME_PAGE* pPage = pTheme->rgPages + iPage;
         for (DWORD i = 0; i < pPage->cControlIndices; ++i)
         {
-            THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[i];
+            const THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[i];
             HWND hWnd = pControl->hWnd;
 
             if ((pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED) && !::IsWindowEnabled(hWnd))
@@ -930,7 +945,7 @@ DAPI_(BOOL) ThemeControlExists(
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
     if (hWnd)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
         fExists = (hWnd == pControl->hWnd);
     }
 
@@ -969,15 +984,16 @@ DAPI_(BOOL) ThemePostControlMessage(
     )
 {
     HRESULT hr = S_OK;
+    UINT er = ERROR_SUCCESS;
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
 
     if (!::PostMessageW(hWnd, Msg, wParam, lParam))
     {
-        hr = ::GetLastError();
-        hr = HRESULT_FROM_WIN32(hr);
+        er = ::GetLastError();
+        hr = HRESULT_FROM_WIN32(er);
     }
 
-    return hr;
+    return SUCCEEDED(hr);
 }
 
 
@@ -1024,7 +1040,7 @@ DAPI_(HRESULT) ThemeDrawControl(
     )
 {
     HRESULT hr = S_OK;
-    const THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA));
+    const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA));
 
     AssertSz(pControl->hWnd == pdis->hwndItem, "Expected control window to match owner draw window.");
     AssertSz(pControl->nWidth < 1 || pControl->nWidth == pdis->rcItem.right - pdis->rcItem.left, "Expected control window width to match owner draw window width.");
@@ -1119,7 +1135,7 @@ DAPI_(BOOL) ThemeSetControlColor(
     }
     else
     {
-        const THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
         pFont = (THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
     }
 
@@ -1144,7 +1160,7 @@ DAPI_(BOOL) ThemeSetControlColor(
 
 
 DAPI_(HRESULT) ThemeStartBillboard(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl,
     __in WORD iImage
     )
@@ -1175,7 +1191,7 @@ LExit:
 
 
 DAPI_(HRESULT) ThemeStopBillboard(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl
     )
 {
@@ -1184,7 +1200,7 @@ DAPI_(HRESULT) ThemeStopBillboard(
 
     if (hWnd)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
         if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
         {
             if (::KillTimer(pTheme->hwndParent, pControl->wId))
@@ -1449,7 +1465,7 @@ static HRESULT ParseImage(
     {
         iResourceId = wcstol(bstr, NULL, 10);
 
-        hr = GdipBitmapFromResource(hModule, reinterpret_cast<LPSTR>(MAKEINTRESOURCE(iResourceId)), &pBitmap);
+        hr = GdipBitmapFromResource(hModule, MAKEINTRESOURCE(iResourceId), &pBitmap);
         //// don't fail
     }
 
@@ -1504,7 +1520,7 @@ LExit:
 
 static HRESULT LocalizeTheme(
     __in THEME *pTheme,
-    __in LOC_STRINGSET *pLocStringSet
+    __in const LOC_STRINGSET *pLocStringSet
     )
 {
     HRESULT hr = S_OK;
@@ -1987,7 +2003,7 @@ static HRESULT ParseImageLists(
 
                 if (0 == i)
                 {
-                    ::GetObject(hBitmap, sizeof(BITMAP), &bm);
+                    ::GetObjectW(hBitmap, sizeof(BITMAP), &bm);
 
                     pTheme->rgImageLists[dwImageListIndex].hImageList = ImageList_Create(bm.bmWidth, bm.bmHeight, ILC_COLOR24, dwImageCount, 0);
                     ExitOnNullWithLastError(pTheme->rgImageLists[dwImageListIndex].hImageList, hr, "Failed to create image list");
@@ -2029,6 +2045,7 @@ static HRESULT ParseControls(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     IXMLDOMNodeList* pixnl = NULL;
     IXMLDOMNode* pixn = NULL;
     BSTR bstrType = NULL;
@@ -2061,21 +2078,30 @@ static HRESULT ParseControls(
 
     if (pPage)
     {
-        pPage->rgdwControlIndices = static_cast<DWORD*>(MemAlloc(sizeof(DWORD) * cNewControls, TRUE));
+        hr = ::SizeTMult(sizeof(DWORD), cNewControls, &cbAllocSize);
+        ExitOnFailure1(hr, "Overflow while calculating allocation size for %u control indices", cNewControls);
+
+        pPage->rgdwControlIndices = static_cast<DWORD*>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pPage->rgdwControlIndices, hr, E_OUTOFMEMORY, "Failed to allocate theme page controls.");
 
         pPage->cControlIndices = cNewControls;
     }
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pTheme->rgControls), pTheme->cControls, sizeof(THEME_CONTROL), cNewControls);
-    ExitOnFailure(hr, "Failed to allocate theme controls.");
-
     iControl = pTheme->cControls;
     pTheme->cControls += cNewControls;
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pTheme->rgControls), pTheme->cControls, sizeof(THEME_CONTROL), cNewControls);
+    ExitOnFailure(hr, "Failed to allocate theme controls.");
 
     while (S_OK == (hr = XmlNextElement(pixnl, &pixn, &bstrType)))
     {
         THEME_CONTROL_TYPE type = THEME_CONTROL_TYPE_UNKNOWN;
+
+        if (NULL == bstrType)
+        {
+            hr = E_UNEXPECTED;
+            ExitOnFailure(hr, "Null element encountered!");
+        }
 
         if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Billboard", -1))
         {
@@ -2568,6 +2594,7 @@ static HRESULT ParseBillboards(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     DWORD i = 0;
     IXMLDOMNodeList* pixnl = NULL;
     IXMLDOMNode* pixnChild = NULL;
@@ -2581,7 +2608,10 @@ static HRESULT ParseBillboards(
         hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cBillboards));
         ExitOnFailure(hr, "Failed to count the number of billboard images.");
 
-        pControl->ptbBillboards = static_cast<THEME_BILLBOARD*>(MemAlloc(sizeof(THEME_BILLBOARD) * pControl->cBillboards, TRUE));
+        hr = ::SizeTMult(sizeof(THEME_BILLBOARD), pControl->cBillboards, &cbAllocSize);
+        ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_BILLBOARD structs", pControl->cBillboards);
+
+        pControl->ptbBillboards = static_cast<THEME_BILLBOARD*>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pControl->ptbBillboards, hr, E_OUTOFMEMORY, "Failed to allocate billboard image structs.");
 
         i = 0;
@@ -2621,6 +2651,7 @@ static HRESULT ParseColumns(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     DWORD i = 0;
     IXMLDOMNodeList* pixnl = NULL;
     IXMLDOMNode* pixnChild = NULL;
@@ -2634,7 +2665,10 @@ static HRESULT ParseColumns(
         hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cColumns));
         ExitOnFailure(hr, "Failed to count the number of control columns.");
 
-        pControl->ptcColumns = static_cast<THEME_COLUMN*>(MemAlloc(sizeof(THEME_COLUMN) * pControl->cColumns, TRUE));
+        hr = ::SizeTMult(sizeof(THEME_COLUMN), pControl->cColumns, &cbAllocSize);
+        ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_COLUMN structs", pControl->cColumns);
+
+        pControl->ptcColumns = static_cast<THEME_COLUMN*>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pControl->ptcColumns, hr, E_OUTOFMEMORY, "Failed to allocate column structs.");
 
         i = 0;
@@ -2677,6 +2711,7 @@ static HRESULT ParseTabs(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     DWORD i = 0;
     IXMLDOMNodeList* pixnl = NULL;
     IXMLDOMNode* pixnChild = NULL;
@@ -2690,7 +2725,10 @@ static HRESULT ParseTabs(
         hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cTabs));
         ExitOnFailure(hr, "Failed to count the number of tabs.");
 
-        pControl->pttTabs = static_cast<THEME_TAB*>(MemAlloc(sizeof(THEME_TAB) * pControl->cTabs, TRUE));
+        hr = ::SizeTMult(sizeof(THEME_TAB), pControl->cTabs, &cbAllocSize);
+        ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_TAB structs", pControl->cTabs);
+
+        pControl->pttTabs = static_cast<THEME_TAB*>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pControl->pttTabs, hr, E_OUTOFMEMORY, "Failed to allocate tab structs.");
 
         i = 0;
@@ -2718,7 +2756,7 @@ LExit:
 
 static HRESULT FindImageList(
     __in THEME* pTheme,
-    __in_z LPWSTR wzImageListName,
+    __in_z LPCWSTR wzImageListName,
     __out HIMAGELIST *phImageList
     )
 {
@@ -2837,7 +2875,10 @@ static HRESULT DrawHyperlink(
     clrForePrev = ::SetTextColor(pdis->hDC, pFont->crForeground);
     clrBackPrev = ::SetBkColor(pdis->hDC, pFont->crBackground);
 
+#pragma prefast(push)
+#pragma prefast(disable:26010) // OACR doesn't know this, but GetWindowText won't return a number larger than the buffer
     ::ExtTextOutW(pdis->hDC, 0, 0, ETO_CLIPPED | ETO_OPAQUE, &pdis->rcItem, wzText, cchText, NULL);
+#pragma prefast(pop)
 
     if (ODS_FOCUS & pdis->itemState)
     {
@@ -3069,7 +3110,7 @@ static void FreeFont(
 
 static DWORD CALLBACK RichEditStreamFromFileHandleCallback(
     __in DWORD_PTR dwCookie,
-    __in LPBYTE pbBuff,
+    __in_bcount(cb) LPBYTE pbBuff,
     __in LONG cb,
     __in LONG* pcb
     )
@@ -3089,7 +3130,7 @@ LExit:
 
 static DWORD CALLBACK RichEditStreamFromMemoryCallback(
     __in DWORD_PTR dwCookie,
-    __in LPBYTE pbBuff,
+    __in_bcount(cb) LPBYTE pbBuff,
     __in LONG cb,
     __in LONG* pcb
     )

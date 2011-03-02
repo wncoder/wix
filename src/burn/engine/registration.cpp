@@ -158,27 +158,27 @@ extern "C" HRESULT RegistrationParseFromXml(
             ExitOnFailure(hr, "Failed to get @Contact.");
         }
 
-        // @NoModify
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"NoModify", &pRegistration->fNoModify);
+        // @DisableModify
+        hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableModify", &pRegistration->fNoModify);
         if (E_NOTFOUND != hr)
         {
-            ExitOnFailure(hr, "Failed to get @NoModify.");
+            ExitOnFailure(hr, "Failed to get @DisableModify.");
             pRegistration->fNoModifyDefined = TRUE;
         }
 
-        // @NoRepair
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"NoRepair", &pRegistration->fNoRepair);
+        // @DisableRepair
+        hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableRepair", &pRegistration->fNoRepair);
         if (E_NOTFOUND != hr)
         {
-            ExitOnFailure(hr, "Failed to get @NoRepair.");
+            ExitOnFailure(hr, "Failed to get @DisableRepair.");
             pRegistration->fNoRepairDefined = TRUE;
         }
 
-        // @NoRemove
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"NoRemove", &pRegistration->fNoRemove);
+        // @DisableRemove
+        hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableRemove", &pRegistration->fNoRemove);
         if (E_NOTFOUND != hr)
         {
-            ExitOnFailure(hr, "Failed to get @NoRemove.");
+            ExitOnFailure(hr, "Failed to get @DisableRemove.");
             pRegistration->fNoRemoveDefined = TRUE;
         }
     }

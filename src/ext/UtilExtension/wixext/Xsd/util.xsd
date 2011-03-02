@@ -963,7 +963,7 @@
                 <xs:documentation>Returns the unformatted value directly from the registry. For example, a REG_DWORD value of '1' is returned as '1', not '#1'.</xs:documentation>
               </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="Compatible">
+            <xs:enumeration value="compatible">
               <xs:annotation>
                 <xs:documentation>Returns the value formatted as Windows Installer would. For example, a REG_DWORD value of '1' is returned as '#1', not '1'.</xs:documentation>
               </xs:annotation>

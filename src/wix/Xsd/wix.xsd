@@ -893,6 +893,11 @@
             </xs:appinfo>
         </xs:annotation>
         <xs:complexType>
+            <xs:attribute name="Id" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The identifier of Payload element.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="Compressed" type="YesNoDefaultType">
                 <xs:annotation>
                     <xs:documentation>Whether the payload should be embedded in a container or left as an external payload.</xs:documentation>
@@ -1104,6 +1109,7 @@
                     <xs:element ref="LayoutDirectoryRef" minOccurs="0" maxOccurs="unbounded"/>
                     <xs:element ref="MajorUpgrade"/>
                     <xs:element ref="Media"/>
+                    <xs:element ref="MediaTemplate"/>
                     <xs:element ref="PackageCertificates"/>
                     <xs:element ref="PatchCertificates"/>
                     <xs:element ref="Property"/>
@@ -1437,6 +1443,7 @@
                 <xs:element ref="LayoutDirectory"/>
                 <xs:element ref="LayoutDirectoryRef"/>
                 <xs:element ref="Media"/>
+                <xs:element ref="MediaTemplate"/>
                 <xs:element ref="PackageGroup"/>
                 <xs:element ref="PackageCertificates"/>
                 <xs:element ref="PatchCertificates"/>
@@ -7705,15 +7712,15 @@
                         only be used in conjunction with the Cabinet attribute.  The default is 'mszip'.
                     </xs:documentation>
                 </xs:annotation>
-                <xs:simpleType>
-                    <xs:restriction base="xs:NMTOKEN">
-                        <xs:enumeration value="high"/>
-                        <xs:enumeration value="low"/>
-                        <xs:enumeration value="medium"/>
-                        <xs:enumeration value="mszip"/>
-                        <xs:enumeration value="none"/>
-                    </xs:restriction>
-                </xs:simpleType>
+    <xs:simpleType>
+        <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="high" />
+            <xs:enumeration value="low" />
+            <xs:enumeration value="medium" />
+            <xs:enumeration value="mszip" />
+            <xs:enumeration value="none" />
+        </xs:restriction>
+    </xs:simpleType>
             </xs:attribute>
             <xs:attribute name="DiskPrompt" type="xs:string">
                 <xs:annotation><xs:documentation>The disk name, which is usually the visible text printed on the disk. This localizable text is used to prompt the user when this disk needs to be inserted. This value will be used in the "[1]" of the DiskPrompt Property. Using this attribute will require you to define a DiskPrompt Property.</xs:documentation></xs:annotation>
@@ -7771,7 +7778,76 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
-
+    <xs:element name="MediaTemplate">
+        <xs:annotation>
+            <xs:documentation>
+                MediaTeplate element describes information to automatically assign files to cabinets. 
+                A maximumum number of cabinets created is 999.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="CabinetTemplate" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Templated name of the cabinet if some or all of the files stored on the media are in 
+                        a cabinet file. This name must begin with either a letter or an underscore, contain 
+                        maximum of five characters and {0} in the cabinet name part and must end three character extension.
+                        The default is Prod{0}.cab. 
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="CompressionLevel">
+                <xs:annotation>
+                    <xs:documentation>
+                        Indicates the compression level for the Media's cabinet.  This attribute can 
+                        only be used in conjunction with the Cabinet attribute.  The default is 'mszip'.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:NMTOKEN">
+                        <xs:enumeration value="high" />
+                        <xs:enumeration value="low" />
+                        <xs:enumeration value="medium" />
+                        <xs:enumeration value="mszip" />
+                        <xs:enumeration value="none" />
+                     </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="DiskPrompt" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        The disk name, which is usually the visible text printed on the disk. This localizable text is used
+                        to prompt the user when this disk needs to be inserted. This value will be used in the "[1]" of the 
+                        DiskPrompt Property. Using this attribute will require you to define a DiskPrompt Property.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="EmbedCab" type="YesNoType">
+                <xs:annotation><xs:documentation>Instructs the binder to embed the cabinets in the product if 'yes'.</xs:documentation></xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="VolumeLabel" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        The label attributed to the volume. This is the volume label returned 
+                        by the GetVolumeInformation function. If the SourceDir property refers 
+                        to a removable (floppy or CD-ROM) volume, then this volume label is 
+                        used to verify that the proper disk is in the drive before attempting 
+                        to install files. The entry in this column must match the volume label 
+                        of the physical media. 
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="MaximumUncompressedMediaSize" type="xs:int">
+                <xs:annotation>
+                    <xs:documentation>
+                        Size of uncompressed files in each cabinet, in megabytes. WIX_MUMS environment variable 
+                        can be used to override this value. Default value is 50 MB.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+  
     <xs:element name="IgnoreModularization">
         <xs:annotation>
             <xs:documentation>

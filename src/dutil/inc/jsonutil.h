@@ -98,7 +98,7 @@ DAPI_(HRESULT) JsonWriteNumber(
 
 DAPI_(HRESULT) JsonWriteString(
     __in JSON_WRITER* pWriter,
-    __in_z_opt LPCWSTR wzValue
+    __in_z LPCWSTR wzValue
     );
 
 DAPI_(HRESULT) JsonWriteArrayStart(

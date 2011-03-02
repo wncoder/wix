@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+extern const int CABC_HANDLE_BYTES;
+
 // time vs. space trade-off
 enum COMPRESSION_TYPE 
 { 
@@ -45,22 +47,22 @@ HRESULT DAPI CabCBegin(
     __in DWORD dwMaxSize,
     __in DWORD dwMaxThresh,
     __in COMPRESSION_TYPE ct,
-    __out HANDLE *phContext
+    __out_bcount(CABC_HANDLE_BYTES) HANDLE *phContext
     );
 HRESULT DAPI CabCNextCab(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     );
 HRESULT DAPI CabCAddFile(
     __in_z LPCWSTR wzFile,
     __in_z_opt LPCWSTR wzToken,
     __in_opt PMSIFILEHASHINFO pmfHash,
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     );
 HRESULT DAPI CabCFinish(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     );
 void DAPI CabCCancel(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     );
 
 #ifdef __cplusplus

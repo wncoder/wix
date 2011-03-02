@@ -2632,8 +2632,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             string value = null;
             YesNoType expand = YesNoType.NotSet;
             YesNoType win64 = YesNoType.NotSet;
-            string format = null;
             Util.RegistrySearch.ResultType result = Util.RegistrySearch.ResultType.NotSet;
+            Util.RegistrySearch.FormatType format = Util.RegistrySearch.FormatType.raw;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -2660,7 +2660,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             expand = this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "Format":
-                            format = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            string formatValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            if (!String.IsNullOrEmpty(formatValue))
+                            {
+                               if (!Util.RegistrySearch.TryParseFormatType(formatValue, out format))
+                               {
+                                   this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, attrib.OwnerElement.Name, attrib.Name,
+                                       formatValue, Util.RegistrySearch.FormatType.raw.ToString(), Util.RegistrySearch.FormatType.compatible.ToString()));
+                               }
+                            }
                             break;
                         case "Result":
                             string resultValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2709,27 +2717,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 id = this.Core.GenerateIdentifier("wrs", variable, condition, after, root.ToString(), key, value, result.ToString());
             }
 
-            WixRegistrySearchFormat formatValue = WixRegistrySearchFormat.Raw;
-            if (null != format)
-            {
-                try
-                {
-                    formatValue = (WixRegistrySearchFormat)Enum.Parse(typeof(WixRegistrySearchFormat), format);
-                }
-                catch
-                {
-                    this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Format", format,
-                        WixRegistrySearchFormat.Raw.ToString(), WixRegistrySearchFormat.Compatible.ToString()));
-                }
-            }
-
             WixRegistrySearchAttributes attributes = WixRegistrySearchAttributes.Raw;
-            switch (formatValue)
+            switch (format)
             {
-                case WixRegistrySearchFormat.Raw:
+                case Util.RegistrySearch.FormatType.raw:
                     attributes = WixRegistrySearchAttributes.Raw;
                     break;
-                case WixRegistrySearchFormat.Compatible:
+                case Util.RegistrySearch.FormatType.compatible:
                     attributes = WixRegistrySearchAttributes.Compatible;
                     break;
             }

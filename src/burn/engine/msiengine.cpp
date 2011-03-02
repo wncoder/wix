@@ -445,6 +445,8 @@ extern "C" HRESULT MsiEngineDetectPackage(
     }
 
     // detect features
+    LogId(REPORT_STANDARD, MSG_DETECT_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
+    
     for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
     {
         BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
@@ -484,6 +486,8 @@ extern "C" HRESULT MsiEngineDetectPackage(
             hr = E_UNEXPECTED;
             ExitOnRootFailure(hr, "Invalid state value.");
         }
+
+        LogId(REPORT_STANDARD, MSG_DETECTED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState));
 
         // pass to UX
         nResult = pUserExperience->pUserExperience->OnDetectMsiFeature(pPackage->sczId, pFeature->sczId, pFeature->currentState);
@@ -531,6 +535,8 @@ extern "C" HRESULT MsiEnginePlanPackage(
 
     if (pPackage->Msi.cFeatures)
     {
+        LogId(REPORT_STANDARD, MSG_PLAN_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
+
         // allocate array for feature actions
         rgFeatureActions = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(sizeof(BOOTSTRAPPER_FEATURE_ACTION) * pPackage->Msi.cFeatures, TRUE);
         ExitOnNull(rgFeatureActions, hr, E_OUTOFMEMORY, "Failed to allocate memory for feature actions.");
@@ -561,6 +567,8 @@ extern "C" HRESULT MsiEnginePlanPackage(
 
             hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_STATE_UNKNOWN != featureExpectedState ? featureExpectedState : pFeature->currentState, FALSE, &rgRollbackFeatureActions[i], &fRollbackFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate rollback feature state.");
+
+            LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(rgFeatureActions[i]), LoggingMsiFeatureActionToString(rgRollbackFeatureActions[i]));
         }
     }
 

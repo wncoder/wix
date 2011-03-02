@@ -48,6 +48,9 @@ struct STRINGDICT_STRUCT
 {
     DICT_TYPE dtType;
 
+    // Optional flags to control the behavior of the dictionary.
+    DICT_FLAG dfFlags;
+
     // Index into MAX_BUCKET_SIZES (array of primes), representing number of buckets we've allocated
     DWORD dwBucketSizeIndex;
 
@@ -63,11 +66,18 @@ struct STRINGDICT_STRUCT
 
     // The actual stored items in the order they were added (used for auto freeing or enumerating)
     void **ppvItemList;
+
+    // Pointer to the array of items, so the caller is free to resize the array of values out from under us without harm
+    void **ppvValueArray;
 };
 
-static DWORD StringHash(
+const int STRINGDICT_HANDLE_BYTES = sizeof(STRINGDICT_STRUCT);
+
+static HRESULT StringHash(
+    __in const STRINGDICT_STRUCT *psd,
     __in DWORD dwNumBuckets,
-    __in_z LPCWSTR pszString
+    __in_z LPCWSTR pszString,
+    __out LPDWORD pdwHash
     );
 static BOOL IsMatchExact(
     __in const STRINGDICT_STRUCT *psd,
@@ -80,6 +90,7 @@ static HRESULT GetValue(
     __out_opt void **ppvValue
     );
 static HRESULT GetInsertIndex(
+    __in const STRINGDICT_STRUCT *psd,
     __in DWORD dwBucketCount,
     __in void **ppvBuckets,
     __in_z LPCWSTR pszString,
@@ -97,17 +108,32 @@ static LPCWSTR GetKey(
 static HRESULT GrowDictionary(
     __inout STRINGDICT_STRUCT *psd
     );
+// These 2 helper functions allow us to safely handle dictutil consumers resizing
+// the value array by storing "offsets" instead of raw void *'s in our buckets.
+static void * TranslateOffsetToValue(
+    __in const STRINGDICT_STRUCT *psd,
+    __in void *pvValue
+    );
+static void * TranslateValueToOffset(
+    __in const STRINGDICT_STRUCT *psd,
+    __in void *pvValue
+    );
 
 // The dict will store a set of keys (as wide-char strings) and a set of values associated with those keys (as void *'s).
 // However, to support collision checking, the key needs to be represented in the "value" object (pointed to
 // by the void *). The "stByteOffset" parameter tells this dict the byte offset of the "key" string pointer
 // within the "value" object. Use the offsetof() macro to fill this out.
+// The "ppvArray" parameter gives dictutil the address of your value array. If you provide this parameter,
+// dictutil will remember all pointer values provided as "offsets" against this array. It is only necessary to provide
+// this parameter to dictutil if it is possible you will realloc the array.
 //
 // Use DictAddValue() and DictGetValue() with this dictionary type.
 extern "C" HRESULT DAPI DictCreateWithEmbeddedKey(
-    __out STRINGDICT_HANDLE* psdHandle,
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdHandle,
     __in DWORD dwNumExpectedItems,
-    __in size_t cByteOffset
+    __in_opt void **ppvArray,
+    __in size_t cByteOffset,
+    __in DICT_FLAG dfFlags
     )
 {
     HRESULT hr = S_OK;
@@ -122,10 +148,12 @@ extern "C" HRESULT DAPI DictCreateWithEmbeddedKey(
 
     // Fill out the new handle's values
     psd->dtType = DICT_EMBEDDED_KEY;
+    psd->dfFlags = dfFlags;
     psd->cByteOffset = cByteOffset;
     psd->dwBucketSizeIndex = 0;
     psd->dwNumItems = 0;
     psd->ppvItemList = NULL;
+    psd->ppvValueArray = ppvArray;
 
     // Make psd->dwBucketSizeIndex point to the appropriate spot in the prime
     // array based on expected number of items and items to buckets ratio
@@ -147,8 +175,9 @@ LExit:
 
 // The dict will store a set of keys, with no values associated with them. Use DictAddKey() and DictKeyExists() with this dictionary type.
 extern "C" HRESULT DAPI DictCreateStringList(
-    __out STRINGDICT_HANDLE* psdHandle,
-    __in DWORD dwNumExpectedItems
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdHandle,
+    __in DWORD dwNumExpectedItems,
+    __in DICT_FLAG dfFlags
     )
 {
     HRESULT hr = S_OK;
@@ -163,10 +192,12 @@ extern "C" HRESULT DAPI DictCreateStringList(
 
     // Fill out the new handle's values
     psd->dtType = DICT_STRING_LIST;
+    psd->dfFlags = dfFlags;
     psd->cByteOffset = 0;
     psd->dwBucketSizeIndex = 0;
     psd->dwNumItems = 0;
     psd->ppvItemList = NULL;
+    psd->ppvValueArray = NULL;
 
     // Make psd->dwBucketSizeIndex point to the appropriate spot in the prime
     // array based on expected number of items and items to buckets ratio
@@ -188,17 +219,22 @@ LExit:
 
 // Todo: Dict should resize itself when (number of items) exceeds (number of buckets / MAX_BUCKETS_TO_ITEMS_RATIO)
 extern "C" HRESULT DAPI DictAddKey(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString
     )
 {
     HRESULT hr = S_OK;
     DWORD dwIndex = 0;
+    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while adding value to dict");
 
-    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
+    if (psd->dwBucketSizeIndex >= countof(MAX_BUCKET_SIZES))
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure(hr, "Invalid dictionary - bucket size index is out of range");
+    }
 
     if (DICT_STRING_LIST != psd->dtType)
     {
@@ -220,7 +256,7 @@ extern "C" HRESULT DAPI DictAddKey(
         ExitOnFailure(hr, "Failed to grow dictionary");
     }
 
-    hr = GetInsertIndex(MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, pszString, &dwIndex);
+    hr = GetInsertIndex(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, pszString, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
     ++psd->dwNumItems;
@@ -238,18 +274,24 @@ LExit:
 
 // Todo: Dict should resize itself when (number of items) exceeds (number of buckets / MAX_BUCKETS_TO_ITEMS_RATIO)
 extern "C" HRESULT DAPI DictAddValue(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle,
     __in void *pvValue
     )
 {
     HRESULT hr = S_OK;
+    void *pvOffset = NULL;
     LPCWSTR wzKey = NULL;
     DWORD dwIndex = 0;
+    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
 
     ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while adding value to dict");
     ExitOnNull(pvValue, hr, E_INVALIDARG, "Value not specified while adding value to dict");
 
-    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
+    if (psd->dwBucketSizeIndex >= countof(MAX_BUCKET_SIZES))
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure(hr, "Invalid dictionary - bucket size index is out of range");
+    }
 
     if (DICT_EMBEDDED_KEY != psd->dtType)
     {
@@ -274,7 +316,7 @@ extern "C" HRESULT DAPI DictAddValue(
         ExitOnFailure(hr, "Failed to grow dictionary");
     }
 
-    hr = GetInsertIndex(MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, wzKey, &dwIndex);
+    hr = GetInsertIndex(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, wzKey, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
     ++psd->dwNumItems;
@@ -282,15 +324,16 @@ extern "C" HRESULT DAPI DictAddValue(
     hr = MemEnsureArraySize(reinterpret_cast<void **>(&(psd->ppvItemList)), psd->dwNumItems, sizeof(void *), 1000);
     ExitOnFailure(hr, "Failed to resize list of items in dictionary");
 
-    psd->ppvBuckets[dwIndex] = pvValue;
-    psd->ppvItemList[psd->dwNumItems-1] = pvValue;
+    pvOffset = TranslateValueToOffset(psd, pvValue);
+    psd->ppvBuckets[dwIndex] = pvOffset;
+    psd->ppvItemList[psd->dwNumItems-1] = pvOffset;
 
 LExit:
     return hr;
 }
 
 extern "C" HRESULT DAPI DictGetValue(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) C_STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString,
     __out void **ppvValue
     )
@@ -300,7 +343,7 @@ extern "C" HRESULT DAPI DictGetValue(
     ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while searching dict");
 
-    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
+    const STRINGDICT_STRUCT *psd = static_cast<const STRINGDICT_STRUCT *>(sdHandle);
 
     if (DICT_EMBEDDED_KEY != psd->dtType)
     {
@@ -320,7 +363,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI DictKeyExists(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) C_STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR pszString
     )
 {
@@ -329,7 +372,7 @@ extern "C" HRESULT DAPI DictKeyExists(
     ExitOnNull(sdHandle, hr, E_INVALIDARG, "Handle not specified while searching dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while searching dict");
 
-    STRINGDICT_STRUCT *psd = static_cast<STRINGDICT_STRUCT *>(sdHandle);
+    const STRINGDICT_STRUCT *psd = static_cast<const STRINGDICT_STRUCT *>(sdHandle);
 
     // This works with either type of dictionary
     hr = GetValue(psd, pszString, NULL);
@@ -344,7 +387,7 @@ LExit:
 }
 
 extern "C" void DAPI DictDestroy(
-    __in STRINGDICT_HANDLE sdHandle
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle
     )
 {
     DWORD i;
@@ -364,19 +407,41 @@ extern "C" void DAPI DictDestroy(
     ReleaseMem(psd);
 }
 
-static DWORD StringHash(
+static HRESULT StringHash(
+    __in const STRINGDICT_STRUCT *psd,
     __in DWORD dwNumBuckets,
-    __in_z LPCWSTR pszString
+    __in_z LPCWSTR pszString,
+    __out DWORD *pdwHash
     )
 {
+    HRESULT hr = S_OK;
+    LPCWSTR wzKey = NULL;
+    LPWSTR sczNewKey = NULL;
     DWORD result = 0;
 
-    while (*pszString)
+    if (DICT_FLAG_CASEINSENSITIVE & psd->dfFlags)
     {
-        result = ~(*pszString++ * 509) + result * 65599;
+        hr = StrAllocStringToUpperInvariant(&sczNewKey, pszString, 0);
+        ExitOnFailure(hr, "Failed to convert the string to upper-case.");
+
+        wzKey = sczNewKey;
+    }
+    else
+    {
+        wzKey = pszString;
     }
 
-    return result % dwNumBuckets;
+    while (*wzKey)
+    {
+        result = ~(*wzKey++ * 509) + result * 65599;
+    }
+
+    *pdwHash = result % dwNumBuckets;
+
+LExit:
+    ReleaseStr(sczNewKey);
+
+    return hr;
 }
 
 static BOOL IsMatchExact(
@@ -385,9 +450,15 @@ static BOOL IsMatchExact(
     __in_z LPCWSTR wzOriginalString
     )
 {
-    LPCWSTR wzMatchString = GetKey(psd, psd->ppvBuckets[dwMatchIndex]);
+    LPCWSTR wzMatchString = GetKey(psd, TranslateOffsetToValue(psd, psd->ppvBuckets[dwMatchIndex]));
+    DWORD dwFlags = 0;
 
-    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, wzOriginalString, -1, wzMatchString, -1))
+    if (DICT_FLAG_CASEINSENSITIVE & psd->dfFlags)
+    {
+        dwFlags |= NORM_IGNORECASE;
+    }
+
+    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, dwFlags, wzOriginalString, -1, wzMatchString, -1))
     {
         return TRUE;
     }
@@ -402,16 +473,28 @@ static HRESULT GetValue(
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwOriginalIndexCandidate = 0;
+    void *pvCandidateValue = NULL;
     DWORD dwIndex = 0;
 
     ExitOnNull(psd, hr, E_INVALIDARG, "Handle not specified while searching dict");
     ExitOnNull(pszString, hr, E_INVALIDARG, "String not specified while searching dict");
 
-    DWORD dwOriginalIndexCandidate = StringHash(MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], pszString);
+    if (psd->dwBucketSizeIndex >= countof(MAX_BUCKET_SIZES))
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure(hr, "Invalid dictionary - bucket size index is out of range");
+    }
+
+    hr = StringHash(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], pszString, &dwOriginalIndexCandidate);
+    ExitOnFailure(hr, "Failed to hash the string.");
+
     DWORD dwIndexCandidate = dwOriginalIndexCandidate;
 
+    pvCandidateValue = TranslateOffsetToValue(psd, psd->ppvBuckets[dwIndexCandidate]);
+
     // If no match exists in the dict
-    if (NULL == psd->ppvBuckets[dwIndexCandidate])
+    if (NULL == pvCandidateValue)
     {
         if (NULL != ppvValue)
         {
@@ -429,7 +512,7 @@ static HRESULT GetValue(
 
     if (NULL != ppvValue)
     {
-        *ppvValue = psd->ppvBuckets[dwIndexCandidate];
+        *ppvValue = pvCandidateValue;
     }
 
 LExit:
@@ -442,6 +525,7 @@ LExit:
 }
 
 static HRESULT GetInsertIndex(
+    __in const STRINGDICT_STRUCT *psd,
     __in DWORD dwBucketCount,
     __in void **ppvBuckets,
     __in_z LPCWSTR pszString,
@@ -449,11 +533,18 @@ static HRESULT GetInsertIndex(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwOriginalIndexCandidate = StringHash(dwBucketCount, pszString);
+    DWORD dwOriginalIndexCandidate = 0;
+
+    hr = StringHash(psd, dwBucketCount, pszString, &dwOriginalIndexCandidate);
+    ExitOnFailure(hr, "Failed to hash the string.");
+
     DWORD dwIndexCandidate = dwOriginalIndexCandidate;
 
     // If we collide, keep iterating forward from our intended position, even wrapping around to zero, until we find an empty bucket
+#pragma prefast(push)
+#pragma prefast(disable:26007)
     while (NULL != ppvBuckets[dwIndexCandidate])
+#pragma prefast(pop)
     {
         ++dwIndexCandidate;
 
@@ -485,7 +576,17 @@ static HRESULT GetIndex(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwOriginalIndexCandidate = StringHash(MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], pszString);
+    DWORD dwOriginalIndexCandidate = 0;
+
+    if (psd->dwBucketSizeIndex >= countof(MAX_BUCKET_SIZES))
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure(hr, "Invalid dictionary - bucket size index is out of range");
+    }
+
+    hr = StringHash(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], pszString, &dwOriginalIndexCandidate);
+    ExitOnFailure(hr, "Failed to hash the string.");
+
     DWORD dwIndexCandidate = dwOriginalIndexCandidate;
 
     while (!IsMatchExact(psd, dwIndexCandidate, pszString))
@@ -522,17 +623,20 @@ static LPCWSTR GetKey(
     __in void *pvValue
     )
 {
-    BYTE *lpByte = reinterpret_cast<BYTE *>(pvValue);
+    const BYTE *lpByte = reinterpret_cast<BYTE *>(pvValue);
 
     if (DICT_EMBEDDED_KEY == psd->dtType)
     {
-        void *pvKey = reinterpret_cast<void *>(lpByte + psd->cByteOffset);
+        void *pvKey = reinterpret_cast<void *>(reinterpret_cast<BYTE *>(pvValue) + psd->cByteOffset);
 
-        return *(reinterpret_cast<LPWSTR *>(pvKey));
+#pragma prefast(push)
+#pragma prefast(disable:26010)
+        return *(reinterpret_cast<LPCWSTR *>(pvKey));
+#pragma prefast(pop)
     }
     else
     {
-        return (reinterpret_cast<LPWSTR>(lpByte));
+        return (reinterpret_cast<LPCWSTR>(lpByte));
     }
 }
 
@@ -544,36 +648,70 @@ static HRESULT GrowDictionary(
     DWORD dwInsertIndex = 0;
     LPCWSTR wzKey = NULL;
     DWORD dwNewBucketSizeIndex = 0;
-    void **pvNewBuckets = NULL;
+    size_t cbAllocSize = 0;
+    void **ppvNewBuckets = NULL;
 
     dwNewBucketSizeIndex = psd->dwBucketSizeIndex + 1;
 
-    if (dwNewBucketSizeIndex >= _countof(MAX_BUCKET_SIZES))
+    if (dwNewBucketSizeIndex >= countof(MAX_BUCKET_SIZES))
     {
-        ExitFunction1(hr = HRESULT_FROM_WIN32(ERROR_DATABASE_FULL););
+        ExitFunction1(hr = HRESULT_FROM_WIN32(ERROR_DATABASE_FULL));
     }
 
-    pvNewBuckets = static_cast<void**>(MemAlloc(sizeof(void *) * MAX_BUCKET_SIZES[dwNewBucketSizeIndex], TRUE));
-    ExitOnNull1(pvNewBuckets, hr, E_OUTOFMEMORY, "Failed to allocate %u buckets while growing dictionary", MAX_BUCKET_SIZES[dwNewBucketSizeIndex]);
+    hr = ::SizeTMult(sizeof(void *), MAX_BUCKET_SIZES[dwNewBucketSizeIndex], &cbAllocSize);
+    ExitOnFailure(hr, "Overflow while calculating allocation size to grow dictionary");
+
+    ppvNewBuckets = static_cast<void**>(MemAlloc(cbAllocSize, TRUE));
+    ExitOnNull1(ppvNewBuckets, hr, E_OUTOFMEMORY, "Failed to allocate %u buckets while growing dictionary", MAX_BUCKET_SIZES[dwNewBucketSizeIndex]);
 
     for (DWORD i = 0; i < psd->dwNumItems; ++i)
     {
-        wzKey = GetKey(psd, psd->ppvItemList[i]);
-        ExitOnNull(wzKey, hr, E_INVALIDARG, "String not specified while adding value to dict");
+        wzKey = GetKey(psd, TranslateOffsetToValue(psd, psd->ppvItemList[i]));
+        ExitOnNull(wzKey, hr, E_INVALIDARG, "String not specified in existing dict value");
 
-        hr = GetInsertIndex(MAX_BUCKET_SIZES[dwNewBucketSizeIndex], pvNewBuckets, wzKey, &dwInsertIndex);
+        hr = GetInsertIndex(psd, MAX_BUCKET_SIZES[dwNewBucketSizeIndex], ppvNewBuckets, wzKey, &dwInsertIndex);
         ExitOnFailure(hr, "Failed to get index to insert into");
 
-        pvNewBuckets[dwInsertIndex] = psd->ppvItemList[i];
+        ppvNewBuckets[dwInsertIndex] = psd->ppvItemList[i];
     }
 
     psd->dwBucketSizeIndex = dwNewBucketSizeIndex;
     ReleaseMem(psd->ppvBuckets);
-    psd->ppvBuckets = pvNewBuckets;
-    pvNewBuckets = NULL;
+    psd->ppvBuckets = ppvNewBuckets;
+    ppvNewBuckets = NULL;
 
 LExit:
-    ReleaseMem(pvNewBuckets);
+    ReleaseMem(ppvNewBuckets);
 
     return hr;
+}
+
+static void * TranslateOffsetToValue(
+    __in const STRINGDICT_STRUCT *psd,
+    __in void *pvValue
+    )
+{
+    if (NULL != psd->ppvValueArray)
+    {
+        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) + reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray));
+    }
+    else
+    {
+        return pvValue;
+    }
+}
+
+static void * TranslateValueToOffset(
+    __in const STRINGDICT_STRUCT *psd,
+    __in void *pvValue
+    )
+{
+    if (NULL != psd->ppvValueArray)
+    {
+        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) - reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray));
+    }
+    else
+    {
+        return pvValue;
+    }
 }

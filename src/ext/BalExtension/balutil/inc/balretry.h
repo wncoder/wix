@@ -18,7 +18,7 @@ extern "C" {
  BalRetryInitialize - initialize the retry count and timeout between
                       retries (in milliseconds).
 ********************************************************************/
-void BalRetryInitialize(
+DAPI_(void) BalRetryInitialize(
     __in DWORD dwMaxRetries,
     __in DWORD dwTimeout
     );
@@ -27,14 +27,14 @@ void BalRetryInitialize(
  BalRetryUninitialize - call to cleanup any memory allocated during
                         use of the retry utility.
 ********************************************************************/
-void BalRetryUninitialize();
+DAPI_(void) BalRetryUninitialize();
 
 /*******************************************************************
  BalRetryStartPackage - call when a package begins to be modified. If
                         the package is being retried, the function will
                         wait the specified timeout.
 ********************************************************************/
-void BalRetryStartPackage(
+DAPI_(void) BalRetryStartPackage(
     __in_z_opt LPCWSTR wzPackageId
     );
 
@@ -42,7 +42,7 @@ void BalRetryStartPackage(
  BalRetryOnError - call when an error occurs for the retry utility to
                    consider.
 ********************************************************************/
-void BalRetryOnError(
+DAPI_(void) BalRetryOnError(
     __in_z_opt LPCWSTR wzPackageId,
     __in DWORD dwError
     );
@@ -51,7 +51,7 @@ void BalRetryOnError(
  BalRetryEndPackage - returns IDRETRY is a retry is recommended or 
                       IDNOACTION if a retry is not recommended.
 ********************************************************************/
-int BalRetryEndPackage(
+DAPI_(int) BalRetryEndPackage(
     __in_z_opt LPCWSTR wzPackageId,
     __in HRESULT hrError
     );

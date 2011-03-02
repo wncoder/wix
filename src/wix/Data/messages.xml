@@ -79,6 +79,13 @@
                 <Parameter Type="System.String" Name="attributeName" />
             </Instance>
             <Instance>
+                The {0} element must have a value for exactly one of the {1} or {2} attributes.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attribute1Name" />
+                <Parameter Type="System.String" Name="attribute2Name" />
+                <Parameter Type="System.Boolean" Name="eitherOr" />
+            </Instance>
+            <Instance>
                 The {0}/@{1} attribute was not found; it is required when attribute {2} is specified.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
@@ -2658,6 +2665,7 @@
                 <Parameter Type="System.String" Name="illegalValueList" />
             </Instance>
         </Message>
+
         <Message Id="InvalidSummaryInfoCodePage" Number="349">
             <Instance>
                 The code page '{0}' is invalid for summary information. You must specify an ANSI code page.
@@ -2713,7 +2721,25 @@
           <Parameter Type="System.String" Name="input" />
         </Instance>
       </Message>
+      <Message Id="MediaTableCollision" Number="357">
+        <Instance>
+          Only one of Media and MediaTemplate tables should be authored.
+        </Instance>
+      </Message>
+      <Message Id="InvalidCabinetTemplate" Number="358">
+        <Instance>
+          CabinetTemplate attribute must begin with either a letter or an underscore, contain maximum of five characters and {0} in the cabinet name part and must end three character extension.
+          <Parameter Type="System.String" Name="cabinetTemplate" />
+        </Instance>
+      </Message>
+      <Message Id="MaximumUncompressedMediaSizeTooLarge" Number="359">
+         <Instance>
+          '{0}' is too large. Reduce the size of maximum uncompressed media size.
+             <Parameter Type="System.Int32" Name="maximumUncompressedMediaSize" />
+          </Instance>
+      </Message>
     </Class>
+
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
         <Message Id="IdentifierCannotBeModularized" Number="1000">
             <Instance>

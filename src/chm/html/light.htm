@@ -745,6 +745,9 @@ light.exe [-?] [-b basePath] [-nologo] [-out outputFile] objectFile [objectFile 
   within other properties, including the attributes on the Product element - many of which are compiled into the Property table. You can reference
   other binder variables like file information above in properties, or even localization and custom binder variables documented below.</p>
 
+  <p>Specializations for each field of the ProductVersion property are also provided as shown below. If you have defined properties like ProductVersion.Major
+  in your package authoring they will not be overwritten, but will be used instead of the automatic binder variables with the same name.</p>
+
   <table border="1" cellspacing="0" cellpadding="2">
     <tr>
       <td>
@@ -770,7 +773,63 @@ light.exe [-?] [-b basePath] [-nologo] [-out outputFile] objectFile [objectFile 
       </td>
 
       <td>
-        <p>1.0.0.0</p>
+        <p>1.2.3.4</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.property.ProductVersion.Major</p>
+      </td>
+
+      <td>
+        <p>!(bind.property.ProductVersion.Major)</p>
+      </td>
+
+      <td>
+        <p>1</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.property.ProductVersion.Minor</p>
+      </td>
+
+      <td>
+        <p>!(bind.property.ProductVersion.Minor)</p>
+      </td>
+
+      <td>
+        <p>2</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.property.ProductVersion.Build</p>
+      </td>
+
+      <td>
+        <p>!(bind.property.ProductVersion.Build)</p>
+      </td>
+
+      <td>
+        <p>3</p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <p>bind.property.ProductVersion.Revision</p>
+      </td>
+
+      <td>
+        <p>!(bind.property.ProductVersion.Revision)</p>
+      </td>
+
+      <td>
+        <p>4</p>
       </td>
     </tr>
   </table>

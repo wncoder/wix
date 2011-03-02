@@ -52,7 +52,10 @@ extern "C" HRESULT DAPI ResGetStringLangId(
         ExitOnNullWithLastError1(hModule, hr, "Failed to open resource file: %ls", wzPath);
     }
 
-    if (!::EnumResourceLanguages(hModule, RT_STRING, MAKEINTRESOURCE(dwBlockId), static_cast<ENUMRESLANGPROC>(EnumLangIdProc), reinterpret_cast<LONG_PTR>(&wFoundLangId)))
+#pragma prefast(push)
+#pragma prefast(disable:25068)
+    if (!::EnumResourceLanguagesA(hModule, RT_STRING, MAKEINTRESOURCE(dwBlockId), static_cast<ENUMRESLANGPROC>(EnumLangIdProc), reinterpret_cast<LONG_PTR>(&wFoundLangId)))
+#pragma prefast(pop)
     {
         ExitWithLastError(hr, "Failed to find string language identifier.");
     }
@@ -134,7 +137,10 @@ extern "C" HRESULT DAPI ResReadStringAnsi(
         hr = StrAnsiAlloc(ppszString, cch);
         ExitOnFailureDebugTrace1(hr, "Failed to allocate string for resource id: %d", uID);
 
+#pragma prefast(push)
+#pragma prefast(disable:25068)
         cchReturned = ::LoadStringA(hinst, uID, *ppszString, cch);
+#pragma prefast(pop)
         if (0 == cchReturned)
         {
             ExitWithLastError1(hr, "Failed to load string resource id: %d", uID);
@@ -175,7 +181,10 @@ extern "C" HRESULT DAPI ResReadData(
     HGLOBAL hData = NULL;
     DWORD cbData = 0;
 
+#pragma prefast(push)
+#pragma prefast(disable:25068)
     hRsrc = ::FindResourceExA(hinst, RT_RCDATA, szDataName, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
+#pragma prefast(pop)
     ExitOnNullWithLastError(hRsrc, hr, "Failed to find resource.");
 
     hData = ::LoadResource(hinst, hRsrc);

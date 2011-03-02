@@ -67,6 +67,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public const string DefaultComponentIdPlaceholderWixVariable = "!(wix.OfficialWixComponentIdPlaceholder)";
         public const string BurnUXContainerId = "WixUXContainer";
 
+        private static readonly Regex CabinetTemplateRegex = new Regex(@"^[_A-Za-z]+\{0\}[_A-Za-z]*.[A-Za-z][A-Za-z][A-Za-z]$", RegexOptions.Compiled | RegexOptions.Singleline);
+
         private TableDefinitionCollection tableDefinitions;
         private Hashtable extensions;
         private List<InspectorExtension> inspectorExtensions;
@@ -6700,6 +6702,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "Media":
                                 this.ParseMediaElement(child, null);
                                 break;
+                            case "MediaTemplate":
+                                this.ParseMediaTemplateElement(child, null);
+                                break;
                             case "PackageGroup":
                                 this.ParsePackageGroupElement(child);
                                 break;
@@ -7899,9 +7904,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 else // external cabinet file
                 {
                     // external cabinet files must use 8.3 filenames
-                    if (!String.IsNullOrEmpty(cabinet) && !CompilerCore.IsValidShortFilename(cabinet, false) && !CompilerCore.IsValidLocIdentifier(cabinet))
+                    if (!String.IsNullOrEmpty(cabinet) && !CompilerCore.IsValidShortFilename(cabinet, false))
                     {
-                        this.core.OnMessage(WixWarnings.MediaExternalCabinetFilenameIllegal(sourceLineNumbers, node.Name, "Cabinet", cabinet));
+                        // WiX variables in the name will trip the "not a valid 8.3 name" switch, so let them through
+                        if (!Common.WixVariableRegex.Match(cabinet).Success)
+                        {
+                            this.core.OnMessage(WixWarnings.MediaExternalCabinetFilenameIllegal(sourceLineNumbers, node.Name, "Cabinet", cabinet));
+                        }
                     }
                 }
             }
@@ -8003,6 +8012,133 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     symbolRow[0] = "Media";
                     symbolRow[1] = id.ToString(CultureInfo.InvariantCulture);
                     symbolRow[2] = symbols;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses a media template element.
+        /// </summary>
+        /// <param name="node">Element to parse.</param>
+        /// <param name="patchId">Set to the PatchId if parsing Patch/Media element otherwise null.</param>
+        private void ParseMediaTemplateElement(XmlNode node, string patchId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string cabinetTemplate = "Prod{0}.cab";
+            string compressionLevel = null; // this defaults to mszip in Binder
+            string diskPrompt = null;
+            bool patch = null != patchId;
+            string volumeLabel = null;
+            int maximumUncompressedMediaSize = CompilerCore.IntegerNotSet;
+
+            Wix.Media.CompressionLevelType compressionLevelType = Wix.Media.CompressionLevelType.none;
+
+            YesNoType embedCab = patch ? YesNoType.Yes : YesNoType.NotSet;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "CabinetTemplate":
+                            string authoredCabinetTemplateValue = this.core.GetAttributeValue(sourceLineNumbers, attrib, true);
+                            if (!String.IsNullOrEmpty(authoredCabinetTemplateValue))
+                            {
+                                cabinetTemplate = authoredCabinetTemplateValue;
+                            }
+
+                            if (!CabinetTemplateRegex.IsMatch(cabinetTemplate))
+                            {
+                                this.core.OnMessage(WixErrors.InvalidCabinetTemplate(sourceLineNumbers, "{0}"));
+                            }
+                            else
+                            {
+                                // Maximun number of cabinets generated is 999
+                                string tempTemplateName = cabinetTemplate.Replace("{0}", "999");
+                                // external cabinet files must use 8.3 filenames
+                                if (!CompilerCore.IsValidShortFilename(tempTemplateName, false) && !CompilerCore.IsValidLocIdentifier(tempTemplateName))
+                                {
+                                    this.core.OnMessage(WixErrors.InvalidCabinetTemplate(sourceLineNumbers, "{0}"));
+                                }
+                            }
+                            break;
+                        case "CompressionLevel":
+                            compressionLevel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            if (0 < compressionLevel.Length)
+                            {
+                                if (!Wix.Media.TryParseCompressionLevelType(compressionLevel, out compressionLevelType))
+                                {
+                                    this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, compressionLevel, "high", "low", "medium", "mszip", "none"));
+                                }
+                            }
+                            break;
+                        case "DiskPrompt":
+                            diskPrompt = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", "DiskPrompt"); // ensure the output has a DiskPrompt Property defined
+                            break;
+                        case "EmbedCab":
+                            embedCab = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "VolumeLabel":
+                            volumeLabel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "MaximumUncompressedMediaSize":
+                            maximumUncompressedMediaSize = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 1, int.MaxValue);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.ParseExtensionAttribute(sourceLineNumbers, (XmlElement)node, attrib);
+                }
+            }
+
+            if (YesNoType.IllegalValue != embedCab)
+            {
+                if (YesNoType.Yes == embedCab)
+                {
+                    cabinetTemplate = String.Concat("#", cabinetTemplate);
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                MediaRow temporaryMediaRow = (MediaRow)this.core.CreateRow(sourceLineNumbers, "Media");
+                temporaryMediaRow.DiskId = 1;
+                WixMediaTemplateRow mediaTemplateRow = (WixMediaTemplateRow)this.core.CreateRow(sourceLineNumbers, "WixMediaTemplate");
+                mediaTemplateRow.CabinetTemplate = cabinetTemplate;
+                mediaTemplateRow.VolumeLabel = volumeLabel;
+                mediaTemplateRow.DiskPrompt = diskPrompt;
+                mediaTemplateRow.VolumeLabel = volumeLabel;
+                mediaTemplateRow.MaximumUncompressedMediaSize = 50; // Default value is 50 MB
+
+                if (maximumUncompressedMediaSize != CompilerCore.IntegerNotSet)
+                {
+                    mediaTemplateRow.MaximumUncompressedMediaSize = maximumUncompressedMediaSize;
+                }
+
+                switch(compressionLevelType)
+                {
+                    case Wix.Media.CompressionLevelType.high:
+                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.High;
+                        break;
+                    case Wix.Media.CompressionLevelType.low:
+                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Low;
+                        break;
+                    case Wix.Media.CompressionLevelType.medium:
+                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Medium;
+                        break;
+                    case Wix.Media.CompressionLevelType.none:
+                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.None;
+                        break;
+                    case Wix.Media.CompressionLevelType.mszip:
+                    case Wix.Media.CompressionLevelType.NotSet:
+                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Mszip;
+                        break;
                 }
             }
         }
@@ -12729,6 +12865,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     break;
                                 case "Media":
                                     this.ParseMediaElement(child, null);
+                                    break;
+                                case "MediaTemplate":
+                                    this.ParseMediaTemplateElement(child, null);
                                     break;
                                 case "Package":
                                     this.ParsePackageElement(child, manufacturer, null);
@@ -18679,7 +18818,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (String.IsNullOrEmpty(property) && String.IsNullOrEmpty(checkBoxPropertyRef))
                     {
-                        this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Property", "CheckBoxPropertyRef"));
+                        this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Property", "CheckBoxPropertyRef", true));
                     }
                     else if (!String.IsNullOrEmpty(property) && !String.IsNullOrEmpty(checkBoxPropertyRef))
                     {

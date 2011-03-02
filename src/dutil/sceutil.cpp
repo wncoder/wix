@@ -68,10 +68,14 @@ struct SCE_QUERY_RESULTS
     SCE_TABLE_SCHEMA *pTableSchema;
 };
 
+extern const int SCE_ROW_HANDLE_BYTES = sizeof(SCE_ROW);
+extern const int SCE_QUERY_HANDLE_BYTES = sizeof(SCE_QUERY);
+extern const int SCE_QUERY_RESULTS_HANDLE_BYTES = sizeof(SCE_QUERY_RESULTS);
+
 // internal function declarations
 static HRESULT RunQuery(
     __in BOOL fRange,
-    __in SCE_QUERY_HANDLE psqhHandle,
+    __in_bcount(SCE_QUERY_BYTES) SCE_QUERY_HANDLE psqhHandle,
     __out SCE_QUERY_RESULTS **ppsqrhHandle
     );
 static HRESULT EnsureSchema(
@@ -339,7 +343,7 @@ LExit:
 extern "C" HRESULT DAPI SceGetFirstRow(
     __in SCE_DATABASE *pDatabase,
     __in DWORD dwTableIndex,
-    __out SCE_ROW_HANDLE *pRowHandle
+    __out_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -376,7 +380,7 @@ LExit:
 HRESULT DAPI SceGetNextRow(
     __in SCE_DATABASE *pDatabase,
     __in DWORD dwTableIndex,
-    __out SCE_ROW_HANDLE *pRowHandle
+    __out_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -465,7 +469,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceDeleteRow(
-    __in SCE_ROW_HANDLE *pRowHandle
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -490,7 +494,7 @@ LExit:
 extern "C" HRESULT DAPI ScePrepareInsert(
     __in SCE_DATABASE *pDatabase,
     __in DWORD dwTableIndex,
-    __out SCE_ROW_HANDLE *pRowHandle
+    __out_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -515,7 +519,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceFinishUpdate(
-    __in SCE_ROW_HANDLE rowHandle
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -562,18 +566,22 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnBinary(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
     __in_bcount(cbBuffer) const BYTE* pbBuffer,
     __in SIZE_T cbBuffer
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set binary, columns: %u", pRow->pTableSchema->cColumns);
 
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -585,17 +593,21 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnDword(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
     __in const DWORD dwValue
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set dword, columns: %u", pRow->pTableSchema->cColumns);
 
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -607,17 +619,21 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnQword(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
     __in const DWORD64 qwValue
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set qword, columns: %u", pRow->pTableSchema->cColumns);
 
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -629,18 +645,22 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnBool(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
     __in const BOOL fValue
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     short int sValue = fValue ? 0xFFFF : 0x0000;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
 
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set bool, columns: %u", pRow->pTableSchema->cColumns);
+
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -652,39 +672,47 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnString(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
-    __in_z LPCWSTR pszValue
+    __in_z_opt LPCWSTR wzValue
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
-    SIZE_T cbSize = (lstrlenW(pszValue) + 1) * sizeof(WCHAR);
+    SIZE_T cbSize = (NULL == wzValue) ? 0 : ((lstrlenW(wzValue) + 1) * sizeof(WCHAR));
+
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set string, columns: %u", pRow->pTableSchema->cColumns);
 
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
-    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<const BYTE *>(pszValue), cbSize, &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
-    ExitOnFailure1(hr, "Failed to set column value as string: %ls", pszValue);
+    hr = SetColumnValue(pRow->pTableSchema, dwColumnIndex, reinterpret_cast<const BYTE *>(wzValue), cbSize, &pRow->rgBinding[pRow->dwBindingIndex++], &pRow->cbOffset, &pRow->pbData);
+    ExitOnFailure1(hr, "Failed to set column value as string: %ls", wzValue);
 
 LExit:
     return hr;
 }
 
 HRESULT DAPI SceSetColumnEmpty(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
+
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set empty, columns: %u", pRow->pTableSchema->cColumns);
 
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -696,19 +724,23 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceSetColumnSystemTime(
-    __in SCE_ROW_HANDLE rowHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle,
     __in DWORD dwColumnIndex,
     __in const SYSTEMTIME *pst
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     DBTIMESTAMP dbTimeStamp = { };
 
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
 
+    hr = ::SizeTMult(sizeof(DBBINDING), pRow->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to set systemtime, columns: %u", pRow->pTableSchema->cColumns);
+
     if (NULL == pRow->rgBinding)
     {
-        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * pRow->pTableSchema->cColumns, TRUE));
+        pRow->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
         ExitOnNull(pRow->rgBinding, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for sce row writer");
     }
 
@@ -729,7 +761,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnBinary(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __out_opt BYTE **ppbBuffer,
     __inout SIZE_T *pcbBuffer
@@ -750,7 +782,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnDword(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __out DWORD *pdwValue
     )
@@ -770,7 +802,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnQword(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __in DWORD64 *pqwValue
     )
@@ -790,7 +822,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnBool(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __out BOOL *pfValue
     )
@@ -820,16 +852,16 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnString(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
-    __out LPWSTR *ppszValue
+    __out_z LPWSTR *psczValue
     )
 {
     HRESULT hr = S_OK;
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowReadHandle);
     SIZE_T cbSize = 0;
 
-    hr = GetColumnValue(pRow, dwColumnIndex, reinterpret_cast<BYTE **>(ppszValue), &cbSize);
+    hr = GetColumnValue(pRow, dwColumnIndex, reinterpret_cast<BYTE **>(psczValue), &cbSize);
     if (E_NOTFOUND == hr)
     {
         ExitFunction();
@@ -841,7 +873,7 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetColumnSystemTime(
-    __in SCE_ROW_HANDLE rowReadHandle,
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowReadHandle,
     __in DWORD dwColumnIndex,
     __out SYSTEMTIME *pst
     )
@@ -893,10 +925,11 @@ extern "C" HRESULT DAPI SceBeginQuery(
     __in SCE_DATABASE *pDatabase,
     __in DWORD dwTableIndex,
     __in DWORD dwIndex,
-    __out SCE_QUERY_HANDLE *psqhHandle
+    __deref_out_bcount(SCE_QUERY_HANDLE_BYTES) SCE_QUERY_HANDLE *psqhHandle
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     SCE_QUERY *psq = static_cast<SCE_QUERY*>(MemAlloc(sizeof(SCE_QUERY), TRUE));
     ExitOnNull(psq, hr, E_OUTOFMEMORY, "Failed to allocate new sce query");
 
@@ -904,7 +937,10 @@ extern "C" HRESULT DAPI SceBeginQuery(
     psq->pIndexSchema = &(psq->pTableSchema->rgIndexes[dwIndex]);
     psq->pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
 
-    psq->rgBinding = static_cast<DBBINDING *>(MemAlloc(sizeof(DBBINDING) * psq->pTableSchema->cColumns, TRUE));
+    hr = ::SizeTMult(sizeof(DBBINDING), psq->pTableSchema->cColumns, &cbAllocSize);
+    ExitOnFailure1(hr, "Overflow while calculating allocation size for DBBINDING to begin query, columns: %u", psq->pTableSchema->cColumns);
+
+    psq->rgBinding = static_cast<DBBINDING *>(MemAlloc(cbAllocSize, TRUE));
     ExitOnNull(psq, hr, E_OUTOFMEMORY, "Failed to allocate DBBINDINGs for new sce query");
 
     *psqhHandle = static_cast<SCE_QUERY_HANDLE>(psq);
@@ -921,7 +957,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnBinary(
-    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
     __in_bcount(cbBuffer) const BYTE* pbBuffer,
     __in SIZE_T cbBuffer
     )
@@ -939,7 +975,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnDword(
-    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
     __in const DWORD dwValue
     )
 {
@@ -956,7 +992,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnQword(
-    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
     __in const DWORD64 qwValue
     )
 {
@@ -973,7 +1009,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnBool(
-    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
     __in const BOOL fValue
     )
 {
@@ -991,15 +1027,15 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnString(
-    __in SCE_QUERY_HANDLE sqhHandle,
-    __in_z LPCWSTR pszString
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
+    __in_z_opt LPCWSTR wzString
     )
 {
     HRESULT hr = S_OK;
     SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
-    SIZE_T cbSize = (lstrlenW(pszString) + 1) * sizeof(WCHAR);
+    SIZE_T cbSize = (NULL == wzString) ? 0 : ((lstrlenW(wzString) + 1) * sizeof(WCHAR));
 
-    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(pszString), cbSize, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
+    hr = SetColumnValue(pQuery->pTableSchema, pQuery->pIndexSchema->rgColumns[pQuery->dwBindingIndex], reinterpret_cast<const BYTE *>(wzString), cbSize, &pQuery->rgBinding[pQuery->dwBindingIndex], &pQuery->cbOffset, &pQuery->pbData);
     ExitOnFailure(hr, "Failed to set query column value as string");
 
     ++(pQuery->dwBindingIndex);
@@ -1009,7 +1045,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnSystemTime(
-    __in SCE_QUERY_HANDLE sqhHandle,
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle,
     __in const SYSTEMTIME *pst
     )
 {
@@ -1036,7 +1072,7 @@ LExit:
 }
 
 HRESULT DAPI SceSetQueryColumnEmpty(
-    __in SCE_QUERY_HANDLE sqhHandle
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle
     )
 {
     HRESULT hr = S_OK;
@@ -1052,8 +1088,8 @@ LExit:
 }
 
 HRESULT DAPI SceRunQueryExact(
-    __in SCE_QUERY_HANDLE *psqhHandle,
-    __out SCE_ROW_HANDLE *pRowHandle
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE *psqhHandle,
+    __out_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -1081,8 +1117,8 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceRunQueryRange(
-    __in SCE_QUERY_HANDLE *psqhHandle,
-    __out SCE_QUERY_RESULTS_HANDLE *psqrhHandle
+    __in_bcount(SCE_QUERY_BYTES) SCE_QUERY_HANDLE *psqhHandle,
+    __deref_out_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_RESULTS_HANDLE *psqrhHandle
     )
 {
     HRESULT hr = S_OK;
@@ -1102,8 +1138,8 @@ LExit:
 }
 
 extern "C" HRESULT DAPI SceGetNextResultRow(
-    __in SCE_QUERY_RESULTS_HANDLE sqrhHandle,
-    __out SCE_ROW_HANDLE *pRowHandle
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_RESULTS_HANDLE sqrhHandle,
+    __out_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE *pRowHandle
     )
 {
     HRESULT hr = S_OK;
@@ -1145,7 +1181,7 @@ LExit:
 }
 
 extern "C" void DAPI SceFreeRow(
-    __in SCE_ROW_HANDLE rowHandle
+    __in_bcount(SCE_ROW_HANDLE_BYTES) SCE_ROW_HANDLE rowHandle
     )
 {
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
@@ -1161,7 +1197,7 @@ extern "C" void DAPI SceFreeRow(
 }
 
 void DAPI SceFreeQuery(
-    __in SCE_QUERY_HANDLE sqhHandle
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_HANDLE sqhHandle
     )
 {
     SCE_QUERY *pQuery = reinterpret_cast<SCE_QUERY *>(sqhHandle);
@@ -1172,7 +1208,7 @@ void DAPI SceFreeQuery(
 }
 
 void DAPI SceFreeQueryResults(
-    __in SCE_QUERY_RESULTS_HANDLE sqrhHandle
+    __in_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_RESULTS_HANDLE sqrhHandle
     )
 {
     SCE_QUERY_RESULTS *pQueryResults = reinterpret_cast<SCE_QUERY_RESULTS *>(sqrhHandle);
@@ -1184,8 +1220,8 @@ void DAPI SceFreeQueryResults(
 // internal function definitions
 static HRESULT RunQuery(
     __in BOOL fRange,
-    __in SCE_QUERY_HANDLE psqhHandle,
-    __out SCE_QUERY_RESULTS **ppQueryResults
+    __in_bcount(SCE_QUERY_BYTES) SCE_QUERY_HANDLE psqhHandle,
+    __deref_out_bcount(SCE_QUERY_RESULTS_BYTES) SCE_QUERY_RESULTS **ppQueryResults
     )
 {
     HRESULT hr = S_OK;
@@ -1277,6 +1313,7 @@ static HRESULT EnsureSchema(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     BOOL fInTransaction = FALSE;
     BOOL fFixedSize = FALSE;
     DBID tableID = { };
@@ -1408,7 +1445,10 @@ static HRESULT EnsureSchema(
             hr = pTableDefinition->CreateTable(NULL, &tableID, pdsSchema->rgTables[dwTable].cColumns, rgColumnDescriptions, IID_IUnknown, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, NULL, NULL);
             ExitOnFailure1(hr, "Failed to create table: %ls", pdsSchema->rgTables[dwTable].wzName);
 
+#pragma prefast(push)
+#pragma prefast(disable:26010)
             hr = EnsureLocalColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
+#pragma prefast(pop)
             ExitOnFailure1(hr, "Failed to ensure local column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
 
             for (DWORD i = 0; i < pdsSchema->rgTables[dwTable].cColumns; ++i)
@@ -1438,7 +1478,10 @@ static HRESULT EnsureSchema(
                 indexID.eKind = DBKIND_NAME;
                 indexID.uName.pwszName = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].wzName;
 
-                rgIndexColumnDescriptions = reinterpret_cast<DBINDEXCOLUMNDESC *>(MemAlloc(sizeof(DBINDEXCOLUMNDESC) * pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns, TRUE));
+                hr = ::SizeTMult(sizeof(DBINDEXCOLUMNDESC), pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns, &cbAllocSize);
+                ExitOnFailure1(hr, "Overflow while calculating allocation size for DBINDEXCOLUMNDESC, columns: %u", pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns);
+
+                rgIndexColumnDescriptions = reinterpret_cast<DBINDEXCOLUMNDESC *>(MemAlloc(cbAllocSize, TRUE));
                 ExitOnNull(rgIndexColumnDescriptions, hr, E_OUTOFMEMORY, "Failed to allocate structure to hold index column descriptions");
                 cIndexColumnDescriptions = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns;
 
@@ -1530,15 +1573,21 @@ static HRESULT SetColumnValue(
     )
 {
     HRESULT hr = S_OK;
-    SIZE_T cbNewOffset = *cbOffset;
+    size_t cbNewOffset = *cbOffset;
 
     pBinding->iOrdinal = dwColumnIndex + 1; // Skip bookmark column
     pBinding->dwMemOwner = DBMEMOWNER_CLIENTOWNED;
     pBinding->dwPart = DBPART_VALUE | DBPART_LENGTH;
     pBinding->obLength = cbNewOffset;
-    cbNewOffset += sizeof(DBBYTEOFFSET);
+
+    hr = ::SizeTAdd(cbNewOffset, sizeof(DBBYTEOFFSET), &cbNewOffset);
+    ExitOnFailure(hr, "Failed to add sizeof(DBBYTEOFFSET) to alloc size while setting column value");
+
     pBinding->obValue = cbNewOffset;
-    cbNewOffset += cbSize;
+
+    hr = ::SizeTAdd(cbNewOffset, cbSize, &cbNewOffset);
+    ExitOnFailure1(hr, "Failed to add %u to alloc size while setting column value", cbSize);
+
     pBinding->wType = pTableSchema->rgColumns[dwColumnIndex].dbtColumnType;
     pBinding->cbMaxLen = cbSize;
 

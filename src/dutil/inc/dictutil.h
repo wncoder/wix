@@ -25,35 +25,47 @@ extern "C" {
 #define ReleaseNullDict(sdh) if (sdh) { DictDestroy(sdh); sdh = NULL; }
 
 typedef void* STRINGDICT_HANDLE;
+typedef const void* C_STRINGDICT_HANDLE;
+
+extern const int STRINGDICT_HANDLE_BYTES;
+
+enum DICT_FLAG
+{
+    DICT_FLAG_NONE = 0,
+    DICT_FLAG_CASEINSENSITIVE = 1
+};
 
 HRESULT DAPI DictCreateWithEmbeddedKey(
-    __out STRINGDICT_HANDLE *psdHandle,
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdHandle,
     __in DWORD dwNumExpectedItems,
-    __in size_t cByteOffset
+    __in_opt void **ppvArray,
+    __in size_t cByteOffset,
+    __in DICT_FLAG dfFlags
     );
 HRESULT DAPI DictCreateStringList(
-    __out STRINGDICT_HANDLE *psdHandle,
-    __in DWORD dwNumExpectedItems
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdHandle,
+    __in DWORD dwNumExpectedItems,
+    __in DICT_FLAG dfFlags
     );
 HRESULT DAPI DictAddKey(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR szString
     );
 HRESULT DAPI DictAddValue(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle,
     __in void *pvValue
     );
 HRESULT DAPI DictKeyExists(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) C_STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR szString
     );
 HRESULT DAPI DictGetValue(
-    __in STRINGDICT_HANDLE sdHandle,
+    __in_bcount(STRINGDICT_HANDLE_BYTES) C_STRINGDICT_HANDLE sdHandle,
     __in_z LPCWSTR szString,
     __out void **ppvValue
     );
 void DAPI DictDestroy(
-    __in STRINGDICT_HANDLE sdHandle
+    __in_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE sdHandle
     );
 
 #ifdef __cplusplus

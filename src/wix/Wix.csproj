@@ -14,6 +14,7 @@
     <Compile Include="AssemblyDefaultHeatExtensionAttribute.cs" />
     <Compile Include="AssemblyDefaultWixExtensionAttribute.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="AutoMediaAssigner.cs" />
     <Compile Include="BBControlRow.cs" />
     <Compile Include="Binder.cs" />
     <Compile Include="BinderCore.cs" />
@@ -149,6 +150,7 @@
     <Compile Include="WixFileRow.cs" />
     <Compile Include="WixGroupingOrdering.cs" />
     <Compile Include="WixMediaRow.cs" />
+    <Compile Include="WixMediaTemplateRow.cs" />
     <Compile Include="WixMergeRow.cs" />
     <Compile Include="WixPropertyRow.cs" />
     <Compile Include="WixSimpleReferenceRow.cs" />

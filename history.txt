@@ -918,3 +918,32 @@ BobArnso: Expose DTF's Database.ExecutePropertyQuery method.
 
 RobMen: Support retrying package install in Burn.
         Add balretry to convert common package errors to retry recommendations.
+
+BobArnso: Allow all bind-time variables in external cabinet names.
+
+BobArnso: Prevent rollback chain from being canceled by UX in both Burn engine
+          and CBalBaseBootstrapperApplication.
+
+BobArnso: SFBUG:3189224 - Fix filename case for hrefs (on Apache 
+          case-sensitive file system).
+
+VaraBall: Added support for Automatic media assignment based on MediaTemplate.
+
+BobArnso: Make Modify, Remove, Repair suppression attributes match across
+          binder and Burn engine.
+
+BobArnso: Expose RTF load to arbitrary rich-edit HWNDs 
+          (ThemeLoadRichEditFromResourceToHWnd)
+
+BobArnso: Fix SFBUG:3190965 -- Add a new error message for multiple possible 
+          attributes
+
+HeathS: Added extended flags for the dictionary utility.
+
+HeathS: Added function to split a string into an array.
+
+HeathS: Added binder property specializations for ProductVersion.
+        Allowed binder extensions to generate unique identifiers.
+
+WixBuild: Version 3.6.1502.0
+

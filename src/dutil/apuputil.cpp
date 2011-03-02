@@ -416,6 +416,7 @@ static HRESULT FilterEntries(
     )
 {
     HRESULT hr = S_OK;
+    size_t cbAllocSize = 0;
     const APPLICATION_UPDATE_ENTRY* pRequired = NULL;;
     LPVOID pv = NULL;
 
@@ -435,14 +436,18 @@ static HRESULT FilterEntries(
         if (pRequired)
         {
             DWORD cNewFilteredEntries = *pcFilteredEntries + 1;
+
+            hr = ::SizeTMult(sizeof(APPLICATION_UPDATE_ENTRY), cNewFilteredEntries, &cbAllocSize);
+            ExitOnFailure1(hr, "Overflow while calculating alloc size for more entries - number of entries: %u", cNewFilteredEntries);
+
             if (*prgFilteredEntries)
             {
-                pv = MemReAlloc(*prgFilteredEntries, sizeof(APPLICATION_UPDATE_ENTRY) * cNewFilteredEntries, FALSE);
+                pv = MemReAlloc(*prgFilteredEntries, cbAllocSize, FALSE);
                 ExitOnNull(pv, hr, E_OUTOFMEMORY, "Failed to reallocate memory for more entries.");
             }
             else
             {
-                pv = MemAlloc(sizeof(APPLICATION_UPDATE_ENTRY) * cNewFilteredEntries, TRUE);
+                pv = MemAlloc(cbAllocSize, TRUE);
                 ExitOnNull(pv, hr, E_OUTOFMEMORY, "Failed to allocate memory for entries.");
             }
 
@@ -499,7 +504,7 @@ static HRESULT CopyEntry(
     pDest->dw64Version = pSrc->dw64Version;
     pDest->fUpgradeExclusive = pSrc->fUpgradeExclusive;
 
-    hr = SizeTMult(sizeof(APPLICATION_UPDATE_ENCLOSURE), pSrc->cEnclosures, &cbAllocSize);
+    hr = ::SizeTMult(sizeof(APPLICATION_UPDATE_ENCLOSURE), pSrc->cEnclosures, &cbAllocSize);
     ExitOnRootFailure(hr, "Overflow while calculating memory allocation size");
 
     pDest->rgEnclosures = static_cast<APPLICATION_UPDATE_ENCLOSURE*>(MemAlloc(cbAllocSize, TRUE));

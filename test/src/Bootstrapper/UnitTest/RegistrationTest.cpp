@@ -281,7 +281,7 @@ namespace Bootstrapper
                     L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
                     L"        <Arp DisplayName='DisplayName1' DisplayVersion='1.2.3.4' Publisher='Publisher1' HelpLink='http://www.microsoft.com/help'"
                     L"             HelpTelephone='555-555-5555' AboutUrl='http://www.microsoft.com/about' UpdateUrl='http://www.microsoft.com/update'"
-                    L"             Comments='Comments1' Contact='Contact1' NoModify='yes' NoRepair='yes' NoRemove='yes' />"
+                    L"             Comments='Comments1' Contact='Contact1' DisableModify='yes' DisableRepair='yes' DisableRemove='yes' />"
                     L"    </Registration>"
                     L"</Bundle>";
 

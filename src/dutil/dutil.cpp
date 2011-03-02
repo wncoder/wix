@@ -18,6 +18,8 @@
 
 #include "precomp.h"
 
+// No need for OACR to warn us about using non-unicode APIs in this file.
+#pragma prefast(disable:25068)
 
 // Asserts & Tracing
 
@@ -295,6 +297,8 @@ extern "C" void DAPI Dutil_Trace(
         {
             ::StringCchPrintfA(szMsg, countof(szMsg), "Trace: message too long, skipping\r\n");
         }
+
+        szMsg[countof(szMsg)-1] = '\0';
         OutputDebugStringA(szMsg);
     }
 }
@@ -385,6 +389,7 @@ extern "C" void DAPI Dutil_TraceError(
             }
         }
 
+        szMsg[countof(szMsg)-1] = '\0';
         OutputDebugStringA(szMsg);
     }
 }

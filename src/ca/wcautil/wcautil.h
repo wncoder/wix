@@ -293,12 +293,12 @@ HRESULT WIXAPI WcaWriteStringToCaData(
     );
 HRESULT WIXAPI WcaWriteIntegerToCaData(
     __in int i, 
-    __deref_inout_z LPWSTR* ppwzCustomActionData
+    __deref_out_z_opt LPWSTR* ppwzCustomActionData
     );
 HRESULT WIXAPI WcaWriteStreamToCaData(
     __in_bcount(cbData) const BYTE* pbData,
     __in DWORD cbData,
-    __deref_inout_z LPWSTR* ppwzCustomActionData
+    __deref_inout_z_opt LPWSTR* ppwzCustomActionData
     );
 
 HRESULT __cdecl WcaAddTempRecord(

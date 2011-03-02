@@ -43,7 +43,7 @@ static HRESULT EnsureTokenStack(
     __in JSON_WRITER* pWriter
     );
 static HRESULT SerializeJsonString(
-    __inout_z LPWSTR* psczJsonString,
+    __out_z LPWSTR* psczJsonString,
     __in_z LPCWSTR wzString
     );
 
@@ -592,7 +592,7 @@ LExit:
 
 
 static HRESULT SerializeJsonString(
-    __inout_z LPWSTR* psczJsonString,
+    __out_z LPWSTR* psczJsonString,
     __in_z LPCWSTR wzString
     )
 {

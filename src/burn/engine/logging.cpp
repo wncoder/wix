@@ -247,6 +247,52 @@ extern "C" LPCSTR LoggingPackageStateToString(
     }
 }
 
+extern "C" LPCSTR LoggingMsiFeatureStateToString(
+    __in BOOTSTRAPPER_FEATURE_STATE featureState
+    )
+{
+    switch (featureState)
+    {
+    case BOOTSTRAPPER_FEATURE_STATE_UNKNOWN:
+        return "Unknown";
+    case BOOTSTRAPPER_FEATURE_STATE_ABSENT:
+        return "Absent";
+    case BOOTSTRAPPER_FEATURE_STATE_ADVERTISED:
+        return "Advertised";
+    case BOOTSTRAPPER_FEATURE_STATE_LOCAL:
+        return "Local";
+    case BOOTSTRAPPER_FEATURE_STATE_SOURCE:
+        return "Source";
+    default:
+        return "Invalid";
+    }
+}
+
+extern "C" LPCSTR LoggingMsiFeatureActionToString(
+    __in BOOTSTRAPPER_FEATURE_ACTION featureAction
+    )
+{
+    switch (featureAction)
+    {
+    case BOOTSTRAPPER_FEATURE_ACTION_NONE:
+        return "None";
+    case BOOTSTRAPPER_FEATURE_ACTION_ADDLOCAL:
+        return "AddLocal";
+    case BOOTSTRAPPER_FEATURE_ACTION_ADDSOURCE:
+        return "AddSource";
+    case BOOTSTRAPPER_FEATURE_ACTION_ADDDEFAULT:
+        return "AddDefault";
+    case BOOTSTRAPPER_FEATURE_ACTION_REINSTALL:
+        return "Reinstall";
+    case BOOTSTRAPPER_FEATURE_ACTION_ADVERTISE:
+        return "Advertise";
+    case BOOTSTRAPPER_FEATURE_ACTION_REMOVE:
+        return "Remove";
+    default:
+        return "Invalid";
+    }
+}
+
 extern "C" LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
     )

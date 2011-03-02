@@ -30,7 +30,7 @@ extern "C" {
 
 HRESULT DAPI CrypDecodeObject(
     __in_z LPCSTR szStructType,
-    __in_ecount(cb) BYTE* pbData,
+    __in_ecount(cb) const BYTE* pbData,
     __in DWORD cbData,
     __in DWORD dwFlags,
     __out LPVOID* ppvObject,

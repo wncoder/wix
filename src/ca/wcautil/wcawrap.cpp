@@ -1328,14 +1328,16 @@ feed a deferred CustomAction
 ********************************************************************/
 extern "C" HRESULT WIXAPI WcaWriteStringToCaData(
     __in_z LPCWSTR wzString,
-    __deref_inout_z LPWSTR* ppwzCustomActionData
+    __deref_inout_z_opt LPWSTR* ppwzCustomActionData
     )
 {
     HRESULT hr = S_OK;
     WCHAR delim[] = {MAGIC_MULTISZ_DELIM, 0}; // magic char followed by NULL terminator
 
     if (!ppwzCustomActionData)
-        return E_INVALIDARG;
+    {
+        ExitFunction1(hr = E_INVALIDARG);
+    }
 
     DWORD cchString = lstrlenW(wzString) + 1; // assume we'll be adding the delim
     DWORD_PTR cchCustomActionData = 0;
@@ -1374,7 +1376,7 @@ feed a deferred CustomAction
 ********************************************************************/
 extern "C" HRESULT WIXAPI WcaWriteIntegerToCaData(
     __in int i, 
-    __deref_inout_z LPWSTR* ppwzCustomActionData
+    __deref_out_z_opt LPWSTR* ppwzCustomActionData
     )
 {
     WCHAR wzBuffer[13];
@@ -1392,7 +1394,7 @@ feed a deferred CustomAction
 extern "C" HRESULT WIXAPI WcaWriteStreamToCaData(
     __in_bcount(cbData) const BYTE* pbData,
     __in DWORD cbData,
-    __deref_inout_z LPWSTR* ppwzCustomActionData
+    __deref_inout_z_opt LPWSTR* ppwzCustomActionData
     )
 {
     HRESULT hr;

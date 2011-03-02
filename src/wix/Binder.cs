@@ -1679,32 +1679,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 fileRows.AddRange(fileTable.Rows);
             }
 
-            // index the media table
-            Table mediaTable = output.Tables["Media"];
-            if (null != mediaTable)
-            {
-                Dictionary<string, MediaRow> cabinetMediaRows = new Dictionary<string, MediaRow>(StringComparer.InvariantCultureIgnoreCase);
-                foreach (MediaRow mediaRow in mediaTable.Rows)
-                {
-                    // If the Media row has a cabinet, make sure it is unique across all Media rows.
-                    if (!String.IsNullOrEmpty(mediaRow.Cabinet))
-                    {
-                        MediaRow existingRow;
-                        if (cabinetMediaRows.TryGetValue(mediaRow.Cabinet, out existingRow))
-                        {
-                            this.core.OnMessage(WixErrors.DuplicateCabinetName(mediaRow.SourceLineNumbers, mediaRow.Cabinet));
-                            this.core.OnMessage(WixErrors.DuplicateCabinetName2(existingRow.SourceLineNumbers, existingRow.Cabinet));
-                        }
-                        else
-                        {
-                            cabinetMediaRows.Add(mediaRow.Cabinet, mediaRow);
-                        }
-                    }
-
-                    mediaRows.Add(mediaRow);
-                }
-            }
-
             // stop processing if an error previously occurred
             if (this.core.EncounteredError)
             {
@@ -1776,9 +1750,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
+            // assign files to media
+            AutoMediaAssigner autoMediaAssigner = new AutoMediaAssigner(output, this.core, compressed);
+            autoMediaAssigner.AssignFiles(fileRows);
+
             // update file version, hash, assembly, etc.. information
             this.core.OnMessage(WixVerboses.UpdatingFileInformation());
-            this.UpdateFileInformation(output, fileRows, mediaRows, variableCache, modularizationGuid);
+            this.UpdateFileInformation(output, fileRows, autoMediaAssigner.MediaRows, variableCache, modularizationGuid);
             this.UpdateControlText(output);
 
             if (delayedFields.Count != 0)
@@ -1798,7 +1776,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (!this.suppressLayout || OutputType.Module == output.Type)
             {
                 this.core.OnMessage(WixVerboses.CreatingCabinetFiles());
-                uncompressedFileRows = this.CreateCabinetFiles(output, fileRows, fileTransfers, mediaRows, layoutDirectory, compressed);
+                uncompressedFileRows = this.CreateCabinetFiles(output, fileRows, fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, autoMediaAssigner);
             }
 
             if (OutputType.Patch == output.Type)
@@ -1916,7 +1894,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // process uncompressed files
             if (!this.suppressLayout)
             {
-                this.ProcessUncompressedFiles(tempDatabaseFile, uncompressedFileRows, fileTransfers, mediaRows, layoutDirectory, compressed, longNames);
+                this.ProcessUncompressedFiles(tempDatabaseFile, uncompressedFileRows, fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, longNames);
             }
 
             // add LayoutDirectory
@@ -2173,6 +2151,48 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     this.core.OnMessage(we.Error);
                     continue;
+                }
+            }
+
+            // add specialization for ProductVersion fields
+            string keyProductVersion = "property.ProductVersion";
+            if (variableCache.ContainsKey(keyProductVersion))
+            {
+                string value = variableCache[keyProductVersion];
+                Version productVersion = null;
+
+                try
+                {
+                    productVersion = new Version(value);
+
+                    // Don't add the variable if it already exists (developer defined a property with the same name).
+                    string fieldKey = String.Concat(keyProductVersion, ".Major");
+                    if (!variableCache.ContainsKey(fieldKey))
+                    {
+                        variableCache[fieldKey] = productVersion.Major.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    fieldKey = String.Concat(keyProductVersion, ".Minor");
+                    if (!variableCache.ContainsKey(fieldKey))
+                    {
+                        variableCache[fieldKey] = productVersion.Minor.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    fieldKey = String.Concat(keyProductVersion, ".Build");
+                    if (!variableCache.ContainsKey(fieldKey))
+                    {
+                        variableCache[fieldKey] = productVersion.Build.ToString(CultureInfo.InvariantCulture);
+                    }
+
+                    fieldKey = String.Concat(keyProductVersion, ".Revision");
+                    if (!variableCache.ContainsKey(fieldKey))
+                    {
+                        variableCache[fieldKey] = productVersion.Revision.ToString(CultureInfo.InvariantCulture);
+                    }
+                }
+                catch
+                {
+                    // Ignore the error introduced by new behavior.
                 }
             }
 
@@ -5371,63 +5391,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="layoutDirectory">The directory in which the image should be layed out.</param>
         /// <param name="compressed">Flag if source image should be compressed.</param>
         /// <returns>The uncompressed file rows.</returns>
-        private FileRowCollection CreateCabinetFiles(Output output, FileRowCollection fileRows, ArrayList fileTransfers, MediaRowCollection mediaRows, string layoutDirectory, bool compressed)
+        private FileRowCollection CreateCabinetFiles(Output output, FileRowCollection fileRows, ArrayList fileTransfers, MediaRowCollection mediaRows, string layoutDirectory, bool compressed, AutoMediaAssigner autoMediaAssigner)
         {
-            Hashtable cabinets = new Hashtable();
-            MediaRow mergeModuleMediaRow = null;
-            FileRowCollection uncompressedFileRows = new FileRowCollection();
-
-            if (OutputType.Module == output.Type)
-            {
-                Table mediaTable = new Table(null, this.core.TableDefinitions["Media"]);
-                mergeModuleMediaRow = (MediaRow)mediaTable.CreateRow(null);
-                mergeModuleMediaRow.Cabinet = "#MergeModule.CABinet";
-
-                cabinets.Add(mergeModuleMediaRow, new FileRowCollection());
-            }
-            else
-            {
-                foreach (MediaRow mediaRow in mediaRows)
-                {
-                    if (null != mediaRow.Cabinet)
-                    {
-                        cabinets.Add(mediaRow, new FileRowCollection());
-                    }
-                }
-            }
-
-            foreach (FileRow fileRow in fileRows)
-            {
-                if (OutputType.Module == output.Type)
-                {
-                    ((FileRowCollection)cabinets[mergeModuleMediaRow]).Add(fileRow);
-                }
-                else
-                {
-                    MediaRow mediaRow = mediaRows[fileRow.DiskId];
-
-                    if (OutputType.Product == output.Type &&
-                        (YesNoType.No == fileRow.Compressed ||
-                        (YesNoType.NotSet == fileRow.Compressed && !compressed)))
-                    {
-                        uncompressedFileRows.Add(fileRow);
-                    }
-                    else // file in a Module or marked compressed
-                    {
-                        FileRowCollection cabinetFileRow = (FileRowCollection)cabinets[mediaRow];
-
-                        if (null != cabinetFileRow)
-                        {
-                            cabinetFileRow.Add(fileRow);
-                        }
-                        else
-                        {
-                            throw new WixException(WixErrors.ExpectedMediaCabinet(fileRow.SourceLineNumbers, fileRow.File, fileRow.DiskId));
-                        }
-                    }
-                }
-            }
-
             this.SetCabbingThreadCount();
 
             CabinetBuilder cabinetBuilder = new CabinetBuilder(this.cabbingThreadCount);
@@ -5436,7 +5401,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 cabinetBuilder.Message += new MessageEventHandler(this.MessageHandler);
             }
 
-            foreach (DictionaryEntry entry in cabinets)
+            foreach (DictionaryEntry entry in autoMediaAssigner.Cabinets)
             {
                 MediaRow mediaRow = (MediaRow)entry.Key;
                 FileRowCollection files = (FileRowCollection)entry.Value;
@@ -5464,7 +5429,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return null;
             }
 
-            return uncompressedFileRows;
+            return autoMediaAssigner.UncompressedFileRows;
         }
 
         /// <summary>

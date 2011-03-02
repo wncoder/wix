@@ -77,10 +77,9 @@ struct CABC_FILE
 
 struct CABC_DATA
 {
-    HFCI hfci;
-    ERF erf;
-    CCAB ccab;
-    TCOMP tc;
+    LONGLONG llBytesSinceLastFlush;
+    LONGLONG llFlushThreshhold;
+
     STRINGDICT_HANDLE shDictHandle;
 
     WCHAR wzCabinetPath[MAX_PATH];
@@ -96,12 +95,16 @@ struct CABC_DATA
     DWORD cMaxDuplicates;
     CABC_DUPLICATEFILE *prgDuplicates;
 
-    LONGLONG llBytesSinceLastFlush;
-    LONGLONG llFlushThreshhold;
-
     HRESULT hrLastError;
     BOOL fGoodCab;
+
+    HFCI hfci;
+    ERF erf;
+    CCAB ccab;
+    TCOMP tc;
 };
+
+const int CABC_HANDLE_BYTES = sizeof(CABC_DATA);
 
 //
 // prototypes
@@ -139,24 +142,24 @@ static HRESULT DuplicateFile(
     __in const CABC_DUPLICATEFILE *pDuplicate
     );
 static HRESULT UtcFileTimeToLocalDosDateTime(
-    __in FILETIME* pFileTime,
+    __in const FILETIME* pFileTime,
     __out USHORT* pDate,
     __out USHORT* pTime
     );
 
-static __callback int DIAMONDAPI CabCFilePlaced(__in PCCAB pccab, __in_z PSTR szFile, __in long cbFile, __in BOOL fContinuation, __out void *pv);
+static __callback int DIAMONDAPI CabCFilePlaced(__in PCCAB pccab, __in_z PSTR szFile, __in long cbFile, __in BOOL fContinuation, __out_bcount(CABC_HANDLE_BYTES) void *pv);
 static __callback void * DIAMONDAPI CabCAlloc(__in ULONG cb);
-static __callback void DIAMONDAPI CabCFree(__out void *pv);
-static __callback INT_PTR DIAMONDAPI CabCOpen(__in_z PSTR pszFile, __in int oflag, __in int pmode, __out int *err, __out void *pv);
-static __callback UINT FAR DIAMONDAPI CabCRead(__in INT_PTR hf, __out_bcount(cb) void FAR *memory, __in UINT cb, __out int *err, __out void *pv);
-static __callback UINT FAR DIAMONDAPI CabCWrite(__in INT_PTR hf, __in_bcount(cb) void FAR *memory, __in UINT cb, __out int *err, __out void *pv);
-static __callback long FAR DIAMONDAPI CabCSeek(__in INT_PTR hf, __in long dist, __in int seektype, __out int *err, __out void *pv);
-static __callback int FAR DIAMONDAPI CabCClose(__in INT_PTR hf, __out int *err, __out void *pv);
-static __callback int DIAMONDAPI CabCDelete(__in_z PSTR szFile, __out int *err, __out void *pv);
-__success(return != FALSE) static __callback BOOL DIAMONDAPI CabCGetTempFile(__out_bcount_z(cbFile) char *szFile, __in int cbFile, __out void *pv);
-__success(return != FALSE) static __callback BOOL DIAMONDAPI CabCGetNextCabinet(__in PCCAB pccab, __in ULONG ul, __out void *pv);
-static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(__in_z PSTR pszName, __out USHORT *pdate, __out USHORT *ptime, __out USHORT *pattribs, __out int *err, __out void *pv);
-static __callback long DIAMONDAPI CabCStatus(__in UINT uiTypeStatus, __in ULONG cb1, __in ULONG cb2, __out void *pv);
+static __callback void DIAMONDAPI CabCFree(__out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback INT_PTR DIAMONDAPI CabCOpen(__in_z PSTR pszFile, __in int oflag, __in int pmode, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback UINT FAR DIAMONDAPI CabCRead(__in INT_PTR hf, __out_bcount(cb) void FAR *memory, __in UINT cb, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback UINT FAR DIAMONDAPI CabCWrite(__in INT_PTR hf, __in_bcount(cb) void FAR *memory, __in UINT cb, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback long FAR DIAMONDAPI CabCSeek(__in INT_PTR hf, __in long dist, __in int seektype, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback int FAR DIAMONDAPI CabCClose(__in INT_PTR hf, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback int DIAMONDAPI CabCDelete(__in_z PSTR szFile, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+__success(return != FALSE) static __callback BOOL DIAMONDAPI CabCGetTempFile(__out_bcount_z(cbFile) char *szFile, __in int cbFile, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+__success(return != FALSE) static __callback BOOL DIAMONDAPI CabCGetNextCabinet(__in PCCAB pccab, __in ULONG ul, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(__in_z PSTR pszName, __out USHORT *pdate, __out USHORT *ptime, __out USHORT *pattribs, __out int *err, __out_bcount(CABC_HANDLE_BYTES) void *pv);
+static __callback long DIAMONDAPI CabCStatus(__in UINT uiTypeStatus, __in ULONG cb1, __in ULONG cb2, __out_bcount(CABC_HANDLE_BYTES) void *pv);
 
 
 /********************************************************************
@@ -193,7 +196,11 @@ extern "C" HRESULT DAPI CabCBegin(
         ExitOnFailure(hr, "Failed to get length of cab directory");
 
         // Need room to terminate with L'\\' and L'\0'
-        Assert(cchPathBuffer < (MAX_PATH - 1));
+        if((MAX_PATH - 1) <= cchPathBuffer || 0 == cchPathBuffer)
+        {
+            hr = E_INVALIDARG;
+            ExitOnFailure1(hr, "Cab directory had invalid length: %u", cchPathBuffer);
+        }
 
         hr = ::StringCchCopyW(wzPathBuffer, countof(wzPathBuffer), wzCabDir);
         ExitOnFailure(hr, "Failed to copy cab directory to buffer");
@@ -294,7 +301,7 @@ extern "C" HRESULT DAPI CabCBegin(
     // case is we'll leave a zero byte file behind in the temp folder.
     pcd->hEmptyFile = ::CreateFileW(pcd->wzEmptyFile, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
 
-    hr = DictCreateWithEmbeddedKey(&pcd->shDictHandle, dwMaxFiles, offsetof(CABC_FILE, pwzSourcePath));
+    hr = DictCreateWithEmbeddedKey(&pcd->shDictHandle, dwMaxFiles, reinterpret_cast<void **>(&pcd->prgFiles), offsetof(CABC_FILE, pwzSourcePath), DICT_FLAG_NONE);
     ExitOnFailure(hr, "Failed to create dictionary to keep track of duplicate files");
 
     // Make sure to allocate at least some space, or we won't be able to realloc later if they "lied" about having zero files
@@ -348,7 +355,7 @@ CabCNextCab - This will be useful when creating multiple cabs.
 Haven't needed it yet.
 ********************************************************************/
 extern "C" HRESULT DAPI CabCNextCab(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     )
 {
     UNREFERENCED_PARAMETER(hContext);
@@ -367,7 +374,7 @@ extern "C" HRESULT DAPI CabCAddFile(
     __in_z LPCWSTR wzFile,
     __in_z_opt LPCWSTR wzToken,
     __in_opt PMSIFILEHASHINFO pmfHash,
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     )
 {
     Assert(wzFile && *wzFile && hContext);
@@ -428,7 +435,7 @@ CabcFinish - finishes making a cabinet
 NOTE: hContext must be the same used in Begin and AddFile
 *********************************************************************/
 extern "C" HRESULT DAPI CabCFinish(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     )
 {
     Assert(hContext);
@@ -554,7 +561,10 @@ extern "C" HRESULT DAPI CabCFinish(
         pcd->llBytesSinceLastFlush += llFileSize;
 
         // add the file to the cab
+#pragma prefast(push)
+#pragma prefast(disable:6387) // OACR is silly, pszFileToken can't be false here
         if (!::FCIAddFile(pcd->hfci, szFile, pszFileToken, FALSE, CabCGetNextCabinet, CabCStatus, CabCGetOpenInfo, pcd->tc))
+#pragma prefast(pop)
         {
             pcd->fGoodCab = FALSE;
 
@@ -628,7 +638,7 @@ CabCCancel - cancels making a cabinet
 NOTE: hContext must be the same used in Begin and AddFile
 *********************************************************************/
 extern "C" void DAPI CabCCancel(
-    __in HANDLE hContext
+    __in_bcount(CABC_HANDLE_BYTES) HANDLE hContext
     )
 {
     Assert(hContext);
@@ -999,7 +1009,7 @@ LExit:
 
 
 static HRESULT UtcFileTimeToLocalDosDateTime(
-    __in FILETIME* pFileTime,
+    __in const FILETIME* pFileTime,
     __out USHORT* pDate,
     __out USHORT* pTime
     )
@@ -1031,7 +1041,7 @@ static __callback int DIAMONDAPI CabCFilePlaced(
     __in_z PSTR szFile,
     __in long cbFile,
     __in BOOL fContinuation,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     UNREFERENCED_PARAMETER(pccab);
@@ -1052,7 +1062,7 @@ static __callback void * DIAMONDAPI CabCAlloc(
 
 
 static __callback void DIAMONDAPI CabCFree(
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     MemFree(pv);
@@ -1063,7 +1073,7 @@ static __callback INT_PTR DIAMONDAPI CabCOpen(
     __in int oflag,
     __in int pmode,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1108,7 +1118,10 @@ static __callback INT_PTR DIAMONDAPI CabCOpen(
     }
     else
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068) // We intentionally don't use the unicode API here
         pFile = reinterpret_cast<INT_PTR>(::CreateFileA(pszFile, dwAccess, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, dwDisposition, dwAttributes, NULL));
+#pragma prefast(pop)
     }
     if (INVALID_HANDLE_VALUE == reinterpret_cast<HANDLE>(pFile))
     {
@@ -1128,7 +1141,7 @@ static __callback UINT FAR DIAMONDAPI CabCRead(
     __out_bcount(cb) void FAR *memory,
     __in UINT cb,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1144,7 +1157,9 @@ static __callback UINT FAR DIAMONDAPI CabCRead(
 
 LExit:
     if (FAILED(hr))
+    {
         pcd->hrLastError = *err = hr;
+    }
 
     return FAILED(hr) ? -1 : cbRead;
 }
@@ -1155,7 +1170,7 @@ static __callback UINT FAR DIAMONDAPI CabCWrite(
     __in_bcount(cb) void FAR *memory,
     __in UINT cb,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1182,7 +1197,7 @@ static __callback long FAR DIAMONDAPI CabCSeek(
     __in long dist,
     __in int seektype,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1219,7 +1234,9 @@ static __callback long FAR DIAMONDAPI CabCSeek(
 
 LExit:
     if (FAILED(hr))
+    {
         pcd->hrLastError = *err = hr;
+    }
 
     return FAILED(hr) ? -1 : lMove;
 }
@@ -1228,7 +1245,7 @@ LExit:
 static __callback int FAR DIAMONDAPI CabCClose(
     __in INT_PTR hf,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1252,7 +1269,7 @@ LExit:
 static __callback int DIAMONDAPI CabCDelete(
     __in_z PSTR szFile,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     UNREFERENCED_PARAMETER(err);
@@ -1264,7 +1281,10 @@ static __callback int DIAMONDAPI CabCDelete(
     }
     else
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068) // We intentionally don't use the unicode API here
         ::DeleteFileA(szFile);
+#pragma prefast(pop)
     }
 
     return 0;
@@ -1275,7 +1295,7 @@ __success(return != FALSE)
 static __callback BOOL DIAMONDAPI CabCGetTempFile(
     __out_bcount_z(cbFile) char *szFile,
     __in int cbFile,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(pv);
@@ -1349,7 +1369,7 @@ __success(return != FALSE)
 static __callback BOOL DIAMONDAPI CabCGetNextCabinet(
     __in PCCAB pccab,
     __in ULONG ul,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     UNREFERENCED_PARAMETER(pccab);
@@ -1365,7 +1385,7 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
     __out USHORT *ptime,
     __out USHORT *pattribs,
     __out int *err,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     HRESULT hr = S_OK;
@@ -1378,7 +1398,10 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
     }
     else
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068) // We intentionally don't use the unicode API here
         fSucceeded = ::GetFileAttributesExA(pszName, GetFileExInfoStandard, &fad);
+#pragma prefast(pop)
     }
 
     if (!fSucceeded)
@@ -1412,7 +1435,7 @@ static __callback long DIAMONDAPI CabCStatus(
     __in UINT ui,
     __in ULONG cb1,
     __in ULONG cb2,
-    __out void *pv
+    __out_bcount(CABC_HANDLE_BYTES) void *pv
     )
 {
     UNREFERENCED_PARAMETER(ui);

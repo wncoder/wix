@@ -200,7 +200,7 @@ BOOL CompareVariantDefault(
 
 BOOL DAPI IsMatchingAppHostElementCallback(
     __in IAppHostElement *pElement,
-    __in LPVOID pContext
+    __in_bcount(sizeof(IIS7_APPHOSTELEMENTCOMPARISON)) LPVOID pContext
     )
 {
     IIS7_APPHOSTELEMENTCOMPARISON* pComparison = (IIS7_APPHOSTELEMENTCOMPARISON*) pContext;

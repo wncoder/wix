@@ -171,7 +171,7 @@ HRESULT DAPI RegValueEnum(
 HRESULT DAPI RegReadBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __deref_out_bcount(*pcbBuffer) BYTE** ppbBuffer,
+    __deref_out_bcount_opt(*pcbBuffer) BYTE** ppbBuffer,
     __out SIZE_T *pcbBuffer
      );
 HRESULT DAPI RegReadString(
@@ -182,7 +182,7 @@ HRESULT DAPI RegReadString(
 HRESULT DAPI RegReadStringArray(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __deref_out_ecount(pcStrings) LPWSTR** prgsczStrings,
+    __deref_out_ecount_opt(pcStrings) LPWSTR** prgsczStrings,
     __out DWORD *pcStrings
     );
 HRESULT DAPI RegReadVersion(
@@ -203,13 +203,13 @@ HRESULT DAPI RegReadQword(
 HRESULT DAPI RegWriteBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __in_bcount(cBuffer) BYTE *pbBuffer,
+    __in_bcount(cBuffer) const BYTE *pbBuffer,
     __in DWORD cbBuffer
     );
 HRESULT DAPI RegWriteString(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __in_z_opt LPWSTR wzValue
+    __in_z_opt LPCWSTR wzValue
     );
 HRESULT DAPI RegWriteStringArray(
     __in HKEY hk,

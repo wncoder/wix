@@ -245,6 +245,9 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
                     continue;
                 }
 
+                // For extra safety / to silence OACR
+                wfd.cFileName[MAX_PATH - 1] = L'\0';
+
                 hr = PathConcat(wzPath, wfd.cFileName, &sczDelete);
                 ExitOnFailure2(hr, "Failed to concat filename '%ls' to directory: %ls", wfd.cFileName, wzPath);
 

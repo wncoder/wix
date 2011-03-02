@@ -347,6 +347,7 @@ public: // IBurnUserExperience
             BalRetryStartPackage(wzPackageId);
         }
 
+        m_fRollingBack = !fExecute;
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -485,7 +486,7 @@ protected:
     {
         ::EnterCriticalSection(&m_csCanceled);
         ::LeaveCriticalSection(&m_csCanceled);
-        return m_fCanceled;
+        return m_fRollingBack ? FALSE : m_fCanceled;
     }
 
     CBalBaseBootstrapperApplication(
@@ -500,6 +501,7 @@ protected:
 
         ::InitializeCriticalSection(&m_csCanceled);
         m_fCanceled = FALSE;
+        m_fRollingBack = FALSE;
 
         BalRetryInitialize(dwRetryCount, dwRetryTimeout);
     }
@@ -516,4 +518,5 @@ protected:
 
     CRITICAL_SECTION m_csCanceled;
     BOOL m_fCanceled;
+    BOOL m_fRollingBack;
 };

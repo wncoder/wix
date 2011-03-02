@@ -20,6 +20,14 @@
 
 #define ARRAY_GROWTH_SIZE 5
 
+// Forward declarations.
+static HRESULT StrAllocStringMapInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource,
+    __in DWORD dwMapFlags
+    );
+
 /********************************************************************
 StrAlloc - allocates or reuses dynamic string memory
 
@@ -66,7 +74,7 @@ StrTrimCapacity - Frees any unnecessary memory associated with a string.
 NOTE: caller is responsible for freeing ppwz even if function fails
 ********************************************************************/
 HRESULT DAPI StrTrimCapacity(
-    __deref_out LPWSTR* ppwz
+    __deref_out_z LPWSTR* ppwz
     )
 {
     Assert(ppwz);
@@ -133,7 +141,7 @@ StrAnsiTrimCapacity - Frees any unnecessary memory associated with a string.
 NOTE: caller is responsible for freeing ppwz even if function fails
 ********************************************************************/
 HRESULT DAPI StrAnsiTrimCapacity(
-    __deref_out LPSTR* ppz
+    __deref_out_z LPSTR* ppz
     )
 {
     Assert(ppz);
@@ -141,7 +149,10 @@ HRESULT DAPI StrAnsiTrimCapacity(
     HRESULT hr = S_OK;
     DWORD_PTR cchLen = 0;
 
+#pragma prefast(push)
+#pragma prefast(disable:25068)
     hr = ::StringCchLengthA(*ppz, STRSAFE_MAX_CCH, reinterpret_cast<UINT_PTR*>(&cchLen));
+#pragma prefast(pop)
     ExitOnFailure(hr, "Failed to calculate length of string");
 
     ++cchLen; // Add 1 for null-terminator
@@ -414,7 +425,10 @@ HRESULT DAPI StrAnsiAllocStringAnsi(
     }
 
     // copy everything (the NULL terminator will be included)
+#pragma prefast(push)
+#pragma prefast(disable:25068)
     hr = ::StringCchCopyNExA(*ppsz, cch, szSource, cchSource, NULL, NULL, STRSAFE_FILL_BEHIND_NULL);
+#pragma prefast(pop)
 
 LExit:
     return hr;
@@ -581,7 +595,10 @@ extern "C" HRESULT DAPI StrAnsiAllocConcat(
         }
         cch /= sizeof(CHAR);  // convert the count in bytes to count in characters
 
+#pragma prefast(push)
+#pragma prefast(disable:25068)
         hr = ::StringCchLengthA(*ppz, STRSAFE_MAX_CCH, reinterpret_cast<UINT_PTR*>(&cchLen));
+#pragma prefast(pop)
         ExitOnFailure(hr, "Failed to calculate length of string");
     }
 
@@ -589,7 +606,10 @@ extern "C" HRESULT DAPI StrAnsiAllocConcat(
 
     if (0 == cchSource)
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068)
         hr = ::StringCchLengthA(pzSource, STRSAFE_MAX_CCH, reinterpret_cast<UINT_PTR*>(&cchSource));
+#pragma prefast(pop)
         ExitOnFailure(hr, "Failed to calculate length of string");
     }
 
@@ -602,7 +622,10 @@ extern "C" HRESULT DAPI StrAnsiAllocConcat(
 
     if (*ppz)
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068)
         hr = ::StringCchCatNExA(*ppz, cch, pzSource, cchSource, NULL, NULL, STRSAFE_FILL_BEHIND_NULL);
+#pragma prefast(pop)
     }
     else
     {
@@ -774,7 +797,10 @@ extern "C" HRESULT DAPI StrAnsiAllocFormattedArgs(
     // format the message (grow until it fits or there is a failure)
     do
     {
+#pragma prefast(push)
+#pragma prefast(disable:25068) // We intentionally don't use the unicode API here
         hr = ::StringCchVPrintfA(*ppsz, cch, szFormat, args);
+#pragma prefast(pop)
         if (STRSAFE_E_INSUFFICIENT_BUFFER == hr)
         {
             if (!pszOriginal)
@@ -1186,7 +1212,7 @@ StrAllocBase85Encode - converts an array of bytes into an XML compatible string
 
 ****************************************************************************/
 extern "C" HRESULT DAPI StrAllocBase85Encode(
-    __in_bcount(cbSource) const BYTE* pbSource,
+    __in_bcount_opt(cbSource) const BYTE* pbSource,
     __in DWORD_PTR cbSource,
     __deref_out_z LPWSTR* pwzDest
     )
@@ -1423,7 +1449,7 @@ including the double null terminator at the end of the MULTISZ.
 NOTE: returns 0 if the multisz in not properly terminated with two nulls
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzLen(
-    __in_z LPCWSTR pwzMultiSz,
+    __in __nullnullterminated LPCWSTR pwzMultiSz,
     __out DWORD_PTR* pcch
     )
 {
@@ -1463,9 +1489,9 @@ MultiSzPrepend - prepends a string onto the front of a MUTLISZ
 
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzPrepend(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout_ecount(*pcchMultiSz) __nullnullterminated LPWSTR* ppwzMultiSz,
     __inout_opt DWORD_PTR *pcchMultiSz,
-    __in_z LPCWSTR pwzInsert
+    __in __nullnullterminated LPCWSTR pwzInsert
     )
 {
     Assert(ppwzMultiSz && pwzInsert && *pwzInsert);
@@ -1499,7 +1525,7 @@ extern "C" HRESULT DAPI MultiSzPrepend(
     hr = ::StringCchCopyW(pwzResult, cchResult, pwzInsert);
     ExitOnFailure1(hr, "failed to copy prepend string: %ls", pwzInsert);
 
-    // If there was no MULTISZ, double null termiate our result, otherwise, copy the MULTISZ in
+    // If there was no MULTISZ, double null terminate our result, otherwise, copy the MULTISZ in
     if (0 == cchMultiSz)
     {
         pwzResult[cchResult] = L'\0';
@@ -1518,7 +1544,9 @@ extern "C" HRESULT DAPI MultiSzPrepend(
     *ppwzMultiSz = pwzResult;
 
     if (pcchMultiSz)
+    {
         *pcchMultiSz = cchResult;
+    }
 
     pwzResult = NULL;
 
@@ -1536,10 +1564,10 @@ string in the MULTISZ, the address, neither, or both
 NOTE: returns S_FALSE if the string is not found
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzFindSubstring(
-    __in_z LPCWSTR pwzMultiSz,
-    __in_z LPCWSTR pwzSubstring,
+    __in __nullnullterminated LPCWSTR pwzMultiSz,
+    __in __nullnullterminated LPCWSTR pwzSubstring,
     __out_opt DWORD_PTR* pdwIndex,
-    __deref_opt_out_z LPCWSTR* ppwzFoundIn
+    __deref_opt_out __nullnullterminated LPCWSTR* ppwzFoundIn
     )
 {
     Assert(pwzMultiSz && *pwzMultiSz && pwzSubstring && *pwzSubstring);
@@ -1602,10 +1630,10 @@ the string in the MULTISZ, the address or both
 NOTE: returns S_FALSE if the string is not found
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzFindString(
-    __in_z LPCWSTR pwzMultiSz,
-    __in_z LPCWSTR pwzString,
+    __in __nullnullterminated LPCWSTR pwzMultiSz,
+    __in __nullnullterminated LPCWSTR pwzString,
     __out_opt DWORD_PTR* pdwIndex,
-    __deref_opt_out_z LPCWSTR* ppwzFound
+    __deref_opt_out __nullnullterminated LPCWSTR* ppwzFound
     )
 {
     Assert(pwzMultiSz && *pwzMultiSz && pwzString && *pwzString && (pdwIndex || ppwzFound));
@@ -1670,7 +1698,7 @@ NOTE: does an in place removal without shrinking the memory allocation
 NOTE: returns S_FALSE if the MULTISZ has fewer strings than dwIndex
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzRemoveString(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout __nullnullterminated LPWSTR* ppwzMultiSz,
     __in DWORD_PTR dwIndex
     )
 {
@@ -1746,10 +1774,10 @@ MultiSzInsertString - inserts new string at the specified index
 
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzInsertString(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout __nullnullterminated LPWSTR* ppwzMultiSz,
     __inout_opt DWORD_PTR *pcchMultiSz,
     __in DWORD_PTR dwIndex,
-    __in_z LPCWSTR pwzInsert
+    __in __nullnullterminated LPCWSTR pwzInsert
     )
 {
     Assert(ppwzMultiSz && pwzInsert && *pwzInsert);
@@ -1839,9 +1867,9 @@ MultiSzReplaceString - replaces string at the specified index with a new one
 
 ****************************************************************************/
 extern "C" HRESULT DAPI MultiSzReplaceString(
-    __deref_inout_z LPWSTR* ppwzMultiSz,
+    __deref_inout __nullnullterminated LPWSTR* ppwzMultiSz,
     __in DWORD_PTR dwIndex,
-    __in_z LPCWSTR pwzString
+    __in __nullnullterminated LPCWSTR pwzString
     )
 {
     Assert(ppwzMultiSz && pwzString && *pwzString);
@@ -2135,11 +2163,37 @@ void DAPI StrStringToLower(
 }
 
 /****************************************************************************
+StrAllocStringToUpperInvariant - creates an upper-case copy of a string.
+
+****************************************************************************/
+extern "C" HRESULT DAPI StrAllocStringToUpperInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource
+    )
+{
+    return StrAllocStringMapInvariant(pscz, wzSource, cchSource, LCMAP_UPPERCASE);
+}
+
+/****************************************************************************
+StrAllocStringToLowerInvariant - creates an lower-case copy of a string.
+
+****************************************************************************/
+extern "C" HRESULT DAPI StrAllocStringToLowerInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource
+    )
+{
+    return StrAllocStringMapInvariant(pscz, wzSource, cchSource, LCMAP_LOWERCASE);
+}
+
+/****************************************************************************
 StrArrayAllocString - Allocates a string array.
 
 ****************************************************************************/
 extern "C" HRESULT DAPI StrArrayAllocString(
-    __deref_inout_ecount(*pcStrArray) LPWSTR **prgsczStrArray,
+    __deref_inout_ecount_opt(*pcStrArray) LPWSTR **prgsczStrArray,
     __inout LPUINT pcStrArray,
     __in_z LPCWSTR wzSource,
     __in DWORD_PTR cchSource
@@ -2153,7 +2207,8 @@ extern "C" HRESULT DAPI StrArrayAllocString(
     hr = StrAllocString(&(*prgsczStrArray)[*pcStrArray], wzSource, cchSource);
     ExitOnFailure(hr, "Failed to allocate and assign the string.");
 
-    ++(*pcStrArray);
+    hr = ::UIntAdd(*pcStrArray, 1, pcStrArray);
+    ExitOnFailure(hr, "Failed to increment the string array element count.");
 
 LExit:
     return hr;
@@ -2180,6 +2235,72 @@ extern "C" HRESULT DAPI StrArrayFree(
 
     hr = MemFree(rgsczStrArray);
     ExitOnFailure(hr, "Failed to free memory for the string array.");
+
+LExit:
+    return hr;
+}
+
+/****************************************************************************
+StrSplitAllocArray - Splits a string into an array.
+
+****************************************************************************/
+extern "C" HRESULT DAPI StrSplitAllocArray(
+    __deref_inout_ecount_opt(*pcStrArray) LPWSTR **prgsczStrArray,
+    __inout LPUINT pcStrArray,
+    __in_z LPCWSTR wzSource,
+    __in_z LPCWSTR wzDelim
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCopy = NULL;
+    LPWSTR wzContext = NULL;
+
+    // Copy wzSource so it is not modified.
+    hr = StrAllocString(&sczCopy, wzSource, 0);
+    ExitOnFailure(hr, "Failed to copy the source string.");
+
+    for (LPCWSTR wzToken = ::wcstok_s(sczCopy, wzDelim, &wzContext); wzToken; wzToken = ::wcstok_s(NULL, wzDelim, &wzContext))
+    {
+        hr = StrArrayAllocString(prgsczStrArray, pcStrArray, wzToken, 0);
+        ExitOnFailure(hr, "Failed to add the string to the string array.");
+    }
+
+LExit:
+    ReleaseStr(sczCopy);
+
+    return hr;
+}
+
+/****************************************************************************
+StrAllocStringMapInvariant - helper function for the ToUpper and ToLower.
+
+Note: Assumes source and destination buffers will be the same.
+****************************************************************************/
+static HRESULT StrAllocStringMapInvariant(
+    __deref_out_z LPWSTR* pscz,
+    __in_z LPCWSTR wzSource,
+    __in int cchSource,
+    __in DWORD dwMapFlags
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = StrAllocString(pscz, wzSource, cchSource);
+    ExitOnFailure(hr, "Failed to allocate a copy of the source string.");
+
+    if (0 == cchSource)
+    {
+        // Need the actual string size for LCMapString. This includes the null-terminator
+        // but LCMapString doesn't care either way.
+        hr = ::StringCchLengthW(*pscz, INT_MAX, reinterpret_cast<size_t*>(&cchSource));
+        ExitOnFailure(hr, "Failed to get the length of the string.");
+    }
+
+    // Convert the copy of the string to upper or lower case in-place.
+    if (0 == ::LCMapStringW(LOCALE_INVARIANT, dwMapFlags, *pscz, cchSource, *pscz, cchSource))
+    {
+        ExitWithLastError(hr, "Failed to convert the string case.");
+    }
 
 LExit:
     return hr;

@@ -124,6 +124,7 @@ extern "C" HRESULT DAPI TimeFromString(
 
 LExit:
     ReleaseStr(pwzTime);
+
     return hr;
 }
 
@@ -180,7 +181,7 @@ TimeSystemDateTime - converts the provided system time struct to string format,
 ****************************************************************************/
 extern "C" HRESULT DAPI TimeSystemDateTime(
     __deref_out_z LPWSTR* ppwz,
-    __in SYSTEMTIME *pst,
+    __in const SYSTEMTIME *pst,
     __in BOOL fGMT
     )
 {

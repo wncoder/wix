@@ -534,7 +534,7 @@ LExit:
 extern "C" HRESULT DAPI LogIdModule(
     __in REPORT_LEVEL rl,
     __in DWORD dwLogId,
-    __in HMODULE hModule,
+    __in_opt HMODULE hModule,
     ...
     )
 {
@@ -789,6 +789,7 @@ static HRESULT LogIdWork(
     // get the string for the id
 #pragma prefast(push)
 #pragma prefast(disable:25028)
+#pragma prefast(disable:25068)
     cch = ::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
                            static_cast<LPCVOID>(hModule), dwLogId, 0, reinterpret_cast<LPSTR>(&psz), 0, &args);
 #pragma prefast(pop)

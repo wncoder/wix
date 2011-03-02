@@ -21,6 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using Microsoft.Tools.WindowsInstallerXml.Msi;
 
     /// <summary>
@@ -63,6 +64,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public TableDefinitionCollection TableDefinitions
         {
             get { return this.tableDefinitions; }
+        }
+
+        /// <summary>
+        /// Generate an identifier by hashing data from the row.
+        /// </summary>
+        /// <param name="prefix">Three letter or less prefix for generated row identifier.</param>
+        /// <param name="args">Information to hash.</param>
+        /// <returns>The generated identifier.</returns>
+        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters", MessageId = "System.InvalidOperationException.#ctor(System.String)")]
+        public string GenerateIdentifier(string prefix, params string[] args)
+        {
+            // Backward compatibility not required for new code.
+            return Common.GenerateIdentifier(prefix, true, args);
         }
 
         /// <summary>
