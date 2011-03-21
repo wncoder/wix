@@ -92,7 +92,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             {
                 ITaskItem resolvedReference = ResolveWixReferences.ResolveReference(reference, this.SearchPaths, this.SearchFilenameExtensions, this.Log);
 
-                this.Log.LogMessage("Resolved path {0}", resolvedReference.ItemSpec);
+                this.Log.LogMessage(MessageImportance.Low, "Resolved path {0}", resolvedReference.ItemSpec);
                 resolvedReferences.Add(resolvedReference);
             }
 
@@ -129,16 +129,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
 
             // Copy all the metadata from the source
             TaskItem resolvedReference = new TaskItem(reference);
-            log.LogMessage("WixReference: {0}", reference.ItemSpec);
+            log.LogMessage(MessageImportance.Low, "WixReference: {0}", reference.ItemSpec);
 
             // Now find the resolved path based on our order of precedence
             foreach (string searchPath in searchPaths)
             {
-                log.LogMessage("Trying {0}", searchPath);
+                log.LogMessage(MessageImportance.Low, "Trying {0}", searchPath);
                 if (searchPath.Equals(HintPathToken, StringComparison.Ordinal))
                 {
                     string path = reference.GetMetadata("HintPath");
-                    log.LogMessage("Trying path {0}", path);
+                    log.LogMessage(MessageImportance.Low, "Trying path {0}", path);
                     if (File.Exists(path))
                     {
                         resolvedReference.ItemSpec = path;
@@ -147,7 +147,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
                 }
                 else if (searchPath.Equals(RawFileNameToken, StringComparison.Ordinal))
                 {
-                    log.LogMessage("Trying path {0}", resolvedReference.ItemSpec);
+                    log.LogMessage(MessageImportance.Low, "Trying path {0}", resolvedReference.ItemSpec);
                     if (File.Exists(resolvedReference.ItemSpec))
                     {
                         break;
@@ -162,7 +162,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
                 else
                 {
                     string path = Path.Combine(searchPath, Path.GetFileName(reference.ItemSpec));
-                    log.LogMessage("Trying path {0}", path);
+                    log.LogMessage(MessageImportance.Low, "Trying path {0}", path);
                     if (File.Exists(path))
                     {
                         resolvedReference.ItemSpec = path;
@@ -196,7 +196,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             foreach (string filenameExtension in filenameExtensions)
             {
                 string path = basePath + filenameExtension;
-                log.LogMessage("Trying path {0}", path);
+                log.LogMessage(MessageImportance.Low, "Trying path {0}", path);
                 if (File.Exists(path))
                 {
                     reference.ItemSpec = path;

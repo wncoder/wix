@@ -39,6 +39,7 @@
 #include <strsafe.h>
 #include <intsafe.h>
 #include <wuapi.h>
+#include <mscat.h>
 
 #include <dutil.h>
 #include <buffutil.h>
@@ -69,17 +70,17 @@
 #include "condition.h"
 #include "search.h"
 #include "container.h"
+#include "catalog.h"
 #include "payload.h"
-#include "package.h"
 #include "cabextract.h"
-#include "cache.h"
-#include "bitsengine.h"
-#include "downloadengine.h"
 #include "userexperience.h"
-#include "logging.h"
+#include "package.h"
 #include "registration.h"
+#include "logging.h"
 #include "plan.h"
 #include "core.h"
+#include "cache.h"
+#include "downloadengine.h"
 #include "apply.h"
 #include "exeengine.h"
 #include "msiengine.h"
@@ -90,6 +91,7 @@
 #include "manifest.h"
 #include "pipe.h"
 #include "splashscreen.h"
+#include "bitsengine.h"
 
 #include "EngineForApplication.h"
 #include "engine.messages.h"

@@ -52,6 +52,7 @@ typedef struct _BURN_PAYLOAD
     DWORD64 qwFileSize;
     LPWSTR sczFilePath; // file path relative to the execute location
 
+    BURN_CATALOG *pCatalog; // used to verify this payload
     BYTE* pbCertificateRootPublicKeyIdentifier;
     DWORD cbCertificateRootPublicKeyIdentifier;
     BYTE* pbCertificateRootThumbprint;
@@ -80,6 +81,7 @@ typedef struct _BURN_PAYLOADS
 HRESULT PayloadsParseFromXml(
     __in BURN_PAYLOADS* pPayloads,
     __in_opt BURN_CONTAINERS* pContainers,
+    __in_opt BURN_CATALOGS* pCatalogs,
     __in IXMLDOMNode* pixnBundle
     );
 void PayloadsUninitialize(

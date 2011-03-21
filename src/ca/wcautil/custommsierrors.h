@@ -102,7 +102,8 @@
 #define msierrUSRFailedUserCreateExists        26404
 #define msierrUSRFailedGrantLogonAsService     26405
 
-
+#define msierrDependencyMissingDependencies    26451
+#define msierrDependencyHasDependents          26452
 
 //--------------------------------------------------------------------------
 // Managed code CustomAction Errors

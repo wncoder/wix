@@ -346,27 +346,6 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT PlanCleanBundle(
-    __in BURN_PLAN* pPlan,
-    __in BURN_RELATED_BUNDLE* pRelatedBundle
-    )
-{
-    HRESULT hr = S_OK;
-    BURN_CLEAN_ACTION* pCleanAction = NULL;
-
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCleanActions), pPlan->cCleanActions, sizeof(BURN_CLEAN_ACTION), 5);
-    ExitOnFailure(hr, "Failed to grow plan's array of clean actions.");
-
-    pCleanAction = pPlan->rgCleanActions + pPlan->cCleanActions;
-    ++pPlan->cCleanActions;
-
-    pCleanAction->type = BURN_CLEAN_ACTION_TYPE_BUNDLE,
-    pCleanAction->bundle.pBundle = pRelatedBundle;
-
-LExit:
-    return hr;
-}
-
 extern "C" HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
@@ -381,8 +360,7 @@ extern "C" HRESULT PlanCleanPackage(
     pCleanAction = pPlan->rgCleanActions + pPlan->cCleanActions;
     ++pPlan->cCleanActions;
 
-    pCleanAction->type = BURN_CLEAN_ACTION_TYPE_PACKAGE;
-    pCleanAction->package.pPackage = pPackage;
+    pCleanAction->pPackage = pPackage;
 
 LExit:
     return hr;

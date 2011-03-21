@@ -182,7 +182,14 @@ public: // IBootstrapperApplication
         )
     {
         WriteEvent("OnDetectRelatedBundle() - wzBundleId: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzBundleId, fPerMachine, dw64Version, operation);
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
+        if (BOOTSTRAPPER_ACTION_INSTALL == m_command.action && BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation)
+        {
+            return IDCANCEL;
+        }
+        else
+        {
+            return IDOK;
+        }
     }
 
 
@@ -195,7 +202,14 @@ public: // IBootstrapperApplication
         )
     {
         WriteEvent("OnDetectRelatedMsiPackage() - wzPackageId: %ls, wzProductCode: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzPackageId, wzProductCode, fPerMachine, dw64Version, operation);
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation ? IDCANCEL : IDOK;
+        if (BOOTSTRAPPER_ACTION_INSTALL == m_command.action && BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation)
+        {
+            return IDCANCEL;
+        }
+        else
+        {
+            return IDOK;
+        }
     }
 
     virtual STDMETHODIMP_(int) OnDetectTargetMsiPackage(

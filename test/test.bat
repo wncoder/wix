@@ -245,6 +245,7 @@ echo    Burn.Searches
 echo    Burn.Variables 
 echo    Examples 
 echo    Extensions
+echo    Extensions.DependencyExtension
 echo    Extensions.IISExtension 
 echo    Extensions.NetFXExtension 
 echo    Extensions.SqlExtension 

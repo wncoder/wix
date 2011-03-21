@@ -130,6 +130,7 @@
     <!-- How Tos -->
     <ItemGroup>
         <HelpSourceFile Include="html\howtos\add_a_file.htm"/>
+        <HelpSourceFile Include="html\howtos\author_product_dependencies.htm"/>
         <HelpSourceFile Include="html\howtos\block_install_on_os.htm"/>
         <HelpSourceFile Include="html\howtos\build_a_localized_version.htm"/>
         <HelpSourceFile Include="html\howtos\check_the_version_number.htm"/>

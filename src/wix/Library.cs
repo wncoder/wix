@@ -167,7 +167,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                     // resolve wix variables
                                     string resolvedValue = wixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)objectField.Data, false);
-                                    files.Add(binderFileManager.ResolveFile(resolvedValue, table.Name, row.SourceLineNumbers));
+                                    files.Add(binderFileManager.ResolveFile(resolvedValue, table.Name, row.SourceLineNumbers, BindStage.Normal));
 
                                     // File was successfully resolved so track this cabient file id.
                                     objectField.CabinetFileId = cabinetFileId;

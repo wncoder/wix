@@ -45,6 +45,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         private bool bindFiles;
         private string cabinetCachePath;
         private int cabinetCreationThreadCount = WixCommandLineBuilder.Unspecified;
+        private ITaskItem contentsFile;
         private string cultures;
         private string customBinder;
         private string defaultCompressionLevel;
@@ -54,6 +55,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         private ITaskItem[] localizationFiles;
         private ITaskItem[] objectFiles;
         private bool outputAsXml;
+        private ITaskItem outputsFile;
         private ITaskItem outputFile;
         private ITaskItem pdbOutputFile;
         private bool pedantic;
@@ -148,6 +150,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         {
             get { return this.cabinetCreationThreadCount; }
             set { this.cabinetCreationThreadCount = value; }
+        }
+
+        [Output]
+        public ITaskItem BindContentsFile
+        {
+            get { return this.contentsFile; }
+            set { this.contentsFile = value; }
+        }
+
+        [Output]
+        public ITaskItem BindOutputsFile
+        {
+            get { return this.outputsFile; }
+            set { this.outputsFile = value; }
         }
 
         public string Cultures
@@ -348,6 +364,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             set { this.suppressTagSectionIdAttributeOnTuples = value; }
         }
 
+        [Output]
         public ITaskItem UnreferencedSymbolsFile
         {
             get { return this.unreferencedSymbolsFile; }
@@ -404,6 +421,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         /// </summary>
         protected override void BuildCommandLine(WixCommandLineBuilder commandLineBuilder)
         {
+            // Always put the output first so it is easy to find in the log.
+            commandLineBuilder.AppendSwitchIfNotNull("-out ", this.OutputFile);
+            commandLineBuilder.AppendSwitchIfNotNull("-pdbout ", this.PdbOutputFile);
+
             base.BuildCommandLine(commandLineBuilder);
 
             commandLineBuilder.AppendIfTrue("-ai", this.AllowIdenticalRows);
@@ -446,8 +467,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendArrayIfNotNull("-ice:", this.Ices);
             commandLineBuilder.AppendArrayIfNotNull("-loc ", this.LocalizationFiles);
             commandLineBuilder.AppendIfTrue("-notidy", this.LeaveTemporaryFiles);
-            commandLineBuilder.AppendSwitchIfNotNull("-out ", this.OutputFile);
-            commandLineBuilder.AppendSwitchIfNotNull("-pdbout ", this.PdbOutputFile);
             commandLineBuilder.AppendIfTrue("-pedantic", this.Pedantic);
             commandLineBuilder.AppendIfTrue("-reusecab", this.ReuseCabinetCache);
             commandLineBuilder.AppendIfTrue("-sa", this.SuppressAssemblies);
@@ -468,6 +487,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendIfTrue("-sval", this.SuppressValidation);
             commandLineBuilder.AppendSwitchIfNotNull("-usf ", this.UnreferencedSymbolsFile);
             commandLineBuilder.AppendIfTrue("-xo", this.OutputAsXml);
+            commandLineBuilder.AppendSwitchIfNotNull("-contentsfile ", this.BindContentsFile);
+            commandLineBuilder.AppendSwitchIfNotNull("-outputsfile ", this.BindOutputsFile);
             commandLineBuilder.AppendTextIfNotNull(this.AdditionalOptions);
 
             List<string> objectFilePaths = AdjustFilePaths(this.objectFiles, this.ReferencePaths);

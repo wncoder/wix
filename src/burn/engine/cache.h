@@ -87,6 +87,11 @@ HRESULT CacheRemovePackage(
     __in BOOL fPerMachine,
     __in LPCWSTR wzPackageId
     );
+HRESULT CacheVerifyPayloadSignature(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in HANDLE hFile
+    );
 
 
 #ifdef __cplusplus

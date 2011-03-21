@@ -22,7 +22,7 @@ MessageId=1
 Severity=Success
 SymbolicName=MSG_BURN_INFO
 Language=English
-Burn v%1!s!, path: %2!ls!, cmdline: '%3!ls!'
+Burn v%1!hs!, path: %2!ls!, cmdline: '%3!ls!'
 .
 
 ; // MessageId=2
@@ -43,14 +43,14 @@ MessageId=51
 Severity=Error
 SymbolicName=MSG_FAILED_PARSE_CONDITION
 Language=English
-Error %1. Failed to parse condition %2!ls!. Unexpected symbol at position %3
+Error %1!hs!. Failed to parse condition %2!ls!. Unexpected symbol at position %3!hs!
 .
 
 MessageId=52
 Severity=Success
 SymbolicName=MSG_CONDITION_RESULT
 Language=English
-Condition '%1!ls!' evaluates to %2.
+Condition '%1!ls!' evaluates to %2!hs!.
 .
 
 MessageId=53
@@ -78,28 +78,28 @@ MessageId=101
 Severity=Success
 SymbolicName=MSG_DETECTED_PACKAGE
 Language=English
-Detected package: %1!ls!, state: %2, cached: %3
+Detected package: %1!ls!, state: %2!hs!, cached: %3!hs!
 .
 
 MessageId=102
 Severity=Success
 SymbolicName=MSG_DETECTED_RELATED_BUNDLE
 Language=English
-Detected related bundle: %1!ls!, scope: %2, version: %3, operation: %4
+Detected related bundle: %1!ls!, scope: %2!hs!, version: %3!hs!, operation: %4!hs!
 .
 
 MessageId=103
 Severity=Success
 SymbolicName=MSG_DETECTED_RELATED_PACKAGE
 Language=English
-Detected related package: %1!ls!, scope: %2, version: %3, operation: %4
+Detected related package: %1!ls!, scope: %2!hs!, version: %3!hs!, operation: %4!hs!
 .
 
 MessageId=104
 Severity=Success
 SymbolicName=MSG_DETECTED_MSI_FEATURE
 Language=English
-Detected feature: %1!ls!, state: %2
+Detected feature: %1!ls!, state: %2!hs!
 .
 
 MessageId=105
@@ -127,28 +127,28 @@ MessageId=200
 Severity=Success
 SymbolicName=MSG_PLAN_BEGIN
 Language=English
-Plan %1!u! packages, action: %2
+Plan %1!u! packages, action: %2!hs!
 .
 
 MessageId=201
 Severity=Success
 SymbolicName=MSG_PLANNED_PACKAGE
 Language=English
-Planned package: %1!ls!, state: %2, default requested: %3, ux requested: %4, execute: %5, rollback: %6, cache: %7, uncache: %8
+Planned package: %1!ls!, state: %2!hs!, default requested: %3!hs!, ux requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, cache: %7!hs!, uncache: %8!hs!
 .
 
 MessageId=202
 Severity=Success
 SymbolicName=MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST
 Language=English
-Planned bundle: %1!ls!, UX requested state: %2 over default: %3
+Planned bundle: %1!ls!, UX requested state: %2!hs! over default: %3!hs!
 .
 
 MessageId=203
 Severity=Success
 SymbolicName=MSG_PLANNED_MSI_FEATURE
 Language=English
-Planned feature: %1!ls!, state: %2, requested: %3, execute action: %4, rollback action: %5
+Planned feature: %1!ls!, state: %2!hs!, requested: %3!hs!, execute action: %4!hs!, rollback action: %5!hs!
 .
 
 MessageId=204
@@ -176,7 +176,7 @@ MessageId=301
 Severity=Success
 SymbolicName=MSG_APPLYING_PACKAGE
 Language=English
-Applying package: %1!ls!, action: %2, path: %3!ls!, arguments: '%4!ls!'
+Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
 .
 
 MessageId=349
@@ -211,7 +211,7 @@ MessageId=399
 Severity=Success
 SymbolicName=MSG_APPLY_COMPLETE
 Language=English
-Apply complete, result: 0x%1!x! restart: %2
+Apply complete, result: 0x%1!x! restart: %2!hs!
 .
 
 MessageId=500

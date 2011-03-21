@@ -89,6 +89,7 @@
     <Compile Include="Burn\Variables\BurnVariableFixture.cs" />
     <Compile Include="Burn\Variables\BurnVariableTests.cs" />
     <Compile Include="Examples\ExampleTests.cs" />
+    <Compile Include="Extensions\DependencyExtension\DependencyExtension.DependencyExtensionTests.cs" />
     <Compile Include="Integration\BuildingPackages\Authoring.FragmentTests.cs" />
     <Compile Include="Integration\BuildingPackages\Bundle.BundleElementTests.cs" />
     <Compile Include="Integration\BuildingPackages\Components.ComponentTests.cs" />

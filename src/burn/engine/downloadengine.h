@@ -31,6 +31,7 @@ extern "C" {
 HRESULT WininetDownloadUrl(
     __in BURN_CACHE_CALLBACK* pCallback,
     __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
+    __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath
     );
 

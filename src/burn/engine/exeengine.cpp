@@ -275,7 +275,7 @@ extern "C" HRESULT ExeEnginePlanPackage(
 
     default:
         hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Invalid package request state.");
+        ExitOnRootFailure1(hr, "Invalid package current state: %d.", pPackage->currentState);
     }
 
     // rollback action

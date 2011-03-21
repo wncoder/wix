@@ -166,7 +166,7 @@ static HRESULT ExecuteMsuPackage(
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
-static HRESULT UncachePackage(
+static HRESULT CleanPackage(
     __in HANDLE hElevatedPipe,
     __in BURN_PACKAGE* pPackage
     );
@@ -299,6 +299,9 @@ extern "C" HRESULT ApplyRegister(
     // save engine state
     hr = CoreSaveEngineState(pEngineState);
     ExitOnFailure(hr, "Failed to save engine state.");
+
+    hr = ElevationDetectRelatedBundles(pEngineState->hElevatedPipe);
+    ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
 
 LExit:
     pEngineState->userExperience.pUserExperience->OnRegisterComplete(hr);
@@ -563,58 +566,9 @@ extern "C" void ApplyClean(
     {
         BURN_CLEAN_ACTION* pCleanAction = pPlan->rgCleanActions + i;
 
-        switch (pCleanAction->type)
-        {
-        case BURN_CLEAN_ACTION_TYPE_BUNDLE:
-            if (pPlan->fPerMachine)
-            {
-                hr = ElevationCleanBundle(hPipe, pCleanAction);
-            }
-
-            hr = ApplyCleanBundle(FALSE, pCleanAction->bundle.pBundle);
-            break;
-
-        case BURN_CLEAN_ACTION_TYPE_PACKAGE:
-            hr = UncachePackage(hPipe, pCleanAction->package.pPackage);
-            break;
-        }
+        hr = CleanPackage(hPipe, pCleanAction->pPackage);
     }
 }
-
-extern "C" HRESULT ApplyCleanBundle(
-    __in BOOL fPerMachine,
-    __in BURN_RELATED_BUNDLE* pRelatedBundle
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczCommand = NULL;
-    STARTUPINFOW si = { };
-    PROCESS_INFORMATION pi = { };
-    DWORD dwExitCode = 0;
-
-    hr = StrAllocFormatted(&sczCommand, L"\"%ls\" -%ls", pRelatedBundle->sczCachePath, fPerMachine ? BURN_COMMANDLINE_SWITCH_UNCACHE_PER_MACHINE : BURN_COMMANDLINE_SWITCH_UNCACHE_PER_USER);
-    ExitOnFailure1(hr, "Failed to format clean command for bundle: %ls", pRelatedBundle->sczId);
-
-    // Launch the related bundle to clean itself up.
-    si.cb = sizeof(si);
-    if (!::CreateProcessW(pRelatedBundle->sczCachePath, sczCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
-    {
-        ExitWithLastError1(hr, "Failed to start clean bundle command: %ls", sczCommand);
-    }
-
-    // Wait for bundle to finish.
-    hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
-    ExitOnFailure1(hr, "Failed to wait for clean bundle to complete: %ls", sczCommand);
-
-    hr = HRESULT_FROM_WIN32(dwExitCode);
-
-LExit:
-    ReleaseHandle(pi.hThread);
-    ReleaseHandle(pi.hProcess);
-    ReleaseStr(sczCommand);
-    return hr;
-}
-
 
 // internal helper functions
 
@@ -748,7 +702,6 @@ static HRESULT AcquireContainerOrPayload(
     LPWSTR sczSourceFullPath = NULL;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
     BOOL fRetry = FALSE;
-    BOOL fDownload = FALSE;
 
     progress.pContainer = pContainer;
     progress.pPackage = pPackage;
@@ -791,6 +744,7 @@ static HRESULT AcquireContainerOrPayload(
         }
         else // can't find the file locally so prompt for source.
         {
+            BOOL fDownload = FALSE;
             LPCWSTR wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
 
             hr = PromptForSource(pUX, wzPackageOrContainerId, wzPayloadId, sczSourceFullPath, wzDownloadUrl, &fRetry, &fDownload);
@@ -807,7 +761,7 @@ static HRESULT AcquireContainerOrPayload(
             }
 
             // Log the error
-            LogExitOnFailure1(hr, MSG_PAYLOAD_FILE_NOT_PRESENT, "Failed while prompting for source.", sczSourceFullPath);
+            LogExitOnFailure1(hr, MSG_PAYLOAD_FILE_NOT_PRESENT, "Failed while prompting for source (original path '%ls').", sczSourceFullPath);
 
             if (fDownload)
             {
@@ -946,7 +900,7 @@ static HRESULT CopyPayload(
         if (pProgress->fCancel)
         {
             hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
-            ExitOnRootFailure2(hr, "BA aborted copy of %s: %ls", pProgress->pPayload ? "payload" : pProgress->pPackage ? "package" : pProgress->pContainer ? "container" : "bundle", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
+            ExitOnRootFailure2(hr, "BA aborted copy of %hs: %ls", pProgress->pPayload ? "payload" : pProgress->pPackage ? "package" : pProgress->pContainer ? "container" : "bundle", pProgress->pContainer ? wzPackageOrContainerId : wzPayloadId);
         }
         else
         {
@@ -975,6 +929,7 @@ static HRESULT DownloadPayload(
     LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
     BURN_DOWNLOAD_SOURCE* pDownloadSource = pProgress->pContainer ? &pProgress->pContainer->downloadSource : &pProgress->pPayload->downloadSource;
+    DWORD64 qwDownloadSize = pProgress->pContainer ? pProgress->pContainer->qwFileSize : pProgress->pPayload->qwFileSize;
     BURN_CACHE_CALLBACK callback = { };
 
     *pfRetry = FALSE;
@@ -1000,7 +955,7 @@ static HRESULT DownloadPayload(
     }
     else // wininet handles everything else.
     {
-        hr = WininetDownloadUrl(&callback, pDownloadSource, wzDestinationPath);
+        hr = WininetDownloadUrl(&callback, pDownloadSource, qwDownloadSize, wzDestinationPath);
         ExitOnFailure(hr, "Failed to download URL using wininet.");
     }
 
@@ -1100,7 +1055,7 @@ static void DoRollbackCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_ROLLBACK_PACKAGE:
-                hr = UncachePackage(hPipe, pRollbackCacheAction->rollbackPackage.pPackage);
+                hr = CleanPackage(hPipe, pRollbackCacheAction->rollbackPackage.pPackage);
                 break;
 
             default:
@@ -1270,7 +1225,7 @@ static HRESULT DoRollbackActions(
                 ExitFunction1(hr = S_OK);
 
             case BURN_EXECUTE_ACTION_TYPE_UNCACHE_PACKAGE:
-                hr = UncachePackage(pEngineState->hElevatedPipe, pRollbackAction->uncachePackage.pPackage);
+                hr = CleanPackage(pEngineState->hElevatedPipe, pRollbackAction->uncachePackage.pPackage);
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
@@ -1484,7 +1439,7 @@ LExit:
     return hr;
 }
 
-static HRESULT UncachePackage(
+static HRESULT CleanPackage(
     __in HANDLE hElevatedPipe,
     __in BURN_PACKAGE* pPackage
     )
@@ -1572,7 +1527,10 @@ static HRESULT ExecutePackageComplete(
 
     // send package execute complete to UX
     int nResult = pUX->pUserExperience->OnExecutePackageComplete(pPackage->sczId, hr, *pRestart);
-    *pRestart = (IDRESTART == nResult) ? BOOTSTRAPPER_APPLY_RESTART_INITIATED : BOOTSTRAPPER_APPLY_RESTART_NONE;
+    if (IDRESTART == nResult)
+    {
+        *pRestart = BOOTSTRAPPER_APPLY_RESTART_INITIATED;
+    }
     *pfRetry = (FAILED(hrExecute) && IDRETRY == nResult); // allow retry only on failures.
     *pfSuspend = (IDSUSPEND == nResult);
 

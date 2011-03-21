@@ -90,6 +90,10 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
     hr = UserExperienceParseFromXml(&pEngineState->userExperience, pixeBundle);
     ExitOnFailure(hr, "Failed to parse user experience.");
 
+    // parse catalog files
+    hr = CatalogsParseFromXml(&pEngineState->catalogs, pixeBundle);
+    ExitOnFailure(hr, "Failed to parse catalog files.");
+
     // parse registration
     hr = RegistrationParseFromXml(&pEngineState->registration, pixeBundle);
     ExitOnFailure(hr, "Failed to parse registration.");
@@ -99,7 +103,7 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
     ExitOnFailure(hr, "Failed to parse containers.");
 
     // parse payloads
-    hr = PayloadsParseFromXml(&pEngineState->payloads, &pEngineState->containers, pixeBundle);
+    hr = PayloadsParseFromXml(&pEngineState->payloads, &pEngineState->containers, &pEngineState->catalogs, pixeBundle);
     ExitOnFailure(hr, "Failed to parse payloads.");
 
     // parse packages

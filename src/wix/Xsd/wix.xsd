@@ -75,6 +75,7 @@
         <xs:complexType>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="Log" minOccurs="0" maxOccurs="1"/>
+                <xs:element ref="Catalog" minOccurs="0" maxOccurs="unbounded"/>
                 <xs:element ref="BootstrapperApplication" minOccurs="0" maxOccurs="1"/>
                 <xs:element ref="BootstrapperApplicationRef" minOccurs="0" maxOccurs="1"/>
                 <xs:element ref="UX" minOccurs="0" maxOccurs="1"/>
@@ -276,64 +277,101 @@
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="BootstrapperApplication">
+    <xs:element name="Catalog">
         <xs:annotation>
-            <xs:documentation>Contains all the relevant information about the setup UI.</xs:documentation>
+            <xs:documentation>Specify one or more catalog files that will be used to verify the contents of the bundle.</xs:documentation>
             <xs:appinfo>
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
             </xs:appinfo>
         </xs:annotation>
         <xs:complexType>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element ref="Payload"/>
-                <xs:element ref="PayloadGroupRef"/>
-            </xs:choice>
             <xs:attribute name="Id" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>The identifier of the BootstrapperApplication element. Only required if you want to reference this element using a BootstrapperApplicationRef element.</xs:documentation>
+                    <xs:documentation>The identifier of the catalog element.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="SourceFile" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>The DLL with the bootstrapper application entry function.</xs:documentation>
-                </xs:annotation>
-            </xs:attribute>
-            <xs:attribute name="Name" type="xs:string">
-                <xs:annotation>
-                    <xs:documentation>The relative destination path and file name for the bootstrapper application DLL. The default is the source file name. Use this attribute to rename the bootstrapper application DLL or extract it into a subfolder.</xs:documentation>
+                    <xs:documentation>The catalog file</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
         </xs:complexType>
     </xs:element>
 
+    <xs:element name="BootstrapperApplication">
+      <xs:annotation>
+        <xs:documentation>Contains all the relevant information about the setup UI.</xs:documentation>
+        <xs:appinfo>
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+        </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="Payload"/>
+          <xs:element ref="PayloadGroupRef"/>
+          <xs:any namespace="##other" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:any>
+        </xs:choice>
+        <xs:attribute name="Id" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>The identifier of the BootstrapperApplication element. Only required if you want to reference this element using a BootstrapperApplicationRef element.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="SourceFile" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>The DLL with the bootstrapper application entry function.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="Name" type="xs:string">
+          <xs:annotation>
+            <xs:documentation>The relative destination path and file name for the bootstrapper application DLL. The default is the source file name. Use this attribute to rename the bootstrapper application DLL or extract it into a subfolder.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:complexType>
+    </xs:element>
+
     <xs:element name="BootstrapperApplicationRef">
-        <xs:annotation>
-            <xs:documentation>Used to reference a BootstrapperApplication element and optionally add additional payloads to the bootstrapper application.</xs:documentation>
-            <xs:appinfo>
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
-                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
-            </xs:appinfo>
-        </xs:annotation>
-        <xs:complexType>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element ref="Payload"/>
-                <xs:element ref="PayloadGroupRef"/>
-            </xs:choice>
-            <xs:attribute name="Id" type="xs:string" use="required">
-                <xs:annotation>
-                    <xs:documentation>The identifier of the BootstrapperApplication element to reference.</xs:documentation>
-                </xs:annotation>
-            </xs:attribute>
-            <xs:anyAttribute namespace="##other" processContents="lax">
-                <xs:annotation>
-                    <xs:documentation>
-                        Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                        attributes at this point in the schema.
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:anyAttribute>
-        </xs:complexType>
+      <xs:annotation>
+        <xs:documentation>Used to reference a BootstrapperApplication element and optionally add additional payloads to the bootstrapper application.</xs:documentation>
+        <xs:appinfo>
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+          <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+        </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="Payload"/>
+          <xs:element ref="PayloadGroupRef"/>
+          <xs:any namespace="##other" processContents="lax">
+            <xs:annotation>
+              <xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:any>
+        </xs:choice>
+        <xs:attribute name="Id" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>The identifier of the BootstrapperApplication element to reference.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:anyAttribute namespace="##other" processContents="lax">
+          <xs:annotation>
+            <xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              attributes at this point in the schema.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:anyAttribute>
+      </xs:complexType>
     </xs:element>
 
     <xs:element name="UX">
@@ -6764,6 +6802,16 @@
                     </xs:restriction>
                 </xs:simpleType>
             </xs:attribute>
+            <xs:attribute name="MultiInstance" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>
+                        If this attribute is set to 'yes', a new Component/@Guid will be generated for each
+                        instance transform. Ensure that all of the resources contained in a multi-instance
+                        Component will be installed to different paths based on the instance Property; otherwise,
+                        the Component Rules will be violated.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="NeverOverwrite" type="YesNoType">
                 <xs:annotation>
                     <xs:documentation>
@@ -7841,7 +7889,7 @@
                 <xs:annotation>
                     <xs:documentation>
                         Size of uncompressed files in each cabinet, in megabytes. WIX_MUMS environment variable 
-                        can be used to override this value. Default value is 50 MB.
+                        can be used to override this value. Default value is 200 MB.
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>

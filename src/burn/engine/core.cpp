@@ -113,6 +113,10 @@ extern "C" HRESULT CoreInitialize(
 
         hr = PayloadExtractFromContainer(&pEngineState->userExperience.payloads, NULL, &containerContext, pEngineState->userExperience.sczTempDirectory);
         ExitOnFailure(hr, "Failed to extract UX payloads.");
+
+        // Load the catalog files as soon as they are extracted
+        hr = CatalogLoadFromPayload(&pEngineState->catalogs, &pEngineState->userExperience.payloads);
+        ExitOnFailure(hr, "Failed to load catalog files.");
     }
 
 LExit:
@@ -137,6 +141,7 @@ extern "C" void CoreUninitialize(
     RegistrationUninitialize(&pEngineState->registration);
     PayloadsUninitialize(&pEngineState->payloads);
     PackagesUninitialize(&pEngineState->packages);
+    CatalogUninitialize(&pEngineState->catalogs);
     ReleaseStr(pEngineState->command.wzCommandLine);
 
     ReleaseStr(pEngineState->log.sczExtension);
@@ -230,7 +235,7 @@ extern "C" HRESULT CoreDetect(
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to execute searches.");
 
-    hr = RegistrationDetectRelatedBundles(&pEngineState->userExperience, &pEngineState->registration);
+    hr = RegistrationDetectRelatedBundles(pEngineState->mode, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
     ExitOnFailure(hr, "Failed to detect bundles.");
 
     // Detecting MSPs requires special initialization before processing each package but
@@ -467,7 +472,7 @@ extern "C" HRESULT CorePlan(
                     hr = E_UNEXPECTED;
                     ExitOnFailure(hr, "Invalid package type.");
                 }
-                ExitOnFailure1(hr, "Failed to plan execute actions for package: &ls", pPackage->sczId);
+                ExitOnFailure1(hr, "Failed to plan execute actions for package: %ls", pPackage->sczId);
 
                 // If we are going to take any action on this package, add progress for it.
                 if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction)
@@ -510,28 +515,55 @@ extern "C" HRESULT CorePlan(
         hRollbackBoundaryCompleteEvent = NULL;
     }
 
-    // Plan the clean up of related bundles last as long as we are not doing layout only.
+    // Plan the removal of related bundles last as long as we are not doing layout only.
     for (DWORD i = 0; i < pEngineState->registration.cRelatedBundles && BOOTSTRAPPER_ACTION_LAYOUT != action; ++i)
     {
         BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.rgRelatedBundles + i;
-        BOOTSTRAPPER_REQUEST_STATE requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+        BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+
+        switch (pRelatedBundle->relationType)
+        {
+        case BURN_RELATION_UPGRADE:
+            requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+            break;
+        case BURN_RELATION_ADDON:
+            requested = (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action) ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+            break;
+        case BURN_RELATION_DETECT:
+            break;
+        default:
+            hr = E_UNEXPECTED;
+            ExitOnFailure1(hr, "Unexpected relation type encountered during plan: %d", pRelatedBundle->relationType);
+            break;
+        }
+        
 
         BOOTSTRAPPER_REQUEST_STATE defaultRequested = requested;
 
-        nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->sczId, &requested);
+        nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
         hr = HRESULT_FROM_VIEW(nResult);
         ExitOnRootFailure(hr, "UX aborted plan related bundle.");
 
         // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
         if (requested != defaultRequested)
         {
-            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
+            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
         }
 
         if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == requested)
         {
-            hr = PlanCleanBundle(&pEngineState->plan, pRelatedBundle);
-            ExitOnFailure(hr, "Failed to plan clean bundle.");
+            hr = ExeEnginePlanPackage(dwPackageSequence, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
+            ExitOnFailure1(hr, "Failed to plan uninstall action to upgrade package: %ls", pPackage->sczId);
+
+            ++pEngineState->plan.cExecutePackagesTotal;
+            ++pEngineState->plan.cOverallProgressTicksTotal;
+            ++dwPackageSequence;
+
+            // If package is per-machine and is being executed, flag the plan to be per-machine as well.
+            if (pPackage->fPerMachine)
+            {
+                pEngineState->plan.fPerMachine = TRUE;
+            }
         }
     }
 

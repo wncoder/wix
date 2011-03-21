@@ -95,6 +95,7 @@
   <property name="dir.build.ext" value="${dir.build.wix}\ext" readonly="true" />
   <property name="dir.build.ext.balextension" value="${dir.build.ext}\balextension" readonly="true" />
   <property name="dir.build.ext.complusextension" value="${dir.build.ext}\complusextension" readonly="true" />
+  <property name="dir.build.ext.dependencyextension" value="${dir.build.ext}\dependencyextension" readonly="true" />
   <property name="dir.build.ext.difxappextension" value="${dir.build.ext}\difxappextension" readonly="true" />
   <property name="dir.build.ext.directxextension" value="${dir.build.ext}\DirectXExtension" readonly="true" />
   <property name="dir.build.ext.firewallextension" value="${dir.build.ext}\firewallextension" readonly="true" />
@@ -326,6 +327,7 @@
     <mkdir dir="${dir.build.ext}" />
     <mkdir dir="${dir.build.ext.balextension}" />
     <mkdir dir="${dir.build.ext.complusextension}" />
+    <mkdir dir="${dir.build.ext.dependencyextension}" />
     <mkdir dir="${dir.build.ext.difxappextension}" />
     <mkdir dir="${dir.build.ext.directxextension}" />
     <mkdir dir="${dir.build.ext.firewallextension}" />

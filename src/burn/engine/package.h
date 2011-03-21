@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+struct _BURN_REGISTRATION;
+typedef _BURN_REGISTRATION BURN_REGISTRATION;
 
 // constants
 
@@ -216,11 +218,19 @@ HRESULT PackagesParseFromXml(
     __in BURN_PAYLOADS* pPayloads,
     __in IXMLDOMNode* pixnBundle
     );
+void PackageUninitialize(
+    __in BURN_PACKAGE* pPackage
+    );
 void PackagesUninitialize(
     __in BURN_PACKAGES* pPackages
     );
 HRESULT PackageFindById(
     __in BURN_PACKAGES* pPackages,
+    __in_z LPCWSTR wzId,
+    __out BURN_PACKAGE** ppPackage
+    );
+HRESULT PackageFindRelatedById(
+    __in BURN_REGISTRATION* pRegistration,
     __in_z LPCWSTR wzId,
     __out BURN_PACKAGE** ppPackage
     );

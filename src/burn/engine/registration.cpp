@@ -25,6 +25,8 @@ const LPCWSTR REGISTRY_UNINSTALL_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVe
 const LPCWSTR REGISTRY_RUN_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 const LPCWSTR REGISTRY_BUNDLE_CACHE_PATH = L"BundleCachePath";
 const LPCWSTR REGISTRY_BUNDLE_UPGRADE_CODE = L"BundleUpgradeCode";
+const LPCWSTR REGISTRY_BUNDLE_ADDON_CODE = L"BundleAddonCode";
+const LPCWSTR REGISTRY_BUNDLE_DETECT_CODE = L"BundleDetectCode";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 
 // internal function declarations
@@ -38,6 +40,24 @@ static HRESULT UpdateResumeMode(
 static HRESULT ParseRelatedCodes(
     __in BURN_REGISTRATION* pRegistration,
     __in IXMLDOMNode* pixnBundle
+    );
+static HRESULT InitializeRelatedBundleFromKey(
+    __in_z LPCWSTR wzBundleId,
+    __in HKEY hkBundleId,
+    __in BOOL fPerMachine,
+    __inout BURN_RELATED_BUNDLE *pRelatedBundle
+    );
+static HRESULT FindMatchingStringBetweenArrays(
+    __in_ecount(cValues) LPCWSTR *rgwzStringArray1,
+    __in DWORD cStringArray1,
+    __in_ecount(cValues) LPCWSTR *rgwzStringArray2,
+    __in DWORD cStringArray2
+    );
+static HRESULT RegistrationDetectRelatedBundlesForKey(
+    __in_opt BURN_USER_EXPERIENCE* pUX,
+    __in BURN_REGISTRATION* pRegistration,
+    __in_opt BOOTSTRAPPER_COMMAND* pCommand,
+    __in HKEY hkRoot
     );
 
 
@@ -203,10 +223,24 @@ extern "C" void RegistrationUninitialize(
 {
     ReleaseStr(pRegistration->sczId);
 
+    for (DWORD i = 0; i < pRegistration->cDetectCodes; ++i)
+    {
+        ReleaseStr(pRegistration->rgsczDetectCodes[i]);
+    }
+    ReleaseMem(pRegistration->rgsczDetectCodes);
+
     for (DWORD i = 0; i < pRegistration->cUpgradeCodes; ++i)
     {
         ReleaseStr(pRegistration->rgsczUpgradeCodes[i]);
     }
+    ReleaseMem(pRegistration->rgsczUpgradeCodes);
+
+    for (DWORD i = 0; i < pRegistration->cAddonCodes; ++i)
+    {
+        ReleaseStr(pRegistration->rgsczAddonCodes[i]);
+    }
+    ReleaseMem(pRegistration->rgsczAddonCodes);
+
     ReleaseStr(pRegistration->sczExecutableName);
 
     ReleaseStr(pRegistration->sczRegistrationKey);
@@ -229,8 +263,7 @@ extern "C" void RegistrationUninitialize(
     {
         for (DWORD i = 0; i < pRegistration->cRelatedBundles; ++i)
         {
-            ReleaseStr(pRegistration->rgRelatedBundles[i].sczCachePath);
-            ReleaseStr(pRegistration->rgRelatedBundles[i].sczId);
+            PackageUninitialize(&pRegistration->rgRelatedBundles[i].package);
         }
 
         MemFree(pRegistration->rgRelatedBundles);
@@ -429,76 +462,53 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT RegistrationDetectRelatedBundles(
+    __in BURN_MODE mode,
     __in BURN_USER_EXPERIENCE* pUX,
-    __in BURN_REGISTRATION* pRegistration
+    __in BURN_REGISTRATION* pRegistration,
+    __in_opt BOOTSTRAPPER_COMMAND* pCommand
     )
 {
     HRESULT hr = S_OK;
-    HKEY hkUninstallKey = NULL;
-    LPWSTR sczBundleId = NULL;
 
-    hr = RegOpen(pRegistration->hkRoot, REGISTRY_UNINSTALL_KEY, KEY_READ, &hkUninstallKey);
-    if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
+    if (BURN_MODE_NORMAL == mode)
     {
-        ExitFunction1(hr = S_OK);
+        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_CURRENT_USER);
+        ExitOnFailure(hr, "Failed to detect related bundles in HKCU for non-elevated process");
+
+        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_LOCAL_MACHINE);
+        ExitOnFailure(hr, "Failed to detect related bundles in HKLM for non-elevated process");
     }
-    ExitOnFailure(hr, "Failed to open uninstall registry key.");
-
-    for (DWORD dwIndex = 0; /* exit via break below */; ++dwIndex)
+    else if (BURN_MODE_ELEVATED == mode || BURN_MODE_EMBEDDED == mode)
     {
-        hr = RegKeyEnum(hkUninstallKey, dwIndex, &sczBundleId);
-        if (E_NOMOREITEMS == hr)
-        {
-            hr = S_OK;
-            break;
-        }
-        ExitOnFailure(hr, "Failed to enumerate uninstall key.");
-
-        // If we did not find ourself, try to load the subkey as a related bundle.
-        if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, sczBundleId, -1, pRegistration->sczId, -1))
-        {
-            // Ignore failures here since we'll often find products that aren't actually
-            // related bundles (or even bundles at all).
-            hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId);
-            if (SUCCEEDED(hr))
-            {
-                BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles - 1;
-                BOOTSTRAPPER_RELATED_OPERATION operation = BOOTSTRAPPER_RELATED_OPERATION_NONE;
-                if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
-                {
-                    operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
-                }
-                else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
-                {
-                    operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
-                }
-
-                LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->sczId, LoggingPerMachineToString(pRelatedBundle->fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
-
-                int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->sczId, pRelatedBundle->fPerMachine, pRelatedBundle->qwVersion, operation);
-                hr = HRESULT_FROM_VIEW(nResult);
-                ExitOnRootFailure(hr, "UX aborted detect related bundle.");
-            }
-        }
+        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_LOCAL_MACHINE);
+        ExitOnFailure(hr, "Failed to detect related bundles in HKLM for elevated process");
+    }
+    else
+    {
+        hr = E_UNEXPECTED;
+        ExitOnFailure1(hr, "Detect related bundles called for unexpected burn mode: %d", mode);
     }
 
 LExit:
-    ReleaseStr(sczBundleId);
-    ReleaseRegKey(hkUninstallKey);
-
     return hr;
 }
 
 extern "C" HRESULT RegistrationLoadRelatedBundle(
     __in BURN_REGISTRATION* pRegistration,
-    __in_z LPCWSTR sczBundleId
+    __in_z LPCWSTR sczBundleId,
+    __out BURN_RELATION_TYPE *pRelationType
     )
 {
     HRESULT hr = S_OK;
+    BOOL fRelated = FALSE;
     LPWSTR sczBundleKey = NULL;
     HKEY hkBundleId = NULL;
     LPWSTR *rgsczUpgradeCodes = NULL;
     DWORD cUpgradeCodes = 0;
+    LPWSTR *rgsczAddonCodes = NULL;
+    DWORD cAddonCodes = 0;
+    LPWSTR *rgsczDetectCodes = NULL;
+    DWORD cDetectCodes = 0;
     LPWSTR sczCachePath = NULL;
     DWORD64 dw64Version = 0;
 
@@ -508,7 +518,6 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     hr = RegOpen(pRegistration->hkRoot, sczBundleKey, KEY_READ, &hkBundleId);
     ExitOnFailure1(hr, "Failed to open bundle registry key: %ls", sczBundleKey);
 
-    // If there is a bundle upgrade code, then it probably is another Burn.
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes, &cUpgradeCodes);
     if (HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE) == hr)
     {
@@ -523,53 +532,104 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
             cUpgradeCodes = 1;
         }
     }
-
     if (SUCCEEDED(hr))
     {
-        // We have to check every one of our upgrade codes against every one of the other product's upgrade codes.
-        // If even a single one matches, then we are going to upgrade this product, and have no need to check
-        // against any of the remaining upgrade codes
-        for (DWORD i = 0; i < pRegistration->cUpgradeCodes; ++i)
+        // Both them and us must have the same upgrade code to cause an upgrade relation
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR *>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
-            for (DWORD j = 0; j < cUpgradeCodes; ++j)
-            {
-                if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, rgsczUpgradeCodes[j], -1, pRegistration->rgsczUpgradeCodes[i], -1))
-                {
-                    hr = RegReadVersion(hkBundleId, REGISTRY_BUNDLE_VERSION, &dw64Version);
-                    ExitOnFailure1(hr, "Failed to read version from registry for bundle: %ls", sczBundleId);
-
-                    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
-                    ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", sczBundleId);
-
-                    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgRelatedBundles), pRegistration->cRelatedBundles, sizeof(BURN_RELATED_BUNDLE), 5);
-                    ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
-
-                    BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
-                    ++pRegistration->cRelatedBundles;
-
-                    pRelatedBundle->fPerMachine = pRegistration->fPerMachine;
-                    hr = StrAllocString(&pRelatedBundle->sczId, sczBundleId, 0);
-                    ExitOnFailure(hr, "Failed to copy related bundle id.");
-
-                    pRelatedBundle->qwVersion = dw64Version;
-                    pRelatedBundle->sczCachePath = sczCachePath;
-                    sczCachePath = NULL;
-
-                    ExitFunction1(hr = S_OK);
-                }
-            }
+            hr = S_OK;
         }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for upgrade code match");
 
-        hr = HRESULT_FROM_WIN32(ERROR_NO_MATCH);
+            fRelated = TRUE;
+            *pRelationType = BURN_RELATION_UPGRADE;
+            goto Finish;
+        }
+    }
+
+    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_ADDON_CODE, &rgsczAddonCodes, &cAddonCodes);
+    if (SUCCEEDED(hr))
+    {
+        // Addon relation only occurs when their addoncode matches our detect code
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match");
+
+            fRelated = TRUE;
+            *pRelationType = BURN_RELATION_ADDON;
+            goto Finish;
+        }
+    }
+
+    // Ignore failure
+    RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_DETECT_CODE, &rgsczDetectCodes, &cDetectCodes);
+
+    // Detect relation occurs when one of our detect codes matches any of their codes.
+    // Since we already matched their addon codes to our detect codes, we just have to check the other two
+    // detection types: their detect codes and their upgrade codes
+    hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczDetectCodes), cDetectCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+    if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+    {
+        hr = S_OK;
+    }
+    else
+    {
+        ExitOnFailure(hr, "Failed to do array search for detect code match");
+
+        fRelated = TRUE;
+        *pRelationType = BURN_RELATION_DETECT;
+        goto Finish;
+    }
+
+    // Here we check against their upgrades, as described in the larger comment above
+    hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+    if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+    {
+        hr = S_OK;
+    }
+    else
+    {
+        ExitOnFailure(hr, "Failed to do array search for detect code match");
+
+        fRelated = TRUE;
+        *pRelationType = BURN_RELATION_DETECT;
+        goto Finish;
+    }
+
+Finish:
+    if (fRelated)
+    {
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgRelatedBundles), pRegistration->cRelatedBundles + 1, sizeof(BURN_RELATED_BUNDLE), 5);
+        ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
+
+        BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
+        ++pRegistration->cRelatedBundles;
+
+        pRelatedBundle->package.fPerMachine = pRegistration->fPerMachine;
+        hr = StrAllocString(&pRelatedBundle->package.sczId, sczBundleId, 0);
+        ExitOnFailure(hr, "Failed to copy related bundle id.");
+
+        hr = InitializeRelatedBundleFromKey(sczBundleId, hkBundleId, pRegistration->fPerMachine, pRelatedBundle);
+        ExitOnFailure1(hr, "Failed to initialize package from bundle id: %ls", sczBundleId);
+    }
+    else
+    {
+        hr = E_NOTFOUND;
     }
 
 LExit:
     ReleaseStr(sczCachePath);
-    for (DWORD i = 0; i < cUpgradeCodes; ++i)
-    {
-        ReleaseStr(rgsczUpgradeCodes[i]);
-    }
-    ReleaseMem(rgsczUpgradeCodes);
+    ReleaseStrArray(rgsczUpgradeCodes, cUpgradeCodes);
+    ReleaseStrArray(rgsczAddonCodes, cAddonCodes);
+    ReleaseStrArray(rgsczDetectCodes, cDetectCodes);
     ReleaseRegKey(hkBundleId);
     ReleaseStr(sczBundleKey);
 
@@ -658,6 +718,12 @@ extern "C" HRESULT RegistrationSessionBegin(
 
                 hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->rgsczUpgradeCodes, pRegistration->cUpgradeCodes);
                 ExitOnFailure(hr, "Failed to write BundleUpgradeCode value.");
+
+                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_ADDON_CODE, pRegistration->rgsczAddonCodes, pRegistration->cAddonCodes);
+                ExitOnFailure(hr, "Failed to write BundleAddonCode value.");
+
+                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_DETECT_CODE, pRegistration->rgsczDetectCodes, pRegistration->cDetectCodes);
+                ExitOnFailure(hr, "Failed to write BundleDetectCode value.");
 
                 hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
                 ExitOnFailure(hr, "Failed to write BundleVersion value.");
@@ -1065,6 +1131,7 @@ static HRESULT ParseRelatedCodes(
     IXMLDOMNode* pixnElement = NULL;
     LPWSTR sczAction = NULL;
     LPWSTR sczId = NULL;
+    DWORD dwIndex = 0;
     DWORD cElements = 0;
 
     hr = XmlSelectNodes(pixnBundle, L"RelatedBundle", &pixnNodes);
@@ -1084,14 +1151,32 @@ static HRESULT ParseRelatedCodes(
         hr = XmlGetAttributeEx(pixnElement, L"Id", &sczId);
         ExitOnFailure(hr, "Failed to get @Id.");
 
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, sczAction, -1, L"Upgrade", -1))
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, sczAction, -1, L"Detect", -1))
         {
-            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes, sizeof(LPWSTR), 5);
-            ExitOnFailure(hr, "Failed to resize upgrade code array in registration");
+            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes + 1, sizeof(LPWSTR), 5);
+            ExitOnFailure(hr, "Failed to resize Detect code array in registration");
+
+            pRegistration->rgsczDetectCodes[pRegistration->cDetectCodes] = sczId;
+            sczId = NULL;
+            ++pRegistration->cDetectCodes;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, sczAction, -1, L"Upgrade", -1))
+        {
+            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes + 1, sizeof(LPWSTR), 5);
+            ExitOnFailure(hr, "Failed to resize Upgrade code array in registration");
 
             pRegistration->rgsczUpgradeCodes[pRegistration->cUpgradeCodes] = sczId;
             sczId = NULL;
             ++pRegistration->cUpgradeCodes;
+        }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, sczAction, -1, L"Addon", -1))
+        {
+            hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgsczAddonCodes), pRegistration->cAddonCodes + 1, sizeof(LPWSTR), 5);
+            ExitOnFailure(hr, "Failed to resize Addon code array in registration");
+
+            pRegistration->rgsczAddonCodes[pRegistration->cAddonCodes] = sczId;
+            sczId = NULL;
+            ++pRegistration->cAddonCodes;
         }
         else
         {
@@ -1105,6 +1190,180 @@ LExit:
     ReleaseObject(pixnElement);
     ReleaseStr(sczAction);
     ReleaseStr(sczId);
+
+    return hr;
+}
+
+static HRESULT InitializeRelatedBundleFromKey(
+    __in_z LPCWSTR wzBundleId,
+    __in HKEY hkBundleId,
+    __in BOOL fPerMachine,
+    __inout BURN_RELATED_BUNDLE *pRelatedBundle
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCachePath = NULL;
+
+    hr = RegReadVersion(hkBundleId, REGISTRY_BUNDLE_VERSION, &pRelatedBundle->qwVersion);
+    ExitOnFailure1(hr, "Failed to read version from registry for bundle: %ls", wzBundleId);
+
+    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
+    ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", wzBundleId);
+
+    // Initialize the single payload, and fill out all the necessary fields
+    pRelatedBundle->package.rgPayloads = (BURN_PACKAGE_PAYLOAD *)MemAlloc(sizeof(BURN_PACKAGE_PAYLOAD), TRUE); 
+    ExitOnNull(pRelatedBundle->package.rgPayloads, hr, E_OUTOFMEMORY, "Failed to allocate space for burn package payload inside of related bundle struct");
+    pRelatedBundle->package.cPayloads = 1;
+
+    pRelatedBundle->package.rgPayloads->fCached = TRUE;
+
+    pRelatedBundle->package.rgPayloads->pPayload = (BURN_PAYLOAD *)MemAlloc(sizeof(BURN_PAYLOAD), TRUE); 
+    ExitOnNull(pRelatedBundle->package.rgPayloads, hr, E_OUTOFMEMORY, "Failed to allocate space for burn payload inside of related bundle struct");
+    pRelatedBundle->package.rgPayloads->pPayload->packaging = BURN_PAYLOAD_PACKAGING_EXTERNAL;
+
+    hr = FileSize(sczCachePath, reinterpret_cast<LONGLONG *>(&pRelatedBundle->package.rgPayloads->pPayload->qwFileSize));
+    ExitOnFailure1(hr, "Failed to get size of related bundle: %ls", sczCachePath);
+
+    pRelatedBundle->package.rgPayloads->pPayload->sczFilePath = sczCachePath;
+    sczCachePath = NULL;
+
+    pRelatedBundle->package.type = BURN_PACKAGE_TYPE_EXE;
+    pRelatedBundle->package.fPerMachine = fPerMachine;
+    pRelatedBundle->package.currentState = BOOTSTRAPPER_PACKAGE_STATE_PRESENT;
+    pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
+    pRelatedBundle->package.fUninstallable = TRUE;
+    pRelatedBundle->package.fVital = FALSE;
+    
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczInstallArguments, L"/quiet", 0);
+    ExitOnFailure(hr, "Failed to copy install arguments for related bundle package");
+
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczRepairArguments, L"/repair /quiet", 0);
+    ExitOnFailure(hr, "Failed to copy repair arguments for related bundle package");
+
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczUninstallArguments, L"/uninstall /quiet", 0);
+    ExitOnFailure(hr, "Failed to copy uninstall arguments for related bundle package");
+
+    pRelatedBundle->package.Exe.fRepairable = TRUE;
+    pRelatedBundle->package.Exe.protocol = BURN_EXE_PROTOCOL_TYPE_BURN;
+
+LExit:
+    ReleaseStr(sczCachePath);
+
+    return hr;
+}
+
+static HRESULT FindMatchingStringBetweenArrays(
+    __in_ecount(cValues) LPCWSTR *rgwzStringArray1,
+    __in DWORD cStringArray1,
+    __in_ecount(cValues) LPCWSTR *rgwzStringArray2,
+    __in DWORD cStringArray2
+    )
+{
+    HRESULT hr = S_OK;
+
+    for (DWORD i = 0; i < cStringArray1; ++i)
+    {
+        for (DWORD j = 0; j < cStringArray2; ++j)
+        {
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, rgwzStringArray2[j], -1, rgwzStringArray1[i], -1))
+            {
+                ExitFunction1(hr = S_OK);
+            }
+        }
+    }
+
+    ExitFunction1(hr = HRESULT_FROM_WIN32(ERROR_NO_MATCH));
+
+LExit:
+    return hr;
+}
+
+static HRESULT RegistrationDetectRelatedBundlesForKey(
+    __in_opt BURN_USER_EXPERIENCE* pUX,
+    __in BURN_REGISTRATION* pRegistration,
+    __in_opt BOOTSTRAPPER_COMMAND* pCommand,
+    __in HKEY hkRoot
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_RELATION_TYPE relationType = BURN_RELATION_NONE;
+    HKEY hkUninstallKey = NULL;
+    LPWSTR sczBundleId = NULL;
+
+    hr = RegOpen(hkRoot, REGISTRY_UNINSTALL_KEY, KEY_READ, &hkUninstallKey);
+    if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to open uninstall registry key.");
+
+    for (DWORD dwIndex = 0; /* exit via break below */; ++dwIndex)
+    {
+        hr = RegKeyEnum(hkUninstallKey, dwIndex, &sczBundleId);
+        if (E_NOMOREITEMS == hr)
+        {
+            hr = S_OK;
+            break;
+        }
+        ExitOnFailure(hr, "Failed to enumerate uninstall key.");
+
+        // If we did not find ourself, try to load the subkey as a related bundle.
+        if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, sczBundleId, -1, pRegistration->sczId, -1))
+        {
+            // Ignore failures here since we'll often find products that aren't actually
+            // related bundles (or even bundles at all).
+            relationType = BURN_RELATION_NONE;
+
+            hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId, &relationType);
+            if (SUCCEEDED(hr))
+            {
+                BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles - 1;
+
+                pRelatedBundle->relationType = relationType;
+
+                if (pUX)
+                {
+                    BOOTSTRAPPER_RELATED_OPERATION operation = BOOTSTRAPPER_RELATED_OPERATION_NONE;
+
+                    switch (relationType)
+                    {
+                    case BURN_RELATION_UPGRADE:
+                        if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
+                        {
+                            operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+                        }
+                        else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
+                        {
+                            operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                        }
+                        break;
+
+                    case BURN_RELATION_ADDON:
+                        if (pCommand && BOOTSTRAPPER_ACTION_UNINSTALL == pCommand->action)
+                        {
+                            operation = BOOTSTRAPPER_RELATED_OPERATION_REMOVE;
+                        }
+                        break;
+
+                    default:
+                        hr = E_FAIL;
+                        ExitOnFailure1(hr, "Unexpected relation type encountered: %d", relationType);
+                        break;
+                    }
+
+                    LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->package.sczId, LoggingPerMachineToString(pRelatedBundle->package.fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
+
+                    int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->package.sczId, pRelatedBundle->package.fPerMachine, pRelatedBundle->qwVersion, operation);
+                    hr = HRESULT_FROM_VIEW(nResult);
+                    ExitOnRootFailure(hr, "UX aborted detect related bundle.");
+                }
+            }
+        }
+    }
+
+LExit:
+    ReleaseStr(sczBundleId);
+    ReleaseRegKey(hkUninstallKey);
 
     return hr;
 }

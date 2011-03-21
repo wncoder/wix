@@ -1483,6 +1483,9 @@
     <tableDefinition name="WixFragment" createSymbols="yes" unreal="yes">
         <columnDefinition name="WixFragment" type="string" length="0" primaryKey="yes"/>
     </tableDefinition>
+    <tableDefinition name="WixInstanceComponent" unreal="yes">
+        <columnDefinition name="Component_" type="string" length="0" primaryKey="yes" modularize="column"/>
+    </tableDefinition>
     <tableDefinition name="WixInstanceTransforms" unreal="yes" createSymbols="yes">
         <columnDefinition name="Id" type="string" length="0" primaryKey="yes"/>
         <columnDefinition name="PropertyId" type="string" length="0"/>
@@ -1610,6 +1613,10 @@
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
+    </tableDefinition>
+    <tableDefinition name="WixCatalog" createSymbols="yes" unreal="yes">
+        <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
+        <columnDefinition name="SourceFile" type="object" length="0"/>
     </tableDefinition>
     <tableDefinition name="WixChain" unreal="yes">
         <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>

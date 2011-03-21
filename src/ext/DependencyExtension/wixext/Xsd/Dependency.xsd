@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:html="http://www.w3.org/1999/xhtml"
+            xmlns:wix="http://schemas.microsoft.com/wix/2006/wi"
+             xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xse="http://schemas.microsoft.com/wix/2005/XmlSchemaExtension"
+      targetNamespace="http://schemas.microsoft.com/wix/DependencyExtension"
+                xmlns="http://schemas.microsoft.com/wix/DependencyExtension">
+    <xs:annotation>
+        <xs:documentation>
+            Copyright (c) Microsoft Corporation.  All rights reserved.
+            
+            The use and distribution terms for this software are covered by the
+            Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+            which can be found in the file CPL.TXT at the root of this distribution.
+            By using this software in any fashion, you are agreeing to be bound by
+            the terms of this license.
+            
+            You must not remove this notice, or any other, from this software.
+
+            The source code schema for the Windows Installer XML Toolset Dependency Extension.
+        </xs:documentation>
+    </xs:annotation>
+
+    <xs:element name="Provides">
+        <xs:annotation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Component" />
+                <xse:remarks>
+                    <html:p>
+                        This element is required for any product or feature that will use the Dependency feature to properly reference count
+                        other products or features. It should be authored into a component that is always installed and removed with the
+                        product or features that contain it. This guarantees that product dependencies are not removed before those products that
+                        depend on them.
+                    </html:p>
+                    <html:p>
+                        The @Key attribute should identify a version range for your product that you guarantee will be backward compatible.
+                        This key is designed to persist throughout compatible upgrades so that dependent products do not have to be reinstalled
+                        and will not prevent your product from being upgraded. If this attribute is not authored, the value is generated at
+                        build time.
+                    </html:p>
+                    <html:p>
+                        By default this uses the Product/@UpgradeCode attribute value,
+                        which typically identifies a family of products, plus the major version number of the Product/@Version attribute value.
+                        This supports most major upgrades. For example, if your UpgradeCode is {B0F46F5E-9979-44B5-B145-FFF40EC0E171}
+                        and your ProductVersion is 1.0.0.0, the calculated value would be {B0F46F5E-9979-44B5-B145-FFF40EC0E171}v1.
+                    </html:p>
+                    <html:p>
+                        If you use a different versioning scheme for your product upgrades, you can specify your own guarantee of backward compatibility
+                        by authoring the @VersionGuarantee attribute. This attribute is mutually exclusive with the @Key attribute, which allows you
+                        to specify your own key name and will not be generated otherwise.
+                    </html:p>
+                </xse:remarks>
+                <xse:howtoRef href="author_product_dependencies.htm">How To: Author product dependencies</xse:howtoRef>
+            </xs:appinfo>
+            <xs:documentation>Describes the information for this product or feature that serves as a dependency of other products or features.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="Requires"/>
+                <xs:element ref="RequiresRef"/>
+            </xs:choice>
+            <xs:attribute name="Id" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Dependency provider identity. If this attribute is not specified, an identifier will be generated automatically.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Key" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Optional unique registry key name that identifies a product version range on which other products can depend.
+                        The default value is generated from other attributes of the product authoring. See the remarks for more information.
+                        This attribute is mutually exclusive with the @VersionGuarantee attribute.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="VersionGuarantee">
+                <xs:annotation>
+                    <xs:documentation>
+                        Optional guarantee for backward compatibility. See the remarks for more information. This attribute is mutually
+                        exclusive with the @Key attribute.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:NMTOKEN">
+                        <xs:enumeration value="None">
+                            <xs:annotation>
+                                <xs:documentation>All versions of the product are backward compatible.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="Major">
+                            <xs:annotation>
+                                <xs:documentation>All versions of the product with the same major version number are backward compatible.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="Minor">
+                            <xs:annotation>
+                                <xs:documentation>All versions of the product with the same major and minor version numbers are backward compatible.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="Build">
+                            <xs:annotation>
+                                <xs:documentation>All versions of the product with the same major, minor, and build version numbers are backward compatible.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="DisplayKey" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Optional unique registry key name in Programs and Features (also known as Add/Remove Programs) to get display information.
+                        Only author the lowest descendant key which is added under "Software\Microsoft\Windows\CurrentVersion\Uninstall".
+                        The default value uses the Product/@Id attribute value.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Requires">
+        <xs:annotation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Module" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Product" />
+                <xse:seeAlso ref="RequiresRef" />
+                <xse:remarks>
+                    <html:p>
+                        This element declares a dependency on any product that uses the Provides element. If that product is uninstalled
+                        before a product that requires it, the uninstall will err or warn the user that other products are installed
+                        which depend on that product. This behavior can be modified by changing the attribute values on the Requires element.
+                    </html:p>
+                    <html:p>
+                        If you do not nest this element under a Provides element, you must specify the @Id attribute
+                        so that it can be referenced by a RequiresRef element nested under a Provides element.
+                    </html:p>
+                </xse:remarks>
+                <xse:howtoRef href="author_product_dependencies.htm">How To: Author product dependencies</xse:howtoRef>
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="Id" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Dependency requirement identity. If this attribute is not specified, an identifier will be generated automatically.
+                        If this element is not authored under a Provides element, this attribute is required.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="ProviderKey" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The unique registry key name for the dependency provider to require during installation of this product.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Minimum" type="VersionType">
+                <xs:annotation>
+                    <xs:documentation>The minimum version of the dependency provider required to be installed. The default is unbound.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="Maximum" type="VersionType">
+                <xs:annotation>
+                    <xs:documentation>The maximum version of the dependency provider required to be installed. The default is unbound.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="IncludeMinimum" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>Set to "yes" to make the range of dependency provider versions required include the value specified in Minimum.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="IncludeMaximum" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>Set to "yes" to make the range of dependency provider versions required include the value specified in Maximum.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="RequiresRef">
+        <xs:annotation>
+            <xs:appinfo>
+                <xse:seeAlso ref="Requires" />
+                <xse:remarks>
+                    <html:p>
+                        This element references a dependency on any product that uses the Provides element. If that product is uninstalled
+                        before a product that requires it, the uninstall will err or warn the user that other products are installed
+                        which depend on that product. This behavior can be modified by changing the attribute values on the Requires element.
+                    </html:p>
+                </xse:remarks>
+                <xse:howtoRef href="author_product_dependencies.htm">How To: Author product dependencies</xse:howtoRef>
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="Id" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The identifier of the Requires element to reference.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:simpleType name="VersionType">
+        <xs:annotation>
+            <xs:documentation>
+                Values of this type will look like: "x.x.x.x" where x is an integer from 0 to 65534.
+                This can also be a preprocessor, binder, or WiX variable.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(\d{1,5}\.){3}\d{1,5}|[!$]\((var|bind|wix)\.[_A-Za-z][\w\.]*\)"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="YesNoType">
+        <xs:annotation>
+            <xs:documentation>
+                Values of this type will either be "yes" or "no".
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="no"/>
+            <xs:enumeration value="yes"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

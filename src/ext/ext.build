@@ -31,6 +31,7 @@
 
   <include buildfile="balextension\balextension.build" unless="${property::exists('balextension.properties.defined')}" />
   <include buildfile="complusextension\complusextension.build" />
+  <include buildfile="dependencyextension\dependencyextension.build" />
   <include buildfile="directxextension\directxextension.build" />
   <include buildfile="firewallextension\firewallextension.build" />
   <include buildfile="gamingextension\gamingextension.build" />
@@ -58,6 +59,7 @@
   <!-- Clean -->
   <target name="ext.clean" description="Cleans the build"
           depends="balextension.clean,
+                   dependencyextension.clean,
                    directxextension.clean,
                    firewallextension.clean,
                    gamingextension.clean,
@@ -71,6 +73,7 @@
   <!-- Inc -->
   <target name="ext.inc" description="Performs an incremental build"
           depends="balextension.inc,
+                   dependencyextension.inc,
                    directxextension.inc,
                    firewallextension.inc,
                    gamingextension.inc,

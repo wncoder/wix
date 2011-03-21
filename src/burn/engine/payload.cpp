@@ -34,6 +34,7 @@ static HRESULT FindEmbeddedBySourcePath(
 extern "C" HRESULT PayloadsParseFromXml(
     __in BURN_PAYLOADS* pPayloads,
     __in_opt BURN_CONTAINERS* pContainers,
+    __in_opt BURN_CATALOGS* pCatalogs,
     __in IXMLDOMNode* pixnBundle
     )
 {
@@ -171,6 +172,16 @@ extern "C" HRESULT PayloadsParseFromXml(
 
         hr = StrAllocHexDecode(scz, &pPayload->pbHash, &pPayload->cbHash);
         ExitOnFailure(hr, "Failed to hex decode the Payload/@Hash.");
+
+        // @Catalog
+        hr = XmlGetAttributeEx(pixnNode, L"Catalog", &scz);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @Catalog.");
+
+            hr = CatalogFindById(pCatalogs, scz, &pPayload->pCatalog);
+            ExitOnFailure(hr, "Failed to find catalog.");
+        }
 
         // prepare next iteration
         ReleaseNullObject(pixnNode);

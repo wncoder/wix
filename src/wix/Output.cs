@@ -506,7 +506,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             else if (null != binderFileManager)
                             {
-                                file = binderFileManager.ResolveFile((string)objectField.Data, table.Name, row.SourceLineNumbers);
+                                file = binderFileManager.ResolveFile((string)objectField.Data, table.Name, row.SourceLineNumbers, BindStage.Normal);
                             }
 
                             // add the file to the list of files to go in the cabinet
@@ -539,7 +539,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             else if (null != objectField.PreviousData && null != binderFileManager)
                             {
-                                previousFile = binderFileManager.ResolveFile((string)objectField.PreviousData, table.Name, row.SourceLineNumbers);
+                                previousFile = binderFileManager.ResolveFile((string)objectField.PreviousData, table.Name, row.SourceLineNumbers, BindStage.Normal);
                             }
 
                             // add the file to the list of files to go in the cabinet

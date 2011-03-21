@@ -31,6 +31,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private string cabinetFileId;
         private string previousCabinetFileId;
         private string previousBaseUri;
+        private string unresolvedData;
+        private string unresolvedPreviousData;
 
         /// <summary>
         /// Instantiates a new Field.
@@ -81,6 +83,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Gets or sets the unresolved data for this field.
+        /// </summary>
+        /// <value>Unresolved Data in the field.</value>
+        public string UnresolvedData
+        {
+            get { return this.unresolvedData; }
+            set { this.unresolvedData = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the unresolved previous data.
+        /// </summary>
+        /// <value>The unresolved previous data.</value>
+        public string UnresolvedPreviousData
+        {
+            get { return this.unresolvedPreviousData; }
+            set { this.unresolvedPreviousData = value; }
+        }
+
+        /// <summary>
         /// Parse a field from the xml.
         /// </summary>
         /// <param name="reader">XmlReader where the intermediate is persisted.</param>
@@ -104,6 +126,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                     case "previousData":
                         this.PreviousData = reader.Value;
+                        break;
+                    case "unresolvedPreviousData":
+                        this.unresolvedPreviousData = reader.Value;
+                        break;
+                    case "unresolvedData":
+                        this.unresolvedData = reader.Value;
                         break;
                     case "previousCabinetFileId":
                         this.previousCabinetFileId = reader.Value;
@@ -177,9 +205,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("modified", "yes");
             }
 
+            if (null != this.unresolvedPreviousData)
+            {
+                writer.WriteAttributeString("unresolvedPreviousData", this.unresolvedPreviousData);
+            }
+
             if (null != this.PreviousData)
             {
                 writer.WriteAttributeString("previousData", this.PreviousData);
+            }
+
+            if (null != this.unresolvedData)
+            {
+                writer.WriteAttributeString("unresolvedData", this.unresolvedData);
             }
 
             if (null != this.previousCabinetFileId)

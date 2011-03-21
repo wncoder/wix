@@ -242,7 +242,7 @@ extern "C" HRESULT DAPI DictAddKey(
         ExitOnFailure1(hr, "Tried to add key without value to wrong dictionary type! This dictionary type is: %d", psd->dtType);
     }
 
-    if ((psd->dwNumItems + 1) > MAX_BUCKET_SIZES[psd->dwBucketSizeIndex] / MAX_BUCKETS_TO_ITEMS_RATIO)
+    if ((psd->dwNumItems + 1) >= MAX_BUCKET_SIZES[psd->dwBucketSizeIndex] / MAX_BUCKETS_TO_ITEMS_RATIO)
     {
         hr = GrowDictionary(psd);
         if (HRESULT_FROM_WIN32(ERROR_DATABASE_FULL) == hr)
@@ -302,7 +302,7 @@ extern "C" HRESULT DAPI DictAddValue(
     wzKey = GetKey(psd, pvValue);
     ExitOnNull(wzKey, hr, E_INVALIDARG, "String not specified while adding value to dict");
 
-    if ((psd->dwNumItems + 1) > MAX_BUCKET_SIZES[psd->dwBucketSizeIndex] / MAX_BUCKETS_TO_ITEMS_RATIO)
+    if ((psd->dwNumItems + 1) >= MAX_BUCKET_SIZES[psd->dwBucketSizeIndex] / MAX_BUCKETS_TO_ITEMS_RATIO)
     {
         hr = GrowDictionary(psd);
         if (HRESULT_FROM_WIN32(ERROR_DATABASE_FULL) == hr && psd->dwNumItems + 1 )
@@ -512,7 +512,7 @@ static HRESULT GetValue(
 
     if (NULL != ppvValue)
     {
-        *ppvValue = pvCandidateValue;
+        *ppvValue = TranslateOffsetToValue(psd, psd->ppvBuckets[dwIndex]);
     }
 
 LExit:
@@ -691,9 +691,15 @@ static void * TranslateOffsetToValue(
     __in void *pvValue
     )
 {
+    if (NULL == pvValue)
+    {
+        return NULL;
+    }
+
+    // All offsets are stored as (real offset + 1), so subtract 1 to get back to the real value
     if (NULL != psd->ppvValueArray)
     {
-        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) + reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray));
+        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) + reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray) - 1);
     }
     else
     {
@@ -708,7 +714,8 @@ static void * TranslateValueToOffset(
 {
     if (NULL != psd->ppvValueArray)
     {
-        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) - reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray));
+        // 0 has a special meaning - we don't want offset 0 into the array to have NULL for the offset - so add 1 to avoid this issue
+        return reinterpret_cast<void *>(reinterpret_cast<DWORD_PTR>(pvValue) - reinterpret_cast<DWORD_PTR>(*psd->ppvValueArray) + 1);
     }
     else
     {

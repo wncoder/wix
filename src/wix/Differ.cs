@@ -320,10 +320,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                             updatedObjectField.PreviousCabinetFileId = targetObjectField.CabinetFileId;
                                             updatedObjectField.PreviousBaseUri = targetObjectField.BaseUri;
 
-                                            if ((string)targetObjectField.Data != (string)updatedObjectField.Data)
-                                            {
-                                                updatedObjectField.PreviousData = (string)targetObjectField.Data;
-                                            }
+                                            // always keep a copy of the previous data even if they are identical
+                                            // This makes diff.wixmst clean and easier to control patch logic
+                                            updatedObjectField.PreviousData = (string)targetObjectField.Data;
+
+                                            // always remember the unresolved data for target build
+                                            updatedObjectField.UnresolvedPreviousData = (string)targetObjectField.UnresolvedData;
 
                                             // keep rows containing object fields so the files can be compared in the binder
                                             keepRow = !this.suppressKeepingSpecialRows;
@@ -401,7 +403,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 Table summaryInfoTable = transform.Tables["_SummaryInformation"];
-                Hashtable summaryRows = new Hashtable();
+                Hashtable summaryRows = new Hashtable(summaryInfoTable.Rows.Count);
                 foreach (Row row in summaryInfoTable.Rows)
                 {
                     summaryRows[row[0]] = row;

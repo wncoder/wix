@@ -947,3 +947,33 @@ HeathS: Added binder property specializations for ProductVersion.
 
 WixBuild: Version 3.6.1502.0
 
+RobMen: Support MultiInstance Component in instance transforms.
+
+HeathS: Added package ref-counting to the core toolset.
+
+SimWu:  Support bindpath re-basing logic for patch by providing 
+        -bt/-bu argument in pyro.exe.
+
+HeathS: Fixed a bug in the dependent check for the wrong key name.
+        Add binder properties even when the ProductCode is auto-generated.
+
+NNewland: Add support for catalog signing of payloads in Burn.
+
+WixBuild: Version 3.6.1511.0
+
+MiCarls: Fix SFBUG:3155665 - Burn shouldn't error out when run from a unicode
+         path. Also make the log files UTF-8, again.
+
+RobMen: Fix incremental build in MSBuild.
+        Minimize messages printed during build by default.
+        Project harvesting now requires setting EnableProjectHarvesting=true.
+
+RobMen: SFBUG:3216782 - fix download when server doesn't send Content-Length
+        header on HTTP "HEAD" requests.
+
+RobMen: Set default auto-cab size to 200 MB.
+
+RobMen: Support passing command-line information to extensions in light.exe.
+
+WixBuild: Version 3.6.1518.0
+

@@ -279,11 +279,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             for (int i = 0; i < fileTransfers.Count; ++i)
             {
                 FileTransfer fileTransfer = (FileTransfer)fileTransfers[i];
-                string fileSource = fileManager.ResolveFile(fileTransfer.Source, fileTransfer.Type, fileTransfer.SourceLineNumbers);
+                string fileSource = fileManager.ResolveFile(fileTransfer.Source, fileTransfer.Type, fileTransfer.SourceLineNumbers, BindStage.Normal);
 
                 // If the source and destination are identical, then there's nothing to do here
                 if (0 == String.Compare(fileSource, fileTransfer.Destination, StringComparison.OrdinalIgnoreCase))
                 {
+                    fileTransfer.Redundant = true;
                     continue;
                 }
 
@@ -296,15 +297,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             this.core.OnMessage(WixVerboses.MoveFile(fileSource, fileTransfer.Destination));
                             this.FileManager.MoveFile(fileSource, fileTransfer.Destination);
-                            retry = false;
                         }
                         else
                         {
                             this.core.OnMessage(WixVerboses.CopyFile(fileSource, fileTransfer.Destination));
                             this.FileManager.CopyFile(fileSource, fileTransfer.Destination, true);
-                            retry = false;
                         }
 
+                        retry = false;
                         destinationFiles.Add(fileTransfer.Destination);
                     }
                     catch (FileNotFoundException e)
@@ -356,6 +356,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 throw new WixException(WixErrors.FileInUse(null, fileTransfer.Destination));
                             }
+
                             retry = true;
                         }
                         else // no idea what just happened, bail
@@ -386,6 +387,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 throw new WixException(WixErrors.FileInUse(null, fileTransfer.Destination));
                             }
+
                             retry = true;
                         }
                         else // no idea what just happened, bail
@@ -393,10 +395,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             throw;
                         }
                     }
-                }
-                while (retry);
+                } while (retry);
             }
-            
+
             // create all directories that did not have files involved in the file transfer
             for (int i = 0; i < directoryTransfers.Count; ++i)
             {
@@ -444,6 +445,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// <summary>Optional type of file this transfer is moving or copying.</summary>
             public string Type;
 
+            /// <summary>Set during layout of media when the file transfer when the source and target resolve to the same path.</summary>
+            internal bool Redundant;
+
             /// <summary>
             /// Prefer the TryCreate() method to create FileTransfer objects.
             /// </summary>
@@ -471,6 +475,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.Type = type;
                 this.SourceLineNumbers = sourceLineNumbers;
+
+                this.Redundant = false;
             }
 
             /// <summary>
@@ -521,6 +527,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     // TODO: would prefer to return null here.
                     transfer = new FileTransfer(); // create an empty transfer because we must.
+                    transfer.Redundant = true;
                     return false;
                 }
 

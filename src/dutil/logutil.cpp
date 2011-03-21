@@ -29,9 +29,9 @@ static CRITICAL_SECTION LogUtil_csLog = { };
 static BOOL LogUtil_fInitializedCriticalSection = FALSE;
 
 // Customization of certain parts of the string, within a line
-static LPSTR LogUtil_sczSpecialBeginLine = NULL;
-static LPSTR LogUtil_sczSpecialEndLine = NULL;
-static LPSTR LogUtil_sczSpecialAfterTimeStamp = NULL;
+static LPWSTR LogUtil_sczSpecialBeginLine = NULL;
+static LPWSTR LogUtil_sczSpecialEndLine = NULL;
+static LPWSTR LogUtil_sczSpecialAfterTimeStamp = NULL;
 
 static LPCSTR LOGUTIL_UNKNOWN = "unknown";
 static LPCSTR LOGUTIL_STANDARD = "standard";
@@ -52,7 +52,7 @@ static HRESULT LogStringWorkArgs(
     __in BOOL fLOGUTIL_NEWLINE
     );
 static HRESULT LogStringWork(
-    __in_z LPCSTR szString,
+    __in_z LPCWSTR sczString,
     __in BOOL fLOGUTIL_NEWLINE
     );
 
@@ -147,7 +147,7 @@ extern "C" HRESULT DAPI LogOpen(
     if (NULL != LogUtil_sczPreInitBuffer)
     {
         // Log anything that was logged before LogOpen() was called.
-        LogStringWork(LogUtil_sczPreInitBuffer, FALSE);
+        LogStringWorkRaw(LogUtil_sczPreInitBuffer);
         ReleaseNullStr(LogUtil_sczPreInitBuffer);
     }
 
@@ -288,9 +288,9 @@ extern "C" BOOL DAPI LogIsOpen()
                        string, post-timestamp string, etc.
 ********************************************************************/
 HRESULT DAPI LogSetSpecialParams(
-    __in_z LPCSTR wzSpecialBeginLine,
-    __in_z LPCSTR wzSpecialAfterTimeStamp,
-    __in_z LPCSTR wzSpecialEndLine
+    __in_z LPCWSTR wzSpecialBeginLine,
+    __in_z LPCWSTR wzSpecialAfterTimeStamp,
+    __in_z LPCWSTR wzSpecialEndLine
     )
 {
     HRESULT hr = S_OK;
@@ -302,7 +302,7 @@ HRESULT DAPI LogSetSpecialParams(
     }
     else
     {
-        hr = StrAnsiAllocConcat(&LogUtil_sczSpecialBeginLine, wzSpecialBeginLine, 0);
+        hr = StrAllocConcat(&LogUtil_sczSpecialBeginLine, wzSpecialBeginLine, 0);
         ExitOnFailure(hr, "Failed to allocate copy of special beginline string");
     }
 
@@ -313,7 +313,7 @@ HRESULT DAPI LogSetSpecialParams(
     }
     else
     {
-        hr = StrAnsiAllocConcat(&LogUtil_sczSpecialAfterTimeStamp, wzSpecialAfterTimeStamp, 0);
+        hr = StrAllocConcat(&LogUtil_sczSpecialAfterTimeStamp, wzSpecialAfterTimeStamp, 0);
         ExitOnFailure(hr, "Failed to allocate copy of special post-timestamp string");
     }
 
@@ -324,7 +324,7 @@ HRESULT DAPI LogSetSpecialParams(
     }
     else
     {
-        hr = StrAnsiAllocConcat(&LogUtil_sczSpecialEndLine, wzSpecialEndLine, 0);
+        hr = StrAllocConcat(&LogUtil_sczSpecialEndLine, wzSpecialEndLine, 0);
         ExitOnFailure(hr, "Failed to allocate copy of special endline string");
     }
 
@@ -586,14 +586,23 @@ extern "C" HRESULT DAPI LogErrorStringArgs(
     )
 {
     HRESULT hr  = S_OK;
-    LPSTR sczMessage = NULL;
+    LPWSTR sczFormat = NULL;
+    LPWSTR sczMessage = NULL;
 
-    hr = StrAnsiAllocFormattedArgs(&sczMessage, szFormat, args);
-    ExitOnFailure1(hr, "failed to format error message: \"%s\"", szFormat);
+    hr = StrAllocStringAnsi(&sczFormat, szFormat, 0, CP_ACP);
+    ExitOnFailure(hr, "Failed to convert format string to wide character string");
 
-    hr = LogLine(REPORT_ERROR, "Error 0x%x: %s", hrError, sczMessage);
+    // format the string as a unicode string - this is necessary to be able to include
+    // international characters in our output string. This doeshas the counterintuitive effect
+    // that the caller's "%s" is interpreted differently
+    // (so callers should use %hs for LPSTR and %ls for LPWSTR)
+    hr = StrAllocFormattedArgs(&sczMessage, sczFormat, args);
+    ExitOnFailure1(hr, "Failed to format error message: \"%ls\"", sczFormat);
+
+    hr = LogLine(REPORT_ERROR, "Error 0x%x: %ls", hrError, sczMessage);
 
 LExit:
+    ReleaseStr(sczFormat);
     ReleaseStr(sczMessage);
 
     return hr;
@@ -783,15 +792,15 @@ static HRESULT LogIdWork(
     )
 {
     HRESULT hr = S_OK;
-    LPSTR psz = NULL;
+    LPWSTR pwz = NULL;
     DWORD cch = 0;
 
     // get the string for the id
 #pragma prefast(push)
 #pragma prefast(disable:25028)
 #pragma prefast(disable:25068)
-    cch = ::FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
-                           static_cast<LPCVOID>(hModule), dwLogId, 0, reinterpret_cast<LPSTR>(&psz), 0, &args);
+    cch = ::FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE,
+                           static_cast<LPCVOID>(hModule), dwLogId, 0, reinterpret_cast<LPWSTR>(&pwz), 0, &args);
 #pragma prefast(pop)
 
     if (0 == cch)
@@ -799,17 +808,17 @@ static HRESULT LogIdWork(
         ExitOnLastError1(hr, "failed to log id: %d", dwLogId);
     }
 
-    if (2 <= cch && '\r' == psz[cch-2] && '\n' == psz[cch-1])
+    if (2 <= cch && L'\r' == pwz[cch-2] && L'\n' == pwz[cch-1])
     {
-        psz[cch-2] = L'\0'; // remove newline from message table
+        pwz[cch-2] = L'\0'; // remove newline from message table
     }
 
-    LogStringWork(psz, fLOGUTIL_NEWLINE);
+    LogStringWork(pwz, fLOGUTIL_NEWLINE);
 
 LExit:
-    if (psz)
+    if (pwz)
     {
-        ::LocalFree(psz);
+        ::LocalFree(pwz);
     }
 
     return hr;
@@ -825,28 +834,33 @@ static HRESULT LogStringWorkArgs(
     Assert(szFormat && *szFormat);
 
     HRESULT hr = S_OK;
-    LPSTR scz = NULL;
+    LPWSTR sczFormat = NULL;
+    LPWSTR sczMessage = NULL;
 
-    // format the string
-    hr = StrAnsiAllocFormattedArgs(&scz, szFormat, args);
-    ExitOnFailure1(hr, "Failed to format message: \"%s\"", szFormat);
+    hr = StrAllocStringAnsi(&sczFormat, szFormat, 0, CP_ACP);
+    ExitOnFailure(hr, "Failed to convert format string to wide character string");
 
-    hr = LogStringWork(scz, fLOGUTIL_NEWLINE);
-    ExitOnFailure1(hr, "Failed to write formatted string to log:%s", scz);
+    // format the string as a unicode string
+    hr = StrAllocFormattedArgs(&sczMessage, sczFormat, args);
+    ExitOnFailure1(hr, "Failed to format message: \"%ls\"", sczFormat);
+
+    hr = LogStringWork(sczMessage, fLOGUTIL_NEWLINE);
+    ExitOnFailure1(hr, "Failed to write formatted string to log:%ls", sczMessage);
 
 LExit:
-    ReleaseStr(scz);
+    ReleaseStr(sczFormat);
+    ReleaseStr(sczMessage);
 
     return hr;
 }
 
 
 static HRESULT LogStringWork(
-    __in_z LPCSTR szString,
+    __in_z LPCWSTR sczString,
     __in BOOL fLOGUTIL_NEWLINE
     )
 {
-    Assert(szString && *szString);
+    Assert(sczString && *sczString);
 
     HRESULT hr = S_OK;
     BOOL fEnteredCriticalSection = FALSE;
@@ -855,8 +869,9 @@ static HRESULT LogStringWork(
     SYSTEMTIME st = { };
     TIME_ZONE_INFORMATION tzi = { };
     DWORD dwAbsBias = 0;
-    LPSTR scz = NULL;
-    LPCSTR szLogData = NULL;
+    LPWSTR scz = NULL;
+    LPCWSTR wzLogData = NULL;
+    LPSTR sczMultiByte = NULL;
 
     // If logging is disabled, just bail.
     if (LogUtil_fDisabled)
@@ -879,23 +894,27 @@ static HRESULT LogStringWork(
         dwAbsBias = abs(tzi.Bias);
 
         // add line prefix and trailing newline
-        hr = StrAnsiAllocFormatted(&scz, "%s[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu.%03hu%c%02u:%02u]:%s %s%s", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : "",
+        hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu.%03hu%wc%02u:%02u]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
             dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, 0 >= tzi.Bias ? L'+' : L'-', dwAbsBias / 60, dwAbsBias % 60,
-            LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : "", szString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : "\r\n");
+            LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : L"", sczString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : L"\r\n");
         ExitOnFailure(hr, "Failed to format line prefix.");
     }
 
-    szLogData = scz ? scz : szString;
+    wzLogData = scz ? scz : sczString;
+
+    // Convert to UTF-8 before writing out to the log file
+    hr = StrAnsiAllocString(&sczMultiByte, wzLogData, 0, CP_UTF8);
+    ExitOnFailure(hr, "Failed to convert log string to UTF-8");
 
     if (s_vpfLogStringWorkRaw)
     {
-        hr = s_vpfLogStringWorkRaw(szLogData, s_vpvLogStringWorkRawContext);
-        ExitOnFailure1(hr, "Failed to write string to log using redirected function: %ls", szString);
+        hr = s_vpfLogStringWorkRaw(sczMultiByte, s_vpvLogStringWorkRawContext);
+        ExitOnFailure1(hr, "Failed to write string to log using redirected function: %ls", sczString);
     }
     else
     {
-        hr = LogStringWorkRaw(szLogData);
-        ExitOnFailure1(hr, "Failed to write string to log using default function: %ls", szString);
+        hr = LogStringWorkRaw(sczMultiByte);
+        ExitOnFailure1(hr, "Failed to write string to log using default function: %ls", sczString);
     }
 
 LExit:
@@ -905,6 +924,7 @@ LExit:
     }
 
     ReleaseStr(scz);
+    ReleaseStr(sczMultiByte);
 
     return hr;
 }

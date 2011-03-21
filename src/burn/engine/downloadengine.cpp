@@ -49,6 +49,7 @@ static HRESULT DownloadResource(
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
     __in_z LPCWSTR wzDestinationPath,
+    __in DWORD64 dw64AuthoredResourceLength,
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
@@ -108,6 +109,7 @@ static HRESULT SendRequest(
 extern "C" HRESULT WininetDownloadUrl(
     __in BURN_CACHE_CALLBACK* pCallback,
     __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
+    __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath
     )
 {
@@ -136,7 +138,7 @@ extern "C" HRESULT WininetDownloadUrl(
     // download.
     InitializeResume(wzDestinationPath, &sczResumePath, &hResumeFile, &dw64ResumeOffset);
 
-    hr = DownloadResource(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64Size, dw64ResumeOffset, hResumeFile, pCallback);
+    hr = DownloadResource(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64AuthoredDownloadSize, dw64Size, dw64ResumeOffset, hResumeFile, pCallback);
     ExitOnFailure1(hr, "Failed to download URL: %ls", sczUrl);
 
     // Cleanup the resume file because we successfully downloaded the whole file.
@@ -222,7 +224,11 @@ static HRESULT GetResourceMetadata(
     ExitOnFailure1(hr, "Failed to connect to URL: %ls", psczUrl);
 
     hr = InternetGetSizeByHandle(hUrl, &llLength);
-    ExitOnFailure(hr, "Failed to get size of download.");
+    if (FAILED(hr))
+    {
+        llLength = 0;
+        hr = S_OK;
+    }
 
     *pdw64ResourceSize = llLength;
 
@@ -247,6 +253,7 @@ static HRESULT DownloadResource(
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
     __in_z LPCWSTR wzDestinationPath,
+    __in DWORD64 dw64AuthoredResourceLength,
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
@@ -261,6 +268,7 @@ static HRESULT DownloadResource(
     LPWSTR sczRangeRequestHeader = NULL;
     HINTERNET hConnect = NULL;
     HINTERNET hUrl = NULL;
+    LONGLONG llLength = 0;
 
     // Ensure the directory where we will be downloading the payload exists and
     // open the file.
@@ -281,9 +289,9 @@ static HRESULT DownloadResource(
     // are not supported we'll have to start over and accept the fact that we only get one shot
     // downloading the file however big it is. Hopefully, not more than 2 GB since wininet doesn't
     // like files that big.
-    while (fRangeRequestsAccepted && (dw64ResumeOffset < dw64ResourceLength))
+    while (fRangeRequestsAccepted && (0 == dw64ResourceLength || dw64ResumeOffset < dw64ResourceLength))
     {
-        hr = AllocateRangeRequestHeader(dw64ResumeOffset, dw64ResourceLength, &sczRangeRequestHeader);
+        hr = AllocateRangeRequestHeader(dw64ResumeOffset, 0 == dw64ResourceLength ? dw64AuthoredResourceLength : dw64ResourceLength, &sczRangeRequestHeader);
         ExitOnFailure(hr, "Failed to allocate range request header.");
 
         ReleaseNullInternet(hConnect);
@@ -291,6 +299,25 @@ static HRESULT DownloadResource(
 
         hr = MakeRequest(hSession, psczUrl, L"GET", sczRangeRequestHeader, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to request URL for download: %ls", *psczUrl);
+
+        // If we didn't get the size of the resource from the initial "HEAD" request
+        // then let's try to get the size from this "GET" request.
+        if (0 == dw64ResourceLength)
+        {
+            hr = InternetGetSizeByHandle(hUrl, &llLength);
+            if (SUCCEEDED(hr))
+            {
+                dw64ResourceLength = llLength;
+            }
+            else // server didn't tell us the resource length.
+            {
+                // Fallback to the authored size of the resource. However, since we
+                // don't really know the size on the server, don't try to use
+                // range requests either.
+                dw64ResourceLength = dw64AuthoredResourceLength;
+                fRangeRequestsAccepted = FALSE;
+            }
+        }
 
         // If we just tried to do a range request and found out that it isn't supported, start over.
         if (!fRangeRequestsAccepted)

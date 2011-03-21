@@ -56,6 +56,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         private bool tidy;
         private WixVariableResolver wixVariableResolver;
 
+        // The following member variables are used to replace bind path
+        private StringCollection targetSourcePaths, updatedSourcePaths;
+        private NameValueCollection targetNamedBindPaths, updatedNamedBindPaths;
+
         /// <summary>
         /// Instantiate a new Pyro class.
         /// </summary>
@@ -75,6 +79,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
 
             this.wixVariableResolver = new WixVariableResolver();
             this.wixVariableResolver.Message += new MessageEventHandler(this.messageHandler.Display);
+
+            // initialize new bind path variables etc
+            this.targetSourcePaths = new StringCollection();
+            this.updatedSourcePaths = new StringCollection();
+            this.targetNamedBindPaths = new NameValueCollection();
+            this.updatedNamedBindPaths = new NameValueCollection();
         }
 
         /// <summary>
@@ -176,6 +186,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     }
                 }
 
+                // since the binder is now ready, let's plug dynamic bindpath into file manager
+                this.PrepareDataForFileManager();
+
                 // Load the patch
                 patch.Load(this.inputFile);
 
@@ -270,8 +283,42 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 if ('-' == arg[0] || '/' == arg[0])
                 {
                     string parameter = arg.Substring(1);
-                    
-                    if ("cc" == parameter)
+
+                    if ("bt" == parameter)
+                    {
+                        string path = CommandLine.GetDirectory(parameter, this.messageHandler, args, ++i, true);
+                        if (String.IsNullOrEmpty(path))
+                        {
+                            return;
+                        }
+                        if (-1 == path.IndexOf('='))
+                        {
+                            this.targetSourcePaths.Add(path);
+                        }
+                        else
+                        {
+                            string[] namedPair = path.Split('=');
+                            this.targetNamedBindPaths.Add(namedPair[0], namedPair[1]);
+                        }
+                    }
+                    else if ("bu" == parameter)
+                    {
+                        string path = CommandLine.GetDirectory(parameter, this.messageHandler, args, ++i, true);
+                        if (String.IsNullOrEmpty(path))
+                        {
+                            return;
+                        }
+                        if (-1 == path.IndexOf('='))
+                        {
+                            this.updatedSourcePaths.Add(path);
+                        }
+                        else
+                        {
+                            string[] namedPair = path.Split('=');
+                            this.updatedNamedBindPaths.Add(namedPair[0], namedPair[1]);
+                        }
+                    }
+                    else if ("cc" == parameter)
                     {
                         this.cabCachePath = CommandLine.GetDirectory(parameter, this.messageHandler, args, ++i);
 
@@ -486,5 +533,47 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 this.Message(this, mea);
             }
         }
-    }
+
+        /// <summary>
+        /// Proces data for File Manager
+        /// </summary>
+        /// <param name="transforms"> Array list </param>
+        /// 
+        private void PrepareDataForFileManager()
+        {
+            foreach (string name in this.targetNamedBindPaths.Keys)
+            {
+                string[] values = this.targetNamedBindPaths.GetValues(name);
+                if (null != values)
+                {
+                    foreach (string bindPath in values)
+                    {
+                        this.binder.FileManager.TargetNamedBindPaths.Add(name, bindPath);
+                    }
+                }
+            }
+
+            foreach (string name in this.updatedNamedBindPaths.Keys)
+            {
+                string[] values = this.updatedNamedBindPaths.GetValues(name);
+                if (null != values)
+                {
+                    foreach (string bindPath in values)
+                    {
+                        this.binder.FileManager.UpdatedNamedBindPaths.Add(name, bindPath);
+                    }
+                }
+            }
+
+            foreach (string bindPath in this.targetSourcePaths)
+            {
+                this.binder.FileManager.TargetSourcePaths.Add(bindPath);
+            }
+
+            foreach (string bindPath in this.updatedSourcePaths)
+            {
+                this.binder.FileManager.UpdatedSourcePaths.Add(bindPath);
+            }
+        }
+    }    
 }

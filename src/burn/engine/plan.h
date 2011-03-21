@@ -219,18 +219,7 @@ typedef struct _BURN_EXECUTE_ACTION
 
 typedef struct _BURN_CLEAN_ACTION
 {
-    BURN_CLEAN_ACTION_TYPE type;
-    union
-    {
-        struct
-        {
-            BURN_RELATED_BUNDLE* pBundle;
-        } bundle;
-        struct
-        {
-            BURN_PACKAGE* pPackage;
-        } package;
-    };
+    BURN_PACKAGE* pPackage;
 } BURN_CLEAN_ACTION;
 
 typedef struct _BURN_PLAN
@@ -292,10 +281,6 @@ HRESULT PlanCachePackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,
     __out HANDLE* phSyncpointEvent
-    );
-HRESULT PlanCleanBundle(
-    __in BURN_PLAN* pPlan,
-    __in BURN_RELATED_BUNDLE* pRelatedBundle
     );
 HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,

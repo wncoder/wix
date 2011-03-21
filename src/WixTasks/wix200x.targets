@@ -146,6 +146,10 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <IntermediateOutputPath Condition=" '$(IntermediateOutputPath)' == '' and '$(Platform)' != 'AnyCPU' ">$(BaseIntermediateOutputPath)$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <IntermediateExt Condition=" '$(IntermediateExt)' == '' ">.wixobj</IntermediateExt>
     <CleanFile Condition=" '$(CleanFile)' == '' ">$(MSBuildProjectFile).FileList.txt</CleanFile>
+    <BindContentsFilePrefix Condition=" '$(BindContentsFilePrefix)' == '' ">$(MSBuildProjectFile).BindContentsFileList</BindContentsFilePrefix>
+    <BindContentsFileExtension Condition=" '$(BindContentsFileExtension)' == '' ">.txt</BindContentsFileExtension>
+    <BindOutputsFilePrefix Condition=" '$(BindOutputsFilePrefix)' == '' ">$(MSBuildProjectFile).BindOutputsFileList</BindOutputsFilePrefix>
+    <BindOutputsFileExtension Condition=" '$(BindOutputsFileExtension)' == '' ">.txt</BindOutputsFileExtension>
   </PropertyGroup>
 
   <!--
@@ -282,6 +286,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
   <!-- Default HarvestProjects properties -->
   <PropertyGroup>
+    <!-- Project harvesting is defaulted to off until it works more consistently. -->
+    <EnableProjectHarvesting Condition=" '$(EnableProjectHarvesting)'=='' ">false</EnableProjectHarvesting>
+
     <HarvestProjectsNoLogo Condition=" '$(HarvestProjectsNoLogo)' == '' ">$(HarvestNoLogo)</HarvestProjectsNoLogo>
     <HarvestProjectsSuppressAllWarnings Condition=" '$(HarvestProjectsSuppressAllWarnings)' == '' ">$(HarvestSuppressAllWarnings)</HarvestProjectsSuppressAllWarnings>
     <HarvestProjectsSuppressSpecificWarnings Condition=" '$(HarvestProjectsSuppressSpecificWarnings)' == '' ">$(HarvestSuppressSpecificWarnings)</HarvestProjectsSuppressSpecificWarnings>
@@ -1272,6 +1279,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       Compile;
       Lib;
       Link;
+      UpdateLinkFileWrites;
       _TimeStampAfterCompileAndLink;
       AfterCompileAndLink
     </CompileAndLinkDependsOn>
@@ -1433,7 +1441,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target Name="AfterSigning" />
 
   <!--
-
   ================================================================================================
   ConvertReferences
 
@@ -1442,7 +1449,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   -->
   <Target
     Name="ConvertReferences"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') ">
+    Condition=" $(EnableProjectHarvesting) and ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') ">
 
     <CreateItem Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' " AdditionalMetadata="DirectoryIds=%(_MSBuildProjectReferenceExistent.RefTargetDir);ProjectOutputGroups=Binaries%3BSymbols%3BSources%3BContent%3BSatellites%3BDocuments;ProjectName=%(_MSBuildProjectReferenceExistent.Name);HeatOutput=$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs">
       <Output TaskParameter="Include" ItemName="HeatProject" />
@@ -1470,7 +1477,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   -->
   <Target
     Name="ConvertBundleReferences"
-    Condition=" ('$(OutputType)' == 'Bundle')">
+    Condition=" $(EnableProjectHarvesting) and ('$(OutputType)' == 'Bundle') ">
 
     <CreateItem Include="@(_MSBuildProjectReferenceExistent)" Condition=" '%(_MSBuildProjectReferenceExistent.DoNotHarvest)' == '' " AdditionalMetadata="ProjectOutputGroups=Binaries%3BSymbols%3BSources%3BContent%3BSatellites%3BDocuments;GenerateType=payloadgroup;HeatOutput=$(IntermediateOutputPath)_%(_MSBuildProjectReferenceExistent.Filename).wxs">
       <Output TaskParameter="Include" ItemName="HeatProject" />
@@ -1551,7 +1558,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     DependsOnTargets="$(HarvestProjectsDependsOn)"
     Inputs="@(_AllHeatProjects);%(_AllHeatProjects.Transforms);$(MSBuildAllProjects);$(ProjectPath)"
     Outputs="@(_AllHeatProjects -> '%(HeatOutput)')"
-    Condition=" '@(HeatProject)' != '' or '@(HarvestProject)' != '' ">
+    Condition=" $(EnableProjectHarvesting) and ('@(HeatProject)' != '' or '@(HarvestProject)' != '') ">
 
     <!--For HeatProject items supporting MSBuild 2.0-->
     <HeatProject
@@ -1647,10 +1654,10 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       DirectoryRefId="%(HarvestDirectory.DirectoryRefId)"
       KeepEmptyDirectories="%(HarvestDirectory.KeepEmptyDirectories)"
       PreprocessorVariable="%(HarvestDirectory.PreprocessorVariable)"
+      RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
       SuppressCom="%(HarvestDirectory.SuppressCom)"
       SuppressRootDirectory="%(HarvestDirectory.SuppressRootDirectory)"
       SuppressRegistry="%(HarvestDirectory.SuppressRegistry)"
-      RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
       AdditionalOptions="$(HarvestDirectoryAdditionalOptions)">
 
       <Output TaskParameter="OutputFile" ItemName="Compile" />
@@ -1743,7 +1750,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     DependsOnTargets="$(RefreshGeneratedFileDependsOn)"
     Inputs="@(_MSBuildResolvedProjectReferencePaths);@(Compile);$(ProjectPath)"
     Outputs="@(_GeneratedFiles)"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') and '@(_GeneratedFiles)' != '' ">
+    Condition=" $(EnableProjectHarvesting) and (('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module') and '@(_GeneratedFiles)' != '') ">
 
     <RefreshGeneratedFile
       GeneratedFiles="@(_GeneratedFiles)"
@@ -1771,7 +1778,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     DependsOnTargets="$(RefreshBundleGeneratedFileDependsOn)"
     Inputs="@(_MSBuildResolvedProjectReferencePaths);@(Compile);$(ProjectPath)"
     Outputs="@(_GeneratedFiles)"
-    Condition=" '$(OutputType)' == 'Bundle' and '@(_GeneratedFiles)' != '' ">
+    Condition=" $(EnableProjectHarvesting) and ('$(OutputType)' == 'Bundle' and '@(_GeneratedFiles)' != '') ">
 
     <RefreshBundleGeneratedFile
       GeneratedFiles="@(_GeneratedFiles)"
@@ -1877,8 +1884,13 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       VerboseOutput="$(CompilerVerboseOutput)">
     </Candle>
 
+    <!-- These will be still be set if the Compile target is up to date. -->
     <CreateItem Include="@(_CompileWithObjectPath -> '%(ObjectPath)%(Filename)$(IntermediateExt)')">
       <Output TaskParameter="Include" ItemName="CompileObjOutput" />
+    </CreateItem>
+
+    <CreateItem Include="@(CompileObjOutput)">
+      <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
   </Target>
 
@@ -1905,7 +1917,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target
     Name="Inscribe"
     DependsOnTargets="$(InscribeDependsOn)"
-    Condition=" '@(Inscribe)' != '' and '$(OutputCabList)' != ''">
+    Condition=" '@(Inscribe)' != '' ">
 
     <Insignia
       DatabaseFiles="@(Inscribe)"
@@ -2014,7 +2026,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     
   ================================================================================================
   -->
-
   <Target 
     Name="AssignCultures"
     Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
@@ -2058,6 +2069,36 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
   <!--
   ================================================================================================
+  ReadPreviousBindInputsAndOuputs
+
+    Reads a previous build's Bind contents and outputs file into @(_BindInputs) and @(_BindOutputs)
+    respectively.
+
+    [IN]
+
+    [OUT]
+    @(_BindInputs) - the content files required to bind (i.e. the Binary/@SourceFile and File/@Source files).
+    @(_BindOutputs) - the previously built .msi, .msm, .pcp, .exe .wixpdb, .cabs, etc.
+  ================================================================================================
+  -->
+  <Target
+    Name="ReadPreviousBindInputsAndOuputs"
+    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
+
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
+      <Output TaskParameter="Lines" ItemName="_BindInputs" />
+    </ReadLinesFromFile>
+
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)">
+      <Output TaskParameter="Lines" ItemName="_BindOutputs" />
+    </ReadLinesFromFile>
+
+    <Message Importance="low" Text="Previous bind inputs: @(_BindInputs)" />
+    <Message Importance="low" Text="Previous bind outputs: @(_BindOutputs)" />
+  </Target>
+
+  <!--
+  ================================================================================================
   Link
 
     Links the .wixobj, .wxl, .wixlib, wix extensions into an .msi or .msm file using light.exe,
@@ -2081,6 +2122,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       PrepareForBuild;
       ResolveReferences;
       AssignCultures;
+      ReadPreviousBindInputsAndOuputs;
     </LinkDependsOn>
   </PropertyGroup>
   
@@ -2092,8 +2134,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
             @(_ResolvedProjectReferencePaths);
             @(_ResolvedWixLibraryPaths);
             @(_ResolvedWixExtensionPaths);
-            $(MSBuildAllProjects)"
-    Outputs="$(TargetDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetExt)"
+            $(MSBuildAllProjects);
+            @(_BindInputs)"
+    Outputs="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);@(_BindOutputs)"
     DependsOnTargets="$(LinkDependsOn)"
     Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
@@ -2111,6 +2154,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       BackwardsCompatibleGuidGeneration="$(BackwardsCompatibleGuidGeneration)" 
       BindInputPaths="@(LinkerBindInputPaths)"
       BindFiles="$(LinkerBindFiles)"
+      BindContentsFile="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)"
+      BindOutputsFile="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)"
       CabinetCachePath="$(CabinetCachePath)"
       CabinetCreationThreadCount="$(CabinetCreationThreadCount)"
       Cultures="%(CultureGroup.Identity)"
@@ -2155,22 +2200,40 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       UnreferencedSymbolsFile="$(UnreferencedSymbolsFile)"
       VerboseOutput="$(LinkerVerboseOutput)"
       WixVariables="$(WixVariables)" />
+  </Target>
 
-    <GetCabList Database="$(TargetDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetExt)"
-        Condition="('$(OutputType)' == 'Package' or '$(OutputType)' == 'Module') and '$(OutputAsXml)' != 'true' " >
-      <Output TaskParameter="CabList" PropertyName="OutputCabs" />
-      <Output TaskParameter="CabList" ItemName="FileWrites" />
-    </GetCabList>
+  <!--
+  ================================================================================================
+  UpdateLinkFileWrites
 
-    <GetLooseFileList Database="$(TargetDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetExt)"
-        Condition="('$(OutputType)' == 'Package' or '$(OutputType)' == 'Module') and '$(OutputAsXml)' != 'true' " >
-      <Output TaskParameter="LooseFileList" ItemName="FileWrites" />
-    </GetLooseFileList>
+    Reads the bind outputs file(s) output generated during Link to correctly set the @(FileWrites)
+    item. Most targets have it easy because they can do a static mapping from inputs to the outputs.
+    However, the Link target outputs are determined after a rather complex calculation we call
+    linking and binding!
 
-    <CreateItem Include="$(OutputCabs)" >
-      <Output TaskParameter="Include" ItemName="OutputCabList" />
+    This is an "after target" of Link to ensure it always runs, even if Link was up to date. It
+    reads the outputs file generated during the Link target.
+
+    [IN]
+    Path to bind outputs file(s).
+
+    [OUT]
+    @(FileWrites) updated with outputs from bind.
+  ================================================================================================
+  -->
+  <Target
+    Name="UpdateLinkFileWrites"
+    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
+
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)">
+      <Output TaskParameter="Lines" ItemName="FileWrites"/>
+    </ReadLinesFromFile>
+
+    <CreateItem Include="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
+      <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
-   
+
+    <Message Importance="low" Text="Build files after link: @(FileWrites)" />
   </Target>
 
   <!--
@@ -2196,7 +2259,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Name="IncrementalClean"
     DependsOnTargets="_CleanGetCurrentAndPriorFileWrites">
 
-    <!-- Subtract list of files produced in prior builds from list of files produced in this build. -->
+    <!-- Subtract list of files produced in this build from list of files produced in prior builds. -->
     <CreateItem Include="@(_CleanPriorFileWrites)" Exclude="@(_CleanCurrentFileWrites)">
       <Output TaskParameter="Include" ItemName="_CleanOrphanFileWrites" />
     </CreateItem>
@@ -2244,14 +2307,13 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   ==================================================================================================
   _CleanGetCurrentAndPriorFileWrites
 
-    Get the list of files built in the current build and in prior builds.
+    Get the list of files built in a prior build and the current build.
   ==================================================================================================
   -->
   <Target
-    Name="_CleanGetCurrentAndPriorFileWrites"
-    DependsOnTargets="_CheckForCompileAndLinkOutputs">
+    Name="_CleanGetCurrentAndPriorFileWrites">
 
-    <!-- Read the list of files produced by a prior builds from disk. -->
+    <!-- Read the list of files produced by a prior build from disk. -->
     <ReadLinesFromFile File="$(IntermediateOutputPath)$(CleanFile)">
       <Output TaskParameter="Lines" ItemName="_CleanPriorFileWrites" />
     </ReadLinesFromFile>
@@ -2271,32 +2333,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="Filtered" ItemName="_CleanCurrentFileWrites" />
     </RemoveDuplicates>
 
-  </Target>
-
-  <!--
-  ==================================================================================================
-  _CheckForCompileAndLinkOutputs
-
-    Checks each file output from the main CompileAndLink target to make sure they really exist.
-    If they do, then record them in the clean cache.
-  ==================================================================================================
-  -->
-  <Target Name="_CheckForCompileAndLinkOutputs">
-
-    <!--Record the main compile outputs -->
-    <CreateItem Include="@(CompileObjOutput)" Condition="Exists('%(FullPath)')">
-      <Output TaskParameter="Include" ItemName="FileWrites" />
-    </CreateItem>
-
-    <!-- Record the link ouput(s) -->
-    <!-- Stuff into an itemgroup -->
-    <CreateItem Include="$(TargetPath);$(TargetPdbPath)">
-      <Output TaskParameter="Include" ItemName="_TempTargetOutputs" />
-    </CreateItem>
-
-    <CreateItem Include="@(_TempTargetOutputs)" Condition="Exists('%(FullPath)')">
-      <Output TaskParameter="Include" ItemName="FileWrites" />
-    </CreateItem>
   </Target>
 
   <!--
@@ -2550,8 +2586,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <TargetPath>$(TargetFileName)</TargetPath>
     </BuiltProjectOutputGroupKeyOutput>
   </ItemGroup>
-  
-  
 
   <!--
   ==================================================================================================
@@ -2580,11 +2614,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="Include" ItemName="BuiltProjectOutputGroupOutput" />
     </CreateItem>
 
-    <GetCabList Database="@(BuiltProjectOutputGroupKeyOutput)" Condition="('$(OutputType)' == 'Package' or '$(OutputType)' == 'Module')">
+    <GetCabList Database="@(BuiltProjectOutputGroupKeyOutput)" Condition=" '$(OutputType)' == 'Package' ">
       <Output TaskParameter="CabList" ItemName="BuiltProjectOutputGroupOutput" />
     </GetCabList>
 
-    <GetLooseFileList Database="@(BuiltProjectOutputGroupKeyOutput)" Condition="('$(OutputType)' == 'Package' or '$(OutputType)' == 'Module')" >
+    <GetLooseFileList Database="@(BuiltProjectOutputGroupKeyOutput)" Condition=" '$(OutputType)' == 'Package' ">
       <Output TaskParameter="LooseFileList" ItemName="BuiltProjectOutputGroupOutput" />
     </GetLooseFileList>
   </Target>

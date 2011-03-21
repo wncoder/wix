@@ -18,12 +18,12 @@
 
 #include "precomp.h"
 
-static HRESULT VerifyPayloadSignature(
+static HRESULT VerifyPayloadHash(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
     );
-static HRESULT VerifyPayloadHash(
+static HRESULT VerifyPayloadWithCatalog(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
@@ -91,7 +91,7 @@ extern "C" HRESULT CacheGetCompletedPath(
     LPWSTR sczLocalAppData = NULL;
 
     hr = PathGetKnownFolder(fPerMachine ? CSIDL_COMMON_APPDATA : CSIDL_LOCAL_APPDATA, &sczLocalAppData);
-    ExitOnFailure1(hr, "Failed to find local %s appdata directory.", fPerMachine ? "per-machine" : "per-user");
+    ExitOnFailure1(hr, "Failed to find local %hs appdata directory.", fPerMachine ? "per-machine" : "per-user");
 
     hr = StrAllocFormatted(psczCompletedPath, L"%lsPackage Cache\\%ls", sczLocalAppData, wzCacheId);
     ExitOnFailure(hr, "Failed to format cache path.");
@@ -247,11 +247,16 @@ extern "C" HRESULT CachePayload(
     {
         ExitWithLastError1(hr, "Failed to open payload in working path: %ls", wzUnverifiedPayloadPath);
     }
-
+    
     // If the payload has a certificate root public key identifier provided, verify the certificate.
     if (pPayload->pbCertificateRootPublicKeyIdentifier)
     {
-        hr = VerifyPayloadSignature(pPayload, wzUnverifiedPayloadPath, hFile);
+        hr = CacheVerifyPayloadSignature(pPayload, wzUnverifiedPayloadPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify payload signature: %ls", sczCachedPath);
+    }
+    else if (pPayload->pCatalog) // If catalog files are specified, attempt to verify the file with a catalog file
+    {
+        hr = VerifyPayloadWithCatalog(pPayload, wzUnverifiedPayloadPath, hFile);
         ExitOnFailure1(hr, "Failed to verify payload signature: %ls", sczCachedPath);
     }
     else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
@@ -366,7 +371,7 @@ LExit:
 }
 
 
-static HRESULT VerifyPayloadSignature(
+extern "C" HRESULT CacheVerifyPayloadSignature(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
@@ -399,8 +404,9 @@ static HRESULT VerifyPayloadSignature(
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
     wtd.pFile = &wfi;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
-    wtd.dwProvFlags = WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT | WTD_CACHE_ONLY_URL_RETRIEVAL | WTD_SAFER_FLAG;
+    wtd.dwProvFlags = WTD_REVOCATION_CHECK_NONE;
     wtd.dwUIChoice = WTD_UI_NONE;
+    wtd.fdwRevocationChecks = WTD_REVOKE_NONE;
 
     er = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &guidAuthenticode, &wtd);
     hr = HRESULT_FROM_WIN32(er);
@@ -496,6 +502,101 @@ static HRESULT VerifyPayloadHash(
     }
 
 LExit:
+    return hr;
+}
+
+static HRESULT VerifyPayloadWithCatalog(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in HANDLE hFile
+    )
+{
+    HRESULT hr = S_FALSE;
+    DWORD dwError = ERROR_SUCCESS;
+    WINTRUST_DATA WinTrustData = { };
+    WINTRUST_CATALOG_INFO WinTrustCatalogInfo = { };
+    GUID gSubSystemDriver = WINTRUST_ACTION_GENERIC_VERIFY_V2;
+    LPWSTR sczLowerCaseFile = NULL;
+    LPWSTR pCurrent = NULL;
+    LPWSTR sczName = NULL;
+    DWORD dwHashSize = 0;
+    DWORD dwTagSize;
+    DWORD error;
+    LPBYTE pbHash = NULL;
+
+    // Get lower case file name.  Older operating systems need a lower case file
+    // to match in the catalog
+    hr = StrAllocString(&sczLowerCaseFile, wzUnverifiedPayloadPath, 0);
+    ExitOnFailure(hr, "Failed to allocate memory");
+    
+    // Go through each character doing the lower case of each letter
+    pCurrent = sczLowerCaseFile;
+    while ('\0' != *pCurrent)
+    {
+        *pCurrent = (WCHAR)_tolower(*pCurrent);
+        pCurrent++;
+    }
+
+    // Get file hash
+    CryptCATAdminCalcHashFromFileHandle(hFile, &dwHashSize, pbHash, 0);
+    error = GetLastError();
+    if (ERROR_INSUFFICIENT_BUFFER == error)
+    {
+        pbHash = (LPBYTE)MemAlloc(dwHashSize, TRUE);
+        if (!CryptCATAdminCalcHashFromFileHandle(hFile, &dwHashSize, pbHash, 0))
+        {
+            hr = HRESULT_FROM_WIN32(GetLastError());
+            ExitOnFailure(hr, "Failed to get file hash.");
+        }
+    }
+    else
+    {
+        hr = HRESULT_FROM_WIN32(error);
+        ExitOnFailure(hr, "Failed to get file hash.");
+    }
+
+    // Make the hash into a string.  This is the member tag for the catalog
+    dwTagSize = (dwHashSize * 2) + 1;
+    hr = StrAlloc(&sczName, dwTagSize);
+    ExitOnFailure(hr, "Failed to allocate string.");
+    hr = StrHexEncode(pbHash, dwHashSize, sczName, dwTagSize);
+    ExitOnFailure(hr, "Failed to encode file hash.");
+
+    // Set up the WinVerifyTrust structures
+    WinTrustData.cbStruct = sizeof(WINTRUST_DATA);
+    WinTrustData.dwUIChoice = WTD_UI_NONE;
+    WinTrustData.fdwRevocationChecks = WTD_REVOKE_NONE;
+    WinTrustData.dwUnionChoice = WTD_CHOICE_CATALOG;
+    WinTrustData.dwStateAction = WTD_STATEACTION_VERIFY;
+    WinTrustData.dwProvFlags = WTD_REVOCATION_CHECK_NONE;
+    WinTrustData.pCatalog = &WinTrustCatalogInfo;
+
+    WinTrustCatalogInfo.cbStruct = sizeof(WINTRUST_CATALOG_INFO);
+    WinTrustCatalogInfo.pbCalculatedFileHash = pbHash;
+    WinTrustCatalogInfo.cbCalculatedFileHash = dwHashSize;
+    WinTrustCatalogInfo.hMemberFile = hFile;
+    WinTrustCatalogInfo.pcwszMemberTag = sczName;
+    WinTrustCatalogInfo.pcwszMemberFilePath = sczLowerCaseFile;
+    WinTrustCatalogInfo.pcwszCatalogFilePath = pPayload->pCatalog->sczLocalFilePath;
+    hr = WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+
+    // WinVerifyTrust returns 0 for success, a few different Win32 error codes if it can't
+    // find the provider, and any other error code is provider specific, so may not
+    // be an actual Win32 error code
+    hr = HRESULT_FROM_WIN32(hr);
+    ExitOnFailure1(hr, "Could not verify file %ls.", wzUnverifiedPayloadPath);
+
+    // Need to close the WinVerifyTrust action
+    WinTrustData.dwStateAction = WTD_STATEACTION_CLOSE;
+    hr = WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+    hr = HRESULT_FROM_WIN32(hr);
+    ExitOnFailure(hr, "Could not close verify handle.");
+
+LExit:
+    ReleaseStr(sczLowerCaseFile);
+    ReleaseStr(sczName);
+    ReleaseMem(pbHash);
+
     return hr;
 }
 

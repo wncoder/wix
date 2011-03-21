@@ -154,6 +154,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 this.unparsedArgs.CopyTo(unparsedArgsArray, 0);
                 StringCollection remainingArgs = this.binder.ParseCommandLine(unparsedArgsArray, this.messageHandler);
 
+                // Loop through the extensions to give them a shot at processing the remaining command-line args.
+                foreach (WixExtension wixExtension in loadedExtensionList)
+                {
+                    if (0 == remainingArgs.Count)
+                    {
+                        break;
+                    }
+
+                    remainingArgs = wixExtension.ParseCommandLine(remainingArgs, this.messageHandler);
+                }
+
                 this.ParseCommandLinePassTwo(remainingArgs);
 
                 // exit if there was an error parsing the command line (otherwise the logo appears after error messages)

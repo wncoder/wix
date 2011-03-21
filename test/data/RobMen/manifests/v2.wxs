@@ -1,10 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-<Bundle Version="0.2.0.0" UpgradeCode="{1be14da3-e26a-4c49-8d39-7b1017ffa071}">
+<Bundle Name="Bundle Test v2" Version="0.2.0.0">
    <UX SourceFile="stdux.dll">
        <Payload SourceFile="en-us.wxl" />
        <Payload SourceFile="thm.xml" />
    </UX>
+
+   <RelatedBundle Id="{1be14da3-e26a-4c49-8d39-7b1017ffa071}" Action="Upgrade"/>
 
    <Chain>
       <MsiPackage Id='Package1v2' Vital='yes' SourceFile='Package1v2.msi' />

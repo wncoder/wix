@@ -66,10 +66,6 @@ void ApplyClean(
     __in BURN_PLAN* pPlan,
     __in HANDLE hPipe
     );
-HRESULT ApplyCleanBundle(
-    __in BOOL fPerMachine,
-    __in BURN_RELATED_BUNDLE* pRelatedBundle
-    );
 
 
 #ifdef __cplusplus

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <?include $(var.caerrwxi)?>
+    <Fragment>
+        <Binary Id="WixDepCA" SourceFile="$(var.wixdepcadll)"/>
+    </Fragment>
+    <Fragment>
+        <CustomAction Id="WixDependencyCheck" BinaryKey="WixDepCA" DllEntry="WixDependencyCheck" Execute="immediate" Return="check" SuppressModularization="yes"/>
+        <InstallExecuteSequence>
+            <Custom Action="WixDependencyCheck" After="InstallValidate" Overridable="yes"/>
+        </InstallExecuteSequence>
+        <UIRef Id="WixDependencyErrors"/>
+        <PropertyRef Id="DISABLEDEPENDENCYCHECK"/>
+        <PropertyRef Id="IGNOREDEPENDENCIES"/>
+    </Fragment>
+    <Fragment>
+        <UI Id="WixDependencyErrors">
+            <Error Id="$(var.msierrDependencyMissingDependencies)">!(loc.msierrDependencyMissingDependencies)</Error>
+            <Error Id="$(var.msierrDependencyHasDependents)">!(loc.msierrDependencyHasDependents)</Error>
+        </UI>
+    </Fragment>
+    <Fragment>
+        <Property Id="DISABLEDEPENDENCYCHECK" Secure="yes" SuppressModularization="yes"/>
+    </Fragment>
+    <Fragment>
+        <Property Id="IGNOREDEPENDENCIES" Secure="yes" SuppressModularization="yes"/>
+    </Fragment>
+</Wix>

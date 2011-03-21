@@ -25,6 +25,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Options for building the cabinet.
@@ -48,28 +49,61 @@ namespace Microsoft.Tools.WindowsInstallerXml
     }
 
     /// <summary>
+    /// Bind stage of a file.. The reason we need this is to change the ResolveFile behavior based on if
+    /// dynamic bindpath plugin is desirable. We cannot change the signature of ResolveFile since it might
+    /// break existing implementers which derived from BinderFileManager
+    /// </summary>
+    public enum BindStage
+    {
+        /// <summary>
+        /// Normal binding
+        /// </summary>
+        Normal,
+
+        /// <summary>
+        /// Bind the file path of the target build file
+        /// </summary>
+        Target,
+
+        /// <summary>
+        /// Bind the file path of the updated build file
+        /// </summary>
+        Updated,
+    }
+
+    /// <summary>
     /// Base class for creating a binder file manager.
     /// </summary>
     public class BinderFileManager
     {
-        private StringCollection bindPaths;
-        private NameValueCollection namedBindPaths;
         private string cabCachePath;
         private Output output;
         private bool reuseCabinets;
-        private StringCollection sourcePaths;
         private SubStorage activeSubstorage;
         private bool deltaBinaryPatch;
         private string tempFilesLocation;
+        private Dictionary<BindStage, StringCollection> sourcePaths;
+        private Dictionary<BindStage, StringCollection> bindPaths;
+        private Dictionary<BindStage, NameValueCollection> namedBindPaths;
 
         /// <summary>
         /// Instantiate a new BinderFileManager.
         /// </summary>
         public BinderFileManager()
         {
-            this.bindPaths = new StringCollection();
-            this.sourcePaths = new StringCollection();
-            this.namedBindPaths = new NameValueCollection();
+            this.sourcePaths = new Dictionary<BindStage, StringCollection>();
+            this.bindPaths = new Dictionary<BindStage, StringCollection>();
+            this.namedBindPaths = new Dictionary<BindStage, NameValueCollection>();
+
+            this.sourcePaths.Add(BindStage.Normal, new StringCollection());
+            this.sourcePaths.Add(BindStage.Target, new StringCollection());
+            this.sourcePaths.Add(BindStage.Updated, new StringCollection());
+
+            this.bindPaths.Add(BindStage.Normal, new StringCollection());
+
+            this.namedBindPaths.Add(BindStage.Normal, new NameValueCollection());
+            this.namedBindPaths.Add(BindStage.Target, new NameValueCollection());
+            this.namedBindPaths.Add(BindStage.Updated, new NameValueCollection());
         }
 
         /// <summary>
@@ -78,7 +112,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>The bind paths to locate files.</value>
         public StringCollection BindPaths
         {
-            get { return this.bindPaths; }
+            get { return this.bindPaths[BindStage.Normal]; }
         }
 
         /// <summary>
@@ -87,7 +121,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>The named bind paths to locate files.</value>
         public NameValueCollection NamedBindPaths
         {
-            get { return this.namedBindPaths; }
+            get { return this.namedBindPaths[BindStage.Normal]; }
         }
 
         /// <summary>
@@ -126,7 +160,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <value>The collection of all source paths to intermediate files.</value>
         public StringCollection SourcePaths
         {
-            get { return this.sourcePaths; }
+            get { return this.sourcePaths[BindStage.Normal]; }
         }
 
         /// <summary>
@@ -157,6 +191,60 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             get { return this.tempFilesLocation; }
             set { this.tempFilesLocation = value; }
+        }
+
+        /// <summary>
+        /// Gets the collection of paths to locate files during ResolveFile when BindStage is Target
+        /// </summary>
+        /// <value>The named bind paths to locate files.</value>
+        public StringCollection TargetSourcePaths
+        {
+            get { return this.sourcePaths[BindStage.Target]; }
+        }
+
+        /// <summary>
+        /// Gets the collection of paths to locate files during ResolveFile when BindStage is Updated
+        /// </summary>
+        /// <value>The named bind paths to locate files.</value>
+        public StringCollection UpdatedSourcePaths
+        {
+            get { return this.sourcePaths[BindStage.Updated]; }
+        }
+
+        /// <summary>
+        /// Gets the named bind paths to locate files during ResolveFile when the BindStage is Target
+        /// </summary>
+        /// <value>The named bind paths to locate files.</value>
+        public NameValueCollection TargetNamedBindPaths
+        {
+            get { return this.namedBindPaths[BindStage.Target]; }
+        }
+
+        /// <summary>
+        /// Gets the named bind paths to locate files during ResolveFile when the BindStage is Updated
+        /// </summary>
+        /// <value>The named bind paths to locate files.</value>
+        public NameValueCollection UpdatedNamedBindPaths
+        {
+            get { return this.namedBindPaths[BindStage.Updated]; }
+        }
+
+        /// <summary>
+        /// Gets the property if re-basing target is true or false
+        /// </summary>
+        /// <value>It returns true if target bind path is to be replaced, otherwise false.</value>
+        public bool ReBaseTarget
+        {
+            get { return (0 != this.namedBindPaths[BindStage.Target].Count || 0 != this.sourcePaths[BindStage.Target].Count); }
+        }
+
+        /// <summary>
+        /// Gets the property if re-basing updated build is true or false
+        /// </summary>
+        /// <value>It returns true if updated bind path is to be replaced, otherwise false.</value>
+        public bool ReBaseUpdated
+        {
+            get { return (0 != this.namedBindPaths[BindStage.Updated].Count || 0 != this.sourcePaths[BindStage.Updated].Count); }
         }
 
         /// <summary>
@@ -232,19 +320,49 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="type">Optional type of source file being resolved.</param>
         /// <param name="sourceLineNumbers">Optional source line of source file being resolved.</param>
         /// <returns>Should return a valid path for the stream to be imported.</returns>
-        public virtual string ResolveFile(string source, string type, SourceLineNumberCollection sourceLineNumbers)
+        public virtual string ResolveFile(string source, string type, SourceLineNumberCollection sourceLineNumber)
         {
+            return ResolveFile(source);
+        }
+
+        /// <summary>
+        /// Resolves the source path of a file.
+        /// </summary>
+        /// <param name="source">Original source value.</param>
+        /// <param name="type">Optional type of source file being resolved.</param>
+        /// <param name="sourceLineNumbers">Optional source line of source file being resolved.</param>
+        /// <param name="bindStage">The binding stage used to determine what collection of bind paths will be used</param>
+        /// <returns>Should return a valid path for the stream to be imported.</returns>
+        public virtual string ResolveFile(string source, string type, SourceLineNumberCollection sourceLineNumbers, BindStage bindStage)
+        {
+            // the following new local variables are used for bind path and protect the changes to object field.
+            StringCollection currentBindPaths = null;
+            NameValueCollection currentNamedBindPaths = null;
+            StringCollection currentSourcePaths = null;
+
             if (String.IsNullOrEmpty(source))
             {
                 throw new ArgumentNullException("source");
             }
 
             // Call the original override function first. If it returns an answer then return that,
-            // otherwise do this code with better error messages.
-            string filePath = this.ResolveFile(source);
+            // otherwise using the default resolving logic
+            string filePath = this.ResolveFile(source, type, sourceLineNumbers);
             if (!String.IsNullOrEmpty(filePath))
             {
                 return filePath;
+            }
+
+            // Assign the correct bind path to file manager
+            currentSourcePaths = this.sourcePaths[bindStage];
+            currentNamedBindPaths = this.namedBindPaths[bindStage];
+            if (BindStage.Target != bindStage && BindStage.Updated != bindStage)
+            {
+                currentBindPaths = this.bindPaths[bindStage];
+            }
+            else
+            {
+                currentBindPaths = this.sourcePaths[bindStage];
             }
 
             // If the path is rooted, it better exist or we're not going to find it.
@@ -263,7 +381,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     int bindpathSignatureLength = bindPathOpenString.Length;
                     string name = source.Substring(bindpathSignatureLength, source.IndexOf(')') - bindpathSignatureLength);
-                    string[] values = this.namedBindPaths.GetValues(name);
+                    string[] values = currentNamedBindPaths.GetValues(name);
 
                     if (null != values)
                     {
@@ -286,7 +404,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else if (source.StartsWith("SourceDir\\", StringComparison.Ordinal) || source.StartsWith("SourceDir/", StringComparison.Ordinal))
                 {
-                    foreach (string bindPath in this.bindPaths)
+                    foreach (string bindPath in currentBindPaths)
                     {
                         filePath = Path.Combine(bindPath, source.Substring(10));
                         if (BinderFileManager.CheckFileExists(filePath))
@@ -300,7 +418,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     return source;
                 }
 
-                foreach (string path in this.sourcePaths)
+                foreach (string path in currentSourcePaths)
                 {
                     filePath = Path.Combine(path, source);
                     if (BinderFileManager.CheckFileExists(filePath))

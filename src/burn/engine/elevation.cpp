@@ -143,6 +143,7 @@ static int MsiExecuteMessageHandler(
     __in_opt LPVOID pvContext
     );
 static HRESULT OnLaunchElevatedEmbeddedChild(
+    __in BURN_REGISTRATION* pRegistration,
     __in BURN_PACKAGES* pPackages,
     __in BYTE* pbData,
     __in DWORD cbData,
@@ -154,13 +155,13 @@ static HRESULT LaunchEmbeddedElevatedProcess(
     __in_z LPCWSTR wzPipeToken,
     __out HANDLE* phProcess
     );
-static HRESULT OnCleanBundle(
-    __in BURN_REGISTRATION* pRegistration,
+static HRESULT OnCleanPackage(
+    __in BURN_PACKAGES* pPackages,
     __in BYTE* pbData,
     __in DWORD cbData
     );
-static HRESULT OnCleanPackage(
-    __in BURN_PACKAGES* pPackages,
+static HRESULT OnDetectRelatedBundles(
+    __in BURN_REGISTRATION *pRegistration,
     __in BYTE* pbData,
     __in DWORD cbData
     );
@@ -291,6 +292,27 @@ extern "C" HRESULT ElevationSessionEnd(
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_END, pbData, cbData, NULL, NULL, &dwResult);
     ExitOnFailure(hr, "Failed to send message to per-machine process.");
+
+    hr = (HRESULT)dwResult;
+
+LExit:
+    ReleaseBuffer(pbData);
+
+    return hr;
+}
+
+HRESULT ElevationDetectRelatedBundles(
+    __in HANDLE hPipe
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+    DWORD dwResult = 0;
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES, pbData, cbData, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES message to per-machine process.");
 
     hr = (HRESULT)dwResult;
 
@@ -620,38 +642,6 @@ LExit:
 }
 
 /*******************************************************************
- ElevationCleanBundle - 
-
-*******************************************************************/
-extern "C" HRESULT ElevationCleanBundle(
-    __in HANDLE hPipe,
-    __in BURN_CLEAN_ACTION* pCleanAction
-    )
-{
-    Assert(BURN_CLEAN_ACTION_TYPE_BUNDLE == pCleanAction->type);
-
-    HRESULT hr = S_OK;
-    BYTE* pbData = NULL;
-    SIZE_T cbData = 0;
-    DWORD dwResult = 0;
-
-    // serialize message data
-    hr = BuffWriteString(&pbData, &cbData, pCleanAction->bundle.pBundle->sczId);
-    ExitOnFailure(hr, "Failed to write clean bundle id to message buffer.");
-
-    // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_CLEAN_BUNDLE, pbData, cbData, NULL, NULL, &dwResult);
-    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_CLEAN_BUNDLE message to per-machine process.");
-
-    hr = (HRESULT)dwResult;
-
-LExit:
-    ReleaseBuffer(pbData);
-
-    return hr;
-}
-
-/*******************************************************************
  ElevationCleanPackage - 
 
 *******************************************************************/
@@ -867,6 +857,10 @@ static HRESULT ProcessElevatedChildMessage(
         hrResult = OnSessionEnd(pContext->pRegistration, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
+    case BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES:
+        hrResult = OnDetectRelatedBundles(pContext->pRegistration, (BYTE*)pMsg->pvData, pMsg->cbData);
+        break;
+
     case BURN_ELEVATION_MESSAGE_TYPE_SAVE_STATE:
         hrResult = OnSaveState(pContext->pRegistration, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
@@ -892,11 +886,7 @@ static HRESULT ProcessElevatedChildMessage(
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD:
-        hrResult = OnLaunchElevatedEmbeddedChild(pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData, &dwPid);
-        break;
-
-    case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_BUNDLE:
-        hrResult = OnCleanBundle(pContext->pRegistration, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnLaunchElevatedEmbeddedChild(pContext->pRegistration, pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData, &dwPid);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE:
@@ -1076,6 +1066,21 @@ static HRESULT OnSessionEnd(
     // suspend session in per-machine process
     hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)fRollback, TRUE, NULL);
     ExitOnFailure(hr, "Failed to suspend registration session.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT OnDetectRelatedBundles(
+    __in BURN_REGISTRATION *pRegistration,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = RegistrationDetectRelatedBundles(BURN_MODE_ELEVATED, NULL, pRegistration, NULL);
+    ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
 
 LExit:
     return hr;
@@ -1516,6 +1521,7 @@ LExit:
 }
 
 static HRESULT OnLaunchElevatedEmbeddedChild(
+    __in BURN_REGISTRATION* pRegistration,
     __in BURN_PACKAGES* pPackages,
     __in BYTE* pbData,
     __in DWORD cbData,
@@ -1541,6 +1547,11 @@ static HRESULT OnLaunchElevatedEmbeddedChild(
     ExitOnFailure(hr, "Failed to read pipe token.");
 
     hr = PackageFindById(pPackages, sczPackage, &pPackage);
+    if (E_NOTFOUND == hr)
+    {
+        // If it isn't in our manifest, fallback to supporting related bundles found in ARP
+        hr = PackageFindRelatedById(pRegistration, sczPackage, &pPackage);
+    }
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // Create the embedded elevated process.
@@ -1602,35 +1613,6 @@ LExit:
     ReleaseStr(sczExecutablePath);
     ReleaseStr(sczCachedDirectory);
 
-    return hr;
-}
-
-static HRESULT OnCleanBundle(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BYTE* pbData,
-    __in DWORD cbData
-    )
-{
-    HRESULT hr = S_OK;
-    SIZE_T iData = 0;
-    LPWSTR sczBundleId = NULL;
-    BURN_RELATED_BUNDLE* pRelatedBundle = NULL;
-
-    // deserialize message data
-    hr = BuffReadString(pbData, cbData, &iData, &sczBundleId);
-    ExitOnFailure(hr, "Failed to read bundle id.");
-
-    hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId);
-    ExitOnFailure1(hr, "Failed to load registration for bundle: %ls", sczBundleId);
-
-    pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles - 1;
-
-    // Remove the bundle from the cache.
-    hr = ApplyCleanBundle(TRUE, pRelatedBundle);
-    ExitOnFailure1(hr, "Failed to clean related bundle: %ls", sczBundleId);
-
-LExit:
-    ReleaseStr(sczBundleId);
     return hr;
 }
 

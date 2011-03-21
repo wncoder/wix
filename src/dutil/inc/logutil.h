@@ -77,9 +77,9 @@ void DAPI LogUninitialize(
 BOOL DAPI LogIsOpen();
 
 HRESULT DAPI LogSetSpecialParams(
-    __in_z LPCSTR wzSpecialBeginLine,
-    __in_z LPCSTR wzSpecialAfterTimeStamp,
-    __in_z LPCSTR wzSpecialEndLine
+    __in_z LPCWSTR wzSpecialBeginLine,
+    __in_z LPCWSTR wzSpecialAfterTimeStamp,
+    __in_z LPCWSTR wzSpecialEndLine
     );
 
 REPORT_LEVEL DAPI LogSetLevel(

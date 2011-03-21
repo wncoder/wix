@@ -24,6 +24,10 @@ extern "C" {
 #endif
 
 
+enum BURN_MODE;
+struct _BURN_LOGGING;
+typedef _BURN_LOGGING BURN_LOGGING;
+
 // constants
 
 enum BURN_RESUME_MODE
@@ -35,15 +39,23 @@ enum BURN_RESUME_MODE
     BURN_RESUME_MODE_REBOOT_PENDING,
 };
 
+enum BURN_RELATION_TYPE
+{
+    BURN_RELATION_NONE,
+    BURN_RELATION_DETECT,
+    BURN_RELATION_UPGRADE,
+    BURN_RELATION_ADDON,
+};
 
 // structs
 
 typedef struct _BURN_RELATED_BUNDLE
 {
-    BOOL fPerMachine;
-    LPWSTR sczId;
+    BURN_RELATION_TYPE relationType;
+
     DWORD64 qwVersion;
-    LPWSTR sczCachePath;
+
+    BURN_PACKAGE package;
 } BURN_RELATED_BUNDLE;
 
 typedef struct _BURN_REGISTRATION
@@ -52,8 +64,14 @@ typedef struct _BURN_REGISTRATION
     BOOL fRegisterArp;
     LPWSTR sczId;
 
+    LPWSTR *rgsczDetectCodes;
+    DWORD cDetectCodes;
+
     LPWSTR *rgsczUpgradeCodes;
     DWORD cUpgradeCodes;
+
+    LPWSTR *rgsczAddonCodes;
+    DWORD cAddonCodes;
 
     DWORD64 qwVersion;
     LPWSTR sczExecutableName;
@@ -85,7 +103,7 @@ typedef struct _BURN_REGISTRATION
     BOOL fNoRemoveDefined;
     BOOL fNoRemove;
 
-    // Upgrade
+    // Related
     BURN_RELATED_BUNDLE* rgRelatedBundles;
     DWORD cRelatedBundles;
 } BURN_REGISTRATION;
@@ -113,12 +131,15 @@ HRESULT RegistrationDetectResumeType(
     __out BOOTSTRAPPER_RESUME_TYPE* pResumeType
     );
 HRESULT RegistrationDetectRelatedBundles(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in BURN_REGISTRATION* pRegistration
+    __in BURN_MODE mode,
+    __in_opt BURN_USER_EXPERIENCE* pUX,
+    __in BURN_REGISTRATION* pRegistration,
+    __in_opt BOOTSTRAPPER_COMMAND* pCommand
     );
 HRESULT RegistrationLoadRelatedBundle(
     __in BURN_REGISTRATION* pRegistration,
-    __in_z LPCWSTR sczBundleId
+    __in_z LPCWSTR sczBundleId,
+    __out BURN_RELATION_TYPE *pRelationType
     );
 HRESULT RegistrationSessionBegin(
     __in BURN_REGISTRATION* pRegistration,

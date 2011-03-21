@@ -121,6 +121,7 @@
       <Topic Title="Product Updates" SourceFile="html\howtos\updates_toc.htm">
         <Topic Title="Implement a major upgrade in your installer" SourceFile="html\howtos\major_upgrade.htm"/>
       </Topic>
+      <Topic Title="Product Dependencies" SourceFile="html\howtos\author_product_dependencies.htm"/>
       <Topic Title="Others" SourceFile="html\howtos\general_toc.htm">
         <Topic Title="Get a log of your installation for debugging" SourceFile="html\howtos\get_a_log.htm"/>
         <Topic Title="Look inside your MSI with Orca" SourceFile="html\howtos\look_inside_msi.htm"/>
@@ -161,6 +162,7 @@
       <XmlSchema SourceFile="..\wix\Xsd\wix.xsd" Main="yes"/>
       <XmlSchema SourceFile="..\wix\Xsd\wixloc.xsd" Main="yes"/>
       <XmlSchema SourceFile="..\ext\ComPlusExtension\wixext\Xsd\complus.xsd" />
+      <XmlSchema SourceFile="..\ext\DependencyExtension\wixext\Xsd\Dependency.xsd"/>
       <XmlSchema SourceFile="..\ext\DifxAppExtension\wixext\Xsd\difxapp.xsd"/>
       <XmlSchema SourceFile="..\ext\FirewallExtension\wixext\Xsd\firewall.xsd"/>
       <XmlSchema SourceFile="..\ext\GamingExtension\wixext\Xsd\gaming.xsd"/>

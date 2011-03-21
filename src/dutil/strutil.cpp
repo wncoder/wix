@@ -2229,8 +2229,11 @@ extern "C" HRESULT DAPI StrArrayFree(
 
     for (UINT i = 0; i < cStrArray; ++i)
     {
-        hr = StrFree(rgsczStrArray[i]);
-        ExitOnFailure1(hr, "Failed to free the string at index %u.", i);
+        if (NULL != rgsczStrArray[i])
+        {
+            hr = StrFree(rgsczStrArray[i]);
+            ExitOnFailure1(hr, "Failed to free the string at index %u.", i);
+        }
     }
 
     hr = MemFree(rgsczStrArray);

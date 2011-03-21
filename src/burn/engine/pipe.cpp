@@ -107,7 +107,7 @@ extern "C" HRESULT PipePumpMessages(
             ExitOnFailure(hr, "Failed to read log message.");
 
             hr = LogStringWorkRaw(sczMessage);
-            ExitOnFailure1(hr, "Failed to write log message:'%s'.", sczMessage);
+            ExitOnFailure1(hr, "Failed to write log message:'%hs'.", sczMessage);
 
             dwResult = static_cast<DWORD>(hr);
             break;

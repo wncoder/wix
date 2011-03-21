@@ -515,7 +515,7 @@ static INT_PTR CopyFileCallback(
         pContext->Cabinet.hTargetFile = ::CreateFileW(pContext->Cabinet.wzTargetFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         if (INVALID_HANDLE_VALUE == pContext->Cabinet.hTargetFile)
         {
-            ExitWithLastError1(hr, "Failed to create file: %s", pContext->Cabinet.wzTargetFile);
+            ExitWithLastError1(hr, "Failed to create file: %ls", pContext->Cabinet.wzTargetFile);
         }
 
         // set file size

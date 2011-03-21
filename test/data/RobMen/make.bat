@@ -82,6 +82,18 @@ IF NOT EXIST %_B%versions\v1.exe (
    %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1.exe %_BM%v1.wixobj
    )
 
+IF NOT EXIST %_B%versions\v1addon.exe (
+   md %_B%versions
+   %_T%candle.exe %_M%v1addon.wxs -o %_BM%
+   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1addon.exe %_BM%v1addon.wixobj
+   )
+
+IF NOT EXIST %_B%versions\v1addon2.exe (
+   md %_B%versions
+   %_T%candle.exe %_M%v1addon2.wxs -o %_BM%
+   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1addon2.exe %_BM%v1addon2.wixobj
+   )
+
 IF NOT EXIST %_B%versions\v2.exe (
    md %_B%versions
    %_T%candle.exe %_M%v2.wxs -o %_BM%

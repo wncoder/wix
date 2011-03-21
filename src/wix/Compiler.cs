@@ -2320,6 +2320,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string keyPath = null;
             bool shouldAddCreateFolder = false;
             bool win64 = false;
+            bool multiInstance = false;
             string symbols = null;
             string feature = null;
 
@@ -2387,6 +2388,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         break;
                                 }
                             }
+                            break;
+                        case "MultiInstance":
+                            multiInstance = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "NeverOverwrite":
                             if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
@@ -2732,6 +2736,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[3] = bits | keyBits;
                 row[4] = condition;
                 row[5] = keyPath;
+
+                if (multiInstance)
+                {
+                    Row instanceComponentRow = this.core.CreateRow(sourceLineNumbers, "WixInstanceComponent");
+                    instanceComponentRow[0] = id;
+                }
 
                 if (null != symbols)
                 {
@@ -8114,11 +8124,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 mediaTemplateRow.VolumeLabel = volumeLabel;
                 mediaTemplateRow.DiskPrompt = diskPrompt;
                 mediaTemplateRow.VolumeLabel = volumeLabel;
-                mediaTemplateRow.MaximumUncompressedMediaSize = 50; // Default value is 50 MB
 
                 if (maximumUncompressedMediaSize != CompilerCore.IntegerNotSet)
                 {
                     mediaTemplateRow.MaximumUncompressedMediaSize = maximumUncompressedMediaSize;
+                }
+                else
+                {
+                    mediaTemplateRow.MaximumUncompressedMediaSize = 200; // Default value is 200 MB
                 }
 
                 switch(compressionLevelType)
@@ -19655,6 +19668,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "BootstrapperApplicationRef":
                                 this.ParseBootstrapperApplicationRefElement(child);
                                 break;
+                            case "Catalog":
+                                this.ParseCatalogElement(child);
+                                break;
                             case "Chain":
                                 if (chainSeen)
                                 {
@@ -19827,6 +19843,71 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             return YesNoType.Yes == disableLog ? null : String.Concat(variable, ":", logPrefix, logExtension);
+        }
+
+        /// <summary>
+        /// Parse a Catalog element.
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        private void ParseCatalogElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+            string sourceFile = null;
+
+            // Parse the attributes
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "SourceFile":
+                            sourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+            }
+
+            // Make sure id and sourceFile have been found
+            if (null == id)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+            if (null == sourceFile)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "SourceFile"));
+            }
+
+            // Check for invalid child nodes
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            // Create catalog row
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "WixCatalog");
+                row[0] = id;
+                row[1] = sourceFile;
+            }
         }
 
         /// <summary>
@@ -20204,7 +20285,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.UnsupportedExtensionElement(node, child);
+                        this.core.ParseExtensionElement(sourceLineNumbers, (XmlElement)node, (XmlElement)child);
                     }
                 }
             }
@@ -20287,7 +20368,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else
                     {
-                        this.core.UnsupportedExtensionElement(node, child);
+                        this.core.ParseExtensionElement(sourceLineNumbers, (XmlElement)node, (XmlElement)child);
                     }
                 }
             }

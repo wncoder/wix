@@ -25,6 +25,7 @@ extern "C" {
 #define ReleaseNullStr(pwz) if (pwz) { StrFree(pwz); pwz = NULL; }
 #define ReleaseBSTR(bstr) if (bstr) { ::SysFreeString(bstr); }
 #define ReleaseNullBSTR(bstr) if (bstr) { ::SysFreeString(bstr); bstr = NULL; }
+#define ReleaseStrArray(rg, c) { if (rg) { StrArrayFree(rg, c); } }
 #define ReleaseNullStrArray(rg, c) { if (rg) { StrArrayFree(rg, c); c = 0; rg = NULL; } }
 
 #define DeclareConstBSTR(bstr_const, wz) const WCHAR bstr_const[] = { 0x00, 0x00, sizeof(wz)-sizeof(WCHAR), 0x00, wz }

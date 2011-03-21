@@ -27,7 +27,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// <summary>
     /// Message handler for console applications.
     /// </summary>
-    public class ConsoleMessageHandler : MessageHandler
+    public class ConsoleMessageHandler : MessageHandler, IMessageHandler
     {
         private const int SuccessErrorNumber = 0;
 
@@ -72,6 +72,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
 #endif
                 Console.WriteLine(message);
             }
+        }
+
+        /// <summary>
+        /// Implements IMessageHandler to display error messages.
+        /// </summary>
+        /// <param name="mea">Message event arguments.</param>
+        public void OnMessage(MessageEventArgs mea)
+        {
+            this.Display(this, mea);
         }
 
         /// <summary>

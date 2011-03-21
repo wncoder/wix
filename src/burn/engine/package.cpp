@@ -250,6 +250,36 @@ LExit:
     return hr;
 }
 
+extern "C" void PackageUninitialize(
+    __in BURN_PACKAGE* pPackage
+    )
+{
+    ReleaseStr(pPackage->sczId);
+    ReleaseStr(pPackage->sczLogPathVariable);
+    ReleaseStr(pPackage->sczRollbackLogPathVariable);
+    ReleaseStr(pPackage->sczInstallCondition);
+    ReleaseStr(pPackage->sczRollbackInstallCondition);
+    ReleaseStr(pPackage->sczCacheId);
+
+    ReleaseMem(pPackage->rgPayloads);
+
+    switch (pPackage->type)
+    {
+    case BURN_PACKAGE_TYPE_EXE:
+        ExeEnginePackageUninitialize(pPackage); // TODO: Modularization
+        break;
+    case BURN_PACKAGE_TYPE_MSI:
+        MsiEnginePackageUninitialize(pPackage); // TODO: Modularization
+        break;
+    case BURN_PACKAGE_TYPE_MSP:
+        MspEnginePackageUninitialize(pPackage); // TODO: Modularization
+        break;
+    case BURN_PACKAGE_TYPE_MSU:
+        MsuEnginePackageUninitialize(pPackage); // TODO: Modularization
+        break;
+    }
+}
+
 extern "C" void PackagesUninitialize(
     __in BURN_PACKAGES* pPackages
     )
@@ -267,32 +297,7 @@ extern "C" void PackagesUninitialize(
     {
         for (DWORD i = 0; i < pPackages->cPackages; ++i)
         {
-            BURN_PACKAGE* pPackage = &pPackages->rgPackages[i];
-
-            ReleaseStr(pPackage->sczId);
-            ReleaseStr(pPackage->sczLogPathVariable);
-            ReleaseStr(pPackage->sczRollbackLogPathVariable);
-            ReleaseStr(pPackage->sczInstallCondition);
-            ReleaseStr(pPackage->sczRollbackInstallCondition);
-            ReleaseStr(pPackage->sczCacheId);
-
-            ReleaseMem(pPackage->rgPayloads);
-
-            switch (pPackage->type)
-            {
-            case BURN_PACKAGE_TYPE_EXE:
-                ExeEnginePackageUninitialize(pPackage); // TODO: Modularization
-                break;
-            case BURN_PACKAGE_TYPE_MSI:
-                MsiEnginePackageUninitialize(pPackage); // TODO: Modularization
-                break;
-            case BURN_PACKAGE_TYPE_MSP:
-                MspEnginePackageUninitialize(pPackage); // TODO: Modularization
-                break;
-            case BURN_PACKAGE_TYPE_MSU:
-                MsuEnginePackageUninitialize(pPackage); // TODO: Modularization
-                break;
-            }
+            PackageUninitialize(pPackages->rgPackages + i);
         }
         MemFree(pPackages->rgPackages);
     }
@@ -316,6 +321,33 @@ extern "C" HRESULT PackageFindById(
     for (DWORD i = 0; i < pPackages->cPackages; ++i)
     {
         pPackage = &pPackages->rgPackages[i];
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pPackage->sczId, -1, wzId, -1))
+        {
+            *ppPackage = pPackage;
+            ExitFunction1(hr = S_OK);
+        }
+    }
+
+    hr = E_NOTFOUND;
+
+LExit:
+    return hr;
+}
+
+
+extern "C" HRESULT PackageFindRelatedById(
+    __in BURN_REGISTRATION* pRegistration,
+    __in_z LPCWSTR wzId,
+    __out BURN_PACKAGE** ppPackage
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_PACKAGE* pPackage = NULL;
+
+    for (DWORD i = 0; i < pRegistration->cRelatedBundles; ++i)
+    {
+        pPackage = &pRegistration->rgRelatedBundles[i].package;
 
         if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pPackage->sczId, -1, wzId, -1))
         {

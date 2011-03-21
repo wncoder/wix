@@ -147,6 +147,7 @@ extern "C" HRESULT LoggingSetPackageVariable(
 
 LExit:
     ReleaseStr(sczLogPath);
+
     return hr;
 }
 

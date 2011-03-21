@@ -184,7 +184,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public void RemoveUsedGroupRows()
         {
             // Ensure we have a list of unique IDs, sorted in descending order...
-            Dictionary<int, bool> uniqueRowsUsed = new Dictionary<int, bool>();
+            Dictionary<int, bool> uniqueRowsUsed = new Dictionary<int, bool>(this.rowsUsed.Count);
             foreach (int rowIndex in this.rowsUsed)
             {
                 uniqueRowsUsed[rowIndex] = true;

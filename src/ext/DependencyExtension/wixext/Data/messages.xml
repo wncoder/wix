@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
+    The messages for the Windows Installer XML Toolset Dependency Extension.
+    
+    Errors start at 5400.
+    Warnings start at 5430.
+    Verboses start at 5460.
+-->
+<Messages Namespace="Microsoft.Tools.WindowsInstallerXml.Extensions" Resources="Data.Messages" xmlns="http://schemas.microsoft.com/genmsgs/2004/07/messages">
+    <Class Name="DependencyErrors" ContainerName="DependencyErrorEventArgs" BaseContainerName="WixErrorEventArgs">
+        <Message Id="IllegalCharactersInProvider" Number="5400">
+            <Instance>
+                The provider key authored into the {0} attribute contains an illegal character, '{1}'. Please author the provider key without this character.
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="illegalChars" />
+            </Instance>
+        </Message>
+    </Class>
+    <Class Name="DependencyWarnings" ContainerName="DependencyWarningEventArgs" BaseContainerName="WixWarningEventArgs">
+        <Message Id="AttributeIgnored" Number="5430">
+            <Instance>
+                The {0}/@{1} attribute will be ignored when the {0}/@{2} attribute is authored.
+                You can safely remove the {0}/@{1} attribute if you intended to provide a specific value for the {0}/@{2} attribute.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="ignoredAttributeName" />
+                <Parameter Type="System.String" Name="authoredAttributeName" />
+            </Instance>
+        </Message>
+        <Message Id="ProvidesKeyNotFound" Number="5431">
+            <Instance>
+                The provider key with identifier {0} was not found in the WixDependencyProvider table. Related registry rows will not be removed from authoring.
+                <Parameter Type="System.String" Name="id" />
+            </Instance>
+        </Message>
+        <Message Id="RequiresKeyNotFound" Number="5432">
+            <Instance>
+                The dependency key with identifier {0} was not found in the WixDependency table. Related registry rows will not be removed from authoring.
+                <Parameter Type="System.String" Name="id" />
+            </Instance>
+        </Message>
+        <Message Id="PropertyRemoved" Number="5433" SourceLineNumbers="no">
+            <Instance>
+                The property {0} was authored in the package with a value and will be removed. The property should not be authored.
+                <Parameter Type="System.String" Name="name" />
+            </Instance>
+        </Message>
+    </Class>
+    <Class Name="DependencyVerboses" ContainerName="DependencyVerboseEventArgs" BaseContainerName="WixVerboseEventArgs" />
+</Messages>

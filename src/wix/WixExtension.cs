@@ -19,6 +19,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml
 {
     using System;
+    using System.Collections.Specialized;
     using System.IO;
     using System.Reflection;
     using System.Xml;
@@ -28,6 +29,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// </summary>
     public class WixExtension
     {
+        /// <summary>
+        /// Allows the extension to parse custom command-line arguments.
+        /// </summary>
+        /// <param name="args">Collection of custom command-line arguments.</param>
+        /// <param name="messageHandler">Message handler to send errors if any occur.</param>
+        /// <returns>Collection of unknown command-line arguments for other extensions to possibly parse.</returns>
+        public virtual StringCollection ParseCommandLine(StringCollection args, IMessageHandler messageHandler)
+        {
+            return args;
+        }
+
         /// <summary>
         /// Gets the optional binder extension.
         /// </summary>

@@ -105,6 +105,8 @@
             <xs:attribute name="cabinetFileId" type="xs:string" />
             <xs:attribute name="modified" type="YesNoType" />
             <xs:attribute name="previousData" type="xs:string" />
+           <xs:attribute name="unresolvedData" type="xs:string" />
+           <xs:attribute name="unresolvedPreviousData" type="xs:string" />
             <xs:attribute name="previousCabinetFileId" type="xs:string" />
         </xs:complexType>
     </xs:element>

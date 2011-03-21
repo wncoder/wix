@@ -80,6 +80,7 @@
       <include name="userexperience.cpp" />
       <include name="variable.cpp" />
       <include name="variant.cpp" />
+      <include name="catalog.cpp" />
     </fileset>
     <property name="compileCpp.dir.build" value="${dir.build.burn.engine}" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.burn.engine}\precomp.h" />
