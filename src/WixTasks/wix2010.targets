@@ -39,6 +39,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
   InitialTargets="_CheckForInvalidConfigurationAndPlatform;
                   _CheckRequiredProperties">
+
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +186,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   </PropertyGroup>
   <PropertyGroup>
       <IntermediateOutputPath Condition="!HasTrailingSlash('$(IntermediateOutputPath)')">$(IntermediateOutputPath)\</IntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+      <CabinetCachePath Condition=" '$(CabinetCachePath)'=='' and '$(ReuseCabinetCache)'!='' and $(ReuseCabinetCache) ">$(IntermediateOutputPath)cabcache\</CabinetCachePath>
   </PropertyGroup>
   <ItemGroup>
       <IntermediateAssembly Include="$(IntermediateOutputPath)$(TargetName)$(TargetExt)"/>
@@ -2065,7 +2069,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   -->
   <Target
     Name="ReadPreviousBindInputsAndOuputs"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
+    Condition=" ('$(OutputType)' == 'Bundle' or '$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
 
     <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
       <Output TaskParameter="Lines" ItemName="_BindInputs" />
@@ -2206,7 +2210,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target
     Name="UpdateLinkFileWrites"
     AfterTargets="Link"
-    Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
+    Condition=" ('$(OutputType)' == 'Bundle' or '$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
     <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)">
       <Output TaskParameter="Lines" ItemName="FileWrites"/>

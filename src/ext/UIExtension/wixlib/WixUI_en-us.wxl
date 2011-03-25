@@ -105,7 +105,7 @@
     <String Id="FilesInUse_Title" Overridable="yes"><!-- _locID_text="FilesInUse_Title" _locComment="FilesInUse_Title" -->[ProductName] Setup</String>
     <String Id="FilesInUseExit" Overridable="yes"><!-- _locID_text="FilesInUseExit" _locComment="FilesInUseExit" -->E&amp;xit</String>
     <String Id="FilesInUseBannerBitmap" Overridable="yes"><!-- _locID_text="FilesInUseBannerBitmap" _locComment="FilesInUseBannerBitmap" -->WixUI_Bmp_Banner</String>
-    <String Id="FilesInUseText" Overridable="yes"><!-- _locID_text="FilesInUseText" _locComment="FilesInUseText" -->The following applications are using files that need to be updated by this setup. Close these applications and then click &amp;Retry to continue the installation or Exit to exit it.</String>
+    <String Id="FilesInUseText" Overridable="yes"><!-- _locID_text="FilesInUseText" _locComment="FilesInUseText" -->The following applications are using files that need to be updated by this setup. Close these applications and then click &amp;Retry to continue setup or Exit to exit it.</String>
     <String Id="FilesInUseDescription" Overridable="yes"><!-- _locID_text="FilesInUseDescription" _locComment="FilesInUseDescription" -->Some files that need to be updated are currently in use.</String>
     <String Id="FilesInUseTitle" Overridable="yes"><!-- _locID_text="FilesInUseTitle" _locComment="FilesInUseTitle" -->{\WixUI_Font_Title}Files in Use</String>
 

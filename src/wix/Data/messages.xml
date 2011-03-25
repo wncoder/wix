@@ -3464,6 +3464,13 @@
                 <Parameter Type="System.String" Name="newElementName2" />
             </Instance>
         </Message>
+        <Message Id="CannotUpdateCabCache" Number="1131">
+            <Instance>
+                Cannot update the timestamp of cached cabinet: '{0}'. If the timestamp is not updated, the build may rebuild more than is necessary. To fix the issue, ensure that the cabinet file is writable, error: {1}
+                <Parameter Type="System.String" Name="cabinetPath" />
+                <Parameter Type="System.String" Name="detail" />
+            </Instance>
+        </Message>
     </Class>
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
         <Message Id="ImportBinaryStream" Number="9000" SourceLineNumbers="no">
@@ -3641,6 +3648,13 @@
         <Message Id="ValidationSerialized" Number="9031" SourceLineNumbers="no">
             <Instance>
                 Multiple packages cannot reliably be validated simultaneously. This validation will resume when the other package being validated has completed.
+            </Instance>
+        </Message>
+        <Message Id="ReusingCabCache" Number="9032">
+            <Instance>
+                Reusing cabinet '{0}' from cabinet cache path: '{1}'.
+                <Parameter Type="System.String" Name="cabinetName" />
+                <Parameter Type="System.String" Name="source" />
             </Instance>
         </Message>
     </Class>

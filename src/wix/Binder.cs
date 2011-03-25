@@ -551,6 +551,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             this.core = new BinderCore(this.MessageHandler);
+            this.FileManager.MessageHandler = this.core;
 
             foreach (BinderExtension extension in this.extensions)
             {
@@ -3073,11 +3074,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 foreach (Row row in catalogTable.Rows)
                 {
-                    string catalogFile = (string)row[1];
+                    string catalogFile = (string)row[1]; // TODO: this should probably run through ResolveFile().
 
                     // Each catalog is also a payload
                     string payloadId = Common.GenerateIdentifier("pay", true, catalogFile);
-                    PayloadInfo payloadInfo = new PayloadInfo(payloadId, Path.GetFileName(catalogFile), catalogFile,
+                    PayloadInfo payloadInfo = new PayloadInfo(payloadId, Path.GetFileName(catalogFile), catalogFile, true,
                         null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
 
                     // Add the payload to the UX container
@@ -3267,21 +3268,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Start creating the bundle.
             this.PopulateBundleInfoFromChain(bundleInfo, chain.Packages);
 
-            // Default to burnstub.exe if the source manifest didn't say otherwise.
+            // Copy the burnstub.exe to a writable location then mark it to be moved to its
+            // final build location.
             string wixExeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string stubFile = Path.Combine(wixExeDirectory, "burnstub.exe");
+            string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleInfo.Path));
 
-            // Start with a writable copy of burnstub.exe.
-            this.core.OnMessage(WixVerboses.GeneratingBundle(bundleInfo.Path, stubFile));
-            File.Copy(stubFile, bundleInfo.Path, true);
-            File.SetAttributes(bundleInfo.Path, File.GetAttributes(bundleInfo.Path) & ~System.IO.FileAttributes.ReadOnly);
+            this.core.OnMessage(WixVerboses.GeneratingBundle(bundleTempPath, stubFile));
+            File.Copy(stubFile, bundleTempPath, true);
+            File.SetAttributes(bundleTempPath, FileAttributes.Normal);
+
+            fileTransfers.Add(new FileTransfer(bundleTempPath, bundleInfo.Path, true, "Bundle", bundleInfo.SourceLineNumbers));
 
             // Create our manifests, CABs and final EXE...
             string baManifestPath = Path.Combine(this.TempFilesLocation, "bundle-BootstrapperApplicationData.xml");
             this.CreateBootstrapperApplicationManifest(bundle, baManifestPath, uxPayloads);
 
             // Add the bootstrapper application manifest to the set of UX payloads.
-            PayloadInfo baManifestPayload = new PayloadInfo(Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), "BootstrapperApplicationData.xml", baManifestPath, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
+            PayloadInfo baManifestPayload = new PayloadInfo(Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), "BootstrapperApplicationData.xml", baManifestPath, false, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
             baManifestPayload.EmbeddedId = string.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloads.Count);
             uxPayloads.Add(baManifestPayload);
 
@@ -3300,10 +3304,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string manifestPath = Path.Combine(this.TempFilesLocation, "bundle-manifest.xml");
             this.CreateBurnManifest(bundleInfo, manifestPath, allRelatedBundles, allVariables, orderedSearches, allPayloads, chain, containers, catalogs);
 
-            this.UpdateBurnResources(bundleInfo);
+            this.UpdateBurnResources(bundleTempPath, bundleInfo);
 
             // update the .wixburn section to point to at the UX and attached container(s) then attach the container(s) if they should be attached.
-            using (BurnWriter writer = new BurnWriter(bundleInfo.Path, this.core, bundleInfo.Id))
+            using (BurnWriter writer = new BurnWriter(bundleTempPath, this.core, bundleInfo.Id))
             {
                 // Always create UX container and attach it first
                 ContainerInfo uxContainer = containers[Compiler.BurnUXContainerId];
@@ -3353,8 +3357,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ProcessLayoutDirectories(this.core, bundle, fileTransfers, directoryTransfers, layoutDirectory);
 
             // layout media
-            this.core.OnMessage(WixVerboses.LayingOutMedia());
-            this.LayoutMedia(fileTransfers, directoryTransfers, this.suppressAclReset);
+            try
+            {
+                this.core.OnMessage(WixVerboses.LayingOutMedia());
+                this.LayoutMedia(fileTransfers, directoryTransfers, this.suppressAclReset);
+            }
+            finally
+            {
+                if (!String.IsNullOrEmpty(this.contentsFile))
+                {
+                    this.CreateContentsFile(this.contentsFile, allPayloads.Values);
+                }
+
+                if (!String.IsNullOrEmpty(this.outputsFile))
+                {
+                    this.CreateOutputsFile(this.outputsFile, fileTransfers, this.pdbFile);
+                }
+            }
 
             return !this.core.EncounteredError;
         }
@@ -3769,12 +3788,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void UpdateBurnResources(BundleInfo bundleInfo)
+        private void UpdateBurnResources(string bundleTempPath, BundleInfo bundleInfo)
         {
             Microsoft.Deployment.Resources.ResourceCollection resources = new Microsoft.Deployment.Resources.ResourceCollection();
             Microsoft.Deployment.Resources.VersionResource version = new Microsoft.Deployment.Resources.VersionResource("#1", 1033);
 
-            version.Load(bundleInfo.Path);
+            version.Load(bundleTempPath);
             resources.Add(version);
 
             Microsoft.Deployment.Resources.VersionStringTable strings = version[1033];
@@ -3820,7 +3839,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 resources.Add(bitmap);
             }
 
-            resources.Save(bundleInfo.Path);
+            resources.Save(bundleTempPath);
         }
 
         private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, ContainerInfo container, int containerIndex)
@@ -6143,6 +6162,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 cabinetWorkItem = new CabinetWorkItem(fileRows, tempCabinetFile, maxThreshold, compressionLevel, this.FileManager);
             }
+            else // reuse the cabinet from the cabinet cache.
+            {
+                this.core.OnMessage(WixVerboses.ReusingCabCache(mediaRow.SourceLineNumbers, mediaRow.Cabinet, tempCabinetFile));
+
+                try
+                {
+                    // Ensure the cached cabinet timestamp is current to prevent perpetual incremental builds. The
+                    // problematic scenario goes like this. Imagine two cabinets in the cache. Update a file that
+                    // goes into one of the cabinets. One cabinet will get rebuilt, the other will be copied from
+                    // the cache. Now the file (an input) has a newer timestamp than the reused cabient (an output)
+                    // causing the project to look like it perpetually needs a rebuild until all of the reused
+                    // cabinets get newer timestamps.
+                    File.SetLastWriteTime(tempCabinetFile, DateTime.Now);
+                }
+                catch (Exception e)
+                {
+                    this.core.OnMessage(WixWarnings.CannotUpdateCabCache(mediaRow.SourceLineNumbers, tempCabinetFile, e.Message));
+                }
+            }
 
             if (mediaRow.Cabinet.StartsWith("#", StringComparison.Ordinal))
             {
@@ -6297,6 +6335,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (FileRow fileRow in fileRows)
                 {
                     contents.WriteLine(fileRow.Source);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes the paths to the content files included in the bundle to a text file.
+        /// </summary>
+        /// <param name="path">Path to write file.</param>
+        /// <param name="payloads">Collection of payloads whose source will be written to file.</param>
+        private void CreateContentsFile(string path, IEnumerable<PayloadInfo> payloads)
+        {
+            string directory = Path.GetDirectoryName(path);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using (StreamWriter contents = new StreamWriter(path, false))
+            {
+                foreach (PayloadInfo payload in payloads)
+                {
+                    if (payload.ContentFile)
+                    {
+                        contents.WriteLine(payload.FileInfo.FullName);
+                    }
                 }
             }
         }
@@ -6534,16 +6597,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     packaging = (compressed == 1) ? PackagingType.Embedded : PackagingType.External;
                 }
 
-                this.Initialize((string)row[0], (string)row[1], (string)row[2], (string)row[3], null, packaging, fileManager);
+                // payload files sourced from a cabinet (think WixExtension with embedded binary wixlib) are considered "non-content files".
+                ObjectField field = (ObjectField)row.Fields[2];
+                bool contentFile = String.IsNullOrEmpty(field.CabinetFileId);
+                this.Initialize((string)row[0], (string)row[1], (string)row[2], contentFile, (string)row[3], null, packaging, fileManager);
             }
 
-            public PayloadInfo(string id, string name, string sourceFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
+            public PayloadInfo(string id, string name, string sourceFile, bool contentFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
             {
-                this.Initialize(id, name, sourceFile, downloadUrl, container, packaging, fileManager);
+                this.Initialize(id, name, sourceFile, contentFile, downloadUrl, container, packaging, fileManager);
             }
 
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Id { get; private set; }
+            public bool ContentFile { get; private set; }
             public FileInfo FileInfo { get; private set; }
             public string FileName { get; private set; }
             public long FileSize { get { return this.FileInfo.Length; } }
@@ -6578,9 +6645,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 get { return this.certificateThumbprint; }
             }
 
-            private void Initialize(string id, string name, string sourceFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
+            private void Initialize(string id, string name, string sourceFile, bool contentFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
             {
                 this.Id = id;
+                this.ContentFile = contentFile;
                 this.FileInfo = new FileInfo(sourceFile);
                 this.FileName = name;
                 this.DownloadUrl = downloadUrl;
@@ -7129,7 +7197,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), cabinet);
                                         string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
 
-                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                         payloadNew.ParentPackagePayload = this.PackagePayload;
                                         if (null != payloadNew.Container)
                                         {
@@ -7183,7 +7251,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         string payloadSourceFile = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileInfo.FullName), fileSourcePath);
                                         string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
 
-                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                         payloadNew.ParentPackagePayload = this.PackagePayload;
                                         if (null != payloadNew.Container)
                                         {

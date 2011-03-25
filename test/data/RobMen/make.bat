@@ -30,9 +30,7 @@ IF /I "clean"=="%1" (
 IF NOT EXIST %_BP%*.msi (
    md %_BP%
    %_T%candle.exe %_P%*.wxs -o %_BP%
-   %_T%light.exe %_BP%Package1.wixobj -ext WixUtilExtension -sval -o %_BP%Package1.msi
    %_T%light.exe %_BP%Package2.wixobj -b %_P% -ext WixUtilExtension -sval -o %_BP%Package2.msi
-   %_T%light.exe %_BP%Package3.wixobj -ext WixUtilExtension -sval -o %_BP%Package3.msi
    %_T%light.exe %_BP%Package4.wixobj -ext WixUtilExtension -sval -o %_BP%Package4.msi
    %_T%light.exe %_BP%Package1v2.wixobj -ext WixUtilExtension -sval -o %_BP%Package1v2.msi
    %_T%light.exe %_BP%Package2v2.wixobj -b %_P% -ext WixUtilExtension -sval -o %_BP%Package2v2.msi

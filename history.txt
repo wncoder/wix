@@ -977,3 +977,23 @@ RobMen: Support passing command-line information to extensions in light.exe.
 
 WixBuild: Version 3.6.1518.0
 
+BobArnso: SFBUG:3214497 and SFBUG:3212982 - Fix bad XML characters in chm 
+          sources and more instances of bad mixed-case filenames. Switch web
+          site manual to use wix36 for the 3.x manual sources.
+
+RobMen: Implement incremental build for Bundles.
+
+RobMen: Hardlink from cabcache and default cabcache on when
+        ReuseCabinetCache=true.
+
+PMarcu: SFBUG:3141215 - Fixing broken link for extensions in the chm.
+
+RobMen: Add WixGenericMessageEventArgs so extensions can send arbitrary
+        messages without having to create a ResourceManager and localized
+        strings.
+
+RobMen: SFBUG:3220208 - use the word "setup" for "installation" for FileInUse
+        so the message makes more sense during uninstall.
+
+WixBuild: Version 3.6.1525.0
+

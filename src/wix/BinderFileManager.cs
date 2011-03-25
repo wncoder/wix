@@ -21,11 +21,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
-    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
 
     /// <summary>
     /// Options for building the cabinet.
@@ -76,6 +77,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// </summary>
     public class BinderFileManager
     {
+        private IMessageHandler messageHandler;
+
         private string cabCachePath;
         private Output output;
         private bool reuseCabinets;
@@ -132,6 +135,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             get { return this.cabCachePath; }
             set { this.cabCachePath = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the message handler used for file resolution.
+        /// </summary>
+        public IMessageHandler MessageHandler
+        {
+            get { return this.messageHandler; }
+            set { this.messageHandler = value; }
         }
 
         /// <summary>
@@ -508,6 +520,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     cabinetExists = false;
                                     break;
                                 }
+
                                 i++;
                             }
                         }
@@ -597,7 +610,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="overwrite">true if the destination file can be overwritten; otherwise, false.</param>
         public virtual void CopyFile(string source, string destination, bool overwrite)
         {
-            File.Copy(source, destination, overwrite);
+            if (overwrite)
+            {
+                File.Delete(destination);
+            }
+
+            if (!CreateHardLink(destination, source, IntPtr.Zero))
+            {
+#if DEBUG
+                int er = Marshal.GetLastWin32Error();
+#endif
+
+                File.Copy(source, destination, overwrite);
+            }
         }
 
         /// <summary>
@@ -690,5 +715,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 throw new WixException(WixErrors.IllegalCharactersInPath(path));
             }
         }
+
+        [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool CreateHardLink(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
     }
 }

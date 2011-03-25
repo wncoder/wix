@@ -215,6 +215,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 messageLevel = MessageLevel.Error;
             }
+            else if (mea is WixGenericMessageEventArgs)
+            {
+                messageLevel = mea.Level;
+            }
             else
             {
                 Debug.Assert(false, String.Format(CultureInfo.InvariantCulture, "Unknown MessageEventArgs type: {0}.", mea.GetType().ToString()));

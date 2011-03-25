@@ -1,14 +1,14 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectGuid>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</ProjectGuid>
     <AssemblyName>wix</AssemblyName>
     <OutputType>Library</OutputType>
     <RootNamespace>Microsoft.Tools.WindowsInstallerXml</RootNamespace>
     <NoWarn>618</NoWarn>
-    <OldToolsVersion>2.0</OldToolsVersion>
-    <ProductVersion>9.0.30729</ProductVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="AssemblyDefaultFabricatorExtensionAttribute.cs" />
     <Compile Include="AssemblyDefaultHeatExtensionAttribute.cs" />
@@ -149,6 +149,7 @@
     <Compile Include="AppCommon.cs" />
     <Compile Include="WixExtension.cs" />
     <Compile Include="WixFileRow.cs" />
+    <Compile Include="WixGenericMessageEventArgs.cs" />
     <Compile Include="WixGroupingOrdering.cs" />
     <Compile Include="WixMediaRow.cs" />
     <Compile Include="WixMediaTemplateRow.cs" />

@@ -768,9 +768,9 @@
                       The IP address to locate an existing WebSite or create a new WebSite. When the WebAddress is part of a WebSite element
                       used to locate an existing web site the following rules are used:
                       <html:ul>
-                      <html:li>When this attribute is not specified only the “All Unassigned” IP address will be located.</html:li>
+                      <html:li>When this attribute is not specified only the "All Unassigned" IP address will be located.</html:li>
                       <html:li>When this attribute is explicitly specified only the specified IP address will be located.</html:li>
-                      <html:li>When this attribute has the value “*” then any IP address including the “All Unassigned” IP address will be located</html:li>
+                      <html:li>When this attribute has the value "*" then any IP address including the "All Unassigned" IP address will be located</html:li>
                       </html:ul>
                       When the WebAddress is part of a WebSite element used to create a new web site the following rules are used:
                       <html:ul>
