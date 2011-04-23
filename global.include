@@ -858,6 +858,9 @@
       <property name="file.target.balutil" value="${file.target.balutil.vs2010}" />
       <property name="file.target.balutil.x86"  value="${file.target.balutil.vs2010.x86}" />
       <property name="file.target.balutil.x64"  value="${file.target.balutil.vs2010.x64}" />
+
+      <property name="file.target.deputil" value="${file.target.deputil.vs2010}" />
+      <property name="file.target.deputil.x86" value="${file.target.deputil.vs2010.x86}" />
     </if>
 
     <if test="${BuildVC9 and not property::exists('file.target.dutil')}">
@@ -874,6 +877,9 @@
       <property name="file.target.balutil" value="${file.target.balutil.vs2008}" />
       <property name="file.target.balutil.x86"  value="${file.target.balutil.vs2008.x86}" />
       <property name="file.target.balutil.x64"  value="${file.target.balutil.vs2008.x64}" />
+
+      <property name="file.target.deputil" value="${file.target.deputil.vs2008}" />
+      <property name="file.target.deputil.x86" value="${file.target.deputil.vs2008.x86}" />
     </if>
 
     <if test="${BuildVC8 and not property::exists('file.target.dutil')}">
@@ -890,6 +896,9 @@
       <property name="file.target.balutil" value="${file.target.balutil.vs2005}" />
       <property name="file.target.balutil.x86"  value="${file.target.balutil.vs2005.x86}" />
       <property name="file.target.balutil.x64"  value="${file.target.balutil.vs2005.x64}" />
+
+      <property name="file.target.deputil" value="${file.target.deputil.vs2005}" />
+      <property name="file.target.deputil.x86" value="${file.target.deputil.vs2005.x86}" />
     </if>
 
     <call target="setPlatform" />

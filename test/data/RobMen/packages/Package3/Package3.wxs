@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) Microsoft Corporation.  All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="4951F69A-8EC9-4F78-B2CC-B528CEB3F18E" Name="TestBurn3" Language="1033" Version="3.1.2.3" Manufacturer="Microsoft Corporation" UpgradeCode="{54464F32-D5F3-4B1C-A973-3B5951C74B1B}">
-        <Package InstallScope="perUser" Description="Test Burn #3" InstallerVersion="200" Compressed="yes" />
+        <Package InstallScope="perMachine" Description="Test Burn #3" InstallerVersion="200" Compressed="yes" />
         <Media Id="1" Cabinet="pkg3a.cab" />
         <Media Id="2" Cabinet="pkg3b.cab" />
         <InstallExecuteSequence>
@@ -14,6 +22,7 @@
         </InstallExecuteSequence>
         <Feature Id="Test3" Title="Test3" Level="1">
             <ComponentRef Id="MyComp" />
+            <ComponentRef Id="MyCompDuped" />
             <ComponentRef Id="MyComp2" />
         </Feature>
     </Product>
@@ -24,13 +33,17 @@
                 <Directory Id="MyFolder" Name="~WiXBurnTest3" FileSource="$(sys.SOURCEFILEDIR)">
                     <Component Id="MyComp">
                         <File Id="MyFile" Name="3a.txt" />
-                        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\WiX_Burn">
-                            <RegistryValue Name="Test3" Value="true" Type="string" />
-                        </RegistryKey>
+                    </Component>
+
+                    <Component Id="MyCompDuped">
+                        <File Id="ThreeADuped" Name="3adupe.txt" />
                     </Component>
 
                     <Component Id="MyComp2" DiskId="2">
                         <File Id="MyFile2" Name="3b.txt" />
+                        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\WiX_Burn">
+                            <RegistryValue Name="Test3" Value="true" Type="string" />
+                        </RegistryKey>
                     </Component>
                 </Directory>
             </Directory>

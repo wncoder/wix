@@ -211,18 +211,22 @@
             <File Source="XsdGen.exe" Checksum="yes" KeyPath="yes" />
           </Component>
           <Component Id="XsdStitch" Guid="8C205460-3ADF-4F6A-8913-A0F900CB66A8" Win64="no">
-                <File Source="XsdStitch.exe" Checksum="yes" KeyPath="yes" />
-            </Component>
+            <File Source="XsdStitch.exe" Checksum="yes" KeyPath="yes" />
+          </Component>
         </DirectoryRef>
 
         <DirectoryRef Id="SdkIncDir">
             <Component Id="SdkHeaders" Guid="332DBDA4-0459-40B3-A1C0-24163C04B3B6" Win64="no">
                 <File Source="aclutil.h" />
+                <File Source="apuputil.h" />
+                <File Source="atomutil.h" />
                 <File Source="buffutil.h" />
                 <File Source="cabcutil.h" />
                 <File Source="cabutil.h" />
                 <File Source="certutil.h" />
                 <File Source="conutil.h" />
+                <File Source="cryputil.h" />
+                <File Source="ext\DependencyExtension\lib\inc\deputil.h" />
                 <File Source="dictutil.h" />
                 <File Source="dirutil.h" />
                 <File Source="dutil.h" KeyPath="yes" />
@@ -239,10 +243,13 @@
                 <File Source="pathutil.h" />
                 <File Source="perfutil.h" />
                 <File Source="procutil.h" />
+                <File Source="regutil.h" />
+                <File Source="rexutil.h" />
                 <File Source="resrutil.h" />
                 <File Source="reswutil.h" />
                 <File Source="rssutil.h" />
                 <File Source="sceutil.h" />
+                <File Source="shelutil.h" />
                 <File Source="sqlutil.h" />
                 <File Source="strutil.h" />
                 <File Source="thmutil.h" />
@@ -265,6 +272,8 @@
             <ComponentRef Id="Wcautil_2005_x86" />
             <ComponentRef Id="Wcautil_2005_x64" />
 
+            <ComponentRef Id="deputil_2005.lib" />
+
             <?if $(var.BuildIA64)=true ?>
             <ComponentRef Id="Dutil_2005_ia64" />
             <ComponentRef Id="Wcautil_2005_ia64" />
@@ -278,11 +287,12 @@
             <ComponentRef Id="Wcautil_2008_x86" />
             <ComponentRef Id="Wcautil_2008_x64" />
 
+            <ComponentRef Id="deputil_2008.lib" />
+
             <?if $(var.BuildIA64)=true ?>
             <ComponentRef Id="Wcautil_2008_ia64" />
             <ComponentRef Id="Dutil_2008_ia64" />
             <?endif ?>
-
             <?endif ?>
 
 
@@ -292,6 +302,8 @@
 
             <ComponentRef Id="Wcautil_2010_x86" />
             <ComponentRef Id="Wcautil_2010_x64" />
+
+            <ComponentRef Id="deputil_2010.lib" />
 
             <?if $(var.BuildIA64)=true ?>
             <ComponentRef Id="Dutil_2010_ia64" />

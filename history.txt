@@ -997,3 +997,43 @@ RobMen: SFBUG:3220208 - use the word "setup" for "installation" for FileInUse
 
 WixBuild: Version 3.6.1525.0
 
+HeathS: SFBUG:3257439 - Added WixDependencyExtension.dll to binaries.zip.
+
+PMarcu: SFBUG:3197719 - Adding exclusive feature file costing to 
+                        BootstrapperApplication xml.
+
+RobMen: Fix over rebuild in incremental build with cabcache and smartcabbing.
+
+RobMen: Allow MSBuild PdbOutputPath property to override ouput location for
+        .wixpdb files.
+
+WixBuild: Version 3.6.1601.0
+
+RobMen: Resolve files related to an MSI Package (like .cabs and loose files)
+        through the BinderFileManager instead of directly in the Binder.
+
+HeathS: Better error handling for dependency messages.
+
+WixBuild: Version 3.6.1608.0
+
+MikeHo: Remove erroneous check from CustomAction element, which prevents valid
+        combinations of custom action types & PatchUninstall values.
+
+HeathS: Refactored out the dependency library for use in Burn.
+
+MiCarls: Add first unit tests for dutil (DictUtil only, for now)
+
+WixBuild: Version 3.6.1615.0
+
+HeathS: Fixed documentation for named bind paths.
+
+A-BobArn: SFBUG:3280250, SFBUG:3285523, SFBUG:3285529, SFBUG:3257439
+          Bring binaries.zip and WiX36.msi back in line.
+
+RobMen: Support signing Bundle and Msm.
+        Fixed incremental build in complex dependency cases.
+            (e.g. Msi.wixproj -> Lib.wixproj -> Exe.csproj)
+        Add support to build only .wixlib project references.
+
+WixBuild: Version 3.6.1623.0
+

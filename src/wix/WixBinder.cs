@@ -445,6 +445,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// <summary>Optional type of file this transfer is moving or copying.</summary>
             public string Type;
 
+            /// <summary>Indicates whether the file transer was a built by this build or copied from other some build.</summary>
+            internal bool Built;
+
             /// <summary>Set during layout of media when the file transfer when the source and target resolve to the same path.</summary>
             internal bool Redundant;
 
@@ -476,6 +479,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Type = type;
                 this.SourceLineNumbers = sourceLineNumbers;
 
+                this.Built = false;
                 this.Redundant = false;
             }
 

@@ -60,6 +60,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         {
             switch (parentElement.LocalName)
             {
+                case "Bundle":
                 case "Fragment":
                 case "Module":
                 case "Product":
@@ -67,6 +68,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     {
                         case "Requires":
                             this.ParseRequiresElement(element, null);
+                            break;
+                        default:
+                            this.Core.UnexpectedElement(parentElement, element);
+                            break;
+                    }
+                    break;
+                case "ExePackage":
+                case "MsiPackage":
+                case "MspPackage":
+                case "MsuPackage":
+                    string packageId = contextValues[0];
+
+                    switch (element.LocalName)
+                    {
+                        case "Provides":
+                            string keyPath = null;
+                            this.ParseProvidesElement(element, true, ref keyPath, packageId);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -100,7 +118,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     switch (element.LocalName)
                     {
                         case "Provides":
-                            keyPathType = this.ParseProvidesElement(element, ref keyPath, componentId);
+                            keyPathType = this.ParseProvidesElement(element, false, ref keyPath, componentId);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -119,10 +137,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// Processes the Provides element.
         /// </summary>
         /// <param name="node">The XML node for the Provides element.</param>
+        /// <param name="isPackage">True if authored for a package; otherwise, false if authored for a component.</param>
         /// <param name="keyPath">Explicit key path.</param>
-        /// <param name="componentId">The parent component identifier.</param>
+        /// <param name="parentId">The identifier of the parent component or package.</param>
         /// <returns>The type of key path if set.</returns>
-        private CompilerExtension.ComponentKeypathType ParseProvidesElement(XmlNode node, ref string keyPath, string componentId)
+        private CompilerExtension.ComponentKeypathType ParseProvidesElement(XmlNode node, bool isPackage, ref string keyPath, string parentId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             CompilerExtension.ComponentKeypathType keyPathType = CompilerExtension.ComponentKeypathType.None;
@@ -192,6 +211,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "Key", ";"));
                 }
             }
+            else if (isPackage)
+            {
+                // Must specify the provider key when authored for a package.
+                if (String.IsNullOrEmpty(key))
+                {
+                    this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Key"));
+                }
+
+                // VersionGuarantee not valid on a package element.
+                if (CompilerCore.IntegerNotSet != versionGuarantee)
+                {
+                    this.Core.OnMessage(WixErrors.IllegalAttributeExceptOnElement(sourceLineNumbers, node.LocalName, "VersionGuarantee", "Component"));
+                }
+            }
             else
             {
                 // Make sure the UpgradeCode is authored and set the key.
@@ -227,7 +260,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             // Need the element ID for child element processing, so generate now if not authored.
             if (null == id)
             {
-                id = this.Core.GenerateIdentifier("dep", node.LocalName, componentId, key);
+                id = this.Core.GenerateIdentifier("dep", node.LocalName, parentId, key);
             }
 
             foreach (XmlNode child in node.ChildNodes)
@@ -264,7 +297,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 // Create the row in the provider table.
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider");
                 row[0] = id;
-                row[1] = componentId;
+                row[1] = parentId;
                 row[2] = key;
 
                 if (null != displayKey)
@@ -277,53 +310,56 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     row[4] = attributes;
                 }
 
-                // Generate registry rows for the provider using binder properties.
-                string keyProvides = String.Concat(DependencyCommon.RegistryRoot, key);
-
-                row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                row[0] = this.Core.GenerateIdentifier("reg", id, "(Default)");
-                row[1] = -1;
-                row[2] = keyProvides;
-                row[3] = null;
-                row[4] = "[ProductCode]";
-                row[5] = componentId;
-
-                // Use the Version registry value as the key path if not already set.
-                string idVersion = this.Core.GenerateIdentifier("reg", id, "Version");
-                if (String.IsNullOrEmpty(keyPath))
+                if (!isPackage)
                 {
-                    keyPath = idVersion;
-                    keyPathType = CompilerExtension.ComponentKeypathType.Registry;
-                }
+                    // Generate registry rows for the provider using binder properties.
+                    string keyProvides = String.Concat(DependencyCommon.RegistryRoot, key);
 
-                row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                row[0] = idVersion;
-                row[1] = -1;
-                row[2] = keyProvides;
-                row[3] = "Version";
-                row[4] = "[ProductVersion]";
-                row[5] = componentId;
-
-                if (null != displayKey)
-                {
                     row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = this.Core.GenerateIdentifier("reg", id, "DisplayKey");
+                    row[0] = this.Core.GenerateIdentifier("reg", id, "(Default)");
                     row[1] = -1;
                     row[2] = keyProvides;
-                    row[3] = "DisplayKey";
-                    row[4] = displayKey;
-                    row[5] = componentId;
-                }
+                    row[3] = null;
+                    row[4] = "[ProductCode]";
+                    row[5] = parentId;
 
-                if (0 != attributes)
-                {
+                    // Use the Version registry value as the key path if not already set.
+                    string idVersion = this.Core.GenerateIdentifier("reg", id, "Version");
+                    if (String.IsNullOrEmpty(keyPath))
+                    {
+                        keyPath = idVersion;
+                        keyPathType = CompilerExtension.ComponentKeypathType.Registry;
+                    }
+
                     row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = this.Core.GenerateIdentifier("reg", id, "Attributes");
+                    row[0] = idVersion;
                     row[1] = -1;
                     row[2] = keyProvides;
-                    row[3] = "Attributes";
-                    row[4] = String.Concat("#", attributes.ToString(CultureInfo.InvariantCulture.NumberFormat));
-                    row[5] = componentId;
+                    row[3] = "Version";
+                    row[4] = "[ProductVersion]";
+                    row[5] = parentId;
+
+                    if (null != displayKey)
+                    {
+                        row = this.Core.CreateRow(sourceLineNumbers, "Registry");
+                        row[0] = this.Core.GenerateIdentifier("reg", id, "DisplayKey");
+                        row[1] = -1;
+                        row[2] = keyProvides;
+                        row[3] = "DisplayKey";
+                        row[4] = displayKey;
+                        row[5] = parentId;
+                    }
+
+                    if (0 != attributes)
+                    {
+                        row = this.Core.CreateRow(sourceLineNumbers, "Registry");
+                        row[0] = this.Core.GenerateIdentifier("reg", id, "Attributes");
+                        row[1] = -1;
+                        row[2] = keyProvides;
+                        row[3] = "Attributes";
+                        row[4] = String.Concat("#", attributes.ToString(CultureInfo.InvariantCulture.NumberFormat));
+                        row[5] = parentId;
+                    }
                 }
             }
 

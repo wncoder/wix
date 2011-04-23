@@ -13,21 +13,19 @@
 // </copyright>
 // 
 // <summary>
-//    Precompiled header for WixDepCA
+//    Precompiled header for the dependency/ref-counting library.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include <windows.h>
-#include <msiquery.h>
 #include <intsafe.h>
 #include <strsafe.h>
 
-#include "wcautil.h"
+#include "dutil.h"
 #include "fileutil.h"
 #include "strutil.h"
 #include "memutil.h"
 #include "regutil.h"
 #include "dictutil.h"
-#include "deputil.h"
 
-#include "CustomMsiErrors.h"
+#include "deputil.h"

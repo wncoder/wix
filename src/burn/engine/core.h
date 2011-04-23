@@ -30,17 +30,12 @@ extern "C" {
 
 const LPCWSTR BURN_COMMANDLINE_SWITCH_ELEVATED = L"burn.elevated";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_EMBEDDED = L"burn.embedded";
-const LPCWSTR BURN_COMMANDLINE_SWITCH_UNCACHE_PER_MACHINE = L"burn.uncache.machine";
-const LPCWSTR BURN_COMMANDLINE_SWITCH_UNCACHE_PER_USER = L"burn.uncache.user";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_LOG_APPEND = L"burn.log.append";
 
 enum BURN_MODE
 {
     BURN_MODE_NORMAL,
-    BURN_MODE_ELEVATED,
     BURN_MODE_EMBEDDED,
-    BURN_MODE_UNCACHE_PER_MACHINE,
-    BURN_MODE_UNCACHE_PER_USER,
 };
 
 
@@ -80,6 +75,7 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PLAN plan;
 
     BURN_MODE mode;
+    BOOL fElevated;
 
     HANDLE hElevatedProcess;
     HANDLE hElevatedPipe;

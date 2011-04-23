@@ -43,6 +43,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         private ITaskItem[] bindInputPaths;
         private bool backwardsCompatibleGuidGeneration;
         private bool bindFiles;
+        private ITaskItem builtOutputsFile;
         private string cabinetCachePath;
         private int cabinetCreationThreadCount = WixCommandLineBuilder.Unspecified;
         private ITaskItem contentsFile;
@@ -152,14 +153,18 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             set { this.cabinetCreationThreadCount = value; }
         }
 
-        [Output]
+        public ITaskItem BindBuiltOutputsFile
+        {
+            get { return this.builtOutputsFile; }
+            set { this.builtOutputsFile = value; }
+        }
+
         public ITaskItem BindContentsFile
         {
             get { return this.contentsFile; }
             set { this.contentsFile = value; }
         }
 
-        [Output]
         public ITaskItem BindOutputsFile
         {
             get { return this.outputsFile; }
@@ -489,6 +494,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendIfTrue("-xo", this.OutputAsXml);
             commandLineBuilder.AppendSwitchIfNotNull("-contentsfile ", this.BindContentsFile);
             commandLineBuilder.AppendSwitchIfNotNull("-outputsfile ", this.BindOutputsFile);
+            commandLineBuilder.AppendSwitchIfNotNull("-builtoutputsfile ", this.BindBuiltOutputsFile);
             commandLineBuilder.AppendTextIfNotNull(this.AdditionalOptions);
 
             List<string> objectFilePaths = AdjustFilePaths(this.objectFiles, this.ReferencePaths);

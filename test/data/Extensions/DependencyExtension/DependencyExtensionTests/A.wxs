@@ -35,6 +35,14 @@
         <Feature Id="Complete" Level="1">
             <ComponentRef Id="Main"/>
         </Feature>
+        <Property Id="MsiLogging" Value="voicewarmup"/>
+        <Upgrade Id="4BDD3F68-8047-4FB6-8E8F-2420705305EE">
+            <UpgradeVersion Maximum="$(var.Version)" MigrateFeatures="yes" Property="OLDERVERSIONS"/>
+            <UpgradeVersion Minimum="$(var.Version)" OnlyDetect="yes" Property="NEWERVERSIONS"/>
+        </Upgrade>
+        <InstallExecuteSequence>
+            <RemoveExistingProducts After="InstallInitialize"/>
+        </InstallExecuteSequence>
     </Product>
     <Fragment>
         <DirectoryRef Id="INSTALLDIR">

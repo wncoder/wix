@@ -124,7 +124,7 @@
 <value><![CDATA[ usage:  lit.exe [-?] [-nologo] [-out libraryFile] objectFile [objectFile ...] [@responseFile]
 
    -b <path>  binder path to locate all files (default: current directory)
-              prefix the path with 'name:' where 'name' is the name of your
+              prefix the path with 'name=' where 'name' is the name of your
               named bindpath.
    -bf        bind files into the library file
    -ext <extension>  extension assembly or "class, assembly"

@@ -23,6 +23,70 @@
             <Component Directory="SdkDir">
                 <File Source="BootstrapperCore.config" />
             </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="ext\BalExtension\balutil\inc\BalBaseBootstrapperApplication.h" />
+            </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="ext\BalExtension\balutil\inc\balcondition.h" />
+            </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="ext\BalExtension\balutil\inc\balretry.h" />
+            </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="ext\BalExtension\balutil\inc\balutil.h" />
+            </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="IBootstrapperApplication.h" />
+            </Component>
+
+            <Component Directory="SdkIncDir">
+                <File Source="IBootstrapperEngine.h" />
+            </Component>
+            
+            <?if $(var.Build2005)=true ?>
+            <ComponentRef Id="balutil_2005.lib" />
+            <ComponentRef Id="balutil_2005_x64.lib" />
+            <?endif ?>
+
+            <?if $(var.Build2008)=true ?>
+            <ComponentRef Id="balutil_2008.lib" />
+            <ComponentRef Id="balutil_2008_x64.lib" />
+            <?endif ?>
+
+            <?if $(var.Build2010)=true ?>
+            <ComponentRef Id="balutil_2010.lib" />
+            <ComponentRef Id="balutil_2010_x64.lib" />
+            <?endif ?>
         </ComponentGroup>
+    </Fragment>
+    
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2005.lib" />
+        </Component>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2005_x64.lib" />
+        </Component>
+    </Fragment>
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2008.lib" />
+        </Component>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2008_x64.lib" />
+        </Component>
+    </Fragment>
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2010.lib" />
+        </Component>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="balutil_2010_x64.lib" />
+        </Component>
     </Fragment>
 </Wix>

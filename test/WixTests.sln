@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "src\Bootstrapper\UnitTest\UnitTest.vcxproj", "{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DUtilUnitTest", "src\UnitTests\dutil\DUtilUnitTest.vcxproj", "{AB7EE608-E5FB-42A5-831F-0DEEEA141223}"
+EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = WixTests.vsmdi
@@ -141,11 +143,28 @@ Global
 		{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}.Release|Win32.Build.0 = Release|Win32
 		{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}.Release|x64.ActiveCfg = Release|Win32
 		{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}.Release|x86.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|ia64.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|Win32.Build.0 = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|x64.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Debug|x86.ActiveCfg = Debug|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|Any CPU.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|ia64.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|Win32.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|Win32.Build.0 = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|x64.ActiveCfg = Release|Win32
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223}.Release|x86.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67} = {487ED4E0-AA91-46F2-B17F-ADE07ED7EB9F}
+		{AB7EE608-E5FB-42A5-831F-0DEEEA141223} = {487ED4E0-AA91-46F2-B17F-ADE07ED7EB9F}
 	EndGlobalSection
 EndGlobal

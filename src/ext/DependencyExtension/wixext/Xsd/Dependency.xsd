@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:html="http://www.w3.org/1999/xhtml"
-            xmlns:wix="http://schemas.microsoft.com/wix/2006/wi"
-             xmlns:xs="http://www.w3.org/2001/XMLSchema"
-            xmlns:xse="http://schemas.microsoft.com/wix/2005/XmlSchemaExtension"
-      targetNamespace="http://schemas.microsoft.com/wix/DependencyExtension"
-                xmlns="http://schemas.microsoft.com/wix/DependencyExtension">
+<xs:schema xmlns:html="http://www.w3.org/1999/xhtml" xmlns:wix="http://schemas.microsoft.com/wix/2006/wi" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xse="http://schemas.microsoft.com/wix/2005/XmlSchemaExtension" targetNamespace="http://schemas.microsoft.com/wix/DependencyExtension" xmlns="http://schemas.microsoft.com/wix/DependencyExtension">
     <xs:annotation>
         <xs:documentation>
             Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -20,14 +15,18 @@
             The source code schema for the Windows Installer XML Toolset Dependency Extension.
         </xs:documentation>
     </xs:annotation>
-
     <xs:element name="Provides">
         <xs:annotation>
             <xs:appinfo>
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Component" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="ExePackage" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsiPackage" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MspPackage" />
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsuPackage" />
                 <xse:remarks>
                     <html:p>
                         This element is required for any product or feature that will use the Dependency feature to properly reference count
+                        This element is required for any product, feature, or bundle that will use the Dependency feature to properly reference count
                         other products or features. It should be authored into a component that is always installed and removed with the
                         product or features that contain it. This guarantees that product dependencies are not removed before those products that
                         depend on them.
@@ -40,9 +39,13 @@
                     </html:p>
                     <html:p>
                         By default this uses the Product/@UpgradeCode attribute value,
+                        By default this uses the Product/@UpgradeCode or Bundle/@UpgradeCode attribute value,
                         which typically identifies a family of products, plus the major version number of the Product/@Version attribute value.
+                        which typically identifies a family of products, plus the major version number of the @Version attribute value.
                         This supports most major upgrades. For example, if your UpgradeCode is {B0F46F5E-9979-44B5-B145-FFF40EC0E171}
+                        This supports most major upgrades. For example, if your @UpgradeCode is {B0F46F5E-9979-44B5-B145-FFF40EC0E171}
                         and your ProductVersion is 1.0.0.0, the calculated value would be {B0F46F5E-9979-44B5-B145-FFF40EC0E171}v1.
+                        and your @Version is 1.0.0.0, the calculated value would be {B0F46F5E-9979-44B5-B145-FFF40EC0E171}v1.
                     </html:p>
                     <html:p>
                         If you use a different versioning scheme for your product upgrades, you can specify your own guarantee of backward compatibility
@@ -56,8 +59,8 @@
         </xs:annotation>
         <xs:complexType>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element ref="Requires"/>
-                <xs:element ref="RequiresRef"/>
+                <xs:element ref="Requires" />
+                <xs:element ref="RequiresRef" />
             </xs:choice>
             <xs:attribute name="Id" type="xs:string">
                 <xs:annotation>
@@ -69,17 +72,28 @@
             <xs:attribute name="Key" type="xs:string">
                 <xs:annotation>
                     <xs:documentation>
-                        Optional unique registry key name that identifies a product version range on which other products can depend.
-                        The default value is generated from other attributes of the product authoring. See the remarks for more information.
-                        This attribute is mutually exclusive with the @VersionGuarantee attribute.
+                        <html:p>
+                            Optional unique registry key name that identifies a product version range on which other products can depend.
+                            A unique registry key name that identifies a product version range on which other products can depend.
+                            The default value is generated from other attributes of the product authoring. See the remarks for more information.
+                            This attribute is mutually exclusive with the @VersionGuarantee attribute.
+                        </html:p>
+                        <html:p>
+                            This attribute is required in package authoring, but optional for components.
+                        </html:p>
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="VersionGuarantee">
                 <xs:annotation>
                     <xs:documentation>
-                        Optional guarantee for backward compatibility. See the remarks for more information. This attribute is mutually
-                        exclusive with the @Key attribute.
+                        <html:p>
+                            Optional guarantee for backward compatibility. See the remarks for more information. This attribute is mutually
+                            exclusive with the @Key attribute.
+                        </html:p>
+                        <html:p>
+                            This attribute cannot be specified in package authoring.
+                        </html:p>
                     </xs:documentation>
                 </xs:annotation>
                 <xs:simpleType>
@@ -121,6 +135,7 @@
     <xs:element name="Requires">
         <xs:annotation>
             <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Module" />
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Product" />
@@ -205,7 +220,7 @@
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:pattern value="(\d{1,5}\.){3}\d{1,5}|[!$]\((var|bind|wix)\.[_A-Za-z][\w\.]*\)"/>
+            <xs:pattern value="(\d{1,5}\.){3}\d{1,5}|[!$]\((var|bind|wix)\.[_A-Za-z][\w\.]*\)" />
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="YesNoType">
@@ -215,8 +230,8 @@
             </xs:documentation>
         </xs:annotation>
         <xs:restriction base="xs:NMTOKEN">
-            <xs:enumeration value="no"/>
-            <xs:enumeration value="yes"/>
+            <xs:enumeration value="no" />
+            <xs:enumeration value="yes" />
         </xs:restriction>
     </xs:simpleType>
 </xs:schema>

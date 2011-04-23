@@ -37,8 +37,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             ProvidesAttributesVersionGuaranteeMinor |
             ProvidesAttributesVersionGuaranteeBuild;
 
-        // The root registry key for the dependency extension.
-        internal static readonly string RegistryRoot = @"Software\Dependencies\";
+        // The root registry key for the dependency extension. We write to Software\Classes explicitly
+        // based on the current security context instead of HKCR. See
+        // http://msdn.microsoft.com/en-us/library/ms724475(VS.85).aspx for more information.
+        internal static readonly string RegistryRoot = @"Software\Classes\Installer\Dependencies\";
         internal static readonly string RegistryDependents = "Dependents";
     }
 }

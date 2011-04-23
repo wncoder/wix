@@ -454,6 +454,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Resolves the source path of a file related to another file's source.
+        /// </summary>
+        /// <param name="source">Original source value.</param>
+        /// <param name="relatedSource">Source related to original source.</param>
+        /// <param name="type">Optional type of source file being resolved.</param>
+        /// <param name="sourceLineNumbers">Optional source line of source file being resolved.</param>
+        /// <param name="bindStage">The binding stage used to determine what collection of bind paths will be used</param>
+        /// <returns>Should return a valid path for the stream to be imported.</returns>
+        public virtual string ResolveRelatedFile(string source, string relatedSource, string type, SourceLineNumberCollection sourceLineNumbers, BindStage bindStage)
+        {
+            string resolvedSource = this.ResolveFile(source, type, sourceLineNumbers, bindStage);
+            return Path.Combine(Path.GetDirectoryName(resolvedSource), relatedSource);
+        }
+
+        /// <summary>
         /// Resolves the source path of a cabinet file.
         /// </summary>
         /// <param name="fileRows">Collection of files in this cabinet.</param>
@@ -484,7 +499,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // if we still think we're going to reuse the cabinet check to see if the cabinet exists first
             if (this.reuseCabinets)
             {
-                bool cabinetExists = false;
+                bool cabinetValid = false;
 
                 if (BinderFileManager.CheckFileExists(cabinetPath))
                 {
@@ -492,7 +507,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // 1. any files are added or removed
                     // 2. order of files changed or names changed
                     // 3. modified time changed
-                    cabinetExists = true;
+                    cabinetValid = true;
 
                     // Need to force garbage collection of WixEnumerateCab to ensure the handle
                     // associated with it is closed before it is reused.
@@ -502,22 +517,30 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                         if (fileRows.Count != fileList.Count)
                         {
-                            cabinetExists = false;
+                            cabinetValid = false;
                         }
                         else
                         {
                             int i = 0;
                             foreach (FileRow fileRow in fileRows)
                             {
-                                CabinetFileInfo fileInfo = fileList[i] as CabinetFileInfo;
-                                DateTime fileTime = File.GetLastWriteTime(fileRow.Source);
-
-                                ushort cabDate;
-                                ushort cabTime;
-                                Cab.Interop.CabInterop.DateTimeToCabDateAndTime(fileTime, out cabDate, out cabTime);
-                                if (fileRow.File != fileInfo.FileId || fileInfo.Date != cabDate || fileInfo.Time != cabTime)
+                                // First check that the file identifiers match because that is quick and easy.
+                                CabinetFileInfo cabFileInfo = fileList[i] as CabinetFileInfo;
+                                cabinetValid = (cabFileInfo.FileId == fileRow.File);
+                                if (cabinetValid)
                                 {
-                                    cabinetExists = false;
+                                    // Still valid so ensure the source time stamp hasn't changed. Thus we need
+                                    // to convert the source file time stamp into a cabinet compatible data/time.
+                                    DateTime sourceFileTime = File.GetLastWriteTime(fileRow.Source);
+                                    ushort sourceCabDate;
+                                    ushort sourceCabTime;
+
+                                    Cab.Interop.CabInterop.DateTimeToCabDateAndTime(sourceFileTime, out sourceCabDate, out sourceCabTime);
+                                    cabinetValid = (cabFileInfo.Date == sourceCabDate && cabFileInfo.Time == sourceCabTime);
+                                }
+
+                                if (!cabinetValid)
+                                {
                                     break;
                                 }
 
@@ -527,7 +550,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                return (cabinetExists ? CabinetBuildOption.Copy : CabinetBuildOption.BuildAndCopy);
+                return (cabinetValid ? CabinetBuildOption.Copy : CabinetBuildOption.BuildAndCopy);
             }
             else // by default move the built cabinet
             {

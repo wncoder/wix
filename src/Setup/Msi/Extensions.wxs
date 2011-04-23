@@ -24,6 +24,9 @@
             <Component Id="ComPlusExt" Guid="AE46D16E-35EA-48F4-B539-7DFE27A75099" Win64="no">
                 <File Source="WixComPlusExtension.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
             </Component>
+            <Component>
+               <File Source="WixDependencyExtension.dll" />
+            </Component>
             <Component Id="DifxAppExt" Guid="1B2303F6-9A78-417C-B96F-A8EE9AD0F9CA" Win64="no">
               <File Source="WixDifxAppExtension.dll" KeyPath="yes" Checksum="yes" Vital="yes" />
               <File Source="difxapp_x86.wixlib" />
@@ -97,6 +100,7 @@
         <ComponentGroup Id="Extensions">
             <ComponentRef Id="BalExt" />
             <ComponentRef Id="ComPlusExt" />
+            <ComponentRef Id="WixDependencyExtension.dll" />
             <ComponentRef Id="DifxAppExt" />
             <ComponentRef Id="DirectXExt" />
             <ComponentRef Id="FirewallExt" />

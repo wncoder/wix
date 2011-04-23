@@ -263,7 +263,9 @@
       <Isolated>False</Isolated>
     </COMReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="UnitTests\dutil\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="Burn\CommonTestFixture\FileMetrics\Readme.txt" />
   </ItemGroup>

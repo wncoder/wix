@@ -131,7 +131,7 @@ HRESULT RegistrationDetectResumeType(
     __out BOOTSTRAPPER_RESUME_TYPE* pResumeType
     );
 HRESULT RegistrationDetectRelatedBundles(
-    __in BURN_MODE mode,
+    __in BOOL fElevated,
     __in_opt BURN_USER_EXPERIENCE* pUX,
     __in BURN_REGISTRATION* pRegistration,
     __in_opt BOOTSTRAPPER_COMMAND* pCommand

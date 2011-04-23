@@ -1592,6 +1592,7 @@
         <columnDefinition name="SourceFile" type="object" length="0"/>
         <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="UnresolvedSourceFile" type="string" length="0"/>
     </tableDefinition>
     <tableDefinition name="WixBundle" unreal="yes">
         <columnDefinition name="Version" type="string" length="24" />
@@ -1662,6 +1663,11 @@
         <columnDefinition name="Value" type="string" length="0" />
         <columnDefinition name="Type" type="string" length="0" nullable="yes" />
     </tableDefinition>
+    <tableDefinition name="WixPackageFeatureInfo" unreal="yes" bootstrapperApplicationData="yes">
+        <columnDefinition name="Package" type="string" length="0" />
+        <columnDefinition name="Feature"  type="string" length="0" />
+        <columnDefinition name="Size" type="string" length="0" />
+    </tableDefinition>
     <tableDefinition name="WixPackageProperties" unreal="yes" bootstrapperApplicationData="yes">
         <columnDefinition name="Package"  type="string" length="0" category="identifier" primaryKey="yes"
                 keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
@@ -1672,6 +1678,7 @@
         <columnDefinition name="PackageSize" type="string" length="0" nullable="yes"/>
         <columnDefinition name="InstalledSize" type="string" length="0" nullable="yes"/>
         <columnDefinition name="PackageType" type="string" length="0" nullable="no"/>
+        <columnDefinition name="Permanent" type="string" length="0" nullable="yes"/>
     </tableDefinition>
     <tableDefinition name="WixLayoutDirectory" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="72" category="identifier" primaryKey="yes"/>

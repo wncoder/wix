@@ -123,7 +123,7 @@
               (will not create a valid output)
    -b &lt;path&gt;  specify a binder path to locate all files
               (default: current directory)
-              prefix the path with 'name:' where 'name' is the name of your
+              prefix the path with 'name=' where 'name' is the name of your
               named bindpath.
    -bf        bind files into a wixout (only valid with -xo option)
    -binder &lt;classname&gt;  specify a specific custom binder to use provided by

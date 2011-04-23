@@ -1079,7 +1079,7 @@ static HRESULT OnDetectRelatedBundles(
 {
     HRESULT hr = S_OK;
 
-    hr = RegistrationDetectRelatedBundles(BURN_MODE_ELEVATED, NULL, pRegistration, NULL);
+    hr = RegistrationDetectRelatedBundles(TRUE, NULL, pRegistration, NULL);
     ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
 
 LExit:

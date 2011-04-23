@@ -3784,11 +3784,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.IllegalPropertyCustomActionAttributes(sourceLineNumbers));
             }
 
-            if (MsiInterop.MsidbCustomActionTypePatchUninstall == (extendedBits & MsiInterop.MsidbCustomActionTypePatchUninstall) && MsiInterop.MsidbCustomActionTypeDll != targetBits && MsiInterop.MsidbCustomActionTypeExe != targetBits && MsiInterop.MsidbCustomActionTypeVBScript != targetBits && MsiInterop.MsidbCustomActionTypeJScript != targetBits)
-            {
-                this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name, "PatchUninstall", "DllEntry", "ExeCommand", "VBScriptCall", "JScriptCall"));
-            }
-
             if (0 == targetBits)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttributes(sourceLineNumbers, node.Name, "DllEntry", "Error", "ExeCommand", "JScriptCall", "Script", "Value", "VBScriptCall"));
@@ -20514,6 +20509,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     row[4] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
                 }
+                row[5] = sourceFile; // duplicate of sourceFile but in a string column so it won't get resolved to a full path during binding.
 
                 this.CreateGroupAndOrderingRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Payload, id, previousType, previousId);
             }

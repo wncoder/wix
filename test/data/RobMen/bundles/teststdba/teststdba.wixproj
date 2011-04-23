@@ -17,10 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\packages\ExePkg\ExePkg.csproj">
-      <DoNotHarvest>true</DoNotHarvest>
-    </ProjectReference>
+    <ProjectReference Include="..\..\packages\ExePkg\ExePkg.csproj" />
   </ItemGroup>
 
   <Import Project="$(WixTargetsPath)" Condition="Exists('$(WixTargetsPath)')" />
+
+    <Target Name="SignBundle">
+        <Message Text="I wish I was signing: $(TargetPath)" />
+    </Target>
 </Project>

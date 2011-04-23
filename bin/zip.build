@@ -103,6 +103,7 @@
         <include name="SetupBuilder.dll" />
         <include name="smoke.exe" />
         <include name="smoke.exe.config" />
+        <include name="ThmViewer.exe" />
         <include name="torch.exe" />
         <include name="torch.exe.config" />
         <include name="votive2005.dll" />
@@ -142,6 +143,7 @@
         <include name="${dir.target.wix.x64}\difxapp_x64.wixlib" />
         <include name="${dir.target.wix.ia64}\difxapp_ia64.wixlib" if="${ia64}" />
 
+        <include name="WixDependencyExtension.dll" />
         <include name="WixDirectXExtension.dll" />
         <include name="WixFirewallExtension.dll" />
         <include name="WixGamingExtension.dll" />
@@ -190,6 +192,9 @@
         <include name="lux.xsd" />
       </fileset>
 
+      <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\BalExtension\wixext\Xsd">
+        <include name="bal.xsd" />
+      </fileset>
       <fileset prefix="doc" basedir="${dir.target.wix}\src\ext\ComPlusExtension\wixext\Xsd">
         <include name="complus.xsd" />
       </fileset>
@@ -279,6 +284,7 @@
         <include name="${dir.inc.balutil}\balcondition.h" />
         <include name="${dir.inc.balutil}\balretry.h" />
         <include name="${dir.inc.balutil}\balutil.h" />
+        <include name="${dir.inc.deputil}\deputil.h" />
         <include name="${dir.inc.dutil}\aclutil.h" />
         <include name="${dir.inc.dutil}\apuputil.h" />
         <include name="${dir.inc.dutil}\atomutil.h" />
@@ -343,6 +349,10 @@
         <include name="${dir.target.wix.x64}\balutil_2005_x64.lib" if="${BuildVC8}" />
         <include name="${dir.target.wix.x64}\balutil_2008_x64.lib" if="${BuildVC9}" />
         <include name="${dir.target.wix.x64}\balutil_2010_x64.lib" if="${BuildVC10}" />
+
+        <include name="deputil_2005.lib" if="${BuildVC8}" />
+        <include name="deputil_2008.lib" if="${BuildVC9}" />
+        <include name="deputil_2010.lib" if="${BuildVC10}" />
 
         <include name="wcautil_2005.lib" if="${BuildVC8}" />
         <include name="wcautil_2008.lib" if="${BuildVC9}" />
@@ -416,6 +426,7 @@
         <include name="**/*.xsd" />
         <include name="**/*.xaml" />
         <include name="**/thm.xml" />
+        <include name="**/*theme.xml" />
         <include name="bin/publickey_wix.snk" />
 
         <!-- skip the files we don't want that match one of the above extensions -->

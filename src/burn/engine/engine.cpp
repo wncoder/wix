@@ -36,9 +36,6 @@ static HRESULT RunEmbedded(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_z_opt LPCWSTR wzCommandLine
     );
-static HRESULT RunUncache(
-    __in BURN_ENGINE_STATE* pEngineState
-    );
 static HRESULT RunApplication(
     __in BURN_ENGINE_STATE* pEngineState,
     __out BOOL* pfReloadApp
@@ -111,24 +108,21 @@ extern "C" HRESULT EngineRun(
     switch (engineState.mode)
     {
     case BURN_MODE_NORMAL:
-        hr = RunNormal(hInstance, &engineState, wzCommandLine);
-        ExitOnFailure(hr, "Failed to run per-user mode.");
-        break;
-
-    case BURN_MODE_ELEVATED:
-        hr = RunElevated(&engineState);
-        ExitOnFailure(hr, "Failed to run per-machine mode.");
+        if (engineState.fElevated)
+        {
+            hr = RunElevated(&engineState);
+            ExitOnFailure(hr, "Failed to run per-machine mode.");
+        }
+        else
+        {
+            hr = RunNormal(hInstance, &engineState, wzCommandLine);
+            ExitOnFailure(hr, "Failed to run per-user mode.");
+        }
         break;
 
     case BURN_MODE_EMBEDDED:
         hr = RunEmbedded(hInstance, &engineState, wzCommandLine);
         ExitOnFailure(hr, "Failed to run embedded mode.");
-        break;
-
-    case BURN_MODE_UNCACHE_PER_MACHINE: __fallthrough;
-    case BURN_MODE_UNCACHE_PER_USER:
-        hr = RunUncache(&engineState);
-        ExitOnFailure(hr, "Failed to run uncache mode.");
         break;
 
     default:
@@ -295,33 +289,6 @@ static HRESULT RunEmbedded(
     ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:
-    return hr;
-}
-
-static HRESULT RunUncache(
-    __in BURN_ENGINE_STATE* pEngineState
-    )
-{
-    HRESULT hr = S_OK;
-    BOOL fRunningPerMachine = (BURN_MODE_UNCACHE_PER_MACHINE == pEngineState->mode);
-
-    for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
-    {
-        BURN_PACKAGE* pPackage = pEngineState->packages.rgPackages + i;
-
-        if (fRunningPerMachine == pPackage->fPerMachine)
-        {
-            hr = CacheRemovePackage(pPackage->fPerMachine, pPackage->sczCacheId);
-        }
-    }
-
-    if (pEngineState->registration.fRegisterArp && fRunningPerMachine == pEngineState->registration.fPerMachine)
-    {
-        hr = RegistrationSessionEnd(&pEngineState->registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, fRunningPerMachine, NULL);
-    }
-
-    hr = S_OK;
-
     return hr;
 }
 

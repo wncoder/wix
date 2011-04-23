@@ -36,6 +36,7 @@ static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
     __out BURN_MODE* pMode,
+    __out BOOL* pfElevated,
     __out DWORD *pdwLoggingAttributes,
     __inout_z LPWSTR* psczLogFile,
     __inout_z LPWSTR* psczParentPipeName,
@@ -71,7 +72,7 @@ extern "C" HRESULT CoreInitialize(
     pEngineState->hElevatedPipe = INVALID_HANDLE_VALUE;
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->mode, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczParentPipeName, &pEngineState->sczParentToken, &sczLayoutDirectory);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->mode, &pEngineState->fElevated, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczParentPipeName, &pEngineState->sczParentToken, &sczLayoutDirectory);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     pEngineState->command.nCmdShow = nCmdShow;
@@ -235,7 +236,7 @@ extern "C" HRESULT CoreDetect(
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to execute searches.");
 
-    hr = RegistrationDetectRelatedBundles(pEngineState->mode, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
+    hr = RegistrationDetectRelatedBundles(pEngineState->fElevated, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
     ExitOnFailure(hr, "Failed to detect bundles.");
 
     // Detecting MSPs requires special initialization before processing each package but
@@ -516,53 +517,55 @@ extern "C" HRESULT CorePlan(
     }
 
     // Plan the removal of related bundles last as long as we are not doing layout only.
-    for (DWORD i = 0; i < pEngineState->registration.cRelatedBundles && BOOTSTRAPPER_ACTION_LAYOUT != action; ++i)
+    if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
-        BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.rgRelatedBundles + i;
-        BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
-
-        switch (pRelatedBundle->relationType)
+        for (DWORD i = 0; i < pEngineState->registration.cRelatedBundles; ++i)
         {
-        case BURN_RELATION_UPGRADE:
-            requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
-            break;
-        case BURN_RELATION_ADDON:
-            requested = (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action) ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
-            break;
-        case BURN_RELATION_DETECT:
-            break;
-        default:
-            hr = E_UNEXPECTED;
-            ExitOnFailure1(hr, "Unexpected relation type encountered during plan: %d", pRelatedBundle->relationType);
-            break;
-        }
-        
+            BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.rgRelatedBundles + i;
+            BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
 
-        BOOTSTRAPPER_REQUEST_STATE defaultRequested = requested;
-
-        nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
-        hr = HRESULT_FROM_VIEW(nResult);
-        ExitOnRootFailure(hr, "UX aborted plan related bundle.");
-
-        // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
-        if (requested != defaultRequested)
-        {
-            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
-        }
-
-        if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == requested)
-        {
-            hr = ExeEnginePlanPackage(dwPackageSequence, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
-            ExitOnFailure1(hr, "Failed to plan uninstall action to upgrade package: %ls", pPackage->sczId);
-
-            ++pEngineState->plan.cExecutePackagesTotal;
-            ++pEngineState->plan.cOverallProgressTicksTotal;
-            ++dwPackageSequence;
-
-            // If package is per-machine and is being executed, flag the plan to be per-machine as well.
-            if (pPackage->fPerMachine)
+            switch (pRelatedBundle->relationType)
             {
-                pEngineState->plan.fPerMachine = TRUE;
+            case BURN_RELATION_UPGRADE:
+                requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+                break;
+            case BURN_RELATION_ADDON:
+                requested = (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action) ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+                break;
+            case BURN_RELATION_DETECT:
+                break;
+            default:
+                hr = E_UNEXPECTED;
+                ExitOnFailure1(hr, "Unexpected relation type encountered during plan: %d", pRelatedBundle->relationType);
+                break;
+            }
+
+            BOOTSTRAPPER_REQUEST_STATE defaultRequested = requested;
+
+            nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
+            hr = HRESULT_FROM_VIEW(nResult);
+            ExitOnRootFailure(hr, "UX aborted plan related bundle.");
+
+            // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
+            if (requested != defaultRequested)
+            {
+                LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
+            }
+
+            if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == requested)
+            {
+                hr = ExeEnginePlanPackage(dwPackageSequence, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
+                ExitOnFailure1(hr, "Failed to plan uninstall action to upgrade package: %ls", pPackage->sczId);
+
+                ++pEngineState->plan.cExecutePackagesTotal;
+                ++pEngineState->plan.cOverallProgressTicksTotal;
+                ++dwPackageSequence;
+
+                // If package is per-machine and is being executed, flag the plan to be per-machine as well.
+                if (pPackage->fPerMachine)
+                {
+                    pEngineState->plan.fPerMachine = TRUE;
+                }
             }
         }
     }
@@ -753,6 +756,7 @@ static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
     __out BURN_MODE* pMode,
+    __out BOOL* pfElevated,
     __out DWORD *pdwLoggingAttributes,
     __inout_z LPWSTR* psczLogFile,
     __inout_z LPWSTR* psczParentPipeName,
@@ -861,6 +865,13 @@ static HRESULT ParseCommandLine(
                     pCommand->action = BOOTSTRAPPER_ACTION_REPAIR;
                 }
             }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"modify", -1))
+            {
+                if (BOOTSTRAPPER_ACTION_HELP != pCommand->action)
+                {
+                    pCommand->action = BOOTSTRAPPER_ACTION_MODIFY;
+                }
+            }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"package", -1) ||
                      CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"update", -1))
             {
@@ -890,7 +901,7 @@ static HRESULT ParseCommandLine(
                     ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the parent and child elevation tokens.");
                 }
 
-                *pMode = BURN_MODE_ELEVATED;
+                *pfElevated = TRUE;
 
                 ++i;
 
@@ -920,14 +931,6 @@ static HRESULT ParseCommandLine(
 
                 hr = StrAllocString(psczParentToken, argv[i], 0);
                 ExitOnFailure(hr, "Failed to copy communication token.");
-            }
-            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_UNCACHE_PER_MACHINE, -1))
-            {
-                *pMode = BURN_MODE_UNCACHE_PER_MACHINE;
-            }
-            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_UNCACHE_PER_USER, -1))
-            {
-                *pMode = BURN_MODE_UNCACHE_PER_USER;
             }
             else
             {

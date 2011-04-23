@@ -1,6 +1,5 @@
-#pragma once
 //-------------------------------------------------------------------------------------------------
-// <copyright file="precomp.h" company="Microsoft">
+// <copyright file="UnitTest.rc" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -11,23 +10,15 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
-//    Precompiled header for WixDepCA
+//
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-#include <windows.h>
-#include <msiquery.h>
-#include <intsafe.h>
-#include <strsafe.h>
-
-#include "wcautil.h"
-#include "fileutil.h"
-#include "strutil.h"
-#include "memutil.h"
-#include "regutil.h"
-#include "dictutil.h"
-#include "deputil.h"
-
-#include "CustomMsiErrors.h"
+#define VER_APP
+#define VER_ORIGINAL_FILENAME "UnitTest.dll"
+#define VER_INTERNAL_NAME "setup"
+#define VER_PRODUCT_NAME "WiX Toolset Bootstrapper unit tests"
+#define VER_FILE_DESCRIPTION "WiX Toolset Bootstrapper unit tests"
+#include "wix.rc"

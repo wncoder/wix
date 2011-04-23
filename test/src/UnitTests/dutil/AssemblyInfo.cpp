@@ -1,6 +1,5 @@
-#pragma once
 //-------------------------------------------------------------------------------------------------
-// <copyright file="precomp.h" company="Microsoft">
+// <copyright file="AssemblyInfo.cpp" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -11,23 +10,19 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
-//    Precompiled header for WixDepCA
+//
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-#include <windows.h>
-#include <msiquery.h>
-#include <intsafe.h>
-#include <strsafe.h>
+#include "precomp.h"
 
-#include "wcautil.h"
-#include "fileutil.h"
-#include "strutil.h"
-#include "memutil.h"
-#include "regutil.h"
-#include "dictutil.h"
-#include "deputil.h"
+using namespace System::Reflection;
+using namespace System::Runtime::CompilerServices;
+using namespace System::Runtime::InteropServices;
 
-#include "CustomMsiErrors.h"
+[assembly: AssemblyTitleAttribute("Windows Installer XML Dutil unit tests")];
+[assembly: AssemblyDescriptionAttribute("Dutil unit tests")];
+[assembly: AssemblyCultureAttribute("")];
+[assembly: ComVisible(false)];

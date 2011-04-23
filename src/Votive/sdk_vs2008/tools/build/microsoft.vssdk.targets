@@ -328,8 +328,8 @@ PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
           ItemName="IntermediateZipItem"/>
     </ZipItems>
 
-    <Copy SourceFiles="@(IntermediateZipProject)" DestinationFiles="@(IntermediateZipProject->'$(ZipProjectOutput)\%(OutputSubPath)\%(FileName)%(Extension)')" />
-    <Copy SourceFiles="@(IntermediateZipItem)" DestinationFolder="$(ZipItemOutput)" />
+    <!-- Copy SourceFiles="@(IntermediateZipProject)" DestinationFiles="@(IntermediateZipProject->'$(ZipProjectOutput)\%(OutputSubPath)\%(FileName)%(Extension)')" / -->
+    <!-- Copy SourceFiles="@(IntermediateZipItem)" DestinationFolder="$(ZipItemOutput)" / -->
 
   </Target>
 

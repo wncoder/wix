@@ -18,6 +18,7 @@
 
 #include "precomp.h"
 
+static const WCHAR CABC_MAGIC_UNICODE_STRING_MARKER = '?';
 static const DWORD MAX_CABINET_HEADER_SIZE = 16 * 1024 * 1024;
 
 // The minimum number of uncompressed bytes between FciFlushFolder() calls - if we call FciFlushFolder()
@@ -55,11 +56,17 @@ struct MS_CABINET_ITEM
     WORD attribs;
 };
 
+struct CABC_INTERNAL_ADDFILEINFO
+{
+    LPCWSTR wzSourcePath;
+    LPCWSTR wzEmptyPath;
+};
 
 struct CABC_DUPLICATEFILE
 {
     DWORD dwFileArrayIndex;
     DWORD dwDuplicateCabFileIndex;
+    LPWSTR pwzSourcePath;
     LPWSTR pwzToken;
 };
 
@@ -122,6 +129,7 @@ static HRESULT CheckForDuplicateFile(
 static HRESULT AddDuplicateFile(
     __in CABC_DATA *pcd,
     __in DWORD dwFileArrayIndex,
+    __in_z LPCWSTR wzSourcePath,
     __in_opt LPCWSTR wzToken,
     __in DWORD dwDuplicateCabFileIndex
     );
@@ -405,7 +413,7 @@ extern "C" HRESULT DAPI CabCAddFile(
         hr = ::PtrdiffTToDWord(pcfDuplicate - pcd->prgFiles, &index);
         ExitOnFailure1(hr, "Failed to calculate index of file name: %ls", pcfDuplicate->pwzSourcePath);
 
-        hr = AddDuplicateFile(pcd, index, wzToken, pcd->dwLastFileIndex);
+        hr = AddDuplicateFile(pcd, index, sczUpperCaseFile, wzToken, pcd->dwLastFileIndex);
         ExitOnFailure1(hr, "Failed to add duplicate of file name: %ls", pcfDuplicate->pwzSourcePath);
     }
     else
@@ -442,15 +450,12 @@ extern "C" HRESULT DAPI CabCFinish(
 
     HRESULT hr = S_OK;
     CABC_DATA *pcd = reinterpret_cast<CABC_DATA*>(hContext);
-    char szFile[MAX_PATH * sizeof(WCHAR)] = {0};
+    CABC_INTERNAL_ADDFILEINFO fileInfo = { };
     DWORD dwCabFileIndex; // Total file index, counts up to pcd->dwLastFileIndex
     DWORD dwArrayFileIndex = 0; // Index into pcd->prgFiles[] array
     DWORD dwDupeArrayFileIndex = 0; // Index into pcd->prgDuplicates[] array
     LPSTR pszFileToken = NULL;
-    LPCWSTR wzFile = NULL;
     LONGLONG llFileSize = 0;
-    
-    szFile[0] = '?'; // signal that the following bytes are actually Unicode (wide) characters
 
     // These are used to determine whether to call FciFlushFolder() before or after the next call to FciAddFile()
     // doing so at appropriate times results in install-time performance benefits in the case of duplicate files.
@@ -476,12 +481,12 @@ extern "C" HRESULT DAPI CabCFinish(
     {
         if (dwArrayFileIndex < pcd->cMaxFilePaths && pcd->prgFiles[dwArrayFileIndex].dwCabFileIndex == dwCabFileIndex) // If it's a non-duplicate file
         {
-            wzFile = pcd->prgFiles[dwArrayFileIndex].pwzSourcePath;
-
             // Just a normal, non-duplicated file.  We'll add it to the list for later checking of
             // duplicates.
-            memcpy_s(szFile + 1, countof(szFile) - 1, wzFile, (lstrlenW(wzFile) + 1) * sizeof(WCHAR));
+            fileInfo.wzSourcePath = pcd->prgFiles[dwArrayFileIndex].pwzSourcePath;
+            fileInfo.wzEmptyPath = NULL;
 
+            // Use the provided token, otherwise default to the source file name.
             if (pcd->prgFiles[dwArrayFileIndex].pwzToken)
             {
                 LPCWSTR pwzTemp = pcd->prgFiles[dwArrayFileIndex].pwzToken;
@@ -490,7 +495,7 @@ extern "C" HRESULT DAPI CabCFinish(
             }
             else
             {
-                LPCWSTR pwzTemp = FileFromPath(pcd->prgFiles[dwArrayFileIndex].pwzSourcePath);
+                LPCWSTR pwzTemp = FileFromPath(fileInfo.wzSourcePath);
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
                 ExitOnFailure1(hr, "failed to convert file name to ANSI: %ls", pwzTemp);
             }
@@ -506,8 +511,17 @@ extern "C" HRESULT DAPI CabCFinish(
         }
         else if (dwDupeArrayFileIndex < pcd->cMaxDuplicates && pcd->prgDuplicates[dwDupeArrayFileIndex].dwDuplicateCabFileIndex == dwCabFileIndex) // If it's a duplicate file
         {
-            wzFile = pcd->prgFiles[pcd->prgDuplicates[dwDupeArrayFileIndex].dwFileArrayIndex].pwzSourcePath;
+            // For duplicate files, we point them at our empty (zero-byte) file so it takes up no space
+            // in the resultant cabinet.  Later on (CabCFinish) we'll go through and change all the zero
+            // byte files to point at their duplicated file index.
+            //
+            // Notice that duplicate files are not added to the list of file paths because all duplicate
+            // files point at the same path (the empty file) so there is no point in tracking them with
+            // their path.
+            fileInfo.wzSourcePath = pcd->prgDuplicates[dwDupeArrayFileIndex].pwzSourcePath;
+            fileInfo.wzEmptyPath = pcd->wzEmptyFile;
 
+            // Use the provided token, otherwise default to the source file name.
             if (pcd->prgDuplicates[dwDupeArrayFileIndex].pwzToken)
             {
                 LPCWSTR pwzTemp = pcd->prgDuplicates[dwDupeArrayFileIndex].pwzToken;
@@ -516,19 +530,10 @@ extern "C" HRESULT DAPI CabCFinish(
             }
             else
             {
-                LPCWSTR pwzTemp = FileFromPath(wzFile);
+                LPCWSTR pwzTemp = FileFromPath(fileInfo.wzSourcePath);
                 hr = StrAnsiAllocString(&pszFileToken, pwzTemp, 0, CP_ACP);
                 ExitOnFailure1(hr, "failed to convert duplicate file name to ANSI: %ls", pwzTemp);
             }
-
-            // For duplicate files, we point them at our empty (zero-byte) file so it takes up no space
-            // in the resultant cabinet.  Later on (CabCFinish) we'll go through and change all the zero
-            // byte files to point at their duplicated file index.
-            //
-            // Notice that duplicate files are not added to the list of file paths because all duplicate
-            // files point at the same path (the empty file) so there is no point in tracking them with
-            // their path.
-            memcpy_s(szFile + 1, countof(szFile) - 1, pcd->wzEmptyFile, (lstrlenW(pcd->wzEmptyFile) + 1) * sizeof(WCHAR));
 
             // Flush afterward only if this isn't a duplicate of the previous file, and at least one non-duplicate file remains to be added to the cab
             if (!(dwCabFileIndex - 1 == pcd->prgFiles[pcd->prgDuplicates[dwDupeArrayFileIndex].dwFileArrayIndex].dwCabFileIndex) &&
@@ -560,10 +565,12 @@ extern "C" HRESULT DAPI CabCFinish(
 
         pcd->llBytesSinceLastFlush += llFileSize;
 
-        // add the file to the cab
+        // Add the file to the cab. Notice that we are passing our CABC_INTERNAL_ADDFILEINFO struct
+        // through the pointer to an ANSI string. This is neccessary so we can smuggle through the
+        // path to the empty file (should this be a duplicate file).
 #pragma prefast(push)
 #pragma prefast(disable:6387) // OACR is silly, pszFileToken can't be false here
-        if (!::FCIAddFile(pcd->hfci, szFile, pszFileToken, FALSE, CabCGetNextCabinet, CabCStatus, CabCGetOpenInfo, pcd->tc))
+        if (!::FCIAddFile(pcd->hfci, reinterpret_cast<LPSTR>(&fileInfo), pszFileToken, FALSE, CabCGetNextCabinet, CabCStatus, CabCGetOpenInfo, pcd->tc))
 #pragma prefast(pop)
         {
             pcd->fGoodCab = FALSE;
@@ -575,10 +582,10 @@ extern "C" HRESULT DAPI CabCFinish(
             }
             else
             {
-                ExitWithLastError3(hr, "failed to add file to FCI object Oper: 0x%x Type: 0x%x File: %s", pcd->erf.erfOper, pcd->erf.erfType, szFile);
+                ExitWithLastError3(hr, "failed to add file to FCI object Oper: 0x%x Type: 0x%x File: %ls", pcd->erf.erfOper, pcd->erf.erfType, fileInfo.wzSourcePath);
             }
 
-            ExitOnFailure3(hr, "failed to add file to FCI object Oper: 0x%x Type: 0x%x File: %s", pcd->erf.erfOper, pcd->erf.erfType, szFile);  // TODO: can these be converted to HRESULTS?
+            ExitOnFailure3(hr, "failed to add file to FCI object Oper: 0x%x Type: 0x%x File: %ls", pcd->erf.erfOper, pcd->erf.erfType, fileInfo.wzSourcePath);  // TODO: can these be converted to HRESULTS?
         }
 
         if (fFlushAfter && pcd->llBytesSinceLastFlush > pcd->llFlushThreshhold)
@@ -660,7 +667,7 @@ static void FreeCabCData(
     if (pcd)
     {
         ReleaseFileHandle(pcd->hEmptyFile);
-        
+
         for (DWORD i = 0; i < pcd->cFilePaths; ++i)
         {
             ReleaseStr(pcd->prgFiles[i].pwzSourcePath);
@@ -759,6 +766,7 @@ LExit:
 static HRESULT AddDuplicateFile(
     __in CABC_DATA *pcd,
     __in DWORD dwFileArrayIndex,
+    __in_z LPCWSTR wzSourcePath,
     __in_opt LPCWSTR wzToken,
     __in DWORD dwDuplicateCabFileIndex
     )
@@ -796,6 +804,9 @@ static HRESULT AddDuplicateFile(
     pcd->prgDuplicates[pcd->cDuplicates].dwFileArrayIndex = dwFileArrayIndex;
     pcd->prgDuplicates[pcd->cDuplicates].dwDuplicateCabFileIndex = dwDuplicateCabFileIndex;
     pcd->prgFiles[dwFileArrayIndex].fHasDuplicates = TRUE; // Mark original file as having duplicates
+
+    hr = StrAllocString(&pcd->prgDuplicates[pcd->cDuplicates].pwzSourcePath, wzSourcePath, 0);
+    ExitOnFailure1(hr, "Failed to copy duplicate file path: %ls", wzSourcePath);
 
     if (wzToken && *wzToken)
     {
@@ -999,9 +1010,12 @@ static HRESULT DuplicateFile(
     pDuplicateItem->cbFile = pOriginalItem->cbFile;
     pDuplicateItem->uoffFolderStart = pOriginalItem->uoffFolderStart;
     pDuplicateItem->iFolder = pOriginalItem->iFolder;
-    pDuplicateItem->date = pOriginalItem->date;
-    pDuplicateItem->time = pOriginalItem->time;
-    pDuplicateItem->attribs = pOriginalItem->attribs;
+    // Note: we do *not* duplicate the date/time and attributes metadata from
+    // the original item to the duplicate. The following lines are commented
+    // so people are not tempted to put them back.
+    //pDuplicateItem->date = pOriginalItem->date;
+    //pDuplicateItem->time = pOriginalItem->time;
+    //pDuplicateItem->attribs = pOriginalItem->attribs;
 
 LExit:
     return hr;
@@ -1015,7 +1029,7 @@ static HRESULT UtcFileTimeToLocalDosDateTime(
     )
 {
     HRESULT hr = S_OK;
-	FILETIME ftLocal = { };
+    FILETIME ftLocal = { };
 
     if (!::FileTimeToLocalFileTime(pFileTime, &ftLocal))
     {
@@ -1112,7 +1126,8 @@ static __callback INT_PTR DIAMONDAPI CabCOpen(
     if (!dwAttributes)
         dwAttributes = FILE_ATTRIBUTE_NORMAL;
 
-    if (pszFile && '?' == *pszFile)
+    // Check to see if we were passed the magic character that says 'Unicode string follows'.
+    if (pszFile && CABC_MAGIC_UNICODE_STRING_MARKER == *pszFile)
     {
         pFile = reinterpret_cast<INT_PTR>(::CreateFileW(reinterpret_cast<LPCWSTR>(pszFile + 1), dwAccess, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, dwDisposition, dwAttributes, NULL));
     }
@@ -1123,6 +1138,7 @@ static __callback INT_PTR DIAMONDAPI CabCOpen(
         pFile = reinterpret_cast<INT_PTR>(::CreateFileA(pszFile, dwAccess, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, dwDisposition, dwAttributes, NULL));
 #pragma prefast(pop)
     }
+
     if (INVALID_HANDLE_VALUE == reinterpret_cast<HANDLE>(pFile))
     {
         ExitOnLastError1(hr, "failed to open file: %s", pszFile);
@@ -1275,17 +1291,10 @@ static __callback int DIAMONDAPI CabCDelete(
     UNREFERENCED_PARAMETER(err);
     UNREFERENCED_PARAMETER(pv);
 
-    if (*szFile == '?')
-    {
-        FileEnsureDelete(reinterpret_cast<LPCWSTR>(szFile + 1));
-    }
-    else
-    {
 #pragma prefast(push)
 #pragma prefast(disable:25068) // We intentionally don't use the unicode API here
-        ::DeleteFileA(szFile);
+    ::DeleteFileA(szFile);
 #pragma prefast(pop)
-    }
 
     return 0;
 }
@@ -1302,27 +1311,24 @@ static __callback BOOL DIAMONDAPI CabCGetTempFile(
     static volatile DWORD dwIndex = 0;
 
     HRESULT hr = S_OK;
-
-    LPWSTR pwzTempPath = NULL;
+    char szTempPath[MAX_PATH] = { };
     DWORD cchTempPath = MAX_PATH;
-
-    LPWSTR pwzTempFile = NULL;
-
     DWORD dwProcessId = ::GetCurrentProcessId();
     HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
-    hr = StrAlloc(&pwzTempPath, cchTempPath);
-    ExitOnFailure(hr, "failed to allocate memory for the temp path");
-    ::GetTempPathW(cchTempPath, pwzTempPath);
+    if (MAX_PATH < ::GetTempPathA(cchTempPath, szTempPath))
+    {
+        ExitWithLastError(hr, "Failed to get temp path during cabinet creation.");
+    }
 
     for (DWORD i = 0; i < DWORD_MAX; ++i)
     {
         ::InterlockedIncrement(reinterpret_cast<volatile LONG*>(&dwIndex));
 
-        hr = StrAllocFormatted(&pwzTempFile, L"%s\\%08x.%03x", pwzTempPath, dwIndex, dwProcessId);
-        ExitOnFailure(hr, "failed to allocate memory for log file");
+        hr = ::StringCbPrintfA(szFile, cbFile, "%s\\%08x.%03x", szTempPath, dwIndex, dwProcessId);
+        ExitOnFailure(hr, "failed to format log file path.");
 
-        hTempFile = ::CreateFileW(pwzTempFile, 0, FILE_SHARE_DELETE, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        hTempFile = ::CreateFileA(szFile, 0, FILE_SHARE_DELETE, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
         if (INVALID_HANDLE_VALUE != hTempFile)
         {
             // we found one that doesn't exist
@@ -1336,24 +1342,7 @@ static __callback BOOL DIAMONDAPI CabCGetTempFile(
     }
     ExitOnFailure(hr, "failed to find temporary file.");
 
-    if (cbFile < 3)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-        ExitOnRootFailure(hr, "Insufficient buffer for szFile.");
-    }
-
-    // TODO: Remember temp files so that we can ensure they're cleaned up later (especially if there's a failure)
-
-    // signal that the following bytes are actually Unicode (wide) characters
-    szFile[0] = '?';
-
-    hr = ::StringCbCopyW((LPWSTR)(szFile + 1), cbFile - 1, pwzTempFile);
-    ExitOnFailure1(hr, "failed to copy to out parameter filename: %ls", pwzTempFile);
-
 LExit:
-    ReleaseStr(pwzTempFile);
-    ReleaseStr(pwzTempPath);
-
     ReleaseFileHandle(hTempFile);
 
     if (FAILED(hr))
@@ -1389,27 +1378,35 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
     )
 {
     HRESULT hr = S_OK;
-    WIN32_FILE_ATTRIBUTE_DATA fad;
-    BOOL fSucceeded = FALSE;
+    CABC_INTERNAL_ADDFILEINFO* pFileInfo = reinterpret_cast<CABC_INTERNAL_ADDFILEINFO*>(pszName);
+    LPCWSTR wzFile = NULL;
+    DWORD cbFile = 0;
+    LPSTR pszFilePlusMagic = NULL;
+    DWORD cbFilePlusMagic = 0;
+    WIN32_FILE_ATTRIBUTE_DATA fad = { };
+    INT_PTR iResult = -1;
 
-    if (*pszName && '?' == *pszName)
+    // If there is an empty file provided, use that as the source path to cab (since we
+    // must be dealing with a duplicate file). Otherwise, use the source path you'd expect.
+    wzFile = pFileInfo->wzEmptyPath ? pFileInfo->wzEmptyPath : pFileInfo->wzSourcePath;
+    cbFile = (lstrlenW(wzFile) + 1) * sizeof(WCHAR);
+
+    // Convert the source file path into an Ansi string that our APIs will recognize as
+    // a Unicode string (due to the magic character).
+    cbFilePlusMagic = cbFile + 1; // add one for the magic.
+    pszFilePlusMagic = reinterpret_cast<LPSTR>(MemAlloc(cbFilePlusMagic, TRUE));
+
+    *pszFilePlusMagic = CABC_MAGIC_UNICODE_STRING_MARKER;
+    memcpy_s(pszFilePlusMagic + 1, cbFilePlusMagic - 1, wzFile, cbFile);
+
+    if (!::GetFileAttributesExW(pFileInfo->wzSourcePath, GetFileExInfoStandard, &fad))
     {
-        fSucceeded = ::GetFileAttributesExW(reinterpret_cast<LPCWSTR>(pszName + 1), GetFileExInfoStandard, &fad);
-    }
-    else
-    {
-#pragma prefast(push)
-#pragma prefast(disable:25068) // We intentionally don't use the unicode API here
-        fSucceeded = ::GetFileAttributesExA(pszName, GetFileExInfoStandard, &fad);
-#pragma prefast(pop)
+        ExitWithLastError1(hr, "Failed to get file attributes on '%s'.", pFileInfo->wzSourcePath);
     }
 
-    if (!fSucceeded)
-    {
-        ExitWithLastError1(hr, "Failed to get file attributes on '%s'.", pszName);
-    }
+    // Set the attributes but only allow the few attributes that CAB supports.
+    *pattribs = static_cast<USHORT>(fad.dwFileAttributes) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_ARCHIVE);
 
-    *pattribs = static_cast<USHORT>(fad.dwFileAttributes);
     hr = UtcFileTimeToLocalDosDateTime(&fad.ftLastWriteTime, pdate, ptime);
     if (FAILED(hr))
     {
@@ -1421,13 +1418,16 @@ static __callback INT_PTR DIAMONDAPI CabCGetOpenInfo(
         ExitOnFailure1(hr, "Filed to read a valid file time stucture on file '%s'.", pszName);
     }
 
+    iResult = CabCOpen(pszFilePlusMagic, _O_BINARY|_O_RDONLY, 0, err, pv);
+
 LExit:
+    ReleaseMem(pszFilePlusMagic);
     if (FAILED(hr))
     {
         *err = (int)hr;
     }
 
-    return FAILED(hr) ? -1 : CabCOpen(pszName, _O_BINARY|_O_RDONLY, 0, err, pv);
+    return FAILED(hr) ? -1 : iResult;
 }
 
 

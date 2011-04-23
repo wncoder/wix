@@ -37,6 +37,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 -->
 <Project
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+  DefaultTargets="Build"
   InitialTargets="_CheckForInvalidConfigurationAndPlatform;
                   _CheckRequiredProperties">
 
@@ -178,6 +179,8 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <BindContentsFileExtension Condition=" '$(BindContentsFileExtension)' == '' ">.txt</BindContentsFileExtension>
     <BindOutputsFilePrefix Condition=" '$(BindOutputsFilePrefix)' == '' ">$(MSBuildProjectFile).BindOutputsFileList</BindOutputsFilePrefix>
     <BindOutputsFileExtension Condition=" '$(BindOutputsFileExtension)' == '' ">.txt</BindOutputsFileExtension>
+    <BindBuiltOutputsFilePrefix Condition=" '$(BindBuiltOutputsFilePrefix)' == '' ">$(MSBuildProjectFile).BindBuiltOutputsFileList</BindBuiltOutputsFilePrefix>
+    <BindBuiltOutputsFileExtension Condition=" '$(BindBuiltOutputsFileExtension)' == '' ">.txt</BindBuiltOutputsFileExtension>
   </PropertyGroup>
 
   <PropertyGroup Condition=" $(IntermediateOutputPath) == '' ">
@@ -228,6 +231,10 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <!-- Ensure OutDir has a trailing slash, so it can be concatenated -->
     <OutDir Condition=" '$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)') ">$(OutDir)\</OutDir>
 
+    <!-- Default pdb output path to the output directory -->
+    <PdbOutputPath Condition=" '$(PdbOutputPath)'=='' ">$(OutDir)</PdbOutputPath>
+    <PdbOutputPath Condition=" '$(PdbOutputPath)' != '' and !HasTrailingSlash('$(PdbOutputPath)') ">$(PdbOutputPath)\</PdbOutputPath>
+
     <!-- Example, MySetup -->
     <ProjectName Condition=" '$(ProjectName)' == '' ">$(MSBuildProjectName)</ProjectName>
 
@@ -275,11 +282,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     when we pick up the value of an environment variable named TargetDir
     -->
     <TargetDir Condition="'$(OutDir)' != ''">$([System.IO.Path]::GetFullPath(`$([System.IO.Path]::Combine(`$(MSBuildProjectDirectory)`, `$(OutDir)`))`))</TargetDir>
+    <TargetPdbDir Condition=" '$(PdbOutputPath)'!='' ">$([System.IO.Path]::GetFullPath(`$([System.IO.Path]::Combine(`$(MSBuildProjectDirectory)`, `$(PdbOutputPath)`))`))</TargetPdbDir>
 
     <!-- Example, C:\MyProjects\MySetup\bin\debug\MySetup.msi -->
     <TargetPath Condition=" '$(TargetPath)' == '' ">$(TargetDir)$(TargetFileName)</TargetPath>
-
-    <TargetPdbPath Condition=" '$(TargetPdbPath)' == '' ">$(TargetDir)$(TargetPdbName)</TargetPdbPath>
+    <TargetPdbPath Condition=" '$(TargetPdbPath)' == '' ">$(TargetPdbDir)$(TargetPdbName)</TargetPdbPath>
   </PropertyGroup>
 
   <!--
@@ -936,6 +943,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     [OUT]
     @(_ProjectReferenceWithConfiguration) - The list of non-VC project references.
+    @(WixLibProjects) - Paths to any .wixlibs that were built by referenced projects.
   ================================================================================================
   -->
   <Target
@@ -943,69 +951,126 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     DependsOnTargets="AssignProjectConfiguration;_SplitProjectReferencesByFileExistence"
     Condition=" '@(_ProjectReferenceWithConfiguration)' != '' ">
 
+    <!-- Issue a warning for each non-existent project. -->
+    <Warning
+      Text="The referenced project '%(_MSBuildProjectReferenceNonexistent.Identity)' does not exist."
+      Condition=" '@(_MSBuildProjectReferenceNonexistent)' != '' " />
+
     <!--
-    When building this project from the IDE or when building a .sln from the command line, just
-    gather the referenced build outputs. The code that builds the .sln will already have built
-    the project, so there's no need to do it again here.
-    
+    When building this project from the IDE or when building a .sln from the command line or
+    when only building .wixlib project references, gather the referenced build outputs. The
+    code that builds the .sln will already have built the project, so there's no need to do
+    it again here and when building only .wixlib project references we'll use the results to
+    determine which projects to build.
+
     The ContinueOnError setting is here so that, during project load, as much information as
     possible will be passed to the compilers.
     -->
     <MSBuild
       Projects="@(_MSBuildProjectReferenceExistent)"
-      Targets="GetTargetPath"
-      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
-      Condition="'@(_ProjectReferenceWithConfiguration)'!='' and ('$(BuildingInsideVisualStudio)' == 'true' or '$(BuildProjectReferences)' != 'true') and '@(_MSBuildProjectReferenceExistent)' != ''"
+      Targets="%(_MSBuildProjectReferenceExistent.Targets);GetTargetPath"
+      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform)"
+      Condition="('$(BuildingSolutionFile)' == 'true' or '$(BuildingInsideVisualStudio)' == 'true' or '$(BuildProjectReferences)' != 'true') and '@(_MSBuildProjectReferenceExistent)' != '' "
       ContinueOnError="!$(BuildingProject)">
 
-      <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
-      <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
+      <Output TaskParameter="TargetOutputs" ItemName="_GatheredProjectReferencePaths" />
     </MSBuild>
 
     <!--
+    Determine which project references should be built. Note: we will not build any project references
+    if building in the IDE or building a .sln file because those build project references directly.
+
+    If BuildProjectReferences is 'true' (the default) then take all MSBuild project references that exist
+    on disk and add them to the list of things to build. This is the easy case.
+    -->
+    <CreateItem
+      Include="@(_MSBuildProjectReferenceExistent)"
+      Condition=" '$(BuildProjectReferences)' == 'true' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+
+      <Output TaskParameter="Include" ItemName="_ProjectReferencesToBuild" />
+    </CreateItem>
+
+    <!--
+    If BuildProjectReferences is 'wixlib' then build only the MSBuild project references that exist and
+    create a .wixlib file. That requires us to first filter the gathered project references down to only
+    those that build .wixlibs.
+    -->
+    <CreateItem
+      Include="@(_GatheredProjectReferencePaths)"
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and '%(Extension)' == '.wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+
+      <Output TaskParameter="Include" ItemName="_ReferencedWixLibPaths" />
+    </CreateItem>
+
+    <!--
+    The second step when building only 'wixlib' project references is to create the list of existing MSBuild
+    project references that do *not* build a .wixlib. These are the projects that will be skipped.
+     -->
+    <CreateItem
+      Include="@(_MSBuildProjectReferenceExistent->'%(FullPath)')"
+      Exclude="@(_ReferencedWixLibPaths->'%(MSBuildSourceProjectFile)')"
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+
+      <Output TaskParameter="Include" ItemName="_ProjectReferencesToSkip" />
+    </CreateItem>
+
+    <!--
+    Finally, when building only 'wixlib' project references, the list of projects to build are naturally the
+    list of projects *not* being skipped.
+    -->
+    <CreateItem
+      Include="@(_MSBuildProjectReferenceExistent->'%(FullPath)')"
+      Exclude="@(_ProjectReferencesToSkip)"
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+
+      <Output TaskParameter="Include" ItemName="_ProjectReferencesToBuild" />
+    </CreateItem>
+
+    <!-- Display a warning for all projects being skipped. -->
+    <Warning
+      Text="BuildProjectReferences set to '$(BuildProjectReferences)'. Skipping the non-Library project: %(_ProjectReferencesToSkip.Identity)"
+      Condition=" '@(_ProjectReferencesToSkip)' != '' " />
+
+    <Message
+      Importance="low"
+      Text="Project reference to build: %(_ProjectReferencesToBuild.Identity), properties: %(_ProjectReferencesToBuild.Properties)"
+      Condition=" '@(_ProjectReferencesToBuild)' != '' " />
+
+    <!--
     Build referenced projects when building from the command line.
-    
+
     The $(ProjectReferenceBuildTargets) will normally be blank so that the project's default target
     is used during a P2P reference. However if a custom build process requires that the referenced
     project has a different target to build it can be specified.
     -->
     <MSBuild
-      Projects="@(_MSBuildProjectReferenceExistent)"
+      Projects="@(_ProjectReferencesToBuild)"
       Targets="$(ProjectReferenceBuildTargets)"
-      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
-      Condition="'@(_ProjectReferenceWithConfiguration)'!='' and '$(BuildingInsideVisualStudio)' != 'true' and '$(BuildProjectReferences)' == 'true' and '@(_MSBuildProjectReferenceExistent)' != ''">
+      Properties="%(_ProjectReferencesToBuild.SetConfiguration);%(_ProjectReferencesToBuild.SetPlatform)"
+      Condition=" '@(_ProjectReferencesToBuild)' != '' ">
 
-      <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
-      <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
+      <Output TaskParameter="TargetOutputs" ItemName="_BuiltProjectReferencePaths" />
     </MSBuild>
 
-    <!-- 
-    VC project references must build GetNativeTargetPath because neither GetTargetPath nor the return of the default build
-    target return the output for a native C++ project. 
-    This will not produce duplicate paths because GetNativeTargetPath is mutually exclusive with GetTargetPath & Build TargetOutputs. 
-    -->
-    <MSBuild
-      Projects="@(_MSBuildProjectReferenceExistent)"
-      Targets="GetNativeTargetPath"
-      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration); %(_MSBuildProjectReferenceExistent.SetPlatform)"
-      Condition="'@(_ProjectReferenceWithConfiguration)'!='' and '%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj'">
+    <!-- Assign the unique gathered and built project references to the resolved project
+         reference paths. -->
+    <RemoveDuplicates Inputs="@(_GatheredProjectReferencePaths);@(_BuiltProjectReferencePaths)">
+      <Output TaskParameter="Filtered" ItemName="_ResolvedProjectReferencePaths" />
+      <Output TaskParameter="Filtered" ItemName="_MSBuildResolvedProjectReferencePaths" />
+    </RemoveDuplicates>
 
-      <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
-      <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
-    </MSBuild>
-    
-    <!-- Issue a warning for each non-existent project. -->
-    <Warning
-      Text="The referenced project '%(_MSBuildProjectReferenceNonexistent.Identity)' does not exist."
-      Condition=" '@(_ProjectReferenceWithConfiguration)' != '' and '@(_MSBuildProjectReferenceNonexistent)'!=''"/>
-
-    <!-- Create list of all .wixlib project references-->
+    <!-- Create list of all .wixlib project references. -->
     <CreateItem
       Include="@(_ResolvedProjectReferencePaths)"
       Condition=" '%(Extension)' == '.wixlib' ">
 
       <Output TaskParameter="Include" ItemName="WixLibProjects" />
     </CreateItem>
+
+    <Message
+      Importance="low"
+      Text="Library from referenced projects: %(WixLibProjects.Identity)"
+      Condition=" '@(WixLibProjects)' != '' " />
 
   </Target>
 
@@ -1345,15 +1410,38 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <SigningDependsOn>
       CompileAndLink;
       BeforeSigning;
-      SignCabs;
+      InternalSignMsm;
+      InternalSignCabs;
       Inscribe;
-      SignMsi;
+      InternalSignMsi;
+      InternalSignBundle;
       AfterSigning
     </SigningDependsOn>
   </PropertyGroup>
   <Target
     Name="Signing"
     DependsOnTargets="$(SigningDependsOn)" />
+
+  <!-- Internal targets so correct signing targets are called. -->
+  <Target
+    Name="InternalSignMsm"
+    DependsOnTargets="SignMsm"
+    Condition=" '$(OutputType)' == 'Module' " />
+
+  <Target
+    Name="InternalSignCabs"
+    DependsOnTargets="SignCabs"
+    Condition=" '$(OutputType)' == 'Package' " />
+
+  <Target
+    Name="InternalSignMsi"
+    DependsOnTargets="SignMsi"
+    Condition=" '$(OutputType)' == 'Package' " />
+
+  <Target
+    Name="InternalSignBundle"
+    DependsOnTargets="SignBundle"
+    Condition=" '$(OutputType)' == 'Bundle' " />
 
   <!--
   ==================================================================================================
@@ -1363,6 +1451,15 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   ==================================================================================================
   -->
   <Target Name="BeforeSigning" />
+
+  <!--
+  ==================================================================================================
+  SignMsm
+
+    Redefine this target in your project in order to sign merge modules.
+  ==================================================================================================
+  -->
+  <Target Name="SignMsm" />
 
   <!--
   ==================================================================================================
@@ -1382,6 +1479,16 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   ==================================================================================================
   -->
   <Target Name="SignMsi" />
+
+  <!--
+  ==================================================================================================
+  SignBundle
+
+    Redefine this target in your project in order to sign your bundle, after it has been inscribed
+    with the signatures of your signed containers
+  ==================================================================================================
+  -->
+  <Target Name="SignBundle" />
 
   <!--
   ==================================================================================================
@@ -2040,7 +2147,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <!-- Build an itemgroup of PDB outputs -->
     <CreateItem
-      Include="$(TargetDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
+      Include="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
       <Output TaskParameter="Include"
               ItemName="_TargetPdbPathItems"/>
     </CreateItem>
@@ -2055,32 +2162,41 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
   <!--
   ================================================================================================
-  ReadPreviousBindInputsAndOuputs
+  ReadPreviousBindInputsAndBuiltOutputs
 
-    Reads a previous build's Bind contents and outputs file into @(_BindInputs) and @(_BindOutputs)
-    respectively.
+    Reads a previous build's Bind contents and built outputs file into @(_BindInputs) and
+    @(_BindBuiltOutputs) respectively.
+
+    Note: Only the *built* outputs are used because using files copied to output folder
+          can cause perpetual incremental build.
+
+          Imagine the case where you have: Msi.wixproj -> Lib.wixproj -> Exe.csproj. The
+          Exe.csproj cannot be both an input to Lib.wixproj and an output of Msi.wixproj
+          (as an uncompressed file) because the Lib.wixproj will always newer than the
+          Exe.csproj.
 
     [IN]
 
     [OUT]
     @(_BindInputs) - the content files required to bind (i.e. the Binary/@SourceFile and File/@Source files).
-    @(_BindOutputs) - the previously built .msi, .msm, .pcp, .exe .wixpdb, .cabs, etc.
+    @(_BindBuiltOutputs) - the previously built .msi, .msm, .pcp, .exe .wixpdb, .cabs, etc.
+                           Does not include content copied to output folder.
   ================================================================================================
   -->
   <Target
-    Name="ReadPreviousBindInputsAndOuputs"
+    Name="ReadPreviousBindInputsAndBuiltOutputs"
     Condition=" ('$(OutputType)' == 'Bundle' or '$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
 
     <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
       <Output TaskParameter="Lines" ItemName="_BindInputs" />
     </ReadLinesFromFile>
 
-    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)">
-      <Output TaskParameter="Lines" ItemName="_BindOutputs" />
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)">
+      <Output TaskParameter="Lines" ItemName="_BindBuiltOutputs" />
     </ReadLinesFromFile>
 
     <Message Importance="low" Text="Previous bind inputs: @(_BindInputs)" />
-    <Message Importance="low" Text="Previous bind outputs: @(_BindOutputs)" />
+    <Message Importance="low" Text="Previous bind outputs: @(_BindBuiltOutputs)" />
   </Target>
 
   <!--
@@ -2108,7 +2224,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       PrepareForBuild;
       ResolveReferences;
       AssignCultures;
-      ReadPreviousBindInputsAndOuputs;
+      ReadPreviousBindInputsAndBuiltOutputs;
     </LinkDependsOn>
   </PropertyGroup>
   
@@ -2122,11 +2238,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
             @(_ResolvedWixExtensionPaths);
             $(MSBuildAllProjects);
             @(_BindInputs)"
-    Outputs="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);@(_BindOutputs)"
+    Outputs="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension);@(_BindBuiltOutputs)"
     DependsOnTargets="$(LinkDependsOn)"
     Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
-    <CreateProperty Condition=" '$(OutputType)' != 'Bundle' " Value="$(TargetDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
+    <CreateProperty Value="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
       <Output TaskParameter="Value" PropertyName="PdbOutputFile" />
     </CreateProperty>
 
@@ -2142,6 +2258,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       BindFiles="$(LinkerBindFiles)"
       BindContentsFile="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)"
       BindOutputsFile="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)"
+      BindBuiltOutputsFile="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)"
       CabinetCachePath="$(CabinetCachePath)"
       CabinetCreationThreadCount="$(CabinetCreationThreadCount)"
       Cultures="%(CultureGroup.Identity)"
@@ -2216,7 +2333,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="Lines" ItemName="FileWrites"/>
     </ReadLinesFromFile>
 
-    <CreateItem Include="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
+    <CreateItem Include="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension);$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)">
       <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
 

@@ -147,4 +147,23 @@
             </Component>
         </DirectoryRef>
     </Fragment>
+
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="deputil_2005.lib" />
+        </Component>
+    </Fragment>
+
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="deputil_2008.lib" />
+        </Component>
+    </Fragment>
+
+    <Fragment>
+        <Component Directory="SdkLibDir" DiskId="2">
+            <File Source="deputil_2010.lib" />
+        </Component>
+    </Fragment>
+
 </Wix>

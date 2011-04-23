@@ -484,20 +484,20 @@
         </Message>
         <Message Id="IllegalAttributeWithoutOtherAttributes" Number="37">
             <Instance>
-                The {0}/@{1} attribute cannot be specified without attribute {2} present.
+                The {0}/@{1} attribute can only be specified with the following attribute {2} present.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="otherAttributeName" />
             </Instance>
             <Instance>
-                The {0}/@{1} attribute cannot be specified without attribute {2} or {3} present.
+                The {0}/@{1} attribute can only be specified with one of the following attributes: {2} or {3} present.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="otherAttributeName1" />
                 <Parameter Type="System.String" Name="otherAttributeName2" />
             </Instance>
             <Instance>
-                The {0}/@{1} attribute cannot be specified without attribute {2}, {3}, or {4} present.
+                The {0}/@{1} attribute can only be specified with one of the following attributes: {2}, {3}, or {4} present.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="otherAttributeName1" />
@@ -505,7 +505,7 @@
                 <Parameter Type="System.String" Name="otherAttributeName3" />
             </Instance>
             <Instance>
-                The {0}/@{1} attribute cannot be specified without attribute {2}, {3}, {4}, or {5} present.
+                The {0}/@{1} attribute can only be specified with one of the following attributes: {2}, {3}, {4}, or {5} present.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="otherAttributeName1" />
@@ -516,7 +516,7 @@
         </Message>
         <Message Id="IllegalAttributeValueWithoutOtherAttribute" Number="38">
             <Instance>
-                The {0}/@{1} attribute's value, '{2}', cannot be specified without attribute {3} present with value '{4}'.
+                The {0}/@{1} attribute's value, '{2}', can only be specified with attribute {3} present with value '{4}'.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="attributeValue" />

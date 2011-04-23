@@ -1,4 +1,3 @@
-#pragma once
 //-------------------------------------------------------------------------------------------------
 // <copyright file="precomp.h" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -13,21 +12,23 @@
 // </copyright>
 // 
 // <summary>
-//    Precompiled header for WixDepCA
+//    Precompiled header for DUtil unit tests.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
+#pragma once
+
 #include <windows.h>
-#include <msiquery.h>
-#include <intsafe.h>
 #include <strsafe.h>
+#include <ShlObj.h>
 
-#include "wcautil.h"
-#include "fileutil.h"
-#include "strutil.h"
-#include "memutil.h"
-#include "regutil.h"
-#include "dictutil.h"
-#include "deputil.h"
+// Include error.h before dutil.h
+#include "error.h"
+#include <dutil.h>
 
-#include "CustomMsiErrors.h"
+#include <memutil.h>
+#include <dictutil.h>
+#include <strutil.h>
+
+#pragma managed
+#include <vcclr.h>

@@ -47,6 +47,9 @@
                 <File Source="Microsoft.Deployment.WindowsInstaller.Package.dll" KeyPath="yes" Vital="yes" />
                 <File Source="Microsoft.Deployment.WindowsInstaller.Package.xml" Vital="yes" />
             </Component>
+            <Component>
+                <File Id="wix.ca.targets.sdk" Source="wix.ca.targets" />
+            </Component>
             <Component Id="MakeSfxCA" Guid="2F322198-0AE7-4FBD-B965-2C165A54376A" Win64="no">
                 <File Source="MakeSfxCA.exe" KeyPath="yes" Vital="yes" />
             </Component>
@@ -143,6 +146,7 @@
             <ComponentRef Id="Microsoft.Deployment.WindowsInstaller" />
             <ComponentRef Id="Microsoft.Deployment.WindowsInstaller.Linq" />
             <ComponentRef Id="Microsoft.Deployment.WindowsInstaller.Package" />
+            <ComponentRef Id="wix.ca.targets.sdk" />
             <ComponentRef Id="MakeSfxCA" />
             <ComponentRef Id="MakeSfxCAConfig" />
             <ComponentRef Id="sfxca.dll_x86" />

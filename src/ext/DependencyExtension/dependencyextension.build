@@ -16,6 +16,7 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+  <include buildfile="${dir.src.deputil}\deputil.build" unless="${property::exists('deputil.properties.defined')}" />
 
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,7 +40,7 @@
   <target name="dependencyextension.build" description="Peforms a full rebuild (clean then build)" depends="dependencyextension.clean, dependencyextension.inc" />
 
   <!-- Clean -->
-  <target name="dependencyextension.clean" description="Cleans the build">
+  <target name="dependencyextension.clean" description="Cleans the build" depends="deputil.clean">
     <delete dir="${dir.build.ext.dependencyextension}" failonerror="false" if="${directory::exists(dir.build.ext.dependencyextension)}" />
     <delete failonerror="false">
       <fileset basedir="${dir.target.wix}">
@@ -49,18 +50,18 @@
   </target>
 
   <!-- Inc -->
-  <target name="dependencyextension.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
+  <target name="dependencyextension.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile, deputil.inc">
     <fileset id="compileCpp.fileset.sources" basedir="${dependencyextension.ca.dir.src}">
       <include name="wixdepca.cpp" />
       <include name="dllmain.cpp" />
     </fileset>
     <property name="compileCpp.dir.build" value="${dir.build.ext.dependencyextension}" />
     <property name="compileCpp.file.precomp.h" value="${dependencyextension.ca.dir.src}\precomp.h" />
-    <property name="compileCpp.additionalOptions" value="-I&quot;${dir.src.ca.wcautil}&quot;" />
+    <property name="compileCpp.additionalOptions" value="-I&quot;${dir.inc.deputil}&quot; -I&quot;${dir.src.ca.wcautil}&quot;" />
     <property name="compileCpp.file.rc" value="${dependencyextension.ca.dir.src}\wixdepca.rc" />
     <property name="makeNativeDll.file.target" value="${file.target.wixdepca}" />
     <property name="makeNativeDll.file.def" value="${dependencyextension.ca.dir.src}\wixdepca.def" />
-    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.wcautil}&quot; &quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot;" dynamic="true" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.deputil}&quot; &quot;${file.target.wcautil}&quot; &quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot;" dynamic="true" />
 
     <!-- Make wixdepca.dll -->
     <call target="makeNativeDll" />

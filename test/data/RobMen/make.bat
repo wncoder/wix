@@ -15,6 +15,7 @@ set _P=packages\
 set _R=..\..\..\build\debug\x86\StduxResources
 set _S=..\..\..\build\debug\x86\WixstdbaResources
 set _T=..\..\..\build\debug\x86\
+set _BASEPATHS=-b %_BP% -b %_M% -b %_R% -b %_T% -b build\Package1 -b build\Package3
 rem set _NOTIDY=-notidy
 
 IF /I "bundles"=="%1" (
@@ -53,64 +54,64 @@ IF NOT EXIST %_B%source_res\b.exe (
 IF NOT EXIST %_B%one_embedded\b.exe (
    md %_B%one_embedded
    %_T%candle.exe %_M%one_embedded.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%one_embedded\b.exe %_BM%one_embedded.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%one_embedded\b.exe %_BM%one_embedded.wixobj
    )
 
 IF NOT EXIST %_B%one_external\b.exe (
    md %_B%one_external
    %_T%candle.exe %_M%one_external.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%one_external\b.exe %_BM%one_external.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%one_external\b.exe %_BM%one_external.wixobj
    )
 
 IF NOT EXIST %_B%detached_container\b.exe (
    md %_B%detached_container
    %_T%candle.exe %_M%detached_container.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%detached_container\b.exe %_BM%detached_container.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%detached_container\b.exe %_BM%detached_container.wixobj
    )
 
 IF NOT EXIST %_B%3_ext\b.exe (
    md %_B%3_ext
    %_T%candle.exe %_M%3_ext.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%3_ext\b.exe %_BM%3_ext.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%3_ext\b.exe %_BM%3_ext.wixobj
    )
 
 IF NOT EXIST %_B%versions\v1.exe (
    md %_B%versions
    %_T%candle.exe %_M%v1.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1.exe %_BM%v1.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1.exe %_BM%v1.wixobj
    )
 
 IF NOT EXIST %_B%versions\v1addon.exe (
    md %_B%versions
    %_T%candle.exe %_M%v1addon.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1addon.exe %_BM%v1addon.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1addon.exe %_BM%v1addon.wixobj
    )
 
 IF NOT EXIST %_B%versions\v1addon2.exe (
    md %_B%versions
    %_T%candle.exe %_M%v1addon2.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v1addon2.exe %_BM%v1addon2.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1addon2.exe %_BM%v1addon2.wixobj
    )
 
 IF NOT EXIST %_B%versions\v2.exe (
    md %_B%versions
    %_T%candle.exe %_M%v2.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%versions\v2.exe %_BM%v2.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v2.exe %_BM%v2.wixobj
    )
 
 IF NOT EXIST %_B%burninburn\b.exe (
    md %_B%burninburn
    %_T%candle.exe %_M%child.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%burninburn\child.exe %_BM%child.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%burninburn\child.exe %_BM%child.wixobj
    %_T%candle.exe -ext WixUtilExtension %_M%burninburn.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -b %_B%burninburn -ext WixUtilExtension -o %_B%burninburn\b.exe %_BM%burninburn.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -b %_B%burninburn -ext WixUtilExtension -o %_B%burninburn\b.exe %_BM%burninburn.wixobj
    )
 
 :Web
 IF NOT EXIST %_B%one_web\b.exe (
    md %_B%one_web\data
    %_T%candle.exe %_M%one_web.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% -b %_BP% -b %_M% -b %_R% -b %_T% -o %_B%one_web\b.exe %_BM%one_web.wixobj
+   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%one_web\b.exe %_BM%one_web.wixobj
    move %_B%one_web\Package3.msi %_B%one_web\data
    move %_B%one_web\pkg3.cab %_B%one_web\data
    )

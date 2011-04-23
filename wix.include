@@ -92,6 +92,10 @@
   <property name="dir.build.ct.clickthrough" value="${dir.build.ct}\clickthrough" readonly="true" />
   <property name="dir.build.ct.setup" value="${dir.build.ct}\setup" readonly="true" />
   <property name="dir.build.dark" value="${dir.build.wix}\dark" readonly="true" />
+  <property name="dir.build.deputil.x86" value="${dir.build.wix.x86}\deputil" readonly="true" />
+  <property name="dir.build.deputil.vs2005.x86" value="${dir.build.deputil.x86}\2005" readonly="true" />
+  <property name="dir.build.deputil.vs2008.x86" value="${dir.build.deputil.x86}\2008" readonly="true" />
+  <property name="dir.build.deputil.vs2010.x86" value="${dir.build.deputil.x86}\2010" readonly="true" />
   <property name="dir.build.ext" value="${dir.build.wix}\ext" readonly="true" />
   <property name="dir.build.ext.balextension" value="${dir.build.ext}\balextension" readonly="true" />
   <property name="dir.build.ext.complusextension" value="${dir.build.ext}\complusextension" readonly="true" />
@@ -179,6 +183,8 @@
   <property name="dir.src.chm" value="${dir.wixroot.src}\chm" readonly="true" />
   <property name="dir.src.dark" value="${dir.wixroot.src}\dark" readonly="true" />
   <property name="dir.src.ext" value="${dir.wixroot.src}\ext" readonly="true" />
+  <property name="dir.src.dependencyextension" value="${dir.src.ext}\dependencyextension" readonly="true" />
+  <property name="dir.src.deputil" value="${dir.src.dependencyextension}\lib" readonly="true" />
   <property name="dir.src.balextension" value="${dir.src.ext}\BalExtension" readonly="true" />
   <property name="dir.src.balutil" value="${dir.src.balextension}\balutil" readonly="true" />
   <property name="dir.src.burn.mba" value="${dir.src.balextension}\mba" readonly="true" />
@@ -209,6 +215,7 @@
   <property name="dir.inc.burn" value="${dir.src.burn}\inc" readonly="true" />
   <property name="dir.inc.balutil" value="${dir.src.balextension}\balutil\inc" readonly="true" />
   <property name="dir.inc.dutil" value="${dir.src.dutil}\inc" readonly="true" />
+  <property name="dir.inc.deputil" value="${dir.src.deputil}\inc" readonly="true" />
 
   <!-- Target files that are referenced between projects -->
   <property name="file.target.appsynup" value="${dir.target.wix}\appsynup.lib" readonly="true" />
@@ -259,6 +266,15 @@
   <property name="file.target.balutil.vs2005.x86" value="${dir.target.wix.x86}\balutil_2005.lib" readonly="true" />
   <property name="file.target.balutil.vs2005.x64" value="${dir.target.wix.x64}\balutil_2005_x64.lib" readonly="true" />
   <property name="file.target.balutil.vs2005" value="${file.target.balutil.vs2005.x86}" readonly="true" />
+
+  <property name="file.target.deputil.vs2010.x86" value="${dir.target.wix.x86}\deputil_2010.lib" readonly="true" />
+  <property name="file.target.deputil.vs2010" value="${file.target.deputil.vs2010.x86}" readonly="true" />
+
+  <property name="file.target.deputil.vs2008.x86" value="${dir.target.wix.x86}\deputil_2008.lib" readonly="true" />
+  <property name="file.target.deputil.vs2008" value="${file.target.deputil.vs2008.x86}" readonly="true" />
+
+  <property name="file.target.deputil.vs2005.x86" value="${dir.target.wix.x86}\deputil_2005.lib" readonly="true" />
+  <property name="file.target.deputil.vs2005" value="${file.target.deputil.vs2005.x86}" readonly="true" />
 
   <!-- Files -->
   <property name="file.nanttasks" value="${dir.target.wix}\Microsoft.Tools.WindowsInstallerXml.NAntTasks.dll" readonly="true" />

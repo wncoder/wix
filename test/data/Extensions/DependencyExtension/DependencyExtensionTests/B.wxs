@@ -35,6 +35,7 @@
         <Feature Id="Complete" Level="1">
             <ComponentRef Id="Main"/>
         </Feature>
+        <Property Id="MsiLogging" Value="voicewarmup"/>
     </Product>
     <Fragment>
         <DirectoryRef Id="INSTALLDIR">

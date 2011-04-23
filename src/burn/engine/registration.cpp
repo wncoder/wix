@@ -462,7 +462,7 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT RegistrationDetectRelatedBundles(
-    __in BURN_MODE mode,
+    __in BOOL fElevated,
     __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_REGISTRATION* pRegistration,
     __in_opt BOOTSTRAPPER_COMMAND* pCommand
@@ -470,23 +470,18 @@ extern "C" HRESULT RegistrationDetectRelatedBundles(
 {
     HRESULT hr = S_OK;
 
-    if (BURN_MODE_NORMAL == mode)
-    {
-        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_CURRENT_USER);
-        ExitOnFailure(hr, "Failed to detect related bundles in HKCU for non-elevated process");
-
-        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_LOCAL_MACHINE);
-        ExitOnFailure(hr, "Failed to detect related bundles in HKLM for non-elevated process");
-    }
-    else if (BURN_MODE_ELEVATED == mode || BURN_MODE_EMBEDDED == mode)
+    if (fElevated)
     {
         hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_LOCAL_MACHINE);
         ExitOnFailure(hr, "Failed to detect related bundles in HKLM for elevated process");
     }
     else
     {
-        hr = E_UNEXPECTED;
-        ExitOnFailure1(hr, "Detect related bundles called for unexpected burn mode: %d", mode);
+        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_CURRENT_USER);
+        ExitOnFailure(hr, "Failed to detect related bundles in HKCU for non-elevated process");
+
+        hr = RegistrationDetectRelatedBundlesForKey(pUX, pRegistration, pCommand, HKEY_LOCAL_MACHINE);
+        ExitOnFailure(hr, "Failed to detect related bundles in HKLM for non-elevated process");
     }
 
 LExit:
@@ -502,6 +497,7 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     HRESULT hr = S_OK;
     BOOL fRelated = FALSE;
     LPWSTR sczBundleKey = NULL;
+    LPWSTR sczId = NULL;
     HKEY hkBundleId = NULL;
     LPWSTR *rgsczUpgradeCodes = NULL;
     DWORD cUpgradeCodes = 0;
@@ -611,14 +607,17 @@ Finish:
         ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
 
         BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
-        ++pRegistration->cRelatedBundles;
 
-        pRelatedBundle->package.fPerMachine = pRegistration->fPerMachine;
-        hr = StrAllocString(&pRelatedBundle->package.sczId, sczBundleId, 0);
+        hr = StrAllocString(&sczId, sczBundleId, 0);
         ExitOnFailure(hr, "Failed to copy related bundle id.");
 
         hr = InitializeRelatedBundleFromKey(sczBundleId, hkBundleId, pRegistration->fPerMachine, pRelatedBundle);
         ExitOnFailure1(hr, "Failed to initialize package from bundle id: %ls", sczBundleId);
+
+        pRelatedBundle->package.sczId = sczId;
+        sczId = NULL;
+        pRelatedBundle->package.fPerMachine = pRegistration->fPerMachine;
+        ++pRegistration->cRelatedBundles;
     }
     else
     {
@@ -627,6 +626,7 @@ Finish:
 
 LExit:
     ReleaseStr(sczCachePath);
+    ReleaseStr(sczId);
     ReleaseStrArray(rgsczUpgradeCodes, cUpgradeCodes);
     ReleaseStrArray(rgsczAddonCodes, cAddonCodes);
     ReleaseStrArray(rgsczDetectCodes, cDetectCodes);
@@ -1343,6 +1343,9 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
                         {
                             operation = BOOTSTRAPPER_RELATED_OPERATION_REMOVE;
                         }
+                        break;
+
+                    case BURN_RELATION_DETECT:
                         break;
 
                     default:

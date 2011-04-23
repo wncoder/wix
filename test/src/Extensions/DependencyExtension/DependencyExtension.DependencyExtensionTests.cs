@@ -36,8 +36,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [TestProperty("IsRuntimeTest", "true")]
         public void DependencyExtension_Install()
         {
-            string packageA = BuildPackage("A");
-            string packageB = BuildPackage("B");
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
 
             try
             {
@@ -61,10 +61,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [TestProperty("IsRuntimeTest", "true")]
         public void DependencyExtension_MissingDependency()
         {
-            string packageB = BuildPackage("B");
+            string packageB = BuildPackage("B", null);
 
-            string logB = MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.ERROR_INSTALL_USEREXIT);
-            Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"WixDependencyCheck:  The dependency ""Microsoft.WiX.DependencyExtension_MissingDependency.A,v1.0"" is missing or is not the required version."));
+            try
+            {
+                string logB = MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.ERROR_INSTALL_FAILURE);
+                Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"WixDependencyCheck:  The dependency ""Microsoft.WiX.DependencyExtension_MissingDependency.A,v1.0"" is missing or is not the required version."));
+            }
+            finally
+            {
+                CleanupInstalledProduct(packageB);
+            }
         }
 
         [TestMethod]
@@ -73,7 +80,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [TestProperty("IsRuntimeTest", "true")]
         public void DependencyExtension_MissingDependencyOverride()
         {
-            string packageB = BuildPackage("B");
+            string packageB = BuildPackage("B", null);
 
             try
             {
@@ -92,17 +99,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [Priority(2)]
         [Description("Install products A then B, and uninstall A while B is still present and appear to succeed.")]
         [TestProperty("IsRuntimeTest", "true")]
-        public void DependencyExtension_UninstallDependent()
+        public void DependencyExtension_UninstallDependency()
         {
-            string packageA = BuildPackage("A");
-            string packageB = BuildPackage("B");
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
 
             try
             {
                 MSIExec.InstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
                 MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Now attempt the uninstall of dependent package A.
+                // Now attempt the uninstall of dependency package A.
                 string logA = MSIExec.UninstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
                 Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found existing dependent ""{B8117EC4-D29D-45AB-8CBD-B0B6121886B1}v1.0""."));
 
@@ -121,17 +128,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [Priority(2)]
         [Description("Install products A then B, and uninstall A while B is still present and override.")]
         [TestProperty("IsRuntimeTest", "true")]
-        public void DependencyExtension_UninstallDependentOverrideAll()
+        public void DependencyExtension_UninstallDependencyOverrideAll()
         {
-            string packageA = BuildPackage("A");
-            string packageB = BuildPackage("B");
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
 
             try
             {
                 MSIExec.InstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
                 MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Now attempt the uninstall of dependent package A.
+                // Now attempt the uninstall of dependency package A.
                 string logA = UninstallProductWithProperties(packageA, MSIExec.MSIExecReturnCode.SUCCESS, "IGNOREDEPENDENCIES=ALL");
                 Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Skipping the dependencies check since IGNOREDEPENDENCIES contains ""ALL""."));
 
@@ -148,17 +155,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         [Priority(2)]
         [Description("Install products A then B, and uninstall A while B is still present and override.")]
         [TestProperty("IsRuntimeTest", "true")]
-        public void DependencyExtension_UninstallDependentOverrideSpecific()
+        public void DependencyExtension_UninstallDependencyOverrideSpecific()
         {
-            string packageA = BuildPackage("A");
-            string packageB = BuildPackage("B");
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
 
             try
             {
                 MSIExec.InstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
                 MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Now attempt the uninstall of dependent package A.
+                // Now attempt the uninstall of dependency package A.
                 UninstallProductWithProperties(packageA, MSIExec.MSIExecReturnCode.SUCCESS, "IGNOREDEPENDENCIES={B8117EC4-D29D-45AB-8CBD-B0B6121886B1}v1.0");
 
                 MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
@@ -170,12 +177,48 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             }
         }
 
+        [TestMethod]
+        [Priority(2)]
+        [Description("Install products A then B, upgrades A, then attempts to uninstall A while B is still present.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_UninstallUpgradedDependency()
+        {
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
+            string packageA1 = BuildPackage("A", "1.0.1.0");
+
+            try
+            {
+                MSIExec.InstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
+                MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
+
+                // Build the upgraded dependency A1 and make sure A was removed.
+                MSIExec.InstallProduct(packageA1, MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsFalse(IsPackageInstalled(packageA));
+
+                // Now attempt the uninstall of upgraded dependency package A1.
+                string logA = MSIExec.UninstallProduct(packageA1, MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found existing dependent ""{B8117EC4-D29D-45AB-8CBD-B0B6121886B1}v1.0""."));
+
+                // Uninstall in reverse order.
+                MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
+                MSIExec.UninstallProduct(packageA1, MSIExec.MSIExecReturnCode.SUCCESS);
+            }
+            finally
+            {
+                CleanupInstalledProduct(packageA1);
+                CleanupInstalledProduct(packageB);
+                CleanupInstalledProduct(packageA);
+            }
+        }
+
         /// <summary>
         /// Passes in per-test data to avoid collisions with failed tests when installing dependencies.
         /// </summary>
         /// <param name="name">The name of the source file (sans extension) to build.</param>
+        /// <param name="version">The optional version to pass to the compiler.</param>
         /// <returns>The path to the build MSI package.</returns>
-        private string BuildPackage(string name)
+        private string BuildPackage(string name, string version)
         {
             // Get the name of the calling method.
             StackTrace stack = new StackTrace();
@@ -185,28 +228,43 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             string source = Path.Combine(TestDataDirectory, String.Concat(name, ".wxs"));
             string rootDirectory = FileUtilities.GetUniqueFileName();
             string objDirectory = Path.Combine(rootDirectory, Settings.WixobjFolder);
-            string package = Path.Combine(objDirectory, String.Concat(name, ".msi"));
+            string msiDirectory = Path.Combine(rootDirectory, Settings.MSIFolder);
+            string package = Path.Combine(msiDirectory, String.Concat(name, ".msi"));
 
             // Compile.
             Candle candle = new Candle();
             candle.Extensions.Add("WixDependencyExtension");
             candle.OtherArguments = String.Concat("-dTestName=", caller);
-            candle.OutputFile = String.Concat(TestDataDirectory, @"\");
+            if (!String.IsNullOrEmpty(version))
+            {
+                candle.OtherArguments = String.Concat(candle.OtherArguments, " -dVersion=", version);
+            }
+            candle.OutputFile = String.Concat(objDirectory, @"\");
             candle.SourceFiles.Add(source);
             candle.WorkingDirectory = TestDataDirectory;
             candle.Run();
 
-            // Link.
+            // Link.    
             Light light = new Light();
             light.Extensions.Add("WixDependencyExtension");
             light.ObjectFiles = candle.ExpectedOutputFiles;
             light.OutputFile = package;
+            light.SuppressMSIAndMSMValidation = true;
             light.WorkingDirectory = TestDataDirectory;
-
-            FileUtilities.CreateOutputDirectory(Path.GetDirectoryName(light.OutputFile));
             light.Run();
 
             return light.OutputFile;
+        }
+
+        /// <summary>
+        /// Gets whether the product defined by the package <paramref name="path"/> is installed.
+        /// </summary>
+        /// <param name="path">The path to the package to test.</param>
+        /// <returns>True if the package is installed; otherwise, false.</returns>
+        private bool IsPackageInstalled(string path)
+        {
+            string productCode = MsiUtils.GetMSIProductCode(path);
+            return MsiUtils.IsProductInstalled(productCode);
         }
 
         /// <summary>
