@@ -931,6 +931,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.FinalizeMsiLockPermissionsExTable(tables);
                 this.FinalizeLockPermissionsTable(tables);
                 this.FinalizeProgIdTable(tables);
+                this.FinalizePropertyTable(tables);
                 this.FinalizeRemoveFileTable(tables);
                 this.FinalizeSearchTables(tables);
                 this.FinalizeUpgradeTable(tables);
@@ -1908,6 +1909,38 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         else
                         {
                             this.core.OnMessage(WixWarnings.ExpectedForeignRow(row.SourceLineNumbers, "Extension", row.GetPrimaryKey(DecompilerCore.PrimaryKeyDelimiter), "Component_", Convert.ToString(row[1]), "Component"));
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Finalize the Property table.
+        /// </summary>
+        /// <param name="tables">The collection of all tables.</param>
+        /// <remarks>
+        /// Removes properties that are generated from other entries.
+        /// </remarks>
+        private void FinalizePropertyTable(TableCollection tables)
+        {
+            Table propertyTable = tables["Property"];
+            Table customActionTable = tables["CustomAction"];
+
+            if (null != propertyTable && null != customActionTable)
+            {
+                foreach (Row row in customActionTable.Rows)
+                {
+                    int bits = Convert.ToInt32(row[1]);
+                    if (MsiInterop.MsidbCustomActionTypeHideTarget == (bits & MsiInterop.MsidbCustomActionTypeHideTarget) &&
+                        MsiInterop.MsidbCustomActionTypeInScript == (bits & MsiInterop.MsidbCustomActionTypeInScript))
+                    {
+                        Wix.Property property = (Wix.Property)this.core.GetIndexedElement("Property", Convert.ToString(row[0]));
+
+                        // If no other fields on the property are set we must have created it during link
+                        if (null == property.Value && Wix.YesNoType.yes != property.Secure && Wix.YesNoType.yes != property.SuppressModularization)
+                        {
+                            this.core.RootElement.RemoveChild(property);
                         }
                     }
                 }

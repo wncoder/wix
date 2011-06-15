@@ -118,6 +118,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <UsingTask TaskName="GetLooseFileList" AssemblyFile="$(WixTasksPath)" />
   <UsingTask TaskName="RefreshGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
   <UsingTask TaskName="RefreshBundleGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
+  <UsingTask TaskName="GenerateCompileWithObjectPath" AssemblyFile="$(WixTasksPath)"/>
 
   <!-- WiX tools are 32bit EXEs, so run them out-of-proc when MSBuild is not 32bit. -->
   <PropertyGroup>
@@ -1922,29 +1923,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <GenerateCompileWithObjectPathDependsOn></GenerateCompileWithObjectPathDependsOn>
   </PropertyGroup>
   <Target Name="GenerateCompileWithObjectPath"
-    Condition=" '@(Compile)' != '' ">
-    <!-- If ObjectPath is defined include directly -->
-    <CreateItem
-      Include="@(Compile)"
-      Condition=" '%(Compile.ObjectPath)' != '' ">
-      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
-    </CreateItem>
+      Condition=" '@(Compile)' != '' ">
 
-    <!-- If RelativeDir is not rooted and not in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
-    <CreateItem
-      Include="@(Compile)"
-      Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(RelativeDir)%(FileName)%(Extension)' != '$(IntermediateOutputPath)%(FileName)%(Extension)' AND '%(Compile.ObjectPath)' == '' "
-      AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)%(RelativeDir)">
-      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
-    </CreateItem>
+    <GenerateCompileWithObjectPath
+        Compile="@(Compile)"
+        IntermediateOutputPath="$(IntermediateOutputPath)">
+      <Output TaskParameter="CompileWithObjectPath" ItemName="_CompileWithObjectPath" />
+    </GenerateCompileWithObjectPath>
 
-    <!-- If RelativeDir is rooted or in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath -->
-    <CreateItem
-      Include="@(Compile)"
-      Condition=" ('%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' OR '%(RelativeDir)%(FileName)%(Extension)' == '$(IntermediateOutputPath)%(FileName)%(Extension)') AND '%(Compile.ObjectPath)' == '' "
-      AdditionalMetadata="ObjectPath=$(IntermediateOutputPath)">
-      <Output TaskParameter="Include" ItemName="_CompileWithObjectPath" />
-    </CreateItem>
   </Target>
 
   <!--

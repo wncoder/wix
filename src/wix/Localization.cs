@@ -48,7 +48,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private Localization(int codepage, string culture)
         {
             this.codepage = codepage;
-            this.culture = culture.ToLower(CultureInfo.InvariantCulture);
+            this.culture = String.IsNullOrEmpty(culture) ? String.Empty : culture.ToLower(CultureInfo.InvariantCulture);
             this.variables = new Hashtable();
         }
 
@@ -114,7 +114,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("Codepage", this.codepage.ToString(CultureInfo.InvariantCulture));
             }
 
-            writer.WriteAttributeString("Culture", this.culture);
+            if (!String.IsNullOrEmpty(this.culture))
+            {
+                writer.WriteAttributeString("Culture", this.culture);
+            }
 
             foreach (WixVariableRow wixVariableRow in this.variables.Values)
             {
@@ -235,11 +238,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         break;
                 }
-            }
-
-            if (null == culture)
-            {
-                throw new WixException(WixErrors.ExpectedAttribute(SourceLineNumberCollection.FromUri(reader.BaseURI), "WixLocalization", "Culture"));
             }
 
             Localization localization = new Localization(codepage, culture);

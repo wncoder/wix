@@ -966,7 +966,7 @@
         </Message>
         <Message Id="DuplicateSymbol" Number="91">
             <Instance>
-                Duplicate symbol '{0}' found.
+                Duplicate symbol '{0}' found. This typically means that an Id is duplicated. Check to make sure all your identifiers of a given type (File, Component, Feature) are unique.
                 <Parameter Type="System.String" Name="symbolName" />
             </Instance>
         </Message>
@@ -2553,12 +2553,6 @@
                 <Parameter Type="System.String" Name="childElement" />
             </Instance>
         </Message>
-        <Message Id="IllegalNestedLayoutDirectory" Number="332">
-            <Instance>
-                A circular reference of layout directories was detected. The infinite loop includes: {0}. layout directories references must form a directed acyclic graph.
-                <Parameter Type="System.String" Name="loopList" />
-            </Instance>
-        </Message>
         <Message Id="PreprocessorExtensionPragmaFailed" Number="333">
             <Instance>
                 Exception thrown while processing pragma '{0}'. The exception's message is: {1}
@@ -3433,12 +3427,6 @@
             <Instance>
                 A UX Payload ('{0}') was marked for something other than embedded packaging, possibly because it included a @DownloadUrl attribute. At present, UX Payloads must be embedded in the Bundle, so the requested packaging is being ignored.
                 <Parameter Type="System.String" Name="sourceFile" />
-            </Instance>
-        </Message>
-        <Message Id="DuplicateLayoutDirectoryDestination" Number="1128">
-            <Instance>
-                More than one LayoutDirectory are writing to the same destination: '{0}'.
-                <Parameter Type="System.String" Name="layoutDirectoryDestination" />
             </Instance>
         </Message>
         <Message Id="DiscardedRollbackBoundary" Number="1129">

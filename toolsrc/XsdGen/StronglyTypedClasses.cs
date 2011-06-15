@@ -1055,13 +1055,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
 
             // XSD supports simpleTypes derived by union, list, or restriction; restrictions can have any
             // combination of pattern, enumeration, length, and more; lists can contain any other simpleType.
-            // XsdGen, in contrast, only supports a limited set of values... unions are not supported,
+            // XsdGen, in contrast, only supports a limited set of values...
+            // Unions are weakly supported by just using the first member type
             // restrictions must either be all enumeration or a single pattern, a list must be of a
             // single simpleType which itself is only a restriction of enumeration.
             if (simpleType.Content is XmlSchemaSimpleTypeUnion)
             {
-                string appName = typeof(XsdGen).Assembly.GetName().Name;
-                throw new NotImplementedException(string.Format("{0} does not support XSD unions in simpleTypes.", appName));
+                XmlSchemaSimpleTypeUnion union = simpleType.Content as XmlSchemaSimpleTypeUnion;
+                if (union.MemberTypes.Length > 0)
+                {
+                    baseTypeName = union.MemberTypes[0].Name;
+                    return;
+                }
+                else
+                {
+                    baseTypeName = "string";
+                    return;
+                }
             }
 
             bool listType = false; // XSD lists become [Flag]enums in C#...

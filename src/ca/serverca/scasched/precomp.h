@@ -56,6 +56,7 @@
 #include "strutil.h"
 #include "userutil.h"
 #include "wiutil.h"
+#include "cryputil.h"
 
 #include "CustomMsiErrors.h"
 

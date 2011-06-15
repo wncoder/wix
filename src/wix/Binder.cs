@@ -21,6 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Collections.Specialized;
     using System.ComponentModel;
     using System.Diagnostics;
@@ -39,6 +40,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using Microsoft.Tools.WindowsInstallerXml.MergeMod;
     using Microsoft.Tools.WindowsInstallerXml.Msi;
     using Microsoft.Tools.WindowsInstallerXml.Msi.Interop;
+
+    using Wix = Microsoft.Tools.WindowsInstallerXml.Serialize;
 
     // TODO: (4.0) Refactor so that these don't need to be copied.
     // Copied verbatim from ext\UtilExtension\wixext\UtilCompiler.cs
@@ -349,31 +352,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                     else if (parameter.StartsWith("dcl:", StringComparison.Ordinal))
                     {
-                        string defaultCompressionLevel = arg.Substring(5).ToLower(CultureInfo.InvariantCulture);
+                        string defaultCompressionLevel = arg.Substring(5);
 
-                        if (!String.IsNullOrEmpty(defaultCompressionLevel))
+                        if (String.IsNullOrEmpty(defaultCompressionLevel))
                         {
-                            switch (defaultCompressionLevel)
-                            {
-                                case "low":
-                                    this.defaultCompressionLevel = Cab.CompressionLevel.Low;
-                                    break;
-                                case "medium":
-                                    this.defaultCompressionLevel = Cab.CompressionLevel.Medium;
-                                    break;
-                                case "high":
-                                    this.defaultCompressionLevel = Cab.CompressionLevel.High;
-                                    break;
-                                case "none":
-                                    this.defaultCompressionLevel = Cab.CompressionLevel.None;
-                                    break;
-                                case "mszip":
-                                    this.defaultCompressionLevel = Cab.CompressionLevel.Mszip;
-                                    break;
-                                default:
-                                    throw new WixException(WixErrors.IllegalCompressionLevel(defaultCompressionLevel));
-                            }
+                            return this.invalidArgs;
                         }
+
+                        this.defaultCompressionLevel = WixCreateCab.CompressionLevelFromString(defaultCompressionLevel);
                     }
                     else if (parameter.Equals("eav", StringComparison.Ordinal))
                     {
@@ -1352,24 +1338,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // compression level
                     if (null != row[1])
                     {
-                        switch ((string)row[1])
-                        {
-                            case "low":
-                                mediaRow.CompressionLevel = Cab.CompressionLevel.Low;
-                                break;
-                            case "medium":
-                                mediaRow.CompressionLevel = Cab.CompressionLevel.Medium;
-                                break;
-                            case "high":
-                                mediaRow.CompressionLevel = Cab.CompressionLevel.High;
-                                break;
-                            case "none":
-                                mediaRow.CompressionLevel = Cab.CompressionLevel.None;
-                                break;
-                            case "mszip":
-                                mediaRow.CompressionLevel = Cab.CompressionLevel.Mszip;
-                                break;
-                        }
+                        mediaRow.CompressionLevel = WixCreateCab.CompressionLevelFromString((string)row[1]);
                     }
 
                     // layout
@@ -1568,7 +1537,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             bool compressed = false;
             FileRowCollection fileRows = new FileRowCollection(OutputType.Patch == output.Type);
             ArrayList fileTransfers = new ArrayList();
-            ArrayList directoryTransfers = new ArrayList();
             bool longNames = false;
             MediaRowCollection mediaRows = new MediaRowCollection();
             Hashtable suppressModularizationIdentifiers = null;
@@ -1934,14 +1902,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.ProcessUncompressedFiles(tempDatabaseFile, uncompressedFileRows, fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, longNames);
             }
 
-            // add LayoutDirectory
-            ProcessLayoutDirectories(this.core, output, fileTransfers, directoryTransfers, layoutDirectory);
-
             // layout media
             try
             {
                 this.core.OnMessage(WixVerboses.LayingOutMedia());
-                this.LayoutMedia(fileTransfers, directoryTransfers, this.suppressAclReset);
+                this.LayoutMedia(fileTransfers, this.suppressAclReset);
             }
             finally
             {
@@ -3271,6 +3236,38 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // Load the SlipstreamMsp information...
+            Table slipstreamMspTable = bundle.Tables["SlipstreamMsp"];
+            if (null != slipstreamMspTable && 0 < slipstreamMspTable.Rows.Count)
+            {
+                foreach (Row row in slipstreamMspTable.Rows)
+                {
+                    string msiPackageId = (string)row[0];
+                    string mspPackageId = (string)row[1];
+
+                    if (!allPackages.ContainsKey(mspPackageId))
+                    {
+                        core.OnMessage(WixErrors.IdentifierNotFound("Package", mspPackageId));
+                        continue;
+                    }
+
+                    ChainPackageInfo package;
+                    if (!allPackages.TryGetValue(msiPackageId, out package))
+                    {
+                        core.OnMessage(WixErrors.IdentifierNotFound("Package", msiPackageId));
+                        continue;
+                    }
+
+                    package.SlipstreamMsps.Add(mspPackageId);
+                }
+            }
+
+            // Set the overridable bundle provider key.
+            this.SetBundleProviderKey(bundle, bundleInfo);
+
+            // Load the dependencies authored into the manifest.
+            this.ImportDependencyProviders(bundle, allPackages);
+
             // Generate the core-defined BA manifest tables...
             this.GenerateBAManifestTables(bundle, chain.Packages);
 
@@ -3372,15 +3369,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            // add any LayoutDirectory/LayoutFile content...
-            ArrayList directoryTransfers = new ArrayList();
-            ProcessLayoutDirectories(this.core, bundle, fileTransfers, directoryTransfers, layoutDirectory);
-
             // layout media
             try
             {
                 this.core.OnMessage(WixVerboses.LayingOutMedia());
-                this.LayoutMedia(fileTransfers, directoryTransfers, this.suppressAclReset);
+                this.LayoutMedia(fileTransfers, this.suppressAclReset);
             }
             finally
             {
@@ -3641,7 +3634,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("Id", bundleInfo.Id.ToString("B"));
                 writer.WriteAttributeString("ExecutableName", Path.GetFileName(bundleInfo.Path));
                 writer.WriteAttributeString("PerMachine", bundleInfo.PerMachine ? "yes" : "no");
+                writer.WriteAttributeString("Tag", bundleInfo.Tag);
                 writer.WriteAttributeString("Version", bundleInfo.Version);
+                writer.WriteAttributeString("ProviderKey", bundleInfo.ProviderKey);
 
                 if (null != bundleInfo.RegistrationInfo)
                 {
@@ -3697,6 +3692,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (chain.DisableRollback)
                 {
                     writer.WriteAttributeString("DisableRollback", "yes");
+                }
+
+                if (chain.ParallelCache)
+                {
+                    writer.WriteAttributeString("ParallelCache", "yes");
                 }
 
                 foreach (ChainPackageInfo package in chain.Packages)
@@ -3771,6 +3771,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         writer.WriteAttributeString("Id", msiProperty.Name);
                         writer.WriteAttributeString("Value", msiProperty.Value);
                         writer.WriteEndElement();
+                    }
+
+                    foreach (string slipstreamMsp in package.SlipstreamMsps)
+                    {
+                        writer.WriteStartElement("SlipstreamMsp");
+                        writer.WriteAttributeString("Id", slipstreamMsp);
+                        writer.WriteEndElement();
+                    }
+
+                    // Output the dependency information.
+                    foreach (ProvidesDependency dependency in package.Provides)
+                    {
+                        // TODO: Add to wixpdb as an imported table, or link package wixpdbs to bundle wixpdbs.
+                        dependency.WriteXml(writer);
                     }
 
                     foreach (RelatedPackage related in package.RelatedPackages)
@@ -3927,6 +3941,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (!String.IsNullOrEmpty(resolvedUrl))
             {
                 writer.WriteAttributeString("DownloadUrl", resolvedUrl);
+            }
+            else if (!String.IsNullOrEmpty(payload.DownloadUrl))
+            {
+                writer.WriteAttributeString("DownloadUrl", payload.DownloadUrl);
             }
 
             switch (payload.Packaging)
@@ -5936,197 +5954,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Final step in binding that transfers (moves/copies) all files generated into the appropriate
-        /// location in the source image
-        /// </summary>
-        /// <param name="output">The output to bind.</param>
-        /// <param name="fileTransfers">Array of files to transfer.</param>
-        /// <param name="directoryTransfers">Array of directories to create.</param>
-        /// <param name="baseDirectory">Root of the relative LayoutDirectories.</param>
-        public static void ProcessLayoutDirectories(BinderCore core, Output output, ArrayList fileTransfers, ArrayList directoryTransfers, string baseDirectory)
-        {
-            if (core.EncounteredError)
-            {
-                return;
-            }
-
-            Table wixLayoutDirectory = output.Tables["WixLayoutDirectory"];
-            if (null == wixLayoutDirectory)
-            {
-                return;
-            }
-
-            wixLayoutDirectory.ValidateRows();
-
-            Table wixLayoutFiles = output.Tables["WixLayoutFile"];
-            if (null != wixLayoutFiles)
-            {
-                wixLayoutFiles.ValidateRows(); // just for completness sake. See comment in tables.xml for details
-            }
-
-            ArrayList rootLayouts = new ArrayList();
-            Table wixLayoutDirRef = output.Tables["WixLayoutDirRef"];
-            if (null != wixLayoutDirRef)
-            {
-                wixLayoutDirRef.ValidateRows();
-                foreach (Row rowLayout in wixLayoutDirectory.Rows)
-                {
-                    bool isRoot = true;
-                    foreach (Row rowRef in wixLayoutDirRef.Rows)
-                    {
-                        if ((0 == String.Compare(rowRef[1].ToString(), rowLayout[0].ToString(), StringComparison.Ordinal)) &&
-                            (0 == String.Compare(rowRef[0].ToString(), Guid.Empty.ToString(), StringComparison.Ordinal)))
-                        {
-                            isRoot = true;
-                            break;
-                        }
-
-                        if (0 == String.Compare(rowRef[1].ToString(), rowLayout[0].ToString(), StringComparison.Ordinal))
-                        {
-                            isRoot = false;
-                            break;
-                        }
-                    }
-
-                    if (isRoot)
-                    {
-                        rootLayouts.Add(rowLayout);
-                    }
-                }
-            }
-            else
-            {
-                foreach (Row rowLayout in wixLayoutDirectory.Rows)
-                {
-                    rootLayouts.Add(rowLayout);
-                }
-            }
-
-            if (null != wixLayoutFiles)
-            {
-                Hashtable fileKeys = new Hashtable(wixLayoutFiles.Rows.Count);
-                foreach (Row row in wixLayoutFiles.Rows)
-                {
-                    // Generate "Name" if needed
-                    if (null == row[2] || String.IsNullOrEmpty(row[2].ToString()))
-                    {
-                        row[2] = Path.GetFileName(row[3].ToString());
-                    }
-
-                    // Check for collisions
-                    // Note that we "manufacture" what we really wanted our primary keys to be. See the entry for the table in tables.xml for details.
-                    string wantedKey = String.Concat(row[1].ToString(), "/", row[2].ToString());
-                    if (fileKeys.Contains(wantedKey))
-                    {
-                        core.OnMessage(WixErrors.DuplicatePrimaryKey(row.SourceLineNumbers, wantedKey, "WixLayoutFile"));
-                    }
-                    else
-                    {
-                        fileKeys.Add(wantedKey, row.SourceLineNumbers);
-                    }
-                }
-            }
-
-            if (core.EncounteredError)
-            {
-                return;
-            }
-
-            Dictionary<string, DirectoryTransfer> seenDirectories = new Dictionary<string,DirectoryTransfer>();
-            foreach (Row row in rootLayouts)
-            {
-                Stack stack = new Stack();
-                stack.Push(row);
-                ProcessLayoutDirectory(core, baseDirectory, stack, wixLayoutDirectory.Rows, null == wixLayoutDirRef ? null : wixLayoutDirRef.Rows, null == wixLayoutFiles ? null : wixLayoutFiles.Rows, fileTransfers, seenDirectories);
-                stack.Pop();
-            }
-
-            // populate the list of directories to create
-            foreach (string directory in seenDirectories.Keys)
-            {
-                directoryTransfers.Add(seenDirectories[directory]);
-            }
-        }
-
-        /// <summary>
-        /// Final step in binding that transfers (moves/copies) all files generated into the appropriate
-        /// location in the source image
-        /// </summary>
-        /// <param name="path">The root path for this instance of the LayoutDirectory.</param>
-        /// <param name="parents">The stack of parents of the current instance.</param>
-        /// <param name="dirs">WixLayoutDirectory table rows.</param>
-        /// <param name="refs">WixLayoutDirRefs table rows.</param>
-        /// <param name="files">WixLayoutFiles table rows.</param>
-        /// <param name="seenDirectories">Dictionary of seen dictionary.</param>
-        private static void ProcessLayoutDirectory(BinderCore core, string path, Stack parents, RowCollection dirs, RowCollection refs, RowCollection files, ArrayList fileTransfers, Dictionary<string, DirectoryTransfer> seenDirectories)
-        {
-            Row thisDir = (Row)parents.Peek();
-            string currentDir = Path.Combine(path, thisDir[1].ToString());
-
-            // check if we have seen this directory before
-            if (seenDirectories.ContainsKey(currentDir.ToUpperInvariant()))
-            {
-                core.OnMessage(WixWarnings.DuplicateLayoutDirectoryDestination(thisDir.SourceLineNumbers, currentDir));
-            }
-            else
-            {
-                seenDirectories.Add(currentDir.ToUpperInvariant(), new DirectoryTransfer(currentDir));
-            }
-
-            if (null != files)
-            {
-                foreach (Row row in files)
-                {
-                    if (String.Equals(row[1].ToString(), thisDir[0].ToString(), StringComparison.Ordinal))
-                    {
-                        FileTransfer transfer;
-                        if (FileTransfer.TryCreate(row[3].ToString(), Path.Combine(currentDir, row[2].ToString()), false, "LayoutFile", row.SourceLineNumbers, out transfer))
-                        {
-                            fileTransfers.Add(transfer);
-                        }
-                    }
-                }
-            }
-
-            if (null != refs)
-            {
-                // find children
-                ArrayList children = new ArrayList();
-                foreach (Row row in refs)
-                {
-                    if (0 == String.Compare(row[0].ToString(), thisDir[0].ToString(), StringComparison.Ordinal))
-                    {
-                        children.Add(row);
-                    }
-                }
-
-                // find row from dirs that each child is, since children contains rows from refs and we need to add rows from dirs to parents
-                foreach (Row rowRef in children)
-                {
-                    Row rowDir = null;
-                    foreach (Row row in dirs)
-                    {
-                        if (0 == String.Compare(row[0].ToString(), rowRef[1].ToString(), StringComparison.Ordinal))
-                        {
-                            rowDir = row;
-                            break;
-                        }
-                    }
-                    // Test for circular directory loops
-                    if (parents.Contains(rowDir))
-                    {
-                        core.OnMessage(WixErrors.IllegalNestedLayoutDirectory(rowDir.SourceLineNumbers, rowDir[1].ToString()));
-                        return;
-                    }
-
-                    parents.Push(rowDir);
-                    ProcessLayoutDirectory(core, currentDir, parents, dirs, refs, files, fileTransfers, seenDirectories);
-                    parents.Pop();
-                }
-            }
-        }
-
-        /// <summary>
         /// Sets the codepage of a database.
         /// </summary>
         /// <param name="db">Database to set codepage into.</param>
@@ -6812,6 +6639,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 this.Condition = (string)row[15];
+                this.Tag = (string)row[16];
+
+                // Default provider key is the Id.
+                this.ProviderKey = this.Id.ToString("B");
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
@@ -6836,7 +6667,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public RegistrationInfo RegistrationInfo { get; set; }
             public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
+            public string Tag { get; private set; }
             public string Version { get; private set; }
+            public string ProviderKey { get; internal set; }
         }
 
         private class CatalogInfo
@@ -6866,12 +6699,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public ChainInfo(Row row)
             {
                 this.DisableRollback = (null != row[0] && 1 == (int)row[0]);
+                this.ParallelCache = (null != row[1] && 1 == (int)row[1]);
                 this.Packages = new List<ChainPackageInfo>();
                 this.RollbackBoundaries = new List<RollbackBoundaryInfo>();
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
 
             public bool DisableRollback { get; private set; }
+            public bool ParallelCache { get; private set; }
             public List<ChainPackageInfo> Packages { get; private set; }
             public List<RollbackBoundaryInfo> RollbackBoundaries { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
@@ -7046,6 +6881,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.RelatedPackages = new List<RelatedPackage>();
                 this.MsiFeatures = new List<MsiFeature>();
                 this.MsiProperties = new List<MsiPropertyInfo>();
+                this.SlipstreamMsps = new List<string>();
+                this.Provides = new ProvidesDependencyCollection();
 
                 // Start the package size with the package's payload size.
                 this.PackageSize = this.PackagePayload.FileInfo.Length;
@@ -7131,6 +6968,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public List<RelatedPackage> RelatedPackages { get; private set; }
             public List<MsiFeature> MsiFeatures { get; private set; }
             public List<MsiPropertyInfo> MsiProperties { get; private set; }
+            public List<string> SlipstreamMsps { get; private set; }
+            public ProvidesDependencyCollection Provides { get; private set; }
 
             public RollbackBoundaryInfo RollbackBoundary { get; set; }
 
@@ -7384,6 +7223,38 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 }
                             }
                         }
+
+                        // Import any dependency providers from the MSI.
+                        if (db.Tables.Contains("WixDependencyProvider"))
+                        {
+                            Microsoft.Deployment.WindowsInstaller.Record record;
+                            Microsoft.Deployment.WindowsInstaller.View view;
+
+                            using (view = db.OpenView("SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`"))
+                            {
+                                view.Execute();
+                                while (null != (record = view.Fetch()))
+                                {
+                                    using (record)
+                                    {
+                                        // Import the provider key and attributes.
+                                        string providerKey = record.GetString(1);
+                                        int attributes = record.GetInteger(2);
+
+                                        ProvidesDependency dependency = new ProvidesDependency(providerKey, attributes);
+                                        dependency.Imported = true;
+
+                                        this.Provides.Add(dependency);
+                                    }
+                                }
+                            }
+
+                            // If any dependencies were imported, add or append the IGNOREDEPENDENCIES property.
+                            if (0 < this.Provides.Count)
+                            {
+                                this.EnsureIgnoreDependencies();
+                            }
+                        }
                     }
                 }
                 catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
@@ -7460,6 +7331,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
                 }
             }
+
+            /// <summary>
+            /// Ensures that the IGNOREDEPENDENCIES property exists and contains the burn dependency key variable.
+            /// </summary>
+            private void EnsureIgnoreDependencies()
+            {
+                string ignoreDependencies = "IGNOREDEPENDENCIES";
+                string ignoreDependenciesValue = "[BundleProviderKey]";
+
+                // Try to find the property.
+                foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
+                {
+                    if (0 == String.CompareOrdinal(ignoreDependencies, propertyInfo.Name))
+                    {
+                        // Append the bundle variable to the property and exit.
+                        propertyInfo.Value = String.Concat(propertyInfo.Value, ";", ignoreDependenciesValue);
+                        return;
+                    }
+                }
+
+                // If we didn't find the property, add it.
+                MsiPropertyInfo ignoreDependenciesProperty = new MsiPropertyInfo(this.Id, ignoreDependencies, ignoreDependenciesValue);
+                this.MsiProperties.Add(ignoreDependenciesProperty);
+            }
+
             /// <summary>
             /// Queries a Windows Installer database to determine if one or more rows exist in the Property table.
             /// </summary>
@@ -7568,7 +7464,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             public string PackageId { get; private set; }
             public string Name { get; private set; }
-            public string Value { get; private set; }
+            public string Value { get; set; }
         }
 
         /// <summary>
@@ -7576,13 +7472,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         private class RelatedBundleInfo
         {
-            public enum RelatedBundleActionType
-            {
-                Detect,
-                Upgrade,
-                Addon,
-            }
-
             public RelatedBundleInfo(Row row)
                 : this((string)row[0], (int)row[1])
             {
@@ -7591,11 +7480,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public RelatedBundleInfo(string id, int action)
             {
                 this.Id = id;
-                this.Action = (RelatedBundleActionType)action;
+                this.Action = (Wix.RelatedBundle.ActionType)action;
             }
 
             public string Id { get; private set; }
-            public RelatedBundleActionType Action { get; private set; }
+            public Wix.RelatedBundle.ActionType Action { get; private set; }
 
             /// <summary>
             /// Generates Burn manifest element for a RelatedBundle.
@@ -7915,5 +7804,133 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteEndElement();
             }
         }
+
+        #region DependencyExtension
+        /// <summary>
+        /// Imports authored dependency providers for each package in the manifest.
+        /// </summary>
+        /// <param name="bundle">The <see cref="Output"/> object for the bundle.</param>
+        /// <param name="packages">An indexed collection of chained packages.</param>
+        private void ImportDependencyProviders(Output bundle, Dictionary<string, ChainPackageInfo> packages)
+        {
+            Table wixDependencyProviderTable = bundle.Tables["WixDependencyProvider"];
+            if (null != wixDependencyProviderTable && 0 < wixDependencyProviderTable.Rows.Count)
+            {
+                // Add package information for each dependency provider authored into the manifest.
+                foreach (Row wixDependencyProviderRow in wixDependencyProviderTable.Rows)
+                {
+                    string packageId = (string)wixDependencyProviderRow[1];
+
+                    ChainPackageInfo package = null;
+                    if (packages.TryGetValue(packageId, out package))
+                    {
+                        ProvidesDependency dependency = new ProvidesDependency(wixDependencyProviderRow);
+                        package.Provides.Add(dependency);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the provider key for the bundle.
+        /// </summary>
+        /// <param name="bundle">The <see cref="Output"/> object for the bundle.</param>
+        /// <param name="bundleInfo">The <see cref="BundleInfo"/> containing the provider key and other information for the bundle.</param>
+        private void SetBundleProviderKey(Output bundle, BundleInfo bundleInfo)
+        {
+            Table wixDependencyProviderTable = bundle.Tables["WixDependencyProvider"];
+            if (null != wixDependencyProviderTable && 0 < wixDependencyProviderTable.Rows.Count)
+            {
+                // Only one row should exist in the table.
+                Row wixDependencyProviderRow = wixDependencyProviderTable.Rows[0];
+                bundleInfo.ProviderKey = (string)wixDependencyProviderRow[2];
+            }
+
+            // Defaults to the bundle ID as the provider key.
+        }
+
+        /// <summary>
+        /// Represents an authored or imported dependency provider.
+        /// </summary>
+        private sealed class ProvidesDependency
+        {
+            /// <summary>
+            /// Creates a new instance of the <see cref="ProviderDependency"/> class from a <see cref="Row"/>.
+            /// </summary>
+            /// <param name="row">The <see cref="Row"/> from which data is imported.</param>
+            internal ProvidesDependency(Row row)
+                : this((string)row[2], (int)row[4])
+            {
+            }
+
+            /// <summary>
+            /// Creates a new instance of the <see cref="ProviderDependency"/> class.
+            /// </summary>
+            /// <param name="key">The unique key of the dependency.</param>
+            /// <param name="attributes">Additional attributes for the dependency.</param>
+            internal ProvidesDependency(string key, int attributes)
+            {
+                this.Key = key;
+            }
+
+            /// <summary>
+            /// Gets the unique key of the dependency.
+            /// </summary>
+            internal string Key { get; private set; }
+
+            /// <summary>
+            /// Gets whether the dependency was imported from the package.
+            /// </summary>
+            internal bool Imported { get; set; }
+
+            /// <summary>
+            /// Writes the dependency to the bundle XML manifest.
+            /// </summary>
+            /// <param name="writer">The <see cref="XmlTextWriter"/> for the bundle XML manifest.</param>
+            internal void WriteXml(XmlTextWriter writer)
+            {
+                writer.WriteStartElement("Provides");
+
+                writer.WriteAttributeString("Key", this.Key);
+
+                if (this.Imported)
+                {
+                    // The package dependency was explicitly authored into the manifest.
+                    writer.WriteAttributeString("Imported", "yes");
+                }
+
+                writer.WriteEndElement();
+            }
+        }
+
+        /// <summary>
+        /// A case-insensitive collection of unique <see cref="ProvidesDependency"/> objects.
+        /// </summary>
+        private sealed class ProvidesDependencyCollection : KeyedCollection<string, ProvidesDependency>
+        {
+            /// <summary>
+            /// Creates a case-insensitive collection of unique <see cref="ProvidesDependency"/> objects.
+            /// </summary>
+            internal ProvidesDependencyCollection()
+                : base(StringComparer.InvariantCultureIgnoreCase)
+            {
+            }
+
+            /// <summary>
+            /// Gets the <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.
+            /// </summary>
+            /// <param name="dependency">The dependency to index.</param>
+            /// <returns>The <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.</returns>
+            protected override string GetKeyForItem(ProvidesDependency dependency)
+            {
+                if (null == dependency)
+                {
+                    throw new ArgumentNullException("dependency");
+                }
+
+                return dependency.Key;
+            }
+        }
+        #endregion
     }
 }

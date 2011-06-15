@@ -41,16 +41,17 @@
     </Fragment>
 
     <Fragment>
-        <UI>
+        <UI Id="ConfigureUsersErrorText">
             <Error Id="$(var.msierrUSRFailedUserCreate)">!(loc.msierrUSRFailedUserCreate)</Error>
             <Error Id="$(var.msierrUSRFailedUserCreatePswd)">!(loc.msierrUSRFailedUserCreatePswd)</Error>
             <Error Id="$(var.msierrUSRFailedUserGroupAdd)">!(loc.msierrUSRFailedUserGroupAdd)</Error>
             <Error Id="$(var.msierrUSRFailedGrantLogonAsService)">Failed to grant 'logon as service' rights to user.  ([2]   [3]   [4]   [5])</Error>
             <Error Id="$(var.msierrUSRFailedUserCreateExists)">!(loc.msierrUSRFailedUserCreateExists)</Error>
         </UI>
+    </Fragment>
 
-        <!-- This is necessary to hide the CreateUser custom action data property that could potentially contain passwords -->
-        <Property Id="CreateUser" Value="nothing" Hidden="yes" />
+    <Fragment>
+        <UIRef Id="ConfigureUsersErrorText" />
 
         <CustomAction Id="ConfigureUsers" BinaryKey="ScaSchedule" DllEntry="ConfigureUsers" Execute="immediate" Return="check" SuppressModularization="yes" />
         <CustomAction Id="CreateUser" BinaryKey="ScaExecute" DllEntry="CreateUser" Impersonate="no" Execute="deferred" Return="check" HideTarget="yes" SuppressModularization="yes" />

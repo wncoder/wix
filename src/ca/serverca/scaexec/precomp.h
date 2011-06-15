@@ -51,6 +51,7 @@
 #include "strutil.h"
 #include "sqlutil.h"
 #include "userutil.h"
+#include "cryputil.h"
 
 #include "CustomMsiErrors.h"
 #include "scasmbexec.h"

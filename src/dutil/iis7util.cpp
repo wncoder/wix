@@ -18,6 +18,8 @@
 
 #include "precomp.h"
 
+#define ISSTRINGVARIANT(vt) (VT_BSTR == vt || VT_LPWSTR == vt)
+
 extern "C" HRESULT DAPI Iis7PutPropertyVariant(
     __in IAppHostElement *pElement,
     __in LPCWSTR wzPropName,
@@ -134,7 +136,7 @@ extern "C" HRESULT DAPI Iis7GetPropertyString(
     hr = Iis7GetPropertyVariant(pElement, wzPropName, &vtGet);
     ExitOnFailure1(hr, "Failed to get iis7 property variant with name: %ls", wzPropName);
 
-    if (VT_BSTR != vtGet.vt && VT_LPWSTR != vtGet.vt)
+    if (!ISSTRINGVARIANT(vtGet.vt))
     {
         hr = E_UNEXPECTED;
         ExitOnFailure1(hr, "Tried to get property as a string, but type was %d instead.", vtGet.vt);
@@ -198,6 +200,36 @@ BOOL CompareVariantDefault(
     return fEqual;
 }
 
+BOOL CompareVariantPath(
+    __in VARIANT* pVariant1,
+    __in VARIANT* pVariant2
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fEqual = FALSE;
+    LPWSTR wzValue1 = NULL;
+    LPWSTR wzValue2 = NULL;
+
+    if (ISSTRINGVARIANT(pVariant1->vt))
+    {
+        hr = PathExpand(&wzValue1, pVariant1->bstrVal, PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
+        ExitOnFailure1(hr, "Failed to expand path %ls", pVariant1->bstrVal);
+    }
+
+    if (ISSTRINGVARIANT(pVariant2->vt))
+    {
+        hr = PathExpand(&wzValue2, pVariant2->bstrVal, PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
+        ExitOnFailure1(hr, "Failed to expand path %ls", pVariant2->bstrVal);
+    }
+
+    fEqual = CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, wzValue1, -1, wzValue2, -1);
+
+LExit:
+    ReleaseNullStr(wzValue1);
+    ReleaseNullStr(wzValue2);
+    return fEqual;
+}
+
 BOOL DAPI IsMatchingAppHostElementCallback(
     __in IAppHostElement *pElement,
     __in_bcount(sizeof(IIS7_APPHOSTELEMENTCOMPARISON)) LPVOID pContext
@@ -231,7 +263,7 @@ extern "C" BOOL DAPI Iis7IsMatchingAppHostElement(
     hr = Iis7GetPropertyVariant(pElement, pComparison->sczAttributeName, &vPropValue);
     ExitOnFailure2(hr, "Failed to get value of %ls attribute of %ls element", pComparison->sczAttributeName, pComparison->sczElementName);
 
-    if (TRUE == CompareVariantDefault(pComparison->pvAttributeValue, &vPropValue))
+    if (TRUE == pComparison->pComparator(pComparison->pvAttributeValue, &vPropValue))
     {
         fResult = TRUE;
     }
@@ -265,6 +297,42 @@ LExit:
     ReleaseBSTR(bstrName);
 
     return fResult;
+}
+
+extern "C" HRESULT DAPI Iis7FindAppHostElementPath(
+    __in IAppHostElementCollection *pCollection,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
+    __in LPCWSTR wzAttributeValue,
+    __out IAppHostElement** ppElement,
+    __out DWORD* pdwIndex
+    )
+{
+    LPWSTR wzPath = NULL;
+    HRESULT hr = S_OK;
+    IIS7_APPHOSTELEMENTCOMPARISON comparison = { };
+    VARIANT vtValue = { };
+    ::VariantInit(&vtValue);
+
+    vtValue.vt = VT_BSTR;
+    vtValue.bstrVal = ::SysAllocString(wzAttributeValue);
+    ExitOnNull(vtValue.bstrVal, hr, E_OUTOFMEMORY, "failed SysAllocString");
+
+    comparison.sczElementName = wzElementName;
+    comparison.sczAttributeName = wzAttributeName;
+    comparison.pvAttributeValue = &vtValue;
+    comparison.pComparator = CompareVariantPath;
+
+    hr = Iis7EnumAppHostElements(pCollection,
+                                 IsMatchingAppHostElementCallback,
+                                 &comparison,
+                                 ppElement,
+                                 pdwIndex);
+
+LExit:
+    ReleaseVariant(vtValue);
+
+    return hr;
 }
 
 extern "C" HRESULT DAPI Iis7FindAppHostElementString(
@@ -338,6 +406,7 @@ extern "C" HRESULT DAPI Iis7FindAppHostElementVariant(
     comparison.sczElementName = wzElementName;
     comparison.sczAttributeName = wzAttributeName;
     comparison.pvAttributeValue = pvAttributeValue;
+    comparison.pComparator = CompareVariantDefault;
 
     return Iis7EnumAppHostElements(pCollection,
                                    IsMatchingAppHostElementCallback,

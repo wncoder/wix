@@ -389,7 +389,7 @@ static HRESULT RmuApplicationArrayAlloc(
     HRESULT hr = S_OK;
     RM_UNIQUE_PROCESS *pApplication = NULL;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgApplications), *pcApplications, sizeof(RM_UNIQUE_PROCESS), ARRAY_GROWTH_SIZE);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgApplications), *pcApplications + 1, sizeof(RM_UNIQUE_PROCESS), ARRAY_GROWTH_SIZE);
     ExitOnFailure(hr, "Failed to allocate memory for the application array.");
 
     pApplication = static_cast<RM_UNIQUE_PROCESS*>(&(*prgApplications)[*pcApplications]);

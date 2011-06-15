@@ -418,6 +418,11 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// Forces display of the source resolution dialog even if the UI is otherwise silent.
         /// </summary>
         SourceResolutionOnly = 0x100,
+
+        /// <summary>
+        /// [MSI 5.0] Forces display of the UAC dialog even if the UI is otherwise silent.
+        /// </summary>
+        UacOnly = 0x200,
     }
 
     /// <summary>

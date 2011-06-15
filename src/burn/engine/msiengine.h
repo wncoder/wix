@@ -44,6 +44,7 @@ HRESULT MsiEngineDetectPackage(
     );
 HRESULT MsiEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,

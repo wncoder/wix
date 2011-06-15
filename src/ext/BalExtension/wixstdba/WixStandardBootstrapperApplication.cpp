@@ -210,6 +210,7 @@ public: // IBootstrapperApplication
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
         __in LPCWSTR /*wzBundleId*/,
+        __in LPCWSTR /*wzBundleTag*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
         __in BOOTSTRAPPER_RELATED_OPERATION operation

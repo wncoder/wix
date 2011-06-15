@@ -19,15 +19,6 @@
 #include "precomp.h"
 
 
-// structs
-
-//struct DEPENDENDY_CHAIN_LINK
-//{
-//    DEPENDENDY_CHAIN_LINK* pPrevious;
-//    LPCWSTR sczKey;
-//};
-
-
 // internal function declarations
 
 static HRESULT DirectorySearchExists(
@@ -760,6 +751,8 @@ static HRESULT RegistrySearchValue(
     if (E_FILENOTFOUND == hr)
     {
         LogStringLine(REPORT_STANDARD, "Registry key not found. Key = '%ls'", sczKey);
+        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+        ExitOnFailure(hr, "Failed to clear variable.");
         ExitFunction1(hr = S_OK);
     }
     ExitOnFailure(hr, "Failed to open registry key.");
@@ -769,6 +762,8 @@ static HRESULT RegistrySearchValue(
     if (ERROR_FILE_NOT_FOUND == er)
     {
         LogStringLine(REPORT_STANDARD, "Registry value not found. Key = '%ls', Value = '%ls'", sczKey, sczValue);
+        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+        ExitOnFailure(hr, "Failed to clear variable.");
         ExitFunction1(hr = S_OK);
     }
     ExitOnWin32Error(er, hr, "Failed to query registry key value size.");

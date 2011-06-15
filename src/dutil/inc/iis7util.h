@@ -110,6 +110,9 @@ extern "C" {
 #define IIS_CONFIG_HTTPEXPIRES              L"httpExpires"
 #define IIS_CONFIG_MAXAGE                   L"cacheControlMaxAge"
 #define IIS_CONFIG_CLIENTCACHE              L"clientCache"
+#define IIS_CONFIG_CACHECONTROLMODE         L"cacheControlMode"
+#define IIS_CONFIG_USEMAXAGE                L"UseMaxAge"
+#define IIS_CONFIG_USEEXPIRES               L"UseExpires"
 #define IIS_CONFIG_CACHECUST                L"cacheControlCustom"
 #define IIS_CONFIG_ASP_SECTION              L"system.webServer/asp"
 #define IIS_CONFIG_SESSION                  L"session"
@@ -124,8 +127,11 @@ extern "C" {
 #define IIS_CONFIG_ALLOWCLIENTDEBUG         L"appAllowClientDebug"
 #define IIS_CONFIG_CERTIFICATEHASH          L"certificateHash"
 #define IIS_CONFIG_CERTIFICATESTORENAME     L"certificateStoreName"
+#define IIS_CONFIG_HTTPLOGGING_SECTION      L"system.webServer/httpLogging"
+#define IIS_CONFIG_DONTLOG                  L"dontLog"
 
-typedef BOOL (CALLBACK* ENUMAPHOSTELEMENTPROC)(IAppHostElement*, LPVOID pContext);
+typedef BOOL (CALLBACK* ENUMAPHOSTELEMENTPROC)(IAppHostElement*, LPVOID);
+typedef BOOL (CALLBACK* VARIANTCOMPARATORPROC)(VARIANT*, VARIANT*);
 
 HRESULT DAPI Iis7PutPropertyVariant(
     __in IAppHostElement *pElement,
@@ -167,6 +173,7 @@ struct IIS7_APPHOSTELEMENTCOMPARISON
     LPCWSTR sczElementName;
     LPCWSTR sczAttributeName;
     VARIANT* pvAttributeValue;
+    VARIANTCOMPARATORPROC pComparator;
 };
 
 BOOL DAPI Iis7IsMatchingAppHostElement( 
@@ -175,6 +182,15 @@ BOOL DAPI Iis7IsMatchingAppHostElement(
     );
 
 HRESULT DAPI Iis7FindAppHostElementString( 
+    __in IAppHostElementCollection *pCollection,
+    __in LPCWSTR wzElementName,
+    __in LPCWSTR wzAttributeName,
+    __in LPCWSTR wzAttributeValue,
+    __out IAppHostElement** ppElement,
+    __out DWORD* pdwIndex
+    );
+
+HRESULT DAPI Iis7FindAppHostElementPath( 
     __in IAppHostElementCollection *pCollection,
     __in LPCWSTR wzElementName,
     __in LPCWSTR wzAttributeName,

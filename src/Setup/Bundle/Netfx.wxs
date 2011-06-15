@@ -2,6 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Fragment>
         <Variable Name="MbaNetfxPackageId" Value="Netfx4Full" />
+        <Variable Name="MbaPreqPackageName" Value=".Net Framework 4.0" />
 
         <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\Net Framework Setup\NDP\v4\Full" Value="Version" Variable="Netfx4FullVersion" />
         <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\Net Framework Setup\NDP\v4\Full" Value="Version" Variable="Netfx4x64FullVersion" Win64="yes" />

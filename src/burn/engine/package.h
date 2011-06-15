@@ -114,6 +114,12 @@ typedef struct _BURN_PACKAGE_PAYLOAD
     BOOL fCached;
 } BURN_PACKAGE_PAYLOAD;
 
+typedef struct _BURN_DEPENDENCY_PROVIDER
+{
+    LPWSTR sczKey;
+    BOOL fImported;
+} BURN_DEPENDENCY_PROVIDER;
+
 typedef struct _BURN_ROLLBACK_BOUNDARY
 {
     LPWSTR sczId;
@@ -146,6 +152,10 @@ typedef struct _BURN_PACKAGE
     BURN_PACKAGE_PAYLOAD* rgPayloads;
     DWORD cPayloads;
 
+    BURN_DEPENDENCY_PROVIDER* rgDependencyProviders;
+    DWORD cDependencyProviders;
+    BOOL fDependencyProvidersImported;
+
     BURN_PACKAGE_TYPE type;
     union
     {
@@ -176,6 +186,10 @@ typedef struct _BURN_PACKAGE
 
             BURN_RELATED_MSI* rgRelatedMsis;
             DWORD cRelatedMsis;
+
+            _BURN_PACKAGE** rgpSlipstreamMspPackages;
+            LPWSTR* rgsczSlipstreamMspPackageIds;
+            DWORD cSlipstreamMspPackages;
         } Msi;
         struct
         {

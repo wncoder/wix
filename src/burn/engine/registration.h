@@ -63,6 +63,7 @@ typedef struct _BURN_REGISTRATION
     BOOL fPerMachine;
     BOOL fRegisterArp;
     LPWSTR sczId;
+    LPWSTR sczTag;
 
     LPWSTR *rgsczDetectCodes;
     DWORD cDetectCodes;
@@ -74,6 +75,7 @@ typedef struct _BURN_REGISTRATION
     DWORD cAddonCodes;
 
     DWORD64 qwVersion;
+    LPWSTR sczProviderKey;
     LPWSTR sczExecutableName;
 
     // paths
@@ -139,7 +141,8 @@ HRESULT RegistrationDetectRelatedBundles(
 HRESULT RegistrationLoadRelatedBundle(
     __in BURN_REGISTRATION* pRegistration,
     __in_z LPCWSTR sczBundleId,
-    __out BURN_RELATION_TYPE *pRelationType
+    __out BURN_RELATION_TYPE *pRelationType,
+    __out LPWSTR *psczTag
     );
 HRESULT RegistrationSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
@@ -152,7 +155,8 @@ HRESULT RegistrationSessionSuspend(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION action,
     __in BOOL fReboot,
-    __in BOOL fPerMachineProcess
+    __in BOOL fPerMachineProcess,
+    __out_opt BURN_RESUME_MODE* pResumeMode
     );
 HRESULT RegistrationSessionResume(
     __in BURN_REGISTRATION* pRegistration,

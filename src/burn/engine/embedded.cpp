@@ -85,7 +85,7 @@ extern "C" HRESULT EmbeddedLaunchChildProcess(
     context.hElevatedPipe = hElevatedPipe;
     context.pUX = pUX->pUserExperience;
 
-    hr = PipeCreatePipeNameAndToken(&hPipe, &sczPipeName, &sczClientToken);
+    hr = PipeCreatePipeNameAndToken(&hPipe, NULL, &sczPipeName, &sczClientToken);
     ExitOnFailure(hr, "Failed to create embedded pipe.");
 
     hr = StrAllocFormatted(&sczCommand, L"%s -%s %s %s", wzCommandLine, BURN_COMMANDLINE_SWITCH_EMBEDDED, sczPipeName, sczClientToken);

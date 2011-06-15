@@ -18,6 +18,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(WIX_ROOT)\src\ext\DependencyExtension\DependencyExtension.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -44,6 +45,9 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\build\$(Configuration)\x86\</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="apply.cpp" />
@@ -56,6 +60,7 @@
     <ClCompile Include="condition.cpp" />
     <ClCompile Include="container.cpp" />
     <ClCompile Include="core.cpp" />
+    <ClCompile Include="dependency.cpp" />
     <ClCompile Include="downloadengine.cpp" />
     <ClCompile Include="elevation.cpp" />
     <ClCompile Include="engine.cpp" />
@@ -65,6 +70,7 @@
     <ClCompile Include="msiengine.cpp" />
     <ClCompile Include="mspengine.cpp" />
     <ClCompile Include="msuengine.cpp" />
+    <ClCompile Include="NetFxChainer.cpp" />
     <ClCompile Include="package.cpp" />
     <ClCompile Include="payload.cpp" />
     <ClCompile Include="pipe.cpp" />
@@ -85,6 +91,7 @@
     <ClInclude Include="catalog.h" />
     <ClInclude Include="embedded.h" />
     <ClInclude Include="EngineForApplication.h" />
+    <ClInclude Include="dependency.h" />
     <ClInclude Include="downloadengine.h" />
     <ClInclude Include="cabextract.h" />
     <ClInclude Include="cache.h" />
@@ -98,6 +105,7 @@
     <ClInclude Include="msiengine.h" />
     <ClInclude Include="mspengine.h" />
     <ClInclude Include="msuengine.h" />
+    <ClInclude Include="netfxchainer.h" />
     <ClInclude Include="package.h" />
     <ClInclude Include="payload.h" />
     <ClInclude Include="pipe.h" />

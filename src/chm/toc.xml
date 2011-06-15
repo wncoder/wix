@@ -46,7 +46,6 @@
       <Topic Title="Burn Built-In Variables" SourceFile="html\bundle_built_in_variables.htm" />
       <Topic Title="Define Searches Using Variables" SourceFile="html\bundle_define_searches.htm" />
       <Topic Title="Chain Packages into a Bundle" SourceFile="html\bundle_author_chain.htm" />
-      <Topic Title="Add files to the Setup Layout" SourceFile="html\bundle_author_layoutdirectory.htm" />
 
       <Topic Title="Working with WiX Standard Bootstrapper Application" SourceFile="html\wixstdba_intro.htm">
         <Topic Title="Specifying the WiX Standard Bootstrapper Application License" SourceFile="html\wixstdba_license.htm" />

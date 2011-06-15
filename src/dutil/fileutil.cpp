@@ -473,6 +473,34 @@ LExit:
     return hr;
 }
 
+/*******************************************************************
+ FileVersionFromStringEx - Formats the DWORD64 as a string version.
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileVersionToStringEx(
+    __in DWORD64 qwVersion,
+    __out LPWSTR* psczVersion
+    )
+{
+    HRESULT hr = S_OK;
+    WORD wMajor = 0;
+    WORD wMinor = 0;
+    WORD wBuild = 0;
+    WORD wRevision = 0;
+
+    // Mask and shift each WORD for each field.
+    wMajor = (WORD)(qwVersion >> 48 & 0xffff);
+    wMinor = (WORD)(qwVersion >> 32 & 0xffff);
+    wBuild = (WORD)(qwVersion >> 16 & 0xffff);
+    wRevision = (WORD)(qwVersion & 0xffff);
+
+    // Format and return the version string.
+    hr = StrAllocFormatted(psczVersion, L"%u.%u.%u.%u", wMajor, wMinor, wBuild, wRevision);
+    ExitOnFailure(hr, "Failed to allocate and format the version number.");
+
+LExit:
+    return hr;
+}
 
 /*******************************************************************
  FileSetPointer - sets the file pointer.
@@ -882,10 +910,14 @@ extern "C" HRESULT DAPI FileEnsureCopy(
             }
         }
         else // no path was specified so just return the error
+        {
             hr = HRESULT_FROM_WIN32(er);
+        }
     }
     else // unexpected error
+    {
         hr = HRESULT_FROM_WIN32(er);
+    }
 
 LExit:
     return hr;
@@ -955,10 +987,14 @@ extern "C" HRESULT DAPI FileEnsureMove(
             }
         }
         else // no path was specified so just return the error
+        {
             hr = HRESULT_FROM_WIN32(er);
+        }
     }
     else // unexpected error
+    {
         hr = HRESULT_FROM_WIN32(er);
+    }
 
 LExit:
     return hr;
@@ -1010,13 +1046,18 @@ extern "C" HRESULT DAPI FileCreateTemp(
     }
 
     if (ppwzTempFile)
+    {
         hr = StrAllocStringAnsi(ppwzTempFile, pszTempFile, 0, CP_UTF8);
-    if (phTempFile)
-        *phTempFile = hTempFile;
-LExit:
-    if (FAILED(hr) || !phTempFile)
-        ReleaseFile(hTempFile);
+    }
 
+    if (phTempFile)
+    {
+        *phTempFile = hTempFile;
+        hTempFile = INVALID_HANDLE_VALUE;
+    }
+
+LExit:
+    ReleaseFile(hTempFile);
     ReleaseStr(pszTempFile);
     ReleaseStr(pszTempPath);
 
@@ -1068,7 +1109,11 @@ extern "C" HRESULT DAPI FileCreateTempW(
     }
 
     if (phTempFile)
+    {
         *phTempFile = hTempFile;
+        hTempFile = INVALID_HANDLE_VALUE;
+    }
+
     if (ppwzTempFile)
     {
         *ppwzTempFile = pwzTempFile;
@@ -1076,9 +1121,7 @@ extern "C" HRESULT DAPI FileCreateTempW(
     }
 
 LExit:
-    if (FAILED(hr) || !phTempFile)
-        ReleaseFile(hTempFile);
-
+    ReleaseFile(hTempFile);
     ReleaseStr(pwzTempFile);
 
     return hr;

@@ -6698,12 +6698,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "IgnoreModularization":
                                 this.ParseIgnoreModularizationElement(child);
                                 break;
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, null);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, null);
-                                break;
                             case "Media":
                                 this.ParseMediaElement(child, null);
                                 break;
@@ -7839,8 +7833,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             compressionLevel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             if (0 < compressionLevel.Length)
                             {
-                                Wix.Media.CompressionLevelType compressionLevelType;
-                                if (!Wix.Media.TryParseCompressionLevelType(compressionLevel, out compressionLevelType))
+                                Wix.CompressionLevelType compressionLevelType;
+                                if (!Wix.Enums.TryParseCompressionLevelType(compressionLevel, out compressionLevelType))
                                 {
                                     this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, compressionLevel, "high", "low", "medium", "mszip", "none"));
                                 }
@@ -8036,7 +8030,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string volumeLabel = null;
             int maximumUncompressedMediaSize = CompilerCore.IntegerNotSet;
 
-            Wix.Media.CompressionLevelType compressionLevelType = Wix.Media.CompressionLevelType.none;
+            Wix.CompressionLevelType compressionLevelType = Wix.CompressionLevelType.none;
 
             YesNoType embedCab = patch ? YesNoType.Yes : YesNoType.NotSet;
 
@@ -8072,7 +8066,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             compressionLevel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             if (0 < compressionLevel.Length)
                             {
-                                if (!Wix.Media.TryParseCompressionLevelType(compressionLevel, out compressionLevelType))
+                                if (!Wix.Enums.TryParseCompressionLevelType(compressionLevel, out compressionLevelType))
                                 {
                                     this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, compressionLevel, "high", "low", "medium", "mszip", "none"));
                                 }
@@ -8131,20 +8125,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 switch(compressionLevelType)
                 {
-                    case Wix.Media.CompressionLevelType.high:
+                    case Wix.CompressionLevelType.high:
                         mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.High;
                         break;
-                    case Wix.Media.CompressionLevelType.low:
+                    case Wix.CompressionLevelType.low:
                         mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Low;
                         break;
-                    case Wix.Media.CompressionLevelType.medium:
+                    case Wix.CompressionLevelType.medium:
                         mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Medium;
                         break;
-                    case Wix.Media.CompressionLevelType.none:
+                    case Wix.CompressionLevelType.none:
                         mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.None;
                         break;
-                    case Wix.Media.CompressionLevelType.mszip:
-                    case Wix.Media.CompressionLevelType.NotSet:
+                    case Wix.CompressionLevelType.mszip:
+                    case Wix.CompressionLevelType.NotSet:
                         mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Mszip;
                         break;
                 }
@@ -8672,12 +8666,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 case "IgnoreTable":
                                     this.ParseIgnoreTableElement(child);
                                     break;
-                                case "LayoutDirectory":
-                                    this.ParseLayoutDirectoryElement(child, null);
-                                    break;
-                                case "LayoutDirectoryRef":
-                                    this.ParseLayoutDirectoryRefElement(child, null);
-                                    break;
                                 case "Package":
                                     this.ParsePackageElement(child, null, moduleId);
                                     break;
@@ -8814,12 +8802,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             case "Family":
                                 this.ParseFamilyElement(child);
-                                break;
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, null);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, null);
                                 break;
                             case "PatchInformation":
                                 this.ParsePatchInformationElement(child);
@@ -10286,12 +10268,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             case "PatchInformation":
                                 this.ParsePatchInformationElement(child);
-                                break;
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, null);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, null);
                                 break;
                             case "Media":
                                 this.ParseMediaElement(child, patchId);
@@ -12861,12 +12837,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     break;
                                 case "InstanceTransforms":
                                     this.ParseInstanceTransformsElement(child);
-                                    break;
-                                case "LayoutDirectory":
-                                    this.ParseLayoutDirectoryElement(child, null);
-                                    break;
-                                case "LayoutDirectoryRef":
-                                    this.ParseLayoutDirectoryRefElement(child, null);
                                     break;
                                 case "MajorUpgrade":
                                     this.ParseMajorUpgradeElement(child, contextValues);
@@ -19491,6 +19461,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string helpUrl = null;
             string manufacturer = null;
             string name = null;
+            string tag = null;
             string updateUrl = null;
             string upgradeCode = null;
             string version = null;
@@ -19501,6 +19472,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string iconSourceFile = null;
             string splashScreenSourceFile = null;
 
+            // Process only standard attributes until the active section is initialized.
             foreach (XmlAttribute attrib in node.Attributes)
             {
                 if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
@@ -19546,6 +19518,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "SplashScreenSourceFile":
                             splashScreenSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
+                        case "Tag":
+                            tag = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
                         case "UpdateUrl":
                             updateUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
@@ -19559,10 +19534,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
                             break;
                     }
-                }
-                else
-                {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
                 }
             }
 
@@ -19639,6 +19610,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.activeName = String.IsNullOrEmpty(name) ? Common.GenerateGuid() : name;
             this.core.CreateActiveSection(this.activeName, SectionType.Bundle, 0);
+
+            // Now that the active section is initialized, process only extension attributes.
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 < attrib.NamespaceURI.Length && attrib.NamespaceURI != this.schema.TargetNamespace)
+                {
+                    this.core.ParseExtensionAttribute(sourceLineNumbers, (XmlElement)node, attrib);
+                }
+            }
+
             bool baSeen = false;
             bool chainSeen = false;
             bool logSeen = false;
@@ -19680,12 +19661,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 break;
                             case "ContainerRef":
                                 this.ParseSimpleRefElement(child, "Container");
-                                break;
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, null);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, null);
                                 break;
                             case "Log":
                                 if (logSeen)
@@ -19773,6 +19748,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[13] = iconSourceFile;
                 row[14] = splashScreenSourceFile;
                 row[15] = condition;
+                row[16] = tag;
             }
         }
 
@@ -20003,238 +19979,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[0] = id;
                 row[1] = name;
                 row[2] = type;
-            }
-        }
-
-        /// <summary>
-        /// Parse LayoutDirectory element
-        /// </summary>
-        /// <param name="node">Element to parse</param>
-        /// <param name="parentId">Optional identifier of parent LayoutDirectory</param>
-        private void ParseLayoutDirectoryElement(XmlNode node, string parentId)
-        {
-            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
-            string name = null;
-
-            foreach (XmlAttribute attrib in node.Attributes)
-            {
-                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
-                {
-                    switch (attrib.LocalName)
-                    {
-                        case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            break;
-                        case "Name":
-                            name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false, true);
-                            break;
-                        default:
-                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
-                            break;
-                    }
-                }
-                else
-                {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
-                }
-            }
-
-            if (null == name)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Name"));
-            }
-
-            if (null == id)
-            {
-                id = Guid.NewGuid().ToString();
-            }
-
-            foreach (XmlNode child in node.ChildNodes)
-            {
-                if (XmlNodeType.Element == child.NodeType)
-                {
-                    if (child.NamespaceURI == this.schema.TargetNamespace)
-                    {
-                        SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
-                        switch (child.LocalName)
-                        {
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, id);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, id);
-                                break;
-                            case "LayoutFile":
-                                this.ParseLayoutFile(child, id);
-                                break;
-                            default:
-                                this.core.UnexpectedElement(node, child);
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        this.core.UnsupportedExtensionElement(node, child);
-                    }
-                }
-            }
-
-            if (!this.core.EncounteredError)
-            {
-                Row row = this.core.CreateRow(sourceLineNumbers, "WixLayoutDirectory");
-                row[0] = id;
-                row[1] = name;
-
-                if (null != parentId)
-                {
-                    Row rowParent = this.core.CreateRow(sourceLineNumbers, "WixLayoutDirRef");
-                    rowParent[0] = parentId;
-                    rowParent[1] = id;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Parse LayoutFile element
-        /// </summary>
-        /// <param name="node">Element to parse</param>
-        /// <param name="parent">Identifier of parent LayoutDirectory</param>
-        private void ParseLayoutFile(XmlNode node, string parent)
-        {
-            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string name = null;
-            string sourceFile = null;
-
-            foreach (XmlAttribute attrib in node.Attributes)
-            {
-                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
-                {
-                    switch (attrib.LocalName)
-                    {
-                        case "Name":
-                            name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
-                            break;
-                        case "SourceFile":
-                            sourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        default:
-                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
-                            break;
-                    }
-                }
-                else
-                {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
-                }
-            }
-
-            if (null == sourceFile)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "SourceFile"));
-            }
-
-            foreach (XmlNode child in node.ChildNodes)
-            {
-                if (XmlNodeType.Element == child.NodeType)
-                {
-                    if (child.NamespaceURI == this.schema.TargetNamespace)
-                    {
-                        this.core.UnexpectedElement(node, child);
-                    }
-                    else
-                    {
-                        this.core.UnsupportedExtensionElement(node, child);
-                    }
-                }
-            }
-
-            if (!this.core.EncounteredError)
-            {
-                Row row = this.core.CreateRow(sourceLineNumbers, "WixLayoutFile");
-                row[0] = Guid.NewGuid().ToString();
-                row[1] = parent;
-                row[2] = name;
-                row[3] = sourceFile;
-            }
-        }
-
-        /// <summary>
-        /// Parse LayoutDirectoryRef element.
-        /// </summary>
-        /// <param name="node">Element to parse</param>
-        /// <param name="parentId">Optional identifier of parent LayoutDirectory</param>
-        private void ParseLayoutDirectoryRefElement(XmlNode node, string parentId)
-        {
-            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
-
-            foreach (XmlAttribute attrib in node.Attributes)
-            {
-                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
-                {
-                    switch (attrib.LocalName)
-                    {
-                        case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixLayoutDirectory", id);
-                            break;
-                        default:
-                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
-                            break;
-                    }
-                }
-                else
-                {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
-                }
-            }
-
-            if (null == id)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
-            }
-
-            foreach (XmlNode child in node.ChildNodes)
-            {
-                if (XmlNodeType.Element == child.NodeType)
-                {
-                    if (child.NamespaceURI == this.schema.TargetNamespace)
-                    {
-                        SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
-                        switch (child.LocalName)
-                        {
-                            case "LayoutDirectory":
-                                this.ParseLayoutDirectoryElement(child, id);
-                                break;
-                            case "LayoutDirectoryRef":
-                                this.ParseLayoutDirectoryRefElement(child, id);
-                                break;
-                            case "LayoutFile":
-                                this.ParseLayoutFile(child, id);
-                                break;
-                            default:
-                                this.core.UnexpectedElement(node, child);
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        this.core.UnsupportedExtensionElement(node, child);
-                    }
-                }
-            }
-
-            if (!this.core.EncounteredError)
-            {
-                if (null == parentId)
-                {
-                    parentId = Guid.Empty.ToString();
-                }
-
-                Row row = this.core.CreateRow(sourceLineNumbers, "WixLayoutDirRef");
-                row[0] = parentId;
-                row[1] = id;
             }
         }
 
@@ -20687,6 +20431,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             YesNoType disableRollback = YesNoType.NotSet;
+            YesNoType parallelCache = YesNoType.NotSet;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -20696,6 +20441,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         case "DisableRollback":
                             disableRollback = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "ParallelCache":
+                            parallelCache = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -20763,6 +20511,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "WixChain");
                 row[0] = YesNoType.Yes == disableRollback ? 1 : 0;
+                row[1] = YesNoType.Yes == parallelCache ? 1 : 0;
             }
         }
 
@@ -21160,6 +20909,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         bool allowed = true;
                         switch (child.LocalName)
                         {
+                            case "SlipstreamMsp":
+                                allowed = (packageType == ChainPackageType.Msi);
+                                if (allowed)
+                                {
+                                    this.ParseSlipstreamMspElement(child, id);
+                                }
+                                break;
                             case "MsiProperty":
                                 allowed = (packageType == ChainPackageType.Msi || packageType == ChainPackageType.Msp);
                                 if (allowed)
@@ -21537,6 +21293,63 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
+        /// <summary>
+        /// Parse SlipstreamMsp element
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        private void ParseSlipstreamMspElement(XmlNode node, string packageId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string id = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "ChainPackage", id);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (null == id)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "SlipstreamMsp");
+                row[0] = packageId;
+                row[1] = id;
+            }
+        }
 
         /// <summary>
         /// Parse RelatedBundle element

@@ -151,7 +151,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// variable string.</param>
         /// <returns>True if a match was found, else false.</returns>
         [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        private static bool DebugBreakEnabled(string[] names)
+        internal static bool DebugBreakEnabled(string[] names)
         {
             string mmsibreak = Environment.GetEnvironmentVariable("MMsiBreak");
             if (mmsibreak != null)

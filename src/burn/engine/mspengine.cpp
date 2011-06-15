@@ -227,6 +227,7 @@ LExit:
 //
 extern "C" HRESULT MspEnginePlanPackage(
     __in DWORD /*dwPackageSequence*/,
+    __in_opt DWORD* /*pdwInsertSequence*/,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* /*pLog*/,
@@ -505,7 +506,7 @@ static HRESULT AddDetectedTargetProduct(
 {
     HRESULT hr = S_OK;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPackage->Msp.rgTargetProducts), pPackage->Msp.cTargetProductCodes, sizeof(BURN_MSPTARGETPRODUCT), 5);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPackage->Msp.rgTargetProducts), pPackage->Msp.cTargetProductCodes + 1, sizeof(BURN_MSPTARGETPRODUCT), 5);
     ExitOnFailure(hr, "Failed to ensure enough target product codes were allocated.");
 
     hr = ::StringCchCopyW(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode, countof(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode), wzProductCode);
@@ -578,7 +579,7 @@ static HRESULT PlanTargetProduct(
     }
 
     // Add our target product to the array and sort based on their order determined during detection.
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pAction->mspTarget.rgOrderedPatches), pAction->mspTarget.cOrderedPatches, sizeof(BURN_ORDERED_PATCHES), 2);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pAction->mspTarget.rgOrderedPatches), pAction->mspTarget.cOrderedPatches + 1, sizeof(BURN_ORDERED_PATCHES), 2);
     ExitOnFailure(hr, "Failed grow array of ordered patches.");
 
     pAction->mspTarget.rgOrderedPatches[pAction->mspTarget.cOrderedPatches].dwOrder = pTargetProduct->dwOrder;

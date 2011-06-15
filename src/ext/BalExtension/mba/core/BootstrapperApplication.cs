@@ -237,7 +237,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Fired when Windows Installer sends a files in use installation message.
         /// </summary>
-        public event EventHandler<ExecuteMsiFilesInUseEventArgs> ExecuteMsiFilesInUse;
+        public event EventHandler<ExecuteFilesInUseEventArgs> ExecuteFilesInUse;
 
         /// <summary>
         /// Fired when the engine has completed installing a specific package.
@@ -818,9 +818,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Called when Windows Installer sends a file in use installation message.
         /// </summary>
         /// <param name="args">Additional arguments for this event.</param>
-        protected virtual void OnExecuteMsiFilesInUse(ExecuteMsiFilesInUseEventArgs args)
+        protected virtual void OnExecuteFilesInUse(ExecuteFilesInUseEventArgs args)
         {
-            EventHandler<ExecuteMsiFilesInUseEventArgs> handler = this.ExecuteMsiFilesInUse;
+            EventHandler<ExecuteFilesInUseEventArgs> handler = this.ExecuteFilesInUse;
             if (null != handler)
             {
                 handler(this, args);
@@ -916,9 +916,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnDetectRelatedBundle(string wzProductCode, bool fPerMachine, long version, RelatedOperation operation)
+        Result IBootstrapperApplication.OnDetectRelatedBundle(string wzProductCode, string wzBundleTag, bool fPerMachine, long version, RelatedOperation operation)
         {
-            DetectRelatedBundleEventArgs args = new DetectRelatedBundleEventArgs(wzProductCode, fPerMachine, version, operation);
+            DetectRelatedBundleEventArgs args = new DetectRelatedBundleEventArgs(wzProductCode, wzBundleTag, fPerMachine, version, operation);
             this.OnDetectRelatedBundle(args);
 
             return args.Result;
@@ -1173,10 +1173,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnExecuteMsiFilesInUse(string wzPackageId, int cFiles, string[] rgwzFiles)
+        Result IBootstrapperApplication.OnExecuteFilesInUse(string wzPackageId, int cFiles, string[] rgwzFiles)
         {
-            ExecuteMsiFilesInUseEventArgs args = new ExecuteMsiFilesInUseEventArgs(wzPackageId, rgwzFiles);
-            this.OnExecuteMsiFilesInUse(args);
+            ExecuteFilesInUseEventArgs args = new ExecuteFilesInUseEventArgs(wzPackageId, rgwzFiles);
+            this.OnExecuteFilesInUse(args);
 
             return args.Result;
         }

@@ -151,7 +151,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListAddSourceEx(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) type | (uint) this.installation.InstallationType,
                 item,
                 (uint) index);
@@ -253,7 +253,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListClearSource(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) type | (uint) this.installation.InstallationType,
                 item);
             if (ret != 0)
@@ -331,7 +331,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListForceResolutionEx(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) this.installation.InstallationType);
             if (ret != 0)
             {
@@ -438,7 +438,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiSourceListGetInfo(
                     this.installation.InstallationCode,
                     this.installation.UserSid,
-                    (int) this.installation.Context,
+                    this.installation.Context,
                     (uint) this.installation.InstallationType,
                     property,
                     buf,
@@ -451,7 +451,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                         ret = NativeMethods.MsiSourceListGetInfo(
                             this.installation.InstallationCode,
                             this.installation.UserSid,
-                            (int) this.installation.Context,
+                            this.installation.Context,
                             (uint) this.installation.InstallationType,
                             property,
                             buf,
@@ -478,7 +478,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiSourceListSetInfo(
                     this.installation.InstallationCode,
                     this.installation.UserSid,
-                    (int) this.installation.Context,
+                    this.installation.Context,
                     (uint) this.installation.InstallationType,
                     property,
                     value);
@@ -502,7 +502,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListClearAllEx(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) type | (uint) this.installation.InstallationType);
             if (ret != 0)
             {
@@ -517,7 +517,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListEnumSources(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) enumType,
                 i,
                 sourceBuf,
@@ -528,7 +528,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 ret = NativeMethods.MsiSourceListEnumSources(
                     this.installation.InstallationCode,
                     this.installation.UserSid,
-                    (int) this.installation.Context,
+                    this.installation.Context,
                     (uint) enumType,
                     i,
                     sourceBuf,

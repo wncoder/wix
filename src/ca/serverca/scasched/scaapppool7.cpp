@@ -359,11 +359,13 @@ HRESULT ScaWriteAppPool7(
             ExitOnFailure(hr, "failed to set app pool identity password");
         }
     }
-
-    if (psap->iAttributes & APATTR_INTEGRATED)
+    
+    if (*psap->wzManagedPipelineMode)
     {
-        hr = ScaWriteConfigID(IIS_APPPOOL_INTEGRATED);
+        hr = ScaWriteConfigID(IIS_APPPOOL_MANAGED_PIPELINE_MODE);
         ExitOnFailure(hr, "failed to set app pool integrated mode");
+        hr = ScaWriteConfigString(psap->wzManagedPipelineMode);
+        ExitOnFailure(hr, "failed to set app pool managed pipeline mode value");
     }
 
     if (*psap->wzManagedRuntimeVersion)

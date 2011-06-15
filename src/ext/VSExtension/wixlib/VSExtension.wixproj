@@ -12,6 +12,7 @@
   <ItemGroup>
     <Compile Include="HTML_Help_Registration__RTL_X86_---.wxs" />
     <Compile Include="VsExtension.wxs" />
+    <Compile Include="VsixPackage.wxs" />
     <Compile Include="vs2005\vs2005_VSIPCC_Collection_Files_RTL_---_---.wxs" />
     <Compile Include="vs2008\vs2008_VSIPCC_Collection_Files_RTL_---_---.wxs" />
   </ItemGroup>

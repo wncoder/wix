@@ -28,7 +28,7 @@ static DWORD vdwRetryCount = 0;
 static DWORD vdwLastError = ERROR_SUCCESS;
 
 
-extern "C" void BalRetryInitialize(
+DAPI_(void) BalRetryInitialize(
     __in DWORD dwMaxRetries,
     __in DWORD dwTimeout
     )
@@ -42,7 +42,7 @@ extern "C" void BalRetryInitialize(
 }
 
 
-extern "C" void BalRetryUninitialize()
+DAPI_(void) BalRetryUninitialize()
 {
     vdwLastError = ERROR_SUCCESS;
     vdwRetryCount = 0;
@@ -53,7 +53,7 @@ extern "C" void BalRetryUninitialize()
 }
 
 
-extern "C" void BalRetryStartPackage(
+DAPI_(void) BalRetryStartPackage(
     __in_z_opt LPCWSTR wzPackageId
     )
 {
@@ -76,7 +76,7 @@ extern "C" void BalRetryStartPackage(
 }
 
 
-extern "C" void BalRetryOnError(
+DAPI_(void) BalRetryOnError(
     __in_z_opt LPCWSTR wzPackageId,
     __in DWORD dwError
     )
@@ -92,7 +92,7 @@ extern "C" void BalRetryOnError(
 }
 
 
-extern "C" int BalRetryEndPackage(
+DAPI_(int) BalRetryEndPackage(
     __in_z_opt LPCWSTR wzPackageId,
     __in HRESULT hrError
     )

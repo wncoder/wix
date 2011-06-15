@@ -21,55 +21,105 @@
 extern "C" {
 #endif
 
-#define ReleaseDependencyArray(rg, c) if (rg) { DependencyArrayFree(rg, c); }
-#define ReleaseNullDependencyArray(rg, c) if (rg) { DependencyArrayFree(rg, c); rg = NULL; }
+#define ReleaseDependencyArray(rg, c) if (rg) { DepDependencyArrayFree(rg, c); }
+#define ReleaseNullDependencyArray(rg, c) if (rg) { DepDependencyArrayFree(rg, c); rg = NULL; }
 
 typedef struct _DEPENDENCY
 {
     LPWSTR sczKey;
     LPWSTR sczName;
 
-} DEPENDENCY, *PDEPENDENCY;
+} DEPENDENCY;
 
 
 /***************************************************************************
- CheckDependencies - Checks that all dependencies are registered
+ DepCheckDependencies - Checks that all dependencies are registered
   and within the proper version range.
 
  Note: Returns S_FALSE if the authored dependencies were not found.
 ***************************************************************************/
-DAPI_(HRESULT) CheckDependencies(
+DAPI_(HRESULT) DepCheckDependencies(
     __in HKEY hkHive,
     __in_z LPCWSTR wzProviderKey,
     __in_z_opt LPCWSTR wzMinVersion,
     __in_z_opt LPCWSTR wzMaxVersion,
     __in int iAttributes,
     __in STRINGDICT_HANDLE sdDependencies,
-    __deref_inout_ecount_opt(*pcDependencies) PDEPENDENCY *prgDependencies,
+    __deref_inout_ecount_opt(*pcDependencies) DEPENDENCY** prgDependencies,
     __inout LPUINT pcDependencies
     );
 
 /***************************************************************************
- CheckDependents - Checks if any dependents are still installed for the
+ DepCheckDependents - Checks if any dependents are still installed for the
   given provider key.
 
  Notes: Returns S_FALSE if no authored dependents were found.
 ***************************************************************************/
-DAPI_(HRESULT) CheckDependents(
+DAPI_(HRESULT) DepCheckDependents(
     __in HKEY hkHive,
     __in_z LPCWSTR wzProviderKey,
     __in int iAttributes,
     __in C_STRINGDICT_HANDLE sdIgnoredDependents,
-    __deref_inout_ecount_opt(*pcDependents) PDEPENDENCY *prgDependents,
+    __deref_inout_ecount_opt(*pcDependents) DEPENDENCY** prgDependents,
     __inout LPUINT pcDependents
     );
 
 /***************************************************************************
- DependencyArrayFree - Frees an array of DEPENDENCY structs.
+ DepRegisterDependency - Registers the dependency provider.
+
+ Notes: Returns S_FALSE if the dependency provider was already registered.
+***************************************************************************/
+DAPI_(HRESULT) DepRegisterDependency(
+    __in HKEY hkHive,
+    __in_z LPCWSTR wzProviderKey,
+    __in_z LPCWSTR wzDisplayKey,
+    __in_z LPCWSTR wzVersion,
+    __in int iAttributes
+    );
+
+/***************************************************************************
+ DepRegisterDependent - Registers a dependent under the dependency provider.
+
+ Notes: Returns S_FALSE if the dependency provider was not registered
+  or if the dependent was already registered.
+***************************************************************************/
+DAPI_(HRESULT) DepRegisterDependent(
+    __in HKEY hkHive,
+    __in_z LPCWSTR wzDependencyProviderKey,
+    __in_z LPCWSTR wzProviderKey,
+    __in_z_opt LPCWSTR wzMinVersion,
+    __in_z_opt LPCWSTR wzMaxVersion,
+    __in int iAttributes
+    );
+
+/***************************************************************************
+ DepUnregisterDependency - Removes the dependency provider.
+
+ Notes: Caller should call CheckDependents prior to remove a dependency.
+  Returns S_FALSE if the dependency provider does not exist.
+***************************************************************************/
+DAPI_(HRESULT) DepUnregisterDependency(
+    __in HKEY hkHive,
+    __in_z LPCWSTR wzProviderKey
+    );
+
+/***************************************************************************
+ DepUnregisterDependent - Removes a dependent under the dependency provider.
+
+ Notes: Returns S_FALSE if the dependency provider does not exist.
+***************************************************************************/
+DAPI_(HRESULT) DepUnregisterDependent(
+    __in HKEY hkHive,
+    __in_z LPCWSTR wzDependencyProviderKey,
+    __in_z LPCWSTR wzProviderKey
+    );
+
+/***************************************************************************
+ DepDependencyArrayFree - Frees an array of DEPENDENCY structs.
 
 ***************************************************************************/
-DAPI_(void) DependencyArrayFree(
-    __in_ecount(cDependencies) PDEPENDENCY rgDependencies,
+DAPI_(void) DepDependencyArrayFree(
+    __in_ecount(cDependencies) DEPENDENCY* rgDependencies,
     __in UINT cDependencies
     );
 

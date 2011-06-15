@@ -79,7 +79,7 @@ namespace Bootstrapper
                 //
                 // per-user side setup
                 //
-                hr = PipeCreatePipeNameAndToken(&hPipe, &sczPipeName, &sczPipeToken);
+                hr = PipeCreatePipeNameAndToken(&hPipe, NULL, &sczPipeName, &sczPipeToken);
                 TestThrowOnFailure(hr, L"Failed to create elevated pipe.");
 
                 hr = PipeLaunchChildProcess(FALSE, sczPipeName, sczPipeToken, NULL, &hProcess);
@@ -95,7 +95,7 @@ namespace Bootstrapper
                 //
                 // initiate termination
                 //
-                hr = PipeTerminateChildProcess(hProcess, hPipe);
+                hr = PipeTerminateChildProcess(hProcess, hPipe, INVALID_HANDLE_VALUE);
                 TestThrowOnFailure(hr, L"Failed to termiate elevated process.");
 
                 // check flags
@@ -164,11 +164,8 @@ static DWORD CALLBACK ElevateTest_ThreadProc(
     }
 
     // set up connection with per-user process
-    hr = PipeChildConnect(wzPipeName, wzToken, &hPipe);
+    hr = PipeChildConnect(wzPipeName, wzToken, FALSE, &hPipe);
     ExitOnFailure(hr, L"Failed to connect to per-user process.");
-
-    hr = PipeChildConnected(hPipe);
-    ExitOnFailure(hr, L"Failed to pass connected message to per-user process.");
 
     // pump messages
     hr = PipePumpMessages(hPipe, ProcessChildMessages, static_cast<LPVOID>(hPipe), &dwResult);

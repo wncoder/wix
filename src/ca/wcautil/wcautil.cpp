@@ -115,8 +115,8 @@ extern "C" HRESULT WIXAPI WcaInitialize(
         ExitWithLastError(hr, "Failed to get module filename");
     }
 
-    hr = FileVersion(wzCAFileName, &dwMajorVersion, &dwMinorVersion);
-    ExitOnFailure(hr, "Failed to get file version of custom action dll");
+    FileVersion(wzCAFileName, &dwMajorVersion, &dwMinorVersion);  // Ignore failure, just log 0.0.0.0
+
     WcaLog(LOGMSG_VERBOSE, "Entering %s in %ls, version %u.%u.%u.%u", szCustomActionLogName, wzCAFileName, (DWORD)HIWORD(dwMajorVersion), (DWORD)LOWORD(dwMajorVersion), (DWORD)HIWORD(dwMinorVersion), (DWORD)LOWORD(dwMinorVersion));
 
     Assert(s_hInstall);

@@ -77,8 +77,10 @@ typedef struct _BURN_ENGINE_STATE
     BURN_MODE mode;
     BOOL fElevated;
 
+    DWORD dwElevatedLoggingTlsId;
     HANDLE hElevatedProcess;
     HANDLE hElevatedPipe;
+    HANDLE hElevatedCachePipe;
 
     HANDLE hEmbeddedProcess;
     HANDLE hEmbeddedPipe;

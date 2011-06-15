@@ -27,6 +27,7 @@ const LPCWSTR REGISTRY_BUNDLE_CACHE_PATH = L"BundleCachePath";
 const LPCWSTR REGISTRY_BUNDLE_UPGRADE_CODE = L"BundleUpgradeCode";
 const LPCWSTR REGISTRY_BUNDLE_ADDON_CODE = L"BundleAddonCode";
 const LPCWSTR REGISTRY_BUNDLE_DETECT_CODE = L"BundleDetectCode";
+const LPCWSTR REGISTRY_BUNDLE_TAG = L"BundleTag";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 
 // internal function declarations
@@ -45,7 +46,8 @@ static HRESULT InitializeRelatedBundleFromKey(
     __in_z LPCWSTR wzBundleId,
     __in HKEY hkBundleId,
     __in BOOL fPerMachine,
-    __inout BURN_RELATED_BUNDLE *pRelatedBundle
+    __inout BURN_RELATED_BUNDLE *pRelatedBundle,
+    __out LPWSTR *psczTag
     );
 static HRESULT FindMatchingStringBetweenArrays(
     __in_ecount(cValues) LPCWSTR *rgwzStringArray1,
@@ -89,6 +91,10 @@ extern "C" HRESULT RegistrationParseFromXml(
     hr = XmlGetAttributeEx(pixnRegistrationNode, L"Id", &pRegistration->sczId);
     ExitOnFailure(hr, "Failed to get @Id.");
 
+    // @Tag
+    hr = XmlGetAttributeEx(pixnRegistrationNode, L"Tag", &pRegistration->sczTag);
+    ExitOnFailure(hr, "Failed to get @Tag.");
+
     hr = ParseRelatedCodes(pRegistration, pixnBundle);
     ExitOnFailure(hr, "Failed to parse related bundles");
 
@@ -98,6 +104,10 @@ extern "C" HRESULT RegistrationParseFromXml(
 
     hr = FileVersionFromStringEx(scz, 0, &pRegistration->qwVersion);
     ExitOnFailure1(hr, "Failed to parse @Version: %ls", scz);
+
+    // @ProviderKey
+    hr = XmlGetAttributeEx(pixnRegistrationNode, L"ProviderKey", &pRegistration->sczProviderKey);
+    ExitOnFailure(hr, "Failed to get @ProviderKey.");
 
     // @ExecutableName
     hr = XmlGetAttributeEx(pixnRegistrationNode, L"ExecutableName", &pRegistration->sczExecutableName);
@@ -222,6 +232,7 @@ extern "C" void RegistrationUninitialize(
     )
 {
     ReleaseStr(pRegistration->sczId);
+    ReleaseStr(pRegistration->sczTag);
 
     for (DWORD i = 0; i < pRegistration->cDetectCodes; ++i)
     {
@@ -241,6 +252,7 @@ extern "C" void RegistrationUninitialize(
     }
     ReleaseMem(pRegistration->rgsczAddonCodes);
 
+    ReleaseStr(pRegistration->sczProviderKey);
     ReleaseStr(pRegistration->sczExecutableName);
 
     ReleaseStr(pRegistration->sczRegistrationKey);
@@ -491,7 +503,8 @@ LExit:
 extern "C" HRESULT RegistrationLoadRelatedBundle(
     __in BURN_REGISTRATION* pRegistration,
     __in_z LPCWSTR sczBundleId,
-    __out BURN_RELATION_TYPE *pRelationType
+    __out BURN_RELATION_TYPE *pRelationType,
+    __out LPWSTR *psczTag
     )
 {
     HRESULT hr = S_OK;
@@ -506,12 +519,16 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     LPWSTR *rgsczDetectCodes = NULL;
     DWORD cDetectCodes = 0;
     LPWSTR sczCachePath = NULL;
-    DWORD64 dw64Version = 0;
+    LPWSTR sczTag = NULL;
 
     hr = StrAllocFormatted(&sczBundleKey, L"%ls\\%ls", REGISTRY_UNINSTALL_KEY, sczBundleId);
     ExitOnFailure(hr, "Failed to allocate path to bundle registry key.");
 
     hr = RegOpen(pRegistration->hkRoot, sczBundleKey, KEY_READ, &hkBundleId);
+    if (E_FILENOTFOUND == hr)
+    {
+        hr = S_OK;
+    }
     ExitOnFailure1(hr, "Failed to open bundle registry key: %ls", sczBundleKey);
 
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes, &cUpgradeCodes);
@@ -549,7 +566,7 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_ADDON_CODE, &rgsczAddonCodes, &cAddonCodes);
     if (SUCCEEDED(hr))
     {
-        // Addon relation only occurs when their addoncode matches our detect code
+        // Addon relation only occurs when their addon code matches our detect code
         hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
@@ -611,11 +628,13 @@ Finish:
         hr = StrAllocString(&sczId, sczBundleId, 0);
         ExitOnFailure(hr, "Failed to copy related bundle id.");
 
-        hr = InitializeRelatedBundleFromKey(sczBundleId, hkBundleId, pRegistration->fPerMachine, pRelatedBundle);
+        hr = InitializeRelatedBundleFromKey(sczBundleId, hkBundleId, pRegistration->fPerMachine, pRelatedBundle, &sczTag);
         ExitOnFailure1(hr, "Failed to initialize package from bundle id: %ls", sczBundleId);
 
         pRelatedBundle->package.sczId = sczId;
         sczId = NULL;
+        *psczTag = sczTag;
+        sczTag = NULL;
         pRelatedBundle->package.fPerMachine = pRegistration->fPerMachine;
         ++pRegistration->cRelatedBundles;
     }
@@ -727,6 +746,12 @@ extern "C" HRESULT RegistrationSessionBegin(
 
                 hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
                 ExitOnFailure(hr, "Failed to write BundleVersion value.");
+
+                if (pRegistration->sczTag)
+                {
+                    hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_TAG, pRegistration->sczTag);
+                    ExitOnFailure(hr, "Failed to write BundleTag value.");
+                }
 
                 // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
                 hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
@@ -842,6 +867,13 @@ extern "C" HRESULT RegistrationSessionBegin(
             //{
             //}
         }
+
+        // Register the bundle dependency key.
+        if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
+        {
+            hr = DependencyRegister(pRegistration);
+            ExitOnFailure(hr, "Failed to register the bundle dependency key.");
+        }
     }
 
     // update resume mode
@@ -866,7 +898,8 @@ extern "C" HRESULT RegistrationSessionSuspend(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION /* action */,
     __in BOOL fReboot,
-    __in BOOL fPerMachineProcess
+    __in BOOL fPerMachineProcess,
+    __out_opt BURN_RESUME_MODE* pResumeMode
     )
 {
     HRESULT hr = S_OK;
@@ -881,7 +914,13 @@ extern "C" HRESULT RegistrationSessionSuspend(
     }
 
     // update resume mode
-    hr = UpdateResumeMode(pRegistration, hkRegistration, fReboot ? BURN_RESUME_MODE_REBOOT_PENDING : BURN_RESUME_MODE_SUSPEND, fPerMachineProcess);
+    BURN_RESUME_MODE resumeMode = fReboot ? BURN_RESUME_MODE_REBOOT_PENDING : BURN_RESUME_MODE_SUSPEND;
+    if (pResumeMode)
+    {
+        *pResumeMode = resumeMode;
+    }
+
+    hr = UpdateResumeMode(pRegistration, hkRegistration, resumeMode, fPerMachineProcess);
     ExitOnFailure(hr, "Failed to update resume mode.");
 
 LExit:
@@ -960,6 +999,10 @@ extern "C" HRESULT RegistrationSessionEnd(
         }
         else
         {
+            // Remove the bundle dependency key.
+            hr = DependencyUnregister(pRegistration);
+            ExitOnFailure(hr, "Failed to remove the bundle dependency key.");
+
             // Delete registration key.
             hr = RegDelete(pRegistration->hkRoot, pRegistration->sczRegistrationKey, REG_KEY_DEFAULT, FALSE);
             if (E_FILENOTFOUND != hr)
@@ -1035,7 +1078,7 @@ extern "C" HRESULT RegistrationLoadState(
 {
     HRESULT hr = S_OK;
 
-    // write data to file
+    // read data from file
     hr = FileRead(ppbBuffer, pcbBuffer, pRegistration->sczStateFile);
     ExitOnFailure1(hr, "Failed to read state from file: %ls", pRegistration->sczStateFile);
 
@@ -1131,7 +1174,6 @@ static HRESULT ParseRelatedCodes(
     IXMLDOMNode* pixnElement = NULL;
     LPWSTR sczAction = NULL;
     LPWSTR sczId = NULL;
-    DWORD dwIndex = 0;
     DWORD cElements = 0;
 
     hr = XmlSelectNodes(pixnBundle, L"RelatedBundle", &pixnNodes);
@@ -1198,7 +1240,8 @@ static HRESULT InitializeRelatedBundleFromKey(
     __in_z LPCWSTR wzBundleId,
     __in HKEY hkBundleId,
     __in BOOL fPerMachine,
-    __inout BURN_RELATED_BUNDLE *pRelatedBundle
+    __inout BURN_RELATED_BUNDLE *pRelatedBundle,
+    __out LPWSTR *psczTag
     )
 {
     HRESULT hr = S_OK;
@@ -1209,6 +1252,13 @@ static HRESULT InitializeRelatedBundleFromKey(
 
     hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
     ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", wzBundleId);
+
+    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_TAG, psczTag);
+    if (E_FILENOTFOUND == hr)
+    {
+        hr = S_OK;
+    }
+    ExitOnFailure1(hr, "Failed to read tag from registry for bundle: %ls", wzBundleId);
 
     // Initialize the single payload, and fill out all the necessary fields
     pRelatedBundle->package.rgPayloads = (BURN_PACKAGE_PAYLOAD *)MemAlloc(sizeof(BURN_PACKAGE_PAYLOAD), TRUE); 
@@ -1230,7 +1280,6 @@ static HRESULT InitializeRelatedBundleFromKey(
     pRelatedBundle->package.type = BURN_PACKAGE_TYPE_EXE;
     pRelatedBundle->package.fPerMachine = fPerMachine;
     pRelatedBundle->package.currentState = BOOTSTRAPPER_PACKAGE_STATE_PRESENT;
-    pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
     pRelatedBundle->package.fUninstallable = TRUE;
     pRelatedBundle->package.fVital = FALSE;
     
@@ -1289,6 +1338,7 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
     BURN_RELATION_TYPE relationType = BURN_RELATION_NONE;
     HKEY hkUninstallKey = NULL;
     LPWSTR sczBundleId = NULL;
+    LPWSTR sczTag = NULL;
 
     hr = RegOpen(hkRoot, REGISTRY_UNINSTALL_KEY, KEY_READ, &hkUninstallKey);
     if (HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr)
@@ -1314,7 +1364,7 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
             // related bundles (or even bundles at all).
             relationType = BURN_RELATION_NONE;
 
-            hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId, &relationType);
+            hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId, &relationType, &sczTag);
             if (SUCCEEDED(hr))
             {
                 BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles - 1;
@@ -1328,20 +1378,30 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
                     switch (relationType)
                     {
                     case BURN_RELATION_UPGRADE:
-                        if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
+                        if (BOOTSTRAPPER_ACTION_INSTALL == pCommand->action)
                         {
-                            operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
-                        }
-                        else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
-                        {
-                            operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                            if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
+                            {
+                                operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+                            }
+                            else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
+                            {
+                                operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                            }
                         }
                         break;
 
                     case BURN_RELATION_ADDON:
-                        if (pCommand && BOOTSTRAPPER_ACTION_UNINSTALL == pCommand->action)
+                        if (pCommand)
                         {
-                            operation = BOOTSTRAPPER_RELATED_OPERATION_REMOVE;
+                            if (BOOTSTRAPPER_ACTION_UNINSTALL == pCommand->action)
+                            {
+                                operation = BOOTSTRAPPER_RELATED_OPERATION_REMOVE;
+                            }
+                            else if (BOOTSTRAPPER_ACTION_REPAIR == pCommand->action)
+                            {
+                                operation = BOOTSTRAPPER_RELATED_OPERATION_REPAIR;
+                            }
                         }
                         break;
 
@@ -1356,7 +1416,7 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
 
                     LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->package.sczId, LoggingPerMachineToString(pRelatedBundle->package.fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
 
-                    int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->package.sczId, pRelatedBundle->package.fPerMachine, pRelatedBundle->qwVersion, operation);
+                    int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->package.sczId, sczTag, pRelatedBundle->package.fPerMachine, pRelatedBundle->qwVersion, operation);
                     hr = HRESULT_FROM_VIEW(nResult);
                     ExitOnRootFailure(hr, "UX aborted detect related bundle.");
                 }
@@ -1366,6 +1426,7 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
 
 LExit:
     ReleaseStr(sczBundleId);
+    ReleaseStr(sczTag);
     ReleaseRegKey(hkUninstallKey);
 
     return hr;

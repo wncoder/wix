@@ -123,6 +123,7 @@
   <property name="dir.build.scaexec" value="${dir.build.wix}\ca\serverca\scaexec" readonly="true" />
   <property name="dir.build.scasched" value="${dir.build.wix}\ca\serverca\scasched" readonly="true" />
   <property name="dir.build.scawixlib" value="${dir.build.wix}\ca\serverca\scawixlib" readonly="true" />
+  <property name="dir.build.shine" value="${dir.build.wix}\shine" readonly="true" />
   <property name="dir.build.smoke" value="${dir.build.wix}\smoke" readonly="true" />
   <property name="dir.build.tdd" value="${dir.build.wix}\tdd" readonly="true" />
   <property name="dir.build.torch" value="${dir.build.wix}\torch" readonly="true" />
@@ -199,6 +200,7 @@
   <property name="dir.src.nanttasks" value="${dir.wixroot.src}\nanttasks" readonly="true" />
   <property name="dir.src.pyro" value="${dir.wixroot.src}\pyro" readonly="true" />
   <property name="dir.src.sconce" value="${dir.wixroot.src}\sconce" readonly="true" />
+  <property name="dir.src.shine" value="${dir.wixroot.src}\shine" readonly="true" />
   <property name="dir.src.smoke" value="${dir.wixroot.src}\smoke" readonly="true" />
   <property name="dir.src.tdd" value="${dir.wixroot.test}\src\Tools\TDD" readonly="true" />
   <property name="dir.src.torch" value="${dir.wixroot.src}\torch" readonly="true" />

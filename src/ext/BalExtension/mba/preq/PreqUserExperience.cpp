@@ -56,7 +56,8 @@ static LPCWSTR vrgwzPageNames[] = {
 
 enum PREQBA_CONTROL
 {
-    PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX = THEME_FIRST_ASSIGN_CONTROL_ID,
+    PREQBA_CONTROL_WELCOME_TITLE = THEME_FIRST_ASSIGN_CONTROL_ID,
+    PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX,
     PREQBA_CONTROL_WELCOME_EULA_LINK,
     PREQBA_CONTROL_WELCOME_INSTALL_BUTTON,
     PREQBA_CONTROL_WELCOME_CANCEL_BUTTON,
@@ -71,6 +72,7 @@ enum PREQBA_CONTROL
 };
 
 static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
+    { PREQBA_CONTROL_WELCOME_TITLE, L"Title" },
     { PREQBA_CONTROL_WELCOME_EULA_ACCEPT_CHECKBOX, L"EulaAcceptCheckbox" },
     { PREQBA_CONTROL_WELCOME_EULA_LINK, L"EulaHyperlink" },
     { PREQBA_CONTROL_WELCOME_INSTALL_BUTTON, L"InstallButton" },
@@ -84,6 +86,13 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { PREQBA_CONTROL_FAILED_LOG_LINK, L"FailureLogHyperlink" },
     { PREQBA_CONTROL_FAILED_CANCEL_BUTTON, L"FailureCancelButton" },
 };
+
+static WORD vrgwzTextControlIds[] = {
+    PREQBA_CONTROL_WELCOME_TITLE,
+    PREQBA_CONTROL_PROGRESS_PACKAGE_NAME,
+    PREQBA_CONTROL_FAILED_TEXT,
+};
+static const int vcTextControlIds = countof(vrgwzTextControlIds);
 
 class CPreqUserExperience : public CBalBaseBootstrapperApplication
 {
@@ -150,6 +159,7 @@ public: // IBootstrapperApplication overrides
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
         __in LPCWSTR /*wzBundleId*/,
+        __in LPCWSTR /*wzBundleTag*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
         __in BOOTSTRAPPER_RELATED_OPERATION /*operation*/
@@ -175,7 +185,10 @@ public: // IBootstrapperApplication overrides
         __in BOOTSTRAPPER_PACKAGE_STATE state
         )
     {
-        // TODO: Handle case where pre-reqs are actually on the machine. This bootstrapper application shouldn't be loaded if things were okay...
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, this->m_sczNetfxPackageId, -1) && BOOTSTRAPPER_PACKAGE_STATE_PRESENT == state)
+        {
+            m_fAlreadyInstalled = TRUE;
+        }
     }
 
     virtual STDMETHODIMP_(void) OnDetectComplete(
@@ -188,7 +201,7 @@ public: // IBootstrapperApplication overrides
         // go start the install automatically.
         if (SUCCEEDED(hrStatus) && BOOTSTRAPPER_DISPLAY_FULL != m_command.display)
         {
-            ::PostMessageW(m_hWnd, WM_PREQBA_PLAN_PACKAGES, 0, m_command.action);
+            ::PostMessageW(m_hWnd, WM_PREQBA_PLAN_PACKAGES, 0, BOOTSTRAPPER_ACTION_INSTALL);
         }
     }
 
@@ -206,8 +219,8 @@ public: // IBootstrapperApplication overrides
         __inout BOOTSTRAPPER_REQUEST_STATE *pRequestState
         )
     {
-        // If we're planning to install a pre-req, install it. Skip everything else.
-        if (BOOTSTRAPPER_ACTION_INSTALL == m_command.action && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, this->m_sczNetfxPackageId, -1))
+        // If we're planning to install a pre-req, install it. Skip everything else.  Bootstrapper pre-req needs to be installed for all workflows.  Otherwize MBA can't be instantiated. 
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, this->m_sczNetfxPackageId, -1))
         {
             *pRequestState = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
         }
@@ -301,7 +314,11 @@ public: // IBootstrapperApplication overrides
         if (SUCCEEDED(hrStatus))
         {
             ThemeSetProgressControl(m_pTheme, PREQBA_CONTROL_PROGRESS_BAR, 100);
-            m_fInstalledPrereqs = TRUE;
+
+            if (!m_fAlreadyInstalled)
+            {
+                m_fInstalledPrereqs = TRUE;
+            }
         }
 
         SetState(PREQBA_STATE_APPLIED, hrStatus);
@@ -334,41 +351,55 @@ public: // IBootstrapperApplication overrides
         LPCWSTR wzId = wzPayloadId ? wzPayloadId : wzPackageOrContainerId;
         LPCWSTR wzContainerOrPayload = wzPayloadId ? L"payload" : L"container";
         StrAllocFormatted(&sczCaption, L"Resolve Source for %ls: %ls", wzContainerOrPayload, wzId);
-        if (wzDownloadSource)
-        {
-            StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
 
-            nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONQUESTION);
+        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
+        {
+            if (wzDownloadSource)
+            {
+                StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
+
+                nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONQUESTION);
+            }
+
+            if (IDYES == nResult)
+            {
+                nResult = IDDOWNLOAD;
+            }
+            else if (IDNO == nResult)
+            {
+                // Prompt to change the source location.
+                OPENFILENAMEW ofn = { };
+                WCHAR wzFile[MAX_PATH] = { };
+
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = m_hWnd;
+                ofn.lpstrFile = wzFile;
+                ofn.nMaxFile = countof(wzFile);
+                ofn.lpstrFilter = L"All Files\0*.*\0";
+                ofn.nFilterIndex = 1;
+                ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                ofn.lpstrTitle = sczCaption;
+
+                if (::GetOpenFileNameW(&ofn))
+                {
+                    HRESULT hr = m_pEngine->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
+                    nResult = SUCCEEDED(hr) ? IDRETRY : IDERROR;
+                }
+                else
+                {
+                    nResult = IDCANCEL;
+                }
+            }
         }
-
-        if (IDYES == nResult)
+        else if (wzDownloadSource)
         {
+            // If doing a non-interactive install and download source is available, let's try downloading the package silently
             nResult = IDDOWNLOAD;
         }
-        else if (IDNO == nResult)
+        else
         {
-            // Prompt to change the source location.
-            OPENFILENAMEW ofn = { };
-            WCHAR wzFile[MAX_PATH] = { };
-
-            ofn.lStructSize = sizeof(ofn);
-            ofn.hwndOwner = m_hWnd;
-            ofn.lpstrFile = wzFile;
-            ofn.nMaxFile = countof(wzFile);
-            ofn.lpstrFilter = L"All Files\0*.*\0";
-            ofn.nFilterIndex = 1;
-            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-            ofn.lpstrTitle = sczCaption;
-
-            if (::GetOpenFileNameW(&ofn))
-            {
-                HRESULT hr = m_pEngine->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
-                nResult = SUCCEEDED(hr) ? IDRETRY : IDERROR;
-            }
-            else
-            {
-                nResult = IDCANCEL;
-            }
+            // There's nothing more we can do in non-interactive mode
+            nResult = IDCANCEL;
         }
 
         ReleaseStr(sczText);
@@ -648,6 +679,9 @@ private: // privates
         hr = ThemeLoadControls(m_pTheme, hWnd, vrgInitControls, countof(vrgInitControls));
         BalExitOnFailure(hr, "Failed to load theme controls.");
 
+        hr = ReplaceTextControlVariables();
+        BalExitOnFailure(hr, "Failed to replace text control variables.");
+
         C_ASSERT(COUNT_PREQBA_PAGE == countof(vrgwzPageNames));
         C_ASSERT(countof(m_rgdwPageIds) == countof(vrgwzPageNames));
 
@@ -811,6 +845,30 @@ private: // privates
         }
     }
 
+    HRESULT ReplaceTextControlVariables()
+    {
+        HRESULT hr = S_OK;
+        LPWSTR sczControlText = NULL;
+        LPWSTR sczFormattedControlText = NULL;
+
+        // Replace variables with their values in text controls
+        for (int iControl = 0; iControl < vcTextControlIds; iControl++)
+        {
+            hr = ThemeGetTextControl(m_pTheme, vrgwzTextControlIds[iControl], &sczControlText);
+            BalExitOnFailure1(hr, "Failed to get '%d' control text.", vrgwzTextControlIds[iControl]);
+
+            hr = BalFormatString(sczControlText, &sczFormattedControlText);
+            BalExitOnFailure(hr, "Failed to format variables string.");
+            
+            hr = ThemeSetTextControl(m_pTheme, vrgwzTextControlIds[iControl], sczFormattedControlText);
+            BalExitOnFailure2(hr, "Failed to set '%d' control text to '%ls'.", vrgwzTextControlIds[iControl], sczFormattedControlText);
+        }
+
+    LExit:
+        ReleaseNullStr(sczControlText);
+        ReleaseNullStr(sczFormattedControlText);
+        return hr;
+    }
 
 public:
     CPreqUserExperience(
@@ -831,6 +889,7 @@ public:
         m_hWnd = NULL;
         m_hwndHover = NULL;
 
+        m_fAlreadyInstalled = FALSE;
         m_fCanceled = FALSE;
         m_state = PREQBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
@@ -872,6 +931,7 @@ private:
     HWND m_hWnd;
     HWND m_hwndHover;
 
+    BOOL m_fAlreadyInstalled;
     BOOL m_fCanceled;
     PREQBA_STATE m_state;
     HRESULT m_hrFinal;

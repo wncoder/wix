@@ -185,6 +185,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public class DetectRelatedBundleEventArgs : ResultEventArgs
     {
         private string productCode;
+        private string bundleTag;
         private bool perMachine;
         private Version version;
         private RelatedOperation operation;
@@ -193,12 +194,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Creates a new instance of the <see cref="DetectRelatedBundleEventArgs"/> class.
         /// </summary>
         /// <param name="productCode">The identity of the related package bundle.</param>
+        /// <param name="bundleTag">The tag of the related package bundle.</param>
         /// <param name="perMachine">Whether the detected bundle is per machine.</param>
         /// <param name="version">The version of the related bundle detected.</param>
         /// <param name="operation">The operation that will be taken on the detected bundle.</param>
-        public DetectRelatedBundleEventArgs(string productCode, bool perMachine, long version, RelatedOperation operation)
+        public DetectRelatedBundleEventArgs(string productCode, string bundleTag, bool perMachine, long version, RelatedOperation operation)
         {
             this.productCode = productCode;
+            this.bundleTag = bundleTag;
             this.perMachine = perMachine;
             this.version = new Version((int)(version >> 48 & 0xFFFF), (int)(version >> 32 & 0xFFFF), (int)(version >> 16 & 0xFFFF), (int)(version & 0xFFFF));
             this.operation = operation;
@@ -210,6 +213,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public string ProductCode
         {
             get { return this.productCode; }
+        }
+
+        /// <summary>
+        /// Gets the tag of the related package bundle.
+        /// </summary>
+        public string BundleTag
+        {
+            get { return this.bundleTag; }
         }
 
         /// <summary>
@@ -1304,20 +1315,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     }
 
     /// <summary>
-    /// Additional arugments used when Windows Installer sends a file in use installation message.
+    /// Additional arugments used for file in use installation messages.
     /// </summary>
     [Serializable]
-    public class ExecuteMsiFilesInUseEventArgs : ResultEventArgs
+    public class ExecuteFilesInUseEventArgs : ResultEventArgs
     {
         private string packageId;
         private string[] files;
 
         /// <summary>
-        /// Creates a new instance of the <see cref="ExecuteMsiFilesInUseEventArgs"/> class.
+        /// Creates a new instance of the <see cref="ExecuteFilesInUseEventArgs"/> class.
         /// </summary>
         /// <param name="packageId">The identity of the package that yielded the files in use message.</param>
         /// <param name="files">The list of files in use.</param>
-        public ExecuteMsiFilesInUseEventArgs(string packageId, string[] files)
+        public ExecuteFilesInUseEventArgs(string packageId, string[] files)
         {
             this.packageId = packageId;
             this.files = files;

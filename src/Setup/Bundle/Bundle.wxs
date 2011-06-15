@@ -30,6 +30,8 @@
           <Payload SourceFile='License.rtf' />
         </BootstrapperApplicationRef>
 
+        <Variable Name="MbaPreqBundleName" Value='WiX Toolset' />
+
         <Chain DisableRollback='yes'>
             <PackageGroupRef Id='Netfx4Full' />
             <PackageGroupRef Id='ProjectAggregator' />

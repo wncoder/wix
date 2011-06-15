@@ -53,6 +53,36 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
         }
 
+        /// <summary>
+        /// Gets the set of installed components for products in the indicated context.
+        /// </summary>
+        /// <exception cref="InstallerException">The installer configuration data is corrupt</exception>
+        /// <remarks><p>
+        /// Win32 MSI API:
+        /// <a href="http://msdn.microsoft.com/library/dd407947.aspx">MsiEnumComponentsEx</a>
+        /// </p></remarks>
+        public static IEnumerable<ComponentInstallation> Components(string szUserSid, UserContexts dwContext)
+        {
+            uint pcchSid = 32;
+            StringBuilder szSid = new StringBuilder((int)pcchSid);
+            StringBuilder buf = new StringBuilder(40);
+            UserContexts installedContext;
+            for (uint i = 0; true; i++)
+            {
+                uint  ret = NativeMethods.MsiEnumComponentsEx(szUserSid, dwContext, i, buf, out installedContext, szSid, ref pcchSid);
+                if (ret == (uint) NativeMethods.Error.MORE_DATA)
+                {
+                    szSid.EnsureCapacity((int) ++pcchSid);
+                    ret = NativeMethods.MsiEnumComponentsEx(szUserSid, dwContext, i, buf, out installedContext, szSid, ref pcchSid);
+                }
+                if (ret == (uint) NativeMethods.Error.NO_MORE_ITEMS) break;
+                if (ret != 0)
+                {
+                    throw InstallerException.ExceptionFromReturnCode(ret);
+                }
+                yield return new ComponentInstallation(buf.ToString(), szSid.ToString(), installedContext);
+            }
+        }
         private static string GetProductCode(string component)
         {
             StringBuilder buf = new StringBuilder(40);
@@ -63,6 +93,12 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
 
             return buf.ToString();
+        }
+
+        private static string GetProductCode(string component, string szUserSid, UserContexts dwContext)
+        {
+            // TODO: We really need what would be MsiGetProductCodeEx, or at least a reasonable facimile thereof (something that restricts the search to the context defined by szUserSid & dwContext)
+            return GetProductCode(component);
         }
 
         /// <summary>
@@ -80,13 +116,38 @@ namespace Microsoft.Deployment.WindowsInstaller
         }
 
         /// <summary>
+        /// Creates a new ComponentInstallation, automatically detecting the
+        /// product that the component is a part of.
+        /// </summary>
+        /// <param name="componentCode">component GUID</param>
+        /// <param name="szUserSid">context user SID</param>
+        /// <param name="dwContext">user contexts</param>
+        public ComponentInstallation(string componentCode, string szUserSid, UserContexts dwContext)
+            : this(componentCode, ComponentInstallation.GetProductCode(componentCode, szUserSid, dwContext), szUserSid, dwContext)
+        {
+        }
+
+        /// <summary>
         /// Creates a new ComponentInstallation for a component installed by a
         /// specific product.
         /// </summary>
         /// <param name="componentCode">component GUID</param>
         /// <param name="productCode">ProductCode GUID</param>
         public ComponentInstallation(string componentCode, string productCode)
-            : base(componentCode, productCode)
+            : this(componentCode, productCode, null, UserContexts.All)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new ComponentInstallation for a component installed by a
+        /// specific product.
+        /// </summary>
+        /// <param name="componentCode">component GUID</param>
+        /// <param name="productCode">ProductCode GUID</param>
+        /// <param name="szUserSid">context user SID</param>
+        /// <param name="dwContext">user contexts</param>
+        public ComponentInstallation(string componentCode, string productCode, string szUserSid, UserContexts dwContext)
+            : base(componentCode, productCode, szUserSid, dwContext)
         {
             if (string.IsNullOrEmpty(componentCode))
             {
@@ -115,7 +176,8 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// This means that the property may return clients in any order.
         /// </p><p>
         /// Win32 MSI API:
-        /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumclients.asp">MsiEnumClients</a>
+        /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msienumclients.asp">MsiEnumClients</a>,
+        /// <a href="http://msdn.microsoft.com/library/dd407946.aspx">MsiEnumClientsEx</a>
         /// </p></remarks>
         public IEnumerable<ProductInstallation> ClientProducts
         {
@@ -124,7 +186,11 @@ namespace Microsoft.Deployment.WindowsInstaller
                 StringBuilder buf = new StringBuilder(40);
                 for (uint i = 0; true; i++)
                 {
-                    uint ret = NativeMethods.MsiEnumClients(this.ComponentCode, i, buf);
+                    uint chSid = 0;
+                    UserContexts installedContext;
+                    uint ret = this.Context == UserContexts.None ?
+                            NativeMethods.MsiEnumClients(this.ComponentCode, i, buf) :
+                            NativeMethods.MsiEnumClientsEx(this.ComponentCode, this.UserSid, this.Context, i, buf, out installedContext, null, ref chSid);
                     if (ret == (uint) NativeMethods.Error.NO_MORE_ITEMS) break;
                     else if (ret == (uint) NativeMethods.Error.UNKNOWN_COMPONENT) break;
                     if (ret != 0)
@@ -143,7 +209,8 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// if this component is not part of a product</returns>
         /// <remarks><p>
         /// Win32 MSI API:
-        /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentpath.asp">MsiGetComponentPath</a>
+        /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentpath.asp">MsiGetComponentPath</a>,
+        /// <a href="http://msdn.microsoft.com/library/dd408006.aspx">MsiGetComponentPathEx</a>
         /// </p></remarks>
         public override InstallState State
         {
@@ -152,8 +219,11 @@ namespace Microsoft.Deployment.WindowsInstaller
                 if (this.ProductCode != null)
                 {
                     uint bufSize = 0;
-                    int installState = NativeMethods.MsiGetComponentPath(
-                        this.ProductCode, this.ComponentCode, null, ref bufSize);
+                    int installState = this.Context == UserContexts.None ?
+                        NativeMethods.MsiGetComponentPath(
+                            this.ProductCode, this.ComponentCode, null, ref bufSize) :
+                        NativeMethods.MsiGetComponentPathEx(
+                            this.ProductCode, this.ComponentCode, this.UserSid, this.Context, null, ref bufSize);
                     return (InstallState) installState;
                 }
                 else
@@ -179,6 +249,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// </p><p>
         /// Win32 MSI APIs:
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msigetcomponentpath.asp">MsiGetComponentPath</a>,
+        /// <a href="http://msdn.microsoft.com/library/dd408006.aspx">MsiGetComponentPathEx</a>,
         /// <a href="http://msdn.microsoft.com/library/en-us/msi/setup/msilocatecomponent.asp">MsiLocateComponent</a>
         /// </p></remarks>
         public string Path
@@ -191,13 +262,19 @@ namespace Microsoft.Deployment.WindowsInstaller
 
                 if (this.ProductCode != null)
                 {
-                    installState = (InstallState) NativeMethods.MsiGetComponentPath(
-                        this.ProductCode, this.ComponentCode, buf, ref bufSize);
+                    installState = (this.Context == UserContexts.None) ?
+                        (InstallState) NativeMethods.MsiGetComponentPath(
+                            this.ProductCode, this.ComponentCode, buf, ref bufSize) :
+                        (InstallState) NativeMethods.MsiGetComponentPathEx(
+                            this.ProductCode, this.ComponentCode, this.UserSid, this.Context, buf, ref bufSize);
                     if (installState == InstallState.MoreData)
                     {
                         buf.Capacity = (int) ++bufSize;
-                        installState = (InstallState) NativeMethods.MsiGetComponentPath(
-                            this.ProductCode, this.ComponentCode, buf, ref bufSize);
+                        installState = (this.Context == UserContexts.None) ?
+                            (InstallState) NativeMethods.MsiGetComponentPath(
+                                this.ProductCode, this.ComponentCode, buf, ref bufSize) :
+                            (InstallState) NativeMethods.MsiGetComponentPathEx(
+                                this.ProductCode, this.ComponentCode, this.UserSid, this.Context, buf, ref bufSize);
                     }
                 }
                 else
@@ -317,6 +394,4 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
         }
     }
-
-
 }

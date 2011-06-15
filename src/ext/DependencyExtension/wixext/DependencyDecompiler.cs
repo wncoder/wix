@@ -101,25 +101,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     provides.DisplayKey = (string)row[3];
                 }
 
-                if (null != row[4])
-                {
-                    int attributes = (int)row[4];
-
-                    // Be sure to always choose the most strict guarantee.
-                    int versionGuarantee = attributes & DependencyCommon.ProvidesAttributesVersionGuaranteeMask;
-                    switch (versionGuarantee)
-                    {
-                        case DependencyCommon.ProvidesAttributesVersionGuaranteeMajor:
-                            provides.VersionGuarantee = Provides.VersionGuaranteeType.Major;
-                            break;
-                        case DependencyCommon.ProvidesAttributesVersionGuaranteeMinor:
-                            provides.VersionGuarantee = Provides.VersionGuaranteeType.Minor;
-                            break;
-                        case DependencyCommon.ProvidesAttributesVersionGuaranteeBuild:
-                            provides.VersionGuarantee = Provides.VersionGuaranteeType.Build;
-                            break;
-                    }
-                }
+                // Nothing to parse for attributes currently.
 
                 Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", (string)row[1]);
                 if (null != component)

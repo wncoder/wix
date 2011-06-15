@@ -47,6 +47,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnDetectRelatedBundle(
             [MarshalAs(UnmanagedType.LPWStr)] string wzBundleId,
+            [MarshalAs(UnmanagedType.LPWStr)] string wzBundleTag,
             [MarshalAs(UnmanagedType.Bool)] bool fPerMachine,
             [MarshalAs(UnmanagedType.U8)] long dw64Version,
             [MarshalAs(UnmanagedType.U4)] RelatedOperation operation
@@ -279,7 +280,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
-        Result OnExecuteMsiFilesInUse(
+        Result OnExecuteFilesInUse(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] int cFiles,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzFiles
@@ -430,7 +431,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         None,
         Downgrade,
         MinorUpdate,
-        MajorUpgrade
+        MajorUpgrade,
+        Remove,
+        Repair
     };
 
     /// <summary>

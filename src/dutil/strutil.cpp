@@ -750,7 +750,8 @@ extern "C" HRESULT DAPI StrAllocFormattedArgs(
     ExitOnFailure(hr, "failed to format string");
 
 LExit:
-    ReleaseStr((void*) pwzOriginal);
+    ReleaseStr(pwzOriginal);
+
     return hr;
 }
 
@@ -822,7 +823,8 @@ extern "C" HRESULT DAPI StrAnsiAllocFormattedArgs(
     ExitOnFailure(hr, "failed to format string");
 
 LExit:
-    ReleaseStr((void*) pszOriginal);
+    ReleaseStr(pszOriginal);
+
     return hr;
 }
 
@@ -1083,6 +1085,7 @@ extern "C" HRESULT DAPI StrHexEncode(
     }
 
     *wzDest = 0;
+
 LExit:
     return hr;
 }
@@ -1437,6 +1440,7 @@ extern "C" HRESULT DAPI StrAllocBase85Decode(
     }
 
     hr = S_OK;
+
 LExit:
     return hr;
 }
@@ -1466,7 +1470,9 @@ extern "C" HRESULT DAPI MultiSzLen(
     while (*pcch < dwMaxSize)
     {
         if (L'\0' == *wz && L'\0' == *(wz + 1))
+        {
             break;
+        }
 
         ++wz;
         *pcch = *pcch + 1;
@@ -1477,7 +1483,9 @@ extern "C" HRESULT DAPI MultiSzLen(
 
     // If we've walked off the end then the length is 0
     if (*pcch > dwMaxSize)
+    {
         *pcch = 0;
+    }
 
 LExit:
     return hr;
@@ -2200,15 +2208,18 @@ extern "C" HRESULT DAPI StrArrayAllocString(
     )
 {
     HRESULT hr = S_OK;
+    UINT cNewStrArray;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgsczStrArray), *pcStrArray, sizeof(LPWSTR), ARRAY_GROWTH_SIZE);
+    hr = ::UIntAdd(*pcStrArray, 1, &cNewStrArray);
+    ExitOnFailure(hr, "Failed to increment the string array element count.");
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgsczStrArray), cNewStrArray, sizeof(LPWSTR), ARRAY_GROWTH_SIZE);
     ExitOnFailure(hr, "Failed to allocate memory for the string array.");
 
     hr = StrAllocString(&(*prgsczStrArray)[*pcStrArray], wzSource, cchSource);
     ExitOnFailure(hr, "Failed to allocate and assign the string.");
 
-    hr = ::UIntAdd(*pcStrArray, 1, pcStrArray);
-    ExitOnFailure(hr, "Failed to increment the string array element count.");
+    *pcStrArray = cNewStrArray;
 
 LExit:
     return hr;

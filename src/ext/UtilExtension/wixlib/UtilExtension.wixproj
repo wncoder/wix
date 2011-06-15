@@ -23,6 +23,7 @@
     <EmbeddedResource Include="en-us.wxl" />
     <EmbeddedResource Include="de-de.wxl" />
     <EmbeddedResource Include="ja-jp.wxl" />
+    <EmbeddedResource Include="pt-br.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
 </Project>

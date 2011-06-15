@@ -84,7 +84,7 @@ extern "C" HRESULT DAPI MemEnsureArraySize(
     {
         SIZE_T cbUsed = cArray * cbArrayType;
         SIZE_T cbCurrent = MemSize(*ppvArray);
-        if (cbCurrent <= cbUsed)
+        if (cbCurrent < cbUsed)
         {
             pvNew = MemReAlloc(*ppvArray, cbNew, TRUE);
             ExitOnNull(pvNew, hr, E_OUTOFMEMORY, "Failed to allocate array larger.");
@@ -104,6 +104,40 @@ LExit:
     return hr;
 }
 
+
+HRESULT DAPI MemInsertIntoArray(
+    __deref_out_bcount((cExistingArray + cNumInsertItems) * cbArrayType) LPVOID* ppvArray,
+    __in DWORD dwInsertIndex,
+    __in DWORD cNumInsertItems,
+    __in DWORD cExistingArray,
+    __in SIZE_T cbArrayType,
+    __in DWORD dwGrowthCount
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD i;
+    BYTE *pbArray = NULL;
+
+    if (0 == cNumInsertItems)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+
+    hr = MemEnsureArraySize(ppvArray, cExistingArray + cNumInsertItems, cbArrayType, dwGrowthCount);
+    ExitOnFailure(hr, "Failed to resize array while inserting items");
+
+    pbArray = reinterpret_cast<BYTE *>(*ppvArray);
+    for (i = cExistingArray + cNumInsertItems - 1; i > dwInsertIndex; --i)
+    {
+        memcpy_s(pbArray + i * cbArrayType, cbArrayType, pbArray + (i - 1) * cbArrayType, cbArrayType);
+    }
+
+    // Zero out the newly-inserted items
+    memset(pbArray + dwInsertIndex * cbArrayType, 0, cNumInsertItems * cbArrayType);
+
+LExit:
+    return hr;
+}
 
 extern "C" HRESULT DAPI MemFree(
     __in LPVOID pv

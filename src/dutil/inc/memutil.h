@@ -24,14 +24,6 @@ extern "C" {
 #define ReleaseMem(p) if (p) { MemFree(p); }
 #define ReleaseNullMem(p) if (p) { MemFree(p); p = NULL; }
 
-#define MEM_ENSURE_ARRAY_SIZE(type, pointer, count, max, grow, hresult, errMsg) \
-    if (max <= count) { \
-        LPVOID pv = NULL; DWORD cNewMax = count + grow; \
-        if (0 == max) pv = MemAlloc(sizeof(type) * cNewMax, TRUE); else pv = MemReAlloc(pointer, sizeof(type) * cNewMax, TRUE); \
-        ExitOnNull(pv, hresult, E_OUTOFMEMORY, errMsg); \
-        max = cNewMax; pointer = static_cast<type*>(pv); \
-    }
-
 HRESULT DAPI MemInitialize();
 void DAPI MemUninitialize();
 
@@ -47,6 +39,14 @@ LPVOID DAPI MemReAlloc(
 HRESULT DAPI MemEnsureArraySize(
     __deref_out_bcount(cArray * cbArrayType) LPVOID* ppvArray,
     __in DWORD cArray,
+    __in SIZE_T cbArrayType,
+    __in DWORD dwGrowthCount
+    );
+HRESULT DAPI MemInsertIntoArray(
+    __deref_out_bcount((cExistingArray + cNumInsertItems) * cbArrayType) LPVOID* ppvArray,
+    __in DWORD dwInsertIndex,
+    __in DWORD cNumInsertItems,
+    __in DWORD cExistingArray,
     __in SIZE_T cbArrayType,
     __in DWORD dwGrowthCount
     );

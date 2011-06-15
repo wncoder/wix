@@ -24,10 +24,34 @@ extern "C" {
 #endif
 
 
-typedef int (*PFN_GENERICEXECUTEPROGRESS)(
-    __in LPVOID pvContext,
-    __in DWORD dwProgress,
-    __in DWORD dwTotal
+enum GENERIC_EXECUTE_MESSAGE_TYPE
+{
+    GENERIC_EXECUTE_MESSAGE_NONE,
+    GENERIC_EXECUTE_MESSAGE_PROGRESS,
+    GENERIC_EXECUTE_MESSAGE_FILES_IN_USE,
+};
+
+typedef struct _GENERIC_EXECUTE_MESSAGE
+{
+    GENERIC_EXECUTE_MESSAGE_TYPE type;
+    union
+    {
+        struct
+        {
+            DWORD dwPercentage;
+        } progress;
+        struct
+        {
+            DWORD cFiles;
+            LPCWSTR* rgwzFiles;
+        } filesInUse;
+    };
+} GENERIC_EXECUTE_MESSAGE;
+
+
+typedef int (*PFN_GENERICMESSAGEHANDLER)(
+    __in GENERIC_EXECUTE_MESSAGE* pMessage,
+    __in LPVOID pvContext
     );
 
 
@@ -35,7 +59,8 @@ HRESULT ApplyElevate(
     __in BURN_ENGINE_STATE* pEngineState,
     __in HWND hwndParent,
     __out HANDLE* phElevatedProcess,
-    __out HANDLE* phElevatedPipe
+    __out HANDLE* phElevatedPipe,
+    __out HANDLE* phElevatedCachePipe
     );
 HRESULT ApplyRegister(
     __in BURN_ENGINE_STATE* pEngineState

@@ -27,16 +27,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         internal const int RequiresAttributesMinVersionInclusive = 256;
         internal const int RequiresAttributesMaxVersionInclusive = 512;
 
-        // Provider attributes.
-        internal const int ProvidesAttributesVersionGuaranteeNone = 0;
-        internal const int ProvidesAttributesVersionGuaranteeMajor = 1;
-        internal const int ProvidesAttributesVersionGuaranteeMinor = 2;
-        internal const int ProvidesAttributesVersionGuaranteeBuild = 3;
-        internal const int ProvidesAttributesVersionGuaranteeMask =
-            ProvidesAttributesVersionGuaranteeMajor |
-            ProvidesAttributesVersionGuaranteeMinor |
-            ProvidesAttributesVersionGuaranteeBuild;
-
         // The root registry key for the dependency extension. We write to Software\Classes explicitly
         // based on the current security context instead of HKCR. See
         // http://msdn.microsoft.com/en-us/library/ms724475(VS.85).aspx for more information.

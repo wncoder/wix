@@ -883,7 +883,7 @@ namespace Microsoft.Tools.DocCompiler
                 }
                 else
                 {
-                    throw new ApplicationException(String.Format("Unknown simple type content type: '{0}'.", simpleType.GetType().ToString()));
+                    return;
                 }
 
                 // How Tos and Examples
@@ -1569,9 +1569,15 @@ namespace Microsoft.Tools.DocCompiler
                 XmlSchema schema = this.schemas[attribute.SchemaTypeName.Namespace];
                 XmlSchemaType schemaType = (XmlSchemaType)schema.SchemaTypes[attribute.SchemaTypeName];
 
+                string typeNameToLink = schemaType.Name;
+                if (typeNameToLink.EndsWith("TypeUnion"))
+                {
+                    typeNameToLink = typeNameToLink.Replace("TypeUnion", "Type");
+                }
+
                 if (schemaType != null)
                 {
-                    type = String.Format("<a href=\"{0}\">{1}</a>", this.GetSchemaHtmlFileName(schema, String.Concat("simple_type_", schemaType.Name)), Capitalize(schemaType.Name));
+                    type = String.Format("<a href=\"{0}\">{1}</a>", this.GetSchemaHtmlFileName(schema, String.Concat("simple_type_", typeNameToLink)), Capitalize(typeNameToLink));
                 }
             }
             else if (attribute.SchemaType != null)

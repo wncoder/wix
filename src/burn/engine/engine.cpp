@@ -66,8 +66,13 @@ extern "C" HRESULT EngineRun(
     BOOL fRegInitialized = FALSE;
     BOOL fWiuInitialized = FALSE;
     BOOL fXmlInitialized = FALSE;
-    BURN_ENGINE_STATE engineState = { };
     BOOL fRestart = FALSE;
+    BURN_ENGINE_STATE engineState = { };
+
+    engineState.dwElevatedLoggingTlsId = TLS_OUT_OF_INDEXES;
+    engineState.hElevatedCachePipe = INVALID_HANDLE_VALUE;
+    engineState.hElevatedPipe = INVALID_HANDLE_VALUE;
+    engineState.hEmbeddedPipe = INVALID_HANDLE_VALUE;
 
     // Ensure that log contains approriate level of information
 #ifdef _DEBUG
@@ -229,9 +234,9 @@ static HRESULT RunNormal(
 
 LExit:
     // end per-machine process if running
-    if (pEngineState->hElevatedProcess && INVALID_HANDLE_VALUE != pEngineState->hElevatedPipe)
+    if (INVALID_HANDLE_VALUE != pEngineState->hElevatedPipe || INVALID_HANDLE_VALUE != pEngineState->hElevatedCachePipe)
     {
-        PipeTerminateChildProcess(pEngineState->hElevatedProcess, pEngineState->hElevatedPipe);
+        PipeTerminateChildProcess(pEngineState->hElevatedProcess, pEngineState->hElevatedPipe, pEngineState->hElevatedCachePipe);
     }
 
     // If the splash screen is still around, close it.
@@ -251,21 +256,41 @@ static HRESULT RunElevated(
 {
     HRESULT hr = S_OK;
 
+    // connect to per-user process
+    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, FALSE, &pEngineState->hElevatedPipe);
+    ExitOnFailure(hr, "Failed to connect to parent process.");
+
+    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, TRUE, &pEngineState->hElevatedCachePipe);
+    ExitOnFailure(hr, "Failed to connect to parent process.");
+
+    // Set up the thread local storage to store the correct pipe to communicate logging.
+    pEngineState->dwElevatedLoggingTlsId = ::TlsAlloc();
+    if (TLS_OUT_OF_INDEXES == pEngineState->dwElevatedLoggingTlsId)
+    {
+        ExitWithLastError(hr, "Failed to allocate thread local storage for logging.");
+    }
+
+    if (!::TlsSetValue(pEngineState->dwElevatedLoggingTlsId, pEngineState->hElevatedPipe))
+    {
+        ExitWithLastError(hr, "Failed to set elevated pipe into thread local storage for logging.");
+    }
+
     // Override logging to write over the pipe.
     LogRedirect(RedirectLoggingOverPipe, pEngineState);
 
-    // connect to per-user process
-    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, &pEngineState->hElevatedPipe);
-    ExitOnFailure(hr, "Failed to connect to parent process.");
-
-    hr = PipeChildConnected(pEngineState->hElevatedPipe);
-    ExitOnFailure(hr, "Failed to notify parent process that child is connected.");
-
     // Pump messages from parent process.
-    hr = ElevationChildPumpMessages(pEngineState->hElevatedPipe, &pEngineState->packages, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience);
+    hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->hElevatedPipe, pEngineState->hElevatedCachePipe, &pEngineState->packages, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience);
     ExitOnFailure(hr, "Failed to pump messages from parent process.");
 
 LExit:
+    ReleaseFileHandle(pEngineState->hElevatedCachePipe);
+    ReleaseFileHandle(pEngineState->hElevatedPipe);
+
+    if (TLS_OUT_OF_INDEXES != pEngineState->dwElevatedLoggingTlsId)
+    {
+        ::TlsFree(pEngineState->dwElevatedLoggingTlsId);
+    }
+
     return hr;
 }
 
@@ -278,17 +303,16 @@ static HRESULT RunEmbedded(
     HRESULT hr = S_OK;
 
     // Connect to parent process.
-    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, &pEngineState->hEmbeddedPipe);
+    hr = PipeChildConnect(pEngineState->sczParentPipeName, pEngineState->sczParentToken, FALSE, &pEngineState->hEmbeddedPipe);
     ExitOnFailure(hr, "Failed to connect to parent process.");
-
-    hr = PipeChildConnected(pEngineState->hEmbeddedPipe);
-    ExitOnFailure(hr, "Failed to notify parent process that child is connected.");
 
     // Now run the application like normal.
     hr = RunNormal(hInstance, pEngineState, wzCommandLine);
     ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:
+    ReleaseFileHandle(pEngineState->hEmbeddedPipe);
+
     return hr;
 }
 
@@ -393,14 +417,17 @@ static HRESULT DAPI RedirectLoggingOverPipe(
 {
     HRESULT hr = S_OK;
     BURN_ENGINE_STATE* pEngineState = static_cast<BURN_ENGINE_STATE*>(pvContext);
+    HANDLE hPipe = INVALID_HANDLE_VALUE;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
     DWORD dwResult = 0;
 
+    hPipe = ::TlsGetValue(pEngineState->dwElevatedLoggingTlsId);
+
     hr = BuffWriteStringAnsi(&pbData, &cbData, szString);
     ExitOnFailure(hr, "Failed to write string to buffer.");
 
-    hr = PipeSendMessage(pEngineState->hElevatedPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_LOG), pbData, cbData, NULL, NULL, &dwResult);
+    hr = PipeSendMessage(hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_LOG), pbData, cbData, NULL, NULL, &dwResult);
     ExitOnFailure(hr, "Failed to post log message over pipe.");
     hr = (HRESULT)dwResult;
 

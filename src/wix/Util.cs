@@ -253,8 +253,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     standardProperties.Add("MSICHECKCRCS", null);
                     standardProperties.Add("MSIDISABLERMRESTART", null);
                     standardProperties.Add("MSIENFORCEUPGRADECOMPONENTRULES", null);
+                    standardProperties.Add("MSIFASTINSTALL", null);
                     standardProperties.Add("MsiFileToUseToCreatePatchTables", null);
                     standardProperties.Add("MsiHiddenProperties", null);
+                    standardProperties.Add("MSIINSTALLPERUSER", null);
                     standardProperties.Add("MSIINSTANCEGUID", null);
                     standardProperties.Add("MsiLogFileLocation", null);
                     standardProperties.Add("MsiLogging", null);

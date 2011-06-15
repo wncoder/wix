@@ -101,7 +101,6 @@ HRESULT ScaWebsRead7(
             hr = E_OUTOFMEMORY;
             break;
         }
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Fetched record from IIsWebSite table");
 
         // get the darwin information
         hr = WcaGetRecordString(hRec, wqWeb, &pwzData);
@@ -162,11 +161,9 @@ HRESULT ScaWebsRead7(
             psw->swaBinding.fSecure = FALSE;
         }
 
-        WcaLog(LOGMSG_VERBOSE, "Entering ScaWebFindBase7()");
         // look to see if site exists
         dwLen = METADATA_MAX_NAME_LEN;
         hr = ScaWebFindBase7(*ppswList, psw->wzDescription);
-        WcaLog(LOGMSG_VERBOSE, "Exiting ScaWebFindBase7()");
 
         // If we didn't find a web in memory, ignore it - during execute CA
         // if the site truly does not exist then there will be an error.
@@ -189,7 +186,6 @@ HRESULT ScaWebsRead7(
 
         while (S_OK == (hr = WcaFetchWrappedRecordWhereString(hQueryWebAddress, 2, psw->wzKey, &hRecAddresses)))
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Fetched record from IIsWebAddress table");
             if (MAX_ADDRESSES_PER_WEB <= psw->cExtraAddresses)
             {
                 hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
@@ -287,10 +283,8 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get directory properties for Web");
         if (*pwzData)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebDirProperties");
             hr = ScaGetWebDirProperties(pwzData, hUserQuery, hWebDirPropQuery, &psw->swp);
             ExitOnFailure(hr, "Failed to get directory properties for Web");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebDirProperties");
 
             psw->fHasProperties = TRUE;
         }
@@ -300,36 +294,28 @@ HRESULT ScaWebsRead7(
         ExitOnFailure(hr, "Failed to get application identifier for Web");
         if (*pwzData)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebApplication");
             hr = ScaGetWebApplication(NULL, pwzData, hWebAppQuery, hWebAppExtQuery, &psw->swapp);
             ExitOnFailure(hr, "Failed to get application for Web");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebApplication");
 
             psw->fHasApplication = TRUE;
         }
 
         // get the SSL certificates
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaSslCertificateRead");
         hr = ScaSslCertificateRead(psw->wzKey, hSslCertQuery, &(psw->pswscList));
         ExitOnFailure(hr, "Failed to get SSL Certificates.");
-        WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaSslCertificateRead");
 
         // get the custom headers
         if (*ppshhList)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetHttpHeader7");
             hr = ScaGetHttpHeader(hhptWeb, psw->wzKey, ppshhList, &(psw->pshhList));
             ExitOnFailure(hr, "Failed to get Custom HTTP Headers");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetHttpHeader7");
         }
 
         // get the errors
         if (*ppsweList)
         {
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Entering ScaGetWebError7");
             hr = ScaGetWebError(weptWeb, psw->wzKey, ppsweList, &(psw->psweList));
             ExitOnFailure(hr, "Failed to get Custom Errors");
-            WcaLog(LOGMSG_VERBOSE, "Executing ScaWebsRead7() - Exiting ScaGetWebError7");
         }
 
         // get the log information for this web
@@ -384,12 +370,18 @@ BOOL CompareBinding(
     {
         LPCWSTR pwzIPExists = pwzExists;
         pwzExists = const_cast<LPWSTR>(wcsstr(pwzIPExists, L":"));
-        ExitOnNull(pwzExists, hr, E_INVALIDARG, "Invalid web address. IP was not separated by a colon.");
+        if (NULL == pwzExists)
+        {
+            ExitFunction();
+        }
         *pwzExists = L'\0';
 
         LPCWSTR pwzPortExists = pwzExists + 1;
         pwzExists = const_cast<LPWSTR>(wcsstr(pwzPortExists, L":"));
-        ExitOnNull(pwzExists, hr, E_INVALIDARG, "Invalid web address. Port was not separated by a colon.");
+        if (NULL == pwzExists)
+        {
+            ExitFunction();
+        }
         *pwzExists = L'\0';
         int iPortExists = wcstol(pwzPortExists, NULL, 10);
 
@@ -410,6 +402,7 @@ BOOL CompareBinding(
     }
 
 LExit:
+    WcaLog(LOGMSG_VERBOSE, "Site with binding %ls %s a match", pwzBindingInfo, fFound ? "is" : "is not");
     ReleaseNullStr(pwzBindingInfo);
     return fFound;
 }
@@ -439,6 +432,8 @@ BOOL EnumSiteCompareBinding(
 
     hr = pBindings->get_Collection(&pBindingsCollection);
     ExitOnFailure(hr, "Failed get bindings collection");
+
+    WcaLog(LOGMSG_VERBOSE, "Searching for site with binding %ls:%d:%ls", psw->swaBinding.wzIP, psw->swaBinding.iPort, psw->swaBinding.wzHeader);
 
     hr = Iis7EnumAppHostElements(pBindingsCollection, CompareBinding, psw, &pBinding, NULL);
     ExitOnFailure(hr, "Failed search bindings collection");

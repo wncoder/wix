@@ -90,6 +90,7 @@ LExit:
 //
 extern "C" HRESULT MsuEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
@@ -196,8 +197,16 @@ extern "C" HRESULT MsuEnginePlanPackage(
     // add execute action
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
+        if (NULL != pdwInsertSequence)
+        {
+            hr = PlanInsertExecuteAction(*pdwInsertSequence, pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to insert execute action.");
+        }
+        else
+        {
+            hr = PlanAppendExecuteAction(pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to append execute action.");
+        }
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE;
         pAction->msuPackage.pPackage = pPackage;
@@ -219,13 +228,6 @@ extern "C" HRESULT MsuEnginePlanPackage(
         LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
     }
 
-    // add checkpoints
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
-    {
-        hr = PlanExecuteCheckpoint(pPlan);
-        ExitOnFailure(hr, "Failed to append execute checkpoint.");
-    }
-
     // return values
     *pExecuteAction = execute;
     *pRollbackAction = rollback;
@@ -236,7 +238,7 @@ LExit:
 
 extern "C" HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -252,6 +254,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
     BOOL fWuWasDisabled = FALSE;
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
+    GENERIC_EXECUTE_MESSAGE message = { };
     DWORD dwExitCode = 0;
 
     // get wusa.exe path
@@ -311,7 +314,9 @@ extern "C" HRESULT MsuEngineExecutePackage(
 
     do
     {
-        nResult = pfnGenericExecuteProgress(pvContext, 1, 2);
+        message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+        message.progress.dwPercentage = 50;
+        nResult = pfnGenericMessageHandler(&message, pvContext);
         hr = HRESULT_FROM_VIEW(nResult);
         ExitOnRootFailure(hr, "Bootstrapper application aborted during MSU progress.");
 

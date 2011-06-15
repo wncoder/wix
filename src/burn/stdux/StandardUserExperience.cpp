@@ -176,12 +176,13 @@ public: // IBootstrapperApplication
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
         __in LPCWSTR wzBundleId,
+        __in LPCWSTR wzBundleTag,
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        WriteEvent("OnDetectRelatedBundle() - wzBundleId: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzBundleId, fPerMachine, dw64Version, operation);
+        WriteEvent("OnDetectRelatedBundle() - wzBundleId: %ls, wzBundleTag: %ls, fPerMachine: %u, dw64Version: %I64u, operation: %u", wzBundleId, wzBundleTag, fPerMachine, dw64Version, operation);
         if (BOOTSTRAPPER_ACTION_INSTALL == m_command.action && BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation)
         {
             return IDCANCEL;
@@ -648,7 +649,7 @@ public: // IBootstrapperApplication
         return IDOK;
     }
 
-    virtual STDMETHODIMP_(int) OnExecuteMsiFilesInUse(
+    virtual STDMETHODIMP_(int) OnExecuteFilesInUse(
         __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*cFiles*/,
         __in LPCWSTR* /*rgwzFiles*/

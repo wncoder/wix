@@ -49,6 +49,9 @@ static HRESULT DetectPackagePayloadsCached(
 static DWORD WINAPI CacheThreadProc(
     __in LPVOID lpThreadParameter
     );
+static HRESULT WaitForCacheThread(
+    __in HANDLE hCacheThread
+    );
 
 
 // function definitions
@@ -94,6 +97,10 @@ extern "C" HRESULT CoreInitialize(
 
     hr = ManifestLoadXmlFromBuffer(pbBuffer, cbBuffer, pEngineState);
     ExitOnFailure(hr, "Failed to load manifest.");
+
+    // set the bundle provider key variable
+    hr = AddBuiltInVariable(&pEngineState->variables, L"BundleProviderKey", InitializeVariableString, (DWORD_PTR)pEngineState->registration.sczProviderKey);
+    ExitOnFailure(hr, "Failed to initialize the BundleProviderKey built-in variable.");
 
     // set registration paths
     hr = RegistrationSetPaths(&pEngineState->registration);
@@ -332,6 +339,7 @@ extern "C" HRESULT CorePlan(
     BOOL fActivated = FALSE;
     LPWSTR sczLayoutDirectory = NULL;
     BURN_PACKAGE* pPackage = NULL;
+    DWORD dwExecuteActionEarlyIndex = 0;
     DWORD dwPackageSequence = 0;
     HANDLE hSyncpointEvent = NULL;
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
@@ -341,6 +349,7 @@ extern "C" HRESULT CorePlan(
     BOOL fPlannedCleanPackage = FALSE;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
     HANDLE hRollbackBoundaryCompleteEvent = NULL;
+    BURN_DEPENDENCY_ACTION dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
 
     LogId(REPORT_STANDARD, MSG_PLAN_BEGIN, pEngineState->packages.cPackages, LoggingBurnActionToString(action));
 
@@ -390,6 +399,11 @@ extern "C" HRESULT CorePlan(
     {
         pEngineState->plan.fPerMachine = TRUE;
     }
+
+    // Remember the early index, because we want to be able to insert some related bundles
+    // into the plan before other executed packages. This particularly occurs for uninstallation
+    // of addons, which should be uninstalled before the main product.
+    dwExecuteActionEarlyIndex = pEngineState->plan.cExecuteActions;
 
     // Plan the packages.
     for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
@@ -444,6 +458,13 @@ extern "C" HRESULT CorePlan(
                 // installed. We'll clean up non-cached packages after installing them.
                 if (BOOTSTRAPPER_REQUEST_STATE_ABSENT < pPackage->requested && !pPackage->fCached)
                 {
+                    // If this is an MSI package with slipstream MSPs, ensure the MSPs are cached first.
+                    if (BURN_PACKAGE_TYPE_MSI == pPackage->type && 0 < pPackage->Msi.cSlipstreamMspPackages)
+                    {
+                        hr = PlanCacheSlipstreamMsps(&pEngineState->plan, pPackage);
+                        ExitOnFailure(hr, "Failed to plan slipstream patches for package.");
+                    }
+
                     hr = PlanCachePackage(&pEngineState->plan, pPackage, &hSyncpointEvent);
                     ExitOnFailure(hr, "Failed to plan cache package.");
 
@@ -454,19 +475,19 @@ extern "C" HRESULT CorePlan(
                 switch (pPackage->type)
                 {
                 case BURN_PACKAGE_TYPE_EXE:
-                    hr = ExeEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
+                    hr = ExeEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &pEngineState->registration, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSI:
-                    hr = MsiEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
+                    hr = MsiEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSP:
-                    hr = MspEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
+                    hr = MspEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
                     break;
 
                 case BURN_PACKAGE_TYPE_MSU:
-                    hr = MsuEnginePlanPackage(dwPackageSequence, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
+                    hr = MsuEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
                     break;
 
                 default:
@@ -501,7 +522,19 @@ extern "C" HRESULT CorePlan(
             }
         }
 
-        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(executeAction), LoggingActionStateToString(rollbackAction), LoggingBoolToString(fPlannedCachePackage), LoggingBoolToString(fPlannedCleanPackage));
+        // Plan the dependency registration automatically based on current state and requested action. This is done even for BOOTSTRAPPER_ACTION_STATE_NONE
+        // because packages that are present with no requested action are still ref-counted by the bundle.
+        hr = DependencyPlanPackage(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, executeAction, rollbackAction, &dependencyAction);
+        ExitOnFailure1(hr, "Failed to plan dependency registration for package: %ls.", pPackage->sczId);
+
+        // Add the checkpoint after each package and dependency registration action.
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction)
+        {
+            hr = PlanExecuteCheckpoint(&pEngineState->plan);
+            ExitOnFailure(hr, "Failed to append execute checkpoint.");
+        }
+
+        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(executeAction), LoggingActionStateToString(rollbackAction), LoggingBoolToString(fPlannedCachePackage), LoggingBoolToString(fPlannedCleanPackage), LoggingDependencyActionToString(dependencyAction));
 
         pEngineState->userExperience.pUserExperience->OnPlanPackageComplete(pPackage->sczId, hr, pPackage->currentState, pPackage->requested, executeAction, rollbackAction);
     }
@@ -521,6 +554,7 @@ extern "C" HRESULT CorePlan(
     {
         for (DWORD i = 0; i < pEngineState->registration.cRelatedBundles; ++i)
         {
+            DWORD *pdwInsertIndex = NULL;
             BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.rgRelatedBundles + i;
             BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
 
@@ -530,7 +564,16 @@ extern "C" HRESULT CorePlan(
                 requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
                 break;
             case BURN_RELATION_ADDON:
-                requested = (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action) ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+                if (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action)
+                {
+                    requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
+                    // Uninstall addons early in the chain, before other packages are installed
+                    pdwInsertIndex = &dwExecuteActionEarlyIndex;
+                }
+                else if (BOOTSTRAPPER_ACTION_REPAIR == pEngineState->command.action)
+                {
+                    requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
+                }
                 break;
             case BURN_RELATION_DETECT:
                 break;
@@ -552,9 +595,11 @@ extern "C" HRESULT CorePlan(
                 LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
             }
 
-            if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == requested)
+            if (BOOTSTRAPPER_REQUEST_STATE_NONE != requested)
             {
-                hr = ExeEnginePlanPackage(dwPackageSequence, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
+                pRelatedBundle->package.requested = requested;
+
+                hr = ExeEnginePlanPackage(dwPackageSequence, pdwInsertIndex, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &pEngineState->registration, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
                 ExitOnFailure1(hr, "Failed to plan uninstall action to upgrade package: %ls", pPackage->sczId);
 
                 ++pEngineState->plan.cExecutePackagesTotal;
@@ -615,7 +660,7 @@ extern "C" HRESULT CoreApply(
     {
         AssertSz(!fLayoutOnly, "A Layout plan should never require elevation.");
 
-        hr = ApplyElevate(pEngineState, hwndParent, &pEngineState->hElevatedProcess, &pEngineState->hElevatedPipe);
+        hr = ApplyElevate(pEngineState, hwndParent, &pEngineState->hElevatedProcess, &pEngineState->hElevatedPipe, &pEngineState->hElevatedCachePipe);
         ExitOnFailure(hr, "Failed to elevate.");
     }
 
@@ -627,21 +672,21 @@ extern "C" HRESULT CoreApply(
         fRegistered = TRUE;
     }
 
-    // Run the cache plan, possibly in parallel with execution below unless we are doing a layout only.
-    if (pEngineState->fParallelCacheAndExecute && !fLayoutOnly)
-    {
-        cacheThreadContext.pEngineState = pEngineState;
-        cacheThreadContext.pcOverallProgressTicks = &cOverallProgressTicks;
-        cacheThreadContext.pfRollback = &fRollback;
+    // Launch the cache thread.
+    cacheThreadContext.pEngineState = pEngineState;
+    cacheThreadContext.pcOverallProgressTicks = &cOverallProgressTicks;
+    cacheThreadContext.pfRollback = &fRollback;
 
-        // create extraction thread
-        hCacheThread = ::CreateThread(NULL, 0, CacheThreadProc, &cacheThreadContext, 0, NULL);
-        ExitOnNullWithLastError(hCacheThread, hr, "Failed to create extraction thread.");
-    }
-    else
+    hCacheThread = ::CreateThread(NULL, 0, CacheThreadProc, &cacheThreadContext, 0, NULL);
+    ExitOnNullWithLastError(hCacheThread, hr, "Failed to create cache thread.");
+
+    // If we're not caching in parallel, wait for the cache thread to terminate.
+    if (!pEngineState->fParallelCacheAndExecute)
     {
-        hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, &cOverallProgressTicks, &fRollback);
-        ExitOnFailure(hr, "Failed to cache packages.");
+        hr = WaitForCacheThread(hCacheThread);
+        ExitOnFailure(hr, "Failed while waiting for cache thread to complete before executing.");
+
+        ReleaseHandle(hCacheThread);
     }
 
     // Execute only if we are not doing a layout.
@@ -651,19 +696,11 @@ extern "C" HRESULT CoreApply(
         ExitOnFailure(hr, "Failed to execute apply.");
     }
 
-    // Wait for cache thread to terminate.
+    // Wait for cache thread to terminate, this should return immediately (unless we're waiting for layout to complete).
     if (hCacheThread)
     {
-        if (WAIT_OBJECT_0 != ::WaitForSingleObject(hCacheThread, INFINITE))
-        {
-            ExitWithLastError(hr, "Failed to wait for cache thread to terminate.");
-        }
-
-        if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
-        {
-            ExitWithLastError(hr, "Failed to get cache thread exit code.");
-        }
-        ExitOnFailure(hr, "Failed to cache packages on a parallel thread.");
+        hr = WaitForCacheThread(hCacheThread);
+        ExitOnFailure(hr, "Failed while waiting for cache thread to complete after execution.");
     }
 
     if (fRollback || fSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
@@ -1053,7 +1090,7 @@ static DWORD WINAPI CacheThreadProc(
     fComInitialized = TRUE;
 
     // cache packages
-    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe, pcOverallProgressTicks, pfRollback);
+    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedCachePipe, pcOverallProgressTicks, pfRollback);
     ExitOnFailure(hr, "Failed to cache packages.");
 
 LExit:
@@ -1063,4 +1100,24 @@ LExit:
     }
 
     return (DWORD)hr;
+}
+
+static HRESULT WaitForCacheThread(
+    __in HANDLE hCacheThread
+    )
+{
+    HRESULT hr = S_OK;
+
+    if (WAIT_OBJECT_0 != ::WaitForSingleObject(hCacheThread, INFINITE))
+    {
+        ExitWithLastError(hr, "Failed to wait for cache thread to terminate.");
+    }
+
+    if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
+    {
+        ExitWithLastError(hr, "Failed to get cache thread exit code.");
+    }
+
+LExit:
+    return hr;
 }

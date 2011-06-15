@@ -413,7 +413,7 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
             {
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
                 hr = IIS7FilterGlobal(&pwz, pAdminMgr);
-                ExitOnFailure(hr, "Failed to configure IIS WebLog.");
+                ExitOnFailure(hr, "Failed to configure IIS filter global.");
                 break;
             }
         case IIS_FILTER_BEGIN:
@@ -437,7 +437,6 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
                 ExitOnFailure(hr, "Failed to configure IIS http Errors.");
                 break;
             }
-
         case IIS_WEB_SVC_EXT:
             {
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
@@ -449,27 +448,27 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
             {
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
                 hr = IIS7WebProperty(&pwz, pAdminMgr);
-                ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
+                ExitOnFailure(hr, "Failed to configure IIS web property.");
                 break;
             }
         case IIS_WEBDIR:
             {
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
                 hr = IIS7WebDir(&pwz, pAdminMgr);
-                ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
+                ExitOnFailure(hr, "Failed to configure IIS web directory.");
                 break;
             }
         case IIS_ASP_BEGIN:
             {
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
                 hr = IIS7AspProperty(&pwz, pAdminMgr);
-                ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
+                ExitOnFailure(hr, "Failed to configure IIS Asp property.");
                 break;
             }
         case IIS_SSL_BINDING:
 #pragma prefast(suppress:26010, "This is a prefast issue - pAdminMgr is correctly allocated")
                 hr = IIS7SslBinding(&pwz, pAdminMgr);
-                ExitOnFailure(hr, "Failed to configure IIS web svc ext.");
+                ExitOnFailure(hr, "Failed to configure IIS SSL binding.");
                 break;
 
         default:
@@ -889,7 +888,7 @@ HRESULT IIS7WebSvcExt(
     ExitOnFailure(hr, "Failed get isapiCgiRestriction collection");
 
     //find element
-    hr = Iis7FindAppHostElementString(pCollection, IIS_CONFIG_ADD, IIS_CONFIG_PATH, pwzPath, &pElement, NULL);
+    hr = Iis7FindAppHostElementPath(pCollection, IIS_CONFIG_ADD, IIS_CONFIG_PATH, pwzPath, &pElement, NULL);
     ExitOnFailure(hr, "Failed get isapiCgiRestriction element");
     fFound = (NULL != pElement);
 
@@ -2501,11 +2500,11 @@ LExit:
 
     //get web name
     hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzWebName);
-    ExitOnFailure(hr, "Failed to read appExt Web name key");
+    ExitOnFailure(hr, "Failed to read mime map Web name key");
 
     //get vdir root name
     hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzWebRoot);
-    ExitOnFailure(hr, "Failed to read appExt Web name key");
+    ExitOnFailure(hr, "Failed to read vdir root name key");
 
     //Construct config root
     hr = StrAllocFormatted(&pwzConfigPath, L"%s/%s",  IIS_CONFIG_APPHOST_ROOT, pwzWebName);
@@ -2772,6 +2771,8 @@ HRESULT IIS7DirProperties(
                 ExitOnFailure(hr, "Failed to get clientCache element");
                 hr = Iis7PutPropertyString(pElement, IIS_CONFIG_HTTPEXPIRES, pwzData);
                 ExitOnFailure(hr, "Failed to set clientCache httpExpires value");
+                hr = Iis7PutPropertyString(pElement, IIS_CONFIG_CACHECONTROLMODE, IIS_CONFIG_USEEXPIRES);
+                ExitOnFailure(hr, "Failed to set clientCache cacheControlMode value");
                 ReleaseNullObject(pSection);
                 ReleaseNullObject(pElement);
                 break;
@@ -2788,6 +2789,8 @@ HRESULT IIS7DirProperties(
                 ConvSecToDHMS(iData, wcTime, countof(wcTime));
                 hr = Iis7PutPropertyString(pElement, IIS_CONFIG_MAXAGE, wcTime);
                 ExitOnFailure(hr, "Failed to set clientCache maxAge value");
+                hr = Iis7PutPropertyString(pElement, IIS_CONFIG_CACHECONTROLMODE, IIS_CONFIG_USEMAXAGE);
+                ExitOnFailure(hr, "Failed to set clientCache cacheControlMode value");
                 ReleaseNullObject(pSection);
                 ReleaseNullObject(pElement);
                 break;
@@ -2820,6 +2823,17 @@ HRESULT IIS7DirProperties(
                 ExitOnFailure(hr, "Failed to add lear element for error collection for DirProp");
                 ReleaseNullObject(pSection);
                 ReleaseNullObject(pElement);
+                break;
+            }
+            case IIS_DIRPROP_LOGVISITS:
+            {
+                hr = WcaReadIntegerFromCaData(ppwzCustomActionData, &iData);
+                ExitOnFailure(hr, "Failed to read DirProps logVisits");
+                hr = pAdminMgr->GetAdminSection(ScopeBSTR(IIS_CONFIG_HTTPLOGGING_SECTION), pwzConfigPath, &pSection);
+                ExitOnFailure(hr, "Failed get httpLogging section for DirProp");
+                hr = Iis7PutPropertyBool(pSection, IIS_CONFIG_DONTLOG, iData);
+                ExitOnFailure(hr, "Failed to set DirProps aspDetailedError");
+                ReleaseNullObject(pSection);
                 break;
             }
             default:
@@ -3845,10 +3859,12 @@ static HRESULT CreateAppPool(
                 ExitOnFailure(hr, "Failed to set AppPool enable32BitAppOnWin64 value");
                 break;
             }
-            case IIS_APPPOOL_INTEGRATED:
+            case IIS_APPPOOL_MANAGED_PIPELINE_MODE:
             {
-                // Override managedPipelineMode="Integrated"
-                hr = Iis7PutPropertyString(pAppPoolElement, IIS_CONFIG_PIPELINEMODE, L"Integrated");
+                // managedPipelineMode
+                hr = WcaReadStringFromCaData(ppwzCustomActionData, &pwzData);
+                ExitOnFailure(hr, "Failed to read AppPool managedRuntimeVersion");
+                hr = Iis7PutPropertyString(pAppPoolElement, IIS_CONFIG_PIPELINEMODE, pwzData);
                 ExitOnFailure(hr, "Failed set AppPool managedPipelineMode property");
                 break;
             }

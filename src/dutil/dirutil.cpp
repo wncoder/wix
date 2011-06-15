@@ -257,7 +257,12 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
                     ExitOnFailure1(hr, "Failed to ensure path is backslash terminated: %ls", sczDelete);
 
                     hr = DirEnsureDeleteEx(sczDelete, dwFlags); // recursive call
-                    ExitOnFailure1(hr, "Failed to delete: %ls", sczDelete);
+                    if (FAILED(hr))
+                    {
+                      // if we failed to delete a subdirectory, keep trying to finish any remaining files
+                      ExitTrace1(hr, "Failed to delete subdirectory; continuing: %ls", sczDelete);
+                      hr = S_OK;
+                    }
                 }
                 else if (fDeleteFiles)  // this is a file, just delete it
                 {
@@ -329,6 +334,7 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
     }
 
     Assert(S_OK == hr);
+
 LExit:
     ReleaseFileFindHandle(hFind);
     ReleaseStr(sczDelete);

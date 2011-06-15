@@ -72,6 +72,13 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
         {
             ExitOnFailure(hr, "Failed to to get Chain/@DisableRollback");
         }
+
+        // parse parallel cache
+        hr = XmlGetYesNoAttribute(pixnChain, L"ParallelCache", &pEngineState->fParallelCacheAndExecute);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to to get Chain/@ParallelCache");
+        }
     }
 
     // parse built-in condition 
@@ -97,6 +104,13 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
     // parse registration
     hr = RegistrationParseFromXml(&pEngineState->registration, pixeBundle);
     ExitOnFailure(hr, "Failed to parse registration.");
+
+    // Set a useful variable we got as part of registration
+    if (NULL != pEngineState->registration.sczTag)
+    {
+        hr = VariableSetString(&pEngineState->variables, L"BundleTag", pEngineState->registration.sczTag);
+        ExitOnFailure(hr, "Failed to set Tag variable from registration information");
+    }
 
     // parse containers
     hr = ContainersParseFromXml(&pEngineState->containers, pixeBundle);

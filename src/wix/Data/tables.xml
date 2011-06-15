@@ -1611,6 +1611,7 @@
         <columnDefinition name="IconSourceFile" type="object" length="0" nullable="yes" />
         <columnDefinition name="SplashScreenSourceFile" type="object" length="0" nullable="yes" />
         <columnDefinition name="Condition" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Tag" type="string" length="0" nullable="yes" />
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1620,7 +1621,8 @@
         <columnDefinition name="SourceFile" type="object" length="0"/>
     </tableDefinition>
     <tableDefinition name="WixChain" unreal="yes">
-        <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+      <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+      <columnDefinition name="ParallelCache" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
     </tableDefinition>
     <tableDefinition name="ChainPackageGroup" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1654,6 +1656,12 @@
         <columnDefinition name="Name" type="string" length="0" category="identifier" primaryKey="yes" />
         <columnDefinition name="Value" type="string" length="0" />
     </tableDefinition>
+    <tableDefinition name="SlipstreamMsp" createSymbols="yes" unreal="yes">
+        <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
+                keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table for the parent Msi."/>
+        <columnDefinition name="ChainPackage_Msp" type="string" length="0" category="identifier" primaryKey="yes"
+                keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table for the referenced Msp." />
+    </tableDefinition>
     <tableDefinition name="RelatedBundle" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="38" category="guid" primaryKey="yes" />
         <columnDefinition name="Action" type="number" length="4" />
@@ -1679,24 +1687,6 @@
         <columnDefinition name="InstalledSize" type="string" length="0" nullable="yes"/>
         <columnDefinition name="PackageType" type="string" length="0" nullable="no"/>
         <columnDefinition name="Permanent" type="string" length="0" nullable="yes"/>
-    </tableDefinition>
-    <tableDefinition name="WixLayoutDirectory" createSymbols="yes" unreal="yes">
-        <columnDefinition name="Id" type="string" length="72" category="identifier" primaryKey="yes"/>
-        <columnDefinition name="Name" type="string" length="255"/>
-    </tableDefinition>
-    <tableDefinition name="WixLayoutDirRef" unreal="yes">
-        <columnDefinition name="Parent" type="string" length="72" category="identifier" primaryKey="yes"
-                keyTable="WixLayoutDirectory" keyColumn="1" />
-        <columnDefinition name="Directory" type="string" length="72" category="identifier" primaryKey="yes"
-                keyTable="WixLayoutDirectory" keyColumn="1" />
-    </tableDefinition>
-    <tableDefinition name="WixLayoutFile" unreal="yes">
-        <!-- We really wanted to use LayoutDir and Name together as the keys for this table but the real value for Name may not be known until binding. So, we generate a guid for uniqueness and we verify desired behavior in the binder by calculating what the primary keys would have been. -->
-        <columnDefinition name="Key" type="string" length="38" primaryKey="yes" />
-        <columnDefinition name="LayoutDir" type="string" length="72" category="identifier"
-                keyTable="WixLayoutDirectory" keyColumn="1" />
-        <columnDefinition name="Name" type="string" length="255" category="filename" nullable="yes" />
-        <columnDefinition name="Source" type="object" length="0"/>
     </tableDefinition>
     <tableDefinition name="_Streams" unreal="yes">
         <columnDefinition name="Name" type="string" length="62" primaryKey="yes"/>
@@ -1729,7 +1719,7 @@
         <columnDefinition name="KeyColumn" type="number" length="2" nullable="yes"
                 minValue="1" maxValue="32" description="Column to which foreign key connects"/>
         <columnDefinition name="Category" type="string" length="32" nullable="yes"
-                set="Text;Formatted;Template;Condition;Guid;Path;Version;Language;Identifier;Binary;UpperCase;LowerCase;Filename;Paths;AnyPath;WildCardFilename;RegPath;KeyFormatted;CustomSource;Property;Cabinet;Shortcut;URL" description="String category"/>
+                set="Text;Formatted;Template;Condition;Guid;Path;Version;Language;Identifier;Binary;UpperCase;LowerCase;Filename;Paths;AnyPath;WildCardFilename;RegPath;CustomSource;Property;Cabinet;Shortcut;FormattedSDDLText;Integer;DoubleInteger;TimeDate;DefaultDir" description="String category"/>
         <columnDefinition name="Set" type="string" length="255" nullable="yes"
                 category="text" description="Set of values that are permitted"/>
         <columnDefinition name="Description" type="string" length="255" nullable="yes"

@@ -19,6 +19,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Cab
 {
     using System;
+    using System.Globalization;
     using System.IO;
     using System.Runtime.InteropServices;
     using Microsoft.Tools.WindowsInstallerXml.Cab.Interop;
@@ -51,6 +52,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Cab
     /// </summary>
     public sealed class WixCreateCab : IDisposable
     {
+        private static readonly string CompressionLevelVariable = "WIX_COMPRESSION_LEVEL";
         private IntPtr handle = IntPtr.Zero;
         private bool disposed;
 
@@ -65,6 +67,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.Cab
         /// <param name="compressionLevel">Level of compression to apply.</param>
         public WixCreateCab(string cabName, string cabDir, int maxFiles, int maxSize, int maxThresh, CompressionLevel compressionLevel)
         {
+            string compressionLevelVariable = Environment.GetEnvironmentVariable(CompressionLevelVariable);
+
+            try
+            {
+                // Override authored compression level if environment variable is present.
+                if (!String.IsNullOrEmpty(compressionLevelVariable))
+                {
+                    compressionLevel = WixCreateCab.CompressionLevelFromString(compressionLevelVariable);
+                }
+            }
+            catch (WixException)
+            {
+                throw new WixException(WixErrors.IllegalEnvironmentVariable(CompressionLevelVariable, compressionLevelVariable));
+            }
+        
             if (String.IsNullOrEmpty(cabDir))
             {
                 cabDir = Directory.GetCurrentDirectory();
@@ -92,6 +109,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Cab
         ~WixCreateCab()
         {
             this.Dispose();
+        }
+
+        /// <summary>
+        /// Converts a compression level from its string to its enum value.
+        /// </summary>
+        /// <param name="compressionLevel">Compression level as a string.</param>
+        /// <returns>CompressionLevel enum value</returns>
+        public static CompressionLevel CompressionLevelFromString(string compressionLevel)
+        {
+            switch (compressionLevel.ToLower(CultureInfo.InvariantCulture))
+            {
+                case "low":
+                    return Cab.CompressionLevel.Low;
+                case "medium":
+                    return Cab.CompressionLevel.Medium;
+                case "high":
+                    return Cab.CompressionLevel.High;
+                case "none":
+                    return Cab.CompressionLevel.None;
+                case "mszip":
+                    return Cab.CompressionLevel.Mszip;
+                default:
+                    throw new WixException(WixErrors.IllegalCompressionLevel(compressionLevel));
+            }
         }
 
         /// <summary>

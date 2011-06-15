@@ -134,6 +134,16 @@ HRESULT VariableDeserialize(
     __in SIZE_T cbBuffer,
     __inout SIZE_T* piBuffer
     );
+HRESULT AddBuiltInVariable(
+    __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzVariable,
+    __in PFN_INITIALIZEVARIABLE pfnInitialize,
+    __in DWORD_PTR dwpInitializeData
+    );
+HRESULT InitializeVariableString(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 
 #if defined(__cplusplus)
 }

@@ -112,6 +112,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <UsingTask TaskName="GetLooseFileList" AssemblyFile="$(WixTasksPath)" />
   <UsingTask TaskName="RefreshGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
   <UsingTask TaskName="RefreshBundleGeneratedFile" AssemblyFile="$(WixTasksPath)"/>
+  <UsingTask TaskName="GenerateCompileWithObjectPath" AssemblyFile="$(WixTasksPath)"/>
 
   <!-- WiX tools are 32bit EXEs, so run them out-of-proc when MSBuild is not 32bit. -->
   <PropertyGroup>
@@ -453,6 +454,23 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <InscribeVerboseOutput Condition=" '$(InscribeVerboseOutput)' == '' ">$(VerboseOutput)</InscribeVerboseOutput>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ProjectDefineConstants>
+      Configuration=$(ConfigurationName);
+      OutDir=$(OutDir);
+      Platform=$(PlatformName);
+      ProjectDir=$(ProjectDir);
+      ProjectExt=$(ProjectExt);
+      ProjectFileName=$(ProjectFileName);
+      ProjectName=$(ProjectName);
+      ProjectPath=$(ProjectPath);
+      TargetDir=$(TargetDir);
+      TargetExt=$(TargetExt);
+      TargetFileName=$(TargetFileName);
+      TargetName=$(TargetName);
+      TargetPath=$(TargetPath);
+    </ProjectDefineConstants>
+  </PropertyGroup>
   <!--
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -690,26 +708,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target
     Name="PrepareForBuild" DependsOnTargets="$(PrepareForBuildDependsOn)">
 
-    <!--
-    These CreateProperty calls are required because TargetDir and TargetPath are defined
-    to contain an item list. We want that item list to be expanded so that it can be used
-    as a regular property value and not as an item-list-with-transform.
-    -->
-    <CreateProperty Value="$(TargetDir)">
-      <Output TaskParameter="Value" PropertyName="TargetDir" />
-    </CreateProperty>
-
-    <CreateProperty Value="$(TargetPath)">
-      <Output TaskParameter="Value" PropertyName="TargetPath" />
-    </CreateProperty>
-
-    <CreateProperty Value="$(TargetPdbPath)">
-      <Output TaskParameter="Value" PropertyName="TargetPdbPath" />
-    </CreateProperty>
-
     <!-- Create the directories for intermediate and final build products. -->
     <MakeDir Directories="$(IntermediateOutputPath);$(OutDir)" />
-  </Target>
+  </Target> 
 
   <!--
   ==================================================================================================
@@ -1182,25 +1183,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <Target
     Name="AddCompilerDefineConstants"
     DependsOnTargets="$(AddCompilerDefineConstantsDependsOn)">
-
-    <CreateProperty Value="
-      Configuration=$(ConfigurationName);
-      OutDir=$(OutDir);
-      Platform=$(PlatformName);
-      ProjectDir=$(ProjectDir);
-      ProjectExt=$(ProjectExt);
-      ProjectFileName=$(ProjectFileName);
-      ProjectName=$(ProjectName);
-      ProjectPath=$(ProjectPath);
-      TargetDir=$(TargetDir);
-      TargetExt=$(TargetExt);
-      TargetFileName=$(TargetFileName);
-      TargetName=$(TargetName);
-      TargetPath=$(TargetPath);
-      ">
-      <Output TaskParameter="Value" PropertyName="ProjectDefineConstants" />
-    </CreateProperty>
-    
+   
   </Target>
 
   <!--
@@ -1903,16 +1886,13 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <GenerateCompileWithObjectPathDependsOn></GenerateCompileWithObjectPathDependsOn>
   </PropertyGroup>
   <Target Name="GenerateCompileWithObjectPath"
-    Condition=" '@(Compile)' != '' ">
+      Condition=" '@(Compile)' != '' ">
 
-    <ItemGroup>
-      <_CompileWithObjectPath Include="@(Compile)">
-        <!-- If RelativeDir is not rooted and not in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath\RelativeDir -->
-        <ObjectPath Condition=" '%(RelativeDir)%(FileName)%(Extension)' != '%(FullPath)' AND '%(RelativeDir)%(FileName)%(Extension)' != '$(IntermediateOutputPath)%(FileName)%(Extension)' AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)%(RelativeDir)</ObjectPath>
-        <!-- If RelativeDir is rooted or in IntermediateOutputPath, and ObjectPath is undefined use IntermediateOutputPath -->
-        <ObjectPath Condition=" ('%(RelativeDir)%(FileName)%(Extension)' == '%(FullPath)' OR '%(RelativeDir)%(FileName)%(Extension)' == '$(IntermediateOutputPath)%(FileName)%(Extension)') AND '%(Compile.ObjectPath)' == '' " >$(IntermediateOutputPath)</ObjectPath>
-      </_CompileWithObjectPath>
-    </ItemGroup>
+    <GenerateCompileWithObjectPath
+        Compile="@(Compile)"
+        IntermediateOutputPath="$(IntermediateOutputPath)">
+      <Output TaskParameter="CompileWithObjectPath" ItemName="_CompileWithObjectPath" />
+    </GenerateCompileWithObjectPath>
 
   </Target>
 
@@ -2147,7 +2127,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <!-- Build an itemgroup of PDB outputs -->
     <CreateItem
-      Include="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
+      Include="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetPdbName)">
       <Output TaskParameter="Include"
               ItemName="_TargetPdbPathItems"/>
     </CreateItem>
@@ -2242,7 +2222,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     DependsOnTargets="$(LinkDependsOn)"
     Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
-    <CreateProperty Value="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetName)$(TargetPdbExt)">
+    <CreateProperty Value="$(TargetPdbDir)%(CultureGroup.OutputFolder)$(TargetPdbName)">
       <Output TaskParameter="Value" PropertyName="PdbOutputFile" />
     </CreateProperty>
 

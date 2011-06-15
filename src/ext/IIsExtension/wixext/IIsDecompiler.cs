@@ -240,11 +240,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         break;
                 }
 
-                if (0 != ((int)row[3] & 0x10))
-                {
-                    webAppPool.ManagedPipelineMode = IIs.WebAppPool.ManagedPipelineModeType.integrated;
-                }
-
                 if (null != row[4])
                 {
                     webAppPool.User = (string)row[4];
@@ -337,21 +332,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 if (null != row[14])
                 {
-                    switch ((string)row[14])
-                    {
-                        case "v1.1":
-                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v11;
-                            break;
-                        case "v2.0":
-                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v20;
-                            break;
-                        case "v4.0":
-                            webAppPool.ManagedRuntimeVersion = IIs.WebAppPool.ManagedRuntimeVersionType.v40;
-                            break;
-                        default:
-                            // TODO: warn
-                            break;
-                    }
+                    webAppPool.ManagedRuntimeVersion = (string)row[14];
+                }
+
+                if (null != row[15])
+                {
+                    webAppPool.ManagedPipelineMode = (string)row[15];
                 }
 
                 if (null != row[2])

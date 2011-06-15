@@ -420,6 +420,9 @@ HRESULT ScaWriteConfigurationScript(__in LPCWSTR pwzCaScriptKey)
 {
     HRESULT hr = S_OK;
     WCA_CASCRIPT_HANDLE hScript = NULL;
+    LPWSTR pwzHashString = NULL;
+    BYTE rgbActualHash[SHA1_HASH_LEN] = { };
+    DWORD dwHashedBytes = SHA1_HASH_LEN;
 
     // Create CaScript for communication with WriteMetabaseChanges
     hr = WcaCaScriptCreate(WCA_ACTION_INSTALL, WCA_CASCRIPT_SCHEDULED, FALSE, pwzCaScriptKey, FALSE, &hScript);
@@ -430,6 +433,16 @@ HRESULT ScaWriteConfigurationScript(__in LPCWSTR pwzCaScriptKey)
         // Write the actual custom action data to the ca script
         WcaCaScriptWriteString(hScript, vpwzCustomActionData);
 
+        hr = CrypHashBuffer((BYTE*)vpwzCustomActionData, sizeof(vpwzCustomActionData) * sizeof(WCHAR), PROV_RSA_AES, CALG_SHA1, rgbActualHash, dwHashedBytes);
+        ExitOnFailure(hr, "Failed to calculate hash of CustomAction data.");
+
+        hr = StrAlloc(&pwzHashString, ((dwHashedBytes * 2) + 1));
+        ExitOnFailure(hr, "Failed to allocate string for script hash");
+
+        hr = StrHexEncode(rgbActualHash, dwHashedBytes, pwzHashString, ((dwHashedBytes * 2) + 1));
+        ExitOnFailure(hr, "Failed to convert hash bytes to string.");
+
+        WcaLog(LOGMSG_VERBOSE,  "Custom action data hash: %ls", pwzHashString);
         WcaLog(LOGMSG_TRACEONLY, "Custom action data being written to ca script: %ls", vpwzCustomActionData);
     }
     else
@@ -438,6 +451,7 @@ HRESULT ScaWriteConfigurationScript(__in LPCWSTR pwzCaScriptKey)
 LExit:
     // Release the string
     ReleaseStr(vpwzCustomActionData);
+    ReleaseStr(pwzHashString);
 
     // Flush the ca script to disk as best we can
     WcaCaScriptFlush(hScript);

@@ -335,21 +335,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 container.Id = String.Format(CultureInfo.InvariantCulture, DirectoryIdFormat, sanitizedProjectName, pog.Name);
             }
-            else if (this.GenerateType == GenerateType.Layout)
-            {
-                Wix.LayoutDirectory layoutDirectory = new Wix.LayoutDirectory();
-                harvestParent = layoutDirectory;
-
-                layoutDirectory.Name = ".";
-                if (this.setUniqueIdentifiers)
-                {
-                    layoutDirectory.Id = String.Format(CultureInfo.InvariantCulture, DirectoryIdFormat, sanitizedProjectName, pog.Name);
-                }
-                else
-                {
-                    layoutDirectory.Id = HarvesterCore.GetIdentifierFromName(String.Format(CultureInfo.InvariantCulture, VSProjectHarvester.DirectoryIdFormat, sanitizedProjectName, pog.Name));
-                }
-            }
             else
             {
                 Wix.DirectoryRef directoryRef = new Wix.DirectoryRef();
@@ -410,15 +395,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 Wix.Fragment fragment = new Wix.Fragment();
                 fragment.AddChild(payloadGroup);
-                fragmentList.Add(fragment);
-            }
-            else if (this.GenerateType == GenerateType.Layout)
-            {
-                // harvestParent must be a LayoutDirectory at this point
-                Wix.LayoutDirectory layoutDirectory = harvestParent as Wix.LayoutDirectory;
-
-                Wix.Fragment fragment = new Wix.Fragment();
-                fragment.AddChild(layoutDirectory);
                 fragmentList.Add(fragment);
             }
             else
@@ -546,10 +522,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 {
                     parentDirId = ((Wix.Directory)parentDir).Id;
                 }
-                else if(parentDir is Wix.LayoutDirectory)
-                {
-                    parentDirId = ((Wix.LayoutDirectory)parentDir).Id;
-                }
 
                 if (this.GenerateType == GenerateType.Container || this.GenerateType == GenerateType.PayloadGroup)
                 {
@@ -560,21 +532,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 else if (this.GenerateType == GenerateType.PackageGroup)
                 {
                     HarvestProjectOutputGroupPackage(projectName, pogName, pogFileSource, filePath, fileName, link, parentDir, seenList);
-                }
-                else if (this.GenerateType == GenerateType.Layout)
-                {
-                    Wix.LayoutFile file = new Wix.LayoutFile();
-
-                    HarvestProjectOutputGroupLayoutFile(baseDir, projectName, pogName, pogFileSource, filePath, fileName, link, parentDir, parentDirId, file, seenList);
-
-                    if (String.Equals(Path.GetExtension(file.SourceFile), ".exe", StringComparison.OrdinalIgnoreCase))
-                    {
-                        exeFile = file;
-                    }
-                    else if (file.SourceFile.EndsWith("app.config", StringComparison.OrdinalIgnoreCase))
-                    {
-                        appConfigFile = file;
-                    }
                 }
                 else
                 {
@@ -608,13 +565,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     Wix.File exeFileAsWixFile = exeFile as Wix.File;
                     // Case insensitive replace
                     appConfigFileAsWixFile.Source = Regex.Replace(appConfigFileAsWixFile.Source, @"app\.config", Path.GetFileName(exeFileAsWixFile.Source) + ".config", RegexOptions.IgnoreCase);
-                }
-                else if (appConfigFile is Wix.LayoutFile)
-                {
-                    Wix.LayoutFile appConfigFileAsWixLayoutFile = appConfigFile as Wix.LayoutFile;
-                    Wix.LayoutFile exeFileAsWixLayoutFile = exeFile as Wix.LayoutFile;
-                    // Case insensitive replace
-                    appConfigFileAsWixLayoutFile.SourceFile = Regex.Replace(appConfigFileAsWixLayoutFile.SourceFile, @"app\.config", Path.GetFileName(exeFileAsWixLayoutFile.SourceFile) + ".config", RegexOptions.IgnoreCase);
                 }
             }
 
@@ -745,49 +695,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             }
         }
 
-        private void HarvestProjectOutputGroupLayoutFile(string baseDir, string projectName, string pogName, string pogFileSource, string filePath, string fileName, string link, Wix.IParentElement parentDir, string parentDirId, Wix.LayoutFile file, Dictionary<string, bool> seenList)
-        {
-            string varFormat = VariableFormat;
-            if (this.generateWixVars)
-            {
-                varFormat = WixVariableFormat;
-            }
-
-            if (pogName.Equals("Satellites", StringComparison.OrdinalIgnoreCase))
-            {
-                Wix.LayoutDirectory locDirectory = new Wix.LayoutDirectory();
-
-                locDirectory.Name = Path.GetFileName(Path.GetDirectoryName(Path.GetFullPath(filePath)));
-                file.SourceFile = String.Concat(String.Format(CultureInfo.InvariantCulture, varFormat, projectName, pogFileSource), "\\", locDirectory.Name, "\\", Path.GetFileName(filePath));
-
-                if (!seenList.ContainsKey(file.SourceFile))
-                {
-                    parentDir.AddChild(locDirectory);
-                    locDirectory.AddChild(file);
-                    seenList.Add(file.SourceFile, true);
-
-                    if (this.setUniqueIdentifiers)
-                    {
-                        locDirectory.Id = this.Core.GenerateIdentifier(DirectoryPrefix, parentDirId, locDirectory.Name);
-                    }
-                    else
-                    {
-                        locDirectory.Id = HarvesterCore.GetIdentifierFromName(String.Format(DirectoryIdFormat, (parentDir is Wix.DirectoryRef) ? ((Wix.DirectoryRef)parentDir).Id : parentDirId, locDirectory.Name));
-                    }
-                }
-            }
-            else
-            {
-                file.SourceFile = GenerateSourceFilePath(baseDir, projectName, pogFileSource, filePath, link, varFormat);
-
-                if (!seenList.ContainsKey(file.SourceFile))
-                {
-                    parentDir.AddChild(file);
-                    seenList.Add(file.SourceFile, true);
-                }
-            }
-        }
-
         /// <summary>
         /// Helper function to generates a source file path when harvesting files.
         /// </summary>
@@ -853,11 +760,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             {
                 directoryType = typeof(Wix.Directory);
                 directoryRefType = typeof(Wix.DirectoryRef);
-            }
-            else if (parentDir is Wix.LayoutDirectory || parentDir is Wix.LayoutDirectoryRef)
-            {
-                directoryType = typeof(Wix.LayoutDirectory);
-                directoryRefType = typeof(Wix.LayoutDirectoryRef);
             }
             else
             {
@@ -1510,14 +1412,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     {
                         return ((Wix.DirectoryRef)directoryElement).Id;
                     }
-                    else if (directoryElement is Wix.LayoutDirectory)
-                    {
-                        return ((Wix.LayoutDirectory)directoryElement).Id;
-                    }
-                    else if (directoryElement is Wix.LayoutDirectoryRef)
-                    {
-                        return ((Wix.LayoutDirectoryRef)directoryElement).Id;
-                    }
                     else
                     {
                         throw new WixException(VSErrors.DirectoryAttributeAccessorBadType("Id"));
@@ -1532,14 +1426,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     else if (directoryElement is Wix.DirectoryRef)
                     {
                         ((Wix.DirectoryRef)directoryElement).Id = value;
-                    }
-                    else if (directoryElement is Wix.LayoutDirectory)
-                    {
-                        ((Wix.LayoutDirectory)directoryElement).Id = value;
-                    }
-                    else if (directoryElement is Wix.LayoutDirectoryRef)
-                    {
-                        ((Wix.LayoutDirectoryRef)directoryElement).Id = value;
                     }
                     else
                     {
@@ -1559,10 +1445,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     {
                         return ((Wix.Directory)directoryElement).Name;
                     }
-                    else if (directoryElement is Wix.LayoutDirectory)
-                    {
-                        return ((Wix.LayoutDirectory)directoryElement).Name;
-                    }
                     else
                     {
                         throw new WixException(VSErrors.DirectoryAttributeAccessorBadType("Name"));
@@ -1573,10 +1455,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     if (directoryElement is Wix.Directory)
                     {
                         ((Wix.Directory)directoryElement).Name = value;
-                    }
-                    else if (directoryElement is Wix.LayoutDirectory)
-                    {
-                        ((Wix.LayoutDirectory)directoryElement).Name = value;
                     }
                     else
                     {

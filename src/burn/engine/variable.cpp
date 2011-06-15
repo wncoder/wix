@@ -56,12 +56,6 @@ enum OS_INFO_VARIABLE
 
 // internal function declarations
 
-static HRESULT AddBuiltInVariable(
-    __in BURN_VARIABLES* pVariables,
-    __in LPCWSTR wzVariable,
-    __in PFN_INITIALIZEVARIABLE pfnInitialize,
-    __in DWORD_PTR dwpInitializeData
-    );
 static HRESULT GetVariable(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
@@ -76,12 +70,6 @@ static HRESULT InsertVariable(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
     __in DWORD iPosition
-    );
-
-static HRESULT AddBuiltInVariable(
-    __in BURN_VARIABLES* pVariables,
-    __in LPCWSTR wzVariable,
-    __in PFN_INITIALIZEVARIABLE pfnInitializer
     );
 static HRESULT InitializeVariableOsInfo(
     __in DWORD_PTR dwpData,
@@ -809,6 +797,8 @@ extern "C" HRESULT VariableSerialize(
 
         switch (pVariable->Value.Type)
         {
+        case BURN_VARIANT_TYPE_NONE:
+            break;
         case BURN_VARIANT_TYPE_NUMERIC: __fallthrough;
         case BURN_VARIANT_TYPE_VERSION:
             hr = BuffWriteNumber64(ppbBuffer, piBuffer, pVariable->Value.qwValue);
@@ -872,6 +862,8 @@ extern "C" HRESULT VariableDeserialize(
         // read variable value
         switch (value.Type)
         {
+        case BURN_VARIANT_TYPE_NONE:
+            break;
         case BURN_VARIANT_TYPE_NUMERIC: __fallthrough;
         case BURN_VARIANT_TYPE_VERSION:
             hr = BuffReadNumber64(pbBuffer, cbBuffer, piBuffer, &value.qwValue);
@@ -903,10 +895,7 @@ LExit:
     return hr;
 }
 
-
-// internal function definitions
-
-static HRESULT AddBuiltInVariable(
+extern "C" HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
     __in PFN_INITIALIZEVARIABLE pfnInitialize,
@@ -936,6 +925,25 @@ static HRESULT AddBuiltInVariable(
 LExit:
     return hr;
 }
+
+extern "C" HRESULT InitializeVariableString(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    LPCWSTR wzValue = (LPCWSTR)dwpData;
+
+    // set value
+    hr = BVariantSetString(pValue, wzValue, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr;
+}
+
+
+// internal function definitions
 
 static HRESULT GetVariable(
     __in BURN_VARIABLES* pVariables,

@@ -601,7 +601,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     continue;
                 }
 
-                if (table.Name == "AdminExcuteSequence"
+                if (table.Name == "AdminExecuteSequence"
                     || table.Name == "AdminUISequence"
                     || table.Name == "AdvtExecuteSequence"
                     || table.Name == "InstallUISequence"

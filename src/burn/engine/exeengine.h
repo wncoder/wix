@@ -39,10 +39,12 @@ HRESULT ExeEngineDetectPackage(
     );
 HRESULT ExeEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in BURN_REGISTRATION* pRegistration,
     __in_opt HANDLE hCacheEvent,
     __in BOOL fPlanPackageCacheRollback,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
@@ -53,7 +55,7 @@ HRESULT ExeEngineExecutePackage(
     __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );

@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         {
             StringBuilder buf = new StringBuilder(40);
             StringBuilder targetProductBuf = new StringBuilder(40);
-            int targetContext;
+            UserContexts targetContext;
             StringBuilder targetSidBuf = new StringBuilder(40);
             for (uint i = 0; ; i++)
             {
@@ -86,7 +86,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiEnumPatchesEx(
                     targetProductCode,
                     userSid,
-                    (int) context,
+                    context,
                     (uint) states,
                     i,
                     buf,
@@ -100,7 +100,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                     ret = NativeMethods.MsiEnumPatchesEx(
                         targetProductCode,
                         userSid,
-                        (int) context,
+                        context,
                         (uint) states,
                         i,
                         buf,
@@ -127,7 +127,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                         buf.ToString(),
                         targetProductBuf.ToString(),
                         targetSidBuf.ToString(),
-                        (UserContexts) targetContext);
+                        targetContext);
                 }
             }
         }
@@ -381,7 +381,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                         this.PatchCode,
                         this.ProductCode,
                         this.UserSid,
-                        (int) this.Context,
+                        this.Context,
                         propertyName,
                         buf,
                         ref bufSize);
@@ -392,7 +392,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                             this.PatchCode,
                             this.ProductCode,
                             this.UserSid,
-                            (int) this.Context,
+                            this.Context,
                             propertyName,
                             buf,
                             ref bufSize);

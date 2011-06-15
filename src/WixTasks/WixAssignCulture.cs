@@ -105,16 +105,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
                         return false;
                     }
 
-                    // Check and see if the attribute is there. The XSD requires it, but this task runs before candle has a chance to
-                    // do validation on the file.
-                    if (wxlFile.DocumentElement.Attributes[WixAssignCulture.CultureAttributeName] == null)
-                    {
-                        Log.LogError("EmbeddedResource {0} has no Culture attribute on the WixLocalization element. Add the attribute to specify the file's culture then try building again.", file.ItemSpec);
-                        return false;
-                    }
-
                     // Take the culture value and try using it to create a culture.
-                    string wxlCulture = wxlFile.DocumentElement.Attributes[WixAssignCulture.CultureAttributeName].Value;
+                    XmlAttribute cultureAttr = wxlFile.DocumentElement.Attributes[WixAssignCulture.CultureAttributeName];
+                    string wxlCulture = null == cultureAttr ? String.Empty : cultureAttr.Value;
                     if (0 == wxlCulture.Length)
                     {
                         // We use a keyword for the invariant culture because MSBuild v2.0.50727 cannnot handle "" items

@@ -1163,7 +1163,6 @@ static INT HandleFilesInUseRecord(
         ExitOnWin32Error1(er, hr, "Failed to get record field as string: %u", i);
     }
 
-    //nResult = m_pBurnView->OnExecuteMsiFilesInUse(m_wzPackageId, cFiles, (LPCWSTR*)rgwzFiles);
     message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
     message.msiFilesInUse.cFiles = cFiles;
     message.msiFilesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;

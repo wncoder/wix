@@ -49,7 +49,7 @@ namespace Bootstrapper
                     "    <UX UxDllPayloadId='ux.dll'>"
                     "        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     "    </UX>"
-                    "    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
+                    "    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
                     "    <Variable Id='Variable1' Type='numeric' Value='1' />"
                     "    <RegistrySearch Id='Search1' Type='exists' Root='HKLM' Key='SOFTWARE\\Microsoft' Variable='Variable1' Condition='0' />"
                     "</Bundle>";

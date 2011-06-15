@@ -22,6 +22,7 @@
 
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
+  <include buildfile="${dir.src.deputil}\deputil.build" unless="${property::exists('deputil.properties.defined')}" />
 
   <property name="dir.src.stub" value="${dir.src.burn}\stub" readonly="true" />
   <property name="dir.build.stub" value="${dir.build.burn}\stub" readonly="true" />
@@ -41,14 +42,14 @@
   <target name="stub.build" description="Peforms a full rebuild (clean then build)" depends="stub.clean, stub.inc" />
 
   <!-- Clean -->
-  <target name="stub.clean" description="Cleans the build">
+  <target name="stub.clean" description="Cleans the build" depends="deputil.clean">
     <delete dir="${dir.build.stub}" failonerror="false" if="${directory::exists(dir.build.stub)}" />
     <delete file="${stub.file.target}" failonerror="false" if="${file::exists(stub.file.target)}" />
     <delete file="${stub.file.targetpdb}" failonerror="false" if="${file::exists(stub.file.targetpdb)}" />
   </target>
 
   <!-- Inc -->
-  <target name="stub.inc" description="Performs an incremental build" depends="makeDirs">
+  <target name="stub.inc" description="Performs an incremental build" depends="makeDirs, deputil.inc">
     <mkdir dir="${dir.build.stub}" />
 
     <fileset id="compileCpp.fileset.sources" basedir="${dir.src.stub}">
@@ -61,7 +62,7 @@
     <property name="compileCpp.additionalIncludes" value="${stub.additionalIncludes}" />
     <property name="compileCpp.additionalOptions" value="-DUNICODE -D_UNICODE" />
     <property name="makeNativeExe.file.target" value="${stub.file.target}" />
-    <property name="makeNativeExe.additionalLibs" value="/SWAPRUN:CD /SWAPRUN:NET -entry:wWinMainCRTStartup &quot;${dir.target.wix}\engine.lib&quot; &quot;${dir.target.wix}\engine.res&quot; &quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\rpcrt4.lib&quot; &quot;${dir.platformsdk.lib}\wininet.lib&quot; &quot;${dir.platformsdk.lib}\wintrust.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\gdi32.lib&quot; &quot;${dir.platformsdk.lib}\shlwapi.lib&quot; &quot;${dir.platformsdk.lib}\cabinet.lib&quot;" />
+    <property name="makeNativeExe.additionalLibs" value="/SWAPRUN:CD /SWAPRUN:NET -entry:wWinMainCRTStartup &quot;${dir.target.wix}\engine.lib&quot; &quot;${dir.target.wix}\engine.res&quot; &quot;${file.target.dutil}&quot; &quot;${file.target.deputil}&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot; &quot;${dir.platformsdk.lib}\rpcrt4.lib&quot; &quot;${dir.platformsdk.lib}\wininet.lib&quot; &quot;${dir.platformsdk.lib}\wintrust.lib&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\gdi32.lib&quot; &quot;${dir.platformsdk.lib}\shlwapi.lib&quot; &quot;${dir.platformsdk.lib}\cabinet.lib&quot;" />
 
     <!-- Make setupbld.exe -->
     <call target="makeNativeExe" />

@@ -81,6 +81,10 @@ LPCSTR LoggingActionStateToString(
     __in BOOTSTRAPPER_ACTION_STATE actionState
     );
 
+LPCSTR LoggingDependencyActionToString(
+    BURN_DEPENDENCY_ACTION action
+    );
+
 LPCSTR LoggingBoolToString(
     __in BOOL f
     );

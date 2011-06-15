@@ -203,7 +203,7 @@ HRESULT DAPI RegReadQword(
 HRESULT DAPI RegWriteBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
-    __in_bcount(cBuffer) const BYTE *pbBuffer,
+    __in_bcount(cbBuffer) const BYTE *pbBuffer,
     __in DWORD cbBuffer
     );
 HRESULT DAPI RegWriteString(

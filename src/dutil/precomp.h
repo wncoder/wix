@@ -46,8 +46,6 @@
 #include <stddef.h>
 #include <esent.h>
 #include <ahadmin.h>
-#include <sqlce_oledb.h>
-#include <sqlce_sync.h>
 
 #include "dutil.h"
 #include "aclutil.h"
@@ -78,7 +76,6 @@
 #include "rmutil.h"
 #include "rssutil.h"
 #include "apuputil.h" // NOTE: this must come after atomutil.h and rssutil.h since it uses them.
-#include "sceutil.h"
 //#include "sqlutil.h" - see sqlutil.cpp why this *must* be commented out
 #include "strutil.h"
 #include "timeutil.h"

@@ -18,6 +18,9 @@
 
 #include "precomp.h"
 
+static const LPCWSTR PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls";
+static const LPCWSTR CACHE_PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls.Cache";
+
 static HRESULT AllocatePipeMessage(
     __in DWORD dwMessage,
     __in_bcount_opt(cbData) LPVOID pvData,
@@ -46,6 +49,10 @@ static HRESULT CreateChildProcess(
     __in_z LPCWSTR wzPipeName,
     __in_z LPCWSTR wzToken,
     __out HANDLE* phProcess
+    );
+static HRESULT ChildPipeConnected(
+    __in_z LPCWSTR wzToken,
+    __in HANDLE hPipe
     );
 
 
@@ -165,6 +172,7 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT PipeCreatePipeNameAndToken(
     __out HANDLE* phPipe,
+    __out_opt HANDLE* phCachePipe,
     __out_z LPWSTR *psczPipeName,
     __out_z LPWSTR *psczPipeToken
     )
@@ -175,7 +183,10 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
     WCHAR wzGuid[39];
     LPWSTR sczPipeName = NULL;
     LPWSTR sczFullPipeName = NULL;
+    LPWSTR sczFullCachePipeName = NULL;
     LPWSTR sczPipeToken = NULL;
+    HANDLE hPipe = INVALID_HANDLE_VALUE;
+    HANDLE hCachePipe = INVALID_HANDLE_VALUE;
 
     // Create the unique pipe name.
     rs = ::UuidCreate(&guid);
@@ -191,8 +202,14 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
     hr = StrAllocFormatted(&sczPipeName, L"BurnPipe.%s", wzGuid);
     ExitOnFailure(hr, "Failed to allocate pipe name.");
 
-    hr = StrAllocFormatted(&sczFullPipeName, L"\\\\.\\pipe\\%ls", sczPipeName);
+    hr = StrAllocFormatted(&sczFullPipeName, PIPE_NAME_FORMAT_STRING, sczPipeName);
     ExitOnFailure1(hr, "Failed to allocate full name of pipe: %ls", sczPipeName);
+
+    if (phCachePipe)
+    {
+        hr = StrAllocFormatted(&sczFullCachePipeName, CACHE_PIPE_NAME_FORMAT_STRING, sczPipeName);
+        ExitOnFailure1(hr, "Failed to allocate full name of cache pipe: %ls", sczPipeName);
+    }
 
     // Create the unique client token.
     rs = ::UuidCreate(&guid);
@@ -205,24 +222,41 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
         ExitOnRootFailure(hr, "Failed to convert pipe guid into string.");
     }
 
-    hr = StrAllocFormatted(&sczPipeToken, L"%ls", wzGuid);
-    ExitOnFailure(hr, "Failed to allocate client token.");
+    hr = StrAllocString(&sczPipeToken, wzGuid, 0);
+    ExitOnFailure(hr, "Failed to allocate pipe token.");
 
     // TODO: use a different security descriptor to lock down this named pipe even more than it is now.
     // TODO: consider using overlapped IO to do waits on the pipe and still be able to cancel and such.
-    *phPipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
-    if (INVALID_HANDLE_VALUE == *phPipe)
+    hPipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
+    if (INVALID_HANDLE_VALUE == hPipe)
     {
         ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullPipeName);
     }
 
+    if (phCachePipe)
+    {
+        hCachePipe = ::CreateNamedPipeW(sczFullCachePipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
+        if (INVALID_HANDLE_VALUE == hCachePipe)
+        {
+            ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullCachePipeName);
+        }
+
+        *phCachePipe = hCachePipe;
+        hCachePipe = INVALID_HANDLE_VALUE;
+    }
+
+    *phPipe = hPipe;
+    hPipe = INVALID_HANDLE_VALUE;
     *psczPipeName = sczPipeName;
     sczPipeName = NULL;
     *psczPipeToken = sczPipeToken;
     sczPipeToken = NULL;
 
 LExit:
+    ReleaseFileHandle(hCachePipe);
+    ReleaseFileHandle(hPipe);
     ReleaseStr(sczPipeToken);
+    ReleaseStr(sczFullCachePipeName);
     ReleaseStr(sczFullPipeName);
     ReleaseStr(sczPipeName);
 
@@ -323,10 +357,17 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT PipeTerminateChildProcess(
     __in HANDLE hProcess,
-    __in HANDLE hPipe
+    __in HANDLE hPipe,
+    __in HANDLE hCachePipe
     )
 {
     HRESULT hr = S_OK;
+
+    if (hCachePipe != INVALID_HANDLE_VALUE)
+    {
+        hr = WritePipeMessage(hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), NULL, 0);
+        ExitOnFailure(hr, "Failed to post terminate message to child process cache thread.");
+    }
 
     hr = WritePipeMessage(hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), NULL, 0);
     ExitOnFailure(hr, "Failed to post terminate message to child process.");
@@ -348,17 +389,15 @@ LExit:
 extern "C" HRESULT PipeChildConnect(
     __in_z LPCWSTR wzPipeName,
     __in_z LPCWSTR wzToken,
+    __in BOOL fCachePipe,
     __out HANDLE* phPipe
     )
 {
     HRESULT hr = S_OK;
     LPWSTR sczPipeName = NULL;
     HANDLE hPipe = INVALID_HANDLE_VALUE;
-    DWORD cbVerificationToken = 0;
-    LPWSTR sczVerificationToken = NULL;
-    DWORD dwRead = 0;
 
-    hr = StrAllocFormatted(&sczPipeName, L"\\\\.\\pipe\\%s", wzPipeName);
+    hr = StrAllocFormatted(&sczPipeName, fCachePipe ? CACHE_PIPE_NAME_FORMAT_STRING : PIPE_NAME_FORMAT_STRING, wzPipeName);
     ExitOnFailure(hr, "Failed to allocate name of parent pipe.");
 
     // Connect to the parent.
@@ -368,61 +407,16 @@ extern "C" HRESULT PipeChildConnect(
         ExitWithLastError1(hr, "Failed to open parent pipe: %ls", sczPipeName)
     }
 
-    // Read the verification token.
-    if (!::ReadFile(hPipe, &cbVerificationToken, sizeof(cbVerificationToken), &dwRead, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
-    }
-
-    if (255 < cbVerificationToken / sizeof(WCHAR))
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Verification token from parent is too big.");
-    }
-
-    hr = StrAlloc(&sczVerificationToken, cbVerificationToken / sizeof(WCHAR) + 1);
-    ExitOnFailure(hr, "Failed to allocate buffer for verification token.");
-
-    if (!::ReadFile(hPipe, sczVerificationToken, cbVerificationToken, &dwRead, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
-    }
-
-    // Verify the tokens match.
-    if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, 0, sczVerificationToken, -1, wzToken, -1))
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Verification token from parent does not match.");
-    }
+    // Verify the parent and notify it that the child connected.
+    hr = ChildPipeConnected(wzToken, hPipe);
+    ExitOnFailure1(hr, "Failed to verify parent pipe: %ls", sczPipeName);
 
     *phPipe = hPipe;
     hPipe = INVALID_HANDLE_VALUE;
 
 LExit:
-    ReleaseStr(sczVerificationToken);
     ReleaseFileHandle(hPipe);
     ReleaseStr(sczPipeName);
-    return hr;
-}
-
-/*******************************************************************
- PipeChildConnected - 
-
-*******************************************************************/
-extern "C" HRESULT PipeChildConnected(
-    HANDLE hPipe
-    )
-{
-    HRESULT hr = S_OK;
-    DWORD dwAck = 1;
-    DWORD cb = 0;
-
-    if (!::WriteFile(hPipe, &dwAck, sizeof(dwAck), &cb, NULL))
-    {
-        ExitWithLastError(hr, "Failed to inform parent process that child is running.");
-    }
-
-LExit:
     return hr;
 }
 
@@ -612,5 +606,55 @@ LExit:
     }
 
     ReleaseStr(sczParameters);
+    return hr;
+}
+
+static HRESULT ChildPipeConnected(
+    __in_z LPCWSTR wzToken,
+    __in HANDLE hPipe
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD cbVerificationToken = 0;
+    LPWSTR sczVerificationToken = NULL;
+    DWORD dwRead = 0;
+    DWORD dwAck = 1;
+    DWORD cb = 0;
+
+    // Read the verification token.
+    if (!::ReadFile(hPipe, &cbVerificationToken, sizeof(cbVerificationToken), &dwRead, NULL))
+    {
+        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
+    }
+
+    if (255 < cbVerificationToken / sizeof(WCHAR))
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        ExitOnRootFailure(hr, "Verification token from parent is too big.");
+    }
+
+    hr = StrAlloc(&sczVerificationToken, cbVerificationToken / sizeof(WCHAR) + 1);
+    ExitOnFailure(hr, "Failed to allocate buffer for verification token.");
+
+    if (!::ReadFile(hPipe, sczVerificationToken, cbVerificationToken, &dwRead, NULL))
+    {
+        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
+    }
+
+    // Verify the tokens match.
+    if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, 0, sczVerificationToken, -1, wzToken, -1))
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        ExitOnRootFailure(hr, "Verification token from parent does not match.");
+    }
+
+    // All is well, tell the parent process.
+    if (!::WriteFile(hPipe, &dwAck, sizeof(dwAck), &cb, NULL))
+    {
+        ExitWithLastError(hr, "Failed to inform parent process that child is running.");
+    }
+
+LExit:
+    ReleaseStr(sczVerificationToken);
     return hr;
 }

@@ -55,6 +55,10 @@ static HRESULT ConcatFeatureActionProperties(
     __in BOOTSTRAPPER_FEATURE_ACTION* rgFeatureActions,
     __inout_z LPWSTR* psczArguments
     );
+static HRESULT ConcatPatchProperty(
+    __in BURN_PACKAGE* pPackage,
+    __inout_z LPWSTR* psczArguments
+    );
 
 
 // function definitions
@@ -192,6 +196,36 @@ extern "C" HRESULT MsiEngineParsePackageFromXml(
         }
     }
 
+    // Select slipstream MSP nodes.
+    hr = XmlSelectNodes(pixnMsiPackage, L"SlipstreamMsp", &pixnNodes);
+    ExitOnFailure(hr, "Failed to select related MSI nodes.");
+
+    hr = pixnNodes->get_length((long*)&cNodes);
+    ExitOnFailure(hr, "Failed to get related MSI node count.");
+
+    if (cNodes)
+    {
+        pPackage->Msi.rgpSlipstreamMspPackages = reinterpret_cast<BURN_PACKAGE**>(MemAlloc(sizeof(BURN_PACKAGE*) * cNodes, TRUE));
+        ExitOnNull(pPackage->Msi.rgpSlipstreamMspPackages, hr, E_OUTOFMEMORY, "Failed to allocate memory for slipstream MSP packages.");
+
+        pPackage->Msi.rgsczSlipstreamMspPackageIds = reinterpret_cast<LPWSTR*>(MemAlloc(sizeof(LPWSTR*) * cNodes, TRUE));
+        ExitOnNull(pPackage->Msi.rgsczSlipstreamMspPackageIds, hr, E_OUTOFMEMORY, "Failed to allocate memory for slipstream MSP ids.");
+
+        pPackage->Msi.cSlipstreamMspPackages = cNodes;
+
+        // Parse slipstream MSP Ids.
+        for (DWORD i = 0; i < cNodes; ++i)
+        {
+            hr = XmlNextElement(pixnNodes, &pixnNode, NULL);
+            ExitOnFailure(hr, "Failed to get next slipstream MSP node.");
+
+            hr = XmlGetAttributeEx(pixnNode, L"Id", pPackage->Msi.rgsczSlipstreamMspPackageIds + i);
+            ExitOnFailure(hr, "Failed to parse slipstream MSP ids.");
+
+            ReleaseNullObject(pixnNode);
+        }
+    }
+
     hr = S_OK;
 
 LExit:
@@ -319,6 +353,22 @@ extern "C" void MsiEnginePackageUninitialize(
             ReleaseMem(pRelatedMsi->rgdwLanguages);
         }
         MemFree(pPackage->Msi.rgRelatedMsis);
+    }
+
+    // free slipstream MSPs
+    if (pPackage->Msi.rgsczSlipstreamMspPackageIds)
+    {
+        for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
+        {
+            ReleaseStr(pPackage->Msi.rgsczSlipstreamMspPackageIds[i]);
+        }
+
+        MemFree(pPackage->Msi.rgsczSlipstreamMspPackageIds);
+    }
+
+    if (pPackage->Msi.rgpSlipstreamMspPackages)
+    {
+        MemFree(pPackage->Msi.rgpSlipstreamMspPackages);
     }
 
     // clear struct
@@ -506,6 +556,7 @@ LExit:
 //
 extern "C" HRESULT MsiEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
@@ -688,8 +739,16 @@ extern "C" HRESULT MsiEnginePlanPackage(
     // add execute action
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
+        if (NULL != pdwInsertSequence)
+        {
+            hr = PlanInsertExecuteAction(*pdwInsertSequence, pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to insert execute action.");
+        }
+        else
+        {
+            hr = PlanAppendExecuteAction(pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to append execute action.");
+        }
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
@@ -715,13 +774,6 @@ extern "C" HRESULT MsiEnginePlanPackage(
 
         LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
-    }
-
-    // add checkpoints
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
-    {
-        hr = PlanExecuteCheckpoint(pPlan);
-        ExitOnFailure(hr, "Failed to append execute checkpoint.");
     }
 
     // return values
@@ -784,6 +836,10 @@ extern "C" HRESULT MsiEngineExecutePackage(
     // add feature action properties
     hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczProperties);
     ExitOnFailure(hr, "Failed to add feature action properties to argument string.");
+
+    // add patch properties
+    hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczProperties);
+    ExitOnFailure(hr, "Failed to add patch properties to argument string.");
 
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczProperties);
 
@@ -1318,5 +1374,57 @@ LExit:
     ReleaseStr(sczAdvertise);
     ReleaseStr(sczRemove);
 
+    return hr;
+}
+
+static HRESULT ConcatPatchProperty(
+    __in BURN_PACKAGE* pPackage,
+    __inout_z LPWSTR* psczArguments
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCachedDirectory = NULL;
+    LPWSTR sczMspPath = NULL;
+    LPWSTR sczPatches = NULL;
+
+    for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
+    {
+        BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[i];
+        AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
+
+        hr = CacheGetCompletedPath(pMspPackage->fPerMachine, pMspPackage->sczCacheId, &sczCachedDirectory);
+        ExitOnFailure1(hr, "Failed to get cached path for MSP package: %ls", pMspPackage->sczId);
+
+        hr = PathConcat(sczCachedDirectory, pMspPackage->rgPayloads[0].pPayload->sczFilePath, &sczMspPath);
+        ExitOnFailure(hr, "Failed to build MSP path.");
+
+        if (!sczPatches)
+        {
+            hr = StrAllocConcat(&sczPatches, L" PATCH=\"", 0);
+            ExitOnFailure(hr, "Failed to prefix with PATCH property.");
+        }
+        else
+        {
+            hr = StrAllocConcat(&sczPatches, L";", 0);
+            ExitOnFailure(hr, "Failed to semi-colon delimit patches.");
+        }
+
+        hr = StrAllocConcat(&sczPatches, sczMspPath, 0);
+        ExitOnFailure(hr, "Failed to append patch path.");
+    }
+
+    if (sczPatches)
+    {
+        hr = StrAllocConcat(&sczPatches, L"\"", 0);
+        ExitOnFailure(hr, "Failed to close the quoted PATCH property.");
+
+        hr = StrAllocConcat(psczArguments, sczPatches, 0);
+        ExitOnFailure(hr, "Failed to append PATCH property.");
+    }
+
+LExit:
+    ReleaseStr(sczMspPath);
+    ReleaseStr(sczCachedDirectory);
+    ReleaseStr(sczPatches);
     return hr;
 }

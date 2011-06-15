@@ -50,6 +50,33 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         }
 
         /// <summary>
+        /// Processes an attribute for the Compiler.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line number for the parent element.</param>
+        /// <param name="parentElement">Parent element of attribute.</param>
+        /// <param name="attribute">Attribute to process.</param>
+        public override void ParseAttribute(SourceLineNumberCollection sourceLineNumbers, XmlElement parentElement, XmlAttribute attribute)
+        {
+            switch (parentElement.LocalName)
+            {
+                case "Bundle":
+                    switch (attribute.LocalName)
+                    {
+                        case "ProviderKey":
+                            this.ParseProviderKeyAttribute(sourceLineNumbers, attribute);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
+                            break;
+                    }
+                    break;
+                default:
+                    this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Processes an element for the Compiler.
         /// </summary>
         /// <param name="sourceLineNumbers">Source line number for the parent element.</param>
@@ -134,6 +161,40 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         }
 
         /// <summary>
+        /// Processes the ProviderKey bundle attribute.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line number for the parent element.</param>
+        /// <param name="attribute">The XML attribute for the ProviderKey attribute.</param>
+        private void ParseProviderKeyAttribute(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute)
+        {
+            string id = null;
+            string providerKey = null;
+
+            switch (attribute.LocalName)
+            {
+                case "ProviderKey":
+                    providerKey = this.Core.GetAttributeValue(sourceLineNumbers, attribute);
+                    break;
+                default:
+                    this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
+                    break;
+            }
+
+            // Generate the primary key for the row.
+            id = this.Core.GenerateIdentifier("dep", attribute.LocalName, providerKey);
+
+            if (!this.Core.EncounteredError)
+            {
+                // Create the provider row for the bundle. The Component_ field is required
+                // in the table definition but unused for bundles, so just set it to the valid ID.
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider");
+                row[0] = id;
+                row[1] = id;
+                row[2] = providerKey;
+            }
+        }
+
+        /// <summary>
         /// Processes the Provides element.
         /// </summary>
         /// <param name="node">The XML node for the Provides element.</param>
@@ -149,7 +210,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             string key = null;
             string displayKey = null;
             int attributes = 0;
-            int versionGuarantee = CompilerCore.IntegerNotSet;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -162,27 +222,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             break;
                         case "Key":
                             key = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        case "VersionGuarantee":
-                            string value = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
-                            Provides.VersionGuaranteeType guarantee = Provides.ParseVersionGuaranteeType(value);
-                            switch (guarantee)
-                            {
-                                case Provides.VersionGuaranteeType.None:
-                                    break;
-                                case Provides.VersionGuaranteeType.Major:
-                                    versionGuarantee = DependencyCommon.ProvidesAttributesVersionGuaranteeMajor;
-                                    break;
-                                case Provides.VersionGuaranteeType.Minor:
-                                    versionGuarantee = DependencyCommon.ProvidesAttributesVersionGuaranteeMinor;
-                                    break;
-                                case Provides.VersionGuaranteeType.Build:
-                                    versionGuarantee = DependencyCommon.ProvidesAttributesVersionGuaranteeBuild;
-                                    break;
-                                default:
-                                    this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.LocalName, attrib.LocalName, value, "None", "Major", "Minor", "Build"));
-                                    break;
-                            }
                             break;
                         case "DisplayKey":
                             displayKey = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -200,11 +239,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (!String.IsNullOrEmpty(key))
             {
-                if (CompilerCore.IntegerNotSet != versionGuarantee)
-                {
-                    this.Core.OnMessage(DependencyWarnings.AttributeIgnored(sourceLineNumbers, node.LocalName, "VersionGuarantee", "Key"));
-                }
-
                 // Make sure the key does not contain a semicolon.
                 if (0 <= key.IndexOf(";", StringComparison.Ordinal))
                 {
@@ -218,43 +252,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 {
                     this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Key"));
                 }
-
-                // VersionGuarantee not valid on a package element.
-                if (CompilerCore.IntegerNotSet != versionGuarantee)
-                {
-                    this.Core.OnMessage(WixErrors.IllegalAttributeExceptOnElement(sourceLineNumbers, node.LocalName, "VersionGuarantee", "Component"));
-                }
             }
             else
             {
-                // Make sure the UpgradeCode is authored and set the key.
-                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", "UpgradeCode");
-
-                // Generate a key based on the documented algorithm.
-                StringBuilder sb = new StringBuilder("!(bind.property.UpgradeCode)");
-
-                // Default to the major version field.
-                if (CompilerCore.IntegerNotSet == versionGuarantee)
-                {
-                    versionGuarantee = DependencyCommon.ProvidesAttributesVersionGuaranteeMajor;
-                }
-
-                if (DependencyCommon.ProvidesAttributesVersionGuaranteeMajor <= versionGuarantee)
-                {
-                    sb.Append("v!(bind.property.ProductVersion.Major)");
-                }
-
-                if (DependencyCommon.ProvidesAttributesVersionGuaranteeMinor <= versionGuarantee)
-                {
-                    sb.Append(".!(bind.property.ProductVersion.Minor)");
-                }
-
-                if (DependencyCommon.ProvidesAttributesVersionGuaranteeBuild <= versionGuarantee)
-                {
-                    sb.Append(".!(bind.property.ProductVersion.Build)");
-                }
-
-                key = sb.ToString();
+                // Make sure the ProductCode is authored and set the key.
+                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", "ProductCode");
+                key = "!(bind.property.ProductCode)";
             }
 
             // Need the element ID for child element processing, so generate now if not authored.
@@ -291,9 +294,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (!this.Core.EncounteredError)
             {
-                // Reference the custom action to check for dependencies on the current provider.
-                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyCheck");
-
                 // Create the row in the provider table.
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider");
                 row[0] = id;
@@ -312,6 +312,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 if (!isPackage)
                 {
+                    // Reference the custom action to check for dependencies on the current provider.
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyCheck");
+
                     // Generate registry rows for the provider using binder properties.
                     string keyProvides = String.Concat(DependencyCommon.RegistryRoot, key);
 

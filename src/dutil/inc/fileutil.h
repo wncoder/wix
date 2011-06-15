@@ -65,6 +65,10 @@ HRESULT DAPI FileVersionFromStringEx(
     __in DWORD cchVersion,
     __out DWORD64* pqwVersion
     );
+HRESULT DAPI FileVersionToStringEx(
+    __in DWORD64 qwVersion,
+    __out LPWSTR* psczVersion
+    );
 HRESULT DAPI FileSetPointer(
     __in HANDLE hFile,
     __in DWORD64 dw64Move,

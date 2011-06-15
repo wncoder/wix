@@ -78,7 +78,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListAddMediaDisk(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) this.installation.InstallationType,
                 (uint) item.DiskId,
                 item.VolumeLabel,
@@ -102,7 +102,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListClearAllEx(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) NativeMethods.SourceType.Media | (uint) this.installation.InstallationType);
 
             if (ret != 0)
@@ -159,7 +159,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             uint ret = NativeMethods.MsiSourceListClearMediaDisk(
                 this.installation.InstallationCode,
                 this.installation.UserSid,
-                (int) this.installation.Context,
+                this.installation.Context,
                 (uint) this.installation.InstallationType,
                 (uint) diskId);
 
@@ -195,7 +195,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiSourceListEnumMediaDisks(
                     this.installation.InstallationCode,
                     this.installation.UserSid,
-                    (int) this.installation.Context,
+                    this.installation.Context,
                     (uint) this.installation.InstallationType,
                     i,
                     out diskId,
@@ -212,7 +212,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                     ret = NativeMethods.MsiSourceListEnumMediaDisks(
                         this.installation.InstallationCode,
                         this.installation.UserSid,
-                        (int) this.installation.Context,
+                        this.installation.Context,
                         (uint) this.installation.InstallationType,
                         i,
                         out diskId,

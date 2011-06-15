@@ -35,6 +35,7 @@ QueueLimit            i2     Yes          500
 CPUMon                s72    Yes          "65,500,1" (65% CPU usage, 500 minutes, Shutdown Action)
 MaxProc               i2     Yes          5
 ManagedRuntimeVersion s72    Yes          "v2.0"
+ManagedPipelineMode   s72    Yes          "Integrated"
 
 Notes:
 RecycleTimes is a comma delimeted list of times.  CPUMon is a
@@ -44,7 +45,7 @@ Action are 1 (Shutdown) and 0 (No Action).
 
 ------------------------------------------------------------------*/
 
-enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqManagedRuntimeVersion, apqInstalled, apqAction };
+enum eAppPoolQuery { apqAppPool = 1, apqName, apqComponent, apqAttributes, apqUser, apqRecycleMinutes, apqRecycleRequests, apqRecycleTimes, apqVirtualMemory, apqPrivateMemory, apqIdleTimeout, apqQueueLimit, apqCpuMon, apqMaxProc, apqManagedRuntimeVersion, apqManagedPipelineMode, apqInstalled, apqAction };
 
 enum eComponentAttrQuery { caqComponent = 1, caqAttributes };
 
@@ -190,6 +191,11 @@ HRESULT ScaAppPoolRead(
         ExitOnFailure(hr, "failed to get AppPool.ManagedRuntimeVersion");
         hr = ::StringCchCopyW(psap->wzManagedRuntimeVersion, countof(psap->wzManagedRuntimeVersion), pwzData);
         ExitOnFailure1(hr, "failed to copy ManagedRuntimeVersion value: %ls", pwzData);
+
+        hr = WcaGetRecordString(hRec, apqManagedPipelineMode, &pwzData);
+        ExitOnFailure(hr, "failed to get AppPool.ManagedPipelineMode");
+        hr = ::StringCchCopyW(psap->wzManagedPipelineMode, countof(psap->wzManagedPipelineMode), pwzData);
+        ExitOnFailure1(hr, "failed to copy ManagedPipelineMode value: %ls", pwzData);
 
     }
 

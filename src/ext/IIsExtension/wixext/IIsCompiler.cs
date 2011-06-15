@@ -930,6 +930,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             int maxCpuUsage = 0;
             int maxWorkerProcs = CompilerCore.IntegerNotSet;
             string managedRuntimeVersion = null;
+            string managedPipelineMode = null;
             string name = null;
             int privateMemory = CompilerCore.IntegerNotSet;
             int queueLimit = CompilerCore.IntegerNotSet;
@@ -1015,22 +1016,34 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                                 this.Core.OnMessage(IIsErrors.IllegalAttributeWithoutComponent(sourceLineNumbers, node.Name, attrib.Name));
                             }
 
-                            string managedPipelineModeValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (0 < managedPipelineModeValue.Length)
+                            managedPipelineMode = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+
+
+                            if (!String.IsNullOrEmpty(managedPipelineMode))
                             {
-                                switch (managedPipelineModeValue)
+                                switch (managedPipelineMode)
                                 {
+                                    // In 3.5 we allowed lower case values (per camel case enum style), we now use formatted fields, 
+                                    // so the value needs to match exactly what we pass in to IIS which uses pascal case.
                                     case "classic":
-                                        // default
+                                        managedPipelineMode = "Classic";
                                         break;
                                     case "integrated":
-                                        attributes |= 0x10;
+                                        managedPipelineMode = "Integrated";
+                                        break;
+                                    case "Classic":
+                                        break;
+                                    case "Integrated":
                                         break;
                                     default:
-                                        this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, managedPipelineModeValue, "classic", "integrated"));
+                                        if (!CompilerCore.ContainsProperty(managedPipelineMode))
+                                        {
+                                            this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, managedPipelineMode, "Classic", "Integrated"));
+                                        }
                                         break;
                                 }
                             }
+
                             break;
                         case "ManagedRuntimeVersion":
                             if (null == componentId)
@@ -1039,19 +1052,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             }
 
                             managedRuntimeVersion = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (0 < managedRuntimeVersion.Length)
-                            {
-                                switch (managedRuntimeVersion)
-                                {
-                                    case "v1.1":
-                                    case "v2.0":
-                                    case "v4.0":
-                                        break;
-                                    default:
-                                        this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.Name, managedRuntimeVersion, "v1.1", "v2.0", "v4.0"));
-                                        break;
-                                }
-                            }
                             break;
                         case "MaxCpuUsage":
                             if (null == componentId)
@@ -1255,6 +1255,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     row[13] = privateMemory;
                 }
                 row[14] = managedRuntimeVersion;
+                row[15] = managedPipelineMode;
             }
         }
 

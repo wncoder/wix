@@ -210,6 +210,10 @@ extern "C" HRESULT PackagesParseFromXml(
         hr = ParsePayloadRefsFromXml(pPackage, pPayloads, pixnNode);
         ExitOnFailure(hr, "Failed to parse payload references.");
 
+        // parse dependency providers
+        hr = DependencyParseProvidersFromXml(pPackage, pixnNode);
+        ExitOnFailure(hr, "Failed to parse dependency providers.");
+
         // prepare next iteration
         ReleaseNullObject(pixnNode);
         ReleaseNullBSTR(bstrNodeName);
@@ -233,6 +237,25 @@ extern "C" HRESULT PackagesParseFromXml(
                 pPackages->rgPatchInfo[pPackages->cPatchInfo].ePatchDataType = MSIPATCH_DATATYPE_XMLBLOB;
                 pPackages->rgPatchInfoToPackage[pPackages->cPatchInfo] = pPackage;
                 ++pPackages->cPatchInfo;
+
+                // Loop through all MSI packages seeing if any of them slipstream this MSP.
+                for (DWORD j = 0; j < pPackages->cPackages; ++j)
+                {
+                    BURN_PACKAGE* pMsiPackage = &pPackages->rgPackages[j];
+
+                    if (BURN_PACKAGE_TYPE_MSI == pMsiPackage->type)
+                    {
+                        for (DWORD k = 0; k < pMsiPackage->Msi.cSlipstreamMspPackages; ++k)
+                        {
+                            if (pMsiPackage->Msi.rgsczSlipstreamMspPackageIds[k] && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pPackage->sczId, -1, pMsiPackage->Msi.rgsczSlipstreamMspPackageIds[k], -1))
+                            {
+                                pMsiPackage->Msi.rgpSlipstreamMspPackages[k] = pPackage;
+
+                                ReleaseNullStr(pMsiPackage->Msi.rgsczSlipstreamMspPackageIds[k]); // we don't need the slipstream package id any longer so free it.
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -260,6 +283,15 @@ extern "C" void PackageUninitialize(
     ReleaseStr(pPackage->sczInstallCondition);
     ReleaseStr(pPackage->sczRollbackInstallCondition);
     ReleaseStr(pPackage->sczCacheId);
+
+    if (pPackage->rgDependencyProviders)
+    {
+        for (DWORD i = 0; i < pPackage->cDependencyProviders; ++i)
+        {
+            ReleaseStr(pPackage->rgDependencyProviders[i].sczKey);
+        }
+        MemFree(pPackage->rgDependencyProviders);
+    }
 
     ReleaseMem(pPackage->rgPayloads);
 

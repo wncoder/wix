@@ -175,12 +175,15 @@ namespace Bootstrapper
         try
         {
             hr = VariableGetVariant(pVariables, wzVariable, &value);
-            if (E_NOTFOUND != hr)
+            if (E_NOTFOUND == hr || value.Type == BURN_VARIANT_TYPE_NONE)
+            {
+                return false;
+            }
+            else
             {
                 TestThrowOnFailure1(hr, L"Failed to find variable: '%s'", wzVariable);
                 return true;
             }
-            return false;
         }
         finally
         {

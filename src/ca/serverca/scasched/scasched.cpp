@@ -27,7 +27,7 @@ LPCWSTR vcsUserDeferredQuery = L"SELECT `User`, `Component_`, `Name`, `Domain`, 
 
 LPCWSTR vcsWebSvcExtQuery = L"SELECT `Component_`, `File`, `Description`, `Group`, `Attributes` FROM `IIsWebServiceExtension`";
 
-LPCWSTR vcsAppPoolQuery = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `ManagedRuntimeVersion` FROM `IIsAppPool`";
+LPCWSTR vcsAppPoolQuery = L"SELECT `AppPool`, `Name`, `Component_`, `Attributes`, `User_`, `RecycleMinutes`, `RecycleRequests`, `RecycleTimes`, `VirtualMemory`, `PrivateMemory`, `IdleTimeout`, `QueueLimit`, `CPUMon`, `MaxProc`, `ManagedRuntimeVersion`, `ManagedPipelineMode` FROM `IIsAppPool`";
 
 LPCWSTR vcsComponentAttrQuery = L"SELECT `Component`,`Attributes` FROM `Component`";
 
@@ -190,7 +190,7 @@ extern "C" UINT __stdcall ConfigureIIs(
     // Wrap vcsAppPoolQuery to send to deferred CA
     if (S_OK == WcaTableExists(L"IIsAppPool"))
     {
-        hr = WcaWrapQuery(vcsAppPoolQuery, &pwzCustomActionData, efmcColumn2, 3, 0xFFFFFFFF);
+        hr = WcaWrapQuery(vcsAppPoolQuery, &pwzCustomActionData, efmcColumn2 | efmcColumn15 | efmcColumn16, 3, 0xFFFFFFFF);
         ExitOnFailure(hr, "Failed to wrap IIsAppPool query");
 
         hr = WcaWrapQuery(vcsComponentAttrQuery, &pwzCustomActionData, 0, 0xFFFFFFFF, 0xFFFFFFFF);

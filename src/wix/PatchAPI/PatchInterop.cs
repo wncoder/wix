@@ -289,7 +289,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.PatchAPI
         {
             if (!ExtractPatchHeaderToFileW(delta, deltaHeader))
             {
-                throw new System.ComponentModel.Win32Exception();
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
             }
         }
 

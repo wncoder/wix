@@ -28,6 +28,11 @@ static HRESULT GetActionDefaultRequestState(
     __in BOOTSTRAPPER_ACTION action,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     );
+static BOOL AlreadyPlannedCachePackage(
+    __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzPackageId,
+    __out HANDLE* phSyncpointEvent
+    );
 static DWORD GetNextCheckpointId();
 static HRESULT AppendCacheAction(
     __in BURN_PLAN* pPlan,
@@ -118,6 +123,10 @@ extern "C" void PlanUninitializeExecuteAction(
     case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP: __fallthrough;
     case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
         ReleaseStr(pExecuteAction->service.sczServiceName);
+        break;
+
+    case BURN_EXECUTE_ACTION_TYPE_DEPENDENCY:
+        ReleaseStr(pExecuteAction->dependency.sczBundleProviderKey);
         break;
     }
 }
@@ -264,6 +273,12 @@ extern "C" HRESULT PlanCachePackage(
     DWORD dwCheckpoint = 0;
     DWORD iPackageStartAction = 0;
 
+    BOOL fPlanned = AlreadyPlannedCachePackage(pPlan, pPackage->sczId, phSyncpointEvent);
+    if (fPlanned)
+    {
+        ExitFunction();
+    }
+
     // Cache checkpoints happen before the package is cached because downloading packages'
     // payloads will not roll themselves back the way installation packages rollback on
     // failure automatically.
@@ -346,6 +361,29 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT PlanCacheSlipstreamMsps(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGE* pPackage
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hIgnored = NULL;
+
+    AssertSz(BURN_PACKAGE_TYPE_MSI == pPackage->type, "Only MSI packages can have slipstream patches.");
+
+    for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
+    {
+        BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[i];
+        AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
+
+        hr = PlanCachePackage(pPlan, pMspPackage, &hIgnored);
+        ExitOnFailure1(hr, "Failed to plan slipstream MSP: %ls", pMspPackage->sczId);
+    }
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
@@ -354,7 +392,7 @@ extern "C" HRESULT PlanCleanPackage(
     HRESULT hr = S_OK;
     BURN_CLEAN_ACTION* pCleanAction = NULL;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCleanActions), pPlan->cCleanActions, sizeof(BURN_CLEAN_ACTION), 5);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCleanActions), pPlan->cCleanActions + 1, sizeof(BURN_CLEAN_ACTION), 5);
     ExitOnFailure(hr, "Failed to grow plan's array of clean actions.");
 
     pCleanAction = pPlan->rgCleanActions + pPlan->cCleanActions;
@@ -424,6 +462,24 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT PlanInsertExecuteAction(
+    __in DWORD dwIndex,
+    __in BURN_PLAN* pPlan,
+    __out BURN_EXECUTE_ACTION** ppExecuteAction
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = MemInsertIntoArray((void**)&pPlan->rgExecuteActions, dwIndex, 1, pPlan->cExecuteActions + 1, sizeof(BURN_EXECUTE_ACTION), 5);
+    ExitOnFailure(hr, "Failed to grow plan's array of execute actions.");
+
+    *ppExecuteAction = pPlan->rgExecuteActions + dwIndex;
+    ++pPlan->cExecuteActions;
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT PlanAppendExecuteAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction
@@ -431,7 +487,7 @@ extern "C" HRESULT PlanAppendExecuteAction(
 {
     HRESULT hr = S_OK;
 
-    hr = MemEnsureArraySize((void**)&pPlan->rgExecuteActions, pPlan->cExecuteActions, sizeof(BURN_EXECUTE_ACTION), 5);
+    hr = MemEnsureArraySize((void**)&pPlan->rgExecuteActions, pPlan->cExecuteActions + 1, sizeof(BURN_EXECUTE_ACTION), 5);
     ExitOnFailure(hr, "Failed to grow plan's array of execute actions.");
 
     *ppExecuteAction = pPlan->rgExecuteActions + pPlan->cExecuteActions;
@@ -448,7 +504,7 @@ extern "C" HRESULT PlanAppendRollbackAction(
 {
     HRESULT hr = S_OK;
 
-    hr = MemEnsureArraySize((void**)&pPlan->rgRollbackActions, pPlan->cRollbackActions, sizeof(BURN_EXECUTE_ACTION), 5);
+    hr = MemEnsureArraySize((void**)&pPlan->rgRollbackActions, pPlan->cRollbackActions + 1, sizeof(BURN_EXECUTE_ACTION), 5);
     ExitOnFailure(hr, "Failed to grow plan's array of rollback actions.");
 
     *ppRollbackAction = pPlan->rgRollbackActions + pPlan->cRollbackActions;
@@ -597,6 +653,36 @@ LExit:
         return hr;
 }
 
+static BOOL AlreadyPlannedCachePackage(
+    __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzPackageId,
+    __out HANDLE* phSyncpointEvent
+    )
+{
+    BOOL fPlanned = FALSE;
+
+    for (DWORD iCacheAction = 0; iCacheAction < pPlan->cCacheActions; ++iCacheAction)
+    {
+        BURN_CACHE_ACTION* pCacheAction = pPlan->rgCacheActions + iCacheAction;
+
+        if (BURN_CACHE_ACTION_TYPE_PACKAGE_STOP == pCacheAction->type)
+        {
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pCacheAction->packageStop.pPackage->sczId, -1, wzPackageId, -1))
+            {
+                if (iCacheAction + 1 < pPlan->cCacheActions && BURN_CACHE_ACTION_TYPE_SYNCPOINT == pPlan->rgCacheActions[iCacheAction + 1].type)
+                {
+                    *phSyncpointEvent = pPlan->rgCacheActions[iCacheAction + 1].syncpoint.hEvent;
+                }
+
+                fPlanned = TRUE;
+                break;
+            }
+        }
+    }
+
+    return fPlanned;
+}
+
 static DWORD GetNextCheckpointId()
 {
     static DWORD dwCounter = 0;
@@ -610,7 +696,7 @@ static HRESULT AppendCacheAction(
 {
     HRESULT hr = S_OK;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCacheActions), pPlan->cCacheActions, sizeof(BURN_CACHE_ACTION), 5);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCacheActions), pPlan->cCacheActions + 1, sizeof(BURN_CACHE_ACTION), 5);
     ExitOnFailure(hr, "Failed to grow plan's array of cache actions.");
 
     *ppCacheAction = pPlan->rgCacheActions + pPlan->cCacheActions;
@@ -627,7 +713,7 @@ static HRESULT AppendRollbackCacheAction(
 {
     HRESULT hr = S_OK;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgRollbackCacheActions), pPlan->cRollbackCacheActions, sizeof(BURN_CACHE_ACTION), 5);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgRollbackCacheActions), pPlan->cRollbackCacheActions + 1, sizeof(BURN_CACHE_ACTION), 5);
     ExitOnFailure(hr, "Failed to grow plan's array of rollback cache actions.");
 
     *ppCacheAction = pPlan->rgRollbackCacheActions + pPlan->cRollbackCacheActions;
@@ -660,7 +746,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
 
         Assert(BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER == pCacheAction->type);
 
-        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pCacheAction->extractContainer.rgPayloads), pCacheAction->extractContainer.cPayloads, sizeof(BURN_EXTRACT_PAYLOAD), 5);
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pCacheAction->extractContainer.rgPayloads), pCacheAction->extractContainer.cPayloads + 1, sizeof(BURN_EXTRACT_PAYLOAD), 5);
         ExitOnFailure(hr, "Failed to grow list of payloads to extract from container.");
 
         BURN_EXTRACT_PAYLOAD* pExtractPayload = pCacheAction->extractContainer.rgPayloads + pCacheAction->extractContainer.cPayloads;

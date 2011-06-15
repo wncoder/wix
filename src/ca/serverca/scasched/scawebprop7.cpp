@@ -88,8 +88,10 @@ HRESULT ScaWriteWebDirProperties7(
 
     if (MSI_NULL_INTEGER != pswp->fLogVisits)
     {
-        //Not Supported by IIS7 : pswp->fIIsControlledPassword
-        WcaLog(LOGMSG_VERBOSE, "Not supported by IIS7: WebDirProperties.LogVisits, ignoring");
+        hr = ScaWriteConfigID(IIS_DIRPROP_LOGVISITS);
+        ExitOnFailure(hr, "Failed to write DirProp logVisits id");
+        hr = ScaWriteConfigInteger(pswp->fLogVisits ? FALSE : TRUE); // we capture "should log" but IIS7 wants "should not log"
+        ExitOnFailure(hr, "Failed to write DirProp logVisits");
     }
 
     if (MSI_NULL_INTEGER != pswp->fIndex)

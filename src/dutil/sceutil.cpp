@@ -18,11 +18,37 @@
 
 #include "precomp.h"
 
-// This conflicts with some of SQLUtil's includes, so best to keep it out of precomp
-#include <sqlce_err.h>
+#include "sceutil.h"
 
 // Limit is documented as 4 GB, but for some reason the API's don't let us specify anything above 4091 MB.
 #define MAX_SQLCE_DATABASE_SIZE 4091
+
+// In case of some older versions of sqlce_oledb.h don't have these definitions, define some types.
+#ifndef DBTYPEFOR_DBLENGTH
+#ifdef _WIN64
+#define SKIP_SCE_COMPILE
+#else
+#define SCE_32BIT_ONLY
+typedef DWORD DBLENGTH;
+typedef LONG  DBROWOFFSET;
+typedef LONG  DBROWCOUNT;
+typedef DWORD DBCOUNTITEM;
+typedef DWORD DBORDINAL;
+typedef LONG  DB_LORDINAL;
+typedef DWORD DBBKMARK;
+typedef DWORD DBBYTEOFFSET;
+typedef DWORD DBREFCOUNT;
+typedef DWORD DB_UPARAMS;
+typedef LONG  DB_LPARAMS;
+typedef DWORD DBHASHVALUE;
+typedef DWORD DB_DWRESERVE;
+typedef LONG  DB_LRESERVE;
+typedef DWORD DB_URESERVE;
+#endif
+
+#endif
+
+#ifndef SKIP_SCE_COMPILE // If the sce headers don't support 64-bit, don't build for 64-bit
 
 // structs
 struct SCE_DATABASE_INTERNAL
@@ -1589,7 +1615,7 @@ static HRESULT SetColumnValue(
     ExitOnFailure1(hr, "Failed to add %u to alloc size while setting column value", cbSize);
 
     pBinding->wType = pTableSchema->rgColumns[dwColumnIndex].dbtColumnType;
-    pBinding->cbMaxLen = cbSize;
+    pBinding->cbMaxLen = static_cast<DBBYTEOFFSET>(cbSize);
 
     if (NULL == *ppbBuffer)
     {
@@ -1602,7 +1628,7 @@ static HRESULT SetColumnValue(
         ExitOnNull(*ppbBuffer, hr, E_OUTOFMEMORY, "Failed to reallocate buffer while setting row string");
     }
 
-    *(reinterpret_cast<DBBYTEOFFSET *>(*ppbBuffer + *cbOffset)) = cbSize;
+    *(reinterpret_cast<DBBYTEOFFSET *>(*ppbBuffer + *cbOffset)) = static_cast<DBBYTEOFFSET>(cbSize);
     *cbOffset += sizeof(DBBYTEOFFSET);
     memcpy(*ppbBuffer + *cbOffset, pbData, cbSize);
     *cbOffset += cbSize;
@@ -1773,7 +1799,7 @@ static HRESULT EnsureLocalColumnConstraints(
     __in ITableDefinition *pTableDefinition,
     __in DBID *pTableID,
     __in SCE_TABLE_SCHEMA *pTableSchema,
-    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    __in SCE_DATABASE_SCHEMA* /*pDatabaseSchema*/
     )
 {
     HRESULT hr = S_OK;
@@ -1781,8 +1807,8 @@ static HRESULT EnsureLocalColumnConstraints(
     DBCONSTRAINTDESC dbcdConstraint = { };
     DBID dbConstraintID = { };
     DBID dbLocalColumnID = { };
-    DBID dbForeignTableID = { };
-    DBID dbForeignColumnID = { };
+    //DBID dbForeignTableID = { };
+    //DBID dbForeignColumnID = { };
     ITableDefinitionWithConstraints *pTableDefinitionWithConstraints = NULL;
 
     hr = pTableDefinition->QueryInterface(IID_ITableDefinitionWithConstraints, reinterpret_cast<void **>(&pTableDefinitionWithConstraints));
@@ -1964,3 +1990,5 @@ static void ReleaseDatabaseInternal(
     }
     ReleaseMem(pDatabaseInternal);
 }
+
+#endif // end SKIP_SCE_COMPILE

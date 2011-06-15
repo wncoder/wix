@@ -24,7 +24,6 @@
 #define APATTR_LOCSERVICE 0x0002 // Local Service
 #define APATTR_LOCSYSTEM 0x0004 // Local System
 #define APATTR_OTHERUSER 0x0008 // Other User
-#define APATTR_INTEGRATED 0x0010 // Integrated pipeline mode
 
 struct SCA_APPPOOL
 {
@@ -50,6 +49,7 @@ struct SCA_APPPOOL
     INT iQueueLimit;
     WCHAR wzCpuMon[MAX_DARWIN_KEY + 1];
     INT iMaxProcesses;
+    WCHAR wzManagedPipelineMode[MAX_DARWIN_KEY + 1];
     WCHAR wzManagedRuntimeVersion[MAX_DARWIN_KEY + 1];
 
     int iCompAttributes;

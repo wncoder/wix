@@ -65,6 +65,7 @@ HRESULT PipePumpMessages(
 // Parent functions.
 HRESULT PipeCreatePipeNameAndToken(
     __out HANDLE* phPipe,
+    __out_opt HANDLE* phCachePipe,
     __out_z LPWSTR *psczPipeName,
     __out_z LPWSTR *psczClientToken
     );
@@ -82,17 +83,16 @@ HRESULT PipeWaitForChildConnect(
     );
 HRESULT PipeTerminateChildProcess(
     __in HANDLE hProcess,
-    __in HANDLE hPipe
+    __in HANDLE hPipe,
+    __in HANDLE hCachePipe
     );
 
 // Child functions.
 HRESULT PipeChildConnect(
     __in_z LPCWSTR wzPipeName,
     __in_z LPCWSTR wzToken,
+    __in BOOL fCachePipe,
     __out HANDLE* phPipe
-    );
-HRESULT PipeChildConnected(
-    HANDLE hPipe
     );
 
 #ifdef __cplusplus

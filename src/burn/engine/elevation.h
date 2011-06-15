@@ -39,13 +39,14 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_DEPENDENCY,
     BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD,
     BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE,
 
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_FILES_IN_USE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE,
 } BURN_ELEVATION_MESSAGE_TYPE;
 
 
@@ -88,7 +89,7 @@ HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -113,9 +114,13 @@ HRESULT ElevationExecuteMspPackage(
 HRESULT ElevationExecuteMsuPackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
+    );
+HRESULT ElevationExecuteDependencyAction(
+    __in HANDLE hPipe,
+    __in BURN_EXECUTE_ACTION* pExecuteAction
     );
 HRESULT ElevationLaunchElevatedChild(
     __in HANDLE hPipe,
@@ -131,7 +136,9 @@ HRESULT ElevationCleanPackage(
 
 // Child (per-machine process) side functions.
 HRESULT ElevationChildPumpMessages(
+    __in DWORD dwLoggingTlsId,
     __in HANDLE hPipe,
+    __in HANDLE hCachePipe,
     __in BURN_PACKAGES* pPackages,
     __in BURN_PAYLOADS* pPayloads,
     __in BURN_VARIABLES* pVariables,

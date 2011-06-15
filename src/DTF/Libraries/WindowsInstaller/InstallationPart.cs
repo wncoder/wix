@@ -25,11 +25,20 @@ namespace Microsoft.Deployment.WindowsInstaller
     {
         private string id;
         private string productCode;
+        private string userSid;
+        private UserContexts context;
 
         internal InstallationPart(string id, string productCode)
+	    : this(id, productCode, null, UserContexts.All)
+        {
+        }
+
+        internal InstallationPart(string id, string productCode, string userSid, UserContexts context)
         {
             this.id = id;
             this.productCode = productCode;
+            this.userSid = userSid;
+            this.context = context;
         }
 
         internal string Id
@@ -48,6 +57,22 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
         }
 
+        internal string UserSid
+        {
+            get
+            {
+                return this.userSid;
+            }
+        }
+
+        internal UserContexts Context
+        {
+            get
+            {
+                return this.context;
+            }
+        }
+
         /// <summary>
         /// Gets the product that this item is a part of.
         /// </summary>
@@ -56,7 +81,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             get
             {
                 return this.productCode != null ?
-                    new ProductInstallation(this.productCode) : null;
+                    new ProductInstallation(this.productCode, userSid, context) : null;
             }
         }
 

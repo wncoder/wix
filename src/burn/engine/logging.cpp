@@ -41,12 +41,12 @@ extern "C" HRESULT LoggingOpen(
 {
     HRESULT hr = S_OK;
     LPWSTR sczExePath = NULL;
-    LPWSTR sczExeDir = NULL;
+    LPWSTR sczCurrentDir = NULL;
 
     PathForCurrentProcess(&sczExePath, NULL); // Ignore failure.
 
-    hr = PathGetDirectory(sczExePath, &sczExeDir);
-    ExitOnFailure(hr, "Failed to get directory bundle executable is in");
+    hr = DirGetCurrent(&sczCurrentDir);
+    ExitOnFailure(hr, "Failed to get current directory.");
 
     // Check if the logging policy is set and configure the logging appropriately.
     CheckLoggingPolicy(&pLog->dwAttributes);
@@ -71,7 +71,7 @@ extern "C" HRESULT LoggingOpen(
     // Open the log approriately.
     if (pLog->sczPath && *pLog->sczPath)
     {
-        hr = LogOpen(sczExeDir, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
+        hr = LogOpen(sczCurrentDir, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
@@ -112,7 +112,7 @@ extern "C" HRESULT LoggingOpen(
 
 LExit:
     ReleaseStr(sczExePath);
-    ReleaseStr(sczExeDir);
+    ReleaseStr(sczCurrentDir);
 
     return hr;
 }
@@ -198,6 +198,23 @@ extern "C" LPCSTR LoggingActionStateToString(
         return "MajorUpgrade";
     case BOOTSTRAPPER_ACTION_STATE_PATCH:
         return "Patch";
+    default:
+        return "Invalid";
+    }
+}
+
+extern "C" LPCSTR LoggingDependencyActionToString(
+    BURN_DEPENDENCY_ACTION action
+    )
+{
+    switch (action)
+    {
+    case BURN_DEPENDENCY_ACTION_NONE:
+        return "None";
+    case BURN_DEPENDENCY_ACTION_REGISTER:
+        return "Register";
+    case BURN_DEPENDENCY_ACTION_UNREGISTER:
+        return "Unregister";
     default:
         return "Invalid";
     }
@@ -320,6 +337,10 @@ extern "C" LPCSTR LoggingRelatedOperationToString(
         return "MinorUpdate";
     case BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE:
         return "MajorUpgrade";
+    case BOOTSTRAPPER_RELATED_OPERATION_REMOVE:
+        return "Remove";
+    case BOOTSTRAPPER_RELATED_OPERATION_REPAIR:
+        return "Repair";
     default:
         return "Invalid";
     }

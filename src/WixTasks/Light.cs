@@ -434,7 +434,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
 
             commandLineBuilder.AppendIfTrue("-ai", this.AllowIdenticalRows);
             commandLineBuilder.AppendIfTrue("-au", this.AllowUnresolvedReferences);
-            commandLineBuilder.AppendArrayIfNotNull("-b ", this.BindInputPaths);
+            commandLineBuilder.AppendArrayIfNotNull("-b ", this.baseInputPaths);
 
             if (null != this.BindInputPaths)
             {
@@ -450,7 +450,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
                     else
                     {
                         formattedPath = item.GetMetadata("FullPath");
-                        }
+                    }
                     formattedBindInputPaths.Enqueue(formattedPath);
                 }
                 commandLineBuilder.AppendArrayIfNotNull("-b ", formattedBindInputPaths.ToArray());

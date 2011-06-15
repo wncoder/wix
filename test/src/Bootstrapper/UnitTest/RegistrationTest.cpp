@@ -99,7 +99,7 @@ namespace Bootstrapper
                     L"    <UX>"
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
-                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
+                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
                     L"</Bundle>";
 
                 // load XML document
@@ -178,7 +178,7 @@ namespace Bootstrapper
                     L"    <UX>"
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
-                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
+                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
                     L"        <Arp DisplayName='Product1' />"
                     L"    </Registration>"
                     L"</Bundle>";
@@ -278,7 +278,7 @@ namespace Bootstrapper
                     L"    <UX UxDllPayloadId='ux.dll'>"
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
-                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
+                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
                     L"        <Arp DisplayName='DisplayName1' DisplayVersion='1.2.3.4' Publisher='Publisher1' HelpLink='http://www.microsoft.com/help'"
                     L"             HelpTelephone='555-555-5555' AboutUrl='http://www.microsoft.com/about' UpdateUrl='http://www.microsoft.com/update'"
                     L"             Comments='Comments1' Contact='Contact1' DisableModify='yes' DisableRepair='yes' DisableRemove='yes' />"
@@ -402,7 +402,7 @@ namespace Bootstrapper
                     L"    <UX>"
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
-                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
+                    L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no' />"
                     L"</Bundle>";
 
                 // load XML document
@@ -440,7 +440,7 @@ namespace Bootstrapper
                 Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_UNEXPECTED, (int)resumeType);
 
                 // suspend session
-                hr = RegistrationSessionSuspend(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE);
+                hr = RegistrationSessionSuspend(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to suspend session.");
 
                 // verify that run key was removed

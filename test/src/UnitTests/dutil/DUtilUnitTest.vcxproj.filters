@@ -24,6 +24,9 @@
     <ClCompile Include="precomp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MemUtilTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="UnitTest.rc">

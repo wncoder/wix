@@ -31,6 +31,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
     /// </summary>
     public sealed class VSCompiler : CompilerExtension
     {
+        internal const int MsidbCustomActionTypeExe              = 0x00000002;  // Target = command line args
+        internal const int MsidbCustomActionTypeProperty         = 0x00000030;  // Source = full path to executable
+        internal const int MsidbCustomActionTypeContinue         = 0x00000040;  // ignore action return status; continue running
+        internal const int MsidbCustomActionTypeRollback         = 0x00000100;  // in conjunction with InScript: queue in Rollback script
+        internal const int MsidbCustomActionTypeInScript         = 0x00000400;  // queue for execution within script
+
         private XmlSchema schema;
 
         /// <summary>
@@ -61,6 +67,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         {
             switch (parentElement.LocalName)
             {
+                case "Component":
+                    switch (element.LocalName)
+                    {
+                        case "VsixPackage":
+                            this.ParseVsixPackageElement(element, contextValues[0], null);
+                            break;
+                        default:
+                            base.ParseElement(sourceLineNumbers, parentElement, element, contextValues);
+                            break;
+                    }
+                    break;
                 case "File":
                     switch (element.LocalName)
                     {
@@ -69,6 +86,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             break;
                         case "HelpFile":
                             this.ParseHelpFileElement(element, contextValues[0]);
+                            break;
+                        case "VsixPackage":
+                            this.ParseVsixPackageElement(element, contextValues[1], contextValues[0]);
                             break;
                         default:
                             base.ParseElement(sourceLineNumbers, parentElement, element, contextValues);
@@ -690,6 +710,228 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     // Reference the parent namespace to enforce the foreign key relationship
                     this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "HelpNamespace",
                         namespaceParent);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parses a VsixPackage element.
+        /// </summary>
+        /// <param name="node">Element to process.</param>
+        /// <param name="componentId">Identifier of the parent Component element.</param>
+        /// <param name="fileId">Identifier of the parent File element.</param>
+        private void ParseVsixPackageElement(XmlNode node, string componentId, string fileId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string propertyId = "VS2010_VSIX_INSTALLER_PATH";
+            string packageId = null;
+            YesNoType permanent = YesNoType.NotSet;
+            string target = null;
+            string targetVersion = null;
+            YesNoType vital = YesNoType.NotSet;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "File":
+                            if (String.IsNullOrEmpty(fileId))
+                            {
+                                fileId = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            }
+                            else
+                            {
+                                this.Core.OnMessage(WixErrors.IllegalAttributeWhenNested(sourceLineNumbers, node.Name, "File", "File"));
+                            }
+                            break;
+                        case "PackageId":
+                            packageId = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Permanent":
+                            permanent = this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Target":
+                            target = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            switch (target.ToLowerInvariant())
+                            {
+                            case "integrated":
+                            case "integratedshell":
+                                target = "IntegratedShell";
+                                break;
+                            case "professional":
+                                target = "Pro";
+                                break;
+                            case "premium":
+                                target = "Premium";
+                                break;
+                            case "ultimate":
+                                target = "Ultimate";
+                                break;
+                            case "vbexpress":
+                                target = "VBExpress";
+                                break;
+                            case "vcexpress":
+                                target = "VCExpress";
+                                break;
+                            case "vcsexpress":
+                                target = "VCSExpress";
+                                break;
+                            case "vwdexpress":
+                                target = "VWDExpress";
+                                break;
+                            }
+                            break;
+                        case "TargetVersion":
+                            targetVersion = this.Core.GetAttributeVersionValue(sourceLineNumbers, attrib, true);
+                            break;
+                        case "Vital":
+                            vital = this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "VsixInstallerPathProperty":
+                            propertyId = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.ParseExtensionAttribute(sourceLineNumbers, (XmlElement)node, attrib);
+                }
+            }
+
+            if (String.IsNullOrEmpty(fileId))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "File"));
+            }
+
+            if (String.IsNullOrEmpty(packageId))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "PackageId"));
+            }
+
+            if (!String.IsNullOrEmpty(target) && String.IsNullOrEmpty(targetVersion))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "TargetVersion", "Target"));
+            }
+            else if (String.IsNullOrEmpty(target) && !String.IsNullOrEmpty(targetVersion))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Target", "TargetVersion"));
+            }
+
+            // find unexpected child elements
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.Core.EncounteredError)
+            {
+                // Ensure there is a reference to the AppSearch Property that will find the VsixInstaller.exe.
+                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", propertyId);
+
+                // Ensure there is a reference to the package file (even if we are a child under it).
+                this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "File", fileId);
+
+                string cmdlinePrefix = "/q [WixVsixAdmin]";
+
+                if (!String.IsNullOrEmpty(target))
+                {
+                    cmdlinePrefix = String.Format("{0} /skuName:{1} /skuVersion:{2}", cmdlinePrefix, target, targetVersion);
+                }
+
+                string installAfter = "SetWixVsixAdmin"; // by default, come after the action that sets the VsixInstaller.exe /admin switch
+                int installExtraBits = VSCompiler.MsidbCustomActionTypeInScript;
+
+                // If the package is not vital, mark the install action as continue.
+                if (vital == YesNoType.No)
+                {
+                    installExtraBits |= VSCompiler.MsidbCustomActionTypeContinue;
+                }
+                else // the package is vital so ensure there is a rollback action scheduled.
+                {
+                    string rollbackName = this.Core.GenerateIdentifier("vpr", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
+                    string rollbackCmdLine = String.Concat(cmdlinePrefix, " /u:", packageId);
+                    int rollbackExtraBits = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeRollback | VSCompiler.MsidbCustomActionTypeInScript;
+                    string rollbackCondition = String.Format("NOT Installed AND ${0}=2 AND ?{0}>2", componentId); // NOT Installed && Component being installed but not installed already.
+
+                    SchedulePropertyExeAction(sourceLineNumbers, rollbackName, propertyId, rollbackCmdLine, rollbackExtraBits, rollbackCondition, null, "SetWixVsixAdmin");
+
+                    installAfter = rollbackName;
+                }
+
+                string installName = this.Core.GenerateIdentifier("vpi", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
+                string installCmdLine = String.Format("{0} \"[#{1}]\"", cmdlinePrefix, fileId);
+                string installCondition = String.Format("${0}=3", componentId); // only execute if the Component being installed.
+
+                SchedulePropertyExeAction(sourceLineNumbers, installName, propertyId, installCmdLine, installExtraBits, installCondition, null, installAfter);
+
+                // If not permanent, schedule the uninstall custom action.
+                if (permanent != YesNoType.Yes)
+                {
+                    string uninstallName = this.Core.GenerateIdentifier("vpu", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
+                    string uninstallCmdLine = String.Concat(cmdlinePrefix, " /u:", packageId);
+                    int uninstallExtraBits = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeInScript;
+                    string uninstallCondition = String.Format("${0}=2 AND ?{0}>2", componentId); // Only execute if component is being uninstalled.
+
+                    SchedulePropertyExeAction(sourceLineNumbers, uninstallName, propertyId, uninstallCmdLine, uninstallExtraBits, uninstallCondition, "InstallFinalize", null);
+                }
+            }
+        }
+
+        private void SchedulePropertyExeAction(SourceLineNumberCollection sourceLineNumbers, string name, string source, string cmdline, int extraBits, string condition, string beforeAction, string afterAction)
+        {
+            const string sequence = "InstallExecuteSequence";
+
+            Row actionRow = this.Core.CreateRow(sourceLineNumbers, "CustomAction");
+            actionRow[0] = name;
+            actionRow[1] = VSCompiler.MsidbCustomActionTypeProperty | VSCompiler.MsidbCustomActionTypeExe | extraBits;
+            actionRow[2] = source;
+            actionRow[3] = cmdline;
+
+            Row sequenceRow = this.Core.CreateRow(sourceLineNumbers, "WixAction");
+            sequenceRow[0] = sequence;
+            sequenceRow[1] = name;
+            sequenceRow[2] = condition;
+            // no explicit sequence
+            sequenceRow[4] = beforeAction;
+            sequenceRow[5] = afterAction;
+            sequenceRow[6] = 0; // not overridable
+
+            if (null != beforeAction)
+            {
+                if (Util.IsStandardAction(beforeAction))
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixAction", sequence, beforeAction);
+                }
+                else
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", beforeAction);
+                }
+            }
+
+            if (null != afterAction)
+            {
+                if (Util.IsStandardAction(afterAction))
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixAction", sequence, afterAction);
+                }
+                else
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", afterAction);
                 }
             }
         }

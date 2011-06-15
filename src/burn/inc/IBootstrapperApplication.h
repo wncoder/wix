@@ -57,7 +57,8 @@ enum BOOTSTRAPPER_RELATED_OPERATION
     BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE,
     BOOTSTRAPPER_RELATED_OPERATION_MINOR_UPDATE,
     BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE,
-    BOOTSTRAPPER_RELATED_OPERATION_REMOVE
+    BOOTSTRAPPER_RELATED_OPERATION_REMOVE,
+    BOOTSTRAPPER_RELATED_OPERATION_REPAIR,
 };
 
 
@@ -109,6 +110,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
 
     STDMETHOD_(int, OnDetectRelatedBundle)(
         __in_z LPCWSTR wzBundleId,
+        __in_z LPCWSTR wzBundleTag,
         __in BOOL fPerMachine,
         __in DWORD64 dw64Version,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
@@ -301,7 +303,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         __in_z LPCWSTR wzMessage
         ) = 0;
 
-    STDMETHOD_(int, OnExecuteMsiFilesInUse)(
+    STDMETHOD_(int, OnExecuteFilesInUse)(
         __in_z LPCWSTR wzPackageId,
         __in DWORD cFiles,
         __in_ecount_z(cFiles) LPCWSTR* rgwzFiles

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-<Bundle Name="Bundle Test v1" Version="0.1.0.0">
+<Bundle Name="Bundle Test v1" Version="0.1.0.0" Tag="v1">
    <UX SourceFile="stdux.dll">
        <Payload SourceFile="en-us.wxl" />
        <Payload SourceFile="thm.xml" />

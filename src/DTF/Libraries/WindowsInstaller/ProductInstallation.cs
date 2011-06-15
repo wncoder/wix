@@ -96,7 +96,7 @@ namespace Microsoft.Deployment.WindowsInstaller
             string productCode, string userSid, UserContexts context)
         {
             StringBuilder buf = new StringBuilder(40);
-            int targetContext;
+            UserContexts targetContext;
             StringBuilder targetSidBuf = new StringBuilder(40);
             for (uint i = 0; ; i++)
             {
@@ -104,7 +104,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiEnumProductsEx(
                     productCode,
                     userSid,
-                    (int) context,
+                    context,
                     i,
                     buf,
                     out targetContext,
@@ -116,7 +116,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                     ret = NativeMethods.MsiEnumProductsEx(
                         productCode,
                         userSid,
-                        (int) context,
+                        context,
                         i,
                         buf,
                         out targetContext,
@@ -137,7 +137,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 yield return new ProductInstallation(
                     buf.ToString(),
                     targetSidBuf.ToString(),
-                    (UserContexts) targetContext);
+                    targetContext);
             }
         }
 
@@ -623,7 +623,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                         ret = NativeMethods.MsiGetProductInfoEx(
                             this.ProductCode,
                             this.UserSid,
-                            (int) this.Context,
+                            this.Context,
                             propertyName,
                             buf,
                             ref bufSize);
@@ -633,7 +633,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                             ret = NativeMethods.MsiGetProductInfoEx(
                                 this.ProductCode,
                                 this.UserSid,
-                                (int) this.Context,
+                                this.Context,
                                 propertyName,
                                 buf,
                                 ref bufSize);
@@ -692,7 +692,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiQueryFeatureStateEx(
                     this.ProductCode,
                     this.UserSid,
-                    (int) this.Context,
+                    this.Context,
                     feature,
                     out installState);
                 if (ret != 0)
@@ -726,7 +726,7 @@ namespace Microsoft.Deployment.WindowsInstaller
                 uint ret = NativeMethods.MsiQueryComponentState(
                     this.ProductCode,
                     this.UserSid,
-                    (int) this.Context,
+                    this.Context,
                     component,
                     out installState);
                 if (ret != 0)

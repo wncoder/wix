@@ -134,7 +134,7 @@ MessageId=201
 Severity=Success
 SymbolicName=MSG_PLANNED_PACKAGE
 Language=English
-Planned package: %1!ls!, state: %2!hs!, default requested: %3!hs!, ux requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, cache: %7!hs!, uncache: %8!hs!
+Planned package: %1!ls!, state: %2!hs!, default requested: %3!hs!, ux requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, cache: %7!hs!, uncache: %8!hs!, dependency: %9!hs!
 .
 
 MessageId=202
@@ -219,4 +219,46 @@ Severity=Success
 SymbolicName=MSG_QUIT
 Language=English
 Shutting down, exit code: 0x%1!x!
+.
+
+MessageId=501
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_BUNDLE_REGISTER
+Language=English
+Registering bundle dependency key: %1!ls!, version %2!ls!
+.
+
+MessageId=502
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
+Language=English
+Removing bundle dependency key: %1!ls!
+.
+
+MessageId=503
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER
+Language=English
+Registering bundle dependency on package: %1!ls!
+.
+
+MessageId=504
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
+Language=English
+Removing bundle dependency on package: %1!ls!
+.
+
+MessageId=505
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE
+Language=English
+Skipping cross-scope bundle dependency registration on package: %1!ls!, bundle scope: %2!hs!, package scope: %3!hs!
+.
+
+MessageId=506
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED
+Language=English
+Skipping bundle dependency registration on failed package: %1!ls!
 .

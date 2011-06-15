@@ -30,7 +30,6 @@
         <HelpSourceFile Include="html\bootstrapper_application_interface.htm" />
         <HelpSourceFile Include="html\building_wix.htm"/>
         <HelpSourceFile Include="html\bundle_author_chain.htm" />
-        <HelpSourceFile Include="html\bundle_author_layoutdirectory.htm" />
         <HelpSourceFile Include="html\bundle_built_in_variables.htm" />
         <HelpSourceFile Include="html\bundle_define_searches.htm" />
         <HelpSourceFile Include="html\candle.htm"/>

@@ -24,8 +24,11 @@
         <Variable Name="NotVersionByPoints" Value="v1.0.1.2.3" />
 -->
 
-        <Chain>
-            <ExePackage SourceFile="ExePkg.exe" Compressed="no" Vital="yes" PerMachine="yes" InstallCommand="-wait 60000 -install" UninstallCommand="-uninstall" />
+        <Chain ParallelCache="yes">
+            <ExePackage SourceFile="ExePkg.exe" Compressed="no" Vital="yes" PerMachine="yes" InstallCommand="-wait 600 -install" UninstallCommand="-uninstall" />
+
+            <RollbackBoundary />
+
             <MsiPackage Id='Package4' Vital='yes' Compressed='no' SourceFile='Package4.msi' Cache='no'
                         InstallCondition='NOT RebootPending'>
                 <!-- MsiProperty Name='TARGETDIR' Value='[InstallFolder]' / -->

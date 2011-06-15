@@ -48,7 +48,7 @@ static HRESULT SplitIgnoredDependents(
 
 static HRESULT CreateDependencyRecord(
     __in int iMessageId,
-    __in_ecount(cDependencies) const PDEPENDENCY rgDependencies,
+    __in_ecount(cDependencies) const DEPENDENCY* rgDependencies,
     __in UINT cDependencies,
     __out MSIHANDLE *phRecord
     );
@@ -114,7 +114,7 @@ static HRESULT ValidateExistentDependencies(
     LPWSTR sczMaxVersion = NULL;
     int iAttributes = 0;
     WCA_TODO tComponentAction = WCA_TODO_UNKNOWN;
-    PDEPENDENCY rgDependencies = NULL;
+    DEPENDENCY* rgDependencies = NULL;
     UINT cDependencies = 0;
     PMSIHANDLE hDependencyRec = NULL;
 
@@ -175,7 +175,7 @@ static HRESULT ValidateExistentDependencies(
         ExitOnFailure(hr, "Failed to get WixDependency.Attributes.");
 
         // Check the registry to see if the required providers (dependencies) exist.
-        hr = CheckDependencies(hkHive, sczProviderKey, sczMinVersion, sczMaxVersion, iAttributes, sdDependencies, &rgDependencies, &cDependencies);
+        hr = DepCheckDependencies(hkHive, sczProviderKey, sczMinVersion, sczMaxVersion, iAttributes, sdDependencies, &rgDependencies, &cDependencies);
         ExitOnFailure1(hr, "Failed dependency check for %ls.", sczId);
     }
 
@@ -264,7 +264,7 @@ static HRESULT ValidateNonexistentDependents(
     LPWSTR sczProviderKey = NULL;
     int iAttributes = 0;
     WCA_TODO tComponentAction = WCA_TODO_UNKNOWN;
-    PDEPENDENCY rgDependents = NULL;
+    DEPENDENCY* rgDependents = NULL;
     UINT cDependents = 0;
     PMSIHANDLE hDependencyRec = NULL;
 
@@ -333,7 +333,7 @@ static HRESULT ValidateNonexistentDependents(
         ExitOnFailure(hr, "Failed to get WixDependencyProvider.Attributes.");
 
         // Check the registry to see if the provider has any dependents registered.
-        hr = CheckDependents(hkHive, sczProviderKey, iAttributes, sdIgnoredDependents, &rgDependents, &cDependents);
+        hr = DepCheckDependents(hkHive, sczProviderKey, iAttributes, sdIgnoredDependents, &rgDependents, &cDependents);
         ExitOnFailure1(hr, "Failed dependents check for %ls.", sczId);
     }
 
@@ -438,7 +438,7 @@ LExit:
 ***************************************************************************/
 static HRESULT CreateDependencyRecord(
     __in int iMessageId,
-    __in_ecount(cDependencies) const PDEPENDENCY rgDependencies,
+    __in_ecount(cDependencies) const DEPENDENCY* rgDependencies,
     __in UINT cDependencies,
     __out MSIHANDLE *phRecord
     )

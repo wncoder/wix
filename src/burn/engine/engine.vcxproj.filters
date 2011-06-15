@@ -78,6 +78,9 @@
     <ClCompile Include="variant.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="dependency.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="downloadengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,6 +106,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="catalog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetFxChainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -171,6 +177,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="plan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dependency.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="downloadengine.h">

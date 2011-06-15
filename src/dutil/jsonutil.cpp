@@ -576,8 +576,9 @@ static HRESULT EnsureTokenStack(
     )
 {
     HRESULT hr = S_OK;
+    DWORD cNumAlloc = pWriter->cTokens != 0 ? pWriter->cTokens : 0;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pWriter->rgTokenStack), pWriter->cTokens, sizeof(JSON_TOKEN), JSON_STACK_INCREMENT);
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pWriter->rgTokenStack), cNumAlloc, sizeof(JSON_TOKEN), JSON_STACK_INCREMENT);
     ExitOnFailure(hr, "Failed to allocate JSON token stack.");
 
     if (0 == pWriter->cTokens)

@@ -2008,6 +2008,10 @@ extern "C" UINT __stdcall WriteIIS7ConfigChanges(MSIHANDLE hInstall)
     UINT er = ERROR_SUCCESS;
     LPWSTR pwzData = NULL;
     LPWSTR pwzScriptKey = NULL;
+    LPWSTR pwzHashString = NULL;
+    BYTE rgbActualHash[SHA1_HASH_LEN] = { };
+    DWORD dwHashedBytes = SHA1_HASH_LEN;
+
     WCA_CASCRIPT_HANDLE hWriteIis7Script = NULL;
 
     hr = WcaInitialize(hInstall, "WriteIIS7ConfigChanges");
@@ -2023,7 +2027,18 @@ extern "C" UINT __stdcall WriteIIS7ConfigChanges(MSIHANDLE hInstall)
     hr = WcaCaScriptReadAsCustomActionData(hWriteIis7Script, &pwzData);
     ExitOnFailure(hr, "Failed to read script into CustomAction data.");
 
+    hr = CrypHashBuffer((BYTE*)pwzData, sizeof(pwzData) * sizeof(WCHAR), PROV_RSA_AES, CALG_SHA1, rgbActualHash, dwHashedBytes);
+    ExitOnFailure(hr, "Failed to calculate hash of CustomAction data.");
+
+    hr = StrAlloc(&pwzHashString, ((dwHashedBytes * 2) + 1));
+    ExitOnFailure(hr, "Failed to allocate string for script hash");
+
+    hr = StrHexEncode(rgbActualHash, dwHashedBytes, pwzHashString, ((dwHashedBytes * 2) + 1));
+    ExitOnFailure(hr, "Failed to convert hash bytes to string.");
+
     WcaLog(LOGMSG_TRACEONLY, "CustomActionData WriteIIS7ConfigChanges: %ls", pwzData);
+    WcaLog(LOGMSG_VERBOSE,  "Custom action data hash: %ls", pwzHashString);
+    WcaLog(LOGMSG_VERBOSE, "CustomActionData WriteIIS7ConfigChanges length: %d", wcslen(pwzData));
 
     hr = IIS7ConfigChanges(hInstall, pwzData);
     ExitOnFailure(hr, "WriteIIS7ConfigChanges Failed.");
@@ -2032,6 +2047,7 @@ LExit:
     WcaCaScriptClose(hWriteIis7Script, WCA_CASCRIPT_CLOSE_DELETE);
     ReleaseStr(pwzScriptKey);
     ReleaseStr(pwzData);
+    ReleaseStr(pwzHashString);
 
     if (FAILED(hr))
     {

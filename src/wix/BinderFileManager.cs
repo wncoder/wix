@@ -676,7 +676,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if (0 != (PatchAttributeType.IncludeWholeFile | fileRow.PatchAttributes))
                 {
-                    string deltaBase = String.Concat(fileRow.PatchGroup.ToString(CultureInfo.InvariantCulture), fileRow.File);
+                    string deltaBase = Common.GenerateIdentifier("dlt", true, Common.GenerateGuid());
                     string deltaFile = Path.Combine(this.tempFilesLocation, String.Concat(deltaBase, ".dpf"));
                     string headerFile = Path.Combine(this.tempFilesLocation, String.Concat(deltaBase, ".phd"));
                     PatchAPI.PatchInterop.PatchSymbolFlagsType apiPatchingSymbolFlags = 0;

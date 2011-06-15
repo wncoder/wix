@@ -33,6 +33,12 @@ namespace Microsoft.Deployment.WindowsInstaller
     internal static class EmbeddedUIProxy
     {
         private static IEmbeddedUI uiInstance;
+        private static string uiClass;
+
+        private static bool DebugBreakEnabled(string method)
+        {
+            return CustomActionProxy.DebugBreakEnabled(new string[] { method, EmbeddedUIProxy.uiClass + "." + method } );
+        }
 
         /// <summary>
         /// Initializes managed embedded UI by loading the UI class and invoking its Initialize method.
@@ -90,6 +96,11 @@ namespace Microsoft.Deployment.WindowsInstaller
             {
                 string resourcePath = Path.GetDirectoryName(EmbeddedUIProxy.uiInstance.GetType().Assembly.Location);
                 InstallUIOptions uiOptions = (InstallUIOptions) internalUILevel;
+                if (EmbeddedUIProxy.DebugBreakEnabled("Initialize"))
+                {
+                    System.Diagnostics.Debugger.Launch();
+                }
+
                 if (EmbeddedUIProxy.uiInstance.Initialize(session, resourcePath, ref uiOptions))
                 {
                     // The embedded UI initialized and the installation should continue
@@ -139,6 +150,11 @@ namespace Microsoft.Deployment.WindowsInstaller
                     Record msgRec = (recordHandle != 0 ? Record.FromHandle((IntPtr) recordHandle, false) : null);
                     using (msgRec)
                     {
+                        if (EmbeddedUIProxy.DebugBreakEnabled("ProcessMessage"))
+                        {
+                            System.Diagnostics.Debugger.Launch();
+                        }
+
                         return (int) EmbeddedUIProxy.uiInstance.ProcessMessage(
                             (InstallMessage) msgType,
                             msgRec,
@@ -167,6 +183,11 @@ namespace Microsoft.Deployment.WindowsInstaller
             {
                 try
                 {
+                    if (EmbeddedUIProxy.DebugBreakEnabled("Shutdown"))
+                    {
+                        System.Diagnostics.Debugger.Launch();
+                    }
+
                     EmbeddedUIProxy.uiInstance.Shutdown();
                 }
                 catch (Exception)
@@ -197,17 +218,26 @@ namespace Microsoft.Deployment.WindowsInstaller
             }
 
             string assemblyName = uiClass.Substring(0, assemblySplit);
-            string className = uiClass.Substring(assemblySplit + 1);
+            EmbeddedUIProxy.uiClass = uiClass.Substring(assemblySplit + 1);
 
             Assembly uiAssembly;
             try
             {
                 uiAssembly = AppDomain.CurrentDomain.Load(assemblyName);
-                return (IEmbeddedUI) uiAssembly.CreateInstance(className);
+
+                // This calls out to CustomActionProxy.DebugBreakEnabled() directly instead
+                // of calling EmbeddedUIProxy.DebugBreakEnabled() because we don't compose a
+                // class.method name for this breakpoint.
+                if (CustomActionProxy.DebugBreakEnabled(new string[] { "EmbeddedUI" }))
+                {
+                    System.Diagnostics.Debugger.Launch();
+                }
+
+                return (IEmbeddedUI) uiAssembly.CreateInstance(EmbeddedUIProxy.uiClass);
             }
             catch (Exception ex)
             {
-                session.Log("Error: could not load embedded UI class " + className + " from assembly: " + assemblyName);
+                session.Log("Error: could not load embedded UI class " + EmbeddedUIProxy.uiClass + " from assembly: " + assemblyName);
                 session.Log(ex.ToString());
                 return null;
             }

@@ -21,6 +21,10 @@
 extern "C" {
 #endif
 
+#include <sqlce_oledb.h>
+#include <sqlce_sync.h>
+#include <sqlce_err.h>
+
 typedef void* SCE_DATABASE_HANDLE;
 typedef void* SCE_ROW_HANDLE;
 typedef void* SCE_QUERY_HANDLE;

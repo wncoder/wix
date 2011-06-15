@@ -212,10 +212,12 @@ LExit:
 //
 extern "C" HRESULT ExeEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in BURN_REGISTRATION* pRegistration,
     __in_opt HANDLE hCacheEvent,
     __in BOOL fPlanPackageCacheRollback,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
@@ -328,12 +330,21 @@ extern "C" HRESULT ExeEnginePlanPackage(
     // add execute action
     if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
+        if (NULL != pdwInsertSequence)
+        {
+            hr = PlanInsertExecuteAction(*pdwInsertSequence, pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to insert execute action.");
+        }
+        else
+        {
+            hr = PlanAppendExecuteAction(pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to append execute action.");
+        }
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE;
         pAction->exePackage.pPackage = pPackage;
         pAction->exePackage.action = execute;
+        pAction->exePackage.sczBundleName = pRegistration->sczDisplayName;
 
         LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, NULL); // ignore errors.
     }
@@ -347,15 +358,9 @@ extern "C" HRESULT ExeEnginePlanPackage(
         pAction->type = BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE;
         pAction->exePackage.pPackage = pPackage;
         pAction->exePackage.action = rollback;
+        pAction->exePackage.sczBundleName = pRegistration->sczDisplayName;
 
         LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, NULL); // ignore errors.
-    }
-
-    // add checkpoints
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute || BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
-    {
-        hr = PlanExecuteCheckpoint(pPlan);
-        ExitOnFailure(hr, "Failed to append execute checkpoint.");
     }
 
     // return values
@@ -371,7 +376,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -386,6 +391,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
     DWORD dwExitCode = 0;
+    GENERIC_EXECUTE_MESSAGE message = { };
 
     // get cached executable path
     hr = CacheGetCompletedPath(pExecuteAction->exePackage.pPackage->fPerMachine, pExecuteAction->exePackage.pPackage->sczCacheId, &sczCachedDirectory);
@@ -439,6 +445,11 @@ extern "C" HRESULT ExeEngineExecutePackage(
         hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
         ExitOnFailure1(hr, "Failed to wait for embedded executable to complete: %ls", sczExecutablePath);
     }
+    else if (BURN_EXE_PROTOCOL_TYPE_NETFX4 == pExecuteAction->exePackage.pPackage->Exe.protocol)
+    {
+        hr = RunNetFxChainer(sczExecutablePath, sczCommand, pExecuteAction->exePackage.sczBundleName, pfnGenericMessageHandler, pvContext, &dwExitCode);
+        ExitOnFailure1(hr, "Failed to run netfx chainer: %ls", sczExecutablePath);
+    }
     else // create and wait for the executable process while sending fake progress to allow cancel.
     {
         si.cb = sizeof(si); // TODO: hookup the stdin/stdout/stderr pipes for logging purposes?
@@ -449,7 +460,9 @@ extern "C" HRESULT ExeEngineExecutePackage(
 
         do
         {
-            nResult = pfnGenericExecuteProgress(pvContext, 1, 2);
+            message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+            message.progress.dwPercentage = 50;
+            nResult = pfnGenericMessageHandler(&message, pvContext);
             hr = HRESULT_FROM_VIEW(nResult);
             ExitOnRootFailure(hr, "Bootstrapper application aborted during EXE progress.");
 
@@ -462,7 +475,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
 
     hr = HandleExitCode(pExecuteAction->exePackage.pPackage, dwExitCode, pRestart);
-    ExitOnRootFailure1(hr, "Process returned error: %u", dwExitCode);
+    ExitOnRootFailure1(hr, "Process returned error: 0x%x", dwExitCode);
 
 LExit:
     ReleaseStr(sczArgumentsFormatted);

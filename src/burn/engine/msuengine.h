@@ -39,6 +39,7 @@ HRESULT MsuEngineDetectPackage(
     );
 HRESULT MsuEnginePlanPackage(
     __in DWORD dwPackageSequence,
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
@@ -50,7 +51,7 @@ HRESULT MsuEnginePlanPackage(
     );
 HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
-    __in PFN_GENERICEXECUTEPROGRESS pfnGenericExecuteProgress,
+    __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );

@@ -512,7 +512,6 @@ static HRESULT VerifyPayloadWithCatalog(
     )
 {
     HRESULT hr = S_FALSE;
-    DWORD dwError = ERROR_SUCCESS;
     WINTRUST_DATA WinTrustData = { };
     WINTRUST_CATALOG_INFO WinTrustCatalogInfo = { };
     GUID gSubSystemDriver = WINTRUST_ACTION_GENERIC_VERIFY_V2;

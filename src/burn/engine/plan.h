@@ -55,7 +55,15 @@ enum BURN_EXECUTE_ACTION_TYPE
     BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP,
     BURN_EXECUTE_ACTION_TYPE_SERVICE_START,
+    BURN_EXECUTE_ACTION_TYPE_DEPENDENCY,
     BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY,
+};
+
+enum BURN_DEPENDENCY_ACTION
+{
+    BURN_DEPENDENCY_ACTION_NONE,
+    BURN_DEPENDENCY_ACTION_REGISTER,
+    BURN_DEPENDENCY_ACTION_UNREGISTER,
 };
 
 enum BURN_CLEAN_ACTION_TYPE
@@ -175,6 +183,7 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             BURN_PACKAGE* pPackage;
             BOOTSTRAPPER_ACTION_STATE action;
+            LPWSTR sczBundleName;
         } exePackage;
         struct
         {
@@ -214,6 +223,12 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
         } rollbackBoundary;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
+            LPWSTR sczBundleProviderKey;
+            BURN_DEPENDENCY_ACTION action;
+        } dependency;
     };
 } BURN_EXECUTE_ACTION;
 
@@ -282,6 +297,10 @@ HRESULT PlanCachePackage(
     __in BURN_PACKAGE* pPackage,
     __out HANDLE* phSyncpointEvent
     );
+HRESULT PlanCacheSlipstreamMsps(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGE* pPackage
+    );
 HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
@@ -294,6 +313,11 @@ HRESULT PlanExecuteCacheSyncAndRollback(
     );
 HRESULT PlanExecuteCheckpoint(
     __in BURN_PLAN* pPlan
+    );
+HRESULT PlanInsertExecuteAction(
+    __in DWORD dwIndex,
+    __in BURN_PLAN* pPlan,
+    __out BURN_EXECUTE_ACTION** ppExecuteAction
     );
 HRESULT PlanAppendExecuteAction(
     __in BURN_PLAN* pPlan,

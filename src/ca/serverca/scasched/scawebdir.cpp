@@ -90,6 +90,12 @@ UINT __stdcall ScaWebDirsRead(
         ExitOnFailure(hr, "Failed to get Web for WebDir");
 
         hr = ScaWebsGetBase(piMetabase, pswList, pwzData, pswd->wzWebBase, countof(pswd->wzWebBase), hWebBaseQuery);
+        if (WcaIsUninstalling(pswd->isInstalled, pswd->isAction))
+        {
+            // If we're uninstalling, ignore any failure to find the existing web
+            hr = S_OK;
+        }
+
         ExitOnFailure(hr, "Failed to get base of web for WebDir");
 
         hr = WcaGetRecordString(hRec, wdqPath, &pwzData);

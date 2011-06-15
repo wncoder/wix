@@ -38,7 +38,7 @@ extern "C" UINT __stdcall WixQueryOsInfo(
 {
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
-    OSVERSIONINFOEX ovix = {0};
+    OSVERSIONINFOEXW ovix = {0};
 
     hr = WcaInitialize(hInstall, "WixQueryOsInfo");
     ExitOnFailure(hr, "WixQueryOsInfo failed to initialize");

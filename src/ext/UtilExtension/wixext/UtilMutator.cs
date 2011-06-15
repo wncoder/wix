@@ -270,6 +270,24 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         componentGroup.AddChild(c);
                         c.Directory = parentDirectory.Id;
                         parentDirectory.RemoveChild(c);
+
+                        // Remove whole fragment if moving the component to the component group just leaves an empty DirectoryRef
+                        if (parentDirectory.ParentElement is Wix.Fragment)
+                        {
+                            Wix.Fragment parentFragment = parentDirectory.ParentElement as Wix.Fragment;
+                            int childCount = 0;
+                            foreach (Wix.ISchemaElement element in parentFragment.Children)
+                            {
+                                childCount++;
+                            }
+
+                            // Component should always have an Id but the SortedList creation allows for null and bases the name on the fragment count which we cannot reverse engineer here.
+                            if (1 == childCount && !String.IsNullOrEmpty(c.Id))
+                            {
+                                int removeIndex = fragments.IndexOfKey(String.Concat("Component:", c.Id));
+                                fragments.RemoveAt(removeIndex);
+                            }
+                        }
                     }
                 }
                 else
@@ -332,8 +350,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// </summary>
         private void MutateComponents()
         {
-            Dictionary<string, Wix.DirectoryRef> processedDirectories = new Dictionary<string, Wix.DirectoryRef>(this.directories.Count);
-            
             IdentifierGenerator identifierGenerator = new IdentifierGenerator("Component");
             if (TemplateType.Module == this.templateType)
             {
@@ -357,7 +373,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     {
                         firstFileId = GetGuid();
                     }
-                    
+
                     component.Id = identifierGenerator.GetIdentifier(firstFileId);
                 }
 
@@ -391,22 +407,18 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         this.rootElement.AddChild(componentRef);
                     }
 
-                    if (!processedDirectories.ContainsKey(directory.Id))
-                    {
-                        // create a new Fragment
-                        Wix.Fragment fragment = new Wix.Fragment();
-                        this.fragments.Add(String.Concat("Component:", (null != component.Id ? component.Id : this.fragments.Count.ToString())), fragment);
+                    // create a new Fragment
+                    Wix.Fragment fragment = new Wix.Fragment();
+                    this.fragments.Add(String.Concat("Component:", (null != component.Id ? component.Id : this.fragments.Count.ToString())), fragment);
 
-                        // create a new DirectoryRef
-                        Wix.DirectoryRef directoryRef = new Wix.DirectoryRef();
-                        directoryRef.Id = directory.Id;
-                        fragment.AddChild(directoryRef);
-                        processedDirectories.Add(directory.Id, directoryRef);
-                    }
+                    // create a new DirectoryRef
+                    Wix.DirectoryRef directoryRef = new Wix.DirectoryRef();
+                    directoryRef.Id = directory.Id;
+                    fragment.AddChild(directoryRef);
 
                     // move the Component from the the Directory to the DirectoryRef
                     directory.RemoveChild(component);
-                    processedDirectories[directory.Id].AddChild(component);
+                    directoryRef.AddChild(component);
                 }
             }
         }

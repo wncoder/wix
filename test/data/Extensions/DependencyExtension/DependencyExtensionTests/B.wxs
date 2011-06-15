@@ -41,8 +41,8 @@
         <DirectoryRef Id="INSTALLDIR">
             <Component Id="Main" Guid="F97196C5-C144-4BB0-A8A5-C00835828929">
                 <File Source="$(sys.SOURCEFILEPATH)"/>
-                <!-- Use default provider ID with an authored UpgradeCode -->
-                <dep:Provides VersionGuarantee="Minor">
+                <!-- Use default provider ID -->
+                <dep:Provides>
                     <dep:Requires ProviderKey="Microsoft.WiX.$(var.TestName).A,v1.0" Minimum="1.0.0.0" IncludeMinimum="yes"/>
                 </dep:Provides>
             </Component>

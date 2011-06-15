@@ -104,6 +104,7 @@ public: // IBurnUserExperience
 
     virtual STDMETHODIMP_(int) OnDetectRelatedBundle(
         __in_z LPCWSTR /*wzBundleId*/,
+        __in_z LPCWSTR /*wzBundleTag*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
         __in BOOTSTRAPPER_RELATED_OPERATION operation
@@ -414,7 +415,7 @@ public: // IBurnUserExperience
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual STDMETHODIMP_(int) OnExecuteMsiFilesInUse(
+    virtual STDMETHODIMP_(int) OnExecuteFilesInUse(
         __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*cFiles*/,
         __in_ecount_z(cFiles) LPCWSTR* /*rgwzFiles*/

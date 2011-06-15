@@ -35,6 +35,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
     /// </summary>
     public sealed class Pyro
     {
+        private bool setAssemblyFileVersions;
         private Microsoft.Tools.WindowsInstallerXml.Binder binder;
         private string cabCachePath;
         private bool delta;
@@ -71,6 +72,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
             this.showLogo = true;
             this.tidy = true;
             this.delta = false;
+            this.setAssemblyFileVersions = false;
             this.inputTransforms = new Dictionary<string, string>();
             this.inputTransformsOrdered = new List<string>();
 
@@ -165,6 +167,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 binder.Message += new MessageEventHandler(this.messageHandler.Display);
                 binder.SuppressAssemblies = this.suppressAssemblies;
                 binder.SuppressFileHashAndInfo = this.suppressFileHashAndInfo;
+                binder.SetMsiAssemblyNameFileVersion = this.setAssemblyFileVersions;
 
                 // Load the extensions
                 bool binderFileManagerLoaded = false;
@@ -340,6 +343,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         }
 
                         this.extensions.Add(args[i]);
+                    }
+                    else if ("fv" == parameter)
+                    {
+                        this.setAssemblyFileVersions = true;
                     }
                     else if ("nologo" == parameter)
                     {
@@ -575,5 +582,5 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 this.binder.FileManager.UpdatedSourcePaths.Add(bindPath);
             }
         }
-    }    
+    }
 }

@@ -60,6 +60,8 @@
 #include <svcutil.h>
 #include <wiutil.h>
 #include <xmlutil.h>
+#include <dictutil.h>
+#include <deputil.h>
 
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
@@ -76,8 +78,8 @@
 #include "userexperience.h"
 #include "package.h"
 #include "registration.h"
-#include "logging.h"
 #include "plan.h"
+#include "logging.h"
 #include "core.h"
 #include "cache.h"
 #include "downloadengine.h"
@@ -86,12 +88,14 @@
 #include "msiengine.h"
 #include "mspengine.h"
 #include "msuengine.h"
+#include "dependency.h"
 #include "elevation.h"
 #include "embedded.h"
 #include "manifest.h"
 #include "pipe.h"
 #include "splashscreen.h"
 #include "bitsengine.h"
+#include "netfxchainer.h"
 
 #include "EngineForApplication.h"
 #include "engine.messages.h"

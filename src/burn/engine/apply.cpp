@@ -43,6 +43,7 @@ typedef struct _BURN_EXECUTE_CONTEXT
     DWORD cExecutedPackages;
     DWORD cExecutePackagesTotal;
     DWORD* pcOverallProgressTicks;
+    BOOL fLastPackageSucceeded;
 } BURN_EXECUTE_CONTEXT;
 
 
@@ -166,14 +167,18 @@ static HRESULT ExecuteMsuPackage(
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
+static HRESULT ExecuteDependencyAction(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pAction,
+    __in BURN_EXECUTE_CONTEXT* pContext
+    );
 static HRESULT CleanPackage(
     __in HANDLE hElevatedPipe,
     __in BURN_PACKAGE* pPackage
     );
-static int GenericExecuteProgress(
-    __in LPVOID pvContext,
-    __in DWORD dwProgress,
-    __in DWORD dwTotal
+static int GenericExecuteMessageHandler(
+    __in GENERIC_EXECUTE_MESSAGE* pMessage,
+    __in LPVOID pvContext
     );
 static int MsiExecuteMessageHandler(
     __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
@@ -201,12 +206,14 @@ extern "C" HRESULT ApplyElevate(
     __in BURN_ENGINE_STATE* pEngineState,
     __in HWND hwndParent,
     __out HANDLE* phElevatedProcess,
-    __out HANDLE* phElevatedPipe
+    __out HANDLE* phElevatedPipe,
+    __out HANDLE* phElevatedCachePipe
     )
 {
     HRESULT hr = S_OK;
     int nResult = IDOK;
     HANDLE hPipe = INVALID_HANDLE_VALUE;
+    HANDLE hCachePipe = INVALID_HANDLE_VALUE;
     LPWSTR sczPipeName = NULL;
     LPWSTR sczPipeToken = NULL;
     HANDLE hProcess = NULL;
@@ -215,8 +222,8 @@ extern "C" HRESULT ApplyElevate(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
 
-    hr = PipeCreatePipeNameAndToken(&hPipe, &sczPipeName, &sczPipeToken);
-    ExitOnFailure(hr, "Failed to create pipe and client token.");
+    hr = PipeCreatePipeNameAndToken(&hPipe, &hCachePipe, &sczPipeName, &sczPipeToken);
+    ExitOnFailure(hr, "Failed to create pipe, cache pipe and client token.");
 
     do
     {
@@ -239,6 +246,9 @@ extern "C" HRESULT ApplyElevate(
         {
             hr = PipeWaitForChildConnect(hPipe, sczPipeToken, hProcess);
             ExitOnFailure(hr, "Failed to connect to embedded elevated child process.");
+
+            hr = PipeWaitForChildConnect(hCachePipe, sczPipeToken, hProcess);
+            ExitOnFailure(hr, "Failed to connect to elevated child process cache pipe.");
         }
         else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr) // the user clicked "Cancel" on the elevation prompt, provide the notification with the option to retry.
         {
@@ -247,6 +257,8 @@ extern "C" HRESULT ApplyElevate(
     } while (IDRETRY == nResult);
     ExitOnFailure(hr, "Failed to elevate.");
 
+    *phElevatedCachePipe = hCachePipe;
+    hCachePipe = INVALID_HANDLE_VALUE;
     *phElevatedPipe = hPipe;
     hPipe = INVALID_HANDLE_VALUE;
     *phElevatedProcess = hProcess;
@@ -257,6 +269,7 @@ LExit:
     ReleaseStr(sczPipeToken);
     ReleaseStr(sczPipeName);
     ReleaseFileHandle(hPipe);
+    ReleaseFileHandle(hCachePipe);
 
     return hr;
 }
@@ -300,8 +313,11 @@ extern "C" HRESULT ApplyRegister(
     hr = CoreSaveEngineState(pEngineState);
     ExitOnFailure(hr, "Failed to save engine state.");
 
-    hr = ElevationDetectRelatedBundles(pEngineState->hElevatedPipe);
-    ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
+    if (pEngineState->registration.fPerMachine)
+    {
+        hr = ElevationDetectRelatedBundles(pEngineState->hElevatedPipe);
+        ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
+    }
 
 LExit:
     pEngineState->userExperience.pUserExperience->OnRegisterComplete(hr);
@@ -329,7 +345,7 @@ extern "C" HRESULT ApplyUnregister(
             ExitOnFailure(hr, "Failed to suspend session in per-machine process.");
         }
 
-        hr = RegistrationSessionSuspend(&pEngineState->registration, pEngineState->plan.action, fRestartInitiated, FALSE);
+        hr = RegistrationSessionSuspend(&pEngineState->registration, pEngineState->plan.action, fRestartInitiated, FALSE, &pEngineState->resumeMode);
         ExitOnFailure(hr, "Failed to suspend session in per-user process.");
     }
     else
@@ -489,6 +505,7 @@ extern "C" HRESULT ApplyExecute(
     context.pUX = &pEngineState->userExperience;
     context.cExecutePackagesTotal = pEngineState->plan.cExecutePackagesTotal;
     context.pcOverallProgressTicks = pcOverallProgressTicks;
+    context.fLastPackageSucceeded = TRUE;
 
     // Send execute begin to BA.
     nResult = pEngineState->userExperience.pUserExperience->OnExecuteBegin(pEngineState->plan.cExecutePackagesTotal);
@@ -886,6 +903,7 @@ static HRESULT CopyPayload(
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwFileAttributes = 0;
     LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
 
@@ -894,6 +912,20 @@ static HRESULT CopyPayload(
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_COPY, wzSourcePath);
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "BA aborted cache acquire begin.");
+
+    // Check if the file we're about to copy already exists - if it does,
+    // clear the readonly bit before copying to avoid E_ACCESSDENIED on copy
+    if (FileExistsEx(wzDestinationPath, &dwFileAttributes))
+    {
+        if (FILE_ATTRIBUTE_READONLY & dwFileAttributes)
+        {
+            dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
+            if (!::SetFileAttributes(wzDestinationPath, dwFileAttributes))
+            {
+                ExitWithLastError1(hr, "Failed to clear readonly bit on destination payload file: %ls", wzDestinationPath);
+            }
+        }
+    }
 
     if (!::CopyFileExW(wzSourcePath, wzDestinationPath, CacheProgressRoutine, pProgress, &pProgress->fCancel, COPY_FILE_RESTARTABLE))
     {
@@ -904,7 +936,7 @@ static HRESULT CopyPayload(
         }
         else
         {
-            ExitWithLastError(hr, "Failed to copy payload with progress.");
+            ExitWithLastError1(hr, "Failed to copy payload with progress to: %ls.", wzDestinationPath);
         }
     }
 
@@ -1136,12 +1168,17 @@ static HRESULT DoExecuteAction(
             ExitOnFailure(hr, "Failed to execute MSU package.");
             break;
 
+        case BURN_EXECUTE_ACTION_TYPE_DEPENDENCY:
+            hr = ExecuteDependencyAction(pEngineState, pExecuteAction, pContext);
+            ExitOnFailure(hr, "Failed to execute dependency action.");
+            break;
+
         case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
             *ppRollbackBoundary = pExecuteAction->rollbackBoundary.pRollbackBoundary;
             break;
 
-        case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
-        case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
+        case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP: __fallthrough;
+        case BURN_EXECUTE_ACTION_TYPE_SERVICE_START: __fallthrough;
         default:
             hr = E_UNEXPECTED;
             ExitOnFailure(hr, "Invalid execute action.");
@@ -1221,6 +1258,12 @@ static HRESULT DoRollbackActions(
                 ExitOnFailure(hr, "Failed to rollback MSU package.");
                 break;
 
+            case BURN_EXECUTE_ACTION_TYPE_DEPENDENCY:
+                hr = ExecuteDependencyAction(pEngineState, pRollbackAction, pContext);
+                TraceError(hr, "Failed to rollback dependency action.");
+                hr = S_OK;
+                break;
+
             case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
                 ExitFunction1(hr = S_OK);
 
@@ -1228,8 +1271,8 @@ static HRESULT DoRollbackActions(
                 hr = CleanPackage(pEngineState->hElevatedPipe, pRollbackAction->uncachePackage.pPackage);
                 break;
 
-            case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP:
-            case BURN_EXECUTE_ACTION_TYPE_SERVICE_START:
+            case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP: __fallthrough;
+            case BURN_EXECUTE_ACTION_TYPE_SERVICE_START: __fallthrough;
             default:
                 hr = E_UNEXPECTED;
                 ExitOnFailure1(hr, "Invalid rollback action: %d.", pRollbackAction->type);
@@ -1258,6 +1301,7 @@ static HRESULT ExecuteExePackage(
 {
     HRESULT hr = S_OK;
     HRESULT hrExecute = S_OK;
+    GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
 
     pContext->pExecutingPackage = pExecuteAction->exePackage.pPackage;
@@ -1267,7 +1311,9 @@ static HRESULT ExecuteExePackage(
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute EXE package begin.");
 
-    nResult = GenericExecuteProgress(pContext, fRollback ? 2 : 0, 2);
+    message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.progress.dwPercentage = fRollback ? 100 : 0;
+    nResult = GenericExecuteMessageHandler(&message, pContext);
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
@@ -1275,16 +1321,20 @@ static HRESULT ExecuteExePackage(
     // elevation and Burn based packages have their own way to ask for elevation.
     if (pExecuteAction->exePackage.pPackage->fPerMachine && BURN_EXE_PROTOCOL_TYPE_BURN != pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        hrExecute = ElevationExecuteExePackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteProgress, pContext, pRestart);
+        hrExecute = ElevationExecuteExePackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine EXE package.");
     }
     else
     {
-        hrExecute = ExeEngineExecutePackage(&pEngineState->userExperience, pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteProgress, pContext, pRestart);
+        hrExecute = ExeEngineExecutePackage(&pEngineState->userExperience, pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user EXE package.");
     }
 
-    nResult = GenericExecuteProgress(pContext, fRollback ? 0 : 2, 2);
+    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
+    
+    message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.progress.dwPercentage = fRollback ? 0 : 100;
+    nResult = GenericExecuteMessageHandler(&message, pContext);
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
@@ -1332,6 +1382,7 @@ static HRESULT ExecuteMsiPackage(
         ExitOnFailure(hrExecute, "Failed to configure per-user MSI package.");
     }
 
+    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
@@ -1376,6 +1427,7 @@ static HRESULT ExecuteMspPackage(
         ExitOnFailure(hrExecute, "Failed to configure per-user MSP package.");
     }
 
+    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
@@ -1399,6 +1451,7 @@ static HRESULT ExecuteMsuPackage(
 {
     HRESULT hr = S_OK;
     HRESULT hrExecute = S_OK;
+    GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
 
     pContext->pExecutingPackage = pExecuteAction->msuPackage.pPackage;
@@ -1408,14 +1461,16 @@ static HRESULT ExecuteMsuPackage(
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute MSU package begin.");
 
-    nResult = GenericExecuteProgress(pContext, fRollback ? 2 : 0, 2);
+    message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.progress.dwPercentage = fRollback ? 100 : 0;
+    nResult = GenericExecuteMessageHandler(&message, pContext);
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
     // execute package
     if (pExecuteAction->msuPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsuPackage(pEngineState->hElevatedPipe, pExecuteAction, GenericExecuteProgress, pContext, pRestart);
+        hrExecute = ElevationExecuteMsuPackage(pEngineState->hElevatedPipe, pExecuteAction, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSU package.");
     }
     else
@@ -1424,7 +1479,11 @@ static HRESULT ExecuteMsuPackage(
         ExitOnFailure(hr, "MSU packages cannot be per-user.");
     }
 
-    nResult = GenericExecuteProgress(pContext, fRollback ? 0 : 2, 2);
+    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
+
+    message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.progress.dwPercentage = fRollback ? 0 : 100;
+    nResult = GenericExecuteMessageHandler(&message, pContext);
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
@@ -1436,6 +1495,38 @@ static HRESULT ExecuteMsuPackage(
 
 LExit:
     hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
+    return hr;
+}
+
+static HRESULT ExecuteDependencyAction(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in BURN_EXECUTE_ACTION* pAction,
+    __in BURN_EXECUTE_CONTEXT* pContext
+    )
+{
+    HRESULT hr = S_OK;
+
+    // Execute the dependency action if the last package was successful.
+    if (pContext->fLastPackageSucceeded)
+    {
+        if (pAction->dependency.pPackage->fPerMachine)
+        {
+            hr = ElevationExecuteDependencyAction(pEngineState->hElevatedPipe, pAction);
+            ExitOnFailure(hr, "Failed to register the dependency on per-machine package.");
+        }
+        else
+        {
+            hr = DependencyExecuteAction(pAction, pEngineState->registration.fPerMachine);
+            ExitOnFailure(hr, "Failed to register the dependency on per-user package.");
+        }
+    }
+    else
+    {
+        LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED, pContext->pExecutingPackage->sczId);
+        hr = S_FALSE;
+    }
+
+LExit:
     return hr;
 }
 
@@ -1458,16 +1549,26 @@ static HRESULT CleanPackage(
     return hr;
 }
 
-static int GenericExecuteProgress(
-    __in LPVOID pvContext,
-    __in DWORD dwProgress,
-    __in DWORD dwTotal
+static int GenericExecuteMessageHandler(
+    __in GENERIC_EXECUTE_MESSAGE* pMessage,
+    __in LPVOID pvContext
     )
 {
     BURN_EXECUTE_CONTEXT* pContext = (BURN_EXECUTE_CONTEXT*)pvContext;
-    DWORD dwProgressPercentage = (dwProgress * 100) / dwTotal;
-    DWORD dwOverallProgress = ((pContext->cExecutedPackages * 100 + dwProgressPercentage) * 100) / (pContext->cExecutePackagesTotal * 100);
-    return pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, dwProgressPercentage, dwOverallProgress);
+
+    switch (pMessage->type)
+    {
+    case GENERIC_EXECUTE_MESSAGE_PROGRESS:
+        {
+            DWORD dwOverallProgress = ((pContext->cExecutedPackages * 100 + pMessage->progress.dwPercentage) * 100) / (pContext->cExecutePackagesTotal * 100);
+            return pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
+        }
+    case GENERIC_EXECUTE_MESSAGE_FILES_IN_USE:
+        return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->filesInUse.cFiles, pMessage->filesInUse.rgwzFiles);
+    
+    default:
+        return IDOK;
+    }
 }
 
 static int MsiExecuteMessageHandler(
@@ -1492,7 +1593,7 @@ static int MsiExecuteMessageHandler(
         return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage);
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
-        return pContext->pUX->pUserExperience->OnExecuteMsiFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
+        return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
 
     default:
         return IDOK;

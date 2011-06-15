@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wix", "wix\Wix.csproj", "{9E03A94C-C70E-45C6-A269-E737BBD8B319}"
 	ProjectSection(ProjectDependencies) = postProject
 		{24121677-0ED0-41B5-833F-1B9A18E87BF4} = {24121677-0ED0-41B5-833F-1B9A18E87BF4}

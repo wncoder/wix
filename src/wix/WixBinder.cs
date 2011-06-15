@@ -267,7 +267,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="fileTransfers">Array of files to transfer.</param>
         /// <param name="fileTransfers">Array of directories to transfer.</param>
         /// <param name="suppressAclReset">Suppress removing ACLs added during file transfer process.</param>
-        protected void LayoutMedia(ArrayList fileTransfers, ArrayList directoryTransfers, bool suppressAclReset)
+        protected void LayoutMedia(ArrayList fileTransfers, bool suppressAclReset)
         {
             if (this.core.EncounteredError)
             {
@@ -398,18 +398,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 } while (retry);
             }
 
-            // create all directories that did not have files involved in the file transfer
-            for (int i = 0; i < directoryTransfers.Count; ++i)
-            {
-                DirectoryTransfer directoryTransfer = (DirectoryTransfer)directoryTransfers[i];
-
-                if (!Directory.Exists(directoryTransfer.Destination))
-                {
-                    this.core.OnMessage(WixVerboses.CreateDirectory(directoryTransfer.Destination));
-                    Directory.CreateDirectory(directoryTransfer.Destination);
-                }
-            }
-
             // finally, if there were any files remove the ACL that may have been added to
             // during the file transfer process
             if (0 < destinationFiles.Count && !suppressAclReset)
@@ -537,24 +525,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 transfer = new FileTransfer(source, destination, move, type, sourceLineNumbers);
                 return true;
-            }
-        }
-
-        /// <summary>
-        /// Structure used for all directory transfer information.
-        /// </summary>
-        protected struct DirectoryTransfer
-        {
-            /// <summary>Destination path for Directory.</summary>
-            public string Destination;
-
-            /// <summary>
-            /// Basic constructor for struct
-            /// </summary>
-            /// <param name="destination">Destination path for file.</param>
-            public DirectoryTransfer(string destination)
-            {
-                this.Destination = destination;
             }
         }
     }

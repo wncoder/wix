@@ -70,15 +70,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to  usage: pyro.exe [-?] [-nologo] inputFile -out outputFile [-t baseline wixTransform]
-        ///
-        ///   -cc        path to cache built cabinets
-        ///   -delta     create binary delta patch (instead of whole file patch)
-        ///   -ext       extension assembly or &quot;class, assembly&quot;
-        ///   -nologo    skip printing logo information
-        ///   -notidy    do not delete temporary files (useful for debugging)
-        ///   -out       specify output file
-        ///   -pdbout &lt;output.wixpdb&gt;  save the WixPdb to a specific file (default: same name as output with wixpdb  [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to  usage: pyro.exe [-?] [-nologo] inputFile -out outputFile [-t baseline wixTransform] [@responseFile]
         /// </summary>
         internal static string HelpMessage {
             get {

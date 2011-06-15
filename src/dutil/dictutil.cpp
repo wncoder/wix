@@ -259,9 +259,9 @@ extern "C" HRESULT DAPI DictAddKey(
     hr = GetInsertIndex(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, pszString, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
-    ++psd->dwNumItems;
-    hr = MemEnsureArraySize(reinterpret_cast<void **>(&(psd->ppvItemList)), psd->dwNumItems, sizeof(void *), 1000);
+    hr = MemEnsureArraySize(reinterpret_cast<void **>(&(psd->ppvItemList)), psd->dwNumItems + 1, sizeof(void *), 1000);
     ExitOnFailure(hr, "Failed to resize list of items in dictionary");
+    ++psd->dwNumItems;
 
     hr = StrAllocString(reinterpret_cast<LPWSTR *>(&(psd->ppvBuckets[dwIndex])), pszString, 0);
     ExitOnFailure(hr, "Failed to allocate copy of string");
@@ -319,10 +319,9 @@ extern "C" HRESULT DAPI DictAddValue(
     hr = GetInsertIndex(psd, MAX_BUCKET_SIZES[psd->dwBucketSizeIndex], psd->ppvBuckets, wzKey, &dwIndex);
     ExitOnFailure(hr, "Failed to get index to insert into");
 
-    ++psd->dwNumItems;
-
-    hr = MemEnsureArraySize(reinterpret_cast<void **>(&(psd->ppvItemList)), psd->dwNumItems, sizeof(void *), 1000);
+    hr = MemEnsureArraySize(reinterpret_cast<void **>(&(psd->ppvItemList)), psd->dwNumItems + 1, sizeof(void *), 1000);
     ExitOnFailure(hr, "Failed to resize list of items in dictionary");
+    ++psd->dwNumItems;
 
     pvOffset = TranslateValueToOffset(psd, pvValue);
     psd->ppvBuckets[dwIndex] = pvOffset;

@@ -23,6 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Xml;
 
@@ -226,11 +227,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 XmlNode sourcePathNode = payload.Attributes.GetNamedItem("SourcePath");
                 XmlNode filePathNode = payload.Attributes.GetNamedItem("FilePath");
+                XmlNode packagingNode = payload.Attributes.GetNamedItem("Packaging");
 
                 string sourcePath = sourcePathNode.Value;
                 string destinationPath = filePathNode.Value;
+                string packaging = packagingNode.Value;
 
-                attachedContainerPayloadNames.Add(new DictionaryEntry(sourcePath, destinationPath));
+                if (0 == String.Compare("embedded", packaging, false, CultureInfo.InvariantCulture))
+                {
+                    attachedContainerPayloadNames.Add(new DictionaryEntry(sourcePath, destinationPath));
+                }
             }
 
             return true;

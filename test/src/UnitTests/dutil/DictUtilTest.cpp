@@ -82,6 +82,7 @@ namespace CfgTests
 
                     if (0 != _wcsicmp(sczExpectedKey, valueFound->sczKey))
                     {
+                        hr = E_FAIL;
                         ExitOnFailure(hr, "Item found doesn't match!");
                     }
                 }

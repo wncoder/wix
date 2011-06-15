@@ -747,7 +747,7 @@ public static partial class Installer
         }
         else
         {
-            ret = NativeMethods.MsiDeterminePatchSequence(product, userSid, (int) context, (uint) sequenceData.Length, sequenceData);
+            ret = NativeMethods.MsiDeterminePatchSequence(product, userSid, context, (uint) sequenceData.Length, sequenceData);
         }
 
         if (errorHandler != null)
