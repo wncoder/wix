@@ -8,189 +8,26 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml
+namespace Microsoft.Tools.WindowsInstallerXml.Shine
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
     using System.Xml.Linq;
 
     public class Shine
     {
         public static readonly XNamespace XDgmlNamespace = "http://schemas.microsoft.com/vs/2009/dgml";
 
-        [Flags]
-        private enum GroupType
-        {
-            None = 0,
-            Projects = 1,
-            Files = 2,
-        }
-
-        [Flags]
-        private enum ShowType
-        {
-            None = 0,
-            Projects = 1,
-            Files = 2,
-            Symbols = 4,
-            References = 8,
-            All = 15,
-        }
-
         public static void Main(string[] args)
         {
             AppCommon.PrepareConsoleForLocalization();
+            CommandLine cmdLine = CommandLine.Parse(args);
 
-            string dgml = null;
-            string dgmlTemplate = null;
-            bool showHelp = false;
-            bool showLogo = true;
-
-            GroupType group = GroupType.None;
-            ShowType show = ShowType.All;
-            List<string> paths = new List<string>();
-
-            Scanner scanner = new Scanner();
-            scanner.RecurseProjects = true;
-
-            for (int i = 0; i < args.Length; ++i)
-            {
-                if (showHelp)
-                {
-                    break;
-                }
-
-                string arg = args[i];
-                if (arg.StartsWith("-") || arg.StartsWith("/"))
-                {
-                    switch (arg.Substring(1).ToLowerInvariant())
-                    {
-                        case "dgml":
-                            ++i;
-                            dgml = args[i];
-                            break;
-
-                        case "dgmltemplate":
-                            ++i;
-                            dgmlTemplate = args[i];
-                            break;
-
-                        case "excludepath":
-                        case "xp":
-                            ++i;
-                            //scanner.ExcludePaths.Add(Path.GetFullPath(args[i]));
-                            break;
-
-                        case "excludesymbol":
-                        case "xs":
-                            ++i;
-                            //scanner.ExcludeSymbols.Add(args[i]);
-                            break;
-
-                        case "includesymbol":
-                        case "is":
-                            ++i;
-                            //scanner.IncludeSymbols.Add(args[i]);
-                            break;
-
-                        case "nologo":
-                            showLogo = false;
-                            break;
-
-                        case "srp":
-                            scanner.RecurseProjects = false;
-                            break;
-
-                        case "help":
-                        case "?":
-                            showHelp = true;
-                            break;
-
-                        case "group":
-                            ++i;
-                            string[] groupNames = args[i].ToLowerInvariant().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string groupName in groupNames)
-                            {
-                                switch (groupName)
-                                {
-                                    case "proj":
-                                    case "projs":
-                                    case "project":
-                                    case "projects":
-                                        group |= GroupType.Projects;
-                                        break;
-
-                                    case "file":
-                                    case "files":
-                                        group |= GroupType.Files;
-                                        break;
-                                }
-                            }
-                            break;
-
-                        case "show":
-                            ++i;
-                            show = ShowType.None;
-                            string[] showNames = args[i].ToLowerInvariant().Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string showName in showNames)
-                            {
-                                switch (showName)
-                                {
-                                    case "all":
-                                        show |= ShowType.All;
-                                        break;
-
-                                    case "proj":
-                                    case "projs":
-                                    case "project":
-                                    case "projects":
-                                        show |= ShowType.Projects;
-                                        break;
-
-                                    case "file":
-                                    case "files":
-                                        show |= ShowType.Files;
-                                        break;
-
-                                    case "sym":
-                                    case "syms":
-                                    case "symbol":
-                                    case "symbols":
-                                        show |= ShowType.Symbols;
-                                        break;
-
-                                    case "ref":
-                                    case "refs":
-                                    case "reference":
-                                    case "references":
-                                        show |= ShowType.References;
-                                        break;
-                                }
-                            }
-                            break;
-
-                        default:
-                            Console.WriteLine("Unknown command line parameter: {0}", arg);
-                            break;
-                    }
-                }
-                else if (Directory.Exists(arg) || File.Exists(arg))
-                {
-                    paths.Add(Path.GetFullPath(arg));
-                }
-                else
-                {
-                    Console.WriteLine("Unknown command line parameter: {0}", arg);
-                }
-            }
-
-            if (showLogo)
+            if (cmdLine.ShowLogo)
             {
                 AppCommon.DisplayToolHeader();
             }
 
-            if (showHelp || paths.Count == 0)
+            if (cmdLine.ShowHelp)
             {
                 Shine.ShowHelp();
                 AppCommon.DisplayToolFooter();
@@ -198,14 +35,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // Execute the scan and display the results.
-            ScanResult result = scanner.Scan(paths, null, null);
-            if (String.IsNullOrEmpty(dgml))
+            Scanner scanner = new Scanner();
+            scanner.RecurseProjects = cmdLine.RecurseProjects;
+
+            ScanResult result = scanner.Scan(cmdLine.Paths, null, null);
+
+            // If there is anything to filter, do so.
+            if (cmdLine.IncludeSymbols.Count > 0 || cmdLine.ExcludeSymbols.Count > 0)
+            {
+                result.FilterSymbols(cmdLine.IncludeSymbols, cmdLine.ExcludeSymbols);
+            }
+
+            if (String.IsNullOrEmpty(cmdLine.Dgml))
             {
                 Console.WriteLine("Displaying graph to console is not supported yet. Use the -dgml switch.");
             }
             else
             {
-                Shine.SaveDgml(result, group, show, dgmlTemplate, dgml);
+                Shine.SaveDgml(result, cmdLine.Group, cmdLine.Show, cmdLine.DgmlTemplate, cmdLine.Dgml);
             }
         }
 
@@ -215,10 +62,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Console.WriteLine(" usage: shine.exe [options] path|*.wixproj|*.wixpdb|...");
             Console.WriteLine("   -dgml file               save scan as DGML file");
             Console.WriteLine("   -dgmlTemplate file       a valid DGML file populated with data from scan");
-            //Console.WriteLine("   -excludePath file|dir  remove file or directory from scan");
-            //Console.WriteLine("   -excludeSymbol symbol  remove symbol and its referenced symbols from scan");
-            //Console.WriteLine("   -includeSymbol symbol  filter scan using symbol");
-            //Console.WriteLine("                            by default all symbols are returned");
+            //Console.WriteLine("   -excludePath file|dir    remove file or directory from scan");
+            Console.WriteLine("   -excludeSymbol symbol    remove symbol and symbols it references from scan");
+            Console.WriteLine("   -includeSymbol symbol    filter scan to include only specified symbol(s)");
             //Console.WriteLine("   -p <name>=<value>        define a property when loading MSBuild projects");
             Console.WriteLine("   -show proj;file;sym;ref  displays only the specified items in the scan");
             Console.WriteLine("                              proj - project files");
@@ -290,16 +136,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
 
                     nodes.Add(node);
-                }
 
-                foreach (ScannedProjectProjectReference projectRef in result.ProjectToProjectReferences)
-                {
+                    foreach (ScannedProject projectRef in project.TargetProjects)
+                    {
                         links.Add(new XElement(XDgmlNamespace + "Link",
                                     new XAttribute("Category", "ProjectReference"),
-                                    new XAttribute("Source", projectRef.SourceProject.Key),
-                                    new XAttribute("Target", projectRef.TargetProject.Key)
+                                    new XAttribute("Source", project.Key),
+                                    new XAttribute("Target", projectRef.Key)
                                     )
                             );
+                    }
+
+                    if (ShowType.Files == (show & ShowType.Files))
+                    {
+                        foreach (ScannedSourceFile file in project.SourceFiles)
+                        {
+                            links.Add(new XElement(XDgmlNamespace + "Link",
+                                        new XAttribute("Category", "CompilesFile"),
+                                        new XAttribute("Source", project.Key),
+                                        new XAttribute("Target", file.Key),
+                                        new XElement(XDgmlNamespace + "Category",
+                                            new XAttribute("Ref", "Contains")
+                                            )
+                                        )
+                                );
+                        }
+                    }
                 }
             }
 
@@ -322,22 +184,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     nodes.Add(node);
                 }
-
-                if (ShowType.Projects == (show & ShowType.Projects))
-                {
-                    foreach (ScannedProjectSourceFileReference fileRef in result.ProjectToSourceFileReferences)
-                    {
-                        links.Add(new XElement(XDgmlNamespace + "Link",
-                                    new XAttribute("Category", "CompilesFile"),
-                                    new XAttribute("Source", fileRef.SourceProject.Key),
-                                    new XAttribute("Target", fileRef.TargetSourceFile.Key),
-                                    new XElement(XDgmlNamespace + "Category",
-                                        new XAttribute("Ref", "Contains")
-                                        )
-                                    )
-                            );
-                    }
-                }
             }
 
             // Draw the symbols.
@@ -349,38 +195,37 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     nodes.Add(new XElement(XDgmlNamespace + "Node",
                                 new XAttribute("Id", symbol.Key),
                                 new XAttribute("Category", symbol.Type),
-                                new XAttribute("Reference", "TODO")
+                                new XAttribute("Reference", symbol.SourceFiles[0].Path)
                                 )
                         );
-                }
 
-                if (ShowType.References == (show & ShowType.References))
-                {
-                    Console.WriteLine("Graphing symbol references...");
-                    foreach (ScannedSymbolSymbolReference symbolRef in result.SymbolToSymbolReference)
+                    if (ShowType.Files == (show & ShowType.Files))
                     {
-                        links.Add(new XElement(XDgmlNamespace + "Link",
-                                    new XAttribute("Category", "SymbolReference"),
-                                    new XAttribute("Source", symbolRef.SourceSymbol.Key),
-                                    new XAttribute("Target", symbolRef.TargetSymbol.Key)
-                                    )
-                            );
-                    }
-                }
-
-                if (ShowType.Files == (show & ShowType.Files))
-                {
-                    foreach (ScannedSourceFileSymbolReference fileSymbolRef in result.SourceFileToSymbolReference)
-                    {
-                        links.Add(new XElement(XDgmlNamespace + "Link",
-                                    new XAttribute("Category", "DefinesSymbol"),
-                                    new XAttribute("Source", fileSymbolRef.SourceSourceFile.Key),
-                                    new XAttribute("Target", fileSymbolRef.TargetSymbol.Key),
-                                    new XElement(XDgmlNamespace + "Category",
-                                        new XAttribute("Ref", "Contains")
+                        foreach (ScannedSourceFile fileRef in symbol.SourceFiles)
+                        {
+                            links.Add(new XElement(XDgmlNamespace + "Link",
+                                        new XAttribute("Category", "DefinesSymbol"),
+                                        new XAttribute("Source", fileRef.Key),
+                                        new XAttribute("Target", symbol.Key),
+                                        new XElement(XDgmlNamespace + "Category",
+                                            new XAttribute("Ref", "Contains")
+                                            )
                                         )
-                                    )
-                            );
+                                );
+                        }
+                    }
+
+                    if (ShowType.References == (show & ShowType.References))
+                    {
+                        foreach (ScannedSymbol symbolRef in symbol.TargetSymbols)
+                        {
+                            links.Add(new XElement(XDgmlNamespace + "Link",
+                                        new XAttribute("Category", "SymbolReference"),
+                                        new XAttribute("Source", symbol.Key),
+                                        new XAttribute("Target", symbolRef.Key)
+                                        )
+                                );
+                        }
                     }
                 }
             }

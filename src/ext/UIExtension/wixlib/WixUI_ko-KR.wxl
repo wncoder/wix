@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">설치 범위 및 폴더 선택</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}설치 범위</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}사용자([USERNAME])에 대해서만(&amp;J)</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}사용자([LogonUser])에 대해서만(&amp;J)</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName]은(는) 사용자 단위 폴더에 설치되며 사용자 계정에 대해서만 사용 가능하게 됩니다. 이 설치에는 로컬 관리자 권한이 없어도 됩니다.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName]은(는) 사용자 단위 설치를 지원하지 않습니다.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}이 컴퓨터의 모든 사용자에 대해 설치(&amp;M)</String>

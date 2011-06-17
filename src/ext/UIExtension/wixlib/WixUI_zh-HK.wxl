@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">選擇安裝範圍和資料夾</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}安裝範圍</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}僅為您安裝 ([USERNAME])(&amp;J)</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}僅為您安裝 ([LogonUser])(&amp;J)</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] 將安裝在個別使用者資料夾中，並且僅供您的使用者帳戶使用。您不需要本機系統管理員權限。</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] 不支援個別使用者安裝。</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}為這部電腦的所有使用者安裝(&amp;M)</String>
@@ -424,13 +424,13 @@
     <String Id="Error1303" Overridable="yes">安裝程式的權限不足，無法存取這個目錄: [2]，安裝無法繼續，請以管理員身分登入或是與您的系統管理員連絡。</String>
     <String Id="Error1304" Overridable="yes">寫入檔案 [2] 時發生錯誤。請檢查您是否有存取該目錄的權限。</String>
     <String Id="Error1305" Overridable="yes">讀取檔案 [2] 時發生錯誤。{{ 系統錯誤 [3]。}} 請確認檔案存在，而且您可以存取它。</String>
-    <String Id="Error1306" Overridable="yes">其他的應用程式對檔案 '[2]' 獨佔存取。請關閉所有其他的應用程式，然後按一下 [重試]。</String>
-    <String Id="Error1307" Overridable="yes">磁碟空間不足，無法安裝這個檔案: [2]。請釋放一些磁碟空間然後按一下 [重試]，或按一下 [取消] 結束。</String>
+    <String Id="Error1306" Overridable="yes">其他的應用程式對檔案 '[2]' 獨佔存取。請關閉所有其他的應用程式，然後按一下 [\[]重試[\]]。</String>
+    <String Id="Error1307" Overridable="yes">磁碟空間不足，無法安裝這個檔案: [2]。請釋放一些磁碟空間然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束。</String>
     <String Id="Error1308" Overridable="yes">找不到來源檔案: [2]。請確認檔案存在，而且您可以存取它。</String>
     <String Id="Error1309" Overridable="yes">讀取檔案 [3] 時發生錯誤。{{ 系統錯誤 [2]。}} 請確認檔案存在，而且您可以存取它。</String>
     <String Id="Error1310" Overridable="yes">寫入至檔案時發生錯誤: [3]。{{ 系統錯誤 [2]。}} 請檢查您是否有存取該目錄的權限。</String>
     <String Id="Error1311" Overridable="yes">找不到來源檔案{{(封包檔)}}: [2]。請確認檔案存在，而且您可以存取它。</String>
-    <String Id="Error1312" Overridable="yes">無法建立目錄 '[2]'。同名的檔案已經存在，請更名或移除此檔案，然後按一下 [重試]，或按一下 [取消] 結束。</String>
+    <String Id="Error1312" Overridable="yes">無法建立目錄 '[2]'。同名的檔案已經存在，請更名或移除此檔案，然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束。</String>
     <String Id="Error1313" Overridable="yes">目前無法使用磁碟區 [2]，請選取別的磁碟區。</String>
     <String Id="Error1314" Overridable="yes">指定的路徑 '[2]' 無法使用。</String>
     <String Id="Error1315" Overridable="yes">無法寫入指定的資料夾: [2]。</String>
@@ -473,14 +473,14 @@
     <String Id="Error1602" Overridable="yes">您確定要取消嗎 ?</String>
     <String Id="Error1603" Overridable="yes">檔案 [2][3] 正在使用中 {被下列處理序使用: 名稱: [4]，識別碼: [5]，視窗標題: '[6]'}，請關閉該應用程式然後重試。</String>
     <String Id="Error1604" Overridable="yes">已經安裝產品 '[2]'，無法安裝本產品。這兩項產品不相容。</String>
-    <String Id="Error1605" Overridable="yes">磁碟區 '[2]' 上的磁碟空間不足，無法繼續進行啟用修復功能的安裝。需要 [3] KB 的空間，但是只有 [4] KB 可供使用。請按一下 [忽略] 繼續安裝但不儲存修復資訊，按一下 [重試] 再檢查一次是否有可用的空間，或按一下 [取消] 結束安裝。</String>
+    <String Id="Error1605" Overridable="yes">磁碟區 '[2]' 上的磁碟空間不足，無法繼續進行啟用修復功能的安裝。需要 [3] KB 的空間，但是只有 [4] KB 可供使用。請按一下 [\[]忽略[\]] 繼續安裝但不儲存修復資訊，按一下 [\[]重試[\]] 再檢查一次是否有可用的空間，或按一下 [\[]取消[\]] 結束安裝。</String>
     <String Id="Error1606" Overridable="yes">無法存取網路位置 [2]。</String>
     <String Id="Error1607" Overridable="yes">繼續安裝之前應先關閉下列應用程式:</String>
     <String Id="Error1608" Overridable="yes">在此機器上，找不到與本產品相容的舊版產品。</String>
     <String Id="Error1609" Overridable="yes">套用安全性設定時發生錯誤。[2] 不是有效的使用者或群組。可能是因為套件有問題，或連線至網路上的網域控制站時發生問題。請檢查您的網路連線再按一下 [重試]，或按一下 [取消] 結束安裝。{{找不到使用者的 SID，系統錯誤 [3]}}</String>
     <String Id="Error1701" Overridable="yes">金鑰 [2] 無效。請檢查您輸入的金鑰是否正確。</String>
-    <String Id="Error1702" Overridable="yes">安裝程式必須重新啟動您的系統才能繼續設定 [2]。請按一下 [是] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [否]。</String>
-    <String Id="Error1703" Overridable="yes">您必須重新啟動系統，才能使對 [2] 的設定變更生效。請按一下 [是] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [否]。</String>
+    <String Id="Error1702" Overridable="yes">安裝程式必須重新啟動您的系統才能繼續設定 [2]。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>
+    <String Id="Error1703" Overridable="yes">您必須重新啟動系統，才能使對 [2] 的設定變更生效。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>
     <String Id="Error1704" Overridable="yes">[2] 的安裝目前已暫停。您必須復原該安裝所做的變更才能繼續。是否要復原那些變更?</String>
     <String Id="Error1705" Overridable="yes">本產品先前的安裝正在進行中，您必須復原該安裝所做的變更才能繼續。是否要復原那些變更?</String>
     <String Id="Error1706" Overridable="yes">找不到產品 [2] 的安裝套件。請試著使用有效的安裝套件 '[3]' 再安裝一次。</String>
@@ -488,7 +488,7 @@
     <String Id="Error1708" Overridable="yes">安裝失敗。</String>
     <String Id="Error1709" Overridable="yes">產品: [2] -- [3]</String>
     <String Id="Error1710" Overridable="yes">您可以將電腦還原成先前的狀態或稍後再繼續安裝。要還原嗎?</String>
-    <String Id="Error1711" Overridable="yes">寫入安裝資訊至磁碟時發生錯誤。請檢查確定有足夠的可用磁碟空間，然後按一下 [重試]，或按一下 [取消] 結束安裝。</String>
+    <String Id="Error1711" Overridable="yes">寫入安裝資訊至磁碟時發生錯誤。請檢查確定有足夠的可用磁碟空間，然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束安裝。</String>
     <String Id="Error1712" Overridable="yes">找不到將您的電腦還原為之前狀態所需的一個或多個檔案。無法還原。</String>
     <String Id="Error1713" Overridable="yes">[2] 無法安裝其中一項必要的產品。請連絡技術支援團隊。{{系統錯誤: [3]。}}</String>
     <String Id="Error1714" Overridable="yes">無法移除舊版的 [2]。請連絡技術支援團隊。{{系統錯誤: [3]。}}</String>
@@ -512,8 +512,8 @@
     <String Id="Error1732" Overridable="yes">若要完成 [2] 的安裝，您必須重新啟動電腦。這部電腦目前有其他使用者登入，重新啟動可能會造成他們工作遺失。是否要立即重新啟動?</String>
     <String Id="Error1801" Overridable="yes">路徑 [2] 無效。請指定有效的路徑。</String>
     <String Id="Error1802" Overridable="yes">記憶體不足，重試之前請先關閉其他應用程式。</String>
-    <String Id="Error1803" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [重試]，或按一下 [取消] 回到上次選取的磁碟機代號。</String>
-    <String Id="Error1804" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [重試]，或按一下 [取消] 返回瀏覽對話方塊，並選取其他磁碟機代號。</String>
+    <String Id="Error1803" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 回到上次選取的磁碟機代號。</String>
+    <String Id="Error1804" Overridable="yes">磁碟機 [2] 中沒有磁片，請插入磁片然後按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 返回瀏覽對話方塊，並選取其他磁碟機代號。</String>
     <String Id="Error1805" Overridable="yes">資料夾 [2] 不存在，請輸入現有資料夾的路徑。</String>
     <String Id="Error1806" Overridable="yes">您的權限不足，無法讀取這個資料夾。</String>
     <String Id="Error1807" Overridable="yes">無法判斷安裝的有效目的地資料夾。</String>

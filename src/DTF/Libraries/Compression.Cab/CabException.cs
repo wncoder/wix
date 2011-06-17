@@ -117,8 +117,8 @@ namespace Microsoft.Deployment.Compression.Cab
                 if (errorResources == null)
                 {
                     errorResources = new ResourceManager(
-                        typeof(CabException).Namespace + ".Errors",
-                        typeof(CabException).Assembly);
+                        typeof(ArchiveException).Namespace + ".Errors",
+                        typeof(ArchiveException).Assembly);
                 }
                 return errorResources;
             }

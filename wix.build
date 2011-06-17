@@ -46,6 +46,7 @@
   <include buildfile="${dir.wixroot.src}\DTF\dtf.build" />
   <include buildfile="${dir.src.dutil}\dutil.build" unless="${property::exists('dutil.properties.defined')}" />
   <include buildfile="${dir.src.ext}\ext.build" />
+  <include buildfile="${dir.src.shine}\shine.build" />
   <include buildfile="${dir.src.ca.serverca}\serverca.build" />
   <include buildfile="${dir.wixroot.src}\setup\setup.build" />
   <include buildfile="${dir.wixroot.src}\setupbld\setupbld.build" />
@@ -86,6 +87,7 @@
                    setupbld.clean,
                    setupexe.clean,
                    serverca.clean,
+                   shine.clean,
                    votive2005.clean,
                    votive2008.clean,
                    votive2010.clean,
@@ -185,7 +187,7 @@
   <target name="burn" depends="first, dutil, burn.inc" />
   <target name="ext" depends="ambient, serverca, setupbld.inc, setupexe.inc, updateexe.inc, ext.inc, core, ext.sln.inc" />
   <target name="serverca" depends="wcautil, wixca, serverca.inc" />
-  <target name="setup" depends="chm, core, ext, votive, setup.inc" />
+  <target name="setup" depends="chm, core, ext, votive, shine.inc, setup.inc" />
   <target name="toolsrc" depends="dutil, toolsrc.inc" />
   <target name="votive" depends="votive2005, votive2008, votive2010" />
   <target name="votive2005" depends="chm, core, ext, votive2005.inc" />

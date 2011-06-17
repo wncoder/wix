@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Izberite obseg namestitve in mapo</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Obseg namestitve</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Namestitev &amp;le za osebo ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Namestitev &amp;le za osebo ([LogonUser])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] bo nameščen v mapo za posameznega uporabnika in bo na voljo le za vaš uporabniški račun. Ne potrebujete lokalnih skrbniških pravic.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] ne podpira namestitve za posamezne uporabnike.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Namesti za vse uporabnike tega &amp;računalnika</String>

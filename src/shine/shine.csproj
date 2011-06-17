@@ -8,9 +8,9 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="CommandLine.cs" />
     <Compile Include="ScannedProject.cs" />
     <Compile Include="ScannedProjectProjectReference.cs" />
     <Compile Include="ScannedProjectSourceFileReference.cs" />
@@ -24,15 +24,12 @@
     <Compile Include="ScanResult.cs" />
     <Compile Include="shine.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedNativeResource Include="shine.rc" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <SpecificVersion>True</SpecificVersion>
@@ -47,6 +44,5 @@
       <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
     </ProjectReference>
   </ItemGroup>
-
   <Import Project="..\..\WixBuild.Common.targets" />
 </Project>

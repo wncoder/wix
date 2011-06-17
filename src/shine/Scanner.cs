@@ -133,7 +133,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // If there is a parent project, create a reference between the two projects.
             if (process.Project != null)
             {
-                result.ProjectToProjectReferences.Add(new ScannedProjectProjectReference() { SourceProject = process.Project, TargetProject = scannedProject });
+                process.Project.TargetProjects.Add(scannedProject);
+                scannedProject.SourceProjects.Add(process.Project);
+                //result.ProjectToProjectReferences.Add(new ScannedProjectProjectReference() { SourceProject = process.Project, TargetProject = scannedProject });
             }
 
             return newFiles;
@@ -166,7 +168,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (sourceFile != null && process.Project != null)
             {
-                result.ProjectToSourceFileReferences.Add(new ScannedProjectSourceFileReference() { SourceProject = process.Project, TargetSourceFile = sourceFile });
+                process.Project.SourceFiles.Add(sourceFile);
+                sourceFile.SourceProjects.Add(process.Project);
+                //result.ProjectToSourceFileReferences.Add(new ScannedProjectSourceFileReference() { SourceProject = process.Project, TargetSourceFile = sourceFile });
             }
         }
 
@@ -265,7 +269,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 result.Symbols.Add(symbol.Key, symbol);
                             }
 
-                            result.SourceFileToSymbolReference.Add(new ScannedSourceFileSymbolReference() { SourceSourceFile = sourceFile, TargetSymbol = symbol });
+                            sourceFile.TargetSymbols.Add(symbol);
+                            symbol.SourceFiles.Add(sourceFile);
+                            //result.SourceFileToSymbolReference.Add(new ScannedSourceFileSymbolReference() { SourceSourceFile = sourceFile, TargetSymbol = symbol });
                             if (references != null)
                             {
                                 AddReferences(node, references, sourceFile, symbol, result);
@@ -305,23 +311,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         private void ResolveSymbols(ScanResult result)
         {
-            List<ScannedUnresolvedReference> actuallyUnresolved = new List<ScannedUnresolvedReference>();
-
-            foreach (ScannedUnresolvedReference reference in result.Unresolved)
+            // Walk backwards through the unresolved list because we will remove items as
+            // we find matches. In the end, only the symbols that can't be found will be
+            // left in the list.
+            for (int i = result.Unresolved.Count; i > 0; --i)
             {
+                ScannedUnresolvedReference reference = result.Unresolved[i - 1];
                 ScannedSymbol symbol;
                 if (result.Symbols.TryGetValue(reference.TargetSymbol, out symbol))
                 {
-                    result.SymbolToSymbolReference.Add(new ScannedSymbolSymbolReference() { SourceSymbol = reference.SourceSymbol, TargetSymbol = symbol });
-                }
-                else
-                {
-                    actuallyUnresolved.Add(reference);
+                    reference.SourceSymbol.TargetSymbols.Add(symbol);
+                    symbol.SourceSymbols.Add(reference.SourceSymbol);
+                    //result.SymbolToSymbolReference.Add(new ScannedSymbolSymbolReference() { SourceSymbol = reference.SourceSymbol, TargetSymbol = symbol });
+
+                    result.Unresolved.RemoveAt(i - 1);
                 }
             }
-
-            result.Unresolved.Clear();
-            result.Unresolved.AddRange(actuallyUnresolved);
         }
 
         private void OnMessage(ScannerMessageType type, string format, params object[] details)

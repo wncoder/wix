@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">اختر نطاق التثبيت والمجلد</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}نطاق التثبيت</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}التثبيت لك &amp;فقط ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}التثبيت لك &amp;فقط ([LogonUser])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">سيتم تثبيت [ProductName] في مجلد لكل مستخدم ولن يكون متوفرًا سوى لحساب المستخدم الخاص بك. ولا تحتاج إلى امتيازات مسؤول محلي.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">لا يدعم [ProductName] التثبيت لكل مستخدم.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}التثبيت لجميع مستخدمي هذا &amp;الجهاز</String>

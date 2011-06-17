@@ -12,6 +12,6 @@
     </Fragment>
 
     <Fragment>
-        <SetProperty Id="WixVsixAdmin" Value="/admin" Sequence="execute" After="InstallFiles">ALLUSERS=1</SetProperty>
+        <SetProperty Id="WixVsixAdmin" Value="/admin" Sequence="execute" After="WriteRegistryValues">ALLUSERS=1</SetProperty>
     </Fragment>
 </Wix>

@@ -47,6 +47,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             this.Key = ScannedProject.CalculateKey(this.Path, this.Properties);
+
+            this.SourceFiles = new List<ScannedSourceFile>();
+            this.SourceProjects = new List<ScannedProject>();
+            this.TargetProjects = new List<ScannedProject>();
         }
 
         public string Key { get; private set; }
@@ -58,6 +62,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public IDictionary<string, string> Properties { get; private set; }
 
         public ScannedProjectType Type { get; private set; }
+
+        public IList<ScannedSourceFile> SourceFiles { get; private set; }
+
+        public IList<ScannedProject> SourceProjects { get; private set; }
+
+        public IList<ScannedProject> TargetProjects { get; private set; }
 
         public static string CalculateKey(string path, IDictionary<string, string> properties)
         {

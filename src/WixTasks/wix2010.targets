@@ -1403,6 +1403,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   </PropertyGroup>
   <Target
     Name="Signing"
+    Condition=" '$(SuppressLayout)' != 'true' "
     DependsOnTargets="$(SigningDependsOn)" />
 
   <!-- Internal targets so correct signing targets are called. -->
@@ -2842,6 +2843,18 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Name="SGenFilesOutputGroup"
     Outputs="@(SGenFilesOutputGroupOutput)"
     DependsOnTargets="$(SGenFilesOutputGroupDependsOn)" />
+
+  <!--
+  ==================================================================================================
+  GetNativeManifest & GetCopyToOutputDirectoryItems
+
+    Some project types expect these targets to be defined when they take a project reference. They
+    are normally defined in Microsoft.Common.targets but we don't include that targets so we define
+    the targets here.
+  ==================================================================================================
+  -->
+  <Target Name="GetNativeManifest"/>
+  <Target Name="GetCopyToOutputDirectoryItems" />
 
   <!-- Extension point: Define CustomAfterWixTargets to a .targets file that you want to include after this file. -->
   <Import Project="$(CustomAfterWixTargets)" Condition=" '$(CustomAfterWixTargets)' != '' and Exists('$(CustomAfterWixTargets)')" />

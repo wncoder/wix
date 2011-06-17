@@ -1171,3 +1171,23 @@ JBae: Fixed bug for unused TargetPdbName property.
 WixBuild: Version 3.6.1811.0
 
 RobMen: SFBUG:3164596 - add pt-br loc for IIs and Util extensions.
+
+JBae: Added condition on target "Signing" for SuppressLayout because 
+      we don't want to sign if layout is suppressed.
+
+RobMen: SFBUG:3293788 - define a couple targets often required by project
+                        references from other projects (like .vcxproj).
+
+RobMen: SFBUG:3288797 - replace USERNAME with LogonUser because LogonUser is
+                        more correct.
+        SFBUG:3162829 - fix incorrectly formatted text in lv-LV and zh-HK .wxl
+                        files.
+        SFBUG:3163411 - delete hi-IN, kk-KZ, ro-RO wxl files that are really
+                        just English.
+
+RobMen: Introducing shine. Tool that generates graphs by reading source code.
+
+RobMen: SFBUG:3132163 - use the WiX update feed for news instead of my blog.
+
+WixBuild: Version 3.6.1817.0
+

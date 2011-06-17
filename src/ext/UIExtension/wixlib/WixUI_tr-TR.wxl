@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Yükleme kapsamını ve klasörünü seçin</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Yükleme Kapsamı</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Yalnızca benim için ([USERNAME]) yükle</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Yalnızca benim için ([LogonUser]) yükle</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] kullanıcıya özel bir klasöre yüklenecek yalnızca sizin kullanıcı hesabınız tarafından kullanılabilecek. Yerel Yönetici ayrıcalıklarınız olması gerekmez.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] kullanıcıya özel yüklemeyi desteklemiyor.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Bu &amp;makinede tüm kullanıcılar için yükle</String>

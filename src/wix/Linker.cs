@@ -391,38 +391,39 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // section (that's how it got its name after all).
                 output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
 
+                // TODO: Temporarily disable this check. Change it later to verify only the symbols in referenced sections, not all symbols.
                 // Check for duplicate symbols now that we have all the symbols.
-                foreach (object o in allSymbols)
-                {
-                    // You can tell you have duplicate symbols when the entry in the ArrayList is an ArrayList of Symbols instead of a single Symbol.
-                    ArrayList duplicates = o as ArrayList;
-                    if (null != duplicates)
-                    {
-                        // Allow duplicates in tables where overriding is allowed and code later on resolves duplicates.
-                        // TODO: Some of these instances aren't places where duplication is really desirable but due to compatibility, 
-                        ///      anywhere we allowed duplicates in the past and produced valid output, we allow through. When we can 
-                        ///      break compat a little more, each of these should be evaluated for whether allowing duplicates is desired.
-                        Symbol symbol = (Symbol)duplicates[0];
-                        if (symbol.Row.Table.Name != "CheckBox" &&
-                            symbol.Row.Table.Name != "Container" &&
-                            symbol.Row.Table.Name != "ControlEvent" &&
-                            symbol.Row.Table.Name != "CustomAction" &&
-                            symbol.Row.Table.Name != "Payload" &&
-                            symbol.Row.Table.Name != "Property" &&
-                            symbol.Row.Table.Name != "RegLocator" &&
-                            symbol.Row.Table.Name != "WixAction" &&
-                            symbol.Row.Table.Name != "WixProperty" &&
-                            symbol.Row.Table.Name != "WixVariable")
-                        {
-                            this.OnMessage(WixErrors.DuplicateSymbol(symbol.Row.SourceLineNumbers, symbol.Name));
-                            for (int i = 1; i < duplicates.Count; i++)
-                            {
-                                Symbol duplicateSymbol = (Symbol)duplicates[i];
-                                this.OnMessage(WixErrors.DuplicateSymbol2(duplicateSymbol.Row.SourceLineNumbers));
-                            }
-                        }
-                    }
-                }
+                ////foreach (object o in allSymbols)
+                ////{
+                ////    // You can tell you have duplicate symbols when the entry in the ArrayList is an ArrayList of Symbols instead of a single Symbol.
+                ////    ArrayList duplicates = o as ArrayList;
+                ////    if (null != duplicates)
+                ////    {
+                ////        // Allow duplicates in tables where overriding is allowed and code later on resolves duplicates.
+                ////        // TODO: Some of these instances aren't places where duplication is really desirable but due to compatibility, 
+                ////        ///      anywhere we allowed duplicates in the past and produced valid output, we allow through. When we can 
+                ////        ///      break compat a little more, each of these should be evaluated for whether allowing duplicates is desired.
+                ////        Symbol symbol = (Symbol)duplicates[0];
+                ////        if (symbol.Row.Table.Name != "CheckBox" &&
+                ////            symbol.Row.Table.Name != "Container" &&
+                ////            symbol.Row.Table.Name != "ControlEvent" &&
+                ////            symbol.Row.Table.Name != "CustomAction" &&
+                ////            symbol.Row.Table.Name != "Payload" &&
+                ////            symbol.Row.Table.Name != "Property" &&
+                ////            symbol.Row.Table.Name != "RegLocator" &&
+                ////            symbol.Row.Table.Name != "WixAction" &&
+                ////            symbol.Row.Table.Name != "WixProperty" &&
+                ////            symbol.Row.Table.Name != "WixVariable")
+                ////        {
+                ////            this.OnMessage(WixErrors.DuplicateSymbol(symbol.Row.SourceLineNumbers, symbol.Name));
+                ////            for (int i = 1; i < duplicates.Count; i++)
+                ////            {
+                ////                Symbol duplicateSymbol = (Symbol)duplicates[i];
+                ////                this.OnMessage(WixErrors.DuplicateSymbol2(duplicateSymbol.Row.SourceLineNumbers));
+                ////            }
+                ////        }
+                ////    }
+                ////}
 
                 // Flattening the complex references that participate in groups.
                 this.FlattenSectionsComplexReferences(output.Sections);

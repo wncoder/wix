@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Microsoft.Tools.WindowsInstallerXml
 {
@@ -30,13 +31,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.Type = (ScannedSymbolType)Enum.Parse(typeof(ScannedSymbolType), typeName);
 
             this.Key = String.Concat(this.Type, ":", this.Id);
+            this.SourceFiles = new List<ScannedSourceFile>();
+            this.SourceSymbols = new List<ScannedSymbol>();
+            this.TargetSymbols = new List<ScannedSymbol>();
         }
 
-        public string Key { get; private set;  }
+        public string Key { get; private set; }
 
         public string Id { get; private set; }
 
         public ScannedSymbolType Type { get; private set; }
+
+        public IList<ScannedSourceFile> SourceFiles { get; private set; }
+
+        public IList<ScannedSymbol> SourceSymbols { get; private set; }
+
+        public IList<ScannedSymbol> TargetSymbols { get; private set; }
+
+        public bool Excluded { get; set; }
 
         public static string CalculateKey(string typeName, string id)
         {

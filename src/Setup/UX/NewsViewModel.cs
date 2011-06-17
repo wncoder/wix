@@ -161,7 +161,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             bool succeeded = false;
             try
             {
-                HttpWebRequest request = WixUX.Model.CreateWebRequest("http://robmensching.com/blog/posts/feed");
+                HttpWebRequest request = WixUX.Model.CreateWebRequest("http://wix.sourceforge.net/releases/wix3.6.feed");
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 if (response.StatusCode == HttpStatusCode.OK)
                 {

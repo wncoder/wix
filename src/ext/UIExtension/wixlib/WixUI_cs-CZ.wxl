@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Umožňuje zvolit obor instalace a instalační složku.</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Obor instalace</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Nainstalovat &amp;pouze pro vás ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Nainstalovat &amp;pouze pro vás ([LogonUser])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">Produkt [ProductName] bude nainstalován do složky konkrétního uživatele a bude k dispozici pouze pro váš uživatelský účet. Nepotřebujete oprávnění místního správce.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">Produkt [ProductName] nepodporuje instalace vázané na uživatele.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Nainstalovat pro všechny uživatele tohoto &amp;počítače</String>

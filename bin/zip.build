@@ -101,6 +101,8 @@
         <include name="setup.exe" />
         <include name="setupbld.exe" />
         <include name="SetupBuilder.dll" />
+        <include name="shine.exe" />
+        <include name="shine.exe.config" />
         <include name="smoke.exe" />
         <include name="smoke.exe.config" />
         <include name="ThmViewer.exe" />

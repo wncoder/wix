@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">Trieu l'àmbit d'instal·lació i la carpeta</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}Àmbit d'instal·lació</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Instal·la &amp;només per al vostre usuari ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}Instal·la &amp;només per al vostre usuari ([LogonUser])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">El producte [ProductName] s'instal·larà en una carpeta per usuari i estarà disponible només per al compte del vostre usuari. No necessiteu privilegis locals d'administrador.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">El producte [ProductName] no admet la instal·lació per usuari.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}Instal·la per a tots els usuaris d'aquest &amp;ordinador</String>

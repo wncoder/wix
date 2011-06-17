@@ -120,7 +120,7 @@
     <String Id="InstallScopeDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallScopeDlgDescription" Overridable="yes">בחר את הטווח והתיקיה להתקנה</String>
     <String Id="InstallScopeDlgTitle" Overridable="yes">{\WixUI_Font_Title}טווח התקנה</String>
-    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}התקן &amp;רק עבורך ([USERNAME])</String>
+    <String Id="InstallScopeDlgPerUser" Overridable="yes">{\WixUI_Font_Emphasized}התקן &amp;רק עבורך ([LogonUser])</String>
     <String Id="InstallScopeDlgPerUserDescription" Overridable="yes">[ProductName] יותקן בתיקיה לפי משתמש ויהיה זמין רק עבור חשבון המשתמש שלך. אינך זקוק להרשאות מקומיות של מנהל מערכת.</String>
     <String Id="InstallScopeDlgNoPerUserDescription" Overridable="yes">[ProductName] אינו תומך בהתקנה לפי משתמש.</String>
     <String Id="InstallScopeDlgPerMachine" Overridable="yes">{\WixUI_Font_Emphasized}התקן עבור כל משתמשי &amp;מחשב זה</String>

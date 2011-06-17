@@ -101,6 +101,12 @@
             <Component Id="PyroConfig" Guid="AE90E5F8-B7B0-4964-9C7A-3730DD0251FE" Win64="no">
                 <File Source="pyro.exe.config" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
+            <Component Id="ShineBinaries" Win64="no">
+                <File Source="shine.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
+            </Component>
+            <Component Id="ShineConfig" Win64="no">
+                <File Source="shine.exe.config" Checksum="yes" KeyPath="yes" Vital="yes" />
+            </Component>
             <Component Id="SmokeBinaries" Guid="48A05B14-C22E-454B-92B7-97200629BCEC" Win64="no">
                 <File Source="smoke.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
@@ -336,6 +342,8 @@
             <ComponentRef Id="MSPatchCBinaries" />
             <ComponentRef Id="PyroBinaries" />
             <ComponentRef Id="PyroConfig" />
+            <ComponentRef Id="ShineBinaries" />
+            <ComponentRef Id="ShineConfig" />
             <ComponentRef Id="SmokeBinaries" />
             <ComponentRef Id="SmokeConfig" />
             <ComponentRef Id="STDUXBinaries" />

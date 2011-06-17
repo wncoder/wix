@@ -38,6 +38,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             this.Key = ScannedSourceFile.CalculateKey(this.Path, this.PreprocessorDefines);
+            this.SourceProjects = new List<ScannedProject>();
+            this.TargetSymbols = new List<ScannedSymbol>();
         }
 
         public string Key { get; private set; }
@@ -45,6 +47,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public string Path { get; private set; }
 
         public IDictionary<string, string> PreprocessorDefines { get; private set; }
+
+        public IList<ScannedProject> SourceProjects { get; private set; }
+
+        public IList<ScannedSymbol> TargetSymbols { get; private set; }
 
         public static string CalculateKey(string path, IDictionary<string, string> preprocessorDefines)
         {
