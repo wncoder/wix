@@ -160,14 +160,24 @@ extern "C" HRESULT PackagesParseFromXml(
             ExitOnFailure(hr, "Failed to get @InstallCondition.");
         }
 
-        // @RollbackBoundary
-        hr = XmlGetAttributeEx(pixnNode, L"RollbackBoundary", &scz);
+        // @RollbackBoundaryForward
+        hr = XmlGetAttributeEx(pixnNode, L"RollbackBoundaryForward", &scz);
         if (E_NOTFOUND != hr)
         {
-            ExitOnFailure(hr, "Failed to get @RollbackBoundary.");
+            ExitOnFailure(hr, "Failed to get @RollbackBoundaryForward.");
 
-            hr =  FindRollbackBoundaryById(pPackages, scz, &pPackage->pRollbackBoundary);
-            ExitOnFailure1(hr, "Failed to find transaction boundary: %ls", scz);
+            hr =  FindRollbackBoundaryById(pPackages, scz, &pPackage->pRollbackBoundaryForward);
+            ExitOnFailure1(hr, "Failed to find forward transaction boundary: %ls", scz);
+        }
+
+        // @RollbackBoundaryBackward
+        hr = XmlGetAttributeEx(pixnNode, L"RollbackBoundaryBackward", &scz);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @RollbackBoundaryBackward.");
+
+            hr =  FindRollbackBoundaryById(pPackages, scz, &pPackage->pRollbackBoundaryBackward);
+            ExitOnFailure1(hr, "Failed to find backward transaction boundary: %ls", scz);
         }
 
         // read type specific attributes

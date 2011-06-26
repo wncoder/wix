@@ -209,24 +209,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         using (View view = database.OpenExecuteView("SELECT `Value` FROM `Property` WHERE Property = 'ProductCode'"))
                         {
-                            Record record = null;
-
-                            try
+                            using (Record record = view.Fetch())
                             {
-                                if (null != (record = view.Fetch()))
+                                if (null != record)
                                 {
                                     productCode = record.GetString(1);
 
                                     using (View dropProductCodeView = database.OpenExecuteView("DELETE FROM `Property` WHERE `Property` = 'ProductCode'"))
                                     {
                                     }
-                                }
-                            }
-                            finally
-                            {
-                                if (null != record)
-                                {
-                                    record.Close();
                                 }
                             }
                         }

@@ -339,279 +339,289 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // get the normal tables
                 using (View tablesView = database.OpenExecuteView("SELECT * FROM _Tables"))
                 {
-                    Record tableRecord;
-
-                    while (null != (tableRecord = tablesView.Fetch()))
+                    while (true)
                     {
-                        string tableName = tableRecord.GetString(1);
-
-                        using (View tableView = database.OpenExecuteView(String.Format(CultureInfo.InvariantCulture, "SELECT * FROM `{0}`", tableName)))
+                        using (Record tableRecord = tablesView.Fetch())
                         {
-                            TableDefinition tableDefinition = new TableDefinition(tableName, false, false);
-                            Hashtable tablePrimaryKeys = new Hashtable();
-
-                            Record columnNameRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFONAMES);
-                            Record columnTypeRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFOTYPES);
-                            int columnCount = columnNameRecord.GetFieldCount();
-
-                            // index the primary keys
-                            using (Record primaryKeysRecord = database.PrimaryKeys(tableName))
+                            if (null == tableRecord)
                             {
-                                int primaryKeysFieldCount = primaryKeysRecord.GetFieldCount();
-
-                                for (int i = 1; i <= primaryKeysFieldCount; i++)
-                                {
-                                    tablePrimaryKeys[primaryKeysRecord.GetString(i)] = null;
-                                }
+                                break;
                             }
 
-                            for (int i = 1; i <= columnCount; i++)
+                            string tableName = tableRecord.GetString(1);
+
+                            using (View tableView = database.OpenExecuteView(String.Format(CultureInfo.InvariantCulture, "SELECT * FROM `{0}`", tableName)))
                             {
-                                string columnName = columnNameRecord.GetString(i);
-                                string idtType = columnTypeRecord.GetString(i);
+                                TableDefinition tableDefinition = new TableDefinition(tableName, false, false);
+                                Hashtable tablePrimaryKeys = new Hashtable();
 
-                                ColumnType columnType;
-                                int length;
-                                bool nullable;
-
-                                ColumnCategory columnCategory = ColumnCategory.Unknown;
-                                ColumnModularizeType columnModularizeType = ColumnModularizeType.None;
-                                bool primary = tablePrimaryKeys.Contains(columnName);
-                                bool minValueSet = false;
-                                int minValue = -1;
-                                bool maxValueSet = false;
-                                int maxValue = -1;
-                                string keyTable = null;
-                                bool keyColumnSet = false;
-                                int keyColumn = -1;
-                                string category = null;
-                                string set = null;
-                                string description = null;
-
-                                // get the column type, length, and whether its nullable
-                                switch (Char.ToLower(idtType[0], CultureInfo.InvariantCulture))
+                                using (Record columnNameRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFONAMES),
+                                              columnTypeRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFOTYPES))
                                 {
-                                    case 'i':
-                                        columnType = ColumnType.Number;
-                                        break;
-                                    case 'l':
-                                        columnType = ColumnType.Localized;
-                                        break;
-                                    case 's':
-                                        columnType = ColumnType.String;
-                                        break;
-                                    case 'v':
-                                        columnType = ColumnType.Object;
-                                        break;
-                                    default:
-                                        // TODO: error
-                                        columnType = ColumnType.Unknown;
-                                        break;
-                                }
-                                length = Convert.ToInt32(idtType.Substring(1), CultureInfo.InvariantCulture);
-                                nullable = Char.IsUpper(idtType[0]);
+                                    int columnCount = columnNameRecord.GetFieldCount();
 
-                                // try to get validation information
-                                if (null != validationView)
-                                {
-                                    Record validationRecord = new Record(2);
-                                    validationRecord.SetString(1, tableName);
-                                    validationRecord.SetString(2, columnName);
-
-                                    validationView.Execute(validationRecord);
-                                    validationRecord.Close();
-
-                                    if (null != (validationRecord = validationView.Fetch()))
+                                    // index the primary keys
+                                    using (Record primaryKeysRecord = database.PrimaryKeys(tableName))
                                     {
-                                        string validationNullable = validationRecord.GetString(3);
-                                        minValueSet = !validationRecord.IsNull(4);
-                                        minValue = (minValueSet ? validationRecord.GetInteger(4) : -1);
-                                        maxValueSet = !validationRecord.IsNull(5);
-                                        maxValue = (maxValueSet ? validationRecord.GetInteger(5) : -1);
-                                        keyTable = (!validationRecord.IsNull(6) ? validationRecord.GetString(6) : null);
-                                        keyColumnSet = !validationRecord.IsNull(7);
-                                        keyColumn = (keyColumnSet ? validationRecord.GetInteger(7) : -1);
-                                        category = (!validationRecord.IsNull(8) ? validationRecord.GetString(8) : null);
-                                        set = (!validationRecord.IsNull(9) ? validationRecord.GetString(9) : null);
-                                        description = (!validationRecord.IsNull(10) ? validationRecord.GetString(10) : null);
+                                        int primaryKeysFieldCount = primaryKeysRecord.GetFieldCount();
 
-                                        // check the validation nullable value against the column definition
-                                        if (null == validationNullable)
+                                        for (int i = 1; i <= primaryKeysFieldCount; i++)
                                         {
-                                            // TODO: warn for illegal validation nullable column
+                                            tablePrimaryKeys[primaryKeysRecord.GetString(i)] = null;
                                         }
-                                        else if ((nullable && "Y" != validationNullable) || (!nullable && "N" != validationNullable))
-                                        {
-                                            // TODO: warn for mismatch between column definition and validation nullable
-                                        }
+                                    }
 
-                                        // convert category to ColumnCategory
-                                        if (null != category)
+                                    for (int i = 1; i <= columnCount; i++)
+                                    {
+                                        string columnName = columnNameRecord.GetString(i);
+                                        string idtType = columnTypeRecord.GetString(i);
+
+                                        ColumnType columnType;
+                                        int length;
+                                        bool nullable;
+
+                                        ColumnCategory columnCategory = ColumnCategory.Unknown;
+                                        ColumnModularizeType columnModularizeType = ColumnModularizeType.None;
+                                        bool primary = tablePrimaryKeys.Contains(columnName);
+                                        bool minValueSet = false;
+                                        int minValue = -1;
+                                        bool maxValueSet = false;
+                                        int maxValue = -1;
+                                        string keyTable = null;
+                                        bool keyColumnSet = false;
+                                        int keyColumn = -1;
+                                        string category = null;
+                                        string set = null;
+                                        string description = null;
+
+                                        // get the column type, length, and whether its nullable
+                                        switch (Char.ToLower(idtType[0], CultureInfo.InvariantCulture))
                                         {
-                                            try
+                                            case 'i':
+                                                columnType = ColumnType.Number;
+                                                break;
+                                            case 'l':
+                                                columnType = ColumnType.Localized;
+                                                break;
+                                            case 's':
+                                                columnType = ColumnType.String;
+                                                break;
+                                            case 'v':
+                                                columnType = ColumnType.Object;
+                                                break;
+                                            default:
+                                                // TODO: error
+                                                columnType = ColumnType.Unknown;
+                                                break;
+                                        }
+                                        length = Convert.ToInt32(idtType.Substring(1), CultureInfo.InvariantCulture);
+                                        nullable = Char.IsUpper(idtType[0]);
+
+                                        // try to get validation information
+                                        if (null != validationView)
+                                        {
+                                            using (Record validationRecord = new Record(2))
                                             {
-                                                columnCategory = (ColumnCategory)Enum.Parse(typeof(ColumnCategory), category, true);
+                                                validationRecord.SetString(1, tableName);
+                                                validationRecord.SetString(2, columnName);
+
+                                                validationView.Execute(validationRecord);
                                             }
-                                            catch (ArgumentException)
+
+                                            using (Record validationRecord = validationView.Fetch())
                                             {
-                                                columnCategory = ColumnCategory.Unknown;
-                                            }
-                                        }
-
-                                        validationRecord.Close();
-                                    }
-                                    else
-                                    {
-                                        // TODO: warn about no validation information
-                                    }
-                                }
-
-                                // guess the modularization type
-                                if ("Icon" == keyTable && 1 == keyColumn)
-                                {
-                                    columnModularizeType = ColumnModularizeType.Icon;
-                                }
-                                else if ("Condition" == columnName)
-                                {
-                                    columnModularizeType = ColumnModularizeType.Condition;
-                                }
-                                else if (ColumnCategory.Formatted == columnCategory || ColumnCategory.FormattedSDDLText == columnCategory)
-                                {
-                                    columnModularizeType = ColumnModularizeType.Property;
-                                }
-                                else if (ColumnCategory.Identifier == columnCategory)
-                                {
-                                    columnModularizeType = ColumnModularizeType.Column;
-                                }
-
-                                tableDefinition.Columns.Add(new ColumnDefinition(columnName, columnType, length, primary, nullable, columnModularizeType, (ColumnType.Localized == columnType), minValueSet, minValue, maxValueSet, maxValue, keyTable, keyColumnSet, keyColumn, columnCategory, set, description, true, true));
-                            }
-
-                            columnNameRecord.Close();
-                            columnTypeRecord.Close();
-
-                            // use our table definitions if core properties are the same; this allows us to take advantage
-                            // of wix concepts like localizable columns which current code assumes
-                            if (this.tableDefinitions.Contains(tableName) && 0 == tableDefinition.CompareTo(this.tableDefinitions[tableName]))
-                            {
-                                tableDefinition = this.tableDefinitions[tableName];
-                            }
-                            Table table = new Table(null, tableDefinition);
-
-                            Record rowRecord;
-                            while (null != (rowRecord = tableView.Fetch()))
-                            {
-                                int recordCount = rowRecord.GetFieldCount();
-                                Row row = table.CreateRow(output.SourceLineNumbers);
-
-                                for (int i = 0; recordCount > i && row.Fields.Length > i; i++)
-                                {
-                                    if (rowRecord.IsNull(i + 1))
-                                    {
-                                        if (!row.Fields[i].Column.IsNullable)
-                                        {
-                                            // TODO: display an error for a null value in a non-nullable field OR
-                                            // display a warning and put an empty string in the value to let the compiler handle it
-                                            // (the second option is risky because the later code may make certain assumptions about
-                                            // the contents of a row value)
-                                        }
-                                    }
-                                    else
-                                    {
-                                        switch (row.Fields[i].Column.Type)
-                                        {
-                                            case ColumnType.Number:
-                                                bool success = false;
-                                                int intValue = rowRecord.GetInteger(i + 1);
-                                                if (row.Fields[i].Column.IsLocalizable)
+                                                if (null != validationRecord)
                                                 {
-                                                    success = row.BestEffortSetField(i, Convert.ToString(intValue, CultureInfo.InvariantCulture));
+                                                    string validationNullable = validationRecord.GetString(3);
+                                                    minValueSet = !validationRecord.IsNull(4);
+                                                    minValue = (minValueSet ? validationRecord.GetInteger(4) : -1);
+                                                    maxValueSet = !validationRecord.IsNull(5);
+                                                    maxValue = (maxValueSet ? validationRecord.GetInteger(5) : -1);
+                                                    keyTable = (!validationRecord.IsNull(6) ? validationRecord.GetString(6) : null);
+                                                    keyColumnSet = !validationRecord.IsNull(7);
+                                                    keyColumn = (keyColumnSet ? validationRecord.GetInteger(7) : -1);
+                                                    category = (!validationRecord.IsNull(8) ? validationRecord.GetString(8) : null);
+                                                    set = (!validationRecord.IsNull(9) ? validationRecord.GetString(9) : null);
+                                                    description = (!validationRecord.IsNull(10) ? validationRecord.GetString(10) : null);
+
+                                                    // check the validation nullable value against the column definition
+                                                    if (null == validationNullable)
+                                                    {
+                                                        // TODO: warn for illegal validation nullable column
+                                                    }
+                                                    else if ((nullable && "Y" != validationNullable) || (!nullable && "N" != validationNullable))
+                                                    {
+                                                        // TODO: warn for mismatch between column definition and validation nullable
+                                                    }
+
+                                                    // convert category to ColumnCategory
+                                                    if (null != category)
+                                                    {
+                                                        try
+                                                        {
+                                                            columnCategory = (ColumnCategory)Enum.Parse(typeof(ColumnCategory), category, true);
+                                                        }
+                                                        catch (ArgumentException)
+                                                        {
+                                                            columnCategory = ColumnCategory.Unknown;
+                                                        }
+                                                    }
                                                 }
                                                 else
                                                 {
-                                                    success = row.BestEffortSetField(i, intValue);
+                                                    // TODO: warn about no validation information
                                                 }
+                                            }
+                                        }
 
-                                                if (!success)
+                                        // guess the modularization type
+                                        if ("Icon" == keyTable && 1 == keyColumn)
+                                        {
+                                            columnModularizeType = ColumnModularizeType.Icon;
+                                        }
+                                        else if ("Condition" == columnName)
+                                        {
+                                            columnModularizeType = ColumnModularizeType.Condition;
+                                        }
+                                        else if (ColumnCategory.Formatted == columnCategory || ColumnCategory.FormattedSDDLText == columnCategory)
+                                        {
+                                            columnModularizeType = ColumnModularizeType.Property;
+                                        }
+                                        else if (ColumnCategory.Identifier == columnCategory)
+                                        {
+                                            columnModularizeType = ColumnModularizeType.Column;
+                                        }
+
+                                        tableDefinition.Columns.Add(new ColumnDefinition(columnName, columnType, length, primary, nullable, columnModularizeType, (ColumnType.Localized == columnType), minValueSet, minValue, maxValueSet, maxValue, keyTable, keyColumnSet, keyColumn, columnCategory, set, description, true, true));
+                                    }
+                                }
+                                // use our table definitions if core properties are the same; this allows us to take advantage
+                                // of wix concepts like localizable columns which current code assumes
+                                if (this.tableDefinitions.Contains(tableName) && 0 == tableDefinition.CompareTo(this.tableDefinitions[tableName]))
+                                {
+                                    tableDefinition = this.tableDefinitions[tableName];
+                                }
+                                Table table = new Table(null, tableDefinition);
+
+                                while (true)
+                                {
+                                    using (Record rowRecord = tableView.Fetch())
+                                    {
+                                        if (null == rowRecord)
+                                        {
+                                            break;
+                                        }
+
+                                        int recordCount = rowRecord.GetFieldCount();
+                                        Row row = table.CreateRow(output.SourceLineNumbers);
+
+                                        for (int i = 0; recordCount > i && row.Fields.Length > i; i++)
+                                        {
+                                            if (rowRecord.IsNull(i + 1))
+                                            {
+                                                if (!row.Fields[i].Column.IsNullable)
                                                 {
-                                                    this.OnMessage(WixWarnings.BadColumnDataIgnored(row.SourceLineNumbers, Convert.ToString(intValue, CultureInfo.InvariantCulture), tableName, row.Fields[i].Column.Name));
+                                                    // TODO: display an error for a null value in a non-nullable field OR
+                                                    // display a warning and put an empty string in the value to let the compiler handle it
+                                                    // (the second option is risky because the later code may make certain assumptions about
+                                                    // the contents of a row value)
                                                 }
-                                                break;
-                                            case ColumnType.Object:
-                                                string sourceFile = "FILE NOT EXPORTED, USE THE dark.exe -x OPTION TO EXPORT BINARIES";
-
-                                                if (null != exportBasePath)
+                                            }
+                                            else
+                                            {
+                                                switch (row.Fields[i].Column.Type)
                                                 {
-                                                    string relativeSourceFile = Path.Combine(tableName, row.GetPrimaryKey('.'));
-                                                    sourceFile = Path.Combine(exportBasePath, relativeSourceFile);
-
-                                                    // ensure the parent directory exists
-                                                    System.IO.Directory.CreateDirectory(Path.Combine(exportBasePath, tableName));
-
-                                                    using (FileStream fs = System.IO.File.Create(sourceFile))
-                                                    {
-                                                        int bytesRead;
-                                                        byte[] buffer = new byte[512];
-
-                                                        while (0 != (bytesRead = rowRecord.GetStream(i + 1, buffer, buffer.Length)))
+                                                    case ColumnType.Number:
+                                                        bool success = false;
+                                                        int intValue = rowRecord.GetInteger(i + 1);
+                                                        if (row.Fields[i].Column.IsLocalizable)
                                                         {
-                                                            fs.Write(buffer, 0, bytesRead);
+                                                            success = row.BestEffortSetField(i, Convert.ToString(intValue, CultureInfo.InvariantCulture));
                                                         }
-                                                    }
-                                                }
+                                                        else
+                                                        {
+                                                            success = row.BestEffortSetField(i, intValue);
+                                                        }
 
-                                                row[i] = sourceFile;
-                                                break;
-                                            default:
-                                                string value = rowRecord.GetString(i + 1);
+                                                        if (!success)
+                                                        {
+                                                            this.OnMessage(WixWarnings.BadColumnDataIgnored(row.SourceLineNumbers, Convert.ToString(intValue, CultureInfo.InvariantCulture), tableName, row.Fields[i].Column.Name));
+                                                        }
+                                                        break;
+                                                    case ColumnType.Object:
+                                                        string sourceFile = "FILE NOT EXPORTED, USE THE dark.exe -x OPTION TO EXPORT BINARIES";
 
-                                                switch (row.Fields[i].Column.Category)
-                                                {
-                                                    case ColumnCategory.Guid:
-                                                        value = value.ToUpper(CultureInfo.InvariantCulture);
+                                                        if (null != exportBasePath)
+                                                        {
+                                                            string relativeSourceFile = Path.Combine(tableName, row.GetPrimaryKey('.'));
+                                                            sourceFile = Path.Combine(exportBasePath, relativeSourceFile);
+
+                                                            // ensure the parent directory exists
+                                                            System.IO.Directory.CreateDirectory(Path.Combine(exportBasePath, tableName));
+
+                                                            using (FileStream fs = System.IO.File.Create(sourceFile))
+                                                            {
+                                                                int bytesRead;
+                                                                byte[] buffer = new byte[512];
+
+                                                                while (0 != (bytesRead = rowRecord.GetStream(i + 1, buffer, buffer.Length)))
+                                                                {
+                                                                    fs.Write(buffer, 0, bytesRead);
+                                                                }
+                                                            }
+                                                        }
+
+                                                        row[i] = sourceFile;
+                                                        break;
+                                                    default:
+                                                        string value = rowRecord.GetString(i + 1);
+
+                                                        switch (row.Fields[i].Column.Category)
+                                                        {
+                                                            case ColumnCategory.Guid:
+                                                                value = value.ToUpper(CultureInfo.InvariantCulture);
+                                                                break;
+                                                        }
+
+                                                        // de-modularize
+                                                        if (!this.suppressDemodularization && OutputType.Module == output.Type && ColumnModularizeType.None != row.Fields[i].Column.ModularizeType)
+                                                        {
+                                                            Regex modularization = new Regex(@"\.[0-9A-Fa-f]{8}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{12}");
+
+                                                            if (null == modularizationGuid)
+                                                            {
+                                                                Match match = modularization.Match(value);
+                                                                if (match.Success)
+                                                                {
+                                                                    modularizationGuid = String.Concat('{', match.Value.Substring(1).Replace('_', '-'), '}');
+                                                                }
+                                                            }
+
+                                                            value = modularization.Replace(value, String.Empty);
+                                                        }
+
+                                                        // escape "$(" for the preprocessor
+                                                        value = value.Replace("$(", "$$(");
+
+                                                        // escape things that look like wix variables
+                                                        MatchCollection matches = Common.WixVariableRegex.Matches(value);
+                                                        for (int j = matches.Count - 1; 0 <= j; j--)
+                                                        {
+                                                            value = value.Insert(matches[j].Index, "!");
+                                                        }
+
+                                                        row[i] = value;
                                                         break;
                                                 }
-
-                                                // de-modularize
-                                                if (!this.suppressDemodularization && OutputType.Module == output.Type && ColumnModularizeType.None != row.Fields[i].Column.ModularizeType)
-                                                {
-                                                    Regex modularization = new Regex(@"\.[0-9A-Fa-f]{8}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{4}_[0-9A-Fa-f]{12}");
-
-                                                    if (null == modularizationGuid)
-                                                    {
-                                                        Match match = modularization.Match(value);
-                                                        if (match.Success)
-                                                        {
-                                                            modularizationGuid = String.Concat('{', match.Value.Substring(1).Replace('_', '-'), '}');
-                                                        }
-                                                    }
-
-                                                    value = modularization.Replace(value, String.Empty);
-                                                }
-
-                                                // escape "$(" for the preprocessor
-                                                value = value.Replace("$(", "$$(");
-
-                                                // escape things that look like wix variables
-                                                MatchCollection matches = Common.WixVariableRegex.Matches(value);
-                                                for (int j = matches.Count - 1; 0 <= j; j--)
-                                                {
-                                                    value = value.Insert(matches[j].Index, "!");
-                                                }
-
-                                                row[i] = value;
-                                                break;
+                                            }
                                         }
                                     }
                                 }
 
-                                rowRecord.Close();
+                                output.Tables.Add(table);
                             }
 
-                            output.Tables.Add(table);
                         }
-
-                        tableRecord.Close();
                     }
                 }
             }
@@ -1390,39 +1400,40 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     foreach (int diskId in embeddedCabinets.Keys)
                     {
-                        Record record = new Record(1);
-
-                        record.SetString(1, (string)embeddedCabinets[diskId]);
-                        streamsView.Execute(record);
-                        record.Close();
-
-                        if (null != (record = streamsView.Fetch()))
+                        using(Record record = new Record(1))
                         {
-                            // since the cabinets are stored in case-sensitive streams inside the msi, but the file system is not case-sensitive,
-                            // embedded cabinets must be extracted to a canonical file name (like their diskid) to ensure extraction will always work
-                            string cabinetFile = Path.Combine(this.TempFilesLocation, String.Concat("Media", Path.DirectorySeparatorChar, diskId.ToString(CultureInfo.InvariantCulture), ".cab"));
-
-                            // ensure the parent directory exists
-                            System.IO.Directory.CreateDirectory(Path.GetDirectoryName(cabinetFile));
-
-                            using (FileStream fs = System.IO.File.Create(cabinetFile))
-                            {
-                                int bytesRead;
-                                byte[] buffer = new byte[512];
-
-                                while (0 != (bytesRead = record.GetStream(1, buffer, buffer.Length)))
-                                {
-                                    fs.Write(buffer, 0, bytesRead);
-                                }
-                            }
-
-                            record.Close();
-
-                            cabinetFiles.Add(cabinetFile);
+                            record.SetString(1, (string)embeddedCabinets[diskId]);
+                            streamsView.Execute(record);
                         }
-                        else
+
+                        using (Record record = streamsView.Fetch())
                         {
-                            // TODO: warning about missing embedded cabinet
+                            if (null != record)
+                            {
+                                // since the cabinets are stored in case-sensitive streams inside the msi, but the file system is not case-sensitive,
+                                // embedded cabinets must be extracted to a canonical file name (like their diskid) to ensure extraction will always work
+                                string cabinetFile = Path.Combine(this.TempFilesLocation, String.Concat("Media", Path.DirectorySeparatorChar, diskId.ToString(CultureInfo.InvariantCulture), ".cab"));
+
+                                // ensure the parent directory exists
+                                System.IO.Directory.CreateDirectory(Path.GetDirectoryName(cabinetFile));
+
+                                using (FileStream fs = System.IO.File.Create(cabinetFile))
+                                {
+                                    int bytesRead;
+                                    byte[] buffer = new byte[512];
+
+                                    while (0 != (bytesRead = record.GetStream(1, buffer, buffer.Length)))
+                                    {
+                                        fs.Write(buffer, 0, bytesRead);
+                                    }
+                                }
+
+                                cabinetFiles.Add(cabinetFile);
+                            }
+                            else
+                            {
+                                // TODO: warning about missing embedded cabinet
+                            }
                         }
                     }
                 }

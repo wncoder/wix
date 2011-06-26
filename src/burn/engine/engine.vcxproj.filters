@@ -215,6 +215,9 @@
     <ClInclude Include="catalog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="netfxchainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="engine.mc" />

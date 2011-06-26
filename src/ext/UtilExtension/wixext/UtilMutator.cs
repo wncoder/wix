@@ -20,11 +20,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 {
     using System;
     using System.Collections;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
-
     using Wix = Microsoft.Tools.WindowsInstallerXml.Serialize;
 
     /// <summary>
@@ -272,7 +270,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         parentDirectory.RemoveChild(c);
 
                         // Remove whole fragment if moving the component to the component group just leaves an empty DirectoryRef
-                        if (parentDirectory.ParentElement is Wix.Fragment)
+                        if (0 < fragments.Count && parentDirectory.ParentElement is Wix.Fragment)
                         {
                             Wix.Fragment parentFragment = parentDirectory.ParentElement as Wix.Fragment;
                             int childCount = 0;
@@ -285,7 +283,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             if (1 == childCount && !String.IsNullOrEmpty(c.Id))
                             {
                                 int removeIndex = fragments.IndexOfKey(String.Concat("Component:", c.Id));
-                                fragments.RemoveAt(removeIndex);
+                                if (0 <= removeIndex)
+                                {
+                                    fragments.RemoveAt(removeIndex);
+                                }
                             }
                         }
                     }

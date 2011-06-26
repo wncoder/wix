@@ -21,6 +21,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
     using System;
     using System.ComponentModel;
     using Microsoft.Tools.WindowsInstallerXml.Msi.Interop;
+    using System.Threading;
+    using System.Diagnostics;
 
     /// <summary>
     /// Wrapper class for MSI handle.
@@ -29,6 +31,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
     {
         private bool disposed;
         private uint handle;
+        private int owningThread;
+#if DEBUG
+        private string creationStack;
+#endif
 
         /// <summary>
         /// MSI handle destructor.
@@ -62,6 +68,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
                 }
 
                 this.handle = value;
+                this.owningThread = Thread.CurrentThread.ManagedThreadId;
+#if DEBUG
+                this.creationStack = Environment.StackTrace;
+#endif
             }
         }
 
@@ -90,12 +100,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
         {
             if (!this.disposed)
             {
-                int error = MsiInterop.MsiCloseHandle(this.handle);
-                if (0 != error)
+                if (0 != this.handle)
                 {
-                    throw new Win32Exception(error);
+                    if (Thread.CurrentThread.ManagedThreadId == this.owningThread)
+                    {
+                        int error = MsiInterop.MsiCloseHandle(this.handle);
+                        if (0 != error)
+                        {
+                            throw new Win32Exception(error);
+                        }
+                        this.handle = 0;
+                    }
+                    else
+                    {
+                        // Don't try to close the handle on a different thread than it was opened.
+                        // This will occasionally cause MSI to AV.
+                        string message = String.Format("Leaked msi handle {0} created on thread {1} by type {2}.  This handle cannot be closed on thread {3}",
+                            this.handle, this.owningThread, this.GetType(), Thread.CurrentThread.ManagedThreadId);
+#if DEBUG
+                        throw new InvalidOperationException(String.Format("{0}.  Created {1}", message, this.creationStack));
+#else
+                        Debug.WriteLine(message);
+#endif
+                    }
                 }
-                this.handle = 0;
 
                 this.disposed = true;
             }

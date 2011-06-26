@@ -18348,19 +18348,39 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            if (null == id)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
-            }
-
-            if (null == name)
-            {
-                name = id;
-            }
-
-            if (null == sourceFile)
+            if (String.IsNullOrEmpty(sourceFile))
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "SourceFile"));
+            }
+            else if (String.IsNullOrEmpty(name))
+            {
+                name = Path.GetFileName(sourceFile);
+                if (!CompilerCore.IsValidLongFilename(name, false))
+                {
+                    this.core.OnMessage(WixErrors.IllegalLongFilename(sourceLineNumbers, node.Name, "Source", name));
+                }
+            }
+
+            if (String.IsNullOrEmpty(id))
+            {
+                if (!String.IsNullOrEmpty(name))
+                {
+                    id = CompilerCore.GetIdentifierFromName(name);
+                }
+
+                if (String.IsNullOrEmpty(id))
+                {
+                    this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+                }
+                else if (!CompilerCore.IsIdentifier(id))
+                {
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name, "Id", id));
+                }
+            }
+
+            if (String.IsNullOrEmpty(name))
+            {
+                name = id;
             }
 
             foreach (XmlNode child in node.ChildNodes)

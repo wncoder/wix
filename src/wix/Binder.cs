@@ -3157,6 +3157,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
+            // Process the chain of packages to add them in the correct order
+            // and assign the forward rollback boundaries as appropriate. Remember
+            // rollback boundaries are authored as elements in the chain which
+            // we re-interpret here to add them as attributes on the next available
+            // package in the chain. Essentially we mark some packages as being
+            // the start of a rollback boundary when installing and repairing.
+            // We handle uninstall (aka: backwards) rollback boundaries after
+            // we get these install/repair (aka: forward) rollback boundaries
+            // defined.
             ChainInfo chain = new ChainInfo(chainTable.Rows[0]); // WixChain table always has one and only row in it.
             RollbackBoundaryInfo previousRollbackBoundary = new RollbackBoundaryInfo("WixDefaultBoundary"); // ensure there is always a rollback boundary at the beginning of the chain.
             foreach (Row row in wixGroupTable.Rows)
@@ -3181,7 +3190,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                         chain.Packages.Add(packageInfo);
                     }
-                    else
+                    else // must be a rollback boundary.
                     {
                         // Discard the next rollback boundary if we have a previously defined boundary. Of course,
                         // a boundary specifically defined will override the default boundary.
@@ -3201,6 +3210,57 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (null != previousRollbackBoundary)
             {
                 this.core.OnMessage(WixWarnings.DiscardedRollbackBoundary(previousRollbackBoundary.SourceLineNumbers, previousRollbackBoundary.Id));
+            }
+
+            // With the forward rollback boundaries assigned, we can now go
+            // through the packages with rollback boundaries and assign backward
+            // rollback boundaries. Backward rollback boundaries are used when
+            // the chain is going "backwards" which (AFAIK) only happens during
+            // uninstall.
+            //
+            // Consider the scenario with three packages: A, B and C. Packages A
+            // and C are marked as rollback boundary packages and package B is
+            // not. The naive implementation would execute the chain like this
+            // (numbers indicate where rollback boundaries would end up):
+            //      install:    1 A B 2 C
+            //      uninstall:  2 C B 1 A
+            //
+            // The uninstall chain is wrong, A and B should be grouped together
+            // not C and B. The fix is to label packages with a "backwards"
+            // rollback boundary used during uninstall. The backwards rollback
+            // boundaries are assigned to the package *before* the next rollback
+            // boundary. Using our example from above again, I'll mark the 
+            // backwards rollback boundaries prime (aka: with ').
+            //      install:    1 A B 1' 2 C 2'
+            //      uninstall:  2' C 2 1' B A 1
+            //
+            // If the marked boundaries are ignored during install you get the
+            // same thing as above (good) and if the non-marked boundaries are
+            // ignored during uninstall then A and B are correctly grouped. 
+            // Here's what it looks like without all the markers:
+            //      install:    1 A B 2 C
+            //      uninstall:  2 C 1 B A
+            // Woot!
+            string previousRollbackBoundaryId = null;
+            ChainPackageInfo previousPackage = null;
+            foreach (ChainPackageInfo package in chain.Packages)
+            {
+                if (null != package.RollbackBoundary)
+                {
+                    if (null != previousPackage)
+                    {
+                        previousPackage.RollbackBoundaryBackwardId = previousRollbackBoundaryId;
+                    }
+
+                    previousRollbackBoundaryId = package.RollbackBoundary.Id;
+                }
+
+                previousPackage = package;
+            }
+
+            if (!String.IsNullOrEmpty(previousRollbackBoundaryId) && null != previousPackage)
+            {
+                previousPackage.RollbackBoundaryBackwardId = previousRollbackBoundaryId;
             }
 
             // Give all embedded payloads that don't have an embedded ID yet an embedded ID.
@@ -3712,7 +3772,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (null != package.RollbackBoundary)
                     {
-                        writer.WriteAttributeString("RollbackBoundary", package.RollbackBoundary.Id);
+                        writer.WriteAttributeString("RollbackBoundaryForward", package.RollbackBoundary.Id);
+                    }
+
+                    if (!String.IsNullOrEmpty(package.RollbackBoundaryBackwardId))
+                    {
+                        writer.WriteAttributeString("RollbackBoundaryBackward", package.RollbackBoundaryBackwardId);
                     }
 
                     if (!String.IsNullOrEmpty(package.LogPathVariable))
@@ -4531,49 +4596,55 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                 using (View view = db.OpenExecuteView("SELECT `File`, `Directory_` FROM `File`, `Component` WHERE `Component_`=`Component`"))
                                 {
-                                    Record record;
-
                                     // add each file row from the merge module into the file row collection (check for errors along the way)
-                                    while (null != (record = view.Fetch()))
+                                    while (true)
                                     {
-                                        // NOTE: this is very tricky - the merge module file rows are not added to the
-                                        // file table because they should not be created via idt import.  Instead, these
-                                        // rows are created by merging in the actual modules
-                                        FileRow fileRow = new FileRow(null, this.core.TableDefinitions["File"]);
-                                        fileRow.File = record[1];
-                                        fileRow.Compressed = wixMergeRow.FileCompression;
-                                        fileRow.Directory = record[2];
-                                        fileRow.DiskId = wixMergeRow.DiskId;
-                                        fileRow.FromModule = true;
-                                        fileRow.PatchGroup = -1;
-                                        fileRow.Source = String.Concat(this.TempFilesLocation, Path.DirectorySeparatorChar, "MergeId.", wixMergeRow.Number.ToString(CultureInfo.InvariantCulture.NumberFormat), Path.DirectorySeparatorChar, record[1]);
-
-                                        FileRow collidingFileRow = fileRows[fileRow.File];
-                                        FileRow collidingModuleFileRow = (FileRow)uniqueModuleFileIdentifiers[fileRow.File];
-
-                                        if (null == collidingFileRow && null == collidingModuleFileRow)
+                                        using (Record record = view.Fetch())
                                         {
-                                            fileRows.Add(fileRow);
-
-                                            // keep track of file identifiers in this merge module
-                                            uniqueModuleFileIdentifiers.Add(fileRow.File, fileRow);
-                                        }
-                                        else // collision(s) detected
-                                        {
-                                            // case-sensitive collision with another merge module or a user-authored file identifier
-                                            if (null != collidingFileRow)
+                                            if (null == record)
                                             {
-                                                this.core.OnMessage(WixErrors.DuplicateModuleFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, collidingFileRow.File));
+                                                break;
                                             }
 
-                                            // case-insensitive collision with another file identifier in the same merge module
-                                            if (null != collidingModuleFileRow)
-                                            {
-                                                this.core.OnMessage(WixErrors.DuplicateModuleCaseInsensitiveFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, fileRow.File, collidingModuleFileRow.File));
-                                            }
-                                        }
+                                            // NOTE: this is very tricky - the merge module file rows are not added to the
+                                            // file table because they should not be created via idt import.  Instead, these
+                                            // rows are created by merging in the actual modules
+                                            FileRow fileRow = new FileRow(null, this.core.TableDefinitions["File"]);
+                                            fileRow.File = record[1];
+                                            fileRow.Compressed = wixMergeRow.FileCompression;
+                                            fileRow.Directory = record[2];
+                                            fileRow.DiskId = wixMergeRow.DiskId;
+                                            fileRow.FromModule = true;
+                                            fileRow.PatchGroup = -1;
+                                            fileRow.Source = String.Concat(this.TempFilesLocation, Path.DirectorySeparatorChar, "MergeId.", wixMergeRow.Number.ToString(CultureInfo.InvariantCulture.NumberFormat), Path.DirectorySeparatorChar, record[1]);
 
-                                        containsFiles = true;
+                                            FileRow collidingFileRow = fileRows[fileRow.File];
+                                            FileRow collidingModuleFileRow = (FileRow)uniqueModuleFileIdentifiers[fileRow.File];
+
+                                            if (null == collidingFileRow && null == collidingModuleFileRow)
+                                            {
+                                                fileRows.Add(fileRow);
+
+                                                // keep track of file identifiers in this merge module
+                                                uniqueModuleFileIdentifiers.Add(fileRow.File, fileRow);
+                                            }
+                                            else // collision(s) detected
+                                            {
+                                                // case-sensitive collision with another merge module or a user-authored file identifier
+                                                if (null != collidingFileRow)
+                                                {
+                                                    this.core.OnMessage(WixErrors.DuplicateModuleFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, collidingFileRow.File));
+                                                }
+
+                                                // case-insensitive collision with another file identifier in the same merge module
+                                                if (null != collidingModuleFileRow)
+                                                {
+                                                    this.core.OnMessage(WixErrors.DuplicateModuleCaseInsensitiveFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, fileRow.File, collidingModuleFileRow.File));
+                                                }
+                                            }
+
+                                            containsFiles = true;
+                                        }
                                     }
                                 }
                             }
@@ -5788,13 +5859,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                             using (View view = db.OpenExecuteView(query))
                             {
-                                Record record;
-
-                                if (null != (record = view.Fetch()))
+                                using (Record record = view.Fetch())
                                 {
-                                    this.core.OnMessage(WixWarnings.SuppressMergedAction((string)row[1], row[0].ToString()));
-                                    view.Modify(ModifyView.Delete, record);
-                                    record.Close();
+                                    if (null != record)
+                                    {
+                                        this.core.OnMessage(WixWarnings.SuppressMergedAction((string)row[1], row[0].ToString()));
+                                        view.Modify(ModifyView.Delete, record);
+                                    }
                                 }
                             }
                         }
@@ -5811,11 +5882,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     using (View view = db.OpenExecuteView(String.Concat("SELECT `Action` FROM ", tableName)))
                     {
-                        Record resultRecord;
-                        while (null != (resultRecord = view.Fetch()))
+                        while (true)
                         {
-                            this.core.OnMessage(WixWarnings.SuppressMergedAction(resultRecord.GetString(1), tableName));
-                            resultRecord.Close();
+                            using (Record resultRecord = view.Fetch())
+                            {
+                                if (null == resultRecord)
+                                {
+                                    break;
+                                }
+
+                                this.core.OnMessage(WixWarnings.SuppressMergedAction(resultRecord.GetString(1), tableName));
+                            }
                         }
                     }
 
@@ -6089,12 +6166,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 using (View directoryView = db.OpenExecuteView("SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`"))
                 {
-                    Record directoryRecord;
-
-                    while (null != (directoryRecord = directoryView.Fetch()))
+                    while (true)
                     {
-                        using (directoryRecord)
+                        using (Record directoryRecord = directoryView.Fetch())
                         {
+                            if (null == directoryRecord)
+                            {
+                                break;
+                            }
+
                             string sourceName = Installer.GetName(directoryRecord.GetString(3), true, longNamesInImage);
 
                             directories.Add(directoryRecord.GetString(1), new ResolvedDirectory(directoryRecord.GetString(2), sourceName));
@@ -6972,6 +7052,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public ProvidesDependencyCollection Provides { get; private set; }
 
             public RollbackBoundaryInfo RollbackBoundary { get; set; }
+            public string RollbackBoundaryBackwardId { get; set; }
 
             /// <summary>
             /// Initializes package state from the MSI contents.
@@ -7040,32 +7121,38 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // Represent the Upgrade table as related packages.
                         if (db.Tables.Contains("Upgrade"))
                         {
-                            Microsoft.Deployment.WindowsInstaller.Record record;
                             using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `UpgradeCode`, `VersionMin`, `VersionMax`, `Language`, `Attributes` FROM `Upgrade`"))
                             {
                                 view.Execute();
-                                while (null != (record = view.Fetch()))
+                                while (true)
                                 {
-                                    RelatedPackage related = new RelatedPackage();
-                                    related.Id = record.GetString(1);
-                                    related.MinVersion = record.GetString(2);
-                                    related.MaxVersion = record.GetString(3);
-
-                                    string languages = record.GetString(4);
-                                    if (!String.IsNullOrEmpty(languages))
+                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
                                     {
-                                        string[] splitLanguages = languages.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                                        related.Languages.AddRange(splitLanguages);
+                                        if (null == record)
+                                        {
+                                            break;
+                                        }
+
+                                        RelatedPackage related = new RelatedPackage();
+                                        related.Id = record.GetString(1);
+                                        related.MinVersion = record.GetString(2);
+                                        related.MaxVersion = record.GetString(3);
+
+                                        string languages = record.GetString(4);
+                                        if (!String.IsNullOrEmpty(languages))
+                                        {
+                                            string[] splitLanguages = languages.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                            related.Languages.AddRange(splitLanguages);
+                                        }
+
+                                        int attributes = record.GetInteger(5);
+                                        related.OnlyDetect = (attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect;
+                                        related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
+                                        related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
+                                        related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;
+
+                                        this.RelatedPackages.Add(related);
                                     }
-
-                                    int attributes = record.GetInteger(5);
-                                    related.OnlyDetect = (attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect;
-                                    related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
-                                    related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
-                                    related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;
-
-                                    this.RelatedPackages.Add(related);
-                                    record.Close();
                                 }
                             }
                         }
@@ -7091,23 +7178,35 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         featureView.Execute(featureRecord);
 
                                         // Loop over all the components
-                                        Microsoft.Deployment.WindowsInstaller.Record componentResultRecord;
-                                        while (null != (componentResultRecord = featureView.Fetch()))
+                                        while (true)
                                         {
-                                            string component = componentResultRecord.GetString(1);
-                                            componentRecord.SetString(1, component);
-                                            componentView.Execute(componentRecord);
-
-                                            // Loop over all the files
-                                            Microsoft.Deployment.WindowsInstaller.Record fileResultRecord;
-                                            while (null != (fileResultRecord = componentView.Fetch()))
+                                            using (Microsoft.Deployment.WindowsInstaller.Record componentResultRecord = featureView.Fetch())
                                             {
-                                                string fileSize = fileResultRecord.GetString(1);
-                                                feature.Size += Convert.ToInt32(fileSize, CultureInfo.InvariantCulture.NumberFormat);
-                                                fileResultRecord.Close();
-                                            }
+                                                if (null == componentResultRecord)
+                                                {
+                                                    break;
+                                                }
+                                                string component = componentResultRecord.GetString(1);
+                                                componentRecord.SetString(1, component);
+                                                componentView.Execute(componentRecord);
 
-                                            componentResultRecord.Close();
+                                                // Loop over all the files
+                                                
+                                                while (true)
+                                                {
+                                                    using (Microsoft.Deployment.WindowsInstaller.Record fileResultRecord = componentView.Fetch())
+                                                    {
+                                                        if (null == fileResultRecord)
+                                                        {
+                                                            break;
+                                                        }
+
+                                                        string fileSize = fileResultRecord.GetString(1);
+                                                        feature.Size += Convert.ToInt32(fileSize, CultureInfo.InvariantCulture.NumberFormat);
+                                                    }
+                                                }
+
+                                            }
                                         }
                                     }
                                 }
@@ -7168,58 +7267,69 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         if (db.Tables.Contains("Component") && db.Tables.Contains("Directory") && db.Tables.Contains("File"))
                         {
                             Hashtable directories = new Hashtable();
-                            Microsoft.Deployment.WindowsInstaller.Record record;
-                            Microsoft.Deployment.WindowsInstaller.View view;
 
                             // Load up the directory hash table so we will be able to resolve source paths
                             // for files in the MSI database.
-                            using (view = db.OpenView("SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`"))
+                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`"))
                             {
                                 view.Execute();
-                                while (null != (record = view.Fetch()))
+                                while (true)
                                 {
-                                    string sourceName = Installer.GetName(record.GetString(3), true, longNamesInImage);
-                                    directories.Add(record.GetString(1), new ResolvedDirectory(record.GetString(2), sourceName));
-                                    record.Close();
+                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
+                                    {
+                                        if (null == record)
+                                        {
+                                            break;
+                                        }
+                                        string sourceName = Installer.GetName(record.GetString(3), true, longNamesInImage);
+                                        directories.Add(record.GetString(1), new ResolvedDirectory(record.GetString(2), sourceName));
+                                    }
                                 }
                             }
 
                             // Resolve the source paths to external files and add each file size to the total
                             // install size of the package.
-                            using (view = db.OpenView("SELECT `Directory_`, `File`, `FileName`, `File`.`Attributes`, `FileSize` FROM `Component`, `File` WHERE `Component`.`Component`=`File`.`Component_`"))
+                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `Directory_`, `File`, `FileName`, `File`.`Attributes`, `FileSize` FROM `Component`, `File` WHERE `Component`.`Component`=`File`.`Component_`"))
                             {
                                 view.Execute();
-                                while (null != (record = view.Fetch()))
+                                while (true)
                                 {
-                                    // Skip adding the loose files as payloads if it was suppressed.
-                                    if (suppressLooseFilePayloadGeneration != YesNoType.Yes)
+                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
                                     {
-                                        // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
-                                        // explicitly marked compressed then this is an external file.
-                                        if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
-                                            (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
+                                        if (null == record)
                                         {
-                                            string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
-                                            string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
-                                            string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
-                                            string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
-
-                                            PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
-                                            payloadNew.ParentPackagePayload = this.PackagePayload;
-                                            if (null != payloadNew.Container)
-                                            {
-                                                payloadNew.Container.Payloads.Add(payloadNew);
-                                            }
-
-                                            this.Payloads.Add(payloadNew);
-                                            allPayloads.Add(payloadNew.Id, payloadNew);
-
-                                            this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
+                                            break;
                                         }
-                                    }
 
-                                    this.InstallSize += record.GetInteger(5);
-                                    record.Close();
+                                        // Skip adding the loose files as payloads if it was suppressed.
+                                        if (suppressLooseFilePayloadGeneration != YesNoType.Yes)
+                                        {
+                                            // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
+                                            // explicitly marked compressed then this is an external file.
+                                            if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
+                                                (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
+                                            {
+                                                string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
+                                                string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
+                                                string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
+                                                string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
+
+                                                PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                                payloadNew.ParentPackagePayload = this.PackagePayload;
+                                                if (null != payloadNew.Container)
+                                                {
+                                                    payloadNew.Container.Payloads.Add(payloadNew);
+                                                }
+
+                                                this.Payloads.Add(payloadNew);
+                                                allPayloads.Add(payloadNew.Id, payloadNew);
+
+                                                this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
+                                            }
+                                        }
+
+                                        this.InstallSize += record.GetInteger(5);
+                                    }
                                 }
                             }
                         }
@@ -7227,16 +7337,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // Import any dependency providers from the MSI.
                         if (db.Tables.Contains("WixDependencyProvider"))
                         {
-                            Microsoft.Deployment.WindowsInstaller.Record record;
-                            Microsoft.Deployment.WindowsInstaller.View view;
-
-                            using (view = db.OpenView("SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`"))
+                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`"))
                             {
                                 view.Execute();
-                                while (null != (record = view.Fetch()))
+                                while (true)
                                 {
-                                    using (record)
+                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
                                     {
+                                        if (null == record)
+                                        {
+                                            break;
+                                        }
+
                                         // Import the provider key and attributes.
                                         string providerKey = record.GetString(1);
                                         int attributes = record.GetInteger(2);

@@ -129,90 +129,96 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 using (View mediaView = database.OpenExecuteView("SELECT * FROM Media"))
                 {
-                    Record mediaRecord;
-
-                    while (null != (mediaRecord = mediaView.Fetch()))
+                    while (true)
                     {
-                        X509Certificate2 cert2 = null;
-                        Row digitalSignatureRow = null;
-
-                        string cabName = mediaRecord.GetString(4); // get the name of the cab
-                        // If it's an internal cab, skip it
-                        if (cabName.StartsWith("#", StringComparison.Ordinal))
+                        using (Record mediaRecord = mediaView.Fetch())
                         {
-                            continue;
-                        }
-
-                        string cabId = mediaRecord.GetString(1); // get the ID of the cab
-                        string cabPath = Path.Combine(Path.GetDirectoryName(databaseFile), cabName);
-
-                        // If the cabs aren't there, throw an error but continue to catch the other errors
-                        if (!File.Exists(cabPath))
-                        {
-                            this.OnMessage(WixErrors.WixFileNotFound(cabPath));
-                            continue;
-                        }
-
-                        try
-                        {
-                            // Get the certificate from the cab
-                            X509Certificate signedFileCert = X509Certificate.CreateFromSignedFile(cabPath);
-                            cert2 = new X509Certificate2(signedFileCert);
-                        }
-                        catch (System.Security.Cryptography.CryptographicException e)
-                        {
-                            uint HResult = unchecked((uint)Marshal.GetHRForException(e));
-
-                            // If the file has no cert, continue, but flag that we found at least one so we can later give a warning
-                            if (0x80092009 == HResult) // CRYPT_E_NO_MATCH
+                            if (null == mediaRecord)
                             {
-                                foundUnsignedExternals = true;
+                                break;
+                            }
+
+                            X509Certificate2 cert2 = null;
+                            Row digitalSignatureRow = null;
+
+                            string cabName = mediaRecord.GetString(4); // get the name of the cab
+                            // If it's an internal cab, skip it
+                            if (cabName.StartsWith("#", StringComparison.Ordinal))
+                            {
                                 continue;
                             }
 
-                            // todo: exactly which HRESULT corresponds to this issue?
-                            // If it's one of these exact platforms, warn the user that it may be due to their OS.
-                            if ((5 == Environment.OSVersion.Version.Major && 2 == Environment.OSVersion.Version.Minor) || // W2K3
-                                    (5 == Environment.OSVersion.Version.Major && 1 == Environment.OSVersion.Version.Minor)) // XP
+                            string cabId = mediaRecord.GetString(1); // get the ID of the cab
+                            string cabPath = Path.Combine(Path.GetDirectoryName(databaseFile), cabName);
+
+                            // If the cabs aren't there, throw an error but continue to catch the other errors
+                            if (!File.Exists(cabPath))
                             {
-                                this.OnMessage(WixErrors.UnableToGetAuthenticodeCertOfFileDownlevelOS(cabPath, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", HResult)));
+                                this.OnMessage(WixErrors.WixFileNotFound(cabPath));
+                                continue;
                             }
-                            else // otherwise, generic error
+
+                            try
                             {
-                                this.OnMessage(WixErrors.UnableToGetAuthenticodeCertOfFile(cabPath, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", HResult)));
+                                // Get the certificate from the cab
+                                X509Certificate signedFileCert = X509Certificate.CreateFromSignedFile(cabPath);
+                                cert2 = new X509Certificate2(signedFileCert);
                             }
+                            catch (System.Security.Cryptography.CryptographicException e)
+                            {
+                                uint HResult = unchecked((uint)Marshal.GetHRForException(e));
+
+                                // If the file has no cert, continue, but flag that we found at least one so we can later give a warning
+                                if (0x80092009 == HResult) // CRYPT_E_NO_MATCH
+                                {
+                                    foundUnsignedExternals = true;
+                                    continue;
+                                }
+
+                                // todo: exactly which HRESULT corresponds to this issue?
+                                // If it's one of these exact platforms, warn the user that it may be due to their OS.
+                                if ((5 == Environment.OSVersion.Version.Major && 2 == Environment.OSVersion.Version.Minor) || // W2K3
+                                        (5 == Environment.OSVersion.Version.Major && 1 == Environment.OSVersion.Version.Minor)) // XP
+                                {
+                                    this.OnMessage(WixErrors.UnableToGetAuthenticodeCertOfFileDownlevelOS(cabPath, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", HResult)));
+                                }
+                                else // otherwise, generic error
+                                {
+                                    this.OnMessage(WixErrors.UnableToGetAuthenticodeCertOfFile(cabPath, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", HResult)));
+                                }
+                            }
+
+                            // If we haven't added this cert to the MsiDigitalCertificate table, set it up to be added
+                            if (!certificates.ContainsKey(cert2.Thumbprint))
+                            {
+                                // Add it to our "add to MsiDigitalCertificate" table dictionary
+                                Row digitalCertificateRow = digitalCertificateTable.CreateRow(null);
+                                digitalCertificateRow[0] = cert2.Thumbprint;
+
+                                // Export to a file, because the MSI API's require us to provide a file path on disk
+                                string certPath = Path.Combine(this.TempFilesLocation, "MsiDigitalCertificate");
+                                Directory.CreateDirectory(certPath);
+                                certPath = Path.Combine(certPath, cert2.Thumbprint + ".cer");
+                                File.Delete(certPath);
+
+                                using (BinaryWriter writer = new BinaryWriter(File.Open(certPath, FileMode.Create)))
+                                {
+                                    writer.Write(cert2.RawData);
+                                    writer.Close();
+                                }
+
+                                // Now set the file path on disk where this binary stream will be picked up at import time
+                                digitalCertificateRow[1] = cert2.Thumbprint + ".cer";
+
+                                certificates.Add(cert2.Thumbprint, certPath);
+                            }
+
+                            digitalSignatureRow = digitalSignatureTable.CreateRow(null);
+
+                            digitalSignatureRow[0] = "Media";
+                            digitalSignatureRow[1] = cabId;
+                            digitalSignatureRow[2] = cert2.Thumbprint;
                         }
-
-                        // If we haven't added this cert to the MsiDigitalCertificate table, set it up to be added
-                        if (!certificates.ContainsKey(cert2.Thumbprint))
-                        {
-                            // Add it to our "add to MsiDigitalCertificate" table dictionary
-                            Row digitalCertificateRow = digitalCertificateTable.CreateRow(null);
-                            digitalCertificateRow[0] = cert2.Thumbprint;
-
-                            // Export to a file, because the MSI API's require us to provide a file path on disk
-                            string certPath = Path.Combine(this.TempFilesLocation, "MsiDigitalCertificate");
-                            Directory.CreateDirectory(certPath);
-                            certPath = Path.Combine(certPath, cert2.Thumbprint + ".cer");
-                            File.Delete(certPath);
-
-                            using (BinaryWriter writer = new BinaryWriter(File.Open(certPath, FileMode.Create)))
-                            {
-                                writer.Write(cert2.RawData);
-                                writer.Close();
-                            }
-
-                            // Now set the file path on disk where this binary stream will be picked up at import time
-                            digitalCertificateRow[1] = cert2.Thumbprint + ".cer";
-
-                            certificates.Add(cert2.Thumbprint, certPath);
-                        }
-
-                        digitalSignatureRow = digitalSignatureTable.CreateRow(null);
-
-                        digitalSignatureRow[0] = "Media";
-                        digitalSignatureRow[1] = cabId;
-                        digitalSignatureRow[2] = cert2.Thumbprint;
                     }
                 }
 

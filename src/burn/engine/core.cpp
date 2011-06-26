@@ -410,6 +410,7 @@ extern "C" HRESULT CorePlan(
     {
         DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pEngineState->packages.cPackages - 1 - i : i;
         pPackage = pEngineState->packages.rgPackages + iPackage;
+        BURN_ROLLBACK_BOUNDARY* pEffectiveRollbackBoundary = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pPackage->pRollbackBoundaryBackward : pPackage->pRollbackBoundaryForward;
 
         executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
         rollbackAction = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -417,7 +418,7 @@ extern "C" HRESULT CorePlan(
         fPlannedCleanPackage = FALSE;
 
         // If the package marks the start of a rollback boundary, start a new one.
-        if (pPackage->pRollbackBoundary)
+        if (pEffectiveRollbackBoundary)
         {
             // Complete previous rollback boundary.
             if (pRollbackBoundary)
@@ -427,10 +428,10 @@ extern "C" HRESULT CorePlan(
             }
 
             // Start new rollback boundary.
-            hr = PlanRollbackBoundaryBegin(&pEngineState->plan, pPackage->pRollbackBoundary, &hRollbackBoundaryCompleteEvent);
+            hr = PlanRollbackBoundaryBegin(&pEngineState->plan, pEffectiveRollbackBoundary, &hRollbackBoundaryCompleteEvent);
             ExitOnFailure(hr, "Failed to plan rollback boundary begin.");
 
-            pRollbackBoundary = pPackage->pRollbackBoundary;
+            pRollbackBoundary = pEffectiveRollbackBoundary;
         }
 
         // Remember the default requested state so the engine doesn't get blamed for planning the wrong thing if the UX changes it.

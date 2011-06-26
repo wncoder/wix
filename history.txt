@@ -1191,3 +1191,20 @@ RobMen: SFBUG:3132163 - use the WiX update feed for news instead of my blog.
 
 WixBuild: Version 3.6.1817.0
 
+HeathS: Changed CRL checks to use cached CRL to support offline support.
+
+RobMen: SFBUG:3163411 - fix WixUI in hi-IN, kk-KZ, ro-RO.
+
+BMurri: Create parity in parsing attributes of EmbeddedUI and EmbeddedUIResource
+        elements.
+
+PMarcu: Second try at catching duplicate symbols early.
+
+EricStJ: Intermittent failure when a sharing violation occurs on last IIS commit
+
+EricStJ: SFBUG: 3310378 AccessViolation in MsiCloseHandle on finalizer thread
+
+JieJi/RobMen - Support rollback boundaries correctly during uninstall.
+
+WixBuild: Version 3.6.1826.0
+

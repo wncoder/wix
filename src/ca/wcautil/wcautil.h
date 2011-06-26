@@ -269,11 +269,6 @@ DWORD WIXAPI WcaCountOfCustomActionDataRecords(
     __in_z LPCWSTR wzData
     );
 
-void WIXAPI RevertCustomActionData(
-    __in LPWSTR wzRevertTo,
-    __in LPCWSTR wzRevertFrom
-    );
-
 HRESULT WIXAPI WcaReadStringFromCaData(
     __deref_in LPWSTR* ppwzCustomActionData,
     __deref_out_z LPWSTR* ppwzString

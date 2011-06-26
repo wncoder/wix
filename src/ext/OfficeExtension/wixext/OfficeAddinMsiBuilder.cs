@@ -615,47 +615,33 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions.OfficeAddin
         /// <param name="filePath">Path to the package.</param>
         private void ReadPreviousPackage(string filePath)
         {
-            Database db = null;
-            View view = null;
-
-            try
+            using (Database db = new Database(filePath, OpenDatabase.ReadOnly))
             {
-                db = new Database(filePath, OpenDatabase.ReadOnly);
-                view = db.OpenView("SELECT `Value` FROM `Property` WHERE `Property`=?");
-
-                string propertyValue;
-
-                // get the UpgradeCode
-                propertyValue = this.FetchPropertyValue(view, "UpgradeCode");
-                if (propertyValue != null)
+                using (View view = db.OpenView("SELECT `Value` FROM `Property` WHERE `Property`=?"))
                 {
-                    this.previousUpgradeCode = new Guid(propertyValue);
-                }
 
-                // get the Version
-                propertyValue = this.FetchPropertyValue(view, "ProductVersion");
-                if (propertyValue != null)
-                {
-                    this.previousVersion = new Version(propertyValue);
-                }
+                    string propertyValue;
 
-                // get the Update URL
-                propertyValue = this.FetchPropertyValue(view, "ARPURLUPDATEINFO");
-                if (propertyValue != null)
-                {
-                    this.previousUri = new Uri(propertyValue);
-                }
-            }
-            finally
-            {
-                if (view != null)
-                {
-                    view.Close();
-                }
+                    // get the UpgradeCode
+                    propertyValue = this.FetchPropertyValue(view, "UpgradeCode");
+                    if (propertyValue != null)
+                    {
+                        this.previousUpgradeCode = new Guid(propertyValue);
+                    }
 
-                if (db != null)
-                {
-                    db.Close();
+                    // get the Version
+                    propertyValue = this.FetchPropertyValue(view, "ProductVersion");
+                    if (propertyValue != null)
+                    {
+                        this.previousVersion = new Version(propertyValue);
+                    }
+
+                    // get the Update URL
+                    propertyValue = this.FetchPropertyValue(view, "ARPURLUPDATEINFO");
+                    if (propertyValue != null)
+                    {
+                        this.previousUri = new Uri(propertyValue);
+                    }
                 }
             }
         }
@@ -674,19 +660,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions.OfficeAddin
                 recIn[1] = propertyName;
                 view.Execute(recIn);
 
-                Record recOut = null;
-                try
-                {
-                    if ((recOut = view.Fetch()) != null)
-                    {
-                        propertyValue = recOut[1];
-                    }
-                }
-                finally
+                using (Record recOut = view.Fetch())
                 {
                     if (recOut != null)
                     {
-                        recOut.Close();
+                        propertyValue = recOut[1];
                     }
                 }
             }

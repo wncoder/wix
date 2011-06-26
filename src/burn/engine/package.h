@@ -142,7 +142,8 @@ typedef struct _BURN_PACKAGE
     BOOL fCache;
     LPWSTR sczCacheId;
 
-    BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
+    BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryForward;  // used during install and repair.
+    BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryBackward; // used during uninstall.
 
     BOOTSTRAPPER_PACKAGE_STATE currentState;
     BOOL fCached;

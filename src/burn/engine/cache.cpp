@@ -404,9 +404,9 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
     wtd.pFile = &wfi;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
-    wtd.dwProvFlags = WTD_REVOCATION_CHECK_NONE;
+    wtd.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL;
     wtd.dwUIChoice = WTD_UI_NONE;
-    wtd.fdwRevocationChecks = WTD_REVOKE_NONE;
+    wtd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
 
     er = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &guidAuthenticode, &wtd);
     hr = HRESULT_FROM_WIN32(er);
@@ -564,10 +564,10 @@ static HRESULT VerifyPayloadWithCatalog(
     // Set up the WinVerifyTrust structures
     WinTrustData.cbStruct = sizeof(WINTRUST_DATA);
     WinTrustData.dwUIChoice = WTD_UI_NONE;
-    WinTrustData.fdwRevocationChecks = WTD_REVOKE_NONE;
+    WinTrustData.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
     WinTrustData.dwUnionChoice = WTD_CHOICE_CATALOG;
     WinTrustData.dwStateAction = WTD_STATEACTION_VERIFY;
-    WinTrustData.dwProvFlags = WTD_REVOCATION_CHECK_NONE;
+    WinTrustData.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL;
     WinTrustData.pCatalog = &WinTrustCatalogInfo;
 
     WinTrustCatalogInfo.cbStruct = sizeof(WINTRUST_CATALOG_INFO);

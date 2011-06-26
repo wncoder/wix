@@ -73,11 +73,13 @@
     <EmbeddedResource Include="WixUI_fi-FI.wxl" />
     <EmbeddedResource Include="WixUI_fr-FR.wxl" />
     <EmbeddedResource Include="WixUI_he-IL.wxl" />
+    <EmbeddedResource Include="WixUI_hi-IN.wxl" />
     <EmbeddedResource Include="WixUI_hr-HR.wxl" />
     <EmbeddedResource Include="WixUI_hu-HU.wxl" />
     <EmbeddedResource Include="WixUI_it-IT.wxl" />
     <EmbeddedResource Include="WixUI_ja-JP.wxl" />
     <EmbeddedResource Include="WixUI_ko-KR.wxl" />
+    <EmbeddedResource Include="WixUI_kk-KZ.wxl" />
     <EmbeddedResource Include="WixUI_lt-LT.wxl" />
     <EmbeddedResource Include="WixUI_lv-LV.wxl" />
     <EmbeddedResource Include="WixUI_nb-NO.wxl" />
@@ -85,6 +87,7 @@
     <EmbeddedResource Include="WixUI_pl-pl.wxl" />
     <EmbeddedResource Include="WixUI_pt-BR.wxl" />
     <EmbeddedResource Include="WixUI_pt-PT.wxl" />
+    <EmbeddedResource Include="WixUI_ro-RO.wxl" />
     <EmbeddedResource Include="WixUI_ru-RU.wxl" />
     <EmbeddedResource Include="WixUI_sk-SK.wxl" />
     <EmbeddedResource Include="WixUI_sl-SI.wxl" />

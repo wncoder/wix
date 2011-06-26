@@ -113,6 +113,44 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Gets a collection of lists of duplicated symbols.
+        /// </summary>
+        /// <param name="messageHandler">Message handler to display errors while acquiring symbols.</param>
+        /// <returns>Collection of duplicated symbols.</returns>
+        internal Dictionary<string, List<Symbol>> GetDuplicateSymbols(IMessageHandler messageHandler)
+        {
+            Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
+            Dictionary<string, List<Symbol>> duplicatedSymbols = new Dictionary<string, List<Symbol>>();
+
+            // Loop through all of the symbols in all of the sections in this collection looking for names that are duplicated.
+            foreach (Section section in this.collection.Keys)
+            {
+                foreach (Symbol symbol in section.GetSymbols(messageHandler))
+                {
+                    // If the symbol already exists in the list, then add it to the duplicatedSymbols collection.
+                    if (symbols.ContainsKey(symbol.Name))
+                    {
+                        List<Symbol> symbolList;
+                        if (!duplicatedSymbols.TryGetValue(symbol.Name, out symbolList))
+                        {
+                            symbolList = new List<Symbol>();
+                            symbolList.Add(symbols[symbol.Name]);
+                            duplicatedSymbols.Add(symbol.Name, symbolList);
+                        }
+
+                        symbolList.Add(symbol);
+                    }
+                    else
+                    {
+                        symbols.Add(symbol.Name, symbol);
+                    }
+                }
+            }
+
+            return duplicatedSymbols;
+        }
+
+        /// <summary>
         /// Gets enumerator for the collection.
         /// </summary>
         /// <returns>Enumerator for the collection.</returns>

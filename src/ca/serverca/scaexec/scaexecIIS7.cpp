@@ -321,6 +321,8 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
 
     LPWSTR pwz = NULL;
     LPWSTR pwzLast = NULL;
+    LPWSTR pwzBackup = NULL;
+    DWORD cchData = lstrlenW(pwzData);
     int iConfigElement = -1;
     int iAction = -1;
 
@@ -330,8 +332,11 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     ExitOnFailure(hr, "Failed to initialize COM");
     fInitializedCom = TRUE;
 
-
     pwz = pwzLast = pwzData;
+
+    hr = StrAllocString(&pwzBackup, pwz, 0);
+    ExitOnFailure(hr, "Failed to backup custom action data");
+
     while (S_OK == (hr = WcaReadIntegerFromCaData(&pwz, &iAction)))
     {
         if (NULL == pAdminMgr)
@@ -484,6 +489,7 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
             // Our transaction may have been interrupted.
             if (hr == HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION))
             {
+                WcaLog(LOGMSG_VERBOSE, "Sharing Violation during attempt to save changes to applicationHost.config");
                 if (++iRetryCount > 30)
                 {
                     if (IDRETRY == WcaErrorMessage(msierrIISFailedCommitInUse, hr, INSTALLMESSAGE_ERROR | MB_RETRYCANCEL, 0))
@@ -492,16 +498,18 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
                     }
                     else
                     {
-                        ExitOnFailure(hr, "Failed to Commit IIS Config Changes, user has chosen to cancel");
+                        ExitOnFailure(hr, "Failed to Commit IIS Config Changes, in silent mode or user has chosen to cancel");
                     }
                 }
 
                 // Throw away the changes since IIS has no way to remove uncommited changes from an AdminManager.
                 ReleaseNullObject(pAdminMgr);
 
-                // Rollback our CA data
-                RevertCustomActionData(pwzLast, pwz);
+                // Restore our CA data backup
                 pwz = pwzLast;
+                hr = ::StringCchCopyW(pwz, cchData - (pwz - pwzData) + 1, pwzBackup);
+                ExitOnFailure(hr , "Failed to restore custom action data backup");
+
             }
             else if (FAILED(hr))
             {
@@ -509,8 +517,13 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
             }
             else
             {
-                // store a pointer to the last place that we successfully commited changes.
-                pwzLast = pwz;
+                // store a backup of CA data @ the last place that we successfully commited changes unless we are done.
+                if(NULL != pwz)
+                {
+                    pwzLast = pwz;
+                    hr = StrAllocString(&pwzBackup, pwz, 0);
+                    ExitOnFailure(hr, "Failed to backup custom action data");
+                }
             }
         }
     }
@@ -520,6 +533,7 @@ HRESULT IIS7ConfigChanges(MSIHANDLE hInstall, __inout LPWSTR pwzData)
     }
 LExit:
     ReleaseObject(pAdminMgr);
+    ReleaseStr(pwzBackup);
 
     if (fInitializedCom)
     {
