@@ -169,6 +169,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 Console.WriteLine(Path.GetFileName(this.inputFile));
 
                 // unbind
+                // TODO: passing a bundle to the decompiler without the /x parameter specified stumbles here
+                //        as the exportBasePath will be null. Need a design decision whether to throw an 
+                //        message below or throw a message here
                 Output output = unbinder.Unbind(this.inputFile, this.outputType, this.exportBasePath);
                 
                 if (null != output)

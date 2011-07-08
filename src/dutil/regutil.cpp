@@ -42,8 +42,8 @@ extern "C" HRESULT DAPI RegInitialize(
 {
     HRESULT hr = S_OK;
 
-    vhAdvApi32Dll = ::LoadLibraryW(L"AdvApi32.dll");
-    ExitOnNullWithLastError(vhAdvApi32Dll, hr, "Failed to load AdvApi32.DLL");
+    hr = LoadSystemLibrary(L"AdvApi32.dll", &vhAdvApi32Dll);
+    ExitOnFailure(hr, "Failed to load AdvApi32.dll");
 
     // ignore failures - if this doesn't exist, we'll fall back to RegDeleteKeyW
     vpfnRegDeleteKeyExWFromLibrary = reinterpret_cast<PFN_REGDELETEKEYEXW>(::GetProcAddress(vhAdvApi32Dll, "RegDeleteKeyExW"));

@@ -18,6 +18,25 @@
 
 #include "precomp.h"
 
+const LPCWSTR BURN_ORIGINAL_SOURCE = L"WixBundleOriginalSource";
+
+static HRESULT CreateCompletedPath(
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzCacheId,
+    __out LPWSTR* psczCacheDirectory
+    );
+static HRESULT ResetPathPermissions(
+    __in BOOL fPerMachine,
+    __in LPWSTR wzPath
+    );
+static HRESULT SecurePath(
+    __in LPWSTR wzPath
+    );
+static HRESULT RemoveBundleOrPackage(
+    __in BOOL fBundle,
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzId
+    );
 static HRESULT VerifyPayloadHash(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
@@ -34,6 +53,54 @@ static HRESULT GetVerifiedCertificateChain(
     __in PCCERT_CONTEXT pCertContext,
     __out PCCERT_CHAIN_CONTEXT* ppChainContext
     );
+
+
+extern "C" HRESULT CacheGetOriginalSourcePath(
+    __in BURN_VARIABLES* pVariables,
+    __in_z_opt LPCWSTR wzRelativePath,
+    __out_z_opt LPWSTR* psczOriginalSource
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczOriginalSource = NULL;
+    LPWSTR sczOriginalSourceDirectory = NULL;
+
+    // If the original source has not been set already then set it where the bundle is
+    // running from right now. This value will be persisted and we'll use it when launched
+    // from the package cache since none of our packages will be relative to that location.
+    hr = VariableGetString(pVariables, BURN_ORIGINAL_SOURCE, &sczOriginalSource);
+    if (E_NOTFOUND == hr)
+    {
+        hr = PathForCurrentProcess(&sczOriginalSource, NULL);
+        ExitOnFailure(hr, "Failed to get path for current executing process.");
+
+        hr = VariableSetString(pVariables, BURN_ORIGINAL_SOURCE, sczOriginalSource);
+        ExitOnFailure(hr, "Failed to set original source variable.");
+    }
+
+    // If the original source was requested, append the relative path if it was provided.
+    if (psczOriginalSource)
+    {
+        if (wzRelativePath)
+        {
+            hr = PathGetDirectory(sczOriginalSource, &sczOriginalSourceDirectory);
+            ExitOnFailure(hr, "Failed to get original source directory.");
+
+            hr = PathConcat(sczOriginalSourceDirectory, wzRelativePath, psczOriginalSource);
+            ExitOnFailure(hr, "Failed to concat original source path with relative path.");
+        }
+        else // return the original source as is.
+        {
+            *psczOriginalSource = sczOriginalSource;
+            sczOriginalSource = NULL;
+        }
+    }
+
+LExit:
+    ReleaseStr(sczOriginalSourceDirectory);
+    ReleaseStr(sczOriginalSource);
+    return hr;
+}
 
 
 extern "C" HRESULT CacheCalculatePayloadUnverifiedPath(
@@ -212,6 +279,69 @@ extern "C" void CacheSendErrorCallback(
 }
 
 
+extern "C" HRESULT CacheBundle(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in_z LPCWSTR wzExecutablePath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCachedDirectory = NULL;
+    LPWSTR sczExecutableDirectory = NULL;
+    LPWSTR sczPayloadSourcePath = NULL;
+    LPWSTR sczPayloadTargetPath = NULL;
+
+    hr = LogStringLine(REPORT_STANDARD, "Caching executable from: '%ls' to: '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
+    ExitOnFailure(hr, "Failed to log 'caching executable' message");
+
+    // get base directory for executable
+    hr = PathGetDirectory(wzExecutablePath, &sczExecutableDirectory);
+    ExitOnFailure(hr, "Failed to get base directory for executable.");
+
+    // create cache directory
+    hr = CreateCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCachedDirectory);
+    ExitOnFailure(hr, "Failed to create cached path for bundle.");
+
+    // TODO: replace this copy with the more intelligent copy of only
+    // the burnstub executable and manifest data with fix-up for the
+    // signature.
+    hr = FileEnsureCopy(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE);
+    ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
+
+    hr = ResetPathPermissions(pRegistration->fPerMachine, pRegistration->sczCacheExecutablePath);
+    ExitOnFailure1(hr, "Failed to reset permissions on cached bundle: '%ls'", pRegistration->sczCacheExecutablePath);
+
+    // copy external UX payloads
+    for (DWORD i = 0; i < pUserExperience->payloads.cPayloads; ++i)
+    {
+        BURN_PAYLOAD* pPayload = &pUserExperience->payloads.rgPayloads[i];
+
+        if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
+        {
+            hr = PathConcat(sczExecutableDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
+            ExitOnFailure(hr, "Failed to build payload source path.");
+
+            hr = PathConcat(sczCachedDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
+            ExitOnFailure(hr, "Failed to build payload target path.");
+
+            // copy payload file
+            hr = FileEnsureCopy(sczPayloadSourcePath, sczPayloadTargetPath, TRUE);
+            ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
+
+            hr = ResetPathPermissions(pRegistration->fPerMachine, sczPayloadTargetPath);
+            ExitOnFailure1(hr, "Failed to reset permissions on cached payload: '%ls'", sczPayloadTargetPath);
+        }
+    }
+
+LExit:
+    ReleaseStr(sczCachedDirectory);
+    ReleaseStr(sczExecutableDirectory);
+    ReleaseStr(sczPayloadSourcePath);
+    ReleaseStr(sczPayloadTargetPath);
+
+    return hr;
+}
+
 extern "C" HRESULT CachePayload(
     __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
@@ -229,7 +359,7 @@ extern "C" HRESULT CachePayload(
     {
         AssertSz(pPackage, "Package is required when caching.");
 
-        hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
+        hr = CreateCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
         ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
     }
     else
@@ -247,7 +377,7 @@ extern "C" HRESULT CachePayload(
     {
         ExitWithLastError1(hr, "Failed to open payload in working path: %ls", wzUnverifiedPayloadPath);
     }
-    
+
     // If the payload has a certificate root public key identifier provided, verify the certificate.
     if (pPayload->pbCertificateRootPublicKeyIdentifier)
     {
@@ -278,10 +408,32 @@ extern "C" HRESULT CachePayload(
         ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
     }
 
+    // Reset the path permissions in the cache (i.e. if we're not doing a layout).
+    if (NULL == wzLayoutDirectory)
+    {
+        hr = ResetPathPermissions(pPackage->fPerMachine, sczCachedPath);
+        ExitOnFailure1(hr, "Failed to reset permissions on cached payload: %ls", sczCachedPath);
+    }
+
 LExit:
     ReleaseFileHandle(hFile);
     ReleaseStr(sczCachedPath);
     ReleaseStr(sczCachedDirectory);
+    return hr;
+}
+
+
+extern "C" HRESULT CacheRemoveBundle(
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzBundleId
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = RemoveBundleOrPackage(TRUE, fPerMachine, wzBundleId);
+    ExitOnFailure1(hr, "Failed to remove bunlde id: %ls.", wzBundleId);
+
+LExit:
     return hr;
 }
 
@@ -292,81 +444,11 @@ extern "C" HRESULT CacheRemovePackage(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczRootCacheDirectory = NULL;
-    LPWSTR sczDirectory = NULL;
-    LPWSTR sczFiles = NULL;
-    HANDLE hFind = INVALID_HANDLE_VALUE;
-    WIN32_FIND_DATAW wfd;
 
-    LPWSTR sczFile = NULL;
-    WCHAR wzTempDirectory[MAX_PATH];
-    WCHAR wzTempPath[MAX_PATH];
-
-    hr = CacheGetCompletedPath(fPerMachine, L"", &sczRootCacheDirectory);
-    ExitOnFailure(hr, "Failed to calculate root cache path.");
-
-    hr = PathConcat(sczRootCacheDirectory, wzPackageId, &sczDirectory);
-    ExitOnFailure(hr, "Failed to combine package id to root cache path.");
-
-    LogId(REPORT_STANDARD, MSG_UNCACHE_PACKAGE, wzPackageId, sczDirectory);
-
-    hr = PathConcat(sczDirectory, L"*.*", &sczFiles);
-    ExitOnFailure(hr, "Failed to allocate path to all files in bundle directory.");
-
-    if (!::GetTempPathW(countof(wzTempDirectory), wzTempDirectory))
-    {
-        ExitWithLastError(hr, "Failed to get temp directory.");
-    }
-
-    hFind = ::FindFirstFileW(sczFiles, &wfd);
-    if (INVALID_HANDLE_VALUE == hFind)
-    {
-        ExitOnLastError1(hr, "Failed to get first file in bundle directory: %ls", sczDirectory);
-    }
-
-    do
-    {
-        // Skip the dot directories.
-        if (L'.' == wfd.cFileName[0] && (L'\0' == wfd.cFileName[1] || (L'.' == wfd.cFileName[1] && L'\0' == wfd.cFileName[2])))
-        {
-            continue;
-        }
-
-        hr = PathConcat(sczDirectory, wfd.cFileName, &sczFile);
-        ExitOnFailure(hr, "Failed to allocate file name to move.");
-
-        if (!::GetTempFileNameW(wzTempDirectory, L"BRN", 0, wzTempPath))
-        {
-            ExitWithLastError(hr, "Failed to get temp file to move to.");
-        }
-
-        // Clear any attributes that might get in our way.
-        if (wfd.dwFileAttributes & FILE_ATTRIBUTE_READONLY || wfd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN || wfd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)
-        {
-            if (!::SetFileAttributesW(sczFile, FILE_ATTRIBUTE_NORMAL))
-            {
-                ExitWithLastError1(hr, "Failed to remove attributes from file: %ls", sczFile);
-            }
-        }
-
-        // We'll ignore failures to remove files for now. The directory delete below may
-        // be more successful.
-        ::MoveFileExW(sczFile, wzTempPath, MOVEFILE_REPLACE_EXISTING);
-    } while (::FindNextFileW(hFind, &wfd));
-
-    hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
-    ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
-
-    // Try to remove root package cache in the off chance it is now empty.
-    ::RemoveDirectoryW(sczRootCacheDirectory);
+    hr = RemoveBundleOrPackage(FALSE, fPerMachine, wzPackageId);
+    ExitOnFailure1(hr, "Failed to remove package id: %ls.", wzPackageId);
 
 LExit:
-    ReleaseFileFindHandle(hFind);
-    ReleaseStr(sczFile);
-    ReleaseStr(sczFiles);
-    ReleaseStr(sczDirectory);
-    ReleaseStr(sczRootCacheDirectory);
-
     return hr;
 }
 
@@ -475,6 +557,221 @@ LExit:
     ReleaseCertContext(pCertContext);
     ReleaseCertStore(hCertStore);
     ReleaseCryptMsg(hCryptMsg);
+
+    return hr;
+}
+
+
+static HRESULT CreateCompletedPath(
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzId,
+    __out LPWSTR* psczCacheDirectory
+    )
+{
+    static BOOL fPerMachineCacheRootVerified = FALSE;
+
+    HRESULT hr = S_OK;
+    LPWSTR sczCacheDirectory = NULL;
+
+    // If we are doing a permachine install but have not yet verified that the root cache folder
+    // was created with the correct ACLs yet, do that now.
+    if (fPerMachine && !fPerMachineCacheRootVerified)
+    {
+        hr = CacheGetCompletedPath(fPerMachine, L"", &sczCacheDirectory);
+        ExitOnFailure(hr, "Failed to get cache directory.");
+
+        hr = DirEnsureExists(sczCacheDirectory, NULL);
+        ExitOnFailure1(hr, "Failed to create cache directory: %ls", sczCacheDirectory);
+
+        hr = SecurePath(sczCacheDirectory);
+        ExitOnFailure1(hr, "Failed to secure cache directory: %ls", sczCacheDirectory);
+
+        fPerMachineCacheRootVerified = TRUE;
+    }
+
+    // Get the cache completed path, ensure it exists, and reset any permissions people
+    // might have tried to set on the directory so we inherit the (correct!) security
+    // permissions from the parent directory.
+    hr = CacheGetCompletedPath(fPerMachine, wzId, &sczCacheDirectory);
+    ExitOnFailure(hr, "Failed to get cache directory.");
+
+    hr = DirEnsureExists(sczCacheDirectory, NULL);
+    ExitOnFailure1(hr, "Failed to create cache directory: %ls", sczCacheDirectory);
+
+    ResetPathPermissions(fPerMachine, sczCacheDirectory);
+
+    *psczCacheDirectory = sczCacheDirectory;
+    sczCacheDirectory = NULL;
+
+LExit:
+    ReleaseStr(sczCacheDirectory);
+    return hr;
+}
+
+
+static HRESULT AllocateSid(
+    __in WELL_KNOWN_SID_TYPE type,
+    __out PSID* ppSid
+    )
+{
+    HRESULT hr = S_OK;
+    PSID pAllocSid = NULL;
+    DWORD cbSid = SECURITY_MAX_SID_SIZE;
+
+    pAllocSid = static_cast<PSID>(MemAlloc(cbSid, TRUE));
+    ExitOnNull(pAllocSid, hr, E_OUTOFMEMORY, "Failed to allocate memory for well known SID.");
+
+    if (!::CreateWellKnownSid(type, NULL, pAllocSid, &cbSid))
+    {
+        ExitWithLastError(hr, "Failed to create well known SID.");
+    }
+
+    *ppSid = pAllocSid;
+    pAllocSid = NULL;
+
+LExit:
+    ReleaseMem(pAllocSid);
+    return hr;
+}
+
+
+static HRESULT ResetPathPermissions(
+    __in BOOL fPerMachine,
+    __in LPWSTR wzPath
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    DWORD dwSetSecurity = DACL_SECURITY_INFORMATION | UNPROTECTED_DACL_SECURITY_INFORMATION;
+    ACL acl = { };
+    PSID pSid = NULL;
+
+    if (fPerMachine)
+    {
+        hr = AllocateSid(WinBuiltinAdministratorsSid, &pSid);
+        ExitOnFailure(hr, "Failed to allocate administrator SID.");
+
+        // Create an empty (not NULL!) ACL to reset the permissions on the file to purely inherit from parent.
+        if (!::InitializeAcl(&acl, sizeof(acl), ACL_REVISION))
+        {
+            ExitWithLastError(hr, "Failed to initialize ACL.");
+        }
+
+        dwSetSecurity |= OWNER_SECURITY_INFORMATION;
+    }
+
+    er = ::SetNamedSecurityInfoW(wzPath, SE_FILE_OBJECT, dwSetSecurity,
+                                 pSid, NULL, &acl, NULL);
+    ExitOnWin32Error1(er, hr, "Failed to reset the ACL on cached file: %ls", wzPath);
+
+    if (!::SetFileAttributesW(wzPath, FILE_ATTRIBUTE_NORMAL))
+    {
+        ExitWithLastError1(hr, "Failed to reset file attributes on cached file: %ls", wzPath);
+    }
+
+LExit:
+    ReleaseMem(pSid);
+    return hr;
+}
+
+
+static HRESULT GrantAccessAndAllocateSid(
+    __in WELL_KNOWN_SID_TYPE type,
+    __in DWORD dwGrantAccess,
+    __in EXPLICIT_ACCESS* pAccess
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = AllocateSid(type, reinterpret_cast<PSID*>(&pAccess->Trustee.ptstrName));
+    ExitOnFailure(hr, "Failed to allocate SID to grate access.");
+
+    pAccess->grfAccessMode = GRANT_ACCESS;
+    pAccess->grfAccessPermissions = dwGrantAccess;
+    pAccess->grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
+    pAccess->Trustee.TrusteeForm = TRUSTEE_IS_SID;
+    pAccess->Trustee.TrusteeType = TRUSTEE_IS_GROUP;
+
+LExit:
+    return hr;
+}
+
+
+static HRESULT SecurePath(
+    __in LPWSTR wzPath
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    EXPLICIT_ACCESSW access[4] = { };
+    PACL pAcl = NULL;
+
+    // Administrators must be the first one in the array so we can reuse the allocated SID below.
+    hr = GrantAccessAndAllocateSid(WinBuiltinAdministratorsSid, FILE_ALL_ACCESS, &access[0]);
+    ExitOnFailure1(hr, "Failed to allocate access for Administrators group to path: %ls", wzPath);
+
+    hr = GrantAccessAndAllocateSid(WinLocalSystemSid, FILE_ALL_ACCESS, &access[1]);
+    ExitOnFailure1(hr, "Failed to allocate access for SYSTEM group to path: %ls", wzPath);
+
+    hr = GrantAccessAndAllocateSid(WinWorldSid, GENERIC_READ | GENERIC_EXECUTE, &access[2]);
+    ExitOnFailure1(hr, "Failed to allocate access for Everyone group to path: %ls", wzPath);
+
+    hr = GrantAccessAndAllocateSid(WinBuiltinUsersSid, GENERIC_READ | GENERIC_EXECUTE, &access[3]);
+    ExitOnFailure1(hr, "Failed to allocate access for Users group to path: %ls", wzPath);
+
+    er = ::SetEntriesInAclW(countof(access), access, NULL, &pAcl);
+    ExitOnWin32Error1(er, hr, "Failed to create ACL to secure cache path: %ls", wzPath);
+
+    // Set the ACL and ensure the Administrators group ends up the owner
+    er = ::SetNamedSecurityInfoW(wzPath, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
+                                 reinterpret_cast<PSID>(access[0].Trustee.ptstrName), NULL, pAcl, NULL);
+    ExitOnWin32Error1(er, hr, "Failed to secure cache path: %ls", wzPath);
+
+LExit:
+    if (pAcl)
+    {
+        ::LocalFree(pAcl);
+    }
+
+    for (DWORD i = 0; i < countof(access); ++i)
+    {
+        ReleaseMem(access[i].Trustee.ptstrName);
+    }
+
+    return hr;
+}
+
+
+static HRESULT RemoveBundleOrPackage(
+    __in BOOL fBundle,
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzId
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczRootCacheDirectory = NULL;
+    LPWSTR sczDirectory = NULL;
+
+    hr = CacheGetCompletedPath(fPerMachine, L"", &sczRootCacheDirectory);
+    ExitOnFailure(hr, "Failed to calculate root cache path.");
+
+    hr = PathConcat(sczRootCacheDirectory, wzId, &sczDirectory);
+    ExitOnFailure(hr, "Failed to combine id to root cache path.");
+
+    hr = PathBackslashTerminate(&sczDirectory);
+    ExitOnFailure(hr, "Failed to ensure cache directory to remove was backslash terminated.");
+
+    LogId(REPORT_STANDARD, fBundle ? MSG_UNCACHE_BUNDLE : MSG_UNCACHE_PACKAGE, wzId, sczDirectory);
+
+    hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
+    ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
+
+    // Try to remove root package cache in the off chance it is now empty.
+    DirEnsureDeleteEx(sczRootCacheDirectory, DIR_DELETE_SCHEDULE);
+
+LExit:
+    ReleaseStr(sczDirectory);
+    ReleaseStr(sczRootCacheDirectory);
 
     return hr;
 }

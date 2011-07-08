@@ -216,7 +216,7 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
             }
         }
 
-        // If we're recursing, just exit and we'll try to delete this path alone down below.
+        // If we're deleting files and/or child directories loop through the contents of the directory.
         if (fDeleteFiles || fRecurse)
         {
             if (fScheduleDelete)
@@ -245,7 +245,7 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
                     continue;
                 }
 
-                // For extra safety / to silence OACR
+                // For extra safety and to silence OACR.
                 wfd.cFileName[MAX_PATH - 1] = L'\0';
 
                 hr = PathConcat(wzPath, wfd.cFileName, &sczDelete);

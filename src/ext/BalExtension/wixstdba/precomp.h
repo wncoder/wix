@@ -38,14 +38,17 @@
 #include "strutil.h"
 #include "thmutil.h"
 #include "uriutil.h"
+#include "xmlutil.h"
 
 #include "IBootstrapperEngine.h"
 #include "IBootstrapperApplication.h"
 
 #include "BalBaseBootstrapperApplication.h"
+#include "balinfo.h"
 
 HRESULT CreateBootstrapperApplication(
     __in HMODULE hModule,
+    __in BOOL fPrereq,
     __in IBootstrapperEngine* pEngine,
     __in const BOOTSTRAPPER_COMMAND* pCommand,
     __out IBootstrapperApplication** ppApplication

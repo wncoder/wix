@@ -22,7 +22,7 @@
 
 
 DAPI_(HRESULT) BalConditionsParseFromXml(
-    __out BAL_CONDITIONS* pConditions,
+    __in BAL_CONDITIONS* pConditions,
     __in IXMLDOMDocument* pixdManifest
     )
 {

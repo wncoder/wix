@@ -103,6 +103,7 @@ static DWORD WINAPI DisplayThreadProc(
     int x = CW_USEDEFAULT;
     int y = CW_USEDEFAULT;
 
+    BOOL fRedoMsg = FALSE;
     BOOL fRet = FALSE;
     MSG msg = { };
 
@@ -132,8 +133,13 @@ static DWORD WINAPI DisplayThreadProc(
         }
 
         // message pump
-        while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
+        while (fRedoMsg || 0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
         {
+            if (fRedoMsg)
+            {
+                fRedoMsg = FALSE;
+            }
+
             if (-1 == fRet)
             {
                 hr = E_UNEXPECTED;
@@ -195,32 +201,34 @@ static DWORD WINAPI DisplayThreadProc(
                     {
                         DWORD dwPageId = static_cast<DWORD>(msg.lParam);
                         int nCmdShow = static_cast<int>(msg.wParam);
-                        if (0 == dwPageId)
+
+                        // First show/hide the controls not associated with a page.
+                        for (DWORD i = 0; i < pCurrentHandle->pTheme->cControls; ++i)
                         {
-                            for (DWORD i = 0; i < pCurrentHandle->pTheme->cControls; ++i)
+                            THEME_CONTROL* pControl = pCurrentHandle->pTheme->rgControls + i;
+                            if (!pControl->wPageId)
                             {
-                                THEME_CONTROL* pControl = pCurrentHandle->pTheme->rgControls + i;
-                                if (!pControl->wPageId)
-                                {
-                                    ThemeShowControl(pCurrentHandle->pTheme, pControl->wId, nCmdShow);
-                                }
+                                ThemeShowControl(pCurrentHandle->pTheme, pControl->wId, nCmdShow);
                             }
                         }
-                        else
+
+                        // If a page id was provided also, show/hide those controls
+                        if (dwPageId)
                         {
                             ThemeShowPage(pCurrentHandle->pTheme, dwPageId, nCmdShow);
                         }
                     }
                     else // display window isn't visible or it doesn't match the current handle.
                     {
-                        // Push this message back on the thread to try again when we break out of this loop.
-                        ::PostThreadMessageW(::GetCurrentThreadId(), msg.message, msg.wParam, msg.lParam);
+                        // Keep the current message around to try again after we break out of this loop
+                        // and create the window.
+                        fRedoMsg = TRUE;
                         fCreateIfNecessary = TRUE;
                         break;
                     }
                 }
             }
-            else // Window message.
+            else if (!ThemeTranslateAccelerator(pCurrentHandle->pTheme, hwndParent, &msg)) // Window message.
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessageW(&msg);
@@ -290,6 +298,24 @@ static LRESULT CALLBACK DisplayWndProc(
             }
 
             return 0;
+        }
+        break;
+
+    case WM_COMMAND:
+        {
+            WCHAR wzText[1024];
+            ::StringCchPrintfW(wzText, countof(wzText), L"Command %u\r\n", LOWORD(wParam));
+            OutputDebugStringW(wzText);
+            //::MessageBoxW(hWnd, wzText, L"Command fired", MB_OK);
+        }
+        break;
+
+    case WM_SYSCOMMAND:
+        {
+            WCHAR wzText[1024];
+            ::StringCchPrintfW(wzText, countof(wzText), L"SysCommand %u\r\n", LOWORD(wParam));
+            OutputDebugStringW(wzText);
+            //::MessageBoxW(hWnd, wzText, L"Command fired", MB_OK);
         }
         break;
 

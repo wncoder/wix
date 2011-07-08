@@ -1134,7 +1134,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                TableDefinition customTable = new TableDefinition((string)row[0], false, false);
+                bool bootstrapperApplicationData = (null != row[13] && 1 == (int)row[13]);
+                TableDefinition customTable = new TableDefinition((string)row[0], false, bootstrapperApplicationData, bootstrapperApplicationData);
 
                 if (null == row[4])
                 {

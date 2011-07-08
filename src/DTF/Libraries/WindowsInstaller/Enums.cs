@@ -572,6 +572,24 @@ namespace Microsoft.Deployment.WindowsInstaller
     }
 
     /// <summary>
+    /// Additional styles for use with message boxes.
+    /// </summary>
+    [Flags]
+    internal enum MessageBoxStyles
+    {
+        /// <summary>
+        /// The message box is created with the WS_EX_TOPMOST window style.
+        /// </summary>
+        TopMost = 0x00040000,
+
+        /// <summary>
+        /// The caller is a service notifying the user of an event.
+        /// The function displays a message box on the current active desktop, even if there is no user logged on to the computer.
+        /// </summary>
+        ServiceNotification = 0x00200000,
+    }
+
+    /// <summary>
     /// Specifies the different patch states for <see cref="PatchInstallation.GetPatches(string, string, string, UserContexts, PatchStates)"/>.
     /// </summary>
     [Flags]

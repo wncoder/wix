@@ -59,6 +59,9 @@
         <include name="HyperlinkTheme.xml" />
         <include name="Logo.bmp" />
         <include name="LoremIpsumLicense.rtf" />
+        <include name="mbapreq.png" />
+        <include name="mbapreq.thm" />
+        <include name="mbapreq.wxl" />
         <include name="RtfTheme.wxl" />
         <include name="RtfTheme.xml" />
       </fileset>

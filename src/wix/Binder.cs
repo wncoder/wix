@@ -2903,18 +2903,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            // To make lookups easier, we load the constituent data bottom-up, so
+            // Ensure that the bundle has our well-known persisted values.
+            Table variableTable = bundle.EnsureTable(this.core.TableDefinitions["Variable"]);
+            Row wellKnownVariable = variableTable.CreateRow(null);
+            wellKnownVariable[0] = "WixBundleName";
+            wellKnownVariable[3] = 0;
+            wellKnownVariable[4] = 1;
+
+            wellKnownVariable = variableTable.CreateRow(null);
+            wellKnownVariable[0] = "WixBundleOriginalSource";
+            wellKnownVariable[3] = 0;
+            wellKnownVariable[4] = 1;
+
+            // To make lookups easier, we load the variable table bottom-up, so
             // that we can index by ID.
-            Table variableTable = bundle.Tables["Variable"];
-            // TODO: Do we need a dictionary for variables?
-            List<VariableInfo> allVariables = new List<VariableInfo>();
-            if (null != variableTable && 0 < variableTable.Rows.Count)
+            List<VariableInfo> allVariables = new List<VariableInfo>(variableTable.Rows.Count);
+            foreach (Row row in variableTable.Rows)
             {
-                allVariables.Capacity = variableTable.Rows.Count;
-                foreach (Row row in variableTable.Rows)
-                {
-                    allVariables.Add(new VariableInfo(row));
-                }
+                allVariables.Add(new VariableInfo(row));
             }
 
             // TODO: Although the WixSearch tables are defined in the Util extension,
@@ -3040,6 +3046,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+
+            // TODO: need to check Compiler.BurnUXContainerId and send a message if it is not set otherwise 
+            //         there is an exception thrown "ight.exe : error LGHT0001 : The given key was not present in the dictionary."
             List<PayloadInfo> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
 
             // If we didn't get any UX payloads, it's an error!
@@ -3329,7 +3338,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.ImportDependencyProviders(bundle, allPackages);
 
             // Generate the core-defined BA manifest tables...
-            this.GenerateBAManifestTables(bundle, chain.Packages);
+            this.GenerateBAManifestPackageTables(bundle, chain.Packages);
 
             foreach (BinderExtension extension in this.extensions)
             {
@@ -3338,6 +3347,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Start creating the bundle.
             this.PopulateBundleInfoFromChain(bundleInfo, chain.Packages);
+
+            this.GenerateBAManifestBundleTables(bundle, bundleInfo);
 
             // Copy the burnstub.exe to a writable location then mark it to be moved to its
             // final build location.
@@ -3456,7 +3467,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             return !this.core.EncounteredError;
         }
 
-        private void GenerateBAManifestTables(Output bundle, List<ChainPackageInfo> chainPackages)
+        private void GenerateBAManifestPackageTables(Output bundle, List<ChainPackageInfo> chainPackages)
         {
             Table wixPackagePropertiesTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageProperties"]);
 
@@ -3472,6 +3483,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[6] = package.InstallSize.ToString(CultureInfo.InvariantCulture); // InstallSize (required disk space)
                 row[7] = package.ChainPackageType.ToString(CultureInfo.InvariantCulture);
                 row[8] = package.Permanent ? "yes" : "no";
+                row[9] = package.LogPathVariable;
+                row[10] = package.RollbackLogPathVariable;
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
@@ -3500,6 +3513,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     bundleInfo.RegistrationInfo = package.RegistrationInfo;
                 }
             }
+        }
+
+        private void GenerateBAManifestBundleTables(Output bundle, BundleInfo bundleInfo)
+        {
+            Table wixBundlePropertiesTable = bundle.EnsureTable(this.core.TableDefinitions["WixBundleProperties"]);
+            Row row = wixBundlePropertiesTable.CreateRow(null);
+            row[0] = bundleInfo.RegistrationInfo == null ? null : bundleInfo.RegistrationInfo.Name;
+            row[1] = bundleInfo.LogPathVariable;
         }
 
         private void CreateContainer(ContainerInfo container, string manifestFile)
@@ -6945,7 +6966,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.PerMachine = (YesNoType.Yes == perMachine); // initiallly true only when specifically requested.
                 this.ProductCode = null;
-                this.Register = false;
                 this.Cache = (YesNoType.No != cache); // true unless it's specifically prohibited.
                 this.CacheId = cacheId;
                 this.Permanent = (YesNoType.Yes == permanent); // true only when specifically requested.
@@ -7023,7 +7043,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string ProductCode { get; private set; }
             public string PatchCode { get; private set; }
             public string PatchXml { get; private set; }
-            public bool Register { get; private set; }
             public bool Cache { get; private set; }
             public string CacheId { get; private set; }
             public bool Permanent { get; private set; }
@@ -7098,24 +7117,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
                         {
                             this.Description = ChainPackageInfo.GetProperty(db, "ARPCOMMENTS");
-                        }
-
-                        // TODO: Add a warning if the Bundle registration is being overridden
-                        // by ARPSYSTEMCOMPONENT.
-                        this.Register = ChainPackageInfo.HasProperty(db, "ARPSYSTEMCOMPONENT");
-
-                        if (this.Register)
-                        {
-                            this.RegistrationInfo = new RegistrationInfo();
-                            this.RegistrationInfo.Name = ChainPackageInfo.GetProperty(db, "ProductName");
-                            this.RegistrationInfo.Publisher = ChainPackageInfo.GetProperty(db, "Manufacturer");
-                            this.RegistrationInfo.AboutUrl = ChainPackageInfo.GetProperty(db, "ARPURLINFOABOUT");
-                            this.RegistrationInfo.HelpLink = ChainPackageInfo.GetProperty(db, "ARPHELPLINK");
-                            this.RegistrationInfo.HelpTelephone = ChainPackageInfo.GetProperty(db, "ARPHELPTELEPHONE");
-                            this.RegistrationInfo.UpdateUrl = ChainPackageInfo.GetProperty(db, "ARPURLUPDATEINFO");
-                            this.RegistrationInfo.DisableModify = ChainPackageInfo.HasProperty(db, "ARPNOMODIFY");
-                            this.RegistrationInfo.DisableRemove = ChainPackageInfo.HasProperty(db, "ARPNOREMOVE");
-                            this.RegistrationInfo.DisableRepair = ChainPackageInfo.HasProperty(db, "ARPNOREPAIR");
                         }
 
                         // Represent the Upgrade table as related packages.
@@ -7619,31 +7620,40 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private class VariableInfo
         {
             public VariableInfo(Row row)
-                : this((string)row[0], (string)row[1], (string)row[2])
+                : this((string)row[0], (string)row[1], (string)row[2], (int)row[3] == 1 ? true : false, (int)row[4] == 1 ? true : false)
             {
             }
 
-            public VariableInfo(string id, string value, string type)
+            public VariableInfo(string id, string value, string type, bool hidden, bool persisted)
             {
                 this.Id = id;
                 this.Value = value;
                 this.Type = type;
+                this.Hidden = hidden;
+                this.Persisted = persisted;
             }
 
+            public bool Hidden { get; private set; }
             public string Id { get; private set; }
+            public bool Persisted { get; private set; }
             public string Value { get; private set; }
             public string Type { get; private set; }
 
             /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup for a variable.
+            /// Generates Burn manifest markup for a variable.
             /// </summary>
             /// <param name="writer"></param>
             public void WriteXml(XmlTextWriter writer)
             {
                 writer.WriteStartElement("Variable");
                 writer.WriteAttributeString("Id", this.Id);
-                writer.WriteAttributeString("Value", this.Value);
-                writer.WriteAttributeString("Type", this.Type);
+                if (null != this.Type)
+                {
+                    writer.WriteAttributeString("Value", this.Value);
+                    writer.WriteAttributeString("Type", this.Type);
+                }
+                writer.WriteAttributeString("Hidden", this.Hidden ? "yes" : "no");
+                writer.WriteAttributeString("Persisted", this.Persisted ? "yes" : "no");
                 writer.WriteEndElement();
             }
         }

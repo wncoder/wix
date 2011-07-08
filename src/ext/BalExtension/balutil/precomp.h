@@ -30,4 +30,5 @@
 
 #include "balutil.h"
 #include "balcondition.h"
+#include "balinfo.h"
 #include "balretry.h"

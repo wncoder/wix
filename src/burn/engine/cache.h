@@ -42,6 +42,11 @@ typedef struct _BURN_CACHE_CALLBACK
 
 // functions
 
+HRESULT CacheGetOriginalSourcePath(
+    __in BURN_VARIABLES* pVariables,
+    __in_z_opt LPCWSTR wzRelativePath,
+    __out_z_opt LPWSTR* psczOriginalSource
+    );
 HRESULT CacheCalculatePayloadUnverifiedPath(
     __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
@@ -76,12 +81,21 @@ void CacheSendErrorCallback(
     __in_z_opt LPCWSTR wzError,
     __out_opt BOOL* pfRetry
     );
+extern "C" HRESULT CacheBundle(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in_z LPCWSTR wzExecutablePath
+    );
 HRESULT CachePayload(
     __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
+    );
+HRESULT CacheRemoveBundle(
+    __in BOOL fPerMachine,
+    __in LPCWSTR wzPackageId
     );
 HRESULT CacheRemovePackage(
     __in BOOL fPerMachine,

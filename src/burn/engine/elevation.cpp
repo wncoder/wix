@@ -95,12 +95,8 @@ static HRESULT OnGenericExecuteFilesInUse(
     );
 static HRESULT OnSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
-    __in BYTE* pbData,
-    __in DWORD cbData
-    );
-static HRESULT OnSessionSuspend(
-    __in BURN_REGISTRATION* pRegistration,
     __in BYTE* pbData,
     __in DWORD cbData
     );
@@ -227,40 +223,6 @@ LExit:
 }
 
 /*******************************************************************
- ElevationSessionSuspend - 
-
-*******************************************************************/
-extern "C" HRESULT ElevationSessionSuspend(
-    __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fReboot
-    )
-{
-    HRESULT hr = S_OK;
-    BYTE* pbData = NULL;
-    SIZE_T cbData = 0;
-    DWORD dwResult = 0;
-
-    // serialize message data
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)action);
-    ExitOnFailure(hr, "Failed to write action to message buffer.");
-
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fReboot);
-    ExitOnFailure(hr, "Failed to write reboot flag to message buffer.");
-
-    // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_SUSPEND, pbData, cbData, NULL, NULL, &dwResult);
-    ExitOnFailure(hr, "Failed to send message to per-machine process.");
-
-    hr = (HRESULT)dwResult;
-
-LExit:
-    ReleaseBuffer(pbData);
-
-    return hr;
-}
-
-/*******************************************************************
  ElevationSessionResume - 
 
 *******************************************************************/
@@ -297,7 +259,9 @@ LExit:
 extern "C" HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback
+    __in BOOL fRollback,
+    __in BOOL fSuspend,
+    __in BOOTSTRAPPER_APPLY_RESTART restart
     )
 {
     HRESULT hr = S_OK;
@@ -311,6 +275,12 @@ extern "C" HRESULT ElevationSessionEnd(
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fRollback);
     ExitOnFailure(hr, "Failed to write rollback flag to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fSuspend);
+    ExitOnFailure(hr, "Failed to write suspend flag to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)restart);
+    ExitOnFailure(hr, "Failed to write restart enum to message buffer.");
 
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_END, pbData, cbData, NULL, NULL, &dwResult);
@@ -439,7 +409,7 @@ extern "C" HRESULT ElevationExecuteExePackage(
     hr = BuffWriteString(&pbData, &cbData, pExecuteAction->exePackage.sczBundleName);
     ExitOnFailure(hr, "Failed to write bundle name to message buffer.");
 
-    hr = VariableSerialize(pVariables, &pbData, &cbData);
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
 
     // send message
@@ -496,7 +466,7 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
 
     // TODO: patches
 
-    hr = VariableSerialize(pVariables, &pbData, &cbData);
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fRollback);
@@ -563,7 +533,7 @@ extern "C" HRESULT ElevationExecuteMspPackage(
         ExitOnFailure(hr, "Failed to write ordered patch id to message buffer.");
     }
 
-    hr = VariableSerialize(pVariables, &pbData, &cbData);
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fRollback);
@@ -982,11 +952,7 @@ static HRESULT ProcessElevatedChildMessage(
     switch (pMsg->dwMessage)
     {
     case BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN:
-        hrResult = OnSessionBegin(pContext->pRegistration, pContext->pUserExperience, (BYTE*)pMsg->pvData, pMsg->cbData);
-        break;
-
-    case BURN_ELEVATION_MESSAGE_TYPE_SESSION_SUSPEND:
-        hrResult = OnSessionSuspend(pContext->pRegistration, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnSessionBegin(pContext->pRegistration, pContext->pVariables, pContext->pUserExperience, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME:
@@ -1189,6 +1155,7 @@ LExit:
 
 static HRESULT OnSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BYTE* pbData,
     __in DWORD cbData
@@ -1207,34 +1174,8 @@ static HRESULT OnSessionBegin(
     ExitOnFailure(hr, "Failed to read estimated size.");
 
     // begin session in per-machine process
-    hr =  RegistrationSessionBegin(pRegistration, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);
+    hr =  RegistrationSessionBegin(pRegistration, pVariables, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);
     ExitOnFailure(hr, "Failed to begin registration session.");
-
-LExit:
-    return hr;
-}
-
-static HRESULT OnSessionSuspend(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BYTE* pbData,
-    __in DWORD cbData
-    )
-{
-    HRESULT hr = S_OK;
-    SIZE_T iData = 0;
-    DWORD action = 0;
-    DWORD fReboot = 0;
-
-    // deserialize message data
-    hr = BuffReadNumber(pbData, cbData, &iData, &action);
-    ExitOnFailure(hr, "Failed to read action.");
-
-    hr = BuffReadNumber(pbData, cbData, &iData, &fReboot);
-    ExitOnFailure(hr, "Failed to read reboot flag.");
-
-    // suspend session in per-machine process
-    hr = RegistrationSessionSuspend(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)fReboot, TRUE, NULL);
-    ExitOnFailure(hr, "Failed to suspend registration session.");
 
 LExit:
     return hr;
@@ -1271,17 +1212,25 @@ static HRESULT OnSessionEnd(
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
     DWORD action = 0;
-    DWORD fRollback = 0;
+    DWORD dwRollback = 0;
+    DWORD dwSuspend = 0;
+    DWORD dwRestart = 0;
 
     // deserialize message data
     hr = BuffReadNumber(pbData, cbData, &iData, &action);
     ExitOnFailure(hr, "Failed to read action.");
 
-    hr = BuffReadNumber(pbData, cbData, &iData, &fRollback);
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwRollback);
     ExitOnFailure(hr, "Failed to read rollback flag.");
 
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwSuspend);
+    ExitOnFailure(hr, "Failed to read suspend flag.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwRestart);
+    ExitOnFailure(hr, "Failed to read restart enum.");
+
     // suspend session in per-machine process
-    hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)fRollback, TRUE, NULL);
+    hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)dwRollback, (BOOL)dwSuspend, (BOOTSTRAPPER_APPLY_RESTART)dwRestart, TRUE, NULL);
     ExitOnFailure(hr, "Failed to suspend registration session.");
 
 LExit:

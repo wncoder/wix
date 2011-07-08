@@ -87,6 +87,8 @@ extern "C" HRESULT PackagesParseFromXml(
         }
     }
 
+    ReleaseNullObject(pixnNodes); // done with the RollbackBoundary elements.
+
     // select package nodes
     hr = XmlSelectNodes(pixnBundle, L"Chain/ExePackage|Chain/MsiPackage|Chain/MspPackage|Chain/MsuPackage", &pixnNodes);
     ExitOnFailure(hr, "Failed to select package nodes.");

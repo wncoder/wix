@@ -1434,6 +1434,7 @@
         <columnDefinition name="Sets" type="string" length="0"/>
         <columnDefinition name="Descriptions" type="string" length="0"/>
         <columnDefinition name="Modularizations" type="string" length="0"/>
+        <columnDefinition name="BootstrapperApplicationData" type="number" length="2"/>
     </tableDefinition>
     <tableDefinition name="WixDirectory" unreal="yes">
         <columnDefinition name="Directory_" type="string" length="0" primaryKey="yes" modularize="column"/>
@@ -1668,8 +1669,14 @@
     </tableDefinition>
     <tableDefinition name="Variable" createSymbols="yes" unreal="yes">
         <columnDefinition name="Variable" type="string" length="0" category="identifier" primaryKey="yes" />
-        <columnDefinition name="Value" type="string" length="0" />
+        <columnDefinition name="Value" type="string" length="0" nullable="yes" />
         <columnDefinition name="Type" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Hidden" type="number" length="2" minValue="0" maxValue="1"/>
+        <columnDefinition name="Persisted" type="number" length="2" minValue="0" maxValue="1"/>
+    </tableDefinition>
+    <tableDefinition name="WixBundleProperties" unreal="yes" bootstrapperApplicationData="yes">
+        <columnDefinition name="DisplayName" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
     </tableDefinition>
     <tableDefinition name="WixPackageFeatureInfo" unreal="yes" bootstrapperApplicationData="yes">
         <columnDefinition name="Package" type="string" length="0" />
@@ -1687,6 +1694,8 @@
         <columnDefinition name="InstalledSize" type="string" length="0" nullable="yes"/>
         <columnDefinition name="PackageType" type="string" length="0" nullable="no"/>
         <columnDefinition name="Permanent" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="RollbackLogPathVariable" type="string" length="0" nullable="yes"/>
     </tableDefinition>
     <tableDefinition name="_Streams" unreal="yes">
         <columnDefinition name="Name" type="string" length="62" primaryKey="yes"/>

@@ -69,10 +69,11 @@ HRESULT ApplyUnregister(
     __in BURN_ENGINE_STATE* pEngineState,
     __in BOOL fRollback,
     __in BOOL fSuspend,
-    __in BOOL fRestartInitiated
+    __in BOOTSTRAPPER_APPLY_RESTART restart
     );
 HRESULT ApplyCache(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_PLAN* pPlan,
     __in HANDLE hPipe,
     __inout DWORD* pcOverallProgressTicks,

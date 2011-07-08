@@ -62,6 +62,7 @@ static HRESULT LayoutBundle(
     );
 static HRESULT AcquireContainerOrPayload(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in_opt BURN_CONTAINER* pContainer,
     __in_opt BURN_PACKAGE* pPackage,
     __in_opt BURN_PAYLOAD* pPayload,
@@ -287,7 +288,7 @@ extern "C" HRESULT ApplyRegister(
     if (BOOTSTRAPPER_RESUME_TYPE_NONE == pEngineState->command.resumeType)
     {
         // begin new session
-        hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
+        hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
         ExitOnFailure(hr, "Failed to begin registration session.");
 
         if (pEngineState->registration.fPerMachine)
@@ -329,36 +330,21 @@ extern "C" HRESULT ApplyUnregister(
     __in BURN_ENGINE_STATE* pEngineState,
     __in BOOL fRollback,
     __in BOOL fSuspend,
-    __in BOOL fRestartInitiated
+    __in BOOTSTRAPPER_APPLY_RESTART restart
     )
 {
     HRESULT hr = S_OK;
 
     pEngineState->userExperience.pUserExperience->OnUnregisterBegin();
 
-    // suspend or end session
-    if (fSuspend || fRestartInitiated)
+    if (pEngineState->registration.fPerMachine)
     {
-        if (pEngineState->registration.fPerMachine)
-        {
-            hr = ElevationSessionSuspend(pEngineState->hElevatedPipe, pEngineState->plan.action, fRestartInitiated);
-            ExitOnFailure(hr, "Failed to suspend session in per-machine process.");
-        }
-
-        hr = RegistrationSessionSuspend(&pEngineState->registration, pEngineState->plan.action, fRestartInitiated, FALSE, &pEngineState->resumeMode);
-        ExitOnFailure(hr, "Failed to suspend session in per-user process.");
+        hr = ElevationSessionEnd(pEngineState->hElevatedPipe, pEngineState->plan.action, fRollback, fSuspend, restart);
+        ExitOnFailure(hr, "Failed to end session in per-machine process.");
     }
-    else
-    {
-        if (pEngineState->registration.fPerMachine)
-        {
-            hr = ElevationSessionEnd(pEngineState->hElevatedPipe, pEngineState->plan.action, fRollback);
-            ExitOnFailure(hr, "Failed to end session in per-machine process.");
-        }
 
-        hr = RegistrationSessionEnd(&pEngineState->registration, pEngineState->plan.action, fRollback, FALSE, &pEngineState->resumeMode);
-        ExitOnFailure(hr, "Failed to end session in per-user process.");
-    }
+    hr = RegistrationSessionEnd(&pEngineState->registration, pEngineState->plan.action, fRollback, fSuspend, restart, FALSE, &pEngineState->resumeMode);
+    ExitOnFailure(hr, "Failed to end session in per-user process.");
 
 LExit:
     pEngineState->userExperience.pUserExperience->OnUnregisterComplete(hr);
@@ -368,6 +354,7 @@ LExit:
 
 extern "C" HRESULT ApplyCache(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_PLAN* pPlan,
     __in HANDLE hPipe,
     __inout DWORD* pcOverallProgressTicks,
@@ -413,7 +400,7 @@ extern "C" HRESULT ApplyCache(
             break;
 
         case BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER:
-            hr = AcquireContainerOrPayload(pUX, pCacheAction->resolveContainer.pContainer, NULL, NULL, pCacheAction->resolveContainer.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
+            hr = AcquireContainerOrPayload(pUX, pVariables, pCacheAction->resolveContainer.pContainer, NULL, NULL, pCacheAction->resolveContainer.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
             ExitOnFailure(hr, "Failed to acquire container.");
             break;
 
@@ -423,7 +410,7 @@ extern "C" HRESULT ApplyCache(
             break;
 
         case BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD:
-            hr = AcquireContainerOrPayload(pUX, NULL, pCacheAction->resolvePayload.pPackage, pCacheAction->resolvePayload.pPayload, pCacheAction->resolvePayload.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
+            hr = AcquireContainerOrPayload(pUX, pVariables, NULL, pCacheAction->resolvePayload.pPackage, pCacheAction->resolvePayload.pPayload, pCacheAction->resolvePayload.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
             ExitOnFailure(hr, "Failed to acquire payload.");
             break;
 
@@ -702,6 +689,7 @@ LExit:
 
 static HRESULT AcquireContainerOrPayload(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in_opt BURN_CONTAINER* pContainer,
     __in_opt BURN_PACKAGE* pPackage,
     __in_opt BURN_PAYLOAD* pPayload,
@@ -729,7 +717,11 @@ static HRESULT AcquireContainerOrPayload(
 
     do
     {
-        LPWSTR wzSourcePath = pContainer ? pContainer->sczSourcePath : pPayload->sczSourcePath;
+        BOOL fCopy = FALSE;
+        BOOL fDownload = FALSE;
+
+        LPCWSTR wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
+        LPCWSTR wzSourcePath = pContainer ? pContainer->sczSourcePath : pPayload->sczSourcePath;
         if (PathIsAbsolute(wzSourcePath))
         {
             hr = StrAllocString(&sczSourceFullPath, wzSourcePath, 0);
@@ -737,8 +729,8 @@ static HRESULT AcquireContainerOrPayload(
         }
         else
         {
-            hr = PathRelativeToModule(&sczSourceFullPath, wzSourcePath, NULL);
-            ExitOnFailure(hr, "Failed to create full path relative to module.");
+            hr = CacheGetOriginalSourcePath(pVariables, wzSourcePath, &sczSourceFullPath);
+            ExitOnFailure(hr, "Failed to create full path relative to original source.");
         }
 
         fRetry = FALSE;
@@ -747,23 +739,14 @@ static HRESULT AcquireContainerOrPayload(
         // If the file exists locally, copy it.
         if (FileExistsEx(sczSourceFullPath, NULL))
         {
-            // If the source path and destination path are the same, bail.
+            // If the source path and destination path are different, do the copy (otherwise there's no point).
             hr = PathCompare(sczSourceFullPath, wzDestinationPath, &nEquivalentPaths);
             ExitOnFailure(hr, "Failed to determine if payload source path was equivalent to the destination path.");
 
-            if (CSTR_EQUAL == nEquivalentPaths)
-            {
-                ExitFunction1(hr = S_OK);
-            }
-
-            hr = CopyPayload(&progress, sczSourceFullPath, wzDestinationPath, &fRetry);
-            ExitOnFailure(hr, "Failed to copy payload.");
+            fCopy = (CSTR_EQUAL != nEquivalentPaths);
         }
         else // can't find the file locally so prompt for source.
         {
-            BOOL fDownload = FALSE;
-            LPCWSTR wzDownloadUrl = pContainer ? pContainer->downloadSource.sczUrl : pPayload->downloadSource.sczUrl;
-
             hr = PromptForSource(pUX, wzPackageOrContainerId, wzPayloadId, sczSourceFullPath, wzDownloadUrl, &fRetry, &fDownload);
 
             // If the BA requested download then ensure a download url is available (it may have been set
@@ -779,12 +762,17 @@ static HRESULT AcquireContainerOrPayload(
 
             // Log the error
             LogExitOnFailure1(hr, MSG_PAYLOAD_FILE_NOT_PRESENT, "Failed while prompting for source (original path '%ls').", sczSourceFullPath);
+        }
 
-            if (fDownload)
-            {
-                hr = DownloadPayload(&progress, wzDestinationPath, &fRetry);
-                ExitOnFailure(hr, "Failed to download payload.");
-            }
+        if (fCopy)
+        {
+            hr = CopyPayload(&progress, sczSourceFullPath, wzDestinationPath, &fRetry);
+            ExitOnFailure2(hr, "Failed to copy payload from: '%ls' to working path: '%ls'", sczSourceFullPath, wzDestinationPath);
+        }
+        else if (fDownload)
+        {
+            hr = DownloadPayload(&progress, wzDestinationPath, &fRetry);
+            ExitOnFailure2(hr, "Failed to download payload from URL: '%ls' to working path: '%ls'", wzDownloadUrl, wzDestinationPath);
         }
     } while (fRetry);
     ExitOnFailure(hr, "Failed to find external payload to cache.");
@@ -913,8 +901,7 @@ static HRESULT CopyPayload(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "BA aborted cache acquire begin.");
 
-    // Check if the file we're about to copy already exists - if it does,
-    // clear the readonly bit before copying to avoid E_ACCESSDENIED on copy
+    // If the destination file already exists, clear the readonly bit to avoid E_ACCESSDENIED.
     if (FileExistsEx(wzDestinationPath, &dwFileAttributes))
     {
         if (FILE_ATTRIBUTE_READONLY & dwFileAttributes)
@@ -922,7 +909,7 @@ static HRESULT CopyPayload(
             dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
             if (!::SetFileAttributes(wzDestinationPath, dwFileAttributes))
             {
-                ExitWithLastError1(hr, "Failed to clear readonly bit on destination payload file: %ls", wzDestinationPath);
+                ExitWithLastError1(hr, "Failed to clear readonly bit on payload destination path: %ls", wzDestinationPath);
             }
         }
     }
@@ -936,7 +923,7 @@ static HRESULT CopyPayload(
         }
         else
         {
-            ExitWithLastError1(hr, "Failed to copy payload with progress to: %ls.", wzDestinationPath);
+            ExitWithLastError2(hr, "Failed attempt to copy payload from: '%ls' to: %ls.", wzSourcePath, wzDestinationPath);
         }
     }
 
@@ -958,6 +945,7 @@ static HRESULT DownloadPayload(
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwFileAttributes = 0;
     LPWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : NULL;
     LPWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : NULL;
     BURN_DOWNLOAD_SOURCE* pDownloadSource = pProgress->pContainer ? &pProgress->pContainer->downloadSource : &pProgress->pPayload->downloadSource;
@@ -969,6 +957,19 @@ static HRESULT DownloadPayload(
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_DOWNLOAD, pDownloadSource->sczUrl);
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "BA aborted cache download payload begin.");
+
+    // If the destination file already exists, clear the readonly bit to avoid E_ACCESSDENIED.
+    if (FileExistsEx(wzDestinationPath, &dwFileAttributes))
+    {
+        if (FILE_ATTRIBUTE_READONLY & dwFileAttributes)
+        {
+            dwFileAttributes &= ~FILE_ATTRIBUTE_READONLY;
+            if (!::SetFileAttributes(wzDestinationPath, dwFileAttributes))
+            {
+                ExitWithLastError1(hr, "Failed to clear readonly bit on payload destination path: %ls", wzDestinationPath);
+            }
+        }
+    }
 
     callback.pfnProgress = CacheProgressRoutine;
     callback.pfnCancel = NULL; // TODO: set this
@@ -983,13 +984,12 @@ static HRESULT DownloadPayload(
         )
     {
         hr = BitsDownloadUrl(&callback, pDownloadSource, wzDestinationPath);
-        ExitOnFailure(hr, "Failed to download URL using BITS.");
     }
     else // wininet handles everything else.
     {
         hr = WininetDownloadUrl(&callback, pDownloadSource, qwDownloadSize, wzDestinationPath);
-        ExitOnFailure(hr, "Failed to download URL using wininet.");
     }
+    ExitOnFailure2(hr, "Failed attempt to download URL: '%ls' to: '%ls'", pDownloadSource->sczUrl, wzDestinationPath);
 
 LExit:
     nResult = pProgress->pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr);

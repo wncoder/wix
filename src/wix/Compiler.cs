@@ -4018,6 +4018,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string modularizations = null;
             string primaryKeys = null;
             string sets = null;
+            bool bootstrapperApplicationData = false;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -4027,6 +4028,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         case "Id":
                             tableId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "BootstrapperApplicationData":
+                            bootstrapperApplicationData = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -4292,6 +4296,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     row[10] = sets;
                     row[11] = descriptions;
                     row[12] = modularizations;
+                    row[13] = bootstrapperApplicationData ? 1 : 0;
                 }
             }
         }
@@ -16008,7 +16013,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                         break;
                     case "Value":
-                        value = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                        value = this.core.GetAttributeValue(sourceLineNumbers, attrib, true);
                         break;
                 }
             }
@@ -19620,12 +19625,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "UpdateUrl", "Name"));
                 }
 
-                logVariablePrefixAndExtension = String.Concat("BurnLog:Setup.log");
+                logVariablePrefixAndExtension = String.Concat("WixBundleLog:Setup.log");
             }
             else
             {
                 fileSystemSafeBundleName = name.Replace(' ', '_'); // TODO: ensure only allowable path characters are in "name".
-                logVariablePrefixAndExtension = String.Concat("BurnLog:", fileSystemSafeBundleName, ".log");
+                logVariablePrefixAndExtension = String.Concat("WixBundleLog:", fileSystemSafeBundleName, ".log");
             }
 
             this.activeName = String.IsNullOrEmpty(name) ? Common.GenerateGuid() : name;
@@ -19780,7 +19785,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             YesNoType disableLog = YesNoType.NotSet;
-            string variable = "BurnLog";
+            string variable = "WixBundleLog";
             string logPrefix = fileSystemSafeBundleName ?? "Setup";
             string logExtension = ".log";
 
@@ -20899,12 +20904,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (null == logPathVariable)
             {
-                logPathVariable = String.Concat("BurnLog_", id);
+                logPathVariable = String.Concat("WixBundleLog_", id);
             }
 
             if (null == rollbackPathVariable)
             {
-                rollbackPathVariable = String.Concat("BurnRollbackLog_", id);
+                rollbackPathVariable = String.Concat("WixBundleRollbackLog_", id);
             }
 
             if (!String.IsNullOrEmpty(protocol) && !protocol.Equals("burn", StringComparison.Ordinal) && !protocol.Equals("netfx4", StringComparison.Ordinal) && !protocol.Equals("none", StringComparison.Ordinal))
@@ -21457,7 +21462,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseVariableElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            bool hidden = false;
             string name = null;
+            bool persisted = false;
             string value = null;
             string type = null;
 
@@ -21467,11 +21474,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     switch (attrib.LocalName)
                     {
+                        case "Hidden":
+                            if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
+                            {
+                                hidden = true;
+                            }
+                            break;
                         case "Name":
                             name = this.core.GetAttributeBundleVariableValue(sourceLineNumbers, attrib);
                             break;
+                        case "Persisted":
+                            if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
+                            {
+                                persisted = true;
+                            }
+                            break;
                         case "Value":
-                            value = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            value = this.core.GetAttributeValue(sourceLineNumbers, attrib, EmptyRule.CanBeEmpty);
                             break;
                         case "Type":
                             type = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -21491,13 +21510,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Name"));
             }
-
-            if (null == value)
+            else if (name.StartsWith("Wix", StringComparison.OrdinalIgnoreCase))
             {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Value"));
+                this.core.OnMessage(WixErrors.ReservedNamespaceViolation(sourceLineNumbers, node.Name, "Name", "Wix"));
             }
 
-            if (null == type)
+            if (null == type && null != value)
             {
                 // Infer the type from the current value... 
                 if (value.StartsWith("v", StringComparison.OrdinalIgnoreCase))
@@ -21538,6 +21556,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            if (null == value && null != type)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, "Variable", "Value", "Type"));
+            }
+
             foreach (XmlNode child in node.ChildNodes)
             {
                 if (XmlNodeType.Element == child.NodeType)
@@ -21559,6 +21582,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[0] = name;
                 row[1] = value;
                 row[2] = type;
+                row[3] = hidden ? 1 : 0;
+                row[4] = persisted ? 1 : 0;
             }
         }
 

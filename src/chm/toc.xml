@@ -141,6 +141,8 @@
       <Topic Title="WixDirectXExtension" SourceFile="html\wixdirectxextension.htm"/>
       <Topic Title="WixExitEarlyWithSuccess" SourceFile="html\wixexitearlywithsuccess.htm"/>
       <Topic Title="WixFailWhenDeferred" SourceFile="html\wixfailwhendeferred.htm"/>
+      <Topic Title="WixWaitForEvent" SourceFile="html\wixwaitforevent.htm"/>
+      <Topic Title="WixWaitForEventDeferred" SourceFile="html\wixwaitforevent.htm"/>
       <Topic Title="WixGamingExtension" SourceFile="html\wixgamingextension.htm"/>
       <Topic Title="WixNetfxExtension" SourceFile="html\wixnetfxextension.htm"/>
       <Topic Title="WixVSExtension" SourceFile="html\wixvsextension.htm"/>

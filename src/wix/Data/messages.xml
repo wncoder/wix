@@ -2745,6 +2745,14 @@
              <Parameter Type="System.Int32" Name="errorCode" />
          </Instance>
       </Message>
+      <Message Id="ReservedNamespaceViolation" Number="362">
+        <Instance>
+          The {0}/@{1} attribute's value begins with the reserved prefix '{2}'. Some prefixes are reserved by the Windows Installer and WiX toolset for well-known values. Change your attribute's value to not begin with the same prefix.
+          <Parameter Type="System.String" Name="element" />
+          <Parameter Type="System.String" Name="attribute" />
+          <Parameter Type="System.String" Name="prefix" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">

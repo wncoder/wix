@@ -284,6 +284,8 @@ internal static class NativeMethods
 [DllImport("ole32.dll")] internal static extern int StgOpenStorage([MarshalAs(UnmanagedType.LPWStr)] string wcsName, IntPtr stgPriority, uint grfMode, IntPtr snbExclude, uint reserved, [MarshalAs(UnmanagedType.Interface)] out IStorage stgOpen);
 [DllImport("ole32.dll")] internal static extern int StgCreateDocfile([MarshalAs(UnmanagedType.LPWStr)] string wcsName, uint grfMode, uint reserved, [MarshalAs(UnmanagedType.Interface)] out IStorage stgOpen);
 
+[DllImport("user32.dll", CharSet=CharSet.Unicode, EntryPoint="MessageBoxW")] internal static extern MessageResult MessageBox(IntPtr hWnd, string lpText, string lpCaption, [MarshalAs(UnmanagedType.U4)] int uType);
+
     [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
     internal struct MsiPatchSequenceData
     {

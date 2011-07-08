@@ -97,9 +97,11 @@ namespace Bootstrapper
             {
                 LPCWSTR wzDocument =
                     L"<Bundle>"
-                    L"    <Variable Id='Var1' Type='numeric' Value='1' />"
-                    L"    <Variable Id='Var2' Type='string' Value='String value.' />"
-                    L"    <Variable Id='Var3' Type='version' Value='1.2.3.4' />"
+                    L"    <Variable Id='Var1' Type='numeric' Value='1' Hidden='no' Persisted='no' />"
+                    L"    <Variable Id='Var2' Type='string' Value='String value.' Hidden='no' Persisted='no' />"
+                    L"    <Variable Id='Var3' Type='version' Value='1.2.3.4' Hidden='no' Persisted='no' />"
+                    L"    <Variable Id='Var4' Hidden='no' Persisted='no' />"
+                    L"    <Variable Id='Var5' Type='string' Value='' Hidden='no' Persisted='no' />"
                     L"</Bundle>";
 
                 hr = VariableInitialize(&variables);
@@ -115,6 +117,7 @@ namespace Bootstrapper
                 Assert::AreEqual((int)BURN_VARIANT_TYPE_NUMERIC, VariableGetTypeHelper(&variables, L"Var1"));
                 Assert::AreEqual((int)BURN_VARIANT_TYPE_STRING, VariableGetTypeHelper(&variables, L"Var2"));
                 Assert::AreEqual((int)BURN_VARIANT_TYPE_VERSION, VariableGetTypeHelper(&variables, L"Var3"));
+                Assert::AreEqual((int)BURN_VARIANT_TYPE_NONE, VariableGetTypeHelper(&variables, L"Var4"));
 
                 Assert::AreEqual(1ll, VariableGetNumericHelper(&variables, L"Var1"));
                 Assert::AreEqual(gcnew String(L"String value."), VariableGetStringHelper(&variables, L"Var2"));
@@ -377,7 +380,7 @@ namespace Bootstrapper
                 VariableSetVersionHelper(&variables1, L"PROP3", MAKEQWORDVERSION(1,1,1,1));
                 VariableSetStringHelper(&variables1, L"PROP4", L"VAL4");
 
-                hr = VariableSerialize(&variables1, &pbBuffer, &cbBuffer);
+                hr = VariableSerialize(&variables1, FALSE, &pbBuffer, &cbBuffer);
                 TestThrowOnFailure(hr, L"Failed to serialize variables.");
 
                 // deserialize

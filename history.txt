@@ -1202,9 +1202,62 @@ PMarcu: Second try at catching duplicate symbols early.
 
 EricStJ: Intermittent failure when a sharing violation occurs on last IIS commit
 
-EricStJ: SFBUG: 3310378 AccessViolation in MsiCloseHandle on finalizer thread
+EricStJ: SFBUG: 3310378 AccessViolation in MsiCloseHandle on finalizer thread.
 
 JieJi/RobMen - Support rollback boundaries correctly during uninstall.
 
 WixBuild: Version 3.6.1826.0
+
+RobMen: SFBUG:3303592 - do not crash in Burn if BITS is disabled.
+
+HeathS: Added a test custom action to wait for events.
+
+RFlaming: SFBug: 3297725 - Removing Burn Name attribute still adds an ARP.
+
+ZhenyaS: SFBUG:3304309 - Set WixBundleOriginalSource variable to help with
+                         source resolution when bundle is launched from the
+                         cache.
+
+RobMen: SFBUG:3166703 - dynamically load all MSI 3.0 functions so wiutil works
+                        against MSI 2.0.
+        SFBUG:3026086 - correctly register reboot pending state in Burn.
+        SFBUG:3309930;SFBUG:3341652 - reset ACLs and read-only attributes on
+                        files in working folder and in final cache locations
+        SFBUG:3314903 - clean up extra UX# in temp folder erroneously created by
+                        elevated Burn process.
+        SFBUG:3328616 - fix a few XML pointer leaks.
+
+PMarcu: Adding authoring support for Hidden and Persisted variables.
+
+HeathS: Created additional auto reset events for testing.
+
+WixBuild: Version 3.6.1901.0
+
+SimWu: SFBUG:3312373 - Cannot clear property value with SetProperty.
+
+FGrohn: SFBUG:3302804 - Burn: support secure Bundle Variables.
+
+RFlaming: SFBUG: 3300341 - Candle: support empty Bundle Variables.
+
+HeathS: SFBUG:3349032 - Allow user to attach a debugger to the process
+        a la Windows Installer
+
+RobMen: SFBUG:3312409 - correctly resume after prerequisites require a reboot.
+        SFBUG:3341140 - expand LaunchTarget variable in wixstdba.
+        SFBUG:3345197 - display appropriate error message when prerequisites
+                        fail to install.
+        Rename "well known" Burn variables to be "WixBundle..." instead of
+                        "Burn...".
+        Allow CustomTable element to provide data that is translated into the
+                        BootstrapperApplicationData.xml.
+        Merge mbapreq.dll functionality into wixstdba.dll to minimize redundant
+                        code.
+        Overhaul wixstdba.dll look and feel to be far more professional.
+        Fix small bugs in theme utility code, start support for accelerators.
+
+RobMen: SFBUG_3073006 - persist WixBundleName and allow it to be overwritten
+                        so the ARP entry can be localized at runtime by a BA.
+        Prevent bundle Variables beginning with "Wix" from being defined.
+
+WixBuild: Version 3.6.1908.0
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Theme xmlns="http://wixtoolset.org/schemas/thmutil/2010">
+    <Window Width="485" Height="300" HexStyle="100a0000" FontId="0">[WixBundleName] System Update</Window>
+    <Font Id="0" Height="-12" Weight="500" Foreground="000000" Background="FFFFFF">Segoe UI</Font>
+    <Font Id="1" Height="-24" Weight="500" Foreground="000000">Segoe UI</Font>
+    <Font Id="2" Height="-22" Weight="500" Foreground="666666">Segoe UI</Font>
+    <Font Id="3" Height="-12" Weight="500" Foreground="000000" Background="FFFFFF">Segoe UI</Font>
+    <Font Id="4" Height="-12" Weight="500" Foreground="ff0000" Background="FFFFFF" Underline="yes">Segoe UI</Font>
+    <Font Id="5" Height="-12" Weight="500" Foreground="FF00ff" Background="FFFFFF" Underline="yes">Segoe UI</Font>
+
+    <Image X="11" Y="11" Width="64" Height="64" ImageFile="mbapreq.png" Visible="yes"/>
+    <Text X="80" Y="11" Width="-11" Height="96" FontId="1" Visible="yes">System updates required before [WixBundleName] setup</Text>
+
+    <Page Name="Install">
+        <Text X="11" Y="121" Width="300" Height="17" FontId="3">Before you can continue with setup you must accept the</Text>
+        <Hyperlink Name="EulaHyperlink" X="312" Y="121" Width="100" Height="17" TabStop="yes" FontId="4" HoverFontId="4" SelectedFontId="4">license agreement.</Hyperlink>
+        <Checkbox Name="EulaAcceptCheckbox" X="-11" Y="-41" Width="246" Height="17" TabStop="yes" FontId="3">I &amp;agree to the license terms and conditions</Checkbox>
+        <Button Name="InstallButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">&amp;Install</Button>
+        <Button Name="WelcomeCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">&amp;Close</Button>
+    </Page>
+    <Page Name="Progress">
+        <Text X="11" Y="112" Width="-11" Height="30" FontId="2">Setup Progress</Text>
+        <Text X="11" Y="153" Width="60" Height="17" FontId="3">Processing:</Text>
+        <Text Name="OverallProgressPackageText" X="75" Y="153" Width="-11" Height="17" FontId="3">[ProgressPackageName]</Text>
+        <Progressbar Name="OverallProgressbar" X="11" Y="175" Width="-11" Height="15" />
+        <Button Name="ProgressCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">&amp;Cancel</Button>
+    </Page>
+    <Page Name="Failure">
+        <Text X="11" Y="112" Width="-11" Height="30" FontId="2">Setup Failed</Text>
+        <Text X="11" Y="153" Width="-11" Height="40" FontId="3">One or more issues caused the setup to fail. Please fix the issues and then retry setup.</Text>
+        <Text Name="FailureLogFileText" X="11" Y="170" Width="160" Height="17" FontId="3" HideWhenDisabled="yes">For more information see the</Text>
+        <Hyperlink Name="FailureLogFileLink" X="170" Y="170" Width="40" Height="17" TabStop="yes" FontId="4" HoverFontId="4" SelectedFontId="4" HideWhenDisabled="yes">log file.</Hyperlink>
+        <Text Name="FailureMessageText" X="22" Y="195" Width="-11" Height="51" FontId="3" HideWhenDisabled="yes"/>
+        <Button Name="FailureRestartButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0" HideWhenDisabled="yes">&amp;Restart</Button>
+        <Button Name="FailureCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">&amp;Close</Button>
+    </Page>
+</Theme>

@@ -160,7 +160,7 @@ extern "C" HRESULT MsiEngineParsePackageFromXml(
         }
     }
 
-    ReleaseNullObject(pixnNodes);
+    ReleaseNullObject(pixnNodes); // done with the MsiFeature elements.
 
     hr = MsiEngineParsePropertiesFromXml(pixnMsiPackage, &pPackage->Msi.rgProperties, &pPackage->Msi.cProperties);
     ExitOnFailure(hr, "Failed to parse properties from XML.");
@@ -195,6 +195,8 @@ extern "C" HRESULT MsiEngineParsePackageFromXml(
             ReleaseNullObject(pixnNode);
         }
     }
+
+    ReleaseNullObject(pixnNodes); // done with the RelatedPackage elements.
 
     // Select slipstream MSP nodes.
     hr = XmlSelectNodes(pixnMsiPackage, L"SlipstreamMsp", &pixnNodes);

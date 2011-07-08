@@ -5,17 +5,19 @@
 
     class Program
     {
-        static readonly string RegRoot = "HKEY_LOCAL_MACHINE";
+        static readonly string RegRootMachine = "HKEY_LOCAL_MACHINE";
+        static readonly string RegRootUser = "HKEY_CURRENT_USER";
         static readonly string RegKey = "SOFTWARE\\Microsoft\\WiX_Burn\\ExePackages";
 
         static int Main(string[] args)
         {
+            string root = RegRootMachine;
             int returnCode = 0;
             int wait = 0;
 
             if (0 == args.Length)
             {
-                Console.WriteLine("usage: ExePkg.exe [-wait milliseconds] [-returnCode #] {-install|-uninstall|-repair}");
+                Console.WriteLine("usage: ExePkg.exe [-wait milliseconds] [-returnCode #] [-peruser|-permachine] {-install|-uninstall|-repair}");
                 return 1;
             }
 
@@ -26,18 +28,33 @@
 
                 switch (arg.ToLower())
                 {
+                    case "-permachine":
+                        root = RegRootMachine;
+                        break;
+
+                    case "-peruser":
+                        root = RegRootUser;
+                        break;
+
                     case "-install":
-                        Registry.SetValue(RegRoot + "\\" + RegKey, "Exe1", "true", RegistryValueKind.String);
+                        Registry.SetValue(root + "\\" + RegKey, "Exe1", "true", RegistryValueKind.String);
                         Console.WriteLine(": complete");
                         break;
 
                     case "-uninstall":
-                        Registry.LocalMachine.DeleteSubKey(RegKey, false);
+                        if (root == RegRootMachine)
+                        {
+                            Registry.LocalMachine.DeleteSubKey(RegKey, false);
+                        }
+                        else
+                        {
+                            Registry.CurrentUser.DeleteSubKey(RegKey, false);
+                        }
                         Console.WriteLine(": complete");
                         break;
 
                     case "-repair":
-                        Registry.SetValue(RegRoot + "\\" + RegKey, "Exe1", "true", RegistryValueKind.String);
+                        Registry.SetValue(root + "\\" + RegKey, "Exe1", "true", RegistryValueKind.String);
                         Console.WriteLine(": complete");
                         break;
 

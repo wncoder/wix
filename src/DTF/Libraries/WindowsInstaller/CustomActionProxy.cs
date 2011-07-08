@@ -125,7 +125,22 @@ namespace Microsoft.Deployment.WindowsInstaller
                 object[] args = new object[] { session };
                 if (DebugBreakEnabled(new string[] { entryPoint, methodName }))
                 {
-                    System.Diagnostics.Debugger.Launch();
+                    string message = String.Format(
+                        "To debug your custom action, attach to process ID {0} (0x{0:x}) and click OK; otherwise, click Cancel to fail the custom action.",
+                        System.Diagnostics.Process.GetCurrentProcess().Id
+                        );
+
+                    MessageResult button = NativeMethods.MessageBox(
+                        IntPtr.Zero,
+                        message,
+                        "Custom Action Breakpoint",
+                        (int)MessageButtons.OKCancel | (int)MessageIcon.Asterisk | (int)(MessageBoxStyles.TopMost | MessageBoxStyles.ServiceNotification)
+                        );
+
+                    if (MessageResult.Cancel == button)
+                    {
+                        return (int)ActionResult.UserExit;
+                    }
                 }
 
                 ActionResult result = (ActionResult) method.Invoke(null, args);

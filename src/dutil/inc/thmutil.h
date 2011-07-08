@@ -139,6 +139,8 @@ struct THEME_PAGE
     WORD wId;
     LPWSTR sczName;
 
+    HACCEL hAcceleratorTable;
+
     DWORD cControlIndices;
     DWORD* rgdwControlIndices;
 };
@@ -359,7 +361,7 @@ DAPI_(THEME_PAGE*) ThemeGetPage(
 
  *******************************************************************/
 DAPI_(void) ThemeShowPage(
-    __in const THEME* pTheme,
+    __in THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
     );

@@ -35,18 +35,11 @@ static void CheckLoggingPolicy(
 
 extern "C" HRESULT LoggingOpen(
     __in BURN_LOGGING* pLog,
-    __in_z_opt LPCWSTR wzCommandLine,
     __in BURN_VARIABLES* pVariables
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczExePath = NULL;
     LPWSTR sczCurrentDir = NULL;
-
-    PathForCurrentProcess(&sczExePath, NULL); // Ignore failure.
-
-    hr = DirGetCurrent(&sczCurrentDir);
-    ExitOnFailure(hr, "Failed to get current directory.");
 
     // Check if the logging policy is set and configure the logging appropriately.
     CheckLoggingPolicy(&pLog->dwAttributes);
@@ -71,6 +64,9 @@ extern "C" HRESULT LoggingOpen(
     // Open the log approriately.
     if (pLog->sczPath && *pLog->sczPath)
     {
+        hr = DirGetCurrent(&sczCurrentDir);
+        ExitOnFailure(hr, "Failed to get current directory.");
+
         hr = LogOpen(sczCurrentDir, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
 
@@ -93,8 +89,6 @@ extern "C" HRESULT LoggingOpen(
     // the log name so future logs are opened with the same pattern.
     if (BURN_LOGGING_STATE_OPEN == pLog->state)
     {
-        LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, sczExePath, wzCommandLine ? wzCommandLine : L"");
-
         LPCWSTR wzExtension = PathExtension(pLog->sczPath);
         ExitOnNull1(wzExtension, hr, E_UNEXPECTED, "Failed to find extension on log path: %ls", pLog->sczPath);
 
@@ -111,7 +105,6 @@ extern "C" HRESULT LoggingOpen(
     }
 
 LExit:
-    ReleaseStr(sczExePath);
     ReleaseStr(sczCurrentDir);
 
     return hr;

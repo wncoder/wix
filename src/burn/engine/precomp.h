@@ -30,6 +30,7 @@
 #include <wixver.h>
 
 #include <windows.h>
+#include <aclapi.h>
 #include <Bits.h>
 #include <math.h>
 #include <msiquery.h>

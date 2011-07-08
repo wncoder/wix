@@ -128,7 +128,7 @@ extern "C" void WINAPI BootstrapperApplicationDestroy()
 
     if (vhMbapreqModule)
     {
-        PFN_BOOTSTRAPPER_APPLICATION_DESTROY pfnDestroy = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_DESTROY>(::GetProcAddress(vhMbapreqModule, "BootstrapperApplicationDestroy"));
+        PFN_BOOTSTRAPPER_APPLICATION_DESTROY pfnDestroy = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_DESTROY>(::GetProcAddress(vhMbapreqModule, "MbaPrereqBootstrapperApplicationDestroy"));
         if (pfnDestroy)
         {
             (*pfnDestroy)();
@@ -426,7 +426,7 @@ static HRESULT CreatePrerequisiteBA(
     hModule = ::LoadLibraryW(sczMbapreqPath);
     ExitOnNullWithLastError(hModule, hr, "Failed to load pre-requisite BA DLL.");
 
-    PFN_BOOTSTRAPPER_APPLICATION_CREATE pfnCreate = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_CREATE>(::GetProcAddress(hModule, "BootstrapperApplicationCreate"));
+    PFN_BOOTSTRAPPER_APPLICATION_CREATE pfnCreate = reinterpret_cast<PFN_BOOTSTRAPPER_APPLICATION_CREATE>(::GetProcAddress(hModule, "MbaPrereqBootstrapperApplicationCreate"));
     ExitOnNullWithLastError1(pfnCreate, hr, "Failed to get BootstrapperApplicationCreate entry-point from: %ls", sczMbapreqPath);
 
     hr = pfnCreate(pEngine, pCommand, &pApp);

@@ -372,12 +372,15 @@ extern "C" HRESULT BitsDownloadUrl(
     ExitOnFailure(hr, "Failed to complete BITS job.");
 
 LExit:
-    pJob->SetNotifyInterface(NULL);
-
-    // If we failed, kill the job.
-    if (FAILED(hr) && pJob)
+    if (pJob)
     {
-        pJob->Cancel(); // TODO: should we cancel if we're going to retry the package? Probably the right thing to do.
+        pJob->SetNotifyInterface(NULL);
+
+        // If we failed, kill the job.
+        if (FAILED(hr))
+        {
+            pJob->Cancel(); // TODO: should we cancel if we're going to retry the package? Probably the right thing to do.
+        }
     }
 
     ReleaseObject(pBitsCallback);

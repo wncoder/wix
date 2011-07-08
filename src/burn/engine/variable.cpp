@@ -191,6 +191,11 @@ extern "C" HRESULT VariablesParseFromXml(
     LPWSTR scz = NULL;
     BURN_VARIANT value = { };
     BURN_VARIANT_TYPE valueType = BURN_VARIANT_TYPE_NONE;
+    BOOL fHidden = FALSE;
+    BOOL fPersisted = FALSE;
+    DWORD iVariable = 0;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
 
     // select variable nodes
     hr = XmlSelectNodes(pixnBundle, L"Variable", &pixnNodes);
@@ -208,53 +213,102 @@ extern "C" HRESULT VariablesParseFromXml(
 
         // @Id
         hr = XmlGetAttributeEx(pixnNode, L"Id", &sczId);
-        ExitOnFailure(hr, "Failed to get Id attribute.");
+        ExitOnFailure(hr, "Failed to get @Id.");
+
+        // @Hidden
+        hr = XmlGetYesNoAttribute(pixnNode, L"Hidden", &fHidden);
+        ExitOnFailure(hr, "Failed to get @Hidden.");
+
+        // @Persisted
+        hr = XmlGetYesNoAttribute(pixnNode, L"Persisted", &fPersisted);
+        ExitOnFailure(hr, "Failed to get @Persisted.");
 
         // @Value
         hr = XmlGetAttributeEx(pixnNode, L"Value", &scz);
-        ExitOnFailure(hr, "Failed to get Value attribute.");
-
-        hr = BVariantSetString(&value, scz, 0);
-        ExitOnFailure(hr, "Failed to set variant value.");
-
-        // @Type
-        hr = XmlGetAttributeEx(pixnNode, L"Type", &scz);
-        ExitOnFailure(hr, "Failed to get Type attribute.");
-
-        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"numeric", -1))
+        if (E_NOTFOUND != hr)
         {
-            LogStringLine(REPORT_STANDARD, "Initializing numeric variable '%ls' to value '%ls'", sczId, value.sczValue);
-            valueType = BURN_VARIANT_TYPE_NUMERIC;
-        }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"string", -1))
-        {
-            LogStringLine(REPORT_STANDARD, "Initializing string variable '%ls' to value '%ls'", sczId, value.sczValue);
-            valueType = BURN_VARIANT_TYPE_STRING;
-        }
-        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"version", -1))
-        {
-            LogStringLine(REPORT_STANDARD, "Initializing version variable '%ls' to value '%ls'", sczId, value.sczValue);
-            valueType = BURN_VARIANT_TYPE_VERSION;
+            ExitOnFailure(hr, "Failed to get @Value.");
+
+            hr = BVariantSetString(&value, scz, 0);
+            ExitOnFailure(hr, "Failed to set variant value.");
+
+            // @Type
+            hr = XmlGetAttributeEx(pixnNode, L"Type", &scz);
+            ExitOnFailure(hr, "Failed to get @Type.");
+
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"numeric", -1))
+            {
+                if (!fHidden)
+                {
+                    LogStringLine(REPORT_STANDARD, "Initializing numeric variable '%ls' to value '%ls'", sczId, value.sczValue);
+                }
+                valueType = BURN_VARIANT_TYPE_NUMERIC;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"string", -1))
+            {
+                if (!fHidden)
+                {
+                    LogStringLine(REPORT_STANDARD, "Initializing string variable '%ls' to value '%ls'", sczId, value.sczValue);
+                }
+                valueType = BURN_VARIANT_TYPE_STRING;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"version", -1))
+            {
+                if (!fHidden)
+                {
+                    LogStringLine(REPORT_STANDARD, "Initializing version variable '%ls' to value '%ls'", sczId, value.sczValue);
+                }
+                valueType = BURN_VARIANT_TYPE_VERSION;
+            }
+            else
+            {
+                hr = E_INVALIDARG;
+                ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
+            }
         }
         else
         {
-            hr = E_INVALIDARG;
-            ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
+            valueType = BURN_VARIANT_TYPE_NONE;
+        }
+
+        if (fHidden)
+        {
+            LogStringLine(REPORT_STANDARD, "Initializing hidden variable '%ls'", sczId);
         }
 
         // change value variant to correct type
         hr = BVariantChangeType(&value, valueType);
         ExitOnFailure(hr, "Failed to change variant type.");
 
-        // set property
-        hr = VariableSetVariant(pVariables, sczId, &value);
-        ExitOnFailure(hr, "Failed to set variable.");
+        // find existing variable
+        hr = FindVariableIndexByName(pVariables, sczId, &iVariable);
+        ExitOnFailure1(hr, "Failed to find variable value '%ls'.", sczId);
+
+        // insert element if not found
+        if (S_FALSE == hr)
+        {
+            hr = InsertVariable(pVariables, sczId, iVariable);
+            ExitOnFailure1(hr, "Failed to insert variable '%ls'.", sczId);
+        }
+        else if (pVariables->rgVariables[iVariable].fBuiltIn)
+        {
+            hr = E_INVALIDARG;
+            ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", sczId);
+        }
+        pVariables->rgVariables[iVariable].fHidden = fHidden;
+        pVariables->rgVariables[iVariable].fPersisted = fPersisted;
+
+        // update variable value
+        hr = BVariantCopy(&value, &pVariables->rgVariables[iVariable].Value);
+        ExitOnFailure1(hr, "Failed to set value of variable: %ls", sczId);
 
         // prepare next iteration
         ReleaseNullObject(pixnNode);
     }
 
 LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
     ReleaseObject(pixnNodes);
     ReleaseObject(pixnNode);
     ReleaseStr(scz);
@@ -297,7 +351,11 @@ extern "C" HRESULT VariableGetNumeric(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    if (E_NOTFOUND == hr)
+    if (SUCCEEDED(hr) && BURN_VARIANT_TYPE_NONE == pVariable->Value.Type)
+    {
+        ExitFunction1(hr = E_NOTFOUND);
+    }
+    else if (E_NOTFOUND == hr)
     {
         ExitFunction();
     }
@@ -324,7 +382,11 @@ extern "C" HRESULT VariableGetString(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    if (E_NOTFOUND == hr)
+    if (SUCCEEDED(hr) && BURN_VARIANT_TYPE_NONE == pVariable->Value.Type)
+    {
+        ExitFunction1(hr = E_NOTFOUND);
+    }
+    else if (E_NOTFOUND == hr)
     {
         ExitFunction();
     }
@@ -351,7 +413,11 @@ extern "C" HRESULT VariableGetVersion(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    if (E_NOTFOUND == hr)
+    if (SUCCEEDED(hr) && BURN_VARIANT_TYPE_NONE == pVariable->Value.Type)
+    {
+        ExitFunction1(hr = E_NOTFOUND);
+    }
+    else if (E_NOTFOUND == hr)
     {
         ExitFunction();
     }
@@ -405,7 +471,11 @@ extern "C" HRESULT VariableGetFormatted(
     ::EnterCriticalSection(&pVariables->csAccess);
 
     hr = GetVariable(pVariables, wzVariable, &pVariable);
-    if (E_NOTFOUND == hr)
+    if (SUCCEEDED(hr) && BURN_VARIANT_TYPE_NONE == pVariable->Value.Type)
+    {
+        ExitFunction1(hr = E_NOTFOUND);
+    }
+    else if (E_NOTFOUND == hr)
     {
         ExitFunction();
     }
@@ -441,8 +511,6 @@ extern "C" HRESULT VariableSetNumeric(
     variant.llValue = llValue;
     variant.Type = BURN_VARIANT_TYPE_NUMERIC;
 
-    LogStringLine(REPORT_STANDARD, "Setting numeric variable '%ls' to value %lld", wzVariable, llValue);
-
     return VariableSetVariant(pVariables, wzVariable, &variant);
 }
 
@@ -457,8 +525,6 @@ extern "C" HRESULT VariableSetString(
     variant.sczValue = (LPWSTR)wzValue;
     variant.Type = BURN_VARIANT_TYPE_STRING;
 
-    LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, wzValue);
-
     return VariableSetVariant(pVariables, wzVariable, &variant);
 }
 
@@ -472,8 +538,6 @@ extern "C" HRESULT VariableSetVersion(
 
     variant.qwValue = qwValue;
     variant.Type = BURN_VARIANT_TYPE_VERSION;
-
-    LogStringLine(REPORT_STANDARD, "Setting version variable '%ls' to value '%hu.%hu.%hu.%hu'", wzVariable, (WORD)(qwValue >> 48), (WORD)(qwValue >> 32), (WORD)(qwValue >> 16), (WORD)(qwValue));
 
     return VariableSetVariant(pVariables, wzVariable, &variant);
 }
@@ -502,6 +566,32 @@ extern "C" HRESULT VariableSetVariant(
     {
         hr = E_INVALIDARG;
         ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
+    }
+
+    // log variable value
+    if (pVariables->rgVariables[iVariable].fHidden)
+    {
+        LogStringLine(REPORT_STANDARD, "Setting hidden variable '%ls'", wzVariable);
+    }
+    else
+    {
+        switch (pVariant->Type)
+        {
+        case BURN_VARIANT_TYPE_NONE:
+            break;
+
+        case BURN_VARIANT_TYPE_NUMERIC:
+            LogStringLine(REPORT_STANDARD, "Setting numeric variable '%ls' to value %lld", wzVariable, pVariant->llValue);
+            break;
+
+        case BURN_VARIANT_TYPE_STRING:
+            LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, pVariant->sczValue);
+            break;
+
+        case BURN_VARIANT_TYPE_VERSION:
+            LogStringLine(REPORT_STANDARD, "Setting version variable '%ls' to value '%hu.%hu.%hu.%hu'", wzVariable, (WORD)(pVariant->qwValue >> 48), (WORD)(pVariant->qwValue >> 32), (WORD)(pVariant->qwValue >> 16), (WORD)(pVariant->qwValue));
+            break;
+        }
     }
 
     // update variable value
@@ -761,11 +851,13 @@ LExit:
 
 extern "C" HRESULT VariableSerialize(
     __in BURN_VARIABLES* pVariables,
+    __in BOOL fPersisting,
     __inout BYTE** ppbBuffer,
     __inout SIZE_T* piBuffer
     )
 {
     HRESULT hr = S_OK;
+    BOOL fIncluded = FALSE;
 
     ::EnterCriticalSection(&pVariables->csAccess);
 
@@ -777,14 +869,27 @@ extern "C" HRESULT VariableSerialize(
     for (DWORD i = 0; i < pVariables->cVariables; ++i)
     {
         BURN_VARIABLE* pVariable = &pVariables->rgVariables[i];
+        fIncluded = TRUE;
 
-        // write variable built-in flag
-        hr = BuffWriteNumber(ppbBuffer, piBuffer, (DWORD)pVariable->fBuiltIn);
-        ExitOnFailure(hr, "Failed to write variable built-in flag.");
-
+        // if variable is built-in, don't serialized
         if (pVariable->fBuiltIn)
         {
-            continue; // if variable is built-in, don't serialized
+            fIncluded = FALSE;
+        }
+
+        // if we are persisting, exclude variables that should not be persisted
+        if (fPersisting && !pVariable->fPersisted)
+        {
+            fIncluded = FALSE;
+        }
+
+        // write included flag
+        hr = BuffWriteNumber(ppbBuffer, piBuffer, (DWORD)fIncluded);
+        ExitOnFailure(hr, "Failed to write included flag.");
+
+        if (!fIncluded)
+        {
+            continue;
         }
 
         // write variable name
@@ -830,7 +935,7 @@ extern "C" HRESULT VariableDeserialize(
     HRESULT hr = S_OK;
     DWORD cVariables = 0;
     LPWSTR sczName = NULL;
-    DWORD fBuiltIn = 0;
+    BOOL fIncluded = FALSE;
     BURN_VARIANT value = { };
 
     ::EnterCriticalSection(&pVariables->csAccess);
@@ -842,13 +947,13 @@ extern "C" HRESULT VariableDeserialize(
     // read variables
     for (DWORD i = 0; i < cVariables; ++i)
     {
-        // read variable built-in flag
-        hr = BuffReadNumber(pbBuffer, cbBuffer, piBuffer, &fBuiltIn);
-        ExitOnFailure(hr, "Failed to read variable built-in flag.");
+        // read variable included flag
+        hr = BuffReadNumber(pbBuffer, cbBuffer, piBuffer, (DWORD*)&fIncluded);
+        ExitOnFailure(hr, "Failed to read variable included flag.");
 
-        if (fBuiltIn)
+        if (!fIncluded)
         {
-            continue; // if variable is built-in, it is not serialized
+            continue; // if variable is not included, skip
         }
 
         // read variable name

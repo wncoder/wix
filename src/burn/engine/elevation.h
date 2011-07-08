@@ -29,7 +29,6 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
 {
     BURN_ELEVATION_MESSAGE_TYPE_UNKNOWN,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN,
-    BURN_ELEVATION_MESSAGE_TYPE_SESSION_SUSPEND,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_END,
     BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES,
@@ -56,11 +55,6 @@ HRESULT ElevationSessionBegin(
     __in BOOTSTRAPPER_ACTION action,
     __in DWORD64 qwEstimatedSize
     );
-HRESULT ElevationSessionSuspend(
-    __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fReboot
-    );
 HRESULT ElevationSessionResume(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action
@@ -68,7 +62,9 @@ HRESULT ElevationSessionResume(
 HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback
+    __in BOOL fRollback,
+    __in BOOL fSuspend,
+    __in BOOTSTRAPPER_APPLY_RESTART restart
     );
 HRESULT ElevationDetectRelatedBundles(
     __in HANDLE hPipe

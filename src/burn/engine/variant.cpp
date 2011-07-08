@@ -236,6 +236,9 @@ extern "C" HRESULT BVariantChangeType(
 
     switch (type)
     {
+    case BURN_VARIANT_TYPE_NONE:
+        hr = S_OK;
+        break;
     case BURN_VARIANT_TYPE_NUMERIC:
         hr = BVariantGetNumeric(pVariant, &variant.llValue);
         break;
@@ -251,6 +254,7 @@ extern "C" HRESULT BVariantChangeType(
     ExitOnFailure(hr, "Failed to copy variant value.");
     variant.Type = type;
 
+    BVariantUninitialize(pVariant);
     memcpy_s(pVariant, sizeof(BURN_VARIANT), &variant, sizeof(BURN_VARIANT));
 
 LExit:

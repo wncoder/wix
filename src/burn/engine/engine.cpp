@@ -25,16 +25,14 @@
 
 static HRESULT RunNormal(
     __in HINSTANCE hInstance,
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in_z_opt LPCWSTR wzCommandLine
+    __in BURN_ENGINE_STATE* pEngineState
     );
 static HRESULT RunElevated(
     __in BURN_ENGINE_STATE* pEngineState
     );
 static HRESULT RunEmbedded(
     __in HINSTANCE hInstance,
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in_z_opt LPCWSTR wzCommandLine
+    __in BURN_ENGINE_STATE* pEngineState
     );
 static HRESULT RunApplication(
     __in BURN_ENGINE_STATE* pEngineState,
@@ -66,6 +64,7 @@ extern "C" HRESULT EngineRun(
     BOOL fRegInitialized = FALSE;
     BOOL fWiuInitialized = FALSE;
     BOOL fXmlInitialized = FALSE;
+    LPWSTR sczExePath = NULL;
     BOOL fRestart = FALSE;
     BURN_ENGINE_STATE engineState = { };
 
@@ -105,6 +104,10 @@ extern "C" HRESULT EngineRun(
     ExitOnFailure(hr, "Failed to initialize XML util.");
     fXmlInitialized = TRUE;
 
+    PathForCurrentProcess(&sczExePath, NULL); // Ignore failure.
+    LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, sczExePath, wzCommandLine ? wzCommandLine : L"");
+    ReleaseNullStr(sczExePath);
+
     // initialize core
     hr = CoreInitialize(wzCommandLine, nCmdShow, &engineState);
     ExitOnFailure(hr, "Failed to initialize core.");
@@ -120,13 +123,13 @@ extern "C" HRESULT EngineRun(
         }
         else
         {
-            hr = RunNormal(hInstance, &engineState, wzCommandLine);
+            hr = RunNormal(hInstance, &engineState);
             ExitOnFailure(hr, "Failed to run per-user mode.");
         }
         break;
 
     case BURN_MODE_EMBEDDED:
-        hr = RunEmbedded(hInstance, &engineState, wzCommandLine);
+        hr = RunEmbedded(hInstance, &engineState);
         ExitOnFailure(hr, "Failed to run embedded mode.");
         break;
 
@@ -140,6 +143,8 @@ extern "C" HRESULT EngineRun(
     fRestart = engineState.fRestart;
 
 LExit:
+    ReleaseStr(sczExePath);
+
     if (fLogInitialized)
     {
         // If anything went wrong but the log was never open, try to open a "failure" log
@@ -187,8 +192,7 @@ LExit:
 
 static HRESULT RunNormal(
     __in HINSTANCE hInstance,
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in_z_opt LPCWSTR wzCommandLine
+    __in BURN_ENGINE_STATE* pEngineState
     )
 {
     HRESULT hr = S_OK;
@@ -196,7 +200,7 @@ static HRESULT RunNormal(
     BOOL fReloadApp = FALSE;
 
     // Initialize logging.
-    hr = LoggingOpen(&pEngineState->log, wzCommandLine, &pEngineState->variables);
+    hr = LoggingOpen(&pEngineState->log, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to open log.");
 
     // Ensure we're on a supported operating system.
@@ -223,6 +227,9 @@ static HRESULT RunNormal(
     // Set resume commandline
     hr = RegistrationSetResumeCommand(&pEngineState->registration, &pEngineState->command, &pEngineState->log);
     ExitOnFailure(hr, "Failed to set resume command");
+
+    // Ensure the original source is initialized.
+    CacheGetOriginalSourcePath(&pEngineState->variables, NULL, NULL);
 
     do
     {
@@ -296,8 +303,7 @@ LExit:
 
 static HRESULT RunEmbedded(
     __in HINSTANCE hInstance,
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in_z_opt LPCWSTR wzCommandLine
+    __in BURN_ENGINE_STATE* pEngineState
     )
 {
     HRESULT hr = S_OK;
@@ -307,7 +313,7 @@ static HRESULT RunEmbedded(
     ExitOnFailure(hr, "Failed to connect to parent process.");
 
     // Now run the application like normal.
-    hr = RunNormal(hInstance, pEngineState, wzCommandLine);
+    hr = RunNormal(hInstance, pEngineState);
     ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:

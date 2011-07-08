@@ -274,6 +274,22 @@
     </Fragment>
 
     <Fragment>
+        <CustomAction Id="WixWaitForEvent" BinaryKey="WixCA" DllEntry="WixWaitForEvent" Execute="immediate" Return="check" SuppressModularization="yes" />
+
+        <InstallExecuteSequence>
+            <Custom Action="WixWaitForEvent" Before="InstallFinalize" Overridable="yes" />
+        </InstallExecuteSequence>
+    </Fragment>
+
+    <Fragment>
+        <CustomAction Id="WixWaitForEventDeferred" BinaryKey="WixCA" DllEntry="WixWaitForEvent" Execute="deferred" Return="check" SuppressModularization="yes" />
+
+        <InstallExecuteSequence>
+            <Custom Action="WixWaitForEventDeferred" After="InstallInitialize" Overridable="yes" />
+        </InstallExecuteSequence>
+    </Fragment>
+
+    <Fragment>
         <CustomAction Id="WixExitEarlyWithSuccess" BinaryKey="WixCA" DllEntry="WixExitEarlyWithSuccess" Execute="immediate" Return="check" SuppressModularization="yes" />
 
         <InstallExecuteSequence>

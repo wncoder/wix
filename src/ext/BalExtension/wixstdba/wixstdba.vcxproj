@@ -73,6 +73,9 @@
     <None Include="Resources\LoremIpsumLicense.rtf" />
     <None Include="Resources\HyperlinkTheme.wxl" />
     <None Include="Resources\HyperlinkTheme.xml" />
+    <None Include="Resources\mbapreq.png" />
+    <None Include="Resources\mbapreq.thm" />
+    <None Include="Resources\mbapreq.wxl" />
     <None Include="Resources\RtfTheme.wxl" />
     <None Include="Resources\RtfTheme.xml">
       <SubType>Designer</SubType>

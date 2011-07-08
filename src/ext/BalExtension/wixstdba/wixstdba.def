@@ -11,3 +11,5 @@
 EXPORTS
     BootstrapperApplicationCreate
     BootstrapperApplicationDestroy
+    MbaPrereqBootstrapperApplicationCreate
+    MbaPrereqBootstrapperApplicationDestroy

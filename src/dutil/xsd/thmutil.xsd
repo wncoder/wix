@@ -525,6 +525,11 @@
                         <xs:documentation>Text to display.</xs:documentation>
                     </xs:annotation>
                     <xs:attributeGroup ref="CommonControlAttributes" />
+                    <xs:attribute name="Center" type="YesNoType" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>Specifies the text should be centered horizontally in the width of the control. Default is "no".</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                     <xs:attribute name="FontId" type="xs:nonNegativeInteger" use="required">
                         <xs:annotation>
                             <xs:documentation>Numeric identifier to the Font element that serves as the font for the control.</xs:documentation>

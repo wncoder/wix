@@ -81,7 +81,6 @@ typedef struct _BURN_REGISTRATION
     // paths
     HKEY hkRoot;
     LPWSTR sczRegistrationKey;
-    LPWSTR sczCacheDirectory;
     LPWSTR sczCacheExecutablePath;
     LPWSTR sczResumeCommandLine;
     LPWSTR sczStateFile;
@@ -120,6 +119,10 @@ HRESULT RegistrationParseFromXml(
 void RegistrationUninitialize(
     __in BURN_REGISTRATION* pRegistration
     );
+HRESULT RegistrationSetVariables(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    );
 HRESULT RegistrationSetPaths(
     __in BURN_REGISTRATION* pRegistration
     );
@@ -146,17 +149,11 @@ HRESULT RegistrationLoadRelatedBundle(
     );
 HRESULT RegistrationSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BOOTSTRAPPER_ACTION action,
     __in DWORD64 qwEstimatedSize,
     __in BOOL fPerMachineProcess
-    );
-HRESULT RegistrationSessionSuspend(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fReboot,
-    __in BOOL fPerMachineProcess,
-    __out_opt BURN_RESUME_MODE* pResumeMode
     );
 HRESULT RegistrationSessionResume(
     __in BURN_REGISTRATION* pRegistration,
@@ -167,6 +164,8 @@ HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION action,
     __in BOOL fRollback,
+    __in BOOL fSuspend,
+    __in BOOTSTRAPPER_APPLY_RESTART restart,
     __in BOOL fPerMachineProcess,
     __out_opt BURN_RESUME_MODE* pResumeMode
     );

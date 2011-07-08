@@ -118,6 +118,9 @@ static HRESULT FindImageList(
     __in_z LPCWSTR wzImageListName,
     __out HIMAGELIST *phImageList
     );
+static WORD FindControlVirtualKey(
+    LPCWSTR wzText
+    );
 static HRESULT DrawBillboard(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis,
@@ -379,8 +382,10 @@ DAPI_(HRESULT) ThemeLoadControls(
     for (DWORD i = 0; i < pTheme->cControls; ++i)
     {
         THEME_CONTROL* pControl = pTheme->rgControls + i;
+        THEME_FONT* pControlFont = (pTheme->cFonts > pControl->dwFontId) ? pTheme->rgFonts + pControl->dwFontId : NULL;
         LPCWSTR wzWindowClass = NULL;
         DWORD dwWindowBits = WS_CHILD;
+        DWORD dwWindowExBits = 0;
 
         switch (pControl->type)
         {
@@ -501,7 +506,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             int x = pControl->nX < 0 ? rcParent.right + pControl->nX - w : pControl->nX;
             int y = pControl->nY < 0 ? rcParent.bottom + pControl->nY - h : pControl->nY;
 
-            pControl->hWnd = ::CreateWindowW(wzWindowClass, pControl->sczText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
+            pControl->hWnd = ::CreateWindowExW(dwWindowExBits, wzWindowClass, pControl->sczText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
             ExitOnNullWithLastError(pControl->hWnd, hr, "Failed to create window.");
 
             ::SetWindowLongPtrW(pControl->hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pControl));
@@ -567,11 +572,36 @@ DAPI_(HRESULT) ThemeLoadControls(
                 }
             }
 
-            if (pTheme->cFonts > pControl->dwFontId)
+            if (pControlFont)
             {
-                THEME_FONT* pFont = pTheme->rgFonts + pControl->dwFontId;
-                ::SendMessageW(pControl->hWnd, WM_SETFONT, (WPARAM)pFont->hFont, FALSE);
+                ::SendMessageW(pControl->hWnd, WM_SETFONT, (WPARAM)pControlFont->hFont, FALSE);
             }
+        }
+    }
+
+    // Load the page accelerator tables now.
+    for (DWORD i = 0; i < pTheme->cPages; ++i)
+    {
+        THEME_PAGE* pPage = pTheme->rgPages + i;
+        ACCEL rgAccel[256] = { }; // should be more than enough accelerators for any given page.
+        DWORD cAccel = 0;
+
+        for (DWORD iControl = 0; iControl < pPage->cControlIndices && cAccel < countof(rgAccel); ++iControl)
+        {
+            THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[iControl];
+            WORD wAcceleratorId = FindControlVirtualKey(pControl->sczText);
+            if (wAcceleratorId)
+            {
+                rgAccel[cAccel].cmd = pControl->wId;
+                rgAccel[cAccel].fVirt = FALT;
+                rgAccel[cAccel].key = wAcceleratorId;
+                ++cAccel;
+            }
+        }
+
+        if (cAccel)
+        {
+            pPage->hAcceleratorTable = ::CreateAcceleratorTableW(rgAccel, cAccel);
         }
     }
 
@@ -826,7 +856,7 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
         case WM_CTLCOLORSTATIC:
             {
             HBRUSH hBrush = NULL;
-            if (ThemeSetControlColor(pTheme, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(hWnd), &hBrush))
+            if (ThemeSetControlColor(pTheme, reinterpret_cast<HDC>(wParam), reinterpret_cast<HWND>(lParam), &hBrush))
             {
                 return reinterpret_cast<LRESULT>(hBrush);
             }
@@ -897,7 +927,7 @@ DAPI_(THEME_PAGE*) ThemeGetPage(
 
 
 DAPI_(void) ThemeShowPage(
-    __in const THEME* pTheme,
+    __in THEME* pTheme,
     __in DWORD dwPage,
     __in int nCmdShow
     )
@@ -931,6 +961,16 @@ DAPI_(void) ThemeShowPage(
                     ThemeStartBillboard(pTheme, pControl->wId, 0xFFFF);
                 }
             }
+        }
+
+        // If we're showing the page, use that as the new accelerator table.
+        if (SW_SHOW == nCmdShow)
+        {
+            pTheme->hActiveAcceleratorTable = pPage->hAcceleratorTable;
+        }
+        else if (pTheme->hActiveAcceleratorTable == pPage->hAcceleratorTable) // we're not showing this page any more, so turn off the accelerator table.
+        {
+            pTheme->hActiveAcceleratorTable = NULL;
         }
     }
 }
@@ -1151,6 +1191,12 @@ DAPI_(BOOL) ThemeSetControlColor(
             ::SetBkColor(hdc, pFont->crBackground);
 
             *phBackgroundBrush = pFont->hBackground;
+            fHasBackground = TRUE;
+        }
+        else
+        {
+            ::SetBkMode(hdc, TRANSPARENT);
+            *phBackgroundBrush = static_cast<HBRUSH>(::GetStockObject(NULL_BRUSH));
             fHasBackground = TRUE;
         }
     }
@@ -2454,6 +2500,19 @@ static HRESULT ParseControl(
         hr = ParseBillboards(hModule, wzRelativePath, pixn, pControl);
         ExitOnFailure(hr, "Failed to parse billboards.");
     }
+    else if (THEME_CONTROL_TYPE_TEXT == type)
+    {
+        hr = XmlGetYesNoAttribute(pixn, L"Center", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= SS_CENTER;
+        }
+        ExitOnFailure(hr, "Failed to tell if the text control should be centered.");
+    }
     else if (THEME_CONTROL_TYPE_LISTVIEW == type)
     {
         // Parse the optional extended window style.
@@ -2516,7 +2575,7 @@ static HRESULT ParseControl(
         {
             pControl->dwStyle |= ~TVS_DISABLEDRAGDROP;
         }
-        ExitOnFailure(hr, "Failed to tell if the tree control control enables drag and drop..");
+        ExitOnFailure(hr, "Failed to tell if the tree control control enables drag and drop.");
 
         hr = XmlGetYesNoAttribute(pixn, L"FullRowSelect", &fValue);
         if (E_NOTFOUND == hr)
@@ -2778,6 +2837,30 @@ LExit:
 }
 
 
+static WORD FindControlVirtualKey(
+    LPCWSTR wzText
+    )
+{
+    WORD wAcceleratorId = 0;
+
+    // Search for the "&" that marks accelerators with underscores.
+    for (LPCWSTR pwz = wzText; pwz && *pwz; ++pwz)
+    {
+        if ('&' == *pwz)
+        {
+            WCHAR wchNext = *(pwz + 1);
+            if (wchNext && '&' != wchNext)
+            {
+                wAcceleratorId = ::VkKeyScanW(wchNext) & 0xFF;
+                break;
+            }
+        }
+    }
+
+    return wAcceleratorId;
+}
+
+
 static HRESULT DrawBillboard(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis,
@@ -2994,6 +3077,12 @@ static void FreePage(
 {
     if (pPage)
     {
+        if (pPage->hAcceleratorTable)
+        {
+            ::DestroyAcceleratorTable(pPage->hAcceleratorTable);
+            pPage->hAcceleratorTable = NULL;
+        }
+
         ReleaseStr(pPage->sczName);
         ReleaseMem(pPage->rgdwControlIndices);
     }

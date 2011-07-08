@@ -108,6 +108,7 @@
         <HelpSourceFile Include="html\wixdirectxextension.htm"/>
         <HelpSourceFile Include="html\wixexitearlywithsuccess.htm"/>
         <HelpSourceFile Include="html\wixfailwhendeferred.htm"/>
+        <HelpSourceFile Include="html\wixWaitForEvent.htm"/>
         <HelpSourceFile Include="html\wixgamingextension.htm"/>
         <HelpSourceFile Include="html\wixnetfxextension.htm"/>
         <HelpSourceFile Include="html\WixUI_advanced.htm"/>

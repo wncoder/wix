@@ -264,7 +264,7 @@
         <xs:annotation>
           <xs:documentation>
                         Name of a Variable that will hold the path to the log file. An empty value
-                        will cause the variable to not be set. The default is "BurnLog".
+                        will cause the variable to not be set. The default is "WixBundleLog".
                     </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -728,7 +728,7 @@
       <xs:annotation>
         <xs:documentation>
                     Name of a Variable that will hold the path to the log file. An empty value will cause the variable to not
-                    be set. The default is "BurnLog_[PackageId]" except for MSU packages which default to no logging.
+                    be set. The default is "WixBundleLog_[PackageId]" except for MSU packages which default to no logging.
                 </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -736,7 +736,7 @@
       <xs:annotation>
         <xs:documentation>
                     Name of a Variable that will hold the path to the log file used during rollback. An empty value will cause
-                    the variable to not be set. The default is "BurnRollbackLog_[PackageId]" except for MSU packages which
+                    the variable to not be set. The default is "WixBundleRollbackLog_[PackageId]" except for MSU packages which
                     default to no logging.
                 </xs:documentation>
       </xs:annotation>
@@ -868,12 +868,22 @@
       </xs:appinfo>
     </xs:annotation>
     <xs:complexType>
+      <xs:attribute name="Hidden" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>Whether the value of the variable should be hidden.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="Name" type="xs:string" use="required">
         <xs:annotation>
           <xs:documentation>The name for the variable.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="Value" type="xs:string" use="required">
+      <xs:attribute name="Persisted" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>Whether the variable should be persisted.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Value" type="xs:string">
         <xs:annotation>
           <xs:documentation>Starting value for the variable.</xs:documentation>
         </xs:annotation>
@@ -11558,6 +11568,11 @@
           <xs:documentation>Identifier for the custom table.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="BootstrapperApplicationData" type="YesNoType">
+            <xs:annotation>
+                <xs:documentation>Indicates the table data is transformed into the bootstrapper application data manifest.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
   </xs:element>
   <xs:element name="Column">

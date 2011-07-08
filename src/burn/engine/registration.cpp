@@ -18,11 +18,14 @@
 
 #include "precomp.h"
 
+const LPCWSTR BURN_BUNDLE_NAME = L"WixBundleName";
+
 
 // constants
 
 const LPCWSTR REGISTRY_UNINSTALL_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 const LPCWSTR REGISTRY_RUN_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+const LPCWSTR REGISTRY_REBOOT_PENDING_FORMAT = L"%ls.RebootRequired";
 const LPCWSTR REGISTRY_BUNDLE_CACHE_PATH = L"BundleCachePath";
 const LPCWSTR REGISTRY_BUNDLE_UPGRADE_CODE = L"BundleUpgradeCode";
 const LPCWSTR REGISTRY_BUNDLE_ADDON_CODE = L"BundleAddonCode";
@@ -32,10 +35,16 @@ const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 
 // internal function declarations
 
+static HRESULT GetBundleName(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
+    __out LPWSTR* psczBundleName
+    );
 static HRESULT UpdateResumeMode(
     __in BURN_REGISTRATION* pRegistration,
     __in HKEY hkRegistration,
     __in BURN_RESUME_MODE resumeMode,
+    __in BOOL fRestartInitiated,
     __in BOOL fPerMachineProcess
     );
 static HRESULT ParseRelatedCodes(
@@ -256,7 +265,6 @@ extern "C" void RegistrationUninitialize(
     ReleaseStr(pRegistration->sczExecutableName);
 
     ReleaseStr(pRegistration->sczRegistrationKey);
-    ReleaseStr(pRegistration->sczCacheDirectory);
     ReleaseStr(pRegistration->sczCacheExecutablePath);
     ReleaseStr(pRegistration->sczResumeCommandLine);
     ReleaseStr(pRegistration->sczStateFile);
@@ -286,6 +294,31 @@ extern "C" void RegistrationUninitialize(
 }
 
 /*******************************************************************
+ RegistrationSetVariables - Initializes bundle variables that map to
+                            registration entities.
+
+*******************************************************************/
+extern "C" HRESULT RegistrationSetVariables(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR scz = NULL;
+
+    // Ensure the registration bundle name is updated.
+    hr = GetBundleName(pRegistration, pVariables, &scz);
+    ExitOnFailure(hr, "Failed to intitialize bundle name.");
+
+    hr = AddBuiltInVariable(pVariables, L"BundleProviderKey", InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
+    ExitOnFailure(hr, "Failed to initialize the BundleProviderKey built-in variable.");
+
+LExit:
+    ReleaseStr(scz);
+    return hr;
+}
+
+/*******************************************************************
  RegistrationSetPaths - Initializes file system paths to registration entities.
 
 *******************************************************************/
@@ -294,6 +327,7 @@ extern "C" HRESULT RegistrationSetPaths(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczCacheDirectory = NULL;
 
     // save registration key root
     pRegistration->hkRoot = pRegistration->fPerMachine ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
@@ -303,21 +337,21 @@ extern "C" HRESULT RegistrationSetPaths(
     ExitOnFailure(hr, "Failed to build uninstall registry key path.");
 
     // build cache directory
-    hr = CacheGetCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &pRegistration->sczCacheDirectory);
+    hr = CacheGetCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCacheDirectory);
     ExitOnFailure(hr, "Failed to build cache directory.");
 
     // build cached executable path
-    hr = PathConcat(pRegistration->sczCacheDirectory, pRegistration->sczExecutableName, &pRegistration->sczCacheExecutablePath);
+    hr = PathConcat(sczCacheDirectory, pRegistration->sczExecutableName, &pRegistration->sczCacheExecutablePath);
     ExitOnFailure(hr, "Failed to build cached executable path.");
 
     // build state file path
-    hr = StrAllocFormatted(&pRegistration->sczStateFile, L"%s\\state.rsm", pRegistration->sczCacheDirectory);
+    hr = StrAllocFormatted(&pRegistration->sczStateFile, L"%s\\state.rsm", sczCacheDirectory);
     ExitOnFailure(hr, "Failed to build state file path.");
 
 LExit:
+    ReleaseStr(sczCacheDirectory);
     return hr;
 }
-
 
 /*******************************************************************
  RegistrationSetResumeCommand - Initializes resume command string
@@ -330,6 +364,7 @@ extern "C" HRESULT RegistrationSetResumeCommand(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczLogAppend = NULL;
 
     // build the resume command-line.
     hr = StrAllocFormatted(&pRegistration->sczResumeCommandLine, L"\"%ls\"", pRegistration->sczCacheExecutablePath);
@@ -337,11 +372,11 @@ extern "C" HRESULT RegistrationSetResumeCommand(
 
     if (pLog->sczPath)
     {
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /burn.log.append ", 0);
-        ExitOnFailure(hr, "Failed to append burn.log.append commandline to resume command-line");
+        hr = StrAllocFormatted(&sczLogAppend, L" /%ls \"%ls\"", BURN_COMMANDLINE_SWITCH_LOG_APPEND, pLog->sczPath);
+        ExitOnFailure(hr, "Failed to format append log command-line for resume command-line.");
 
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, pLog->sczPath, 0);
-        ExitOnFailure(hr, "Failed to append logfile path to resume command-line");
+        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, sczLogAppend, 0);
+        ExitOnFailure(hr, "Failed to append log command-line to resume command-line");
     }
 
     switch (pCommand->action)
@@ -387,6 +422,7 @@ extern "C" HRESULT RegistrationSetResumeCommand(
     }
 
 LExit:
+    ReleaseStr(sczLogAppend);
     return hr;
 }
 
@@ -401,9 +437,21 @@ extern "C" HRESULT RegistrationDetectResumeType(
     )
 {
     HRESULT hr = S_OK;
-    HKEY hkRegistration = NULL;
+    LPWSTR sczRebootRequiredKey = NULL;
     HKEY hkRebootRequired = NULL;
+    HKEY hkRegistration = NULL;
     DWORD dwResume = 0;
+
+    // Check to see if a restart is pending for this bundle.
+    hr = StrAllocFormatted(&sczRebootRequiredKey, REGISTRY_REBOOT_PENDING_FORMAT, pRegistration->sczRegistrationKey);
+    ExitOnFailure(hr, "Failed to format pending restart registry key to read.");
+
+    hr = RegOpen(pRegistration->hkRoot, sczRebootRequiredKey, KEY_QUERY_VALUE, &hkRebootRequired);
+    if (SUCCEEDED(hr))
+    {
+        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING;
+        ExitFunction1(hr = S_OK);
+    }
 
     // open registration key
     hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_QUERY_VALUE, &hkRegistration);
@@ -418,7 +466,7 @@ extern "C" HRESULT RegistrationDetectResumeType(
     hr = RegReadNumber(hkRegistration, L"Resume", &dwResume);
     if (E_FILENOTFOUND == hr)
     {
-        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_NONE;
+        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_INVALID;
         ExitFunction1(hr = S_OK);
     }
     ExitOnFailure(hr, "Failed to read Resume value.");
@@ -439,21 +487,9 @@ extern "C" HRESULT RegistrationDetectResumeType(
         break;
 
     case BURN_RESUME_MODE_REBOOT_PENDING:
-        // open RebootRequired key
-        hr = RegOpen(hkRegistration, L"RebootRequired", KEY_QUERY_VALUE, &hkRebootRequired);
-        if (E_FILENOTFOUND == hr)
-        {
-            // if key was not found, the system has been rebooted successfully
-            *pResumeType = BOOTSTRAPPER_RESUME_TYPE_REBOOT;
-            hr = S_OK;
-        }
-        else
-        {
-            ExitOnFailure(hr, "Failed to open RebootRequired key.");
-
-            // if the key was opened successfully we are still pending a reboot
-            *pResumeType = BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING;
-        }
+        // The volatile pending registry doesn't exist (checked above) which means
+        // the system was successfully restarted.
+        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_REBOOT;
         break;
 
     default:
@@ -465,6 +501,7 @@ extern "C" HRESULT RegistrationDetectResumeType(
 LExit:
     ReleaseRegKey(hkRegistration);
     ReleaseRegKey(hkRebootRequired);
+    ReleaseStr(sczRebootRequiredKey);
 
     return hr;
 }
@@ -661,6 +698,7 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT RegistrationSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BOOTSTRAPPER_ACTION action,
     __in DWORD64 /* qwEstimatedSize */,
@@ -670,55 +708,19 @@ extern "C" HRESULT RegistrationSessionBegin(
     HRESULT hr = S_OK;
     HKEY hkRegistration = NULL;
     LPWSTR sczExecutablePath = NULL;
-    LPWSTR sczExecutableDirectory = NULL;
-    LPWSTR sczPayloadSourcePath = NULL;
-    LPWSTR sczPayloadTargetPath = NULL;
+    LPWSTR sczDisplayName = NULL;
 
     // alter registration in the correct process
     if (pRegistration->fPerMachine == fPerMachineProcess)
     {
-        // on install, cache executable
+        // On install, cache executable
         if (BOOTSTRAPPER_ACTION_INSTALL == action)
         {
-            // build cached executable path
             hr = PathForCurrentProcess(&sczExecutablePath, NULL);
             ExitOnFailure(hr, "Failed to get path for current executing process.");
 
-            hr = LogStringLine(REPORT_STANDARD, "Caching executable from: %ls to: %ls", sczExecutablePath, pRegistration->sczCacheExecutablePath);
-            ExitOnFailure(hr, "Failed to log 'caching executable' message");
-
-            // create cache directory
-            hr = DirEnsureExists(pRegistration->sczCacheDirectory, NULL);
-            ExitOnFailure(hr, "Failed to ensure bundle cache directory exists.");
-
-            // TODO: replace this copy with the more intelligent copy of only
-            // the burnstub executable and manifest data with fix-up for the
-            // signature.
-            hr = FileEnsureCopy(sczExecutablePath, pRegistration->sczCacheExecutablePath, TRUE);
-            ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", sczExecutablePath, pRegistration->sczCacheExecutablePath);
-
-            // get base directory for executable
-            hr = PathGetDirectory(sczExecutablePath, &sczExecutableDirectory);
-            ExitOnFailure(hr, "Failed to get base directory for executable.");
-
-            // copy external UX payloads
-            for (DWORD i = 0; i < pUserExperience->payloads.cPayloads; ++i)
-            {
-                BURN_PAYLOAD* pPayload = &pUserExperience->payloads.rgPayloads[i];
-
-                if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
-                {
-                    hr = PathConcat(sczExecutableDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
-                    ExitOnFailure(hr, "Failed to build payload source path.");
-
-                    hr = PathConcat(pRegistration->sczCacheDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
-                    ExitOnFailure(hr, "Failed to build payload target path.");
-
-                    // copy payload file
-                    hr = FileEnsureCopy(sczPayloadSourcePath, sczPayloadTargetPath, TRUE);
-                    ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
-                }
-            }
+            hr = CacheBundle(pRegistration, pUserExperience, sczExecutablePath);
+            ExitOnFailure1(hr, "Failed to cache bundle from path: %ls", sczExecutablePath);
         }
 
         // create registration key
@@ -758,7 +760,8 @@ extern "C" HRESULT RegistrationSessionBegin(
                 ExitOnFailure(hr, "Failed to write DisplayIcon value.");
 
                 // DisplayName: provided by UI
-                hr = RegWriteString(hkRegistration, L"DisplayName", pRegistration->sczDisplayName);
+                hr = GetBundleName(pRegistration, pVariables, &sczDisplayName);
+                hr = RegWriteString(hkRegistration, L"DisplayName", SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
                 ExitOnFailure(hr, "Failed to write DisplayName value.");
 
                 // DisplayVersion: provided by UI
@@ -877,53 +880,12 @@ extern "C" HRESULT RegistrationSessionBegin(
     }
 
     // update resume mode
-    hr = UpdateResumeMode(pRegistration, hkRegistration, BURN_RESUME_MODE_ACTIVE, fPerMachineProcess);
+    hr = UpdateResumeMode(pRegistration, hkRegistration, BURN_RESUME_MODE_ACTIVE, FALSE, fPerMachineProcess);
     ExitOnFailure(hr, "Failed to update resume mode.");
 
 LExit:
-    ReleaseRegKey(hkRegistration);
+    ReleaseStr(sczDisplayName);
     ReleaseStr(sczExecutablePath);
-    ReleaseStr(sczExecutableDirectory);
-    ReleaseStr(sczPayloadSourcePath);
-    ReleaseStr(sczPayloadTargetPath);
-
-    return hr;
-}
-
-/*******************************************************************
- RegistrationSessionSuspend - Suspends a run session and writes resume mode to the system.
-
-*******************************************************************/
-extern "C" HRESULT RegistrationSessionSuspend(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_ACTION /* action */,
-    __in BOOL fReboot,
-    __in BOOL fPerMachineProcess,
-    __out_opt BURN_RESUME_MODE* pResumeMode
-    )
-{
-    HRESULT hr = S_OK;
-    HKEY hkRegistration = NULL;
-
-    // alter registration in the correct process
-    if (pRegistration->fPerMachine == fPerMachineProcess)
-    {
-        // open registration key
-        hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
-        ExitOnFailure(hr, "Failed to open registration key.");
-    }
-
-    // update resume mode
-    BURN_RESUME_MODE resumeMode = fReboot ? BURN_RESUME_MODE_REBOOT_PENDING : BURN_RESUME_MODE_SUSPEND;
-    if (pResumeMode)
-    {
-        *pResumeMode = resumeMode;
-    }
-
-    hr = UpdateResumeMode(pRegistration, hkRegistration, resumeMode, fPerMachineProcess);
-    ExitOnFailure(hr, "Failed to update resume mode.");
-
-LExit:
     ReleaseRegKey(hkRegistration);
 
     return hr;
@@ -952,7 +914,7 @@ extern "C" HRESULT RegistrationSessionResume(
     }
 
     // update resume mode
-    hr = UpdateResumeMode(pRegistration, hkRegistration, BURN_RESUME_MODE_ACTIVE, fPerMachineProcess);
+    hr = UpdateResumeMode(pRegistration, hkRegistration, BURN_RESUME_MODE_ACTIVE, FALSE, fPerMachineProcess);
     ExitOnFailure(hr, "Failed to update resume mode.");
 
 LExit:
@@ -970,17 +932,34 @@ extern "C" HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
     __in BOOTSTRAPPER_ACTION action,
     __in BOOL fRollback,
+    __in BOOL fSuspend,
+    __in BOOTSTRAPPER_APPLY_RESTART restart,
     __in BOOL fPerMachineProcess,
     __out_opt BURN_RESUME_MODE* pResumeMode
     )
 {
     HRESULT hr = S_OK;
     BURN_RESUME_MODE resumeMode = BURN_RESUME_MODE_NONE;
+    LPWSTR sczRebootRequiredKey = NULL;
+    HKEY hkRebootRequired = NULL;
     HKEY hkRegistration = NULL;
-    LPWSTR sczRootCacheDirectory = NULL;
 
-    // If we are ARP registered, and not uninstalling, then set resume mode to "ARP".
-    if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
+    // Calculate the correct resume mode. If a restart has been initiated, that trumps all other
+    // modes. If the user chose to suspend the install then we'll use that as the resume mode.
+    // Barring those special cases, if the bundle is supposed to be registered in ARP and the
+    // install was successful or the uninstall was unsuccessful, then set resume mode to "ARP".
+    // Finally, (the unspoken case) if we are not registering in ARP or we failed to install
+    // or we successfully uninstalled then the resume mode is none and everything gets cleaned
+    // up.
+    if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+    {
+        resumeMode = BURN_RESUME_MODE_REBOOT_PENDING;
+    }
+    else if (fSuspend)
+    {
+        resumeMode = BURN_RESUME_MODE_SUSPEND;
+    }
+    else if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
     {
         resumeMode = BURN_RESUME_MODE_ARP;
     }
@@ -988,16 +967,29 @@ extern "C" HRESULT RegistrationSessionEnd(
     // Alter registration in the correct process.
     if (pRegistration->fPerMachine == fPerMachineProcess)
     {
-        // If resume mode is "ARP", then leave the cache behind.
-        if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
+        // If a restart is required for any reason, write a volatile registry key to track of
+        // of that fact until the reboot has taken place.
+        if (BOOTSTRAPPER_APPLY_RESTART_NONE != restart)
         {
-            resumeMode = BURN_RESUME_MODE_ARP;
+            // We'll write the volatile registry key right next to the bundle ARP registry key
+            // because that's easy. This is all best effort since the worst case just means in
+            // the rare case the user launches the same install again before taking the restart
+            // the BA won't know a restart was still required.
+            hr = StrAllocFormatted(&sczRebootRequiredKey, REGISTRY_REBOOT_PENDING_FORMAT, pRegistration->sczRegistrationKey);
+            if (SUCCEEDED(hr))
+            {
+                hr = RegCreateEx(pRegistration->hkRoot, sczRebootRequiredKey, KEY_WRITE, TRUE, NULL, &hkRebootRequired, NULL);
+            }
 
-            // Open registration key.
-            hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
-            ExitOnFailure(hr, "Failed to open registration key.");
+            if (FAILED(hr))
+            {
+                ExitTrace(hr, "Failed to write volatile reboot required registry key.");
+                hr = S_OK;
+            }
         }
-        else
+
+        // If no resume mode, then remove the bundle registration.
+        if (BURN_RESUME_MODE_NONE == resumeMode)
         {
             // Remove the bundle dependency key.
             hr = DependencyUnregister(pRegistration);
@@ -1010,23 +1002,19 @@ extern "C" HRESULT RegistrationSessionEnd(
                 ExitOnFailure1(hr, "Failed to delete registration key: %ls", pRegistration->sczRegistrationKey);
             }
 
-            LogId(REPORT_STANDARD, MSG_UNCACHE_BUNDLE, pRegistration->sczId, pRegistration->sczCacheDirectory);
-
-            // Delete cache directory.
-            hr = DirEnsureDeleteEx(pRegistration->sczCacheDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
-            ExitOnFailure1(hr, "Failed to remove bundle directory: %ls", pRegistration->sczCacheDirectory);
-
-            // Try to remove root package cache in the off chance it is now empty.
-            HRESULT hrIgnored = CacheGetCompletedPath(pRegistration->fPerMachine, L"", &sczRootCacheDirectory);
-            if (SUCCEEDED(hrIgnored))
-            {
-                ::RemoveDirectoryW(sczRootCacheDirectory);
-            }
+            hr = CacheRemoveBundle(pRegistration->fPerMachine, pRegistration->sczId);
+            ExitOnFailure(hr, "Failed to remove bundle from cache.");
+        }
+        else // the mode needs to be updated so open the registration key.
+        {
+            // Open registration key.
+            hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
+            ExitOnFailure(hr, "Failed to open registration key.");
         }
     }
 
     // Update resume mode.
-    hr = UpdateResumeMode(pRegistration, hkRegistration, resumeMode, fPerMachineProcess);
+    hr = UpdateResumeMode(pRegistration, hkRegistration, resumeMode, BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart, fPerMachineProcess);
     ExitOnFailure(hr, "Failed to update resume mode.");
 
     // Return resume mode.
@@ -1036,8 +1024,9 @@ extern "C" HRESULT RegistrationSessionEnd(
     }
 
 LExit:
-    ReleaseStr(sczRootCacheDirectory);
     ReleaseRegKey(hkRegistration);
+    ReleaseRegKey(hkRebootRequired);
+    ReleaseStr(sczRebootRequiredKey);
 
     return hr;
 }
@@ -1053,10 +1042,6 @@ extern "C" HRESULT RegistrationSaveState(
     )
 {
     HRESULT hr = S_OK;
-
-    // create cache directory
-    hr = DirEnsureExists(pRegistration->sczCacheDirectory, NULL);
-    ExitOnFailure(hr, "Failed to ensure bundle cache directory exists.");
 
     // write data to file
     hr = FileWrite(pRegistration->sczStateFile, FILE_ATTRIBUTE_NORMAL, pbBuffer, cbBuffer, NULL);
@@ -1089,10 +1074,33 @@ LExit:
 
 // internal helper functions
 
+static HRESULT GetBundleName(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables,
+    __out LPWSTR* psczBundleName
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = VariableGetString(pVariables, BURN_BUNDLE_NAME, psczBundleName);
+    if (E_NOTFOUND == hr)
+    {
+        hr = VariableSetString(pVariables, BURN_BUNDLE_NAME, pRegistration->sczDisplayName);
+        ExitOnFailure(hr, "Failed to set bundle name.");
+
+        hr = StrAllocString(psczBundleName, pRegistration->sczDisplayName, 0);
+    }
+    ExitOnFailure(hr, "Failed to get bundle name.");
+
+LExit:
+    return hr;
+}
+
 static HRESULT UpdateResumeMode(
     __in BURN_REGISTRATION* pRegistration,
     __in HKEY hkRegistration,
     __in BURN_RESUME_MODE resumeMode,
+    __in BOOL fRestartInitiated,
     __in BOOL fPerMachineProcess
     )
 {
@@ -1104,35 +1112,28 @@ static HRESULT UpdateResumeMode(
     // write resume information
     if (hkRegistration)
     {
-        if (BURN_RESUME_MODE_NONE == resumeMode)
-        {
-            // delete Resume value
-            er = ::RegDeleteValueW(hkRegistration, L"Resume");
-            ExitOnWin32Error(er, hr, "Failed to delete Resume value.");
-        }
-        else
-        {
-            // write Resume value
-            hr = RegWriteNumber(hkRegistration, L"Resume", (DWORD)resumeMode);
-            ExitOnFailure(hr, "Failed to write Resume value.");
-        }
-
-        // If we are entering reboot-pending mode, write a volatile
-        // registry key to track when the reboot has taken place.
-        if (BURN_RESUME_MODE_REBOOT_PENDING == resumeMode)
-        {
-            // create registry key
-            hr = RegCreateEx(hkRegistration, L"RebootRequired", KEY_WRITE, TRUE, NULL, &hkRebootRequired, NULL);
-            ExitOnFailure(hr, "Failed to create resume key.");
-        }
+        // write Resume value
+        hr = RegWriteNumber(hkRegistration, L"Resume", (DWORD)resumeMode);
+        ExitOnFailure(hr, "Failed to write Resume value.");
     }
 
     // update run key, this always happens in the per-user process
     if (!fPerMachineProcess)
     {
-        if (BURN_RESUME_MODE_SUSPEND == resumeMode || BURN_RESUME_MODE_ARP == resumeMode || BURN_RESUME_MODE_NONE == resumeMode)
+        // If the engine is active write the run key so we resume if there is an unexpected
+        // power loss. Also, if a restart was initiated in the middle of the chain then
+        // ensure the run key exists (it should since going active would have written it).
+        if (BURN_RESUME_MODE_ACTIVE == resumeMode || fRestartInitiated)
         {
-            // delete run key value
+            // write run key
+            hr = RegCreate(HKEY_CURRENT_USER, REGISTRY_RUN_KEY, KEY_WRITE, &hkRun);
+            ExitOnFailure(hr, "Failed to create run key.");
+
+            hr = RegWriteString(hkRun, pRegistration->sczId, pRegistration->sczResumeCommandLine);
+            ExitOnFailure(hr, "Failed to write run key value.");
+        }
+        else // delete run key value
+        {
             hr = RegOpen(HKEY_CURRENT_USER, REGISTRY_RUN_KEY, KEY_WRITE, &hkRun);
             if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
             {
@@ -1145,15 +1146,6 @@ static HRESULT UpdateResumeMode(
                 er = ::RegDeleteValueW(hkRun, pRegistration->sczId);
                 ExitOnWin32Error(er, hr, "Failed to delete run key value.");
             }
-        }
-        else
-        {
-            // write run key
-            hr = RegCreate(HKEY_CURRENT_USER, REGISTRY_RUN_KEY, KEY_WRITE, &hkRun);
-            ExitOnFailure(hr, "Failed to create run key.");
-
-            hr = RegWriteString(hkRun, pRegistration->sczId, pRegistration->sczResumeCommandLine);
-            ExitOnFailure(hr, "Failed to write run key value.");
         }
     }
 

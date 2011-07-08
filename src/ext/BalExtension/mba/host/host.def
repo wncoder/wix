@@ -1,10 +1,10 @@
 ;-------------------------------------------------------------------------------------------------
-; <copyright file="muxhost.def" company="Microsoft">
+; <copyright file="host.def" company="Microsoft">
 ;    Copyright (c) Microsoft Corporation.  All rights reserved.
 ; </copyright>
 ; 
 ; <summary>
-;    MUX Host DLL entry points.
+;    MBA Host DLL entry points.
 ; </summary>
 ;-------------------------------------------------------------------------------------------------
 

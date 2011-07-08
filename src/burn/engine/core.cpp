@@ -98,9 +98,9 @@ extern "C" HRESULT CoreInitialize(
     hr = ManifestLoadXmlFromBuffer(pbBuffer, cbBuffer, pEngineState);
     ExitOnFailure(hr, "Failed to load manifest.");
 
-    // set the bundle provider key variable
-    hr = AddBuiltInVariable(&pEngineState->variables, L"BundleProviderKey", InitializeVariableString, (DWORD_PTR)pEngineState->registration.sczProviderKey);
-    ExitOnFailure(hr, "Failed to initialize the BundleProviderKey built-in variable.");
+    // set the registration variables
+    hr = RegistrationSetVariables(&pEngineState->registration, &pEngineState->variables);
+    ExitOnFailure(hr, "Failed to set registration variables");
 
     // set registration paths
     hr = RegistrationSetPaths(&pEngineState->registration);
@@ -113,7 +113,9 @@ extern "C" HRESULT CoreInitialize(
         ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
     }
 
-    if (BURN_MODE_EMBEDDED == pEngineState->mode || BURN_MODE_NORMAL == pEngineState->mode)
+    // If we're not elevated then we'll be loading the bootstrapper application, so extract
+    // the payloads from the BA container.
+    if (!pEngineState->fElevated)
     {
         // Extract all UX payloads to temp directory.
         hr = PathCreateTempDirectory(NULL, L"UX%d", 999999, &pEngineState->userExperience.sczTempDirectory);
@@ -178,7 +180,7 @@ extern "C" HRESULT CoreSerializeEngineState(
 {
     HRESULT hr = S_OK;
 
-    hr = VariableSerialize(&pEngineState->variables, ppbBuffer, piBuffer);
+    hr = VariableSerialize(&pEngineState->variables, TRUE, ppbBuffer, piBuffer);
     ExitOnFailure(hr, "Failed to serialize variables.");
 
 LExit:
@@ -714,7 +716,7 @@ extern "C" HRESULT CoreApply(
 LExit:
     if (fRegistered)
     {
-        ApplyUnregister(pEngineState, fRollback, fSuspend, BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart);
+        ApplyUnregister(pEngineState, fRollback, fSuspend, restart);
     }
 
     if (fActivated)
@@ -725,7 +727,7 @@ LExit:
     ReleaseHandle(hCacheThread);
 
     nResult = pEngineState->userExperience.pUserExperience->OnApplyComplete(hr, restart);
-    if (IDRESTART == nResult || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+    if (IDRESTART == nResult)
     {
         pEngineState->fRestart = TRUE;
     }
@@ -1091,7 +1093,7 @@ static DWORD WINAPI CacheThreadProc(
     fComInitialized = TRUE;
 
     // cache packages
-    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedCachePipe, pcOverallProgressTicks, pfRollback);
+    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->variables, &pEngineState->plan, pEngineState->hElevatedCachePipe, pcOverallProgressTicks, pfRollback);
     ExitOnFailure(hr, "Failed to cache packages.");
 
 LExit:

@@ -40,6 +40,8 @@ typedef struct _BURN_VARIABLE
 {
     LPWSTR sczName;
     BURN_VARIANT Value;
+    BOOL fHidden;
+    BOOL fPersisted;
 
     // used for late initialization of built-in variables
     BOOL fBuiltIn;
@@ -125,6 +127,7 @@ HRESULT VariableEscapeString(
     );
 HRESULT VariableSerialize(
     __in BURN_VARIABLES* pVariables,
+    __in BOOL fPersisting,
     __inout BYTE** ppbBuffer,
     __inout SIZE_T* piBuffer
     );

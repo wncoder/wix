@@ -80,6 +80,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
             BURN_REGISTRATION registration = { };
@@ -105,6 +106,9 @@ namespace Bootstrapper
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 hr = UserExperienceParseFromXml(&userExperience, pixeBundle);
                 TestThrowOnFailure(hr, L"Failed to parse UX from XML.");
 
@@ -118,7 +122,7 @@ namespace Bootstrapper
                 TestThrowOnFailure(hr, L"Failed to set registration resume command.");
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
@@ -126,10 +130,10 @@ namespace Bootstrapper
                 Assert::IsTrue(File::Exists(Path::Combine(cacheDirectory, gcnew String(L"setup.exe"))));
 
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat("\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat("\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // end session
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -143,6 +147,7 @@ namespace Bootstrapper
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
+                VariablesUninitialize(&variables);
 
                 Registry::CurrentUser->DeleteSubKeyTree(gcnew String(ROOT_PATH));
                 if (Directory::Exists(cacheDirectory))
@@ -159,6 +164,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
             BURN_REGISTRATION registration = { };
@@ -186,6 +192,9 @@ namespace Bootstrapper
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 hr = UserExperienceParseFromXml(&userExperience, pixeBundle);
                 TestThrowOnFailure(hr, L"Failed to parse UX from XML.");
 
@@ -203,15 +212,15 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was updated
@@ -223,15 +232,15 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was updated
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -243,6 +252,7 @@ namespace Bootstrapper
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
+                VariablesUninitialize(&variables);
 
                 Registry::CurrentUser->DeleteSubKeyTree(gcnew String(ROOT_PATH));
                 if (Directory::Exists(cacheDirectory))
@@ -259,6 +269,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
             BURN_REGISTRATION registration = { };
@@ -288,6 +299,9 @@ namespace Bootstrapper
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 hr = UserExperienceParseFromXml(&userExperience, pixeBundle);
                 TestThrowOnFailure(hr, L"Failed to parse UX from XML.");
 
@@ -305,15 +319,15 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was updated
@@ -338,15 +352,15 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was updated
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append BurnUnitTest.txt"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // verify that registration was removed
@@ -358,6 +372,7 @@ namespace Bootstrapper
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
+                VariablesUninitialize(&variables);
 
                 Registry::CurrentUser->DeleteSubKeyTree(gcnew String(ROOT_PATH));
                 if (Directory::Exists(cacheDirectory))
@@ -374,6 +389,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
             BURN_REGISTRATION registration = { };
@@ -408,6 +424,9 @@ namespace Bootstrapper
                 // load XML document
                 LoadBundleXmlHelper(wzDocument, &pixeBundle);
 
+                hr = VariableInitialize(&variables);
+                TestThrowOnFailure(hr, L"Failed to initialize variables.");
+
                 hr = UserExperienceParseFromXml(&userExperience, pixeBundle);
                 TestThrowOnFailure(hr, L"Failed to parse UX from XML.");
 
@@ -427,7 +446,7 @@ namespace Bootstrapper
                 Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_NONE, (int)resumeType);
 
                 // begin session
-                hr = RegistrationSessionBegin(&registration, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 hr = RegistrationSaveState(&registration, rgbData, sizeof(rgbData));
@@ -440,7 +459,7 @@ namespace Bootstrapper
                 Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_UNEXPECTED, (int)resumeType);
 
                 // suspend session
-                hr = RegistrationSessionSuspend(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, TRUE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to suspend session.");
 
                 // verify that run key was removed
@@ -467,7 +486,7 @@ namespace Bootstrapper
                 Assert::AreNotEqual(nullptr, Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // end session
-                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, NULL);
+                hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
                 TestThrowOnFailure(hr, L"Failed to unregister bundle.");
 
                 // read resume type after session
@@ -481,6 +500,7 @@ namespace Bootstrapper
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
+                VariablesUninitialize(&variables);
 
                 Registry::CurrentUser->DeleteSubKeyTree(gcnew String(ROOT_PATH));
                 if (Directory::Exists(cacheDirectory))
