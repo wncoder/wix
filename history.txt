@@ -1261,3 +1261,6 @@ RobMen: SFBUG_3073006 - persist WixBundleName and allow it to be overwritten
 
 WixBuild: Version 3.6.1908.0
 
+BobArnson: Fix SFBUG:3175287 by clarifying Component/@Win64 doc. Update 
+           MediaTemplate and CompressionLevel doc based on 
+           http://www.joyofsetup.com/2011/06/21/wix-and-cabinetry/.

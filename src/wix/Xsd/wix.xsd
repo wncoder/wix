@@ -7175,10 +7175,11 @@
       <xs:attribute name="Win64" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Set this attribute to 'yes' to mark this as a 64-bit component. This attribute facilitates
-                        the installation of packages that include both 32-bit and 64-bit components.  If this bit
-                        is not set, the component is registered as a 32-bit component.  If this is a 64-bit
-                        component replacing a 32-bit component, set this bit and assign a new GUID in the Guid attribute.
+                        By default, components take on the 'bitness' of the source code being compiled, as specified
+                        by the -arch switch (or the InstallerPlatform property in an MSBuild .wixproj project):
+                        'x86' defaults to 32-bit components; 'x64' and 'ia64' default to 64-bit components.
+                        Specify 'no' for this attribute to specify a 32-bit component in a 64-bit package. 
+                        (Including a 64-bit component in a 32-bit package is not supported.)
                     </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -8138,6 +8139,8 @@
           <xs:documentation>
                         Indicates the compression level for the Media's cabinet.  This attribute can
                         only be used in conjunction with the Cabinet attribute.  The default is 'mszip'.
+                        Explicitly-authored compression level can be overridden with the WIX_COMPRESSION_LEVEL 
+                        environment variable.
                     </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -8205,7 +8208,10 @@
     <xs:annotation>
       <xs:documentation>
                 MediaTeplate element describes information to automatically assign files to cabinets. 
-                A maximumum number of cabinets created is 999.
+                A maximum of 999 cabinets will be created, based on the MaximumUncompressedMediaSize 
+                attribute value, the WIX_MUMS environment variable, or the default of 200MB. Note 
+                that MediaTemplate and Media cannot be used together in the same package. Explicitly
+                authored DiskId values are ignored when using MediaTemplate.
             </xs:documentation>
     </xs:annotation>
     <xs:complexType>
@@ -8224,6 +8230,8 @@
           <xs:documentation>
                         Indicates the compression level for the Media's cabinet.  This attribute can 
                         only be used in conjunction with the Cabinet attribute.  The default is 'mszip'.
+                        Explicitly-authored compression level can be overridden with the WIX_COMPRESSION_LEVEL 
+                        environment variable.
                     </xs:documentation>
         </xs:annotation>
         <xs:simpleType>
