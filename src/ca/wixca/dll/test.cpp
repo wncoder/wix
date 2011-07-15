@@ -48,17 +48,41 @@ extern "C" UINT __stdcall WixWaitForEvent(
 {
     HRESULT hr = S_OK;
     UINT er = ERROR_SUCCESS;
+    LPCWSTR wzSDDL = L"D:(A;;GA;;;WD)";
+    OS_VERSION version = OS_VERSION_UNKNOWN;
+    DWORD dwServicePack = 0;
+    PSECURITY_DESCRIPTOR pSD = NULL;
+    SECURITY_ATTRIBUTES sa = { };
     HANDLE rghEvents[2];
 
     hr = WcaInitialize(hInstall, "WixWaitForEvent");
     ExitOnFailure(hr, "Failed to initialize.");
 
-    rghEvents[0] = ::CreateEventW(NULL, FALSE, FALSE, L"Global\\WixWaitForEventFail");
+    // If running on Vista/2008 or newer use integrity enhancements.
+    OsGetVersion(&version, &dwServicePack);
+    if (OS_VERSION_VISTA <= version)
+    {
+        // Add SACL to allow Everyone to signal from a medium integrity level.
+        wzSDDL = L"D:(A;;GA;;;WD)S:(ML;;NW;;;ME)";
+    }
+
+    // Create the security descriptor and attributes for the events.
+    if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(wzSDDL, SDDL_REVISION_1, &pSD, NULL))
+    {
+        ExitWithLastError(hr, "Failed to create the security descriptor for the events.");
+    }
+
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = pSD;
+    sa.bInheritHandle = FALSE;
+
+    rghEvents[0] = ::CreateEventW(&sa, FALSE, FALSE, L"Global\\WixWaitForEventFail");
     ExitOnNullWithLastError(rghEvents[0], hr, "Failed to create the Global\\WixWaitForEventFail event.");
 
-    rghEvents[1] = ::CreateEventW(NULL, FALSE, FALSE, L"Global\\WixWaitForEventSucceed");
+    rghEvents[1] = ::CreateEventW(&sa, FALSE, FALSE, L"Global\\WixWaitForEventSucceed");
     ExitOnNullWithLastError(rghEvents[1], hr, "Failed to create the Global\\WixWaitForEventSucceed event.");
 
+    // Wait for either of the events to be signaled and handle accordingly.
     er = ::WaitForMultipleObjects(countof(rghEvents), rghEvents, FALSE, INFINITE);
     switch (er)
     {
@@ -75,6 +99,11 @@ extern "C" UINT __stdcall WixWaitForEvent(
 LExit:
     ReleaseHandle(rghEvents[1]);
     ReleaseHandle(rghEvents[0]);
+
+    if (pSD)
+    {
+        ::LocalFree(pSD);
+    }
 
     if (FAILED(hr))
     {

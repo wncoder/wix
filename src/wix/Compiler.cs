@@ -12484,6 +12484,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "User":
                             user = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
+                        case "FileAllRights":
+                            // match the WinNT.h mask FILE_ALL_ACCESS for value 0x001F01FF (aka 1 1111 0000 0001 1111 1111 or 2032127)
+                            bits[0] = bits[1] = bits[2] = bits[3] = bits[4] = bits[5] = bits[6] = bits[7] = bits[8] = bits[16] = bits[17] = bits[18] = bits[19] = bits[20] = true;
+                            break;
+                        case "SpecificRightsAll":
+                            // match the WinNT.h mask SPECIFIC_RIGHTS_ALL for value 0x0000FFFF (aka 1111 1111 1111 1111)
+                            bits[0] = bits[1] = bits[2] = bits[3] = bits[4] = bits[5] = bits[6] = bits[7] = bits[8] = bits[9] = bits[10] = bits[11] = bits[12] = bits[13] = bits[14] = bits[15] = true;
+                            break;
                         default:
                             YesNoType attribValue = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             if (!CompilerCore.NameToBit(Common.StandardPermissions, attrib.Name, attribValue, bits, 16))

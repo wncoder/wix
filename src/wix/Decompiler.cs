@@ -6287,9 +6287,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         string name = null;
 
-                        if (16 > i && specialPermissions.Length > i)
+                        if (specialPermissions.Length > i)
                         {
                             name = specialPermissions[i];
+                        }
+                        else if (16 > i && specialPermissions.Length <= i)
+                        {
+                            name = "SpecificRightsAll";
                         }
                         else if (28 > i && Common.StandardPermissions.Length > (i - 16))
                         {
@@ -6338,6 +6342,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 case "Execute":
                                     permission.Execute = Wix.YesNoType.yes;
                                     break;
+                                case "FileAllRights":
+                                    permission.FileAllRights = Wix.YesNoType.yes;
+                                    break;
                                 case "GenericAll":
                                     permission.GenericAll = Wix.YesNoType.yes;
                                     break;
@@ -6364,6 +6371,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     break;
                                 case "ReadPermission":
                                     permission.ReadPermission = Wix.YesNoType.yes;
+                                    break;
+                                case "SpecificRightsAll":
+                                    permission.SpecificRightsAll = Wix.YesNoType.yes;
                                     break;
                                 case "Synchronize":
                                     permission.Synchronize = Wix.YesNoType.yes;

@@ -4003,6 +4003,11 @@
       <xs:attribute name="ReadPermission" type="YesNoTypeUnion"></xs:attribute>
       <xs:attribute name="ChangePermission" type="YesNoTypeUnion"></xs:attribute>
       <xs:attribute name="TakeOwnership" type="YesNoTypeUnion"></xs:attribute>
+      <xs:attribute name="SpecificRightsAll" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>Bit mask for SPECIFIC_RIGHTS_ALL from WinNT.h (0x0000FFFF).</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <!-- Folder and File ACLs -->
       <xs:attribute name="ReadAttributes" type="YesNoTypeUnion"></xs:attribute>
       <xs:attribute name="WriteAttributes" type="YesNoTypeUnion"></xs:attribute>
@@ -4033,6 +4038,11 @@
       <!-- File only ACLs -->
       <xs:attribute name="Append" type="YesNoTypeUnion"></xs:attribute>
       <xs:attribute name="Execute" type="YesNoTypeUnion"></xs:attribute>
+      <xs:attribute name="FileAllRights" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>Bit mask for FILE_ALL_ACCESS from WinNT.h (0x001F01FF).</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <!-- File and Registry ACLs -->
       <xs:attribute name="Write" type="YesNoTypeUnion"></xs:attribute>
       <!-- Registry only ACLs -->

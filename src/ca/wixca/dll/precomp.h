@@ -29,6 +29,7 @@
 #include <msxml2.h>
 #include <shobjidl.h>
 #include <intshcut.h>
+#include <sddl.h>
 
 #include "wixstrsafe.h"
 #include "wcautil.h"
@@ -44,6 +45,7 @@
 #include "rmutil.h"
 #include "xmlutil.h"
 #include "wiutil.h"
+#include "osutil.h"
 
 #include "CustomMsiErrors.h"
 #include "cost.h"

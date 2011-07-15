@@ -193,7 +193,7 @@ BOOL CompareVariantDefault(
     default:
         fEqual = VARCMP_EQ == ::VarCmp(pVariant1,
                                        pVariant2,
-                                       LOCALE_NEUTRAL,
+                                       LOCALE_INVARIANT,
                                        NORM_IGNORECASE);
     }
 

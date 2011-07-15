@@ -113,6 +113,7 @@ extern "C" HRESULT DAPI LogOpen(
 {
     HRESULT hr = S_OK;
     BOOL fEnteredCriticalSection = FALSE;
+    LPWSTR sczLogDirectory = NULL;
 
     ::EnterCriticalSection(&LogUtil_csLog);
     fEnteredCriticalSection = TRUE;
@@ -126,6 +127,12 @@ extern "C" HRESULT DAPI LogOpen(
     {
         hr = PathConcat(wzDirectory, wzLog, &LogUtil_sczLogPath);
         ExitOnFailure(hr, "Failed to combine the log path.");
+
+        hr = PathGetDirectory(LogUtil_sczLogPath, &sczLogDirectory);
+        ExitOnFailure(hr, "Failed to get log directory.");
+
+        hr = DirEnsureExists(sczLogDirectory, NULL);
+        ExitOnFailure1(hr, "Failed to ensure log file directory exists: %ls", sczLogDirectory);
 
         LogUtil_hLog = ::CreateFileW(LogUtil_sczLogPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, (fAppend) ? OPEN_ALWAYS : CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         if (INVALID_HANDLE_VALUE == LogUtil_hLog)
@@ -164,6 +171,8 @@ LExit:
     {
         ::LeaveCriticalSection(&LogUtil_csLog);
     }
+
+    ReleaseStr(sczLogDirectory);
 
     return hr;
 }

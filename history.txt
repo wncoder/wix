@@ -1261,3 +1261,18 @@ RobMen: SFBUG_3073006 - persist WixBundleName and allow it to be overwritten
 
 WixBuild: Version 3.6.1908.0
 
+HeathS: Allow everyone to signal the test CA events.
+
+RobMen: SFBUG:3363492 - create directory for Burn log files.
+
+RFlaming: SFBug: 3304311 - dark.exe crashes while decompiling LockPermissions
+                           using standard WinNT.h mask in Permissions column.
+
+EricStJ: SFBUG: 3342730 Use case insensitive compare when doing IIS element searches
+
+EricStJ: SFBUG: 3314832 - Solution variables don't work in Votive 2008
+
+RobMen: Fix escaping of quotes when passing properties to MSI packages.
+
+WixBuild: Version 3.6.1915.0
+

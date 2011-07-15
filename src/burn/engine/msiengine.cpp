@@ -1220,14 +1220,16 @@ static HRESULT EscapePropertyArgumentString(
     while (*wzSource)
     {
         *wzTarget = *wzSource;
-        ++wzTarget;
         if (L'\"' == *wzTarget)
         {
-            *wzTarget = L'\"';
             ++wzTarget;
+            *wzTarget = L'\"';
         }
+
         ++wzSource;
+        ++wzTarget;
     }
+
     *wzTarget = L'\0'; // add null terminator
 
 LExit:
