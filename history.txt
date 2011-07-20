@@ -1276,3 +1276,6 @@ RobMen: Fix escaping of quotes when passing properties to MSI packages.
 
 WixBuild: Version 3.6.1915.0
 
+BobArnson: Fix SFBUG:3175287 by clarifying Component/@Win64 doc. Update 
+           MediaTemplate and CompressionLevel doc based on 
+           http://www.joyofsetup.com/2011/06/21/wix-and-cabinetry/.
