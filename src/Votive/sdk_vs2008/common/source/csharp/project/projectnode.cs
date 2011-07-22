@@ -1837,7 +1837,7 @@ namespace Microsoft.VisualStudio.Package
                     this.isNewProject = true;
 
                     // This should be a very fast operation if the build project is already initialized by the Factory.
-                    this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, fileName, this.buildProject, this.Site);
+                    this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, fileName, this.buildProject);
 
 
                     // Compute the file name
@@ -2954,7 +2954,7 @@ namespace Microsoft.VisualStudio.Package
                 this.isClosed = false;
                 this.eventTriggeringFlag = ProjectNode.EventTriggering.DoNotTriggerHierarchyEvents | ProjectNode.EventTriggering.DoNotTriggerTrackerEvents;
 
-                this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, this.filename, this.buildProject, this.Site);
+                this.buildProject = Utilities.ReinitializeMsBuildProject(this.buildEngine, this.filename, this.buildProject);
                 MSBuild.BuildPropertyGroup projectProperties = buildProject.EvaluatedProperties;
 
                 // Load the guid

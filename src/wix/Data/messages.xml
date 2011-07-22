@@ -3467,6 +3467,12 @@
                 <Parameter Type="System.String" Name="detail" />
             </Instance>
         </Message>
+        <Message Id="DownloadUrlNotSupportedForEmbeddedPayloads" Number="1132">
+            <Instance>
+                The Payload '{0}' is embedded but included a @DownloadUrl attribute. Embedded Payloads cannot be downloaded so the download URL is being ignored.
+                <Parameter Type="System.String" Name="payloadId" />
+            </Instance>
+        </Message>
     </Class>
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
         <Message Id="ImportBinaryStream" Number="9000" SourceLineNumbers="no">

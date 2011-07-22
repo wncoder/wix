@@ -1004,6 +1004,16 @@ DAPI_(void) ThemeControlEnable(
 }
 
 
+DAPI_(BOOL) ThemeControlEnabled(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    )
+{
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    return ::IsWindowEnabled(hWnd);
+}
+
+
 DAPI_(void) ThemeShowControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
@@ -1012,6 +1022,16 @@ DAPI_(void) ThemeShowControl(
 {
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
     ::ShowWindow(hWnd, nCmdShow);
+}
+
+
+DAPI_(BOOL) ThemeControlVisible(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    )
+{
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    return ::IsWindowVisible(hWnd);
 }
 
 

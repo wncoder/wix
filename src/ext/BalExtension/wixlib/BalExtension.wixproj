@@ -13,7 +13,7 @@
     <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
     <DefineConstants>
         $(DefineConstants);
-        LogoImage=SourceDir\Logo.bmp;
+        LogoImage=SourceDir\logo.png;
         LoremIpsumLicenseFile=SourceDir\LoremIpsumLicense.rtf;
         RtfThemeXml=SourceDir\RtfTheme.xml;
         RtfThemeWxl=SourceDir\RtfTheme.wxl;

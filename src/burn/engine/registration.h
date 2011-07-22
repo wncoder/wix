@@ -47,6 +47,14 @@ enum BURN_RELATION_TYPE
     BURN_RELATION_ADDON,
 };
 
+enum BURN_REGISTRATION_MODIFY_TYPE
+{
+    BURN_REGISTRATION_MODIFY_ENABLED,
+    BURN_REGISTRATION_MODIFY_DISABLE,
+    BURN_REGISTRATION_MODIFY_DISABLE_BUTTON,
+};
+
+
 // structs
 
 typedef struct _BURN_RELATED_BUNDLE
@@ -97,8 +105,7 @@ typedef struct _BURN_REGISTRATION
     //LPWSTR sczReadme; // TODO: this would be a file path
     LPWSTR sczContact;
     //DWORD64 qwEstimatedSize; // TODO: size should come from disk cost calculation
-    BOOL fNoModifyDefined;
-    BOOL fNoModify;
+    BURN_REGISTRATION_MODIFY_TYPE modify;
     BOOL fNoRepairDefined;
     BOOL fNoRepair;
     BOOL fNoRemoveDefined;

@@ -67,6 +67,13 @@ Language=English
 Failed to resolve source for file: %2!ls!, error: %1!ls!.
 .
 
+MessageId=55
+Severity=Warning
+SymbolicName=MSG_CANNOT_LOAD_STATE_FILE
+Language=English
+Could not load or read state file: %2!ls!, error: 0x%1!x!.
+.
+
 MessageId=100
 Severity=Success
 SymbolicName=MSG_DETECT_BEGIN
@@ -113,7 +120,7 @@ MessageId=151
 Severity=Error
 SymbolicName=MSG_FAILED_DETECT_PACKAGE
 Language=English
-Detect failed for package: %2!ls!, error: 0x%1!x!
+Detect failed for package: %2!ls!, error: %1!ls!
 .
 
 MessageId=199

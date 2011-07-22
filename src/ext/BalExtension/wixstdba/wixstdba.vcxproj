@@ -69,7 +69,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Logo.bmp" />
+    <None Include="Resources\logo.png" />
     <None Include="Resources\LoremIpsumLicense.rtf" />
     <None Include="Resources\HyperlinkTheme.wxl" />
     <None Include="Resources\HyperlinkTheme.xml" />

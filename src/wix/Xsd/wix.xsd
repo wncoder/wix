@@ -116,13 +116,16 @@
           <xs:documentation>Whether Packages and Payloads not assigned to a container should be added to the default attached container or if they should be external. The default is yes.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="DisableModify" type="YesNoTypeUnion">
+      <xs:attribute name="DisableModify" type="YesNoButtonTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Determines whether the bundle can be modified via the Programs and Features (also
-                        known as Add/Remove Programs). If the Bundle/@Name attribute is not specified then
-                        this attribute may not be specified either.
-                    </xs:documentation>
+            Determines whether the bundle can be modified via the Programs and Features (also known as
+            Add/Remove Programs). If the value is "button" then Programs and Features will show a single
+            "Uninstall/Change" button. If the value is "yes" then Programs and Features will only show
+            the "Uninstall" button". Finally, if the value is "no", the default, then a "Change" button
+            is shown in addition to the "Uninstall" button. If the Bundle/@Name attribute is not specified
+            then this attribute may not be specified either.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="DisableRemove" type="YesNoTypeUnion">
@@ -12343,6 +12346,22 @@
     <xs:restriction base="xs:NMTOKEN">
       <xs:enumeration value="no" />
       <xs:enumeration value="yes" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="YesNoButtonTypeUnion">
+    <xs:annotation>
+      <xs:documentation>Values of this type will either be "button", "yes" or "no".</xs:documentation>
+    </xs:annotation>
+    <xs:union memberTypes="YesNoButtonType PreprocessorVariables"/>
+  </xs:simpleType>
+  <xs:simpleType name="YesNoButtonType">
+    <xs:annotation>
+      <xs:documentation>Values of this type will either be "button", "yes" or "no".</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:NMTOKEN">
+      <xs:enumeration value="no" />
+      <xs:enumeration value="yes" />
+      <xs:enumeration value="button" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="YesNoDefaultTypeUnion">

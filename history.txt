@@ -1268,9 +1268,8 @@ RobMen: SFBUG:3363492 - create directory for Burn log files.
 RFlaming: SFBug: 3304311 - dark.exe crashes while decompiling LockPermissions
                            using standard WinNT.h mask in Permissions column.
 
-EricStJ: SFBUG: 3342730 Use case insensitive compare when doing IIS element searches
-
-EricStJ: SFBUG: 3314832 - Solution variables don't work in Votive 2008
+EricStJ: SFBUG: 3342730 Use case insensitive compare when doing IIS element
+                        searches.
 
 RobMen: Fix escaping of quotes when passing properties to MSI packages.
 
@@ -1279,3 +1278,34 @@ WixBuild: Version 3.6.1915.0
 BobArnson: Fix SFBUG:3175287 by clarifying Component/@Win64 doc. Update 
            MediaTemplate and CompressionLevel doc based on 
            http://www.joyofsetup.com/2011/06/21/wix-and-cabinetry/.
+
+PMarcu: SFBUG: 3323884 - Enforcing entries in UpgradeVersion/@Maximum and
+                         Minimum are valid versions.
+
+EricStJ: SFBUG:3354254 - IIS6 CA fails when nothing to install & no IIS
+
+EricStJ: SFBUG:3369868 - Votive truncates project OutputName property at .
+
+EricStJ: SFBUG:3313606 - IIS7 Rollback broken with UseIis6Compatibility
+
+RobMen: Prefix BurnLayoutDirectory, BundleProviderKey and BundleTag with
+        "WixBundle" to be consistent with WixBundleName.
+        SFBUG:3373380 - fix typo in wixstdba_intro.htm documentation.
+
+RobMen: Only call ResolveUrl() for external payloads.
+
+RobMen: SFBUG:3356312 - allow WixStdba HyperlinkLicense to be empty.
+        Major clean up of WixStdba HyperlinkLicense BA UI.
+        Allow WixVariables to be empty.
+        Switch to .png files in WixStdba because they are smaller.
+        (refix) SFBUG:3308501 - Don't show source resolution in silent mode,
+                                but try downloading netfx package instead.
+
+RobMen: SFBUG:3156696 - Bundle/@DisableModify="button" creates an ARP 
+                        "Uninstall/Change" button.
+        SFBUG:3374115 - expand width of "Processing" label in wixstdba.
+
+RobMen: When Burn state file is missing log warning, do not fail.
+
+WixBuild: Version 3.6.1922.0
+

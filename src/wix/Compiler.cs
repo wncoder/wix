@@ -19229,10 +19229,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             language = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "Minimum":
-                            minimum = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            minimum = this.core.GetAttributeVersionValue(sourceLineNumbers, attrib, true);
                             break;
                         case "Maximum":
-                            maximum = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            maximum = this.core.GetAttributeVersionValue(sourceLineNumbers, attrib, true);
                             break;
                         case "MigrateFeatures":
                             if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
@@ -19487,7 +19487,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string copyright = null;
             string aboutUrl = null;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
-            YesNoType disableModify = YesNoType.NotSet;
+            int disableModify = -1;
             YesNoType disableRemove = YesNoType.NotSet;
             YesNoType disableRepair = YesNoType.NotSet;
             string helpTelephone = null;
@@ -19525,7 +19525,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             copyright = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "DisableModify":
-                            disableModify = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            string value = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            switch (value)
+                            {
+                                case "button":
+                                    disableModify = 2;
+                                    break;
+                                case "yes":
+                                    disableModify = 1;
+                                    break;
+                                case "no":
+                                    disableModify = 0;
+                                    break;
+                                default:
+                                    this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.LocalName, attrib.Name, value, "button", "yes", "no"));
+                                    break;
+                            }
                             break;
                         case "DisableRemove":
                             disableRemove = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -19598,7 +19613,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "AboutUrl", "Name"));
                 }
 
-                if (YesNoType.NotSet != disableModify)
+                if (-1 != disableModify)
                 {
                     this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "DisableModify", "Name"));
                 }
@@ -19756,9 +19771,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[1] = copyright;
                 row[2] = name;
                 row[3] = aboutUrl;
-                if (YesNoType.NotSet != disableModify)
+                if (-1 != disableModify)
                 {
-                    row[4] = (YesNoType.Yes == disableModify) ? 1 : 0;
+                    row[4] = disableModify;
                 }
                 if (YesNoType.NotSet != disableRemove)
                 {
@@ -21693,7 +21708,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             overridable = (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib));
                             break;
                         case "Value":
-                            value = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            value = this.core.GetAttributeValue(sourceLineNumbers, attrib, EmptyRule.CanBeEmpty);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);

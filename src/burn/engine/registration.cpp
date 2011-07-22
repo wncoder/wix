@@ -198,12 +198,33 @@ extern "C" HRESULT RegistrationParseFromXml(
         }
 
         // @DisableModify
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableModify", &pRegistration->fNoModify);
-        if (E_NOTFOUND != hr)
+        hr = XmlGetAttributeEx(pixnArpNode, L"DisableModify", &scz);
+        if (SUCCEEDED(hr))
         {
-            ExitOnFailure(hr, "Failed to get @DisableModify.");
-            pRegistration->fNoModifyDefined = TRUE;
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"button", -1))
+            {
+                pRegistration->modify = BURN_REGISTRATION_MODIFY_DISABLE_BUTTON;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"yes", -1))
+            {
+                pRegistration->modify = BURN_REGISTRATION_MODIFY_DISABLE;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"no", -1))
+            {
+                pRegistration->modify = BURN_REGISTRATION_MODIFY_ENABLED;
+            }
+            else
+            {
+                hr = E_UNEXPECTED;
+                ExitOnRootFailure1(hr, "Invalid modify disabled type: %ls", scz);
+            }
         }
+        else if (E_NOTFOUND == hr)
+        {
+            pRegistration->modify = BURN_REGISTRATION_MODIFY_ENABLED;
+            hr = S_OK;
+        }
+        ExitOnFailure(hr, "Failed to get @DisableModify.");
 
         // @DisableRepair
         hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableRepair", &pRegistration->fNoRepair);
@@ -310,8 +331,11 @@ extern "C" HRESULT RegistrationSetVariables(
     hr = GetBundleName(pRegistration, pVariables, &scz);
     ExitOnFailure(hr, "Failed to intitialize bundle name.");
 
-    hr = AddBuiltInVariable(pVariables, L"BundleProviderKey", InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
-    ExitOnFailure(hr, "Failed to initialize the BundleProviderKey built-in variable.");
+    hr = AddBuiltInVariable(pVariables, L"WixBundleProviderKey", InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
+    ExitOnFailure(hr, "Failed to initialize the WixBundleProviderKey built-in variable.");
+
+    hr = AddBuiltInVariable(pVariables, L"WixBundleTag", InitializeVariableString, (DWORD_PTR)pRegistration->sczTag);
+    ExitOnFailure(hr, "Failed to initialize the WixBundleTag built-in variable.");
 
 LExit:
     ReleaseStr(scz);
@@ -824,23 +848,21 @@ extern "C" HRESULT RegistrationSessionBegin(
                 // TODO: need to figure out what "InstallLocation" means in a chainer. <smile/>
 
                 // NoModify
-                if (pRegistration->fNoModifyDefined)
+                if (BURN_REGISTRATION_MODIFY_DISABLE == pRegistration->modify)
                 {
-                    hr = RegWriteNumber(hkRegistration, L"NoModify", (DWORD)pRegistration->fNoModify);
+                    hr = RegWriteNumber(hkRegistration, L"NoModify", 1);
                     ExitOnFailure(hr, "Failed to set NoModify value.");
                 }
-
-                // If we support modify (aka: not no modify) then write the other supporting keys.
-                if (!pRegistration->fNoModify)
+                else if (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON != pRegistration->modify) // if support modify (aka: did not disable anything)
                 {
                     // ModifyPath: [path to exe] /modify
-                    hr = RegWriteStringFormatted(hkRegistration, L"ModifyPath", L"\"%s\" /modify", pRegistration->sczCacheExecutablePath);
+                    hr = RegWriteStringFormatted(hkRegistration, L"ModifyPath", L"\"%ls\" /modify", pRegistration->sczCacheExecutablePath);
                     ExitOnFailure(hr, "Failed to write ModifyPath value.");
-                }
 
-                // NoElevateOnModify: 1
-                hr = RegWriteNumber(hkRegistration, L"NoElevateOnModify", 1);
-                ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
+                    // NoElevateOnModify: 1
+                    hr = RegWriteNumber(hkRegistration, L"NoElevateOnModify", 1);
+                    ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
+                }
 
                 // NoRepair
                 if (pRegistration->fNoRepairDefined)
@@ -857,11 +879,14 @@ extern "C" HRESULT RegistrationSessionBegin(
                 }
 
                 // QuietUninstallString: [path to exe] /uninstall /quiet
-                hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%s\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
+                hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%ls\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
                 ExitOnFailure(hr, "Failed to write QuietUninstallString value.");
 
-                // UninstallString, [path to exe] /uninstall /passive
-                hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%s\" /uninstall /passive", pRegistration->sczCacheExecutablePath);
+                // UninstallString, [path to exe]
+                // If the modify button is to be disabled, we'll add "/modify" to the uninstall string because the button is "Uninstall/Change". Otherwise,
+                // it's just the "Uninstall" button so we add "/uninstall" to make the program just go away.
+                LPCWSTR wzUninstallParameters = (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON == pRegistration->modify) ? L"/modify" : L" /uninstall";
+                hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
                 ExitOnFailure(hr, "Failed to write UninstallString value.");
             }
 
@@ -1061,13 +1086,8 @@ extern "C" HRESULT RegistrationLoadState(
     __out DWORD* pcbBuffer
     )
 {
-    HRESULT hr = S_OK;
-
     // read data from file
-    hr = FileRead(ppbBuffer, pcbBuffer, pRegistration->sczStateFile);
-    ExitOnFailure1(hr, "Failed to read state from file: %ls", pRegistration->sczStateFile);
-
-LExit:
+    HRESULT hr = FileRead(ppbBuffer, pcbBuffer, pRegistration->sczStateFile);
     return hr;
 }
 

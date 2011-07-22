@@ -105,13 +105,6 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
     hr = RegistrationParseFromXml(&pEngineState->registration, pixeBundle);
     ExitOnFailure(hr, "Failed to parse registration.");
 
-    // Set a useful variable we got as part of registration
-    if (NULL != pEngineState->registration.sczTag)
-    {
-        hr = VariableSetString(&pEngineState->variables, L"BundleTag", pEngineState->registration.sczTag);
-        ExitOnFailure(hr, "Failed to set Tag variable from registration information");
-    }
-
     // parse containers
     hr = ContainersParseFromXml(&pEngineState->containers, pixeBundle);
     ExitOnFailure(hr, "Failed to parse containers.");

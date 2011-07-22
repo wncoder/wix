@@ -76,7 +76,8 @@ LPCWSTR vcsFilterQuery = L"SELECT `Web_`, `Name`, `Component_`, `Path`, `Descrip
 LPCWSTR vcsPropertyQuery = L"SELECT `Property`, `Component_`, `Attributes`, `Value` "
     L"FROM `IIsProperty`";
 
-#define USEIIS7CONDITION L"VersionNT >= 600 AND NOT UseIis6Compatibility"
+#define IIS7CONDITION L"VersionNT >= 600"
+#define USEIIS7CONDITION IIS7CONDITION L"AND NOT UseIis6Compatibility"
 
 /********************************************************************
 DllMain - standard entry point for all WiX CustomActions
@@ -116,7 +117,6 @@ extern "C" UINT __stdcall ConfigureIIs(
     LPWSTR pwzScriptKey = NULL;
     LPWSTR pwzBackupId = NULL;
     LPWSTR pwzCustomActionData = NULL; // CustomActionData for ConfigureIIs custom action
-    BOOL fUseIis7 = FALSE;
 
     // initialize
     hr = WcaInitialize(hInstall, "ConfigureIIs");
@@ -128,11 +128,6 @@ extern "C" UINT __stdcall ConfigureIIs(
     {
         WcaLog(LOGMSG_VERBOSE, "skipping IIs CustomAction, no IIsWebSite table, no IIsFilter table, no IIsProperty table, no IIsWebServiceExtension, and no IIsAppPool table");
         ExitFunction1(hr = S_FALSE);
-    }
-
-    if (MSICONDITION_TRUE == ::MsiEvaluateConditionW(hInstall, USEIIS7CONDITION))
-    {
-        fUseIis7 = TRUE;
     }
 
     // Get a CaScript key
@@ -148,7 +143,8 @@ extern "C" UINT __stdcall ConfigureIIs(
     ExitOnFailure(hr, "failed to concat ScaConfigureIIs");
 
     // make sure the operations below are wrapped in a "transaction"
-    if (fUseIis7)
+    // use IIS7 transaction logic even if using Iis6 compat because Backup/Restore don't work with metabase compatibility
+    if (MSICONDITION_TRUE == ::MsiEvaluateConditionW(hInstall, IIS7CONDITION))
     {
         hr = ScaIIS7ConfigTransaction(pwzBackupId);
         MessageExitOnFailure(hr, msierrIISFailedSchedTransaction, "failed to start IIS7 transaction");
@@ -370,7 +366,7 @@ extern "C" UINT __stdcall ConfigureIIs(
         ExitOnFailure(hr, "Failed to wrap IIsProperty empty query");
     }
 
-    if (fUseIis7)
+    if (MSICONDITION_TRUE == ::MsiEvaluateConditionW(hInstall, USEIIS7CONDITION))
     {
         // This must remain trace only, CA data may contain password
         WcaLog(LOGMSG_TRACEONLY, "Custom Action Data for ConfigureIIS7Exec will be: %ls", pwzCustomActionData);
@@ -460,6 +456,10 @@ extern "C" UINT __stdcall ConfigureIIsExec(
     hr = WcaGetProperty(L"CustomActionData", &pwzCustomActionData);
     ExitOnFailure(hr, "failed to get CustomActionData");
 
+    // Get the CaScript key
+    hr = WcaReadStringFromCaData(&pwzCustomActionData, &pwzScriptKey);
+    ExitOnFailure(hr, "Failed to get CaScript key from custom action data");
+
     hr = ::CoInitialize(NULL);
     ExitOnFailure(hr, "failed to initialize COM");
     fInitializedCom = TRUE;
@@ -481,17 +481,18 @@ extern "C" UINT __stdcall ConfigureIIsExec(
                 hr = S_FALSE;   // hit me, baby, one more time
                 break;
             case IDIGNORE:
-                ExitFunction1(hr = S_OK);  // pretend everything is okay and bail
+                __fallthrough;
             default:
-                ExitFunction1(hr = S_OK);  // pretend everything is okay and bail
+                WcaLog(LOGMSG_STANDARD, "ignoring absent IIS");
+                // We need to write the empty script to communicate to other deferred CA that there is noting to do.
+                hr = ScaWriteConfigurationScript(pwzScriptKey);
+                ExitOnFailure(hr, "failed to schedule metabase configuration");
+
+                ExitFunction1(hr = S_OK);  // pretend everything is okay
                 break;
             }
         }
     } while (S_FALSE == hr);
-
-    // Get the CaScript key
-    hr = WcaReadStringFromCaData(&pwzCustomActionData, &pwzScriptKey);
-    ExitOnFailure(hr, "Failed to get CaScript key from custom action data");
 
     // read the msi tables
     hr = WcaBeginUnwrapQuery(&hUserQuery, &pwzCustomActionData);

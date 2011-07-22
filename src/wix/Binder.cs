@@ -3750,9 +3750,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         writer.WriteAttributeString("UpdateUrl", bundleInfo.RegistrationInfo.UpdateUrl);
                     }
 
-                    if (bundleInfo.RegistrationInfo.DisableModify)
+                    if (1 == bundleInfo.RegistrationInfo.DisableModify)
                     {
                         writer.WriteAttributeString("DisableModify", "yes");
+                    }
+                    else if (2 == bundleInfo.RegistrationInfo.DisableModify)
+                    {
+                        writer.WriteAttributeString("DisableModify", "button");
                     }
 
                     if (bundleInfo.RegistrationInfo.DisableRepair)
@@ -3996,7 +4000,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private static void WriteBurnManifestPayloadAttributes(XmlTextWriter writer, PayloadInfo payload, bool embeddedOnly, BinderFileManager fileManager)
+        private void WriteBurnManifestPayloadAttributes(XmlTextWriter writer, PayloadInfo payload, bool embeddedOnly, BinderFileManager fileManager)
         {
             Debug.Assert(!embeddedOnly || PayloadInfo.PackagingType.Embedded == payload.Packaging);
 
@@ -4020,22 +4024,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("CertificateRootThumbprint", payload.CertificateThumbprint);
             }
 
-            // TODO: should we show a warning if we are doing embedded-only because the URL will be ignored?
-            string packageId = payload.ParentPackagePayload != null ? payload.ParentPackagePayload.Id : null;
-            string parentUrl = payload.ParentPackagePayload == null ? null : payload.ParentPackagePayload.DownloadUrl;
-            string resolvedUrl = fileManager.ResolveUrl(payload.DownloadUrl, parentUrl, packageId, payload.Id, payload.FileName);
-            if (!String.IsNullOrEmpty(resolvedUrl))
-            {
-                writer.WriteAttributeString("DownloadUrl", resolvedUrl);
-            }
-            else if (!String.IsNullOrEmpty(payload.DownloadUrl))
-            {
-                writer.WriteAttributeString("DownloadUrl", payload.DownloadUrl);
-            }
-
             switch (payload.Packaging)
             {
                 case PayloadInfo.PackagingType.Embedded: // this means it's in a container.
+                    if (!String.IsNullOrEmpty(payload.DownloadUrl))
+                    {
+                        this.core.OnMessage(WixWarnings.DownloadUrlNotSupportedForEmbeddedPayloads(payload.SourceLineNumbers, payload.Id));
+                    }
+
                     writer.WriteAttributeString("Packaging", "embedded");
                     writer.WriteAttributeString("SourcePath", payload.EmbeddedId);
 
@@ -4046,6 +4042,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     break;
 
                 case PayloadInfo.PackagingType.External:
+                    string packageId = payload.ParentPackagePayload != null ? payload.ParentPackagePayload.Id : null;
+                    string parentUrl = payload.ParentPackagePayload == null ? null : payload.ParentPackagePayload.DownloadUrl;
+                    string resolvedUrl = fileManager.ResolveUrl(payload.DownloadUrl, parentUrl, packageId, payload.Id, payload.FileName);
+                    if (!String.IsNullOrEmpty(resolvedUrl))
+                    {
+                        writer.WriteAttributeString("DownloadUrl", resolvedUrl);
+                    }
+                    else if (!String.IsNullOrEmpty(payload.DownloadUrl))
+                    {
+                        writer.WriteAttributeString("DownloadUrl", payload.DownloadUrl);
+                    }
+
                     writer.WriteAttributeString("Packaging", "external");
                     writer.WriteAttributeString("SourcePath", payload.FileName);
                     break;
@@ -6704,7 +6712,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.RegistrationInfo = new RegistrationInfo();
                     this.RegistrationInfo.Name = (string)row[2];
                     this.RegistrationInfo.AboutUrl = (string)row[3];
-                    this.RegistrationInfo.DisableModify = (null != row[4] && 1 == (int)row[4]);
+                    this.RegistrationInfo.DisableModify = (null != row[4]) ? (int)row[4] : 0;
                     this.RegistrationInfo.DisableRemove = (null != row[5] && 1 == (int)row[5]);
                     this.RegistrationInfo.DisableRepair = (null != row[6] && 1 == (int)row[6]);
                     this.RegistrationInfo.HelpTelephone = (string)row[7];
@@ -7536,7 +7544,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string HelpTelephone { get; set; }
             public string AboutUrl { get; set; }
             public string UpdateUrl { get; set; }
-            public bool DisableModify { get; set; }
+            public int DisableModify { get; set; }
             public bool DisableRepair { get; set; }
             public bool DisableRemove { get; set; }
         }

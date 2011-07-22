@@ -1576,7 +1576,7 @@
     </tableDefinition>
     <tableDefinition name="WixVariable" unreal="yes">
         <columnDefinition name="WixVariable" type="string" length="0"/>
-        <columnDefinition name="Value" type="localized" length="0"/>
+        <columnDefinition name="Value" type="localized" length="0" nullable="yes"/>
         <columnDefinition name="Attributes" type="number" length="4"/>
     </tableDefinition>
     <tableDefinition name="Container" createSymbols="yes" unreal="yes">
@@ -1600,7 +1600,7 @@
         <columnDefinition name="Copyright" type="string" length="0" nullable="yes" />
         <columnDefinition name="Name" type="string" length="0" nullable="yes" />
         <columnDefinition name="AboutUrl" type="string" length="0" nullable="yes" />
-        <columnDefinition name="DisableModify" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="DisableModify" type="number" length="2" nullable="yes" minValue="0" maxValue="2"/>
         <columnDefinition name="DisableRemove" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="DisableRepair" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="HelpTelephone" type="string" length="0" nullable="yes" />

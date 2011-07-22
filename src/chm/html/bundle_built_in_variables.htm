@@ -15,8 +15,6 @@
     <ul>
         <li>AdminToolsFolder - gets the well-known folder for CSIDL_ADMINTOOLS.</li>
         <li>AppDataFolder - gets the well-known folder for CSIDL_APPDATA.</li>
-        <li>BundleProviderKey - gets the bundle dependency provider key.</li>
-        <li>BundleTag - gets the developer-defined tag string for this bundle (from Bundle/@Tag).</li>
         <li>CommonAppDataFolder - gets the well-known folder for CSIDL_COMMON_APPDATA.</li>
         <li>CommonFiles64Folder - gets the well-known folder for FOLDERID_ProgramFilesCommonX64.</li>
         <li>CommonFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMONX86.</li>
@@ -55,6 +53,10 @@
         <li>VersionNT64 - version value representing the OS version if 64-bit. Undefined if running a 32-bit operating system.</li>
         <li>WindowsFolder - gets the well-known folder for CSIDL_WINDOWS.</li>
         <li>WindowsVolume - gets the well-known folder for the windows volume.</li>
+        <li>WixBundleDirectoryLayout - set to the folder provided to the -layout switch (default is directory containin the bundle executable). This variable can also be set by the bootstrapper application to modify where files will be laid out.</li>
+        <li>WixBundleName - gets the name of the bundle (from Bundle/@Name). This variable can also be set by the bootstrapper application to modify the bundle name at runtime.</li>
+        <li>WixBundleProviderKey - gets the bundle dependency provider key.</li>
+        <li>WixBundleTag - gets the developer-defined tag string for this bundle (from Bundle/@Tag).</li>
     </ul>
 </body>
 </html>

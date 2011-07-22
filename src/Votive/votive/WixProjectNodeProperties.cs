@@ -500,19 +500,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     string outputType = this.OutputType;
                     if (String.Equals(outputType, WixOutputType.Package.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                        outputFileName = Path.ChangeExtension(outputFileName, ".msi");
+                        outputFileName = String.Concat(outputFileName, ".msi");
                     }
                     else if (String.Equals(outputType, WixOutputType.Module.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                        outputFileName = Path.ChangeExtension(outputFileName, ".msm");
+                        outputFileName = String.Concat(outputFileName, ".msm");
                     }
                     else if (String.Equals(outputType, WixOutputType.Library.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                        outputFileName = Path.ChangeExtension(outputFileName, ".wixlib");
+                        outputFileName = String.Concat(outputFileName, ".wixlib");
                     }
                     else if (String.Equals(outputType, WixOutputType.Bundle.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                        outputFileName = Path.ChangeExtension(outputFileName, ".exe");
+                        outputFileName = String.Concat(outputFileName, ".exe");
                     }
                 }
 
@@ -522,7 +522,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             set
             {
                 string outputName = Path.GetFileNameWithoutExtension(value);
-                this.OutputName = outputName;
 
                 string outputExtension = Path.GetExtension(value);
                 if (String.Equals(outputExtension, ".msi", StringComparison.OrdinalIgnoreCase))
@@ -541,6 +540,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 {
                     this.OutputType = WixOutputType.Bundle.ToString();
                 }
+                else
+                {
+                    outputName = value;
+                }
+
+                this.OutputName = outputName;
             }
         }
 

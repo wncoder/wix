@@ -732,87 +732,13 @@ namespace Microsoft.VisualStudio.Package
 		}
 
 
-		/// Get the default global properties for a new project instance.
-		/// </summary>
-		/// <param name="provider">The service provider.</param>
-		/// <returns></returns>
-		private static MSBuild.BuildPropertyGroup GetProjectDefaultGlobalProperties(IServiceProvider provider)
-		{
-			MSBuild.BuildPropertyGroup properties = new MSBuild.BuildPropertyGroup();
-			string solutionDirectory = null;
-			string solutionFile = null;
-			string userOptionsFile = null;
-			string installDir = null;
-
-			if (provider != null)
-			{
-				IVsSolution solution = provider.GetService(typeof(SVsSolution)) as IVsSolution;
-				if (solution != null)
-				{
-					// We do not want to throw. If we cannot set the solution related constants we set them to empty string.
-					solution.GetSolutionInfo(out solutionDirectory, out solutionFile, out userOptionsFile);
-				}
-
-				// DevEnvDir property
-				IVsShell shell = provider.GetService(typeof(SVsShell)) as IVsShell;
-				if (shell != null)
-				{
-					object installDirAsObject = null;
-					// We do not want to throw. If we cannot set the solution related constants we set them to empty string.
-					shell.GetProperty((int)__VSSPROPID.VSSPROPID_InstallDirectory, out installDirAsObject);
-					installDir = ((string)installDirAsObject);
-				}
-			}
-
-			if (solutionDirectory == null)
-			{
-				solutionDirectory = String.Empty;
-			}
-
-			if (solutionFile == null)
-			{
-				solutionFile = String.Empty;
-			}
-
-			string solutionFileName = (solutionFile.Length == 0) ? String.Empty : Path.GetFileName(solutionFile);
-			string solutionName = (solutionFile.Length == 0) ? String.Empty : Path.GetFileNameWithoutExtension(solutionFile);
-			string solutionExtension = (solutionFile.Length == 0 || !Path.HasExtension(solutionFile)) ? String.Empty : Path.GetExtension(solutionFile);
-
-			properties.AddNewProperty(GlobalProperty.SolutionDir.ToString(), solutionDirectory);
-			properties.AddNewProperty(GlobalProperty.SolutionPath.ToString(), solutionFile);
-			properties.AddNewProperty(GlobalProperty.SolutionFileName.ToString(), solutionFileName);
-			properties.AddNewProperty(GlobalProperty.SolutionName.ToString(), solutionName);
-			properties.AddNewProperty(GlobalProperty.SolutionExt.ToString(), solutionExtension);
-
-			// Other misc properties
-			properties.AddNewProperty(GlobalProperty.BuildingInsideVisualStudio.ToString(), "true");
-
-			if (String.IsNullOrEmpty(installDir))
-			{
-				installDir = String.Empty;
-			}
-			else
-			{
-				// Ensure that we have traimnling backslash as this is done for the langproj macros too.
-				if (installDir[installDir.Length - 1] != Path.DirectorySeparatorChar)
-				{
-					installDir += Path.DirectorySeparatorChar;
-				}
-			}
-
-			properties.AddNewProperty(GlobalProperty.DevEnvDir.ToString(), installDir);
-
-			return properties;
-		}
-
 		/// <summary>
 		/// Initializes the in memory project. Sets BuildEnabled on the project to true.
 		/// </summary>
 		/// <param name="engine">The build engine to use to create a build project.</param>
 		/// <param name="fullProjectPath">The full path of the project.</param>
 		/// <returns>A loaded msbuild project.</returns>
-		/// <param name="provider">The service provider.</param>
-		internal static MSBuild.Project InitializeMsBuildProject(MSBuild.Engine buildEngine, string fullProjectPath, IServiceProvider provider)
+		internal static MSBuild.Project InitializeMsBuildProject(MSBuild.Engine buildEngine, string fullProjectPath)
 		{
 			if (buildEngine == null)
 			{
@@ -831,7 +757,6 @@ namespace Microsoft.VisualStudio.Package
 			{
 				buildProject = buildEngine.CreateNewProject();
 				buildProject.BuildEnabled = true;
-				buildProject.GlobalProperties = GetProjectDefaultGlobalProperties(provider);
 				buildProject.Load(fullProjectPath);
 			}
 
@@ -844,9 +769,8 @@ namespace Microsoft.VisualStudio.Package
 		/// <param name="engine">The build engine to use to create a build project.</param>
 		/// <param name="fullProjectPath">The full path of the project.</param>
 		/// <param name="exitingBuildProject">An Existing build project that will be reloaded.</param>
-		/// <param name="provider">The service provider.</param>
 		/// <returns>A loaded msbuild project.</returns>
-		internal static MSBuild.Project ReinitializeMsBuildProject(MSBuild.Engine buildEngine, string fullProjectPath, MSBuild.Project exitingBuildProject, IServiceProvider provider)
+		internal static MSBuild.Project ReinitializeMsBuildProject(MSBuild.Engine buildEngine, string fullProjectPath, MSBuild.Project exitingBuildProject)
 		{
 			// If we have a build project that has been loaded with another file unload it.
 			try
@@ -862,7 +786,7 @@ namespace Microsoft.VisualStudio.Package
 			{
 			}
 
-			return Utilities.InitializeMsBuildProject(buildEngine, fullProjectPath, provider);
+			return Utilities.InitializeMsBuildProject(buildEngine, fullProjectPath);
 		}
 
 		/// <summary>

@@ -386,6 +386,15 @@ DAPI_(void) ThemeControlEnable(
     );
 
 /********************************************************************
+ ThemeControlEnabled - returns whether a control is enabled/disabled.
+
+ *******************************************************************/
+DAPI_(BOOL) ThemeControlEnabled(
+    __in THEME* pTheme,
+    __in DWORD dwControl
+    );
+
+/********************************************************************
  ThemeShowControl - shows/hides a control.
 
  *******************************************************************/
@@ -393,6 +402,15 @@ DAPI_(void) ThemeShowControl(
     __in THEME* pTheme,
     __in DWORD dwControl,
     __in int nCmdShow
+    );
+
+/********************************************************************
+ ThemeControlVisible - returns whether a control is visible.
+
+ *******************************************************************/
+DAPI_(BOOL) ThemeControlVisible(
+    __in THEME* pTheme,
+    __in DWORD dwControl
     );
 
 DAPI_(BOOL) ThemePostControlMessage(

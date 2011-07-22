@@ -527,41 +527,55 @@ public: // IBootstrapperApplication
         LPCWSTR wzId = wzPayloadId ? wzPayloadId : wzPackageOrContainerId;
         LPCWSTR wzContainerOrPayload = wzPayloadId ? L"payload" : L"container";
         StrAllocFormatted(&sczCaption, L"Resolve Source for %ls: %ls", wzContainerOrPayload, wzId);
-        if (wzDownloadSource)
-        {
-            StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
 
-            nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONASTERISK);
+        if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
+        {
+            if (wzDownloadSource)
+            {
+                StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
+
+                nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONASTERISK);
+            }
+
+            if (IDYES == nResult)
+            {
+                nResult = IDDOWNLOAD;
+            }
+            else if (IDNO == nResult)
+            {
+                // Prompt to change the source location.
+                OPENFILENAMEW ofn = { };
+                WCHAR wzFile[MAX_PATH] = { };
+
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = m_hWnd;
+                ofn.lpstrFile = wzFile;
+                ofn.nMaxFile = countof(wzFile);
+                ofn.lpstrFilter = L"All Files\0*.*\0";
+                ofn.nFilterIndex = 1;
+                ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                ofn.lpstrTitle = sczCaption;
+
+                if (::GetOpenFileNameW(&ofn))
+                {
+                    HRESULT hr = m_pEngine->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
+                    nResult = SUCCEEDED(hr) ? IDRETRY : IDERROR;
+                }
+                else
+                {
+                    nResult = IDCANCEL;
+                }
+            }
         }
-
-        if (IDYES == nResult)
+        else if (wzDownloadSource)
         {
+            // If doing a non-interactive install and download source is available, let's try downloading the package silently
             nResult = IDDOWNLOAD;
         }
-        else if (IDNO == nResult)
+        else
         {
-            // Prompt to change the source location.
-            OPENFILENAMEW ofn = { };
-            WCHAR wzFile[MAX_PATH] = { };
-
-            ofn.lStructSize = sizeof(ofn);
-            ofn.hwndOwner = m_hWnd;
-            ofn.lpstrFile = wzFile;
-            ofn.nMaxFile = countof(wzFile);
-            ofn.lpstrFilter = L"All Files\0*.*\0";
-            ofn.nFilterIndex = 1;
-            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-            ofn.lpstrTitle = sczCaption;
-
-            if (::GetOpenFileNameW(&ofn))
-            {
-                HRESULT hr = m_pEngine->SetLocalSource(wzPackageOrContainerId, wzPayloadId, ofn.lpstrFile);
-                nResult = SUCCEEDED(hr) ? IDRETRY : IDERROR;
-            }
-            else
-            {
-                nResult = IDCANCEL;
-            }
+            // There's nothing more we can do in non-interactive mode
+            nResult = IDCANCEL;
         }
 
         ReleaseStr(sczText);
@@ -1082,10 +1096,8 @@ private: // privates
         if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK))
         {
             BOOL fEulaLink = (m_sczLicenseUrl && *m_sczLicenseUrl);
-            if (!fEulaLink)
-            {
-                BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "Failed to find license hyperlink control target from manifest value: '%ls'", m_sczLicenseUrl);
-            }
+            ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK, fEulaLink);
+            ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX, fEulaLink);
         }
 
         // Load the RTF EULA control with text if the control exists.
@@ -1230,12 +1242,12 @@ private: // privates
                 // Enable disable controls per-page.
                 if (m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL] == dwNewPageId) // on the "Install" page, ensure the install button is enabled/disabled correctly.
                 {
-                    BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
+                    BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || !ThemeControlEnabled(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
 
                     // If there is an "Options" page and the "Options" button exists then enable the button.
-                    BOOL fOptionsEnbaled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnbaled);
+                    BOOL fOptionsEnabled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnabled);
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
                 {

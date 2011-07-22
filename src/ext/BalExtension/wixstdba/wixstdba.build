@@ -57,7 +57,7 @@
       <fileset basedir="${dir.src.wixstdba}\Resources">
         <include name="HyperlinkTheme.wxl" />
         <include name="HyperlinkTheme.xml" />
-        <include name="Logo.bmp" />
+        <include name="logo.png" />
         <include name="LoremIpsumLicense.rtf" />
         <include name="mbapreq.png" />
         <include name="mbapreq.thm" />

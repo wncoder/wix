@@ -203,30 +203,33 @@ extern "C" HRESULT WIXAPI WcaCaScriptReadAsCustomActionData(
     }
 
     cbData = liScriptSize.LowPart;
-    pbData = static_cast<BYTE*>(MemAlloc(cbData, TRUE));
-    ExitOnNull(pbData, hr, E_OUTOFMEMORY, "Failed to allocate memory to read in ca script.");
-
-    if (INVALID_SET_FILE_POINTER == ::SetFilePointer(hScript->hScriptFile, 0, NULL, FILE_BEGIN))
+    if (cbData)
     {
-        ExitWithLastError(hr, "Failed to reset to beginning of ca script.");
-    }
+        pbData = static_cast<BYTE*>(MemAlloc(cbData, TRUE));
+        ExitOnNull(pbData, hr, E_OUTOFMEMORY, "Failed to allocate memory to read in ca script.");
 
-    DWORD cbTotalRead = 0;
-    DWORD cbRead = 0;
-    do
-    {
-        if (!::ReadFile(hScript->hScriptFile, pbData + cbTotalRead, cbData - cbTotalRead, &cbRead, NULL))
+        if (INVALID_SET_FILE_POINTER == ::SetFilePointer(hScript->hScriptFile, 0, NULL, FILE_BEGIN))
         {
-            ExitWithLastError(hr, "Failed to read from ca script.");
+            ExitWithLastError(hr, "Failed to reset to beginning of ca script.");
         }
 
-        cbTotalRead += cbRead;
-    } while (cbRead && cbTotalRead < cbData);
+        DWORD cbTotalRead = 0;
+        DWORD cbRead = 0;
+        do
+        {
+            if (!::ReadFile(hScript->hScriptFile, pbData + cbTotalRead, cbData - cbTotalRead, &cbRead, NULL))
+            {
+                ExitWithLastError(hr, "Failed to read from ca script.");
+            }
 
-    if (cbTotalRead != cbData)
-    {
-        hr = E_UNEXPECTED;
-        ExitOnFailure(hr, "Failed to completely read ca script.");
+            cbTotalRead += cbRead;
+        } while (cbRead && cbTotalRead < cbData);
+
+        if (cbTotalRead != cbData)
+        {
+            hr = E_UNEXPECTED;
+            ExitOnFailure(hr, "Failed to completely read ca script.");
+        }
     }
 
     // Add one to the allocated space because the data stored in the script is not
@@ -236,7 +239,11 @@ extern "C" HRESULT WIXAPI WcaCaScriptReadAsCustomActionData(
     hr = StrAlloc(ppwzCustomActionData, cchData);
     ExitOnFailure(hr, "Failed to copy ca script.");
 
-    CopyMemory(*ppwzCustomActionData, pbData, cbData);
+    if (cbData)
+    {
+        CopyMemory(*ppwzCustomActionData, pbData, cbData);
+    }
+
     (*ppwzCustomActionData)[cchData - 1] = L'\0';
 
 LExit:

@@ -238,7 +238,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                 if (this.wixVariables.Contains(variableId))
                                 {
-                                    resolvedValue = (string)this.wixVariables[variableId];
+                                    resolvedValue = (string)this.wixVariables[variableId] ?? String.Empty;
                                     isDefault = false;
                                 }
                             }

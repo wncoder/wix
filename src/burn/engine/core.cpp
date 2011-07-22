@@ -109,7 +109,7 @@ extern "C" HRESULT CoreInitialize(
     // If a layout directory was specified on the command-line, set it as a well-known variable.
     if (sczLayoutDirectory)
     {
-        hr = VariableSetString(&pEngineState->variables, L"BurnLayoutDirectory", sczLayoutDirectory);
+        hr = VariableSetString(&pEngineState->variables, L"WixBundleLayoutDirectory", sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
     }
 
@@ -204,17 +204,16 @@ extern "C" HRESULT CoreQueryRegistration(
     {
         // load resume state
         hr = RegistrationLoadState(&pEngineState->registration, &pbBuffer, &cbBuffer);
+        if (SUCCEEDED(hr))
+        {
+            hr = VariableDeserialize(&pEngineState->variables, pbBuffer, cbBuffer, &iBuffer);
+        }
+
+        // Log any failures and continue.
         if (FAILED(hr))
         {
-            TraceError(hr, "Failed to load engine state.");
-            pEngineState->command.resumeType = BOOTSTRAPPER_RESUME_TYPE_INVALID;
+            LogId(REPORT_STANDARD, MSG_CANNOT_LOAD_STATE_FILE, hr, pEngineState->registration.sczStateFile);
             hr = S_OK;
-        }
-        else
-        {
-            // deserialize variables
-            hr = VariableDeserialize(&pEngineState->variables, pbBuffer, cbBuffer, &iBuffer);
-            ExitOnFailure(hr, "Failed to deserialize variables.");
         }
     }
 
