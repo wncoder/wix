@@ -91,11 +91,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             this.FlattenDependentReferences(constraints);
 
-            // Reorder by ID, then shuffle to fix up any dependencies.
-            // We can do this in a single operation with a smart comparer..
-            List<string> sortedIds = new List<string>(rowDictionary.Keys);
-            ConstraintComparer comparer = new ConstraintComparer(constraints);
-            sortedIds.Sort(comparer);
+            // Reorder by topographical sort (http://en.wikipedia.org/wiki/Topological_sorting)
+            // We use a variation of Kahn (1962) algorithm as described in
+            // Wikipedia, with the additional criteria that start nodes are sorted
+            // lexicographically at each step to ensure a deterministic ordering
+            // based on 'after' dependencies and ID.
+            TopologicalSort sorter = new TopologicalSort();
+            List <string> sortedIds = sorter.Sort(rowDictionary.Keys, constraints);
 
             // Now, re-write the table with the searches in order...
             wixSearchTable.Rows.Clear();
@@ -138,44 +140,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             }
 
             // TODO: Hide other Add methods?
-        }
-
-        /// <summary>
-        /// A string Comparer that uses a Constaints dictionary to order items.
-        /// </summary>
-        private class ConstraintComparer : Comparer<string>
-        {
-            public ConstraintComparer(Constraints constraints)
-            {
-                this.constraints = constraints;
-            }
-
-            private Constraints constraints;
-
-            public override int Compare(string x, string y)
-            {
-                // check the constraints first..
-                List<string> afterIds;
-                if (this.constraints.TryGetValue(x, out afterIds))
-                {
-                    if (afterIds.Contains(y))
-                    {
-                        return 1;
-                    }
-                }
-
-                if (this.constraints.TryGetValue(y, out afterIds))
-                {
-                    if (afterIds.Contains(x))
-                    {
-                        return -1;
-                    }
-                }
-
-
-                // If all else fails, just compare the ids...
-                return string.Compare(x, y, StringComparison.Ordinal);
-            }
         }
 
         /// <summary>
@@ -280,6 +244,122 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             }
         }
 
+        /// <summary>
+        /// Reorder by topological sort
+        /// </summary>
+        /// <remarks>
+        /// We use a variation of Kahn (1962) algorithm as described in
+        /// Wikipedia (http://en.wikipedia.org/wiki/Topological_sorting), with
+        /// the additional criteria that start nodes are sorted lexicographically
+        /// at each step to ensure a deterministic ordering based on 'after'
+        /// dependencies and ID.
+        /// </remarks>
+        private class TopologicalSort
+        {
+            private List<string> startIds = new List<string>();
+            private Constraints constraints;
 
+            /// <summary>
+            /// Reorder by topological sort
+            /// </summary>
+            /// <param name="allIds">The complete list of IDs.</param>
+            /// <param name="constraints">Constraints to use.</param>
+            /// <returns>The topologically sorted list of IDs.</returns>
+            internal List<string> Sort(IEnumerable<string> allIds, Constraints constraints)
+            {
+                this.startIds.Clear();
+                this.CopyConstraints(constraints);
+
+                this.FindInitialStartIds(allIds);
+
+                // We always create a new sortedId list, because we return it
+                // to the caller and don't know what its lifetime may be.
+                List<string> sortedIds = new List<string>();
+
+                while (this.startIds.Count > 0)
+                {
+                    this.SortStartIds();
+
+                    string currentId = this.startIds[0];
+                    sortedIds.Add(currentId);
+                    this.startIds.RemoveAt(0);
+
+                    this.ResolveConstraint(currentId);
+                }
+                
+                return sortedIds;
+            }
+
+            /// <summary>
+            /// Copies a Constraints set (to prevent modifying the incoming data).
+            /// </summary>
+            /// <param name="constraints">Constraints to copy.</param>
+            private void CopyConstraints(Constraints constraints)
+            {
+                this.constraints = new Constraints();
+                foreach (string id in constraints.Keys)
+                {
+                    foreach (string afterId in constraints[id])
+                    {
+                        this.constraints.AddConstraint(id, afterId);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Finds initial start IDs.  (Those with no constraints.)
+            /// </summary>
+            /// <param name="allIds">The complete list of IDs.</param>
+            private void FindInitialStartIds(IEnumerable<string> allIds)
+            {
+                foreach (string id in allIds)
+                {
+                    if (!this.constraints.ContainsKey(id))
+                    {
+                        this.startIds.Add(id);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Sorts start IDs.
+            /// </summary>
+            private void SortStartIds()
+            {
+                this.startIds.Sort();
+            }
+
+            /// <summary>
+            /// Removes the resolved constraint and updates the list of startIds
+            /// with any now-valid (all constraints resolved) IDs.
+            /// </summary>
+            /// <param name="resolvedId">The ID to resolve from the set of constraints.</param>
+            private void ResolveConstraint(string resolvedId)
+            {
+                List<string> newStartIds = new List<string>();
+
+                foreach (string id in constraints.Keys)
+                {
+                    if (this.constraints[id].Contains(resolvedId))
+                    {
+                        this.constraints[id].Remove(resolvedId);
+
+                        // If we just removed the last constraint for this
+                        // ID, it is now a valid start ID.
+                        if (0 == this.constraints[id].Count)
+                        {
+                            newStartIds.Add(id);
+                        }
+                    }
+                }
+
+                foreach (string id in newStartIds)
+                {
+                    this.constraints.Remove(id);
+                }
+
+                this.startIds.AddRange(newStartIds);
+            }
+        }
     }
 }

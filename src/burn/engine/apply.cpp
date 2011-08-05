@@ -205,51 +205,41 @@ static HRESULT ExecutePackageComplete(
 
 extern "C" HRESULT ApplyElevate(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent,
-    __out HANDLE* phElevatedProcess,
-    __out HANDLE* phElevatedPipe,
-    __out HANDLE* phElevatedCachePipe
+    __in HWND hwndParent
     )
 {
+    Assert(BURN_MODE_ELEVATED != pEngineState->mode);
+    Assert(!pEngineState->companionConnection.sczName);
+    Assert(!pEngineState->companionConnection.sczSecret);
+    Assert(!pEngineState->companionConnection.hProcess);
+    Assert(!pEngineState->companionConnection.dwProcessId);
+    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hPipe);
+    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hCachePipe);
+
     HRESULT hr = S_OK;
     int nResult = IDOK;
-    HANDLE hPipe = INVALID_HANDLE_VALUE;
-    HANDLE hCachePipe = INVALID_HANDLE_VALUE;
-    LPWSTR sczPipeName = NULL;
-    LPWSTR sczPipeToken = NULL;
-    HANDLE hProcess = NULL;
+    HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
 
     nResult = pEngineState->userExperience.pUserExperience->OnElevate();
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
 
-    hr = PipeCreatePipeNameAndToken(&hPipe, &hCachePipe, &sczPipeName, &sczPipeToken);
-    ExitOnFailure(hr, "Failed to create pipe, cache pipe and client token.");
+    hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
+    ExitOnFailure(hr, "Failed to create pipe name and client token.");
+
+    hr = PipeCreatePipes(&pEngineState->companionConnection, TRUE, &hPipesCreatedEvent);
+    ExitOnFailure(hr, "Failed to create pipe and cache pipe.");
 
     do
     {
         nResult = IDOK;
-        ReleaseHandle(hProcess);
 
-        // Create the elevated process.
-        if (BURN_MODE_EMBEDDED == pEngineState->mode)
-        {
-            hr = EmbeddedParentLaunchChildProcess(pEngineState->hEmbeddedPipe, sczPipeName, sczPipeToken, &hProcess);
-        }
-        else
-        {
-            Assert(BURN_MODE_NORMAL == pEngineState->mode);
-            hr = PipeLaunchChildProcess(TRUE, sczPipeName, sczPipeToken, hwndParent, &hProcess);
-        }
-
-        // If the process was launched successfully, wait for it.
+        // Create the elevated process and if successful, wait for it to connect.
+        hr = PipeLaunchChildProcess(&pEngineState->companionConnection, TRUE, hwndParent);
         if (SUCCEEDED(hr))
         {
-            hr = PipeWaitForChildConnect(hPipe, sczPipeToken, hProcess);
-            ExitOnFailure(hr, "Failed to connect to embedded elevated child process.");
-
-            hr = PipeWaitForChildConnect(hCachePipe, sczPipeToken, hProcess);
-            ExitOnFailure(hr, "Failed to connect to elevated child process cache pipe.");
+            hr = PipeWaitForChildConnect(&pEngineState->companionConnection);
+            ExitOnFailure(hr, "Failed to connect to elevated child process.");
         }
         else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr) // the user clicked "Cancel" on the elevation prompt, provide the notification with the option to retry.
         {
@@ -258,19 +248,14 @@ extern "C" HRESULT ApplyElevate(
     } while (IDRETRY == nResult);
     ExitOnFailure(hr, "Failed to elevate.");
 
-    *phElevatedCachePipe = hCachePipe;
-    hCachePipe = INVALID_HANDLE_VALUE;
-    *phElevatedPipe = hPipe;
-    hPipe = INVALID_HANDLE_VALUE;
-    *phElevatedProcess = hProcess;
-    hProcess = NULL;
 
 LExit:
-    ReleaseHandle(hProcess);
-    ReleaseStr(sczPipeToken);
-    ReleaseStr(sczPipeName);
-    ReleaseFileHandle(hPipe);
-    ReleaseFileHandle(hCachePipe);
+    ReleaseHandle(hPipesCreatedEvent);
+
+    if (FAILED(hr))
+    {
+        PipeConnectionUninitialize(&pEngineState->companionConnection);
+    }
 
     return hr;
 }
@@ -293,7 +278,7 @@ extern "C" HRESULT ApplyRegister(
 
         if (pEngineState->registration.fPerMachine)
         {
-            hr = ElevationSessionBegin(pEngineState->hElevatedPipe, pEngineState->plan.action, 0);
+            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, 0);
             ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
         }
     }
@@ -305,7 +290,7 @@ extern "C" HRESULT ApplyRegister(
 
         if (pEngineState->registration.fPerMachine)
         {
-            hr =  ElevationSessionResume(pEngineState->hElevatedPipe, pEngineState->plan.action);
+            hr =  ElevationSessionResume(pEngineState->companionConnection.hPipe, pEngineState->plan.action);
             ExitOnFailure(hr, "Failed to resume registration session in per-machine process.");
         }
     }
@@ -316,7 +301,7 @@ extern "C" HRESULT ApplyRegister(
 
     if (pEngineState->registration.fPerMachine)
     {
-        hr = ElevationDetectRelatedBundles(pEngineState->hElevatedPipe);
+        hr = ElevationDetectRelatedBundles(pEngineState->companionConnection.hPipe);
         ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
     }
 
@@ -339,7 +324,7 @@ extern "C" HRESULT ApplyUnregister(
 
     if (pEngineState->registration.fPerMachine)
     {
-        hr = ElevationSessionEnd(pEngineState->hElevatedPipe, pEngineState->plan.action, fRollback, fSuspend, restart);
+        hr = ElevationSessionEnd(pEngineState->companionConnection.hPipe, pEngineState->plan.action, fRollback, fSuspend, restart);
         ExitOnFailure(hr, "Failed to end session in per-machine process.");
     }
 
@@ -1268,7 +1253,7 @@ static HRESULT DoRollbackActions(
                 ExitFunction1(hr = S_OK);
 
             case BURN_EXECUTE_ACTION_TYPE_UNCACHE_PACKAGE:
-                hr = CleanPackage(pEngineState->hElevatedPipe, pRollbackAction->uncachePackage.pPackage);
+                hr = CleanPackage(pEngineState->companionConnection.hPipe, pRollbackAction->uncachePackage.pPackage);
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_SERVICE_STOP: __fallthrough;
@@ -1317,16 +1302,15 @@ static HRESULT ExecuteExePackage(
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
-    // Execute package. Per-machine packages that are not Burn based get elevated. Per-user packages don't need
-    // elevation and Burn based packages have their own way to ask for elevation.
-    if (pExecuteAction->exePackage.pPackage->fPerMachine && BURN_EXE_PROTOCOL_TYPE_BURN != pExecuteAction->exePackage.pPackage->Exe.protocol)
+    // Execute package.
+    if (pExecuteAction->exePackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteExePackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteExePackage(pEngineState->companionConnection.hPipe, pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine EXE package.");
     }
     else
     {
-        hrExecute = ExeEngineExecutePackage(&pEngineState->userExperience, pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ExeEngineExecutePackage(pExecuteAction, &pEngineState->variables, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user EXE package.");
     }
 
@@ -1373,7 +1357,7 @@ static HRESULT ExecuteMsiPackage(
     // execute package
     if (pExecuteAction->msiPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsiPackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMsiPackage(pEngineState->companionConnection.hPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSI package.");
     }
     else
@@ -1418,7 +1402,7 @@ static HRESULT ExecuteMspPackage(
     // execute package
     if (pExecuteAction->mspTarget.fPerMachineTarget)
     {
-        hrExecute = ElevationExecuteMspPackage(pEngineState->hElevatedPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMspPackage(pEngineState->companionConnection.hPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSP package.");
     }
     else
@@ -1470,7 +1454,7 @@ static HRESULT ExecuteMsuPackage(
     // execute package
     if (pExecuteAction->msuPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsuPackage(pEngineState->hElevatedPipe, pExecuteAction, GenericExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMsuPackage(pEngineState->companionConnection.hPipe, pExecuteAction, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSU package.");
     }
     else
@@ -1511,7 +1495,7 @@ static HRESULT ExecuteDependencyAction(
     {
         if (pAction->dependency.pPackage->fPerMachine)
         {
-            hr = ElevationExecuteDependencyAction(pEngineState->hElevatedPipe, pAction);
+            hr = ElevationExecuteDependencyAction(pEngineState->companionConnection.hPipe, pAction);
             ExitOnFailure(hr, "Failed to register the dependency on per-machine package.");
         }
         else

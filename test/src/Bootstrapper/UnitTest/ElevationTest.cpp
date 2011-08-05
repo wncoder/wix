@@ -21,6 +21,7 @@
 
 const DWORD TEST_CHILD_SENT_MESSAGE_ID = 0xFFFE;
 const DWORD TEST_PARENT_SENT_MESSAGE_ID = 0xFFFF;
+const HRESULT S_TEST_SUCCEEDED = 0x3133;
 const char TEST_MESSAGE_DATA[] = "{94949868-7EAE-4ac5-BEAC-AFCA2821DE01}";
 
 
@@ -66,55 +67,47 @@ namespace Bootstrapper
         void ElevateTest()
         {
             HRESULT hr = S_OK;
-            HRESULT hrResult = S_OK;
-            HANDLE hPipe = NULL;
-            LPWSTR sczPipeName = NULL;
-            LPWSTR sczPipeToken = NULL;
-            HANDLE hProcess = NULL;
+            BURN_PIPE_CONNECTION connection = { };
+            HANDLE hEvent = NULL;
             DWORD dwResult = S_OK;
             try
             {
-                vpfnShellExecuteExW = ElevateTest_ShellExecuteExW;
+                ShelFunctionOverride(ElevateTest_ShellExecuteExW);
+
+                PipeConnectionInitialize(&connection);
 
                 //
                 // per-user side setup
                 //
-                hr = PipeCreatePipeNameAndToken(&hPipe, NULL, &sczPipeName, &sczPipeToken);
-                TestThrowOnFailure(hr, L"Failed to create elevated pipe.");
+                hr = PipeCreateNameAndSecret(&connection.sczName, &connection.sczSecret);
+                TestThrowOnFailure(hr, L"Failed to create connection name and secret.");
 
-                hr = PipeLaunchChildProcess(FALSE, sczPipeName, sczPipeToken, NULL, &hProcess);
+                hr = PipeCreatePipes(&connection, TRUE, &hEvent);
+                TestThrowOnFailure(hr, L"Failed to create pipes.");
+
+                hr = PipeLaunchChildProcess(&connection, TRUE, NULL);
                 TestThrowOnFailure(hr, L"Failed to create elevated process.");
 
-                hr = PipeWaitForChildConnect(hPipe, sczPipeToken, hProcess);
+                hr = PipeWaitForChildConnect(&connection);
                 TestThrowOnFailure(hr, L"Failed to wait for child process to connect.");
 
                 // post execute message
-                hr = PipeSendMessage(hPipe, TEST_PARENT_SENT_MESSAGE_ID, NULL, 0, ProcessParentMessages, NULL, &dwResult);
+                hr = PipeSendMessage(connection.hPipe, TEST_PARENT_SENT_MESSAGE_ID, NULL, 0, ProcessParentMessages, NULL, &dwResult);
                 TestThrowOnFailure(hr, "Failed to post execute message to per-machine process.");
 
                 //
                 // initiate termination
                 //
-                hr = PipeTerminateChildProcess(hProcess, hPipe, INVALID_HANDLE_VALUE);
-                TestThrowOnFailure(hr, L"Failed to termiate elevated process.");
+                hr = PipeTerminateChildProcess(&connection, 666);
+                TestThrowOnFailure(hr, L"Failed to terminate elevated process.");
 
                 // check flags
-                hr = static_cast<HRESULT>(dwResult);
-                TestThrowOnFailure(hr, L"Expected success returned from child process pipe.");
+                Assert::AreEqual(S_TEST_SUCCEEDED, (HRESULT)dwResult);
             }
             finally
             {
-                ReleaseStr(sczPipeToken);
-                ReleaseStr(sczPipeName);
-
-                if (hProcess)
-                {
-                    ::CloseHandle(hProcess);
-                }
-                if (hPipe)
-                {
-                    ::CloseHandle(hPipe);
-                }
+                PipeConnectionUninitialize(&connection);
+                ReleaseHandle(hEvent);
             }
         }
     };
@@ -135,6 +128,7 @@ static BOOL STDAPICALLTYPE ElevateTest_ShellExecuteExW(
     hr = StrAllocString(&scz, lpExecInfo->lpParameters, 0);
     ExitOnFailure(hr, "Failed to copy arguments.");
 
+    // Pretend this thread is the elevated process.
     lpExecInfo->hProcess = ::CreateThread(NULL, 0, ElevateTest_ThreadProc, scz, 0, NULL);
     ExitOnNullWithLastError(lpExecInfo->hProcess, hr, "Failed to create thread.");
     scz = NULL;
@@ -150,36 +144,35 @@ static DWORD CALLBACK ElevateTest_ThreadProc(
     )
 {
     HRESULT hr = S_OK;
-    HANDLE hPipe = NULL;
     LPWSTR sczArguments = (LPWSTR)lpThreadParameter;
+    BURN_PIPE_CONNECTION connection = { };
     DWORD dwResult = 0;
-    WCHAR wzPipeName[MAX_PATH] = { };
-    WCHAR wzToken[MAX_PATH] = { };
+
+    PipeConnectionInitialize(&connection);
+
+    StrAlloc(&connection.sczName, MAX_PATH);
+    StrAlloc(&connection.sczSecret, MAX_PATH);
 
     // parse command line arguments
-    if (2 != swscanf_s(sczArguments, L"-q -burn.elevated %s %s", wzPipeName, countof(wzPipeName), wzToken, countof(wzToken)))
+    if (3 != swscanf_s(sczArguments, L"-q -burn.elevated %s %s %u", connection.sczName, MAX_PATH, connection.sczSecret, MAX_PATH, &connection.dwProcessId, sizeof(connection.dwProcessId)))
     {
         hr = E_INVALIDARG;
         ExitOnFailure(hr, L"Failed to parse argument string.");
     }
 
     // set up connection with per-user process
-    hr = PipeChildConnect(wzPipeName, wzToken, FALSE, &hPipe);
+    hr = PipeChildConnect(&connection, TRUE);
     ExitOnFailure(hr, L"Failed to connect to per-user process.");
 
     // pump messages
-    hr = PipePumpMessages(hPipe, ProcessChildMessages, static_cast<LPVOID>(hPipe), &dwResult);
+    hr = PipePumpMessages(connection.hPipe, ProcessChildMessages, static_cast<LPVOID>(connection.hPipe), &dwResult);
     ExitOnFailure(hr, L"Failed while pumping messages in child 'process'.");
 
 LExit:
-    if (hPipe)
-    {
-        ::CloseHandle(hPipe);
-    }
-
+    PipeConnectionUninitialize(&connection);
     ReleaseStr(sczArguments);
 
-    return (DWORD)hr;
+    return FAILED(hr) ? (DWORD)hr : dwResult;
 }
 
 static HRESULT ProcessParentMessages(
@@ -197,7 +190,7 @@ static HRESULT ProcessParentMessages(
     case TEST_CHILD_SENT_MESSAGE_ID:
         if (sizeof(TEST_MESSAGE_DATA) == pMsg->cbData && 0 == memcmp(TEST_MESSAGE_DATA, pMsg->pvData, sizeof(TEST_MESSAGE_DATA)))
         {
-            hrResult = S_OK;
+            hrResult = S_TEST_SUCCEEDED;
         }
         break;
 

@@ -111,6 +111,10 @@ extern "C" HRESULT DAPI DirEnsureExists(
         {
             ExitFunction1(hr = S_OK);
         }
+        else if (ERROR_PATH_NOT_FOUND != er && DirExists(wzPath, NULL)) // if the directory happens to exist (don't check if CreateDirectory said it doesn't), declare success.
+        {
+            ExitFunction1(hr = S_OK);
+        }
 
         // get the parent path and try to create it
         LPWSTR pwzLastSlash = NULL;

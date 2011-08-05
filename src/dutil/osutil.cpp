@@ -86,7 +86,7 @@ extern "C" void DAPI OsGetVersion(
     *pdwServicePack = vdwOsServicePack;
 }
 
-extern "C" HRESULT OsIsRunningPrivileged(
+extern "C" HRESULT DAPI OsIsRunningPrivileged(
     __out BOOL* pfPrivileged
     )
 {

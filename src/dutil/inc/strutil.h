@@ -38,12 +38,20 @@ HRESULT DAPI StrAlloc(
 HRESULT DAPI StrTrimCapacity(
     __deref_out_z LPWSTR* ppwz
     );
+HRESULT DAPI StrTrimWhitespace(
+    __deref_out_ecount_z(cchSource+1) LPWSTR* ppwz,
+    __in_z LPCWSTR wzSource
+    );
 HRESULT DAPI StrAnsiAlloc(
     __deref_out_ecount_part(cch, 0) LPSTR* ppz,
     __in DWORD_PTR cch
     );
 HRESULT DAPI StrAnsiTrimCapacity(
     __deref_out_z LPSTR* ppz
+    );
+HRESULT DAPI StrAnsiTrimWhitespace(
+    __deref_out_ecount_z(cchSource+1) LPSTR* ppz,
+    __in_z LPCSTR szSource
     );
 HRESULT DAPI StrAllocString(
     __deref_out_ecount_z(cchSource+1) LPWSTR* ppwz,

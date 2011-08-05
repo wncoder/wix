@@ -21,6 +21,8 @@
 #include "precomp.h"
 
 
+const DWORD BURN_TIMEOUT = 5 * 60 * 1000; // TODO: is 5 minutes good?
+
 // struct
 
 typedef struct _BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT
@@ -40,6 +42,7 @@ typedef struct _BURN_ELEVATION_CHILD_MESSAGE_CONTEXT
     DWORD dwLoggingTlsId;
     HANDLE hPipe;
     BURN_PACKAGES* pPackages;
+    BURN_RELATED_BUNDLES* pRelatedBundles;
     BURN_PAYLOADS* pPayloads;
     BURN_VARIABLES* pVariables;
     BURN_REGISTRATION* pRegistration;
@@ -53,7 +56,8 @@ static DWORD WINAPI ElevatedChildCacheThreadProc(
     __in LPVOID lpThreadParameter
     );
 static HRESULT WaitForElevatedChildCacheThread(
-    __in HANDLE hCacheThread
+    __in HANDLE hCacheThread,
+    __in DWORD dwExpectedExitCode
     );
 static HRESULT ProcessGenericExecuteMessages(
     __in BURN_PIPE_MESSAGE* pMsg,
@@ -124,6 +128,7 @@ static HRESULT OnCachePayload(
 static HRESULT OnExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BURN_VARIABLES* pVariables,
     __in BYTE* pbData,
     __in DWORD cbData
@@ -160,19 +165,6 @@ static int GenericExecuteMessageHandler(
 static int MsiExecuteMessageHandler(
     __in WIU_MSI_EXECUTE_MESSAGE* pMessage,
     __in_opt LPVOID pvContext
-    );
-static HRESULT OnLaunchElevatedEmbeddedChild(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BURN_PACKAGES* pPackages,
-    __in BYTE* pbData,
-    __in DWORD cbData,
-    __out DWORD* pdwPid
-    );
-static HRESULT LaunchEmbeddedElevatedProcess(
-    __in BURN_PACKAGE* pPackage,
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzPipeToken,
-    __out HANDLE* phProcess
     );
 static HRESULT OnCleanPackage(
     __in BURN_PACKAGES* pPackages,
@@ -632,46 +624,6 @@ LExit:
 }
 
 /*******************************************************************
- ElevationLaunchElevatedChild - 
-
-*******************************************************************/
-extern "C" HRESULT ElevationLaunchElevatedChild(
-    __in HANDLE hPipe,
-    __in BURN_PACKAGE* pPackage,
-    __in LPCWSTR wzPipeName,
-    __in LPCWSTR wzPipeToken,
-    __out DWORD* pdwChildPid
-    )
-{
-    HRESULT hr = S_OK;
-    BYTE* pbData = NULL;
-    SIZE_T cbData = 0;
-    DWORD dwResult = 0;
-
-    // serialize message data
-    Assert(BURN_PACKAGE_TYPE_EXE == pPackage->type);
-    hr = BuffWriteString(&pbData, &cbData, pPackage->sczId);
-    ExitOnFailure(hr, "Failed to write package id to message buffer.");
-
-    hr = BuffWriteString(&pbData, &cbData, wzPipeName);
-    ExitOnFailure(hr, "Failed to write pipe name to message buffer.");
-
-    hr = BuffWriteString(&pbData, &cbData, wzPipeToken);
-    ExitOnFailure(hr, "Failed to write pipe token to message buffer.");
-
-    // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD, pbData, cbData, NULL, NULL, &dwResult);
-    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD message to per-machine process.");
-
-    *pdwChildPid = dwResult;
-
-LExit:
-    ReleaseBuffer(pbData);
-
-    return hr;
-}
-
-/*******************************************************************
  ElevationCleanPackage - 
 
 *******************************************************************/
@@ -710,10 +662,12 @@ extern "C" HRESULT ElevationChildPumpMessages(
     __in HANDLE hPipe,
     __in HANDLE hCachePipe,
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BURN_PAYLOADS* pPayloads,
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
-    __in BURN_USER_EXPERIENCE* pUserExperience
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __out DWORD* pdwChildExitCode
     )
 {
     HRESULT hr = S_OK;
@@ -725,6 +679,7 @@ extern "C" HRESULT ElevationChildPumpMessages(
     cacheContext.dwLoggingTlsId = dwLoggingTlsId;
     cacheContext.hPipe = hCachePipe;
     cacheContext.pPackages = pPackages;
+    cacheContext.pRelatedBundles = pRelatedBundles;
     cacheContext.pPayloads = pPayloads;
     cacheContext.pVariables = pVariables;
     cacheContext.pRegistration = pRegistration;
@@ -733,6 +688,7 @@ extern "C" HRESULT ElevationChildPumpMessages(
     context.dwLoggingTlsId = dwLoggingTlsId;
     context.hPipe = hPipe;
     context.pPackages = pPackages;
+    context.pRelatedBundles = pRelatedBundles;
     context.pPayloads = pPayloads;
     context.pVariables = pVariables;
     context.pRegistration = pRegistration;
@@ -744,10 +700,11 @@ extern "C" HRESULT ElevationChildPumpMessages(
     hr = PipePumpMessages(hPipe, ProcessElevatedChildMessage, &context, &dwResult);
     ExitOnFailure(hr, "Failed to pump messages in child process.");
 
-    hr = WaitForElevatedChildCacheThread(hCacheThread);
-    ExitOnFailure(hr, "Failed while waiting for elevated cache thread to complete after execution.");
+    // Wait for the cache thread and verify it gets the right result but don't fail if things
+    // don't work out.
+    WaitForElevatedChildCacheThread(hCacheThread, dwResult);
 
-    hr = (HRESULT)dwResult;
+    *pdwChildExitCode = dwResult;
 
 LExit:
     ReleaseHandle(hCacheThread);
@@ -792,20 +749,24 @@ LExit:
 }
 
 static HRESULT WaitForElevatedChildCacheThread(
-    __in HANDLE hCacheThread
+    __in HANDLE hCacheThread,
+    __in DWORD dwExpectedExitCode
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwExitCode = ERROR_SUCCESS;
 
-    if (WAIT_OBJECT_0 != ::WaitForSingleObject(hCacheThread, INFINITE))
+    if (WAIT_OBJECT_0 != ::WaitForSingleObject(hCacheThread, BURN_TIMEOUT))
     {
         ExitWithLastError(hr, "Failed to wait for cache thread to terminate.");
     }
 
-    if (!::GetExitCodeThread(hCacheThread, (DWORD*)&hr))
+    if (!::GetExitCodeThread(hCacheThread, &dwExitCode))
     {
         ExitWithLastError(hr, "Failed to get cache thread exit code.");
     }
+
+    AssertSz(dwExitCode == dwExpectedExitCode, "Cache thread should have exited with the expected exit code.");
 
 LExit:
     return hr;
@@ -972,7 +933,7 @@ static HRESULT ProcessElevatedChildMessage(
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE:
-        hrResult = OnExecuteExePackage(pContext->hPipe, pContext->pPackages, pContext->pVariables, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnExecuteExePackage(pContext->hPipe, pContext->pPackages, pContext->pRelatedBundles, pContext->pVariables, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE:
@@ -989,10 +950,6 @@ static HRESULT ProcessElevatedChildMessage(
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_DEPENDENCY:
         hrResult = OnExecuteDependencyAction(pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData);
-        break;
-
-    case BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD:
-        hrResult = OnLaunchElevatedEmbeddedChild(pContext->pRegistration, pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData, &dwPid);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE:
@@ -1316,6 +1273,7 @@ LExit:
 static HRESULT OnExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BURN_VARIABLES* pVariables,
     __in BYTE* pbData,
     __in DWORD cbData
@@ -1343,10 +1301,14 @@ static HRESULT OnExecuteExePackage(
     ExitOnFailure(hr, "Failed to read variables.");
 
     hr = PackageFindById(pPackages, sczPackage, &executeAction.exePackage.pPackage);
+    if (E_NOTFOUND == hr)
+    {
+        hr = PackageFindRelatedById(pRelatedBundles, sczPackage, &executeAction.exePackage.pPackage);
+    }
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // execute EXE package
-    hr = ExeEngineExecutePackage(NULL, INVALID_HANDLE_VALUE, &executeAction, pVariables, GenericExecuteMessageHandler, hPipe, &exeRestart);
+    hr = ExeEngineExecutePackage(&executeAction, pVariables, GenericExecuteMessageHandler, hPipe, &exeRestart);
     ExitOnFailure(hr, "Failed to execute EXE package.");
 
 LExit:
@@ -1721,102 +1683,6 @@ LExit:
     ReleaseBuffer(pbData);
 
     return nResult;
-}
-
-static HRESULT OnLaunchElevatedEmbeddedChild(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BURN_PACKAGES* pPackages,
-    __in BYTE* pbData,
-    __in DWORD cbData,
-    __out DWORD* pdwPid
-    )
-{
-    HRESULT hr = S_OK;
-    SIZE_T iData = 0;
-    LPWSTR sczPackage = NULL;
-    LPWSTR sczPipeName = NULL;
-    LPWSTR sczPipeToken = NULL;
-    BURN_PACKAGE* pPackage = NULL;
-    HANDLE hProcess = NULL;
-
-    // deserialize message data
-    hr = BuffReadString(pbData, cbData, &iData, &sczPackage);
-    ExitOnFailure(hr, "Failed to read package id.");
-
-    hr = BuffReadString(pbData, cbData, &iData, &sczPipeName);
-    ExitOnFailure(hr, "Failed to read pipe name.");
-
-    hr = BuffReadString(pbData, cbData, &iData, &sczPipeToken);
-    ExitOnFailure(hr, "Failed to read pipe token.");
-
-    hr = PackageFindById(pPackages, sczPackage, &pPackage);
-    if (E_NOTFOUND == hr)
-    {
-        // If it isn't in our manifest, fallback to supporting related bundles found in ARP
-        hr = PackageFindRelatedById(pRegistration, sczPackage, &pPackage);
-    }
-    ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
-
-    // Create the embedded elevated process.
-    hr = LaunchEmbeddedElevatedProcess(pPackage, sczPipeName, sczPipeToken, &hProcess);
-    ExitOnFailure(hr, "Failed to launch elevated embedded process.");
-
-    *pdwPid = ::GetProcessId(hProcess);
-    if (!*pdwPid)
-    {
-        ExitWithLastError(hr, "Failed to get elevated embedded process id.");
-    }
-
-LExit:
-    ReleaseHandle(hProcess);
-    ReleaseStr(sczPipeToken);
-    ReleaseStr(sczPipeName);
-    ReleaseStr(sczPackage);
-
-    return hr;
-}
-
-static HRESULT LaunchEmbeddedElevatedProcess(
-    __in BURN_PACKAGE* pPackage,
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzPipeToken,
-    __out HANDLE* phProcess
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczCachedDirectory = NULL;
-    LPWSTR sczExecutablePath = NULL;
-    LPWSTR sczCommand = NULL;
-    STARTUPINFOW si = { };
-    PROCESS_INFORMATION pi = { };
-
-    // get cached executable path
-    hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
-    ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
-
-    hr = PathConcat(sczCachedDirectory, pPackage->rgPayloads[0].pPayload->sczFilePath, &sczExecutablePath);
-    ExitOnFailure(hr, "Failed to build executable path.");
-
-    hr = StrAllocFormatted(&sczCommand, L"%s -%s %s %s", sczExecutablePath, BURN_COMMANDLINE_SWITCH_ELEVATED, wzPipeName, wzPipeToken);
-    ExitOnFailure(hr, "Failed to allocate embedded command.");
-
-    if (!::CreateProcessW(sczExecutablePath, sczCommand, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
-    {
-        ExitWithLastError1(hr, "Failed to create embedded process at path: %ls", sczExecutablePath);
-    }
-
-    *phProcess = pi.hProcess;
-    pi.hProcess = NULL;
-
-LExit:
-    ReleaseHandle(pi.hThread);
-    ReleaseHandle(pi.hProcess);
-
-    ReleaseStr(sczCommand);
-    ReleaseStr(sczExecutablePath);
-    ReleaseStr(sczCachedDirectory);
-
-    return hr;
 }
 
 static HRESULT OnCleanPackage(

@@ -104,7 +104,7 @@ struct NetFxCloseApplications
     NetFxApplication applications[1];
 };
 
-HRESULT RunNetFxChainer(
+HRESULT NetFxRunChainer(
     __in LPCWSTR wzExecutablePath,
     __in LPCWSTR wzArguments,
     __in LPCWSTR wzBundleName,

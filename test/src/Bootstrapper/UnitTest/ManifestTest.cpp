@@ -66,7 +66,7 @@ namespace Bootstrapper
             }
             finally
             {
-                CoreUninitialize(&engineState);
+                //CoreUninitialize(&engineState);
             }
         }
     };

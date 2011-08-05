@@ -85,7 +85,7 @@ static HRESULT CreateNetFxChainer(
     ExitOnNullWithLastError1(pChainer->pData, hr, "Failed to MapViewOfFile for %ls.", wzSectionName);
 
     // Initialize the shared memory
-    hr = ::StringCchCopyW(pChainer->pData->szEventName, sizeof(pChainer->pData->szEventName), wzEventName);
+    hr = ::StringCchCopyW(pChainer->pData->szEventName, countof(pChainer->pData->szEventName), wzEventName);
     ExitOnFailure(hr, "failed to copy event name to shared memory structure.");
     pChainer->pData->downloadFinished = false;
     pChainer->pData->downloadSoFar = 0;
@@ -319,7 +319,7 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT RunNetFxChainer(
+extern "C" HRESULT NetFxRunChainer(
     __in LPCWSTR wzExecutablePath,
     __in LPCWSTR wzArguments,
     __in LPCWSTR wzBundleName,

@@ -1309,3 +1309,31 @@ RobMen: When Burn state file is missing log warning, do not fail.
 
 WixBuild: Version 3.6.1922.0
 
+RobMen: SFBUG:3158619 - escape command-line args passed to the BA to handle
+                        arguments with spaces in them such that
+                        ::CommandLineToArgv() will parse it correctly.
+
+RobMen: Massive refactoring to elevate/unelevate appropriately.
+        Support external programs "embedding" a Bundle.
+
+RobMen: Remove out of date stdux.dll
+
+WixBuild: Version 3.6.1929.0
+
+JaredR: Update UtilExtension's Binder to use a topological sort for ordering
+        WixSearch IDs.
+
+ZhenyaS: Do not pass PATCH property to MSIs during uninstall in Burn.
+
+JieJi - DirEnsureExistsEx() now handles "creating" the root of a folder.
+
+RobMen: Centralize variables that need to be kept in sync between Binder and
+        Burn.
+
+RobMen: Enable Burn to upgrade previous versions of Burn even when there is a
+        breaking change to the communication protocol.
+
+RobMen: SFBUG:3385078 - fix documentation link.
+
+WixBuild: Version 3.6.2005.0
+

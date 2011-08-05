@@ -110,7 +110,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectRelatedMsiPackage(
@@ -121,7 +121,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         ) 
     {
-        return BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation || CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(int) OnDetectTargetMsiPackage(

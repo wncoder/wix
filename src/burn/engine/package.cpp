@@ -381,7 +381,7 @@ LExit:
 
 
 extern "C" HRESULT PackageFindRelatedById(
-    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in_z LPCWSTR wzId,
     __out BURN_PACKAGE** ppPackage
     )
@@ -389,9 +389,9 @@ extern "C" HRESULT PackageFindRelatedById(
     HRESULT hr = S_OK;
     BURN_PACKAGE* pPackage = NULL;
 
-    for (DWORD i = 0; i < pRegistration->cRelatedBundles; ++i)
+    for (DWORD i = 0; i < pRelatedBundles->cRelatedBundles; ++i)
     {
-        pPackage = &pRegistration->rgRelatedBundles[i].package;
+        pPackage = &pRelatedBundles->rgRelatedBundles[i].package;
 
         if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pPackage->sczId, -1, wzId, -1))
         {

@@ -18,6 +18,9 @@
 
 #include "precomp.h"
 
+const BYTE UTF8BOM[] = {0xEF, 0xBB, 0xBF};
+const BYTE UTF16BOM[] = {0xFF, 0xFE};
+
 /*******************************************************************
  FileFromPath -  returns a pointer to the file part of the path
 
@@ -1289,7 +1292,7 @@ LExit:
  FileExecutableArchitecture
 
 *******************************************************************/
-extern "C" HRESULT FileExecutableArchitecture(
+extern "C" HRESULT DAPI FileExecutableArchitecture(
     __in LPCWSTR wzFile,
     __out FILE_ARCHITECTURE *pArchitecture
     )
@@ -1365,6 +1368,184 @@ LExit:
     {
         ::CloseHandle(hFile);
     }
+
+    return hr;
+}
+
+/*******************************************************************
+ FileToString
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileToString(
+    __in_z LPCWSTR wzFile,
+    __out LPWSTR *psczString,
+    __out_opt FILE_ENCODING *pfeEncoding
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE *pbFullFileBuffer = NULL;
+    DWORD cbFullFileBuffer = 0;
+    BOOL fNullCharFound = FALSE;
+    LPSTR sczAnsiFileText = NULL;
+    LPWSTR sczFileText = NULL;
+
+    // Check if the file is ANSI
+    hr = FileRead(&pbFullFileBuffer, &cbFullFileBuffer, wzFile);
+    ExitOnFailure1(hr, "Failed to read file: %ls", wzFile);
+
+    if (0 == cbFullFileBuffer)
+    {
+        *psczString = NULL;
+        ExitFunction1(hr = S_OK);
+    }
+
+    // UTF-8 BOM
+    if (cbFullFileBuffer > sizeof(UTF8BOM) && 0 == memcmp(pbFullFileBuffer, UTF8BOM, sizeof(UTF8BOM)))
+    {
+        if (pfeEncoding)
+        {
+            *pfeEncoding = FILE_ENCODING_UTF8_WITH_BOM;
+        }
+
+        hr = StrAllocStringAnsi(&sczFileText, reinterpret_cast<LPCSTR>(pbFullFileBuffer + 3), cbFullFileBuffer - 3, CP_UTF8);
+        ExitOnFailure1(hr, "Failed to convert file %ls from UTF-8 as its BOM indicated", wzFile);
+
+        *psczString = sczFileText;
+        sczFileText = NULL;
+    }
+    // UTF-16 BOM, little endian (windows regular UTF-16)
+    else if (cbFullFileBuffer > sizeof(UTF16BOM) && 0 == memcmp(pbFullFileBuffer, UTF16BOM, sizeof(UTF16BOM)))
+    {
+        if (pfeEncoding)
+        {
+            *pfeEncoding = FILE_ENCODING_UTF16_WITH_BOM;
+        }
+
+        hr = StrAllocString(psczString, reinterpret_cast<LPWSTR>(pbFullFileBuffer + 2), (cbFullFileBuffer - 2) / sizeof(WCHAR));
+        ExitOnFailure(hr, "Failed to allocate copy of string");
+    }
+    // No BOM, let's try to detect
+    else
+    {
+        for (DWORD i = 0; i < cbFullFileBuffer; ++i)
+        {
+            if (pbFullFileBuffer[i] == '\0')
+            {
+                fNullCharFound = TRUE;
+                break;
+            }
+        }
+
+        if (!fNullCharFound)
+        {
+            if (pfeEncoding)
+            {
+                *pfeEncoding = FILE_ENCODING_UTF8;
+            }
+
+            hr = StrAllocStringAnsi(&sczFileText, reinterpret_cast<LPCSTR>(pbFullFileBuffer), cbFullFileBuffer, CP_UTF8);
+            if (FAILED(hr))
+            {
+                if (E_OUTOFMEMORY == hr)
+                {
+                    ExitOnFailure1(hr, "Failed to convert file %ls from UTF-8", wzFile);
+                }
+            }
+            else
+            {
+                *psczString = sczFileText;
+                sczFileText = NULL;
+            }
+        }
+        else if (NULL == *psczString)
+        {
+            if (pfeEncoding)
+            {
+                *pfeEncoding = FILE_ENCODING_UTF16;
+            }
+
+            hr = StrAllocString(psczString, reinterpret_cast<LPWSTR>(pbFullFileBuffer), cbFullFileBuffer / sizeof(WCHAR));
+            ExitOnFailure(hr, "Failed to allocate copy of string");
+        }
+    }
+
+LExit:
+    ReleaseStr(sczAnsiFileText);
+    ReleaseStr(sczFileText);
+    ReleaseMem(pbFullFileBuffer);
+
+    return hr;
+}
+
+/*******************************************************************
+ FileFromString
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileFromString(
+    __in_z LPCWSTR wzFile,
+    __in DWORD dwFlagsAndAttributes,
+    __in_z LPCWSTR sczString,
+    __in FILE_ENCODING feEncoding
+    )
+{
+    HRESULT hr = S_OK;
+    LPSTR sczUtf8String = NULL;
+    BYTE *pbFullFileBuffer = NULL;
+    DWORD cbFullFileBuffer = 0;
+    DWORD cbStrLen = 0;
+
+    switch (feEncoding)
+    {
+    case FILE_ENCODING_UTF8:
+        hr = StrAnsiAllocString(&sczUtf8String, sczString, 0, CP_UTF8);
+        ExitOnFailure(hr, "Failed to convert string to UTF-8 to write UTF-8 file");
+        
+        cbFullFileBuffer = lstrlenA(sczUtf8String);
+
+        pbFullFileBuffer = reinterpret_cast<BYTE *>(MemAlloc(cbFullFileBuffer, TRUE));
+        ExitOnNull(pbFullFileBuffer, hr, E_OUTOFMEMORY, "Failed to allocate memory for output file buffer");
+
+        memcpy_s(pbFullFileBuffer, cbFullFileBuffer, sczUtf8String, cbFullFileBuffer);
+        break;
+    case FILE_ENCODING_UTF8_WITH_BOM:
+        hr = StrAnsiAllocString(&sczUtf8String, sczString, 0, CP_UTF8);
+        ExitOnFailure(hr, "Failed to convert string to UTF-8 to write UTF-8 file");
+        
+        cbStrLen = lstrlenA(sczUtf8String);
+        cbFullFileBuffer = sizeof(UTF8BOM) + cbStrLen;
+
+        pbFullFileBuffer = reinterpret_cast<BYTE *>(MemAlloc(cbFullFileBuffer, TRUE));
+        ExitOnNull(pbFullFileBuffer, hr, E_OUTOFMEMORY, "Failed to allocate memory for output file buffer");
+
+        memcpy_s(pbFullFileBuffer, sizeof(UTF8BOM), UTF8BOM, sizeof(UTF8BOM));
+        memcpy_s(pbFullFileBuffer + sizeof(UTF8BOM), cbStrLen, sczUtf8String, cbStrLen);
+        break;
+    case FILE_ENCODING_UTF16:
+        cbFullFileBuffer = lstrlenW(sczString) * sizeof(WCHAR);
+
+        pbFullFileBuffer = reinterpret_cast<BYTE *>(MemAlloc(cbFullFileBuffer, TRUE));
+        ExitOnNull(pbFullFileBuffer, hr, E_OUTOFMEMORY, "Failed to allocate memory for output file buffer");
+
+        memcpy_s(pbFullFileBuffer, cbFullFileBuffer, sczString, cbFullFileBuffer);
+        break;
+    case FILE_ENCODING_UTF16_WITH_BOM:
+        cbStrLen = lstrlenW(sczString) * sizeof(WCHAR);
+        cbFullFileBuffer = sizeof(UTF16BOM) + cbStrLen;
+
+        pbFullFileBuffer = reinterpret_cast<BYTE *>(MemAlloc(cbFullFileBuffer, TRUE));
+        ExitOnNull(pbFullFileBuffer, hr, E_OUTOFMEMORY, "Failed to allocate memory for output file buffer");
+
+        memcpy_s(pbFullFileBuffer, sizeof(UTF16BOM), UTF16BOM, sizeof(UTF16BOM));
+        memcpy_s(pbFullFileBuffer + sizeof(UTF16BOM), cbStrLen, sczString, cbStrLen);
+        break;
+    }
+
+    hr = FileWrite(wzFile, dwFlagsAndAttributes, pbFullFileBuffer, cbFullFileBuffer, NULL);
+    ExitOnFailure1(hr, "Failed to write file from string to: %ls", wzFile);
+
+LExit:
+    ReleaseStr(sczUtf8String);
+    ReleaseMem(pbFullFileBuffer);
 
     return hr;
 }

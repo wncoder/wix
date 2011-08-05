@@ -3,11 +3,16 @@
 
     <Bundle Name='Burn Test Bundle' Version='0.1' UpgradeCode='0A190CA6-6D59-4F20-9BC3-B1021021F795'
             IconSourceFile='$(env.WIX_ROOT)\src\Votive\votive2010\Templates\Projects\WixProject\WixProject.ico'
-            SplashScreenSourceFile='logo.bmp'>
-        <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
-
-        <Variable Name='BundleName' Value='WiX Standard Bootstrapper Test' />
-        <Variable Name='InstallFolder' Value='[ProgramFilesFolder]\[BundleName]' />
+            SplashScreenSourceFile='logo.bmp' DisableModify='yes'>
+        <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.HyperlinkLicense' />
+        <WixVariable Id="WixStdbaLicenseUrl" Value="" />
+<!--
+        <BootstrapperApplication SourceFile='E:\denv\Dev\wix36\build\debug\x86\stdux.dll'>
+            <Payload SourceFile='E:\denv\Dev\wix36\build\debug\x86\StduxResources\thm.xml' />
+            <Payload SourceFile='E:\denv\Dev\wix36\build\debug\x86\StduxResources\en-us.wxl' />
+        </BootstrapperApplication>
+-->
+        <Variable Name='InstallFolder' Value='[ProgramFilesFolder]\[WixBundleName]' />
 
         <PayloadGroup Id='LayoutStuff'>
             <Payload SourceFile='readme.html' />
@@ -25,14 +30,22 @@
 -->
 
         <Chain ParallelCache="yes">
-            <ExePackage SourceFile="ExePkg.exe" Compressed="no" Vital="yes" PerMachine="yes" InstallCommand="-wait 600 -install" UninstallCommand="-uninstall" />
+<!--
+                       <ExePackage SourceFile="ExePkg.exe" 
+                        Compressed="no" Vital="yes"
+                        PerMachine="yes"
+                        InstallCommand="-permachine -wait 600 -install"
+                        UninstallCommand="-permachine -uninstall" />
 
             <RollbackBoundary />
-
-            <MsiPackage Id='Package4' Vital='yes' Compressed='no' SourceFile='Package4.msi' Cache='no'
-                        InstallCondition='NOT RebootPending'>
-                <!-- MsiProperty Name='TARGETDIR' Value='[InstallFolder]' / -->
-                <MsiProperty Name='FAIL' Value='1' />
+-->
+            <MsiPackage Id='Package3'
+                        SourceFile='Package3.msi'
+                        Vital='yes' Compressed='no' Cache='yes'>
+                <MsiProperty Name='FAIL' Value='0' />
+                <MsiProperty Name='TARGETDIR' Value='[InstallFolder]' />
+                <MsiProperty Name='FOO' Value='A "pretty" long value with some "quoted" material in it.' />
+                <MsiProperty Name='BAR' Value='An even longer long value with absolutely no quoted strings anywhere to be found.' />
             </MsiPackage>
         </Chain>
     </Bundle>

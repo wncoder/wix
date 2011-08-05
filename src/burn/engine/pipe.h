@@ -22,6 +22,17 @@
 extern "C" {
 #endif
 
+typedef struct _BURN_PIPE_CONNECTION
+{
+    LPWSTR sczName;
+    LPWSTR sczSecret;
+    DWORD dwProcessId;
+
+    HANDLE hProcess;
+    HANDLE hPipe;
+    HANDLE hCachePipe;
+} BURN_PIPE_CONNECTION;
+
 typedef enum _BURN_PIPE_MESSAGE_TYPE
 {
     BURN_PIPE_MESSAGE_TYPE_LOG = 0xF0000001,
@@ -46,6 +57,12 @@ typedef HRESULT (*PFN_PIPE_MESSAGE_CALLBACK)(
 
 
 // Common functions.
+void PipeConnectionInitialize(
+    __in BURN_PIPE_CONNECTION* pConnection
+    );
+void PipeConnectionUninitialize(
+    __in BURN_PIPE_CONNECTION* pConnection
+    );
 HRESULT PipeSendMessage(
     __in HANDLE hPipe,
     __in DWORD dwMessage,
@@ -63,36 +80,38 @@ HRESULT PipePumpMessages(
     );
 
 // Parent functions.
-HRESULT PipeCreatePipeNameAndToken(
-    __out HANDLE* phPipe,
-    __out_opt HANDLE* phCachePipe,
-    __out_z LPWSTR *psczPipeName,
-    __out_z LPWSTR *psczClientToken
+HRESULT PipeCreateNameAndSecret(
+    __out_z LPWSTR *psczConnectionName,
+    __out_z LPWSTR *psczSecret
+    );
+HRESULT PipeCreatePipes(
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in BOOL fCreateCachePipe,
+    __out HANDLE* phEvent
+    );
+HRESULT PipeLaunchParentProcess(
+    __in LPCWSTR wzCommandLine,
+    __in int nCmdShow,
+    __in_z LPWSTR sczPipeName,
+    __in_z LPWSTR sczClientToken
     );
 HRESULT PipeLaunchChildProcess(
+    __in BURN_PIPE_CONNECTION* pConnection,
     __in BOOL fElevate,
-    __in_z LPWSTR sczPipeName,
-    __in_z LPWSTR sczClientToken,
-    __in_opt HWND hwndParent,
-    __out HANDLE* phElevationProcess
+    __in_opt HWND hwndParent
     );
 HRESULT PipeWaitForChildConnect(
-    __in HANDLE hPipe,
-    __in LPCWSTR wzToken,
-    __in HANDLE hProcess
+    __in BURN_PIPE_CONNECTION* pConnection
     );
 HRESULT PipeTerminateChildProcess(
-    __in HANDLE hProcess,
-    __in HANDLE hPipe,
-    __in HANDLE hCachePipe
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in DWORD dwParentExitCode
     );
 
 // Child functions.
 HRESULT PipeChildConnect(
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzToken,
-    __in BOOL fCachePipe,
-    __out HANDLE* phPipe
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in BOOL fConnectCachePipe
     );
 
 #ifdef __cplusplus

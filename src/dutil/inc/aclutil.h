@@ -122,6 +122,7 @@ HRESULT DAPI AclDuplicateSecurityDescriptor(
 HRESULT DAPI AclGetSecurityDescriptor(
     __in_z LPCWSTR wzObject,
     __in SE_OBJECT_TYPE sot,
+    __in SECURITY_INFORMATION securityInformation,
     __deref_out SECURITY_DESCRIPTOR** ppsd
     );
 

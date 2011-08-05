@@ -73,6 +73,7 @@
       <include name="eseutil.cpp" />
       <include name="iis7util.cpp" />
       <include name="inetutil.cpp" />
+      <include name="iniutil.cpp" />
       <include name="jsonutil.cpp" />
       <include name="locutil.cpp" />
       <include name="logutil.cpp" />

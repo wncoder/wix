@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="~Bundle v2" 
+        Manufacturer="Microsoft Corporation"
+        Version="0.2.0.0"
+        DisableModify="yes">
+   <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+   <RelatedBundle Id="1BE14DA3-E26A-4C49-8D39-7B1017FFA071" Action="Upgrade"/>
+
+   <Chain>
+      <MsiPackage Vital='yes' Name='Bv1.msi' SourceFile='Bv1.1-MinorUpdate\Bv1.msi' />
+   </Chain>
+</Bundle>
+</Wix>

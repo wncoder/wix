@@ -341,7 +341,7 @@ public: // IBootstrapperEngine
         hr = BuffWriteNumber(&pbData, &cbData, dwUIHint);
         ExitOnFailure(hr, "Failed to write UI hint to message buffer.");
 
-        hr = PipeSendMessage(m_pEngineState->hElevatedPipe, BURN_EMBEDDED_MESSAGE_TYPE_ERROR, pbData, cbData, NULL, NULL, &dwResult);
+        hr = PipeSendMessage(m_pEngineState->embeddedConnection.hPipe, BURN_EMBEDDED_MESSAGE_TYPE_ERROR, pbData, cbData, NULL, NULL, &dwResult);
         ExitOnFailure(hr, "Failed to send embedded message over pipe.");
 
         *pnResult = static_cast<int>(dwResult);
@@ -374,7 +374,7 @@ public: // IBootstrapperEngine
         hr = BuffWriteNumber(&pbData, &cbData, dwOverallProgressPercentage);
         ExitOnFailure(hr, "Failed to write overall progress percentage to message buffer.");
 
-        hr = PipeSendMessage(m_pEngineState->hElevatedPipe, BURN_EMBEDDED_MESSAGE_TYPE_PROGRESS, pbData, cbData, NULL, NULL, &dwResult);
+        hr = PipeSendMessage(m_pEngineState->embeddedConnection.hPipe, BURN_EMBEDDED_MESSAGE_TYPE_PROGRESS, pbData, cbData, NULL, NULL, &dwResult);
         ExitOnFailure(hr, "Failed to send embedded progress message over pipe.");
 
         *pnResult = static_cast<int>(dwResult);

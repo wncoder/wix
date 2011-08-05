@@ -66,6 +66,12 @@ typedef struct _BURN_RELATED_BUNDLE
     BURN_PACKAGE package;
 } BURN_RELATED_BUNDLE;
 
+typedef struct _BURN_RELATED_BUNDLES
+{
+    BURN_RELATED_BUNDLE* rgRelatedBundles;
+    DWORD cRelatedBundles;
+} BURN_RELATED_BUNDLES;
+
 typedef struct _BURN_REGISTRATION
 {
     BOOL fPerMachine;
@@ -112,8 +118,7 @@ typedef struct _BURN_REGISTRATION
     BOOL fNoRemove;
 
     // Related
-    BURN_RELATED_BUNDLE* rgRelatedBundles;
-    DWORD cRelatedBundles;
+    BURN_RELATED_BUNDLES relatedBundles;
 } BURN_REGISTRATION;
 
 

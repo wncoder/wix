@@ -34,6 +34,49 @@ static BOOL CALLBACK CloseWindowEnumCallback(
     );
 
 
+extern "C" HRESULT DAPI ProcElevated(
+    __in HANDLE hProcess,
+    __out BOOL* pfElevated
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hToken = NULL;
+    TOKEN_ELEVATION tokenElevated = { };
+    DWORD cbToken = 0;
+
+    if (!::OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
+    {
+        ExitWithLastError(hr, "Failed to open process token.");
+    }
+
+    if (::GetTokenInformation(hToken, TokenElevation, &tokenElevated, sizeof(TOKEN_ELEVATION), &cbToken))
+    {
+        *pfElevated = (0 != tokenElevated.TokenIsElevated);
+    }
+    else
+    {
+        DWORD er = ::GetLastError();
+        hr = HRESULT_FROM_WIN32(er);
+
+        // If it's invalid argument, this means the OS doesn't support TokenElevation, so we're not elevated.
+        if (E_INVALIDARG == hr)
+        {
+            *pfElevated = FALSE;
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnRootFailure(hr, "Failed to get elevation token from process.");
+        }
+    }
+
+LExit:
+    ReleaseHandle(hToken);
+
+    return hr;
+}
+
+
 /********************************************************************
  ProcExecute() - executes a command-line.
 

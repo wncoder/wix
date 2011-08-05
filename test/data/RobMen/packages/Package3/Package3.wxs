@@ -25,6 +25,10 @@
             <ComponentRef Id="MyCompDuped" />
             <ComponentRef Id="MyComp2" />
         </Feature>
+
+        <InstallExecuteSequence>
+            <!-- <ForceReboot After="InstallFiles">NOT Installed AND NOT AFTERREBOOT</ForceReboot> -->
+        </InstallExecuteSequence>
     </Product>
 
     <Fragment>

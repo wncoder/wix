@@ -378,7 +378,7 @@ extern "C" REPORT_LEVEL DAPI LogSetLevel(
                 break;
             }
 
-            LogLine(REPORT_STANDARD, "--- logging level: %s ---", szLevel);
+            LogLine(REPORT_STANDARD, "--- logging level: %hs ---", szLevel);
         }
     }
 
@@ -602,7 +602,7 @@ extern "C" HRESULT DAPI LogErrorStringArgs(
     ExitOnFailure(hr, "Failed to convert format string to wide character string");
 
     // format the string as a unicode string - this is necessary to be able to include
-    // international characters in our output string. This doeshas the counterintuitive effect
+    // international characters in our output string. This does have the counterintuitive effect
     // that the caller's "%s" is interpreted differently
     // (so callers should use %hs for LPSTR and %ls for LPWSTR)
     hr = StrAllocFormattedArgs(&sczMessage, sczFormat, args);
@@ -709,7 +709,7 @@ extern "C" HRESULT DAPI LogHeader()
         szLevel = LOGUTIL_NONE;
         break;
     }
-    LogLine(REPORT_STANDARD, "--- logging level: %s ---", szLevel);
+    LogLine(REPORT_STANDARD, "--- logging level: %hs ---", szLevel);
 
     hr = S_OK;
 
@@ -903,8 +903,11 @@ static HRESULT LogStringWork(
         dwAbsBias = abs(tzi.Bias);
 
         // add line prefix and trailing newline
-        hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu.%03hu%wc%02u:%02u]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
-            dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, 0 >= tzi.Bias ? L'+' : L'-', dwAbsBias / 60, dwAbsBias % 60,
+//        hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu.%03hu%wc%02u:%02u]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
+//            dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, 0 >= tzi.Bias ? L'+' : L'-', dwAbsBias / 60, dwAbsBias % 60,
+//            LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : L"", sczString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : L"\r\n");
+        hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
+            dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
             LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : L"", sczString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : L"\r\n");
         ExitOnFailure(hr, "Failed to format line prefix.");
     }

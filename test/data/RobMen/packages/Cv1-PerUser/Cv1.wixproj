@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <OutputName>Cv1</OutputName>
+    <OutputType>Package</OutputType>
+
+    <SuppressIces>ICE91</SuppressIces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Cv1.wxs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WixExtension Include="WixUtilExtension"/>
+  </ItemGroup>
+
+  <Import Project="..\..\Common.targets" />
+</Project>

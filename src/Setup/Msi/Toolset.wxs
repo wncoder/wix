@@ -113,9 +113,6 @@
             <Component Id="SmokeConfig" Guid="24F0A281-B01F-4CD1-960B-7DE7EFA07470" Win64="no">
                 <File Source="smoke.exe.config" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
-            <Component Id="STDUXBinaries" Guid="25A05614-D524-874A-9345-2AD0062FBC4A" Win64="no">
-                <File Source="stdux.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
-            </Component>
             <Component Id="TorchBinaries" Guid="D9496C8B-825A-4464-92C7-8B8E258CA364" Win64="no">
                 <File Source="torch.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
@@ -346,7 +343,6 @@
             <ComponentRef Id="ShineConfig" />
             <ComponentRef Id="SmokeBinaries" />
             <ComponentRef Id="SmokeConfig" />
-            <ComponentRef Id="STDUXBinaries" />
             <ComponentRef Id="TorchBinaries" />
             <ComponentRef Id="TorchConfig" />
             <ComponentRef Id="WConsoleBinaries" />

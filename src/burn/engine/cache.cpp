@@ -18,7 +18,6 @@
 
 #include "precomp.h"
 
-const LPCWSTR BURN_ORIGINAL_SOURCE = L"WixBundleOriginalSource";
 
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -68,13 +67,13 @@ extern "C" HRESULT CacheGetOriginalSourcePath(
     // If the original source has not been set already then set it where the bundle is
     // running from right now. This value will be persisted and we'll use it when launched
     // from the package cache since none of our packages will be relative to that location.
-    hr = VariableGetString(pVariables, BURN_ORIGINAL_SOURCE, &sczOriginalSource);
+    hr = VariableGetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, &sczOriginalSource);
     if (E_NOTFOUND == hr)
     {
         hr = PathForCurrentProcess(&sczOriginalSource, NULL);
         ExitOnFailure(hr, "Failed to get path for current executing process.");
 
-        hr = VariableSetString(pVariables, BURN_ORIGINAL_SOURCE, sczOriginalSource);
+        hr = VariableSetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, sczOriginalSource);
         ExitOnFailure(hr, "Failed to set original source variable.");
     }
 

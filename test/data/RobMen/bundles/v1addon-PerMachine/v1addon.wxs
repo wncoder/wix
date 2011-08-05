@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="Bundle Test v1 Addon (1)" Version="0.1.0.0" Tag="v1addon">
+   <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+   <RelatedBundle Id="8C78F409-835E-46DD-A00F-5E5802FEA6D8" Action="Addon"/>
+
+   <Chain>
+      <MsiPackage Id='Dv1' Vital='yes' SourceFile='Dv1.msi'/>
+   </Chain>
+</Bundle>
+</Wix>

@@ -141,6 +141,9 @@
     <ClCompile Include="regutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="iniutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\aclutil.h">
@@ -267,6 +270,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\svcutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\iniutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -26,8 +26,12 @@
 #include "error.h"
 #include <dutil.h>
 
-#include <memutil.h>
 #include <dictutil.h>
+#include <dirutil.h>
+#include <fileutil.h>
+#include <iniutil.h>
+#include <memutil.h>
+#include <pathutil.h>
 #include <strutil.h>
 
 #pragma managed

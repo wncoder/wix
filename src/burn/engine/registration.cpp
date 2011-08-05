@@ -18,8 +18,6 @@
 
 #include "precomp.h"
 
-const LPCWSTR BURN_BUNDLE_NAME = L"WixBundleName";
-
 
 // constants
 
@@ -32,6 +30,7 @@ const LPCWSTR REGISTRY_BUNDLE_ADDON_CODE = L"BundleAddonCode";
 const LPCWSTR REGISTRY_BUNDLE_DETECT_CODE = L"BundleDetectCode";
 const LPCWSTR REGISTRY_BUNDLE_TAG = L"BundleTag";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
+const LPCWSTR REGISTRY_ENGINE_VERSION = L"EngineVersion";
 
 // internal function declarations
 
@@ -300,14 +299,14 @@ extern "C" void RegistrationUninitialize(
     ReleaseStr(pRegistration->sczComments);
     ReleaseStr(pRegistration->sczContact);
 
-    if (pRegistration->rgRelatedBundles)
+    if (pRegistration->relatedBundles.rgRelatedBundles)
     {
-        for (DWORD i = 0; i < pRegistration->cRelatedBundles; ++i)
+        for (DWORD i = 0; i < pRegistration->relatedBundles.cRelatedBundles; ++i)
         {
-            PackageUninitialize(&pRegistration->rgRelatedBundles[i].package);
+            PackageUninitialize(&pRegistration->relatedBundles.rgRelatedBundles[i].package);
         }
 
-        MemFree(pRegistration->rgRelatedBundles);
+        MemFree(pRegistration->relatedBundles.rgRelatedBundles);
     }
 
     // clear struct
@@ -331,11 +330,11 @@ extern "C" HRESULT RegistrationSetVariables(
     hr = GetBundleName(pRegistration, pVariables, &scz);
     ExitOnFailure(hr, "Failed to intitialize bundle name.");
 
-    hr = AddBuiltInVariable(pVariables, L"WixBundleProviderKey", InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
-    ExitOnFailure(hr, "Failed to initialize the WixBundleProviderKey built-in variable.");
+    hr = AddBuiltInVariable(pVariables, BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
+    ExitOnFailure(hr, "Failed to initialize the bundle provider key built-in variable.");
 
-    hr = AddBuiltInVariable(pVariables, L"WixBundleTag", InitializeVariableString, (DWORD_PTR)pRegistration->sczTag);
-    ExitOnFailure(hr, "Failed to initialize the WixBundleTag built-in variable.");
+    hr = AddBuiltInVariable(pVariables, BURN_BUNDLE_TAG, InitializeVariableString, (DWORD_PTR)pRegistration->sczTag);
+    ExitOnFailure(hr, "Failed to initialize the bundle tag built-in variable.");
 
 LExit:
     ReleaseStr(scz);
@@ -681,10 +680,10 @@ extern "C" HRESULT RegistrationLoadRelatedBundle(
 Finish:
     if (fRelated)
     {
-        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->rgRelatedBundles), pRegistration->cRelatedBundles + 1, sizeof(BURN_RELATED_BUNDLE), 5);
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pRegistration->relatedBundles.rgRelatedBundles), pRegistration->relatedBundles.cRelatedBundles + 1, sizeof(BURN_RELATED_BUNDLE), 5);
         ExitOnFailure(hr, "Failed to ensure there is space for related bundles.");
 
-        BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles;
+        BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->relatedBundles.rgRelatedBundles + pRegistration->relatedBundles.cRelatedBundles;
 
         hr = StrAllocString(&sczId, sczBundleId, 0);
         ExitOnFailure(hr, "Failed to copy related bundle id.");
@@ -697,7 +696,7 @@ Finish:
         *psczTag = sczTag;
         sczTag = NULL;
         pRelatedBundle->package.fPerMachine = pRegistration->fPerMachine;
-        ++pRegistration->cRelatedBundles;
+        ++pRegistration->relatedBundles.cRelatedBundles;
     }
     else
     {
@@ -778,6 +777,9 @@ extern "C" HRESULT RegistrationSessionBegin(
                     hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_TAG, pRegistration->sczTag);
                     ExitOnFailure(hr, "Failed to write BundleTag value.");
                 }
+
+                hr = RegWriteStringFormatted(hkRegistration, REGISTRY_ENGINE_VERSION, L"%hs", szVerMajorMinorBuild);
+                ExitOnFailure(hr, "Failed to write EngineVersion value.");
 
                 // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
                 hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
@@ -1257,7 +1259,15 @@ static HRESULT InitializeRelatedBundleFromKey(
     )
 {
     HRESULT hr = S_OK;
+    DWORD64 qwEngineVersion = 0;
     LPWSTR sczCachePath = NULL;
+
+    hr = RegReadVersion(hkBundleId, REGISTRY_ENGINE_VERSION, &qwEngineVersion);
+    if (FAILED(hr))
+    {
+        qwEngineVersion = 0;
+        hr = S_OK;
+    }
 
     hr = RegReadVersion(hkBundleId, REGISTRY_BUNDLE_VERSION, &pRelatedBundle->qwVersion);
     ExitOnFailure1(hr, "Failed to read version from registry for bundle: %ls", wzBundleId);
@@ -1294,18 +1304,20 @@ static HRESULT InitializeRelatedBundleFromKey(
     pRelatedBundle->package.currentState = BOOTSTRAPPER_PACKAGE_STATE_PRESENT;
     pRelatedBundle->package.fUninstallable = TRUE;
     pRelatedBundle->package.fVital = FALSE;
-    
-    hr = StrAllocString(&pRelatedBundle->package.Exe.sczInstallArguments, L"/quiet", 0);
+
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczInstallArguments, L"-quiet", 0);
     ExitOnFailure(hr, "Failed to copy install arguments for related bundle package");
 
-    hr = StrAllocString(&pRelatedBundle->package.Exe.sczRepairArguments, L"/repair /quiet", 0);
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczRepairArguments, L"-repair -quiet", 0);
     ExitOnFailure(hr, "Failed to copy repair arguments for related bundle package");
 
-    hr = StrAllocString(&pRelatedBundle->package.Exe.sczUninstallArguments, L"/uninstall /quiet", 0);
+    hr = StrAllocString(&pRelatedBundle->package.Exe.sczUninstallArguments, L"-uninstall -quiet", 0);
     ExitOnFailure(hr, "Failed to copy uninstall arguments for related bundle package");
 
     pRelatedBundle->package.Exe.fRepairable = TRUE;
-    pRelatedBundle->package.Exe.protocol = BURN_EXE_PROTOCOL_TYPE_BURN;
+
+    // Only support progress from engines that are compatible (aka: version greater then or equal to last protocol breaking change).
+    pRelatedBundle->package.Exe.protocol = (FILEMAKEVERSION(3, 6, 1922, 0) <= qwEngineVersion) ? BURN_EXE_PROTOCOL_TYPE_BURN : BURN_EXE_PROTOCOL_TYPE_NONE;
 
 LExit:
     ReleaseStr(sczCachePath);
@@ -1379,7 +1391,7 @@ static HRESULT RegistrationDetectRelatedBundlesForKey(
             hr = RegistrationLoadRelatedBundle(pRegistration, sczBundleId, &relationType, &sczTag);
             if (SUCCEEDED(hr))
             {
-                BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->rgRelatedBundles + pRegistration->cRelatedBundles - 1;
+                BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->relatedBundles.rgRelatedBundles + pRegistration->relatedBundles.cRelatedBundles - 1;
 
                 pRelatedBundle->relationType = relationType;
 

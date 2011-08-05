@@ -20,6 +20,7 @@
 
 #include "precomp.h"
 
+
 // structs
 
 struct BURN_CACHE_THREAD_CONTEXT
@@ -35,13 +36,17 @@ struct BURN_CACHE_THREAD_CONTEXT
 static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
+    __in BURN_PIPE_CONNECTION* pCompanionConnection,
+    __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
-    __out BOOL* pfElevated,
+    __out BURN_ELEVATION_STATE* pElevationState,
     __out DWORD *pdwLoggingAttributes,
-    __inout_z LPWSTR* psczLogFile,
-    __inout_z LPWSTR* psczParentPipeName,
-    __inout_z LPWSTR* psczParentToken,
-    __inout_z LPWSTR* psczLayoutDirectory
+    __out_z LPWSTR* psczLogFile,
+    __out_z LPWSTR* psczLayoutDirectory
+    );
+static HRESULT ParsePipeConnection(
+    __in LPWSTR* rgArgs,
+    __in BURN_PIPE_CONNECTION* pConnection
     );
 static HRESULT DetectPackagePayloadsCached(
     __in BURN_PACKAGE* pPackage
@@ -58,7 +63,6 @@ static HRESULT WaitForCacheThread(
 
 extern "C" HRESULT CoreInitialize(
     __in_z_opt LPCWSTR wzCommandLine,
-    __in int nCmdShow,
     __in BURN_ENGINE_STATE* pEngineState
     )
 {
@@ -69,16 +73,9 @@ extern "C" HRESULT CoreInitialize(
     SIZE_T cbBuffer = 0;
     BURN_CONTAINER_CONTEXT containerContext = { };
 
-    // initialize structure
-    ::InitializeCriticalSection(&pEngineState->csActive);
-    ::InitializeCriticalSection(&pEngineState->userExperience.csEngineActive);
-    pEngineState->hElevatedPipe = INVALID_HANDLE_VALUE;
-
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->mode, &pEngineState->fElevated, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczParentPipeName, &pEngineState->sczParentToken, &sczLayoutDirectory);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory);
     ExitOnFailure(hr, "Failed to parse command line.");
-
-    pEngineState->command.nCmdShow = nCmdShow;
 
     // initialize variables
     hr = VariableInitialize(&pEngineState->variables);
@@ -109,13 +106,13 @@ extern "C" HRESULT CoreInitialize(
     // If a layout directory was specified on the command-line, set it as a well-known variable.
     if (sczLayoutDirectory)
     {
-        hr = VariableSetString(&pEngineState->variables, L"WixBundleLayoutDirectory", sczLayoutDirectory);
+        hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
     }
 
     // If we're not elevated then we'll be loading the bootstrapper application, so extract
     // the payloads from the BA container.
-    if (!pEngineState->fElevated)
+    if (pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED || pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY)
     {
         // Extract all UX payloads to temp directory.
         hr = PathCreateTempDirectory(NULL, L"UX%d", 999999, &pEngineState->userExperience.sczTempDirectory);
@@ -136,40 +133,6 @@ LExit:
     ReleaseMem(pbBuffer);
 
     return hr;
-}
-
-extern "C" void CoreUninitialize(
-    __in BURN_ENGINE_STATE* pEngineState
-    )
-{
-    ::DeleteCriticalSection(&pEngineState->userExperience.csEngineActive);
-    ::DeleteCriticalSection(&pEngineState->csActive);
-
-    VariablesUninitialize(&pEngineState->variables);
-    SearchesUninitialize(&pEngineState->searches);
-    UserExperienceUninitialize(&pEngineState->userExperience);
-    RegistrationUninitialize(&pEngineState->registration);
-    PayloadsUninitialize(&pEngineState->payloads);
-    PackagesUninitialize(&pEngineState->packages);
-    CatalogUninitialize(&pEngineState->catalogs);
-    ReleaseStr(pEngineState->command.wzCommandLine);
-
-    ReleaseStr(pEngineState->log.sczExtension);
-    ReleaseStr(pEngineState->log.sczPrefix);
-    ReleaseStr(pEngineState->log.sczPath);
-    ReleaseStr(pEngineState->log.sczPathVariable);
-
-    ReleaseHandle(pEngineState->hElevatedPipe);
-    ReleaseHandle(pEngineState->hElevatedProcess);
-
-    ReleaseHandle(pEngineState->hEmbeddedPipe);
-    ReleaseHandle(pEngineState->hEmbeddedProcess);
-
-    ReleaseStr(pEngineState->sczParentPipeName);
-    ReleaseStr(pEngineState->sczParentToken);
-
-    // clear struct
-    memset(pEngineState, 0, sizeof(BURN_ENGINE_STATE));
 }
 
 extern "C" HRESULT CoreSerializeEngineState(
@@ -244,7 +207,7 @@ extern "C" HRESULT CoreDetect(
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to execute searches.");
 
-    hr = RegistrationDetectRelatedBundles(pEngineState->fElevated, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
+    hr = RegistrationDetectRelatedBundles(BURN_MODE_ELEVATED == pEngineState->mode, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
     ExitOnFailure(hr, "Failed to detect bundles.");
 
     // Detecting MSPs requires special initialization before processing each package but
@@ -370,13 +333,13 @@ extern "C" HRESULT CorePlan(
 
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
-        hr = VariableGetString(&pEngineState->variables, L"BurnLayoutDirectory", &sczLayoutDirectory);
+        hr = VariableGetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, &sczLayoutDirectory);
         if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
         {
             hr = DirGetCurrent(&sczLayoutDirectory);
             ExitOnFailure(hr, "Failed to get current directory as layout directory.");
         }
-        ExitOnFailure(hr, "Failed to get BurnLayoutDirectory property.");
+        ExitOnFailure(hr, "Failed to get bundle layout directory property.");
 
         hr = PathBackslashTerminate(&sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to ensure layout directory is backslash terminated.");
@@ -554,10 +517,10 @@ extern "C" HRESULT CorePlan(
     // Plan the removal of related bundles last as long as we are not doing layout only.
     if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
-        for (DWORD i = 0; i < pEngineState->registration.cRelatedBundles; ++i)
+        for (DWORD i = 0; i < pEngineState->registration.relatedBundles.cRelatedBundles; ++i)
         {
             DWORD *pdwInsertIndex = NULL;
-            BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.rgRelatedBundles + i;
+            BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.relatedBundles.rgRelatedBundles + i;
             BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
 
             switch (pRelatedBundle->relationType)
@@ -585,7 +548,7 @@ extern "C" HRESULT CorePlan(
                 break;
             }
 
-            BOOTSTRAPPER_REQUEST_STATE defaultRequested = requested;
+            defaultRequested = requested;
 
             nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
             hr = HRESULT_FROM_VIEW(nResult);
@@ -657,12 +620,12 @@ extern "C" HRESULT CoreApply(
     ExitOnRootFailure(hr, "UX aborted apply begin.");
 
     // If the plan contains per-machine contents but we have not created
-    // the elevated process yet, let's make that happen.
-    if (pEngineState->plan.fPerMachine && !pEngineState->hElevatedProcess)
+    // the elevated companion process yet, let's make that happen.
+    if (pEngineState->plan.fPerMachine && !pEngineState->companionConnection.hProcess)
     {
         AssertSz(!fLayoutOnly, "A Layout plan should never require elevation.");
 
-        hr = ApplyElevate(pEngineState, hwndParent, &pEngineState->hElevatedProcess, &pEngineState->hElevatedPipe, &pEngineState->hElevatedCachePipe);
+        hr = ApplyElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to elevate.");
     }
 
@@ -710,7 +673,7 @@ extern "C" HRESULT CoreApply(
         ExitFunction();
     }
 
-    ApplyClean(&pEngineState->userExperience, &pEngineState->plan, pEngineState->hElevatedPipe);
+    ApplyClean(&pEngineState->userExperience, &pEngineState->plan, pEngineState->companionConnection.hPipe);
 
 LExit:
     if (fRegistered)
@@ -773,7 +736,7 @@ extern "C" HRESULT CoreSaveEngineState(
     // write to registration store
     if (pEngineState->registration.fPerMachine)
     {
-        hr = ElevationSaveState(pEngineState->hElevatedPipe, pbBuffer, cbBuffer);
+        hr = ElevationSaveState(pEngineState->companionConnection.hPipe, pbBuffer, cbBuffer);
         ExitOnFailure(hr, "Failed to save engine state in per-machine process.");
     }
     else
@@ -794,13 +757,13 @@ LExit:
 static HRESULT ParseCommandLine(
     __in_z_opt LPCWSTR wzCommandLine,
     __in BOOTSTRAPPER_COMMAND* pCommand,
+    __in BURN_PIPE_CONNECTION* pCompanionConnection,
+    __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
-    __out BOOL* pfElevated,
+    __out BURN_ELEVATION_STATE* pElevationState,
     __out DWORD *pdwLoggingAttributes,
-    __inout_z LPWSTR* psczLogFile,
-    __inout_z LPWSTR* psczParentPipeName,
-    __inout_z LPWSTR* psczParentToken,
-    __inout_z LPWSTR* psczLayoutDirectory
+    __out_z LPWSTR* psczLogFile,
+    __out_z LPWSTR* psczLayoutDirectory
     )
 {
     HRESULT hr = S_OK;
@@ -935,41 +898,51 @@ static HRESULT ParseCommandLine(
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_ELEVATED, -1))
             {
-                if (i + 2 >= argc)
+                if (i + 3 >= argc)
                 {
-                    ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the parent and child elevation tokens.");
+                    ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the elevated name, token and parent process id.");
                 }
 
-                *pfElevated = TRUE;
+                *pElevationState = BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY;
 
                 ++i;
 
-                hr = StrAllocString(psczParentPipeName, argv[i], 0);
-                ExitOnFailure(hr, "Failed to copy elevated pipe name.");
+                hr = ParsePipeConnection(argv + i, pCompanionConnection);
+                ExitOnFailure(hr, "Failed to parse elevated connection.");
+
+                i += 2;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_UNELEVATED, -1))
+            {
+                if (i + 3 >= argc)
+                {
+                    ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the unelevated name, token and parent process id.");
+                }
+
+                *pElevationState = BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY;
 
                 ++i;
 
-                hr = StrAllocString(psczParentToken, argv[i], 0);
-                ExitOnFailure(hr, "Failed to copy elevation token.");
+                hr = ParsePipeConnection(argv + i, pCompanionConnection);
+                ExitOnFailure(hr, "Failed to parse unelevated connection.");
+
+                i += 2;
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_EMBEDDED, -1))
             {
-                if (i + 2 >= argc)
+                if (i + 3 >= argc)
                 {
-                    ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the parent and child communication tokens.");
+                    ExitOnRootFailure(hr = E_INVALIDARG, "Must specify the embedded name, token and parent process id.");
                 }
 
                 *pMode = BURN_MODE_EMBEDDED;
 
                 ++i;
 
-                hr = StrAllocString(psczParentPipeName, argv[i], 0);
-                ExitOnFailure(hr, "Failed to copy communication pipe name.");
+                hr = ParsePipeConnection(argv + i, pEmbeddedConnection);
+                ExitOnFailure(hr, "Failed to parse embedded connection.");
 
-                ++i;
-
-                hr = StrAllocString(psczParentToken, argv[i], 0);
-                ExitOnFailure(hr, "Failed to copy communication token.");
+                i += 2;
             }
             else
             {
@@ -981,21 +954,19 @@ static HRESULT ParseCommandLine(
             fUnknownArg = TRUE;
         }
 
+        // Remember command-line switch to pass off to UX.
         if (fUnknownArg)
         {
-            if (pCommand->wzCommandLine && *pCommand->wzCommandLine)
-            {
-                hr = StrAllocConcat(&pCommand->wzCommandLine, L" ", 0);
-                ExitOnFailure(hr, "Failed to append space.");
-            }
-
-            // Remember command-line switch to pass off to UX.
-            hr = StrAllocConcat(&pCommand->wzCommandLine, &argv[i][0], 0);
-            ExitOnFailure(hr, "Failed to copy command line parameter.");
+            PathCommandLineAppend(&pCommand->wzCommandLine, argv[i]);
         }
     }
 
-    if (BURN_MODE_EMBEDDED == *pMode)
+    // Being elevated trumps all other modes.
+    if (BURN_ELEVATION_STATE_ELEVATED == *pElevationState || BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY == *pElevationState)
+    {
+        *pMode = BURN_MODE_ELEVATED;
+    }
+    else if (BURN_MODE_EMBEDDED == *pMode) // if embedded, ensure the display goes embedded as well.
     {
         pCommand->display = BOOTSTRAPPER_DISPLAY_EMBEDDED;
     }
@@ -1022,6 +993,26 @@ LExit:
         ::LocalFree(argv);
     }
 
+    return hr;
+}
+
+static HRESULT ParsePipeConnection(
+    __in_ecount(3) LPWSTR* rgArgs,
+    __in BURN_PIPE_CONNECTION* pConnection
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = StrAllocString(&pConnection->sczName, rgArgs[0], 0);
+    ExitOnFailure(hr, "Failed to copy connection name from command line.");
+
+    hr = StrAllocString(&pConnection->sczSecret, rgArgs[1], 0);
+    ExitOnFailure(hr, "Failed to copy connection secret from command line.");
+
+    hr = StrStringToUInt32(rgArgs[2], 0, reinterpret_cast<UINT*>(&pConnection->dwProcessId));
+    ExitOnFailure(hr, "Failed to copy parent process id from command line.");
+
+LExit:
     return hr;
 }
 
@@ -1092,7 +1083,7 @@ static DWORD WINAPI CacheThreadProc(
     fComInitialized = TRUE;
 
     // cache packages
-    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->variables, &pEngineState->plan, pEngineState->hElevatedCachePipe, pcOverallProgressTicks, pfRollback);
+    hr = ApplyCache(&pEngineState->userExperience, &pEngineState->variables, &pEngineState->plan, pEngineState->companionConnection.hCachePipe, pcOverallProgressTicks, pfRollback);
     ExitOnFailure(hr, "Failed to cache packages.");
 
 LExit:

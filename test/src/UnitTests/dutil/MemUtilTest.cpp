@@ -109,7 +109,6 @@ namespace CfgTests
         void TestInsert()
         {
             HRESULT hr = S_OK;
-            DWORD dwSize;
             ArrayValue *rgValues = NULL;
             ArrayValue *valueFound = NULL;
             DWORD cValues = 0;

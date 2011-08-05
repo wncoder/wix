@@ -18,6 +18,10 @@
 
 #include "precomp.h"
 
+static const DWORD PIPE_64KB = 64 * 1024;
+static const DWORD PIPE_WAIT_FOR_CONNECTION = 5 * 60 * 1000;
+
+static const LPCWSTR EVENT_NAME_FORMAT_STRING = L"Local\\%ls";
 static const LPCWSTR PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls";
 static const LPCWSTR CACHE_PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls.Cache";
 
@@ -41,20 +45,42 @@ static HRESULT GetPipeMessage(
     __in HANDLE hPipe,
     __in BURN_PIPE_MESSAGE* pMsg
     );
-static HRESULT CreateChildProcess(
-    __in BOOL fElevate,
-    __in_opt HWND hwndParent,
-    __in_z LPCWSTR wzExecutable,
-    __in_z LPCWSTR wzOptionName,
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzToken,
-    __out HANDLE* phProcess
-    );
 static HRESULT ChildPipeConnected(
-    __in_z LPCWSTR wzToken,
-    __in HANDLE hPipe
+    __in HANDLE hPipe,
+    __in_z LPCWSTR wzSecret,
+    __inout DWORD* pdwProcessId
     );
 
+
+
+/*******************************************************************
+ PipeConnectionInitialize - initialize pipe connection data.
+
+*******************************************************************/
+void PipeConnectionInitialize(
+    __in BURN_PIPE_CONNECTION* pConnection
+    )
+{
+    memset(pConnection, 0, sizeof(BURN_PIPE_CONNECTION));
+    pConnection->hPipe = INVALID_HANDLE_VALUE;
+    pConnection->hCachePipe = INVALID_HANDLE_VALUE;
+}
+
+/*******************************************************************
+ PipeConnectionUninitialize - free data in a pipe connection.
+
+*******************************************************************/
+void PipeConnectionUninitialize(
+    __in BURN_PIPE_CONNECTION* pConnection
+    )
+{
+    ReleaseFileHandle(pConnection->hCachePipe);
+    ReleaseFileHandle(pConnection->hPipe);
+    ReleaseHandle(pConnection->hProcess);
+    ReleaseStr(pConnection->sczSecret);
+    ReleaseStr(pConnection->sczName);
+    memset(pConnection, 0, sizeof(BURN_PIPE_CONNECTION));
+}
 
 /*******************************************************************
  PipeSendMessage - 
@@ -130,7 +156,13 @@ extern "C" HRESULT PipePumpMessages(
             ExitFunction1(hr = S_OK);
 
         case BURN_PIPE_MESSAGE_TYPE_TERMINATE:
-            *pdwResult = 0;
+            if (!msg.pvData || sizeof(DWORD) != msg.cbData)
+            {
+                hr = E_INVALIDARG;
+                ExitOnRootFailure(hr, "No exit code returned to PipePumpMessages()");
+            }
+
+            *pdwResult = *static_cast<DWORD*>(msg.pvData);
             ExitFunction1(hr = S_OK);
 
         default:
@@ -167,26 +199,20 @@ LExit:
 }
 
 /*******************************************************************
- PipeCreatePipeNameAndToken - 
+ PipeCreateNameAndSecret - 
 
 *******************************************************************/
-extern "C" HRESULT PipeCreatePipeNameAndToken(
-    __out HANDLE* phPipe,
-    __out_opt HANDLE* phCachePipe,
-    __out_z LPWSTR *psczPipeName,
-    __out_z LPWSTR *psczPipeToken
+extern "C" HRESULT PipeCreateNameAndSecret(
+    __out_z LPWSTR *psczConnectionName,
+    __out_z LPWSTR *psczSecret
     )
 {
     HRESULT hr = S_OK;
     RPC_STATUS rs = RPC_S_OK;
     UUID guid = { };
     WCHAR wzGuid[39];
-    LPWSTR sczPipeName = NULL;
-    LPWSTR sczFullPipeName = NULL;
-    LPWSTR sczFullCachePipeName = NULL;
-    LPWSTR sczPipeToken = NULL;
-    HANDLE hPipe = INVALID_HANDLE_VALUE;
-    HANDLE hCachePipe = INVALID_HANDLE_VALUE;
+    LPWSTR sczConnectionName = NULL;
+    LPWSTR sczSecret = NULL;
 
     // Create the unique pipe name.
     rs = ::UuidCreate(&guid);
@@ -199,19 +225,10 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
         ExitOnRootFailure(hr, "Failed to convert pipe guid into string.");
     }
 
-    hr = StrAllocFormatted(&sczPipeName, L"BurnPipe.%s", wzGuid);
+    hr = StrAllocFormatted(&sczConnectionName, L"BurnPipe.%s", wzGuid);
     ExitOnFailure(hr, "Failed to allocate pipe name.");
 
-    hr = StrAllocFormatted(&sczFullPipeName, PIPE_NAME_FORMAT_STRING, sczPipeName);
-    ExitOnFailure1(hr, "Failed to allocate full name of pipe: %ls", sczPipeName);
-
-    if (phCachePipe)
-    {
-        hr = StrAllocFormatted(&sczFullCachePipeName, CACHE_PIPE_NAME_FORMAT_STRING, sczPipeName);
-        ExitOnFailure1(hr, "Failed to allocate full name of cache pipe: %ls", sczPipeName);
-    }
-
-    // Create the unique client token.
+    // Create the unique client secret.
     rs = ::UuidCreate(&guid);
     hr = HRESULT_FROM_RPC(rs);
     ExitOnRootFailure(hr, "Failed to create pipe guid.");
@@ -222,76 +239,200 @@ extern "C" HRESULT PipeCreatePipeNameAndToken(
         ExitOnRootFailure(hr, "Failed to convert pipe guid into string.");
     }
 
-    hr = StrAllocString(&sczPipeToken, wzGuid, 0);
-    ExitOnFailure(hr, "Failed to allocate pipe token.");
+    hr = StrAllocString(&sczSecret, wzGuid, 0);
+    ExitOnFailure(hr, "Failed to allocate pipe secret.");
 
-    // TODO: use a different security descriptor to lock down this named pipe even more than it is now.
-    // TODO: consider using overlapped IO to do waits on the pipe and still be able to cancel and such.
-    hPipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
-    if (INVALID_HANDLE_VALUE == hPipe)
-    {
-        ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullPipeName);
-    }
-
-    if (phCachePipe)
-    {
-        hCachePipe = ::CreateNamedPipeW(sczFullCachePipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 64 * 1024, 64 * 1024, 1, NULL);
-        if (INVALID_HANDLE_VALUE == hCachePipe)
-        {
-            ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullCachePipeName);
-        }
-
-        *phCachePipe = hCachePipe;
-        hCachePipe = INVALID_HANDLE_VALUE;
-    }
-
-    *phPipe = hPipe;
-    hPipe = INVALID_HANDLE_VALUE;
-    *psczPipeName = sczPipeName;
-    sczPipeName = NULL;
-    *psczPipeToken = sczPipeToken;
-    sczPipeToken = NULL;
+    *psczConnectionName = sczConnectionName;
+    sczConnectionName = NULL;
+    *psczSecret = sczSecret;
+    sczSecret = NULL;
 
 LExit:
-    ReleaseFileHandle(hCachePipe);
-    ReleaseFileHandle(hPipe);
-    ReleaseStr(sczPipeToken);
-    ReleaseStr(sczFullCachePipeName);
-    ReleaseStr(sczFullPipeName);
-    ReleaseStr(sczPipeName);
+    ReleaseStr(sczSecret);
+    ReleaseStr(sczConnectionName);
 
     return hr;
 }
 
 /*******************************************************************
- PipeParentProcessConnect - Called from the per-user process to create
-                            the per-machine process and set up the
-                            communication pipe.
+ PipeCreatePipes - create the pipes and event to signal child process.
 
 *******************************************************************/
-extern "C" HRESULT PipeLaunchChildProcess(
-    __in BOOL fElevate,
-    __in_z LPWSTR sczPipeName,
-    __in_z LPWSTR sczPipeToken,
-    __in_opt HWND hwndParent,
-    __out HANDLE* phChildProcess
+extern "C" HRESULT PipeCreatePipes(
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in BOOL fCreateCachePipe,
+    __out HANDLE* phEvent
+    )
+{
+    Assert(pConnection->sczName);
+    Assert(INVALID_HANDLE_VALUE == pConnection->hPipe);
+    Assert(INVALID_HANDLE_VALUE == pConnection->hCachePipe);
+
+    HRESULT hr = S_OK;
+    PSECURITY_DESCRIPTOR psd = NULL;
+    SECURITY_ATTRIBUTES sa = { };
+    LPWSTR sczEventName = NULL;
+    LPWSTR sczFullPipeName = NULL;
+    HANDLE hEvent = NULL;
+    HANDLE hPipe = INVALID_HANDLE_VALUE;
+    HANDLE hCachePipe = INVALID_HANDLE_VALUE;
+
+    // Only the grant special rights when the pipe is being used for "embedded"
+    // scenarios (aka: there is no cache pipe).
+    if (!fCreateCachePipe)
+    {
+        // Create the security descriptor that grants read/write/sync access to Everyone.
+        // TODO: consider locking down "WD" to LogonIds (logon session)
+        LPCWSTR wzSddl = L"D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW0x00100000;;;WD)";
+        if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(wzSddl, SDDL_REVISION_1, &psd, NULL))
+        {
+            ExitWithLastError(hr, "Failed to create the security descriptor for the connection event and pipe.");
+        }
+
+        sa.nLength = sizeof(sa);
+        sa.lpSecurityDescriptor = psd;
+        sa.bInheritHandle = FALSE;
+    }
+
+    // Create the event that will be signaled when the pipes are ready to go.
+    hr = StrAllocFormatted(&sczEventName, EVENT_NAME_FORMAT_STRING, pConnection->sczName);
+    ExitOnFailure(hr, "Failed to allocate name of connection event.");
+
+    hEvent = ::CreateEventW(NULL, TRUE, FALSE, sczEventName);
+    ExitOnNullWithLastError1(hEvent, hr, "Failed to create connection event: %ls", sczEventName);
+
+    // Create the pipe.
+    hr = StrAllocFormatted(&sczFullPipeName, PIPE_NAME_FORMAT_STRING, pConnection->sczName);
+    ExitOnFailure1(hr, "Failed to allocate full name of pipe: %ls", pConnection->sczName);
+
+    // TODO: consider using overlapped IO to do waits on the pipe and still be able to cancel and such.
+    hPipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, PIPE_64KB, PIPE_64KB, 1, psd ? &sa : NULL);
+    if (INVALID_HANDLE_VALUE == hPipe)
+    {
+        ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullPipeName);
+    }
+
+    if (fCreateCachePipe)
+    {
+        // Create the cache pipe.
+        hr = StrAllocFormatted(&sczFullPipeName, CACHE_PIPE_NAME_FORMAT_STRING, pConnection->sczName);
+        ExitOnFailure1(hr, "Failed to allocate full name of cache pipe: %ls", pConnection->sczName);
+
+        hCachePipe = ::CreateNamedPipeW(sczFullPipeName, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, PIPE_64KB, PIPE_64KB, 1, NULL);
+        if (INVALID_HANDLE_VALUE == hCachePipe)
+        {
+            ExitWithLastError1(hr, "Failed to create pipe: %ls", sczFullPipeName);
+        }
+    }
+
+    pConnection->hCachePipe = hCachePipe;
+    hCachePipe = INVALID_HANDLE_VALUE;
+
+    pConnection->hPipe = hPipe;
+    hPipe = INVALID_HANDLE_VALUE;
+
+    // Pipes created, rock and roll.
+    ::SetEvent(hEvent);
+
+    *phEvent = hEvent;
+    hEvent = NULL;
+
+LExit:
+    ReleaseFileHandle(hCachePipe);
+    ReleaseFileHandle(hPipe);
+    ReleaseHandle(hEvent);
+    ReleaseStr(sczFullPipeName);
+    ReleaseStr(sczEventName);
+
+    if (psd)
+    {
+        ::LocalFree(psd);
+    }
+
+    return hr;
+}
+
+/*******************************************************************
+ PipeLaunchParentProcess - Called from the per-machine process to create
+                           a per-user process and set up the
+                           communication pipe.
+
+*******************************************************************/
+HRESULT PipeLaunchParentProcess(
+    __in_z LPCWSTR wzCommandLine,
+    __in int nCmdShow,
+    __in_z LPWSTR sczConnectionName,
+    __in_z LPWSTR sczSecret
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwProcessId = 0;
     LPWSTR sczBurnPath = NULL;
+    LPWSTR sczParameters = NULL;
+
+    dwProcessId = ::GetCurrentProcessId();
+
+    hr = PathForCurrentProcess(&sczBurnPath, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
+
+    hr = StrAllocFormatted(&sczParameters, L"%ls -%ls %ls %ls %u", wzCommandLine, BURN_COMMANDLINE_SWITCH_UNELEVATED, sczConnectionName, sczSecret, dwProcessId);
+    ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
+
+    // Try to launch unelevated and if that fails for any reason, try launch our process normally (even though that may make it elevated).
+    hr = ShelExecUnelevated(sczBurnPath, sczParameters, L"open", NULL, nCmdShow);
+    if (FAILED(hr))
+    {
+        hr = ShelExec(sczBurnPath, sczParameters, L"open", NULL, nCmdShow, NULL, NULL);
+        ExitOnFailure1(hr, "Failed to launch parent process: %ls", sczBurnPath);
+    }
+
+LExit:
+    ReleaseStr(sczParameters);
+    ReleaseStr(sczBurnPath);
+
+    return hr;
+}
+
+/*******************************************************************
+ PipeLaunchChildProcess - Called from the per-user process to create
+                          the per-machine process and set up the
+                          communication pipe.
+
+*******************************************************************/
+extern "C" HRESULT PipeLaunchChildProcess(
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in BOOL fElevate,
+    __in_opt HWND hwndParent
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD dwCurrentProcessId = ::GetCurrentProcessId();
+    LPWSTR sczBurnPath = NULL;
+    LPWSTR sczParameters = NULL;
+    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
+    DWORD dwServicePack = 0;
+    LPCWSTR wzVerb = NULL;
     HANDLE hProcess = NULL;
 
     hr = PathForCurrentProcess(&sczBurnPath, NULL);
     ExitOnFailure(hr, "Failed to get current process path.");
 
-    hr = CreateChildProcess(fElevate, hwndParent, sczBurnPath, BURN_COMMANDLINE_SWITCH_ELEVATED, sczPipeName, sczPipeToken, &hProcess);
-    ExitOnFailure(hr, "Failed to create process.");
+    hr = StrAllocFormatted(&sczParameters, L"-q -%ls %ls %ls %u", BURN_COMMANDLINE_SWITCH_ELEVATED, pConnection->sczName, pConnection->sczSecret, dwCurrentProcessId);
+    ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
 
-    *phChildProcess = hProcess;
+    OsGetVersion(&osVersion, &dwServicePack);
+    wzVerb = (OS_VERSION_VISTA > osVersion) || !fElevate ? L"open" : L"runas";
+
+    hr = ShelExec(sczBurnPath, sczParameters, wzVerb, NULL, SW_HIDE, hwndParent, &hProcess);
+    ExitOnFailure1(hr, "Failed to launch elevated child process: %ls", sczBurnPath);
+
+    pConnection->dwProcessId = ::GetProcessId(hProcess);
+    pConnection->hProcess = hProcess;
     hProcess = NULL;
 
 LExit:
     ReleaseHandle(hProcess);
+    ReleaseStr(sczParameters);
     ReleaseStr(sczBurnPath);
 
     return hr;
@@ -302,49 +443,66 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT PipeWaitForChildConnect(
-    __in HANDLE hPipe,
-    __in LPCWSTR wzToken,
-    __in HANDLE hProcess
+    __in BURN_PIPE_CONNECTION* pConnection
     )
 {
     HRESULT hr = S_OK;
-    DWORD cbToken = lstrlenW(wzToken) * sizeof(WCHAR);
+    HANDLE hPipes[2] = { pConnection->hPipe, pConnection->hCachePipe};
+    LPCWSTR wzSecret = pConnection->sczSecret;
+    DWORD cbSecret = lstrlenW(wzSecret) * sizeof(WCHAR);
+    DWORD dwCurrentProcessId = ::GetCurrentProcessId();
     DWORD dwAck = 0;
     DWORD cb = 0;
 
-    UNREFERENCED_PARAMETER(hProcess); // TODO: use the hProcess to determine if the child process dies before/while waiting for pipe communcation.
-
-    if (!::ConnectNamedPipe(hPipe, NULL))
+    for (DWORD i = 0; i < countof(hPipes) && INVALID_HANDLE_VALUE != hPipes[i]; ++i)
     {
-        DWORD er = ::GetLastError();
-        if (ERROR_PIPE_CONNECTED != er)
+        HANDLE hPipe = hPipes[i];
+
+        // TODO: use a handle to the child process to determine if the child process dies before/while waiting for pipe communcation.
+        if (!::ConnectNamedPipe(hPipe, NULL))
         {
-            hr = HRESULT_FROM_WIN32(er);
-            ExitOnRootFailure(hr, "Failed to connect elevated pipe.");
+            DWORD er = ::GetLastError();
+            if (ERROR_PIPE_CONNECTED != er)
+            {
+                hr = HRESULT_FROM_WIN32(er);
+                ExitOnRootFailure(hr, "Failed to connect to pipe.");
+            }
         }
+
+        // Prove we are the one that created the elevated process by passing the secret.
+        if (!::WriteFile(hPipe, &cbSecret, sizeof(cbSecret), &cb, NULL))
+        {
+            ExitWithLastError(hr, "Failed to write secret length to pipe.");
+        }
+
+        if (!::WriteFile(hPipe, wzSecret, cbSecret, &cb, NULL))
+        {
+            ExitWithLastError(hr, "Failed to write secret to pipe.");
+        }
+
+        if (!::WriteFile(hPipe, &dwCurrentProcessId, sizeof(dwCurrentProcessId), &cb, NULL))
+        {
+            ExitWithLastError(hr, "Failed to write our process id to pipe.");
+        }
+
+        // Wait until the elevated process responds that it is ready to go.
+        if (!::ReadFile(hPipe, &dwAck, sizeof(dwAck), &cb, NULL))
+        {
+            ExitWithLastError(hr, "Failed to read ACK from pipe.");
+        }
+
+        // The ACK should match out expected child process id.
+        //if (pConnection->dwProcessId != dwAck)
+        //{
+        //    hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        //    ExitOnRootFailure1(hr, "Incorrect ACK from elevated pipe: %u", dwAck);
+        //}
     }
 
-    // Prove we are the one that created the elevated process by passing the token.
-    if (!::WriteFile(hPipe, &cbToken, sizeof(cbToken), &cb, NULL))
+    if (!pConnection->hProcess)
     {
-        ExitWithLastError(hr, "Failed to write token length to elevated pipe.");
-    }
-
-    if (!::WriteFile(hPipe, wzToken, cbToken, &cb, NULL))
-    {
-        ExitWithLastError(hr, "Failed to write token to elevated pipe.");
-    }
-
-    // Wait until the elevated process responds that it is ready to go.
-    if (!::ReadFile(hPipe, &dwAck, sizeof(dwAck), &cb, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read ACK from elevated pipe.");
-    }
-
-    if (1 != dwAck)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure1(hr, "Incorrect ACK from elevated pipe: %u", dwAck);
+        pConnection->hProcess = ::OpenProcess(SYNCHRONIZE, FALSE, pConnection->dwProcessId);
+        ExitOnNullWithLastError1(pConnection->hProcess, hr, "Failed to open process with PID: %u", pConnection->dwProcessId);
     }
 
 LExit:
@@ -356,26 +514,45 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT PipeTerminateChildProcess(
-    __in HANDLE hProcess,
-    __in HANDLE hPipe,
-    __in HANDLE hCachePipe
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in DWORD dwParentExitCode
     )
 {
     HRESULT hr = S_OK;
 
-    if (hCachePipe != INVALID_HANDLE_VALUE)
+    if (pConnection->hCachePipe != INVALID_HANDLE_VALUE)
     {
-        hr = WritePipeMessage(hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), NULL, 0);
+        hr = WritePipeMessage(pConnection->hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
         ExitOnFailure(hr, "Failed to post terminate message to child process cache thread.");
     }
 
-    hr = WritePipeMessage(hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), NULL, 0);
+    hr = WritePipeMessage(pConnection->hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
     ExitOnFailure(hr, "Failed to post terminate message to child process.");
 
-    if (WAIT_FAILED == ::WaitForSingleObject(hProcess, INFINITE))
+    if (WAIT_FAILED == ::WaitForSingleObject(pConnection->hProcess, INFINITE))
     {
         ExitWithLastError(hr, "Failed to wait for child process exit.");
     }
+
+#ifdef DEBUG
+    DWORD dwChildExitCode = 0;
+    DWORD dwErrorCode = ERROR_SUCCESS;
+    BOOL fReturnedExitCode = ::GetExitCodeProcess(pConnection->hProcess, &dwChildExitCode);
+    if (!fReturnedExitCode)
+    {
+        dwErrorCode = ::GetLastError(); // if the other process is elevated and we are not, then we'll get ERROR_ACCESS_DENIED.
+
+        // The unit test use a thread instead of a process so try to get the exit code from
+        // the thread because we failed to get it from the process.
+        if (ERROR_INVALID_HANDLE == dwErrorCode)
+        {
+            fReturnedExitCode = ::GetExitCodeThread(pConnection->hProcess, &dwChildExitCode);
+        }
+    }
+    AssertSz((fReturnedExitCode && dwChildExitCode == dwParentExitCode) ||
+             (!fReturnedExitCode && ERROR_ACCESS_DENIED == dwErrorCode),
+             "Child elevated process did not return matching exit code to parent process.");
+#endif
 
 LExit:
     return hr;
@@ -387,36 +564,84 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT PipeChildConnect(
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzToken,
-    __in BOOL fCachePipe,
-    __out HANDLE* phPipe
+    __in BURN_PIPE_CONNECTION* pConnection,
+    __in BOOL fConnectCachePipe
     )
 {
-    HRESULT hr = S_OK;
-    LPWSTR sczPipeName = NULL;
-    HANDLE hPipe = INVALID_HANDLE_VALUE;
+    Assert(pConnection->sczName);
+    Assert(pConnection->sczSecret);
+    Assert(!pConnection->hProcess);
+    Assert(INVALID_HANDLE_VALUE == pConnection->hPipe);
+    Assert(INVALID_HANDLE_VALUE == pConnection->hCachePipe);
 
-    hr = StrAllocFormatted(&sczPipeName, fCachePipe ? CACHE_PIPE_NAME_FORMAT_STRING : PIPE_NAME_FORMAT_STRING, wzPipeName);
-    ExitOnFailure(hr, "Failed to allocate name of parent pipe.");
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    LPWSTR sczEventName = NULL;
+    HANDLE hEvent = NULL;
+    LPWSTR sczPipeName = NULL;
+
+    hr = StrAllocFormatted(&sczEventName, EVENT_NAME_FORMAT_STRING, pConnection->sczName);
+    ExitOnFailure(hr, "Failed to allocate name of connection event.");
+
+    // Wait for the parent process to signal that it created the pipe(s).
+    hEvent = ::CreateEventW(NULL, TRUE, FALSE, sczEventName);
+    ExitOnNullWithLastError1(hEvent, hr, "Failed to create connection event: %ls", sczEventName);
+
+    er = ::WaitForSingleObject(hEvent, PIPE_WAIT_FOR_CONNECTION);
+    if (WAIT_OBJECT_0 == er)
+    {
+        er = ERROR_SUCCESS;
+    }
+    else if (WAIT_TIMEOUT == er || WAIT_ABANDONED == er)
+    {
+        er = ERROR_TIMEOUT;
+    }
+    else
+    {
+        er = ::GetLastError();
+    }
+    hr = HRESULT_FROM_WIN32(er);
+    ExitOnRootFailure1(hr, "Failed to wait for connection event: %ls", sczEventName);
 
     // Connect to the parent.
-    hPipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (INVALID_HANDLE_VALUE == hPipe)
+    hr = StrAllocFormatted(&sczPipeName, PIPE_NAME_FORMAT_STRING, pConnection->sczName);
+    ExitOnFailure(hr, "Failed to allocate name of parent pipe.");
+
+    pConnection->hPipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (INVALID_HANDLE_VALUE == pConnection->hPipe)
     {
         ExitWithLastError1(hr, "Failed to open parent pipe: %ls", sczPipeName)
     }
 
     // Verify the parent and notify it that the child connected.
-    hr = ChildPipeConnected(wzToken, hPipe);
+    hr = ChildPipeConnected(pConnection->hPipe, pConnection->sczSecret, &pConnection->dwProcessId);
     ExitOnFailure1(hr, "Failed to verify parent pipe: %ls", sczPipeName);
 
-    *phPipe = hPipe;
-    hPipe = INVALID_HANDLE_VALUE;
+    if (fConnectCachePipe)
+    {
+        // Connect to the parent for the cache pipe.
+        hr = StrAllocFormatted(&sczPipeName, CACHE_PIPE_NAME_FORMAT_STRING, pConnection->sczName);
+        ExitOnFailure(hr, "Failed to allocate name of parent cache pipe.");
+
+        pConnection->hCachePipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if (INVALID_HANDLE_VALUE == pConnection->hCachePipe)
+        {
+            ExitWithLastError1(hr, "Failed to open parent pipe: %ls", sczPipeName)
+        }
+
+        // Verify the parent and notify it that the child connected.
+        hr = ChildPipeConnected(pConnection->hCachePipe, pConnection->sczSecret, &pConnection->dwProcessId);
+        ExitOnFailure1(hr, "Failed to verify parent pipe: %ls", sczPipeName);
+    }
+
+    pConnection->hProcess = ::OpenProcess(SYNCHRONIZE, FALSE, pConnection->dwProcessId);
+    ExitOnNullWithLastError1(pConnection->hProcess, hr, "Failed to open companion process with PID: %u", pConnection->dwProcessId);
 
 LExit:
-    ReleaseFileHandle(hPipe);
     ReleaseStr(sczPipeName);
+    ReleaseHandle(hEvent);
+    ReleaseStr(sczEventName);
+
     return hr;
 }
 
@@ -562,90 +787,62 @@ LExit:
     return hr;
 }
 
-static HRESULT CreateChildProcess(
-    __in BOOL fElevate,
-    __in_opt HWND hwndParent,
-    __in_z LPCWSTR wzExecutable,
-    __in_z LPCWSTR wzOptionName,
-    __in_z LPCWSTR wzPipeName,
-    __in_z LPCWSTR wzToken,
-    __out HANDLE* phProcess
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczParameters = NULL;
-    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
-    DWORD dwServicePack = 0;
-    SHELLEXECUTEINFOW info = { };
-
-    hr = StrAllocFormatted(&sczParameters, L"-q -%ls %ls %ls", wzOptionName, wzPipeName, wzToken);
-    ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
-
-    OsGetVersion(&osVersion, &dwServicePack);
-
-    info.cbSize = sizeof(SHELLEXECUTEINFOW);
-    info.fMask = SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
-    info.hwnd = hwndParent;
-    info.lpFile = wzExecutable;
-    info.lpParameters = sczParameters;
-    info.lpVerb = (OS_VERSION_VISTA > osVersion) && fElevate ? L"open" : L"runas";
-    info.nShow = SW_HIDE;
-
-    if (!vpfnShellExecuteExW(&info))
-    {
-        ExitWithLastError2(hr, "Failed to launch elevated process: %ls %ls", wzExecutable, sczParameters);
-    }
-
-    *phProcess = info.hProcess;
-    info.hProcess = NULL;
-
-LExit:
-    if (info.hProcess)
-    {
-        ::CloseHandle(info.hProcess);
-    }
-
-    ReleaseStr(sczParameters);
-    return hr;
-}
-
 static HRESULT ChildPipeConnected(
-    __in_z LPCWSTR wzToken,
-    __in HANDLE hPipe
+    __in HANDLE hPipe,
+    __in_z LPCWSTR wzSecret,
+    __inout DWORD* pdwProcessId
     )
 {
     HRESULT hr = S_OK;
-    DWORD cbVerificationToken = 0;
-    LPWSTR sczVerificationToken = NULL;
+    LPWSTR sczVerificationSecret = NULL;
+    DWORD cbVerificationSecret = 0;
+    DWORD dwVerificationProcessId = 0;
     DWORD dwRead = 0;
-    DWORD dwAck = 1;
+    DWORD dwAck = ::GetCurrentProcessId(); // send our process id as the ACK.
     DWORD cb = 0;
 
-    // Read the verification token.
-    if (!::ReadFile(hPipe, &cbVerificationToken, sizeof(cbVerificationToken), &dwRead, NULL))
+    // Read the verification secret.
+    if (!::ReadFile(hPipe, &cbVerificationSecret, sizeof(cbVerificationSecret), &dwRead, NULL))
     {
-        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
+        ExitWithLastError(hr, "Failed to read size of verification secret from parent pipe.");
     }
 
-    if (255 < cbVerificationToken / sizeof(WCHAR))
+    if (255 < cbVerificationSecret / sizeof(WCHAR))
     {
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Verification token from parent is too big.");
+        ExitOnRootFailure(hr, "Verification secret from parent is too big.");
     }
 
-    hr = StrAlloc(&sczVerificationToken, cbVerificationToken / sizeof(WCHAR) + 1);
-    ExitOnFailure(hr, "Failed to allocate buffer for verification token.");
+    hr = StrAlloc(&sczVerificationSecret, cbVerificationSecret / sizeof(WCHAR) + 1);
+    ExitOnFailure(hr, "Failed to allocate buffer for verification secret.");
 
-    if (!::ReadFile(hPipe, sczVerificationToken, cbVerificationToken, &dwRead, NULL))
+    if (!::ReadFile(hPipe, sczVerificationSecret, cbVerificationSecret, &dwRead, NULL))
     {
-        ExitWithLastError(hr, "Failed to read size of verification token from parent pipe.");
+        ExitWithLastError(hr, "Failed to read verification secret from parent pipe.");
     }
 
-    // Verify the tokens match.
-    if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, 0, sczVerificationToken, -1, wzToken, -1))
+    // Verify the secrets match.
+    if (CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, 0, sczVerificationSecret, -1, wzSecret, -1))
     {
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnRootFailure(hr, "Verification token from parent does not match.");
+        ExitOnRootFailure(hr, "Verification secret from parent does not match.");
+    }
+
+    // Read the verification process id.
+    if (!::ReadFile(hPipe, &dwVerificationProcessId, sizeof(dwVerificationProcessId), &dwRead, NULL))
+    {
+        ExitWithLastError(hr, "Failed to read verification process id from parent pipe.");
+    }
+
+    // If a process id was not provided, we'll trust the process id from the parent.
+    if (*pdwProcessId == 0)
+    {
+        *pdwProcessId = dwVerificationProcessId;
+    }
+    else if (*pdwProcessId != dwVerificationProcessId) // verify the ids match.
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+        ExitOnRootFailure(hr, "Verification process id from parent does not match.");
     }
 
     // All is well, tell the parent process.
@@ -655,6 +852,6 @@ static HRESULT ChildPipeConnected(
     }
 
 LExit:
-    ReleaseStr(sczVerificationToken);
+    ReleaseStr(sczVerificationSecret);
     return hr;
 }
