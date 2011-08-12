@@ -96,6 +96,57 @@ LExit:
 
 
 /********************************************************************
+StrTrimWhitespace - allocates or reuses dynamic string memory and copies
+                    in an existing string, excluding whitespace
+
+NOTE: caller is responsible for freeing ppwz even if function fails
+********************************************************************/
+HRESULT DAPI StrTrimWhitespace(
+    __deref_out_ecount_z(cchSource+1) LPWSTR* ppwz,
+    __in_z LPCWSTR wzSource
+    )
+{
+    HRESULT hr = S_OK;
+    int i = 0;
+    LPWSTR sczResult = NULL;
+
+    // Ignore beginning whitespace
+    while (L' ' == *wzSource || L'\t' == *wzSource)
+    {
+        wzSource++;
+    }
+
+    i = lstrlenW(wzSource);
+    // Overwrite ending whitespace with null characters
+    if (0 < i)
+    {
+        // start from the last non-null-terminator character in the array
+        for (i = i - 1; i > 0; --i)
+        {
+            if (L' ' != wzSource[i] && L'\t' != wzSource[i])
+            {
+                break;
+            }
+        }
+
+        ++i;
+    }
+
+    hr = StrAllocString(&sczResult, wzSource, i);
+    ExitOnFailure(hr, "Failed to copy result string");
+
+    // Output result
+    *ppwz = sczResult;
+    sczResult = NULL;
+
+LExit:
+    ReleaseStr(sczResult);
+
+    return hr;
+}
+
+
+/********************************************************************
 StrAnsiAlloc - allocates or reuses dynamic ANSI string memory
 
 NOTE: caller is responsible for freeing ppsz even if function fails
@@ -164,6 +215,56 @@ LExit:
     return hr;
 }
 
+
+/********************************************************************
+StrAnsiTrimWhitespace - allocates or reuses dynamic string memory and copies
+                    in an existing string, excluding whitespace
+
+NOTE: caller is responsible for freeing ppz even if function fails
+********************************************************************/
+HRESULT DAPI StrAnsiTrimWhitespace(
+    __deref_out_ecount_z(cchSource+1) LPSTR* ppz,
+    __in_z LPCSTR szSource
+    )
+{
+    HRESULT hr = S_OK;
+    int i = 0;
+    LPSTR sczResult = NULL;
+
+    // Ignore beginning whitespace
+    while (' ' == *szSource || '\t' == *szSource)
+    {
+        szSource++;
+    }
+
+    i = lstrlen(szSource);
+    // Overwrite ending whitespace with null characters
+    if (0 < i)
+    {
+        // start from the last non-null-terminator character in the array
+        for (i = i - 1; i > 0; --i)
+        {
+            if (L' ' != szSource[i] && L'\t' != szSource[i])
+            {
+                break;
+            }
+        }
+
+        ++i;
+    }
+
+    hr = StrAnsiAllocStringAnsi(&sczResult, szSource, i);
+    ExitOnFailure(hr, "Failed to copy result string");
+
+    // Output result
+    *ppz = sczResult;
+    sczResult = NULL;
+
+LExit:
+    ReleaseStr(sczResult);
+
+    return hr;
+}
 
 /********************************************************************
 StrAllocString - allocates or reuses dynamic string memory and copies in an existing string

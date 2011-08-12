@@ -166,7 +166,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiGetSummaryInformation(db.Handle, null, 0, ref handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
             this.Handle = handle;
         }
@@ -186,7 +186,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiGetSummaryInformation(0, databaseFile, 0, ref handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
             this.Handle = handle;
         }
@@ -239,7 +239,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
 
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             switch ((VT)dataType)

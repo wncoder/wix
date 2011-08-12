@@ -107,6 +107,7 @@
     <Compile Include="Msi\Database.cs" />
     <Compile Include="Msi\Installer.cs" />
     <Compile Include="Msi\Interop\MsiInterop.cs" />
+    <Compile Include="Msi\MsiException.cs" />
     <Compile Include="Msi\MsiHandle.cs" />
     <Compile Include="Msi\Record.cs" />
     <Compile Include="Msi\Session.cs" />

@@ -25,12 +25,27 @@ extern "C" {
 #define ReleaseFileHandle(h) if (INVALID_HANDLE_VALUE != h) { ::CloseHandle(h); h = INVALID_HANDLE_VALUE; }
 #define ReleaseFileFindHandle(h) if (INVALID_HANDLE_VALUE != h) { ::FindClose(h); h = INVALID_HANDLE_VALUE; }
 
+#define FILEMAKEVERSION(major, minor, build, revision) static_cast<DWORD64>((static_cast<DWORD64>(major & 0xFFFF) << 48) \
+                                                                          | (static_cast<DWORD64>(minor & 0xFFFF) << 32) \
+                                                                          | (static_cast<DWORD64>(build & 0xFFFF) << 16) \
+                                                                          | (static_cast<DWORD64>(revision & 0xFFFF)))
+
 enum FILE_ARCHITECTURE
 {
     FILE_ARCHITECTURE_UNKNOWN,
     FILE_ARCHITECTURE_X86,
     FILE_ARCHITECTURE_X64,
     FILE_ARCHITECTURE_IA64,
+};
+
+enum FILE_ENCODING
+{
+    FILE_ENCODING_UNSPECIFIED = 0,
+    // TODO: distinguish between non-BOM utf-8 and ANSI in the future?
+    FILE_ENCODING_UTF8,
+    FILE_ENCODING_UTF8_WITH_BOM,
+    FILE_ENCODING_UTF16,
+    FILE_ENCODING_UTF16_WITH_BOM,
 };
 
 
@@ -124,11 +139,26 @@ HRESULT DAPI FileEnsureCopy(
     __in_z LPCWSTR wzTarget,
     __in BOOL fOverwrite
     );
+HRESULT DAPI FileEnsureCopyWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    );
 HRESULT DAPI FileEnsureMove(
     __in_z LPCWSTR wzSource, 
     __in_z LPCWSTR wzTarget, 
     __in BOOL fOverwrite,
     __in BOOL fAllowCopy
+    );
+HRESULT DAPI FileEnsureMoveWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in BOOL fAllowCopy,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
     );
 HRESULT DAPI FileCreateTemp(
     __in_z LPCWSTR wzPrefix,
@@ -170,9 +200,20 @@ HRESULT DAPI FileSetTime(
 HRESULT DAPI FileResetTime(
     __in_z LPCWSTR wzFile
     );
-HRESULT FileExecutableArchitecture(
+HRESULT DAPI FileExecutableArchitecture(
     __in_z LPCWSTR wzFile,
     __out FILE_ARCHITECTURE *pArchitecture
+    );
+HRESULT DAPI FileToString(
+    __in_z LPCWSTR wzFile,
+    __out LPWSTR *psczString,
+    __out_opt FILE_ENCODING *pfeEncoding
+    );
+HRESULT DAPI FileFromString(
+    __in_z LPCWSTR wzFile,
+    __in DWORD dwFlagsAndAttributes,
+    __in_z LPCWSTR sczString,
+    __in FILE_ENCODING feEncoding
     );
 
 #ifdef __cplusplus

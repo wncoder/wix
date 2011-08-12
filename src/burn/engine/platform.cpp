@@ -22,7 +22,6 @@
 // variables
 
 PFN_INITIATESYSTEMSHUTDOWNEXW vpfnInitiateSystemShutdownExW;
-PFN_SHELLEXECUTEEXW vpfnShellExecuteExW;
 
 
 // function definitions
@@ -30,5 +29,4 @@ PFN_SHELLEXECUTEEXW vpfnShellExecuteExW;
 extern "C" void PlatformInitialize()
 {
     vpfnInitiateSystemShutdownExW = ::InitiateSystemShutdownExW;
-    vpfnShellExecuteExW = ::ShellExecuteExW;
 }

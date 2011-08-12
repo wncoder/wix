@@ -1,12 +1,27 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ProjectReference Include="packages\Av1-PerMachine\Av1.wixproj"/>
+    <ProjectReference Include="packages\Av2-PerMachine-MajorUpgrade\Av2.wixproj" />
+    <ProjectReference Include="packages\Bv1-PerMachine\Bv1.wixproj" />
+    <ProjectReference Include="packages\Bv1.1-PerMachine-MinorUpdate\Bv1.1.wixproj" />
+    <ProjectReference Include="packages\Cv1-PerUser\Cv1.wixproj" />
+
     <ProjectReference Include="packages\Package1\Package1.wixproj"/>
     <ProjectReference Include="packages\Package3\Package3.wixproj"/>
-    <ProjectReference Include="bundles\teststdba\teststdba.wixproj"/>
+
+    <ProjectReference Include="bundles\teststdba\teststdba.wixproj" />
+    <ProjectReference Include="bundles\v1\v1.wixproj" />
+    <ProjectReference Include="bundles\v1addon-PerMachine\v1addon.wixproj" />
+    <ProjectReference Include="bundles\v2\v2.wixproj" />
+    <ProjectReference Include="tools\EmbedTest\EmbedTest.csproj" />
   </ItemGroup>
 
   <Target Name="Build">
     <MSBuild Projects="@(ProjectReference)" />
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectReference)" Targets="Clean" />
   </Target>
 </Project>

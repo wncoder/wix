@@ -36,6 +36,7 @@
 #include <pathutil.h>
 #include <regutil.h>
 #include <resrutil.h>
+#include <shelutil.h>
 #include <strutil.h>
 #include <wiutil.h>
 #include <xmlutil.h>
@@ -58,6 +59,7 @@
 #include "package.h"
 #include "registration.h"
 #include "plan.h"
+#include "pipe.h"
 #include "logging.h"
 #include "core.h"
 #include "cache.h"
@@ -71,7 +73,6 @@
 #include "elevation.h"
 #include "embedded.h"
 #include "manifest.h"
-#include "pipe.h"
 #include "splashscreen.h"
 #include "bitsengine.h"
 

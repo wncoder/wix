@@ -60,6 +60,9 @@ struct SCE_DATABASE_INTERNAL
     IDBProperties *pIDBProperties;
     IOpenRowset *pIOpenRowset;
     ISessionProperties *pISessionProperties;
+
+    // If the database was opened as read-only, we copied it here - so delete it on close
+    LPWSTR sczTempDbFile;
 };
 
 struct SCE_ROW
@@ -163,9 +166,9 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
     IUnknown *pIUnknownSession = NULL;
     IDBDataSourceAdmin *pIDBDataSourceAdmin = NULL; 
-    DBPROPSET rgdbpDataSourcePropSet[2];
-    DBPROP rgdbpDataSourceProp[1];
-    DBPROP rgdbpDataSourceSsceProp[1];
+    DBPROPSET rgdbpDataSourcePropSet[2] = { };
+    DBPROP rgdbpDataSourceProp[1] = { };
+    DBPROP rgdbpDataSourceSsceProp[1] = { };
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
     ExitOnNull(pNewSceDatabase, hr, E_OUTOFMEMORY, "Failed to allocate SCE_DATABASE struct");
@@ -236,21 +239,25 @@ LExit:
     ReleaseObject(pIDBDataSourceAdmin);
     ReleaseVariant(rgdbpDataSourceProp[0].vValue);
     ReleaseDatabase(pNewSceDatabase);
+    ReleaseBSTR(rgdbpDataSourceProp[0].vValue.bstrVal);
 
     return hr;
 }
 
 extern "C" HRESULT DAPI SceOpenDatabase(
     __in_z LPCWSTR sczFile,
-    __out SCE_DATABASE **ppDatabase
+    __out SCE_DATABASE **ppDatabase,
+    __in BOOL fReadOnly
     )
 {
     HRESULT hr = S_OK;
+    WCHAR wzTempDbFile[MAX_PATH];
+    LPCWSTR wzPathToOpen = NULL;
     SCE_DATABASE *pNewSceDatabase = NULL;
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
-    DBPROPSET rgdbpDataSourcePropSet[2];
-    DBPROP rgdbpDataSourceProp[1];
-    DBPROP rgdbpDataSourceSsceProp[1];
+    DBPROPSET rgdbpDataSourcePropSet[2] = { };
+    DBPROP rgdbpDataSourceProp[1] = { };
+    DBPROP rgdbpDataSourceSsceProp[1] =  { };
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
     ExitOnNull(pNewSceDatabase, hr, E_OUTOFMEMORY, "Failed to allocate SCE_DATABASE struct");
@@ -266,10 +273,29 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     hr = pNewSceDatabaseInternal->pIDBInitialize->QueryInterface(IID_IDBProperties, reinterpret_cast<void **>(&pNewSceDatabaseInternal->pIDBProperties));
     ExitOnFailure(hr, "Failed to get IDBProperties interface");
 
+    // TODO: had trouble getting SQL CE to read a file read-only, so we're copying it to a temp path for now.
+    if (fReadOnly)
+    {
+        hr = DirCreateTempPath(PathFile(sczFile), (LPWSTR)wzTempDbFile, _countof(wzTempDbFile));
+        ExitOnFailure(hr, "Failed to get temp path");
+
+        hr = FileEnsureCopy(sczFile, (LPCWSTR)wzTempDbFile, TRUE);
+        ExitOnFailure(hr, "Failed to copy file to temp path");
+
+        hr = StrAllocString(&pNewSceDatabaseInternal->sczTempDbFile, (LPCWSTR)wzTempDbFile, 0);
+        ExitOnFailure(hr, "Failed to copy temp db file path");
+
+        wzPathToOpen = (LPCWSTR)wzTempDbFile;
+    }
+    else
+    {
+        wzPathToOpen = sczFile;
+    }
+
     rgdbpDataSourceProp[0].dwPropertyID = DBPROP_INIT_DATASOURCE;
     rgdbpDataSourceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
     rgdbpDataSourceProp[0].vValue.vt = VT_BSTR;
-    rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(sczFile);
+    rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(wzPathToOpen);
 
     // SQL CE doesn't seem to allow us to specify DBPROP_INIT_PROMPT if we include any properties from DBPROPSET_SSCE_DBINIT 
     rgdbpDataSourcePropSet[0].guidPropertySet = DBPROPSET_DBINIT;
@@ -310,6 +336,7 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     pNewSceDatabase = NULL;
 
 LExit:
+    ReleaseBSTR(rgdbpDataSourceProp[0].vValue.bstrVal);
     ReleaseDatabase(pNewSceDatabase);
 
     return hr;
@@ -325,7 +352,7 @@ extern "C" HRESULT DAPI SceEnsureDatabase(
 
     if (FileExistsEx(sczFile, NULL))
     {
-        hr = SceOpenDatabase(sczFile, ppDatabase);
+        hr = SceOpenDatabase(sczFile, ppDatabase, FALSE);
         ExitOnFailure1(hr, "Failed to open database while ensuring database exists: %ls", sczFile);
     }
     else
@@ -1988,6 +2015,18 @@ static void ReleaseDatabaseInternal(
             ReleaseObject(pDatabaseInternal->pIDBInitialize);
         }
     }
+
+    // If there was a temp file we copied to (for read-only databases), delete it after close
+    if (NULL != pDatabaseInternal->sczTempDbFile)
+    {
+        hr = FileEnsureDelete(pDatabaseInternal->sczTempDbFile);
+        if (FAILED(hr))
+        {
+            TraceError1(hr, "Failed to delete temporary database file (copied here because the database was opened as read-only): %ls", pDatabaseInternal->sczTempDbFile);
+        }
+        ReleaseStr(pDatabaseInternal->sczTempDbFile);
+    }
+
     ReleaseMem(pDatabaseInternal);
 }
 

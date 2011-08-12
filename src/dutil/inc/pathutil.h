@@ -27,6 +27,17 @@ enum PATH_EXPAND
     PATH_EXPAND_FULLPATH    = 0x0002,
 };
 
+
+/*******************************************************************
+ PathCommandLineAppend - appends a command line argument on to a
+    string such that ::CommandLineToArgv() will shred them correctly
+    (i.e. quote arguments with spaces in them).
+********************************************************************/
+DAPI_(HRESULT) PathCommandLineAppend(
+    __deref_out_z LPWSTR* psczCommandLine,
+    __in_z LPCWSTR wzArgument
+    );
+
 /*******************************************************************
  PathFile -  returns a pointer to the file part of the path.
 ********************************************************************/

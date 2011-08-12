@@ -39,7 +39,7 @@ void DAPI OsGetVersion(
     __out OS_VERSION* pVersion,
     __out DWORD* pdwServicePack
     );
-HRESULT OsIsRunningPrivileged(
+HRESULT DAPI OsIsRunningPrivileged(
     __out BOOL* pfPrivileged
     );
 

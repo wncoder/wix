@@ -21,6 +21,10 @@
 extern "C" {
 #endif
 
+HRESULT DAPI ProcElevated(
+    __in HANDLE hProcess,
+    __out BOOL* pfElevated
+    );
 HRESULT DAPI ProcExecute(
     __in_z LPWSTR wzCommand,
     __out HANDLE *phProcess,

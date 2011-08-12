@@ -51,8 +51,6 @@ HRESULT ExeEnginePlanPackage(
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
     );
 HRESULT ExeEngineExecutePackage(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,

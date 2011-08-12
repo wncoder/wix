@@ -558,6 +558,17 @@ DAPI_(HRESULT) ThemeLoadControls(
             }
             else if (THEME_CONTROL_TYPE_TAB == pControl->type)
             {
+                ULONG_PTR hbrBackground = 0;
+                if (THEME_INVALID_ID != pControl->dwFontId)
+                {
+                    hbrBackground = reinterpret_cast<ULONG_PTR>(pTheme->rgFonts[pControl->dwFontId].hBackground);
+                }
+                else
+                {
+                    hbrBackground = ::GetClassLongPtr(pTheme->hwndParent, GCLP_HBRBACKGROUND);
+                }
+                ::SetClassLongPtr(pControl->hWnd, GCLP_HBRBACKGROUND, hbrBackground);
+
                 for (DWORD j = 0; j < pControl->cTabs; ++j)
                 {
                     TCITEMW tci = { };

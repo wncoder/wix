@@ -239,12 +239,10 @@ public: // IBootstrapperApplication
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        // If we're not doing a pre-req install, cancel when a newer version of
-        // the bundle is found.
+        // If we're not doing a pre-req install, remember when our bundle would cause a downgrad.
         if (!m_sczPrereqPackage && BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation)
         {
-            // TODO: Show a message that we are downgrading.
-            PromptCancel(m_hWnd, TRUE, NULL, NULL);
+            m_fDowngrading = TRUE;
         }
 
         return CheckCanceled() ? IDCANCEL : IDOK;
@@ -840,7 +838,6 @@ private: // privates
     LExit:
         ReleaseStr(sczCaption);
         ReleaseStr(sczThemePath);
-        ReleaseStr(m_sczLanguage);
 
         return hr;
     }
@@ -1084,8 +1081,8 @@ private: // privates
             THEME_CONTROL* pControl = m_pTheme->rgControls + i;
             if (!pControl->wPageId && pControl->sczText && *pControl->sczText)
             {
-                HRESULT hr = BalFormatString(pControl->sczText, &sczText);
-                if (SUCCEEDED(hr))
+                HRESULT hrFormat = BalFormatString(pControl->sczText, &sczText);
+                if (SUCCEEDED(hrFormat))
                 {
                     ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
                 }
@@ -1161,6 +1158,13 @@ private: // privates
         )
     {
         HRESULT hr = S_OK;
+
+        // If we are going to apply a downgrade, bail.
+        if (m_fDowngrading && BOOTSTRAPPER_ACTION_UNINSTALL < action)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_PRODUCT_VERSION);
+            BalExitOnFailure(hr, "Cannot install a product when a newer version is installed.");
+        }
 
         SetState(WIXSTDBA_STATE_PLANNING, hr);
 
@@ -1531,7 +1535,7 @@ private: // privates
             hr = PathRelativeToModule(&sczLicensePath, sczLicenseUrl, m_hModule);
         }
 
-        hr = ShelExec(sczLicensePath ? sczLicensePath : sczLicenseUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
+        hr = ShelExec(sczLicensePath ? sczLicensePath : sczLicenseUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, m_hWnd, NULL);
         BalExitOnFailure(hr, "Failed to launch URL to EULA.");
 
     LExit:
@@ -1556,7 +1560,7 @@ private: // privates
         hr = BalFormatString(sczUnformattedLaunchTarget, &sczLaunchTarget);
         BalExitOnFailure1(hr, "Failed to format launch target variable: %ls", sczUnformattedLaunchTarget);
 
-        hr = ShelExec(sczLaunchTarget, NULL, L"open", NULL, SW_SHOWDEFAULT, NULL);
+        hr = ShelExec(sczLaunchTarget, NULL, L"open", NULL, SW_SHOWDEFAULT, m_hWnd, NULL);
         BalExitOnFailure1(hr, "Failed to launch target: %ls", sczLaunchTarget);
 
         ::PostMessageW(m_hWnd, WM_CLOSE, 0, 0);
@@ -1594,7 +1598,7 @@ private: // privates
         hr = BalGetStringVariable(m_Bundle.sczLogVariable, &sczLogFile);
         BalExitOnFailure1(hr, "Failed to get log file variable '%ls'.", m_Bundle.sczLogVariable);
 
-        hr = ShelExec(L"notepad.exe", sczLogFile, L"open", NULL, SW_SHOWDEFAULT, NULL);
+        hr = ShelExec(L"notepad.exe", sczLogFile, L"open", NULL, SW_SHOWDEFAULT, m_hWnd, NULL);
         BalExitOnFailure1(hr, "Failed to open log file target: %ls", sczLogFile);
 
     LExit:
@@ -1741,6 +1745,7 @@ public:
         m_state = WIXSTDBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
 
+        m_fDowngrading = FALSE;
         m_fRestartRequired = FALSE;
         m_fAllowRestart = FALSE;
 
@@ -1792,6 +1797,7 @@ private:
     WIXSTDBA_STATE m_stateBeforeOptions;
     HRESULT m_hrFinal;
 
+    BOOL m_fDowngrading;
     BOOL m_fRestartRequired;
     BOOL m_fAllowRestart;
 

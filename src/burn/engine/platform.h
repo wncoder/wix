@@ -34,15 +34,11 @@ typedef BOOL (WINAPI *PFN_INITIATESYSTEMSHUTDOWNEXW)(
     __in BOOL bRebootAfterShutdown,
     __in DWORD dwReason
     );
-typedef BOOL (STDAPICALLTYPE *PFN_SHELLEXECUTEEXW)(
-    __inout LPSHELLEXECUTEINFOW lpExecInfo
-    );
 
 
 // variable declarations
 
 extern PFN_INITIATESYSTEMSHUTDOWNEXW vpfnInitiateSystemShutdownExW;
-extern PFN_SHELLEXECUTEEXW vpfnShellExecuteExW;
 
 
 // function declarations

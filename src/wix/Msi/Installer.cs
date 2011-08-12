@@ -311,7 +311,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiGetFileHash(filePath, Convert.ToUInt32(options), hashInterop);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             Debug.Assert(20 == hashInterop.FileHashInfoSize);
@@ -354,7 +354,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
 
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             version = versionBuffer.ToString();

@@ -62,6 +62,7 @@
     <ClCompile Include="fileutil.cpp" />
     <ClCompile Include="gdiputil.cpp" />
     <ClCompile Include="inetutil.cpp" />
+    <ClCompile Include="iniutil.cpp" />
     <ClCompile Include="jsonutil.cpp" />
     <ClCompile Include="locutil.cpp" />
     <ClCompile Include="logutil.cpp" />
@@ -106,6 +107,7 @@
     <ClInclude Include="inc\fileutil.h" />
     <ClInclude Include="inc\gdiputil.h" />
     <ClInclude Include="inc\inetutil.h" />
+    <ClInclude Include="inc\iniutil.h" />
     <ClInclude Include="inc\jsonutil.h" />
     <ClInclude Include="inc\locutil.h" />
     <ClInclude Include="inc\logutil.h" />

@@ -81,7 +81,7 @@
       <AdditionalIncludeDirectories>$(BurnSolutionDirectory)..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>msi.lib;version.lib;rpcrt4.lib;cabinet.lib;crypt32.lib;wintrust.lib;wininet.lib;advapi32.lib;shell32.lib;user32.lib;ole32.lib;oleaut32.lib;$(OutputDirectory)engine.lib;$(OutputDirectory)dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msi.lib;shlwapi.lib;rpcrt4.lib;cabinet.lib;crypt32.lib;wintrust.lib;wininet.lib;advapi32.lib;shell32.lib;user32.lib;ole32.lib;oleaut32.lib;version.lib;$(OutputDirectory)engine.lib;$(OutputDirectory)dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
@@ -109,7 +109,7 @@
       <AdditionalIncludeDirectories>$(BurnSolutionDirectory)..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>msi.lib;version.lib;rpcrt4.lib;cabinet.lib;crypt32.lib;wintrust.lib;wininet.lib;advapi32.lib;shell32.lib;user32.lib;ole32.lib;oleaut32.lib;$(OutputDirectory)engine.lib;$(OutputDirectory)dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msi.lib;shlwapi.lib;version.lib;rpcrt4.lib;cabinet.lib;crypt32.lib;wintrust.lib;wininet.lib;advapi32.lib;shell32.lib;user32.lib;ole32.lib;oleaut32.lib;$(OutputDirectory)engine.lib;$(OutputDirectory)dutil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>

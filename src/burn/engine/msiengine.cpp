@@ -839,9 +839,12 @@ extern "C" HRESULT MsiEngineExecutePackage(
     hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczProperties);
     ExitOnFailure(hr, "Failed to add feature action properties to argument string.");
 
-    // add patch properties
-    hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczProperties);
-    ExitOnFailure(hr, "Failed to add patch properties to argument string.");
+    // add patch properties, except on uninstall because that can confuse the Windows Installer in some situations.
+    if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL != pExecuteAction->msiPackage.action)
+    {
+        hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczProperties);
+        ExitOnFailure(hr, "Failed to add patch properties to argument string.");
+    }
 
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczProperties);
 

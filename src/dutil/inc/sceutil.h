@@ -96,7 +96,8 @@ HRESULT DAPI SceCreateDatabase(
     );
 HRESULT DAPI SceOpenDatabase(
     __in_z LPCWSTR sczFile,
-    __deref_out SCE_DATABASE **ppDatabase
+    __deref_out SCE_DATABASE **ppDatabase,
+    __in BOOL fReadOnly
     );
 HRESULT DAPI SceEnsureDatabase(
     __in_z LPCWSTR sczFile,

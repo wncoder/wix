@@ -97,6 +97,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
         // as outlined in RFC 4122, this is our namespace for generating name-based (version 3) UUIDs
         private static readonly Guid WixComponentGuidNamespace = new Guid("{3064E5C6-FB63-4FE9-AC49-E446A792EFA5}");
 
+        // The following constants must stay in sync with src\burn\engine\core.h
+        private const string BURN_BUNDLE_NAME = "WixBundleName";
+        private const string BURN_BUNDLE_ORIGINAL_SOURCE = "WixBundleOriginalSource";
+        private const string BURN_BUNDLE_PROVIDER_KEY = "WixBundleProviderKey";
+
         private string emptyFile;
 
         private bool backwardsCompatibleGuidGen;
@@ -2906,12 +2911,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Ensure that the bundle has our well-known persisted values.
             Table variableTable = bundle.EnsureTable(this.core.TableDefinitions["Variable"]);
             Row wellKnownVariable = variableTable.CreateRow(null);
-            wellKnownVariable[0] = "WixBundleName";
+            wellKnownVariable[0] = Binder.BURN_BUNDLE_NAME;
             wellKnownVariable[3] = 0;
             wellKnownVariable[4] = 1;
 
             wellKnownVariable = variableTable.CreateRow(null);
-            wellKnownVariable[0] = "WixBundleOriginalSource";
+            wellKnownVariable[0] = Binder.BURN_BUNDLE_ORIGINAL_SOURCE;
             wellKnownVariable[3] = 0;
             wellKnownVariable[4] = 1;
 
@@ -3936,11 +3941,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
             version.Load(bundleTempPath);
             resources.Add(version);
 
+            // Ensure the bundle info provides a full four part version.
+            Version fourPartVersion = new Version(bundleInfo.Version);
+            int major = (fourPartVersion.Major < 0) ? 0 : fourPartVersion.Major;
+            int minor = (fourPartVersion.Minor < 0) ? 0 : fourPartVersion.Minor;
+            int build = (fourPartVersion.Build < 0) ? 0 : fourPartVersion.Build;
+            int revision = (fourPartVersion.Revision < 0) ? 0 : fourPartVersion.Revision;
+            fourPartVersion = new Version(major, minor, build, revision);
+
+            version.FileVersion = fourPartVersion;
+            version.ProductVersion = fourPartVersion;
+
             Microsoft.Deployment.Resources.VersionStringTable strings = version[1033];
-            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
-            strings["FileVersion"] = bundleInfo.Version;
-            strings["ProductVersion"] = bundleInfo.Version;
             strings["LegalCopyright"] = bundleInfo.Copyright;
+            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
+            strings["FileVersion"] = bundleInfo.Version;    // string versions do not have to be four parts.
+            strings["ProductVersion"] = bundleInfo.Version; // string versions do not have to be four parts.
 
             if (null != bundleInfo.RegistrationInfo)
             {
@@ -7459,7 +7475,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private void EnsureIgnoreDependencies()
             {
                 string ignoreDependencies = "IGNOREDEPENDENCIES";
-                string ignoreDependenciesValue = "[BundleProviderKey]";
+                string ignoreDependenciesValue = String.Concat("[", Binder.BURN_BUNDLE_PROVIDER_KEY, "]");
 
                 // Try to find the property.
                 foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)

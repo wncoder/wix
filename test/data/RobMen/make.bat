@@ -31,10 +31,7 @@ IF /I "clean"=="%1" (
 IF NOT EXIST %_BP%*.msi (
    md %_BP%
    %_T%candle.exe %_P%*.wxs -o %_BP%
-   %_T%light.exe %_BP%Package2.wixobj -b %_P% -ext WixUtilExtension -sval -o %_BP%Package2.msi
    %_T%light.exe %_BP%Package4.wixobj -ext WixUtilExtension -sval -o %_BP%Package4.msi
-   %_T%light.exe %_BP%Package1v2.wixobj -ext WixUtilExtension -sval -o %_BP%Package1v2.msi
-   %_T%light.exe %_BP%Package2v2.wixobj -b %_P% -ext WixUtilExtension -sval -o %_BP%Package2v2.msi
    )
 
 rem IF NOT EXIST %_B%external_nocache\b.exe (
@@ -75,28 +72,10 @@ IF NOT EXIST %_B%3_ext\b.exe (
    %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%3_ext\b.exe %_BM%3_ext.wixobj
    )
 
-IF NOT EXIST %_B%versions\v1.exe (
-   md %_B%versions
-   %_T%candle.exe %_M%v1.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1.exe %_BM%v1.wixobj
-   )
-
-IF NOT EXIST %_B%versions\v1addon.exe (
-   md %_B%versions
-   %_T%candle.exe %_M%v1addon.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1addon.exe %_BM%v1addon.wixobj
-   )
-
 IF NOT EXIST %_B%versions\v1addon2.exe (
    md %_B%versions
    %_T%candle.exe %_M%v1addon2.wxs -o %_BM%
    %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v1addon2.exe %_BM%v1addon2.wixobj
-   )
-
-IF NOT EXIST %_B%versions\v2.exe (
-   md %_B%versions
-   %_T%candle.exe %_M%v2.wxs -o %_BM%
-   %_T%light.exe %_NOTIDY% %_BASEPATHS% -o %_B%versions\v2.exe %_BM%v2.wixobj
    )
 
 IF NOT EXIST %_B%burninburn\b.exe (

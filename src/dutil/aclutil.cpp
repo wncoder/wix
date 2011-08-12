@@ -46,7 +46,7 @@ extern "C" HRESULT DAPI AclCheckAccess(
     {
         if (!::AllocateAndInitializeSid(&paa->sia, paa->nSubAuthorityCount, paa->nSubAuthority[0], paa->nSubAuthority[1], paa->nSubAuthority[2], paa->nSubAuthority[3], paa->nSubAuthority[4], paa->nSubAuthority[5], paa->nSubAuthority[6], paa->nSubAuthority[7], &psid))
         {
-            ExitWithLastError(hr, "failed to check membership");
+            ExitWithLastError(hr, "failed to initialize SID");
         }
     }
 
@@ -864,6 +864,7 @@ NOTE: free ppsd with AclFreeSecurityDescriptor()
 extern "C" HRESULT DAPI AclGetSecurityDescriptor(
     __in_z LPCWSTR wzObject,
     __in SE_OBJECT_TYPE sot,
+    __in SECURITY_INFORMATION securityInformation,
     __deref_out SECURITY_DESCRIPTOR** ppsd
     )
 {
@@ -875,8 +876,8 @@ extern "C" HRESULT DAPI AclGetSecurityDescriptor(
     ExitOnNull(ppsd, hr, E_INVALIDARG, "Failed to get ACL Security Descriptor because no place to output was provided");
     *ppsd = NULL;
 
-    // get the security descriptor fo rth object
-    er = ::GetNamedSecurityInfoW(const_cast<LPWSTR>(wzObject), sot, 0, NULL, NULL, NULL, NULL, &psd);
+    // get the security descriptor for the object
+    er = ::GetNamedSecurityInfoW(const_cast<LPWSTR>(wzObject), sot, securityInformation, NULL, NULL, NULL, NULL, &psd);
     hr = HRESULT_FROM_WIN32(er);
     ExitOnFailure1(hr, "failed to get security info from object: %ls", wzObject);
     Assert(::IsValidSecurityDescriptor(psd));

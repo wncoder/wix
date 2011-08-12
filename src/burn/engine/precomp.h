@@ -34,6 +34,7 @@
 #include <Bits.h>
 #include <math.h>
 #include <msiquery.h>
+#include <sddl.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <softpub.h>
@@ -81,6 +82,7 @@
 #include "registration.h"
 #include "plan.h"
 #include "logging.h"
+#include "pipe.h"
 #include "core.h"
 #include "cache.h"
 #include "downloadengine.h"
@@ -93,7 +95,6 @@
 #include "elevation.h"
 #include "embedded.h"
 #include "manifest.h"
-#include "pipe.h"
 #include "splashscreen.h"
 #include "bitsengine.h"
 #include "netfxchainer.h"

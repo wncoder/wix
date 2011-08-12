@@ -31,11 +31,32 @@ extern "C" {
 const LPCWSTR BURN_COMMANDLINE_SWITCH_ELEVATED = L"burn.elevated";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_EMBEDDED = L"burn.embedded";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_LOG_APPEND = L"burn.log.append";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_UNELEVATED = L"burn.unelevated";
+
+const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
+const LPCWSTR BURN_BUNDLE_TAG = L"WixBundleTag";
+
+// The following constants must stay in sync with src\wix\Binder.cs
+const LPCWSTR BURN_BUNDLE_NAME = L"WixBundleName";
+const LPCWSTR BURN_BUNDLE_ORIGINAL_SOURCE = L"WixBundleOriginalSource";
+const LPCWSTR BURN_BUNDLE_PROVIDER_KEY = L"WixBundleProviderKey";
+
+
+// enums
 
 enum BURN_MODE
 {
     BURN_MODE_NORMAL,
+    BURN_MODE_ELEVATED,
     BURN_MODE_EMBEDDED,
+};
+
+enum BURN_ELEVATION_STATE
+{
+    BURN_ELEVATION_STATE_UNELEVATED,
+    BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY,
+    BURN_ELEVATION_STATE_ELEVATED,
+    BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY,
 };
 
 
@@ -75,18 +96,11 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PLAN plan;
 
     BURN_MODE mode;
-    BOOL fElevated;
-
+    BURN_ELEVATION_STATE elevationState;
     DWORD dwElevatedLoggingTlsId;
-    HANDLE hElevatedProcess;
-    HANDLE hElevatedPipe;
-    HANDLE hElevatedCachePipe;
 
-    HANDLE hEmbeddedProcess;
-    HANDLE hEmbeddedPipe;
-
-    LPWSTR sczParentPipeName;
-    LPWSTR sczParentToken;
+    BURN_PIPE_CONNECTION companionConnection;
+    BURN_PIPE_CONNECTION embeddedConnection;
 
     BURN_RESUME_MODE resumeMode;
 } BURN_ENGINE_STATE;
@@ -96,10 +110,6 @@ typedef struct _BURN_ENGINE_STATE
 
 HRESULT CoreInitialize(
     __in_z_opt LPCWSTR wzCommandLine,
-    __in int nCmdShow,
-    __in BURN_ENGINE_STATE* pEngineState
-    );
-void CoreUninitialize(
     __in BURN_ENGINE_STATE* pEngineState
     );
 HRESULT CoreSerializeEngineState(

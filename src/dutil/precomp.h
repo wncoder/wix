@@ -62,6 +62,7 @@
 #include "dictutil.h"
 #include "iis7util.h"
 #include "inetutil.h"
+#include "iniutil.h"
 #include "jsonutil.h"
 #include "logutil.h"
 #include "memutil.h"  // NOTE: almost everying is inlined so there is a small .cpp file
@@ -77,6 +78,7 @@
 #include "rssutil.h"
 #include "apuputil.h" // NOTE: this must come after atomutil.h and rssutil.h since it uses them.
 //#include "sqlutil.h" - see sqlutil.cpp why this *must* be commented out
+#include "shelutil.h"
 #include "strutil.h"
 #include "timeutil.h"
 #include "locutil.h"

@@ -50,7 +50,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cabinet.lib;crypt32.lib;msi.lib;rpcrt4.lib;version.lib;wininet.lib;wintrust.lib;dutil_2010.lib;engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cabinet.lib;crypt32.lib;msi.lib;rpcrt4.lib;shlwapi.lib;version.lib;wininet.lib;wintrust.lib;dutil_2010.lib;engine.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>

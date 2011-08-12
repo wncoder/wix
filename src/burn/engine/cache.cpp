@@ -18,7 +18,8 @@
 
 #include "precomp.h"
 
-const LPCWSTR BURN_ORIGINAL_SOURCE = L"WixBundleOriginalSource";
+static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
+static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -68,13 +69,13 @@ extern "C" HRESULT CacheGetOriginalSourcePath(
     // If the original source has not been set already then set it where the bundle is
     // running from right now. This value will be persisted and we'll use it when launched
     // from the package cache since none of our packages will be relative to that location.
-    hr = VariableGetString(pVariables, BURN_ORIGINAL_SOURCE, &sczOriginalSource);
+    hr = VariableGetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, &sczOriginalSource);
     if (E_NOTFOUND == hr)
     {
         hr = PathForCurrentProcess(&sczOriginalSource, NULL);
         ExitOnFailure(hr, "Failed to get path for current executing process.");
 
-        hr = VariableSetString(pVariables, BURN_ORIGINAL_SOURCE, sczOriginalSource);
+        hr = VariableSetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, sczOriginalSource);
         ExitOnFailure(hr, "Failed to set original source variable.");
     }
 
@@ -305,7 +306,7 @@ extern "C" HRESULT CacheBundle(
     // TODO: replace this copy with the more intelligent copy of only
     // the burnstub executable and manifest data with fix-up for the
     // signature.
-    hr = FileEnsureCopy(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE);
+    hr = FileEnsureCopyWithRetry(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
     ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
 
     hr = ResetPathPermissions(pRegistration->fPerMachine, pRegistration->sczCacheExecutablePath);
@@ -325,7 +326,7 @@ extern "C" HRESULT CacheBundle(
             ExitOnFailure(hr, "Failed to build payload target path.");
 
             // copy payload file
-            hr = FileEnsureCopy(sczPayloadSourcePath, sczPayloadTargetPath, TRUE);
+            hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
             ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
 
             hr = ResetPathPermissions(pRegistration->fPerMachine, sczPayloadTargetPath);
@@ -399,12 +400,12 @@ extern "C" HRESULT CachePayload(
 
     if (fMove)
     {
-        hr = FileEnsureMove(wzUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE);
+        hr = FileEnsureMoveWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
         ExitOnFailure2(hr, "Failed to move %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
     }
     else
     {
-        hr = FileEnsureCopy(wzUnverifiedPayloadPath, sczCachedPath, TRUE);
+        hr = FileEnsureCopyWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
         ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
     }
 

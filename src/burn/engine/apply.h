@@ -27,6 +27,7 @@ extern "C" {
 enum GENERIC_EXECUTE_MESSAGE_TYPE
 {
     GENERIC_EXECUTE_MESSAGE_NONE,
+    GENERIC_EXECUTE_MESSAGE_ERROR,
     GENERIC_EXECUTE_MESSAGE_PROGRESS,
     GENERIC_EXECUTE_MESSAGE_FILES_IN_USE,
 };
@@ -36,6 +37,12 @@ typedef struct _GENERIC_EXECUTE_MESSAGE
     GENERIC_EXECUTE_MESSAGE_TYPE type;
     union
     {
+        struct
+        {
+            DWORD dwErrorCode;
+            DWORD dwUIHint;
+            LPCWSTR wzMessage;
+        } error;
         struct
         {
             DWORD dwPercentage;
@@ -57,10 +64,7 @@ typedef int (*PFN_GENERICMESSAGEHANDLER)(
 
 HRESULT ApplyElevate(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent,
-    __out HANDLE* phElevatedProcess,
-    __out HANDLE* phElevatedPipe,
-    __out HANDLE* phElevatedCachePipe
+    __in HWND hwndParent
     );
 HRESULT ApplyRegister(
     __in BURN_ENGINE_STATE* pEngineState

@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="~Bundle v1"
+        Manufacturer="Microsoft Corporation"
+        Version="0.1.0.0"
+        Tag="v1"
+        DisableModify="yes">
+  <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+   <RelatedBundle Id="1BE14DA3-E26A-4C49-8D39-7B1017FFA071" Action="Upgrade"/>
+   <RelatedBundle Id="8C78F409-835E-46DD-A00F-5E5802FEA6D8" Action="Detect"/>
+
+   <Chain>
+      <MsiPackage Vital='yes' SourceFile='Av1.msi' />
+      <MsiPackage Id='Bv1' Vital='yes' SourceFile='Bv1.msi' Name='Bv1.msi'>
+         <MsiProperty Name="TARGETDIR" Value="[BV1TARGETDIR]" />
+      </MsiPackage>
+   </Chain>
+</Bundle>
+</Wix>

@@ -196,7 +196,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiOpenDatabase(path, new IntPtr((int)type), out handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
             this.Handle = handle;
         }
@@ -232,7 +232,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseApplyTransform(this.Handle, transformFile, errorConditions);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -244,7 +244,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseCommit(this.Handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -261,7 +261,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiCreateTransformSummaryInfo(this.Handle, referenceDatabase.Handle, transformFile, errorConditions, validations);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -271,7 +271,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
         /// <param name="folderPath">Specifies the path to the folder containing archive files.</param>
         /// <param name="fileName">Specifies the name of the file to import.</param>
         /// <exception cref="WixInvalidIdtException">Attempted to import an IDT file with an invalid format or unsupported data.</exception>
-        /// <exception cref="Win32Exception">Another error occured while importing the IDT file.</exception>
+        /// <exception cref="MsiException">Another error occured while importing the IDT file.</exception>
         public void Import(string folderPath, string fileName)
         {
             int error = MsiInterop.MsiDatabaseImport(this.Handle, folderPath, fileName);
@@ -282,7 +282,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             }
             else if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -302,7 +302,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseExport(this.Handle, tableName, folderPath, fileName);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -318,7 +318,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseGenerateTransform(this.Handle, referenceDatabase.Handle, transformFile, 0, 0);
             if (0 != error && 0xE8 != error) // ERROR_NO_DATA(0xE8) means no differences were found
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             return (0xE8 != error);
@@ -334,7 +334,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseMerge(this.Handle, mergeDatabase.Handle, tableName);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -386,7 +386,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseGetPrimaryKeys(this.Handle, tableName, out recordHandle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             return new Record(recordHandle);

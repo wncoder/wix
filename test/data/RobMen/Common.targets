@@ -5,9 +5,13 @@
   <PropertyGroup>
     <BuildDirectory>$(MSBuildThisFileDirectory)build\</BuildDirectory>
 
-    <OutputPath>$(BuildDirectory)$(MSBuildProjectName)</OutputPath>
-    <BindInputPaths>$(MSBuildThisFileDirectory)data;$(BuildDirectory)obj\packages</BindInputPaths>
+    <OutputPath Condition=" '$(OutputType)'=='Package' ">$(BuildDirectory)obj\packages\$(OutputSubFolder)</OutputPath>
+    <OutputPath Condition=" '$(OutputType)'!='Package' ">$(BuildDirectory)$(MSBuildProjectName)\$(OutputSubFolder)</OutputPath>
+    <BindInputPaths>$(BindInputPaths);$(MSBuildThisFileDirectory)data;$(BuildDirectory)obj\packages</BindInputPaths>
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <SuppressValidation>true</SuppressValidation>
   </PropertyGroup>
+
+  <Import Project="$(WixTargetsPath)" />
 </Project>

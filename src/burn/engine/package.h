@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-struct _BURN_REGISTRATION;
-typedef _BURN_REGISTRATION BURN_REGISTRATION;
+struct _BURN_RELATED_BUNDLES;
+typedef _BURN_RELATED_BUNDLES BURN_RELATED_BUNDLES;
 
 // constants
 
@@ -245,7 +245,7 @@ HRESULT PackageFindById(
     __out BURN_PACKAGE** ppPackage
     );
 HRESULT PackageFindRelatedById(
-    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in_z LPCWSTR wzId,
     __out BURN_PACKAGE** ppPackage
     );

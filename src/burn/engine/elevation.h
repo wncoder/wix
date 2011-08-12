@@ -53,11 +53,12 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
-    __in DWORD64 qwEstimatedSize
+    __in DWORD64 qwEstimatedSize,
+    __in_z LPCWSTR wzResumeCommandLine
     );
 HRESULT ElevationSessionResume(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action
+    __in_z LPCWSTR wzResumeCommandLine
     );
 HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,
@@ -136,10 +137,12 @@ HRESULT ElevationChildPumpMessages(
     __in HANDLE hPipe,
     __in HANDLE hCachePipe,
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BURN_PAYLOADS* pPayloads,
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
-    __in BURN_USER_EXPERIENCE* pUserExperience
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __out DWORD* pdwChildExitCode
     );
 
 #ifdef __cplusplus

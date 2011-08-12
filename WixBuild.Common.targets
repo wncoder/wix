@@ -367,7 +367,7 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
     <DistCS>wixdistribution.cs</DistCS>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(MSBuildProjectExtension)' == '.csproj' ">
+  <ItemGroup Condition=" '$(Language)' == 'C#' ">
     <!-- Include the current version in all of the wix projects (this won't show up in the Solution Explorer, but it is used when building). -->
     <Compile Include="$(WIX_ROOT)inc\$(VersionCS)">
       <Link>Properties\$(VersionCS)</Link>

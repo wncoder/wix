@@ -372,8 +372,6 @@ LExit:
 }
 
 extern "C" HRESULT ExeEngineExecutePackage(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in HANDLE hElevatedPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
@@ -439,15 +437,12 @@ extern "C" HRESULT ExeEngineExecutePackage(
 
     if (BURN_EXE_PROTOCOL_TYPE_BURN == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        hr = EmbeddedLaunchChildProcess(pExecuteAction->exePackage.pPackage, pUX, hElevatedPipe, sczExecutablePath, sczCommand, &pi.hProcess);
-        ExitOnFailure1(hr, "Failed to launch executable as embedded from path: %ls", sczExecutablePath);
-
-        hr = ProcWaitForCompletion(pi.hProcess, INFINITE, &dwExitCode);
-        ExitOnFailure1(hr, "Failed to wait for embedded executable to complete: %ls", sczExecutablePath);
+        hr = EmbeddedRunBundle(sczExecutablePath, sczCommand, pfnGenericMessageHandler, pvContext, &dwExitCode);
+        ExitOnFailure1(hr, "Failed to run bundle as embedded from path: %ls", sczExecutablePath);
     }
     else if (BURN_EXE_PROTOCOL_TYPE_NETFX4 == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        hr = RunNetFxChainer(sczExecutablePath, sczCommand, pExecuteAction->exePackage.sczBundleName, pfnGenericMessageHandler, pvContext, &dwExitCode);
+        hr = NetFxRunChainer(sczExecutablePath, sczCommand, pExecuteAction->exePackage.sczBundleName, pfnGenericMessageHandler, pvContext, &dwExitCode);
         ExitOnFailure1(hr, "Failed to run netfx chainer: %ls", sczExecutablePath);
     }
     else // create and wait for the executable process while sending fake progress to allow cancel.

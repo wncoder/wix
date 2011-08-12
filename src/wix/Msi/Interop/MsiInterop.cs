@@ -475,6 +475,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi.Interop
         internal static extern int MsiGetFileVersion(string filePath, StringBuilder versionBuf, ref int versionBufSize, StringBuilder langBuf, ref int langBufSize);
 
         /// <summary>
+        /// PInvoke of MsiGetLastErrorRecord.
+        /// </summary>
+        /// <returns>Handle to error record if one exists.</returns>
+        [DllImport("msi.dll", EntryPoint = "MsiGetLastErrorRecord", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        internal static extern uint MsiGetLastErrorRecord();
+
+        /// <summary>
         /// PInvoke of MsiDatabaseGetPrimaryKeysW.
         /// </summary>
         /// <param name="database">Handle to a database.</param>
