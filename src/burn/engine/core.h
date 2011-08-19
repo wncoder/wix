@@ -32,6 +32,11 @@ const LPCWSTR BURN_COMMANDLINE_SWITCH_ELEVATED = L"burn.elevated";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_EMBEDDED = L"burn.embedded";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_LOG_APPEND = L"burn.log.append";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_UNELEVATED = L"burn.unelevated";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_DETECT = L"burn.related.detect";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_UPGRADE = L"burn.related.upgrade";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_ADDON = L"burn.related.addon";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_PATCH = L"burn.related.patch";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_PREFIX = L"burn.";
 
 const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
 const LPCWSTR BURN_BUNDLE_TAG = L"WixBundleTag";
@@ -88,6 +93,8 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PAYLOADS payloads;
     BURN_PACKAGES packages;
 
+    HWND hMessageWindow;
+
     BOOL fDisableRollback;
     BOOL fParallelCacheAndExecute;
 
@@ -96,6 +103,7 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PLAN plan;
 
     BURN_MODE mode;
+
     BURN_ELEVATION_STATE elevationState;
     DWORD dwElevatedLoggingTlsId;
 

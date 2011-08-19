@@ -214,7 +214,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Escapes the input string.
         /// </summary>
-        /// <param name="format">The string to escape.</param>
+        /// <param name="input">The string to escape.</param>
         /// <returns>The escaped string.</returns>
         /// <exception cref="Win32Exception">A Win32 error occured.</exception>
         public string EscapeString(string input)
@@ -338,7 +338,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Sends progress percentages when embedded.
         /// </summary>
         /// <param name="progressPercentage">Percentage completed thus far.</param>
-        /// <param name="progressPercentage">Overall precentage completed.</param>
+        /// <param name="overallPercentage">Overall precentage completed.</param>
         public int SendEmbeddedProgress(int progressPercentage, int overallPercentage)
         {
             int result = 0;
@@ -367,11 +367,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             private Getter<T> getter;
             private Setter<T> setter;
 
-            /// <summary>
-            /// Creates a new instance of the <see cref="Variables"/> class.
-            /// </summary>
-            /// <param name="getter">The function to get the variable value from the engine.</param>
-            /// <param name="setter">The function to set the variable value in the engine.</param>
             internal Variables(Getter<T> getter, Setter<T> setter)
             {
                 this.getter = getter;

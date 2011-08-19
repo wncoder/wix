@@ -32,7 +32,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private Type bootstrapperApplicationType;
 
         /// <summary>
-        /// Creates a new instance of the <see cref="UxFactoryAttribute"/> class.
+        /// Creates a new instance of the <see cref="BootstrapperApplicationAttribute"/> class.
         /// </summary>
         /// <param name="bootstrapperApplicationType">The <see cref="Type"/> of the user experience, or null for the default user experience.</param>
         public BootstrapperApplicationAttribute(Type bootstrapperApplicationType)

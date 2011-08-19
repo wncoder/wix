@@ -39,6 +39,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
+        Result OnSystemShutdown(
+            [MarshalAs(UnmanagedType.U4)] EndSessionReasons dwEndSession
+            );
+
+        [PreserveSig]
+        [return: MarshalAs(UnmanagedType.I4)]
         Result OnDetectBegin(
             [MarshalAs(UnmanagedType.U4)] int cPackages
             );
@@ -419,11 +425,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// The bundle was launched from Add/Remove Programs.
         /// </summary>
         Arp,
-
-        /// <summary>
-        /// The bundle is being unregistered from Add/Remove Programs and removed from the cache.
-        /// </summary>
-        Unregister
     }
 
     public enum RelatedOperation
@@ -476,5 +477,44 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Package or chain has already initiated the restart.
         /// </summary>
         RestartInitiated
+    }
+
+    /// <summary>
+    /// The relation type for related bundles.
+    /// </summary>
+    public enum RelationType
+    {
+        None,
+        Detect,
+        Upgrade,
+        Addon,
+        Patch,
+    }
+
+    /// <summary>
+    /// One or more reasons why the application is requested to be closed or is being closed.
+    /// </summary>
+    [Flags]
+    public enum EndSessionReasons
+    {
+        /// <summary>
+        /// The system is shutting down or restarting (it is not possible to determine which event is occurring).
+        /// </summary>
+        Unknown,
+
+        /// <summary>
+        /// The application is using a file that must be replaced, the system is being serviced, or system resources are exhausted.
+        /// </summary>
+        CloseApplication,
+
+        /// <summary>
+        /// The application is forced to shut down.
+        /// </summary>
+        Critical = 0x40000000,
+
+        /// <summary>
+        /// The user is logging off.
+        /// </summary>
+        Logoff = unchecked((int)0x80000000)
     }
 }

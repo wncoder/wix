@@ -390,6 +390,7 @@ public: // IBootstrapperApplication
         )
     {
         int nResult = IDNOACTION;
+        LPWSTR sczError = NULL;
 
         if (BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
         {
@@ -401,15 +402,26 @@ public: // IBootstrapperApplication
         }
         else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
-            BalRetryOnError(wzPackageId, dwCode);
+            BalRetryErrorOccurred(wzPackageId, dwCode);
 
-            nResult = ::MessageBoxW(m_hWnd, wzError, m_pTheme->sczCaption, dwUIHint);
+            // If no error message was provided, use the error code to try and get an error message.
+            if (!wzError || !*wzError)
+            {
+                HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
+                if (FAILED(hr) || !sczError || !*sczError)
+                {
+                    StrAllocFormatted(&sczError, L"0x%x", dwCode);
+                }
+            }
+
+            nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
         }
         else // just take note of the error code and let things continue.
         {
-            BalRetryOnError(wzPackageId, dwCode);
+            BalRetryErrorOccurred(wzPackageId, dwCode);
         }
 
+        ReleaseStr(sczError);
         return nResult;
     }
 
@@ -954,11 +966,7 @@ private: // privates
             break;
 
         case WM_QUERYENDSESSION:
-            if (ENDSESSION_CLOSEAPP == static_cast<DWORD>(lParam)) // deny Restart Manager requests to shutdown.
-            {
-                return FALSE;
-            }
-            break;
+            return IDCANCEL != pBA->OnSystemShutdown(static_cast<DWORD>(lParam));
 
         case WM_CLOSE:
             // If the user chose not to close, do *not* let the default window proc handle the message.

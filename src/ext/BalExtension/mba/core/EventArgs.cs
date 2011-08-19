@@ -81,7 +81,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private int status;
 
         /// <summary>
-        /// Creates a new instance of the <see cref="resultStatusEventArgs"/> class.
+        /// Creates a new instance of the <see cref="ResultStatusEventArgs"/> class.
         /// </summary>
         /// <param name="status">The return code of the operation.</param>
         public ResultStatusEventArgs(int status)
@@ -123,6 +123,52 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         public ShutdownEventArgs()
         {
+        }
+    }
+
+    /// <summary>
+    /// Additional arguments used when the system is shutting down or the user is logging off.
+    /// </summary>
+    /// <remarks>
+    /// <para>To prevent shutting down or logging off, set <see cref="ResultEventArgs.Result"/> to
+    /// <see cref="Result.Cancel"/>; otherwise, set it to <see cref="Result.Ok"/>.</para>
+    /// <para>By default setup will prevent shutting down or logging off between
+    /// <see cref="BootstrapperApplication.ApplyBegin"/> and <see cref="BootstrapperApplication.ApplyComplete"/>.
+    /// Derivatives can change this behavior by overriding <see cref="BootstrapperApplication.OnSystemShutdown"/>
+    /// or handling <see cref="BootstrapperApplication.SystemShutdown"/>.</para>
+    /// <para>If <see cref="SystemShutdownEventArgs.Reasons"/> contains <see cref="EndSessionReasons.Critical"/>
+    /// the bootstrapper cannot prevent the shutdown and only has a few seconds to save state or perform any other
+    /// critical operations before being closed by the operating system.</para>
+    /// <seealso cref="BootstrapperApplication.SystemShutdown"/>
+    /// <seealso cref="BootstrapperApplication.OnSystemShutdown"/>
+    /// </remarks>
+    [Serializable]
+    public class SystemShutdownEventArgs : ResultEventArgs
+    {
+        private EndSessionReasons reasons;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="SystemShutdownEventArgs"/> class.
+        /// </summary>
+        /// <param name="reasons">The reason the application is requested to close or being closed.</param>
+        public SystemShutdownEventArgs(EndSessionReasons reasons)
+        {
+            this.reasons = reasons;
+        }
+
+        /// <summary>
+        /// Gets the reason the application is requested to close or being closed.
+        /// </summary>
+        /// <remarks>
+        /// <para>To prevent shutting down or logging off, set <see cref="ResultEventArgs.Result"/> to
+        /// <see cref="Result.Cancel"/>; otherwise, set it to <see cref="Result.Ok"/>.</para>
+        /// <para>If <see cref="SystemShutdownEventArgs.Reasons"/> contains <see cref="EndSessionReasons.Critical"/>
+        /// the bootstrapper cannot prevent the shutdown and only has a few seconds to save state or perform any other
+        /// critical operations before being closed by the operating system.</para>
+        /// </remarks>
+        public EndSessionReasons Reasons
+        {
+            get { return this.reasons; }
         }
     }
 
@@ -1365,6 +1411,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         /// <param name="packageId">The identity of the packaged that was acted on.</param>
         /// <param name="status">The return code of the operation.</param>
+        /// <param name="restart">Whether a restart is required.</param>
         public ExecutePackageCompleteEventArgs(string packageId, int status, ApplyRestart restart)
             : base(status)
         {
@@ -1442,6 +1489,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Creates a new instance of the <see cref="ApplyCompleteEventArgs"/> clas.
         /// </summary>
         /// <param name="status">The return code of the operation.</param>
+        /// <param name="restart">Whether a restart is required.</param>
         public ApplyCompleteEventArgs(int status, ApplyRestart restart)
             : base(status)
         {
@@ -1458,7 +1506,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     }
 
     /// <summary>
-    /// Additional arguments used by the engine to allow the user experience to change the source using <see cref="Engine.SetSource"/>.
+    /// Additional arguments used by the engine to allow the user experience to change the source
+    /// using <see cref="Engine.SetLocalSource"/> or <see cref="Engine.SetDownloadSource"/>.
     /// </summary>
     [Serializable]
     public class ResolveSourceEventArgs : ResultEventArgs
@@ -1473,7 +1522,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         /// <param name="packageOrContainerId">The identity of the package or container that requires source.</param>
         /// <param name="payloadId">The identity of the payload that requires source.</param>
-        /// <param name="path">The current path used for source resolution.</param>
+        /// <param name="localSource">The current path used for source resolution.</param>
         /// <param name="downloadSource">Optional URL to download container or payload.</param>
         public ResolveSourceEventArgs(string packageOrContainerId, string payloadId, string localSource, string downloadSource)
         {

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <BuildPath>$(MSBuildThisFileDirectory)Build\</BuildPath>
+        <BindInputPaths>$(BuildPath)</BindInputPaths>
+        <OutDir>$(BuildPath)</OutDir>
+        <OutputPath>$(BuildPath)</OutputPath>
+        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+        <SuppressValidation>True</SuppressValidation>
+    </PropertyGroup>
+    <Import Project="$(WIX_ROOT)\WixBuild.Common.targets" />
+    <ItemGroup>
+        <WixExtension Include="WixBalExtension">
+            <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
+        </WixExtension>
+        <WixExtension Include="WixUtilExtension">
+            <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>
+        </WixExtension>
+    </ItemGroup>
+</Project>

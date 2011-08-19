@@ -3490,6 +3490,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[8] = package.Permanent ? "yes" : "no";
                 row[9] = package.LogPathVariable;
                 row[10] = package.RollbackLogPathVariable;
+                row[11] = (PayloadInfo.PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
@@ -3526,6 +3527,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Row row = wixBundlePropertiesTable.CreateRow(null);
             row[0] = bundleInfo.RegistrationInfo == null ? null : bundleInfo.RegistrationInfo.Name;
             row[1] = bundleInfo.LogPathVariable;
+            row[2] = (YesNoDefaultType.Yes == bundleInfo.Compressed) ? "yes" : "no";
         }
 
         private void CreateContainer(ContainerInfo container, string manifestFile)
@@ -6926,7 +6928,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
                        (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
-                       wixGroupTable, allPayloads, fileManager, core)
+                       row[20], wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
@@ -6936,7 +6938,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
                                     string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
-                                    Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
+                                    object enableFeatureSelectionData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
                 if (null != cacheData)
@@ -6972,6 +6974,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (null != suppressLooseFilePayloadGenerationData)
                 {
                     suppressLooseFilePayloadGeneration = (1 == (int)suppressLooseFilePayloadGenerationData) ? YesNoType.Yes : YesNoType.No;
+                }
+
+                YesNoType enableFeatureSelection = YesNoType.NotSet;
+                if (null != enableFeatureSelectionData)
+                {
+                    enableFeatureSelection = (1 == (int)enableFeatureSelectionData) ? YesNoType.Yes : YesNoType.No;
                 }
 
                 this.Id = id;
@@ -7035,7 +7043,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (this.ChainPackageType)
                 {
                     case Compiler.ChainPackageType.Msi:
-                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration);
+                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration, enableFeatureSelection);
                         break;
                     case Compiler.ChainPackageType.Msp:
                         this.ResolveMspPackage(core);
@@ -7101,7 +7109,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// Initializes package state from the MSI contents.
             /// </summary>
             /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration)
+            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration, YesNoType enableFeatureSelection)
             {
                 string sourcePath = this.PackagePayload.FileInfo.FullName;
                 bool longNamesInImage = false;
@@ -7137,6 +7145,31 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
 
                         this.DisplayName = ChainPackageInfo.GetProperty(db, "ProductName");
+
+                        if (ChainPackageInfo.HasProperty(db, "ALLUSERS"))
+                        {
+                            string allusers = ChainPackageInfo.GetProperty(db, "ALLUSERS");
+                            if (allusers.Equals("1", StringComparison.Ordinal))
+                            {
+                                if (!this.PerMachine)
+                                {
+                                    core.OnMessage(WixErrors.PerUserButAllUsersEquals1(this.PackagePayload.SourceLineNumbers, sourcePath));
+                                }
+                            }
+                            else if (allusers.Equals("2", StringComparison.Ordinal))
+                            {
+                                core.OnMessage(WixWarnings.DiscouragedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, this.PerMachine ? "machine" : "user"));
+                            }
+                            else
+                            {
+                                core.OnMessage(WixErrors.UnsupportedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, allusers));
+                            }
+                        }
+                        else if (this.PerMachine)
+                        {
+                            core.OnMessage(WixWarnings.ImplicitlyPerUser(this.PackagePayload.SourceLineNumbers, sourcePath));
+                            this.PerMachine = false;
+                        }
 
                         if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
                         {
@@ -7182,8 +7215,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                         }
 
-                        // Represent the Feature table in the manifest.
-                        if (db.Tables.Contains("Feature"))
+                        // If feature selection is enabled, represent the Feature table in the manifest.
+                        if (YesNoType.Yes == enableFeatureSelection && db.Tables.Contains("Feature"))
                         {
                             using (Microsoft.Deployment.WindowsInstaller.View featureView = db.OpenView("SELECT `Component_` FROM `FeatureComponents` WHERE `Feature_` = ?"), 
                                         componentView = db.OpenView("SELECT `FileSize` FROM `File` WHERE `Component_` = ?"))

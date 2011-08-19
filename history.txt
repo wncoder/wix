@@ -1356,3 +1356,32 @@ HeathS: Updated msi.chm for Windows Installer 5.0.
 
 WixBuild: Version 3.6.2012.0
 
+CAraman: Fix annotations.
+
+RobMen: SFBUG:3296438 - balretry can now retry cache errors.
+
+RobMen: SFBUG:3197004 - add MsiPackage/@EnableFeatureSelection so Burn knows
+                        when to use REINSTALL=ALL.
+        Rename MAINTENANCE to MODIFY and RECACHE to REPAIR which are more
+        correct names.
+
+FGrohn: SFBUG:3388644 - Partial feature selection doesn't work in some cases.
+
+HeathS: SFBUG:3323554 - Prevent shutdown even if initiated from AU.
+
+HeathS: Added documentation for BootstrapperCore to install.
+
+HeathS: Register the bundle as a dependent during repair actions.
+
+RobMen: SFBUG:3385097 - be a bit smarter about setting per-user MSI packages
+                        in Bundles and provide better error messages.
+
+MiCarls: SFBUG:2994274 - support "patch" type of related bundle.
+
+HeathS: Remove calls to disable the IME for message windows.
+
+MiCarls: SFBUG:3338956 - Burn related bundles now use the action passed in
+         to plan, rather than the action specified on the commandline
+
+WixBuild: Version 3.6.2019.0
+

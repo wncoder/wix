@@ -22,6 +22,12 @@
 extern "C" {
 #endif
 
+enum BALRETRY_TYPE
+{
+    BALRETRY_TYPE_CACHE,
+    BALRETRY_TYPE_EXECUTE,
+};
+
 /*******************************************************************
  BalRetryInitialize - initialize the retry count and timeout between
                       retries (in milliseconds).
@@ -43,14 +49,16 @@ DAPI_(void) BalRetryUninitialize();
                         wait the specified timeout.
 ********************************************************************/
 DAPI_(void) BalRetryStartPackage(
-    __in_z_opt LPCWSTR wzPackageId
+    __in BALRETRY_TYPE type,
+    __in_z_opt LPCWSTR wzPackageId,
+    __in_z_opt LPCWSTR wzPayloadId
     );
 
 /*******************************************************************
- BalRetryOnError - call when an error occurs for the retry utility to
-                   consider.
+ BalRetryErrorOccured - call when an error occurs for the retry utility
+                        to consider.
 ********************************************************************/
-DAPI_(void) BalRetryOnError(
+DAPI_(void) BalRetryErrorOccurred(
     __in_z_opt LPCWSTR wzPackageId,
     __in DWORD dwError
     );
@@ -60,7 +68,9 @@ DAPI_(void) BalRetryOnError(
                       IDNOACTION if a retry is not recommended.
 ********************************************************************/
 DAPI_(int) BalRetryEndPackage(
+    __in BALRETRY_TYPE type,
     __in_z_opt LPCWSTR wzPackageId,
+    __in_z_opt LPCWSTR wzPayloadId,
     __in HRESULT hrError
     );
 

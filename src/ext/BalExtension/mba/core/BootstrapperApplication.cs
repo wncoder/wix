@@ -31,12 +31,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     {
         private Engine engine;
         private Command command;
+        private bool applying;
 
         /// <summary>
         /// Creates a new instance of the <see cref="BootstrapperApplication"/> class.
         /// </summary>
         protected BootstrapperApplication()
         {
+            this.engine = null;
+            this.applying = false;
         }
 
         /// <summary>
@@ -48,6 +51,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Fired when the engine is shutting down the bootstrapper application.
         /// </summary>
         public event EventHandler<ShutdownEventArgs> Shutdown;
+
+        /// <summary>
+        /// Fired when the system is shutting down or user is logging off.
+        /// </summary>
+        /// <remarks>
+        /// <para>To prevent shutting down or logging off, set <see cref="ResultEventArgs.Result"/> to
+        /// <see cref="Result.Cancel"/>; otherwise, set it to <see cref="Result.Ok"/>.</para>
+        /// <para>By default setup will prevent shutting down or logging off between
+        /// <see cref="BootstrapperApplication.ApplyBegin"/> and <see cref="BootstrapperApplication.ApplyComplete"/>.
+        /// Derivatives can change this behavior by overriding <see cref="BootstrapperApplication.OnSystemShutdown"/>
+        /// or handling <see cref="BootstrapperApplication.SystemShutdown"/>.</para>
+        /// <para>If <see cref="SystemShutdownEventArgs.Reasons"/> contains <see cref="EndSessionReasons.Critical"/>
+        /// the bootstrapper cannot prevent the shutdown and only has a few seconds to save state or perform any other
+        /// critical operations before being closed by the operating system.</para>
+        /// <para>This event may be fired on a different thread.</para>
+        /// </remarks>
+        public event EventHandler<SystemShutdownEventArgs> SystemShutdown;
 
         /// <summary>
         /// Fired when the overall detection phase has begun.
@@ -180,7 +200,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public event EventHandler<CacheAcquireProgressEventArgs> CacheAcquireProgress;
 
         /// <summary>
-        /// Fired by the engine to allow the user experience to change the source using <see cref="Engine.SetLocalSource"/> or <see cref="Engine.SetDownloadSource"/>.
+        /// Fired by the engine to allow the user experience to change the source
+        /// using <see cref="M:Engine.SetLocalSource"/> or <see cref="M:Engine.SetDownloadSource"/>.
         /// </summary>
         public event EventHandler<ResolveSourceEventArgs> ResolveSource;
 
@@ -330,6 +351,37 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             if (null != handler)
             {
                 handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Called when the system is shutting down or the user is logging off.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        /// <remarks>
+        /// <para>To prevent shutting down or logging off, set <see cref="ResultEventArgs.Result"/> to
+        /// <see cref="Result.Cancel"/>; otherwise, set it to <see cref="Result.Ok"/>.</para>
+        /// <para>By default setup will prevent shutting down or logging off between
+        /// <see cref="BootstrapperApplication.ApplyBegin"/> and <see cref="BootstrapperApplication.ApplyComplete"/>.
+        /// Derivatives can change this behavior by overriding <see cref="BootstrapperApplication.OnSystemShutdown"/>
+        /// or handling <see cref="BootstrapperApplication.SystemShutdown"/>.</para>
+        /// <para>If <see cref="SystemShutdownEventArgs.Reasons"/> contains <see cref="EndSessionReasons.Critical"/>
+        /// the bootstrapper cannot prevent the shutdown and only has a few seconds to save state or perform any other
+        /// critical operations before being closed by the operating system.</para>
+        /// <para>This method may be called on a different thread.</para>
+        /// </remarks>
+        protected virtual void OnSystemShutdown(SystemShutdownEventArgs args)
+        {
+            EventHandler<SystemShutdownEventArgs> handler = this.SystemShutdown;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+            else
+            {
+                // Allow requests to shut down when critical or not applying.
+                bool critical = EndSessionReasons.Critical == (EndSessionReasons.Critical & args.Reasons);
+                args.Result = (critical || !this.applying) ? Result.Ok : Result.Cancel;
             }
         }
 
@@ -672,7 +724,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Called by the engine to allow the user experience to change the source using <see cref="Engine.SetSource"/>.
+        /// Called by the engine to allow the user experience to change the source
+        /// using <see cref="M:Engine.SetLocalSource"/> or <see cref="M:Engine.SetDownloadSource"/>.
         /// </summary>
         /// <param name="args">Additional arguments for this event.</param>
         protected virtual void OnResolveSource(ResolveSourceEventArgs args)
@@ -908,6 +961,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
+        Result IBootstrapperApplication.OnSystemShutdown(EndSessionReasons dwEndSession)
+        {
+            SystemShutdownEventArgs args = new SystemShutdownEventArgs(dwEndSession);
+            this.OnSystemShutdown(args);
+
+            return args.Result;
+        }
+
         Result IBootstrapperApplication.OnDetectBegin(int cPackages)
         {
             DetectBeginEventArgs args = new DetectBeginEventArgs(cPackages);
@@ -1022,6 +1083,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         Result IBootstrapperApplication.OnApplyBegin()
         {
+            this.applying = true;
+
             ApplyBeginEventArgs args = new ApplyBeginEventArgs();
             this.OnApplyBegin(args);
 
@@ -1198,6 +1261,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             ApplyCompleteEventArgs args = new ApplyCompleteEventArgs(hrStatus, restart);
             this.OnApplyComplete(args);
+
+            this.applying = false;
 
             return args.Result;
         }

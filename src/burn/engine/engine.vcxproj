@@ -78,6 +78,7 @@
     <ClCompile Include="registration.cpp" />
     <ClCompile Include="search.cpp" />
     <ClCompile Include="splashscreen.cpp" />
+    <ClCompile Include="uithread.cpp" />
     <ClCompile Include="userexperience.cpp" />
     <ClCompile Include="variable.cpp" />
     <ClCompile Include="variant.cpp" />
@@ -112,6 +113,7 @@
     <ClInclude Include="registration.h" />
     <ClInclude Include="search.h" />
     <ClInclude Include="splashscreen.h" />
+    <ClInclude Include="uithread.h" />
     <ClInclude Include="userexperience.h" />
     <ClInclude Include="variable.h" />
     <ClInclude Include="variant.h" />

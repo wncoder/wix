@@ -250,7 +250,7 @@ extern "C" HRESULT ExeEnginePlanPackage(
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            execute = pPackage->Exe.fRepairable ? BOOTSTRAPPER_ACTION_STATE_RECACHE : BOOTSTRAPPER_ACTION_STATE_NONE;
+            execute = pPackage->Exe.fRepairable ? BOOTSTRAPPER_ACTION_STATE_REPAIR : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -409,7 +409,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
         wzArguments = pExecuteAction->exePackage.pPackage->Exe.sczUninstallArguments;
         break;
 
-    case BOOTSTRAPPER_ACTION_STATE_RECACHE:
+    case BOOTSTRAPPER_ACTION_STATE_REPAIR:
         wzArguments = pExecuteAction->exePackage.pPackage->Exe.sczRepairArguments;
         break;
 

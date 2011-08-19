@@ -78,6 +78,16 @@ enum BOOTSTRAPPER_APPLY_RESTART
 };
 
 
+enum BOOTSTRAPPER_RELATION_TYPE
+{
+    BOOTSTRAPPER_RELATION_NONE,
+    BOOTSTRAPPER_RELATION_DETECT,
+    BOOTSTRAPPER_RELATION_UPGRADE,
+    BOOTSTRAPPER_RELATION_ADDON,
+    BOOTSTRAPPER_RELATION_PATCH,
+};
+
+
 struct BOOTSTRAPPER_COMMAND
 {
     BOOTSTRAPPER_ACTION action;
@@ -89,6 +99,9 @@ struct BOOTSTRAPPER_COMMAND
 
     BOOTSTRAPPER_RESUME_TYPE resumeType;
     HWND hwndSplashScreen;
+
+    // If this was run from a related bundle, specifies the relation type
+    BOOTSTRAPPER_RELATION_TYPE relationType;
 };
 
 
@@ -103,6 +116,10 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //            is rebooted. Ignored if reboot was already initiated by OnExecutePackageComplete().
     //  All other return codes are ignored.
     STDMETHOD_(int, OnShutdown)() = 0;
+
+    STDMETHOD_(int, OnSystemShutdown)(
+        __in DWORD dwEndSession
+        ) = 0;
 
     STDMETHOD_(int, OnDetectBegin)(
         __in DWORD cPackages

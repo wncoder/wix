@@ -2753,6 +2753,19 @@
           <Parameter Type="System.String" Name="prefix" />
         </Instance>
       </Message>
+      <Message Id="PerUserButAllUsersEquals1" Number="363">
+        <Instance>
+          The MSI '{0}' is explicitly marked to not elevate so it must be a per-user package but the ALLUSERS Property is set to '1' creating a per-machine package. Remove the Property with Id='ALLUSERS' and use Package/@InstallScope attribute to be explicit instead.
+          <Parameter Type="System.String" Name="path" />
+        </Instance>
+      </Message>
+      <Message Id="UnsupportedAllUsersValue" Number="364">
+        <Instance>
+          The MSI '{0}' set the ALLUSERS Property to '{0}' which is not supported. Remove the Property with Id='ALLUSERS' and use Package/@InstallScope attribute instead.
+          <Parameter Type="System.String" Name="path" />
+          <Parameter Type="System.String" Name="value" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
@@ -3473,7 +3486,21 @@
                 <Parameter Type="System.String" Name="payloadId" />
             </Instance>
         </Message>
+        <Message Id="DiscouragedAllUsersValue" Number="1133">
+            <Instance>
+                Bundles require a package to be either per-machine or per-user. The MSI '{0}' ALLUSERS Property is set to '2' which may change from per-user to per-machine at install time. The Bundle will assume the package is per-{1} and will not work correctly if that changes. If possible, remove the Property with Id='ALLUSERS' and use Package/@InstallScope attribute instead.
+                <Parameter Type="System.String" Name="path" />
+                <Parameter Type="System.String" Name="machineOrUser" />
+            </Instance>
+        </Message>
+        <Message Id="ImplicitlyPerUser" Number="1134">
+            <Instance>
+                The MSI '{0}' does not explicitly indicate that it is a per-user package even though the ALLUSERS Property is blank. This suggests a per-user package so the Bundle will assume the package is per-user. If possible, use the Package/@InstallScope attribute to be explicit instead.
+                <Parameter Type="System.String" Name="path" />
+            </Instance>
+        </Message>
     </Class>
+
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
         <Message Id="ImportBinaryStream" Number="9000" SourceLineNumbers="no">
             <Instance>

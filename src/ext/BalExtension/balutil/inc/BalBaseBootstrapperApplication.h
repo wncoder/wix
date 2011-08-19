@@ -81,6 +81,19 @@ public: // IBurnUserExperience
         return IDNOACTION;
     }
 
+    virtual STDMETHODIMP_(int) OnSystemShutdown(
+        __in DWORD dwEndSession
+        )
+    {
+        // Allow requests to shut down when critical or not applying.
+        if (ENDSESSION_CRITICAL & dwEndSession || !m_fApplying)
+        {
+            return IDOK;
+        }
+
+        return IDCANCEL;
+    }
+
     virtual STDMETHODIMP_(int) OnDetectBegin(
         __in DWORD /*cPackages*/
         )
@@ -107,7 +120,7 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzBundleTag*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
-        __in BOOTSTRAPPER_RELATED_OPERATION operation
+        __in BOOTSTRAPPER_RELATED_OPERATION /*operation*/
         )
     {
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
@@ -118,7 +131,7 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzProductCode*/,
         __in BOOL /*fPerMachine*/,
         __in DWORD64 /*dw64Version*/,
-        __in BOOTSTRAPPER_RELATED_OPERATION operation
+        __in BOOTSTRAPPER_RELATED_OPERATION /*operation*/
         ) 
     {
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
@@ -216,6 +229,7 @@ public: // IBurnUserExperience
 
     virtual STDMETHODIMP_(int) OnApplyBegin()
     {
+        m_fApplying = TRUE;
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -253,6 +267,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_APPLY_RESTART restart
         )
     {
+        m_fApplying = FALSE;
         return BOOTSTRAPPER_APPLY_RESTART_REQUIRED == restart ? IDRESTART : CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -271,12 +286,13 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireBegin(
-        __in_z LPCWSTR /*wzPackageOrContainerId*/,
-        __in_z_opt LPCWSTR /*wzPayloadId*/,
+        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPayloadId,
         __in BOOTSTRAPPER_CACHE_OPERATION /*operation*/,
         __in_z LPCWSTR /*wzSource*/
         )
     {
+        BalRetryStartPackage(BALRETRY_TYPE_CACHE, wzPackageOrContainerId, wzPayloadId);
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -292,12 +308,12 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnCacheAcquireComplete(
-        __in_z LPCWSTR /*wzPackageOrContainerId*/,
-        __in_z_opt LPCWSTR /*wzPayloadId*/,
-        __in HRESULT /*hrStatus*/
+        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPayloadId,
+        __in HRESULT hrStatus
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_CACHE, wzPackageOrContainerId, wzPayloadId, hrStatus);
     }
 
     virtual STDMETHODIMP_(int) OnCacheVerifyBegin(
@@ -345,7 +361,7 @@ public: // IBurnUserExperience
         // Only track retry on execution (not rollback).
         if (fExecute)
         {
-            BalRetryStartPackage(wzPackageId);
+            BalRetryStartPackage(BALRETRY_TYPE_EXECUTE, wzPackageId, NULL);
         }
 
         m_fRollingBack = !fExecute;
@@ -359,7 +375,7 @@ public: // IBurnUserExperience
         __in DWORD /*dwUIHint*/
         )
     {
-        BalRetryOnError(wzPackageId, dwCode);
+        BalRetryErrorOccurred(wzPackageId, dwCode);
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -430,7 +446,7 @@ public: // IBurnUserExperience
         __in BOOTSTRAPPER_APPLY_RESTART /*restart*/
         )
     {
-        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(wzPackageId, hrExitCode);
+        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_EXECUTE, wzPackageId, NULL, hrExitCode);
     }
 
     virtual STDMETHODIMP_(void) OnExecuteComplete(
@@ -502,6 +518,7 @@ protected:
 
         ::InitializeCriticalSection(&m_csCanceled);
         m_fCanceled = FALSE;
+        m_fApplying = FALSE;
         m_fRollingBack = FALSE;
 
         BalRetryInitialize(dwRetryCount, dwRetryTimeout);
@@ -513,11 +530,12 @@ protected:
         ::DeleteCriticalSection(&m_csCanceled);
     }
 
-protected:
+private:
     long m_cReferences;
     BOOTSTRAPPER_RESTART m_restart;
 
     CRITICAL_SECTION m_csCanceled;
     BOOL m_fCanceled;
+    BOOL m_fApplying;
     BOOL m_fRollingBack;
 };

@@ -480,6 +480,15 @@
         </xs:any>
       </xs:choice>
       <xs:attributeGroup ref="ChainPackageCommonAttributes" />
+      <xs:attribute name="EnableFeatureSelection" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+              Specifies whether the bundle will allow individual control over the installation state of Features inside
+              the msi package. Managing feature selection requires special care to ensure the install, modify, update and
+              uninstall behavior of the package is always correct. The default is "no".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="SuppressLooseFilePayloadGeneration" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
@@ -1050,6 +1059,7 @@
             <xs:enumeration value="Detect" />
             <xs:enumeration value="Upgrade" />
             <xs:enumeration value="Addon" />
+            <xs:enumeration value="Patch" />
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

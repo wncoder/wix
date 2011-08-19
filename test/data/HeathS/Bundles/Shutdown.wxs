@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation. All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
+    <Bundle Name="Shutdown" Version="1.0.0.0" IconSourceFile="Setup.ico">
+        <BootstrapperApplicationRef Id="ManagedBootstrapperApplicationHost">
+            <Payload Name="BootstrapperCore.config" SourceFile="$(var.TestUX.TargetDir)\TestUX.BootstrapperCore.config"/>
+            <Payload SourceFile="$(var.TestUX.TargetPath)"/>
+            <Payload SourceFile="NetfxLicense.rtf"/>
+        </BootstrapperApplicationRef>
+        <Chain>
+            <PackageGroupRef Id="Netfx4Full"/>
+            <MsiPackage Compressed="yes" SourceFile="$(var.Wait.TargetPath)" Vital="yes">
+                <MsiProperty Name="ARPSYSTEMCOMPONENT" Value="1"/>
+            </MsiPackage>
+        </Chain>
+    </Bundle>
+</Wix>

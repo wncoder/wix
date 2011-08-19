@@ -181,10 +181,10 @@ extern "C" LPCSTR LoggingActionStateToString(
         return "Install";
     case BOOTSTRAPPER_ACTION_STATE_ADMIN_INSTALL:
         return "AdminInstall";
-    case BOOTSTRAPPER_ACTION_STATE_MAINTENANCE:
-        return "MaintenanceMode";
-    case BOOTSTRAPPER_ACTION_STATE_RECACHE:
-        return "Recache";
+    case BOOTSTRAPPER_ACTION_STATE_MODIFY:
+        return "Modify";
+    case BOOTSTRAPPER_ACTION_STATE_REPAIR:
+        return "Repair";
     case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE:
         return "MinorUpgrade";
     case BOOTSTRAPPER_ACTION_STATE_MAJOR_UPGRADE:

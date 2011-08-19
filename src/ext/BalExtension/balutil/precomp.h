@@ -19,6 +19,8 @@
 #pragma once
 
 #include <windows.h>
+#include <bitsmsg.h>
+#include <wininet.h>
 
 #include <dutil.h>
 #include <pathutil.h>

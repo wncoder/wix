@@ -1153,7 +1153,6 @@ static HRESULT OnSessionResume(
 {
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
-    DWORD action = 0;
 
     // deserialize message data
     hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);

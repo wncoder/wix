@@ -12,7 +12,30 @@ namespace CfgTests
     {
     public:
         [TestMethod]
-        void StrUtilTest()
+        void StrUtilFormattedTest()
+        {
+            HRESULT hr = S_OK;
+            LPWSTR sczText = NULL;
+
+            hr = StrAllocFormatted(&sczText, L"%hs - %ls - %u", "ansi string", L"unicode string", 1234);
+            ExitOnFailure(hr, "Failed to format string.");
+            Assert::AreEqual(gcnew String(L"ansi string - unicode string - 1234"), gcnew String(sczText));
+
+            ReleaseNullStr(sczText);
+
+            hr = StrAllocString(&sczText, L"repeat", 0);
+            ExitOnFailure(hr, "Failed to allocate string.");
+
+            hr = StrAllocFormatted(&sczText, L"%ls and %ls", sczText, sczText);
+            ExitOnFailure(hr, "Failed to format string unto itself.");
+            Assert::AreEqual(gcnew String(L"repeat and repeat"), gcnew String(sczText));
+
+        LExit:
+            ReleaseStr(sczText);
+        }
+
+        [TestMethod]
+        void StrUtilTrimTest()
         {
             TestTrim(L"", L"");
             TestTrim(L"Blah", L"Blah");

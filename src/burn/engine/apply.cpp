@@ -1124,11 +1124,12 @@ static HRESULT DoExecuteAction(
                 {
                     ExitWithLastError(hr, "Failed to get cache thread exit code.");
                 }
+
                 if (SUCCEEDED(hr))
                 {
                     hr = E_UNEXPECTED;
                 }
-                ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
+                ExitOnFailure(hr, "Cache thread exited.");
 
             case WAIT_FAILED: __fallthrough;
             default:

@@ -24,6 +24,10 @@
                 <File Source="BootstrapperCore.config" />
             </Component>
 
+            <Component Directory="SdkDir">
+                <File Source="BootstrapperCore.xml" />
+            </Component>
+
             <Component Directory="SdkIncDir">
                 <File Source="ext\BalExtension\balutil\inc\BalBaseBootstrapperApplication.h" />
             </Component>

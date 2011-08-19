@@ -97,7 +97,7 @@ extern "C" HRESULT CoreInitialize(
 
     // set the registration variables
     hr = RegistrationSetVariables(&pEngineState->registration, &pEngineState->variables);
-    ExitOnFailure(hr, "Failed to set registration variables");
+    ExitOnFailure(hr, "Failed to set registration variables.");
 
     // set registration paths
     hr = RegistrationSetPaths(&pEngineState->registration);
@@ -399,7 +399,7 @@ extern "C" HRESULT CorePlan(
         }
 
         // Remember the default requested state so the engine doesn't get blamed for planning the wrong thing if the UX changes it.
-        hr = PlanDefaultPackageRequestState(pPackage->currentState, action, &pEngineState->variables, pPackage->sczInstallCondition, &defaultRequested);
+        hr = PlanDefaultPackageRequestState(pPackage->type, pPackage->currentState, action, &pEngineState->variables, pPackage->sczInstallCondition, pEngineState->command.relationType, &defaultRequested);
         ExitOnFailure(hr, "Failed to set default package state.");
 
         pPackage->requested = defaultRequested;
@@ -525,22 +525,23 @@ extern "C" HRESULT CorePlan(
 
             switch (pRelatedBundle->relationType)
             {
-            case BURN_RELATION_UPGRADE:
+            case BOOTSTRAPPER_RELATION_UPGRADE:
                 requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
                 break;
-            case BURN_RELATION_ADDON:
-                if (BOOTSTRAPPER_ACTION_UNINSTALL == pEngineState->command.action)
+            case BOOTSTRAPPER_RELATION_PATCH: __fallthrough;
+            case BOOTSTRAPPER_RELATION_ADDON:
+                if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
                 {
                     requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
                     // Uninstall addons early in the chain, before other packages are installed
                     pdwInsertIndex = &dwExecuteActionEarlyIndex;
                 }
-                else if (BOOTSTRAPPER_ACTION_REPAIR == pEngineState->command.action)
+                else if (BOOTSTRAPPER_ACTION_REPAIR == action)
                 {
                     requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
                 }
                 break;
-            case BURN_RELATION_DETECT:
+            case BOOTSTRAPPER_RELATION_DETECT:
                 break;
             default:
                 hr = E_UNEXPECTED;
@@ -943,6 +944,37 @@ static HRESULT ParseCommandLine(
                 ExitOnFailure(hr, "Failed to parse embedded connection.");
 
                 i += 2;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RELATED_DETECT, -1))
+            {
+                pCommand->relationType = BOOTSTRAPPER_RELATION_DETECT;
+
+                LogId(REPORT_STANDARD, MSG_BURN_RUN_BY_RELATED_BUNDLE, "Detect");
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RELATED_UPGRADE, -1))
+            {
+                pCommand->relationType = BOOTSTRAPPER_RELATION_UPGRADE;
+
+                LogId(REPORT_STANDARD, MSG_BURN_RUN_BY_RELATED_BUNDLE, "Upgrade");
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RELATED_ADDON, -1))
+            {
+                pCommand->relationType = BOOTSTRAPPER_RELATION_ADDON;
+
+                LogId(REPORT_STANDARD, MSG_BURN_RUN_BY_RELATED_BUNDLE, "Addon");
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RELATED_PATCH, -1))
+            {
+                pCommand->relationType = BOOTSTRAPPER_RELATION_PATCH;
+
+                LogId(REPORT_STANDARD, MSG_BURN_RUN_BY_RELATED_BUNDLE, "Patch");
+            }
+            else if (lstrlenW(&argv[i][1]) >= lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX) &&
+                CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX), BURN_COMMANDLINE_SWITCH_PREFIX, lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX)))
+            {
+                // Skip (but log) any other private burn switches we don't recognize, so that
+                // adding future private variables doesn't break old bundles 
+                LogId(REPORT_STANDARD, MSG_BURN_UNKNOWN_PRIVATE_SWITCH, &argv[i][1]);
             }
             else
             {

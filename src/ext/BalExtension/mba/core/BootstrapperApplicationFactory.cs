@@ -42,7 +42,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="pEngine">IBootstrapperEngine provided for the bootstrapper application.</param>
         /// <param name="command">Command line for the bootstrapper application.</param>
         /// <returns>Bootstrapper application via <see cref="IBootstrapperApplication"/> interface.</returns>
-        /// <exception cref="MissingAttributeException">The assembly specified by <paramref name="assemblyName"/>
+        /// <exception cref="MissingAttributeException">The bootstrapper application assembly
         /// does not define the <see cref="BootstrapperApplicationAttribute"/>.</exception>
         public IBootstrapperApplication Create(IBootstrapperEngine pEngine, ref Command command)
         {

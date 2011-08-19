@@ -20770,6 +20770,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string msuKB = null;
             YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
+            YesNoType enableFeatureSelection = YesNoType.NotSet;
 
             // This crazy list lets us evaluate extension attributes *after* all core attributes
             // have been parsed and dealt with, regardless of authoring order.
@@ -20810,6 +20811,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "CacheId":
                             cacheId = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "EnableFeatureSelection":
+                            enableFeatureSelection = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
                             break;
                         case "LogPathVariable":
                             logPathVariable = this.core.GetAttributeValue(sourceLineNumbers, attrib, true);
@@ -21046,6 +21051,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (YesNoType.NotSet != suppressLooseFilePayloadGeneration)
                 {
                     row[19] = (YesNoType.Yes == suppressLooseFilePayloadGeneration) ? 1 : 0;
+                }
+
+                if (YesNoType.NotSet != enableFeatureSelection)
+                {
+                    row[20] = (YesNoType.Yes == enableFeatureSelection) ? 1 : 0;
                 }
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
@@ -21449,8 +21459,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                     case Wix.RelatedBundle.ActionType.Addon:
                         break;
+                    case Wix.RelatedBundle.ActionType.Patch:
+                        break;
                     default:
-                        this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Action", action, "Detect", "Upgrade", "Addon"));
+                        this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Action", action, "Detect", "Upgrade", "Addon", "Patch"));
                         break;
                 }
             }
