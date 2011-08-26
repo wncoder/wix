@@ -4247,7 +4247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 this.core.OnMessage(WixErrors.ExpectedAttribute(dataSourceLineNumbers, data.Name, "Column"));
                                             }
 
-                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : "\t", columnName, ":", data.InnerText);
+                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : "\x0", columnName, ":", data.InnerText);
                                             break;
                                     }
                                 }
@@ -19797,6 +19797,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[14] = splashScreenSourceFile;
                 row[15] = condition;
                 row[16] = tag;
+                row[17] = this.currentPlatform.ToString();
             }
         }
 
@@ -20772,6 +20773,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoDefaultType compressed = YesNoDefaultType.Default;
             YesNoType enableFeatureSelection = YesNoType.NotSet;
 
+            string[] expectedNetFx4Args = new string[] { "/q", "/norestart", "/chainingpackage" };
+
             // This crazy list lets us evaluate extension attributes *after* all core attributes
             // have been parsed and dealt with, regardless of authoring order.
             List<KeyValuePair<SourceLineNumberCollection, XmlAttribute>> extensionAttributes =
@@ -20943,6 +20946,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (!String.IsNullOrEmpty(protocol) && !protocol.Equals("burn", StringComparison.Ordinal) && !protocol.Equals("netfx4", StringComparison.Ordinal) && !protocol.Equals("none", StringComparison.Ordinal))
             {
                 this.core.OnMessage(WixErrors.IllegalAttributeValueWithLegalList(sourceLineNumbers, node.Name, "Protocol", protocol, "none, burn, netfx4"));
+            }
+
+            if (!String.IsNullOrEmpty(protocol) && protocol.Equals("netfx4", StringComparison.Ordinal))
+            {
+                foreach (string expectedArgument in expectedNetFx4Args)
+                {
+                    if (null == installCommand  || - 1 == installCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "InstallCommand", installCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+
+                    if (null == uninstallCommand || -1 == repairCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "RepairCommand", repairCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+
+                    if (null == uninstallCommand || -1 == uninstallCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "UninstallCommand", uninstallCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+                }
             }
 
             // Now that the package ID is known, we can parse the extension attributes...

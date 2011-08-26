@@ -1613,6 +1613,7 @@
         <columnDefinition name="SplashScreenSourceFile" type="object" length="0" nullable="yes" />
         <columnDefinition name="Condition" type="string" length="0" nullable="yes" />
         <columnDefinition name="Tag" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Platform" type="string" length="4" />
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>

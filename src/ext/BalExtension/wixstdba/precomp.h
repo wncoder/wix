@@ -31,6 +31,7 @@
 #include "memutil.h"
 #include "dirutil.h"
 #include "fileutil.h"
+#include "locutil.h"
 #include "logutil.h"
 #include "pathutil.h"
 #include "resrutil.h"
@@ -45,6 +46,7 @@
 
 #include "BalBaseBootstrapperApplication.h"
 #include "balinfo.h"
+#include "balcondition.h"
 
 HRESULT CreateBootstrapperApplication(
     __in HMODULE hModule,

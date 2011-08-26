@@ -64,6 +64,7 @@
 #include "inetutil.h"
 #include "iniutil.h"
 #include "jsonutil.h"
+#include "locutil.h"
 #include "logutil.h"
 #include "memutil.h"  // NOTE: almost everying is inlined so there is a small .cpp file
 //#include "metautil.h" - see metautil.cpp why this *must* be commented out

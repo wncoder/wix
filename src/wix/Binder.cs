@@ -3355,10 +3355,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.GenerateBAManifestBundleTables(bundle, bundleInfo);
 
-            // Copy the burnstub.exe to a writable location then mark it to be moved to its
+            // Copy the burn.exe to a writable location then mark it to be moved to its
             // final build location.
-            string wixExeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string stubFile = Path.Combine(wixExeDirectory, "burnstub.exe");
+            string wixExeDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), bundleInfo.Platform.ToString());
+            string stubFile = Path.Combine(wixExeDirectory, "burn.exe");
             string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleInfo.Path));
 
             this.core.OnMessage(WixVerboses.GeneratingBundle(bundleTempPath, stubFile));
@@ -6767,6 +6767,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.Condition = (string)row[15];
                 this.Tag = (string)row[16];
+                this.Platform = (Platform)Enum.Parse(typeof(Platform), (string)row[17]);
 
                 // Default provider key is the Id.
                 this.ProviderKey = this.Id.ToString("B");
@@ -6795,6 +6796,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Tag { get; private set; }
+            public Platform Platform { get; private set; }
             public string Version { get; private set; }
             public string ProviderKey { get; internal set; }
         }

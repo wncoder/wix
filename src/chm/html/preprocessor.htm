@@ -234,7 +234,7 @@ candle.exe -dMyVariable="Hello World" ...
 
   <p>An few examples:</p>
   <pre>
-&lt;?foreach LCID in "1033;1041;1055"?&gt;
+&lt;?foreach LCID in 1033;1041;1055?&gt;
         &lt;Fragment Id='Fragment.$(var.LCID)'&gt;
                 &lt;DirectoryRef Id='TARGETDIR'&gt;
                         &lt;Component Id='MyComponent.$(var.LCID)' /&gt;

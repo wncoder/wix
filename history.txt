@@ -1385,3 +1385,27 @@ MiCarls: SFBUG:3338956 - Burn related bundles now use the action passed in
 
 WixBuild: Version 3.6.2019.0
 
+ScotK: A start on getting burn to compile for other architectures.
+
+PMarcu: SFBUG:3375939 Persisting tabs in custom table data and enforcing 
+                      Identifiers in Custom tables.
+
+PMarcu: SFBUG: 3383823 - removing quotes from around value in foreach in sample
+
+EricStJ: SFBUG:3394755 - Don't add extra netfx parameters
+         SFBUG:3394662 - When NetFx hits success blocker, Burn returns failure.
+
+ZhenyaS: SFBUG:3394197 - Transfer variables from user process to elevated
+                         process so that bundle name set by BA gets registered
+                         in ARP
+
+RobMen: Create runtime localization for WiX Standard Bootstrapper Application.
+        Support Bundle/Condition in WiX Standard Bootstrapper Application.
+        SFBUG:3396537 - allow preqba to be localized.
+
+RobMen: SFBUG:3328616 - fix leaked XML DOM nodes.
+
+JieJi: Fix the calculation of MSI execution percentage during rollback.
+
+WixBuild: Version 3.6.2026.0
+

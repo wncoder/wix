@@ -107,7 +107,6 @@ struct NetFxCloseApplications
 HRESULT NetFxRunChainer(
     __in LPCWSTR wzExecutablePath,
     __in LPCWSTR wzArguments,
-    __in LPCWSTR wzBundleName,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out DWORD* pdwExitCode

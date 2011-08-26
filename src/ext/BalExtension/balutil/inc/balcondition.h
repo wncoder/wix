@@ -42,7 +42,8 @@ typedef struct _BAL_CONDITIONS
 ********************************************************************/
 DAPI_(HRESULT) BalConditionsParseFromXml(
     __in BAL_CONDITIONS* pConditions,
-    __in IXMLDOMDocument* pixdManifest
+    __in IXMLDOMDocument* pixdManifest,
+    __in_opt LOC_STRINGSET* pLocStringSet
     );
 
 

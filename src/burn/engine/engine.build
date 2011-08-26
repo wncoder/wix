@@ -23,9 +23,11 @@
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
   <!-- engine-specific properties -->
-  <property name="burnengine.file.lib.target" value="${dir.target.wix}\engine.lib" readonly="true" />
-  <property name="burnengine.file.lib.targetpdb" value="${dir.target.wix}\engine.pdb" readonly="true" />
-  <property name="burnengine.file.lib.targetres" value="${dir.target.wix}\engine.res" readonly="true" />
+  <property name="dir.build.burn.engine.x86" value="${dir.build.burn.x86}\engine" readonly="true" />
+  <property name="burnengine.file.lib.target.x86" value="${dir.target.wix.x86}\engine.lib" readonly="true" />
+  <property name="burnengine.file.lib.targetpdb.x86" value="${dir.target.wix.x86}\engine.pdb" readonly="true" />
+  <property name="burnengine.file.lib.targetres.x86" value="${dir.target.wix.x86}\engine.res" readonly="true" />
+
   <property name="burnengine.additionalIncludes" value="/I &quot;${dir.src.burn.engine}\inc&quot; /I &quot;${dir.src.burn}\inc&quot; /I&quot;${dir.inc.deputil}&quot;"/>
 
   <!--
@@ -39,17 +41,19 @@
 
   <!-- Clean -->
   <target name="burnengine.clean" description="Cleans the build">
-    <delete dir="${dir.build.burn.engine}" failonerror="false" if="${directory::exists(dir.build.burn.engine)}" />
-    <delete file="${burnengine.file.lib.target}" failonerror="false" if="${file::exists(burnengine.file.lib.target)}" />
-    <delete file="${burnengine.file.lib.targetpdb}" failonerror="false" if="${file::exists(burnengine.file.lib.targetpdb)}" />
-    <delete file="${burnengine.file.lib.targetres}" failonerror="false" if="${file::exists(burnengine.file.lib.targetres)}" />
+    <delete dir="${dir.build.burn.engine.x86}" failonerror="false" if="${directory::exists(dir.build.burn.engine.x86)}" />
+    <delete file="${burnengine.file.lib.target.x86}" failonerror="false" if="${file::exists(burnengine.file.lib.target.x86)}" />
+    <delete file="${burnengine.file.lib.targetpdb.x86}" failonerror="false" if="${file::exists(burnengine.file.lib.targetpdb.x86)}" />
+    <delete file="${burnengine.file.lib.targetres.x86}" failonerror="false" if="${file::exists(burnengine.file.lib.targetres.x86)}" />
   </target>
 
   <!-- Inc -->
-  <target name="burnengine.inc" description="Performs an incremental build" depends="makeDirs, burnengineinc.mc, burnengineinc.lib" />
+  <target name="burnengine.inc" description="Performs an incremental build" depends="makeDirs, burnengineinc.lib" />
 
   <!-- burnengineinc.lib -->
   <target name="burnengineinc.lib" description="Performs an incremental build of engine.lib">
+    <mkdir dir="${dir.build.burn.engine.x86}" />
+
     <fileset id="compileCpp.fileset.sources" basedir="${dir.src.burn.engine}">
       <include name="bitsengine.cpp" />
       <include name="apply.cpp" />
@@ -85,20 +89,19 @@
       <include name="variant.cpp" />
       <include name="catalog.cpp" />
     </fileset>
-    <property name="compileCpp.dir.build" value="${dir.build.burn.engine}" />
+
+    <!-- Build x86 -->
+    <property name="compileCpp.dir.build" value="${dir.build.burn.engine.x86}" dynamic="true" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.burn.engine}\precomp.h" />
     <property name="compileCpp.additionalIncludes" value="${burnengine.additionalIncludes} /I &quot;$(dir.externalroot)\MsiSdk\v4.5\INCLUDE&quot;" />
     <property name="compileCpp.additionalOptions" value="-WX- -DUNICODE -D_UNICODE -DBURN_DEVELOPMENT_BUILD" />
-    <property name="makeNativeLib.file.target" value="${burnengine.file.lib.target}" />
-
-    <!-- Make engine.lib -->
+    <property name="compileCpp.file.mc" value="${dir.src.burn.engine}\engine.mc" />
+    <property name="compileCpp.options.mc" value="-A -c -z engine.messages" />
+    <property name="compileCpp.file.rc" value="${dir.build.burn.engine.x86}\engine.messages.rc" />
+    <property name="compileCpp.output.rc" value="${burnengine.file.lib.targetres.x86}" />
+    <property name="makeNativeLib.file.target" value="${burnengine.file.lib.target.x86}" />
+    <property name="makeNativeLib.platform" value="x86" />
     <call target="makeNativeLib" />
-  </target>
-
-  <!-- burnengineinc.mc -->
-  <target name="burnengineinc.mc" description="Performs an incremental build of engine.lib">
-    <mc mcfile="${dir.src.burn.engine}\engine.mc" headerpath="${dir.build.burn.engine}" rcpath="${dir.build.burn.engine}" options="-A -c -z engine.messages"/>
-    <rc rcfile="${dir.build.burn.engine}\engine.messages.rc" output="${burnengine.file.lib.targetres}" />
   </target>
 
   <!-- This prevents this file from being included more than once (by convention, not by syntax) -->

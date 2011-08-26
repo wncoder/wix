@@ -116,6 +116,9 @@
   <property name="link.exe.ia64" value="${link.standardOptions} -TSAWARE -DYNAMICBASE -entry:wmainCRTStartup -subsystem:windows ${link.standardLibs.ia64} ${link.standardLibs.flavorDependent}" dynamic="true" />
 
   <!-- RC properties -->
+  <property name="rc.defines.x86" value="/d X86" dynamic="true" />
+  <property name="rc.defines.x64" value="/d X64" dynamic="true" />
+  <property name="rc.defines.ia64" value="/d IA64" dynamic="true" />
   <if test="${debug}">
     <property name="rc.standardOptions" value="/d DEBUG" />
   </if>
@@ -174,6 +177,9 @@
       compileCpp.dir.build          Required - The directory where .obj and other temporary files are built
       compileCpp.file.precomp.h     Optional - If supplied, the absolute path to the precomp.h file to use for the precompiled header
       compileCpp.file.rc            Optional - If supplied, the source .rc file to compile
+      compileCpp.output.rc          Optional - If supplied, the output .res file from compile
+      compileCpp.file.mc            Optional - If supplied, the source .mc file to compile
+      compileCpp.options.mc         Optional - If supplied, the options for .mc compile
       compileCpp.additionalIncludes Optional - If supplied, additional include paths
       compileCpp.additionalOptions  Optional - Additional options to pass to the cl.exe compiler
       compileCpp.preserveArgs       Optional - If true, then the arguments won't be cleared on completion of the target
@@ -181,12 +187,12 @@
       compileCpp.vctoolsversion     Optional - The version of VC tools to use - default is "9" (Visual Studio 2008)
   -->
   <property name="compileCpp.requiredArgs" value="compileCpp.dir.build" />
-  <property name="compileCpp.optionalArgs" value="compileCpp.file.precomp.h, compileCpp.file.rc, compileCpp.additionalOptions, compileCpp.preserveArgs, compileCpp.platform, compileCpp.vctoolsversion" />
+  <property name="compileCpp.optionalArgs" value="compileCpp.file.precomp.h, compileCpp.file.rc, compileCpp.output.rc, compileCpp.file.mc, compileCpp.options.mc, compileCpp.additionalOptions, compileCpp.preserveArgs, compileCpp.platform, compileCpp.vctoolsversion" />
   <target name="compileCpp" description="Compiles a C++ project by correctly using a precompiled header (if supplied)" >
     <!-- Check the required arguments -->
     <property name="args" value="${compileCpp.requiredArgs}" />
     <call target="checkRequiredArgs" />
-    
+
     <!-- Set the default values for the optional parameters -->
     <if test="${not property::exists('compileCpp.additionalIncludes')}">
       <property name="compileCpp.additionalIncludes" value="" />
@@ -220,7 +226,15 @@
 
       <!-- Create the build directory if necessary -->
       <mkdir dir="${compileCpp.dir.build}" />
-    
+
+      <!-- Compile the .mc file if there is one -->
+      <if test="${property::exists('compileCpp.file.mc') and string::trim(compileCpp.file.mc) != ''}">
+        <if test="${not property::exists('compileCpp.options.mc')}">
+          <property name="compileCpp.options.mc" value="" />
+        </if>
+        <mc mcfile="${compileCpp.file.mc}" headerpath="${compileCpp.dir.build}" rcpath="${compileCpp.dir.build}" options="${compileCpp.options.mc}" />
+      </if>
+
       <!-- See if we need to use a precompiled header -->
       <if test="${property::exists('compileCpp.file.precomp.h') and string::trim(compileCpp.file.precomp.h) != ''}">
         <!-- Local variables -->
@@ -246,9 +260,12 @@
 
       <!-- Compile the .rc file if there is one -->
       <if test="${property::exists('compileCpp.file.rc') and string::trim(compileCpp.file.rc) != ''}">
-        <rc rcfile="${compileCpp.file.rc}" langid="0" output="${compileCpp.dir.build}\${path::get-file-name-without-extension(compileCpp.file.rc)}.res" options="${rc.standardOptions} ${cl.standardIncludes}" />
+        <if test="${not property::exists('compileCpp.output.rc') or string::trim(compileCpp.output.rc) == ''}">
+          <property name="compileCpp.output.rc" value="${compileCpp.dir.build}\${path::get-file-name-without-extension(compileCpp.file.rc)}.res" />
+        </if>
+        <rc rcfile="${compileCpp.file.rc}" langid="0" output="${compileCpp.output.rc}" options="${rc.defines} ${rc.standardOptions} ${cl.standardIncludes}" />
       </if>
-    
+
       <!-- Compile the cpp files into the obj files -->
       <if test="${property::exists('compileCpp.file.precomp.h') and string::trim(compileCpp.file.precomp.h) != ''}">
         <cl
@@ -919,6 +936,7 @@
 
       <property name="cl.standardoptions" value="${cl.standardoptions.x86} ${cl.optimization.x86} ${cl.analysis.x86}" />
       <property name="cl.defines" value="${cl.defines.x86}" />
+      <property name="rc.defines" value="${rc.defines.x86}" />
       <property name="link.standardOptions.switch" value="${link.standardOptions.x86}" />
       <property name="link.dll" value="${link.dll.x86}" />
       <property name="link.exe" value="${link.exe.x86}" />
@@ -939,6 +957,7 @@
 
       <property name="cl.standardoptions" value="${cl.standardoptions.x64} ${cl.optimization.x64}" />
       <property name="cl.defines" value="${cl.defines.x64}" />
+      <property name="rc.defines" value="${rc.defines.x64}" />
       <property name="link.standardOptions.switch" value="${link.standardOptions.x64}" />
       <property name="link.dll" value="${link.dll.x64}" />
       <property name="link.exe" value="${link.exe.x64}" />
@@ -967,6 +986,7 @@
 
       <property name="cl.standardoptions" value="${cl.standardoptions.ia64} ${cl.optimization.ia64}" />
       <property name="cl.defines" value="${cl.defines.ia64}" />
+      <property name="rc.defines" value="${rc.defines.ia64}" />
       <property name="link.standardOptions.switch" value="${link.standardOptions.ia64}" />
       <property name="link.dll" value="${link.dll.ia64}" />
       <property name="link.exe" value="${link.exe.ia64}" />

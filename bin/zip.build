@@ -71,7 +71,7 @@
 
     <zip zipfile="${file.target.binaries.zip}">
       <fileset basedir="${dir.target.wix}">
-        <include name="burnstub.exe" />
+        <include name="x86\burn.exe" />
         <include name="candle.exe" />
         <include name="candle.exe.config" />
         <include name="${dir.root}\CPL.TXT" />

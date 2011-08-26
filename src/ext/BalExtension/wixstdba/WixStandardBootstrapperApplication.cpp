@@ -15,6 +15,8 @@
 
 #include "precomp.h"
 
+static const HRESULT E_WIXSTDBA_CONDITION_FAILED = MAKE_HRESULT(SEVERITY_ERROR, 500, 1);
+
 static const LPCWSTR WIXSTDBA_WINDOW_CLASS = L"WixStdBA";
 static const LPCWSTR WIXSTDBA_VARIABLE_INSTALL_FOLDER = L"InstallFolder";
 static const LPCWSTR WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH = L"LaunchTarget";
@@ -268,6 +270,11 @@ public: // IBootstrapperApplication
         __in HRESULT hrStatus
         )
     {
+        if (SUCCEEDED(hrStatus))
+        {
+            hrStatus = EvaluateConditions();
+        }
+
         SetState(WIXSTDBA_STATE_DETECTED, hrStatus);
 
         // If we're not interacting with the user or we're doing a layout then automatically
@@ -526,36 +533,24 @@ public: // IBootstrapperApplication
     virtual STDMETHODIMP_(int) OnResolveSource(
         __in_z LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
-        __in_z LPCWSTR /*wzLocalSource*/,
+        __in_z LPCWSTR wzLocalSource,
         __in_z_opt LPCWSTR wzDownloadSource
         )
     {
-        int nResult = IDNO;
-        LPWSTR sczCaption = NULL;
-        LPWSTR sczText = NULL;
-
-        LPCWSTR wzId = wzPayloadId ? wzPayloadId : wzPackageOrContainerId;
-        LPCWSTR wzContainerOrPayload = wzPayloadId ? L"payload" : L"container";
-        StrAllocFormatted(&sczCaption, L"Resolve Source for %ls: %ls", wzContainerOrPayload, wzId);
+        int nResult = IDERROR; // assume we won't resolve source and that is unexpected.
 
         if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
             if (wzDownloadSource)
             {
-                StrAllocFormatted(&sczText, L"The %ls has a download url: %ls\nWould you like to download?", wzContainerOrPayload, wzDownloadSource);
-
-                nResult = ::MessageBoxW(m_hWnd, sczText, sczCaption, MB_YESNOCANCEL | MB_ICONASTERISK);
-            }
-
-            if (IDYES == nResult)
-            {
                 nResult = IDDOWNLOAD;
             }
-            else if (IDNO == nResult)
+            else // prompt to change the source location.
             {
-                // Prompt to change the source location.
                 OPENFILENAMEW ofn = { };
                 WCHAR wzFile[MAX_PATH] = { };
+
+                ::StringCchCopyW(wzFile, countof(wzFile), wzLocalSource);
 
                 ofn.lStructSize = sizeof(ofn);
                 ofn.hwndOwner = m_hWnd;
@@ -564,7 +559,7 @@ public: // IBootstrapperApplication
                 ofn.lpstrFilter = L"All Files\0*.*\0";
                 ofn.nFilterIndex = 1;
                 ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-                ofn.lpstrTitle = sczCaption;
+                ofn.lpstrTitle = m_pTheme->sczCaption;
 
                 if (::GetOpenFileNameW(&ofn))
                 {
@@ -582,14 +577,8 @@ public: // IBootstrapperApplication
             // If doing a non-interactive install and download source is available, let's try downloading the package silently
             nResult = IDDOWNLOAD;
         }
-        else
-        {
-            // There's nothing more we can do in non-interactive mode
-            nResult = IDCANCEL;
-        }
+        // else there's nothing more we can do in non-interactive mode
 
-        ReleaseStr(sczText);
-        ReleaseStr(sczCaption);
         return CheckCanceled() ? IDCANCEL : nResult;
     }
 
@@ -676,6 +665,7 @@ private: // privates
         // initiate engine shutdown
         pThis->m_pEngine->Quit(hr);
 
+        ReleaseTheme(pThis->m_pTheme);
         ThemeUninitialize();
 
         // uninitialize COM
@@ -694,13 +684,30 @@ private: // privates
     HRESULT InitializeData()
     {
         HRESULT hr = S_OK;
+        LPWSTR sczLanguage = NULL;
+        LPWSTR sczModulePath = NULL;
         IXMLDOMDocument *pixdManifest = NULL;
+
+        hr = ProcessCommandLine(&sczLanguage);
+        ExitOnFailure(hr, "Unknown commandline parameters.");
+
+        hr = PathRelativeToModule(&sczModulePath, NULL, m_hModule);
+        BalExitOnFailure(hr, "Failed to get module path.");
+
+        hr = LoadLocalization(sczModulePath, sczLanguage);
+        ExitOnFailure(hr, "Failed to load localization.");
+
+        hr = LoadTheme(sczModulePath, sczLanguage);
+        ExitOnFailure(hr, "Failed to load theme.");
 
         hr = BalManifestLoad(m_hModule, &pixdManifest);
         BalExitOnFailure(hr, "Failed to load bootstrapper application manifest.");
 
         hr = BalInfoParseFromXml(&m_Bundle, pixdManifest);
         BalExitOnFailure(hr, "Failed to load bundle information.");
+
+        hr = BalConditionsParseFromXml(&m_Conditions, pixdManifest, m_pLocStrings);
+        BalExitOnFailure(hr, "Failed to load conditions from XML.");
 
         if (m_fPrereq)
         {
@@ -715,6 +722,111 @@ private: // privates
 
     LExit:
         ReleaseObject(pixdManifest);
+        ReleaseStr(sczModulePath);
+        ReleaseStr(sczLanguage);
+
+        return hr;
+    }
+
+
+    //
+    // ProcessCommandLine - process the provided command line arguments.
+    //
+    HRESULT ProcessCommandLine(
+        __inout LPWSTR* psczLanguage
+        )
+    {
+        HRESULT hr = S_OK;
+        int argc = 0;
+        LPWSTR* argv = NULL;
+
+        if (m_command.wzCommandLine && *m_command.wzCommandLine)
+        {
+            argv = ::CommandLineToArgvW(m_command.wzCommandLine, &argc);
+            ExitOnNullWithLastError(argv, hr, "Failed to get command line.");
+
+            for (int i = 0; i < argc; ++i)
+            {
+                if (argv[i][0] == L'-' || argv[i][0] == L'/')
+                {
+                    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"lang", -1))
+                    {
+                        if (i + 1 >= argc)
+                        {
+                            hr = E_INVALIDARG;
+                            BalExitOnFailure(hr, "Must specify a language.");
+                        }
+
+                        ++i;
+
+                        hr = StrAllocString(psczLanguage, &argv[i][0], 0);
+                        BalExitOnFailure(hr, "Failed to copy language.");
+                    }
+                }
+            }
+        }
+
+    LExit:
+        if (argv)
+        {
+            ::LocalFree(argv);
+        }
+
+        return hr;
+    }
+
+    HRESULT LoadLocalization(
+        __in_z LPCWSTR wzModulePath,
+        __in_z_opt LPCWSTR wzLanguage
+        )
+    {
+        HRESULT hr = S_OK;
+        LPWSTR sczLocPath = NULL;
+        LPCWSTR wzLocFileName = m_fPrereq ? L"mbapreq.wxl" : L"thm.wxl";
+
+        hr = LocProbeForFile(wzModulePath, wzLocFileName, wzLanguage, &sczLocPath);
+        BalExitOnFailure2(hr, "Failed to probe for loc file: %ls in path: %ls", wzLocFileName, wzModulePath);
+
+        hr = LocLoadFromFile(sczLocPath, &m_pLocStrings);
+        BalExitOnFailure1(hr, "Failed to load loc file from path: %ls", sczLocPath);
+
+    LExit:
+        ReleaseStr(sczLocPath);
+
+        return hr;
+    }
+
+
+    HRESULT LoadTheme(
+        __in_z LPCWSTR wzModulePath,
+        __in_z_opt LPCWSTR wzLanguage
+        )
+    {
+        HRESULT hr = S_OK;
+        LPWSTR sczThemePath = NULL;
+        LPCWSTR wzThemeFileName = m_fPrereq ? L"mbapreq.thm" : L"thm.xml";
+        LPWSTR sczCaption = NULL;
+
+        hr = LocProbeForFile(wzModulePath, wzThemeFileName, wzLanguage, &sczThemePath);
+        BalExitOnFailure2(hr, "Failed to probe for theme file: %ls in path: %ls", wzThemeFileName, wzModulePath);
+
+        hr = ThemeLoadFromFile(sczThemePath, &m_pTheme);
+        BalExitOnFailure1(hr, "Failed to load theme from path: %ls", sczThemePath);
+
+        hr = ThemeLocalize(m_pTheme, m_pLocStrings);
+        BalExitOnFailure1(hr, "Failed to localize theme: %ls", sczThemePath);
+
+        // Update the caption if there are any formated strings in it.
+        hr = BalFormatString(m_pTheme->sczCaption, &sczCaption);
+        if (SUCCEEDED(hr))
+        {
+            ThemeUpdateCaption(m_pTheme, sczCaption);
+        }
+
+    LExit:
+        ReleaseStr(sczCaption);
+        ReleaseStr(sczThemePath);
+
         return hr;
     }
 
@@ -787,31 +899,6 @@ private: // privates
         HRESULT hr = S_OK;
         WNDCLASSW wc = { };
         DWORD dwWindowStyle = 0;
-        LPCWSTR wzThemeFileName = m_fPrereq ? L"mbapreq.thm" : L"thm.xml";
-        LPCWSTR wzLocFileName = m_fPrereq ? L"mbapreq.wxl" : L"thm.wxl";
-        LPWSTR sczThemePath = NULL;
-        LPWSTR sczCaption = NULL;
-
-        // Load theme relative to the bootstrapper application.dll.
-        hr = PathRelativeToModule(&sczThemePath, wzThemeFileName, m_hModule);
-        BalExitOnFailure1(hr, "Failed to combine module path with '%ls'", wzThemeFileName);
-
-        hr = ThemeLoadFromFile(sczThemePath, &m_pTheme);
-        BalExitOnFailure1(hr, "Failed to load theme from path: %ls", sczThemePath);
-
-        hr = ProcessCommandLine();
-        BalExitOnFailure(hr, "Unknown commandline parameters.");
-
-        if (NULL != m_sczLanguage)
-        {
-            hr = ThemeLoadLocFromFile(m_pTheme, m_sczLanguage, m_hModule);
-            BalExitOnFailure(hr, "Failed to localize from /lang.");
-        }
-        else
-        {
-            hr = ThemeLoadLocFromFile(m_pTheme, wzLocFileName, m_hModule);
-            BalExitOnFailure1(hr, "Failed to localize from fallback language: %ls", wzLocFileName);
-        }
 
         // Register the window class and create the window.
         wc.lpfnWndProc = CWixStandardBootstrapperApplication::WndProc;
@@ -835,22 +922,12 @@ private: // privates
             dwWindowStyle &= ~WS_VISIBLE;
         }
 
-        // Update the caption if there are any formated strings in it.
-        hr = BalFormatString(m_pTheme->sczCaption, &sczCaption);
-        if (SUCCEEDED(hr))
-        {
-            ThemeUpdateCaption(m_pTheme, sczCaption);
-        }
-
         m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->sczCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
         ExitOnNullWithLastError(m_hWnd, hr, "Failed to create window.");
 
         hr = S_OK;
 
     LExit:
-        ReleaseStr(sczCaption);
-        ReleaseStr(sczThemePath);
-
         return hr;
     }
 
@@ -871,59 +948,6 @@ private: // privates
             ::UnregisterClassW(WIXSTDBA_WINDOW_CLASS, m_hModule);
             m_fRegistered = FALSE;
         }
-
-        if (m_pTheme)
-        {
-            ThemeFree(m_pTheme);
-            m_pTheme = NULL;
-        }
-    }
-
-
-    //
-    // ProcessCommandLine - process the provided command line arguments.
-    //
-    HRESULT ProcessCommandLine()
-    {
-        HRESULT hr = S_OK;
-        int argc = 0;
-        LPWSTR* argv = NULL;
-
-        if (m_command.wzCommandLine && *m_command.wzCommandLine)
-        {
-            argv = ::CommandLineToArgvW(m_command.wzCommandLine, &argc);
-            ExitOnNullWithLastError(argv, hr, "Failed to get command line.");
-
-            for (int i = 0; i < argc; ++i)
-            {
-                if (argv[i][0] == L'-' || argv[i][0] == L'/')
-                {
-                    if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"lang", -1))
-                    {
-                        if (i + 1 >= argc)
-                        {
-                            ExitOnRootFailure(hr = E_INVALIDARG, "Must specify a language.");
-                        }
-
-                        ++i;
-
-                        hr = StrAllocString(&m_sczLanguage, &argv[i][0], 0);
-                        BalExitOnFailure(hr, "Failed to copy language.");
-
-                        hr = StrAllocConcat(&m_sczLanguage, L".wxl", 0);
-                        BalExitOnFailure(hr, "Failed to concatenate wxl extension.");
-                    }
-                }
-            }
-        }
-
-    LExit:
-        if (argv)
-        {
-            ::LocalFree(argv);
-        }
-
-        return hr;
     }
 
 
@@ -1297,10 +1321,18 @@ private: // privates
 
                     if (FAILED(m_hrFinal))
                     {
-                        StrAllocFromError(&sczUnformattedText, m_hrFinal, NULL);
-                        if (!sczUnformattedText || !*sczUnformattedText)
+                        // If we know the failure message, use that.
+                        if (m_sczFailedMessage && *m_sczFailedMessage)
                         {
-                            StrAllocFromError(&sczUnformattedText, E_FAIL, NULL);
+                            StrAllocString(&sczUnformattedText, m_sczFailedMessage, 0);
+                        }
+                        else // try to get the error message from the error code.
+                        {
+                            StrAllocFromError(&sczUnformattedText, m_hrFinal, NULL);
+                            if (!sczUnformattedText || !*sczUnformattedText)
+                            {
+                                StrAllocFromError(&sczUnformattedText, E_FAIL, NULL);
+                            }
                         }
 
                         StrAllocFormatted(&sczText, L"0x%08x - %ls", m_hrFinal, sczUnformattedText);
@@ -1679,11 +1711,11 @@ private: // privates
                 *pdwPageId = 0;
                 break;
 
-            case WIXSTDBA_STATE_INITIALIZED:
+            case WIXSTDBA_STATE_INITIALIZED: __fallthrough;
+            case WIXSTDBA_STATE_DETECTING:
                 *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_LOADING];
                 break;
 
-            case WIXSTDBA_STATE_DETECTING: __fallthrough;
             case WIXSTDBA_STATE_DETECTED:
                 switch (m_command.action)
                 {
@@ -1729,6 +1761,32 @@ private: // privates
     }
 
 
+    HRESULT EvaluateConditions()
+    {
+        HRESULT hr = S_OK;
+        BOOL fResult = FALSE;
+
+        ReleaseNullStr(m_sczFailedMessage);
+
+        for (DWORD i = 0; i < m_Conditions.cConditions; ++i)
+        {
+            BAL_CONDITION* pCondition = m_Conditions.rgConditions + i;
+
+            hr = BalConditionEvaluate(pCondition, m_pEngine, &fResult, &m_sczFailedMessage);
+            BalExitOnFailure(hr, "Failed to evaluate condition.");
+
+            if (!fResult)
+            {
+                hr = E_WIXSTDBA_CONDITION_FAILED;
+                BalExitOnFailure1(hr, "Bundle condition evaluated to false: %ls", pCondition->sczCondition);
+            }
+        }
+
+    LExit:
+        return hr;
+    }
+
+
 public:
     //
     // Constructor - intitialize member variables.
@@ -1743,12 +1801,16 @@ public:
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));
 
+        m_pLocStrings = NULL;
+        memset(&m_Bundle, 0, sizeof(m_Bundle));
+        memset(&m_Conditions, 0, sizeof(m_Conditions));
+        m_sczFailedMessage = NULL;
+
         m_pTheme = NULL;
         memset(m_rgdwPageIds, 0, sizeof(m_rgdwPageIds));
         m_hUiThread = NULL;
         m_fRegistered = FALSE;
         m_hWnd = NULL;
-        memset(&m_Bundle, 0, sizeof(m_Bundle));
 
         m_state = WIXSTDBA_STATE_INITIALIZING;
         m_hrFinal = S_OK;
@@ -1757,7 +1819,6 @@ public:
         m_fRestartRequired = FALSE;
         m_fAllowRestart = FALSE;
 
-        m_sczLanguage = NULL;
         m_sczLicenseFile = NULL;
         m_sczLicenseUrl = NULL;
 
@@ -1779,9 +1840,10 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
+        BalConditionsUninitialize(&m_Conditions);
         BalInfoUninitialize(&m_Bundle);
+        LocFree(m_pLocStrings);
 
-        ReleaseStr(m_sczLanguage);
         ReleaseStr(m_sczLicenseFile);
         ReleaseStr(m_sczLicenseUrl);
         ReleaseStr(m_sczPrereqPackage);
@@ -1793,7 +1855,10 @@ private:
     BOOTSTRAPPER_COMMAND m_command;
     IBootstrapperEngine* m_pEngine;
 
+    LOC_STRINGSET* m_pLocStrings;
     BAL_INFO_BUNDLE m_Bundle;
+    BAL_CONDITIONS m_Conditions;
+    LPWSTR m_sczFailedMessage;
 
     THEME* m_pTheme;
     DWORD m_rgdwPageIds[countof(vrgwzPageNames)];
@@ -1809,7 +1874,6 @@ private:
     BOOL m_fRestartRequired;
     BOOL m_fAllowRestart;
 
-    LPWSTR m_sczLanguage;
     LPWSTR m_sczLicenseFile;
     LPWSTR m_sczLicenseUrl;
 

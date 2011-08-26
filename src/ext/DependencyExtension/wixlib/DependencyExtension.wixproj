@@ -9,11 +9,11 @@
     <Pedantic>True</Pedantic>
     <SuppressSpecificWarnings>1086</SuppressSpecificWarnings>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <IncludeSearchPaths>$(WIX_ROOT)\src\ca\inc</IncludeSearchPaths>
     <Cultures>en-us</Cultures>
     <DefineConstants>
       $(DefineConstants);
       caerrwxi=$(OutputPath)\caerr.wxi;
-      wixdepcadll=$(OutputPath)\wixdepca.dll;
     </DefineConstants>
   </PropertyGroup>
   <ItemGroup>

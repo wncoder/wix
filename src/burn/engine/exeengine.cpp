@@ -442,7 +442,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     else if (BURN_EXE_PROTOCOL_TYPE_NETFX4 == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        hr = NetFxRunChainer(sczExecutablePath, sczCommand, pExecuteAction->exePackage.sczBundleName, pfnGenericMessageHandler, pvContext, &dwExitCode);
+        hr = NetFxRunChainer(sczExecutablePath, sczCommand, pfnGenericMessageHandler, pvContext, &dwExitCode);
         ExitOnFailure1(hr, "Failed to run netfx chainer: %ls", sczExecutablePath);
     }
     else // create and wait for the executable process while sending fake progress to allow cancel.

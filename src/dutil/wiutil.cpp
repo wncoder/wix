@@ -1099,6 +1099,11 @@ static INT SendProgressUpdate(
     dwPercentage += CalculatePhaseProgress(pContext, 1, 80);
     dwPercentage += CalculatePhaseProgress(pContext, 2, 5);
 
+    if (pContext->fRollback)
+    {
+        dwPercentage = 100 - dwPercentage;
+    }
+
     //if (qwTotal) // avoid "divide by zero" if the MSI range is blank.
     //{
     //    // calculate gauge.
@@ -1153,7 +1158,7 @@ static DWORD CalculatePhaseProgress(
         WIU_MSI_PROGRESS* pProgress = pContext->rgMsiProgress + dwProgressIndex;
         if (pProgress->dwTotal)
         {
-            DWORD64 dw64Completed = pContext->fRollback ? pProgress->dwTotal - pProgress->dwCompleted : pProgress->dwCompleted;
+            DWORD64 dw64Completed = pProgress->dwCompleted;
             dwPhasePercentage = static_cast<DWORD>(dw64Completed * dwWeightPercentage / pProgress->dwTotal);
         }
     }

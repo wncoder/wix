@@ -187,6 +187,7 @@ static HRESULT OnDetectRelatedBundles(
 extern "C" HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
+    __in BURN_VARIABLES* pVariables,
     __in DWORD64 qwEstimatedSize,
     __in_z LPCWSTR wzResumeCommandLine
     )
@@ -205,6 +206,9 @@ extern "C" HRESULT ElevationSessionBegin(
 
     hr = BuffWriteString(&pbData, &cbData, wzResumeCommandLine);
     ExitOnFailure(hr, "Failed to write resume command line to message buffer.");
+
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
+    ExitOnFailure(hr, "Failed to write variables.");
 
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN, pbData, cbData, NULL, NULL, &dwResult);
@@ -1136,6 +1140,9 @@ static HRESULT OnSessionBegin(
 
     hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);
     ExitOnFailure(hr, "Failed to read resume command line.");
+
+    hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
+    ExitOnFailure(hr, "Failed to read variables.");
 
     // begin session in per-machine process
     hr =  RegistrationSessionBegin(pRegistration, pVariables, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);

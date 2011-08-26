@@ -24,6 +24,7 @@
 
 #include <dutil.h>
 #include <pathutil.h>
+#include <locutil.h>
 #include <memutil.h>
 #include <strutil.h>
 #include <xmlutil.h>

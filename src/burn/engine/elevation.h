@@ -53,6 +53,7 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
+    __in BURN_VARIABLES* pVariables,
     __in DWORD64 qwEstimatedSize,
     __in_z LPCWSTR wzResumeCommandLine
     );

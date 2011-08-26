@@ -54,6 +54,8 @@ DAPI_(HRESULT) BalInfoParseFromXml(
     BalExitOnFailure(hr, "Failed to parse package information from bootstrapper application data.");
 
 LExit:
+    ReleaseObject(pNode);
+
     return hr;
 }
 
@@ -166,6 +168,7 @@ static HRESULT ParsePackagesFromXml(
         ++iPackage;
         ReleaseNullObject(pNode);
     }
+    ExitOnFailure(hr, "Failed to parse all package property elements.");
 
     if (S_FALSE == hr)
     {

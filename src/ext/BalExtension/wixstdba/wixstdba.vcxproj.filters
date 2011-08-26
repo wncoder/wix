@@ -45,6 +45,11 @@
     <None Include="Resources\RtfTheme.xml">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="Resources\mbapreq.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\mbapreq.thm" />
+    <None Include="Resources\mbapreq.wxl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h">

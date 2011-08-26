@@ -274,7 +274,7 @@ extern "C" HRESULT ApplyRegister(
         // begin new session
         if (pEngineState->registration.fPerMachine)
         {
-            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, 0, pEngineState->registration.sczResumeCommandLine);
+            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, 0, pEngineState->registration.sczResumeCommandLine);
             ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
         }
         else

@@ -21,6 +21,8 @@
 extern "C" {
 #endif
 
+#define ReleaseTheme(p) if (p) { ThemeFree(p); p = NULL; }
+
 enum THEME_CONTROL_DATA
 {
     THEME_CONTROL_DATA_HOVER = 1,
@@ -253,26 +255,12 @@ DAPI_(void) ThemeUnloadControls(
     );
 
 /********************************************************************
- ThemeLoadLocFromFile - Loads a wxl file and localizes strings.
- Must be called after loading a theme.
+ ThemeLocalize - Localizes all of the strings in the them.
 
 *******************************************************************/
-DAPI_(HRESULT) ThemeLoadLocFromFile(
-    __in THEME* pTheme,
-    __in_z LPCWSTR wzFileName,
-    __in HMODULE hModule
-    );
-
-/********************************************************************
- ThemeLoadLocFromResource - Loads a wxl file from a module's data
- resource and localizes strings. Must be called after loading a theme.
-
- NOTE: The resource data must be UTF-8 encoded.
-*******************************************************************/
-DAPI_(HRESULT) ThemeLoadLocFromResource(
-    __in THEME* pTheme,
-    __in_z LPCSTR szResourceName,
-    __in HMODULE hModule
+DAPI_(HRESULT) ThemeLocalize(
+    __in THEME *pTheme,
+    __in const LOC_STRINGSET *pLocStringSet
     );
 
 DAPI_(HRESULT) ThemeLoadStrings(

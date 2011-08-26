@@ -23,7 +23,7 @@ extern "C" {
 
 struct LOC_STRING
 {
-    LPWSTR wzID;
+    LPWSTR wzId;
     LPWSTR wzText;
     BOOL bOverridable;
 };
@@ -34,23 +34,53 @@ struct LOC_STRINGSET
     LOC_STRING* rgLocStrings;
 };
 
+/********************************************************************
+ LocProbeForFile - Searches for a localization file on disk.
+
+*******************************************************************/
+HRESULT DAPI LocProbeForFile(
+    __in_z LPCWSTR wzBasePath,
+    __in_z LPCWSTR wzLocFileName,
+    __in_z_opt LPCWSTR wzLanguage,
+    __inout LPWSTR* psczPath
+    );
+
+/********************************************************************
+ LocLoadFromFile - Loads a localization file
+
+*******************************************************************/
 HRESULT DAPI LocLoadFromFile(
     __in_z LPCWSTR wzWxlFile,
     __out LOC_STRINGSET** ppLocStringSet
     );
+
+/********************************************************************
+ LocLoadFromResource - loads a localization file from a module's data
+                       resource.
+
+ NOTE: The resource data must be UTF-8 encoded.
+*******************************************************************/
 HRESULT DAPI LocLoadFromResource(
     __in HMODULE hModule,
     __in_z LPCSTR szResource,
     __out LOC_STRINGSET** ppLocStringSet
     );
 
-HRESULT DAPI LocLocalizeString(
-    __in const LOC_STRINGSET* pLocStringSet,
-    __inout LPWSTR* ppInput
-    );
+/********************************************************************
+ LocFree - free memory allocated when loading a localization file
 
+*******************************************************************/
 void DAPI LocFree(
     __in_opt LOC_STRINGSET* pLocStringSet
+    );
+
+/********************************************************************
+ LocLocalizeString - replace any #(loc.id) in a string with the
+                    correct sub string
+*******************************************************************/
+HRESULT DAPI LocLocalizeString(
+    __in const LOC_STRINGSET* pLocStringSet,
+    __inout LPWSTR* psczInput
     );
 
 #ifdef __cplusplus

@@ -146,6 +146,11 @@
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />
             </Instance>
+            <Instance>
+                The {0} element's value, '{1}', is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="value" />
+            </Instance>
         </Message>
         <Message Id="IllegalYesNoValue" Number="15">
             <Instance>
@@ -3497,6 +3502,17 @@
             <Instance>
                 The MSI '{0}' does not explicitly indicate that it is a per-user package even though the ALLUSERS Property is blank. This suggests a per-user package so the Bundle will assume the package is per-user. If possible, use the Package/@InstallScope attribute to be explicit instead.
                 <Parameter Type="System.String" Name="path" />
+            </Instance>
+        </Message>
+        <Message Id="AttributeShouldContain" Number="1135">
+            <Instance>
+                The {0}/@{1} attribute value '{2}' should contain '{3}' when the {0}/@{4} attribute is set to '{5}'.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="attributeValue" />
+                <Parameter Type="System.String" Name="expectedContains" />
+                <Parameter Type="System.String" Name="otherAttributeName" />
+                <Parameter Type="System.String" Name="otherAttributeValue" />
             </Instance>
         </Message>
     </Class>
