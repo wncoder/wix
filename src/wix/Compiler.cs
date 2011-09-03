@@ -4247,7 +4247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 this.core.OnMessage(WixErrors.ExpectedAttribute(dataSourceLineNumbers, data.Name, "Column"));
                                             }
 
-                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : "\t", columnName, ":", data.InnerText);
+                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : "\x0", columnName, ":", data.InnerText);
                                             break;
                                     }
                                 }
@@ -19797,6 +19797,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[14] = splashScreenSourceFile;
                 row[15] = condition;
                 row[16] = tag;
+                row[17] = this.currentPlatform.ToString();
             }
         }
 
@@ -20770,6 +20771,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string msuKB = null;
             YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
+            YesNoType enableFeatureSelection = YesNoType.NotSet;
+            YesNoType forcePerMachine = YesNoType.NotSet;
+
+            string[] expectedNetFx4Args = new string[] { "/q", "/norestart", "/chainingpackage" };
 
             // This crazy list lets us evaluate extension attributes *after* all core attributes
             // have been parsed and dealt with, regardless of authoring order.
@@ -20810,6 +20815,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "CacheId":
                             cacheId = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "EnableFeatureSelection":
+                            enableFeatureSelection = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
+                            break;
+                        case "ForcePerMachine":
+                            forcePerMachine = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
                             break;
                         case "LogPathVariable":
                             logPathVariable = this.core.GetAttributeValue(sourceLineNumbers, attrib, true);
@@ -20940,6 +20953,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.IllegalAttributeValueWithLegalList(sourceLineNumbers, node.Name, "Protocol", protocol, "none, burn, netfx4"));
             }
 
+            if (!String.IsNullOrEmpty(protocol) && protocol.Equals("netfx4", StringComparison.Ordinal))
+            {
+                foreach (string expectedArgument in expectedNetFx4Args)
+                {
+                    if (null == installCommand  || - 1 == installCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "InstallCommand", installCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+
+                    if (null == uninstallCommand || -1 == repairCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "RepairCommand", repairCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+
+                    if (null == uninstallCommand || -1 == uninstallCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "UninstallCommand", uninstallCommand, expectedArgument, "Protocol", "netfx4"));
+                    }
+                }
+            }
+
             // Now that the package ID is known, we can parse the extension attributes...
             Dictionary<string, string> contextValues = new Dictionary<string,string>();
             contextValues["PackageId"] = id;
@@ -21046,6 +21080,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (YesNoType.NotSet != suppressLooseFilePayloadGeneration)
                 {
                     row[19] = (YesNoType.Yes == suppressLooseFilePayloadGeneration) ? 1 : 0;
+                }
+
+                if (YesNoType.NotSet != enableFeatureSelection)
+                {
+                    row[20] = (YesNoType.Yes == enableFeatureSelection) ? 1 : 0;
+                }
+
+                if (YesNoType.NotSet != forcePerMachine)
+                {
+                    row[21] = (YesNoType.Yes == forcePerMachine) ? 1 : 0;
                 }
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
@@ -21449,8 +21493,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         break;
                     case Wix.RelatedBundle.ActionType.Addon:
                         break;
+                    case Wix.RelatedBundle.ActionType.Patch:
+                        break;
                     default:
-                        this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Action", action, "Detect", "Upgrade", "Addon"));
+                        this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, "Action", action, "Detect", "Upgrade", "Addon", "Patch"));
                         break;
                 }
             }

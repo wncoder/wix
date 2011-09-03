@@ -121,7 +121,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDatabaseOpenView(db.Handle, query, out handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             this.Handle = handle;
@@ -145,7 +145,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiViewExecute(this.Handle, null == record ? 0 : record.Handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -164,7 +164,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             }
             else if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             return new Record(recordHandle);
@@ -180,7 +180,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiViewModify(this.Handle, Convert.ToInt32(type, CultureInfo.InvariantCulture), record.Handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
 
@@ -196,7 +196,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiViewGetColumnInfo(this.Handle, columnType, out recordHandle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
 
             return new Record(recordHandle);

@@ -3355,10 +3355,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.GenerateBAManifestBundleTables(bundle, bundleInfo);
 
-            // Copy the burnstub.exe to a writable location then mark it to be moved to its
+            // Copy the burn.exe to a writable location then mark it to be moved to its
             // final build location.
-            string wixExeDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string stubFile = Path.Combine(wixExeDirectory, "burnstub.exe");
+            string wixExeDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), bundleInfo.Platform.ToString());
+            string stubFile = Path.Combine(wixExeDirectory, "burn.exe");
             string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleInfo.Path));
 
             this.core.OnMessage(WixVerboses.GeneratingBundle(bundleTempPath, stubFile));
@@ -3490,6 +3490,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[8] = package.Permanent ? "yes" : "no";
                 row[9] = package.LogPathVariable;
                 row[10] = package.RollbackLogPathVariable;
+                row[11] = (PayloadInfo.PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
@@ -3526,6 +3527,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Row row = wixBundlePropertiesTable.CreateRow(null);
             row[0] = bundleInfo.RegistrationInfo == null ? null : bundleInfo.RegistrationInfo.Name;
             row[1] = bundleInfo.LogPathVariable;
+            row[2] = (YesNoDefaultType.Yes == bundleInfo.Compressed) ? "yes" : "no";
         }
 
         private void CreateContainer(ContainerInfo container, string manifestFile)
@@ -3941,11 +3943,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
             version.Load(bundleTempPath);
             resources.Add(version);
 
+            // Ensure the bundle info provides a full four part version.
+            Version fourPartVersion = new Version(bundleInfo.Version);
+            int major = (fourPartVersion.Major < 0) ? 0 : fourPartVersion.Major;
+            int minor = (fourPartVersion.Minor < 0) ? 0 : fourPartVersion.Minor;
+            int build = (fourPartVersion.Build < 0) ? 0 : fourPartVersion.Build;
+            int revision = (fourPartVersion.Revision < 0) ? 0 : fourPartVersion.Revision;
+            fourPartVersion = new Version(major, minor, build, revision);
+
+            version.FileVersion = fourPartVersion;
+            version.ProductVersion = fourPartVersion;
+
             Microsoft.Deployment.Resources.VersionStringTable strings = version[1033];
-            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
-            strings["FileVersion"] = bundleInfo.Version;
-            strings["ProductVersion"] = bundleInfo.Version;
             strings["LegalCopyright"] = bundleInfo.Copyright;
+            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
+            strings["FileVersion"] = bundleInfo.Version;    // string versions do not have to be four parts.
+            strings["ProductVersion"] = bundleInfo.Version; // string versions do not have to be four parts.
 
             if (null != bundleInfo.RegistrationInfo)
             {
@@ -6754,6 +6767,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.Condition = (string)row[15];
                 this.Tag = (string)row[16];
+                this.Platform = (Platform)Enum.Parse(typeof(Platform), (string)row[17]);
 
                 // Default provider key is the Id.
                 this.ProviderKey = this.Id.ToString("B");
@@ -6782,6 +6796,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Tag { get; private set; }
+            public Platform Platform { get; private set; }
             public string Version { get; private set; }
             public string ProviderKey { get; internal set; }
         }
@@ -6915,7 +6930,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
                        (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
-                       wixGroupTable, allPayloads, fileManager, core)
+                       row[20], row[21], wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
@@ -6925,7 +6940,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
                                     string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
-                                    Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
+                                    object enableFeatureSelectionData, object forcePerMachineData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
                 if (null != cacheData)
@@ -6961,6 +6976,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (null != suppressLooseFilePayloadGenerationData)
                 {
                     suppressLooseFilePayloadGeneration = (1 == (int)suppressLooseFilePayloadGenerationData) ? YesNoType.Yes : YesNoType.No;
+                }
+
+                YesNoType enableFeatureSelection = YesNoType.NotSet;
+                if (null != enableFeatureSelectionData)
+                {
+                    enableFeatureSelection = (1 == (int)enableFeatureSelectionData) ? YesNoType.Yes : YesNoType.No;
+                }
+
+                YesNoType forcePerMachine = YesNoType.NotSet;
+                if (null != forcePerMachineData)
+                {
+                    forcePerMachine = (1 == (int)forcePerMachineData) ? YesNoType.Yes : YesNoType.No;
                 }
 
                 this.Id = id;
@@ -7024,7 +7051,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (this.ChainPackageType)
                 {
                     case Compiler.ChainPackageType.Msi:
-                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration);
+                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration, enableFeatureSelection, forcePerMachine);
                         break;
                     case Compiler.ChainPackageType.Msp:
                         this.ResolveMspPackage(core);
@@ -7090,7 +7117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// Initializes package state from the MSI contents.
             /// </summary>
             /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration)
+            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration, YesNoType enableFeatureSelection, YesNoType forcePerMachine)
             {
                 string sourcePath = this.PackagePayload.FileInfo.FullName;
                 bool longNamesInImage = false;
@@ -7126,6 +7153,43 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
 
                         this.DisplayName = ChainPackageInfo.GetProperty(db, "ProductName");
+
+                        this.VerifyMsiProperties(core);
+
+                        if (YesNoType.Yes == forcePerMachine)
+                        {
+                            if (!this.PerMachine)
+                            {
+                                core.OnMessage(WixWarnings.PerUserButForcingPerMachine(this.PackagePayload.SourceLineNumbers, sourcePath));
+                                this.PerMachine = true; // ensure that we think the MSI is per-machine.
+                            }
+
+                            this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "ALLUSERS", "1")); // force ALLUSERS=1 via the MSI command-line.
+                        }
+                        else if (ChainPackageInfo.HasProperty(db, "ALLUSERS"))
+                        {
+                            string allusers = ChainPackageInfo.GetProperty(db, "ALLUSERS");
+                            if (allusers.Equals("1", StringComparison.Ordinal))
+                            {
+                                if (!this.PerMachine)
+                                {
+                                    core.OnMessage(WixErrors.PerUserButAllUsersEquals1(this.PackagePayload.SourceLineNumbers, sourcePath));
+                                }
+                            }
+                            else if (allusers.Equals("2", StringComparison.Ordinal))
+                            {
+                                core.OnMessage(WixWarnings.DiscouragedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, this.PerMachine ? "machine" : "user"));
+                            }
+                            else
+                            {
+                                core.OnMessage(WixErrors.UnsupportedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, allusers));
+                            }
+                        }
+                        else if (this.PerMachine) // not forced per-machine and no ALLUSERS property, flip back to per-user
+                        {
+                            core.OnMessage(WixWarnings.ImplicitlyPerUser(this.PackagePayload.SourceLineNumbers, sourcePath));
+                            this.PerMachine = false;
+                        }
 
                         if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
                         {
@@ -7171,8 +7235,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                         }
 
-                        // Represent the Feature table in the manifest.
-                        if (db.Tables.Contains("Feature"))
+                        // If feature selection is enabled, represent the Feature table in the manifest.
+                        if (YesNoType.Yes == enableFeatureSelection && db.Tables.Contains("Feature"))
                         {
                             using (Microsoft.Deployment.WindowsInstaller.View featureView = db.OpenView("SELECT `Component_` FROM `FeatureComponents` WHERE `Feature_` = ?"), 
                                         componentView = db.OpenView("SELECT `FileSize` FROM `File` WHERE `Component_` = ?"))
@@ -7455,6 +7519,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 catch (System.IO.IOException e)
                 {
                     core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
+                }
+            }
+
+            /// <summary>
+            /// Verifies that only allowed properties are passed to the MSI.
+            /// </summary>
+            /// <param name="core">BinderCore for messages.</param>
+            private void VerifyMsiProperties(BinderCore core)
+            {
+                foreach (string disallowed in new string[] { "ACTION", "ALLUSERS", "REBOOT", "REINSTALL", "REINSTALLMODE" })
+                {
+                    foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
+                    {
+                        if (disallowed.Equals(propertyInfo.Name, StringComparison.Ordinal))
+                        {
+                            core.OnMessage(WixErrors.DisallowedMsiProperty(this.PackagePayload.SourceLineNumbers, disallowed));
+                        }
+                    }
                 }
             }
 

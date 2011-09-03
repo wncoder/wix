@@ -34,6 +34,7 @@ static HRESULT RunNormal(
     __in BURN_ENGINE_STATE* pEngineState
     );
 static HRESULT RunElevated(
+    __in HINSTANCE hInstance,
     __in LPCWSTR wzCommandLine,
     __in BURN_ENGINE_STATE* pEngineState
     );
@@ -126,7 +127,7 @@ extern "C" HRESULT EngineRun(
         break;
 
     case BURN_MODE_ELEVATED:
-        hr = RunElevated(wzCommandLine, &engineState);
+        hr = RunElevated(hInstance, wzCommandLine, &engineState);
         ExitOnFailure(hr, "Failed to run per-machine mode.");
         break;
 
@@ -292,6 +293,10 @@ static HRESULT RunNormal(
         SplashScreenCreate(hInstance, NULL, &pEngineState->command.hwndSplashScreen);
     }
 
+    // Create a top-level window to handle system messages.
+    hr = UiCreateMessageWindow(hInstance, pEngineState);
+    ExitOnFailure(hr, "Failed to create the message window.");
+
     // Query registration state.
     hr = CoreQueryRegistration(pEngineState);
     ExitOnFailure(hr, "Failed to query registration.");
@@ -312,6 +317,9 @@ static HRESULT RunNormal(
     } while (fReloadApp);
 
 LExit:
+    // If the message window is still around, close it.
+    UiCloseMessageWindow(pEngineState);
+
     // end per-machine process if running
     if (pEngineState->companionConnection.hProcess)
     {
@@ -332,6 +340,7 @@ LExit:
 }
 
 static HRESULT RunElevated(
+    __in HINSTANCE hInstance,
     __in LPCWSTR wzCommandLine,
     __in BURN_ENGINE_STATE* pEngineState
     )
@@ -371,11 +380,18 @@ static HRESULT RunElevated(
     // Override logging to write over the pipe.
     LogRedirect(RedirectLoggingOverPipe, pEngineState);
 
+    // Create a top-level window to prevent shutting down the elevated process.
+    hr = UiCreateMessageWindow(hInstance, pEngineState);
+    ExitOnFailure(hr, "Failed to create the message window.");
+
     // Pump messages from parent process.
     hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &pEngineState->userExperience.dwExitCode);
     ExitOnFailure(hr, "Failed to pump messages from parent process.");
 
 LExit:
+    // If the message window is still around, close it.
+    UiCloseMessageWindow(pEngineState);
+
     return hr;
 }
 
@@ -480,6 +496,10 @@ static HRESULT ProcessMessage(
         hr = CorePlan(pEngineState, static_cast<BOOTSTRAPPER_ACTION>(pmsg->lParam));
         break;
 
+    case WM_BURN_ELEVATE:
+        hr = CoreElevate(pEngineState, reinterpret_cast<HWND>(pmsg->lParam));
+        break;
+
     case WM_BURN_APPLY:
         hr = CoreApply(pEngineState, reinterpret_cast<HWND>(pmsg->lParam));
         break;
@@ -505,6 +525,9 @@ static HRESULT DAPI RedirectLoggingOverPipe(
     DWORD dwResult = 0;
 
     hPipe = ::TlsGetValue(pEngineState->dwElevatedLoggingTlsId);
+
+    // Make sure the current thread set the pipe in TLS.
+    Assert(hPipe);
 
     hr = BuffWriteStringAnsi(&pbData, &cbData, szString);
     ExitOnFailure(hr, "Failed to write string to buffer.");

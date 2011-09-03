@@ -96,6 +96,7 @@
 #include "embedded.h"
 #include "manifest.h"
 #include "splashscreen.h"
+#include "uithread.h"
 #include "bitsengine.h"
 #include "netfxchainer.h"
 

@@ -6,13 +6,17 @@
     <ProjectReference Include="packages\Bv1-PerMachine\Bv1.wixproj" />
     <ProjectReference Include="packages\Bv1.1-PerMachine-MinorUpdate\Bv1.1.wixproj" />
     <ProjectReference Include="packages\Cv1-PerUser\Cv1.wixproj" />
+    <ProjectReference Include="packages\Dv1-PerMachine\Dv1.wixproj" />
+    <ProjectReference Include="packages\Dv1.0.1-PerMachine\Dv1.0.1.wixproj" />
 
     <ProjectReference Include="packages\Package1\Package1.wixproj"/>
     <ProjectReference Include="packages\Package3\Package3.wixproj"/>
 
     <ProjectReference Include="bundles\teststdba\teststdba.wixproj" />
+    <ProjectReference Include="bundles\perUser\perUser.wixproj" />
     <ProjectReference Include="bundles\v1\v1.wixproj" />
     <ProjectReference Include="bundles\v1addon-PerMachine\v1addon.wixproj" />
+    <ProjectReference Include="bundles\v1addon-patch\v1addonpatch.wixproj" />
     <ProjectReference Include="bundles\v2\v2.wixproj" />
     <ProjectReference Include="tools\EmbedTest\EmbedTest.csproj" />
   </ItemGroup>

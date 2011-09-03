@@ -19,9 +19,12 @@
 #pragma once
 
 #include <windows.h>
+#include <bitsmsg.h>
+#include <wininet.h>
 
 #include <dutil.h>
 #include <pathutil.h>
+#include <locutil.h>
 #include <memutil.h>
 #include <strutil.h>
 #include <xmlutil.h>

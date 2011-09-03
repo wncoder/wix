@@ -221,7 +221,7 @@ static HRESULT GetResourceMetadata(
     LONGLONG llLength = 0;
 
     hr = MakeRequest(hSession, psczUrl, L"HEAD", NULL, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
-    ExitOnFailure1(hr, "Failed to connect to URL: %ls", psczUrl);
+    ExitOnFailure1(hr, "Failed to connect to URL: %ls", *psczUrl);
 
     hr = InternetGetSizeByHandle(hUrl, &llLength);
     if (FAILED(hr))
@@ -500,6 +500,15 @@ static HRESULT MakeRequest(
         hConnect = ::InternetConnectW(hSession, uri.sczHostName, uri.port, (wzUser && *wzUser) ? wzUser : uri.sczUser, (wzPassword && *wzPassword) ? wzPassword : uri.sczPassword, INTERNET_SCHEME_FTP == uri.scheme ? INTERNET_SERVICE_FTP : INTERNET_SERVICE_HTTP, 0, 0);
         ExitOnNullWithLastError1(hConnect, hr, "Failed to connect to URL: %ls", *psczSourceUrl);
 
+        // Best effort set the proxy username and password, if they were provided.
+        if ((wzUser && *wzUser) && (wzPassword && *wzPassword))
+        {
+            if (::InternetSetOptionW(hConnect, INTERNET_OPTION_PROXY_USERNAME, (LPVOID)wzUser, lstrlenW(wzUser)))
+            {
+                ::InternetSetOptionW(hConnect, INTERNET_OPTION_PROXY_PASSWORD, (LPVOID)wzPassword, lstrlenW(wzPassword));
+            }
+        }
+
         hr = OpenRequest(hConnect, wzMethod, uri.scheme, uri.sczPath, uri.sczQueryString, wzHeaders, &hUrl);
         ExitOnFailure1(hr, "Failed to open internet URL: %ls", *psczSourceUrl);
 
@@ -607,9 +616,9 @@ static HRESULT SendRequest(
         break;
 
     // redirection cases
-    case 301:  __fallthrough; // file moved
-    case 302:  __fallthrough; // temporary
-    case 303:  // redirect method
+    case 301: __fallthrough; // file moved
+    case 302: __fallthrough; // temporary
+    case 303: // redirect method
         hr = InternetQueryInfoString(hUrl, HTTP_QUERY_CONTENT_LOCATION, psczUrl);
         ExitOnFailure1(hr, "Failed to get redirect url: %ls", *psczUrl);
 
@@ -617,30 +626,40 @@ static HRESULT SendRequest(
         break;
 
     // error cases
-    case 400:
-        hr = HRESULT_FROM_WIN32(ERROR_BAD_ARGUMENTS);
+    case 400: // bad request
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME);
         break;
 
-    case 401:  __fallthrough; // unauthorized
-    case 403:  // access denied
+    case 401: __fallthrough; // unauthorized
+    case 407: __fallthrough; // proxy unauthorized
+    case 403: // access denied
         hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
         break;
 
-    case 405:
-        hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        break;
-
-    case 404:  __fallthrough; // file not found
-    case 502:  __fallthrough; // server (through a gateway) was not found
-    case 503:  // server unavailable
+    case 404: // file not found
+    case 410: // gone
         hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         break;
 
-    case 408:  __fallthrough; // request timedout
-    case 504:   // gateway timeout
+    case 405: // method not allowed
+        hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+        break;
+
+    case 408: __fallthrough; // request timedout
+    case 504: // gateway timeout
         hr = HRESULT_FROM_WIN32(WAIT_TIMEOUT);
         break;
 
+    case 414: // request URI too long
+        hr = CO_E_PATHTOOLONG;
+        break;
+
+    case 502: __fallthrough; // server (through a gateway) was not found
+    case 503: // server unavailable
+        hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+        break;
+
+    case 418: // I'm a teapot.
     default:
         {
             hr = E_UNEXPECTED;

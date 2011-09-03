@@ -126,6 +126,19 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <BindInputPaths Include="$(OutputPath)" />
+    <BindInputPaths Include="$(OutputPath_x86)">
+        <BindName>x86</BindName>
+    </BindInputPaths>
+    <BindInputPaths Include="$(OutputPath_x64)">
+        <BindName>x64</BindName>
+    </BindInputPaths>
+    <BindInputPaths Include="$(OutputPath_ia64)">
+        <BindName>ia64</BindName>
+    </BindInputPaths>
+  </ItemGroup>
+
   <!-- Global properties for .wixproj projects -->
   <PropertyGroup>
     <DefineSolutionProperties>false</DefineSolutionProperties>
@@ -367,7 +380,7 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
     <DistCS>wixdistribution.cs</DistCS>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(MSBuildProjectExtension)' == '.csproj' ">
+  <ItemGroup Condition=" '$(Language)' == 'C#' ">
     <!-- Include the current version in all of the wix projects (this won't show up in the Solution Explorer, but it is used when building). -->
     <Compile Include="$(WIX_ROOT)inc\$(VersionCS)">
       <Link>Properties\$(VersionCS)</Link>
@@ -379,7 +392,8 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
       <ExcludeFromStyleCop>true</ExcludeFromStyleCop>
       <Visible>true</Visible>
     </Compile>
-      <!--Provide support for setting type (BuildAction) from VS-->
+
+    <!--Provide support for setting type (BuildAction) from VS-->
     <AvailableItemName Include="EmbeddedFlattenedResource" />
     <AvailableItemName Include="EmbeddedNativeResource" />
     <AvailableItemName Include="MsgGenSource" />

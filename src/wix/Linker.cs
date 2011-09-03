@@ -904,7 +904,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     customRow.SectionId = row.SectionId;
 
-                    string[] data = row[1].ToString().Split('\t');
+                    string[] data = row[1].ToString().Split('\x0');
 
                     for (int i = 0; i < data.Length; ++i)
                     {
@@ -930,6 +930,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         catch (OverflowException)
                                         {
                                             this.OnMessage(WixErrors.IllegalIntegerValue(row.SourceLineNumbers, customTableDefinition.Columns[i].Name, customTableDefinition.Name, item[1]));
+                                        }
+                                    }
+                                    else if (customRow.Fields[j].Column.IsPrimaryKey)
+                                    {
+                                        if (CompilerCore.IsIdentifier(item[1]) || Common.IsValidBinderVariable(item[1]))
+                                        {
+                                            customRow.Fields[j].Data = item[1];
+                                        }
+                                        else
+                                        {
+                                            this.OnMessage(WixErrors.IllegalIdentifier(row.SourceLineNumbers, "Data", item[1]));
                                         }
                                     }
                                     else

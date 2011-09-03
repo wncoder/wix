@@ -132,10 +132,12 @@ extern "C" void PlanUninitializeExecuteAction(
 }
 
 extern "C" HRESULT PlanDefaultPackageRequestState(
+    __in BURN_PACKAGE_TYPE packageType,
     __in BOOTSTRAPPER_PACKAGE_STATE currentState,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_VARIABLES* pVariables,
     __in_z_opt LPCWSTR wzInstallCondition,
+    __in BOOTSTRAPPER_RELATION_TYPE relationType,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     )
 {
@@ -151,6 +153,11 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     // the package is superseded then default to doing nothing except during uninstall.
     else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && BOOTSTRAPPER_ACTION_UNINSTALL != action)
     {
+        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
+    }
+    else if (BOOTSTRAPPER_RELATION_PATCH == relationType && BURN_PACKAGE_TYPE_MSP == packageType)
+    {
+        // If we're run from a related bundle as a patch, don't do anything to our MSP packages inside
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
     }
     else // pick the best option for the action state and install condition.

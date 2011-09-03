@@ -272,10 +272,12 @@ void PlanUninitializeExecuteAction(
     __in BURN_EXECUTE_ACTION* pExecuteAction
     );
 HRESULT PlanDefaultPackageRequestState(
+    __in BURN_PACKAGE_TYPE packageType,
     __in BOOTSTRAPPER_PACKAGE_STATE currentState,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_VARIABLES* pVariables,
     __in_z_opt LPCWSTR wzInstallCondition,
+    __in BOOTSTRAPPER_RELATION_TYPE relationType,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     );
 HRESULT PlanLayoutBundle(

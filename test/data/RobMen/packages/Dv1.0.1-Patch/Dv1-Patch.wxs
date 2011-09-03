@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Patch 
+        AllowRemoval="yes"
+        Manufacturer="Microsoft Corporation" 
+        MoreInfoURL="http://wix.sf.net/"
+        DisplayName="Dv1.0.1 Patch" 
+        Description="Dv1 to Dv1.0.1 Patch" 
+        Classification="Update">
+ 
+        <Media Id="5000" Cabinet="RTM.cab">
+            <PatchBaseline Id="RTM"/>
+        </Media>
+     </Patch>
+</Wix>

@@ -50,14 +50,20 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
 
 
 // Parent (per-user process) side functions.
+HRESULT ElevationElevate(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in HWND hwndParent
+    );
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
-    __in DWORD64 qwEstimatedSize
+    __in BURN_VARIABLES* pVariables,
+    __in DWORD64 qwEstimatedSize,
+    __in_z LPCWSTR wzResumeCommandLine
     );
 HRESULT ElevationSessionResume(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action
+    __in_z LPCWSTR wzResumeCommandLine
     );
 HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,

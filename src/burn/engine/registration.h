@@ -39,14 +39,6 @@ enum BURN_RESUME_MODE
     BURN_RESUME_MODE_REBOOT_PENDING,
 };
 
-enum BURN_RELATION_TYPE
-{
-    BURN_RELATION_NONE,
-    BURN_RELATION_DETECT,
-    BURN_RELATION_UPGRADE,
-    BURN_RELATION_ADDON,
-};
-
 enum BURN_REGISTRATION_MODIFY_TYPE
 {
     BURN_REGISTRATION_MODIFY_ENABLED,
@@ -59,7 +51,7 @@ enum BURN_REGISTRATION_MODIFY_TYPE
 
 typedef struct _BURN_RELATED_BUNDLE
 {
-    BURN_RELATION_TYPE relationType;
+    BOOTSTRAPPER_RELATION_TYPE relationType;
 
     DWORD64 qwVersion;
 
@@ -87,6 +79,9 @@ typedef struct _BURN_REGISTRATION
 
     LPWSTR *rgsczAddonCodes;
     DWORD cAddonCodes;
+
+    LPWSTR *rgsczPatchCodes;
+    DWORD cPatchCodes;
 
     DWORD64 qwVersion;
     LPWSTR sczProviderKey;
@@ -153,12 +148,6 @@ HRESULT RegistrationDetectRelatedBundles(
     __in BURN_REGISTRATION* pRegistration,
     __in_opt BOOTSTRAPPER_COMMAND* pCommand
     );
-HRESULT RegistrationLoadRelatedBundle(
-    __in BURN_REGISTRATION* pRegistration,
-    __in_z LPCWSTR sczBundleId,
-    __out BURN_RELATION_TYPE *pRelationType,
-    __out LPWSTR *psczTag
-    );
 HRESULT RegistrationSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables,
@@ -169,7 +158,6 @@ HRESULT RegistrationSessionBegin(
     );
 HRESULT RegistrationSessionResume(
     __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_ACTION action,
     __in BOOL fPerMachineProcess
     );
 HRESULT RegistrationSessionEnd(

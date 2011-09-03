@@ -23,7 +23,8 @@
 
 DAPI_(HRESULT) BalConditionsParseFromXml(
     __in BAL_CONDITIONS* pConditions,
-    __in IXMLDOMDocument* pixdManifest
+    __in IXMLDOMDocument* pixdManifest,
+    __in_opt LOC_STRINGSET* pLocStringSet
     )
 {
     HRESULT hr = S_OK;
@@ -38,6 +39,11 @@ DAPI_(HRESULT) BalConditionsParseFromXml(
     hr = pNodeList->get_length(reinterpret_cast<long*>(&cConditions));
     ExitOnFailure(hr, "Failed to get the condition count.");
 
+    if (!cConditions)
+    {
+        ExitFunction();
+    }
+
     prgConditions = static_cast<BAL_CONDITION*>(MemAlloc(sizeof(BAL_CONDITION) * cConditions, TRUE));
     ExitOnNull(prgConditions, hr, E_OUTOFMEMORY, "Failed to allocate memory for conditions.");
 
@@ -45,14 +51,21 @@ DAPI_(HRESULT) BalConditionsParseFromXml(
     while (S_OK == (hr = XmlNextElement(pNodeList, &pNode, NULL)))
     {
         hr = XmlGetAttributeEx(pNode, L"Condition", &prgConditions[iCondition].sczCondition);
-        ExitOnFailure(hr, "Failed to get message for condition.");
+        ExitOnFailure(hr, "Failed to get condition for condition.");
 
         hr = XmlGetAttributeEx(pNode, L"Message", &prgConditions[iCondition].sczMessage);
         ExitOnFailure(hr, "Failed to get message for condition.");
 
+        if (pLocStringSet && prgConditions[iCondition].sczMessage && *prgConditions[iCondition].sczMessage)
+        {
+            hr = LocLocalizeString(pLocStringSet, &prgConditions[iCondition].sczMessage);
+            ExitOnFailure(hr, "Failed to localize condition message.");
+        }
+
         ++iCondition;
         ReleaseNullObject(pNode);
     }
+    ExitOnFailure(hr, "Failed to parse all condition elements.");
 
     if (S_FALSE == hr)
     {
@@ -67,6 +80,7 @@ LExit:
     ReleaseMem(prgConditions);
     ReleaseObject(pNode);
     ReleaseObject(pNodeList);
+
     return hr;
 }
 

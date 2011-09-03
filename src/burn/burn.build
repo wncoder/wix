@@ -53,7 +53,7 @@
   <target name="burn.clean" description="Cleans the build"
           depends="burnengine.clean,
                    stub.clean">
-    <delete dir="${dir.build.burn}" failonerror="false" if="${directory::exists(dir.build.burn)}" />
+    <delete dir="${dir.build.burn.x86}" failonerror="false" if="${directory::exists(dir.build.burn.x86)}" />
     
     <delete failonerror="false">
       <fileset basedir="${dir.target.wix}">

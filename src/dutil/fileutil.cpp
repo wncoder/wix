@@ -906,7 +906,7 @@ extern "C" HRESULT DAPI FileEnsureCopy(
             *pwzLastSlash = L'\\'; // now put the slash back
             ExitOnFailureDebugTrace2(hr, "failed to create directory while copying file: '%ls' to: '%ls'", wzSource, wzTarget);
 
-            // try to move again
+            // try to copy again
             if (!::CopyFileW(wzSource, wzTarget, fOverwrite))
             {
                 ExitOnLastErrorDebugTrace2(hr, "failed to copy file: '%ls' to: '%ls'", wzSource, wzTarget);
@@ -921,6 +921,44 @@ extern "C" HRESULT DAPI FileEnsureCopy(
     {
         hr = HRESULT_FROM_WIN32(er);
     }
+
+LExit:
+    return hr;
+}
+
+
+/*******************************************************************
+ FileEnsureCopyWithRetry
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileEnsureCopyWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    )
+{
+    AssertSz(cRetry != DWORD_MAX, "Cannot pass DWORD_MAX for retry.");
+
+    HRESULT hr = E_FAIL;
+    DWORD i = 0;
+
+    for (i = 0; FAILED(hr) && i < cRetry + 1; ++i)
+    {
+        if (0 < i)
+        {
+            ::Sleep(dwWaitMilliseconds);
+        }
+
+        hr = FileEnsureCopy(wzSource, wzTarget, fOverwrite);
+        if (HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr
+            || HRESULT_FROM_WIN32(ERROR_FILE_EXISTS) == hr || HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) == hr)
+        {
+            break; // no reason to retry these errors.
+        }
+    }
+    ExitOnFailure3(hr, "Failed to copy file: '%ls' to: '%ls' after %u retries.", wzSource, wzTarget, i);
 
 LExit:
     return hr;
@@ -1002,6 +1040,46 @@ extern "C" HRESULT DAPI FileEnsureMove(
 LExit:
     return hr;
 }
+
+
+/*******************************************************************
+ FileEnsureMoveWithRetry
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileEnsureMoveWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in BOOL fAllowCopy,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    )
+{
+    AssertSz(cRetry != DWORD_MAX, "Cannot pass DWORD_MAX for retry.");
+
+    HRESULT hr = E_FAIL;
+    DWORD i = 0;
+
+    for (i = 0; FAILED(hr) && i < cRetry + 1; ++i)
+    {
+        if (0 < i)
+        {
+            ::Sleep(dwWaitMilliseconds);
+        }
+
+        hr = FileEnsureMove(wzSource, wzTarget, fOverwrite, fAllowCopy);
+        if (HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr
+            || HRESULT_FROM_WIN32(ERROR_FILE_EXISTS) == hr || HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) == hr)
+        {
+            break; // no reason to retry these errors.
+        }
+    }
+    ExitOnFailure3(hr, "Failed to move file: '%ls' to: '%ls' after %u retries.", wzSource, wzTarget, i);
+
+LExit:
+    return hr;
+}
+
 
 /*******************************************************************
  FileCreateTemp - creates an empty temp file

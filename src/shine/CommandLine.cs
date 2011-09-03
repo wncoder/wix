@@ -50,6 +50,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Shine
             this.Paths = new List<string>();
             this.IncludeSymbols = new SortedSet<string>();
             this.ExcludeSymbols = new SortedSet<string>();
+            this.RecurseProjects = true;
             this.ShowLogo = true;
             this.Show = ShowType.All;
         }

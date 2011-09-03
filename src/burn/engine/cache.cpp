@@ -18,6 +18,8 @@
 
 #include "precomp.h"
 
+static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
+static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -304,7 +306,7 @@ extern "C" HRESULT CacheBundle(
     // TODO: replace this copy with the more intelligent copy of only
     // the burnstub executable and manifest data with fix-up for the
     // signature.
-    hr = FileEnsureCopy(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE);
+    hr = FileEnsureCopyWithRetry(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
     ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
 
     hr = ResetPathPermissions(pRegistration->fPerMachine, pRegistration->sczCacheExecutablePath);
@@ -324,7 +326,7 @@ extern "C" HRESULT CacheBundle(
             ExitOnFailure(hr, "Failed to build payload target path.");
 
             // copy payload file
-            hr = FileEnsureCopy(sczPayloadSourcePath, sczPayloadTargetPath, TRUE);
+            hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
             ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
 
             hr = ResetPathPermissions(pRegistration->fPerMachine, sczPayloadTargetPath);
@@ -398,12 +400,12 @@ extern "C" HRESULT CachePayload(
 
     if (fMove)
     {
-        hr = FileEnsureMove(wzUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE);
+        hr = FileEnsureMoveWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
         ExitOnFailure2(hr, "Failed to move %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
     }
     else
     {
-        hr = FileEnsureCopy(wzUnverifiedPayloadPath, sczCachedPath, TRUE);
+        hr = FileEnsureCopyWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
         ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
     }
 

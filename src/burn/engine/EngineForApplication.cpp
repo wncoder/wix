@@ -641,19 +641,21 @@ public: // IBootstrapperEngine
     }
 
     virtual STDMETHODIMP Elevate(
-        __in_opt HWND /*hwndParent*/
+        __in_opt HWND hwndParent
         )
     {
         HRESULT hr = S_OK;
 
-        ::EnterCriticalSection(&m_pEngineState->csActive);
-        hr = UserExperienceEnsureEngineInactive(&m_pEngineState->userExperience);
-        ExitOnFailure(hr, "Engine is active, cannot change engine state.");
-
-        hr = E_NOTIMPL;
+        if (m_pEngineState->companionConnection.hProcess)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
+        }
+        else if (!::PostThreadMessageW(m_dwThreadId, WM_BURN_ELEVATE, 0, reinterpret_cast<LPARAM>(hwndParent)))
+        {
+            ExitWithLastError(hr, "Failed to post elevate message.");
+        }
 
     LExit:
-        ::LeaveCriticalSection(&m_pEngineState->csActive);
         return hr;
     }
 

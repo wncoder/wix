@@ -33,6 +33,7 @@ enum WM_BURN
 
     WM_BURN_DETECT,
     WM_BURN_PLAN,
+    WM_BURN_ELEVATE,
     WM_BURN_APPLY,
     WM_BURN_QUIT,
 

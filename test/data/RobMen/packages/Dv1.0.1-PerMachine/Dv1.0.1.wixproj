@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <OutputName>Dv1</OutputName>
+    <OutputType>Package</OutputType>
+
+    <OutputSubFolder>Dv1.0.1-PerMachine</OutputSubFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Dv1.0.1.wxs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WixExtension Include="WixUtilExtension"/>
+  </ItemGroup>
+
+  <Import Project="..\..\Common.targets" />
+</Project>

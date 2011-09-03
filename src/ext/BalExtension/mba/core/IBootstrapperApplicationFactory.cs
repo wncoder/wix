@@ -49,6 +49,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [MarshalAs(UnmanagedType.I4)] private readonly int nCmdShow;
         [MarshalAs(UnmanagedType.U4)] private readonly ResumeType resume;
         private readonly IntPtr hwndSplashScreen;
+        [MarshalAs(UnmanagedType.I4)] private readonly RelationType relation;
 
         /// <summary>
         /// Gets the action for the user experience to perform.
@@ -96,6 +97,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public IntPtr SplashScreen
         {
             get { return this.hwndSplashScreen; }
+        }
+
+        /// <summary>
+        /// If this was run from a related bundle, specifies the relation type
+        /// </summary>
+        public RelationType Relation
+        {
+            get { return this.relation; }
         }
     }
 }

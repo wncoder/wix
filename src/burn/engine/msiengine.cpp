@@ -44,7 +44,7 @@ static HRESULT CalculateFeatureAction(
     __in BOOTSTRAPPER_FEATURE_STATE requestedState,
     __in BOOL fRepair,
     __out BOOTSTRAPPER_FEATURE_ACTION* pFeatureAction,
-    __out BOOL* pfDelta
+    __inout BOOL* pfDelta
     );
 static HRESULT EscapePropertyArgumentString(
     __in LPCWSTR wzProperty,
@@ -497,54 +497,57 @@ extern "C" HRESULT MsiEngineDetectPackage(
     }
 
     // detect features
-    LogId(REPORT_STANDARD, MSG_DETECT_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
-    
-    for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
+    if (pPackage->Msi.cFeatures)
     {
-        BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
+        LogId(REPORT_STANDARD, MSG_DETECT_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
 
-        // get current state
-        if (BOOTSTRAPPER_PACKAGE_STATE_PRESENT == pPackage->currentState) // only try to detect features if the product is installed
+        for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
         {
-            hr = WiuQueryFeatureState(pPackage->Msi.sczProductCode, pFeature->sczId, &installState);
-            ExitOnFailure(hr, "Failed to query feature state.");
+            BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
 
-            if (INSTALLSTATE_UNKNOWN == installState) // in case of an upgrade this could happen
+            // get current state
+            if (BOOTSTRAPPER_PACKAGE_STATE_PRESENT == pPackage->currentState) // only try to detect features if the product is installed
+            {
+                hr = WiuQueryFeatureState(pPackage->Msi.sczProductCode, pFeature->sczId, &installState);
+                ExitOnFailure(hr, "Failed to query feature state.");
+
+                if (INSTALLSTATE_UNKNOWN == installState) // in case of an upgrade this could happen
+                {
+                    installState = INSTALLSTATE_ABSENT;
+                }
+            }
+            else
             {
                 installState = INSTALLSTATE_ABSENT;
             }
-        }
-        else
-        {
-            installState = INSTALLSTATE_ABSENT;
-        }
 
-        // set current state
-        switch (installState)
-        {
-        case INSTALLSTATE_ABSENT:
-            pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_ABSENT;
-            break;
-        case INSTALLSTATE_ADVERTISED:
-            pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_ADVERTISED;
-            break;
-        case INSTALLSTATE_LOCAL:
-            pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_LOCAL;
-            break;
-        case INSTALLSTATE_SOURCE:
-            pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_SOURCE;
-            break;
-        default:
-            hr = E_UNEXPECTED;
-            ExitOnRootFailure(hr, "Invalid state value.");
+            // set current state
+            switch (installState)
+            {
+            case INSTALLSTATE_ABSENT:
+                pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_ABSENT;
+                break;
+            case INSTALLSTATE_ADVERTISED:
+                pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_ADVERTISED;
+                break;
+            case INSTALLSTATE_LOCAL:
+                pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_LOCAL;
+                break;
+            case INSTALLSTATE_SOURCE:
+                pFeature->currentState = BOOTSTRAPPER_FEATURE_STATE_SOURCE;
+                break;
+            default:
+                hr = E_UNEXPECTED;
+                ExitOnRootFailure(hr, "Invalid state value.");
+            }
+
+            LogId(REPORT_STANDARD, MSG_DETECTED_MSI_FEATURE, pPackage->sczId, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState));
+
+            // pass to UX
+            nResult = pUserExperience->pUserExperience->OnDetectMsiFeature(pPackage->sczId, pFeature->sczId, pFeature->currentState);
+            hr = HRESULT_FROM_VIEW(nResult);
+            ExitOnRootFailure(hr, "UX aborted detect.");
         }
-
-        LogId(REPORT_STANDARD, MSG_DETECTED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState));
-
-        // pass to UX
-        nResult = pUserExperience->pUserExperience->OnDetectMsiFeature(pPackage->sczId, pFeature->sczId, pFeature->currentState);
-        hr = HRESULT_FROM_VIEW(nResult);
-        ExitOnRootFailure(hr, "UX aborted detect.");
     }
 
 LExit:
@@ -640,7 +643,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
             }
             else if (qwVersion == qwInstalledVersion) // maintenance install "10.X.X.X" = "10.X.X.X"
             {
-                execute = (BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) ? BOOTSTRAPPER_ACTION_STATE_RECACHE : (fFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MAINTENANCE : BOOTSTRAPPER_ACTION_STATE_NONE);
+                execute = (BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) ? BOOTSTRAPPER_ACTION_STATE_REPAIR : (fFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE);
             }
             else // newer version present "14.X.X.X" < "15.X.X.X", skip
             {
@@ -694,7 +697,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
         switch (pPackage->requested)
         {
         case BOOTSTRAPPER_REQUEST_STATE_PRESENT:
-            rollback = fRollbackFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MAINTENANCE : BOOTSTRAPPER_ACTION_STATE_NONE;
+            rollback = fRollbackFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -855,7 +858,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
     {
     case BOOTSTRAPPER_ACTION_STATE_ADMIN_INSTALL:
         hr = StrAllocConcat(&sczProperties, L" ACTION=ADMIN", 0);
-        ExitOnFailure(hr, "Failed to format property: ADMIN");
+        ExitOnFailure(hr, "Failed to add ADMIN property on admin install.");
          __fallthrough;
 
     case BOOTSTRAPPER_ACTION_STATE_MAJOR_UPGRADE: __fallthrough;
@@ -868,19 +871,24 @@ extern "C" HRESULT MsiEngineExecutePackage(
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE:
-        hr = StrAllocConcat(&sczProperties, L" REINSTALL=ALL REINSTALLMODE=\"vomus\" REBOOT=ReallySuppress", 0);
+        hr = StrAllocConcat(&sczProperties, L" REINSTALLMODE=\"vomus\" REBOOT=ReallySuppress", 0);
         ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on minor upgrade.");
 
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to perform minor upgrade of MSI package.");
         break;
 
-    case BOOTSTRAPPER_ACTION_STATE_RECACHE:
-        hr = StrAllocConcat(&sczProperties, L" REINSTALL=ALL REINSTALLMODE=\"cemus\" REBOOT=ReallySuppress", 0);
-        ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on repair.");
-        __fallthrough;
+    case BOOTSTRAPPER_ACTION_STATE_MODIFY: __fallthrough;
+    case BOOTSTRAPPER_ACTION_STATE_REPAIR:
+        {
+        LPCWSTR wzReinstallAll = (BOOTSTRAPPER_ACTION_STATE_MODIFY == pExecuteAction->msiPackage.action ||
+                                  pExecuteAction->msiPackage.pPackage->Msi.cFeatures) ? L"" : L" REINSTALL=ALL";
+        LPCWSTR wzReinstallMode = (BOOTSTRAPPER_ACTION_STATE_MODIFY == pExecuteAction->msiPackage.action) ? L"o" : L"e";
 
-    case BOOTSTRAPPER_ACTION_STATE_MAINTENANCE:
+        hr = StrAllocFormatted(&sczProperties, L"%ls%ls REINSTALLMODE=\"cmus%ls\" REBOOT=ReallySuppress", sczProperties ? sczProperties : L"", wzReinstallAll, wzReinstallMode);
+        ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on repair.");
+        }
+
         hr = WiuConfigureProductEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to run maintanance mode for MSI package.");
         break;
@@ -1127,7 +1135,7 @@ static HRESULT CalculateFeatureAction(
     __in BOOTSTRAPPER_FEATURE_STATE requestedState,
     __in BOOL fRepair,
     __out BOOTSTRAPPER_FEATURE_ACTION* pFeatureAction,
-    __out BOOL* pfDelta
+    __inout BOOL* pfDelta
     )
 {
     HRESULT hr = S_OK;
@@ -1184,7 +1192,10 @@ static HRESULT CalculateFeatureAction(
         ExitOnRootFailure(hr, "Invalid state value.");
     }
 
-    *pfDelta = (BOOTSTRAPPER_FEATURE_ACTION_NONE != *pFeatureAction);
+    if (BOOTSTRAPPER_FEATURE_ACTION_NONE != *pFeatureAction)
+    {
+        *pfDelta = TRUE;
+    }
 
 LExit:
     return hr;
@@ -1331,6 +1342,7 @@ static HRESULT ConcatFeatureActionProperties(
         hr = StrAllocConcat(psczArguments, scz, 0);
         ExitOnFailure(hr, "Failed to concat argument string.");
     }
+
     if (sczAddSource)
     {
         hr = StrAllocFormatted(&scz, L" ADDSOURCE=\"%s\"", sczAddSource, 0);
@@ -1339,6 +1351,7 @@ static HRESULT ConcatFeatureActionProperties(
         hr = StrAllocConcat(psczArguments, scz, 0);
         ExitOnFailure(hr, "Failed to concat argument string.");
     }
+
     if (sczAddDefault)
     {
         hr = StrAllocFormatted(&scz, L" ADDDEFAULT=\"%s\"", sczAddDefault, 0);
@@ -1347,6 +1360,7 @@ static HRESULT ConcatFeatureActionProperties(
         hr = StrAllocConcat(psczArguments, scz, 0);
         ExitOnFailure(hr, "Failed to concat argument string.");
     }
+
     if (sczReinstall)
     {
         hr = StrAllocFormatted(&scz, L" REINSTALL=\"%s\"", sczReinstall, 0);
@@ -1355,6 +1369,7 @@ static HRESULT ConcatFeatureActionProperties(
         hr = StrAllocConcat(psczArguments, scz, 0);
         ExitOnFailure(hr, "Failed to concat argument string.");
     }
+
     if (sczAdvertise)
     {
         hr = StrAllocFormatted(&scz, L" ADVERTISE=\"%s\"", sczAdvertise, 0);
@@ -1363,6 +1378,7 @@ static HRESULT ConcatFeatureActionProperties(
         hr = StrAllocConcat(psczArguments, scz, 0);
         ExitOnFailure(hr, "Failed to concat argument string.");
     }
+
     if (sczRemove)
     {
         hr = StrAllocFormatted(&scz, L" REMOVE=\"%s\"", sczRemove, 0);

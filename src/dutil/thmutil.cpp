@@ -636,57 +636,40 @@ DAPI_(void) ThemeUnloadControls(
 }
 
 
-DAPI_(HRESULT) ThemeLoadLocFromFile(
-    __in THEME* pTheme,
-    __in_z LPCWSTR wzFileName,
-    __in HMODULE hModule
+DAPI_(HRESULT) ThemeLocalize(
+    __in THEME *pTheme,
+    __in const LOC_STRINGSET *pLocStringSet
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczFileFullPath = NULL;
-    LOC_STRINGSET* pLocStringSet = NULL;
 
-    ExitOnNull(pTheme, hr, S_FALSE, "Theme must be loaded first.");
+    hr = LocLocalizeString(pLocStringSet, &pTheme->sczCaption);
+    ExitOnFailure(hr, "Failed to localize theme caption.");
 
-    hr = PathRelativeToModule(&sczFileFullPath, wzFileName, hModule);
-    ExitOnFailure(hr, "Failed to create WXL file path.");
+    for (DWORD i = 0; i < pTheme->cControls; ++i)
+    {
+        THEME_CONTROL* pControl = pTheme->rgControls + i;
 
-    hr = LocLoadFromFile(sczFileFullPath, &pLocStringSet);
-    ExitOnFailure(hr, "Failed to load WXL file.");
+        hr = LocLocalizeString(pLocStringSet, &pControl->sczText);
+        ExitOnFailure(hr, "Failed to localize control text.");
 
-    hr = LocalizeTheme(pTheme, pLocStringSet);
-    ExitOnFailure(hr, "Failed to localize theme");
+        for (DWORD j = 0; j < pControl->cColumns; ++j)
+        {
+            hr = LocLocalizeString(pLocStringSet, &pControl->ptcColumns[j].pszName);
+            ExitOnFailure(hr, "Failed to localize column text.");
+        }
+
+        for (DWORD j = 0; j < pControl->cTabs; ++j)
+        {
+            hr = LocLocalizeString(pLocStringSet, &pControl->pttTabs[j].pszName);
+            ExitOnFailure(hr, "Failed to localize tab text.");
+        }
+    }
 
 LExit:
-    LocFree(pLocStringSet);
-    ReleaseStr(sczFileFullPath);
-
     return hr;
 }
 
-
-DAPI_(HRESULT) ThemeLoadLocFromResource(
-    __in THEME* pTheme,
-    __in_z LPCSTR szResourceName,
-    __in HMODULE hModule
-    )
-{
-    HRESULT hr = S_OK;
-    LOC_STRINGSET* pLocStringSet = NULL;
-
-    ExitOnNull(pTheme, hr, S_FALSE, "Theme must be loaded first.");
-
-    hr = LocLoadFromResource(hModule, szResourceName, &pLocStringSet);
-    ExitOnFailure(hr, "Failed to load WXL file from resource.");
-
-    hr = LocalizeTheme(pTheme, pLocStringSet);
-    ExitOnFailure(hr, "Failed to localize theme");
-
-LExit:
-    LocFree(pLocStringSet);
-
-    return hr;
-}
 
 /********************************************************************
  ThemeLoadStrings - Loads string resources.
@@ -1595,40 +1578,6 @@ LExit:
     return hr;
 }
 
-static HRESULT LocalizeTheme(
-    __in THEME *pTheme,
-    __in const LOC_STRINGSET *pLocStringSet
-    )
-{
-    HRESULT hr = S_OK;
-
-    hr = LocLocalizeString(pLocStringSet, &pTheme->sczCaption);
-    ExitOnFailure(hr, "Failed to localize theme caption.");
-
-    for (DWORD i = 0; i < pTheme->cControls; ++i)
-    {
-        THEME_CONTROL* pControl = pTheme->rgControls + i;
-
-        hr = LocLocalizeString(pLocStringSet, &pControl->sczText);
-        ExitOnFailure(hr, "Failed to localize control text.");
-
-        for (DWORD j = 0; j < pControl->cColumns; ++j)
-        {
-            hr = LocLocalizeString(pLocStringSet, &pControl->ptcColumns[j].pszName);
-            ExitOnFailure(hr, "Failed to localize column text.");
-        }
-
-        for (DWORD j = 0; j < pControl->cTabs; ++j)
-        {
-            hr = LocLocalizeString(pLocStringSet, &pControl->pttTabs[j].pszName);
-            ExitOnFailure(hr, "Failed to localize tab text.");
-        }
-    }
-
-LExit:
-    return hr;
-}
-
 static HRESULT ParseApplication(
     __in_opt HMODULE hModule,
     __in_opt LPCWSTR wzRelativePath,
@@ -2002,6 +1951,13 @@ static HRESULT ParsePages(
         ++iPage;
 
         ReleaseNullBSTR(bstrType);
+        ReleaseNullObject(pixn);
+    }
+    ExitOnFailure(hr, "Failed to enumerate all pages.");
+
+    if (S_FALSE == hr)
+    {
+        hr = S_OK;
     }
 
 LExit:

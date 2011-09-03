@@ -116,7 +116,8 @@ extern "C" HRESULT DependencyPlanPackage(
         switch (executeAction)
         {
         case BOOTSTRAPPER_ACTION_STATE_INSTALL: __fallthrough;
-        case BOOTSTRAPPER_ACTION_STATE_MAINTENANCE: __fallthrough;
+        case BOOTSTRAPPER_ACTION_STATE_REPAIR: __fallthrough;
+        case BOOTSTRAPPER_ACTION_STATE_MODIFY: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_MAJOR_UPGRADE: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_PATCH:
@@ -142,7 +143,8 @@ extern "C" HRESULT DependencyPlanPackage(
         {
         case BOOTSTRAPPER_ACTION_STATE_NONE: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_INSTALL: __fallthrough;
-        case BOOTSTRAPPER_ACTION_STATE_MAINTENANCE: __fallthrough;
+        case BOOTSTRAPPER_ACTION_STATE_REPAIR: __fallthrough;
+        case BOOTSTRAPPER_ACTION_STATE_MODIFY: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_MAJOR_UPGRADE: __fallthrough;
         case BOOTSTRAPPER_ACTION_STATE_PATCH:

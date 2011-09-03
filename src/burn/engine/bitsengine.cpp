@@ -434,20 +434,24 @@ static HRESULT SetCredentials(
     IBackgroundCopyJob2* pJob2 = NULL;
     BG_AUTH_CREDENTIALS ac = { };
 
-    ac.Target = BG_AUTH_TARGET_PROXY;
-    ac.Credentials.Basic.UserName = const_cast<LPWSTR>(wzUser);
-    ac.Credentials.Basic.Password = const_cast<LPWSTR>(wzPassword);
-
+    // If IBackgroundCopyJob2::SetCredentials() is supported, set the username/password.
     hr = pJob->QueryInterface(IID_PPV_ARGS(&pJob2));
-    ExitOnFailure(hr, "Failed to query for IBackgroundCopyJob2 interface.");
+    if (SUCCEEDED(hr))
+    {
+        ac.Target = BG_AUTH_TARGET_PROXY;
+        ac.Credentials.Basic.UserName = const_cast<LPWSTR>(wzUser);
+        ac.Credentials.Basic.Password = const_cast<LPWSTR>(wzPassword);
 
-    ac.Scheme = BG_AUTH_SCHEME_NTLM;
-    hr = pJob2->SetCredentials(&ac);
-    ExitOnFailure(hr, "Failed to set background copy NTLM credentials");
+        ac.Scheme = BG_AUTH_SCHEME_NTLM;
+        hr = pJob2->SetCredentials(&ac);
+        ExitOnFailure(hr, "Failed to set background copy NTLM credentials");
 
-    ac.Scheme = BG_AUTH_SCHEME_NEGOTIATE;
-    hr = pJob2->SetCredentials(&ac);
-    ExitOnFailure(hr, "Failed to set background copy negotiate credentials");
+        ac.Scheme = BG_AUTH_SCHEME_NEGOTIATE;
+        hr = pJob2->SetCredentials(&ac);
+        ExitOnFailure(hr, "Failed to set background copy negotiate credentials");
+    }
+
+    hr = S_OK;
 
 LExit:
     ReleaseObject(pJob2);

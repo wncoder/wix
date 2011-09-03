@@ -40,7 +40,7 @@
             <RollbackBoundary />
 -->
             <MsiPackage Id='Package3'
-                        SourceFile='Package3.msi'
+                        SourceFile='Package3.msi' EnableFeatureSelection='yes'
                         Vital='yes' Compressed='no' Cache='yes'>
                 <MsiProperty Name='FAIL' Value='0' />
                 <MsiProperty Name='TARGETDIR' Value='[InstallFolder]' />

@@ -8,7 +8,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Tools.WindowsInstallerXml.Bootstrapper</RootNamespace>
     <AssemblyName>BootstrapperCore</AssemblyName>
-    <NoWarn>0693</NoWarn>
+    <DocumentationFile>BootstrapperCore.xml</DocumentationFile>
+    <NoWarn>0693;1591</NoWarn>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <OldToolsVersion>3.5</OldToolsVersion>
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>

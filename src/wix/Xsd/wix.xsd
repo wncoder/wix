@@ -431,24 +431,24 @@
       <xs:attribute name="DisableRollback" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Specifies whether the bundle will attempt to rollback packages
-                        executed in the chain. If "yes" is specified then when a vital
-                        package fails to install only that package will rollback and the
-                        chain will stop with the error. The default is "no" which
-                        indicates all packages executed during the chain will be
-                        rolledback to their previous state when a vital package fails.
-                    </xs:documentation>
+            Specifies whether the bundle will attempt to rollback packages
+            executed in the chain. If "yes" is specified then when a vital
+            package fails to install only that package will rollback and the
+            chain will stop with the error. The default is "no" which
+            indicates all packages executed during the chain will be
+            rolledback to their previous state when a vital package fails.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="ParallelCache" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Specifies whether the bundle will start installing packages
-                        while other packages are still being cached. If "yes",
-                        packages will start executing when a rollback boundary is
-                        encountered. The default is "no" which dictates all packages
-                        must be cached before any packages will start to be installed.
-                    </xs:documentation>
+            Specifies whether the bundle will start installing packages
+            while other packages are still being cached. If "yes",
+            packages will start executing when a rollback boundary is
+            encountered. The default is "no" which dictates all packages
+            must be cached before any packages will start to be installed.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -470,23 +470,40 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.  The extension's
-                            <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
-                            method will be called with the package identifier as the first value in
-                            <html:code>contextValues</html:code>.
-                        </xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              elements at this point in the schema.  The extension's
+              <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
+              method will be called with the package identifier as the first value in
+              <html:code>contextValues</html:code>.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
       <xs:attributeGroup ref="ChainPackageCommonAttributes" />
+      <xs:attribute name="EnableFeatureSelection" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+              Specifies whether the bundle will allow individual control over the installation state of Features inside
+              the msi package. Managing feature selection requires special care to ensure the install, modify, update and
+              uninstall behavior of the package is always correct. The default is "no".
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ForcePerMachine" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+              Override the automatic per-machine detection of MSI packages and force the package to be per-machine.
+              The default is "no", which allows the tools to detect the expected value.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="SuppressLooseFilePayloadGeneration" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        This attribute has been deprecated. When the value is "yes", the Binder will not read the MSI package
-                        to detect uncompressed files that would otherwise be automatically included in the Bundle as Payloads.
-                        The resulting Bundle may not be able to install the MSI package correctly. The default is "no".
-                    </xs:documentation>
+            This attribute has been deprecated. When the value is "yes", the Binder will not read the MSI package
+            to detect uncompressed files that would otherwise be automatically included in the Bundle as Payloads.
+            The resulting Bundle may not be able to install the MSI package correctly. The default is "no".
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -507,12 +524,12 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.  The extension's
-                            <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
-                            method will be called with the package identifier as the first value in
-                            <html:code>contextValues</html:code>.
-                        </xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.  The extension's
+                <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
+                method will be called with the package identifier as the first value in
+                <html:code>contextValues</html:code>.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
@@ -539,12 +556,12 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.  The extension's
-                            <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
-                            method will be called with the package identifier as the first value in
-                            <html:code>contextValues</html:code>.
-                        </xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.  The extension's
+                <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
+                method will be called with the package identifier as the first value in
+                <html:code>contextValues</html:code>.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
@@ -576,12 +593,12 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.  The extension's
-                            <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
-                            method will be called with the package identifier as the first value in
-                            <html:code>contextValues</html:code>.
-                        </xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.  The extension's
+                <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
+                method will be called with the package identifier as the first value in
+                <html:code>contextValues</html:code>.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
@@ -599,9 +616,9 @@
       <xs:attribute name="RepairCommand" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The command-line arguments to specify to indicate a repair. If the executable package can be repaired but
-                        does not require any special command-line arguments to do so then set the attribute's value to blank.
-                    </xs:documentation>
+            The command-line arguments to specify to indicate a repair. If the executable package can be repaired but
+            does not require any special command-line arguments to do so then set the attribute's value to blank.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="UninstallCommand" type="xs:string">
@@ -634,31 +651,31 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.  The extension's
-                            <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
-                            method will be called with the rollback boundary identifier as the 'RollbackBoundaryId' key in
-                            <html:code>contextValues</html:code>.
-                        </xs:documentation>
+                Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                elements at this point in the schema.  The extension's
+                <html:code><html:nobr>CompilerExtension.ParseElement()</html:nobr></html:code>
+                method will be called with the rollback boundary identifier as the 'RollbackBoundaryId' key in
+                <html:code>contextValues</html:code>.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
       <xs:attribute name="Id" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        Identifier for this rollback boundary, for ordering and cross-referencing. If this attribute is
-                        not provided a stable identifier will be generated.
-                    </xs:documentation>
+            Identifier for this rollback boundary, for ordering and cross-referencing. If this attribute is
+            not provided a stable identifier will be generated.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Vital" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Specifies whether the rollback boundary aborts the chain. If "yes" is specified and
-                        the rollback boundary is encountered then the chain will fail and rollback or stop. The
-                        default "no" indicates that the chain should continue successfuly at the next rollback
-                        boundary.
-                    </xs:documentation>
+            Specifies whether the rollback boundary aborts the chain. If "yes" is specified and
+            the rollback boundary is encountered then the chain will fail and rollback or stop. The
+            default "no" indicates that the chain should continue successfuly at the next rollback
+            boundary.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -667,18 +684,18 @@
     <xs:attribute name="SourceFile" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    Location of the package to add to the bundle. The default value is the Name attribute, if provided.
-                    At a minimum, the SourceFile or Name attribute must be specified.
-                </xs:documentation>
+            Location of the package to add to the bundle. The default value is the Name attribute, if provided.
+            At a minimum, the SourceFile or Name attribute must be specified.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Name" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    The destination path and file name for this chain payload. Use this attribute to rename the
-                    chain entry point or extract it into a subfolder. The default value is the file name from the
-                    SourceFile attribute, if provided. At a minimum, the Name or SourceFile attribute must be specified.
-                </xs:documentation>
+            The destination path and file name for this chain payload. Use this attribute to rename the
+            chain entry point or extract it into a subfolder. The default value is the file name from the
+            SourceFile attribute, if provided. At a minimum, the Name or SourceFile attribute must be specified.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="DownloadUrl" type="xs:string">
@@ -689,27 +706,27 @@
     <xs:attribute name="Id" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    Identifier for this package, for ordering and cross-referencing. The default is the Name attribute
-                    modified to be suitable as an identifier (i.e. invalid characters are replaced with underscores).
-                </xs:documentation>
+            Identifier for this package, for ordering and cross-referencing. The default is the Name attribute
+            modified to be suitable as an identifier (i.e. invalid characters are replaced with underscores).
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="After" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    The identifier of another package that this one should be installed after. By default the After
-                    attribute is set to the previous sibling package in the Chain or PackageGroup element. If this
-                    attribute is specified ensure that a cycle is not created explicitly or implicitly.
-                </xs:documentation>
+            The identifier of another package that this one should be installed after. By default the After
+            attribute is set to the previous sibling package in the Chain or PackageGroup element. If this
+            attribute is specified ensure that a cycle is not created explicitly or implicitly.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="InstallSize" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    The size this package will take on disk after it is installed. By default, the binder will
-                    calculate the install size by scanning the package (File table for MSIs, Payloads for EXEs)
-                    and use the total for the install size of the package.
-                </xs:documentation>
+            The size this package will take on disk after it is installed. By default, the binder will
+            calculate the install size by scanning the package (File table for MSIs, Payloads for EXEs)
+            and use the total for the install size of the package.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="InstallCondition" type="xs:string">
@@ -730,35 +747,35 @@
     <xs:attribute name="LogPathVariable" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    Name of a Variable that will hold the path to the log file. An empty value will cause the variable to not
-                    be set. The default is "WixBundleLog_[PackageId]" except for MSU packages which default to no logging.
-                </xs:documentation>
+            Name of a Variable that will hold the path to the log file. An empty value will cause the variable to not
+            be set. The default is "WixBundleLog_[PackageId]" except for MSU packages which default to no logging.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="RollbackLogPathVariable" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-                    Name of a Variable that will hold the path to the log file used during rollback. An empty value will cause
-                    the variable to not be set. The default is "WixBundleRollbackLog_[PackageId]" except for MSU packages which
-                    default to no logging.
-                </xs:documentation>
+            Name of a Variable that will hold the path to the log file used during rollback. An empty value will cause
+            the variable to not be set. The default is "WixBundleRollbackLog_[PackageId]" except for MSU packages which
+            default to no logging.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Permanent" type="YesNoTypeUnion">
       <xs:annotation>
         <xs:documentation>
-                    Specifies whether the package can be uninstalled. The default is "no".
-                </xs:documentation>
+            Specifies whether the package can be uninstalled. The default is "no".
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Vital" type="YesNoTypeUnion">
       <xs:annotation>
         <xs:documentation>
-                    Specifies whether the package must succeed for the chain to continue. If "yes" is
-                    specified and the package fails then the chain will fail and rollback or stop. The
-                    default "no" indicates that the chain should continue even if the package reports
-                    a failure.
-                </xs:documentation>
+            Specifies whether the package must succeed for the chain to continue. If "yes" is
+            specified and the package fails then the chain will fail and rollback or stop. The
+            default "no" indicates that the chain should continue even if the package reports
+            a failure.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Compressed" type="YesNoDefaultTypeUnion">
@@ -769,12 +786,12 @@
     <xs:anyAttribute namespace="##other" processContents="lax">
       <xs:annotation>
         <xs:documentation>
-                    Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                    attributes at this point in the schema.  The extension's
-                    <html:code><html:nobr>CompilerExtension.ParseAttribute()</html:nobr></html:code>
-                    method will be called with the package identifier in
-                    <html:code><html:nobr>contextValues["PackageId"]</html:nobr></html:code>.
-                </xs:documentation>
+            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+            attributes at this point in the schema.  The extension's
+            <html:code><html:nobr>CompilerExtension.ParseAttribute()</html:nobr></html:code>
+            method will be called with the package identifier in
+            <html:code><html:nobr>contextValues["PackageId"]</html:nobr></html:code>.
+        </xs:documentation>
       </xs:annotation>
     </xs:anyAttribute>
   </xs:attributeGroup>
@@ -1050,6 +1067,7 @@
             <xs:enumeration value="Detect" />
             <xs:enumeration value="Upgrade" />
             <xs:enumeration value="Addon" />
+            <xs:enumeration value="Patch" />
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

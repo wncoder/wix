@@ -139,11 +139,26 @@ HRESULT DAPI FileEnsureCopy(
     __in_z LPCWSTR wzTarget,
     __in BOOL fOverwrite
     );
+HRESULT DAPI FileEnsureCopyWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    );
 HRESULT DAPI FileEnsureMove(
     __in_z LPCWSTR wzSource, 
     __in_z LPCWSTR wzTarget, 
     __in BOOL fOverwrite,
     __in BOOL fAllowCopy
+    );
+HRESULT DAPI FileEnsureMoveWithRetry(
+    __in LPCWSTR wzSource,
+    __in LPCWSTR wzTarget,
+    __in BOOL fOverwrite,
+    __in BOOL fAllowCopy,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
     );
 HRESULT DAPI FileCreateTemp(
     __in_z LPCWSTR wzPrefix,

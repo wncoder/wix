@@ -1337,3 +1337,84 @@ RobMen: SFBUG:3385078 - fix documentation link.
 
 WixBuild: Version 3.6.2005.0
 
+RobMen: SFBUG:3044016 - write Run key to the bundle's registry root instead
+                        of always going to HKCU.
+
+RobMen: Correctly set file version of bundle to the Bundle/@Version.
+
+RobMen: SFBUG:3309971 - internally retry Burn file copy and move operations to
+                        deal with overzealous anti-virus software.
+
+HeathS: Include version files when compiling temporary assemblies for WPF.
+
+RobMen: SFBUG:3386748 - fix wixstdba.dll to not double free m_sczLanguage.
+
+RobMen: Call MsiGetLastError() to get more details about unexpected MSI
+        failures.
+
+HeathS: Updated msi.chm for Windows Installer 5.0.
+
+WixBuild: Version 3.6.2012.0
+
+CAraman: Fix annotations.
+
+RobMen: SFBUG:3296438 - balretry can now retry cache errors.
+
+RobMen: SFBUG:3197004 - add MsiPackage/@EnableFeatureSelection so Burn knows
+                        when to use REINSTALL=ALL.
+        Rename MAINTENANCE to MODIFY and RECACHE to REPAIR which are more
+        correct names.
+
+FGrohn: SFBUG:3388644 - Partial feature selection doesn't work in some cases.
+
+HeathS: SFBUG:3323554 - Prevent shutdown even if initiated from AU.
+
+HeathS: Added documentation for BootstrapperCore to install.
+
+HeathS: Register the bundle as a dependent during repair actions.
+
+RobMen: SFBUG:3385097 - be a bit smarter about setting per-user MSI packages
+                        in Bundles and provide better error messages.
+
+MiCarls: SFBUG:2994274 - support "patch" type of related bundle.
+
+HeathS: Remove calls to disable the IME for message windows.
+
+MiCarls: SFBUG:3338956 - Burn related bundles now use the action passed in
+         to plan, rather than the action specified on the commandline
+
+WixBuild: Version 3.6.2019.0
+
+ScotK: A start on getting burn to compile for other architectures.
+
+PMarcu: SFBUG:3375939 Persisting tabs in custom table data and enforcing 
+                      Identifiers in Custom tables.
+
+PMarcu: SFBUG: 3383823 - removing quotes from around value in foreach in sample
+
+EricStJ: SFBUG:3394755 - Don't add extra netfx parameters
+         SFBUG:3394662 - When NetFx hits success blocker, Burn returns failure.
+
+ZhenyaS: SFBUG:3394197 - Transfer variables from user process to elevated
+                         process so that bundle name set by BA gets registered
+                         in ARP
+
+RobMen: Create runtime localization for WiX Standard Bootstrapper Application.
+        Support Bundle/Condition in WiX Standard Bootstrapper Application.
+        SFBUG:3396537 - allow preqba to be localized.
+
+RobMen: SFBUG:3328616 - fix leaked XML DOM nodes.
+
+JieJi: Fix the calculation of MSI execution percentage during rollback.
+
+WixBuild: Version 3.6.2026.0
+
+RobMen: SFBUG:3396574 - add MsiPackage/@ForcePerMachine to workaround poorly
+                        designed 3rd party packages.
+
+RobMen: SFBUG:3375622 - implement IBootstrapperApplicationEngine->Elevate().
+
+ZhenyaS: Refactor mba.wxs to allow for customization of prereq BA theme.
+
+WixBuild: Version 3.6.2102.0
+

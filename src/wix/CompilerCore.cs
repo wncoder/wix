@@ -374,23 +374,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Verifies if an identifier is a valid binder variable name.
-        /// </summary>
-        /// <param name="name">Binder variable name to verify.</param>
-        /// <returns>True if the identifier is a valid binder variable name.</returns>
-        public static bool IsValidBinderVariable(string name)
-        {
-            if (String.IsNullOrEmpty(name))
-            {
-                return false;
-            }
-
-            Match match = Common.WixVariableRegex.Match(name);
-
-            return (match.Success && "bind" == match.Groups["namespace"].Value && 0 == match.Index && name.Length == match.Length);
-        }
-
-        /// <summary>
         /// Verifies if a filename is a valid short filename.
         /// </summary>
         /// <param name="filename">Filename to verify.</param>
@@ -585,7 +568,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>True if version is a valid product version</returns>
         public static bool IsValidProductVersion(string version)
         {
-            if (!IsValidBinderVariable(version))
+            if (!Common.IsValidBinderVariable(version))
             {
                 Version ver = new Version(version);
 
@@ -605,7 +588,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>True if version is a valid module or bundle version.</returns>
         public static bool IsValidModuleOrBundleVersion(string version)
         {
-            if (!IsValidBinderVariable(version))
+            if (!Common.IsValidBinderVariable(version))
             {
                 Version ver = new Version(version);
 
@@ -1119,7 +1102,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (0 < value.Length)
             {
-                if (IsValidLocIdentifier(value) || IsValidBinderVariable(value))
+                if (IsValidLocIdentifier(value) || Common.IsValidBinderVariable(value))
                 {
                     return value;
                 }
@@ -1461,7 +1444,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (0 < value.Length)
             {
-                if (allowBinderVariable && IsValidBinderVariable(value))
+                if (allowBinderVariable && Common.IsValidBinderVariable(value))
                 {
                     return value;
                 }

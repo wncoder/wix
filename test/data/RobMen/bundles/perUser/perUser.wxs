@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="~Bundle perUser"
+        Manufacturer="Microsoft Corporation"
+        Version="0.1.0.0"
+        Tag="PerUser">
+
+   <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+   <Chain>
+      <MsiPackage Vital='yes' SourceFile='Cv1.msi' />
+   </Chain>
+</Bundle>
+</Wix>

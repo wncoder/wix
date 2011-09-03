@@ -83,5 +83,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             this.result = args.Status;
             this.wait.Set();
         }
+
+        protected override void OnSystemShutdown(SystemShutdownEventArgs args)
+        {
+            // Always prevent shutdown.
+            this.Engine.Log(LogLevel.Verbose, "Disallowed system request to shut down the bootstrapper application.");
+            args.Result = Result.Cancel;
+
+            this.wait.Set();
+        }
     }
 }

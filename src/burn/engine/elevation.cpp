@@ -180,6 +180,63 @@ static HRESULT OnDetectRelatedBundles(
 
 // function definitions
 
+extern "C" HRESULT ElevationElevate(
+    __in BURN_ENGINE_STATE* pEngineState,
+    __in HWND hwndParent
+    )
+{
+    Assert(BURN_MODE_ELEVATED != pEngineState->mode);
+    Assert(!pEngineState->companionConnection.sczName);
+    Assert(!pEngineState->companionConnection.sczSecret);
+    Assert(!pEngineState->companionConnection.hProcess);
+    Assert(!pEngineState->companionConnection.dwProcessId);
+    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hPipe);
+    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hCachePipe);
+
+    HRESULT hr = S_OK;
+    int nResult = IDOK;
+    HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
+
+    nResult = pEngineState->userExperience.pUserExperience->OnElevate();
+    hr = HRESULT_FROM_VIEW(nResult);
+    ExitOnRootFailure(hr, "UX aborted elevation requirement.");
+
+    hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
+    ExitOnFailure(hr, "Failed to create pipe name and client token.");
+
+    hr = PipeCreatePipes(&pEngineState->companionConnection, TRUE, &hPipesCreatedEvent);
+    ExitOnFailure(hr, "Failed to create pipe and cache pipe.");
+
+    do
+    {
+        nResult = IDOK;
+
+        // Create the elevated process and if successful, wait for it to connect.
+        hr = PipeLaunchChildProcess(&pEngineState->companionConnection, TRUE, hwndParent);
+        if (SUCCEEDED(hr))
+        {
+            hr = PipeWaitForChildConnect(&pEngineState->companionConnection);
+            ExitOnFailure(hr, "Failed to connect to elevated child process.");
+        }
+        else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr ||   // the user clicked "Cancel" on the elevation prompt or
+                 HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) == hr) // the elevation prompt timed out, provide the notification with the option to retry.
+        {
+            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL);
+        }
+    } while (IDRETRY == nResult);
+    ExitOnFailure(hr, "Failed to elevate.");
+
+LExit:
+    ReleaseHandle(hPipesCreatedEvent);
+
+    if (FAILED(hr))
+    {
+        PipeConnectionUninitialize(&pEngineState->companionConnection);
+    }
+
+    return hr;
+}
+
 /*******************************************************************
  ElevationSessionBegin - 
 
@@ -187,7 +244,9 @@ static HRESULT OnDetectRelatedBundles(
 extern "C" HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in BOOTSTRAPPER_ACTION action,
-    __in DWORD64 qwEstimatedSize
+    __in BURN_VARIABLES* pVariables,
+    __in DWORD64 qwEstimatedSize,
+    __in_z LPCWSTR wzResumeCommandLine
     )
 {
     HRESULT hr = S_OK;
@@ -201,6 +260,12 @@ extern "C" HRESULT ElevationSessionBegin(
 
     hr = BuffWriteNumber64(&pbData, &cbData, qwEstimatedSize);
     ExitOnFailure(hr, "Failed to write estimated size to message buffer.");
+
+    hr = BuffWriteString(&pbData, &cbData, wzResumeCommandLine);
+    ExitOnFailure(hr, "Failed to write resume command line to message buffer.");
+
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
+    ExitOnFailure(hr, "Failed to write variables.");
 
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN, pbData, cbData, NULL, NULL, &dwResult);
@@ -220,7 +285,7 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT ElevationSessionResume(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action
+    __in_z LPCWSTR wzResumeCommandLine
     )
 {
     HRESULT hr = S_OK;
@@ -229,8 +294,8 @@ extern "C" HRESULT ElevationSessionResume(
     DWORD dwResult = 0;
 
     // serialize message data
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)action);
-    ExitOnFailure(hr, "Failed to write action to message buffer.");
+    hr = BuffWriteString(&pbData, &cbData, wzResumeCommandLine);
+    ExitOnFailure(hr, "Failed to write resume command line to message buffer.");
 
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME, pbData, cbData, NULL, NULL, &dwResult);
@@ -1130,6 +1195,12 @@ static HRESULT OnSessionBegin(
     hr = BuffReadNumber64(pbData, cbData, &iData, &qwEstimatedSize);
     ExitOnFailure(hr, "Failed to read estimated size.");
 
+    hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);
+    ExitOnFailure(hr, "Failed to read resume command line.");
+
+    hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
+    ExitOnFailure(hr, "Failed to read variables.");
+
     // begin session in per-machine process
     hr =  RegistrationSessionBegin(pRegistration, pVariables, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);
     ExitOnFailure(hr, "Failed to begin registration session.");
@@ -1146,14 +1217,13 @@ static HRESULT OnSessionResume(
 {
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
-    DWORD action = 0;
 
     // deserialize message data
-    hr = BuffReadNumber(pbData, cbData, &iData, &action);
-    ExitOnFailure(hr, "Failed to read action.");
+    hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);
+    ExitOnFailure(hr, "Failed to read resume command line.");
 
     // suspend session in per-machine process
-    hr = RegistrationSessionResume(pRegistration, (BOOTSTRAPPER_ACTION)action, TRUE);
+    hr = RegistrationSessionResume(pRegistration, TRUE);
     ExitOnFailure(hr, "Failed to suspend registration session.");
 
 LExit:

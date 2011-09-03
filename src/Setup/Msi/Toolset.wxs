@@ -19,7 +19,9 @@
     <Fragment>
         <!-- Directories -->
         <DirectoryRef Id="APPLICATIONFOLDER">
-            <Directory Id="BinDir" Name="bin" />
+            <Directory Id="BinDir" Name="bin">
+                <Directory Id="Burnx86Dir" Name="x86" />
+            </Directory>
             <Directory Id="DocDir" Name="doc" />
             <Directory Id="SdkDir" Name="SDK">
                 <Directory Id="SdkIncDir" Name="inc" />
@@ -35,9 +37,6 @@
         </DirectoryRef>
 
         <DirectoryRef Id="BinDir">
-            <Component Id="BurnBinaries" Guid="ABC4BC34-2A57-4B7D-2897-E999A2452345" Win64="no">
-                 <File Source="burnstub.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
-            </Component>
             <Component Id="CandleBinaries" Guid="FBD4BCFB-F1B7-4B6D-B07C-E999A24521CF" Win64="no">
                 <File Source="candle.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
@@ -143,6 +142,12 @@
             </Component>
             <Component Id="Microsoft.Deployment.WindowsInstaller.Wix" Guid="A95DB27C-DB3E-41CC-8CB9-40F286F304EC" Win64="no">
               <File Id="Microsoft.Deployment.WindowsInstaller.dll_Wix" Source="Microsoft.Deployment.WindowsInstaller.dll" Checksum="yes" KeyPath="yes" Vital="yes" />
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="Burnx86Dir">
+            <Component Id="BurnBinaries" Win64="no">
+                 <File Source="x86\burn.exe" Checksum="yes" KeyPath="yes" Vital="yes" />
             </Component>
         </DirectoryRef>
 

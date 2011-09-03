@@ -45,7 +45,7 @@
         <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\8.0' Value='InstallDir' Variable='VS2005InstallFolder' />
 
         <PackageGroup Id='ProjectAggregator'>
-            <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' InstallCondition='VS2005InstallFolder'
+            <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
                         DownloadUrl='http://wix.sourceforge.net/releases/data/ProjectAggregator2.msi'
                         SourceFile='x86\ProjectAggregator2.msi' />
         </PackageGroup>

@@ -322,7 +322,6 @@ LExit:
 extern "C" HRESULT NetFxRunChainer(
     __in LPCWSTR wzExecutablePath,
     __in LPCWSTR wzArguments,
-    __in LPCWSTR wzBundleName,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out DWORD* pdwExitCode
@@ -360,8 +359,7 @@ extern "C" HRESULT NetFxRunChainer(
     hr = CreateNetFxChainer(sczSectionName, sczEventName, &pNetfxChainer);
     ExitOnFailure(hr, "Failed to create netfx chainer.");
 
-    // TODO: Chaining package
-    hr = StrAllocFormatted(&sczCommand, L"%ls /pipe %ls /q /norestart /chainingpackage \"%ls\"", wzArguments, sczSectionName, wzBundleName);
+    hr = StrAllocFormatted(&sczCommand, L"%ls /pipe %ls", wzArguments, sczSectionName);
     ExitOnFailure(hr, "Failed to allocate netfx chainer arguments.");
 
     si.cb = sizeof(si);
@@ -381,7 +379,10 @@ extern "C" HRESULT NetFxRunChainer(
             *pdwExitCode = NetFxGetResult(pNetfxChainer);
             if (E_PENDING == *pdwExitCode)
             {
-                ExitOnFailure(hr = E_FAIL, "Result was not set by netfx chainer");
+                if (!::GetExitCodeProcess(pi.hProcess, pdwExitCode))
+                {
+                    ExitWithLastError(hr, "Failed to get netfx return code.");
+                }
             }
 
             break;

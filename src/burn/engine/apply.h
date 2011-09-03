@@ -62,10 +62,6 @@ typedef int (*PFN_GENERICMESSAGEHANDLER)(
     );
 
 
-HRESULT ApplyElevate(
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent
-    );
 HRESULT ApplyRegister(
     __in BURN_ENGINE_STATE* pEngineState
     );

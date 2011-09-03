@@ -56,7 +56,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BootstrapperApplicationException"/> class.
+        /// Initializes a new instance of the <see cref="BootstrapperException"/> class.
         /// </summary>
         /// <param name="info">Serialization information for this exception</param>
         /// <param name="context">Streaming context to serialize to</param>

@@ -203,63 +203,6 @@ static HRESULT ExecutePackageComplete(
 
 // function definitions
 
-extern "C" HRESULT ApplyElevate(
-    __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent
-    )
-{
-    Assert(BURN_MODE_ELEVATED != pEngineState->mode);
-    Assert(!pEngineState->companionConnection.sczName);
-    Assert(!pEngineState->companionConnection.sczSecret);
-    Assert(!pEngineState->companionConnection.hProcess);
-    Assert(!pEngineState->companionConnection.dwProcessId);
-    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hPipe);
-    Assert(INVALID_HANDLE_VALUE == pEngineState->companionConnection.hCachePipe);
-
-    HRESULT hr = S_OK;
-    int nResult = IDOK;
-    HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
-
-    nResult = pEngineState->userExperience.pUserExperience->OnElevate();
-    hr = HRESULT_FROM_VIEW(nResult);
-    ExitOnRootFailure(hr, "UX aborted elevation requirement.");
-
-    hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
-    ExitOnFailure(hr, "Failed to create pipe name and client token.");
-
-    hr = PipeCreatePipes(&pEngineState->companionConnection, TRUE, &hPipesCreatedEvent);
-    ExitOnFailure(hr, "Failed to create pipe and cache pipe.");
-
-    do
-    {
-        nResult = IDOK;
-
-        // Create the elevated process and if successful, wait for it to connect.
-        hr = PipeLaunchChildProcess(&pEngineState->companionConnection, TRUE, hwndParent);
-        if (SUCCEEDED(hr))
-        {
-            hr = PipeWaitForChildConnect(&pEngineState->companionConnection);
-            ExitOnFailure(hr, "Failed to connect to elevated child process.");
-        }
-        else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr) // the user clicked "Cancel" on the elevation prompt, provide the notification with the option to retry.
-        {
-            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL);
-        }
-    } while (IDRETRY == nResult);
-    ExitOnFailure(hr, "Failed to elevate.");
-
-
-LExit:
-    ReleaseHandle(hPipesCreatedEvent);
-
-    if (FAILED(hr))
-    {
-        PipeConnectionUninitialize(&pEngineState->companionConnection);
-    }
-
-    return hr;
-}
-
 extern "C" HRESULT ApplyRegister(
     __in BURN_ENGINE_STATE* pEngineState
     )
@@ -273,25 +216,29 @@ extern "C" HRESULT ApplyRegister(
     if (BOOTSTRAPPER_RESUME_TYPE_NONE == pEngineState->command.resumeType)
     {
         // begin new session
-        hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
-        ExitOnFailure(hr, "Failed to begin registration session.");
-
         if (pEngineState->registration.fPerMachine)
         {
-            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, 0);
+            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, 0, pEngineState->registration.sczResumeCommandLine);
             ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
+        }
+        else
+        {
+            hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
+            ExitOnFailure(hr, "Failed to begin registration session.");
         }
     }
     else
     {
         // resume previous session
-        hr =  RegistrationSessionResume(&pEngineState->registration, pEngineState->plan.action, FALSE);
-        ExitOnFailure(hr, "Failed to resume registration session.");
-
         if (pEngineState->registration.fPerMachine)
         {
-            hr =  ElevationSessionResume(pEngineState->companionConnection.hPipe, pEngineState->plan.action);
+            hr =  ElevationSessionResume(pEngineState->companionConnection.hPipe, pEngineState->registration.sczResumeCommandLine);
             ExitOnFailure(hr, "Failed to resume registration session in per-machine process.");
+        }
+        else
+        {
+            hr =  RegistrationSessionResume(&pEngineState->registration, FALSE);
+            ExitOnFailure(hr, "Failed to resume registration session.");
         }
     }
 
@@ -1121,11 +1068,12 @@ static HRESULT DoExecuteAction(
                 {
                     ExitWithLastError(hr, "Failed to get cache thread exit code.");
                 }
+
                 if (SUCCEEDED(hr))
                 {
                     hr = E_UNEXPECTED;
                 }
-                ExitOnFailure(hr, "Cache thread terminated unexpectedly.");
+                ExitOnFailure(hr, "Cache thread exited.");
 
             case WAIT_FAILED: __fallthrough;
             default:

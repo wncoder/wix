@@ -71,7 +71,7 @@
 
     <zip zipfile="${file.target.binaries.zip}">
       <fileset basedir="${dir.target.wix}">
-        <include name="burnstub.exe" />
+        <include name="x86\burn.exe" />
         <include name="candle.exe" />
         <include name="candle.exe.config" />
         <include name="${dir.root}\CPL.TXT" />
@@ -466,12 +466,24 @@
         <include name="*.pdb" />
       </fileset>
 
+      <fileset prefix="x86" basedir="${dir.target.wix.x86}\x86">
+        <include name="*.pdb" />
+      </fileset>
+
       <fileset prefix="x64" basedir="${dir.target.wix.x64}">
+        <include name="*.pdb" />
+      </fileset>
+
+      <fileset prefix="x64" basedir="${dir.target.wix.x86}\x64">
         <include name="*.pdb" />
       </fileset>
 
       <fileset prefix="ia64" basedir="${dir.target.wix.ia64}">
         <include name="*.pdb" if="${ia64}" />
+      </fileset>
+
+      <fileset prefix="ia64" basedir="${dir.target.wix.x86}\ia64">
+        <include name="*.pdb" />
       </fileset>
     </zip>
   </target>

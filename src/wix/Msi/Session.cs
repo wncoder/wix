@@ -40,7 +40,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiOpenPackage(packagePath, out handle);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
             this.Handle = handle;
         }
@@ -54,7 +54,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             int error = MsiInterop.MsiDoAction(this.Handle, action);
             if (0 != error)
             {
-                throw new Win32Exception(error);
+                throw new MsiException(error);
             }
         }
     }

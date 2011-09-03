@@ -1,2 +1,1 @@
-Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.EndToEnd.EndToEndBundleTests.BurnInstallUninstallBigBundle
-Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.EndToEnd.EndToEndBundleTests.BurnInstallRollback
+Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyExtension

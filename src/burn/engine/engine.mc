@@ -25,6 +25,20 @@ Language=English
 Burn v%1!hs!, path: %2!ls!, cmdline: '%3!ls!'
 .
 
+MessageId=2
+Severity=Warning
+SymbolicName=MSG_BURN_UNKNOWN_PRIVATE_SWITCH
+Language=English
+Unknown burn internal commandline switch encountered: '%1!ls!'.
+.
+
+MessageId=3
+Severity=Success
+SymbolicName=MSG_BURN_RUN_BY_RELATED_BUNDLE
+Language=English
+This bundle is being run by a related bundle as type '%1!hs!'.
+.
+
 ; // MessageId=2
 ; // Severity=Warning
 ; // SymbolicName=MSG_WARNING
@@ -106,7 +120,7 @@ MessageId=104
 Severity=Success
 SymbolicName=MSG_DETECTED_MSI_FEATURE
 Language=English
-Detected feature: %1!ls!, state: %2!hs!
+Detected package: %1!ls!, feature: %2!ls!, state: %3!hs!
 .
 
 MessageId=105
@@ -219,6 +233,13 @@ Severity=Success
 SymbolicName=MSG_APPLY_COMPLETE
 Language=English
 Apply complete, result: 0x%1!x! restart: %2!hs!
+.
+
+MessageId=400
+Severity=Success
+SymbolicName=MSG_SYSTEM_SHUTDOWN
+Language=English
+Received system request to shut down the process: critical: %1!hs!, elevated: %2!hs!, allowed: %3!hs!
 .
 
 MessageId=500

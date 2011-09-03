@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <ProjectReference Include="applications\signal.csproj"/>
+        <ProjectReference Include="packages\wait.wixproj"/>
+        <ProjectReference Include="bundles\shutdown.wixproj"/>
+    </ItemGroup>
+    <Target Name="Build">
+        <MSBuild Projects="@(ProjectReference)" Targets="Build" />
+    </Target>
+    <Target Name="Clean">
+        <MSBuild Projects="@(ProjectReference)" Targets="Clean" />
+    </Target>
+    <Target Name="Rebuild" DependsOnTargets="Clean;Build"/>
+</Project>

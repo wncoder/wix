@@ -1,13 +1,34 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
-    <Fragment>
-        <BootstrapperApplication Id='WixStandardBootstrapperApplication.RtfLicense' SourceFile='wixstdba.dll'>
-            <Payload Name='thm.xml' Compressed='yes' SourceFile='!(wix.WixStdbaThemeXml=$(var.RtfThemeXml))' />
-            <Payload Name='thm.wxl' Compressed='yes' SourceFile='!(wix.WixStdbaThemeWxl=$(var.RtfThemeWxl))' />
-            <Payload Name='logo.png' Compressed='yes' SourceFile='!(wix.WixStdbaLogo=$(var.LogoImage))' />
+    <?foreach platform in x86 ?>
+        <?include caSuffix.wxi ?>
 
-            <Payload Name='!(wix.WixStdbaLicenseRtfName=license.rtf)' Compressed='yes' SourceFile='!(wix.WixStdbaLicenseRtf=$(var.LoremIpsumLicenseFile))' />
-        </BootstrapperApplication>
+        <Fragment>
+            <BootstrapperApplication Id='WixStandardBootstrapperApplication.RtfLicense$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll'>
+                <PayloadGroupRef Id='WixStdbaRtfLicensePayloads' />
+            </BootstrapperApplication>
+        </Fragment>
+
+        <Fragment>
+            <BootstrapperApplication Id='WixStandardBootstrapperApplication.HyperlinkLicense$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll'>
+                <PayloadGroupRef Id='WixStdbaHyperlinkLicensePayloads' />
+            </BootstrapperApplication>
+        </Fragment>
+
+        <Fragment>
+            <BootstrapperApplication Id='WixStandardBootstrapperApplication.Foundation$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll' />
+        </Fragment>
+    <?endforeach ?>
+
+    <!-- RTF License Payload Group -->
+    <Fragment>
+        <PayloadGroup Id='WixStdbaRtfLicensePayloads'>
+            <Payload Name='thm.xml' Compressed='yes' SourceFile='!(wix.WixStdbaThemeXml=RtfTheme.xml)' />
+            <Payload Name='thm.wxl' Compressed='yes' SourceFile='!(wix.WixStdbaThemeWxl=RtfTheme.wxl)' />
+            <Payload Name='logo.png' Compressed='yes' SourceFile='!(wix.WixStdbaLogo=logo.png)' />
+
+            <Payload Name='!(wix.WixStdbaLicenseRtfName=license.rtf)' Compressed='yes' SourceFile='!(wix.WixStdbaLicenseRtf=LoremIpsumLicense.rtf)' />
+        </PayloadGroup>
 
         <CustomTable Id='WixStdbaInformation'>
             <Row>
@@ -16,12 +37,13 @@
         </CustomTable>
     </Fragment>
 
+    <!-- Hyperlink License Payload Group -->
     <Fragment>
-        <BootstrapperApplication Id='WixStandardBootstrapperApplication.HyperlinkLicense' SourceFile='wixstdba.dll'>
-            <Payload Name='thm.xml' Compressed='yes' SourceFile='!(wix.WixStdbaThemeXml=$(var.HyperlinkThemeXml))' />
-            <Payload Name='thm.wxl' Compressed='yes' SourceFile='!(wix.WixStdbaThemeWxl=$(var.HyperlinkThemeWxl))' />
-            <Payload Name='logo.png' Compressed='yes' SourceFile='!(wix.WixStdbaLogo=$(var.LogoImage))' />
-        </BootstrapperApplication>
+        <PayloadGroup Id='WixStdbaHyperlinkLicensePayloads'>
+            <Payload Name='thm.xml' Compressed='yes' SourceFile='!(wix.WixStdbaThemeXml=HyperlinkTheme.xml)' />
+            <Payload Name='thm.wxl' Compressed='yes' SourceFile='!(wix.WixStdbaThemeWxl=HyperlinkTheme.wxl)' />
+            <Payload Name='logo.png' Compressed='yes' SourceFile='!(wix.WixStdbaLogo=logo.png)' />
+        </PayloadGroup>
 
         <CustomTable Id='WixStdbaInformation'>
             <Row>
@@ -30,10 +52,7 @@
         </CustomTable>
     </Fragment>
 
-    <Fragment>
-        <BootstrapperApplication Id='WixStandardBootstrapperApplication.Foundation' SourceFile='wixstdba.dll' />
-    </Fragment>
-
+    <!-- BootstrapperApplicationData tables definition -->
     <Fragment>
         <CustomTable Id='WixStdbaInformation' BootstrapperApplicationData='yes'>
             <Column Id='LicenseFile' Category='Text' Type='string' Width='0' Nullable='yes' PrimaryKey='yes' />

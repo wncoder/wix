@@ -250,7 +250,7 @@ extern "C" HRESULT ExeEnginePlanPackage(
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            execute = pPackage->Exe.fRepairable ? BOOTSTRAPPER_ACTION_STATE_RECACHE : BOOTSTRAPPER_ACTION_STATE_NONE;
+            execute = pPackage->Exe.fRepairable ? BOOTSTRAPPER_ACTION_STATE_REPAIR : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -409,7 +409,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
         wzArguments = pExecuteAction->exePackage.pPackage->Exe.sczUninstallArguments;
         break;
 
-    case BOOTSTRAPPER_ACTION_STATE_RECACHE:
+    case BOOTSTRAPPER_ACTION_STATE_REPAIR:
         wzArguments = pExecuteAction->exePackage.pPackage->Exe.sczRepairArguments;
         break;
 
@@ -442,7 +442,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     else if (BURN_EXE_PROTOCOL_TYPE_NETFX4 == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
-        hr = NetFxRunChainer(sczExecutablePath, sczCommand, pExecuteAction->exePackage.sczBundleName, pfnGenericMessageHandler, pvContext, &dwExitCode);
+        hr = NetFxRunChainer(sczExecutablePath, sczCommand, pfnGenericMessageHandler, pvContext, &dwExitCode);
         ExitOnFailure1(hr, "Failed to run netfx chainer: %ls", sczExecutablePath);
     }
     else // create and wait for the executable process while sending fake progress to allow cancel.

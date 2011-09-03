@@ -12,11 +12,12 @@
 // </copyright>
 // 
 // <summary>
-//  localization functions
+//    Localization helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
+
 
 // prototypes
 static HRESULT ParseWxl(
@@ -34,10 +35,80 @@ static HRESULT ParseWxlString(
     );
 
 
-/********************************************************************
- LocLoadFromFile - Loads a localization file
+HRESULT DAPI LocProbeForFile(
+    __in_z LPCWSTR wzBasePath,
+    __in_z LPCWSTR wzLocFileName,
+    __in_z_opt LPCWSTR wzLanguage,
+    __inout LPWSTR* psczPath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczProbePath = NULL;
+    LCID lcid = 0;
+    LPWSTR sczLcidFile = NULL;
 
-*******************************************************************/
+    // If a language was specified, look for a loc file in that as a directory.
+    if (wzLanguage && *wzLanguage)
+    {
+        hr = PathConcat(wzBasePath, wzLanguage, &sczProbePath);
+        ExitOnFailure(hr, "Failed to concat base path to language.");
+
+        hr = PathConcat(sczProbePath, wzLocFileName, &sczProbePath);
+        ExitOnFailure(hr, "Failed to concat loc file name to probe path.");
+
+        if (FileExistsEx(sczProbePath, NULL))
+        {
+            ExitFunction();
+        }
+    }
+
+    // Look for a loc file in the current user LCID.
+    lcid = ::GetUserDefaultLCID();
+    hr = StrAllocFormatted(&sczLcidFile, L"%u\\%ls", lcid, wzLocFileName);
+    ExitOnFailure(hr, "Failed to format user lcid.");
+
+    hr = PathConcat(wzBasePath, sczLcidFile, &sczProbePath);
+    ExitOnFailure(hr, "Failed to concat user lcid file name to base path.");
+
+    if (FileExistsEx(sczProbePath, NULL))
+    {
+        ExitFunction();
+    }
+
+    // Look for a loc file in the current system LCID.
+    lcid = ::GetSystemDefaultLCID();
+    hr = StrAllocFormatted(&sczLcidFile, L"%u\\%ls", lcid, wzLocFileName);
+    ExitOnFailure(hr, "Failed to format user lcid.");
+
+    hr = PathConcat(wzBasePath, sczLcidFile, &sczProbePath);
+    ExitOnFailure(hr, "Failed to concat user lcid file name to base path.");
+
+    if (FileExistsEx(sczProbePath, NULL))
+    {
+        ExitFunction();
+    }
+
+    // Finally, look for the loc file in the base path.
+    hr = PathConcat(wzBasePath, wzLocFileName, &sczProbePath);
+    ExitOnFailure(hr, "Failed to concat loc file name to base path.");
+
+    if (!FileExistsEx(sczProbePath, NULL))
+    {
+        hr = E_FILENOTFOUND;
+    }
+
+LExit:
+    if (SUCCEEDED(hr))
+    {
+        hr = StrAllocString(psczPath, sczProbePath, 0);
+    }
+
+    ReleaseStr(sczLcidFile);
+    ReleaseStr(sczProbePath);
+
+    return hr;
+}
+
 extern "C" HRESULT DAPI LocLoadFromFile(
     __in_z LPCWSTR wzWxlFile,
     __out LOC_STRINGSET** ppLocStringSet
@@ -58,12 +129,7 @@ LExit:
     return hr;
 }
 
-/********************************************************************
- LocLoadFromFile - Loads a localization file from a module's data resource.
-
- NOTE: The resource data must be UTF-8 encoded.
-*******************************************************************/
-HRESULT DAPI LocLoadFromResource(
+extern "C" HRESULT DAPI LocLoadFromResource(
     __in HMODULE hModule,
     __in_z LPCSTR szResource,
     __out LOC_STRINGSET** ppLocStringSet
@@ -94,10 +160,6 @@ LExit:
     return hr;
 }
 
-/********************************************************************
- LocFree - free memory allocated when loading a localization file
-
-*******************************************************************/
 extern "C" void DAPI LocFree(
     __in_opt LOC_STRINGSET* pLocStringSet
     )
@@ -106,7 +168,7 @@ extern "C" void DAPI LocFree(
     {
         for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
         {
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzID);
+            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzId);
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
         }
 
@@ -115,21 +177,17 @@ extern "C" void DAPI LocFree(
     }
 }
 
-/********************************************************************
- LocLocalizeString - replace any !(loc.id) in a string with the
-                    correct sub string
-*******************************************************************/
 extern "C" HRESULT DAPI LocLocalizeString(
     __in const LOC_STRINGSET* pLocStringSet,
-    __inout LPWSTR* ppwzInput
+    __inout LPWSTR* ppsczInput
     )
 {
-    Assert(ppwzInput && pLocStringSet);
+    Assert(ppsczInput && pLocStringSet);
     HRESULT hr = S_OK;
 
     for (DWORD i = 0; i < pLocStringSet->cLocStrings; ++i)
     {
-        hr = StrReplaceStringAll(ppwzInput, pLocStringSet->rgLocStrings[i].wzID, pLocStringSet->rgLocStrings[i].wzText);
+        hr = StrReplaceStringAll(ppsczInput, pLocStringSet->rgLocStrings[i].wzId, pLocStringSet->rgLocStrings[i].wzText);
         ExitOnFailure(hr, "Localizing string failed.");
     }
 
@@ -206,7 +264,7 @@ LExit:
     {
         for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
         {
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzID);
+            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzId);
             ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
         }
 
@@ -235,7 +293,7 @@ static HRESULT ParseWxlString(
     hr = XmlGetAttribute(pixn, L"Id", &bstrText);
     ExitOnFailure(hr, "Failed to get Xml attribute Id in Wxl file.");
 
-    hr = StrAllocFormatted(&pLocString->wzID, L"!(loc.%s)", bstrText);
+    hr = StrAllocFormatted(&pLocString->wzId, L"#(loc.%s)", bstrText);
     ExitOnFailure(hr, "Failed to duplicate Xml attribute Id in Wxl file.");
 
     ReleaseNullBSTR(bstrText);

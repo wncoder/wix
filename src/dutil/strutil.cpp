@@ -102,7 +102,7 @@ StrTrimWhitespace - allocates or reuses dynamic string memory and copies
 NOTE: caller is responsible for freeing ppwz even if function fails
 ********************************************************************/
 HRESULT DAPI StrTrimWhitespace(
-    __deref_out_ecount_z(cchSource+1) LPWSTR* ppwz,
+    __deref_out_z LPWSTR* ppwz,
     __in_z LPCWSTR wzSource
     )
 {
@@ -223,7 +223,7 @@ StrAnsiTrimWhitespace - allocates or reuses dynamic string memory and copies
 NOTE: caller is responsible for freeing ppz even if function fails
 ********************************************************************/
 HRESULT DAPI StrAnsiTrimWhitespace(
-    __deref_out_ecount_z(cchSource+1) LPSTR* ppz,
+    __deref_out_z LPSTR* ppz,
     __in_z LPCSTR szSource
     )
 {
