@@ -4394,7 +4394,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                    this.core.ParseExtensionAttribute(sourceLineNumbers, (XmlElement)node, attrib);
                 }
             }
 
@@ -10488,6 +10488,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 break;
                             case "DirectoryRef":
                                 this.ParsePatchChildRefElement(child, "Directory");
+                                break;
+                            case "DigitalCertificateRef":
+                                this.ParsePatchChildRefElement(child, "MsiDigitalCertificate");
                                 break;
                             case "FeatureRef":
                                 this.ParsePatchChildRefElement(child, "Feature");
@@ -20962,7 +20965,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "InstallCommand", installCommand, expectedArgument, "Protocol", "netfx4"));
                     }
 
-                    if (null == uninstallCommand || -1 == repairCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
+                    if (null == repairCommand || -1 == repairCommand.IndexOf(expectedArgument, StringComparison.OrdinalIgnoreCase))
                     {
                         this.core.OnMessage(WixWarnings.AttributeShouldContain(sourceLineNumbers, node.Name, "RepairCommand", repairCommand, expectedArgument, "Protocol", "netfx4"));
                     }

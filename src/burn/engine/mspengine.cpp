@@ -34,8 +34,11 @@ static HRESULT AddDetectedTargetProduct(
     LPCWSTR wzProductCode
     );
 static HRESULT PlanTargetProduct(
+    __in DWORD dwPackageSequence,
     __in BOOL fRollback,
     __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
     __in BOOTSTRAPPER_ACTION_STATE actionState,
     __in BURN_PACKAGE* pPackage,
     __in BURN_MSPTARGETPRODUCT* pTargetProduct
@@ -226,12 +229,12 @@ LExit:
 // Plan - calculates the execute and rollback state for the requested package state.
 //
 extern "C" HRESULT MspEnginePlanPackage(
-    __in DWORD /*dwPackageSequence*/,
+    __in DWORD dwPackageSequence,
     __in_opt DWORD* /*pdwInsertSequence*/,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in BURN_LOGGING* /*pLog*/,
-    __in BURN_VARIABLES* /*pVariables*/,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
     __in BOOL fPlanPackageCacheRollback,
     __in BURN_USER_EXPERIENCE* pUserExperience,
@@ -337,13 +340,13 @@ extern "C" HRESULT MspEnginePlanPackage(
 
         if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
         {
-            hr = PlanTargetProduct(FALSE, pPlan, execute, pPackage, pTargetProduct);
+            hr = PlanTargetProduct(dwPackageSequence, FALSE, pPlan, pLog, pVariables, execute, pPackage, pTargetProduct);
             ExitOnFailure(hr, "Failed to plan target product.");
         }
 
         if (BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
         {
-            hr = PlanTargetProduct(TRUE, pPlan, rollback, pPackage, pTargetProduct);
+            hr = PlanTargetProduct(dwPackageSequence, TRUE, pPlan, pLog, pVariables, rollback, pPackage, pTargetProduct);
             ExitOnFailure(hr, "Failed to plan rollack target product.");
         }
 
@@ -522,8 +525,11 @@ LExit:
 
 
 static HRESULT PlanTargetProduct(
+    __in DWORD dwPackageSequence,
     __in BOOL fRollback,
     __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
     __in BOOTSTRAPPER_ACTION_STATE actionState,
     __in BURN_PACKAGE* pPackage,
     __in BURN_MSPTARGETPRODUCT* pTargetProduct
@@ -576,6 +582,8 @@ static HRESULT PlanTargetProduct(
         {
             pPlan->fPerMachine = TRUE;
         }
+
+        LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
     }
 
     // Add our target product to the array and sort based on their order determined during detection.

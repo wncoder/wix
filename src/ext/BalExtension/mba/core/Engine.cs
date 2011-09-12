@@ -59,6 +59,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
                 delegate(string name, long value)
                 {
                     this.engine.SetVariableNumeric(name, value);
+                },
+                delegate(string name)
+                {
+                    long value;
+                    int ret = this.engine.GetVariableNumeric(name, out value);
+
+                    return NativeMethods.E_NOTFOUND != ret;
                 }
             );
 
@@ -87,6 +94,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
                 delegate(string name, string value)
                 {
                     this.engine.SetVariableString(name, value);
+                },
+                delegate(string name)
+                {
+                    int capacity = InitialBufferSize;
+                    StringBuilder sb = new StringBuilder(capacity);
+                    int ret = this.engine.GetVariableString(name, sb, ref capacity);
+
+                    return NativeMethods.E_NOTFOUND != ret;
                 }
             );
 
@@ -119,6 +134,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
                     long version = major | minor | build | revision;
                     this.engine.SetVariableVersion(name, version);
+                },
+                delegate(string name)
+                {
+                    long value;
+                    int ret = this.engine.GetVariableVersion(name, out value);
+
+                    return NativeMethods.E_NOTFOUND != ret;
                 }
             );
         }
@@ -366,11 +388,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
             private Getter<T> getter;
             private Setter<T> setter;
+            private Predicate<string> contains;
 
-            internal Variables(Getter<T> getter, Setter<T> setter)
+            internal Variables(Getter<T> getter, Setter<T> setter, Predicate<string> contains)
             {
                 this.getter = getter;
                 this.setter = setter;
+                this.contains = contains;
             }
 
             /// <summary>
@@ -378,10 +402,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             /// </summary>
             /// <param name="name">The name of the variable to set.</param>
             /// <returns>The value of the given variable.</returns>
+            /// <exception cref="Win32Exception">An error occured getting the variable.</exception>
             public T this[string name]
             {
                 get { return this.getter(name); }
                 set { this.setter(name, value); }
+            }
+
+            /// <summary>
+            /// Gets whether the variable given by <paramref name="name"/> exists.
+            /// </summary>
+            /// <param name="name">The name of the variable to check.</param>
+            /// <returns>True if the variable given by <paramref name="name"/> exists; otherwise, false.</returns>
+            public bool Contains(string name)
+            {
+                return this.contains(name);
             }
         }
     }

@@ -101,6 +101,50 @@ extern const int SCE_ROW_HANDLE_BYTES = sizeof(SCE_ROW);
 extern const int SCE_QUERY_HANDLE_BYTES = sizeof(SCE_QUERY);
 extern const int SCE_QUERY_RESULTS_HANDLE_BYTES = sizeof(SCE_QUERY_RESULTS);
 
+// The following is the internal Sce-maintained table to tell the identifier and version of the schema
+static bool fSchemaOpened = false;
+static SCE_COLUMN_SCHEMA SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA[] =
+{
+    {
+        L"AppIdentifier",
+        DBTYPE_WSTR,
+        0,
+        FALSE,
+        TRUE,
+        FALSE,
+        NULL,
+        0,
+        0
+    },
+    {
+        L"Version",
+        DBTYPE_I4,
+        0,
+        FALSE,
+        FALSE,
+        FALSE,
+        NULL,
+        0,
+        0
+    }
+};
+
+static SCE_TABLE_SCHEMA SCE_INTERNAL_VERSION_TABLE_SCHEMA[] =
+{
+    L"SceSchemaTablev1",
+    _countof(SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA),
+    SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA,
+    0,
+    NULL,
+    NULL,
+    NULL
+};
+static SCE_DATABASE_SCHEMA SCE_INTERNAL_VERSION_SCHEMA =
+{
+    _countof(SCE_INTERNAL_VERSION_TABLE_SCHEMA),
+    SCE_INTERNAL_VERSION_TABLE_SCHEMA
+};
+
 // internal function declarations
 static HRESULT RunQuery(
     __in BOOL fRange,
@@ -110,6 +154,10 @@ static HRESULT RunQuery(
 static HRESULT EnsureSchema(
     __in SCE_DATABASE *pDatabase,
     __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    );
+static HRESULT OpenSchema(
+    __in SCE_DATABASE *pDatabase,
+    __in SCE_DATABASE_SCHEMA *pdsSchema
     );
 static HRESULT SetColumnValue(
     __in const SCE_TABLE_SCHEMA *pTableSchema,
@@ -146,6 +194,16 @@ static HRESULT EnsureForeignColumnConstraints(
     );
 static HRESULT SetSessionProperties(
     __in ISessionProperties *pISessionProperties
+    );
+static HRESULT GetDatabaseSchemaInfo(
+    __in SCE_DATABASE *pDatabase,
+    __out LPWSTR *psczSchemaType,
+    __out DWORD *pdwVersion
+    );
+static HRESULT SetDatabaseSchemaInfo(
+    __in SCE_DATABASE *pDatabase,
+    __in LPCWSTR wzSchemaType,
+    __in DWORD dwVersion
     );
 static void ReleaseDatabase(
     SCE_DATABASE *pDatabase
@@ -246,15 +304,20 @@ LExit:
 
 extern "C" HRESULT DAPI SceOpenDatabase(
     __in_z LPCWSTR sczFile,
+    __in LPCWSTR wzExpectedSchemaType,
+    __in DWORD dwExpectedVersion,
     __out SCE_DATABASE **ppDatabase,
     __in BOOL fReadOnly
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwVersionFound = 0;
     WCHAR wzTempDbFile[MAX_PATH];
     LPCWSTR wzPathToOpen = NULL;
+    LPWSTR sczSchemaType = NULL;
     SCE_DATABASE *pNewSceDatabase = NULL;
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
+    UUID schemaType = { };
     DBPROPSET rgdbpDataSourcePropSet[2] = { };
     DBPROP rgdbpDataSourceProp[1] = { };
     DBPROP rgdbpDataSourceSsceProp[1] =  { };
@@ -332,11 +395,26 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     hr = pNewSceDatabaseInternal->pISessionProperties->QueryInterface(IID_ITransactionLocal, reinterpret_cast<void **>(&pNewSceDatabaseInternal->pITransactionLocal));
     ExitOnFailure(hr, "Failed to get ITransactionLocal interface");
 
+    hr = GetDatabaseSchemaInfo(pNewSceDatabase, &sczSchemaType, &dwVersionFound);
+    ExitOnFailure(hr, "Failed to find schema version of database");
+
+    if (CSTR_EQUAL != ::CompareStringW(LOCALE_INVARIANT, 0, sczSchemaType, -1, wzExpectedSchemaType, -1))
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_BAD_FILE_TYPE);
+        ExitOnFailure2(hr, "Tried to open wrong database type - expected type %ls, found type %ls", wzExpectedSchemaType, sczSchemaType);
+    }
+    else if (dwVersionFound != dwExpectedVersion)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_PRODUCT_VERSION);
+        ExitOnFailure2(hr, "Tried to open wrong database schema version - expected version %u, found version %u", dwExpectedVersion, dwVersionFound);
+    }
+
     *ppDatabase = pNewSceDatabase;
     pNewSceDatabase = NULL;
 
 LExit:
     ReleaseBSTR(rgdbpDataSourceProp[0].vValue.bstrVal);
+    ReleaseStr(sczSchemaType);
     ReleaseDatabase(pNewSceDatabase);
 
     return hr;
@@ -344,27 +422,41 @@ LExit:
 
 extern "C" HRESULT DAPI SceEnsureDatabase(
     __in_z LPCWSTR sczFile,
+    __in LPCWSTR wzSchemaType,
+    __in DWORD dwExpectedVersion,
     __in SCE_DATABASE_SCHEMA *pdsSchema,
     __out SCE_DATABASE **ppDatabase
     )
 {
     HRESULT hr = S_OK;
+    SCE_DATABASE *pDatabase = NULL;
 
     if (FileExistsEx(sczFile, NULL))
     {
-        hr = SceOpenDatabase(sczFile, ppDatabase, FALSE);
+        hr = SceOpenDatabase(sczFile, wzSchemaType, dwExpectedVersion, &pDatabase, FALSE);
         ExitOnFailure1(hr, "Failed to open database while ensuring database exists: %ls", sczFile);
     }
     else
     {
-        hr = SceCreateDatabase(sczFile, ppDatabase);
+        hr = SceCreateDatabase(sczFile, &pDatabase);
         ExitOnFailure1(hr, "Failed to create database while ensuring database exists: %ls", sczFile);
+
+        hr = SetDatabaseSchemaInfo(pDatabase, wzSchemaType, dwExpectedVersion);
+        ExitOnFailure(hr, "Failed to set schema version of database");
     }
 
-    hr = EnsureSchema(*ppDatabase, pdsSchema);
+    hr = EnsureSchema(pDatabase, pdsSchema);
     ExitOnFailure1(hr, "Failed to ensure schema is correct in database: %ls", sczFile);
-    
+
+    // Keep a pointer to the schema in the SCE_DATABASE object for future reference
+    pDatabase->pdsSchema = pdsSchema;
+
+    *ppDatabase = pDatabase;
+    pDatabase = NULL;
+
 LExit:
+    ReleaseDatabase(pDatabase);
+
     return hr;
 }
 
@@ -1384,9 +1476,6 @@ static HRESULT EnsureSchema(
     ITableDefinition *pTableDefinition = NULL;
     IIndexDefinition *pIndexDefinition = NULL;
 
-    // Keep a pointer to the schema in the SCE_DATABASE object for future reference
-    pDatabase->pdsSchema = pdsSchema;
-
     rgdbpRowSetPropset[0].cProperties = 1;
     rgdbpRowSetPropset[0].guidPropertySet = DBPROPSET_ROWSET;
     rgdbpRowSetPropset[0].rgProperties = rgdbpRowSetProp;
@@ -1580,20 +1669,8 @@ static HRESULT EnsureSchema(
     ExitOnFailure(hr, "Failed to commit transaction for ensuring schema");
     fInTransaction = FALSE;
 
-    // Finally, open all tables
-    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
-    {
-        tableID.eKind = DBKIND_NAME;
-        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
-
-        // And finally, open the table's standard interfaces
-        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
-        ExitOnFailure(hr, "Failed to re-open table after ensuring all indexes and constraints are created");
-
-        hr = pdsSchema->rgTables[dwTable].pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pdsSchema->rgTables[dwTable].pIRowsetChange));
-        ExitOnFailure1(hr, "Failed to get IRowsetChange object for table: %ls", pdsSchema->rgTables[dwTable].wzName);
-    }
-
+    hr = OpenSchema(pDatabase, pdsSchema);
+    ExitOnFailure(hr, "Failed to open schema");
 
 LExit:
     ReleaseObject(pTableDefinition);
@@ -1612,6 +1689,45 @@ LExit:
     ReleaseMem(rgIndexColumnDescriptions);
     ReleaseMem(rgColumnDescriptions);
 
+    return hr;
+}
+
+static HRESULT OpenSchema(
+    __in SCE_DATABASE *pDatabase,
+    __in SCE_DATABASE_SCHEMA *pdsSchema
+    )
+{
+    HRESULT hr = S_OK;
+    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    DBID tableID = { };
+    DBPROPSET rgdbpRowSetPropset[1];
+    DBPROP rgdbpRowSetProp[1];
+
+    rgdbpRowSetPropset[0].cProperties = 1;
+    rgdbpRowSetPropset[0].guidPropertySet = DBPROPSET_ROWSET;
+    rgdbpRowSetPropset[0].rgProperties = rgdbpRowSetProp;
+
+    rgdbpRowSetProp[0].dwPropertyID = DBPROP_IRowsetChange;
+    rgdbpRowSetProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
+    rgdbpRowSetProp[0].colid = DB_NULLID;
+    rgdbpRowSetProp[0].vValue.vt = VT_BOOL;
+    rgdbpRowSetProp[0].vValue.boolVal = VARIANT_TRUE;
+
+    // Finally, open all tables
+    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
+    {
+        tableID.eKind = DBKIND_NAME;
+        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
+
+        // And finally, open the table's standard interfaces
+        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
+        ExitOnFailure(hr, "Failed to re-open table after ensuring all indexes and constraints are created");
+
+        hr = pdsSchema->rgTables[dwTable].pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pdsSchema->rgTables[dwTable].pIRowsetChange));
+        ExitOnFailure1(hr, "Failed to get IRowsetChange object for table: %ls", pdsSchema->rgTables[dwTable].wzName);
+    }
+
+LExit:
     return hr;
 }
 
@@ -1977,6 +2093,103 @@ static HRESULT SetSessionProperties(
     ExitOnFailure(hr, "Failed to set session properties");
 
 LExit:
+    return hr;
+}
+
+static HRESULT GetDatabaseSchemaInfo(
+    __in SCE_DATABASE *pDatabase,
+    __out LPWSTR *psczSchemaType,
+    __out DWORD *pdwVersion
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczSchemaType = NULL;
+    DWORD dwVersionFound = 0;
+    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    // Database object with our alternate schema
+    SCE_DATABASE database = { pDatabase->sdbHandle, &SCE_INTERNAL_VERSION_SCHEMA };
+    SCE_ROW_HANDLE sceRow = NULL;
+
+    if (!fSchemaOpened)
+    {
+        hr = OpenSchema(pDatabase, &SCE_INTERNAL_VERSION_SCHEMA);
+        ExitOnFailure(hr, "Failed to ensure internal version schema");
+    }
+
+    hr = SceGetFirstRow(&database, 0, &sceRow);
+    ExitOnFailure(hr, "Failed to get first row in internal version schema table");
+
+    hr = SceGetColumnString(sceRow, 0, &sczSchemaType);
+    ExitOnFailure(hr, "Failed to get internal schematype");
+
+    hr = SceGetColumnDword(sceRow, 1, &dwVersionFound);
+    ExitOnFailure(hr, "Failed to get internal version");
+
+    *psczSchemaType = sczSchemaType;
+    sczSchemaType = NULL;
+    *pdwVersion = dwVersionFound;
+
+LExit:
+    ReleaseStr(sczSchemaType);
+    ReleaseSceRow(sceRow);
+
+    return hr;
+}
+
+static HRESULT SetDatabaseSchemaInfo(
+    __in SCE_DATABASE *pDatabase,
+    __in LPCWSTR wzSchemaType,
+    __in DWORD dwVersion
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fInSceTransaction = FALSE;
+    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    // Database object with our alternate schema
+    SCE_DATABASE database = { pDatabase->sdbHandle, &SCE_INTERNAL_VERSION_SCHEMA };
+    SCE_ROW_HANDLE sceRow = NULL;
+
+    if (!fSchemaOpened)
+    {
+        hr = EnsureSchema(pDatabase, &SCE_INTERNAL_VERSION_SCHEMA);
+        ExitOnFailure(hr, "Failed to ensure internal version schema");
+    }
+
+    hr = SceBeginTransaction(&database);
+    ExitOnFailure(hr, "Failed to begin transaction");
+    fInSceTransaction = TRUE;
+
+    hr = SceGetFirstRow(&database, 0, &sceRow);
+    if (E_NOTFOUND == hr)
+    {
+        hr = ScePrepareInsert(&database, 0, &sceRow);
+        ExitOnFailure(hr, "Failed to insert only row into internal version schema table");
+    }
+    else
+    {
+        ExitOnFailure(hr, "Failed to get first row in internal version schema table");
+    }
+
+    hr = SceSetColumnString(sceRow, 0, wzSchemaType);
+    ExitOnFailure1(hr, "Failed to set internal schematype to: %ls", wzSchemaType);
+
+    hr = SceSetColumnDword(sceRow, 1, dwVersion);
+    ExitOnFailure1(hr, "Failed to set internal version to: %u", dwVersion);
+
+    hr = SceFinishUpdate(sceRow);
+    ExitOnFailure(hr, "Failed to insert first row in internal version schema table");
+
+    hr = SceCommitTransaction(&database);
+    ExitOnFailure(hr, "Failed to commit transaction");
+    fInSceTransaction = FALSE;
+
+LExit:
+    ReleaseSceRow(sceRow);
+    if (fInSceTransaction)
+    {
+        SceRollbackTransaction(&database);
+    }
+
     return hr;
 }
 

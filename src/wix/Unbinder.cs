@@ -669,6 +669,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             AssignSectionIdsToTable(output.Tables["Directory"], 0);
             Hashtable featureSectionIdIndex = AssignSectionIdsToTable(output.Tables["Feature"], 0);
             AssignSectionIdsToTable(output.Tables["Icon"], 0);
+            Hashtable digitalCertificateSectionIdIndex = AssignSectionIdsToTable(output.Tables["MsiDigitalCertificate"], 0);
             AssignSectionIdsToTable(output.Tables["Property"], 0);
 
             // Now handle all the tables that rely on the first set of indexes but also produce their own indexes. Order matters here.
@@ -689,6 +690,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     case "MsiAssembly":
                     case "MsiAssemblyName":
                         ConnectTableToSection(table, componentSectionIdIndex, 0);
+                        break;
+                    case "MsiPackageCertificate":
+                    case "MsiPatchCertificate":
+                        ConnectTableToSection(table, digitalCertificateSectionIdIndex, 1);
                         break;
                     case "CreateFolder":
                     case "FeatureComponents":

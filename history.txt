@@ -1418,3 +1418,18 @@ ZhenyaS: Refactor mba.wxs to allow for customization of prereq BA theme.
 
 WixBuild: Version 3.6.2102.0
 
+HeathS: SFBUG:3385047 - Support checking variable existence for MBAs.
+
+PMarcu: SFBUG: 3383823 - removing quotes from around value in foreach in sample
+
+PMarcu: SFBUG: 3393691 - Allowing patches to reference digital signatures.
+        SFBUG: 3400196 - Allowing extension attributes on Directory.
+        SFBUG: 3390807 - Better error when trying to generate a component guid
+                         and you have CompanionFile set.
+
+EricStJ: SFBUG:3401931 - crash when protocol=netfx and no repair command.
+
+MiCarls: SFBUG:3234079 - Make MSP's log in burn, just like MSI's already do.
+
+WixBuild: Version 3.6.2109.0
+

@@ -46,6 +46,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         {
             this.action = this.Command.Action;
 
+            this.TestVariables();
             this.Engine.Detect();
 
             this.wait.WaitOne();
@@ -91,6 +92,77 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             args.Result = Result.Cancel;
 
             this.wait.Set();
+        }
+
+        private void TestVariables()
+        {
+            // First make sure we can check and get standard variables of each type.
+            {
+                string value = null;
+                if (this.Engine.StringVariables.Contains("WindowsFolder"))
+                {
+                    value = this.Engine.StringVariables["WindowsFolder"];
+                    this.Engine.Log(LogLevel.Verbose, "TEST: Successfully retrieved a string variable: WindowsFolder");
+                }
+                else
+                {
+                    throw new Exception("Engine did not define a standard string variable: WindowsFolder");
+                }
+            }
+
+            {
+                long value = 0;
+                if (this.Engine.NumericVariables.Contains("NTProductType"))
+                {
+                    value = this.Engine.NumericVariables["NTProductType"];
+                    this.Engine.Log(LogLevel.Verbose, "TEST: Successfully retrieved a numeric variable: NTProductType");
+                }
+                else
+                {
+                    throw new Exception("Engine did not define a standard numeric variable: NTProductType");
+                }
+            }
+
+            {
+                Version value = new Version();
+                if (this.Engine.VersionVariables.Contains("VersionMsi"))
+                {
+                    value = this.Engine.VersionVariables["VersionMsi"];
+                    this.Engine.Log(LogLevel.Verbose, "TEST: Successfully retrieved a version variable: VersionMsi");
+                }
+                else
+                {
+                    throw new Exception("Engine did not define a standard version variable: VersionMsi");
+                }
+            }
+
+            // Now validate that Contians returns false for non-existant variables of each type.
+            if (this.Engine.StringVariables.Contains("TestStringVariableShouldNotExist"))
+            {
+                throw new Exception("Engine defined a string variable that should not exist: TestStringVariableShouldNotExist");
+            }
+            else
+            {
+                this.Engine.Log(LogLevel.Verbose, "TEST: Successfully checked for non-existent string variable: TestStringVariableShouldNotExist");
+            }
+
+            if (this.Engine.NumericVariables.Contains("TestNumericVariableShouldNotExist"))
+            {
+                throw new Exception("Engine defined a numeric variable that should not exist: TestNumericVariableShouldNotExist");
+            }
+            else
+            {
+                this.Engine.Log(LogLevel.Verbose, "TEST: Successfully checked for non-existent numeric variable: TestNumericVariableShouldNotExist");
+            }
+
+            if (this.Engine.VersionVariables.Contains("TestVersionVariableShouldNotExist"))
+            {
+                throw new Exception("Engine defined a version variable that should not exist: TestVersionVariableShouldNotExist");
+            }
+            else
+            {
+                this.Engine.Log(LogLevel.Verbose, "TEST: Successfully checked for non-existent version variable: TestVersionVariableShouldNotExist");
+            }
         }
     }
 }

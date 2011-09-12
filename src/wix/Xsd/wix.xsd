@@ -1836,10 +1836,11 @@
           <xs:element ref="BinaryRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="ComponentRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="CustomActionRef" minOccurs="0" maxOccurs="unbounded" />
+          <xs:element ref="DigitalCertificateRef" minOccurs="0" maxOccurs="unbounded" />
+          <xs:element ref="DirectoryRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="FeatureRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="IconRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="PropertyRef" minOccurs="0" maxOccurs="unbounded" />
-          <xs:element ref="DirectoryRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:element ref="UIRef" minOccurs="0" maxOccurs="unbounded" />
           <xs:any namespace="##other" processContents="lax">
             <xs:annotation>
@@ -2833,6 +2834,25 @@
           <xs:documentation>The path to the certificate file.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DigitalCertificateRef">
+    <xs:annotation>
+      <xs:documentation>
+        Reference to a DigitalCertificate element.  This will force the entire referenced Fragment's contents
+        to be included in the installer database. This is only used for references when patching.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
+      <xs:anyAttribute namespace="##other" processContents="lax">
+        <xs:annotation>
+          <xs:documentation>
+            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+            attributes at this point in the schema.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:anyAttribute>
     </xs:complexType>
   </xs:element>
   <xs:element name="DigitalSignature">
@@ -7621,6 +7641,14 @@
           </xs:appinfo>
         </xs:annotation>
       </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax">
+        <xs:annotation>
+          <xs:documentation>
+            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+            attributes at this point in the schema.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:anyAttribute>
     </xs:complexType>
   </xs:element>
   <xs:element name="DirectoryRef">
