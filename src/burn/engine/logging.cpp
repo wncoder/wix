@@ -100,7 +100,7 @@ extern "C" HRESULT LoggingOpen(
 
         if (pLog->sczPathVariable && *pLog->sczPathVariable)
         {
-            VariableSetString(pVariables, pLog->sczPathVariable, pLog->sczPath); // Ignore failure.
+            VariableSetString(pVariables, pLog->sczPathVariable, pLog->sczPath, FALSE); // Ignore failure.
         }
     }
 
@@ -128,7 +128,7 @@ extern "C" HRESULT LoggingSetPackageVariable(
         hr = StrAllocFormatted(&sczLogPath, L"%ls_%u_%ls%ls.%ls", pLog->sczPrefix, dwPackageSequence, pPackage->sczId, fRollback ? L"_rollback" : L"", pLog->sczExtension);
         ExitOnFailure(hr, "Failed to allocate path for package log.");
 
-        hr = VariableSetString(pVariables, fRollback ? pPackage->sczRollbackLogPathVariable : pPackage->sczLogPathVariable, sczLogPath);
+        hr = VariableSetString(pVariables, fRollback ? pPackage->sczRollbackLogPathVariable : pPackage->sczLogPathVariable, sczLogPath, FALSE);
         ExitOnFailure(hr, "Failed to set log path into variable.");
 
         if (psczLogPath)

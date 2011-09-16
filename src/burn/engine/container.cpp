@@ -19,28 +19,6 @@
 #include "precomp.h"
 
 
-// constants
-
-#define BURN_SECTION_NAME ".wixburn"
-#define BURN_CONTAINER_MAGIC 0x00f14300
-#define MANIFEST_CABINET_TOKEN L"0"
-
-
-// structs
-
-typedef struct _BURN_CONTAINER_HEADER
-{
-    DWORD dwMagic;
-    DWORD dwVersion;
-    DWORD cContainerInfo;
-    DWORD dwFormat;
-    struct {
-        DWORD64 qwOffset;
-        DWORD64 qwSize;
-    } rgContainerInfo[1];
-} BURN_CONTAINER_HEADER;
-
-
 // internal function declarations
 
 static HRESULT GetAttachedContainerInfo(
@@ -55,6 +33,7 @@ static HRESULT GetAttachedContainerInfo(
 // function definitions
 
 extern "C" HRESULT ContainersParseFromXml(
+    __in BURN_SECTION* pSection,
     __in BURN_CONTAINERS* pContainers,
     __in IXMLDOMNode* pixnBundle
     )
@@ -134,21 +113,19 @@ extern "C" HRESULT ContainersParseFromXml(
             ExitOnFailure(hr, "Failed to get @DownloadUrl. Either @SourcePath or @DownloadUrl needs to be provided.");
         }
 
-        // @FileSize
-        hr = XmlGetAttributeEx(pixnNode, L"FileSize", &scz);
-        if (E_NOTFOUND != hr)
-        {
-            ExitOnFailure(hr, "Failed to get @FileSize.");
-
-            hr = StrStringToUInt64(scz, 0, &pContainer->qwFileSize);
-            ExitOnFailure(hr, "Failed to parse @FileSize.");
-        }
-
         // @Hash
         hr = XmlGetAttributeEx(pixnNode, L"Hash", &pContainer->sczHash);
         if (E_NOTFOUND != hr)
         {
             ExitOnFailure(hr, "Failed to get @Hash.");
+        }
+
+        // If the container is attached, make sure the information in the section matches what the
+        // manifest contained and get the offset to the container.
+        if (pContainer->fAttached)
+        {
+            hr = SectionGetAttachedContainerInfo(pSection, pContainer->dwAttachedIndex, pContainer->type, &pContainer->qwAttachedOffset, &pContainer->qwFileSize);
+            ExitOnFailure(hr, "Failed to get attached container information.");
         }
 
         // prepare next iteration
@@ -190,6 +167,7 @@ extern "C" void ContainersUninitialize(
 }
 
 extern "C" HRESULT ContainerOpenUX(
+    __in BURN_SECTION* pSection,
     __in BURN_CONTAINER_CONTEXT* pContext
     )
 {
@@ -201,6 +179,9 @@ extern "C" HRESULT ContainerOpenUX(
     container.fPrimary = TRUE;
     container.fAttached = TRUE;
     container.dwAttachedIndex = 0;
+
+    hr = SectionGetAttachedContainerInfo(pSection, container.dwAttachedIndex, container.type, &container.qwAttachedOffset, &container.qwFileSize);
+    ExitOnFailure(hr, "Failed to get container information for UX container.");
 
     hr = ContainerOpen(pContext, &container, NULL);
     ExitOnFailure(hr, "Failed to open attached container.");
@@ -216,12 +197,13 @@ extern "C" HRESULT ContainerOpen(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwFormat = 0;
     LPWSTR sczExecutablePath = NULL;
     LARGE_INTEGER li = { };
 
     // initialize context
     pContext->type = pContainer->type;
+    pContext->qwSize = pContainer->qwFileSize;
+    pContext->qwOffset = pContainer->qwAttachedOffset;
 
     // for a primary container, get the executable module path
     if (pContainer->fPrimary)
@@ -241,30 +223,15 @@ extern "C" HRESULT ContainerOpen(
     pContext->hFile = ::CreateFileW(wzFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
     ExitOnInvalidHandleWithLastError1(pContext->hFile, hr, "Failed to open file: %ls", wzFilePath);
 
-    // if it is a container attached to an executable, read container header
+    // if it is a container attached to an executable, seek to the right place.
     if (pContainer->fAttached)
     {
-        hr = GetAttachedContainerInfo(pContext->hFile, pContainer->dwAttachedIndex, &dwFormat, &pContext->qwOffset, &pContext->qwSize);
-        ExitOnFailure(hr, "Failed to get container info.");
-
-        // verify format
-        if (dwFormat != (DWORD)pContainer->type)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-            ExitOnFailure(hr, "Invalid container format.");
-        }
-
         // seek to container offset
         li.QuadPart = (LONGLONG)pContext->qwOffset;
         if (!::SetFilePointerEx(pContext->hFile, li, NULL, FILE_BEGIN))
         {
             ExitWithLastError(hr, "Failed to move file pointer to container offset.");
         }
-    }
-    else
-    {
-        hr = FileSizeByHandle(pContext->hFile, (LONGLONG*)&pContext->qwSize);
-        ExitOnFailure1(hr, "Failed to check size of file %ls by handle", wzFilePath);
     }
 
     // open the archive
@@ -403,161 +370,5 @@ extern "C" HRESULT ContainerFindById(
     hr = E_NOTFOUND;
 
 LExit:
-    return hr;
-}
-
-
-// internal function definitions
-
-static HRESULT GetAttachedContainerInfo(
-    __in HANDLE hFile,
-    __in DWORD iContainerIndex,
-    __out DWORD* pdwFormat,
-    __out DWORD64* pqwOffset,
-    __out DWORD64* pqwSize
-    )
-{
-    HRESULT hr = S_OK;
-    DWORD cbRead = 0;
-    LARGE_INTEGER li = { };
-    IMAGE_DOS_HEADER dosHeader = { };
-    IMAGE_NT_HEADERS ntHeader = { };
-    IMAGE_SECTION_HEADER sectionHeader = { };
-    BURN_CONTAINER_HEADER* pContainerHeader = NULL;
-
-    //
-    // First, make sure we have a valid DOS signature.
-    //
-
-    // read DOS header
-    if (!::ReadFile(hFile, &dosHeader, sizeof(IMAGE_DOS_HEADER), &cbRead, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read DOS header.");
-    }
-    if (sizeof(IMAGE_DOS_HEADER) > cbRead || IMAGE_DOS_SIGNATURE != dosHeader.e_magic)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure(hr, "Failed to find valid DOS image header in buffer.");
-    }
-
-    //
-    // Now, make sure we have a valid NT signature.
-    //
-
-    // seek to new header
-    li.QuadPart = dosHeader.e_lfanew;
-    if (!::SetFilePointerEx(hFile, li, NULL, FILE_BEGIN))
-    {
-        ExitWithLastError(hr, "Failed to seek to NT header.");
-    }
-
-    // read NT header
-    if (!::ReadFile(hFile, &ntHeader, sizeof(IMAGE_NT_HEADERS) - sizeof(IMAGE_OPTIONAL_HEADER), &cbRead, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read NT header.");
-    }
-    if ((sizeof(IMAGE_NT_HEADERS) - sizeof(IMAGE_OPTIONAL_HEADER)) > cbRead || IMAGE_NT_SIGNATURE != ntHeader.Signature)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure(hr, "Failed to find valid NT image header in buffer.");
-    }
-
-    //
-    // Finally, get into the section table and look for the Burn container header.
-    //
-
-    // seek past optional headers
-    li.QuadPart = ntHeader.FileHeader.SizeOfOptionalHeader;
-    if (!::SetFilePointerEx(hFile, li, NULL, FILE_CURRENT))
-    {
-        ExitWithLastError(hr, "Failed to seek past optional headers.");
-    }
-
-    // read sections one by one until we find our section
-    for (DWORD i = 0; ; ++i)
-    {
-        // read section
-        if (!::ReadFile(hFile, &sectionHeader, sizeof(IMAGE_SECTION_HEADER), &cbRead, NULL))
-        {
-            ExitWithLastError1(hr, "Failed to read image section header, index: %u", i);
-        }
-        if (sizeof(IMAGE_SECTION_HEADER) > cbRead)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-            ExitOnFailure1(hr, "Failed to read complete image section header, index: %u", i);
-        }
-
-        // compare header name
-        C_ASSERT(sizeof(sectionHeader.Name) == sizeof(BURN_SECTION_NAME) - 1);
-        if (0 == memcmp(sectionHeader.Name, BURN_SECTION_NAME, sizeof(sectionHeader.Name)))
-        {
-            break;
-        }
-
-        // fail if we hit the end
-        if (i + 1 >= ntHeader.FileHeader.NumberOfSections)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-            ExitOnFailure(hr, "Failed to find Burn section.");
-        }
-    }
-
-    //
-    // We've arrived at the container header.
-    //
-
-    // check size of section
-    if (sizeof(BURN_CONTAINER_HEADER) > sectionHeader.SizeOfRawData)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure1(hr, "Failed to read container header, data to short: %u", sectionHeader.SizeOfRawData);
-    }
-
-    // allocate buffer for container header
-    pContainerHeader = (BURN_CONTAINER_HEADER*)MemAlloc(sectionHeader.SizeOfRawData, TRUE);
-    ExitOnNull(pContainerHeader, hr, E_OUTOFMEMORY, "Failed to allocate buffer for container header.");
-
-    // seek to container header
-    li.QuadPart = sectionHeader.PointerToRawData;
-    if (!::SetFilePointerEx(hFile, li, NULL, FILE_BEGIN))
-    {
-        ExitWithLastError(hr, "Failed to seek to container header.");
-    }
-
-    // read container header
-    if (!::ReadFile(hFile, pContainerHeader, sectionHeader.SizeOfRawData, &cbRead, NULL))
-    {
-        ExitWithLastError(hr, "Failed to read container header.");
-    }
-    if (sectionHeader.SizeOfRawData > cbRead)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure(hr, "Failed to read complete container header.");
-    }
-
-    // validate version of container header
-    if (0x00000001 != pContainerHeader->dwVersion)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure1(hr, "Failed to read container header, unsupported version: %08x", pContainerHeader->dwVersion);
-    }
-
-    // validate container info
-    if (iContainerIndex >= pContainerHeader->cContainerInfo)
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
-        ExitOnFailure1(hr, "Failed to find container info, too few elements: %u", pContainerHeader->cContainerInfo);
-    }
-
-    // get container format
-    *pdwFormat = pContainerHeader->dwFormat;
-
-    // get container offset and size
-    *pqwOffset = pContainerHeader->rgContainerInfo[iContainerIndex].qwOffset;
-    *pqwSize = pContainerHeader->rgContainerInfo[iContainerIndex].qwSize;
-
-LExit:
-    ReleaseMem(pContainerHeader);
-
     return hr;
 }

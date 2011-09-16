@@ -195,11 +195,15 @@ extern "C" HRESULT ElevationElevate(
 
     HRESULT hr = S_OK;
     int nResult = IDOK;
+    LPWSTR sczEngineWorkingPath = NULL;
     HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
 
     nResult = pEngineState->userExperience.pUserExperience->OnElevate();
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
+
+    hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
+    ExitOnFailure(hr, "Failed to cache engine to working directory.");
 
     hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
     ExitOnFailure(hr, "Failed to create pipe name and client token.");
@@ -212,7 +216,7 @@ extern "C" HRESULT ElevationElevate(
         nResult = IDOK;
 
         // Create the elevated process and if successful, wait for it to connect.
-        hr = PipeLaunchChildProcess(&pEngineState->companionConnection, TRUE, hwndParent);
+        hr = PipeLaunchChildProcess(sczEngineWorkingPath, &pEngineState->companionConnection, TRUE, hwndParent);
         if (SUCCEEDED(hr))
         {
             hr = PipeWaitForChildConnect(&pEngineState->companionConnection);
@@ -228,6 +232,7 @@ extern "C" HRESULT ElevationElevate(
 
 LExit:
     ReleaseHandle(hPipesCreatedEvent);
+    ReleaseStr(sczEngineWorkingPath);
 
     if (FAILED(hr))
     {
@@ -1330,7 +1335,7 @@ static HRESULT OnCachePayload(
     ExitOnFailure(hr, "Failed to read move flag.");
 
     // cache payload
-    hr = CachePayload(pPackage, pPayload, NULL, sczUnverifiedPayloadPath, fMove);
+    hr = CachePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, NULL, sczUnverifiedPayloadPath, fMove);
     ExitOnFailure(hr, "Failed to cache payload.");
 
 LExit:

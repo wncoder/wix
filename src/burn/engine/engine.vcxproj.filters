@@ -114,6 +114,9 @@
     <ClCompile Include="NetFxChainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="section.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h">
@@ -222,6 +225,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="netfxchainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="section.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

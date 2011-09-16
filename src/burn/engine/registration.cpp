@@ -345,11 +345,11 @@ extern "C" HRESULT RegistrationSetVariables(
     hr = GetBundleName(pRegistration, pVariables, &scz);
     ExitOnFailure(hr, "Failed to intitialize bundle name.");
 
-    hr = AddBuiltInVariable(pVariables, BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)pRegistration->sczProviderKey);
-    ExitOnFailure(hr, "Failed to initialize the bundle provider key built-in variable.");
+    hr = VariableSetString(pVariables, BURN_BUNDLE_PROVIDER_KEY, pRegistration->sczProviderKey, TRUE);
+    ExitOnFailure(hr, "Failed to overwrite the bundle provider key built-in variable.");
 
-    hr = AddBuiltInVariable(pVariables, BURN_BUNDLE_TAG, InitializeVariableString, (DWORD_PTR)pRegistration->sczTag);
-    ExitOnFailure(hr, "Failed to initialize the bundle tag built-in variable.");
+    hr = VariableSetString(pVariables, BURN_BUNDLE_TAG, pRegistration->sczTag, TRUE);
+    ExitOnFailure(hr, "Failed to overwrite the bundle tag built-in variable.");
 
 LExit:
     ReleaseStr(scz);
@@ -603,7 +603,11 @@ extern "C" HRESULT RegistrationSessionBegin(
             hr = PathForCurrentProcess(&sczExecutablePath, NULL);
             ExitOnFailure(hr, "Failed to get path for current executing process.");
 
-            hr = CacheBundle(pRegistration, pUserExperience, sczExecutablePath);
+            hr = CacheBundle(pRegistration->fPerMachine, pRegistration->sczId, pRegistration->sczExecutableName, &pUserExperience->payloads
+#ifdef DEBUG
+                            , pRegistration->sczCacheExecutablePath
+#endif
+                            );
             ExitOnFailure1(hr, "Failed to cache bundle from path: %ls", sczExecutablePath);
         }
 
@@ -970,7 +974,7 @@ static HRESULT GetBundleName(
     hr = VariableGetString(pVariables, BURN_BUNDLE_NAME, psczBundleName);
     if (E_NOTFOUND == hr)
     {
-        hr = VariableSetString(pVariables, BURN_BUNDLE_NAME, pRegistration->sczDisplayName);
+        hr = VariableSetString(pVariables, BURN_BUNDLE_NAME, pRegistration->sczDisplayName, FALSE);
         ExitOnFailure(hr, "Failed to set bundle name.");
 
         hr = StrAllocString(psczBundleName, pRegistration->sczDisplayName, 0);

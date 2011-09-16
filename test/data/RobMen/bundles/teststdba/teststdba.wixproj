@@ -20,8 +20,4 @@
   </ItemGroup>
 
   <Import Project="..\..\Common.targets" />
-
-  <Target Name="SignBundle">
-    <Message Text="I wish I was signing: $(TargetPath)" />
-  </Target>
 </Project>

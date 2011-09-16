@@ -21,6 +21,10 @@
 static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
 static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
+static HRESULT CreateWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczWorkingPath
+    );
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
     __in LPCWSTR wzCacheId,
@@ -32,6 +36,11 @@ static HRESULT ResetPathPermissions(
     );
 static HRESULT SecurePath(
     __in LPWSTR wzPath
+    );
+static HRESULT CopyEngineWithSignatureFixup(
+    __in_z LPCWSTR wzSourcePath,
+    __in_z LPCWSTR wzTargetPath,
+    __in BURN_SECTION* pSection
     );
 static HRESULT RemoveBundleOrPackage(
     __in BOOL fBundle,
@@ -75,7 +84,7 @@ extern "C" HRESULT CacheGetOriginalSourcePath(
         hr = PathForCurrentProcess(&sczOriginalSource, NULL);
         ExitOnFailure(hr, "Failed to get path for current executing process.");
 
-        hr = VariableSetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, sczOriginalSource);
+        hr = VariableSetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, sczOriginalSource, FALSE);
         ExitOnFailure(hr, "Failed to set original source variable.");
     }
 
@@ -102,7 +111,6 @@ LExit:
     ReleaseStr(sczOriginalSource);
     return hr;
 }
-
 
 extern "C" HRESULT CacheCalculatePayloadUnverifiedPath(
     __in_opt BURN_PACKAGE* /* pPackage */,
@@ -152,7 +160,7 @@ LExit:
 extern "C" HRESULT CacheGetCompletedPath(
     __in BOOL fPerMachine,
     __in_z LPCWSTR wzCacheId,
-    __inout_z LPWSTR* psczCompletedPath
+    __deref_out_z LPWSTR* psczCompletedPath
     )
 {
     HRESULT hr = S_OK;
@@ -171,7 +179,7 @@ LExit:
 
 extern "C" HRESULT CacheGetResumePath(
     __in_z LPCWSTR wzWorkingPath,
-    __inout_z LPWSTR* psczResumePath
+    __deref_out_z LPWSTR* psczResumePath
     )
 {
     HRESULT hr = S_OK;
@@ -280,72 +288,147 @@ extern "C" void CacheSendErrorCallback(
 }
 
 
-extern "C" HRESULT CacheBundle(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
-    __in_z LPCWSTR wzExecutablePath
+extern "C" HRESULT CacheBundleToWorkingDirectory(
+    __in_z LPCWSTR wzBundleId,
+    __in BURN_PAYLOADS* pUxPayloads,
+    __in BURN_SECTION* pSection,
+    __deref_out_z LPWSTR* psczEngineWorkingPath
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczCachedDirectory = NULL;
-    LPWSTR sczExecutableDirectory = NULL;
+    LPWSTR sczSourcePath = NULL;
+    LPWSTR wzSourceFileName = NULL;
+    LPWSTR sczSourceDirectory = NULL;
+    LPWSTR sczTargetDirectory = NULL;
+    LPWSTR sczTargetPath = NULL;
     LPWSTR sczPayloadSourcePath = NULL;
     LPWSTR sczPayloadTargetPath = NULL;
 
-    hr = LogStringLine(REPORT_STANDARD, "Caching executable from: '%ls' to: '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
-    ExitOnFailure(hr, "Failed to log 'caching executable' message");
+    // Initialize the source and target path names.
+    hr = PathForCurrentProcess(&sczSourcePath, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
 
-    // get base directory for executable
-    hr = PathGetDirectory(wzExecutablePath, &sczExecutableDirectory);
-    ExitOnFailure(hr, "Failed to get base directory for executable.");
+    wzSourceFileName = FileFromPath(sczSourcePath);
+    ExitOnNull1(wzSourceFileName, hr, HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "Failed to get file name from engine path: %ls", sczSourcePath);
 
-    // create cache directory
-    hr = CreateCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCachedDirectory);
-    ExitOnFailure(hr, "Failed to create cached path for bundle.");
+    hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
+    ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
+
+    hr = CreateWorkingPath(wzBundleId, &sczTargetDirectory);
+    ExitOnFailure(hr, "Failed to create working path to copy engine.");
+
+    hr = PathConcat(sczTargetDirectory, wzSourceFileName, &sczTargetPath);
+    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
+
+    // Copy the engine without any attached containers to the working path.
+    hr = CopyEngineWithSignatureFixup(sczSourcePath, sczTargetPath, pSection);
+    ExitOnFailure2(hr, "Failed to copy engine: '%ls' to working path: %ls", sczSourcePath, sczTargetPath);
+
+    // Copy external UX payloads to working path.
+    for (DWORD i = 0; i < pUxPayloads->cPayloads; ++i)
+    {
+        BURN_PAYLOAD* pPayload = &pUxPayloads->rgPayloads[i];
+
+        if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
+        {
+            hr = PathConcat(sczSourceDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
+            ExitOnFailure(hr, "Failed to build payload source path for working copy.");
+
+            hr = PathConcat(sczTargetDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
+            ExitOnFailure(hr, "Failed to build payload target path for working copy.");
+
+            hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+            ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
+        }
+    }
+
+    *psczEngineWorkingPath = sczTargetPath;
+    sczTargetPath = NULL;
+
+LExit:
+    ReleaseStr(sczPayloadTargetPath);
+    ReleaseStr(sczPayloadSourcePath);
+    ReleaseStr(sczTargetPath);
+    ReleaseStr(sczTargetDirectory);
+    ReleaseStr(sczSourceDirectory);
+    ReleaseStr(sczSourcePath);
+
+    return hr;
+}
+
+
+extern "C" HRESULT CacheBundle(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzBundleId,
+    __in_z LPCWSTR wzExecutableName,
+    __in BURN_PAYLOADS* pUxPayloads
+#ifdef DEBUG
+    , __in_z LPCWSTR wzExecutablePath
+#endif
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczSourcePath = NULL;
+    LPWSTR sczSourceDirectory = NULL;
+    LPWSTR sczTargetDirectory = NULL;
+    LPWSTR sczTargetPath = NULL;
+    LPWSTR sczPayloadSourcePath = NULL;
+
+    // Initialize the source and target path names.
+    hr = PathForCurrentProcess(&sczSourcePath, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
+
+    hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
+    ExitOnFailure1(hr, "Failed to get directory from engine working path: %ls", sczSourcePath);
+
+    hr = CreateCompletedPath(fPerMachine, wzBundleId, &sczTargetDirectory);
+    ExitOnFailure(hr, "Failed to create completed cache path for bundle.");
+
+    hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
+    ExitOnFailure(hr, "Failed to combine completed path with engine file name.");
+
+    Assert(CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, wzExecutablePath, -1, sczTargetPath, -1));
+
+    LogStringLine(REPORT_STANDARD, "Caching executable from: '%ls' to: '%ls'", sczSourcePath, sczTargetPath);
 
     // TODO: replace this copy with the more intelligent copy of only
     // the burnstub executable and manifest data with fix-up for the
     // signature.
-    hr = FileEnsureCopyWithRetry(wzExecutablePath, pRegistration->sczCacheExecutablePath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-    ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", wzExecutablePath, pRegistration->sczCacheExecutablePath);
+    hr = FileEnsureCopyWithRetry(sczSourcePath, sczTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+    ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", sczSourcePath, sczTargetPath);
 
-    hr = ResetPathPermissions(pRegistration->fPerMachine, pRegistration->sczCacheExecutablePath);
-    ExitOnFailure1(hr, "Failed to reset permissions on cached bundle: '%ls'", pRegistration->sczCacheExecutablePath);
+    hr = ResetPathPermissions(fPerMachine, sczTargetPath);
+    ExitOnFailure1(hr, "Failed to reset permissions on cached bundle: '%ls'", sczTargetPath);
 
-    // copy external UX payloads
-    for (DWORD i = 0; i < pUserExperience->payloads.cPayloads; ++i)
+    // Cache external UX payloads to completed path.
+    for (DWORD i = 0; i < pUxPayloads->cPayloads; ++i)
     {
-        BURN_PAYLOAD* pPayload = &pUserExperience->payloads.rgPayloads[i];
+        BURN_PAYLOAD* pPayload = &pUxPayloads->rgPayloads[i];
 
         if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
         {
-            hr = PathConcat(sczExecutableDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
+            hr = PathConcat(sczSourceDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
             ExitOnFailure(hr, "Failed to build payload source path.");
 
-            hr = PathConcat(sczCachedDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
-            ExitOnFailure(hr, "Failed to build payload target path.");
-
-            // copy payload file
-            hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-            ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
-
-            hr = ResetPathPermissions(pRegistration->fPerMachine, sczPayloadTargetPath);
-            ExitOnFailure1(hr, "Failed to reset permissions on cached payload: '%ls'", sczPayloadTargetPath);
+            hr = CachePayload(fPerMachine, pPayload, wzBundleId, NULL, sczPayloadSourcePath, FALSE);
+            ExitOnFailure2(hr, "Failed to cache payload: %ls from: %ls", pPayload->sczKey, sczPayloadSourcePath);
         }
     }
 
 LExit:
-    ReleaseStr(sczCachedDirectory);
-    ReleaseStr(sczExecutableDirectory);
     ReleaseStr(sczPayloadSourcePath);
-    ReleaseStr(sczPayloadTargetPath);
+    ReleaseStr(sczTargetPath);
+    ReleaseStr(sczTargetDirectory);
+    ReleaseStr(sczSourceDirectory);
+    ReleaseStr(sczSourcePath);
 
     return hr;
 }
 
 extern "C" HRESULT CachePayload(
-    __in_opt BURN_PACKAGE* pPackage,
+    __in BOOL fPerMachine,
     __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzCacheId,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
@@ -358,10 +441,10 @@ extern "C" HRESULT CachePayload(
 
     if (NULL == wzLayoutDirectory)
     {
-        AssertSz(pPackage, "Package is required when caching.");
+        AssertSz(wzCacheId && *wzCacheId, "Cache id is required when caching.");
 
-        hr = CreateCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachedDirectory);
-        ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pPackage->sczId);
+        hr = CreateCompletedPath(fPerMachine, wzCacheId, &sczCachedDirectory);
+        ExitOnFailure1(hr, "Failed to get cached path for package with cache id: %ls", wzCacheId);
     }
     else
     {
@@ -396,7 +479,7 @@ extern "C" HRESULT CachePayload(
         ExitOnFailure1(hr, "Failed to verify payload hash: %ls", sczCachedPath);
     }
 
-    LogStringLine(REPORT_STANDARD, "Caching payload from working path '%ls' to path '%ls'", wzUnverifiedPayloadPath, sczCachedPath);
+    LogStringLine(REPORT_STANDARD, "%ls payload from working path '%ls' to path '%ls'", fMove ? L"Moving" : L"Copying", wzUnverifiedPayloadPath, sczCachedPath);
 
     if (fMove)
     {
@@ -412,7 +495,7 @@ extern "C" HRESULT CachePayload(
     // Reset the path permissions in the cache (i.e. if we're not doing a layout).
     if (NULL == wzLayoutDirectory)
     {
-        hr = ResetPathPermissions(pPackage->fPerMachine, sczCachedPath);
+        hr = ResetPathPermissions(fPerMachine, sczCachedPath);
         ExitOnFailure1(hr, "Failed to reset permissions on cached payload: %ls", sczCachedPath);
     }
 
@@ -562,6 +645,34 @@ LExit:
     return hr;
 }
 
+
+static HRESULT CreateWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczWorkingPath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczPath = NULL;
+
+    hr = StrAlloc(&sczPath, MAX_PATH);
+    ExitOnFailure(hr, "Failed to allocate memory for the working path.");
+
+    if (0 == ::GetTempPathW(MAX_PATH, sczPath))
+    {
+        ExitWithLastError(hr, "Failed to get temp path for working path.");
+    }
+
+    hr = PathConcat(sczPath, wzBundleId, psczWorkingPath);
+    ExitOnFailure(hr, "Failed to append bundle id on working path.");
+
+    hr = DirEnsureExists(*psczWorkingPath, NULL);
+    ExitOnFailure1(hr, "Failed to create working directory: %ls", *psczWorkingPath);
+
+LExit:
+    ReleaseStr(sczPath);
+
+    return hr;
+}
 
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -738,6 +849,78 @@ LExit:
     {
         ReleaseMem(access[i].Trustee.ptstrName);
     }
+
+    return hr;
+}
+
+
+static HRESULT CopyEngineWithSignatureFixup(
+    __in_z LPCWSTR wzSourcePath,
+    __in_z LPCWSTR wzTargetPath,
+    __in BURN_SECTION* pSection
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hSource = INVALID_HANDLE_VALUE;
+    HANDLE hTarget = INVALID_HANDLE_VALUE;
+    LARGE_INTEGER li = { };
+    DWORD dwZeroOriginals[3] = { };
+
+    hSource = ::CreateFileW(wzSourcePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hSource)
+    {
+        ExitWithLastError1(hr, "Failed to open engine as file: %ls", wzSourcePath);
+    }
+
+    hTarget = ::CreateFileW(wzTargetPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hTarget)
+    {
+        ExitWithLastError1(hr, "Failed to create engine file at path: %ls", wzTargetPath);
+    }
+
+    hr = FileCopyUsingHandles(hSource, hTarget, pSection->cbEngineSize, NULL);
+    ExitOnFailure2(hr, "Failed to copy engine from: %ls to: %ls", wzSourcePath, wzTargetPath);
+
+    // If the original executable was signed, let's put back the checksum and signature.
+    if (pSection->dwOriginalSignatureOffset)
+    {
+        // Fix up the checksum.
+        li.QuadPart = pSection->dwChecksumOffset;
+        if (!::SetFilePointerEx(hTarget, li, NULL, FILE_BEGIN))
+        {
+            ExitWithLastError(hr, "Failed to seek to checksum in exe header.");
+        }
+
+        hr = FileWriteHandle(hTarget, reinterpret_cast<LPBYTE>(&pSection->dwOriginalChecksum), sizeof(pSection->dwOriginalChecksum));
+        ExitOnFailure(hr, "Failed to update signature offset.");
+
+        // Fix up the signature information.
+        li.QuadPart = pSection->dwCertificateTableOffset;
+        if (!::SetFilePointerEx(hTarget, li, NULL, FILE_BEGIN))
+        {
+            ExitWithLastError(hr, "Failed to seek to signature table in exe header.");
+        }
+
+        hr = FileWriteHandle(hTarget, reinterpret_cast<LPBYTE>(&pSection->dwOriginalSignatureOffset), sizeof(pSection->dwOriginalSignatureOffset));
+        ExitOnFailure(hr, "Failed to update signature offset.");
+
+        hr = FileWriteHandle(hTarget, reinterpret_cast<LPBYTE>(&pSection->dwOriginalSignatureSize), sizeof(pSection->dwOriginalSignatureSize));
+        ExitOnFailure(hr, "Failed to update signature offset.");
+
+        // Zero out the original information since that is how it was when the file was originally signed.
+        li.QuadPart = pSection->dwOriginalChecksumAndSignatureOffset;
+        if (!::SetFilePointerEx(hTarget, li, NULL, FILE_BEGIN))
+        {
+            ExitWithLastError(hr, "Failed to seek to original data in exe burn section header.");
+        }
+
+        hr = FileWriteHandle(hTarget, reinterpret_cast<LPBYTE>(&dwZeroOriginals), sizeof(dwZeroOriginals));
+        ExitOnFailure(hr, "Failed to zero out original data offset.");
+    }
+
+LExit:
+    ReleaseHandle(hTarget);
+    ReleaseHandle(hSource);
 
     return hr;
 }

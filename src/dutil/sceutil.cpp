@@ -102,8 +102,7 @@ extern const int SCE_QUERY_HANDLE_BYTES = sizeof(SCE_QUERY);
 extern const int SCE_QUERY_RESULTS_HANDLE_BYTES = sizeof(SCE_QUERY_RESULTS);
 
 // The following is the internal Sce-maintained table to tell the identifier and version of the schema
-static bool fSchemaOpened = false;
-static SCE_COLUMN_SCHEMA SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA[] =
+const SCE_COLUMN_SCHEMA SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA[] =
 {
     {
         L"AppIdentifier",
@@ -129,20 +128,15 @@ static SCE_COLUMN_SCHEMA SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA[] =
     }
 };
 
-static SCE_TABLE_SCHEMA SCE_INTERNAL_VERSION_TABLE_SCHEMA[] =
+const SCE_TABLE_SCHEMA SCE_INTERNAL_VERSION_TABLE_SCHEMA[] =
 {
     L"SceSchemaTablev1",
     _countof(SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA),
-    SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA,
+    (SCE_COLUMN_SCHEMA *)SCE_INTERNAL_VERSION_TABLE_VERSION_COLUMN_SCHEMA,
     0,
     NULL,
     NULL,
     NULL
-};
-static SCE_DATABASE_SCHEMA SCE_INTERNAL_VERSION_SCHEMA =
-{
-    _countof(SCE_INTERNAL_VERSION_TABLE_SCHEMA),
-    SCE_INTERNAL_VERSION_TABLE_SCHEMA
 };
 
 // internal function declarations
@@ -317,7 +311,6 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     LPWSTR sczSchemaType = NULL;
     SCE_DATABASE *pNewSceDatabase = NULL;
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
-    UUID schemaType = { };
     DBPROPSET rgdbpDataSourcePropSet[2] = { };
     DBPROP rgdbpDataSourceProp[1] = { };
     DBPROP rgdbpDataSourceSsceProp[1] =  { };
@@ -2105,16 +2098,14 @@ static HRESULT GetDatabaseSchemaInfo(
     HRESULT hr = S_OK;
     LPWSTR sczSchemaType = NULL;
     DWORD dwVersionFound = 0;
-    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    SCE_TABLE_SCHEMA schemaTable = SCE_INTERNAL_VERSION_TABLE_SCHEMA[0];
+    SCE_DATABASE_SCHEMA fullSchema = { 1, &schemaTable};
     // Database object with our alternate schema
-    SCE_DATABASE database = { pDatabase->sdbHandle, &SCE_INTERNAL_VERSION_SCHEMA };
+    SCE_DATABASE database = { pDatabase->sdbHandle, &fullSchema };
     SCE_ROW_HANDLE sceRow = NULL;
 
-    if (!fSchemaOpened)
-    {
-        hr = OpenSchema(pDatabase, &SCE_INTERNAL_VERSION_SCHEMA);
-        ExitOnFailure(hr, "Failed to ensure internal version schema");
-    }
+    hr = OpenSchema(pDatabase, &fullSchema);
+    ExitOnFailure(hr, "Failed to ensure internal version schema");
 
     hr = SceGetFirstRow(&database, 0, &sceRow);
     ExitOnFailure(hr, "Failed to get first row in internal version schema table");
@@ -2130,6 +2121,7 @@ static HRESULT GetDatabaseSchemaInfo(
     *pdwVersion = dwVersionFound;
 
 LExit:
+    SceCloseTable(&schemaTable); // ignore failure
     ReleaseStr(sczSchemaType);
     ReleaseSceRow(sceRow);
 
@@ -2144,16 +2136,14 @@ static HRESULT SetDatabaseSchemaInfo(
 {
     HRESULT hr = S_OK;
     BOOL fInSceTransaction = FALSE;
-    SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    SCE_TABLE_SCHEMA schemaTable = SCE_INTERNAL_VERSION_TABLE_SCHEMA[0];
+    SCE_DATABASE_SCHEMA fullSchema = { 1, &schemaTable};
     // Database object with our alternate schema
-    SCE_DATABASE database = { pDatabase->sdbHandle, &SCE_INTERNAL_VERSION_SCHEMA };
+    SCE_DATABASE database = { pDatabase->sdbHandle, &fullSchema };
     SCE_ROW_HANDLE sceRow = NULL;
 
-    if (!fSchemaOpened)
-    {
-        hr = EnsureSchema(pDatabase, &SCE_INTERNAL_VERSION_SCHEMA);
-        ExitOnFailure(hr, "Failed to ensure internal version schema");
-    }
+    hr = EnsureSchema(pDatabase, &fullSchema);
+    ExitOnFailure(hr, "Failed to ensure internal version schema");
 
     hr = SceBeginTransaction(&database);
     ExitOnFailure(hr, "Failed to begin transaction");
@@ -2184,6 +2174,7 @@ static HRESULT SetDatabaseSchemaInfo(
     fInSceTransaction = FALSE;
 
 LExit:
+    SceCloseTable(&schemaTable); // ignore failure
     ReleaseSceRow(sceRow);
     if (fInSceTransaction)
     {

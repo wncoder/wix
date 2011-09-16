@@ -1292,7 +1292,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string uxExtractPath = Path.Combine(exportBasePath, "UX");
             string acExtractPath = Path.Combine(exportBasePath, "AttachedContainer");
 
-            using (BurnReader reader = new BurnReader(bundleFile, this))
+            using (BurnReader reader = BurnReader.Open(bundleFile, this))
             {
                 reader.ExtractUXContainer(uxExtractPath, this.tempFiles.BasePath);
                 reader.ExtractAttachedContainer(acExtractPath, this.tempFiles.BasePath);

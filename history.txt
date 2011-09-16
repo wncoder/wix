@@ -1433,3 +1433,22 @@ MiCarls: SFBUG:3234079 - Make MSP's log in burn, just like MSI's already do.
 
 WixBuild: Version 3.6.2109.0
 
+RobMen: SFBUG:3379088 - don't relog variables passed to the elevated Burn
+                        process.
+
+RobMen: SFBUG:3197472 - cache only Burn engine, fix up signatures when using
+                        attached containers.
+
+PMarcu: SFBUG:3390034 - Adding error message for when module installer version
+                        is not valid.
+
+RobMen: SFBUG:3292846 - allow acquire to be retried if verify fails.
+        SFBUG:3293210 - allow BA to ignore cache failures for non-vital
+                        packages.
+
+SimWu:  SFBUG:3323496 - Shared payloads downloaded more than once.
+
+HeathS: Added variable to determine if elevated burn has launched.
+
+WixBuild: Version 3.6.2116.0
+

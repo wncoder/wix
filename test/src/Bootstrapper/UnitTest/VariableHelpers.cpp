@@ -37,7 +37,7 @@ namespace Bootstrapper
     {
         HRESULT hr = S_OK;
 
-        hr = VariableSetString(pVariables, wzVariable, wzValue);
+        hr = VariableSetString(pVariables, wzVariable, wzValue, FALSE);
         TestThrowOnFailure2(hr, L"Failed to set %s to: %s", wzVariable, wzValue);
     }
 
@@ -45,7 +45,7 @@ namespace Bootstrapper
     {
         HRESULT hr = S_OK;
 
-        hr = VariableSetNumeric(pVariables, wzVariable, llValue);
+        hr = VariableSetNumeric(pVariables, wzVariable, llValue, FALSE);
         TestThrowOnFailure2(hr, L"Failed to set %s to: %I64d", wzVariable, llValue);
     }
 
@@ -53,7 +53,7 @@ namespace Bootstrapper
     {
         HRESULT hr = S_OK;
 
-        hr = VariableSetVersion(pVariables, wzVariable, qwValue);
+        hr = VariableSetVersion(pVariables, wzVariable, qwValue, FALSE);
         TestThrowOnFailure2(hr, L"Failed to set %s to: 0x%016I64x", wzVariable, qwValue);
     }
 

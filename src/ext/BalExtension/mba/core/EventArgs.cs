@@ -1616,7 +1616,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     /// Additional arguments passed by the engine when it has completed caching a specific package.
     /// </summary>
     [Serializable]
-    public class CachePackageCompleteEventArgs : StatusEventArgs
+    public class CachePackageCompleteEventArgs : ResultStatusEventArgs
     {
         private string packageId;
 

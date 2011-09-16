@@ -13,7 +13,6 @@
     <OutputName>WiX36</OutputName>
     <OutputType>Bundle</OutputType>
     <Pedantic>True</Pedantic>
-    <SuppressSpecificWarnings>1133</SuppressSpecificWarnings>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 

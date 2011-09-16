@@ -85,7 +85,7 @@ namespace Bootstrapper
                 hr = PipeCreatePipes(&connection, TRUE, &hEvent);
                 TestThrowOnFailure(hr, L"Failed to create pipes.");
 
-                hr = PipeLaunchChildProcess(&connection, TRUE, NULL);
+                hr = PipeLaunchChildProcess(L"tests\\ignore\\this\\path\\to\\burn.exe", &connection, TRUE, NULL);
                 TestThrowOnFailure(hr, L"Failed to create elevated process.");
 
                 hr = PipeWaitForChildConnect(&connection);

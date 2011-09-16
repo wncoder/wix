@@ -96,6 +96,7 @@ HRESULT PipeLaunchParentProcess(
     __in_z LPWSTR sczClientToken
     );
 HRESULT PipeLaunchChildProcess(
+    __in_z LPCWSTR wzExecutablePath,
     __in BURN_PIPE_CONNECTION* pConnection,
     __in BOOL fElevate,
     __in_opt HWND hwndParent

@@ -333,11 +333,12 @@ public: // IBurnUserExperience
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual STDMETHODIMP_(void) OnCachePackageComplete(
+    virtual STDMETHODIMP_(int) OnCachePackageComplete(
         __in_z LPCWSTR /*wzPackageId*/,
         __in HRESULT /*hrStatus*/
         )
     {
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
     virtual STDMETHODIMP_(void) OnCacheComplete(

@@ -98,22 +98,26 @@ HRESULT VariableGetFormatted(
 HRESULT VariableSetNumeric(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in LONGLONG llValue
+    __in LONGLONG llValue,
+    __in BOOL fOverwriteBuiltIn
     );
 HRESULT VariableSetString(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in_z_opt LPCWSTR wzValue
+    __in_z_opt LPCWSTR wzValue,
+    __in BOOL fOverwriteBuiltIn
     );
 HRESULT VariableSetVersion(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in DWORD64 qwValue
+    __in DWORD64 qwValue,
+    __in BOOL fOverwriteBuiltIn
     );
 HRESULT VariableSetVariant(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in BURN_VARIANT* pVariant
+    __in BURN_VARIANT* pVariant,
+    __in BOOL fOverwriteBuiltIn
     );
 HRESULT VariableFormatString(
     __in BURN_VARIABLES* pVariables,
@@ -136,16 +140,6 @@ HRESULT VariableDeserialize(
     __in_bcount(cbBuffer) BYTE* pbBuffer,
     __in SIZE_T cbBuffer,
     __inout SIZE_T* piBuffer
-    );
-HRESULT AddBuiltInVariable(
-    __in BURN_VARIABLES* pVariables,
-    __in LPCWSTR wzVariable,
-    __in PFN_INITIALIZEVARIABLE pfnInitialize,
-    __in DWORD_PTR dwpInitializeData
-    );
-HRESULT InitializeVariableString(
-    __in DWORD_PTR dwpData,
-    __inout BURN_VARIANT* pValue
     );
 
 #if defined(__cplusplus)

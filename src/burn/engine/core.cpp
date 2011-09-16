@@ -81,8 +81,15 @@ extern "C" HRESULT CoreInitialize(
     hr = VariableInitialize(&pEngineState->variables);
     ExitOnFailure(hr, "Failed to initialize variables.");
 
+    // retain whether burn was initially run elevated
+    hr = VariableSetNumeric(&pEngineState->variables, BURN_BUNDLE_ELEVATED, BURN_ELEVATION_STATE_UNELEVATED != pEngineState->elevationState, TRUE);
+    ExitOnFailure1(hr, "Failed to overwrite the %ls built-in variable.", BURN_BUNDLE_ELEVATED);
+
     // open attached UX container
-    hr = ContainerOpenUX(&containerContext);
+    hr = SectionInitialize(&pEngineState->section);
+    ExitOnFailure(hr, "Failed to load section information.");
+
+    hr = ContainerOpenUX(&pEngineState->section, &containerContext);
     ExitOnFailure(hr, "Failed to open attached UX container.");
 
     // load manifest
@@ -106,7 +113,7 @@ extern "C" HRESULT CoreInitialize(
     // If a layout directory was specified on the command-line, set it as a well-known variable.
     if (sczLayoutDirectory)
     {
-        hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, sczLayoutDirectory);
+        hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, sczLayoutDirectory, FALSE);
         ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
     }
 
@@ -607,6 +614,9 @@ extern "C" HRESULT CoreElevate(
     {
         hr = ElevationElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to actually elevate.");
+
+        hr = VariableSetNumeric(&pEngineState->variables, BURN_BUNDLE_ELEVATED, TRUE, TRUE);
+        ExitOnFailure1(hr, "Failed to overwrite the %ls built-in variable.", BURN_BUNDLE_ELEVATED);
     }
 
 LExit:

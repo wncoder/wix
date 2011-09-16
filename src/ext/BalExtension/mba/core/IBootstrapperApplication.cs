@@ -245,7 +245,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             int hrStatus
             );
 
-        void OnCachePackageComplete(
+        [PreserveSig]
+        [return: MarshalAs(UnmanagedType.I4)]
+        Result OnCachePackageComplete(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             int hrStatus
             );

@@ -536,7 +536,7 @@ public: // IBootstrapperEngine
 
         if (wzVariable && *wzVariable)
         {
-            hr = VariableSetNumeric(&m_pEngineState->variables, wzVariable, llValue);
+            hr = VariableSetNumeric(&m_pEngineState->variables, wzVariable, llValue, FALSE);
             ExitOnFailure(hr, "Failed to set numeric variable.");
         }
         else
@@ -560,7 +560,7 @@ public: // IBootstrapperEngine
         {
             if (wzValue)
             {
-                hr = VariableSetString(&m_pEngineState->variables, wzVariable, wzValue);
+                hr = VariableSetString(&m_pEngineState->variables, wzVariable, wzValue, FALSE);
                 ExitOnFailure(hr, "Failed to set numeric variable.");
             }
             else
@@ -588,7 +588,7 @@ public: // IBootstrapperEngine
 
         if (wzVariable && *wzVariable)
         {
-            hr = VariableSetVersion(&m_pEngineState->variables, wzVariable, qwValue);
+            hr = VariableSetVersion(&m_pEngineState->variables, wzVariable, qwValue, FALSE);
             ExitOnFailure(hr, "Failed to set version variable.");
         }
         else

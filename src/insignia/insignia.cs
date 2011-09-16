@@ -34,9 +34,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
     /// </summary>
     public sealed class Insignia
     {
-        private StringCollection inputFiles;
+        private string bundlePath;
+        private string bundleWithAttachedContainerPath;
         private StringCollection invalidArgs;
         private ConsoleMessageHandler messageHandler;
+        private string msiPath;
+        private string outputPath;
         private bool showHelp;
         private bool showLogo;
         private bool tidy;
@@ -46,7 +49,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         /// </summary>
         private Insignia()
         {
-            this.inputFiles = new StringCollection();
             this.invalidArgs = new StringCollection();
             this.messageHandler = new ConsoleMessageHandler("INSG", "Insignia.exe");
             this.showLogo = true;
@@ -73,6 +75,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
         /// <returns>Returns the application error code.</returns>
         private int Run(string[] args)
         {
+            bool inscribed = false;
             try
             {
                 Inscriber inscriber = null;
@@ -86,7 +89,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     return this.messageHandler.LastErrorNumber;
                 }
 
-                if (0 == this.inputFiles.Count)
+                if (String.IsNullOrEmpty(this.msiPath) && String.IsNullOrEmpty(this.bundlePath))
                 {
                     this.showHelp = true;
                 }
@@ -109,27 +112,41 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 }
                 this.invalidArgs = null;
 
+                // Calculate the output path.
+                string inputPath = String.IsNullOrEmpty(this.msiPath) ? Path.GetFullPath(this.bundlePath) : Path.GetFullPath(this.msiPath);
+                if (String.IsNullOrEmpty(this.outputPath))
+                {
+                    this.outputPath = inputPath;
+                }
+                else if (this.outputPath.EndsWith("\\"))
+                {
+                    this.outputPath = Path.GetFullPath(Path.Combine(this.outputPath, Path.GetFileName(inputPath)));
+                }
+
                 inscriber = new Inscriber();
                 inscriber.MessageHandler += new MessageEventHandler(this.messageHandler.Display);
 
                 // Set the temp directory - if it's null, we'll default appropriately
                 inscriber.TempFilesLocation = Environment.GetEnvironmentVariable("WIX_TEMP");
 
-                foreach (string inputFile in this.inputFiles)
+                if (!String.IsNullOrEmpty(this.msiPath))
                 {
-                    string inputFileFullPath = Path.GetFullPath(inputFile);
-
-                    // print friendly message saying what file is being inscribed
-                    Console.WriteLine(Path.GetFileName(inputFile));
-
                     try
                     {
-                        inscriber.Inscribe(inputFileFullPath, this.tidy);
+                        inscribed = inscriber.InscribeDatabase(inputPath, this.outputPath, this.tidy);
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        this.messageHandler.Display(this, WixErrors.UnauthorizedAccess(inputFileFullPath));
+                        this.messageHandler.Display(this, WixErrors.UnauthorizedAccess(inputPath));
                     }
+                }
+                else if (!String.IsNullOrEmpty(this.bundleWithAttachedContainerPath))
+                {
+                    inscribed = inscriber.InscribeBundle(this.bundleWithAttachedContainerPath, this.bundlePath, this.outputPath);
+                }
+                else
+                {
+                    inscribed = inscriber.InscribeBundleEngine(this.bundlePath, this.outputPath);
                 }
 
                 if (this.tidy)
@@ -150,7 +167,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 }
             }
 
-            return this.messageHandler.LastErrorNumber;
+            return inscribed ? 1 : this.messageHandler.LastErrorNumber;
         }
 
         /// <summary>
@@ -178,6 +195,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         this.showHelp = true;
                         return;
                     }
+                    else if ("ab" == parameter) // attach container to bundle
+                    {
+                        this.bundlePath = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
+                        this.bundleWithAttachedContainerPath = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
+                    }
+                    else if ("ib" == parameter) // inscribe bundle
+                    {
+                        this.bundlePath = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
+                    }
+                    else if ("im" == parameter) // inscribe msi
+                    {
+                        this.msiPath = CommandLine.GetFile(parameter, this.messageHandler, args, ++i);
+                    }
                     else if ("nologo" == parameter)
                     {
                         this.showLogo = false;
@@ -185,6 +215,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                     else if ("notidy" == parameter)
                     {
                         this.tidy = false;
+                    }
+                    else if ("o" == parameter || "out" == parameter)
+                    {
+                        this.outputPath = CommandLine.GetFileOrDirectory(parameter, this.messageHandler, args, ++i);
                     }
                     else if ("swall" == parameter)
                     {
@@ -269,7 +303,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 }
                 else
                 {
-                    this.inputFiles.AddRange(AppCommon.GetFiles(arg, "Source"));
+                    this.invalidArgs.Add(arg);
                 }
             }
         }

@@ -225,6 +225,7 @@ static void UninitializeEngineState(
     PayloadsUninitialize(&pEngineState->payloads);
     PackagesUninitialize(&pEngineState->packages);
     CatalogUninitialize(&pEngineState->catalogs);
+    SectionUninitialize(&pEngineState->section);
     ReleaseStr(pEngineState->command.wzCommandLine);
 
     ReleaseStr(pEngineState->log.sczExtension);

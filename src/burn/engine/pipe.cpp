@@ -400,6 +400,7 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT PipeLaunchChildProcess(
+    __in_z LPCWSTR wzExecutablePath,
     __in BURN_PIPE_CONNECTION* pConnection,
     __in BOOL fElevate,
     __in_opt HWND hwndParent
@@ -407,15 +408,11 @@ extern "C" HRESULT PipeLaunchChildProcess(
 {
     HRESULT hr = S_OK;
     DWORD dwCurrentProcessId = ::GetCurrentProcessId();
-    LPWSTR sczBurnPath = NULL;
     LPWSTR sczParameters = NULL;
     OS_VERSION osVersion = OS_VERSION_UNKNOWN;
     DWORD dwServicePack = 0;
     LPCWSTR wzVerb = NULL;
     HANDLE hProcess = NULL;
-
-    hr = PathForCurrentProcess(&sczBurnPath, NULL);
-    ExitOnFailure(hr, "Failed to get current process path.");
 
     hr = StrAllocFormatted(&sczParameters, L"-q -%ls %ls %ls %u", BURN_COMMANDLINE_SWITCH_ELEVATED, pConnection->sczName, pConnection->sczSecret, dwCurrentProcessId);
     ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
@@ -423,8 +420,8 @@ extern "C" HRESULT PipeLaunchChildProcess(
     OsGetVersion(&osVersion, &dwServicePack);
     wzVerb = (OS_VERSION_VISTA > osVersion) || !fElevate ? L"open" : L"runas";
 
-    hr = ShelExec(sczBurnPath, sczParameters, wzVerb, NULL, SW_HIDE, hwndParent, &hProcess);
-    ExitOnFailure1(hr, "Failed to launch elevated child process: %ls", sczBurnPath);
+    hr = ShelExec(wzExecutablePath, sczParameters, wzVerb, NULL, SW_HIDE, hwndParent, &hProcess);
+    ExitOnFailure1(hr, "Failed to launch elevated child process: %ls", wzExecutablePath);
 
     pConnection->dwProcessId = ::GetProcessId(hProcess);
     pConnection->hProcess = hProcess;
@@ -433,7 +430,6 @@ extern "C" HRESULT PipeLaunchChildProcess(
 LExit:
     ReleaseHandle(hProcess);
     ReleaseStr(sczParameters);
-    ReleaseStr(sczBurnPath);
 
     return hr;
 }

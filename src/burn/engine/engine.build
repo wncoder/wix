@@ -82,6 +82,7 @@
       <include name="platform.cpp" />
       <include name="registration.cpp" />
       <include name="search.cpp" />
+      <include name="section.cpp" />
       <include name="splashscreen.cpp" />
       <include name="uithread.cpp" />
       <include name="userexperience.cpp" />

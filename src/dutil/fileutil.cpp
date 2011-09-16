@@ -863,6 +863,49 @@ LExit:
 
 
 /*******************************************************************
+ FileCopyUsingHandles
+
+*******************************************************************/
+extern "C" HRESULT DAPI FileCopyUsingHandles(
+    __in HANDLE hSource,
+    __in HANDLE hTarget,
+    __in DWORD64 cbCopy,
+    __out_opt DWORD64* pcbCopied
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD64 cbTotalCopied = 0;
+    BYTE rgbData[4 * 1024];
+    DWORD cbRead = 0;
+
+    do
+    {
+        cbRead = static_cast<DWORD>((0 == cbCopy) ? countof(rgbData) : min(countof(rgbData), cbCopy - cbTotalCopied));
+        if (!::ReadFile(hSource, rgbData, cbRead, &cbRead, NULL))
+        {
+            ExitWithLastError(hr, "Failed to read from source.");
+        }
+
+        if (cbRead)
+        {
+            hr = FileWriteHandle(hTarget, rgbData, cbRead);
+            ExitOnFailure(hr, "Failed to write to target.");
+        }
+
+        cbTotalCopied += cbRead;
+    } while (cbTotalCopied < cbCopy && 0 != cbRead);
+
+    if (pcbCopied)
+    {
+        *pcbCopied = cbTotalCopied;
+    }
+
+LExit:
+    return hr;
+}
+
+
+/*******************************************************************
  FileEnsureCopy
 
 *******************************************************************/

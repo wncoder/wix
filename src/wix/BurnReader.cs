@@ -18,14 +18,12 @@
 
 namespace Microsoft.Tools.WindowsInstallerXml
 {
-    using Microsoft.Tools.WindowsInstallerXml.Cab;
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Globalization;
     using System.IO;
     using System.Xml;
+    using Microsoft.Tools.WindowsInstallerXml.Cab;
 
     /// <summary>
     /// Burn PE reader for the Windows Installer Xml toolset.
@@ -35,134 +33,56 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// <example>
     /// using (BurnReader reader = BurnReader.Open(fileExe, this.core, guid))
     /// {
-    ///     reader.AppendContainer(file1, BurnReader.Container.UX);
-    ///     reader.AppendContainer(file2, BurnReader.Container.Attached);
+    ///     reader.ExtractUXContainer(file1, tempFolder);
     /// }
     /// </example>
-    class BurnReader : BurnCommon
+    internal class BurnReader : BurnCommon
     {
-        private bool invalidBundle;
-        private UInt32 version = 0;
-        private UInt32 sectionCount = 0;
-        private UInt64 uxAddress = 0;
-        private UInt64 uxSize = 0;
-        private UInt64 attachedContainerAddress = 0;
-        private UInt64 attachedContainerSize = 0;
+        private bool disposed;
 
-        List<DictionaryEntry> attachedContainerPayloadNames;
+        private bool invalidBundle;
+        private BinaryReader binaryReader;
+        private List<DictionaryEntry> attachedContainerPayloadNames;
 
         /// <summary>
         /// Creates a BurnReader for reading a PE file.
         /// </summary>
         /// <param name="fileExe">File to read.</param>
         /// <param name="messageHandler">The messagehandler to report warnings/errors to.</param>
-        public BurnReader(string fileExe, IMessageHandler messageHandler)
+        private BurnReader(string fileExe, IMessageHandler messageHandler)
             : base(fileExe, messageHandler)
         {
-            this.stream = File.Open(fileExe, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-            if (!GetWixburnSectionInfo())
-            {
-                // If we detect we're an invalid bundle,
-                // remember that so we don't continue trying to extract if asked again
-                invalidBundle = true;
-                return;
-            }
-
-            if (!ReadWixburnData())
-            {
-                invalidBundle = true;
-                return;
-            }
-
-            attachedContainerPayloadNames = new List<DictionaryEntry>();
+            this.attachedContainerPayloadNames = new List<DictionaryEntry>();
         }
 
         /// <summary>
-        /// Finds the ".wixburn" section in the current exe.
+        /// Gets the underlying stream.
         /// </summary>
-        /// <returns>true if the ".wixburn" section is successfully found; false otherwise</returns>
-        private bool GetWixburnSectionInfo()
+        public Stream Stream
         {
-            if (UInt32.MaxValue == this.wixburnDataOffset)
+            get
             {
-                if (!EnsureNTHeader())
-                {
-                    return false;
-                }
-
-                byte[] bytes = new byte[IMAGE_SECTION_HEADER_SIZE];
-                this.stream.Seek(this.firstSectionOffset, SeekOrigin.Begin);
-
-                UInt32 wixburnSectionOffset = UInt32.MaxValue;
-
-                for (UInt16 sectionIndex = 0; sectionIndex < this.sections; ++sectionIndex)
-                {
-                    this.stream.Read(bytes, 0, bytes.Length);
-
-                    if (IMAGE_SECTION_WIXBURN_NAME == BurnCommon.ReadUInt64(bytes, IMAGE_SECTION_HEADER_OFFSET_NAME))
-                    {
-                        wixburnSectionOffset = this.firstSectionOffset + (IMAGE_SECTION_HEADER_SIZE * sectionIndex);
-                        break;
-                    }
-                }
-
-                if (UInt32.MaxValue == wixburnSectionOffset)
-                {
-                    this.messageHandler.OnMessage(WixErrors.StubMissingWixburnSection(this.fileExe));
-                    return false;
-                }
-
-                // we need 32 bytes for the manifest header, which is always going to fit in 
-                // the smallest alignment (512 bytes), but just to be paranoid...
-                if (BURN_SECTION_SIZE > BurnCommon.ReadUInt32(bytes, IMAGE_SECTION_HEADER_OFFSET_SIZEOFRAWDATA))
-                {
-                    this.messageHandler.OnMessage(WixErrors.StubWixburnSectionTooSmall(this.fileExe));
-                    return false;
-                }
-
-                this.wixburnDataOffset = BurnCommon.ReadUInt32(bytes, IMAGE_SECTION_HEADER_OFFSET_POINTERTORAWDATA);
+                return (null != this.binaryReader) ? this.binaryReader.BaseStream : null;
             }
-
-            return true;
         }
 
         /// <summary>
-        /// Read the magic ".wixburn" section data and bundle GUID from the current exe.
+        /// Opens a Burn reader.
         /// </summary>
-        /// <returns>true if the ".wixburn" section data is successfully read; false otherwise</returns>
-        private bool ReadWixburnData()
+        /// <param name="fileExe">Path to file.</param>
+        /// <param name="messageHandler">Message handler.</param>
+        /// <returns>Burn reader.</returns>
+        public static BurnReader Open(string fileExe, IMessageHandler messageHandler)
         {
-            byte[] bytes = this.ReadBytes(this.wixburnDataOffset, BURN_SECTION_SIZE);
-            UInt32 uint32 = 0;
+            BurnReader reader = new BurnReader(fileExe, messageHandler);
 
-            uint32 = BurnCommon.ReadUInt32(bytes, BURN_SECTION_OFFSET_MAGIC);
-            if (BURN_SECTION_MAGIC != uint32)
+            reader.binaryReader = new BinaryReader(File.Open(fileExe, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete));
+            if (!reader.Initialize(reader.binaryReader))
             {
-                this.messageHandler.OnMessage(WixErrors.InvalidBundle(this.fileExe));
-                return false;
-            }
-            version = BurnCommon.ReadUInt32(bytes, BURN_SECTION_OFFSET_VERSION);
-            if (BURN_SECTION_VERSION != version)
-            {
-                this.messageHandler.OnMessage(WixErrors.BundleTooNew(this.fileExe, version));
-                return false;
+                reader.invalidBundle = true;
             }
 
-            sectionCount = BurnCommon.ReadUInt32(bytes, BURN_SECTION_OFFSET_COUNT);
-            uint32 = BurnCommon.ReadUInt32(bytes, BURN_SECTION_OFFSET_FORMAT); // We only know how to deal with CABs right now
-            if (1 != uint32)
-            {
-                this.messageHandler.OnMessage(WixErrors.InvalidBundle(this.fileExe));
-                return false;
-            }
-
-            uxAddress = BurnCommon.ReadUInt64(bytes, BURN_SECTION_OFFSET_UXADDRESS);
-            uxSize = BurnCommon.ReadUInt64(bytes, BURN_SECTION_OFFSET_UXSIZE);
-            attachedContainerAddress = BurnCommon.ReadUInt64(bytes, BURN_SECTION_OFFSET_ATTACHEDCONTAINERADDRESS);
-            attachedContainerSize = BurnCommon.ReadUInt64(bytes, BURN_SECTION_OFFSET_ATTACHEDCONTAINERSIZE);
-
-            return true;
+            return reader;
         }
 
         /// <summary>
@@ -173,11 +93,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public bool ExtractUXContainer(string outputDirectory, string tempDirectory)
         {
             // No UX container to extract
-            if (uxAddress == 0 || uxSize == 0)
+            if (this.UXAddress == 0 || this.UXSize == 0)
             {
                 return false;
             }
-            if (invalidBundle)
+
+            if (this.invalidBundle)
             {
                 return false;
             }
@@ -187,11 +108,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string manifestOriginalPath = Path.Combine(outputDirectory, "0");
             string manifestPath = Path.Combine(outputDirectory, "manifest.xml");
 
-            byte[] bytes = this.ReadBytes(uxAddress, uxSize);
+            this.binaryReader.BaseStream.Seek(this.UXAddress, SeekOrigin.Begin);
             using (Stream tempCab = File.Open(tempCabPath, FileMode.Create, FileAccess.Write))
             {
-                tempCab.Write(bytes, 0, bytes.Length);
-                tempCab.Close();
+                BurnCommon.CopyStream(this.binaryReader.BaseStream, tempCab, (int)this.UXSize);
             }
 
             using (WixExtractCab extract = new WixExtractCab())
@@ -233,9 +153,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 string destinationPath = filePathNode.Value;
                 string packaging = packagingNode.Value;
 
-                if (0 == String.Compare("embedded", packaging, false, CultureInfo.InvariantCulture))
+                if (packaging.Equals("embedded", StringComparison.OrdinalIgnoreCase))
                 {
-                    attachedContainerPayloadNames.Add(new DictionaryEntry(sourcePath, destinationPath));
+                    this.attachedContainerPayloadNames.Add(new DictionaryEntry(sourcePath, destinationPath));
                 }
             }
 
@@ -250,11 +170,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public bool ExtractAttachedContainer(string outputDirectory, string tempDirectory)
         {
             // No attached container to extract
-            if (attachedContainerAddress == 0 || attachedContainerSize == 0)
+            if (this.AttachedContainerAddress == 0 || this.AttachedContainerSize == 0)
             {
                 return false;
             }
-            if (invalidBundle)
+
+            if (this.invalidBundle)
             {
                 return false;
             }
@@ -262,11 +183,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Directory.CreateDirectory(outputDirectory);
             string tempCabPath = Path.Combine(tempDirectory, "attached.cab");
 
-            byte[] bytes = this.ReadBytes(attachedContainerAddress, attachedContainerSize);
+            this.binaryReader.BaseStream.Seek(this.AttachedContainerAddress, SeekOrigin.Begin);
             using (Stream tempCab = File.Open(tempCabPath, FileMode.Create, FileAccess.Write))
             {
-                tempCab.Write(bytes, 0, bytes.Length);
-                tempCab.Close();
+                BurnCommon.CopyStream(this.binaryReader.BaseStream, tempCab, (int)this.AttachedContainerSize);
             }
 
             using (WixExtractCab extract = new WixExtractCab())
@@ -285,6 +205,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Dispose object.
+        /// </summary>
+        /// <param name="disposing">True when releasing managed objects.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing && this.binaryReader != null)
+                {
+                    this.binaryReader.Close();
+                    this.binaryReader = null;
+                }
+
+                this.disposed = true;
+            }
         }
     }
 }

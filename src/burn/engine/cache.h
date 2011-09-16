@@ -59,11 +59,11 @@ HRESULT CacheCaclulateContainerUnverifiedPath(
 HRESULT CacheGetCompletedPath(
     __in BOOL fPerMachine,
     __in_z LPCWSTR wzCacheId,
-    __inout_z LPWSTR* psczCompletedPath
+    __deref_out_z LPWSTR* psczCompletedPath
     );
 HRESULT CacheGetResumePath(
     __in_z LPCWSTR wzWorkingPath,
-    __inout_z LPWSTR* psczResumePath
+    __deref_out_z LPWSTR* psczResumePath
     );
 HRESULT CacheEnsureWorkingDirectory(
     __in_z LPCWSTR wzWorkingPath,
@@ -81,14 +81,26 @@ void CacheSendErrorCallback(
     __in_z_opt LPCWSTR wzError,
     __out_opt BOOL* pfRetry
     );
-extern "C" HRESULT CacheBundle(
-    __in BURN_REGISTRATION* pRegistration,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
+HRESULT CacheBundleToWorkingDirectory(
+    __in_z LPCWSTR wzBundleId,
+    __in BURN_PAYLOADS* pUxPayloads,
+    __in BURN_SECTION* pSection,
+    __deref_out_z LPWSTR* psczEngineWorkingPath
+    );
+HRESULT CacheBundle(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzBundleId,
+    __in_z LPCWSTR wzExecutableName,
+    __in BURN_PAYLOADS* pUxPayloads
+#ifdef DEBUG
+    ,
     __in_z LPCWSTR wzExecutablePath
+#endif
     );
 HRESULT CachePayload(
-    __in_opt BURN_PACKAGE* pPackage,
+    __in BOOL fPerMachine,
     __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzCacheId,
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove

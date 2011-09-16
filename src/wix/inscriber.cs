@@ -102,7 +102,100 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        public void Inscribe(string databaseFile, bool tidy)
+        /// <summary>
+        /// Extracts engine from attached container and updates engine with detached container signatures.
+        /// </summary>
+        /// <param name="bundleFile">Bundle with attached container.</param>
+        /// <param name="outputFile">Bundle engine only.</param>
+        /// <returns>True if bundle was updated.</returns>
+        public bool InscribeBundleEngine(string bundleFile, string outputFile)
+        {
+            string tempFile = Path.Combine(this.TempFilesLocation, "bundle_engine_unsigned.exe");
+
+            using (BurnReader reader = BurnReader.Open(bundleFile, this))
+            using (FileStream writer = File.Open(tempFile, FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete))
+            {
+                reader.Stream.Seek(0, SeekOrigin.Begin);
+
+                byte[] buffer = new byte[4 * 1024];
+                int total = 0;
+                int read = 0;
+                do
+                {
+                    read = Math.Min(buffer.Length, (int)reader.EngineSize - total);
+
+                    read = reader.Stream.Read(buffer, 0, read);
+                    writer.Write(buffer, 0, read);
+
+                    total += read;
+                } while (total < reader.EngineSize && 0 < read);
+
+                if (total != reader.EngineSize)
+                {
+                    throw new InvalidOperationException("Failed to copy engine out of bundle.");
+                }
+
+                // TODO: update writer with detached container signatures.
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
+            File.Move(tempFile, outputFile);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Updates engine with attached container information and adds attached container again.
+        /// </summary>
+        /// <param name="bundleFile">Bundle with attached container.</param>
+        /// <param name="signedEngineFile">Signed bundle engine.</param>
+        /// <param name="outputFile">Signed engine with attached container.</param>
+        /// <returns>True if bundle was updated.</returns>
+        public bool InscribeBundle(string bundleFile, string signedEngineFile, string outputFile)
+        {
+            bool inscribed = false;
+            string tempFile = Path.Combine(this.TempFilesLocation, "bundle_engine_signed.exe");
+
+            using (BurnReader reader = BurnReader.Open(bundleFile, this))
+            {
+                File.Copy(signedEngineFile, tempFile, true);
+
+                // If there was an attached container on the original (unsigned) bundle, put it back.
+                if (reader.AttachedContainerSize > 0)
+                {
+                    reader.Stream.Seek(reader.AttachedContainerAddress, SeekOrigin.Begin);
+
+                    using (BurnWriter writer = BurnWriter.Open(tempFile, this))
+                    {
+                        writer.RememberThenResetSignature();
+                        writer.AppendContainer(reader.Stream, reader.AttachedContainerSize, BurnCommon.Container.Attached);
+                        inscribed = true;
+                    }
+                }
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+            if (File.Exists(outputFile))
+            {
+                File.Delete(outputFile);
+            }
+            File.Move(tempFile, outputFile);
+
+            return inscribed;
+        }
+
+        /// <summary>
+        /// Updates database with signatures from external cabinets.
+        /// </summary>
+        /// <param name="databaseFile">Path to MSI database.</param>
+        /// <param name="outputFile">Ouput for updated MSI database.</param>
+        /// <param name="tidy">Clean up files.</param>
+        /// <returns>True if database is updated.</returns>
+        public bool InscribeDatabase(string databaseFile, string outputFile, bool tidy)
         {
             // Keeps track of whether we've encountered at least one signed cab or not - we'll throw a warning if no signed cabs were encountered
             bool foundUnsignedExternals = false;
@@ -112,7 +205,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (FileAttributes.ReadOnly == (attributes & FileAttributes.ReadOnly))
             {
                 this.OnMessage(WixErrors.ReadOnlyOutputFile(databaseFile));
-                return;
+                return shouldCommit;
             }
 
             using (Database database = new Database(databaseFile, OpenDatabase.Transact))
@@ -227,6 +320,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     database.ImportTable(codepage, (IMessageHandler)this, digitalSignatureTable, this.TempFilesLocation, true);
                     shouldCommit = true;
                 }
+
                 if (digitalCertificateTable.Rows.Count > 0)
                 {
                     database.ImportTable(codepage, (IMessageHandler)this, digitalCertificateTable, this.TempFilesLocation, true);
@@ -246,6 +340,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     database.Commit();
                 }
             }
+
+            return shouldCommit;
         }
 
         /// <summary>

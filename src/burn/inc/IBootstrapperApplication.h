@@ -263,7 +263,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //  All other return codes result in an error.
     //
     // Notes:
-    //  It is expected the UX may call IBurnCore::SetLocalSource() or IBurnCore::SetDownloadSource()
+    //  It is expected the BA may call IBurnCore::SetLocalSource() or IBurnCore::SetDownloadSource()
     //  to update the source location before returning IDRETRY or IDDOWNLOAD.
     STDMETHOD_(int, OnResolveSource)(
         __in_z LPCWSTR wzPackageOrContainerId,
@@ -289,7 +289,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         __in HRESULT hrStatus
         ) = 0;
 
-    STDMETHOD_(void, OnCachePackageComplete)(
+    STDMETHOD_(int, OnCachePackageComplete)(
         __in_z LPCWSTR wzPackageId,
         __in HRESULT hrStatus
         )  = 0;

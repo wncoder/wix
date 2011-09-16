@@ -81,6 +81,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
 
         protected override void OnApplyComplete(ApplyCompleteEventArgs args)
         {
+            // Output what the privileges are now.
+            this.Engine.Log(LogLevel.Verbose, String.Format("TEST: After elevation: WixBundleElevated = {0}", this.Engine.NumericVariables["WixBundleElevated"]));
+
             this.result = args.Status;
             this.wait.Set();
         }
@@ -163,6 +166,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             {
                 this.Engine.Log(LogLevel.Verbose, "TEST: Successfully checked for non-existent version variable: TestVersionVariableShouldNotExist");
             }
+
+            // Output what the initially run privileges were.
+            this.Engine.Log(LogLevel.Verbose, String.Format("TEST: WixBundleElevated = {0}", this.Engine.NumericVariables["WixBundleElevated"]));
         }
     }
 }

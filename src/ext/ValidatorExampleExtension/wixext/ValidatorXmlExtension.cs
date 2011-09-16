@@ -19,6 +19,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 {
     using System;
+    using System.Globalization;
     using System.IO;
     using System.Text;
     using System.Xml;
@@ -92,6 +93,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// <param name="message">The entire string sent from the validator.</param>
         public override void Log(string message)
         {
+            this.Log(message, null);
+        }
+
+        /// <summary>
+        /// Logs the messages for ICE errors, warnings, and information.
+        /// </summary>
+        /// <param name="message">The entire string sent from the validator.</param>
+        /// <param name="action">The name of the ICE action.</param>
+        public override void Log(string message, string action)
+        {
             if (null == message) return;
 
             // Open the message element.
@@ -104,6 +115,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 this.writer.WriteElementString(
                     elements[Math.Min(i, elements.Length - 1)],
                     messageParts[i]);
+            }
+
+            // Write source line number information.
+            string tableName = null;
+            string[] primaryKeys = new string[] {String.Empty};
+
+            if (6 < messageParts.Length)
+            {
+                tableName = messageParts[4];
+
+                primaryKeys = new string[messageParts.Length - 6];
+                Array.Copy(messageParts, 6, primaryKeys, 0, primaryKeys.Length);
+            }
+
+            SourceLineNumberCollection messageSourceLineNumbers = base.GetSourceLineNumbers(tableName, primaryKeys);
+            if (null != messageSourceLineNumbers && 0 < messageSourceLineNumbers.Count)
+            {
+                SourceLineNumber messageSourceLineNumber = messageSourceLineNumbers[0];
+                this.writer.WriteElementString("SourceFileName", messageSourceLineNumber.FileName);
+
+                if (messageSourceLineNumber.HasLineNumber)
+                {
+                    this.writer.WriteElementString("SourceLineNumber", messageSourceLineNumber.LineNumber.ToString(CultureInfo.InvariantCulture));
+                }
             }
 
             // Close the element.

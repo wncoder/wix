@@ -1186,9 +1186,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        void IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus)
+        Result IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus)
         {
-            this.OnCachePackageComplete(new CachePackageCompleteEventArgs(wzPackageId, hrStatus));
+            CachePackageCompleteEventArgs args = new CachePackageCompleteEventArgs(wzPackageId, hrStatus);
+            this.OnCachePackageComplete(args);
+
+            return args.Result;
         }
 
         void IBootstrapperApplication.OnCacheComplete(int hrStatus)

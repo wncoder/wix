@@ -2777,6 +2777,14 @@
           <Parameter Type="System.String" Name="property" />
         </Instance>
       </Message>
+      <Message Id="MissingOrInvalidModuleInstallerVersion" Number="366">
+        <Instance>
+          The merge module '{0}' from file '{1}' is either missing or has an invalid installer version. The value read from the installer version in module's summary information was '{2}'. This should be a numeric value representing a valid installer version such as 200 or 301.
+          <Parameter Type="System.String" Name="moduleId" />
+          <Parameter Type="System.String" Name="mergeModuleFile" />
+          <Parameter Type="System.String" Name="productInstallerVersion" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">

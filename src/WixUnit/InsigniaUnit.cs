@@ -88,8 +88,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
                             attributes = (attributes & ~FileAttributes.ReadOnly);
                             File.SetAttributes(outputFile, attributes);
 
-                            commandLine.AppendFormat(" \"{0}\"", outputFile);
-                            
+                            commandLine.AppendFormat(" -im \"{0}\"", outputFile);
+
                             previousUnitResults.OutputFiles.Add(outputFile);
                             break;
                     }

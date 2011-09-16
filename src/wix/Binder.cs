@@ -3384,12 +3384,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Create all the containers except the UX container first so the manifest in the UX container can contain all size and hash information.
             foreach (ContainerInfo container in containers.Values)
             {
-                if (Compiler.BurnUXContainerId != container.Id)
+                if (Compiler.BurnUXContainerId != container.Id && 0 < container.Payloads.Count)
                 {
-                    if (0 < container.Payloads.Count)
-                    {
-                        this.CreateContainer(container, null);
-                    }
+                    this.CreateContainer(container, null);
                 }
             }
 
@@ -3399,8 +3396,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.UpdateBurnResources(bundleTempPath, bundleInfo);
 
             // update the .wixburn section to point to at the UX and attached container(s) then attach the container(s) if they should be attached.
-            using (BurnWriter writer = new BurnWriter(bundleTempPath, this.core, bundleInfo.Id))
+            using (BurnWriter writer = BurnWriter.Open(bundleTempPath, this.core))
             {
+                FileInfo burnStubFile = new FileInfo(bundleTempPath);
+                writer.InitializeBundleSectionData(burnStubFile.Length, bundleInfo.Id);
+
                 // Always create UX container and attach it first
                 ContainerInfo uxContainer = containers[Compiler.BurnUXContainerId];
                 this.CreateContainer(uxContainer, manifestPath);
@@ -3411,13 +3411,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (container.Type == "attached")
                     {
-                        if (Compiler.BurnUXContainerId != container.Id)
+                        // The container was only created if it had payloads.
+                        if (Compiler.BurnUXContainerId != container.Id && 0 < container.Payloads.Count)
                         {
-                            // The container was only created if it had payloads.
-                            if (0 < container.Payloads.Count)
-                            {
-                                writer.AppendContainer(container.TempPath, BurnWriter.Container.Attached);
-                            }
+                            writer.AppendContainer(container.TempPath, BurnWriter.Container.Attached);
                         }
                     }
                 }
@@ -3680,7 +3677,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 int attachedContainerIndex = 1; // count starts at one because UX container is "0".
                 foreach (ContainerInfo container in containers.Values)
                 {
-                    if (Compiler.BurnUXContainerId != container.Id)
+                    if (Compiler.BurnUXContainerId != container.Id && 0 < container.Payloads.Count)
                     {
                         writer.WriteStartElement("Container");
                         WriteBurnManifestContainerAttributes(writer, container, attachedContainerIndex);
@@ -4699,10 +4696,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             // Get the summary information to detect the Schema
                             using (SummaryInformation summaryInformation = new SummaryInformation(db))
                             {
-                                int moduleInstallerVersion = Convert.ToInt32(summaryInformation.GetProperty(14), CultureInfo.InvariantCulture);
-                                if (moduleInstallerVersion > outputInstallerVersion)
+                                string moduleInstallerVersionString = summaryInformation.GetProperty(14);
+
+                                try
                                 {
-                                    this.core.OnMessage(WixWarnings.InvalidHigherInstallerVersionInModule(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, moduleInstallerVersion, outputInstallerVersion));
+                                    int moduleInstallerVersion = Convert.ToInt32(moduleInstallerVersionString, CultureInfo.InvariantCulture);
+                                    if (moduleInstallerVersion > outputInstallerVersion)
+                                    {
+                                        this.core.OnMessage(WixWarnings.InvalidHigherInstallerVersionInModule(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, moduleInstallerVersion, outputInstallerVersion));
+                                    }
+                                }
+                                catch (FormatException)
+                                {
+                                    throw new WixException(WixErrors.MissingOrInvalidModuleInstallerVersion(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, wixMergeRow.SourceFile, moduleInstallerVersionString));
                                 }
                             }
                         }

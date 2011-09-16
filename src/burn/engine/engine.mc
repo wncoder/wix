@@ -18,6 +18,27 @@ LanguageNames=(English=0x409:MSG00409)
 
 ; // message definitions
 
+; // MessageId=#
+; // Severity=Success
+; // SymbolicName=MSG_SUCCESS
+; // Language=English
+; // Success %1.
+; // .
+;
+; // MessageId=#
+; // Severity=Warning
+; // SymbolicName=MSG_WARNING
+; // Language=English
+; // Warning %1.
+; // .
+;
+; // MessageId=#
+; // Severity=Error
+; // SymbolicName=MSG_ERROR
+; // Language=English
+; // Error %1.
+; // .
+
 MessageId=1
 Severity=Success
 SymbolicName=MSG_BURN_INFO
@@ -38,20 +59,6 @@ SymbolicName=MSG_BURN_RUN_BY_RELATED_BUNDLE
 Language=English
 This bundle is being run by a related bundle as type '%1!hs!'.
 .
-
-; // MessageId=2
-; // Severity=Warning
-; // SymbolicName=MSG_WARNING
-; // Language=English
-; // Warning %1.
-; // .
-;
-; // MessageId=4
-; // Severity=Error
-; // SymbolicName=MSG_ERROR
-; // Language=English
-; // Error %1.
-; // .
 
 MessageId=51
 Severity=Error
@@ -86,6 +93,13 @@ Severity=Warning
 SymbolicName=MSG_CANNOT_LOAD_STATE_FILE
 Language=English
 Could not load or read state file: %2!ls!, error: 0x%1!x!.
+.
+
+MessageId=56
+Severity=Error
+SymbolicName=MSG_USER_CANCELED
+Language=English
+Application canceled operation: %2!ls!, error: %1!ls!
 .
 
 MessageId=100
@@ -193,18 +207,67 @@ Language=English
 Apply begin
 .
 
-MessageId=301
+MessageId=311
+Severity=Error
+SymbolicName=MSG_FAILED_ACQUIRE_CONTAINER
+Language=English
+Failed to acquire container: %2!ls! to working path: %3!ls!, error: %1!ls!.
+.
+
+MessageId=312
+Severity=Error
+SymbolicName=MSG_FAILED_EXTRACT_CONTAINER
+Language=English
+Failed to extract payloads from container: %2!ls! to working path: %3!ls!, error: %1!ls!.
+.
+
+MessageId=313
+Severity=Error
+SymbolicName=MSG_FAILED_ACQUIRE_PAYLOAD
+Language=English
+Failed to acquire payload: %2!ls! to working path: %3!ls!, error: %1!ls!.
+.
+
+MessageId=314
+Severity=Error
+SymbolicName=MSG_FAILED_CACHE_PAYLOAD
+Language=English
+Failed to cache payload: %2!ls! from working path: %3!ls!, error: %1!ls!.
+.
+
+MessageId=315
+Severity=Error
+SymbolicName=MSG_FAILED_LAYOUT_BUNDLE
+Language=English
+Failed to layout bundle: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
+.
+
+MessageId=316
+Severity=Error
+SymbolicName=MSG_FAILED_LAYOUT_PAYLOAD
+Language=English
+Failed to layout payload: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
+.
+
+MessageId=325
 Severity=Success
 SymbolicName=MSG_APPLYING_PACKAGE
 Language=English
 Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
 .
 
-MessageId=349
+MessageId=348
 Severity=Warning
 SymbolicName=MSG_APPLY_RETRYING_PACKAGE
 Language=English
 Application requested retry of package: %1!ls!, encountered error: 0x%2!x!. Retrying...
+.
+
+MessageId=349
+Severity=Warning
+SymbolicName=MSG_APPLY_RETRYING_PAYLOAD
+Language=English
+Application requested retry of payload: %1!ls!, encountered error: 0x%2!x!. Retrying...
 .
 
 MessageId=350

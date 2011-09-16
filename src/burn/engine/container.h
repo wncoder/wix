@@ -91,6 +91,8 @@ typedef struct _BURN_CONTAINER
     LPWSTR sczSourcePath;
     BURN_DOWNLOAD_SOURCE downloadSource;
 
+    DWORD64 qwAttachedOffset;
+
     //LPWSTR* rgsczPayloads;
     //DWORD cPayloads;
 } BURN_CONTAINER;
@@ -142,6 +144,7 @@ typedef struct _BURN_CONTAINER_CONTEXT
 // functions
 
 HRESULT ContainersParseFromXml(
+    __in BURN_SECTION* pSection,
     __in BURN_CONTAINERS* pContainers,
     __in IXMLDOMNode* pixnBundle
     );
@@ -149,6 +152,7 @@ void ContainersUninitialize(
     __in BURN_CONTAINERS* pContainers
     );
 HRESULT ContainerOpenUX(
+    __in BURN_SECTION* pSection,
     __in BURN_CONTAINER_CONTEXT* pContext
     );
 HRESULT ContainerOpen(

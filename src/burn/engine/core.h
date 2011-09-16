@@ -39,6 +39,7 @@ const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_PATCH = L"burn.related.patch";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_PREFIX = L"burn.";
 
 const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
+const LPCWSTR BURN_BUNDLE_ELEVATED = L"WixBundleElevated";
 const LPCWSTR BURN_BUNDLE_TAG = L"WixBundleTag";
 
 // The following constants must stay in sync with src\wix\Binder.cs
@@ -83,6 +84,7 @@ typedef struct _BURN_ENGINE_STATE
 
     // engine data
     BOOTSTRAPPER_COMMAND command;
+    BURN_SECTION section;
     BURN_VARIABLES variables;
     BURN_CONDITION condition;
     BURN_SEARCHES searches;

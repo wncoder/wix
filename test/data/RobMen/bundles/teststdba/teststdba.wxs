@@ -15,7 +15,7 @@
         <Variable Name='InstallFolder' Value='[ProgramFilesFolder]\[WixBundleName]' />
 
         <PayloadGroup Id='LayoutStuff'>
-            <Payload SourceFile='readme.html' />
+            <Payload SourceFile='readme.html' Compressed='no' />
         </PayloadGroup>
 
         <util:ProductSearch Variable="PS" Guid='AAAAAAAA-6D59-4F20-9BC3-B1021021F795' />

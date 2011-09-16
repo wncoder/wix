@@ -54,6 +54,7 @@
         <li>WindowsFolder - gets the well-known folder for CSIDL_WINDOWS.</li>
         <li>WindowsVolume - gets the well-known folder for the windows volume.</li>
         <li>WixBundleDirectoryLayout - set to the folder provided to the -layout switch (default is directory containin the bundle executable). This variable can also be set by the bootstrapper application to modify where files will be laid out.</li>
+        <li>WixBundleElevated - gets whether the bundle was launched elevated and will be set to 1 once the bundle is elevated. Use this variable, for example, to show or hide the elevation shield in the bootstrapper application UI.</li>
         <li>WixBundleName - gets the name of the bundle (from Bundle/@Name). This variable can also be set by the bootstrapper application to modify the bundle name at runtime.</li>
         <li>WixBundleProviderKey - gets the bundle dependency provider key.</li>
         <li>WixBundleTag - gets the developer-defined tag string for this bundle (from Bundle/@Tag).</li>

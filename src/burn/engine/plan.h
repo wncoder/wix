@@ -101,6 +101,7 @@ typedef struct _BURN_CACHE_ACTION
             BURN_PACKAGE* pPackage;
             DWORD cCachePayloads;
             DWORD64 qwCachePayloadSizeTotal;
+            DWORD iPackageCompleteAction;
         } packageStart;
         struct
         {

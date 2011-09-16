@@ -56,6 +56,12 @@ enum OS_INFO_VARIABLE
 
 // internal function declarations
 
+static HRESULT AddBuiltInVariable(
+    __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzVariable,
+    __in PFN_INITIALIZEVARIABLE pfnInitialize,
+    __in DWORD_PTR dwpInitializeData
+    );
 static HRESULT GetVariable(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
@@ -70,6 +76,13 @@ static HRESULT InsertVariable(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
     __in DWORD iPosition
+    );
+static HRESULT SetVariableValue(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzVariable,
+    __in BURN_VARIANT* pVariant,
+    __in BOOL fOverwriteBuiltIn,
+    __in BOOL fLog
     );
 static HRESULT InitializeVariableOsInfo(
     __in DWORD_PTR dwpData,
@@ -108,6 +121,14 @@ static HRESULT InitializeSystemLanguageID(
     __inout BURN_VARIANT* pValue
     );
 static HRESULT InitializeUserLanguageID(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableString(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableNumeric(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
@@ -164,6 +185,9 @@ extern "C" HRESULT VariableInitialize(
         {L"VersionNT64", InitializeVariableOsInfo, OS_INFO_VARIABLE_VersionNT64},
         {L"WindowsFolder", InitializeVariableCsidlFolder, CSIDL_WINDOWS},
         {L"WindowsVolume", InitializeVariableWindowsVolumeFolder, 0},
+        {BURN_BUNDLE_ELEVATED, InitializeVariableNumeric, 0},
+        {BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)L""},
+        {BURN_BUNDLE_TAG, InitializeVariableString, (DWORD_PTR)L""},
     };
 
     for (DWORD i = 0; i < countof(vrgBuiltInVariables); ++i)
@@ -503,7 +527,8 @@ LExit:
 extern "C" HRESULT VariableSetNumeric(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in LONGLONG llValue
+    __in LONGLONG llValue,
+    __in BOOL fOverwriteBuiltIn
     )
 {
     BURN_VARIANT variant = { };
@@ -511,13 +536,14 @@ extern "C" HRESULT VariableSetNumeric(
     variant.llValue = llValue;
     variant.Type = BURN_VARIANT_TYPE_NUMERIC;
 
-    return VariableSetVariant(pVariables, wzVariable, &variant);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
 }
 
 extern "C" HRESULT VariableSetString(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in_z_opt LPCWSTR wzValue
+    __in_z_opt LPCWSTR wzValue,
+    __in BOOL fOverwriteBuiltIn
     )
 {
     BURN_VARIANT variant = { };
@@ -525,13 +551,14 @@ extern "C" HRESULT VariableSetString(
     variant.sczValue = (LPWSTR)wzValue;
     variant.Type = BURN_VARIANT_TYPE_STRING;
 
-    return VariableSetVariant(pVariables, wzVariable, &variant);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
 }
 
 extern "C" HRESULT VariableSetVersion(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in DWORD64 qwValue
+    __in DWORD64 qwValue,
+    __in BOOL fOverwriteBuiltIn
     )
 {
     BURN_VARIANT variant = { };
@@ -539,74 +566,17 @@ extern "C" HRESULT VariableSetVersion(
     variant.qwValue = qwValue;
     variant.Type = BURN_VARIANT_TYPE_VERSION;
 
-    return VariableSetVariant(pVariables, wzVariable, &variant);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
 }
 
 extern "C" HRESULT VariableSetVariant(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
-    __in BURN_VARIANT* pVariant
+    __in BURN_VARIANT* pVariant,
+    __in BOOL fOverwriteBuiltIn
     )
 {
-    HRESULT hr = S_OK;
-    DWORD iVariable = 0;
-
-    ::EnterCriticalSection(&pVariables->csAccess);
-
-    hr = FindVariableIndexByName(pVariables, wzVariable, &iVariable);
-    ExitOnFailure1(hr, "Failed to find variable value '%ls'.", wzVariable);
-
-    // insert element if not found
-    if (S_FALSE == hr)
-    {
-        hr = InsertVariable(pVariables, wzVariable, iVariable);
-        ExitOnFailure1(hr, "Failed to insert variable '%ls'.", wzVariable);
-    }
-    else if (pVariables->rgVariables[iVariable].fBuiltIn)
-    {
-        hr = E_INVALIDARG;
-        ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
-    }
-
-    // log variable value
-    if (pVariables->rgVariables[iVariable].fHidden)
-    {
-        LogStringLine(REPORT_STANDARD, "Setting hidden variable '%ls'", wzVariable);
-    }
-    else
-    {
-        switch (pVariant->Type)
-        {
-        case BURN_VARIANT_TYPE_NONE:
-            break;
-
-        case BURN_VARIANT_TYPE_NUMERIC:
-            LogStringLine(REPORT_STANDARD, "Setting numeric variable '%ls' to value %lld", wzVariable, pVariant->llValue);
-            break;
-
-        case BURN_VARIANT_TYPE_STRING:
-            LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, pVariant->sczValue);
-            break;
-
-        case BURN_VARIANT_TYPE_VERSION:
-            LogStringLine(REPORT_STANDARD, "Setting version variable '%ls' to value '%hu.%hu.%hu.%hu'", wzVariable, (WORD)(pVariant->qwValue >> 48), (WORD)(pVariant->qwValue >> 32), (WORD)(pVariant->qwValue >> 16), (WORD)(pVariant->qwValue));
-            break;
-        }
-    }
-
-    // update variable value
-    hr = BVariantCopy(pVariant, &pVariables->rgVariables[iVariable].Value);
-    ExitOnFailure1(hr, "Failed to set value of variable: %ls", wzVariable);
-
-LExit:
-    ::LeaveCriticalSection(&pVariables->csAccess);
-
-    if (FAILED(hr))
-    {
-        LogStringLine(REPORT_STANDARD, "Setting variable failed: ID '%ls', HRESULT 0x%x", wzVariable, hr);
-    }
-
-    return hr;
+    return SetVariableValue(pVariables, wzVariable, pVariant, fOverwriteBuiltIn, TRUE);
 }
 
 extern "C" HRESULT VariableFormatString(
@@ -984,7 +954,7 @@ extern "C" HRESULT VariableDeserialize(
         }
 
         // set variable
-        hr = VariableSetVariant(pVariables, sczName, &value);
+        hr = SetVariableValue(pVariables, sczName, &value, FALSE, FALSE);
         ExitOnFailure(hr, "Failed to set variable.");
 
         // clean up
@@ -1000,7 +970,10 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT AddBuiltInVariable(
+
+// internal function definitions
+
+static HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
     __in PFN_INITIALIZEVARIABLE pfnInitialize,
@@ -1030,25 +1003,6 @@ extern "C" HRESULT AddBuiltInVariable(
 LExit:
     return hr;
 }
-
-extern "C" HRESULT InitializeVariableString(
-    __in DWORD_PTR dwpData,
-    __inout BURN_VARIANT* pValue
-    )
-{
-    HRESULT hr = S_OK;
-    LPCWSTR wzValue = (LPCWSTR)dwpData;
-
-    // set value
-    hr = BVariantSetString(pValue, wzValue, 0);
-    ExitOnFailure(hr, "Failed to set variant value.");
-
-LExit:
-    return hr;
-}
-
-
-// internal function definitions
 
 static HRESULT GetVariable(
     __in BURN_VARIABLES* pVariables,
@@ -1183,6 +1137,88 @@ LExit:
     return hr;
 }
 
+static HRESULT SetVariableValue(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzVariable,
+    __in BURN_VARIANT* pVariant,
+    __in BOOL fOverwriteBuiltIn,
+    __in BOOL fLog
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD iVariable = 0;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
+
+    hr = FindVariableIndexByName(pVariables, wzVariable, &iVariable);
+    ExitOnFailure1(hr, "Failed to find variable value '%ls'.", wzVariable);
+
+    // insert element if not found
+    if (S_FALSE == hr)
+    {
+        hr = InsertVariable(pVariables, wzVariable, iVariable);
+        ExitOnFailure1(hr, "Failed to insert variable '%ls'.", wzVariable);
+    }
+    else if (!fOverwriteBuiltIn && pVariables->rgVariables[iVariable].fBuiltIn)
+    {
+        hr = E_INVALIDARG;
+        ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
+    }
+    else if (fOverwriteBuiltIn && !pVariables->rgVariables[iVariable].fBuiltIn)
+    {
+        // invalid intent for the opposite condition; not possible from external callers so just assert
+        AssertSz(FALSE, "Intent to overwrite non-built-in variable.");
+    }
+
+
+    // log value when not overwriting a built-in variable
+    if (fLog && !fOverwriteBuiltIn)
+    {
+        if (pVariables->rgVariables[iVariable].fHidden)
+        {
+            LogStringLine(REPORT_STANDARD, "Setting hidden variable '%ls'", wzVariable);
+        }
+        else
+        {
+            switch (pVariant->Type)
+            {
+            case BURN_VARIANT_TYPE_NONE:
+                break;
+
+            case BURN_VARIANT_TYPE_NUMERIC:
+                LogStringLine(REPORT_STANDARD, "Setting numeric variable '%ls' to value %lld", wzVariable, pVariant->llValue);
+                break;
+
+            case BURN_VARIANT_TYPE_STRING:
+                LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, pVariant->sczValue);
+                break;
+
+            case BURN_VARIANT_TYPE_VERSION:
+                LogStringLine(REPORT_STANDARD, "Setting version variable '%ls' to value '%hu.%hu.%hu.%hu'", wzVariable, (WORD)(pVariant->qwValue >> 48), (WORD)(pVariant->qwValue >> 32), (WORD)(pVariant->qwValue >> 16), (WORD)(pVariant->qwValue));
+                break;
+
+            default:
+                AssertSz(FALSE, "Unknown variant type.");
+                break;
+            }
+        }
+    }
+
+    // update variable value
+    hr = BVariantCopy(pVariant, &pVariables->rgVariables[iVariable].Value);
+    ExitOnFailure1(hr, "Failed to set value of variable: %ls", wzVariable);
+
+LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
+    if (FAILED(hr) && fLog)
+    {
+        LogStringLine(REPORT_STANDARD, "Setting variable failed: ID '%ls', HRESULT 0x%x", wzVariable, hr);
+    }
+
+    return hr;
+}
+
 static HRESULT InitializeVariableOsInfo(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
@@ -1280,6 +1316,9 @@ static HRESULT InitializeVariableOsInfo(
     case OS_INFO_VARIABLE_TerminalServer:
         value.llValue = (VER_SUITE_TERMINAL == (ovix.wSuiteMask & VER_SUITE_TERMINAL)) && (VER_SUITE_SINGLEUSERTS != (ovix.wSuiteMask & VER_SUITE_SINGLEUSERTS)) ? 1 : 0;
         value.Type = BURN_VARIANT_TYPE_NUMERIC;
+        break;
+    default:
+        AssertSz(FALSE, "Unknown OS info type.");
         break;
     }
 
@@ -1524,4 +1563,36 @@ static HRESULT InitializeUserLanguageID(
 
 LExit:
     return hr; 
+}
+
+static HRESULT InitializeVariableString(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    LPCWSTR wzValue = (LPCWSTR)dwpData;
+
+    // set value
+    hr = BVariantSetString(pValue, wzValue, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT InitializeVariableNumeric(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    LONGLONG llValue = (LONGLONG)dwpData;
+
+    // set value
+    hr = BVariantSetNumeric(pValue, llValue);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr;
 }

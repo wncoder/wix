@@ -537,7 +537,7 @@ static HRESULT DirectorySearchExists(
     }
 
     // set variable
-    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists);
+    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
@@ -584,7 +584,7 @@ static HRESULT FileSearchExists(
     }
 
     // set variable
-    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists);
+    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
@@ -621,7 +621,7 @@ static HRESULT FileSearchVersion(
     ExitOnFailure(hr, "Failed get file version.");
 
     // set variable
-    hr = VariableSetVersion(pVariables, pSearch->sczVariable, uliVersion.QuadPart);
+    hr = VariableSetVersion(pVariables, pSearch->sczVariable, uliVersion.QuadPart, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
@@ -697,7 +697,7 @@ static HRESULT RegistrySearchExists(
     }
 
     // set variable
-    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists);
+    hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
@@ -751,7 +751,7 @@ static HRESULT RegistrySearchValue(
     if (E_FILENOTFOUND == hr)
     {
         LogStringLine(REPORT_STANDARD, "Registry key not found. Key = '%ls'", sczKey);
-        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value, FALSE);
         ExitOnFailure(hr, "Failed to clear variable.");
         ExitFunction1(hr = S_OK);
     }
@@ -762,7 +762,7 @@ static HRESULT RegistrySearchValue(
     if (ERROR_FILE_NOT_FOUND == er)
     {
         LogStringLine(REPORT_STANDARD, "Registry value not found. Key = '%ls', Value = '%ls'", sczKey, sczValue);
-        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+        hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value, FALSE);
         ExitOnFailure(hr, "Failed to clear variable.");
         ExitFunction1(hr = S_OK);
     }
@@ -824,7 +824,7 @@ static HRESULT RegistrySearchValue(
     ExitOnFailure(hr, "Failed to change value type.");
 
     // set variable
-    hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+    hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
@@ -893,11 +893,11 @@ static HRESULT MsiComponentSearch(
     case BURN_MSI_COMPONENT_SEARCH_TYPE_KEYPATH:
         if (INSTALLSTATE_ABSENT == is || INSTALLSTATE_LOCAL == is || INSTALLSTATE_SOURCE == is)
         {
-            hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath);
+            hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath, FALSE);
         }
         break;
     case BURN_MSI_COMPONENT_SEARCH_TYPE_STATE:
-        hr = VariableSetNumeric(pVariables, pSearch->sczVariable, is);
+        hr = VariableSetNumeric(pVariables, pSearch->sczVariable, is, FALSE);
         break;
     case BURN_MSI_COMPONENT_SEARCH_TYPE_DIRECTORY:
         if (INSTALLSTATE_ABSENT == is || INSTALLSTATE_LOCAL == is || INSTALLSTATE_SOURCE == is)
@@ -909,7 +909,7 @@ static HRESULT MsiComponentSearch(
                 wz[1] = L'\0';
             }
 
-            hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath);
+            hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath, FALSE);
         }
         break;
     }
@@ -1004,7 +1004,7 @@ static HRESULT MsiProductSearch(
     ExitOnFailure(hr, "Failed to change value type.");
 
     // set variable
-    hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value);
+    hr = VariableSetVariant(pVariables, pSearch->sczVariable, &value, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:

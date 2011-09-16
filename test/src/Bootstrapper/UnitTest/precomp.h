@@ -51,6 +51,7 @@
 #include "variable.h"
 #include "condition.h"
 #include "search.h"
+#include "section.h"
 #include "container.h"
 #include "catalog.h"
 #include "payload.h"

@@ -106,7 +106,7 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
     ExitOnFailure(hr, "Failed to parse registration.");
 
     // parse containers
-    hr = ContainersParseFromXml(&pEngineState->containers, pixeBundle);
+    hr = ContainersParseFromXml(&pEngineState->section, &pEngineState->containers, pixeBundle);
     ExitOnFailure(hr, "Failed to parse containers.");
 
     // parse payloads

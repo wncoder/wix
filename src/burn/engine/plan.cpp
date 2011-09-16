@@ -53,7 +53,10 @@ static HRESULT CreateOrFindContainerExtractAction(
     __in BURN_CONTAINER* pContainer,
     __out BURN_CACHE_ACTION** ppContainerExtractAction
     );
-
+static BOOL ProcessSharedPayload(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PAYLOAD* pPayload
+    );
 
 // function definitions
 
@@ -261,6 +264,9 @@ extern "C" HRESULT PlanLayoutPackage(
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_STOP;
     pCacheAction->packageStop.pPackage = pPackage;
 
+    // Update the start action with the location of the complete action.
+    pPlan->rgCacheActions[iPackageStartAction].packageStart.iPackageCompleteAction = pPlan->cCacheActions - 1;
+
     ++pPlan->cOverallProgressTicksTotal;
 
 LExit:
@@ -351,6 +357,9 @@ extern "C" HRESULT PlanCachePackage(
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_PACKAGE_STOP;
     pCacheAction->packageStop.pPackage = pPackage;
+
+    // Update the start action with the location of the complete action.
+    pPlan->rgCacheActions[iPackageStartAction].packageStart.iPackageCompleteAction = pPlan->cCacheActions - 1;
 
     // Create syncpoint action.
     hr = AppendCacheAction(pPlan, &pCacheAction);
@@ -767,16 +776,20 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
     }
     else // add a payload acquire action to the plan.
     {
-        hr = AppendCacheAction(pPlan, &pCacheAction);
-        ExitOnFailure(hr, "Failed to append cache action to acquire payload.");
+        // If a payload is shared and processed/acquired/downloaded before, skip the acquire operation
+        if (!ProcessSharedPayload(pPlan, pPayload))
+        {
+            hr = AppendCacheAction(pPlan, &pCacheAction);
+            ExitOnFailure(hr, "Failed to append cache action to acquire payload.");
 
-        pCacheAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD;
-        pCacheAction->resolvePayload.pPackage = pPackage;
-        pCacheAction->resolvePayload.pPayload = pPayload;
-        hr = StrAllocString(&pCacheAction->resolvePayload.sczUnverifiedPath, sczPayloadUnverifiedPath, 0);
-        ExitOnFailure(hr, "Failed to copy unverified path for payload to acquire.");
+            pCacheAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD;
+            pCacheAction->resolvePayload.pPackage = pPackage;
+            pCacheAction->resolvePayload.pPayload = pPayload;
+            hr = StrAllocString(&pCacheAction->resolvePayload.sczUnverifiedPath, sczPayloadUnverifiedPath, 0);
+            ExitOnFailure(hr, "Failed to copy unverified path for payload to acquire.");
 
-        pCacheAction = NULL;
+            pCacheAction = NULL;
+        }
     }
 
     hr = AppendCacheAction(pPlan, &pCacheAction);
@@ -903,4 +916,57 @@ static HRESULT CreateOrFindContainerExtractAction(
 LExit:
     ReleaseStr(sczUnverifiedPath);
     return hr;
+}
+
+static BOOL ProcessSharedPayload(
+    __in BURN_PLAN* pPlan,
+    __in BURN_PAYLOAD* pPayload
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD cMove = 0;
+    DWORD cAcquirePayload = 0;
+
+    for (DWORD i = 0; i < pPlan->cCacheActions; ++i)
+    {
+        BURN_CACHE_ACTION* pCacheAction = pPlan->rgCacheActions + i;
+
+        if (BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD == pCacheAction->type &&
+            pCacheAction->resolvePayload.pPayload == pPayload)
+        {
+            cAcquirePayload++;
+        }
+        else if (BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD == pCacheAction->type &&
+                 pCacheAction->cachePayload.pPayload == pPayload &&
+                 pCacheAction->cachePayload.fMove)
+        {
+            // Since we found a shared payload, change its operation from MOVE to COPY if necessary
+            pCacheAction->cachePayload.fMove = FALSE;
+
+            // In theory, we can early exit the for loop at this point. We decide to walk through the whole
+            // list to make sure there is no broken data here.
+            cMove++;
+        }
+        else if (BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD == pCacheAction->type &&
+                 pCacheAction->layoutPayload.pPayload == pPayload &&
+                 pCacheAction->layoutPayload.fMove)
+        {
+            // Since we found a shared payload, change its operation from MOVE to COPY if necessary
+            pCacheAction->layoutPayload.fMove = FALSE;
+
+            // In theory, we can early exit the for loop at this point. We decide to walk through the whole
+            // list to make sure there is no broken data here.
+            cMove++;
+        }
+    }
+
+#ifdef DEBUG
+    if (cAcquirePayload > 0)
+    {
+        AssertSz(cAcquirePayload < 2, "Shared payload should not be acquired more than once.");
+        AssertSz(cMove == 1, "Shared payload should be moved once and only once.");
+    }
+#endif
+
+    return (cAcquirePayload > 0);
 }

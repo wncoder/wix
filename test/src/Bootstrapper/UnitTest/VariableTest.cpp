@@ -434,7 +434,7 @@ namespace Bootstrapper
                 }
 
                 // attempt to set a built-in property
-                hr = VariableSetString(&variables, L"VersionNT", L"VAL");
+                hr = VariableSetString(&variables, L"VersionNT", L"VAL", FALSE);
                 Assert::AreEqual(E_INVALIDARG, hr);
                 Assert::IsFalse(EvaluateConditionHelper(&variables, L"VersionNT = \"VAL\""));
 
