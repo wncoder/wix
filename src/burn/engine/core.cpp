@@ -121,12 +121,12 @@ extern "C" HRESULT CoreInitialize(
     // the payloads from the BA container.
     if (pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED || pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY)
     {
-        // Extract all UX payloads to temp directory.
-        hr = PathCreateTempDirectory(NULL, L"UX%d", 999999, &pEngineState->userExperience.sczTempDirectory);
-        ExitOnFailure(hr, "Failed to get unique temporary folder for UX.");
+        // Extract all UX payloads to working folder.
+        hr = UserExperienceEnsureWorkingFolder(pEngineState->registration.sczId, &pEngineState->userExperience.sczTempDirectory);
+        ExitOnFailure(hr, "Failed to get unique temporary folder for bootstrapper application.");
 
         hr = PayloadExtractFromContainer(&pEngineState->userExperience.payloads, NULL, &containerContext, pEngineState->userExperience.sczTempDirectory);
-        ExitOnFailure(hr, "Failed to extract UX payloads.");
+        ExitOnFailure(hr, "Failed to extract bootstrapper application payloads.");
 
         // Load the catalog files as soon as they are extracted
         hr = CatalogLoadFromPayload(&pEngineState->catalogs, &pEngineState->userExperience.payloads);
@@ -170,7 +170,9 @@ extern "C" HRESULT CoreQueryRegistration(
     hr = RegistrationDetectResumeType(&pEngineState->registration, &pEngineState->command.resumeType);
     ExitOnFailure(hr, "Failed to detect resume type.");
 
-    if (BOOTSTRAPPER_RESUME_TYPE_NONE != pEngineState->command.resumeType && BOOTSTRAPPER_RESUME_TYPE_INVALID != pEngineState->command.resumeType)
+    // If we have a resume mode that suggests the bundle might already be present, try to load any
+    // previously stored state.
+    if (BOOTSTRAPPER_RESUME_TYPE_INVALID < pEngineState->command.resumeType)
     {
         // load resume state
         hr = RegistrationLoadState(&pEngineState->registration, &pbBuffer, &cbBuffer);
@@ -311,7 +313,6 @@ extern "C" HRESULT CorePlan(
     LPWSTR sczLayoutDirectory = NULL;
     BURN_PACKAGE* pPackage = NULL;
     DWORD dwExecuteActionEarlyIndex = 0;
-    DWORD dwPackageSequence = 0;
     HANDLE hSyncpointEvent = NULL;
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
     BOOTSTRAPPER_ACTION_STATE executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -337,34 +338,13 @@ extern "C" HRESULT CorePlan(
     // Remember the overall action state in the plan since it shapes the changes
     // we make everywhere.
     pEngineState->plan.action = action;
+    pEngineState->plan.wzBundleId = pEngineState->registration.sczId;
 
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
-        hr = VariableGetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, &sczLayoutDirectory);
-        if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
-        {
-            hr = DirGetCurrent(&sczLayoutDirectory);
-            ExitOnFailure(hr, "Failed to get current directory as layout directory.");
-        }
-        ExitOnFailure(hr, "Failed to get bundle layout directory property.");
-
-        hr = PathBackslashTerminate(&sczLayoutDirectory);
-        ExitOnFailure(hr, "Failed to ensure layout directory is backslash terminated.");
-
         // Plan the bundle's layout.
-        hr = PlanLayoutBundle(&pEngineState->plan, sczLayoutDirectory);
+        hr = PlanLayoutBundle(&pEngineState->plan, &pEngineState->variables, &pEngineState->payloads, &sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to plan the layout of the bundle.");
-
-        // Plan the layout of layout-only payloads.
-        for (DWORD i = 0; i < pEngineState->payloads.cPayloads; ++i)
-        {
-            BURN_PAYLOAD* pPayload = pEngineState->payloads.rgPayloads + i;
-            if (pPayload->fLayoutOnly)
-            {
-                hr = PlanLayoutOnlyPayload(&pEngineState->plan, pPayload, sczLayoutDirectory);
-                ExitOnFailure(hr, "Failed to plan layout payload.");
-            }
-        }
     }
     else if (pEngineState->registration.fPerMachine) // the registration of this bundle is per-machine then the plan needs to be per-machine as well.
     {
@@ -425,72 +405,8 @@ extern "C" HRESULT CorePlan(
             }
             else
             {
-                // If the package is not supposed to be absent then ensure it is cached. Even packages that are
-                // marked Cache='no' need to be cached so we can check the hash and ensure the correct package is
-                // installed. We'll clean up non-cached packages after installing them.
-                if (BOOTSTRAPPER_REQUEST_STATE_ABSENT < pPackage->requested && !pPackage->fCached)
-                {
-                    // If this is an MSI package with slipstream MSPs, ensure the MSPs are cached first.
-                    if (BURN_PACKAGE_TYPE_MSI == pPackage->type && 0 < pPackage->Msi.cSlipstreamMspPackages)
-                    {
-                        hr = PlanCacheSlipstreamMsps(&pEngineState->plan, pPackage);
-                        ExitOnFailure(hr, "Failed to plan slipstream patches for package.");
-                    }
-
-                    hr = PlanCachePackage(&pEngineState->plan, pPackage, &hSyncpointEvent);
-                    ExitOnFailure(hr, "Failed to plan cache package.");
-
-                    fPlannedCachePackage = TRUE;
-                }
-
-                // plan execute actions
-                switch (pPackage->type)
-                {
-                case BURN_PACKAGE_TYPE_EXE:
-                    hr = ExeEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &pEngineState->registration, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
-                    break;
-
-                case BURN_PACKAGE_TYPE_MSI:
-                    hr = MsiEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
-                    break;
-
-                case BURN_PACKAGE_TYPE_MSP:
-                    hr = MspEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &pEngineState->userExperience, &executeAction, &rollbackAction);
-                    break;
-
-                case BURN_PACKAGE_TYPE_MSU:
-                    hr = MsuEnginePlanPackage(dwPackageSequence, NULL, pPackage, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, hSyncpointEvent, fPlannedCachePackage, &executeAction, &rollbackAction);
-                    break;
-
-                default:
-                    hr = E_UNEXPECTED;
-                    ExitOnFailure(hr, "Invalid package type.");
-                }
-                ExitOnFailure1(hr, "Failed to plan execute actions for package: %ls", pPackage->sczId);
-
-                // If we are going to take any action on this package, add progress for it.
-                if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction)
-                {
-                    ++pEngineState->plan.cExecutePackagesTotal;
-                    ++pEngineState->plan.cOverallProgressTicksTotal;
-                    ++dwPackageSequence;
-
-                    // If package is per-machine and is being executed, flag the plan to be per-machine as well.
-                    if (pPackage->fPerMachine)
-                    {
-                        pEngineState->plan.fPerMachine = TRUE;
-                    }
-                }
-
-                // If the package is scheduled to be cached or is already cached but we are removing it or the package 
-                // is not supposed to stay cached then ensure the package is cleaned up.
-                if ((fPlannedCachePackage || pPackage->fCached) && (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested || !pPackage->fCache))
-                {
-                    hr = PlanCleanPackage(&pEngineState->plan, pPackage);
-                    ExitOnFailure(hr, "Failed to plan clean package.");
-
-                    fPlannedCleanPackage = TRUE;
-                }
+                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, &executeAction, &rollbackAction, &fPlannedCachePackage, &fPlannedCleanPackage);
+                ExitOnFailure(hr, "Failed to plan execute package.");
             }
         }
 
@@ -521,71 +437,11 @@ extern "C" HRESULT CorePlan(
         hRollbackBoundaryCompleteEvent = NULL;
     }
 
-    // Plan the removal of related bundles last as long as we are not doing layout only.
+    // Plan the update of related bundles last as long as we are not doing layout only.
     if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
-        for (DWORD i = 0; i < pEngineState->registration.relatedBundles.cRelatedBundles; ++i)
-        {
-            DWORD *pdwInsertIndex = NULL;
-            BURN_RELATED_BUNDLE* pRelatedBundle = pEngineState->registration.relatedBundles.rgRelatedBundles + i;
-            BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
-
-            switch (pRelatedBundle->relationType)
-            {
-            case BOOTSTRAPPER_RELATION_UPGRADE:
-                requested = pEngineState->registration.qwVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
-                break;
-            case BOOTSTRAPPER_RELATION_PATCH: __fallthrough;
-            case BOOTSTRAPPER_RELATION_ADDON:
-                if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
-                {
-                    requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
-                    // Uninstall addons early in the chain, before other packages are installed
-                    pdwInsertIndex = &dwExecuteActionEarlyIndex;
-                }
-                else if (BOOTSTRAPPER_ACTION_REPAIR == action)
-                {
-                    requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
-                }
-                break;
-            case BOOTSTRAPPER_RELATION_DETECT:
-                break;
-            default:
-                hr = E_UNEXPECTED;
-                ExitOnFailure1(hr, "Unexpected relation type encountered during plan: %d", pRelatedBundle->relationType);
-                break;
-            }
-
-            defaultRequested = requested;
-
-            nResult = pEngineState->userExperience.pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
-            hr = HRESULT_FROM_VIEW(nResult);
-            ExitOnRootFailure(hr, "UX aborted plan related bundle.");
-
-            // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
-            if (requested != defaultRequested)
-            {
-                LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
-            }
-
-            if (BOOTSTRAPPER_REQUEST_STATE_NONE != requested)
-            {
-                pRelatedBundle->package.requested = requested;
-
-                hr = ExeEnginePlanPackage(dwPackageSequence, pdwInsertIndex, &pRelatedBundle->package, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &pEngineState->registration, hSyncpointEvent, FALSE, &executeAction, &rollbackAction);
-                ExitOnFailure1(hr, "Failed to plan uninstall action to upgrade package: %ls", pPackage->sczId);
-
-                ++pEngineState->plan.cExecutePackagesTotal;
-                ++pEngineState->plan.cOverallProgressTicksTotal;
-                ++dwPackageSequence;
-
-                // If package is per-machine and is being executed, flag the plan to be per-machine as well.
-                if (pPackage->fPerMachine)
-                {
-                    pEngineState->plan.fPerMachine = TRUE;
-                }
-            }
-        }
+        hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, dwExecuteActionEarlyIndex);
+        ExitOnFailure(hr, "Failed to plan related bundles.");
     }
 
 LExit:
@@ -609,8 +465,8 @@ extern "C" HRESULT CoreElevate(
 {
     HRESULT hr = S_OK;
 
-    // If the elevated companion process isn't created yet, let's make that happen.
-    if (!pEngineState->companionConnection.hProcess)
+    // If the elevated companion pipe isn't created yet, let's make that happen.
+    if (INVALID_HANDLE_VALUE == pEngineState->companionConnection.hPipe)
     {
         hr = ElevationElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to actually elevate.");
@@ -685,7 +541,7 @@ extern "C" HRESULT CoreApply(
     // Execute only if we are not doing a layout.
     if (!fLayoutOnly)
     {
-        hr = ApplyExecute(pEngineState, hCacheThread, &cOverallProgressTicks, &fRollback, &fSuspend, &restart);
+        hr = ApplyExecute(pEngineState, hwndParent, hCacheThread, &cOverallProgressTicks, &fRollback, &fSuspend, &restart);
         ExitOnFailure(hr, "Failed to execute apply.");
     }
 
@@ -738,8 +594,12 @@ extern "C" HRESULT CoreQuit(
     if (BURN_RESUME_MODE_NONE != pEngineState->resumeMode)
     {
         hr = CoreSaveEngineState(pEngineState);
-        ExitOnFailure(hr, "Failed to save engine state.");
-    }
+        if (FAILED(hr))
+        {
+            LogErrorId(hr, MSG_STATE_NOT_SAVED, NULL, NULL, NULL);
+            hr = S_OK;
+        }
+   }
 
 LExit:
     LogId(REPORT_STANDARD, MSG_QUIT, nExitCode);

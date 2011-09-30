@@ -84,6 +84,7 @@
       <include name="perfutil.cpp" />
       <include name="procutil.cpp" />
       <include name="proc2utl.cpp" />
+      <include name="proc3utl.cpp" />
       <include name="regutil.cpp" />
       <include name="resrutil.cpp" />
       <include name="reswutil.cpp" />

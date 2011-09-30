@@ -76,6 +76,80 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT DAPI ProcWow64(
+    __in HANDLE hProcess,
+    __out BOOL* pfWow64
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fIsWow64 = FALSE;
+
+    typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
+    LPFN_ISWOW64PROCESS pfnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(::GetModuleHandleW(L"kernel32"), "IsWow64Process");
+
+    if (pfnIsWow64Process)
+    {
+        if (!pfnIsWow64Process(hProcess, &fIsWow64))
+        {
+            ExitWithLastError(hr, "Failed to check WOW64 process.");
+        }
+    }
+
+    *pfWow64 = fIsWow64;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT DAPI ProcDisableWowFileSystemRedirection(
+    __in PROC_FILESYSTEMREDIRECTION* pfsr
+    )
+{
+    AssertSz(!pfsr->fDisabled, "File system redirection was already disabled.");
+    HRESULT hr = S_OK;
+
+    typedef BOOL (WINAPI *LPFN_Wow64DisableWow64FsRedirection)(PVOID *);
+    LPFN_Wow64DisableWow64FsRedirection pfnWow64DisableWow64FsRedirection = (LPFN_Wow64DisableWow64FsRedirection)::GetProcAddress(::GetModuleHandleW(L"kernel32"), "Wow64DisableWow64FsRedirection");
+
+    if (!pfnWow64DisableWow64FsRedirection)
+    {
+        ExitFunction1(hr = E_NOTIMPL);
+    }
+
+    if (!pfnWow64DisableWow64FsRedirection(&pfsr->pvRevertState))
+    {
+        ExitWithLastError(hr, "Failed to disable file system redirection.");
+    }
+
+    pfsr->fDisabled = TRUE;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT DAPI ProcRevertWowFileSystemRedirection(
+    __in PROC_FILESYSTEMREDIRECTION* pfsr
+    )
+{
+    HRESULT hr = S_OK;
+
+    if (pfsr->fDisabled)
+    {
+        typedef BOOL (WINAPI *LPFN_Wow64RevertWow64FsRedirection)(PVOID);
+        LPFN_Wow64RevertWow64FsRedirection pfnWow64RevertWow64FsRedirection = (LPFN_Wow64RevertWow64FsRedirection)::GetProcAddress(::GetModuleHandleW(L"kernel32"), "Wow64RevertWow64FsRedirection");
+
+        if (!pfnWow64RevertWow64FsRedirection(pfsr->pvRevertState))
+        {
+            ExitWithLastError(hr, "Failed to revert file system redirection.");
+        }
+
+        pfsr->fDisabled = FALSE;
+        pfsr->pvRevertState = NULL;
+    }
+
+LExit:
+    return hr;
+}
 
 /********************************************************************
  ProcExecute() - executes a command-line.

@@ -19,6 +19,7 @@
   <ItemGroup>
     <Compile Include="Bundle.wxs" />
     <Compile Include="Netfx.wxs" />
+    <Compile Include="ProjectAggregator.wxs" />
     <None Include="License.rtf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

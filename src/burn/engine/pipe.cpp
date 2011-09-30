@@ -19,9 +19,9 @@
 #include "precomp.h"
 
 static const DWORD PIPE_64KB = 64 * 1024;
-static const DWORD PIPE_WAIT_FOR_CONNECTION = 5 * 60 * 1000;
+static const DWORD PIPE_WAIT_FOR_CONNECTION = 5 * 1000;
+static const DWORD PIPE_RETRY_FOR_CONNECTION = 60;
 
-static const LPCWSTR EVENT_NAME_FORMAT_STRING = L"Local\\%ls";
 static const LPCWSTR PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls";
 static const LPCWSTR CACHE_PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls.Cache";
 
@@ -79,7 +79,10 @@ void PipeConnectionUninitialize(
     ReleaseHandle(pConnection->hProcess);
     ReleaseStr(pConnection->sczSecret);
     ReleaseStr(pConnection->sczName);
+
     memset(pConnection, 0, sizeof(BURN_PIPE_CONNECTION));
+    pConnection->hPipe = INVALID_HANDLE_VALUE;
+    pConnection->hCachePipe = INVALID_HANDLE_VALUE;
 }
 
 /*******************************************************************
@@ -271,9 +274,7 @@ extern "C" HRESULT PipeCreatePipes(
     HRESULT hr = S_OK;
     PSECURITY_DESCRIPTOR psd = NULL;
     SECURITY_ATTRIBUTES sa = { };
-    LPWSTR sczEventName = NULL;
     LPWSTR sczFullPipeName = NULL;
-    HANDLE hEvent = NULL;
     HANDLE hPipe = INVALID_HANDLE_VALUE;
     HANDLE hCachePipe = INVALID_HANDLE_VALUE;
 
@@ -293,13 +294,6 @@ extern "C" HRESULT PipeCreatePipes(
         sa.lpSecurityDescriptor = psd;
         sa.bInheritHandle = FALSE;
     }
-
-    // Create the event that will be signaled when the pipes are ready to go.
-    hr = StrAllocFormatted(&sczEventName, EVENT_NAME_FORMAT_STRING, pConnection->sczName);
-    ExitOnFailure(hr, "Failed to allocate name of connection event.");
-
-    hEvent = ::CreateEventW(NULL, TRUE, FALSE, sczEventName);
-    ExitOnNullWithLastError1(hEvent, hr, "Failed to create connection event: %ls", sczEventName);
 
     // Create the pipe.
     hr = StrAllocFormatted(&sczFullPipeName, PIPE_NAME_FORMAT_STRING, pConnection->sczName);
@@ -331,18 +325,13 @@ extern "C" HRESULT PipeCreatePipes(
     pConnection->hPipe = hPipe;
     hPipe = INVALID_HANDLE_VALUE;
 
-    // Pipes created, rock and roll.
-    ::SetEvent(hEvent);
-
-    *phEvent = hEvent;
-    hEvent = NULL;
+    // TODO: remove the following
+    *phEvent = NULL;
 
 LExit:
     ReleaseFileHandle(hCachePipe);
     ReleaseFileHandle(hPipe);
-    ReleaseHandle(hEvent);
     ReleaseStr(sczFullPipeName);
-    ReleaseStr(sczEventName);
 
     if (psd)
     {
@@ -369,6 +358,7 @@ HRESULT PipeLaunchParentProcess(
     DWORD dwProcessId = 0;
     LPWSTR sczBurnPath = NULL;
     LPWSTR sczParameters = NULL;
+    HANDLE hProcess = NULL;
 
     dwProcessId = ::GetCurrentProcessId();
 
@@ -379,14 +369,19 @@ HRESULT PipeLaunchParentProcess(
     ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
 
     // Try to launch unelevated and if that fails for any reason, try launch our process normally (even though that may make it elevated).
-    hr = ShelExecUnelevated(sczBurnPath, sczParameters, L"open", NULL, nCmdShow);
+    hr = ProcExecuteAsInteractiveUser(sczBurnPath, sczParameters, &hProcess);
     if (FAILED(hr))
     {
-        hr = ShelExec(sczBurnPath, sczParameters, L"open", NULL, nCmdShow, NULL, NULL);
-        ExitOnFailure1(hr, "Failed to launch parent process: %ls", sczBurnPath);
+        hr = ShelExecUnelevated(sczBurnPath, sczParameters, L"open", NULL, nCmdShow);
+        if (FAILED(hr))
+        {
+            hr = ShelExec(sczBurnPath, sczParameters, L"open", NULL, nCmdShow, NULL, NULL);
+            ExitOnFailure1(hr, "Failed to launch parent process: %ls", sczBurnPath);
+        }
     }
 
 LExit:
+    ReleaseHandle(hProcess);
     ReleaseStr(sczParameters);
     ReleaseStr(sczBurnPath);
 
@@ -454,7 +449,7 @@ extern "C" HRESULT PipeWaitForChildConnect(
     {
         HANDLE hPipe = hPipes[i];
 
-        // TODO: use a handle to the child process to determine if the child process dies before/while waiting for pipe communcation.
+        // TODO: use overlapped I/O to allow the connection to timeout instead of waiting forever for a client that may never show.
         if (!::ConnectNamedPipe(hPipe, NULL))
         {
             DWORD er = ::GetLastError();
@@ -495,12 +490,6 @@ extern "C" HRESULT PipeWaitForChildConnect(
         //}
     }
 
-    if (!pConnection->hProcess)
-    {
-        pConnection->hProcess = ::OpenProcess(SYNCHRONIZE, FALSE, pConnection->dwProcessId);
-        ExitOnNullWithLastError1(pConnection->hProcess, hr, "Failed to open process with PID: %u", pConnection->dwProcessId);
-    }
-
 LExit:
     return hr;
 }
@@ -516,7 +505,7 @@ extern "C" HRESULT PipeTerminateChildProcess(
 {
     HRESULT hr = S_OK;
 
-    if (pConnection->hCachePipe != INVALID_HANDLE_VALUE)
+    if (INVALID_HANDLE_VALUE != pConnection->hCachePipe)
     {
         hr = WritePipeMessage(pConnection->hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
         ExitOnFailure(hr, "Failed to post terminate message to child process cache thread.");
@@ -525,30 +514,34 @@ extern "C" HRESULT PipeTerminateChildProcess(
     hr = WritePipeMessage(pConnection->hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
     ExitOnFailure(hr, "Failed to post terminate message to child process.");
 
-    if (WAIT_FAILED == ::WaitForSingleObject(pConnection->hProcess, INFINITE))
+    // If we were able to get a handle to the other process, wait for it to exit.
+    if (pConnection->hProcess)
     {
-        ExitWithLastError(hr, "Failed to wait for child process exit.");
-    }
+        if (WAIT_FAILED == ::WaitForSingleObject(pConnection->hProcess, PIPE_WAIT_FOR_CONNECTION * PIPE_RETRY_FOR_CONNECTION))
+        {
+            ExitWithLastError(hr, "Failed to wait for child process exit.");
+        }
 
 #ifdef DEBUG
-    DWORD dwChildExitCode = 0;
-    DWORD dwErrorCode = ERROR_SUCCESS;
-    BOOL fReturnedExitCode = ::GetExitCodeProcess(pConnection->hProcess, &dwChildExitCode);
-    if (!fReturnedExitCode)
-    {
-        dwErrorCode = ::GetLastError(); // if the other process is elevated and we are not, then we'll get ERROR_ACCESS_DENIED.
-
-        // The unit test use a thread instead of a process so try to get the exit code from
-        // the thread because we failed to get it from the process.
-        if (ERROR_INVALID_HANDLE == dwErrorCode)
+        DWORD dwChildExitCode = 0;
+        DWORD dwErrorCode = ERROR_SUCCESS;
+        BOOL fReturnedExitCode = ::GetExitCodeProcess(pConnection->hProcess, &dwChildExitCode);
+        if (!fReturnedExitCode)
         {
-            fReturnedExitCode = ::GetExitCodeThread(pConnection->hProcess, &dwChildExitCode);
+            dwErrorCode = ::GetLastError(); // if the other process is elevated and we are not, then we'll get ERROR_ACCESS_DENIED.
+
+            // The unit test use a thread instead of a process so try to get the exit code from
+            // the thread because we failed to get it from the process.
+            if (ERROR_INVALID_HANDLE == dwErrorCode)
+            {
+                fReturnedExitCode = ::GetExitCodeThread(pConnection->hProcess, &dwChildExitCode);
+            }
         }
-    }
-    AssertSz((fReturnedExitCode && dwChildExitCode == dwParentExitCode) ||
-             (!fReturnedExitCode && ERROR_ACCESS_DENIED == dwErrorCode),
-             "Child elevated process did not return matching exit code to parent process.");
+        AssertSz((fReturnedExitCode && dwChildExitCode == dwParentExitCode) ||
+                 (!fReturnedExitCode && ERROR_ACCESS_DENIED == dwErrorCode),
+                 "Child elevated process did not return matching exit code to parent process.");
 #endif
+    }
 
 LExit:
     return hr;
@@ -571,43 +564,27 @@ extern "C" HRESULT PipeChildConnect(
     Assert(INVALID_HANDLE_VALUE == pConnection->hCachePipe);
 
     HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
-    LPWSTR sczEventName = NULL;
-    HANDLE hEvent = NULL;
     LPWSTR sczPipeName = NULL;
 
-    hr = StrAllocFormatted(&sczEventName, EVENT_NAME_FORMAT_STRING, pConnection->sczName);
-    ExitOnFailure(hr, "Failed to allocate name of connection event.");
-
-    // Wait for the parent process to signal that it created the pipe(s).
-    hEvent = ::CreateEventW(NULL, TRUE, FALSE, sczEventName);
-    ExitOnNullWithLastError1(hEvent, hr, "Failed to create connection event: %ls", sczEventName);
-
-    er = ::WaitForSingleObject(hEvent, PIPE_WAIT_FOR_CONNECTION);
-    if (WAIT_OBJECT_0 == er)
-    {
-        er = ERROR_SUCCESS;
-    }
-    else if (WAIT_TIMEOUT == er || WAIT_ABANDONED == er)
-    {
-        er = ERROR_TIMEOUT;
-    }
-    else
-    {
-        er = ::GetLastError();
-    }
-    hr = HRESULT_FROM_WIN32(er);
-    ExitOnRootFailure1(hr, "Failed to wait for connection event: %ls", sczEventName);
-
-    // Connect to the parent.
+    // Try to connect to the parent.
     hr = StrAllocFormatted(&sczPipeName, PIPE_NAME_FORMAT_STRING, pConnection->sczName);
     ExitOnFailure(hr, "Failed to allocate name of parent pipe.");
 
-    pConnection->hPipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-    if (INVALID_HANDLE_VALUE == pConnection->hPipe)
+    hr = E_UNEXPECTED;
+    for (DWORD cRetry = 0; FAILED(hr) && cRetry < PIPE_RETRY_FOR_CONNECTION; ++cRetry)
     {
-        ExitWithLastError1(hr, "Failed to open parent pipe: %ls", sczPipeName)
+        pConnection->hPipe = ::CreateFileW(sczPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if (INVALID_HANDLE_VALUE == pConnection->hPipe)
+        {
+            hr = HRESULT_FROM_WIN32(::GetLastError());
+            ::Sleep(PIPE_WAIT_FOR_CONNECTION);
+        }
+        else // we have a connection, go with it.
+        {
+            hr = S_OK;
+        }
     }
+    ExitOnRootFailure1(hr, "Failed to open parent pipe: %ls", sczPipeName)
 
     // Verify the parent and notify it that the child connected.
     hr = ChildPipeConnected(pConnection->hPipe, pConnection->sczSecret, &pConnection->dwProcessId);
@@ -635,8 +612,6 @@ extern "C" HRESULT PipeChildConnect(
 
 LExit:
     ReleaseStr(sczPipeName);
-    ReleaseHandle(hEvent);
-    ReleaseStr(sczEventName);
 
     return hr;
 }

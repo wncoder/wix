@@ -69,7 +69,9 @@ typedef struct _BURN_MSPTARGETPRODUCT
     DWORD dwOrder;
     WCHAR wzTargetProductCode[39];
 
-    BOOTSTRAPPER_PACKAGE_STATE patchPackageState;
+    BOOTSTRAPPER_PACKAGE_STATE patchPackageState; // only valid after Detect.
+    BOOTSTRAPPER_ACTION_STATE execute;            // only valid during Plan.
+    BOOTSTRAPPER_ACTION_STATE rollback;           // only valid during Plan.
 } BURN_MSPTARGETPRODUCT;
 
 typedef struct _BURN_MSIPROPERTY
@@ -88,8 +90,11 @@ typedef struct _BURN_MSIFEATURE
     LPWSTR sczRollbackAddLocalCondition;
     LPWSTR sczRollbackAddSourceCondition;
     LPWSTR sczRollbackAdvertiseCondition;
-    BOOTSTRAPPER_FEATURE_STATE currentState;
     BOOL fRepair;
+
+    BOOTSTRAPPER_FEATURE_STATE currentState; // only valid after Detect.
+    BOOTSTRAPPER_FEATURE_ACTION execute;       // only valid during Plan.
+    BOOTSTRAPPER_FEATURE_ACTION rollback;      // only valid during Plan.
 } BURN_MSIFEATURE;
 
 typedef struct _BURN_RELATED_MSI
@@ -145,10 +150,12 @@ typedef struct _BURN_PACKAGE
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryForward;  // used during install and repair.
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryBackward; // used during uninstall.
 
-    BOOTSTRAPPER_PACKAGE_STATE currentState;
-    BOOL fCached;
-    BOOTSTRAPPER_PACKAGE_STATE expected;
-    BOOTSTRAPPER_REQUEST_STATE requested;
+    BOOTSTRAPPER_PACKAGE_STATE currentState;    // only valid after Detect.
+    BOOL fCached;                               // only valid after Detect.
+    BOOTSTRAPPER_PACKAGE_STATE expected;        // only valid during Plan.
+    BOOTSTRAPPER_REQUEST_STATE requested;       // only valid during Plan.
+    BOOTSTRAPPER_ACTION_STATE execute;          // only valid during Plan.
+    BOOTSTRAPPER_ACTION_STATE rollback;         // only valid during Plan.
 
     BURN_PACKAGE_PAYLOAD* rgPayloads;
     DWORD cPayloads;
@@ -178,6 +185,7 @@ typedef struct _BURN_PACKAGE
             LPWSTR sczProductCode;
             DWORD64 qwVersion;
             DWORD64 qwInstalledVersion;
+            BOOL fDisplayInternalUI;
 
             BURN_MSIPROPERTY* rgProperties;
             DWORD cProperties;
@@ -196,6 +204,7 @@ typedef struct _BURN_PACKAGE
         {
             LPWSTR sczPatchCode;
             LPWSTR sczApplicabilityXml;
+            BOOL fDisplayInternalUI;
 
             BURN_MSIPROPERTY* rgProperties;
             DWORD cProperties;

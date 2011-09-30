@@ -1446,9 +1446,60 @@ RobMen: SFBUG:3292846 - allow acquire to be retried if verify fails.
         SFBUG:3293210 - allow BA to ignore cache failures for non-vital
                         packages.
 
-SimWu:  SFBUG:3323496 - Shared payloads downloaded more than once.
+SimWu: SFBUG:3323496 - Shared payloads downloaded more than once.
 
 HeathS: Added variable to determine if elevated burn has launched.
 
 WixBuild: Version 3.6.2116.0
+
+RobMen: SFBUG:3341700 - handle encrypted TEMP when caching in Burn.
+        SFBUG:3354642 - use unique folder in TEMP to avoid name collisions.
+
+RobMen: SFBUG:3409685 - fail to plan in Burn when a restart is required.
+
+RobMen: SFBUG:3366273 - provide progress in wixstdba using cache + execute
+                        detailed progress.
+        SFBUG:3408913 - probe for license file in wixstdba.
+
+RobMen: SFBUG:3366082 - allow MSI/MSP packages to show their internal UI.
+
+RobMen: Burn now works correctly when launched via psexec.exe.
+
+WixBuild: Version 3.6.2123.0
+
+CAraman: Use only interlocked accessors to avoid race conditions.
+
+RobMen: SFBUG:3411628 - by default treat detect-only related MSI packages as
+                        determing supersedence and don't modify superseded MSI
+                        packages.
+
+RobMen: SFBUG:3403392 - cache packages only when absolutely necessary.
+        SFBUG:3390725 - send MsiRecord data when possible from MSI messages.
+
+RobMen: SFBUG:3394749 - add supportedFramework/@runtimeVersion to ensure
+                        correct framework is loaded.
+
+RobMen: SFBUG:3390016 - fix bundle search documentation.
+        SFBUG:3413887 - fix .targets for VS2005 since conditions do not support
+                        short circuiting.
+        SFBUG:3118791 - add support for case-insensitive variable comparisons.
+        SFBUG:3393136 - add support for System64Folder in Burn.
+
+RobMen: SFBUG:3390305 - make long cabinet templates a warning like other
+                        cabinet messages.
+
+RobMen: SFBUG:3367340 - handle the Burn resume mode better to prevent getting
+                        into perpetually failed state.
+
+RobMen: WiX v3.6 single executable bundle and MSI no longer creates ARP entry.
+
+BobArnson: Fix SFBUG:3303277/3324464/3414454 by following project references 
+           when building a solution. MSBuild's behavior when building a 
+           solution changed in v4.0. For details, see 
+           http://connect.microsoft.com/VisualStudio/feedback/details/586875/msbuild-4-0-incorrectly-processes-project-dependencies-specified-in-solution-file.
+
+EricStJ: SFBUG:3299524 E_FAIL when opening a WIXPROJ with "show all files"
+         SFBUG:3405294 % is not encoded when setting property values.
+
+WixBuild: Version 3.6.2130.0
 

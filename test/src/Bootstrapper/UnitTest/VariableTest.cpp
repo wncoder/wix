@@ -239,6 +239,11 @@ namespace Bootstrapper
                 Assert::IsFalse(EvaluateConditionHelper(&variables, L"PROP1 <> \"VAL1\""));
                 Assert::IsTrue(EvaluateConditionHelper(&variables, L"NONE <> \"NOT\""));
 
+                Assert::IsTrue(EvaluateConditionHelper(&variables, L"PROP1 ~= \"val1\""));
+                Assert::IsFalse(EvaluateConditionHelper(&variables, L"PROP1 = \"val1\""));
+                Assert::IsFalse(EvaluateConditionHelper(&variables, L"PROP1 ~<> \"val1\""));
+                Assert::IsTrue(EvaluateConditionHelper(&variables, L"PROP1 <> \"val1\""));
+
                 Assert::IsTrue(EvaluateConditionHelper(&variables, L"PROP5 = 5"));
                 Assert::IsFalse(EvaluateConditionHelper(&variables, L"PROP5 = 0"));
                 Assert::IsFalse(EvaluateConditionHelper(&variables, L"PROP5 <> 5"));
@@ -453,33 +458,36 @@ namespace Bootstrapper
                 VariableGetNumericHelper(&variables, L"UserLanguageID");
 
                 // known folders
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"AppDataFolder"), Environment::GetFolderPath(Environment::SpecialFolder::ApplicationData));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"CommonAppDataFolder"), Environment::GetFolderPath(Environment::SpecialFolder::CommonApplicationData));
-                //VariableGetStringHelper(&variables, L"CommonFiles64Folder");
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"DesktopFolder"), Environment::GetFolderPath(Environment::SpecialFolder::DesktopDirectory));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"FavoritesFolder"), Environment::GetFolderPath(Environment::SpecialFolder::Favorites));
-                VariableGetStringHelper(&variables, L"FontsFolder");
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"LocalAppDataFolder"), Environment::GetFolderPath(Environment::SpecialFolder::LocalApplicationData));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"PersonalFolder"), Environment::GetFolderPath(Environment::SpecialFolder::Personal));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::ApplicationData) + "\\", VariableGetStringHelper(&variables, L"AppDataFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::CommonApplicationData) + "\\", VariableGetStringHelper(&variables, L"CommonAppDataFolder"));
+
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::ProgramFiles) + "\\", VariableGetStringHelper(&variables, L"ProgramFilesFolder"));
                 //VariableGetStringHelper(&variables, L"ProgramFiles64Folder");
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"ProgramMenuFolder"), Environment::GetFolderPath(Environment::SpecialFolder::Programs));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"SendToFolder"), Environment::GetFolderPath(Environment::SpecialFolder::SendTo));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"StartMenuFolder"), Environment::GetFolderPath(Environment::SpecialFolder::StartMenu));
-                Assert::AreEqual(VariableGetStringHelper(&variables, L"StartupFolder"), Environment::GetFolderPath(Environment::SpecialFolder::Startup));
+                //VariableGetStringHelper(&variables, L"CommonFiles64Folder");
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::DesktopDirectory) + "\\", VariableGetStringHelper(&variables, L"DesktopFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::Favorites) + "\\", VariableGetStringHelper(&variables, L"FavoritesFolder"));
+                VariableGetStringHelper(&variables, L"FontsFolder");
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::LocalApplicationData) + "\\", VariableGetStringHelper(&variables, L"LocalAppDataFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::Personal) + "\\", VariableGetStringHelper(&variables, L"PersonalFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::Programs) + "\\", VariableGetStringHelper(&variables, L"ProgramMenuFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::SendTo) + "\\", VariableGetStringHelper(&variables, L"SendToFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::StartMenu) + "\\", VariableGetStringHelper(&variables, L"StartMenuFolder"));
+                Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::Startup) + "\\", VariableGetStringHelper(&variables, L"StartupFolder"));
+                VariableGetStringHelper(&variables, L"System64Folder");
                 VariableGetStringHelper(&variables, L"SystemFolder");
                 VariableGetStringHelper(&variables, L"WindowsFolder");
                 VariableGetStringHelper(&variables, L"WindowsVolume");
 
-                Assert::AreEqual(System::IO::Path::GetFullPath(VariableGetStringHelper(&variables, L"TempFolder")), System::IO::Path::GetTempPath());
+                Assert::AreEqual(System::IO::Path::GetTempPath(), System::IO::Path::GetFullPath(VariableGetStringHelper(&variables, L"TempFolder")));
 
                 // known folders not supported on Windows Server 2003.
                 if (osVersion->Major >= 5 && osVersion->Minor > 2)
                 {
                     VariableGetStringHelper(&variables, L"AdminToolsFolder");
-                    Assert::AreEqual(VariableGetStringHelper(&variables, L"CommonFilesFolder"), Environment::GetFolderPath(Environment::SpecialFolder::CommonProgramFiles));
-                    Assert::AreEqual(VariableGetStringHelper(&variables, L"MyPicturesFolder"), Environment::GetFolderPath(Environment::SpecialFolder::MyPictures));
-                    Assert::AreEqual(VariableGetStringHelper(&variables, L"ProgramFilesFolder"), Environment::GetFolderPath(Environment::SpecialFolder::ProgramFiles));
-                    Assert::AreEqual(VariableGetStringHelper(&variables, L"TemplateFolder"), Environment::GetFolderPath(Environment::SpecialFolder::Templates));
+                    Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::CommonProgramFiles) + "\\", VariableGetStringHelper(&variables, L"CommonFilesFolder"));
+                    Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::MyPictures) + "\\", VariableGetStringHelper(&variables, L"MyPicturesFolder"));
+                    Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::ProgramFiles) + "\\", VariableGetStringHelper(&variables, L"ProgramFilesFolder"));
+                    Assert::AreEqual(Environment::GetFolderPath(Environment::SpecialFolder::Templates) + "\\", VariableGetStringHelper(&variables, L"TemplateFolder"));
                 }
             }
             finally

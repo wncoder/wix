@@ -21,10 +21,29 @@
 extern "C" {
 #endif
 
+// structs
+typedef struct _PROC_FILESYSTEMREDIRECTION
+{
+    BOOL fDisabled;
+    LPVOID pvRevertState;
+} PROC_FILESYSTEMREDIRECTION;
+
 HRESULT DAPI ProcElevated(
     __in HANDLE hProcess,
     __out BOOL* pfElevated
     );
+
+HRESULT DAPI ProcWow64(
+    __in HANDLE hProcess,
+    __out BOOL* pfWow64
+    );
+HRESULT DAPI ProcDisableWowFileSystemRedirection(
+    __in PROC_FILESYSTEMREDIRECTION* pfsr
+    );
+HRESULT DAPI ProcRevertWowFileSystemRedirection(
+    __in PROC_FILESYSTEMREDIRECTION* pfsr
+    );
+
 HRESULT DAPI ProcExecute(
     __in_z LPWSTR wzCommand,
     __out HANDLE *phProcess,
@@ -51,6 +70,13 @@ HRESULT DAPI ProcFindAllIdsFromExeName(
     __in_z LPCWSTR wzExeName,
     __out DWORD** ppdwProcessIds,
     __out DWORD* pcProcessIds
+    );
+
+// following code in proc3utl.cpp due to dependency on Wtsapi32.DLL.
+HRESULT DAPI ProcExecuteAsInteractiveUser(
+    __in_z LPCWSTR wzExecutablePath,
+    __in_z LPCWSTR wzCommand,
+    __out HANDLE *phProcess
     );
 
 #ifdef __cplusplus

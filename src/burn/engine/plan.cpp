@@ -18,7 +18,6 @@
 
 #include "precomp.h"
 
-
 // internal function definitions
 
 static void UninitializeCacheAction(
@@ -153,8 +152,9 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_CACHE;
     }
-    // the package is superseded then default to doing nothing except during uninstall.
-    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && BOOTSTRAPPER_ACTION_UNINSTALL != action)
+    // the package is superseded then default to doing nothing except during uninstall of
+    // MSPs. Superseded patches are actually installed and can be removed.
+    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && !(BOOTSTRAPPER_ACTION_UNINSTALL == action && BURN_PACKAGE_TYPE_MSP == packageType))
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
     }
@@ -189,23 +189,55 @@ LExit:
 
 extern "C" HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzLayoutDirectory
+    __in BURN_VARIABLES* pVariables,
+    __in BURN_PAYLOADS* pPayloads,
+    __out_z LPWSTR* psczLayoutDirectory
     )
 {
     HRESULT hr = S_OK;
     BURN_CACHE_ACTION* pCacheAction = NULL;
+    LPWSTR sczLayoutDirectory = NULL;
 
+    // Get the layout directory.
+    hr = VariableGetString(pVariables, BURN_BUNDLE_LAYOUT_DIRECTORY, &sczLayoutDirectory);
+    if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
+    {
+        hr = DirGetCurrent(&sczLayoutDirectory);
+        ExitOnFailure(hr, "Failed to get current directory as layout directory.");
+    }
+    ExitOnFailure(hr, "Failed to get bundle layout directory property.");
+
+    hr = PathBackslashTerminate(&sczLayoutDirectory);
+    ExitOnFailure(hr, "Failed to ensure layout directory is backslash terminated.");
+
+    // Plan the layout of the bundle engine itself.
     hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append bundle start action.");
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE;
 
-    hr = StrAllocString(&pCacheAction->bundleLayout.sczLayoutDirectory, wzLayoutDirectory, 0);
+    hr = StrAllocString(&pCacheAction->bundleLayout.sczLayoutDirectory, sczLayoutDirectory, 0);
     ExitOnFailure(hr, "Failed to to copy layout directory for bundle.");
 
     ++pPlan->cOverallProgressTicksTotal;
 
+    // Plan the layout of layout-only payloads.
+    for (DWORD i = 0; i < pPayloads->cPayloads; ++i)
+    {
+        BURN_PAYLOAD* pPayload = pPayloads->rgPayloads + i;
+        if (pPayload->fLayoutOnly)
+        {
+            hr = PlanLayoutOnlyPayload(pPlan, pPayload, sczLayoutDirectory);
+            ExitOnFailure(hr, "Failed to plan layout payload.");
+        }
+    }
+
+    *psczLayoutDirectory = sczLayoutDirectory;
+    sczLayoutDirectory = NULL;
+
 LExit:
+    ReleaseStr(sczLayoutDirectory);
+
     return hr;
 }
 
@@ -268,6 +300,222 @@ extern "C" HRESULT PlanLayoutPackage(
     pPlan->rgCacheActions[iPackageStartAction].packageStart.iPackageCompleteAction = pPlan->cCacheActions - 1;
 
     ++pPlan->cOverallProgressTicksTotal;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanExecutePackage(
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __inout HANDLE* phSyncpointEvent,
+    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
+    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction,
+    __out BOOL* pfPlannedCachePackage,
+    __out BOOL* pfPlannedCleanPackage
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fNeedsCache = FALSE;
+    BOOL fPlannedCachePackage = FALSE;
+    BOOL fPlannedCleanPackage = FALSE;
+
+    // Calculate execute actions.
+    switch (pPackage->type)
+    {
+    case BURN_PACKAGE_TYPE_EXE:
+        hr = ExeEnginePlanCalculatePackage(pPackage);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSI:
+        hr = MsiEnginePlanCalculatePackage(pPackage, pVariables, pUserExperience);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSP:
+        hr = MspEnginePlanCalculatePackage(pPackage, pUserExperience);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSU:
+        hr = MsuEnginePlanCalculatePackage(pPackage);
+        break;
+
+    default:
+        hr = E_UNEXPECTED;
+        ExitOnFailure(hr, "Invalid package type.");
+    }
+    ExitOnFailure1(hr, "Failed to calculate plan actions for package: %ls", pPackage->sczId);
+
+    // Exe packages require the package for all operations (even uninstall).
+    if (BURN_PACKAGE_TYPE_EXE == pPackage->type)
+    {
+        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute || BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback);
+    }
+    else // the other engine types can uninstall without the original package.
+    {
+        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->execute || BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->rollback);
+    }
+
+    // If the package needs to be cached and is not already cached, plan the cache action first. Even packages that are marked
+    // Cache='no' need to be cached so we can check the hash and ensure the correct package is installed. We'll clean up Cache='no'
+    // packages after applying the changes.
+    if (fNeedsCache && !pPackage->fCached)
+    {
+        // If this is an MSI package with slipstream MSPs, ensure the MSPs are cached first.
+        if (BURN_PACKAGE_TYPE_MSI == pPackage->type && 0 < pPackage->Msi.cSlipstreamMspPackages)
+        {
+            hr = PlanCacheSlipstreamMsps(pPlan, pPackage);
+            ExitOnFailure(hr, "Failed to plan slipstream patches for package.");
+        }
+
+        hr = PlanCachePackage(pPlan, pPackage, phSyncpointEvent);
+        ExitOnFailure(hr, "Failed to plan cache package.");
+
+        fPlannedCachePackage = TRUE;
+    }
+
+    // Add execute actions.
+    switch (pPackage->type)
+    {
+    case BURN_PACKAGE_TYPE_EXE:
+        hr = ExeEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSI:
+        hr = MsiEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSP:
+        hr = MspEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        break;
+
+    case BURN_PACKAGE_TYPE_MSU:
+        hr = MsuEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        break;
+
+    default:
+        hr = E_UNEXPECTED;
+        ExitOnFailure(hr, "Invalid package type.");
+    }
+    ExitOnFailure1(hr, "Failed to add plan actions for package: %ls", pPackage->sczId);
+
+    // If we are going to take any action on this package, add progress for it.
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute || BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
+    {
+        LoggingIncrementPackageSequence();
+
+        ++pPlan->cExecutePackagesTotal;
+        ++pPlan->cOverallProgressTicksTotal;
+
+        // If package is per-machine and is being executed, flag the plan to be per-machine as well.
+        if (pPackage->fPerMachine)
+        {
+            pPlan->fPerMachine = TRUE;
+        }
+    }
+
+    // If the package is scheduled to be cached or is already cached but we are removing it or the package
+    // is not supposed to stay cached then ensure the package is cleaned up.
+    if ((fPlannedCachePackage || pPackage->fCached) && (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute || !pPackage->fCache))
+    {
+        hr = PlanCleanPackage(pPlan, pPackage);
+        ExitOnFailure(hr, "Failed to plan clean package.");
+
+        fPlannedCleanPackage = TRUE;
+    }
+
+    *pExecuteAction = pPackage->execute;
+    *pRollbackAction = pPackage->rollback;
+    *pfPlannedCachePackage = fPlannedCachePackage;
+    *pfPlannedCleanPackage = fPlannedCleanPackage;
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT PlanRelatedBundles(
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
+    __in DWORD64 qwBundleVersion,
+    __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __inout HANDLE* phSyncpointEvent,
+    __in DWORD dwExecuteActionEarlyIndex
+    )
+{
+    HRESULT hr = S_OK;
+    BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+
+    for (DWORD i = 0; i < pRelatedBundles->cRelatedBundles; ++i)
+    {
+        DWORD *pdwInsertIndex = NULL;
+        BURN_RELATED_BUNDLE* pRelatedBundle = pRelatedBundles->rgRelatedBundles + i;
+        BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+
+        switch (pRelatedBundle->relationType)
+        {
+        case BOOTSTRAPPER_RELATION_UPGRADE:
+            requested = qwBundleVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+            break;
+        case BOOTSTRAPPER_RELATION_PATCH: __fallthrough;
+        case BOOTSTRAPPER_RELATION_ADDON:
+            if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
+            {
+                requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
+                // Uninstall addons early in the chain, before other packages are installed
+                pdwInsertIndex = &dwExecuteActionEarlyIndex;
+            }
+            else if (BOOTSTRAPPER_ACTION_REPAIR == action)
+            {
+                requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
+            }
+            break;
+        case BOOTSTRAPPER_RELATION_DETECT:
+            break;
+        default:
+            hr = E_UNEXPECTED;
+            ExitOnFailure1(hr, "Unexpected relation type encountered during plan: %d", pRelatedBundle->relationType);
+            break;
+        }
+
+        defaultRequested = requested;
+
+        int nResult = pUserExperience->pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
+        hr = HRESULT_FROM_VIEW(nResult);
+        ExitOnRootFailure(hr, "UX aborted plan related bundle.");
+
+        // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
+        if (requested != defaultRequested)
+        {
+            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
+        }
+
+        if (BOOTSTRAPPER_REQUEST_STATE_NONE != requested)
+        {
+            pRelatedBundle->package.requested = requested;
+
+            hr = ExeEnginePlanCalculatePackage(&pRelatedBundle->package);
+            ExitOnFailure1(hr, "Failed to calcuate plan for related bundle: %ls", pRelatedBundle->package.sczId);
+
+            hr = ExeEnginePlanAddPackage(pdwInsertIndex, &pRelatedBundle->package, pPlan, pLog, pVariables, *phSyncpointEvent, FALSE);
+            ExitOnFailure1(hr, "Failed to add to plan related bundle: %ls", pRelatedBundle->package.sczId);
+
+            LoggingIncrementPackageSequence();
+            ++pPlan->cExecutePackagesTotal;
+            ++pPlan->cOverallProgressTicksTotal;
+
+            // If package is per-machine and is being executed, flag the plan to be per-machine as well.
+            if (pRelatedBundle->package.fPerMachine)
+            {
+                pPlan->fPerMachine = TRUE;
+            }
+        }
+    }
 
 LExit:
     return hr;
@@ -750,7 +998,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
     BURN_CACHE_ACTION* pCacheAction = NULL;
     LPWSTR sczPayloadUnverifiedPath = NULL;
 
-    hr = CacheCalculatePayloadUnverifiedPath(pPackage, pPayload, &sczPayloadUnverifiedPath);
+    hr = CacheCalculatePayloadUnverifiedPath(pPlan->wzBundleId, pPayload, &sczPayloadUnverifiedPath);
     ExitOnFailure(hr, "Failed to calculate unverified path for payload.");
 
     // If the payload is in a container, ensure the container is being acquired
@@ -883,7 +1131,7 @@ static HRESULT CreateOrFindContainerExtractAction(
     }
     else // ensure the container is acquired before we try to extract from it.
     {
-        hr = CacheCaclulateContainerUnverifiedPath(pContainer, &sczUnverifiedPath);
+        hr = CacheCaclulateContainerUnverifiedPath(pPlan->wzBundleId, pContainer, &sczUnverifiedPath);
         ExitOnFailure(hr, "Failed to calculate unverified path for container.");
 
         hr = AppendCacheAction(pPlan, &pAcquireContainerAction);
@@ -923,7 +1171,6 @@ static BOOL ProcessSharedPayload(
     __in BURN_PAYLOAD* pPayload
     )
 {
-    HRESULT hr = S_OK;
     DWORD cMove = 0;
     DWORD cAcquirePayload = 0;
 

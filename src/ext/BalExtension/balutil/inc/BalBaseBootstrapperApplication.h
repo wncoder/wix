@@ -373,7 +373,9 @@ public: // IBurnUserExperience
         __in_z LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR /*wzError*/,
-        __in DWORD /*dwUIHint*/
+        __in DWORD /*dwUIHint*/,
+        __in DWORD /*cData*/,
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
         )
     {
         BalRetryErrorOccurred(wzPackageId, dwCode);
@@ -426,7 +428,9 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzPackageId*/,
         __in INSTALLMESSAGE /*mt*/,
         __in UINT /*uiFlags*/,
-        __in_z LPCWSTR /*wzMessage*/
+        __in_z LPCWSTR /*wzMessage*/,
+        __in DWORD /*cData*/,
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
         )
     {
         return CheckCanceled() ? IDCANCEL : IDNOACTION;

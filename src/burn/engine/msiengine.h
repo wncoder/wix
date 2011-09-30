@@ -42,20 +42,23 @@ HRESULT MsiEngineDetectPackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_USER_EXPERIENCE* pUserExperience
     );
-HRESULT MsiEnginePlanPackage(
-    __in DWORD dwPackageSequence,
+HRESULT MsiEnginePlanCalculatePackage(
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_VARIABLES* pVariables,
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    );
+HRESULT MsiEnginePlanAddPackage(
     __in_opt DWORD *pdwInsertSequence,
+    __in BOOTSTRAPPER_DISPLAY display,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BOOL fPlanPackageCacheRollback
     );
 HRESULT MsiEngineExecutePackage(
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
@@ -70,7 +73,10 @@ HRESULT MsiEngineConcatProperties(
     __in BOOL fRollback,
     __deref_out_z LPWSTR* psczProperties
     );
-
+INSTALLUILEVEL MsiEngineCalculateInstallLevel(
+    __in BOOL fDisplayInternalUI,
+    __in BOOTSTRAPPER_DISPLAY display
+    );
 
 #if defined(__cplusplus)
 }

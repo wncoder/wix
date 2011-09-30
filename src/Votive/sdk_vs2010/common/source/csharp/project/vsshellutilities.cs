@@ -51,8 +51,10 @@ namespace Microsoft.VisualStudio.Package
 
 			try
 			{
-				ErrorHandler.ThrowOnFailure(shell.FindToolWindow(0, ref persistenceSlot, out frame));
-				ErrorHandler.ThrowOnFailure(frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocView, out pvar));
+                if (0 == shell.FindToolWindow(0, ref persistenceSlot, out frame))
+                {
+                    ErrorHandler.ThrowOnFailure(frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocView, out pvar));
+                }
 			}
 			finally
 			{

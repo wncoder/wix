@@ -1215,6 +1215,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private int errorCode;
         private string errorMessage;
         private int uiHint;
+        private string[] data;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ErrorEventArgs"/> class.
@@ -1223,12 +1224,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="errorCode">The error code.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <param name="uiHint">Recommended display flags for an error dialog.</param>
-        public ErrorEventArgs(string packageId, int errorCode, string errorMessage, int uiHint)
+        /// <param name="data">The exteded data for the error.</param>
+        public ErrorEventArgs(string packageId, int errorCode, string errorMessage, int uiHint, string[] data)
         {
             this.packageId = packageId;
             this.errorCode = errorCode;
             this.errorMessage = errorMessage;
             this.uiHint = uiHint;
+            this.data = data;
         }
 
         /// <summary>
@@ -1261,6 +1264,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public int UIHint
         {
             get { return this.uiHint; }
+        }
+
+        /// <summary>
+        /// Gets the extended data for the error.
+        /// </summary>
+        public string[] Data
+        {
+            get { return this.data; }
         }
     }
 
@@ -1311,6 +1322,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private InstallMessage messageType;
         private int displayParameters;
         private string message;
+        private string[] data;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ExecuteMsiMessageEventArgs"/> class.
@@ -1319,12 +1331,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="messageType">The type of this message.</param>
         /// <param name="displayParameters">Recommended display flags for this message.</param>
         /// <param name="message">The message.</param>
-        public ExecuteMsiMessageEventArgs(string packageId, InstallMessage messageType, int displayParameters, string message)
+        /// <param name="data">The extended data for the message.</param>
+        public ExecuteMsiMessageEventArgs(string packageId, InstallMessage messageType, int displayParameters, string message, string[] data)
         {
             this.packageId = packageId;
             this.messageType = messageType;
             this.displayParameters = displayParameters;
             this.message = message;
+            this.data = data;
         }
 
         /// <summary>
@@ -1357,6 +1371,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public string Message
         {
             get { return this.message; }
+        }
+
+        /// <summary>
+        /// Gets the extended data for the message.
+        /// </summary>
+        public string[] Data
+        {
+            get { return this.data; }
         }
     }
 

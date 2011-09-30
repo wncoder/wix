@@ -3840,11 +3840,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         writer.WriteAttributeString("ProductCode", package.ProductCode);
                         writer.WriteAttributeString("Version", package.Version);
+                        writer.WriteAttributeString("DisplayInternalUI", package.DisplayInternalUI ? "yes" : "no");
                     }
                     else if (Compiler.ChainPackageType.Msp == package.ChainPackageType)
                     {
                         writer.WriteAttributeString("PatchCode", package.PatchCode);
                         writer.WriteAttributeString("PatchXml", package.PatchXml);
+                        writer.WriteAttributeString("DisplayInternalUI", package.DisplayInternalUI ? "yes" : "no");
                     }
                     else if (Compiler.ChainPackageType.Msu == package.ChainPackageType)
                     {
@@ -6936,7 +6938,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
                        (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
-                       row[20], row[21], wixGroupTable, allPayloads, fileManager, core)
+                       row[20], row[21], row[22], wixGroupTable, allPayloads, fileManager, core)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
@@ -6946,7 +6948,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
                                     string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
-                                    object enableFeatureSelectionData, object forcePerMachineData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
+                                    object enableFeatureSelectionData, object forcePerMachineData, object displayInternalUIData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
                 YesNoType cache = YesNoType.NotSet;
                 if (null != cacheData)
@@ -6996,6 +6998,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     forcePerMachine = (1 == (int)forcePerMachineData) ? YesNoType.Yes : YesNoType.No;
                 }
 
+                YesNoType displayInternalUI = YesNoType.NotSet;
+                if (null != displayInternalUIData)
+                {
+                    displayInternalUI = (1 == (int)displayInternalUIData) ? YesNoType.Yes : YesNoType.No;
+                }
+
                 this.Id = id;
                 this.ChainPackageType = (Compiler.ChainPackageType)Enum.Parse(typeof(Compiler.ChainPackageType), packageType, true);
                 PayloadInfo packagePayload;
@@ -7022,6 +7030,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Repairable = (YesNoType.Yes == repairable); // true only when specifically requested.
                 this.LogPathVariable = logPathVariable;
                 this.RollbackLogPathVariable = rollbackPathVariable;
+
+                this.DisplayInternalUI = (YesNoType.Yes == displayInternalUI); 
 
                 this.Payloads = new List<PayloadInfo>();
                 this.RelatedPackages = new List<RelatedPackage>();
@@ -7102,6 +7112,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             public string LogPathVariable { get; private set; }
             public string RollbackLogPathVariable { get; private set; }
+
+            public bool DisplayInternalUI { get; private set; }
 
             public string MsuKB { get; private set; }
             public string Protocol { get; private set; }

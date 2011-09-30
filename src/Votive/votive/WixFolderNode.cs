@@ -486,8 +486,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             if (!Utilities.IsInAutomationFunction(this.ProjectMgr.Site))
             {
                 IVsUIHierarchyWindow uiWindow = UIHierarchyUtilities.GetUIHierarchyWindow(this.ProjectMgr.Site, SolutionExplorer);
-                int result = uiWindow.ExpandItem(this.ProjectMgr, this.ID, expanded ? EXPANDFLAGS.EXPF_ExpandFolder : EXPANDFLAGS.EXPF_CollapseFolder);
-                ErrorHandler.ThrowOnFailure(result);
+                if (null != uiWindow)
+                {
+                    ErrorHandler.ThrowOnFailure(uiWindow.ExpandItem(this.ProjectMgr, this.ID, expanded ? EXPANDFLAGS.EXPF_ExpandFolder : EXPANDFLAGS.EXPF_CollapseFolder));
+                }
 
                 // then post the expand command to the shell. Folder verification and creation will
                 // happen in the setlabel code...
@@ -495,8 +497,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
                 object dummy = null;
                 Guid cmdGroup = VsMenus.guidStandardCommandSet97;
-                result = shell.PostExecCommand(ref cmdGroup, (uint)(expanded ? VsCommands.Expand : VsCommands.Collapse), 0, ref dummy);
-                ErrorHandler.ThrowOnFailure(result);
+                ErrorHandler.ThrowOnFailure(shell.PostExecCommand(ref cmdGroup, (uint)(expanded ? VsCommands.Expand : VsCommands.Collapse), 0, ref dummy));
             }
         }
     }

@@ -160,6 +160,10 @@ LExit:
         LogUninitialize(FALSE);
     }
 
+    UserExperienceRemove(&engineState.userExperience);
+
+    CacheRemoveWorkingFolder(engineState.registration.sczId);
+
     UninitializeEngineState(&engineState);
 
     if (fXmlInitialized)
@@ -322,7 +326,7 @@ LExit:
     UiCloseMessageWindow(pEngineState);
 
     // end per-machine process if running
-    if (pEngineState->companionConnection.hProcess)
+    if (INVALID_HANDLE_VALUE != pEngineState->companionConnection.hPipe)
     {
         PipeTerminateChildProcess(&pEngineState->companionConnection, pEngineState->userExperience.dwExitCode);
     }
@@ -332,8 +336,6 @@ LExit:
     {
         ::PostMessageW(pEngineState->command.hwndSplashScreen, WM_CLOSE, 0, 0);
     }
-
-    UserExperienceRemove(&pEngineState->userExperience);
 
     ReleaseHandle(hPipesCreatedEvent);
 

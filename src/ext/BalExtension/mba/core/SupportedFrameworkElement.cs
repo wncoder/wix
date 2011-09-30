@@ -27,6 +27,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public sealed class SupportedFrameworkElement : ConfigurationElement
     {
         private static readonly ConfigurationProperty versionProperty = new ConfigurationProperty("version", typeof(string), null, ConfigurationPropertyOptions.IsRequired);
+        private static readonly ConfigurationProperty runtimeVersionProperty = new ConfigurationProperty("runtimeVersion", typeof(string));
 
         /// <summary>
         /// Creates a new instance of the <see cref="SupportedFrameworkElement"/> class.
@@ -47,6 +48,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             get { return (string)base[versionProperty]; }
             set { base[versionProperty] = value; }
+        }
+
+        /// <summary>
+        /// Gets the runtime version required by this supported framework.
+        /// </summary>
+        [ConfigurationProperty("runtimeVersion", IsRequired = false)]
+        public string RuntimeVersion
+        {
+            get { return (string)base[runtimeVersionProperty]; }
+            set { base[runtimeVersionProperty] = value; }
         }
     }
 }

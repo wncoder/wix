@@ -72,6 +72,7 @@
     <ClCompile Include="pathutil.cpp" />
     <ClCompile Include="perfutil.cpp" />
     <ClCompile Include="proc2utl.cpp" />
+    <ClCompile Include="proc3utl.cpp" />
     <ClCompile Include="procutil.cpp" />
     <ClCompile Include="regutil.cpp" />
     <ClCompile Include="resrutil.cpp" />

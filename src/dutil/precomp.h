@@ -41,11 +41,13 @@
 #include <Tlhelp32.h>
 #include <lm.h>
 #include <Iads.h>
-#include <activeds.h> 
+#include <activeds.h>
 #include <richedit.h>
 #include <stddef.h>
 #include <esent.h>
 #include <ahadmin.h>
+#include <userenv.h>
+#include <wtsapi32.h>
 
 #include "dutil.h"
 #include "aclutil.h"

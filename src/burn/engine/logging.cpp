@@ -20,6 +20,9 @@
 
 #include "precomp.h"
 
+
+static DWORD vdwPackageSequence = 0;
+
 // structs
 
 
@@ -110,8 +113,12 @@ LExit:
     return hr;
 }
 
+extern "C" void LoggingIncrementPackageSequence()
+{
+    ++vdwPackageSequence;
+}
+
 extern "C" HRESULT LoggingSetPackageVariable(
-    __in DWORD dwPackageSequence,
     __in BURN_PACKAGE* pPackage,
     __in BOOL fRollback,
     __in BURN_LOGGING* pLog,
@@ -125,7 +132,7 @@ extern "C" HRESULT LoggingSetPackageVariable(
     if ((!fRollback && pPackage->sczLogPathVariable && *pPackage->sczLogPathVariable) ||
         (fRollback && pPackage->sczRollbackLogPathVariable && *pPackage->sczRollbackLogPathVariable))
     {
-        hr = StrAllocFormatted(&sczLogPath, L"%ls_%u_%ls%ls.%ls", pLog->sczPrefix, dwPackageSequence, pPackage->sczId, fRollback ? L"_rollback" : L"", pLog->sczExtension);
+        hr = StrAllocFormatted(&sczLogPath, L"%ls_%u_%ls%ls.%ls", pLog->sczPrefix, vdwPackageSequence, pPackage->sczId, fRollback ? L"_rollback" : L"", pLog->sczExtension);
         ExitOnFailure(hr, "Failed to allocate path for package log.");
 
         hr = VariableSetString(pVariables, fRollback ? pPackage->sczRollbackLogPathVariable : pPackage->sczLogPathVariable, sczLogPath, FALSE);

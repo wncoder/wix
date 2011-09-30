@@ -21,6 +21,10 @@
 
         <Media Id="1" Cabinet="bv1.cab" />
 
+        <Property Id="FAIL">
+            <RegistrySearch Id="SearchForFail" Root="HKLM" Key="Software\Wix" Name="Bv1Fail" Type="raw" />
+        </Property>
+
         <Feature Id="Test1" Title="Test1" Level="1">
             <ComponentRef Id="MyCompFile" />
             <Feature Id="Test2" Title="Test2" Level="1">

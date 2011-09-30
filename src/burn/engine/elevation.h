@@ -97,6 +97,7 @@ HRESULT ElevationExecuteExePackage(
     );
 HRESULT ElevationExecuteMsiPackage(
     __in HANDLE hPipe,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
@@ -106,6 +107,7 @@ HRESULT ElevationExecuteMsiPackage(
     );
 HRESULT ElevationExecuteMspPackage(
     __in HANDLE hPipe,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,

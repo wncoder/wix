@@ -48,8 +48,12 @@
     <None Include="Resources\mbapreq.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Resources\mbapreq.thm" />
-    <None Include="Resources\mbapreq.wxl" />
+    <None Include="Resources\mbapreq.thm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\mbapreq.wxl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h">

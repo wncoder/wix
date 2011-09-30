@@ -1653,6 +1653,7 @@
         <columnDefinition name="SuppressLooseFilePayloadGeneration" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="EnableFeatureSelection" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="ForcePerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="DisplayInternalUI" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
     </tableDefinition>
     <tableDefinition name="MsiProperty" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"

@@ -171,7 +171,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] int dwCode,
             [MarshalAs(UnmanagedType.LPWStr)] string wzError,
-            [MarshalAs(UnmanagedType.U4)] int dwUIHint
+            [MarshalAs(UnmanagedType.U4)] int dwUIHint,
+            [MarshalAs(UnmanagedType.U4)] int cData,
+            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData
             );
 
         [PreserveSig]
@@ -283,7 +285,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] InstallMessage mt,
             [MarshalAs(UnmanagedType.U4)] int uiFlags,
-            [MarshalAs(UnmanagedType.LPWStr)] string wzMessage
+            [MarshalAs(UnmanagedType.LPWStr)] string wzMessage,
+            [MarshalAs(UnmanagedType.U4)] int cData,
+            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData
             );
 
         [PreserveSig]
@@ -406,7 +410,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// The bundle was re-launched after an unexpected interruption.
         /// </summary>
-        Unexpected,
+        Interrupted,
 
         /// <summary>
         /// A reboot is pending.

@@ -58,6 +58,10 @@ enum WIU_MSI_EXECUTE_MESSAGE_TYPE
 typedef struct _WIU_MSI_EXECUTE_MESSAGE
 {
     WIU_MSI_EXECUTE_MESSAGE_TYPE type;
+
+    DWORD cData;
+    LPCWSTR* rgwzData;
+
     union
     {
         struct
@@ -108,6 +112,8 @@ typedef struct _WIU_MSI_EXECUTE_CONTEXT
     WIU_MSI_PROGRESS rgMsiProgress[64];
     DWORD dwCurrentProgressIndex;
 
+    INSTALLUILEVEL previousInstallUILevel;
+    HWND hwndPreviousParentWindow;
     INSTALLUI_HANDLERW pfnPreviousExternalUI;
     INSTALLUI_HANDLER_RECORD pfnPreviousExternalUIRecord;
 
@@ -292,6 +298,8 @@ HRESULT DAPI WiuEnableLog(
     );
 HRESULT DAPI WiuInitializeExternalUI(
     __in PFN_MSIEXECUTEMESSAGEHANDLER pfnMessageHandler,
+    __in INSTALLUILEVEL internalUILevel,
+    __in HWND hwndParent,
     __in LPVOID pvContext,
     __in BOOL fRollback,
     __in WIU_MSI_EXECUTE_CONTEXT* pExecuteContext

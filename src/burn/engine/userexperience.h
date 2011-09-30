@@ -69,6 +69,10 @@ HRESULT UserExperienceLoad(
 HRESULT UserExperienceUnload(
     __in BURN_USER_EXPERIENCE* pUserExperience
     );
+HRESULT UserExperienceEnsureWorkingFolder(
+    __in LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczUserExperienceWorkingFolder
+    );
 HRESULT UserExperienceRemove(
     __in BURN_USER_EXPERIENCE* pUserExperience
     );

@@ -49,20 +49,22 @@ HRESULT MspEngineDetectPackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_USER_EXPERIENCE* pUserExperience
     );
-HRESULT MspEnginePlanPackage(
-    __in DWORD dwPackageSequence,
-    __in_opt DWORD *pdwInsertSequence,
+HRESULT MspEnginePlanCalculatePackage(
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    );
+HRESULT MspEnginePlanAddPackage(
+    __in_opt DWORD* /*pdwInsertSequence*/,
+    __in BOOTSTRAPPER_DISPLAY display,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in_opt HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BOOL fPlanPackageCacheRollback
     );
 HRESULT MspEngineExecutePackage(
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,

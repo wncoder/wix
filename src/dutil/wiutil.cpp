@@ -88,10 +88,6 @@ static INT SendProgressUpdate(
 static void ResetProgress(
     __in WIU_MSI_EXECUTE_CONTEXT* pContext
     );
-static INT HandleFilesInUseRecord(
-    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
-    __in MSIHANDLE hRecord
-    );
 static DWORD CalculatePhaseProgress(
     __in WIU_MSI_EXECUTE_CONTEXT* pContext,
     __in DWORD dwProgressIndex,
@@ -547,6 +543,8 @@ LExit:
 
 extern "C" HRESULT DAPI WiuInitializeExternalUI(
     __in PFN_MSIEXECUTEMESSAGEHANDLER pfnMessageHandler,
+    __in INSTALLUILEVEL internalUILevel,
+    __in HWND hwndParent,
     __in LPVOID pvContext,
     __in BOOL fRollback,
     __in WIU_MSI_EXECUTE_CONTEXT* pExecuteContext
@@ -555,7 +553,6 @@ extern "C" HRESULT DAPI WiuInitializeExternalUI(
     HRESULT hr = S_OK;
     DWORD er = ERROR_SUCCESS;
 
-    DWORD dwUiLevel = INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY;
     DWORD dwMessageFilter = INSTALLLOGMODE_INITIALIZE | INSTALLLOGMODE_TERMINATE |
                             INSTALLLOGMODE_FATALEXIT | INSTALLLOGMODE_ERROR | INSTALLLOGMODE_WARNING |
                             INSTALLLOGMODE_RESOLVESOURCE | INSTALLLOGMODE_OUTOFDISKSPACE |
@@ -567,8 +564,9 @@ extern "C" HRESULT DAPI WiuInitializeExternalUI(
     pExecuteContext->pfnMessageHandler = pfnMessageHandler;
     pExecuteContext->pvContext = pvContext;
 
-    // Wire up logging and the external UI handler.
-    vpfnMsiSetInternalUI(static_cast<INSTALLUILEVEL>(dwUiLevel), NULL);
+    // Wire the internal and external UI handler.
+    pExecuteContext->previousInstallUILevel = vpfnMsiSetInternalUI(internalUILevel, &hwndParent);
+    pExecuteContext->hwndPreviousParentWindow = hwndParent;
 
     // If the external UI record is available (MSI version >= 3.1) use it but fall back to the standard external
     // UI handler if necesary.
@@ -593,6 +591,11 @@ extern "C" void DAPI WiuUninitializeExternalUI(
     __in WIU_MSI_EXECUTE_CONTEXT* pExecuteContext
     )
 {
+    if (INSTALLUILEVEL_NOCHANGE != pExecuteContext->previousInstallUILevel)
+    {
+        pExecuteContext->previousInstallUILevel = vpfnMsiSetInternalUI(pExecuteContext->previousInstallUILevel, &pExecuteContext->hwndPreviousParentWindow);
+    }
+
     if (pExecuteContext->fSetPreviousExternalUI)  // unset the UI handler
     {
         vpfnMsiSetExternalUIW(pExecuteContext->pfnPreviousExternalUI, 0, NULL);
@@ -776,9 +779,41 @@ static INT HandleInstallMessage(
 {
     INT nResult = IDOK;
     WIU_MSI_EXECUTE_MESSAGE message = { };
+    DWORD cData = 0;
+    LPWSTR* rgwzData = NULL;
 
 Trace2(REPORT_STANDARD, "install[%x]: %ls", pContext->dwCurrentProgressIndex, wzMessage);
 
+    // If we have a record based message, try to get the extra data.
+    if (hRecord)
+    {
+        cData = ::MsiRecordGetFieldCount(hRecord);
+
+        rgwzData = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cData, TRUE);
+        for (DWORD i = 0; rgwzData && i < cData; ++i)
+        {
+            DWORD cch = 0;
+
+            // get string from record
+#pragma prefast(push)
+#pragma prefast(disable:6298)
+            DWORD er = ::MsiRecordGetStringW(hRecord, i + 1, L"", &cch);
+#pragma prefast(pop)
+            if (ERROR_MORE_DATA == er)
+            {
+                HRESULT hr = StrAlloc(&rgwzData[i], ++cch);
+                if (SUCCEEDED(hr))
+                {
+                    er = ::MsiRecordGetStringW(hRecord, i + 1, rgwzData[i], &cch);
+                }
+            }
+        }
+
+        message.cData = cData;
+        message.rgwzData = (LPCWSTR*)rgwzData;
+    }
+
+    // Handle the message.
     switch (mt)
     {
     case INSTALLMESSAGE_INITIALIZE: // this message is received prior to internal UI initialization, no string data
@@ -852,7 +887,10 @@ Trace3(REPORT_STANDARD, "progress[%x]: actiondata, progress: %u  forward: %d", p
 
     //case INSTALLMESSAGE_RMFILESINUSE: __fallthrough;
     case INSTALLMESSAGE_FILESINUSE:
-        nResult = HandleFilesInUseRecord(pContext, hRecord);
+        message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE;
+        message.msiFilesInUse.cFiles = message.cData;       // point the files in use information to the message record information.
+        message.msiFilesInUse.rgwzFiles = message.rgwzData;
+        nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
 
 /*
@@ -896,6 +934,17 @@ Trace3(REPORT_STANDARD, "progress[%x]: actiondata, progress: %u  forward: %d", p
         message.msiMessage.wzMessage = wzMessage;
         nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
+    }
+
+    // Clean up if there was any data allocated.
+    if (rgwzData)
+    {
+        for (DWORD i = 0; i < cData; ++i)
+        {
+            ReleaseStr(rgwzData[i]);
+        }
+
+        MemFree(rgwzData);
     }
 
     return nResult;
@@ -1165,57 +1214,4 @@ static DWORD CalculatePhaseProgress(
     // else we're not there yet so it has to be zero.
 
     return dwPhasePercentage;
-}
-
-static INT HandleFilesInUseRecord(
-    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
-    __in MSIHANDLE hRecord
-    )
-{
-    HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
-    int nResult = IDOK;
-    DWORD cFiles = 0;
-    LPWSTR* rgwzFiles = NULL;
-    DWORD cch = 0;
-    WIU_MSI_EXECUTE_MESSAGE message = { };
-
-    cFiles = ::MsiRecordGetFieldCount(hRecord);
-
-    rgwzFiles = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cFiles, TRUE);
-    ExitOnNull(rgwzFiles, hr, E_OUTOFMEMORY, "Failed to allocate buffer.");
-
-    for (DWORD i = 0; i < cFiles; ++i)
-    {
-        // get string from record
-#pragma prefast(push)
-#pragma prefast(disable:6298)
-        er = ::MsiRecordGetStringW(hRecord, i + 1, L"", &cch);
-#pragma prefast(pop)
-        if (ERROR_MORE_DATA == er)
-        {
-            hr = StrAlloc(&rgwzFiles[i], ++cch);
-            ExitOnFailure(hr, "Failed to allocate string buffer.");
-
-            er = ::MsiRecordGetStringW(hRecord, i + 1, rgwzFiles[i], &cch);
-        }
-        ExitOnWin32Error1(er, hr, "Failed to get record field as string: %u", i);
-    }
-
-    message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
-    message.msiFilesInUse.cFiles = cFiles;
-    message.msiFilesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
-    nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
-
-LExit:
-    if (rgwzFiles)
-    {
-        for (DWORD i = 0; i <= cFiles; ++i)
-        {
-            ReleaseStr(rgwzFiles[i]);
-        }
-        MemFree(rgwzFiles);
-    }
-
-    return nResult;
 }

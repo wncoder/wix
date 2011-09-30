@@ -144,6 +144,9 @@
     <ClCompile Include="iniutil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="proc3utl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\aclutil.h">

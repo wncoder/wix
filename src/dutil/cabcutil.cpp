@@ -1323,9 +1323,9 @@ static __callback BOOL DIAMONDAPI CabCGetTempFile(
 
     for (DWORD i = 0; i < DWORD_MAX; ++i)
     {
-        ::InterlockedIncrement(reinterpret_cast<volatile LONG*>(&dwIndex));
+        LONG dwTempIndex = ::InterlockedIncrement(reinterpret_cast<volatile LONG*>(&dwIndex));
 
-        hr = ::StringCbPrintfA(szFile, cbFile, "%s\\%08x.%03x", szTempPath, dwIndex, dwProcessId);
+        hr = ::StringCbPrintfA(szFile, cbFile, "%s\\%08x.%03x", szTempPath, dwTempIndex, dwProcessId);
         ExitOnFailure(hr, "failed to format log file path.");
 
         hTempFile = ::CreateFileA(szFile, 0, FILE_SHARE_DELETE, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);

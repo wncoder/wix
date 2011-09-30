@@ -270,11 +270,6 @@ static HRESULT DownloadResource(
     HINTERNET hUrl = NULL;
     LONGLONG llLength = 0;
 
-    // Ensure the directory where we will be downloading the payload exists and
-    // open the file.
-    hr = CacheEnsureWorkingDirectory(wzDestinationPath, NULL);
-    ExitOnFailure1(hr, "Failed to create working directory: %ls", wzDestinationPath);
-
     hPayloadFile = ::CreateFileW(wzDestinationPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (INVALID_HANDLE_VALUE == hPayloadFile)
     {

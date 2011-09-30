@@ -44,6 +44,11 @@ static HRESULT GetAppBase(
 static HRESULT CheckSupportedFrameworks(
     __in LPCWSTR wzConfigPath
     );
+static HRESULT UpdateSupportedRuntime(
+    __in IXMLDOMDocument* pixdManifest,
+    __in IXMLDOMNode* pixnSupportedFramework,
+    __out BOOL* pfUpdatedManifest
+    );
 static HRESULT GetCLRHost(
     __in LPCWSTR wzConfigPath,
     __out ICorRuntimeHost** ppCLRHost
@@ -244,6 +249,7 @@ static HRESULT CheckSupportedFrameworks(
     LPWSTR sczFrameworkRegistryKey = NULL;
     HKEY hkFramework = NULL;
     DWORD dwFrameworkInstalled = 0;
+    BOOL fUpdatedManifest = FALSE;
 
     hr = XmlInitialize();
     ExitOnFailure(hr, "Failed to initialize XML.");
@@ -285,9 +291,19 @@ static HRESULT CheckSupportedFrameworks(
         if (S_FALSE == hr)
         {
             hr = E_NOTFOUND;
+            ExitOnRootFailure(hr, "Failed to find a supported framework.");
         }
+
+        hr = UpdateSupportedRuntime(pixdManifest, pNode, &fUpdatedManifest);
+        ExitOnFailure(hr, "Failed to update supportedRuntime.");
     }
     // else no supported frameworks specified, so the startup/supportedRuntime must be enough.
+
+    if (fUpdatedManifest)
+    {
+        hr = XmlSaveDocument(pixdManifest, wzConfigPath);
+        ExitOnFailure1(hr, "Failed to save updated manifest over config file: %ls", wzConfigPath);
+    }
 
 LExit:
     ReleaseRegKey(hkFramework);
@@ -298,6 +314,59 @@ LExit:
     ReleaseObject(pixdManifest);
 
     XmlUninitialize();
+
+    return hr;
+}
+
+// Fixes the supportedRuntime element if necessary.
+static HRESULT UpdateSupportedRuntime(
+    __in IXMLDOMDocument* pixdManifest,
+    __in IXMLDOMNode* pixnSupportedFramework,
+    __out BOOL* pfUpdatedManifest
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczSupportedRuntimeVersion = NULL;
+    IXMLDOMNode* pixnStartup = NULL;
+    IXMLDOMNode* pixnSupportedRuntime = NULL;
+
+    *pfUpdatedManifest = FALSE;
+
+    // If the runtime version attribute is not specified, don't update the manifest.
+    hr = XmlGetAttributeEx(pixnSupportedFramework, L"runtimeVersion", &sczSupportedRuntimeVersion);
+    if (E_NOTFOUND == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to get supportedFramework/@runtimeVersion.");
+
+    // Get the startup element. Fail if we can't find it since it'll be necessary to load the
+    // correct runtime.
+    hr = XmlSelectSingleNode(pixdManifest, L"/configuration/startup", &pixnStartup);
+    ExitOnFailure(hr, "Failed to get startup element.");
+
+    if (S_FALSE == hr)
+    {
+        hr = E_NOTFOUND;
+        ExitOnRootFailure(hr, "Failed to find startup element in bootstrapper application config.");
+    }
+
+    // Remove any pre-existing supported runtimes because they'll just get in the way and create our new one.
+    hr = XmlRemoveChildren(pixnStartup, L"supportedRuntime");
+    ExitOnFailure(hr, "Failed to remove pre-existing supportedRuntime elements.");
+
+    hr = XmlCreateChild(pixnStartup, L"supportedRuntime", &pixnSupportedRuntime);
+    ExitOnFailure(hr, "Failed to create supportedRuntime element.");
+
+    hr = XmlSetAttribute(pixnSupportedRuntime, L"version", sczSupportedRuntimeVersion);
+    ExitOnFailure1(hr, "Failed to set supportedRuntime/@version to '%ls'.", sczSupportedRuntimeVersion);
+
+    *pfUpdatedManifest = TRUE;
+
+LExit:
+    ReleaseObject(pixnSupportedRuntime);
+    ReleaseObject(pixnStartup);
+    ReleaseStr(sczSupportedRuntimeVersion);
 
     return hr;
 }

@@ -42,17 +42,22 @@ typedef struct _BURN_CACHE_CALLBACK
 
 // functions
 
+HRESULT CacheEnsureWorkingFolder(
+    __in LPCWSTR wzBundleId,
+    __deref_out_z_opt LPWSTR* psczWorkingFolder
+    );
 HRESULT CacheGetOriginalSourcePath(
     __in BURN_VARIABLES* pVariables,
     __in_z_opt LPCWSTR wzRelativePath,
     __out_z_opt LPWSTR* psczOriginalSource
     );
 HRESULT CacheCalculatePayloadUnverifiedPath(
-    __in_opt BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzBundleId,
     __in BURN_PAYLOAD* pPayload,
     __deref_out_z LPWSTR* psczUnverifiedPath
     );
 HRESULT CacheCaclulateContainerUnverifiedPath(
+    __in_z LPCWSTR wzBundleId,
     __in BURN_CONTAINER* pContainer,
     __deref_out_z LPWSTR* psczUnverifiedPath
     );
@@ -62,12 +67,8 @@ HRESULT CacheGetCompletedPath(
     __deref_out_z LPWSTR* psczCompletedPath
     );
 HRESULT CacheGetResumePath(
-    __in_z LPCWSTR wzWorkingPath,
+    __in_z LPCWSTR wzPayloadWorkingPath,
     __deref_out_z LPWSTR* psczResumePath
-    );
-HRESULT CacheEnsureWorkingDirectory(
-    __in_z LPCWSTR wzWorkingPath,
-    __out_z_opt LPWSTR* psczWorkingDir
     );
 HRESULT CacheSendProgressCallback(
     __in BURN_CACHE_CALLBACK* pCallback,
@@ -104,6 +105,9 @@ HRESULT CachePayload(
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
+    );
+HRESULT CacheRemoveWorkingFolder(
+    __in_z_opt LPCWSTR wzBundleId
     );
 HRESULT CacheRemoveBundle(
     __in BOOL fPerMachine,

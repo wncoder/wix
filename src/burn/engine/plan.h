@@ -184,7 +184,6 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             BURN_PACKAGE* pPackage;
             BOOTSTRAPPER_ACTION_STATE action;
-            LPWSTR sczBundleName;
         } exePackage;
         struct
         {
@@ -192,6 +191,7 @@ typedef struct _BURN_EXECUTE_ACTION
             LPWSTR sczProductCode;
             LPWSTR sczLogPath;
             DWORD dwLoggingAttributes;
+            INSTALLUILEVEL uiLevel;
             BOOTSTRAPPER_ACTION_STATE action;
 
             BOOTSTRAPPER_FEATURE_ACTION* rgFeatures;
@@ -205,6 +205,7 @@ typedef struct _BURN_EXECUTE_ACTION
             LPWSTR sczTargetProductCode;
             BOOL fPerMachineTarget;
             LPWSTR sczLogPath;
+            INSTALLUILEVEL uiLevel;
             BOOTSTRAPPER_ACTION_STATE action;
 
             BURN_ORDERED_PATCHES* rgOrderedPatches;
@@ -241,6 +242,7 @@ typedef struct _BURN_CLEAN_ACTION
 typedef struct _BURN_PLAN
 {
     BOOTSTRAPPER_ACTION action;
+    LPWSTR wzBundleId; // points directly into parent the ENGINE_STATE.
     BOOL fPerMachine;
 
     DWORD64 qwCacheSizeTotal;
@@ -283,7 +285,9 @@ HRESULT PlanDefaultPackageRequestState(
     );
 HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzLayoutDirectory
+    __in BURN_VARIABLES* pVariables,
+    __in BURN_PAYLOADS* pPayloads,
+    __out_z LPWSTR* psczLayoutDirectory
     );
 HRESULT PlanLayoutOnlyPayload(
     __in BURN_PLAN* pPlan,
@@ -294,6 +298,30 @@ HRESULT PlanLayoutPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,
     __in_z LPCWSTR wzLayoutDirectory
+    );
+HRESULT PlanExecutePackage(
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __inout HANDLE* phSyncpointEvent,
+    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
+    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction,
+    __out BOOL* pfPlannedCachePackage,
+    __out BOOL* pfPlannedCleanPackage
+    );
+HRESULT PlanRelatedBundles(
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
+    __in DWORD64 qwBundleVersion,
+    __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __inout HANDLE* phSyncpointEvent,
+    __in DWORD dwExecuteActionEarlyIndex
     );
 HRESULT PlanCachePackage(
     __in BURN_PLAN* pPlan,

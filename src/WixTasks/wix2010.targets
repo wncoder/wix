@@ -193,7 +193,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <IntermediateOutputPath Condition="!HasTrailingSlash('$(IntermediateOutputPath)')">$(IntermediateOutputPath)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup>
-      <CabinetCachePath Condition=" '$(CabinetCachePath)'=='' and '$(ReuseCabinetCache)'!='' and $(ReuseCabinetCache) ">$(IntermediateOutputPath)cabcache\</CabinetCachePath>
+      <CabinetCachePath Condition=" '$(CabinetCachePath)'=='' and '$(ReuseCabinetCache)'=='true' ">$(IntermediateOutputPath)cabcache\</CabinetCachePath>
   </PropertyGroup>
   <ItemGroup>
       <IntermediateAssembly Include="$(IntermediateOutputPath)$(TargetName)$(TargetExt)"/>
@@ -984,14 +984,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
 
     <!--
     Determine which project references should be built. Note: we will not build any project references
-    if building in the IDE or building a .sln file because those build project references directly.
+    if building in the IDE because it builds project references directly.
 
     If BuildProjectReferences is 'true' (the default) then take all MSBuild project references that exist
     on disk and add them to the list of things to build. This is the easy case.
     -->
     <CreateItem
       Include="@(_MSBuildProjectReferenceExistent)"
-      Condition=" '$(BuildProjectReferences)' == 'true' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+      Condition=" '$(BuildProjectReferences)' == 'true' and '$(BuildingInsideVisualStudio)' != 'true' ">
 
       <Output TaskParameter="Include" ItemName="_ProjectReferencesToBuild" />
     </CreateItem>
@@ -1003,7 +1003,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     -->
     <CreateItem
       Include="@(_GatheredProjectReferencePaths)"
-      Condition=" '$(BuildProjectReferences)' == 'wixlib' and '%(Extension)' == '.wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and '%(Extension)' == '.wixlib' and '$(BuildingInsideVisualStudio)' != 'true' ">
 
       <Output TaskParameter="Include" ItemName="_ReferencedWixLibPaths" />
     </CreateItem>
@@ -1015,7 +1015,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <CreateItem
       Include="@(_MSBuildProjectReferenceExistent->'%(FullPath)')"
       Exclude="@(_ReferencedWixLibPaths->'%(MSBuildSourceProjectFile)')"
-      Condition=" '$(BuildProjectReferences)' == 'wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and '$(BuildingInsideVisualStudio)' != 'true' ">
 
       <Output TaskParameter="Include" ItemName="_ProjectReferencesToSkip" />
     </CreateItem>
@@ -1027,7 +1027,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <CreateItem
       Include="@(_MSBuildProjectReferenceExistent->'%(FullPath)')"
       Exclude="@(_ProjectReferencesToSkip)"
-      Condition=" '$(BuildProjectReferences)' == 'wixlib' and ('$(BuildingSolutionFile)' != 'true' and '$(BuildingInsideVisualStudio)' != 'true') ">
+      Condition=" '$(BuildProjectReferences)' == 'wixlib' and '$(BuildingInsideVisualStudio)' != 'true' ">
 
       <Output TaskParameter="Include" ItemName="_ProjectReferencesToBuild" />
     </CreateItem>

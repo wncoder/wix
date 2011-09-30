@@ -631,7 +631,11 @@ public: // IBootstrapperEngine
     {
         HRESULT hr = S_OK;
 
-        if (!::PostThreadMessageW(m_dwThreadId, WM_BURN_PLAN, 0, action))
+        if (BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING == m_pEngineState->command.resumeType)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_FAIL_NOACTION_REBOOT);
+        }
+        else if (!::PostThreadMessageW(m_dwThreadId, WM_BURN_PLAN, 0, action))
         {
             ExitWithLastError(hr, "Failed to post plan message.");
         }
@@ -646,7 +650,7 @@ public: // IBootstrapperEngine
     {
         HRESULT hr = S_OK;
 
-        if (m_pEngineState->companionConnection.hProcess)
+        if (INVALID_HANDLE_VALUE != m_pEngineState->companionConnection.hPipe)
         {
             hr = HRESULT_FROM_WIN32(ERROR_ALREADY_INITIALIZED);
         }

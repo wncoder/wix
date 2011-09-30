@@ -96,15 +96,19 @@ static HRESULT InitializeVariableCsidlFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
-//static HRESULT InitializeVariableKnownFolder(
-//    __in DWORD_PTR dwpData,
-//    __inout BURN_VARIANT* pValue
-//    );
+static HRESULT InitializeVariableKnownFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 static HRESULT InitializeVariableWindowsVolumeFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
 static HRESULT InitializeVariableTempFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableSystemFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
@@ -148,8 +152,8 @@ extern "C" HRESULT VariableInitialize(
         {L"AdminToolsFolder", InitializeVariableCsidlFolder, CSIDL_ADMINTOOLS},
         {L"AppDataFolder", InitializeVariableCsidlFolder, CSIDL_APPDATA},
         {L"CommonAppDataFolder", InitializeVariableCsidlFolder, CSIDL_COMMON_APPDATA},
-        //{L"CommonFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesCommonX64},
-        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMONX86},
+        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMON},
+        {L"CommonFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesCommonX64},
         {L"CompatibilityMode", InitializeVariableOsInfo, OS_INFO_VARIABLE_CompatibilityMode},
         {L"DesktopFolder", InitializeVariableCsidlFolder, CSIDL_DESKTOP},
         {L"FavoritesFolder", InitializeVariableCsidlFolder, CSIDL_FAVORITES},
@@ -166,17 +170,18 @@ extern "C" HRESULT VariableInitialize(
         {L"NTSuiteWebServer", InitializeVariableOsInfo, OS_INFO_VARIABLE_NTSuiteWebServer},
         {L"PersonalFolder", InitializeVariableCsidlFolder, CSIDL_PERSONAL},
         {L"Privileged", InitializeVariablePrivileged, 0},
-        //{L"ProgramFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesX64},
-        {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
+        {L"ProgramFilesFolder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFiles},
+        {L"ProgramFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesX64},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
         {L"RebootPending", InitializeVariableRebootPending, 0},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},
         {L"ServicePackLevel", InitializeVariableOsInfo, OS_INFO_VARIABLE_ServicePackLevel},
         {L"StartMenuFolder", InitializeVariableCsidlFolder, CSIDL_STARTMENU},
         {L"StartupFolder", InitializeVariableCsidlFolder, CSIDL_STARTUP},
-        {L"SystemFolder", InitializeVariableCsidlFolder, CSIDL_SYSTEMX86},
+        {L"SystemFolder", InitializeVariableSystemFolder, FALSE},
+        {L"System64Folder", InitializeVariableSystemFolder, TRUE},
         {L"SystemLanguageID", InitializeSystemLanguageID, 0},
-        {L"TempFolder", InitializeVariableTempFolder, CSIDL_TEMPLATES},
+        {L"TempFolder", InitializeVariableTempFolder, 0},
         {L"TemplateFolder", InitializeVariableCsidlFolder, CSIDL_TEMPLATES},
         {L"TerminalServer", InitializeVariableOsInfo, OS_INFO_VARIABLE_TerminalServer},
         {L"UserLanguageID", InitializeUserLanguageID, 0},
@@ -1251,16 +1256,8 @@ static HRESULT InitializeVariableOsInfo(
         {
 #if !defined(_WIN64)
             BOOL fIsWow64 = FALSE;
-            typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
-            LPFN_ISWOW64PROCESS pfnIsWow64Process = (LPFN_ISWOW64PROCESS)::GetProcAddress(::GetModuleHandleW(L"kernel32"), "IsWow64Process");
 
-            if (pfnIsWow64Process)
-            {
-                if (!pfnIsWow64Process(::GetCurrentProcess(), &fIsWow64))
-                {
-                    ExitWithLastError(hr, "Failed to check WOW64 process.");
-                }
-            }
+            ProcWow64(::GetCurrentProcess(), &fIsWow64);
             if (fIsWow64)
 #endif
             {
@@ -1362,52 +1359,49 @@ static HRESULT InitializeVariableCsidlFolder(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczPath = NULL;
     int nFolder = (int)dwpData;
-    WCHAR wzPath[MAX_PATH] = { };
 
     // get folder path
-    hr = ::SHGetFolderPathW(NULL, nFolder, NULL, 0, wzPath);
-    ExitOnRootFailure(hr, "Failed to get known folder.");
+    hr = ShelGetFolder(&sczPath, nFolder);
+    ExitOnRootFailure(hr, "Failed to get shell folder.");
 
     // set value
-    hr = BVariantSetString(pValue, wzPath, 0);
+    hr = BVariantSetString(pValue, sczPath, 0);
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
+    ReleaseStr(sczPath);
+
     return hr;
 }
 
-//static HRESULT InitializeVariableKnownFolder(
-//    __in DWORD_PTR dwpData,
-//    __inout BURN_VARIANT* pValue
-//    )
-//{
-//    HRESULT hr = S_OK;
-//    REFKNOWNFOLDERID rfid = *(KNOWNFOLDERID*)dwpData;
-//    typedef HRESULT (*PFN_SHGetKnownFolderPath)(REFKNOWNFOLDERID rfid, DWORD dwFlags, HANDLE hToken, PWSTR *ppszPath);
-//    PFN_SHGetKnownFolderPath pfnSHGetKnownFolderPath = NULL;
-//    LPWSTR sczPath = NULL;
-//
-//    // get DllGetVersion proc address
-//    pfnSHGetKnownFolderPath = (PFN_SHGetKnownFolderPath)::GetProcAddress(::GetModuleHandleW(L"shell32"), "SHGetKnownFolderPath");
-//    if (pfnSHGetKnownFolderPath)
-//    {
-//        hr = pfnSHGetKnownFolderPath(rfid, 0, NULL, &sczPath);
-//        ExitOnRootFailure(hr, "Failed to get known folder.");
-//    }
-//
-//    // set value
-//    hr = BVariantSetString(pValue, sczPath ? sczPath : L"", 0);
-//    ExitOnFailure(hr, "Failed to set variant value.");
-//
-//LExit:
-//    if (sczPath)
-//    {
-//        ::CoTaskMemFree(sczPath);
-//    }
-//
-//    return hr;
-//}
+static HRESULT InitializeVariableKnownFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczPath = NULL;
+    REFKNOWNFOLDERID rfid = *(KNOWNFOLDERID*)dwpData;
+
+    hr = ShelGetKnownFolder(&sczPath, rfid);
+    if (E_NOTIMPL == hr)
+    {
+        sczPath = NULL;
+        hr = S_OK;
+    }
+    ExitOnFailure(hr, "Failed to get known folder.");
+
+    // set value
+    hr = BVariantSetString(pValue, sczPath ? sczPath : L"", 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    ReleaseStr(sczPath);
+
+    return hr;
+}
 
 static HRESULT InitializeVariableTempFolder(
     __in DWORD_PTR dwpData,
@@ -1428,6 +1422,71 @@ static HRESULT InitializeVariableTempFolder(
     // set value
     hr = BVariantSetString(pValue, wzPath, 0);
     ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT InitializeVariableSystemFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL f64 = (BOOL)dwpData;
+    BOOL fWow64 = FALSE;
+    WCHAR wzSystemFolder[MAX_PATH] = { };
+
+#ifndef _WIN64
+    if (f64)
+    {
+        // Try to get the WOW system folder. If this function is not implemented (aka: 32-bit Windows)
+        // then we'll leave the folder blank.
+        if (!::GetSystemWow64DirectoryW(wzSystemFolder, countof(wzSystemFolder)))
+        {
+            DWORD er = ::GetLastError();
+            if (ERROR_CALL_NOT_IMPLEMENTED != er)
+            {
+                er = ERROR_SUCCESS;
+            }
+
+            hr = HRESULT_FROM_WIN32(er);
+            ExitOnRootFailure(hr, "Failed to get 32-bit system folder.");
+        }
+    }
+    else
+    {
+        if (!::GetSystemDirectoryW(wzSystemFolder, countof(wzSystemFolder)))
+        {
+            ExitWithLastError(hr, "Failed to get 64-bit system folder.");
+        }
+    }
+#else
+    if (f64)
+    {
+        if (!::GetSystemDirectoryW(wzSystemFolder, countof(wzSystemFolder)))
+        {
+            ExitWithLastError(hr, "Failed to get 64-bit system folder.");
+        }
+    }
+    else
+    {
+        if (!::GetSystemWow64DirectoryW(wzSystemFolder, countof(wzSystemFolder)))
+        {
+            ExitWithLastError(hr, "Failed to get 32-bit system folder.");
+        }
+    }
+#endif
+
+    if (*wzSystemFolder)
+    {
+        hr = PathFixedBackslashTerminate(wzSystemFolder, countof(wzSystemFolder));
+        ExitOnFailure(hr, "Failed to backslash terminate system folder.");
+    }
+
+    // set value
+    hr = BVariantSetString(pValue, wzSystemFolder, 0);
+    ExitOnFailure(hr, "Failed to set system folder variant value.");
 
 LExit:
     return hr;

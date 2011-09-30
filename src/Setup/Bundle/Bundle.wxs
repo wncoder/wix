@@ -31,11 +31,13 @@
           <Payload SourceFile='NetfxLicense.rtf' />
         </BootstrapperApplicationRef>
 
-        <Chain DisableRollback='yes'>
+        <Chain>
             <PackageGroupRef Id='Netfx4Full' />
             <PackageGroupRef Id='ProjectAggregator' />
 
-            <MsiPackage Id='Wix' Compressed='no' Vital='yes'
+            <RollbackBoundary />
+
+            <MsiPackage Id='Wix' Vital='yes'
                         DownloadUrl='http://wix.sourceforge.net/releases/$(var.WixVersion)/{2}'
                         Name='data\Wix36.msi' SourceFile='x86\data\Wix36.msi' />
         </Chain>
@@ -46,7 +48,6 @@
 
         <PackageGroup Id='ProjectAggregator'>
             <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
-                        DownloadUrl='http://wix.sourceforge.net/releases/data/ProjectAggregator2.msi'
                         SourceFile='x86\ProjectAggregator2.msi' />
         </PackageGroup>
     </Fragment>

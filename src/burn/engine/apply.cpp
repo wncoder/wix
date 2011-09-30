@@ -119,6 +119,7 @@ static void DoRollbackCache(
     );
 static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
@@ -129,6 +130,7 @@ static HRESULT DoExecuteAction(
     );
 static HRESULT DoRollbackActions(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -144,6 +146,7 @@ static HRESULT ExecuteExePackage(
     );
 static HRESULT ExecuteMsiPackage(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -153,6 +156,7 @@ static HRESULT ExecuteMsiPackage(
     );
 static HRESULT ExecuteMspPackage(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -214,21 +218,8 @@ extern "C" HRESULT ApplyRegister(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted register begin.");
 
-    if (BOOTSTRAPPER_RESUME_TYPE_NONE == pEngineState->command.resumeType)
-    {
-        // begin new session
-        if (pEngineState->registration.fPerMachine)
-        {
-            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, 0, pEngineState->registration.sczResumeCommandLine);
-            ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
-        }
-        else
-        {
-            hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
-            ExitOnFailure(hr, "Failed to begin registration session.");
-        }
-    }
-    else
+    // If we have a resume mode that suggests the bundle is on the machine.
+    if (BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING < pEngineState->command.resumeType)
     {
         // resume previous session
         if (pEngineState->registration.fPerMachine)
@@ -242,10 +233,28 @@ extern "C" HRESULT ApplyRegister(
             ExitOnFailure(hr, "Failed to resume registration session.");
         }
     }
+    else // need to complete registration on the machine.
+    {
+        // begin new session
+        if (pEngineState->registration.fPerMachine)
+        {
+            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, 0, pEngineState->registration.sczResumeCommandLine);
+            ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
+        }
+        else
+        {
+            hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
+            ExitOnFailure(hr, "Failed to begin registration session.");
+        }
+    }
 
-    // save engine state
+    // Try to save engine state.
     hr = CoreSaveEngineState(pEngineState);
-    ExitOnFailure(hr, "Failed to save engine state.");
+    if (FAILED(hr))
+    {
+        LogErrorId(hr, MSG_STATE_NOT_SAVED, NULL, NULL, NULL);
+        hr = S_OK;
+    }
 
     if (pEngineState->registration.fPerMachine)
     {
@@ -485,6 +494,7 @@ LExit:
 
 extern "C" HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
     __out BOOL* pfRollback,
@@ -528,7 +538,7 @@ extern "C" HRESULT ApplyExecute(
         }
 
         // Execute the action.
-        hr = DoExecuteAction(pEngineState, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfSuspend, pRestart);
+        hr = DoExecuteAction(pEngineState, hwndParent, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfSuspend, pRestart);
 
         if (*pfSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
         {
@@ -545,7 +555,7 @@ extern "C" HRESULT ApplyExecute(
             }
             else // the action failed, roll back to previous rollback boundary.
             {
-                HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pRestart);
+                HRESULT hrRollback = DoRollbackActions(pEngineState, hwndParent, &context, dwCheckpoint, pRestart);
                 UNREFERENCED_PARAMETER(hrRollback);
 
                 // If the rollback boundary is vital, end execution here.
@@ -1117,6 +1127,7 @@ static void DoRollbackCache(
 
 static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
@@ -1172,12 +1183,12 @@ static HRESULT DoExecuteAction(
             break;
 
         case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-            hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            hr = ExecuteMsiPackage(pEngineState, hwndParent, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
             ExitOnFailure(hr, "Failed to execute MSI package.");
             break;
 
         case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-            hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            hr = ExecuteMspPackage(pEngineState, hwndParent, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
             ExitOnFailure(hr, "Failed to execute MSP package.");
             break;
 
@@ -1214,6 +1225,7 @@ LExit:
 
 static HRESULT DoRollbackActions(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -1260,13 +1272,13 @@ static HRESULT DoRollbackActions(
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-                hr = ExecuteMsiPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
+                hr = ExecuteMsiPackage(pEngineState, hwndParent, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSI package.");
                 hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-                hr = ExecuteMspPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
+                hr = ExecuteMspPackage(pEngineState, hwndParent, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSP package.");
                 hr = S_OK;
                 break;
@@ -1368,6 +1380,7 @@ LExit:
 
 static HRESULT ExecuteMsiPackage(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -1390,12 +1403,12 @@ static HRESULT ExecuteMsiPackage(
     // execute package
     if (pExecuteAction->msiPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsiPackage(pEngineState->companionConnection.hPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMsiPackage(pEngineState->companionConnection.hPipe, hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSI package.");
     }
     else
     {
-        hrExecute = MsiEngineExecutePackage(pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = MsiEngineExecutePackage(hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user MSI package.");
     }
 
@@ -1413,6 +1426,7 @@ LExit:
 
 static HRESULT ExecuteMspPackage(
     __in BURN_ENGINE_STATE* pEngineState,
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -1435,12 +1449,12 @@ static HRESULT ExecuteMspPackage(
     // execute package
     if (pExecuteAction->mspTarget.fPerMachineTarget)
     {
-        hrExecute = ElevationExecuteMspPackage(pEngineState->companionConnection.hPipe, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMspPackage(pEngineState->companionConnection.hPipe, hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSP package.");
     }
     else
     {
-        hrExecute = MspEngineExecutePackage(pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = MspEngineExecutePackage(hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user MSP package.");
     }
 
@@ -1604,10 +1618,10 @@ static int MsiExecuteMessageHandler(
         }
 
     case WIU_MSI_EXECUTE_MESSAGE_ERROR:
-        return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags);
+        return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags, pMessage->cData, pMessage->rgwzData);
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
-        return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage);
+        return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage, pMessage->cData, pMessage->rgwzData);
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
         return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);

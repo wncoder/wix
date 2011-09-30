@@ -1215,9 +1215,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnError(string wzPackageId, int dwCode, string wzError, int dwUIHint)
+        Result IBootstrapperApplication.OnError(string wzPackageId, int dwCode, string wzError, int dwUIHint, int cData, string[] rgwzData)
         {
-            ErrorEventArgs args = new ErrorEventArgs(wzPackageId, dwCode, wzError, dwUIHint);
+            ErrorEventArgs args = new ErrorEventArgs(wzPackageId, dwCode, wzError, dwUIHint, rgwzData);
             this.OnError(args);
 
             return args.Result;
@@ -1231,9 +1231,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnExecuteMsiMessage(string wzPackageId, InstallMessage mt, int uiFlags, string wzMessage)
+        Result IBootstrapperApplication.OnExecuteMsiMessage(string wzPackageId, InstallMessage mt, int uiFlags, string wzMessage, int cData, string[] rgwzData)
         {
-            ExecuteMsiMessageEventArgs args = new ExecuteMsiMessageEventArgs(wzPackageId, mt, uiFlags, wzMessage);
+            ExecuteMsiMessageEventArgs args = new ExecuteMsiMessageEventArgs(wzPackageId, mt, uiFlags, wzMessage, rgwzData);
             this.OnExecuteMsiMessage(args);
 
             return args.Result;

@@ -86,25 +86,15 @@ LExit:
 }
 
 //
-// Plan - calculates the execute and rollback state for the requested package state.
+// PlanCalculate - calculates the execute and rollback state for the requested package state.
 //
-extern "C" HRESULT MsuEnginePlanPackage(
-    __in DWORD dwPackageSequence,
-    __in_opt DWORD *pdwInsertSequence,
-    __in BURN_PACKAGE* pPackage,
-    __in BURN_PLAN* pPlan,
-    __in BURN_LOGGING* pLog,
-    __in BURN_VARIABLES* pVariables,
-    __in HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+extern "C" HRESULT MsuEnginePlanCalculatePackage(
+    __in BURN_PACKAGE* pPackage
     )
 {
     HRESULT hr = S_OK;
     BOOTSTRAPPER_ACTION_STATE execute = BOOTSTRAPPER_ACTION_STATE_NONE;
     BOOTSTRAPPER_ACTION_STATE rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-    BURN_EXECUTE_ACTION* pAction = NULL;
 
     BOOL fAllowUninstall = FALSE;
     OS_VERSION osVersion = OS_VERSION_UNKNOWN;
@@ -187,6 +177,30 @@ extern "C" HRESULT MsuEnginePlanPackage(
         ExitOnRootFailure(hr, "Invalid package expected state.");
     }
 
+    // return values
+    pPackage->execute = execute;
+    pPackage->rollback = rollback;
+
+LExit:
+    return hr;
+}
+
+//
+// PlanAdd - adds the calculated execute and rollback actions for the package.
+//
+extern "C" HRESULT MsuEnginePlanAddPackage(
+    __in_opt DWORD *pdwInsertSequence,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __in HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_EXECUTE_ACTION* pAction = NULL;
+
     // add wait for cache
     if (hCacheEvent)
     {
@@ -195,7 +209,7 @@ extern "C" HRESULT MsuEnginePlanPackage(
     }
 
     // add execute action
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute)
     {
         if (NULL != pdwInsertSequence)
         {
@@ -210,27 +224,23 @@ extern "C" HRESULT MsuEnginePlanPackage(
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE;
         pAction->msuPackage.pPackage = pPackage;
-        pAction->msuPackage.action = execute;
+        pAction->msuPackage.action = pPackage->execute;
 
-        LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
     }
 
     // add rollback action
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
     {
         hr = PlanAppendRollbackAction(pPlan, &pAction);
         ExitOnFailure(hr, "Failed to append rollback action.");
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE;
         pAction->msuPackage.pPackage = pPackage;
-        pAction->msuPackage.action = rollback;
+        pAction->msuPackage.action = pPackage->rollback;
 
-        LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
     }
-
-    // return values
-    *pExecuteAction = execute;
-    *pRollbackAction = rollback;
 
 LExit:
     return hr;

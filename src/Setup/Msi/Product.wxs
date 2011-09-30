@@ -20,14 +20,10 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" Name="$(var.ProductName) MSI Package" Language="1033" Manufacturer="Microsoft Corporation" Version="$(var.WixVersion)" UpgradeCode="3618724B-2523-44F9-A908-866AA619504D">
 
-        <Package Platform="$(var.Platform)" Manufacturer="Microsoft Corporation" Description="Windows Installer XML Toolset Visual Studio Package" Comments="Windows Installer XML Toolset Visual Studio Package" Compressed="yes" InstallerVersion="200" Languages="1033" Keywords="Database, Installer" ShortNames="no" SummaryCodepage="1252" />
+      <Package Compressed="yes" InstallerVersion="200" SummaryCodepage="1252" InstallScope="perMachine" />
 
-        <!-- Major upgrade -->
-        <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed." />
-
-        <Condition Message="An administrator must approve or install [ProductName].">
-            Privileged
-        </Condition>
+      <!-- Major upgrade -->
+      <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed." />
 
       <!-- Media -->
       <Media Id="1" Cabinet="Wix36.cab" />
@@ -38,6 +34,7 @@
       <Icon Id="WixSetupIcons.ico" SourceFile="wixsetupicons.dll" />
 
       <!-- Properties -->
+      <Property Id="ARPSYSTEMCOMPONENT" Value="1" />
       <Property Id="ARPHELPLINK" Value="http://sourceforge.net/support/getsupport.php?group_id=105970" />
       <Property Id="ARPPRODUCTICON" Value="WixIcon" />
       <Property Id="ARPURLINFOABOUT" Value="http://wix.sourceforge.net" />
@@ -172,7 +169,6 @@
 
         <!-- WixUI_Advanced scaffolding (to be replaced by extension authoring) -->
         <Property Id="ApplicationFolderName" Value="$(var.ProductDirectoryName)" />
-        <Property Id="ALLUSERS" Value="1" />
         <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
 
         <WixVariable Id="WixUISupportPerMachine" Value="1" />

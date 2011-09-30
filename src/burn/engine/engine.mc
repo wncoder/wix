@@ -207,6 +207,13 @@ Language=English
 Apply begin
 .
 
+MessageId=301
+Severity=Success
+SymbolicName=MSG_APPLYING_PACKAGE
+Language=English
+Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
+.
+
 MessageId=311
 Severity=Error
 SymbolicName=MSG_FAILED_ACQUIRE_CONTAINER
@@ -249,11 +256,46 @@ Language=English
 Failed to layout payload: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
 .
 
-MessageId=325
+MessageId=320
 Severity=Success
-SymbolicName=MSG_APPLYING_PACKAGE
+SymbolicName=MSG_DEPENDENCY_BUNDLE_REGISTER
 Language=English
-Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
+Registering bundle dependency key: %1!ls!, version %2!ls!
+.
+
+MessageId=321
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
+Language=English
+Removing bundle dependency key: %1!ls!
+.
+
+MessageId=322
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER
+Language=English
+Registering bundle dependency on package: %1!ls!
+.
+
+MessageId=323
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
+Language=English
+Removing bundle dependency on package: %1!ls!
+.
+
+MessageId=324
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE
+Language=English
+Skipping cross-scope bundle dependency registration on package: %1!ls!, bundle scope: %2!hs!, package scope: %3!hs!
+.
+
+MessageId=325
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED
+Language=English
+Skipping bundle dependency registration on failed package: %1!ls!
 .
 
 MessageId=348
@@ -313,43 +355,8 @@ Shutting down, exit code: 0x%1!x!
 .
 
 MessageId=501
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_BUNDLE_REGISTER
-Language=English
-Registering bundle dependency key: %1!ls!, version %2!ls!
-.
-
-MessageId=502
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
-Language=English
-Removing bundle dependency key: %1!ls!
-.
-
-MessageId=503
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER
-Language=English
-Registering bundle dependency on package: %1!ls!
-.
-
-MessageId=504
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
-Language=English
-Removing bundle dependency on package: %1!ls!
-.
-
-MessageId=505
 Severity=Warning
-SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE
+SymbolicName=MSG_STATE_NOT_SAVED
 Language=English
-Skipping cross-scope bundle dependency registration on package: %1!ls!, bundle scope: %2!hs!, package scope: %3!hs!
-.
-
-MessageId=506
-Severity=Warning
-SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED
-Language=English
-Skipping bundle dependency registration on failed package: %1!ls!
+The state file could not be saved, error: 0x%1!x!. Continuing...
 .

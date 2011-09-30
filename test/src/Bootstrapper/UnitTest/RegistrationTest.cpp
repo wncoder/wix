@@ -456,7 +456,7 @@ namespace Bootstrapper
                 hr = RegistrationDetectResumeType(&registration, &resumeType);
                 TestThrowOnFailure(hr, L"Failed to read interrupted resume type.");
 
-                Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_UNEXPECTED, (int)resumeType);
+                Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_INTERRUPTED, (int)resumeType);
 
                 // suspend session
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, TRUE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);

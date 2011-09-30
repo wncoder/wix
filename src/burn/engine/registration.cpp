@@ -514,7 +514,7 @@ extern "C" HRESULT RegistrationDetectResumeType(
     {
     case BURN_RESUME_MODE_ACTIVE:
         // a previous run was interrupted
-        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_UNEXPECTED;
+        *pResumeType = BOOTSTRAPPER_RESUME_TYPE_INTERRUPTED;
         break;
 
     case BURN_RESUME_MODE_SUSPEND:
@@ -939,6 +939,11 @@ extern "C" HRESULT RegistrationSaveState(
 
     // write data to file
     hr = FileWrite(pRegistration->sczStateFile, FILE_ATTRIBUTE_NORMAL, pbBuffer, cbBuffer, NULL);
+    if (E_PATHNOTFOUND == hr)
+    {
+        // TODO: should we log that the bundle's cache folder was not present so the state file wasn't created either?
+        hr = S_OK;
+    }
     ExitOnFailure1(hr, "Failed to write state to file: %ls", pRegistration->sczStateFile);
 
 LExit:

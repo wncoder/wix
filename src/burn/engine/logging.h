@@ -63,8 +63,9 @@ HRESULT LoggingOpen(
     __in BURN_VARIABLES* pVariables
     );
 
+void LoggingIncrementPackageSequence();
+
 HRESULT LoggingSetPackageVariable(
-    __in DWORD dwPackageSequence,
     __in BURN_PACKAGE* pPackage,
     __in BOOL fRollback,
     __in BURN_LOGGING* pLog,

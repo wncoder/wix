@@ -67,8 +67,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public const string DefaultComponentIdPlaceholderWixVariable = "!(wix.OfficialWixComponentIdPlaceholder)";
         public const string BurnUXContainerId = "WixUXContainer";
 
-        private static readonly Regex CabinetTemplateRegex = new Regex(@"^[_A-Za-z]+\{0\}[_A-Za-z]*.[A-Za-z][A-Za-z][A-Za-z]$", RegexOptions.Compiled | RegexOptions.Singleline);
-
         private TableDefinitionCollection tableDefinitions;
         private Hashtable extensions;
         private List<InspectorExtension> inspectorExtensions;
@@ -7902,7 +7900,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             this.core.OnMessage(WixErrors.MediaEmbeddedCabinetNameTooLong(sourceLineNumbers, node.Name, "Cabinet", cabinet, cabinet.Length));
                         }
-                    cabinet = String.Concat("#", cabinet);
+
+                        cabinet = String.Concat("#", cabinet);
                     }
                 }
                 else // external cabinet file
@@ -8028,7 +8027,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseMediaTemplateElement(XmlNode node, string patchId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string cabinetTemplate = "Prod{0}.cab";
+            string cabinetTemplate = "cab{0}.cab";
             string compressionLevel = null; // this defaults to mszip in Binder
             string diskPrompt = null;
             bool patch = null != patchId;
@@ -8052,18 +8051,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 cabinetTemplate = authoredCabinetTemplateValue;
                             }
 
-                            if (!CabinetTemplateRegex.IsMatch(cabinetTemplate))
+                            // Create an example cabinet name using the maximum number of cabinets supported, 999.
+                            string exampleCabinetName = String.Format(cabinetTemplate, "###");
+                            if (!CompilerCore.IsValidLocIdentifier(exampleCabinetName))
                             {
-                                this.core.OnMessage(WixErrors.InvalidCabinetTemplate(sourceLineNumbers, "{0}"));
-                            }
-                            else
-                            {
-                                // Maximun number of cabinets generated is 999
-                                string tempTemplateName = cabinetTemplate.Replace("{0}", "999");
-                                // external cabinet files must use 8.3 filenames
-                                if (!CompilerCore.IsValidShortFilename(tempTemplateName, false) && !CompilerCore.IsValidLocIdentifier(tempTemplateName))
+                                // The example name should not match the authored template since that would nullify the
+                                // reason for having multiple cabients. External cabinet files must also be valid file names.
+                                if (exampleCabinetName.Equals(authoredCabinetTemplateValue) || !CompilerCore.IsValidLongFilename(exampleCabinetName, false))
                                 {
-                                    this.core.OnMessage(WixErrors.InvalidCabinetTemplate(sourceLineNumbers, "{0}"));
+                                    this.core.OnMessage(WixErrors.InvalidCabinetTemplate(sourceLineNumbers, cabinetTemplate));
+                                }
+                                else if (!CompilerCore.IsValidShortFilename(exampleCabinetName, false) && !Common.WixVariableRegex.Match(exampleCabinetName).Success) // ignore short names with wix variables because it rarely works out.
+                                {
+                                    this.core.OnMessage(WixWarnings.MediaExternalCabinetFilenameIllegal(sourceLineNumbers, node.Name, "CabinetTemplate", cabinetTemplate));
                                 }
                             }
                             break;
@@ -20774,6 +20774,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string msuKB = null;
             YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
+            YesNoType displayInternalUI = YesNoType.NotSet;
             YesNoType enableFeatureSelection = YesNoType.NotSet;
             YesNoType forcePerMachine = YesNoType.NotSet;
 
@@ -20818,6 +20819,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "CacheId":
                             cacheId = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "DisplayInternalUI":
+                            displayInternalUI = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi || packageType == ChainPackageType.Msp);
                             break;
                         case "EnableFeatureSelection":
                             enableFeatureSelection = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -21093,6 +21098,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (YesNoType.NotSet != forcePerMachine)
                 {
                     row[21] = (YesNoType.Yes == forcePerMachine) ? 1 : 0;
+                }
+
+                if (YesNoType.NotSet != displayInternalUI)
+                {
+                    row[22] = (YesNoType.Yes == displayInternalUI) ? 1 : 0;
                 }
 
                 this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);

@@ -85,6 +85,10 @@ extern "C" HRESULT MsiEngineParsePackageFromXml(
     hr = FileVersionFromStringEx(scz, 0, &pPackage->Msi.qwVersion);
     ExitOnFailure1(hr, "Failed to parse @Version: %ls", scz);
 
+    // @DisplayInternalUI
+    hr = XmlGetYesNoAttribute(pixnMsiPackage, L"DisplayInternalUI", &pPackage->Msi.fDisplayInternalUI);
+    ExitOnFailure(hr, "Failed to get @DisplayInternalUI.");
+
     // select feature nodes
     hr = XmlSelectNodes(pixnMsiPackage, L"MsiFeature", &pixnNodes);
     ExitOnFailure(hr, "Failed to select feature nodes.");
@@ -413,6 +417,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
             {
                 operation = BOOTSTRAPPER_RELATED_OPERATION_MINOR_UPDATE;
             }
+
             pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_PRESENT;
         }
 
@@ -488,11 +493,24 @@ extern "C" HRESULT MsiEngineDetectPackage(
                 continue;
             }
 
+            // If this is a detect-only related package then we'll assume a downgrade is taking place, since
+            // that is the overwhelmingly common use of detect-only related packages. If not detect-only then
+            // it's easy; we're clearly doing a major upgrade.
+            operation = pRelatedMsi->fOnlyDetect ? BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE : BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+
+            LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, wzProductCode, LoggingPerMachineToString(fPerMachine), LoggingVersionToString(qwVersion), LoggingRelatedOperationToString(operation));
+
             // pass to UX
-            operation = pRelatedMsi->fOnlyDetect ? BOOTSTRAPPER_RELATED_OPERATION_NONE : BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, wzProductCode, fPerMachine, qwVersion, operation);
             hr = HRESULT_FROM_VIEW(nResult);
             ExitOnRootFailure(hr, "UX aborted detect related MSI package.");
+
+            // If we think a downgrade will occur and the BA did not ignore our notification above
+            // then mark the package as superseded.
+            if (BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation && IDIGNORE != nResult)
+            {
+                pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED;
+            }
         }
     }
 
@@ -557,20 +575,12 @@ LExit:
 }
 
 //
-// Plan - calculates the execute and rollback state for the requested package state.
+// PlanCalculate - calculates the execute and rollback state for the requested package state.
 //
-extern "C" HRESULT MsiEnginePlanPackage(
-    __in DWORD dwPackageSequence,
-    __in_opt DWORD *pdwInsertSequence,
+extern "C" HRESULT MsiEnginePlanCalculatePackage(
     __in BURN_PACKAGE* pPackage,
-    __in BURN_PLAN* pPlan,
-    __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
-    __in_opt HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BURN_USER_EXPERIENCE* pUserExperience
     )
 {
     Trace1(REPORT_STANDARD, "Planning MSI package 0x%p", pPackage);
@@ -582,9 +592,6 @@ extern "C" HRESULT MsiEnginePlanPackage(
     BOOTSTRAPPER_ACTION_STATE rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
     BOOTSTRAPPER_FEATURE_STATE featureRequestedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
     BOOTSTRAPPER_FEATURE_STATE featureExpectedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
-    BURN_EXECUTE_ACTION* pAction = NULL;
-    BOOTSTRAPPER_FEATURE_ACTION* rgFeatureActions = NULL;
-    BOOTSTRAPPER_FEATURE_ACTION* rgRollbackFeatureActions = NULL;
     BOOL fFeatureActionDelta = FALSE;
     BOOL fRollbackFeatureActionDelta = FALSE;
     int nResult = 0;
@@ -592,13 +599,6 @@ extern "C" HRESULT MsiEnginePlanPackage(
     if (pPackage->Msi.cFeatures)
     {
         LogId(REPORT_STANDARD, MSG_PLAN_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
-
-        // allocate array for feature actions
-        rgFeatureActions = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(sizeof(BOOTSTRAPPER_FEATURE_ACTION) * pPackage->Msi.cFeatures, TRUE);
-        ExitOnNull(rgFeatureActions, hr, E_OUTOFMEMORY, "Failed to allocate memory for feature actions.");
-
-        rgRollbackFeatureActions = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(sizeof(BOOTSTRAPPER_FEATURE_ACTION) * pPackage->Msi.cFeatures, TRUE);
-        ExitOnNull(rgRollbackFeatureActions, hr, E_OUTOFMEMORY, "Failed to allocate memory for rollback feature actions.");
 
         // plan features
         for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
@@ -618,13 +618,13 @@ extern "C" HRESULT MsiEnginePlanPackage(
             ExitOnRootFailure(hr, "UX aborted plan MSI feature.");
 
             // calculate feature actions
-            hr = CalculateFeatureAction(pFeature->currentState, featureRequestedState, pFeature->fRepair, &rgFeatureActions[i], &fFeatureActionDelta);
+            hr = CalculateFeatureAction(pFeature->currentState, featureRequestedState, pFeature->fRepair, &pFeature->execute, &fFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate execute feature state.");
 
-            hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_STATE_UNKNOWN != featureExpectedState ? featureExpectedState : pFeature->currentState, FALSE, &rgRollbackFeatureActions[i], &fRollbackFeatureActionDelta);
+            hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_STATE_UNKNOWN != featureExpectedState ? featureExpectedState : pFeature->currentState, FALSE, &pFeature->rollback, &fRollbackFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate rollback feature state.");
 
-            LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(rgFeatureActions[i]), LoggingMsiFeatureActionToString(rgRollbackFeatureActions[i]));
+            LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(pFeature->execute), LoggingMsiFeatureActionToString(pFeature->rollback));
         }
     }
 
@@ -734,6 +734,52 @@ extern "C" HRESULT MsiEnginePlanPackage(
         ExitOnRootFailure(hr, "Invalid package detection result encountered.");
     }
 
+    // return values
+    pPackage->execute = execute;
+    pPackage->rollback = rollback;
+
+LExit:
+    return hr;
+}
+
+//
+// PlanAdd - adds the calculated execute and rollback actions for the package.
+//
+extern "C" HRESULT MsiEnginePlanAddPackage(
+    __in_opt DWORD *pdwInsertSequence,
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_EXECUTE_ACTION* pAction = NULL;
+    BOOTSTRAPPER_FEATURE_ACTION* rgFeatureActions = NULL;
+    BOOTSTRAPPER_FEATURE_ACTION* rgRollbackFeatureActions = NULL;
+
+    if (pPackage->Msi.cFeatures)
+    {
+        // Allocate and populate array for feature actions.
+        rgFeatureActions = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(sizeof(BOOTSTRAPPER_FEATURE_ACTION) * pPackage->Msi.cFeatures, TRUE);
+        ExitOnNull(rgFeatureActions, hr, E_OUTOFMEMORY, "Failed to allocate memory for feature actions.");
+
+        rgRollbackFeatureActions = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(sizeof(BOOTSTRAPPER_FEATURE_ACTION) * pPackage->Msi.cFeatures, TRUE);
+        ExitOnNull(rgRollbackFeatureActions, hr, E_OUTOFMEMORY, "Failed to allocate memory for rollback feature actions.");
+
+        for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
+        {
+            BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
+
+            // calculate feature actions
+            rgFeatureActions[i] = pFeature->execute;
+            rgRollbackFeatureActions[i] = pFeature->rollback;
+        }
+    }
+
     // add wait for cache
     if (hCacheEvent)
     {
@@ -742,7 +788,7 @@ extern "C" HRESULT MsiEnginePlanPackage(
     }
 
     // add execute action
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute)
     {
         if (NULL != pdwInsertSequence)
         {
@@ -757,33 +803,30 @@ extern "C" HRESULT MsiEnginePlanPackage(
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
-        pAction->msiPackage.action = execute;
+        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
+        pAction->msiPackage.action = pPackage->execute;
         pAction->msiPackage.rgFeatures = rgFeatureActions;
         rgFeatureActions = NULL;
 
-        LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
 
     // add rollback action
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
     {
         hr = PlanAppendRollbackAction(pPlan, &pAction);
         ExitOnFailure(hr, "Failed to append rollback action.");
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
-        pAction->msiPackage.action = rollback;
+        pAction->msiPackage.action = pPackage->rollback;
         pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
         rgRollbackFeatureActions = NULL;
 
-        LoggingSetPackageVariable(dwPackageSequence, pPackage, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
-
-    // return values
-    *pExecuteAction = execute;
-    *pRollbackAction = rollback;
 
 LExit:
     ReleaseMem(rgFeatureActions);
@@ -793,6 +836,7 @@ LExit:
 }
 
 extern "C" HRESULT MsiEngineExecutePackage(
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
@@ -825,7 +869,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
     ExitOnFailure(hr, "Failed to build MSI path.");
 
     // Wire up the external UI handler and logging.
-    hr = WiuInitializeExternalUI(pfnMessageHandler, pvContext, fRollback, &context);
+    hr = WiuInitializeExternalUI(pfnMessageHandler, pExecuteAction->msiPackage.uiLevel, hwndParent, pvContext, fRollback, &context);
     ExitOnFailure(hr, "Failed to initialize external UI handler.");
 
     if (pExecuteAction->msiPackage.sczLogPath && *pExecuteAction->msiPackage.sczLogPath)
@@ -966,6 +1010,31 @@ LExit:
     ReleaseStr(sczEscapedValue);
     ReleaseStr(sczProperty);
     return hr;
+}
+
+extern "C" INSTALLUILEVEL MsiEngineCalculateInstallLevel(
+    __in BOOL fDisplayInternalUI,
+    __in BOOTSTRAPPER_DISPLAY display
+    )
+{
+    // Assume there will be no internal UI displayed.
+    INSTALLUILEVEL uiLevel = static_cast<INSTALLUILEVEL>(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY);
+
+    if (fDisplayInternalUI)
+    {
+        switch (display)
+        {
+        case BOOTSTRAPPER_DISPLAY_FULL:
+            uiLevel = INSTALLUILEVEL_FULL;
+            break;
+
+        case BOOTSTRAPPER_DISPLAY_PASSIVE:
+            uiLevel = INSTALLUILEVEL_REDUCED;
+            break;
+        }
+    }
+
+    return uiLevel;
 }
 
 

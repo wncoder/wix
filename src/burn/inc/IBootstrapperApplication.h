@@ -43,7 +43,7 @@ enum BOOTSTRAPPER_RESUME_TYPE
 {
     BOOTSTRAPPER_RESUME_TYPE_NONE,
     BOOTSTRAPPER_RESUME_TYPE_INVALID,        // resume information is present but invalid
-    BOOTSTRAPPER_RESUME_TYPE_UNEXPECTED,     // relaunched after an unexpected interruption
+    BOOTSTRAPPER_RESUME_TYPE_INTERRUPTED,    // relaunched after an unexpected interruption
     BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING, // reboot has not taken place yet
     BOOTSTRAPPER_RESUME_TYPE_REBOOT,         // relaunched after reboot
     BOOTSTRAPPER_RESUME_TYPE_SUSPEND,        // relaunched after suspend
@@ -219,7 +219,9 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         __in_z_opt LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR wzError,
-        __in DWORD dwUIHint
+        __in DWORD dwUIHint,
+        __in DWORD cData,
+        __in_ecount_z_opt(cData) LPCWSTR* rgwzData
         ) = 0;
 
     STDMETHOD_(int, OnRegisterBegin)() = 0;
@@ -317,7 +319,9 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
         __in_z LPCWSTR wzPackageId,
         __in INSTALLMESSAGE mt,
         __in UINT uiFlags,
-        __in_z LPCWSTR wzMessage
+        __in_z LPCWSTR wzMessage,
+        __in DWORD cData,
+        __in_ecount_z_opt(cData) LPCWSTR* rgwzData
         ) = 0;
 
     STDMETHOD_(int, OnExecuteFilesInUse)(

@@ -20,6 +20,7 @@ static const HRESULT E_WIXSTDBA_CONDITION_FAILED = MAKE_HRESULT(SEVERITY_ERROR, 
 static const LPCWSTR WIXSTDBA_WINDOW_CLASS = L"WixStdBA";
 static const LPCWSTR WIXSTDBA_VARIABLE_INSTALL_FOLDER = L"InstallFolder";
 static const LPCWSTR WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH = L"LaunchTarget";
+static const DWORD WIXSTDBA_ACQUIRE_PERCENTAGE = 30;
 
 enum WIXSTDBA_STATE
 {
@@ -111,6 +112,7 @@ enum WIXSTDBA_CONTROL
 
     WIXSTDBA_CONTROL_OVERALL_PROGRESS_PACKAGE_TEXT,
     WIXSTDBA_CONTROL_OVERALL_PROGRESS_BAR,
+    WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR,
     WIXSTDBA_CONTROL_OVERALL_PROGRESS_TEXT,
 
     WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON,
@@ -156,6 +158,7 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_EXECUTE_PROGRESS_TEXT, L"ExecuteProgressText" },
     { WIXSTDBA_CONTROL_OVERALL_PROGRESS_PACKAGE_TEXT, L"OverallProgressPackageText" },
     { WIXSTDBA_CONTROL_OVERALL_PROGRESS_BAR, L"OverallProgressbar" },
+    { WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, L"OverallCalculatedProgressbar" },
     { WIXSTDBA_CONTROL_OVERALL_PROGRESS_TEXT, L"OverallProgressText" },
     { WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, L"ProgressCancelButton" },
 
@@ -338,6 +341,9 @@ public: // IBootstrapperApplication
         {
             ::PostMessageW(m_hWnd, WM_WIXSTDBA_APPLY_PACKAGES, 0, 0);
         }
+
+        m_dwCalculatedCacheProgress = 0;
+        m_dwCalculatedExecuteProgress = 0;
     }
 
 
@@ -376,6 +382,9 @@ public: // IBootstrapperApplication
 
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_CACHE_PROGRESS_BAR, dwOverallPercentage);
 
+        m_dwCalculatedCacheProgress = dwOverallPercentage * WIXSTDBA_ACQUIRE_PERCENTAGE / 100;
+        ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
+
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
@@ -393,7 +402,9 @@ public: // IBootstrapperApplication
         __in LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR wzError,
-        __in DWORD dwUIHint
+        __in DWORD dwUIHint,
+        __in DWORD /*cData*/,
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
         )
     {
         int nResult = IDNOACTION;
@@ -491,6 +502,9 @@ public: // IBootstrapperApplication
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_TEXT, wzProgress);
 
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_BAR, dwOverallProgressPercentage);
+
+        m_dwCalculatedExecuteProgress = dwOverallProgressPercentage * (100 - WIXSTDBA_ACQUIRE_PERCENTAGE) / 100;
+        ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
 
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
@@ -684,20 +698,19 @@ private: // privates
     HRESULT InitializeData()
     {
         HRESULT hr = S_OK;
-        LPWSTR sczLanguage = NULL;
         LPWSTR sczModulePath = NULL;
         IXMLDOMDocument *pixdManifest = NULL;
 
-        hr = ProcessCommandLine(&sczLanguage);
+        hr = ProcessCommandLine(&m_sczLanguage);
         ExitOnFailure(hr, "Unknown commandline parameters.");
 
         hr = PathRelativeToModule(&sczModulePath, NULL, m_hModule);
         BalExitOnFailure(hr, "Failed to get module path.");
 
-        hr = LoadLocalization(sczModulePath, sczLanguage);
+        hr = LoadLocalization(sczModulePath, m_sczLanguage);
         ExitOnFailure(hr, "Failed to load localization.");
 
-        hr = LoadTheme(sczModulePath, sczLanguage);
+        hr = LoadTheme(sczModulePath, m_sczLanguage);
         ExitOnFailure(hr, "Failed to load theme.");
 
         hr = BalManifestLoad(m_hModule, &pixdManifest);
@@ -723,7 +736,6 @@ private: // privates
     LExit:
         ReleaseObject(pixdManifest);
         ReleaseStr(sczModulePath);
-        ReleaseStr(sczLanguage);
 
         return hr;
     }
@@ -1097,7 +1109,10 @@ private: // privates
     {
         HRESULT hr = S_OK;
         LPWSTR sczText = NULL;
+        LPWSTR sczLicenseFormatted = NULL;
         LPWSTR sczLicensePath = NULL;
+        LPWSTR sczLicenseDirectory = NULL;
+        LPWSTR sczLicenseFilename = NULL;
 
         hr = ThemeLoadControls(m_pTheme, hWnd, vrgInitControls, countof(vrgInitControls));
         BalExitOnFailure(hr, "Failed to load theme controls.");
@@ -1135,10 +1150,26 @@ private: // privates
             hr = (m_sczLicenseFile && *m_sczLicenseFile) ? S_OK : E_INVALIDDATA;
             if (SUCCEEDED(hr))
             {
-                hr = BalFormatString(m_sczLicenseFile, &sczLicensePath);
+                hr = BalFormatString(m_sczLicenseFile, &sczLicenseFormatted);
                 if (SUCCEEDED(hr))
                 {
-                    hr = ThemeLoadRichEditFromFile(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT, sczLicensePath, m_hModule);
+                    hr = PathRelativeToModule(&sczLicensePath, sczLicenseFormatted, m_hModule);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = PathGetDirectory(sczLicensePath, &sczLicenseDirectory);
+                        if (SUCCEEDED(hr))
+                        {
+                            hr = StrAllocString(&sczLicenseFilename, PathFile(sczLicenseFormatted), 0);
+                            if (SUCCEEDED(hr))
+                            {
+                                hr = LocProbeForFile(sczLicenseDirectory, sczLicenseFilename, m_sczLanguage, &sczLicensePath);
+                                if (SUCCEEDED(hr))
+                                {
+                                    hr = ThemeLoadRichEditFromFile(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT, sczLicensePath, m_hModule);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1150,7 +1181,10 @@ private: // privates
         }
 
     LExit:
+        ReleaseStr(sczLicenseFilename);
+        ReleaseStr(sczLicenseDirectory);
         ReleaseStr(sczLicensePath);
+        ReleaseStr(sczLicenseFormatted);
         ReleaseStr(sczText);
 
         return SUCCEEDED(hr);
@@ -1806,6 +1840,7 @@ public:
         memset(&m_Conditions, 0, sizeof(m_Conditions));
         m_sczFailedMessage = NULL;
 
+        m_sczLanguage = NULL;
         m_pTheme = NULL;
         memset(m_rgdwPageIds, 0, sizeof(m_rgdwPageIds));
         m_hUiThread = NULL;
@@ -1840,10 +1875,12 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
+        ReleaseStr(m_sczFailedMessage);
         BalConditionsUninitialize(&m_Conditions);
         BalInfoUninitialize(&m_Bundle);
         LocFree(m_pLocStrings);
 
+        ReleaseStr(m_sczLanguage);
         ReleaseStr(m_sczLicenseFile);
         ReleaseStr(m_sczLicenseUrl);
         ReleaseStr(m_sczPrereqPackage);
@@ -1860,6 +1897,7 @@ private:
     BAL_CONDITIONS m_Conditions;
     LPWSTR m_sczFailedMessage;
 
+    LPWSTR m_sczLanguage;
     THEME* m_pTheme;
     DWORD m_rgdwPageIds[countof(vrgwzPageNames)];
     HANDLE m_hUiThread;
@@ -1869,6 +1907,9 @@ private:
     WIXSTDBA_STATE m_state;
     WIXSTDBA_STATE m_stateBeforeOptions;
     HRESULT m_hrFinal;
+
+    DWORD m_dwCalculatedCacheProgress;
+    DWORD m_dwCalculatedExecuteProgress;
 
     BOOL m_fDowngrading;
     BOOL m_fRestartRequired;

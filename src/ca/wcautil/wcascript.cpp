@@ -125,7 +125,7 @@ extern "C" HRESULT WIXAPI WcaCaScriptOpen(
         ExitWithLastError1(hr, "Failed to open CaScript: %ls", pwzScriptPath);
     }
 
-    *phScript = static_cast<WCA_CASCRIPT_HANDLE>(MemAlloc(sizeof(WCA_CASCRIPT_HANDLE), TRUE));
+    *phScript = static_cast<WCA_CASCRIPT_HANDLE>(MemAlloc(sizeof(WCA_CASCRIPT_STRUCT), TRUE));
     ExitOnNull(*phScript, hr, E_OUTOFMEMORY, "Failed to allocate space for cascript handle.");
 
     (*phScript)->pwzScriptPath = pwzScriptPath;

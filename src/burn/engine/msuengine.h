@@ -37,17 +37,17 @@ HRESULT MsuEngineDetectPackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_VARIABLES* pVariables
     );
-HRESULT MsuEnginePlanPackage(
-    __in DWORD dwPackageSequence,
+HRESULT MsuEnginePlanCalculatePackage(
+    __in BURN_PACKAGE* pPackage
+    );
+HRESULT MsuEnginePlanAddPackage(
     __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BOOL fPlanPackageCacheRollback
     );
 HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,

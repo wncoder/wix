@@ -147,7 +147,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <IntermediateOutputPath Condition=" '$(IntermediateOutputPath)' == '' and '$(Platform)' == 'AnyCPU' ">$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
     <IntermediateOutputPath Condition=" '$(IntermediateOutputPath)' == '' and '$(Platform)' != 'AnyCPU' ">$(BaseIntermediateOutputPath)$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <IntermediateExt Condition=" '$(IntermediateExt)' == '' ">.wixobj</IntermediateExt>
-    <CabinetCachePath Condition=" '$(CabinetCachePath)'=='' and '$(ReuseCabinetCache)'!='' and $(ReuseCabinetCache) ">$(IntermediateOutputPath)cabcache\</CabinetCachePath>
+    <CabinetCachePath Condition=" '$(CabinetCachePath)'=='' and '$(ReuseCabinetCache)'=='true' ">$(IntermediateOutputPath)cabcache\</CabinetCachePath>
     <CleanFile Condition=" '$(CleanFile)' == '' ">$(MSBuildProjectFile).FileList.txt</CleanFile>
     <BindContentsFilePrefix Condition=" '$(BindContentsFilePrefix)' == '' ">$(MSBuildProjectFile).BindContentsFileList</BindContentsFilePrefix>
     <BindContentsFileExtension Condition=" '$(BindContentsFileExtension)' == '' ">.txt</BindContentsFileExtension>
@@ -1018,6 +1018,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     If BuildProjectReferences is 'wixlib' then build only the MSBuild project references that exist and
     create a .wixlib file. That requires us to first filter the gathered project references down to only
     those that build .wixlibs.
+
+    Note that this functionality is broken in MSBuild v3.5 due to MSBuildSourceProjectFile metadata 
+    being relative paths in v3.5 (versus full paths in v4.0).
     -->
     <CreateItem
       Include="@(_GatheredProjectReferencePaths)"

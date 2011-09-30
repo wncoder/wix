@@ -108,6 +108,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             // Open the message element.
             this.writer.WriteStartElement("Message");
 
+            // Write the database file name.
+            this.writer.WriteElementString("File", this.DatabaseFile);
+
             // Write elements for each message part.
             string[] messageParts = message.Split('\t');
             for (int i = 0; i < messageParts.Length; i++)

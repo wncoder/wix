@@ -34,26 +34,36 @@
 // constants
 
 #define COMPARISON  0x00010000
+#define INSENSITIVE 0x00020000
 
 enum BURN_SYMBOL_TYPE
 {
     // terminals
     BURN_SYMBOL_TYPE_NONE       =  0,
     BURN_SYMBOL_TYPE_END        =  1,
-    BURN_SYMBOL_TYPE_OR         =  2,               // OR
-    BURN_SYMBOL_TYPE_AND        =  3,               // AND
-    BURN_SYMBOL_TYPE_NOT        =  4,               // NOT
-    BURN_SYMBOL_TYPE_LT         =  5 | COMPARISON,  // <
-    BURN_SYMBOL_TYPE_GT         =  6 | COMPARISON,  // >
-    BURN_SYMBOL_TYPE_LE         =  7 | COMPARISON,  // <=
-    BURN_SYMBOL_TYPE_GE         =  8 | COMPARISON,  // >=
-    BURN_SYMBOL_TYPE_EQ         =  9 | COMPARISON,  // =
-    BURN_SYMBOL_TYPE_NE         = 10 | COMPARISON,  // <>
-    BURN_SYMBOL_TYPE_BAND       = 11 | COMPARISON,  // ><
-    BURN_SYMBOL_TYPE_HIEQ       = 12 | COMPARISON,  // <<
-    BURN_SYMBOL_TYPE_LOEQ       = 13 | COMPARISON,  // >>
-    BURN_SYMBOL_TYPE_LPAREN     = 14,               // (
-    BURN_SYMBOL_TYPE_RPAREN     = 15,               // )
+    BURN_SYMBOL_TYPE_OR         =  2,                               // OR
+    BURN_SYMBOL_TYPE_AND        =  3,                               // AND
+    BURN_SYMBOL_TYPE_NOT        =  4,                               // NOT
+    BURN_SYMBOL_TYPE_LT         =  5 | COMPARISON,                  // <
+    BURN_SYMBOL_TYPE_GT         =  6 | COMPARISON,                  // >
+    BURN_SYMBOL_TYPE_LE         =  7 | COMPARISON,                  // <=
+    BURN_SYMBOL_TYPE_GE         =  8 | COMPARISON,                  // >=
+    BURN_SYMBOL_TYPE_EQ         =  9 | COMPARISON,                  // =
+    BURN_SYMBOL_TYPE_NE         = 10 | COMPARISON,                  // <>
+    BURN_SYMBOL_TYPE_BAND       = 11 | COMPARISON,                  // ><
+    BURN_SYMBOL_TYPE_HIEQ       = 12 | COMPARISON,                  // <<
+    BURN_SYMBOL_TYPE_LOEQ       = 13 | COMPARISON,                  // >>
+    BURN_SYMBOL_TYPE_LT_I       =  5 | COMPARISON | INSENSITIVE,    // ~<
+    BURN_SYMBOL_TYPE_GT_I       =  6 | COMPARISON | INSENSITIVE,    // ~>
+    BURN_SYMBOL_TYPE_LE_I       =  7 | COMPARISON | INSENSITIVE,    // ~<=
+    BURN_SYMBOL_TYPE_GE_I       =  8 | COMPARISON | INSENSITIVE,    // ~>=
+    BURN_SYMBOL_TYPE_EQ_I       =  9 | COMPARISON | INSENSITIVE,    // ~=
+    BURN_SYMBOL_TYPE_NE_I       = 10 | COMPARISON | INSENSITIVE,    // ~<>
+    BURN_SYMBOL_TYPE_BAND_I     = 11 | COMPARISON | INSENSITIVE,    // ~><
+    BURN_SYMBOL_TYPE_HIEQ_I     = 12 | COMPARISON | INSENSITIVE,    // ~<<
+    BURN_SYMBOL_TYPE_LOEQ_I     = 13 | COMPARISON | INSENSITIVE,    // ~>>
+    BURN_SYMBOL_TYPE_LPAREN     = 14,                               // (
+    BURN_SYMBOL_TYPE_RPAREN     = 15,                               // )
     BURN_SYMBOL_TYPE_NUMBER     = 16,
     BURN_SYMBOL_TYPE_IDENTIFIER = 17,
     BURN_SYMBOL_TYPE_LITERAL    = 18,
@@ -511,6 +521,60 @@ static HRESULT NextSymbol(
     case L'\0':
         pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_END;
         break;
+    case L'~':
+        switch (pContext->wzRead[1])
+        {
+        case L'=':
+            pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_EQ_I;
+            n = 2;
+            break;
+        case L'>':
+            switch (pContext->wzRead[2])
+            {
+            case '=':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_GE_I;
+                n = 3;
+                break;
+            case L'>':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_LOEQ_I;
+                n = 3;
+                break;
+            case L'<':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_BAND_I;
+                n = 3;
+                break;
+            default:
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_GT_I;
+                n = 2;
+            }
+            break;
+        case L'<':
+            switch (pContext->wzRead[2])
+            {
+            case '=':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_LE_I;
+                n = 3;
+                break;
+            case L'<':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_HIEQ_I;
+                n = 3;
+                break;
+            case '>':
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_NE_I;
+                n = 3;
+                break;
+            default:
+                pContext->NextSymbol.Type = BURN_SYMBOL_TYPE_LT_I;
+                n = 2;
+            }
+            break;
+        default:
+            // error
+            pContext->fError = TRUE;
+            hr = E_INVALIDDATA;
+            ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Unexpected '~' operator at position %d.", pContext->wzCondition, iPosition);
+        }
+        break;
     case L'>':
         switch (pContext->wzRead[1])
         {
@@ -571,8 +635,8 @@ static HRESULT NextSymbol(
             {
                 // error
                 pContext->fError = TRUE;
-                Trace2(REPORT_STANDARD, "Failed to parse condition \"%ls\". Unterminated literal at position %d.", pContext->wzCondition, iPosition);
-                ExitFunction1(hr = E_INVALIDDATA);
+                hr = E_INVALIDDATA;
+                ExitOnRootFailure2(hr, "Failed to parse condition \"%ls\". Unterminated literal at position %d.", pContext->wzCondition, iPosition);
             }
         } while (L'"' != pContext->wzRead[n]);
         ++n; // terminating '"'
@@ -800,6 +864,7 @@ static HRESULT CompareStringValues(
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwCompareString = (comparison & INSENSITIVE) ? NORM_IGNORECASE : 0;
     int cchLeft = lstrlenW(wzLeftOperand);
     int cchRight = lstrlenW(wzRightOperand);
 
@@ -811,16 +876,23 @@ static HRESULT CompareStringValues(
     case BURN_SYMBOL_TYPE_GE:
     case BURN_SYMBOL_TYPE_EQ:
     case BURN_SYMBOL_TYPE_NE:
+    case BURN_SYMBOL_TYPE_LT_I:
+    case BURN_SYMBOL_TYPE_GT_I:
+    case BURN_SYMBOL_TYPE_LE_I:
+    case BURN_SYMBOL_TYPE_GE_I:
+    case BURN_SYMBOL_TYPE_EQ_I:
+    case BURN_SYMBOL_TYPE_NE_I:
         {
-            int i = ::CompareStringW(LOCALE_INVARIANT, 0, wzLeftOperand, cchLeft, wzRightOperand, cchRight);
+            int i = ::CompareStringW(LOCALE_INVARIANT, dwCompareString, wzLeftOperand, cchLeft, wzRightOperand, cchRight);
             hr = CompareIntegerValues(comparison, i, CSTR_EQUAL, pfResult);
         }
         break;
     case BURN_SYMBOL_TYPE_BAND:
+    case BURN_SYMBOL_TYPE_BAND_I:
         // test if left string contains right string
         for (int i = 0; (i + cchRight) < cchLeft; ++i)
         {
-            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, wzLeftOperand + i, cchRight, wzRightOperand, cchRight))
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, dwCompareString, wzLeftOperand + i, cchRight, wzRightOperand, cchRight))
             {
                 *pfResult = TRUE;
                 ExitFunction();
@@ -829,12 +901,14 @@ static HRESULT CompareStringValues(
         *pfResult = FALSE;
         break;
     case BURN_SYMBOL_TYPE_HIEQ:
+    case BURN_SYMBOL_TYPE_HIEQ_I:
         // test if left string starts with right string
-        *pfResult = cchLeft >= cchRight && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, wzLeftOperand, cchRight, wzRightOperand, cchRight);
+        *pfResult = cchLeft >= cchRight && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, dwCompareString, wzLeftOperand, cchRight, wzRightOperand, cchRight);
         break;
     case BURN_SYMBOL_TYPE_LOEQ:
+    case BURN_SYMBOL_TYPE_LOEQ_I:
         // test if left string ends with right string
-        *pfResult = cchLeft >= cchRight && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, wzLeftOperand + (cchLeft - cchRight), cchRight, wzRightOperand, cchRight);
+        *pfResult = cchLeft >= cchRight && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, dwCompareString, wzLeftOperand + (cchLeft - cchRight), cchRight, wzRightOperand, cchRight);
         break;
     default:
         ExitFunction1(hr = E_INVALIDARG);
@@ -858,15 +932,15 @@ static HRESULT CompareIntegerValues(
 
     switch (comparison)
     {
-    case BURN_SYMBOL_TYPE_LT: *pfResult = llLeftOperand <  llRightOperand; break;
-    case BURN_SYMBOL_TYPE_GT: *pfResult = llLeftOperand >  llRightOperand; break;
-    case BURN_SYMBOL_TYPE_LE: *pfResult = llLeftOperand <= llRightOperand; break;
-    case BURN_SYMBOL_TYPE_GE: *pfResult = llLeftOperand >= llRightOperand; break;
-    case BURN_SYMBOL_TYPE_EQ: *pfResult = llLeftOperand == llRightOperand; break;
-    case BURN_SYMBOL_TYPE_NE: *pfResult = llLeftOperand != llRightOperand; break;
-    case BURN_SYMBOL_TYPE_BAND: *pfResult = (llLeftOperand & llRightOperand) ? TRUE : FALSE; break;
-    case BURN_SYMBOL_TYPE_HIEQ: *pfResult = ((llLeftOperand >> 16) & 0xFFFF) == llRightOperand; break;
-    case BURN_SYMBOL_TYPE_LOEQ: *pfResult = (llLeftOperand & 0xFFFF) == llRightOperand; break;
+    case BURN_SYMBOL_TYPE_LT: case BURN_SYMBOL_TYPE_LT_I: *pfResult = llLeftOperand <  llRightOperand; break;
+    case BURN_SYMBOL_TYPE_GT: case BURN_SYMBOL_TYPE_GT_I: *pfResult = llLeftOperand >  llRightOperand; break;
+    case BURN_SYMBOL_TYPE_LE: case BURN_SYMBOL_TYPE_LE_I: *pfResult = llLeftOperand <= llRightOperand; break;
+    case BURN_SYMBOL_TYPE_GE: case BURN_SYMBOL_TYPE_GE_I: *pfResult = llLeftOperand >= llRightOperand; break;
+    case BURN_SYMBOL_TYPE_EQ: case BURN_SYMBOL_TYPE_EQ_I: *pfResult = llLeftOperand == llRightOperand; break;
+    case BURN_SYMBOL_TYPE_NE: case BURN_SYMBOL_TYPE_NE_I: *pfResult = llLeftOperand != llRightOperand; break;
+    case BURN_SYMBOL_TYPE_BAND: case BURN_SYMBOL_TYPE_BAND_I: *pfResult = (llLeftOperand & llRightOperand) ? TRUE : FALSE; break;
+    case BURN_SYMBOL_TYPE_HIEQ: case BURN_SYMBOL_TYPE_HIEQ_I: *pfResult = ((llLeftOperand >> 16) & 0xFFFF) == llRightOperand; break;
+    case BURN_SYMBOL_TYPE_LOEQ: case BURN_SYMBOL_TYPE_LOEQ_I: *pfResult = (llLeftOperand & 0xFFFF) == llRightOperand; break;
     default:
         ExitFunction1(hr = E_INVALIDARG);
     }

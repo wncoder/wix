@@ -34,7 +34,7 @@ static HRESULT AddDetectedTargetProduct(
     LPCWSTR wzProductCode
     );
 static HRESULT PlanTargetProduct(
-    __in DWORD dwPackageSequence,
+    __in BOOTSTRAPPER_DISPLAY display,
     __in BOOL fRollback,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
@@ -61,6 +61,10 @@ extern "C" HRESULT MspEngineParsePackageFromXml(
     // @PatchXml
     hr = XmlGetAttributeEx(pixnMspPackage, L"PatchXml", &pPackage->Msp.sczApplicabilityXml);
     ExitOnFailure(hr, "Failed to get @PatchXml.");
+
+    // @DisplayInternalUI
+    hr = XmlGetYesNoAttribute(pixnMspPackage, L"DisplayInternalUI", &pPackage->Msp.fDisplayInternalUI);
+    ExitOnFailure(hr, "Failed to get @DisplayInternalUI.");
 
     // Read properties.
     hr = MsiEngineParsePropertiesFromXml(pixnMspPackage, &pPackage->Msp.rgProperties, &pPackage->Msp.cProperties);
@@ -226,33 +230,14 @@ LExit:
 }
 
 //
-// Plan - calculates the execute and rollback state for the requested package state.
+// PlanCalculate - calculates the execute and rollback state for the requested package state.
 //
-extern "C" HRESULT MspEnginePlanPackage(
-    __in DWORD dwPackageSequence,
-    __in_opt DWORD* /*pdwInsertSequence*/,
+extern "C" HRESULT MspEnginePlanCalculatePackage(
     __in BURN_PACKAGE* pPackage,
-    __in BURN_PLAN* pPlan,
-    __in BURN_LOGGING* pLog,
-    __in BURN_VARIABLES* pVariables,
-    __in_opt HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BURN_USER_EXPERIENCE* pUserExperience
     )
 {
     HRESULT hr = S_OK;
-    int nResult = IDNOACTION;
-
-    // TODO: need to handle the case where this patch adds itself to an earlier patch's list of target products. That would
-    //       essentially bump this patch earlier in the plan and we need to make sure this patch is downloaded.
-    // add wait for cache
-    if (hCacheEvent)
-    {
-        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
-        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
-    }
 
     for (DWORD i = 0; i < pPackage->Msp.cTargetProductCodes; ++i)
     {
@@ -262,7 +247,7 @@ extern "C" HRESULT MspEnginePlanPackage(
         BOOTSTRAPPER_ACTION_STATE execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         BOOTSTRAPPER_ACTION_STATE rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
 
-        nResult = pUserExperience->pUserExperience->OnPlanTargetMsiPackage(pPackage->sczId, pTargetProduct->wzTargetProductCode, &requested);
+        int nResult = pUserExperience->pUserExperience->OnPlanTargetMsiPackage(pPackage->sczId, pTargetProduct->wzTargetProductCode, &requested);
         hr = HRESULT_FROM_VIEW(nResult);
         ExitOnRootFailure(hr, "UX aborted plan target MSI package.");
 
@@ -338,27 +323,65 @@ extern "C" HRESULT MspEnginePlanPackage(
             break;
         }
 
-        if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
+        pTargetProduct->execute = execute;
+        pTargetProduct->rollback = rollback;
+
+        // The highest aggregate action state found will be returned.
+        if (pPackage->execute < execute)
         {
-            hr = PlanTargetProduct(dwPackageSequence, FALSE, pPlan, pLog, pVariables, execute, pPackage, pTargetProduct);
+            pPackage->execute = execute;
+        }
+
+        if (pPackage->rollback < rollback)
+        {
+            pPackage->rollback = rollback;
+        }
+    }
+
+LExit:
+
+    return hr;
+}
+
+//
+// PlanAdd - adds the calculated execute and rollback actions for the package.
+//
+extern "C" HRESULT MspEnginePlanAddPackage(
+    __in_opt DWORD* /*pdwInsertSequence*/,
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BURN_PACKAGE* pPackage,
+    __in BURN_PLAN* pPlan,
+    __in BURN_LOGGING* pLog,
+    __in BURN_VARIABLES* pVariables,
+    __in_opt HANDLE hCacheEvent,
+    __in BOOL fPlanPackageCacheRollback
+    )
+{
+    HRESULT hr = S_OK;
+
+    // TODO: need to handle the case where this patch adds itself to an earlier patch's list of target products. That would
+    //       essentially bump this patch earlier in the plan and we need to make sure this patch is downloaded.
+    // add wait for cache
+    if (hCacheEvent)
+    {
+        hr = PlanExecuteCacheSyncAndRollback(pPlan, pPackage, hCacheEvent, fPlanPackageCacheRollback);
+        ExitOnFailure(hr, "Failed to plan package cache syncpoint");
+    }
+
+    for (DWORD i = 0; i < pPackage->Msp.cTargetProductCodes; ++i)
+    {
+        BURN_MSPTARGETPRODUCT* pTargetProduct = pPackage->Msp.rgTargetProducts + i;
+
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != pTargetProduct->execute)
+        {
+            hr = PlanTargetProduct(display, FALSE, pPlan, pLog, pVariables, pTargetProduct->execute, pPackage, pTargetProduct);
             ExitOnFailure(hr, "Failed to plan target product.");
         }
 
-        if (BOOTSTRAPPER_ACTION_STATE_NONE != rollback)
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != pTargetProduct->rollback)
         {
-            hr = PlanTargetProduct(dwPackageSequence, TRUE, pPlan, pLog, pVariables, rollback, pPackage, pTargetProduct);
+            hr = PlanTargetProduct(display, TRUE, pPlan, pLog, pVariables, pTargetProduct->rollback, pPackage, pTargetProduct);
             ExitOnFailure(hr, "Failed to plan rollack target product.");
-        }
-
-        // The highest aggregate action state found will be returned.
-        if (*pExecuteAction < execute)
-        {
-            *pExecuteAction = execute;
-        }
-
-        if (*pRollbackAction < rollback)
-        {
-            *pRollbackAction = rollback;
         }
     }
 
@@ -368,6 +391,7 @@ LExit:
 }
 
 extern "C" HRESULT MspEngineExecutePackage(
+    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
@@ -377,6 +401,7 @@ extern "C" HRESULT MspEngineExecutePackage(
     )
 {
     HRESULT hr = S_OK;
+    INSTALLUILEVEL uiLevel = pExecuteAction->mspTarget.pPackage->Msp.fDisplayInternalUI ? INSTALLUILEVEL_DEFAULT : static_cast<INSTALLUILEVEL>(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY);
     WIU_MSI_EXECUTE_CONTEXT context = { };
     WIU_RESTART restart = WIU_RESTART_NONE;
 
@@ -423,7 +448,7 @@ extern "C" HRESULT MspEngineExecutePackage(
     }
 
     // Wire up the external UI handler and logging.
-    hr = WiuInitializeExternalUI(pfnMessageHandler, pvContext, fRollback, &context);
+    hr = WiuInitializeExternalUI(pfnMessageHandler, uiLevel, hwndParent, pvContext, fRollback, &context);
     ExitOnFailure(hr, "Failed to initialize external UI handler.");
 
     //if (BURN_LOGGING_LEVEL_DEBUG == logLevel)
@@ -525,7 +550,7 @@ LExit:
 
 
 static HRESULT PlanTargetProduct(
-    __in DWORD dwPackageSequence,
+    __in BOOTSTRAPPER_DISPLAY display,
     __in BOOL fRollback,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
@@ -574,6 +599,7 @@ static HRESULT PlanTargetProduct(
         pAction->mspTarget.action = actionState;
         pAction->mspTarget.pPackage = pPackage;
         pAction->mspTarget.fPerMachineTarget = (MSIINSTALLCONTEXT_MACHINE == pTargetProduct->context);
+        pAction->mspTarget.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msp.fDisplayInternalUI, display);
         hr = StrAllocString(&pAction->mspTarget.sczTargetProductCode, pTargetProduct->wzTargetProductCode, 0);
         ExitOnFailure(hr, "Failed to copy target product code.");
 
@@ -583,7 +609,7 @@ static HRESULT PlanTargetProduct(
             pPlan->fPerMachine = TRUE;
         }
 
-        LoggingSetPackageVariable(dwPackageSequence, pPackage, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
     }
 
     // Add our target product to the array and sort based on their order determined during detection.

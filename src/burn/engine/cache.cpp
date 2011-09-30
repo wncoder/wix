@@ -18,12 +18,13 @@
 
 #include "precomp.h"
 
+static const LPCWSTR BUNDLE_WORKING_FOLDER_NAME = L".be";
 static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
 static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
-static HRESULT CreateWorkingPath(
+static HRESULT CalculateWorkingFolder(
     __in_z LPCWSTR wzBundleId,
-    __deref_out_z LPWSTR* psczWorkingPath
+    __deref_out_z LPWSTR* psczWorkingFolder
     );
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -64,6 +65,35 @@ static HRESULT GetVerifiedCertificateChain(
     __out PCCERT_CHAIN_CONTEXT* ppChainContext
     );
 
+
+extern "C" HRESULT CacheEnsureWorkingFolder(
+    __in_z LPCWSTR wzBundleId,
+    __deref_out_z_opt LPWSTR* psczWorkingFolder
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczWorkingFolder = NULL;
+
+    hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
+    ExitOnFailure(hr, "Failed to calculate working folder to ensure it exists.");
+
+    hr = DirEnsureExists(sczWorkingFolder, NULL);
+    ExitOnFailure(hr, "Failed create working folder.");
+
+    // Best effort to ensure our working folder is not encrypted.
+    ::DecryptFileW(sczWorkingFolder, 0);
+
+    if (psczWorkingFolder)
+    {
+        hr = StrAllocString(psczWorkingFolder, sczWorkingFolder, 0);
+        ExitOnFailure(hr, "Failed to copy working folder.");
+    }
+
+LExit:
+    ReleaseStr(sczWorkingFolder);
+
+    return hr;
+}
 
 extern "C" HRESULT CacheGetOriginalSourcePath(
     __in BURN_VARIABLES* pVariables,
@@ -113,20 +143,15 @@ LExit:
 }
 
 extern "C" HRESULT CacheCalculatePayloadUnverifiedPath(
-    __in_opt BURN_PACKAGE* /* pPackage */,
+    __in_z LPCWSTR wzBundleId,
     __in BURN_PAYLOAD* pPayload,
     __deref_out_z LPWSTR* psczUnverifiedPath
     )
 {
     HRESULT hr = S_OK;
 
-    hr = StrAlloc(psczUnverifiedPath, MAX_PATH);
-    ExitOnFailure(hr, "Failed to allocate memory for the unverified path for a payload.");
-
-    if (0 == ::GetTempPathW(MAX_PATH, *psczUnverifiedPath))
-    {
-        ExitWithLastError(hr, "Failed to get temp path for payload unverified path.");
-    }
+    hr = CalculateWorkingFolder(wzBundleId, psczUnverifiedPath);
+    ExitOnFailure(hr, "Failed to get working folder for payload.");
 
     hr = StrAllocConcat(psczUnverifiedPath, pPayload->sczKey, 0);
     ExitOnFailure(hr, "Failed to append SHA1 hash as payload unverified path.");
@@ -136,19 +161,15 @@ LExit:
 }
 
 extern "C" HRESULT CacheCaclulateContainerUnverifiedPath(
+    __in_z LPCWSTR wzBundleId,
     __in BURN_CONTAINER* pContainer,
     __deref_out_z LPWSTR* psczUnverifiedPath
     )
 {
     HRESULT hr = S_OK;
 
-    hr = StrAlloc(psczUnverifiedPath, MAX_PATH);
-    ExitOnFailure(hr, "Failed to allocate memory for the unverified path for a container.");
-
-    if (0 == ::GetTempPathW(MAX_PATH, *psczUnverifiedPath))
-    {
-        ExitWithLastError(hr, "Failed to get temp path for container unverified path.");
-    }
+    hr = CalculateWorkingFolder(wzBundleId, psczUnverifiedPath);
+    ExitOnFailure(hr, "Failed to get working folder for container.");
 
     hr = StrAllocConcat(psczUnverifiedPath, pContainer->sczHash, 0);
     ExitOnFailure(hr, "Failed to append SHA1 hash as container unverified path.");
@@ -178,45 +199,18 @@ LExit:
 }
 
 extern "C" HRESULT CacheGetResumePath(
-    __in_z LPCWSTR wzWorkingPath,
+    __in_z LPCWSTR wzPayloadWorkingPath,
     __deref_out_z LPWSTR* psczResumePath
     )
 {
     HRESULT hr = S_OK;
 
-    hr = StrAllocFormatted(psczResumePath, L"%ls.R", wzWorkingPath);
+    hr = StrAllocFormatted(psczResumePath, L"%ls.R", wzPayloadWorkingPath);
     ExitOnFailure(hr, "Failed to create resume path.");
 
 LExit:
     return hr;
 }
-
-
-extern "C" HRESULT CacheEnsureWorkingDirectory(
-    __in_z LPCWSTR wzWorkingPath,
-    __out_z_opt LPWSTR* psczWorkingDir
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczWorkingDir = NULL;
-
-    hr = PathGetDirectory(wzWorkingPath, &sczWorkingDir);
-    ExitOnFailure(hr, "Failed to get working directory for payload.");
-
-    hr = DirEnsureExists(sczWorkingDir, NULL);
-    ExitOnFailure(hr, "Failed create working directory for payload.");
-
-    if (psczWorkingDir)
-    {
-        hr = StrAllocString(psczWorkingDir, sczWorkingDir, 0);
-        ExitOnFailure(hr, "Failed to copy working directory.");
-    }
-
-LExit:
-    ReleaseStr(sczWorkingDir);
-    return hr;
-}
-
 
 extern "C" HRESULT CacheSendProgressCallback(
     __in BURN_CACHE_CALLBACK* pCallback,
@@ -264,7 +258,6 @@ LExit:
     return hr;
 }
 
-
 extern "C" void CacheSendErrorCallback(
     __in BURN_CACHE_CALLBACK* pCallback,
     __in HRESULT hrError,
@@ -299,6 +292,7 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     LPWSTR sczSourcePath = NULL;
     LPWSTR wzSourceFileName = NULL;
     LPWSTR sczSourceDirectory = NULL;
+    LPWSTR sczWorkingFolder = NULL;
     LPWSTR sczTargetDirectory = NULL;
     LPWSTR sczTargetPath = NULL;
     LPWSTR sczPayloadSourcePath = NULL;
@@ -314,8 +308,14 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
     ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
 
-    hr = CreateWorkingPath(wzBundleId, &sczTargetDirectory);
+    hr = CacheEnsureWorkingFolder(wzBundleId, &sczWorkingFolder);
     ExitOnFailure(hr, "Failed to create working path to copy engine.");
+
+    hr = PathConcat(sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, &sczTargetDirectory);
+    ExitOnFailure(hr, "Failed to calculate the bundle working folder target name.");
+
+    hr = DirEnsureExists(sczTargetDirectory, NULL);
+    ExitOnFailure(hr, "Failed create bundle working folder.");
 
     hr = PathConcat(sczTargetDirectory, wzSourceFileName, &sczTargetPath);
     ExitOnFailure(hr, "Failed to combine working path with engine file name.");
@@ -350,12 +350,12 @@ LExit:
     ReleaseStr(sczPayloadSourcePath);
     ReleaseStr(sczTargetPath);
     ReleaseStr(sczTargetDirectory);
+    ReleaseStr(sczWorkingFolder);
     ReleaseStr(sczSourceDirectory);
     ReleaseStr(sczSourcePath);
 
     return hr;
 }
-
 
 extern "C" HRESULT CacheBundle(
     __in BOOL fPerMachine,
@@ -506,6 +506,37 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT CacheRemoveWorkingFolder(
+    __in_z_opt LPCWSTR wzBundleId
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczWorkingFolder = NULL;
+    LPWSTR sczBundleWorkingFolder = NULL;
+
+    if (wzBundleId && *wzBundleId)
+    {
+        hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
+        ExitOnFailure(hr, "Failed to calculate the working folder to remove it.");
+
+        hr = PathConcat(sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, &sczBundleWorkingFolder);
+        ExitOnFailure(hr, "Failed to calculate the bundle working folder to remove it.");
+
+        // Clean out everything in the bundle working folder.
+        hr = DirEnsureDeleteEx(sczBundleWorkingFolder, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
+        TraceError(hr, "Could not delete bundle engine working folder.");
+
+        // Try to remove the working folder. If there are any resume files left behind, that's okay.
+        hr = DirEnsureDeleteEx(sczWorkingFolder, DIR_DELETE_SCHEDULE);
+        TraceError(hr, "Could not remove working folder. Probably some resume files are left behind.");
+    }
+
+LExit:
+    ReleaseStr(sczBundleWorkingFolder);
+    ReleaseStr(sczWorkingFolder);
+
+    return hr;
+}
 
 extern "C" HRESULT CacheRemoveBundle(
     __in BOOL fPerMachine,
@@ -515,7 +546,7 @@ extern "C" HRESULT CacheRemoveBundle(
     HRESULT hr = S_OK;
 
     hr = RemoveBundleOrPackage(TRUE, fPerMachine, wzBundleId);
-    ExitOnFailure1(hr, "Failed to remove bunlde id: %ls.", wzBundleId);
+    ExitOnFailure1(hr, "Failed to remove bundle id: %ls.", wzBundleId);
 
 LExit:
     return hr;
@@ -646,31 +677,25 @@ LExit:
 }
 
 
-static HRESULT CreateWorkingPath(
+// Internal functions.
+
+static HRESULT CalculateWorkingFolder(
     __in_z LPCWSTR wzBundleId,
-    __deref_out_z LPWSTR* psczWorkingPath
+    __deref_out_z LPWSTR* psczWorkingFolder
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczPath = NULL;
+    WCHAR wzTempPath[MAX_PATH] = { };
 
-    hr = StrAlloc(&sczPath, MAX_PATH);
-    ExitOnFailure(hr, "Failed to allocate memory for the working path.");
-
-    if (0 == ::GetTempPathW(MAX_PATH, sczPath))
+    if (0 == ::GetTempPathW(countof(wzTempPath), wzTempPath))
     {
-        ExitWithLastError(hr, "Failed to get temp path for working path.");
+        ExitWithLastError(hr, "Failed to get temp path for working folder.");
     }
 
-    hr = PathConcat(sczPath, wzBundleId, psczWorkingPath);
-    ExitOnFailure(hr, "Failed to append bundle id on working path.");
-
-    hr = DirEnsureExists(*psczWorkingPath, NULL);
-    ExitOnFailure1(hr, "Failed to create working directory: %ls", *psczWorkingPath);
+    hr = StrAllocFormatted(psczWorkingFolder, L"%ls%ls\\", wzTempPath, wzBundleId);
+    ExitOnFailure(hr, "Failed to append bundle id on to temp path for working folder.");
 
 LExit:
-    ReleaseStr(sczPath);
-
     return hr;
 }
 
@@ -948,6 +973,11 @@ static HRESULT RemoveBundleOrPackage(
     LogId(REPORT_STANDARD, fBundle ? MSG_UNCACHE_BUNDLE : MSG_UNCACHE_PACKAGE, wzId, sczDirectory);
 
     hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
+    if (E_PATHNOTFOUND == hr)
+    {
+        // TODO: should we log that the bundle was already removed?
+        hr = S_OK;
+    }
     ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
 
     // Try to remove root package cache in the off chance it is now empty.

@@ -2727,7 +2727,7 @@
       </Message>
       <Message Id="InvalidCabinetTemplate" Number="358">
         <Instance>
-          CabinetTemplate attribute must begin with either a letter or an underscore, contain maximum of five characters and {0} in the cabinet name part and must end three character extension.
+          CabinetTemplate attribute's value '{0}' must contain '{{0}}' and should contain no more than 8 characters followed by an optional extension of no more than 3 characters.  Any character except for the follow may be used: \ ? | &gt; &lt; : / * " + , ; = [ ] (space).  The Windows Installer team has recommended following the 8.3 format for external cabinet files and any other naming scheme is officially unsupported (which means it is not guaranteed to work on all platforms).
           <Parameter Type="System.String" Name="cabinetTemplate" />
         </Instance>
       </Message>
@@ -2912,7 +2912,7 @@
         </Message>
         <Message Id="MediaExternalCabinetFilenameIllegal" Number="1033">
             <Instance>
-                The {0}/@{1} attribute's value, '{2}', is not a valid external cabinet name.  Legal cabinet names must follow 8.3 format: they should contain no more than 8 characters followed by an optional extension of no more than 3 characters.  Any character except for the follow may be used: \ ? | &gt; &lt; : / * " + , ; = [ ] (space).  The Windows Installer team has recommended following the 8.3 format for external cabinet files and any other naming scheme is officially unsupported (which means its not guaranteed to work on all platforms).
+                The {0}/@{1} attribute's value, '{2}', is not a valid external cabinet name.  Legal cabinet names should follow 8.3 format: they should contain no more than 8 characters followed by an optional extension of no more than 3 characters.  Any character except for the follow may be used: \ ? | &gt; &lt; : / * " + , ; = [ ] (space).  The Windows Installer team has recommended following the 8.3 format for external cabinet files and any other naming scheme is officially unsupported (which means it is not guaranteed to work on all platforms).
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />

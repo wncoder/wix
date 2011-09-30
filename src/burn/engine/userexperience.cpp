@@ -142,6 +142,27 @@ extern "C" HRESULT UserExperienceUnload(
     return hr;
 }
 
+extern "C" HRESULT UserExperienceEnsureWorkingFolder(
+    __in LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczUserExperienceWorkingFolder
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczWorkingFolder = NULL;
+
+    hr = CacheEnsureWorkingFolder(wzBundleId, &sczWorkingFolder);
+    ExitOnFailure(hr, "Failed to create working folder.");
+
+    hr = PathCreateTempDirectory(sczWorkingFolder, L".ba%d", 999999, psczUserExperienceWorkingFolder);
+    ExitOnFailure(hr, "Failed to get unique temporary folder for bootstrapper application.");
+
+LExit:
+    ReleaseStr(sczWorkingFolder);
+
+    return hr;
+}
+
+
 extern "C" HRESULT UserExperienceRemove(
     __in BURN_USER_EXPERIENCE* pUserExperience
     )
@@ -152,7 +173,7 @@ extern "C" HRESULT UserExperienceRemove(
     if (pUserExperience->sczTempDirectory)
     {
         hr = DirEnsureDeleteEx(pUserExperience->sczTempDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
-        TraceError(hr, "Failed to delete UX cache directory.");
+        TraceError(hr, "Could not delete bootstrapper application folder. Some files will be left in the temp folder.");
     }
 
 //LExit:

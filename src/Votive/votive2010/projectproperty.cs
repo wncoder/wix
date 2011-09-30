@@ -518,9 +518,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 charsToEscape.Remove(';');
             }
 
-            // Never auto-escape the % sign because it just causes much confusion.
-            charsToEscape.Remove('%');
-
             return charsToEscape;
         }
     }

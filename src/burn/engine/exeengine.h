@@ -37,18 +37,17 @@ HRESULT ExeEngineDetectPackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_VARIABLES* pVariables
     );
-HRESULT ExeEnginePlanPackage(
-    __in DWORD dwPackageSequence,
+HRESULT ExeEnginePlanCalculatePackage(
+    __in BURN_PACKAGE* pPackage
+    );
+HRESULT ExeEnginePlanAddPackage(
     __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
-    __in BURN_REGISTRATION* pRegistration,
     __in_opt HANDLE hCacheEvent,
-    __in BOOL fPlanPackageCacheRollback,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction
+    __in BOOL fPlanPackageCacheRollback
     );
 HRESULT ExeEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
