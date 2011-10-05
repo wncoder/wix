@@ -19,6 +19,8 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 {
     using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
 
     /// <summary>
     /// Base class for <see cref="EventArgs"/> classes that must return a value.
@@ -1215,7 +1217,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private int errorCode;
         private string errorMessage;
         private int uiHint;
-        private string[] data;
+        private ReadOnlyCollection<string> data;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ErrorEventArgs"/> class.
@@ -1231,7 +1233,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             this.errorCode = errorCode;
             this.errorMessage = errorMessage;
             this.uiHint = uiHint;
-            this.data = data;
+            this.data = new ReadOnlyCollection<string>(data ?? new string [] { });
         }
 
         /// <summary>
@@ -1269,7 +1271,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Gets the extended data for the error.
         /// </summary>
-        public string[] Data
+        public IList<string> Data
         {
             get { return this.data; }
         }
@@ -1322,7 +1324,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         private InstallMessage messageType;
         private int displayParameters;
         private string message;
-        private string[] data;
+        private ReadOnlyCollection<string> data;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ExecuteMsiMessageEventArgs"/> class.
@@ -1338,7 +1340,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             this.messageType = messageType;
             this.displayParameters = displayParameters;
             this.message = message;
-            this.data = data;
+            this.data = new ReadOnlyCollection<string>(data ?? new string[] { });
         }
 
         /// <summary>
@@ -1376,7 +1378,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Gets the extended data for the message.
         /// </summary>
-        public string[] Data
+        public IList<string> Data
         {
             get { return this.data; }
         }
@@ -1389,7 +1391,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public class ExecuteFilesInUseEventArgs : ResultEventArgs
     {
         private string packageId;
-        private string[] files;
+        private ReadOnlyCollection<string> files;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ExecuteFilesInUseEventArgs"/> class.
@@ -1399,7 +1401,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public ExecuteFilesInUseEventArgs(string packageId, string[] files)
         {
             this.packageId = packageId;
-            this.files = files;
+            this.files = new ReadOnlyCollection<string>(files ?? new string[] { });
         }
 
         /// <summary>
@@ -1413,7 +1415,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Gets the list of files in use.
         /// </summary>
-        public string[] Files
+        public IList<string> Files
         {
             get { return this.files; }
         }

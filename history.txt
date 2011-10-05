@@ -1503,3 +1503,10 @@ EricStJ: SFBUG:3299524 E_FAIL when opening a WIXPROJ with "show all files"
 
 WixBuild: Version 3.6.2130.0
 
+RobMen: Fix Burn MSI messages not being sent via MBA due to exception thrown.
+
+RobMen: Retry setting ACLs in Burn since files may be in use.
+        Repair MSIs in Burn using InstallProduct instead of ConfigureProduct.
+
+WixBuild: Version 3.6.2201.0
+

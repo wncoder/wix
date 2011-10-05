@@ -44,6 +44,7 @@
 #include <mscat.h>
 
 #include <dutil.h>
+#include <aclutil.h>
 #include <buffutil.h>
 #include <cabutil.h>
 #include <certutil.h>

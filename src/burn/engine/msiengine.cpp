@@ -933,7 +933,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
         ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on repair.");
         }
 
-        hr = WiuConfigureProductEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, sczProperties, &restart);
+        hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to run maintanance mode for MSI package.");
         break;
 

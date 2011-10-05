@@ -601,7 +601,6 @@ extern "C" HRESULT CoreQuit(
         }
    }
 
-LExit:
     LogId(REPORT_STANDARD, MSG_QUIT, nExitCode);
 
     ::PostQuitMessage(nExitCode); // go bye-bye.

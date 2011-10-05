@@ -987,7 +987,7 @@ extern "C" HRESULT DAPI FileEnsureCopyWithRetry(
     HRESULT hr = E_FAIL;
     DWORD i = 0;
 
-    for (i = 0; FAILED(hr) && i < cRetry + 1; ++i)
+    for (i = 0; FAILED(hr) && i <= cRetry; ++i)
     {
         if (0 < i)
         {

@@ -33,10 +33,10 @@ static HRESULT CreateCompletedPath(
     );
 static HRESULT ResetPathPermissions(
     __in BOOL fPerMachine,
-    __in LPWSTR wzPath
+    __in_z LPCWSTR wzPath
     );
 static HRESULT SecurePath(
-    __in LPWSTR wzPath
+    __in LPCWSTR wzPath
     );
 static HRESULT CopyEngineWithSignatureFixup(
     __in_z LPCWSTR wzSourcePath,
@@ -774,7 +774,7 @@ LExit:
 
 static HRESULT ResetPathPermissions(
     __in BOOL fPerMachine,
-    __in LPWSTR wzPath
+    __in LPCWSTR wzPath
     )
 {
     HRESULT hr = S_OK;
@@ -797,14 +797,10 @@ static HRESULT ResetPathPermissions(
         dwSetSecurity |= OWNER_SECURITY_INFORMATION;
     }
 
-    er = ::SetNamedSecurityInfoW(wzPath, SE_FILE_OBJECT, dwSetSecurity,
-                                 pSid, NULL, &acl, NULL);
+    hr = AclSetSecurityWithRetry(wzPath, SE_FILE_OBJECT, dwSetSecurity, pSid, NULL, &acl, NULL, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
     ExitOnWin32Error1(er, hr, "Failed to reset the ACL on cached file: %ls", wzPath);
 
-    if (!::SetFileAttributesW(wzPath, FILE_ATTRIBUTE_NORMAL))
-    {
-        ExitWithLastError1(hr, "Failed to reset file attributes on cached file: %ls", wzPath);
-    }
+    ::SetFileAttributesW(wzPath, FILE_ATTRIBUTE_NORMAL); // let's try to reset any possible read-only/system bits.
 
 LExit:
     ReleaseMem(pSid);
@@ -835,7 +831,7 @@ LExit:
 
 
 static HRESULT SecurePath(
-    __in LPWSTR wzPath
+    __in LPCWSTR wzPath
     )
 {
     HRESULT hr = S_OK;
@@ -860,9 +856,9 @@ static HRESULT SecurePath(
     ExitOnWin32Error1(er, hr, "Failed to create ACL to secure cache path: %ls", wzPath);
 
     // Set the ACL and ensure the Administrators group ends up the owner
-    er = ::SetNamedSecurityInfoW(wzPath, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-                                 reinterpret_cast<PSID>(access[0].Trustee.ptstrName), NULL, pAcl, NULL);
-    ExitOnWin32Error1(er, hr, "Failed to secure cache path: %ls", wzPath);
+    hr = AclSetSecurityWithRetry(wzPath, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
+                                 reinterpret_cast<PSID>(access[0].Trustee.ptstrName), NULL, pAcl, NULL, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+    ExitOnFailure1(hr, "Failed to secure cache path: %ls", wzPath);
 
 LExit:
     if (pAcl)

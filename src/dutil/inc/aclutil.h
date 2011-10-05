@@ -125,6 +125,17 @@ HRESULT DAPI AclGetSecurityDescriptor(
     __in SECURITY_INFORMATION securityInformation,
     __deref_out SECURITY_DESCRIPTOR** ppsd
     );
+HRESULT DAPI AclSetSecurityWithRetry(
+    __in_z LPCWSTR wzObject,
+    __in SE_OBJECT_TYPE sot,
+    __in SECURITY_INFORMATION securityInformation,
+    __in_opt PSID psidOwner,
+    __in_opt PSID psidGroup,
+    __in_opt PACL pDacl,
+    __in_opt PACL pSacl,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    );
 
 HRESULT DAPI AclFreeSid(
     __in PSID psid

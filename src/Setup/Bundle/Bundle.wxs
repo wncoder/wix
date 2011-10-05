@@ -37,18 +37,9 @@
 
             <RollbackBoundary />
 
+            <!-- DownloadUrl='http://wix.sourceforge.net/releases/$(var.WixVersion)/{2}' -->
             <MsiPackage Id='Wix' Vital='yes'
-                        DownloadUrl='http://wix.sourceforge.net/releases/$(var.WixVersion)/{2}'
                         Name='data\Wix36.msi' SourceFile='x86\data\Wix36.msi' />
         </Chain>
     </Bundle>
-
-    <Fragment>
-        <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\8.0' Value='InstallDir' Variable='VS2005InstallFolder' />
-
-        <PackageGroup Id='ProjectAggregator'>
-            <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
-                        SourceFile='x86\ProjectAggregator2.msi' />
-        </PackageGroup>
-    </Fragment>
 </Wix>

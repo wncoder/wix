@@ -906,6 +906,45 @@ LExit:
 }
 
 
+extern "C" HRESULT DAPI AclSetSecurityWithRetry(
+    __in_z LPCWSTR wzObject,
+    __in SE_OBJECT_TYPE sot,
+    __in SECURITY_INFORMATION securityInformation,
+    __in_opt PSID psidOwner,
+    __in_opt PSID psidGroup,
+    __in_opt PACL pDacl,
+    __in_opt PACL pSacl,
+    __in DWORD cRetry,
+    __in DWORD dwWaitMilliseconds
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczObject = NULL;
+    DWORD i = 0;
+
+    hr = StrAllocString(&sczObject, wzObject, 0);
+    ExitOnFailure(hr, "Failed to copy object to secure.");
+
+    hr = E_FAIL;
+    for (i = 0; FAILED(hr) && i <= cRetry; ++i)
+    {
+        if (0 < i)
+        {
+            ::Sleep(dwWaitMilliseconds);
+        }
+
+        DWORD er = ::SetNamedSecurityInfoW(sczObject, sot, securityInformation, psidOwner, psidGroup, pDacl, pSacl);
+        hr = HRESULT_FROM_WIN32(er);
+    }
+    ExitOnRootFailure2(hr, "Failed to set security on object '%ls' after %u retries.", wzObject, i);
+
+LExit:
+    ReleaseStr(sczObject);
+
+    return hr;
+}
+
+
 /********************************************************************
 AclFreeSid - frees a SID created by any Acl* functions
 
