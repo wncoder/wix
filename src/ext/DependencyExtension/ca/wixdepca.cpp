@@ -43,7 +43,7 @@ static HRESULT ValidateNonexistentDependents(
     );
 
 static HRESULT SplitIgnoredDependents(
-    __deref_inout_opt STRINGDICT_HANDLE *psdIgnoredDependents
+    __deref_inout STRINGDICT_HANDLE* psdIgnoredDependents
     );
 
 static HRESULT CreateDependencyRecord(
@@ -130,8 +130,9 @@ static HRESULT ValidateExistentDependencies(
     if (S_FALSE == hr)
     {
         WcaLog(LOGMSG_STANDARD, "Skipping the dependency check since no dependencies are authored.");
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
+
     // If the table exists but not the others, the database was not authored correctly.
     ExitOnFailure(hr, "Failed to check if the WixDependency table exists.");
 
@@ -175,15 +176,21 @@ static HRESULT ValidateExistentDependencies(
         ExitOnFailure(hr, "Failed to get WixDependency.Attributes.");
 
         // Check the registry to see if the required providers (dependencies) exist.
-        hr = DepCheckDependencies(hkHive, sczProviderKey, sczMinVersion, sczMaxVersion, iAttributes, sdDependencies, &rgDependencies, &cDependencies);
-        ExitOnFailure1(hr, "Failed dependency check for %ls.", sczId);
+        hr = DepCheckDependency(hkHive, sczProviderKey, sczMinVersion, sczMaxVersion, iAttributes, sdDependencies, &rgDependencies, &cDependencies);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure1(hr, "Failed dependency check for %ls.", sczId);
+        }
     }
 
-    if (E_NOMOREITEMS == hr)
+    if (E_NOMOREITEMS != hr)
+    {
+        ExitOnFailure(hr, "Failed to enumerate all of the rows in the dependency query view.");
+    }
+    else
     {
         hr = S_OK;
     }
-    ExitOnFailure(hr, "Failed to enumerate all of the rows in the dependency query view.");
 
     // If we collected any dependencies in the previous check, pump a message and prompt the user.
     if (0 < cDependencies)
@@ -199,15 +206,12 @@ static HRESULT ValidateExistentDependencies(
         {
         // Only a user or dependency-aware bootstrapper that prompted the user should return IDYES to continue anyway.
         case IDYES:
-            hr = S_OK;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         // Only a user or dependency-aware bootstrapper that prompted the user should return IDNO to terminate the operation.
         case IDNO:
             WcaSetReturnValue(ERROR_INSTALL_USEREXIT);
-
-            hr = S_FALSE;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         // A dependency-aware bootstrapper should return IDCANCEL if running silently and the operation should be canceled.
         case IDCANCEL:
@@ -220,13 +224,10 @@ static HRESULT ValidateExistentDependencies(
         // Windows Installer returns 0 for USER messages when silent or passive, or when a bootstrapper does not handle the message.
         case IDNOACTION:
             WcaSetReturnValue(ERROR_INSTALL_FAILURE);
-
-            hr = S_FALSE;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         default:
-            hr = E_UNEXPECTED;
-            ExitOnFailure1(hr, "Unexpected message response %d from user or bootstrapper application.", er);
+            ExitOnFailure1(hr = E_UNEXPECTED, "Unexpected message response %d from user or bootstrapper application.", er);
         }
     }
 
@@ -280,19 +281,19 @@ static HRESULT ValidateNonexistentDependents(
     ExitOnFailure(hr, "Failed to get the ignored dependents.");
 
     hr = DictKeyExists(sdIgnoredDependents, L"ALL");
-    if (S_OK == hr)
+    if (E_NOTFOUND != hr)
     {
-        WcaLog(LOGMSG_STANDARD, "Skipping the dependencies check since IGNOREDEPENDENCIES contains \"ALL\".");
+        ExitOnFailure(hr, "Failed to check if \"ALL\" was set in IGNOREDEPENDENCIES.");
 
-        hr = S_FALSE;
+        // Otherwise...
+        WcaLog(LOGMSG_STANDARD, "Skipping the dependencies check since IGNOREDEPENDENCIES contains \"ALL\".");
         ExitFunction();
     }
-    else if (E_NOTFOUND == hr)
+    else
     {
         // Key was not found, so proceed.
         hr = S_OK;
     }
-    ExitOnFailure(hr, "Failed to check if \"ALL\" was set in IGNOREDEPENDENCIES.");
 
     // Skip the dependent check if the WixDependencyProvider table is missing (no dependency providers).
     hr = WcaTableExists(L"WixDependencyProvider");
@@ -301,6 +302,7 @@ static HRESULT ValidateNonexistentDependents(
         WcaLog(LOGMSG_STANDARD, "Skipping the dependents check since no dependency providers are authored.");
         ExitFunction();
     }
+
     ExitOnFailure(hr, "Failed to check if the WixDependencyProvider table exists.");
 
     // Set the registry hive to use depending on install context.
@@ -337,11 +339,14 @@ static HRESULT ValidateNonexistentDependents(
         ExitOnFailure1(hr, "Failed dependents check for %ls.", sczId);
     }
 
-    if (E_NOMOREITEMS == hr)
+    if (E_NOMOREITEMS != hr)
+    {
+        ExitOnFailure(hr, "Failed to enumerate all of the rows in the dependency provider query view.");
+    }
+    else
     {
         hr = S_OK;
     }
-    ExitOnFailure(hr, "Failed to enumerate all of the rows in the dependency provider query view.");
 
     // If we collected any providers with dependents in the previous check, pump a message and prompt the user.
     if (0 < cDependents)
@@ -357,8 +362,7 @@ static HRESULT ValidateNonexistentDependents(
         {
         // Only a user or dependency-aware bootstrapper that prompted the user should return IDYES to continue anyway.
         case IDYES:
-            hr = S_OK;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         // Only a user or dependency-aware bootstrapper that prompted the user should return IDNO to terminate the operation.
         case IDNO:
@@ -371,16 +375,12 @@ static HRESULT ValidateNonexistentDependents(
         // Windows Installer returns 0 for USER messages when silent or passive, or when a bootstrapper does not handle the message.
         case IDNOACTION:
             WcaSetReturnValue(ERROR_NO_MORE_ITEMS);
-
-            hr = S_FALSE;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         // A dependency-aware bootstrapper should return IDCANCEL if running silently and the operation should be canceled.
         case IDCANCEL:
             WcaSetReturnValue(ERROR_INSTALL_FAILURE);
-
-            hr = S_FALSE;
-            ExitFunction();
+            ExitFunction1(hr = S_OK);
 
         default:
             hr = E_UNEXPECTED;
@@ -400,10 +400,9 @@ LExit:
 /***************************************************************************
  SplitIgnoredDependents - Splits the IGNOREDEPENDENCIES property into a map.
 
- Notes: Returns S_FALSE if the property is not set.
 ***************************************************************************/
 static HRESULT SplitIgnoredDependents(
-    __deref_inout_opt STRINGDICT_HANDLE *psdIgnoredDependents
+    __deref_inout STRINGDICT_HANDLE* psdIgnoredDependents
     )
 {
     HRESULT hr = S_OK;

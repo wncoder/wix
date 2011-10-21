@@ -229,6 +229,9 @@ namespace Bootstrapper
                     L"    <RegistrySearch Id='Search20' Type='value' Root='HKCU' Key='[MyKey]' Value='[MyValue]' Variable='Variable20' VariableType='string' />"
                     L"    <RegistrySearch Id='Search21' Type='value' Root='HKCU' Key='SOFTWARE\\Classes\\CLSID\\WiX_Burn_UnitTest\\Bitness' Value='TestStringSpecificToBitness' Variable='Variable21' VariableType='string' Win64='no' />"
                     L"    <RegistrySearch Id='Search22' Type='value' Root='HKCU' Key='SOFTWARE\\Classes\\CLSID\\WiX_Burn_UnitTest\\Bitness' Value='TestStringSpecificToBitness' Variable='Variable22' VariableType='string' Win64='yes' />"
+                    L"    <RegistrySearch Id='Search23' Type='exists' Root='HKU' Key='S-1-5-20\\System\\CurrentControlSet' Variable='Variable23' />"
+                    L"    <RegistrySearch Id='Search23' Type='exists' Root='HKU' Key='S-1-5-20\\System\\NetworkServiceSidSubkeyDoesNotExist' Variable='Variable24' />"
+                    L"    <RegistrySearch Id='Search24' Type='value' Root='HKCR' Key='.msi' Variable='Variable25' VariableType='string' />"
                     L"</Bundle>";
 
                 // load XML document
@@ -267,6 +270,10 @@ namespace Bootstrapper
                     Assert::AreEqual(gcnew String(L"32-bit"), VariableGetStringHelper(&variables, L"Variable21"));
                     Assert::AreEqual(gcnew String(L"64-bit"), VariableGetStringHelper(&variables, L"Variable22"));
                 }
+
+                Assert::AreEqual(1ll, VariableGetNumericHelper(&variables, L"Variable23"));
+                Assert::AreEqual(0ll, VariableGetNumericHelper(&variables, L"Variable24"));
+                Assert::AreEqual(gcnew String(L"Msi.Package"), VariableGetStringHelper(&variables, L"Variable25"));
             }
             finally
             {

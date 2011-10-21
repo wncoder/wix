@@ -71,7 +71,7 @@ extern "C" HRESULT EmbeddedRunBundle(
     LPWSTR sczCommand = NULL;
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
-    DWORD dwResult = 0;
+    BURN_PIPE_RESULT result = { };
 
     BURN_PIPE_CONNECTION connection = { };
     PipeConnectionInitialize(&connection);
@@ -101,7 +101,7 @@ extern "C" HRESULT EmbeddedRunBundle(
     hr = PipeWaitForChildConnect(&connection);
     ExitOnFailure(hr, "Failed to wait for embedded process to connect to pipe.");
 
-    hr = PipePumpMessages(connection.hPipe, ProcessEmbeddedMessages, &context, &dwResult);
+    hr = PipePumpMessages(connection.hPipe, ProcessEmbeddedMessages, &context, &result);
     ExitOnFailure(hr, "Failed to process messages from embedded message.");
 
     // Get the return code from the embedded process.

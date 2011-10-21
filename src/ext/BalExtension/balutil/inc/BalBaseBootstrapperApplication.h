@@ -82,7 +82,8 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnSystemShutdown(
-        __in DWORD dwEndSession
+        __in DWORD dwEndSession,
+        __in int /*nRecommendation*/
         )
     {
         // Allow requests to shut down when critical or not applying.
@@ -310,10 +311,12 @@ public: // IBurnUserExperience
     virtual STDMETHODIMP_(int) OnCacheAcquireComplete(
         __in_z LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
-        __in HRESULT hrStatus
+        __in HRESULT hrStatus,
+        __in int nRecommendation
         )
     {
-        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_CACHE, wzPackageOrContainerId, wzPayloadId, hrStatus);
+        int nResult = CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_CACHE, wzPackageOrContainerId, wzPayloadId, hrStatus);
+        return IDNOACTION == nResult ? nRecommendation : nResult;
     }
 
     virtual STDMETHODIMP_(int) OnCacheVerifyBegin(
@@ -327,18 +330,20 @@ public: // IBurnUserExperience
     virtual STDMETHODIMP_(int) OnCacheVerifyComplete(
         __in_z LPCWSTR /*wzPackageId*/,
         __in_z LPCWSTR /*wzPayloadId*/,
-        __in HRESULT /*hrStatus*/
+        __in HRESULT /*hrStatus*/,
+        __in int nRecommendation
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : nRecommendation;
     }
 
     virtual STDMETHODIMP_(int) OnCachePackageComplete(
         __in_z LPCWSTR /*wzPackageId*/,
-        __in HRESULT /*hrStatus*/
+        __in HRESULT /*hrStatus*/,
+        __in int nRecommendation
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : nRecommendation;
     }
 
     virtual STDMETHODIMP_(void) OnCacheComplete(
@@ -375,11 +380,12 @@ public: // IBurnUserExperience
         __in_z LPCWSTR /*wzError*/,
         __in DWORD /*dwUIHint*/,
         __in DWORD /*cData*/,
-        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/,
+        __in int nRecommendation
         )
     {
         BalRetryErrorOccurred(wzPackageId, dwCode);
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : nRecommendation;
     }
 
     virtual STDMETHODIMP_(int) OnProgress(
@@ -430,10 +436,11 @@ public: // IBurnUserExperience
         __in UINT /*uiFlags*/,
         __in_z LPCWSTR /*wzMessage*/,
         __in DWORD /*cData*/,
-        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/,
+        __in int nRecommendation
         )
     {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return CheckCanceled() ? IDCANCEL : nRecommendation;
     }
 
     virtual STDMETHODIMP_(int) OnExecuteFilesInUse(
@@ -448,10 +455,12 @@ public: // IBurnUserExperience
     virtual STDMETHODIMP_(int) OnExecutePackageComplete(
         __in_z LPCWSTR wzPackageId,
         __in HRESULT hrExitCode,
-        __in BOOTSTRAPPER_APPLY_RESTART /*restart*/
+        __in BOOTSTRAPPER_APPLY_RESTART /*restart*/,
+        __in int nRecommendation
         )
     {
-        return CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_EXECUTE, wzPackageId, NULL, hrExitCode);
+        int nResult = CheckCanceled() ? IDCANCEL : CheckCanceled() ? IDCANCEL : BalRetryEndPackage(BALRETRY_TYPE_EXECUTE, wzPackageId, NULL, hrExitCode);
+        return IDNOACTION == nResult ? nRecommendation : nResult;
     }
 
     virtual STDMETHODIMP_(void) OnExecuteComplete(

@@ -531,7 +531,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.validator.AddCubeFile(Path.Combine(lightDirectory, "darice.cub"));
                 }
 
-                // disable ICE33, ICE47 and ICE66 by default
+                // by default, disable ICEs that have equivalent-or-better checks in WiX
+                this.suppressICEs.Add("ICE08");
                 this.suppressICEs.Add("ICE33");
                 this.suppressICEs.Add("ICE47");
                 this.suppressICEs.Add("ICE66");
@@ -1590,13 +1591,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return false;
             }
 
-            // set generated component guids
-            // this must occur before modularization and after all variables have been resolved
-            this.SetComponentGuids(output);
-
-            // With the Component Guids set now we can create instance transforms.
-            this.CreateInstanceTransforms(output);
-
             // modularize identifiers and add tables with real streams to the import tables
             if (OutputType.Module == output.Type)
             {
@@ -1766,6 +1760,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // update file version, hash, assembly, etc.. information
             this.core.OnMessage(WixVerboses.UpdatingFileInformation());
             this.UpdateFileInformation(output, fileRows, autoMediaAssigner.MediaRows, variableCache, modularizationGuid);
+
+            // set generated component guids
+            this.SetComponentGuids(output);
+
+            // With the Component Guids set now we can create instance transforms.
+            this.CreateInstanceTransforms(output);
+
+            this.ValidateComponentGuids(output);
+
             this.UpdateControlText(output);
 
             if (delayedFields.Count != 0)
@@ -1983,7 +1986,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             field.Data = this.WixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)field.Data, false, ref isDefault, ref delayedResolve);
                             if (delayedResolve)
                             {
-                                delayedFields.Add(new DelayedField(row, field));
+                                // Check to make sure we're in a scenario where fields are valid to be resolved.
+                                if (null != delayedFields)
+                                {
+                                    delayedFields.Add(new DelayedField(row, field));
+                                }
                             }
                         }
 
@@ -3480,8 +3487,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[1] = package.Vital ? "yes" : "no";
                 row[2] = package.DisplayName;
                 row[3] = package.Description;
-                row[4] = package.PackageSize.ToString(CultureInfo.InvariantCulture); // TODO: DownloadSize (compressed) (what does this mean when it's embedded?)
-                row[5] = package.PackageSize.ToString(CultureInfo.InvariantCulture); // PackageSize (uncompressed)
+                row[4] = package.Size.ToString(CultureInfo.InvariantCulture); // TODO: DownloadSize (compressed) (what does this mean when it's embedded?)
+                row[5] = package.Size.ToString(CultureInfo.InvariantCulture); // Package.Size (uncompressed)
                 row[6] = package.InstallSize.ToString(CultureInfo.InvariantCulture); // InstallSize (required disk space)
                 row[7] = package.ChainPackageType.ToString(CultureInfo.InvariantCulture);
                 row[8] = package.Permanent ? "yes" : "no";
@@ -3795,6 +3802,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("Id", package.Id);
                     writer.WriteAttributeString("Cache", package.Cache ? "yes" : "no");
                     writer.WriteAttributeString("CacheId", package.CacheId);
+                    writer.WriteAttributeString("InstallSize", Convert.ToString(package.InstallSize));
+                    writer.WriteAttributeString("Size", Convert.ToString(package.Size));
                     writer.WriteAttributeString("PerMachine", package.PerMachine ? "yes" : "no");
                     writer.WriteAttributeString("Permanent", package.Permanent ? "yes" : "no");
                     writer.WriteAttributeString("Vital", package.Vital ? "yes" : "no");
@@ -4801,7 +4810,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 Hashtable registryKeyRows = null;
                 Hashtable directories = null;
                 Hashtable componentIdGenSeeds = null;
-                Hashtable fileRows = null;
+                Dictionary<string, List<FileRow>> fileRows = null;
 
                 // find components with generatable guids
                 foreach (ComponentRow componentRow in componentTable.Rows)
@@ -4893,7 +4902,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 }
                             }
 
-                            // if the file rows have not been indexed by File.File yet
+                            // if the file rows have not been indexed by File.Component yet
                             // then do that now
                             if (null == fileRows)
                             {
@@ -4901,35 +4910,67 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                 int numFileRows = (null != fileTable) ? fileTable.Rows.Count : 0;
 
-                                fileRows = new Hashtable(numFileRows);
+                                fileRows = new Dictionary<string, List<FileRow>>(numFileRows);
 
                                 if (null != fileTable)
                                 {
                                     foreach (FileRow file in fileTable.Rows)
                                     {
-                                        fileRows.Add(file.File, file);
+                                        List<FileRow> files;
+                                        if (!fileRows.TryGetValue(file.Component, out files))
+                                        {
+                                            files = new List<FileRow>();
+                                            fileRows.Add(file.Component, files);
+                                        }
+
+                                        files.Add(file);
                                     }
                                 }
                             }
 
-                            // calculate the canonical target path for the file key path
-                            FileRow fileRow = fileRows[componentRow.KeyPath] as FileRow;
-                            string directoryPath = GetDirectoryPath(directories, componentIdGenSeeds, componentRow.Directory, true);
-                            string fileName = Installer.GetName(fileRow.FileName, false, true).ToLower(CultureInfo.InvariantCulture);
+                            // validate component meets all the conditions to have a generated guid
+                            List<FileRow> currentComponentFiles = fileRows[componentRow.Component];
+                            int numFilesInComponent = currentComponentFiles.Count;
+                            string path = null;
 
-                            string path = Path.Combine(directoryPath, fileName);
-
-                            // find paths that are not canonicalized
-                            if (path.StartsWith(@"PersonalFolder\my pictures", StringComparison.Ordinal) ||
-                                path.StartsWith(@"ProgramFilesFolder\common files", StringComparison.Ordinal) ||
-                                path.StartsWith(@"ProgramMenuFolder\startup", StringComparison.Ordinal) ||
-                                path.StartsWith("TARGETDIR", StringComparison.Ordinal) ||
-                                path.StartsWith(@"StartMenuFolder\programs", StringComparison.Ordinal) ||
-                                path.StartsWith(@"WindowsFolder\fonts", StringComparison.Ordinal))
+                            foreach (FileRow fileRow in currentComponentFiles)
                             {
-                                this.core.OnMessage(WixErrors.IllegalPathForGeneratedComponentGuid(componentRow.SourceLineNumbers, fileRow.Component, path));
+                                if (fileRow.File == componentRow.KeyPath)
+                                {
+                                    // calculate the key file's canonical target path
+                                    string directoryPath = GetDirectoryPath(directories, componentIdGenSeeds, componentRow.Directory, true);
+                                    string fileName = Installer.GetName(fileRow.FileName, false, true).ToLower(CultureInfo.InvariantCulture);
+                                    path = Path.Combine(directoryPath, fileName);
+
+                                    // find paths that are not canonicalized
+                                    if (path.StartsWith(@"PersonalFolder\my pictures", StringComparison.Ordinal) ||
+                                        path.StartsWith(@"ProgramFilesFolder\common files", StringComparison.Ordinal) ||
+                                        path.StartsWith(@"ProgramMenuFolder\startup", StringComparison.Ordinal) ||
+                                        path.StartsWith("TARGETDIR", StringComparison.Ordinal) ||
+                                        path.StartsWith(@"StartMenuFolder\programs", StringComparison.Ordinal) ||
+                                        path.StartsWith(@"WindowsFolder\fonts", StringComparison.Ordinal))
+                                    {
+                                        this.core.OnMessage(WixErrors.IllegalPathForGeneratedComponentGuid(componentRow.SourceLineNumbers, fileRow.Component, path));
+                                    }
+
+                                    // if component has more than one file, the key path must be versioned
+                                    if (1 < numFilesInComponent && String.IsNullOrEmpty(fileRow.Version))
+                                    {
+                                        this.core.OnMessage(WixErrors.IllegalGeneratedGuidComponentUnversionedKeypath(componentRow.SourceLineNumbers));
+                                    }
+                                }
+                                else
+                                {
+                                    // not a key path, so it must be an unversioned file if component has more than one file
+                                    if (1 < numFilesInComponent && !String.IsNullOrEmpty(fileRow.Version))
+                                    {
+                                        this.core.OnMessage(WixErrors.IllegalGeneratedGuidComponentVersionedNonkeypath(componentRow.SourceLineNumbers));
+                                    }
+                                }
                             }
-                            else // generate a guid
+
+                            // if the rules were followed, reward with a generated guid
+                            if (!this.core.EncounteredError)
                             {
                                 componentRow.Guid = Uuid.NewUuid(Binder.WixComponentGuidNamespace, path, this.backwardsCompatibleGuidGen).ToString("B").ToUpper(CultureInfo.InvariantCulture);
                             }
@@ -5114,6 +5155,49 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
 
                     output.SubStorages.Add(new SubStorage(instanceId, instanceTransform));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validate that there are no duplicate GUIDs in the output.
+        /// </summary>
+        /// <remarks>
+        /// Duplicate GUIDs without conditions are an error condition; with conditions, it's a
+        /// warning, as the conditions might be mutually exclusive.
+        /// </remarks>
+        private void ValidateComponentGuids(Output output)
+        {
+            Table componentTable = output.Tables["Component"];
+            if (null != componentTable)
+            {
+                Dictionary<string, bool> componentGuidConditions = new Dictionary<string, bool>(componentTable.Rows.Count);
+
+                foreach (ComponentRow row in componentTable.Rows)
+                {
+                    // we don't care about unmanaged components and if there's a * GUID remaining,
+                    // there's already an error that prevented it from being replaced with a real GUID.
+                    if (!String.IsNullOrEmpty(row.Guid) && "*" != row.Guid)
+                    {
+                        bool thisComponentHasCondition = !String.IsNullOrEmpty(row.Condition);
+                        bool allComponentsHaveConditions = thisComponentHasCondition;
+
+                        if (componentGuidConditions.ContainsKey(row.Guid))
+                        {
+                            allComponentsHaveConditions = componentGuidConditions[row.Guid] && thisComponentHasCondition;
+
+                            if (allComponentsHaveConditions)
+                            {
+                                this.core.OnMessage(WixWarnings.DuplicateComponentGuidsMustHaveMutuallyExclusiveConditions(row.SourceLineNumbers, row.Component, row.Guid));
+                            }
+                            else
+                            {
+                                this.core.OnMessage(WixErrors.DuplicateComponentGuids(row.SourceLineNumbers, row.Component, row.Guid));
+                            }
+                        }
+
+                        componentGuidConditions[row.Guid] = allComponentsHaveConditions;
+                    }
                 }
             }
         }
@@ -7041,7 +7125,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Provides = new ProvidesDependencyCollection();
 
                 // Start the package size with the package's payload size.
-                this.PackageSize = this.PackagePayload.FileInfo.Length;
+                this.Size = this.PackagePayload.FileInfo.Length;
 
                 // get all contained payloads...
                 foreach (Row row in wixGroupTable.Rows)
@@ -7057,12 +7141,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         PayloadInfo payload = allPayloads[rowChildName];
                         this.Payloads.Add(payload);
 
-                        this.PackageSize += payload.FileSize; // add each payload to the total size of the package.
+                        this.Size += payload.FileSize; // add each payload to the total size of the package.
                     }
                 }
 
                 // Default the install size to the calculated package size.
-                this.InstallSize = this.PackageSize;
+                this.InstallSize = this.Size;
 
                 switch (this.ChainPackageType)
                 {
@@ -7107,7 +7191,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public bool Repairable { get; private set; }
             public string DetectCondition { get; private set; }
 
-            public long PackageSize { get; private set; }
+            public long Size { get; private set; }
             public long InstallSize { get; private set; }
 
             public string LogPathVariable { get; private set; }
@@ -7316,26 +7400,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 if (!String.IsNullOrEmpty(cabinet) && !cabinet.StartsWith("#", StringComparison.Ordinal))
                                 {
-                                    // Before adding the external file as another payload, we have to check to
-                                    // see if it's already in the payload list. To do this, we have to match the
-                                    // expected relative location of the external file specified in the MSI with
-                                    // the destination @Name of the payload... the @SourceFile path on the payload
-                                    // may be something completely different!
-                                    bool foundPayload = false;
-                                    foreach (PayloadInfo payload in this.Payloads)
-                                    {
-                                        if (cabinet.Equals(payload.FileName, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            payload.ParentPackagePayload = this.PackagePayload;
-                                            foundPayload = true;
-                                            break;
-                                        }
-                                    }
-
                                     // If we didn't find the Payload as an existing child of the package, we need to
                                     // add it.  We expect the file to exist on-disk in the same relative location as
                                     // the MSI expects to find it...
-                                    if (!foundPayload)
+                                    if (!this.IsExistingPayload(cabinet))
                                     {
                                         string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
                                         string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
@@ -7351,7 +7419,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         this.Payloads.Add(payloadNew);
                                         allPayloads.Add(payloadNew.Id, payloadNew);
 
-                                        this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
+                                        this.Size += payloadNew.FileSize; // add the newly added payload to the package size.
                                     }
                                 }
                             }
@@ -7410,17 +7478,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
                                                 string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
 
-                                                PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
-                                                payloadNew.ParentPackagePayload = this.PackagePayload;
-                                                if (null != payloadNew.Container)
+                                                if (!this.IsExistingPayload(name))
                                                 {
-                                                    payloadNew.Container.Payloads.Add(payloadNew);
+                                                    PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                                    payloadNew.ParentPackagePayload = this.PackagePayload;
+                                                    if (null != payloadNew.Container)
+                                                    {
+                                                        payloadNew.Container.Payloads.Add(payloadNew);
+                                                    }
+
+                                                    this.Payloads.Add(payloadNew);
+                                                    allPayloads.Add(payloadNew.Id, payloadNew);
+
+                                                    this.Size += payloadNew.FileSize; // add the newly added payload to the package size.
                                                 }
-
-                                                this.Payloads.Add(payloadNew);
-                                                allPayloads.Add(payloadNew.Id, payloadNew);
-
-                                                this.PackageSize += payloadNew.FileSize; // add the newly added payload to the package size.
                                             }
                                         }
 
@@ -7469,6 +7540,30 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
                 }
+            }
+
+            /// <summary>
+            /// Determines whether a payload with the same name already exists.
+            /// </summary>
+            /// <param name="payloadName">Payload to search for.</param>
+            /// <returns>true if payload already exists; false otherwise</returns>
+            private bool IsExistingPayload(string payloadName)
+            {
+                // Before adding the external file as another payload, we have to check to
+                // see if it's already in the payload list. To do this, we have to match the
+                // expected relative location of the external file specified in the MSI with
+                // the destination @Name of the payload... the @SourceFile path on the payload
+                // may be something completely different!
+                foreach (PayloadInfo payload in this.Payloads)
+                {
+                    if (payloadName.Equals(payload.FileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        payload.ParentPackagePayload = this.PackagePayload;
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             /// <summary>
@@ -8094,7 +8189,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// </summary>
             /// <param name="row">The <see cref="Row"/> from which data is imported.</param>
             internal ProvidesDependency(Row row)
-                : this((string)row[2], (int)row[4])
+                : this((string)row[2], (int?)row[4])
             {
             }
 
@@ -8103,15 +8198,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// </summary>
             /// <param name="key">The unique key of the dependency.</param>
             /// <param name="attributes">Additional attributes for the dependency.</param>
-            internal ProvidesDependency(string key, int attributes)
+            internal ProvidesDependency(string key, int? attributes)
             {
                 this.Key = key;
+                this.Attributes = attributes;
             }
 
             /// <summary>
             /// Gets the unique key of the dependency.
             /// </summary>
             internal string Key { get; private set; }
+
+            /// <summary>
+            /// Gets the attributes for the dependency.
+            /// </summary>
+            internal int? Attributes { get; private set; }
 
             /// <summary>
             /// Gets whether the dependency was imported from the package.

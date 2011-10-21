@@ -743,7 +743,7 @@
     <xs:attribute name="InstallSize" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-            The size this package will take on disk after it is installed. By default, the binder will
+            The size this package will take on disk in bytes after it is installed. By default, the binder will
             calculate the install size by scanning the package (File table for MSIs, Payloads for EXEs)
             and use the total for the install size of the package.
         </xs:documentation>
@@ -1508,6 +1508,7 @@
         <xs:element ref="PackageCertificates" />
         <xs:element ref="PatchCertificates" />
         <xs:element ref="PatchFamily" />
+        <xs:element ref="PatchFamilyGroup"/>
         <xs:element ref="PayloadGroup" />
         <xs:element ref="Property" />
         <xs:element ref="PropertyRef" />
@@ -1575,6 +1576,8 @@
           </xs:element>
           <xs:element ref="PatchFamily" minOccurs="1" maxOccurs="unbounded" />
           <xs:element ref="PatchFamilyRef" minOccurs="0" maxOccurs="unbounded" />
+          <xs:element ref="PatchFamilyGroup" minOccurs="1" maxOccurs="unbounded"/>
+          <xs:element ref="PatchFamilyGroupRef" minOccurs="0" maxOccurs="unbounded"/>
           <xs:element ref="PatchProperty" />
           <xs:element ref="TargetProductCodes" />
           <xs:any namespace="##other" processContents="lax">
@@ -1899,6 +1902,67 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
+  <xs:element name="PatchFamilyGroup">
+    <xs:annotation>
+      <xs:documentation>
+        Groups together multiple patch families to be used in other locations.
+      </xs:documentation>
+      <xs:appinfo>
+        <xse:seeAlso ref="PatchFamilyGroupRef"/>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="PatchFamily"/>
+        <xs:element ref="PatchFamilyRef"/>
+        <xs:element ref="PatchFamilyGroupRef"/>
+        <xs:any namespace="##other" processContents="lax">
+          <xs:annotation>
+            <xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              elements at this point in the schema.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:any>
+      </xs:choice>
+      <xs:attribute name="Id" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>Identifier for the PatchFamilyGroup.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax">
+        <xs:annotation>
+          <xs:documentation>
+            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+            attributes at this point in the schema.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:anyAttribute>
+  </xs:complexType>
+</xs:element>
+<xs:element name="PatchFamilyGroupRef">
+  <xs:annotation>
+      <xs:documentation>Create a reference to a PatchFamilyGroup in another Fragment.</xs:documentation>
+      <xs:appinfo>
+          <xse:seeAlso ref="PatchFamilyGroupRef"/>
+      </xs:appinfo>
+  </xs:annotation>
+  <xs:complexType>
+    <xs:attribute name="Id" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>The identifier of the PatchFamilyGroup to reference.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:anyAttribute namespace="##other" processContents="lax">
+      <xs:annotation>
+        <xs:documentation>
+          Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+          attributes at this point in the schema.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:anyAttribute>
+  </xs:complexType>
+</xs:element>
   <xs:element name="PatchCreation">
     <xs:annotation>
       <xs:documentation>
@@ -2271,9 +2335,6 @@
       </xs:attribute>
       <xs:attribute name="Target" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the TargetImage attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="TargetImage" />
           </xs:appinfo>
@@ -2357,9 +2418,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceFile" />
           </xs:appinfo>
@@ -2372,9 +2430,6 @@
       </xs:attribute>
       <xs:attribute name="srcPatch" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourcePatch attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourcePatch" />
           </xs:appinfo>
@@ -2403,9 +2458,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceFile" />
           </xs:appinfo>
@@ -2520,9 +2572,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Source attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Source" />
           </xs:appinfo>
@@ -2700,23 +2749,19 @@
       <xs:attribute name="Platforms" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The list of platforms supported by the package. This attribute has been deprecated.
-                        Use the -arch switch to candle.exe.
-                    </xs:documentation>
-          <xs:appinfo>
-            <xse:deprecated />
-          </xs:appinfo>
+            The list of platforms supported by the package. This attribute has been deprecated.
+            Specify the -arch switch at the candle.exe command line or the InstallerPlatform 
+            property in a .wixproj MSBuild project.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Platform">
         <xs:annotation>
           <xs:documentation>
-                        The platform supported by the package. This attribute has been deprecated.
-                        Use the -arch switch to candle.exe.
-                    </xs:documentation>
-          <xs:appinfo>
-            <xse:deprecated />
-          </xs:appinfo>
+            The platform supported by the package. Use of this attribute is discouraged; instead,
+            specify the -arch switch at the candle.exe command line or the InstallerPlatform 
+            property in a .wixproj MSBuild project.
+          </xs:documentation>
         </xs:annotation>
         <xs:simpleType>
           <xs:restriction base="xs:NMTOKEN">
@@ -3009,9 +3054,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -3227,9 +3269,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -3469,9 +3508,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -3862,9 +3898,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -4263,9 +4296,6 @@
       </xs:attribute>
       <xs:attribute name="DestinationLongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the DestinationName attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="DestinationName" />
           </xs:appinfo>
@@ -4374,9 +4404,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -4573,9 +4600,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Source attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Source" />
           </xs:appinfo>
@@ -4673,7 +4697,8 @@
       <xs:attribute name="Action">
         <xs:annotation>
           <xs:documentation>
-                        This is the action that will be taken for this registry value.
+                        The Action attribute has been deprecated. In most cases, you can simply omit @Action.  If you need to force Windows Installer 
+                        to create an empty key or recursively delete the key, use the ForceCreateOnInstall or ForceDeleteOnUninstall attributes instead.
                     </xs:documentation>
         </xs:annotation>
         <xs:simpleType>
@@ -4704,6 +4729,25 @@
             </xs:enumeration>
           </xs:restriction>
         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="ForceCreateOnInstall" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+                        Set this attribute to 'yes' to create an empty key, if absent, when the parent component is installed.
+                        This value is needed only to create an empty key with no subkeys or values. Windows Installer creates
+                        keys as needed to store subkeys and values. The default is "no".
+                    </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ForceDeleteOnUninstall" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+                        Set this attribute to 'yes' to remove the key with all its values and subkeys when the parent component is uninstalled.
+                        Note that this value is useful only if your program creates additional values or subkeys under this key and you want an uninstall to remove them. MSI already
+                        removes all values and subkeys that it creates, so this option just adds additional overhead to uninstall.
+                        The default is "no".
+                    </xs:documentation>
+        </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Key" type="xs:string">
         <xs:annotation>
@@ -4999,9 +5043,6 @@
   <xs:element name="Registry">
     <xs:annotation>
       <xs:appinfo>
-        <xs:documentation>
-                    This element has been deprecated. Use the RegistryValue element instead.
-                </xs:documentation>
         <xse:msiRef table="Registry" href="http://msdn.microsoft.com/library/aa371168.aspx" />
         <xse:deprecated ref="RegistryValue" />
       </xs:appinfo>
@@ -5248,9 +5289,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="WildCardLongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -5479,9 +5517,6 @@
       </xs:attribute>
       <xs:attribute name="Target" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the TargetFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="TargetFile" />
           </xs:appinfo>
@@ -7292,6 +7327,21 @@
           <xs:documentation>Identifier for the ComponentGroup.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="Directory" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Sets the default directory identifier for child Component elements.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Source" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Used to set the default file system source for child Component elements. For more information, see 
+            <html:a href="specifying_source_files.htm">Specifying source files</html:a>.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:anyAttribute namespace="##other" processContents="lax">
         <xs:annotation>
           <xs:documentation>
@@ -7463,9 +7513,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceFile" />
           </xs:appinfo>
@@ -7577,9 +7624,6 @@
       </xs:attribute>
       <xs:attribute name="LongName" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Name attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Name" />
           </xs:appinfo>
@@ -7587,9 +7631,6 @@
       </xs:attribute>
       <xs:attribute name="LongSource" type="LongFileNameType">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceName attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceName" />
           </xs:appinfo>
@@ -7653,9 +7694,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the FileSource attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="FileSource" />
           </xs:appinfo>
@@ -7715,9 +7753,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the FileSource attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="FileSource" />
           </xs:appinfo>
@@ -8248,9 +8283,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the Layout attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="Layout" />
           </xs:appinfo>
@@ -8300,7 +8332,7 @@
                         Templated name of the cabinet if some or all of the files stored on the media are in 
                         a cabinet file. This name must begin with either a letter or an underscore, contain 
                         maximum of five characters and {0} in the cabinet name part and must end three character extension.
-                        The default is Prod{0}.cab. 
+                        The default is cab{0}.cab. 
                     </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -8878,7 +8910,12 @@
     <xs:complexType>
       <xs:attribute name="Id" type="xs:string" use="required">
         <xs:annotation>
-          <xs:documentation>The identifier of the CustomAction to reference.</xs:documentation>
+          <xs:documentation>The identifier of the PatchFamily to reference.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ProductCode" type="Guid">
+        <xs:annotation>
+          <xs:documentation>Specifies the ProductCode of the product that this family applies to.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:anyAttribute namespace="##other" processContents="lax">
@@ -10309,9 +10346,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceFile" />
           </xs:appinfo>
@@ -10358,9 +10392,6 @@
       </xs:attribute>
       <xs:attribute name="src" type="xs:string">
         <xs:annotation>
-          <xs:documentation>
-                        This attribute has been deprecated. Use the SourceFile attribute instead.
-                    </xs:documentation>
           <xs:appinfo>
             <xse:deprecated ref="SourceFile" />
           </xs:appinfo>
@@ -10748,9 +10779,6 @@
           </xs:attribute>
           <xs:attribute name="src" type="xs:string">
             <xs:annotation>
-              <xs:documentation>
-                                This attribute has been deprecated. Use the SourceFile attribute instead.
-                            </xs:documentation>
               <xs:appinfo>
                 <xse:deprecated ref="SourceFile" />
               </xs:appinfo>

@@ -5,7 +5,7 @@
 
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
-    <DirectoryRef Id="INSTALLLOCATION">
+    <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="ProductComponent" Guid="*">
         <File Source="Product.wxs" />
       </Component>

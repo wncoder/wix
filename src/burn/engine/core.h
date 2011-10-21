@@ -36,6 +36,7 @@ const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_DETECT = L"burn.related.detect";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_UPGRADE = L"burn.related.upgrade";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_ADDON = L"burn.related.addon";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_RELATED_PATCH = L"burn.related.patch";
+const LPCWSTR BURN_COMMANDLINE_SWITCH_DISABLE_UNELEVATE = L"burn.disable.unelevate";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_PREFIX = L"burn.";
 
 const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
@@ -96,6 +97,7 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PACKAGES packages;
 
     HWND hMessageWindow;
+    HANDLE hMessageWindowThread;
 
     BOOL fDisableRollback;
     BOOL fParallelCacheAndExecute;
@@ -113,6 +115,7 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PIPE_CONNECTION embeddedConnection;
 
     BURN_RESUME_MODE resumeMode;
+    BOOL fDisableUnelevate;
 } BURN_ENGINE_STATE;
 
 

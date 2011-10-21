@@ -159,7 +159,7 @@ static HRESULT SetColumnValue(
     __in_bcount_opt(cbSize) const BYTE *pbData,
     __in SIZE_T cbSize,
     __inout DBBINDING *pBinding,
-    __inout SIZE_T *cbOffset,
+    __inout SIZE_T *pcbOffset,
     __inout BYTE **ppbBuffer
     );
 static HRESULT GetColumnValue(
@@ -574,6 +574,7 @@ extern "C" HRESULT DAPI SceCommitTransaction(
 {
     HRESULT hr = S_OK;
     SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    Assert(0 < pDatabaseInternal->dwTransactionRefcount);
 
     ::InterlockedDecrement(&pDatabaseInternal->dwTransactionRefcount);
 
@@ -593,6 +594,7 @@ extern "C" HRESULT DAPI SceRollbackTransaction(
 {
     HRESULT hr = S_OK;
     SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
+    Assert(0 < pDatabaseInternal->dwTransactionRefcount);
 
     ::InterlockedDecrement(&pDatabaseInternal->dwTransactionRefcount);
 
@@ -664,13 +666,23 @@ extern "C" HRESULT DAPI SceFinishUpdate(
     SCE_ROW *pRow = reinterpret_cast<SCE_ROW *>(rowHandle);
     IAccessor *pIAccessor = NULL;
     IRowsetChange *pIRowsetChange = NULL;
+    DBBINDSTATUS *rgBindStatus = NULL;
     HACCESSOR hAccessor = DB_NULL_HACCESSOR;
     HROW hRow = DB_NULL_HROW;
 
     hr = pRow->pIRowset->QueryInterface(IID_IAccessor, reinterpret_cast<void **>(&pIAccessor));
     ExitOnFailure(hr, "Failed to get IAccessor interface");
 
-    hr = pIAccessor->CreateAccessor(DBACCESSOR_ROWDATA, pRow->dwBindingIndex, pRow->rgBinding, 0, &hAccessor, NULL);
+// This can be used when stepping through the debugger to see bind failures
+#ifdef DEBUG
+    if (0 < pRow->dwBindingIndex)
+    {
+        hr = MemEnsureArraySize(reinterpret_cast<void **>(&rgBindStatus), pRow->dwBindingIndex, sizeof(DBBINDSTATUS), 0);
+        ExitOnFailure(hr, "Failed to ensure binding status array size");
+    }
+#endif
+
+    hr = pIAccessor->CreateAccessor(DBACCESSOR_ROWDATA, pRow->dwBindingIndex, pRow->rgBinding, 0, &hAccessor, rgBindStatus);
     ExitOnFailure(hr, "Failed to create accessor");
 
     hr = pRow->pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pIRowsetChange));
@@ -697,6 +709,7 @@ LExit:
     {
         pIAccessor->ReleaseAccessor(hAccessor, NULL);
     }
+    ReleaseMem(rgBindStatus);
     ReleaseObject(pIAccessor);
     ReleaseObject(pIRowsetChange);
 
@@ -1730,16 +1743,17 @@ static HRESULT SetColumnValue(
     __in_bcount_opt(cbSize) const BYTE *pbData,
     __in SIZE_T cbSize,
     __inout DBBINDING *pBinding,
-    __inout SIZE_T *cbOffset,
+    __inout SIZE_T *pcbOffset,
     __inout BYTE **ppbBuffer
     )
 {
     HRESULT hr = S_OK;
-    size_t cbNewOffset = *cbOffset;
+    size_t cbNewOffset = *pcbOffset;
 
     pBinding->iOrdinal = dwColumnIndex + 1; // Skip bookmark column
     pBinding->dwMemOwner = DBMEMOWNER_CLIENTOWNED;
     pBinding->dwPart = DBPART_VALUE | DBPART_LENGTH;
+
     pBinding->obLength = cbNewOffset;
 
     hr = ::SizeTAdd(cbNewOffset, sizeof(DBBYTEOFFSET), &cbNewOffset);
@@ -1749,6 +1763,14 @@ static HRESULT SetColumnValue(
 
     hr = ::SizeTAdd(cbNewOffset, cbSize, &cbNewOffset);
     ExitOnFailure1(hr, "Failed to add %u to alloc size while setting column value", cbSize);
+
+#ifdef DEBUG
+    pBinding->dwPart |= DBPART_STATUS;
+    pBinding->obStatus = cbNewOffset;
+
+    hr = ::SizeTAdd(cbNewOffset, sizeof(DBSTATUS), &cbNewOffset);
+    ExitOnFailure(hr, "Failed to add sizeof(DBSTATUS) to alloc size while setting column value");
+#endif
 
     pBinding->wType = pTableSchema->rgColumns[dwColumnIndex].dbtColumnType;
     pBinding->cbMaxLen = static_cast<DBBYTEOFFSET>(cbSize);
@@ -1764,10 +1786,13 @@ static HRESULT SetColumnValue(
         ExitOnNull(*ppbBuffer, hr, E_OUTOFMEMORY, "Failed to reallocate buffer while setting row string");
     }
 
-    *(reinterpret_cast<DBBYTEOFFSET *>(*ppbBuffer + *cbOffset)) = static_cast<DBBYTEOFFSET>(cbSize);
-    *cbOffset += sizeof(DBBYTEOFFSET);
-    memcpy(*ppbBuffer + *cbOffset, pbData, cbSize);
-    *cbOffset += cbSize;
+    *(reinterpret_cast<DBBYTEOFFSET *>(*ppbBuffer + *pcbOffset)) = static_cast<DBBYTEOFFSET>(cbSize);
+    *pcbOffset += sizeof(DBBYTEOFFSET);
+    memcpy(*ppbBuffer + *pcbOffset, pbData, cbSize);
+    *pcbOffset += cbSize;
+#ifdef DEBUG
+    *pcbOffset += sizeof(DBSTATUS);
+#endif
 
 LExit:
     return hr;

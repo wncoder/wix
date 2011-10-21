@@ -359,22 +359,43 @@ extern "C" HRESULT PlanExecutePackage(
         fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->execute || BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->rollback);
     }
 
-    // If the package needs to be cached and is not already cached, plan the cache action first. Even packages that are marked
-    // Cache='no' need to be cached so we can check the hash and ensure the correct package is installed. We'll clean up Cache='no'
-    // packages after applying the changes.
-    if (fNeedsCache && !pPackage->fCached)
+    if (fNeedsCache)
     {
-        // If this is an MSI package with slipstream MSPs, ensure the MSPs are cached first.
-        if (BURN_PACKAGE_TYPE_MSI == pPackage->type && 0 < pPackage->Msi.cSlipstreamMspPackages)
+        if (pPackage->fCache)
         {
-            hr = PlanCacheSlipstreamMsps(pPlan, pPackage);
-            ExitOnFailure(hr, "Failed to plan slipstream patches for package.");
+            // Add the cache size to the estimated size
+            pPlan->qwEstimatedSize += pPackage->qwSize;
         }
 
-        hr = PlanCachePackage(pPlan, pPackage, phSyncpointEvent);
-        ExitOnFailure(hr, "Failed to plan cache package.");
+        // If the package needs to be cached and is not already cached, plan the cache action first. Even packages that are marked
+        // Cache='no' need to be cached so we can check the hash and ensure the correct package is installed. We'll clean up Cache='no'
+        // packages after applying the changes.
+        if (!pPackage->fCached)
+        {
+            // If this is an MSI package with slipstream MSPs, ensure the MSPs are cached first.
+            if (BURN_PACKAGE_TYPE_MSI == pPackage->type && 0 < pPackage->Msi.cSlipstreamMspPackages)
+            {
+                hr = PlanCacheSlipstreamMsps(pPlan, pPackage);
+                ExitOnFailure(hr, "Failed to plan slipstream patches for package.");
+            }
 
-        fPlannedCachePackage = TRUE;
+            hr = PlanCachePackage(pPlan, pPackage, phSyncpointEvent);
+            ExitOnFailure(hr, "Failed to plan cache package.");
+
+            fPlannedCachePackage = TRUE;
+        }
+    }
+
+    // Add the installed size to estimated size if it will be on the machine at the end of the install
+    if (BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || (BOOTSTRAPPER_PACKAGE_STATE_PRESENT == pPackage->currentState && (BOOTSTRAPPER_REQUEST_STATE_ABSENT != pPackage->requested && BOOTSTRAPPER_REQUEST_STATE_CACHE != pPackage->requested)))
+    {
+        // MSP packages get cached automatically by windows installer with any embedded cabs, so include that in the size as well
+        if (BURN_PACKAGE_TYPE_MSP == pPackage->type)
+        {
+            pPlan->qwEstimatedSize += pPackage->qwSize;
+        }
+
+        pPlan->qwEstimatedSize += pPackage->qwInstallSize;
     }
 
     // Add execute actions.
@@ -1066,8 +1087,6 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
         pCacheAction->layoutPayload.sczUnverifiedPath = sczPayloadUnverifiedPath;
         sczPayloadUnverifiedPath = NULL;
     }
-
-     // TODO: Add to the cache size when we send progress for verification: pPlan->qwTotalCacheSize += pPayload->qwFileSize;
 
     pCacheAction = NULL;
 

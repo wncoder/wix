@@ -1510,3 +1510,78 @@ RobMen: Retry setting ACLs in Burn since files may be in use.
 
 WixBuild: Version 3.6.2201.0
 
+BriaRo: Adding PatchFamilyGroup and PatchFamilyGroupRef as two new WiX schema
+        elements.
+        
+BobArnson: SFBUG:3414460 - Update DocCompiler to read the authored HTML title.
+
+BobArnson: SFBUG:3303277 - Restore .vcxproj references by calling
+           GetNativeTargetPath.
+
+PMarcu: SFBUG:3374854 - Fixing docs to not say that you can use preprocessor
+                        variables that are not defined to check for their
+                        existance in an if statement.
+
+PMarcu: SFBUG:3392723 - Fixing crash when duplicate keys are added during
+                        ICE validation.
+
+BobArnson: SFBUG:3383304 - Add Directory and Source attributes to
+           ComponentGroup
+
+RobMen: SFBUG:3418715 - Provide override switch for test harnesses to disable
+                        unelevate behavior in Burn.
+
+WixBuild: Version 3.6.2207.0
+
+BobArnson: SFBUG:3393359 - de-dupe media and loose-file payloads with the same
+           name.
+
+BobArnson: SFBUG:3408233 - Use locale functions on Vista and later; fallback to
+           LCID.
+
+BobArnson: SFBUG:3130897 - ensure a "none" feature action state on execute is 
+           likewise "none" for rollback.
+
+BobArnson: Add PathCompress pathutil function to compress a file or directory.
+
+RobMen: SFBUG:3419045 - remove Sleep call now that message callbacks are working
+                        regularly.
+
+RobMen: Fix Insignia to not crash when inscribing a Media row with no cabinet.
+
+BobArnson: For * component GUIDs, support multiple files iff the keypath is a
+           versioned file and all the other files are not.
+
+BobArnson: Check output for duplicate GUIDs, replacing ICE08.
+
+JieJi: Fix mba.wxs to support RTF license in preqba.
+
+RobMen: SFBUG:3421308 - do not allow MSI packages to supersede themselves.
+
+RobMen: Move Burn resume key to RunOnce so per-machine bundles are automatically
+        elevated on restart.
+
+WixBuild: Version 3.6.2214.0
+
+HeathS: General code cleanup and bug fixes for the dependency feature.
+
+BobArnson: SFBUG:3361054 - Deprecate RegistryKey/@Action, replacing with 
+           @ForceCreateOnInstall and @ForceDeleteOnUninstall.
+
+MiCarls: SFBUG:3036347 - use an appropriate EstimatedSize in ARP.
+
+RobMen: Make cache failures on non-vital packages same as for vital packages.
+
+RobMen: SFBUG:3414392 - ensure Burn engine's suppress restart dialog is closed
+                        before attempting to schedule restart.
+
+RobMen: Burn engine will recommend best action.
+
+BobArnson: SFBUG:3425511 - Add support for RegistrySearch/@Root="HKU|HKCR".
+
+BobArnson: Fix doc bugs SFBUG:3425151 and SFBUG:3424772.
+
+PMarcu: SFBUG:3389181 pyro throws null exception when passing wixouts to torch.
+
+WixBuild: Version 3.6.2221.0
+

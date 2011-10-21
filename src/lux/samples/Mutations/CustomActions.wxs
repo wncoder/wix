@@ -3,16 +3,16 @@
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLLOCATION" Name="Mutations" />
+        <Directory Id="INSTALLFOLDER" Name="Mutations" />
       </Directory>
     </Directory>
   </Fragment>
   
   <Fragment>
-    <CustomAction Id="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" />
+    <CustomAction Id="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" />
     <CustomAction Id="TestCustomActionSimpleNumber" Property="SIMPLENUMBER" Value="1" />
-    <CustomAction Id="TestCustomActionMultiValue" Property="MULTIVALUE" Value="1*[INSTALLLOCATION]*WIXEAST" />
-    <CustomAction Id="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" Value="InstallationRoot#[INSTALLLOCATION]#Developers#WIXEAST" />
+    <CustomAction Id="TestCustomActionMultiValue" Property="MULTIVALUE" Value="1*[INSTALLFOLDER]*WIXEAST" />
+    <CustomAction Id="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" Value="InstallationRoot#[INSTALLFOLDER]#Developers#WIXEAST" />
 
     <InstallExecuteSequence>
       <Custom Action="TestCustomActionSimple" After="InstallFiles" />
@@ -24,11 +24,11 @@
 
   <Fragment>
     <!-- mutation-free -->
-    <lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" Operator="equal" />
+    <lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" Operator="equal" />
     <lux:UnitTest CustomAction="TestCustomActionSimpleNumber" Property="SIMPLENUMBER" Value="1" />
 
     <lux:Mutation Id="SimulateDiskFull">
-      <lux:UnitTest Id="DiskFullSimple" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" Operator="equal" />
+      <lux:UnitTest Id="DiskFullSimple" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" Operator="equal" />
       <lux:UnitTest Id="DiskFullSimpleNumber" CustomAction="TestCustomActionSimpleNumber" Property="SIMPLENUMBER" Value="1" />
     </lux:Mutation>
     
@@ -37,7 +37,7 @@
         <lux:Condition>VersionNT</lux:Condition>
         <!-- intentional failure -->
         <lux:UnitTest Index="0" Value="INTENTIONAL_FAILURE" /> 
-        <lux:UnitTest Index="1" Value="[INSTALLLOCATION]">
+        <lux:UnitTest Index="1" Value="[INSTALLFOLDER]">
           <lux:Condition>NOT Installed</lux:Condition>
         </lux:UnitTest>
         <lux:UnitTest Index="2" Value="WIXEAST" /> 
@@ -46,7 +46,7 @@
     
     <lux:Mutation Id="SimulateUpgradeFailure">
       <lux:UnitTest CustomAction="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" NameValueSeparator="#">
-        <lux:UnitTest Index="InstallationRoot" Value="[INSTALLLOCATION]" />
+        <lux:UnitTest Index="InstallationRoot" Value="[INSTALLFOLDER]" />
         <lux:UnitTest Index="Developers" Operator="caseInsensitiveNotEqual" Value="WIXWEST" />
       </lux:UnitTest>
     </lux:Mutation>

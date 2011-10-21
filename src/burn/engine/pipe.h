@@ -49,6 +49,13 @@ typedef struct _BURN_PIPE_MESSAGE
     LPVOID pvData;
 } BURN_PIPE_MESSAGE;
 
+typedef struct _BURN_PIPE_RESULT
+{
+    DWORD dwResult;
+    BOOL fRestart;
+} BURN_PIPE_RESULT;
+
+
 typedef HRESULT (*PFN_PIPE_MESSAGE_CALLBACK)(
     __in BURN_PIPE_MESSAGE* pMsg,
     __in_opt LPVOID pvContext,
@@ -76,7 +83,7 @@ HRESULT PipePumpMessages(
     __in HANDLE hPipe,
     __in_opt PFN_PIPE_MESSAGE_CALLBACK pfnCallback,
     __in_opt LPVOID pvContext,
-    __out DWORD* pdwResult
+    __in BURN_PIPE_RESULT* pResult
     );
 
 // Parent functions.
@@ -92,8 +99,9 @@ HRESULT PipeCreatePipes(
 HRESULT PipeLaunchParentProcess(
     __in LPCWSTR wzCommandLine,
     __in int nCmdShow,
-    __in_z LPWSTR sczPipeName,
-    __in_z LPWSTR sczClientToken
+    __in_z LPWSTR sczConnectionName,
+    __in_z LPWSTR sczSecret,
+    __in BOOL fDisableUnelevate
     );
 HRESULT PipeLaunchChildProcess(
     __in_z LPCWSTR wzExecutablePath,
@@ -106,7 +114,8 @@ HRESULT PipeWaitForChildConnect(
     );
 HRESULT PipeTerminateChildProcess(
     __in BURN_PIPE_CONNECTION* pConnection,
-    __in DWORD dwParentExitCode
+    __in DWORD dwParentExitCode,
+    __in BOOL fRestart
     );
 
 // Child functions.

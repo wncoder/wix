@@ -27,5 +27,6 @@
 #include "memutil.h"
 #include "regutil.h"
 #include "dictutil.h"
+#include "procutil.h"
 
 #include "deputil.h"

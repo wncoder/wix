@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Bundle Name="$wixsafeprojectname$" Version="1.0.0.0" Manufacturer="$wixsafeprojectname$" UpgradeCode="$guid1$">
-    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
-    <Chain>
-      <!-- $loc_WXS_TODO$ -->
+	<Bundle Name="$wixsafeprojectname$" Version="1.0.0.0" Manufacturer="$registeredorganization$" UpgradeCode="$guid1$">
+		<BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
 
-      <!-- $loc_WXS_NOTE1$ -->
-      <PackageGroupRef Id="Bundle.Generated.Packages"/>
-    </Chain>
-  </Bundle>
+		<Chain>
+			<!-- $loc_WXS_TODO$ -->
+			<!-- <MsiPackage SourceFile="path\to\your.msi" /> -->
+		</Chain>
+	</Bundle>
 </Wix>

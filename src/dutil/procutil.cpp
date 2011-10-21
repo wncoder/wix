@@ -151,6 +151,41 @@ LExit:
     return hr;
 }
 
+
+extern "C" HRESULT DAPI ProcExec(
+    __in_z LPCWSTR wzExecutablePath,
+    __in_z LPCWSTR wzCommandLine,
+    __in int nCmdShow,
+    __out HANDLE *phProcess
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczFullCommandLine = NULL;
+    STARTUPINFOW si = { };
+    PROCESS_INFORMATION pi = { };
+
+    hr = StrAllocFormatted(&sczFullCommandLine, L"\"%ls\" %ls", wzExecutablePath, wzCommandLine);
+    ExitOnFailure(hr, "Failed to allocate full command-line.");
+
+    si.cb = sizeof(si);
+    si.wShowWindow = nCmdShow;
+    if (!::CreateProcessW(wzExecutablePath, sczFullCommandLine, NULL, NULL, FALSE, 0, 0, NULL, &si, &pi))
+    {
+        ExitWithLastError1(hr, "Failed to create process: %ls", sczFullCommandLine);
+    }
+
+    *phProcess = pi.hProcess;
+    pi.hProcess = NULL;
+
+LExit:
+    ReleaseHandle(pi.hThread);
+    ReleaseHandle(pi.hProcess);
+    ReleaseStr(sczFullCommandLine);
+
+    return hr;
+}
+
+
 /********************************************************************
  ProcExecute() - executes a command-line.
 

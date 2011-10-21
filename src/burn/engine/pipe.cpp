@@ -19,8 +19,8 @@
 #include "precomp.h"
 
 static const DWORD PIPE_64KB = 64 * 1024;
-static const DWORD PIPE_WAIT_FOR_CONNECTION = 5 * 1000;
-static const DWORD PIPE_RETRY_FOR_CONNECTION = 60;
+static const DWORD PIPE_WAIT_FOR_CONNECTION = 500;  // wait half a second,
+static const DWORD PIPE_RETRY_FOR_CONNECTION = 600; // for up to 3 minutes.
 
 static const LPCWSTR PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls";
 static const LPCWSTR CACHE_PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls.Cache";
@@ -100,15 +100,15 @@ extern "C" HRESULT PipeSendMessage(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwResult = 0;
+    BURN_PIPE_RESULT result = { };
 
     hr = WritePipeMessage(hPipe, dwMessage, pvData, cbData);
     ExitOnFailure(hr, "Failed to write send message to pipe.");
 
-    hr = PipePumpMessages(hPipe, pfnCallback, pvContext, &dwResult);
+    hr = PipePumpMessages(hPipe, pfnCallback, pvContext, &result);
     ExitOnFailure(hr, "Failed to pump messages during send message to pipe.");
 
-    *pdwResult = dwResult;
+    *pdwResult = result.dwResult;
 
 LExit:
     return hr;
@@ -122,7 +122,7 @@ extern "C" HRESULT PipePumpMessages(
     __in HANDLE hPipe,
     __in_opt PFN_PIPE_MESSAGE_CALLBACK pfnCallback,
     __in_opt LPVOID pvContext,
-    __out DWORD* pdwResult
+    __in BURN_PIPE_RESULT* pResult
     )
 {
     HRESULT hr = S_OK;
@@ -155,18 +155,22 @@ extern "C" HRESULT PipePumpMessages(
                 ExitOnRootFailure(hr, "No status returned to PipePumpMessages()");
             }
 
-            *pdwResult = *static_cast<DWORD*>(msg.pvData);
-            ExitFunction1(hr = S_OK);
+            pResult->dwResult = *static_cast<DWORD*>(msg.pvData);
+            ExitFunction1(hr = S_OK); // exit loop.
 
         case BURN_PIPE_MESSAGE_TYPE_TERMINATE:
-            if (!msg.pvData || sizeof(DWORD) != msg.cbData)
+            iData = 0;
+
+            hr = BuffReadNumber(static_cast<BYTE*>(msg.pvData), msg.cbData, &iData, &pResult->dwResult);
+            ExitOnFailure(hr, "Failed to read returned result to PipePumpMessages()");
+
+            if (sizeof(DWORD) * 2 == msg.cbData)
             {
-                hr = E_INVALIDARG;
-                ExitOnRootFailure(hr, "No exit code returned to PipePumpMessages()");
+                hr = BuffReadNumber(static_cast<BYTE*>(msg.pvData), msg.cbData, &iData, (DWORD*)&pResult->fRestart);
+                ExitOnFailure(hr, "Failed to read returned restart to PipePumpMessages()");
             }
 
-            *pdwResult = *static_cast<DWORD*>(msg.pvData);
-            ExitFunction1(hr = S_OK);
+            ExitFunction1(hr = S_OK); // exit loop.
 
         default:
             if (pfnCallback)
@@ -351,7 +355,8 @@ HRESULT PipeLaunchParentProcess(
     __in_z LPCWSTR wzCommandLine,
     __in int nCmdShow,
     __in_z LPWSTR sczConnectionName,
-    __in_z LPWSTR sczSecret
+    __in_z LPWSTR sczSecret,
+    __in BOOL fDisableUnelevate
     )
 {
     HRESULT hr = S_OK;
@@ -368,15 +373,23 @@ HRESULT PipeLaunchParentProcess(
     hr = StrAllocFormatted(&sczParameters, L"%ls -%ls %ls %ls %u", wzCommandLine, BURN_COMMANDLINE_SWITCH_UNELEVATED, sczConnectionName, sczSecret, dwProcessId);
     ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
 
-    // Try to launch unelevated and if that fails for any reason, try launch our process normally (even though that may make it elevated).
-    hr = ProcExecuteAsInteractiveUser(sczBurnPath, sczParameters, &hProcess);
-    if (FAILED(hr))
+    if (fDisableUnelevate)
     {
-        hr = ShelExecUnelevated(sczBurnPath, sczParameters, L"open", NULL, nCmdShow);
+        hr = ProcExec(sczBurnPath, sczParameters, nCmdShow, &hProcess);
+        ExitOnFailure1(hr, "Failed to launch parent process with unelevate disabled: %ls", sczBurnPath);
+    }
+    else
+    {
+        // Try to launch unelevated and if that fails for any reason, try launch our process normally (even though that may make it elevated).
+        hr = ProcExecuteAsInteractiveUser(sczBurnPath, sczParameters, &hProcess);
         if (FAILED(hr))
         {
-            hr = ShelExec(sczBurnPath, sczParameters, L"open", NULL, nCmdShow, NULL, NULL);
-            ExitOnFailure1(hr, "Failed to launch parent process: %ls", sczBurnPath);
+            hr = ShelExecUnelevated(sczBurnPath, sczParameters, L"open", NULL, nCmdShow);
+            if (FAILED(hr))
+            {
+                hr = ShelExec(sczBurnPath, sczParameters, L"open", NULL, nCmdShow, NULL, NULL);
+                ExitOnFailure1(hr, "Failed to launch parent process: %ls", sczBurnPath);
+            }
         }
     }
 
@@ -500,18 +513,29 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT PipeTerminateChildProcess(
     __in BURN_PIPE_CONNECTION* pConnection,
-    __in DWORD dwParentExitCode
+    __in DWORD dwParentExitCode,
+    __in BOOL fRestart
     )
 {
     HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
 
+    // Prepare the exit message.
+    hr = BuffWriteNumber(&pbData, &cbData, dwParentExitCode);
+    ExitOnFailure(hr, "Failed to write exit code to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, fRestart);
+    ExitOnFailure(hr, "Failed to write restart to message buffer.");
+
+    // Send the messages.
     if (INVALID_HANDLE_VALUE != pConnection->hCachePipe)
     {
-        hr = WritePipeMessage(pConnection->hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
+        hr = WritePipeMessage(pConnection->hCachePipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), pbData, cbData);
         ExitOnFailure(hr, "Failed to post terminate message to child process cache thread.");
     }
 
-    hr = WritePipeMessage(pConnection->hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), &dwParentExitCode, sizeof(dwParentExitCode));
+    hr = WritePipeMessage(pConnection->hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_TERMINATE), pbData, cbData);
     ExitOnFailure(hr, "Failed to post terminate message to child process.");
 
     // If we were able to get a handle to the other process, wait for it to exit.

@@ -7790,25 +7790,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             foreach (Row row in table.Rows)
             {
-                if ("-" == Convert.ToString(row[3]) && null == row[4])
-                {
-                    Wix.RemoveRegistryKey removeRegistryKey = new Wix.RemoveRegistryKey();
-
-                    removeRegistryKey.Id = Convert.ToString(row[0]);
-
-                    Wix.RegistryRootType registryRootType;
-                    if (this.GetRegistryRootType(row.SourceLineNumbers, table.Name, row.Fields[1], out registryRootType))
-                    {
-                        removeRegistryKey.Root = registryRootType;
-                    }
-
-                    removeRegistryKey.Key = Convert.ToString(row[2]);
-
-                    removeRegistryKey.Action = Wix.RemoveRegistryKey.ActionType.removeOnUninstall;
-
-                    this.core.IndexElement(row, removeRegistryKey);
-                }
-                else if (("+" == Convert.ToString(row[3]) || "*" == Convert.ToString(row[3])) && null == row[4])
+                if (("-" == Convert.ToString(row[3]) || "+" == Convert.ToString(row[3]) || "*" == Convert.ToString(row[3])) && null == row[4])
                 {
                     Wix.RegistryKey registryKey = new Wix.RegistryKey();
 
@@ -7822,13 +7804,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     registryKey.Key = Convert.ToString(row[2]);
 
-                    if ("+" == Convert.ToString(row[3]))
+                    switch (Convert.ToString(row[3]))
                     {
-                        registryKey.Action = Wix.RegistryKey.ActionType.create;
-                    }
-                    else
-                    {
-                        registryKey.Action = Wix.RegistryKey.ActionType.createAndRemoveOnUninstall;
+                        case "+":
+                            registryKey.ForceCreateOnInstall = Wix.YesNoType.yes;
+                            break;
+                        case "-":
+                            registryKey.ForceDeleteOnUninstall = Wix.YesNoType.yes;
+                            break;
+                        case "*":
+                            registryKey.ForceDeleteOnUninstall = Wix.YesNoType.yes;
+                            registryKey.ForceCreateOnInstall = Wix.YesNoType.yes;
+                            break;
                     }
 
                     this.core.IndexElement(row, registryKey);

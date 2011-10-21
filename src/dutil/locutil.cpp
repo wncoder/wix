@@ -10,13 +10,22 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 //    Localization helper functions.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
+
+// Vista-and-later functions
+static PFN_GETUSERDEFAULTLOCALENAME vpfnGetUserDefaultLocaleName = NULL;
+static PFN_GETUSERDEFAULTLOCALENAME vpfnGetUserDefaultLocaleNameFromLibrary = NULL;
+static PFN_GETSYSTEMDEFAULTLOCALENAME vpfnGetSystemDefaultLocaleName = NULL;
+static PFN_GETSYSTEMDEFAULTLOCALENAME vpfnGetSystemDefaultLocaleNameFromLibrary = NULL;
+static PFN_LOCALENAMETOLCID vpfnLocaleNameToLCID = NULL;
+static PFN_LOCALENAMETOLCID vpfnLocaleNameToLCIDFromLibrary = NULL;
+static HMODULE vhmodKernel32 = NULL;
 
 
 // prototypes
@@ -35,7 +44,51 @@ static HRESULT ParseWxlString(
     );
 
 
-HRESULT DAPI LocProbeForFile(
+extern "C" HRESULT DAPI LocInitialize(
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = LoadSystemLibrary(L"Kernel32.dll", &vhmodKernel32);
+    ExitOnFailure(hr, "Failed to load Kernel32.dll");
+
+    // Ignore failures
+    vpfnGetUserDefaultLocaleNameFromLibrary = reinterpret_cast<PFN_GETUSERDEFAULTLOCALENAME>(::GetProcAddress(vhmodKernel32, "GetUserDefaultLocaleName"));
+    if (NULL == vpfnGetUserDefaultLocaleName)
+    {
+        vpfnGetUserDefaultLocaleName = vpfnGetUserDefaultLocaleNameFromLibrary;
+    }
+
+    vpfnGetSystemDefaultLocaleNameFromLibrary = reinterpret_cast<PFN_GETSYSTEMDEFAULTLOCALENAME>(::GetProcAddress(vhmodKernel32, "GetSystemDefaultLocaleName"));
+    if (NULL == vpfnGetSystemDefaultLocaleName)
+    {
+        vpfnGetSystemDefaultLocaleName = vpfnGetSystemDefaultLocaleNameFromLibrary;
+    }
+
+    vpfnLocaleNameToLCIDFromLibrary = reinterpret_cast<PFN_LOCALENAMETOLCID>(::GetProcAddress(vhmodKernel32, "LocaleNameToLCID"));
+    if (NULL == vpfnLocaleNameToLCID)
+    {
+        vpfnLocaleNameToLCID = vpfnLocaleNameToLCIDFromLibrary;
+    }
+
+LExit:
+    return hr;
+}
+
+extern "C" void DAPI LocUninitialize(
+    )
+{
+    if (vhmodKernel32)
+    {
+        ::FreeLibrary(vhmodKernel32);
+        vhmodKernel32 = NULL;
+        vpfnGetUserDefaultLocaleNameFromLibrary = NULL;
+        vpfnGetSystemDefaultLocaleNameFromLibrary = NULL;
+        vpfnLocaleNameToLCIDFromLibrary = NULL;
+    }
+}
+
+extern "C" HRESULT DAPI LocProbeForFile(
     __in_z LPCWSTR wzBasePath,
     __in_z LPCWSTR wzLocFileName,
     __in_z_opt LPCWSTR wzLanguage,
@@ -62,8 +115,24 @@ HRESULT DAPI LocProbeForFile(
         }
     }
 
-    // Look for a loc file in the current user LCID.
-    lcid = ::GetUserDefaultLCID();
+    // Look for a loc file in the current user locale/LCID.
+    if (vpfnGetUserDefaultLocaleName && vpfnLocaleNameToLCID)
+    {
+        // prefer the Vista-and-later locale functions
+        WCHAR wzLocaleName[LOCALE_NAME_MAX_LENGTH] = { };
+        if (0 == vpfnGetUserDefaultLocaleName(wzLocaleName, countof(wzLocaleName)))
+        {
+            ExitWithLastError(hr, "Failed to get user locale name.");
+        }
+
+        lcid = vpfnLocaleNameToLCID(wzLocaleName, 0);
+    }
+
+    if (0 == lcid)
+    {
+        lcid = ::GetUserDefaultLCID();
+    }
+
     hr = StrAllocFormatted(&sczLcidFile, L"%u\\%ls", lcid, wzLocFileName);
     ExitOnFailure(hr, "Failed to format user lcid.");
 
@@ -75,13 +144,30 @@ HRESULT DAPI LocProbeForFile(
         ExitFunction();
     }
 
-    // Look for a loc file in the current system LCID.
-    lcid = ::GetSystemDefaultLCID();
+    // Look for a loc file in the current system locale/LCID.
+    lcid = 0;
+    if (vpfnGetSystemDefaultLocaleName && vpfnLocaleNameToLCID)
+    {
+        // prefer the Vista-and-later locale functions
+        WCHAR wzLocaleName[LOCALE_NAME_MAX_LENGTH] = { };
+        if (0 == vpfnGetSystemDefaultLocaleName(wzLocaleName, countof(wzLocaleName)))
+        {
+            ExitWithLastError(hr, "Failed to get system locale name.");
+        }
+
+        lcid = vpfnLocaleNameToLCID(wzLocaleName, 0);
+    }
+
+    if (0 == lcid)
+    {
+        lcid = ::GetSystemDefaultLCID();
+    }
+
     hr = StrAllocFormatted(&sczLcidFile, L"%u\\%ls", lcid, wzLocFileName);
-    ExitOnFailure(hr, "Failed to format user lcid.");
+    ExitOnFailure(hr, "Failed to format system lcid.");
 
     hr = PathConcat(wzBasePath, sczLcidFile, &sczProbePath);
-    ExitOnFailure(hr, "Failed to concat user lcid file name to base path.");
+    ExitOnFailure(hr, "Failed to concat system lcid file name to base path.");
 
     if (FileExistsEx(sczProbePath, NULL))
     {

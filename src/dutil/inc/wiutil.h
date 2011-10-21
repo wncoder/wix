@@ -62,6 +62,8 @@ typedef struct _WIU_MSI_EXECUTE_MESSAGE
     DWORD cData;
     LPCWSTR* rgwzData;
 
+    INT nResultRecommendation; // recommended return result for this message based on analysis of real world installs.
+
     union
     {
         struct

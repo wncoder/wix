@@ -21,10 +21,11 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
     <Bundle Name="$(var.TestName) - Bundle A" Version="$(var.Version)" UpgradeCode="A517E3D8-887B-4024-8F24-5F039E3CEF27">
+        <Log Prefix="$(var.TestName)"/>
         <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
         <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
         <Chain>
-            <MsiPackage Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>
+            <MsiPackage Name="$(var.TestName) - Package A" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>
         </Chain>
     </Bundle>
 </Wix>

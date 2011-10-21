@@ -279,7 +279,6 @@ public: // IBootstrapperEngine
     {
         HRESULT hr = S_OK;
         REPORT_LEVEL rl = REPORT_NONE;
-        LPSTR sczMessage = NULL;
 
         switch (level)
         {
@@ -303,14 +302,10 @@ public: // IBootstrapperEngine
             ExitFunction1(hr = E_INVALIDARG);
         }
 
-        hr = StrAnsiAllocString(&sczMessage, wzMessage, 0, CP_UTF8);
-        ExitOnFailure(hr, "Failed to reformat UX log message as UTF8 string.");
-
-        hr = LogStringLine(rl, sczMessage);
+        hr = LogStringLine(rl, "%ls", wzMessage);
         ExitOnFailure(hr, "Failed to log UX message.");
 
     LExit:
-        ReleaseStr(sczMessage);
         return hr;
     }
 

@@ -16,6 +16,9 @@
         <WixExtension Include="WixBalExtension">
             <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
         </WixExtension>
+        <WixExtension Include="WixDependencyExtension">
+            <HintPath>$(OutputPath_x86)WixDependencyExtension.dll</HintPath>
+        </WixExtension>
         <WixExtension Include="WixUtilExtension">
             <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>
         </WixExtension>

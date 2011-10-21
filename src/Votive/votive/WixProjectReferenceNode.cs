@@ -68,7 +68,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         {
             this.setDoNotHarvest = "True"; // do not harvest references by default
             this.setRefProjectOutputGroups = "Binaries;Content;Satellites";
-            this.setRefTargetDir = "INSTALLLOCATION";
+            this.setRefTargetDir = "INSTALLFOLDER";
         }
 
         // =========================================================================================

@@ -174,6 +174,10 @@ extern "C" HRESULT DAPI ShelExecUnelevated(
     ExitOnFailure(hr, "Failed to get shell dispatch from view.");
 
     hr = psd->ShellExecute(bstrTargetPath, vtParameters, vtWorkingDirectory, vtVerb, vtShow);
+    if (S_FALSE == hr)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_CANCELLED);
+    }
     ExitOnRootFailure1(hr, "Failed to launch unelevate executable: %ls", bstrTargetPath);
 
 LExit:

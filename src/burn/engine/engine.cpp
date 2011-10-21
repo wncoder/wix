@@ -220,6 +220,8 @@ static void UninitializeEngineState(
     PipeConnectionUninitialize(&pEngineState->embeddedConnection);
     PipeConnectionUninitialize(&pEngineState->companionConnection);
 
+    ReleaseHandle(pEngineState->hMessageWindowThread);
+
     ::DeleteCriticalSection(&pEngineState->userExperience.csEngineActive);
     UserExperienceUninitialize(&pEngineState->userExperience);
 
@@ -328,7 +330,7 @@ LExit:
     // end per-machine process if running
     if (INVALID_HANDLE_VALUE != pEngineState->companionConnection.hPipe)
     {
-        PipeTerminateChildProcess(&pEngineState->companionConnection, pEngineState->userExperience.dwExitCode);
+        PipeTerminateChildProcess(&pEngineState->companionConnection, pEngineState->userExperience.dwExitCode, (BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY == pEngineState->elevationState) ? pEngineState->fRestart : FALSE);
     }
 
     // If the splash screen is still around, close it.
@@ -360,7 +362,7 @@ static HRESULT RunElevated(
         hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
         ExitOnFailure(hr, "Failed to create implicit elevated connection name and secret.");
 
-        hr = PipeLaunchParentProcess(wzCommandLine, pEngineState->command.nCmdShow, pEngineState->companionConnection.sczName, pEngineState->companionConnection.sczSecret);
+        hr = PipeLaunchParentProcess(wzCommandLine, pEngineState->command.nCmdShow, pEngineState->companionConnection.sczName, pEngineState->companionConnection.sczSecret, pEngineState->fDisableUnelevate);
         ExitOnFailure(hr, "Failed to launch unelevated process.");
     }
 
@@ -388,7 +390,7 @@ static HRESULT RunElevated(
     ExitOnFailure(hr, "Failed to create the message window.");
 
     // Pump messages from parent process.
-    hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &pEngineState->userExperience.dwExitCode);
+    hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &pEngineState->userExperience.dwExitCode, &pEngineState->fRestart);
     ExitOnFailure(hr, "Failed to pump messages from parent process.");
 
 LExit:

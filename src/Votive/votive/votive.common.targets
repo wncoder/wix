@@ -468,9 +468,6 @@
     <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.wxs">
       <Visible>true</Visible>
     </ZipProject>
-    <ZipProject Include="Templates\Projects\WixBundleProject\Bundle.Generated.wxs">
-      <Visible>true</Visible>
-    </ZipProject>
     <ZipProject Include="Templates\Projects\WixBundleProject\WixBundle.ico">
       <Visible>true</Visible>
     </ZipProject>

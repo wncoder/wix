@@ -14,7 +14,6 @@
   <TemplateContent>
     <Project File="BundleProject.wixproj" TargetFileName="$safeprojectname$.wixproj" ReplaceParameters="true">
       <ProjectItem ReplaceParameters="true" OpenInEditor="true" TargetFileName="Bundle.wxs">Bundle.wxs</ProjectItem>
-      <ProjectItem ReplaceParameters="false" OpenInEditor="false" TargetFileName="Bundle.Generated.wxs">Bundle.Generated.wxs</ProjectItem>
     </Project>
     <CustomParameters>
       <CustomParameter _locID="$loc_WXS_TODO$" Name="$loc_WXS_TODO$" Value="TODO: Define the list of chained packages."/>

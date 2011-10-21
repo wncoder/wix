@@ -40,7 +40,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnSystemShutdown(
-            [MarshalAs(UnmanagedType.U4)] EndSessionReasons dwEndSession
+            [MarshalAs(UnmanagedType.U4)] EndSessionReasons dwEndSession,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         [PreserveSig]
@@ -171,9 +172,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] int dwCode,
             [MarshalAs(UnmanagedType.LPWStr)] string wzError,
-            [MarshalAs(UnmanagedType.U4)] int dwUIHint,
+            [MarshalAs(UnmanagedType.U4)] int uiFlags,
             [MarshalAs(UnmanagedType.U4)] int cData,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData
+            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         [PreserveSig]
@@ -229,7 +231,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         Result OnCacheAcquireComplete(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageOrContainerId,
             [MarshalAs(UnmanagedType.LPWStr)] string wzPayloadId,
-            int hrStatus
+            int hrStatus,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         [PreserveSig]
@@ -244,14 +247,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         Result OnCacheVerifyComplete(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.LPWStr)] string wzPayloadId,
-            int hrStatus
+            int hrStatus,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnCachePackageComplete(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
-            int hrStatus
+            int hrStatus,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         void OnCacheComplete(
@@ -287,7 +292,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.U4)] int uiFlags,
             [MarshalAs(UnmanagedType.LPWStr)] string wzMessage,
             [MarshalAs(UnmanagedType.U4)] int cData,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData
+            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         [PreserveSig]
@@ -303,7 +309,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         Result OnExecutePackageComplete(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             int hrExitCode,
-            [MarshalAs(UnmanagedType.U4)] ApplyRestart restart
+            [MarshalAs(UnmanagedType.U4)] ApplyRestart restart,
+            [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 
         void OnExecuteComplete(

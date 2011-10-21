@@ -97,7 +97,6 @@
           <include name="BundleProject.wixproj"/>
           <include name="WixBundle.ico"/>
           <include name="Bundle.wxs"/>
-          <include name="Bundle.Generated.wxs"/>
       </fileset>
     </zip>
     

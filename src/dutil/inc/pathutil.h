@@ -204,6 +204,15 @@ DAPI_(HRESULT) PathCompare(
     __out int* pnResult
     );
 
+/*******************************************************************
+ PathCompress - sets the compression state on an existing file or 
+                directory. A no-op on file systems that don't 
+                support compression.
+*******************************************************************/
+DAPI_(HRESULT) PathCompress(
+    __in_z LPCWSTR wzPath
+    );
+
 #ifdef __cplusplus
 }
 #endif

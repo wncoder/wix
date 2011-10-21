@@ -147,6 +147,9 @@ typedef struct _BURN_PACKAGE
     BOOL fCache;
     LPWSTR sczCacheId;
 
+    DWORD64 qwInstallSize;
+    DWORD64 qwSize;
+
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryForward;  // used during install and repair.
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundaryBackward; // used during uninstall.
 

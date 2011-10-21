@@ -23,7 +23,7 @@
 #define HKLM_PATH L"SOFTWARE\\Microsoft\\WiX_Burn_UnitTest\\HKLM"
 #define HKCU_PATH L"SOFTWARE\\Microsoft\\WiX_Burn_UnitTest\\HKCU"
 #define REGISTRY_UNINSTALL_KEY L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
-#define REGISTRY_RUN_KEY L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+#define REGISTRY_RUN_KEY L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce"
 
 #define TEST_UNINSTALL_KEY L"HKEY_CURRENT_USER\\" HKCU_PATH L"\\" REGISTRY_UNINSTALL_KEY L"\\{D54F896D-1952-43e6-9C67-B5652240618C}"
 #define TEST_RUN_KEY L"HKEY_CURRENT_USER\\" HKCU_PATH L"\\" REGISTRY_RUN_KEY

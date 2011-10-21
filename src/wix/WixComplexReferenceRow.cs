@@ -60,6 +60,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         /// <summary>Layout parent of complex reference.</summary>
         Layout,
+
+        /// <summary>Patch parent of complex reference.</summary>
+        Patch,
+
+        /// <summary>PatchFamilyGroup parent of complex reference.</summary>
+        PatchFamilyGroup,
     }
 
     /// <summary>
@@ -96,6 +102,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         /// <summary>PackageGroup child of complex reference.</summary>
         PackageGroup,
+
+        /// <summary>PatchFamily child of complex reference.</summary>
+        PatchFamily,
+
+        /// <summary>PatchFamilyGroup child of complex reference.</summary>
+        PatchFamilyGroup,
     }
 
     /// <summary>

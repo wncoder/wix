@@ -128,6 +128,14 @@ extern "C" HRESULT PackagesParseFromXml(
         hr = XmlGetAttributeEx(pixnNode, L"CacheId", &pPackage->sczCacheId);
         ExitOnFailure(hr, "Failed to get @CacheId.");
 
+        // @Size
+        hr = XmlGetAttributeLargeNumber(pixnNode, L"Size", &pPackage->qwSize);
+        ExitOnFailure(hr, "Failed to get @Size.");
+
+        // @InstallSize
+        hr = XmlGetAttributeLargeNumber(pixnNode, L"InstallSize", &pPackage->qwInstallSize);
+        ExitOnFailure(hr, "Failed to get @InstallSize.");
+
         // @PerMachine
         hr = XmlGetYesNoAttribute(pixnNode, L"PerMachine", &pPackage->fPerMachine);
         ExitOnFailure(hr, "Failed to get @PerMachine.");

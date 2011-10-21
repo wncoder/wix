@@ -961,9 +961,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnSystemShutdown(EndSessionReasons dwEndSession)
+        Result IBootstrapperApplication.OnSystemShutdown(EndSessionReasons dwEndSession, int nRecommendation)
         {
-            SystemShutdownEventArgs args = new SystemShutdownEventArgs(dwEndSession);
+            SystemShutdownEventArgs args = new SystemShutdownEventArgs(dwEndSession, nRecommendation);
             this.OnSystemShutdown(args);
 
             return args.Result;
@@ -1162,9 +1162,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnCacheAcquireComplete(string wzPackageOrContainerId, string wzPayloadId, int hrStatus)
+        Result IBootstrapperApplication.OnCacheAcquireComplete(string wzPackageOrContainerId, string wzPayloadId, int hrStatus, int nRecommendation)
         {
-            CacheAcquireCompleteEventArgs args = new CacheAcquireCompleteEventArgs(wzPackageOrContainerId, wzPayloadId, hrStatus);
+            CacheAcquireCompleteEventArgs args = new CacheAcquireCompleteEventArgs(wzPackageOrContainerId, wzPayloadId, hrStatus, nRecommendation);
             this.OnCacheAcquireComplete(args);
 
             return args.Result;
@@ -1178,17 +1178,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnCacheVerifyComplete(string wzPackageId, string wzPayloadId, int hrStatus)
+        Result IBootstrapperApplication.OnCacheVerifyComplete(string wzPackageId, string wzPayloadId, int hrStatus, int nRecommendation)
         {
-            CacheVerifyCompleteEventArgs args = new CacheVerifyCompleteEventArgs(wzPackageId, wzPayloadId, hrStatus);
+            CacheVerifyCompleteEventArgs args = new CacheVerifyCompleteEventArgs(wzPackageId, wzPayloadId, hrStatus, nRecommendation);
             this.OnCacheVerifyComplete(args);
 
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus)
+        Result IBootstrapperApplication.OnCachePackageComplete(string wzPackageId, int hrStatus, int nRecommendation)
         {
-            CachePackageCompleteEventArgs args = new CachePackageCompleteEventArgs(wzPackageId, hrStatus);
+            CachePackageCompleteEventArgs args = new CachePackageCompleteEventArgs(wzPackageId, hrStatus, nRecommendation);
             this.OnCachePackageComplete(args);
 
             return args.Result;
@@ -1215,9 +1215,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnError(string wzPackageId, int dwCode, string wzError, int dwUIHint, int cData, string[] rgwzData)
+        Result IBootstrapperApplication.OnError(string wzPackageId, int dwCode, string wzError, int dwUIHint, int cData, string[] rgwzData, int nRecommendation)
         {
-            ErrorEventArgs args = new ErrorEventArgs(wzPackageId, dwCode, wzError, dwUIHint, rgwzData);
+            ErrorEventArgs args = new ErrorEventArgs(wzPackageId, dwCode, wzError, dwUIHint, rgwzData, nRecommendation);
             this.OnError(args);
 
             return args.Result;
@@ -1231,9 +1231,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnExecuteMsiMessage(string wzPackageId, InstallMessage mt, int uiFlags, string wzMessage, int cData, string[] rgwzData)
+        Result IBootstrapperApplication.OnExecuteMsiMessage(string wzPackageId, InstallMessage mt, int uiFlags, string wzMessage, int cData, string[] rgwzData, int nRecommendation)
         {
-            ExecuteMsiMessageEventArgs args = new ExecuteMsiMessageEventArgs(wzPackageId, mt, uiFlags, wzMessage, rgwzData);
+            ExecuteMsiMessageEventArgs args = new ExecuteMsiMessageEventArgs(wzPackageId, mt, uiFlags, wzMessage, rgwzData, nRecommendation);
             this.OnExecuteMsiMessage(args);
 
             return args.Result;
@@ -1247,9 +1247,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnExecutePackageComplete(string wzPackageId, int hrExitCode, ApplyRestart restart)
+        Result IBootstrapperApplication.OnExecutePackageComplete(string wzPackageId, int hrExitCode, ApplyRestart restart, int nRecommendation)
         {
-            ExecutePackageCompleteEventArgs args = new ExecutePackageCompleteEventArgs(wzPackageId, hrExitCode, restart);
+            ExecutePackageCompleteEventArgs args = new ExecutePackageCompleteEventArgs(wzPackageId, hrExitCode, restart, nRecommendation);
             this.OnExecutePackageComplete(args);
 
             return args.Result;

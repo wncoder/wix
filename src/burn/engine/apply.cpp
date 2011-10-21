@@ -238,12 +238,12 @@ extern "C" HRESULT ApplyRegister(
         // begin new session
         if (pEngineState->registration.fPerMachine)
         {
-            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, 0, pEngineState->registration.sczResumeCommandLine);
+            hr = ElevationSessionBegin(pEngineState->companionConnection.hPipe, pEngineState->plan.action, &pEngineState->variables, pEngineState->plan.qwEstimatedSize, pEngineState->registration.sczResumeCommandLine);
             ExitOnFailure(hr, "Failed to begin registration session in per-machine process.");
         }
         else
         {
-            hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, 0, FALSE);
+            hr =  RegistrationSessionBegin(&pEngineState->registration, &pEngineState->variables, &pEngineState->userExperience, pEngineState->plan.action, pEngineState->plan.qwEstimatedSize, FALSE);
             ExitOnFailure(hr, "Failed to begin registration session.");
         }
     }
@@ -421,8 +421,7 @@ extern "C" HRESULT ApplyCache(
                 {
                     ++(*pcOverallProgressTicks);
 
-                    nResult = pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr);
-                    hr = HRESULT_FROM_VIEW(nResult);
+                    pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, IDNOACTION);
 
                     iPackageStartPoint = 0;
                     iPackageCompletePoint = 0;
@@ -454,7 +453,7 @@ extern "C" HRESULT ApplyCache(
         {
             Assert(iPackageStartPoint && iPackageCompletePoint);
 
-            nResult = pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr);
+            nResult = pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, SUCCEEDED(hr) || pStartedPackage->fVital ? IDNOACTION : IDIGNORE);
             if (FAILED(hr))
             {
                 if (IDRETRY == nResult)
@@ -464,7 +463,7 @@ extern "C" HRESULT ApplyCache(
                     iRetryPoint = iPackageStartPoint;
                     hr = S_FALSE;
                 }
-                else if (IDIGNORE == nResult && !pStartedPackage->fVital)
+                else if (IDIGNORE == nResult && !pStartedPackage->fVital) // ignore non-vital download failures.
                 {
                     LogErrorId(hr, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pStartedPackage->sczId, NULL, NULL);
 
@@ -842,7 +841,7 @@ static HRESULT LayoutOrCachePayload(
             hr = CachePayload(fPerMachine, pPayload, wzCacheId, wzLayoutDirectory, wzUnverifiedPath, fMove);
         }
 
-        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr);
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, IDNOACTION);
         if (FAILED(hr))
         {
             if (IDRETRY == nResult)
@@ -955,7 +954,7 @@ static HRESULT CopyPayload(
     }
 
 LExit:
-    nResult = pProgress->pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr);
+    nResult = pProgress->pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr, IDNOACTION);
     if (FAILED(hr) && IDRETRY == nResult)
     {
         *pfRetry = TRUE;
@@ -1019,7 +1018,7 @@ static HRESULT DownloadPayload(
     ExitOnFailure2(hr, "Failed attempt to download URL: '%ls' to: '%ls'", pDownloadSource->sczUrl, wzDestinationPath);
 
 LExit:
-    nResult = pProgress->pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr);
+    nResult = pProgress->pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr, IDNOACTION);
     if (FAILED(hr) && IDRETRY == nResult)
     {
         *pfRetry = TRUE;
@@ -1618,10 +1617,10 @@ static int MsiExecuteMessageHandler(
         }
 
     case WIU_MSI_EXECUTE_MESSAGE_ERROR:
-        return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags, pMessage->cData, pMessage->rgwzData);
+        return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
-        return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage, pMessage->cData, pMessage->rgwzData);
+        return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
         return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
@@ -1658,7 +1657,7 @@ static HRESULT ExecutePackageComplete(
     HRESULT hr = FAILED(hrOverall) ? hrOverall : hrExecute; // if the overall function failed use that otherwise use the execution result.
 
     // send package execute complete to UX
-    int nResult = pUX->pUserExperience->OnExecutePackageComplete(pPackage->sczId, hr, *pRestart);
+    int nResult = pUX->pUserExperience->OnExecutePackageComplete(pPackage->sczId, hr, *pRestart, FAILED(hrOverall) || SUCCEEDED(hrExecute) || pPackage->fVital ? IDNOACTION : IDIGNORE);
     if (IDRESTART == nResult)
     {
         *pRestart = BOOTSTRAPPER_APPLY_RESTART_INITIATED;
@@ -1672,7 +1671,7 @@ static HRESULT ExecutePackageComplete(
         LogId(REPORT_STANDARD, MSG_APPLY_RETRYING_PACKAGE, pPackage->sczId, hrExecute);
         hr = S_OK;
     }
-    else if (SUCCEEDED(hrOverall) && FAILED(hrExecute) && !pPackage->fVital) // If we *only* failed to execute and this package is not vital, say everything is okay.
+    else if (SUCCEEDED(hrOverall) && FAILED(hrExecute) && IDIGNORE == nResult && !pPackage->fVital) // If we *only* failed to execute and the BA ignored this *not-vital* package, say everything is okay.
     {
         LogId(REPORT_STANDARD, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pPackage->sczId, hrExecute);
         hr = S_OK;

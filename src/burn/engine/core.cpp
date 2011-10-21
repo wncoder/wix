@@ -40,6 +40,7 @@ static HRESULT ParseCommandLine(
     __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
     __out BURN_ELEVATION_STATE* pElevationState,
+    __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
     __out_z LPWSTR* psczLayoutDirectory
@@ -74,7 +75,7 @@ extern "C" HRESULT CoreInitialize(
     BURN_CONTAINER_CONTEXT containerContext = { };
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     // initialize variables
@@ -648,6 +649,7 @@ static HRESULT ParseCommandLine(
     __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
     __out BURN_ELEVATION_STATE* pElevationState,
+    __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
     __out_z LPWSTR* psczLayoutDirectory
@@ -854,6 +856,10 @@ static HRESULT ParseCommandLine(
                 pCommand->relationType = BOOTSTRAPPER_RELATION_PATCH;
 
                 LogId(REPORT_STANDARD, MSG_BURN_RUN_BY_RELATED_BUNDLE, "Patch");
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_DISABLE_UNELEVATE, -1))
+            {
+                *pfDisableUnelevate = TRUE;
             }
             else if (lstrlenW(&argv[i][1]) >= lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX) &&
                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX), BURN_COMMANDLINE_SWITCH_PREFIX, lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX)))

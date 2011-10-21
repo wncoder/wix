@@ -168,13 +168,21 @@ extern "C" HRESULT SearchesParseFromXml(
             hr = XmlGetAttributeEx(pixnNode, L"Root", &scz);
             ExitOnFailure(hr, "Failed to get @Root.");
 
-            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"HKCU", -1))
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"HKCR", -1))
+            {
+                pSearch->RegistrySearch.hRoot = HKEY_CLASSES_ROOT;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"HKCU", -1))
             {
                 pSearch->RegistrySearch.hRoot = HKEY_CURRENT_USER;
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"HKLM", -1))
             {
                 pSearch->RegistrySearch.hRoot = HKEY_LOCAL_MACHINE;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"HKU", -1))
+            {
+                pSearch->RegistrySearch.hRoot = HKEY_USERS;
             }
             else
             {

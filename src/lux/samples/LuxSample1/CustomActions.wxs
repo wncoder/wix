@@ -3,16 +3,16 @@
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLLOCATION" Name="LuxSample1" />
+        <Directory Id="INSTALLFOLDER" Name="LuxSample1" />
       </Directory>
     </Directory>
   </Fragment>
   
   <Fragment>
-    <CustomAction Id="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" />
+    <CustomAction Id="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" />
     <CustomAction Id="TestCustomActionSimpleNumber" Property="SIMPLENUMBER" Value="1" />
-    <CustomAction Id="TestCustomActionMultiValue" Property="MULTIVALUE" Value="1*[INSTALLLOCATION]*WIXEAST" />
-    <CustomAction Id="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" Value="InstallationRoot#[INSTALLLOCATION]#Developers#WIXEAST" />
+    <CustomAction Id="TestCustomActionMultiValue" Property="MULTIVALUE" Value="1*[INSTALLFOLDER]*WIXEAST" />
+    <CustomAction Id="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" Value="InstallationRoot#[INSTALLFOLDER]#Developers#WIXEAST" />
 
     <InstallExecuteSequence>
       <Custom Action="TestCustomActionSimple" After="InstallFiles" />
@@ -23,7 +23,7 @@
   </Fragment>
 
 <Fragment>
-  <lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" Operator="equal" />
+  <lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" Operator="equal" />
 </Fragment>
 
 <Fragment>
@@ -31,10 +31,10 @@
 </Fragment>
 
 <Fragment>
-  <lux:UnitTest Id="TestConditionBeforeVista" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]">
+  <lux:UnitTest Id="TestConditionBeforeVista" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]">
     <lux:Condition><![CDATA[VersionNT < 600]]></lux:Condition>
   </lux:UnitTest>
-  <lux:UnitTest Id="TestConditionVistaOrLater" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]">
+  <lux:UnitTest Id="TestConditionVistaOrLater" CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]">
     <lux:Condition><![CDATA[VersionNT >= 600]]></lux:Condition>
   </lux:UnitTest>
 </Fragment>
@@ -50,7 +50,7 @@
     <lux:Condition>VersionNT</lux:Condition>
     <!-- intentional failure -->
     <lux:UnitTest Index="0" Value="INTENTIONAL_FAILURE" /> 
-    <lux:UnitTest Index="1" Value="[INSTALLLOCATION]">
+    <lux:UnitTest Index="1" Value="[INSTALLFOLDER]">
       <lux:Condition>NOT Installed</lux:Condition>
     </lux:UnitTest>
     <lux:UnitTest Index="2" Value="WIXEAST" /> 
@@ -59,7 +59,7 @@
 
 <Fragment>
   <lux:UnitTest CustomAction="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" NameValueSeparator="#">
-    <lux:UnitTest Index="InstallationRoot" Value="[INSTALLLOCATION]" />
+    <lux:UnitTest Index="InstallationRoot" Value="[INSTALLFOLDER]" />
     <lux:UnitTest Index="Developers" Operator="caseInsensitiveNotEqual" Value="WIXWEST" />
   </lux:UnitTest>
 </Fragment>

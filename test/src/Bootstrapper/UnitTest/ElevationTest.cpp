@@ -98,7 +98,7 @@ namespace Bootstrapper
                 //
                 // initiate termination
                 //
-                hr = PipeTerminateChildProcess(&connection, 666);
+                hr = PipeTerminateChildProcess(&connection, 666, FALSE);
                 TestThrowOnFailure(hr, L"Failed to terminate elevated process.");
 
                 // check flags
@@ -146,7 +146,7 @@ static DWORD CALLBACK ElevateTest_ThreadProc(
     HRESULT hr = S_OK;
     LPWSTR sczArguments = (LPWSTR)lpThreadParameter;
     BURN_PIPE_CONNECTION connection = { };
-    DWORD dwResult = 0;
+    BURN_PIPE_RESULT result = { };
 
     PipeConnectionInitialize(&connection);
 
@@ -165,14 +165,14 @@ static DWORD CALLBACK ElevateTest_ThreadProc(
     ExitOnFailure(hr, L"Failed to connect to per-user process.");
 
     // pump messages
-    hr = PipePumpMessages(connection.hPipe, ProcessChildMessages, static_cast<LPVOID>(connection.hPipe), &dwResult);
+    hr = PipePumpMessages(connection.hPipe, ProcessChildMessages, static_cast<LPVOID>(connection.hPipe), &result);
     ExitOnFailure(hr, L"Failed while pumping messages in child 'process'.");
 
 LExit:
     PipeConnectionUninitialize(&connection);
     ReleaseStr(sczArguments);
 
-    return FAILED(hr) ? (DWORD)hr : dwResult;
+    return FAILED(hr) ? (DWORD)hr : result.dwResult;
 }
 
 static HRESULT ProcessParentMessages(

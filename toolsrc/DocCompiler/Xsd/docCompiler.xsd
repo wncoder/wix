@@ -59,7 +59,6 @@
                 <xs:element ref="XmlSchema"/>
             </xs:choice>
             <xs:attribute name="SourceFile"/>
-            <xs:attribute name="Title" use="required"/>
         </xs:complexType>
     </xs:element>
 

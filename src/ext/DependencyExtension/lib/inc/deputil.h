@@ -33,12 +33,12 @@ typedef struct _DEPENDENCY
 
 
 /***************************************************************************
- DepCheckDependencies - Checks that all dependencies are registered
-  and within the proper version range.
+ DepCheckDependency - Checks that the dependency is registered and within
+                      the proper version range.
 
- Note: Returns S_FALSE if the authored dependencies were not found.
+ Note: Returns E_NOTFOUND if the dependency was not found.
 ***************************************************************************/
-DAPI_(HRESULT) DepCheckDependencies(
+DAPI_(HRESULT) DepCheckDependency(
     __in HKEY hkHive,
     __in_z LPCWSTR wzProviderKey,
     __in_z_opt LPCWSTR wzMinVersion,
@@ -51,9 +51,8 @@ DAPI_(HRESULT) DepCheckDependencies(
 
 /***************************************************************************
  DepCheckDependents - Checks if any dependents are still installed for the
-  given provider key.
+                      given provider key.
 
- Notes: Returns S_FALSE if no authored dependents were found.
 ***************************************************************************/
 DAPI_(HRESULT) DepCheckDependents(
     __in HKEY hkHive,
@@ -67,7 +66,6 @@ DAPI_(HRESULT) DepCheckDependents(
 /***************************************************************************
  DepRegisterDependency - Registers the dependency provider.
 
- Notes: Returns S_FALSE if the dependency provider was already registered.
 ***************************************************************************/
 DAPI_(HRESULT) DepRegisterDependency(
     __in HKEY hkHive,
@@ -80,8 +78,7 @@ DAPI_(HRESULT) DepRegisterDependency(
 /***************************************************************************
  DepRegisterDependent - Registers a dependent under the dependency provider.
 
- Notes: Returns S_FALSE if the dependency provider was not registered
-  or if the dependent was already registered.
+ Note: Returns E_FILENOTFOUND if the dependency is not registered.
 ***************************************************************************/
 DAPI_(HRESULT) DepRegisterDependent(
     __in HKEY hkHive,
@@ -95,8 +92,8 @@ DAPI_(HRESULT) DepRegisterDependent(
 /***************************************************************************
  DepUnregisterDependency - Removes the dependency provider.
 
- Notes: Caller should call CheckDependents prior to remove a dependency.
-  Returns S_FALSE if the dependency provider does not exist.
+ Note: Caller should call CheckDependents prior to remove a dependency.
+       Returns E_FILENOTFOUND if the dependency is not registered.
 ***************************************************************************/
 DAPI_(HRESULT) DepUnregisterDependency(
     __in HKEY hkHive,
@@ -106,8 +103,9 @@ DAPI_(HRESULT) DepUnregisterDependency(
 /***************************************************************************
  DepUnregisterDependent - Removes a dependent under the dependency provider.
 
- Notes: Returns S_FALSE if the dependency provider does not exist.
-***************************************************************************/
+ Note: Returns E_FILENOTFOUND if neither the dependency or dependent are
+       registered.
+ ***************************************************************************/
 DAPI_(HRESULT) DepUnregisterDependent(
     __in HKEY hkHive,
     __in_z LPCWSTR wzDependencyProviderKey,

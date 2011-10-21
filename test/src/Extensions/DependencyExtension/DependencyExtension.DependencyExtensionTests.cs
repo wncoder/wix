@@ -611,8 +611,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             // Be sure to run silent.
             sb.Append(" -quiet");
 
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(2).GetMethod().Name;
+
             // Generate the log file name.
-            string logFile = String.Format("{0}_{1}_{2:yyyyMMddhhmmss}.log", Path.GetFileNameWithoutExtension(path), mode, DateTime.UtcNow);
+            string logFile = String.Format("{0}_{3:yyyyMMddhhmmss}_{2}_{1}.log", caller, Path.GetFileNameWithoutExtension(path), mode, DateTime.UtcNow);
             sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
 
             // Set operation.
@@ -644,6 +648,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         /// <param name="path">The path to the MSI to uninstall.</param>
         private void CleanupInstalledBundle(string path)
         {
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(1).GetMethod().Name;
+
             TestTool bundle = new TestTool(path, null);
             StringBuilder sb = new StringBuilder();
 
@@ -651,7 +659,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             sb.Append("-quiet -uninstall");
 
             // Generate the log file name.
-            string logFile = String.Format("{0}_Cleanup_{1:yyyyMMddhhmmss}.log", Path.GetFileNameWithoutExtension(path), DateTime.UtcNow);
+            string logFile = String.Format("{0}_{2:yyyyMMddhhmmss}_Cleanup_{1}.log", caller, Path.GetFileNameWithoutExtension(path), DateTime.UtcNow);
             sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
 
             bundle.Arguments = sb.ToString();

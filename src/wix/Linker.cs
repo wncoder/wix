@@ -1727,6 +1727,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 }
                                 break;
 
+                            case ComplexReferenceParentType.Patch:
+                                switch(wixComplexReferenceRow.ChildType)
+                                {
+                                    case ComplexReferenceChildType.PatchFamily:
+                                    case ComplexReferenceChildType.PatchFamilyGroup:
+                                        break;
+
+                                    default:
+                                        throw new InvalidOperationException(String.Format(CultureInfo.CurrentUICulture, WixStrings.EXP_UnexpectedComplexReferenceChildType, Enum.GetName(typeof(ComplexReferenceChildType), wixComplexReferenceRow.ChildType)));
+                                }
+                                break;
+
                             case ComplexReferenceParentType.Product:
                                 switch (wixComplexReferenceRow.ChildType)
                                 {
@@ -1790,6 +1802,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             ComplexReferenceParentType.ComponentGroup == wixComplexReferenceRow.ParentType ||
                             ComplexReferenceParentType.Feature == wixComplexReferenceRow.ParentType ||
                             ComplexReferenceParentType.Module == wixComplexReferenceRow.ParentType ||
+                            ComplexReferenceParentType.PatchFamilyGroup == wixComplexReferenceRow.ParentType ||
                             ComplexReferenceParentType.Product == wixComplexReferenceRow.ParentType)
                         {
                             string parentTypeAndId = CombineTypeAndId(wixComplexReferenceRow.ParentType, wixComplexReferenceRow.ParentId);
@@ -1821,7 +1834,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             // we're going to have to process this complex reference again to copy 
                             // the child group's references into the parent group.
                             if ((ComplexReferenceChildType.ComponentGroup == wixComplexReferenceRow.ChildType) ||
-                                (ComplexReferenceChildType.FeatureGroup == wixComplexReferenceRow.ChildType))
+                                (ComplexReferenceChildType.FeatureGroup == wixComplexReferenceRow.ChildType) ||
+                                (ComplexReferenceChildType.PatchFamilyGroup == wixComplexReferenceRow.ChildType))
                             {
                                 if (!parentGroupsNeedingProcessing.ContainsKey(parentTypeAndId))
                                 {
@@ -1870,7 +1884,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 foreach (WixComplexReferenceRow wixComplexReferenceRow in (ArrayList)parentGroups[parentGroup])
                 {
                     if ((ComplexReferenceParentType.FeatureGroup != wixComplexReferenceRow.ParentType) &&
-                        (ComplexReferenceParentType.ComponentGroup != wixComplexReferenceRow.ParentType))
+                        (ComplexReferenceParentType.ComponentGroup != wixComplexReferenceRow.ParentType) &&
+                        (ComplexReferenceParentType.PatchFamilyGroup != wixComplexReferenceRow.ParentType))
                     {
                         wixComplexReferenceTable.Rows.Add(wixComplexReferenceRow);
                     }
@@ -1906,12 +1921,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ArrayList referencesToParent = (ArrayList)parentGroups[parentTypeAndId];
             foreach (WixComplexReferenceRow wixComplexReferenceRow in referencesToParent)
             {
-                Debug.Assert(ComplexReferenceParentType.ComponentGroup == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.FeatureGroup == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Feature == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Module == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Product == wixComplexReferenceRow.ParentType);
+                Debug.Assert(ComplexReferenceParentType.ComponentGroup == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.FeatureGroup == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Feature == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Module == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Product == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.PatchFamilyGroup == wixComplexReferenceRow.ParentType || ComplexReferenceParentType.Patch == wixComplexReferenceRow.ParentType);
                 Debug.Assert(parentTypeAndId == CombineTypeAndId(wixComplexReferenceRow.ParentType, wixComplexReferenceRow.ParentId));
 
                 // We are only interested processing when the child is a group.
                 if ((ComplexReferenceChildType.ComponentGroup == wixComplexReferenceRow.ChildType) ||
-                    (ComplexReferenceChildType.FeatureGroup == wixComplexReferenceRow.ChildType))
+                    (ComplexReferenceChildType.FeatureGroup == wixComplexReferenceRow.ChildType) ||
+                    (ComplexReferenceChildType.PatchFamilyGroup == wixComplexReferenceRow.ChildType))
                 {
                     string childTypeAndId = CombineTypeAndId(wixComplexReferenceRow.ChildType, wixComplexReferenceRow.ChildId);
                     if (loopDetector.Contains(childTypeAndId))
@@ -1961,7 +1977,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             // after this part of the processing anyway (cloning them would
                             // be a complete waste of time).
                             if ((ComplexReferenceChildType.FeatureGroup != crefChild.ChildType) ||
-                                (ComplexReferenceChildType.ComponentGroup != crefChild.ChildType))
+                                (ComplexReferenceChildType.ComponentGroup != crefChild.ChildType) ||
+                                (ComplexReferenceChildType.PatchFamilyGroup != crefChild.ChildType))
                             {
                                 WixComplexReferenceRow crefChildClone = crefChild.Clone();
                                 Debug.Assert(crefChildClone.ParentId == wixComplexReferenceRow.ChildId);
@@ -1983,7 +2000,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 WixComplexReferenceRow wixComplexReferenceRow = (WixComplexReferenceRow)referencesToParent[i];
                 if ((ComplexReferenceChildType.FeatureGroup == wixComplexReferenceRow.ChildType) ||
-                    (ComplexReferenceChildType.ComponentGroup == wixComplexReferenceRow.ChildType))
+                    (ComplexReferenceChildType.ComponentGroup == wixComplexReferenceRow.ChildType) ||
+                    (ComplexReferenceChildType.PatchFamilyGroup == wixComplexReferenceRow.ChildType))
                 {
                     referencesToParent.RemoveAt(i);
                 }

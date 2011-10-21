@@ -218,7 +218,7 @@ extern "C" HRESULT ElevationElevate(
         else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr ||   // the user clicked "Cancel" on the elevation prompt or
                  HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) == hr) // the elevation prompt timed out, provide the notification with the option to retry.
         {
-            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL);
+            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL, IDNOACTION);
         }
     } while (IDRETRY == nResult);
     ExitOnFailure(hr, "Failed to elevate.");
@@ -741,14 +741,15 @@ extern "C" HRESULT ElevationChildPumpMessages(
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out DWORD* pdwChildExitCode
+    __out DWORD* pdwChildExitCode,
+    __out BOOL* pfRestart
     )
 {
     HRESULT hr = S_OK;
     BURN_ELEVATION_CHILD_MESSAGE_CONTEXT cacheContext = { };
     BURN_ELEVATION_CHILD_MESSAGE_CONTEXT context = { };
     HANDLE hCacheThread = NULL;
-    DWORD dwResult = 0;
+    BURN_PIPE_RESULT result = { };
 
     cacheContext.dwLoggingTlsId = dwLoggingTlsId;
     cacheContext.hPipe = hCachePipe;
@@ -771,14 +772,15 @@ extern "C" HRESULT ElevationChildPumpMessages(
     hCacheThread = ::CreateThread(NULL, 0, ElevatedChildCacheThreadProc, &cacheContext, 0, NULL);
     ExitOnNullWithLastError(hCacheThread, hr, "Failed to create elevated cache thread.");
 
-    hr = PipePumpMessages(hPipe, ProcessElevatedChildMessage, &context, &dwResult);
+    hr = PipePumpMessages(hPipe, ProcessElevatedChildMessage, &context, &result);
     ExitOnFailure(hr, "Failed to pump messages in child process.");
 
     // Wait for the cache thread and verify it gets the right result but don't fail if things
     // don't work out.
-    WaitForElevatedChildCacheThread(hCacheThread, dwResult);
+    WaitForElevatedChildCacheThread(hCacheThread, result.dwResult);
 
-    *pdwChildExitCode = dwResult;
+    *pdwChildExitCode = result.dwResult;
+    *pfRestart = result.fRestart;
 
 LExit:
     ReleaseHandle(hCacheThread);
@@ -796,7 +798,7 @@ static DWORD WINAPI ElevatedChildCacheThreadProc(
     HRESULT hr = S_OK;
     BURN_ELEVATION_CHILD_MESSAGE_CONTEXT* pContext = reinterpret_cast<BURN_ELEVATION_CHILD_MESSAGE_CONTEXT*>(lpThreadParameter);
     BOOL fComInitialized = FALSE;
-    DWORD dwResult = 0;
+    BURN_PIPE_RESULT result = { };
 
     if (!::TlsSetValue(pContext->dwLoggingTlsId, pContext->hPipe))
     {
@@ -808,10 +810,10 @@ static DWORD WINAPI ElevatedChildCacheThreadProc(
     ExitOnFailure(hr, "Failed to initialize COM.");
     fComInitialized = TRUE;
 
-    hr = PipePumpMessages(pContext->hPipe, ProcessElevatedChildCacheMessage, pContext, &dwResult);
+    hr = PipePumpMessages(pContext->hPipe, ProcessElevatedChildCacheMessage, pContext, &result);
     ExitOnFailure(hr, "Failed to pump messages in child process.");
 
-    hr = (HRESULT)dwResult;
+    hr = (HRESULT)result.dwResult;
 
 LExit:
     if (fComInitialized)

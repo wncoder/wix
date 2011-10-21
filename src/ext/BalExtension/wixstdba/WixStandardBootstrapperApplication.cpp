@@ -513,10 +513,11 @@ public: // IBootstrapperApplication
     virtual STDMETHODIMP_(int) OnExecutePackageComplete(
         __in_z LPCWSTR wzPackageId,
         __in HRESULT hrExitCode,
-        __in BOOTSTRAPPER_APPLY_RESTART restart
+        __in BOOTSTRAPPER_APPLY_RESTART restart,
+        __in int nRecommendation
         )
     {
-        int nResult = __super::OnExecutePackageComplete(wzPackageId, hrExitCode, restart);
+        int nResult = __super::OnExecutePackageComplete(wzPackageId, hrExitCode, restart, nRecommendation);
 
         if (m_sczPrereqPackage && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, m_sczPrereqPackage, -1))
         {
@@ -632,6 +633,9 @@ private: // privates
         BalExitOnFailure(hr, "Failed to initialize COM.");
         fComInitialized = TRUE;
 
+        hr = LocInitialize();
+        ExitOnFailure(hr, "Failed to initialize localization.");
+
         hr = ThemeInitialize(pThis->m_hModule);
         BalExitOnFailure(hr, "Failed to initialize theme manager.");
 
@@ -681,6 +685,7 @@ private: // privates
 
         ReleaseTheme(pThis->m_pTheme);
         ThemeUninitialize();
+        LocUninitialize();
 
         // uninitialize COM
         if (fComInitialized)
@@ -861,7 +866,18 @@ private: // privates
         BalExitOnFailure(hr, "Failed to get prerequisite package identifier.");
 
         hr = XmlGetAttributeEx(pNode, L"LicenseUrl", &m_sczLicenseUrl);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
         BalExitOnFailure(hr, "Failed to get prerequisite license URL.");
+
+        hr = XmlGetAttributeEx(pNode, L"LicenseFile", &m_sczLicenseFile);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        BalExitOnFailure(hr, "Failed to get prerequisite license file.");
 
     LExit:
         ReleaseObject(pNode);
@@ -1002,7 +1018,7 @@ private: // privates
             break;
 
         case WM_QUERYENDSESSION:
-            return IDCANCEL != pBA->OnSystemShutdown(static_cast<DWORD>(lParam));
+            return IDCANCEL != pBA->OnSystemShutdown(static_cast<DWORD>(lParam), IDCANCEL);
 
         case WM_CLOSE:
             // If the user chose not to close, do *not* let the default window proc handle the message.
@@ -1834,6 +1850,12 @@ public:
     {
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));
+
+        // Pre-req BA shouldn't be doing layout
+        if (fPrereq && BOOTSTRAPPER_ACTION_LAYOUT == m_command.action)
+        {
+            m_command.action = BOOTSTRAPPER_ACTION_INSTALL;
+        }
 
         m_pLocStrings = NULL;
         memset(&m_Bundle, 0, sizeof(m_Bundle));

@@ -149,7 +149,8 @@ HRESULT ElevationChildPumpMessages(
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_USER_EXPERIENCE* pUserExperience,
-    __out DWORD* pdwChildExitCode
+    __out DWORD* pdwChildExitCode,
+    __out BOOL* pfRestart
     );
 
 #ifdef __cplusplus

@@ -34,8 +34,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Creates a new instance of the <see cref="ResultEventArgs"/> class.
         /// </summary>
         public ResultEventArgs()
+            : this(0)
         {
-            this.result = Result.Ok;
+        }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="ResultEventArgs"/> class.
+        /// </summary>
+        /// <param name="recommendation">Recommended result from engine.</param>
+        public ResultEventArgs(int recommendation)
+        {
+            this.result = (Result)recommendation;
         }
 
         /// <summary>
@@ -87,6 +96,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         /// <param name="status">The return code of the operation.</param>
         public ResultStatusEventArgs(int status)
+            : this(status, 0)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="ResultStatusEventArgs"/> class.
+        /// </summary>
+        /// <param name="status">The return code of the operation.</param>
+        /// <param name="recommendation">The recommended result from the engine.</param>
+        public ResultStatusEventArgs(int status, int recommendation)
+            : base(recommendation)
         {
             this.status = status;
         }
@@ -153,7 +173,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// Creates a new instance of the <see cref="SystemShutdownEventArgs"/> class.
         /// </summary>
         /// <param name="reasons">The reason the application is requested to close or being closed.</param>
-        public SystemShutdownEventArgs(EndSessionReasons reasons)
+        /// <param name="recommendation">The recommdation from the engine.</param>
+        public SystemShutdownEventArgs(EndSessionReasons reasons, int recommendation)
+            : base(recommendation)
         {
             this.reasons = reasons;
         }
@@ -1033,8 +1055,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Creates a new instance of the <see cref="CacheAcquireCompleteEventArgs"/> class.
         /// </summary>
-        public CacheAcquireCompleteEventArgs(string packageOrContainerId, string payloadId, int status)
-            : base(status)
+        public CacheAcquireCompleteEventArgs(string packageOrContainerId, string payloadId, int status, int recommendation)
+            : base(status, recommendation)
         {
             this.packageOrContainerId = packageOrContainerId;
             this.payloadId = payloadId;
@@ -1104,8 +1126,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Creates a new instance of the <see cref="CacheVerifyCompleteEventArgs"/> class.
         /// </summary>
-        public CacheVerifyCompleteEventArgs(string packageId, string payloadId, int status)
-            : base(status)
+        public CacheVerifyCompleteEventArgs(string packageId, string payloadId, int status, int recommendation)
+            : base(status, recommendation)
         {
             this.packageId = packageId;
             this.payloadId = payloadId;
@@ -1227,7 +1249,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="errorMessage">The error message.</param>
         /// <param name="uiHint">Recommended display flags for an error dialog.</param>
         /// <param name="data">The exteded data for the error.</param>
-        public ErrorEventArgs(string packageId, int errorCode, string errorMessage, int uiHint, string[] data)
+        /// <param name="recommendation">Recommended result from engine.</param>
+        public ErrorEventArgs(string packageId, int errorCode, string errorMessage, int uiHint, string[] data, int recommendation)
+            : base(recommendation)
         {
             this.packageId = packageId;
             this.errorCode = errorCode;
@@ -1334,7 +1358,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="displayParameters">Recommended display flags for this message.</param>
         /// <param name="message">The message.</param>
         /// <param name="data">The extended data for the message.</param>
-        public ExecuteMsiMessageEventArgs(string packageId, InstallMessage messageType, int displayParameters, string message, string[] data)
+        /// <param name="recommendation">Recommended result from engine.</param>
+        public ExecuteMsiMessageEventArgs(string packageId, InstallMessage messageType, int displayParameters, string message, string[] data, int recommendation)
+            : base(recommendation)
         {
             this.packageId = packageId;
             this.messageType = messageType;
@@ -1436,8 +1462,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <param name="packageId">The identity of the packaged that was acted on.</param>
         /// <param name="status">The return code of the operation.</param>
         /// <param name="restart">Whether a restart is required.</param>
-        public ExecutePackageCompleteEventArgs(string packageId, int status, ApplyRestart restart)
-            : base(status)
+        /// <param name="recommendation">Recommended result from engine.</param>
+        public ExecutePackageCompleteEventArgs(string packageId, int status, ApplyRestart restart, int recommendation)
+            : base(status, recommendation)
         {
             this.packageId = packageId;
             this.restart = restart;
@@ -1649,8 +1676,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         /// <param name="packageId">The identity of the package that was cached.</param>
         /// <param name="status">The return code of the operation.</param>
-        public CachePackageCompleteEventArgs(string packageId, int status)
-            : base(status)
+        /// <param name="recommendation">Recommended result from engine.</param>
+        public CachePackageCompleteEventArgs(string packageId, int status, int recommendation)
+            : base(status, recommendation)
         {
             this.packageId = packageId;
         }

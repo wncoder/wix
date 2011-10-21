@@ -235,8 +235,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             Row digitalSignatureRow = null;
 
                             string cabName = mediaRecord.GetString(4); // get the name of the cab
-                            // If it's an internal cab, skip it
-                            if (cabName.StartsWith("#", StringComparison.Ordinal))
+                            // If there is no cabinet or it's an internal cab, skip it.
+                            if (String.IsNullOrEmpty(cabName) || cabName.StartsWith("#", StringComparison.Ordinal))
                             {
                                 continue;
                             }

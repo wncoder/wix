@@ -44,8 +44,8 @@ extern "C" HRESULT DAPI XmlInitialize(
         }
     }
 
-    LONG fInitialized = ::InterlockedIncrement(&vcXmlInitialized);
-    if (1 == fInitialized)
+    LONG cInitialized = ::InterlockedIncrement(&vcXmlInitialized);
+    if (1 == cInitialized)
     {
         // NOTE: 4.0 behaves differently than 3.0 so there may be problems doing this
 #if 0
@@ -87,11 +87,11 @@ LExit:
 extern "C" void DAPI XmlUninitialize(
     )
 {
-    LONG fInitialized = ::InterlockedDecrement(&vcXmlInitialized);
+    AssertSz(vcXmlInitialized, "XmlUninitialize called when not initialized");
 
-    AssertSz(0 == fInitialized, "XmlUninitialize called when not initialized");
+    LONG cInitialized = ::InterlockedDecrement(&vcXmlInitialized);
 
-    if (0 == fInitialized)
+    if (0 == cInitialized)
     {
         memset(&vclsidXMLDOM, 0, sizeof(vclsidXMLDOM));
 

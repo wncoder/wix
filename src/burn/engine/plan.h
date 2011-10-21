@@ -246,6 +246,9 @@ typedef struct _BURN_PLAN
     BOOL fPerMachine;
 
     DWORD64 qwCacheSizeTotal;
+
+    DWORD64 qwEstimatedSize;
+
     DWORD cExecutePackagesTotal;
     DWORD cOverallProgressTicksTotal;
 

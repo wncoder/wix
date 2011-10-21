@@ -286,7 +286,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             {
                                 string key = String.Concat(table.Name, ":", primaryKey);
 
-                                this.indexedSourceLineNumbers.Add(key, row.SourceLineNumbers);
+                                if (this.indexedSourceLineNumbers.ContainsKey(key))
+                                {
+                                    this.OnMessage(WixWarnings.DuplicatePrimaryKey(row.SourceLineNumbers, primaryKey, table.Name));
+                                }
+                                else
+                                {
+                                    this.indexedSourceLineNumbers.Add(key, row.SourceLineNumbers);
+                                }
                             }
                         }
                     }

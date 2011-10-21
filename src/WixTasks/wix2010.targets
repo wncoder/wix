@@ -1058,6 +1058,20 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="TargetOutputs" ItemName="_BuiltProjectReferencePaths" />
     </MSBuild>
 
+    <!-- 
+    VC project references must build GetNativeTargetPath because neither GetTargetPath nor the return of the default build
+    target return the output for a native .vcxproj. 
+    -->
+    <MSBuild
+      Projects="@(_MSBuildProjectReferenceExistent)"
+      Targets="GetNativeTargetPath"
+      Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform)"
+      Condition=" '@(_ProjectReferenceWithConfiguration)' != '' and '%(_MSBuildProjectReferenceExistent.Extension)' == '.vcxproj' ">
+
+      <Output TaskParameter="TargetOutputs" ItemName="_ResolvedProjectReferencePaths" />
+      <Output TaskParameter="TargetOutputs" ItemName="_MSBuildResolvedProjectReferencePaths" />
+    </MSBuild>
+
     <!-- Assign the unique gathered and built project references to the resolved project
          reference paths. -->
     <RemoveDuplicates Inputs="@(_GatheredProjectReferencePaths);@(_BuiltProjectReferencePaths)">

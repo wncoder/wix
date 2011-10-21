@@ -584,8 +584,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             {
                 this.Message = e.Message;
                 e.Result = this.Canceled ? Result.Cancel : Result.Ok;
-
-                System.Threading.Thread.Sleep(100); // TODO: remove this
             }
         }
 

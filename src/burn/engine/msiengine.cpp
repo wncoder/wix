@@ -457,6 +457,12 @@ extern "C" HRESULT MsiEngineDetectPackage(
             }
             ExitOnFailure(hr, "Failed to enum related products.");
 
+            // If we found ourselves, skip because saying that a package is related to itself is nonsensical.
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, pPackage->Msi.sczProductCode, -1, wzProductCode, -1))
+            {
+                continue;
+            }
+
             // get product version
             hr = WiuGetProductInfoEx(wzProductCode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, INSTALLPROPERTY_VERSIONSTRING, &sczInstalledVersion);
             if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr)
@@ -496,7 +502,15 @@ extern "C" HRESULT MsiEngineDetectPackage(
             // If this is a detect-only related package then we'll assume a downgrade is taking place, since
             // that is the overwhelmingly common use of detect-only related packages. If not detect-only then
             // it's easy; we're clearly doing a major upgrade.
-            operation = pRelatedMsi->fOnlyDetect ? BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE : BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+            if (pRelatedMsi->fOnlyDetect)
+            {
+                operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED;
+            }
+            else
+            {
+                operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+            }
 
             LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, wzProductCode, LoggingPerMachineToString(fPerMachine), LoggingVersionToString(qwVersion), LoggingRelatedOperationToString(operation));
 
@@ -504,13 +518,6 @@ extern "C" HRESULT MsiEngineDetectPackage(
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, wzProductCode, fPerMachine, qwVersion, operation);
             hr = HRESULT_FROM_VIEW(nResult);
             ExitOnRootFailure(hr, "UX aborted detect related MSI package.");
-
-            // If we think a downgrade will occur and the BA did not ignore our notification above
-            // then mark the package as superseded.
-            if (BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation && IDIGNORE != nResult)
-            {
-                pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED;
-            }
         }
     }
 
@@ -621,7 +628,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
             hr = CalculateFeatureAction(pFeature->currentState, featureRequestedState, pFeature->fRepair, &pFeature->execute, &fFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate execute feature state.");
 
-            hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_STATE_UNKNOWN != featureExpectedState ? featureExpectedState : pFeature->currentState, FALSE, &pFeature->rollback, &fRollbackFeatureActionDelta);
+            hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_ACTION_NONE == pFeature->execute ? featureExpectedState : pFeature->currentState, FALSE, &pFeature->rollback, &fRollbackFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate rollback feature state.");
 
             LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(pFeature->execute), LoggingMsiFeatureActionToString(pFeature->rollback));
@@ -820,6 +827,7 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
+        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
         pAction->msiPackage.action = pPackage->rollback;
         pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
         rgRollbackFeatureActions = NULL;

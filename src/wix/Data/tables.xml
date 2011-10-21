@@ -1446,6 +1446,9 @@
     <tableDefinition name="WixFeatureGroup" createSymbols="yes" unreal="yes">
         <columnDefinition name="WixFeatureGroup" type="string" length="0" primaryKey="yes"/>
     </tableDefinition>
+    <tableDefinition name="WixPatchFamilyGroup" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixPatchFamilyGroup" type="string" length="0" primaryKey="yes"/>
+    </tableDefinition>
     <tableDefinition name="WixGroup" unreal="yes">
         <columnDefinition name="ParentId" type="string" length="0" primaryKey="yes" nullable="no" category="identifier"
                 description="Primary key used to identify a particular record in a parent table."/>

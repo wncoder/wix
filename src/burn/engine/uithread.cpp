@@ -70,6 +70,9 @@ HRESULT UiCreateMessageWindow(
     // Wait for either the thread to be initialized or the window to exit / fail prematurely.
     ::WaitForMultipleObjects(countof(rgWaitHandles), rgWaitHandles, FALSE, INFINITE);
 
+    pEngineState->hMessageWindowThread = rgWaitHandles[1];
+    rgWaitHandles[1] = NULL;
+
 LExit:
     ReleaseHandle(rgWaitHandles[1]);
     ReleaseHandle(rgWaitHandles[0]);
@@ -84,6 +87,10 @@ void UiCloseMessageWindow(
     if (::IsWindow(pEngineState->hMessageWindow))
     {
         ::PostMessageW(pEngineState->hMessageWindow, WM_CLOSE, 0, 0);
+
+        // Give the window 15 seconds to close because if it stays open it can prevent
+        // the engine from starting a reboot (should a reboot actually be necessary).
+        ::WaitForSingleObject(pEngineState->hMessageWindowThread, 15 * 1000);
     }
 }
 
@@ -199,7 +206,9 @@ static LRESULT CALLBACK WndProc(
         UITHREAD_INFO* pInfo = reinterpret_cast<UITHREAD_INFO*>(::GetWindowLongW(hWnd, GWLP_USERDATA));
         if (!pInfo->fElevated)
         {
-            fRet = IDCANCEL != pInfo->pUserExperience->pUserExperience->OnSystemShutdown(dwEndSession);
+            // TODO: instead of recommending canceling all non-critical shutdowns, maybe we should only recommend cancel
+            //       when the engine is doing work?
+            fRet = IDCANCEL != pInfo->pUserExperience->pUserExperience->OnSystemShutdown(dwEndSession, fCritical ? IDNOACTION : IDCANCEL);
         }
 
         LogId(REPORT_STANDARD, MSG_SYSTEM_SHUTDOWN, LoggingBoolToString(fCritical), LoggingBoolToString(pInfo->fElevated), LoggingBoolToString(fRet));

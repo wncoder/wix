@@ -921,3 +921,35 @@ LExit:
 
     return hr;
 }
+
+
+DAPI_(HRESULT) PathCompress(
+    __in_z LPCWSTR wzPath
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hPath = INVALID_HANDLE_VALUE;
+
+    hPath = ::CreateFileW(wzPath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+    if (INVALID_HANDLE_VALUE == hPath)
+    {
+        ExitWithLastError1(hr, "Failed to open path %ls for compression.", wzPath);
+    }
+
+    DWORD dwBytesReturned = 0;
+    USHORT usCompressionFormat = COMPRESSION_FORMAT_DEFAULT;
+    if (0 == ::DeviceIoControl(hPath, FSCTL_SET_COMPRESSION, &usCompressionFormat, sizeof(usCompressionFormat), NULL, 0, &dwBytesReturned, NULL))
+    {
+        // ignore compression attempts on file systems that don't support it
+        DWORD er = ::GetLastError();
+        if (ERROR_INVALID_FUNCTION != er)
+        {
+            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Failed to set compression state for path %ls.", wzPath);
+        }
+    }
+
+LExit:
+    ReleaseFile(hPath);
+
+    return hr;
+}

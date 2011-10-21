@@ -82,6 +82,23 @@ static INT HandleInstallProgress(
     __in_z_opt LPCWSTR wzMessage,
     __in_opt MSIHANDLE hRecord
     );
+static INT SendMsiMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in INSTALLMESSAGE mt,
+    __in UINT uiFlags,
+    __in_z LPCWSTR wzMessage,
+    __in_opt MSIHANDLE hRecord
+    );
+static INT SendErrorMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in UINT uiFlags,
+    __in_z LPCWSTR wzMessage,
+    __in_opt MSIHANDLE hRecord
+    );
+static INT SendFilesInUseMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in_opt MSIHANDLE hRecord
+    );
 static INT SendProgressUpdate(
     __in WIU_MSI_EXECUTE_CONTEXT* pContext
     );
@@ -92,6 +109,15 @@ static DWORD CalculatePhaseProgress(
     __in WIU_MSI_EXECUTE_CONTEXT* pContext,
     __in DWORD dwProgressIndex,
     __in DWORD dwWeightPercentage
+    );
+void InitializeMessageData(
+    __in MSIHANDLE hRecord,
+    __out LPWSTR** prgsczData,
+    __out DWORD* pcData
+    );
+void UninitializeMessageData(
+    __in LPWSTR* rgsczData,
+    __in DWORD cData
     );
 
 
@@ -777,41 +803,9 @@ static INT HandleInstallMessage(
     __in_opt MSIHANDLE hRecord
     )
 {
-    INT nResult = IDOK;
-    WIU_MSI_EXECUTE_MESSAGE message = { };
-    DWORD cData = 0;
-    LPWSTR* rgwzData = NULL;
+    INT nResult = IDNOACTION;
 
-Trace2(REPORT_STANDARD, "install[%x]: %ls", pContext->dwCurrentProgressIndex, wzMessage);
-
-    // If we have a record based message, try to get the extra data.
-    if (hRecord)
-    {
-        cData = ::MsiRecordGetFieldCount(hRecord);
-
-        rgwzData = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cData, TRUE);
-        for (DWORD i = 0; rgwzData && i < cData; ++i)
-        {
-            DWORD cch = 0;
-
-            // get string from record
-#pragma prefast(push)
-#pragma prefast(disable:6298)
-            DWORD er = ::MsiRecordGetStringW(hRecord, i + 1, L"", &cch);
-#pragma prefast(pop)
-            if (ERROR_MORE_DATA == er)
-            {
-                HRESULT hr = StrAlloc(&rgwzData[i], ++cch);
-                if (SUCCEEDED(hr))
-                {
-                    er = ::MsiRecordGetStringW(hRecord, i + 1, rgwzData[i], &cch);
-                }
-            }
-        }
-
-        message.cData = cData;
-        message.rgwzData = (LPCWSTR*)rgwzData;
-    }
+Trace2(REPORT_STANDARD, "MSI install[%x]: %ls", pContext->dwCurrentProgressIndex, wzMessage);
 
     // Handle the message.
     switch (mt)
@@ -829,12 +823,7 @@ Trace2(REPORT_STANDARD, "install[%x]: %ls", pContext->dwCurrentProgressIndex, wz
             pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].fEnableActionData = FALSE;
         }
 
-        //nResult = m_pView->OnExecuteMsiMessage(m_pExecutingPackage, mt, uiFlags, wzMessage, hRecord);
-        message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
-        message.msiMessage.mt = mt;
-        message.msiMessage.uiFlags = uiFlags;
-        message.msiMessage.wzMessage = wzMessage;
-        nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+        nResult = SendMsiMessage(pContext, mt, uiFlags, wzMessage, hRecord);
         break;
 
     case INSTALLMESSAGE_ACTIONDATA:
@@ -844,61 +833,32 @@ Trace2(REPORT_STANDARD, "install[%x]: %ls", pContext->dwCurrentProgressIndex, wz
             {
                 pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted += pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwStep;
             }
-            else
+            else // rollback.
             {
                 pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted -= pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwStep;
             }
-Trace3(REPORT_STANDARD, "progress[%x]: actiondata, progress: %u  forward: %d", pContext->dwCurrentProgressIndex, pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwStep, pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].fMoveForward);
 
             nResult = SendProgressUpdate(pContext);
         }
         else
         {
-            message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
-            message.msiMessage.mt = mt;
-            message.msiMessage.uiFlags = uiFlags;
-            message.msiMessage.wzMessage = wzMessage;
-            nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+            nResult = SendMsiMessage(pContext, mt, uiFlags, wzMessage, hRecord);
         }
         break;
-
-    //case INSTALLMESSAGE_RESOLVESOURCE:
-    //    m_pView->OnExecuteMsiMessage(m_pExecutingPackage, mt, uiFlags, wzMessage, hRecord);
-    //    nResult = IDNOACTION; // always return no action (0) for resolve source.
-    //    break;
 
     case INSTALLMESSAGE_OUTOFDISKSPACE: __fallthrough;
     case INSTALLMESSAGE_FATALEXIT: __fallthrough;
     case INSTALLMESSAGE_ERROR:
-        {
-        DWORD dwErrorCode = 0;
-        if (hRecord)
-        {
-            dwErrorCode = ::MsiRecordGetInteger(hRecord, 1);
-        }
-
-        message.type = WIU_MSI_EXECUTE_MESSAGE_ERROR;
-        message.error.dwErrorCode = dwErrorCode;
-        message.error.uiFlags = uiFlags;
-        message.error.wzMessage = wzMessage;
-        nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
-        }
+        nResult = SendErrorMessage(pContext, uiFlags, wzMessage, hRecord);
         break;
 
-    //case INSTALLMESSAGE_RMFILESINUSE: __fallthrough;
     case INSTALLMESSAGE_FILESINUSE:
-        message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE;
-        message.msiFilesInUse.cFiles = message.cData;       // point the files in use information to the message record information.
-        message.msiFilesInUse.rgwzFiles = message.rgwzData;
-        nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+        nResult = SendFilesInUseMessage(pContext, hRecord);
         break;
+
+    //case INSTALLMESSAGE_RMFILESINUSE: we don't register for this message today.
 
 /*
-    case INSTALLMESSAGE_WARNING:
-    case INSTALLMESSAGE_USER:
-    case INSTALLMESSAGE_INFO:
-    case INSTALLMESSAGE_SHOWDIALOG: // sent prior to display of authored dialog or wizard
-
 #if 0
     case INSTALLMESSAGE_COMMONDATA:
         if (L'1' == wzMessage[0] && L':' == wzMessage[1] && L' ' == wzMessage[2])
@@ -926,28 +886,17 @@ Trace3(REPORT_STANDARD, "progress[%x]: actiondata, progress: %u  forward: %d", p
 #endif
 */
 
+    //case INSTALLMESSAGE_WARNING:
+    //case INSTALLMESSAGE_USER:
+    //case INSTALLMESSAGE_INFO:
+    //case INSTALLMESSAGE_SHOWDIALOG: // sent prior to display of authored dialog or wizard
     default:
-        //nResult = m_pView->OnExecuteMsiMessage(m_pExecutingPackage, mt, uiFlags, wzMessage, hRecord);
-        message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
-        message.msiMessage.mt = mt;
-        message.msiMessage.uiFlags = uiFlags;
-        message.msiMessage.wzMessage = wzMessage;
-        nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+        nResult = SendMsiMessage(pContext, mt, uiFlags, wzMessage, hRecord);
         break;
     }
 
-    // Clean up if there was any data allocated.
-    if (rgwzData)
-    {
-        for (DWORD i = 0; i < cData; ++i)
-        {
-            ReleaseStr(rgwzData[i]);
-        }
-
-        MemFree(rgwzData);
-    }
-
-    return nResult;
+    // Always return "no action" (0) for resolve source messages.
+    return (INSTALLMESSAGE_RESOLVESOURCE == mt) ? IDNOACTION : nResult;
 }
 
 static INT HandleInstallProgress(
@@ -957,7 +906,7 @@ static INT HandleInstallProgress(
     )
 {
     HRESULT hr = S_OK;
-    INT nResult = IDOK;
+    INT nResult = IDNOACTION;
     INT iFields[4] = { };
     INT cFields = 0;
     LPCWSTR pwz = NULL;
@@ -967,7 +916,7 @@ static INT HandleInstallProgress(
     if (hRecord)
     {
         cFields = ::MsiRecordGetFieldCount(hRecord);
-        cFields = min(cFields, countof(iFields)); // no buffer overrun if there are more fields than our buffer can hold
+        cFields = min(cFields, countof(iFields)); // avoid buffer overrun if there are more fields than our buffer can hold
         for (INT i = 0; i < cFields; ++i)
         {
             iFields[i] = ::MsiRecordGetInteger(hRecord, i + 1);
@@ -1005,18 +954,18 @@ static INT HandleInstallProgress(
     }
 
 #ifdef _DEBUG
-WCHAR wz[256];
-swprintf_s(wz, countof(wz), L"1: %d 2: %d 3: %d 4: %d", iFields[0], iFields[1], iFields[2], iFields[3]);
-Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, wz);
+    WCHAR wz[256];
+    ::StringCchPrintfW(wz, countof(wz), L"1: %d 2: %d 3: %d 4: %d", iFields[0], iFields[1], iFields[2], iFields[3]);
+    Trace2(REPORT_STANDARD, "MSI progress[%x]: %ls", pContext->dwCurrentProgressIndex, wz);
 #endif
 
-    // verify that we have enought field values
+    // Verify that we have the enough field values.
     if (1 > cFields)
     {
         ExitFunction(); // unknown message, bail
     }
 
-    // hande based on message type
+    // Handle based on message type.
     switch (iFields[0])
     {
     case 0: // master progress reset
@@ -1039,7 +988,7 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
         else
         {
             hr = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-            ExitOnRootFailure(hr, "(Insufficient space to hold progress information.");
+            ExitOnRootFailure(hr, "Insufficient space to hold progress information.");
         }
 
         // we only care about the first stage after script execution has started
@@ -1064,7 +1013,7 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
         }
         break;
 
-    case 1: // action info
+    case 1: // action info.
         if (3 > cFields)
         {
             Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%ls'", cFields, wzMessage);
@@ -1083,12 +1032,13 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
         }
         break;
 
-    case 2: // progress report
+    case 2: // progress report.
         if (2 > cFields)
         {
             Trace2(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - Invalid field count %d, '%ls'", cFields, wzMessage);
             break;
         }
+
         //Trace3(REPORT_STANDARD, "INSTALLMESSAGE_PROGRESS - PROGRESS REPORT - %d, %d, %d", iFields[1], iFields[2], iFields[3]);
 
         if (WIU_MSI_PROGRESS_INVALID == pContext->dwCurrentProgressIndex)
@@ -1100,18 +1050,18 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
             break;
         }
 
-        // update progress
+        // Update progress.
         if (pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].fMoveForward)
         {
             pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted += iFields[1];
         }
-        else
+        else // rollback.
         {
             pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted -= iFields[1];
         }
         break;
 
-    case 3:
+    case 3: // extend the progress bar.
         pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwTotal += iFields[1];
         break;
 
@@ -1126,6 +1076,101 @@ Trace2(REPORT_STANDARD, "progress[%x]: %ls", pContext->dwCurrentProgressIndex, w
     }
 
 LExit:
+    return (IDNOACTION == nResult) ? IDOK : nResult;
+}
+
+static INT SendMsiMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in INSTALLMESSAGE mt,
+    __in UINT uiFlags,
+    __in_z LPCWSTR wzMessage,
+    __in_opt MSIHANDLE hRecord
+    )
+{
+    INT nResult = IDNOACTION;
+    WIU_MSI_EXECUTE_MESSAGE message = { };
+    LPWSTR* rgsczData = NULL;
+    DWORD cData = 0;
+
+    InitializeMessageData(hRecord, &rgsczData, &cData);
+
+    message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
+    message.cData = cData;
+    message.rgwzData = (LPCWSTR*)rgsczData;
+    message.msiMessage.mt = mt;
+    message.msiMessage.uiFlags = uiFlags;
+    message.msiMessage.wzMessage = wzMessage;
+    nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+
+    UninitializeMessageData(rgsczData, cData);
+    return nResult;
+}
+
+static INT SendErrorMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in UINT uiFlags,
+    __in_z LPCWSTR wzMessage,
+    __in_opt MSIHANDLE hRecord
+    )
+{
+    INT nResult = IDNOACTION;
+    WIU_MSI_EXECUTE_MESSAGE message = { };
+    DWORD dwErrorCode = 0;
+    LPWSTR* rgsczData = NULL;
+    DWORD cData = 0;
+
+    if (hRecord)
+    {
+        dwErrorCode = ::MsiRecordGetInteger(hRecord, 1);
+
+        // Set the recommendation if it's a known error code.
+        switch (dwErrorCode)
+        {
+        case 1605: // continue with install even if there isn't enough room for rollback.
+            nResult = IDIGNORE;
+            break;
+
+        case 1704: // rollback suspended installs so our install can continue.
+            nResult = IDOK;
+            break;
+        }
+    }
+
+    InitializeMessageData(hRecord, &rgsczData, &cData);
+
+    message.type = WIU_MSI_EXECUTE_MESSAGE_ERROR;
+    message.nResultRecommendation = nResult;
+    message.cData = cData;
+    message.rgwzData = (LPCWSTR*)rgsczData;
+    message.error.dwErrorCode = dwErrorCode;
+    message.error.uiFlags = uiFlags;
+    message.error.wzMessage = wzMessage;
+    nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+
+    UninitializeMessageData(rgsczData, cData);
+    return nResult;
+}
+
+static INT SendFilesInUseMessage(
+    __in WIU_MSI_EXECUTE_CONTEXT* pContext,
+    __in_opt MSIHANDLE hRecord
+    )
+{
+    INT nResult = IDNOACTION;
+    WIU_MSI_EXECUTE_MESSAGE message = { };
+    LPWSTR* rgsczData = NULL;
+    DWORD cData = 0;
+
+    InitializeMessageData(hRecord, &rgsczData, &cData);
+
+    message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE;
+    message.cData = cData;
+    message.rgwzData = (LPCWSTR*)rgsczData;
+    message.msiFilesInUse.cFiles = message.cData;       // point the files in use information to the message record information.
+    message.msiFilesInUse.rgwzFiles = message.rgwzData;
+    nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
+
+    UninitializeMessageData(rgsczData, cData);
     return nResult;
 }
 
@@ -1133,8 +1178,8 @@ static INT SendProgressUpdate(
     __in WIU_MSI_EXECUTE_CONTEXT* pContext
     )
 {
-    DWORD dwPercentage = 0; // number representing 0 - 100%
     int nResult = IDNOACTION;
+    DWORD dwPercentage = 0; // number representing 0 - 100%
     WIU_MSI_EXECUTE_MESSAGE message = { };
 
     //DWORD dwMsiProgressTotal = pEngineInfo->dwMsiProgressTotal;
@@ -1147,6 +1192,7 @@ static INT SendProgressUpdate(
     dwPercentage += CalculatePhaseProgress(pContext, 0, 15);
     dwPercentage += CalculatePhaseProgress(pContext, 1, 80);
     dwPercentage += CalculatePhaseProgress(pContext, 2, 5);
+    dwPercentage = min(dwPercentage, 100); // ensure the percentage never goes over 100%.
 
     if (pContext->fRollback)
     {
@@ -1165,18 +1211,16 @@ static INT SendProgressUpdate(
     //    //qwProgressComplete = min(qwProgressComplete, pEngineInfo->qwProgressStageTotal);
     //}
 
-    dwPercentage = min(dwPercentage, 100);
-    //nResult = m_pView->OnExecuteProgress(m_pExecutingPackage, dwPercentage);
+#ifdef _DEBUG
+    DWORD64 qwCompleted = pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted;
+    DWORD64 qwTotal = pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwTotal;
+    Trace3(REPORT_STANDARD, "MSI progress: %I64u/%I64u (%u%%)", qwCompleted, qwTotal, dwPercentage);
+    //AssertSz(qwCompleted <= qwTotal, "Completed progress is larger than total progress.");
+#endif
+
     message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
     message.progress.dwPercentage = dwPercentage;
     nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
-
-#ifdef _DEBUG
-DWORD64 qwCompleted = pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwCompleted;
-DWORD64 qwTotal = pContext->rgMsiProgress[pContext->dwCurrentProgressIndex].dwTotal;
-Trace3(REPORT_STANDARD, "progress: %I64u/%I64u (%u%%)", qwCompleted, qwTotal, dwPercentage);
-//AssertSz(qwCompleted <= qwTotal, "Completed progress is larger than total progress.");
-#endif
 
     return nResult;
 }
@@ -1214,4 +1258,60 @@ static DWORD CalculatePhaseProgress(
     // else we're not there yet so it has to be zero.
 
     return dwPhasePercentage;
+}
+
+void InitializeMessageData(
+    __in_opt MSIHANDLE hRecord,
+    __out LPWSTR** prgsczData,
+    __out DWORD* pcData
+    )
+{
+    DWORD cData = 0;
+    LPWSTR* rgsczData = NULL;
+
+    // If we have a record based message, try to get the extra data.
+    if (hRecord)
+    {
+        cData = ::MsiRecordGetFieldCount(hRecord);
+
+        rgsczData = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cData, TRUE);
+        for (DWORD i = 0; rgsczData && i < cData; ++i)
+        {
+            DWORD cch = 0;
+
+            // get string from record
+#pragma prefast(push)
+#pragma prefast(disable:6298)
+            DWORD er = ::MsiRecordGetStringW(hRecord, i + 1, L"", &cch);
+#pragma prefast(pop)
+            if (ERROR_MORE_DATA == er)
+            {
+                HRESULT hr = StrAlloc(&rgsczData[i], ++cch);
+                if (SUCCEEDED(hr))
+                {
+                    er = ::MsiRecordGetStringW(hRecord, i + 1, rgsczData[i], &cch);
+                }
+            }
+        }
+    }
+
+    *prgsczData = rgsczData;
+    *pcData = cData;
+}
+
+void UninitializeMessageData(
+    __in LPWSTR* rgsczData,
+    __in DWORD cData
+    )
+{
+    // Clean up if there was any data allocated.
+    if (rgsczData)
+    {
+        for (DWORD i = 0; i < cData; ++i)
+        {
+            ReleaseStr(rgsczData[i]);
+        }
+
+        MemFree(rgsczData);
+    }
 }

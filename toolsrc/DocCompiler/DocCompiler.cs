@@ -269,6 +269,10 @@ namespace Microsoft.Tools.DocCompiler
 
                 if (sourceFile.Length > 0)
                 {
+                    // get the title from the HTML file and save it as an attribute for later processing
+                    string title = this.GetTopicTitle(sourceFile);
+                    topicElement.SetAttribute("Title", title);
+
                     string htmlDir = Path.Combine(this.outputDir, "html");
                     string destinationFile = Path.Combine(htmlDir, Path.GetFileName(sourceFile));
 
@@ -284,6 +288,30 @@ namespace Microsoft.Tools.DocCompiler
                     {
                         indexElement.SetAttribute("DestinationFile", relDestinationFile);
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Inspect the given topic XHTML file to determine its title.
+        /// </summary>
+        /// <param name="htmlFile">The XHTML file to inspect.</param>
+        /// <returns>The topic title.</returns>
+        private string GetTopicTitle(string xhtmlFile)
+        {
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.XmlResolver = null;
+            settings.ProhibitDtd = false;
+            
+            using (XmlReader reader = XmlReader.Create(xhtmlFile, settings))
+            {
+                if (!reader.ReadToFollowing("html", XhtmlNamespace) || !reader.ReadToFollowing("head", XhtmlNamespace) || !reader.ReadToFollowing("title", XhtmlNamespace))
+                {
+                    return String.Format("***Couldn't read title from topic {0}", xhtmlFile);
+                }
+                else
+                {
+                    return reader.ReadString().Trim();
                 }
             }
         }

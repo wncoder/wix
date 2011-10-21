@@ -45,8 +45,7 @@ extern "C" HRESULT DependencyParseProvidersFromXml(
 
     if (!cNodes)
     {
-        hr = S_OK;
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
 
     // Allocate memory for dependency provider pointers.
@@ -70,12 +69,15 @@ extern "C" HRESULT DependencyParseProvidersFromXml(
 
         // @Imported
         hr = XmlGetYesNoAttribute(pixnNode, L"Imported", &pDependencyProvider->fImported);
-        if (E_NOTFOUND == hr)
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get the Imported attribute.");
+        }
+        else
         {
             pDependencyProvider->fImported = FALSE;
             hr = S_OK;
         }
-        ExitOnFailure(hr, "Failed to get the Imported attribute.");
 
         // Set whether any dependency provider was imported.
         pPackage->fDependencyProvidersImported |= pDependencyProvider->fImported;
@@ -271,9 +273,7 @@ extern "C" HRESULT DependencyRegisterDependent(
     if (fPerMachine != pPackage->fPerMachine)
     {
         LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE, pPackage->sczId, LoggingPerMachineToString(fPerMachine), LoggingPerMachineToString(pPackage->fPerMachine));
-
-        hr = S_FALSE;
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
 
     // Loop through each package provider and remove the bundle dependency key.
@@ -302,7 +302,14 @@ extern "C" HRESULT DependencyUnregister(
 
     // Remove the bundle provider key.
     hr = DepUnregisterDependency(pRegistration->hkRoot, pRegistration->sczProviderKey);
-    ExitOnFailure(hr, "Failed to remove the bundle dependency provider key.");
+    if (E_FILENOTFOUND != hr)
+    {
+        ExitOnFailure(hr, "Failed to remove the bundle dependency provider key.");
+    }
+    else
+    {
+        hr = S_OK;
+    }
 
 LExit:
     return hr;
@@ -321,9 +328,7 @@ extern "C" HRESULT DependencyUnregisterDependent(
     if (fPerMachine != pPackage->fPerMachine)
     {
         LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE, pPackage->sczId, LoggingPerMachineToString(fPerMachine), LoggingPerMachineToString(pPackage->fPerMachine));
-
-        hr = S_FALSE;
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
 
     // Loop through each package provider and remove the bundle dependency key.
@@ -334,7 +339,14 @@ extern "C" HRESULT DependencyUnregisterDependent(
         for (DWORD i = 0; i < pPackage->cDependencyProviders; ++i)
         {
             hr = DepUnregisterDependent(hkRoot, pPackage->rgDependencyProviders[i].sczKey, wzBundleProviderKey);
-            ExitOnFailure(hr, "Failed to remove the bundle dependency key from a package dependency provider.");
+            if (E_FILENOTFOUND != hr)
+            {
+                ExitOnFailure(hr, "Failed to remove the bundle dependency key from a package dependency provider.");
+            }
+            else
+            {
+                hr = S_OK;
+            }
         }
     }
 

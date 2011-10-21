@@ -208,16 +208,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.Searches
             }
             else
             {
-                if (root != RegistrySearchElement.RegRoot.HKLM || root != RegistrySearchElement.RegRoot.HKCU)
-                {
-                    result = true;
-                    Trace.WriteLine("Burn engine current supports registry search for keys under HKLM and HKCU only");
-                }
-                else
-                {
-                    Trace.WriteLine(string.Format("Expected return value is 0 whereas actual return value is: {0}", returnValue));
-                    result = false;
-                }
+                Trace.WriteLine(string.Format("Expected return value is 0 whereas actual return value is: {0}", returnValue));
+                result = false;
             }
 
             // Delete the key

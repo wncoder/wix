@@ -107,10 +107,10 @@
   <h2>Property value tests</h2>
   <p>A simple test lets you specify a property to test, a value to test against, and the operator to compare with (which defaults to "equal").</p>
   <pre>&lt;Fragment&gt;
-  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]" Operator="equal" /&gt;
+  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]" Operator="equal" /&gt;
 &lt;/Fragment&gt;</pre>
 
-  <p>When the test runs, Lux compares the value of the SIMPLE property against the (formatted) value [INSTALLLOCATION]. 
+  <p>When the test runs, Lux compares the value of the SIMPLE property against the (formatted) value [INSTALLFOLDER].
   If the two match (because the operator is "equal"), the test passes. Legal values of the Operator attribute are:</p>
     <dl>
         <dt><dfn>equal</dfn></dt>
@@ -128,10 +128,10 @@
   <p>Conditions let you validate code paths in your custom action. For example, if your custom action behaves differently on Windows XP than it does on Windows Vista and later, 
   you can create two tests with mutually exclusive conditions:</p>
   <pre>&lt;Fragment&gt;
-  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]"&gt;
+  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]"&gt;
     &lt;lux:Condition&gt;&lt;![CDATA[VersionNT &lt; 600]]&gt;&lt;/lux:Condition&gt;
   &lt;/lux:UnitTest&gt;
-  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLLOCATION]"&gt;
+  &lt;lux:UnitTest CustomAction="TestCustomActionSimple" Property="SIMPLE" Value="[INSTALLFOLDER]"&gt;
     &lt;lux:Condition&gt;&lt;![CDATA[VersionNT &gt;= 600]]&gt;&lt;/lux:Condition&gt;
   &lt;/lux:UnitTest&gt;
 &lt;/Fragment&gt;
@@ -155,7 +155,7 @@
   &lt;lux:UnitTest CustomAction="TestCustomActionMultiValue" Property="MULTIVALUE" ValueSeparator="*"&gt;
     &lt;lux:Condition&gt;VersionNT&lt;/lux:Condition&gt;
     &lt;lux:UnitTest Index="0" Value="1" /&gt;
-    &lt;lux:UnitTest Index="1" Value="[INSTALLLOCATION]"&gt;
+    &lt;lux:UnitTest Index="1" Value="[INSTALLFOLDER]"&gt;
       &lt;lux:Condition&gt;NOT Installed&lt;/lux:Condition&gt;
     &lt;/lux:UnitTest&gt;
     &lt;lux:UnitTest Index="2" Value="WIXEAST" /&gt;
@@ -169,7 +169,7 @@
   properties using the NameValueSeparator and Index attributes.</p>
   <pre>&lt;Fragment&gt;
   &lt;lux:UnitTest CustomAction="TestCustomActionNameValuePairs" Property="NAMEVALUEPAIRS" NameValueSeparator="#"&gt;
-    &lt;lux:UnitTest Index="InstallationRoot" Value="[INSTALLLOCATION]" /&gt;
+    &lt;lux:UnitTest Index="InstallationRoot" Value="[INSTALLFOLDER]" /&gt;
     &lt;lux:UnitTest Index="Developers" Operator="caseInsensitiveNotEqual" Value="WIXEAST" /&gt;
   &lt;/lux:UnitTest&gt;
 &lt;/Fragment&gt;</pre>
@@ -248,14 +248,14 @@ light -ext WixLuxExtension LuxSample1_test.wixobj CustomActions.wixobj -out LuxS
   Microsoft (R) Windows Installer Xml Unit Test Runner version 3.5.1204.0
   Copyright (C) Microsoft Corporation. All rights reserved.
   
-  Test luxB21F0D12E0701DBA30FFB92A532A5390 passed: Property 'SIMPLE' matched expected value '[INSTALLLOCATION]'.
-  Test TestConditionBeforeVista passed: Property 'SIMPLE' matched expected value '[INSTALLLOCATION]'.
-  Test TestConditionVistaOrLater passed: Property 'SIMPLE' matched expected value '[INSTALLLOCATION]'.
+  Test luxB21F0D12E0701DBA30FFB92A532A5390 passed: Property 'SIMPLE' matched expected value '[INSTALLFOLDER]'.
+  Test TestConditionBeforeVista passed: Property 'SIMPLE' matched expected value '[INSTALLFOLDER]'.
+  Test TestConditionVistaOrLater passed: Property 'SIMPLE' matched expected value '[INSTALLFOLDER]'.
   Test TestExpressionTruth passed: Expression 'NOT MsiSystemRebootPending AND SIMPLE' evaluated to true.
 nit.exe : error NIT8103: Test luxA6D27EC5903612D7F3786FF71952E314 failed: Property 'MULTIVALUE' expected value '2' but actual value was '1'.
-  Test lux210257649C16AFA33793F1CDDF575505 passed: Property 'MULTIVALUE' matched expected value '[INSTALLLOCATION]'.
+  Test lux210257649C16AFA33793F1CDDF575505 passed: Property 'MULTIVALUE' matched expected value '[INSTALLFOLDER]'.
 nit.exe : error NIT8103: Test lux402940A90D3ADAD181D599AB8C260FA0 failed: Property 'MULTIVALUE' expected value 'xxxWIXEAST' but actual value was 'WIXEAST'.
-  Test lux453EC8DB458A8F66F0D22970CFF2AE99 passed: Property 'NAMEVALUEPAIRS' matched expected value '[INSTALLLOCATION]'.
+  Test lux453EC8DB458A8F66F0D22970CFF2AE99 passed: Property 'NAMEVALUEPAIRS' matched expected value '[INSTALLFOLDER]'.
   Test lux20CB4F88795F22D15631FD60BA03AFEB passed: Property 'NAMEVALUEPAIRS' matched expected value 'WIXWEST'.
 nit.exe : error NIT8102: 2 tests failed. 7 tests passed.
 Done Building Project "C:\Delivery\Dev\wix35\src\lux\samples\LuxSample1\LuxSample1.wixproj" (Test target(s)) -- FAILED.

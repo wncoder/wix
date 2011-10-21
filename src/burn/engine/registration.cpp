@@ -22,7 +22,7 @@
 // constants
 
 const LPCWSTR REGISTRY_UNINSTALL_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
-const LPCWSTR REGISTRY_RUN_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+const LPCWSTR REGISTRY_RUN_KEY = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce";
 const LPCWSTR REGISTRY_REBOOT_PENDING_FORMAT = L"%ls.RebootRequired";
 const LPCWSTR REGISTRY_BUNDLE_CACHE_PATH = L"BundleCachePath";
 const LPCWSTR REGISTRY_BUNDLE_UPGRADE_CODE = L"BundleUpgradeCode";
@@ -585,11 +585,12 @@ extern "C" HRESULT RegistrationSessionBegin(
     __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BOOTSTRAPPER_ACTION action,
-    __in DWORD64 /* qwEstimatedSize */,
+    __in DWORD64 qwEstimatedSize,
     __in BOOL fPerMachineProcess
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwSize = 0;
     HKEY hkRegistration = NULL;
     LPWSTR sczExecutablePath = NULL;
     LPWSTR sczDisplayName = NULL;
@@ -657,6 +658,25 @@ extern "C" HRESULT RegistrationSessionBegin(
                 hr = GetBundleName(pRegistration, pVariables, &sczDisplayName);
                 hr = RegWriteString(hkRegistration, L"DisplayName", SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
                 ExitOnFailure(hr, "Failed to write DisplayName value.");
+
+                // EstimatedSize
+                qwEstimatedSize /= 1024; // Convert bytes to KB
+                if (0 < qwEstimatedSize)
+                {
+                    // Convert bytes to KB as ARP expects
+                    if (DWORD_MAX < qwEstimatedSize)
+                    {
+                        // ARP doesn't support QWORDs here
+                        dwSize = DWORD_MAX;
+                    }
+                    else
+                    {
+                        dwSize = static_cast<DWORD>(qwEstimatedSize);
+                    }
+
+                    hr = RegWriteNumber(hkRegistration, L"EstimatedSize", dwSize);
+                    ExitOnFailure(hr, "Failed to write EstimatedSize value.");
+                }
 
                 // DisplayVersion: provided by UI
                 if (pRegistration->sczDisplayVersion)
