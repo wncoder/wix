@@ -210,7 +210,7 @@ extern "C" HRESULT SectionInitialize(
     {
         pSection->cbEngineSize = pBurnSectionHeader->dwOriginalSignatureOffset + pBurnSectionHeader->dwOriginalSignatureSize;
     }
-    else if (dwSignatureOffset && 1 == pBurnSectionHeader->cContainers) // if there is a signature and no attached containers, use the current signature.
+    else if (dwSignatureOffset) // if there is a signature, use it.
     {
         pSection->cbEngineSize = dwSignatureOffset + cbSignature;
     }

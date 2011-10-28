@@ -201,6 +201,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             this.messagesAvailable = new ManualResetEvent(false);
             this.toolExited = new ManualResetEvent(false);
 
+            Util.RunningInMsBuild = true;
+
             WixToolTaskLogger logger = new WixToolTaskLogger(this.messageQueue, this.messagesAvailable);
             TextWriter saveConsoleOut = Console.Out;
             TextWriter saveConsoleError = Console.Error;

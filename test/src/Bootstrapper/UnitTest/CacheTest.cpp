@@ -62,7 +62,7 @@ namespace Bootstrapper
                 payload.pbCertificateRootPublicKeyIdentifier = pb;
                 payload.cbCertificateRootPublicKeyIdentifier = cb;
 
-                hr = CachePayload(package.fPerMachine, &payload, package.sczCacheId, NULL, sczPayloadPath, FALSE);
+                hr = CacheCompletePayload(package.fPerMachine, &payload, package.sczCacheId, sczPayloadPath, FALSE);
                 Assert::AreEqual(S_OK, hr, "Failed while verifying path.");
             }
             finally

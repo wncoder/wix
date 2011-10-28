@@ -281,6 +281,9 @@ static HRESULT RunNormal(
         ExitOnFailure(hr, "Failed to connect to elevated parent process.");
 
         ReleaseHandle(hPipesCreatedEvent);
+
+        hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, NULL);
+        ExitOnFailure(hr, "Failed to cache engine to working directory when launched unelevated.");
     }
 
     // Ensure we're on a supported operating system.

@@ -371,6 +371,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>The variable value.</returns>
         public string GetVariableValue(SourceLineNumberCollection sourceLineNumbers, string variable, bool allowMissingPrefix)
         {
+            // Strip the "$(" off the front.
+            if (variable.StartsWith("$(", StringComparison.Ordinal))
+            {
+                variable = variable.Substring(2);
+            }
+
             string[] parts = variable.Split(variableSplitter, 2);
 
             if (1 == parts.Length) // missing prefix

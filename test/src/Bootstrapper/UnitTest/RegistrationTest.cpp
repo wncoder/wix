@@ -80,6 +80,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            LPWSTR sczCurrentProcess = NULL;
             BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
@@ -121,8 +122,11 @@ namespace Bootstrapper
                 hr = RegistrationSetResumeCommand(&registration, &command, &logging);
                 TestThrowOnFailure(hr, L"Failed to set registration resume command.");
 
+                hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+                TestThrowOnFailure(hr, L"Failed to get current process path.");
+
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
@@ -144,6 +148,7 @@ namespace Bootstrapper
             }
             finally
             {
+                ReleaseStr(sczCurrentProcess);
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
@@ -164,6 +169,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            LPWSTR sczCurrentProcess = NULL;
             BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
@@ -207,12 +213,15 @@ namespace Bootstrapper
                 hr = RegistrationSetResumeCommand(&registration, &command, &logging);
                 TestThrowOnFailure(hr, L"Failed to set registration resume command.");
 
+                hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+                TestThrowOnFailure(hr, L"Failed to get current process path.");
+
                 //
                 // install
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
@@ -232,7 +241,7 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was updated
@@ -249,6 +258,7 @@ namespace Bootstrapper
             }
             finally
             {
+                ReleaseStr(sczCurrentProcess);
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
@@ -269,6 +279,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            LPWSTR sczCurrentProcess = NULL;
             BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
@@ -314,12 +325,15 @@ namespace Bootstrapper
                 hr = RegistrationSetResumeCommand(&registration, &command, &logging);
                 TestThrowOnFailure(hr, L"Failed to set registration resume command.");
 
+                hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+                TestThrowOnFailure(hr, L"Failed to get current process path.");
+
                 //
                 // install
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was created
@@ -352,7 +366,7 @@ namespace Bootstrapper
                 //
 
                 // write registration
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_UNINSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 // verify that registration was updated
@@ -369,6 +383,7 @@ namespace Bootstrapper
             }
             finally
             {
+                ReleaseStr(sczCurrentProcess);
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);
@@ -389,6 +404,7 @@ namespace Bootstrapper
         {
             HRESULT hr = S_OK;
             IXMLDOMElement* pixeBundle = NULL;
+            LPWSTR sczCurrentProcess = NULL;
             BURN_VARIABLES variables = { };
             BURN_USER_EXPERIENCE userExperience = { };
             BOOTSTRAPPER_COMMAND command = { };
@@ -439,6 +455,9 @@ namespace Bootstrapper
                 hr = RegistrationSetResumeCommand(&registration, &command, &logging);
                 TestThrowOnFailure(hr, L"Failed to set registration resume command.");
 
+                hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+                TestThrowOnFailure(hr, L"Failed to get current process path.");
+
                 // read resume type before session
                 hr = RegistrationDetectResumeType(&registration, &resumeType);
                 TestThrowOnFailure(hr, L"Failed to read resume type.");
@@ -446,7 +465,7 @@ namespace Bootstrapper
                 Assert::AreEqual((int)BOOTSTRAPPER_RESUME_TYPE_NONE, (int)resumeType);
 
                 // begin session
-                hr = RegistrationSessionBegin(&registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
+                hr = RegistrationSessionBegin(sczCurrentProcess, &registration, &variables, &userExperience, BOOTSTRAPPER_ACTION_INSTALL, 0, FALSE);
                 TestThrowOnFailure(hr, L"Failed to register bundle.");
 
                 hr = RegistrationSaveState(&registration, rgbData, sizeof(rgbData));
@@ -497,6 +516,7 @@ namespace Bootstrapper
             }
             finally
             {
+                ReleaseStr(sczCurrentProcess);
                 ReleaseObject(pixeBundle);
                 UserExperienceUninitialize(&userExperience);
                 RegistrationUninitialize(&registration);

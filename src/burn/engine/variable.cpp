@@ -96,10 +96,6 @@ static HRESULT InitializeVariableCsidlFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
-static HRESULT InitializeVariableKnownFolder(
-    __in DWORD_PTR dwpData,
-    __inout BURN_VARIANT* pValue
-    );
 static HRESULT InitializeVariableWindowsVolumeFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
@@ -136,6 +132,10 @@ static HRESULT InitializeVariableNumeric(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT InitializeVariableRegistryFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 
 
 // function definitions
@@ -152,8 +152,12 @@ extern "C" HRESULT VariableInitialize(
         {L"AdminToolsFolder", InitializeVariableCsidlFolder, CSIDL_ADMINTOOLS},
         {L"AppDataFolder", InitializeVariableCsidlFolder, CSIDL_APPDATA},
         {L"CommonAppDataFolder", InitializeVariableCsidlFolder, CSIDL_COMMON_APPDATA},
-        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMON},
-        {L"CommonFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesCommonX64},
+#if defined(_WIN64)
+        {L"CommonFiles64Folder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMON},
+#else
+        {L"CommonFiles64Folder", InitializeVariableRegistryFolder, CSIDL_PROGRAM_FILES_COMMON},
+#endif
+        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMONX86},
         {L"CompatibilityMode", InitializeVariableOsInfo, OS_INFO_VARIABLE_CompatibilityMode},
         {L"DesktopFolder", InitializeVariableCsidlFolder, CSIDL_DESKTOP},
         {L"FavoritesFolder", InitializeVariableCsidlFolder, CSIDL_FAVORITES},
@@ -170,8 +174,12 @@ extern "C" HRESULT VariableInitialize(
         {L"NTSuiteWebServer", InitializeVariableOsInfo, OS_INFO_VARIABLE_NTSuiteWebServer},
         {L"PersonalFolder", InitializeVariableCsidlFolder, CSIDL_PERSONAL},
         {L"Privileged", InitializeVariablePrivileged, 0},
-        {L"ProgramFilesFolder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFiles},
-        {L"ProgramFiles64Folder", InitializeVariableKnownFolder, (DWORD_PTR)&FOLDERID_ProgramFilesX64},
+#if defined(_WIN64)
+        {L"ProgramFiles64Folder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES},
+#else
+        {L"ProgramFiles64Folder", InitializeVariableRegistryFolder, CSIDL_PROGRAM_FILES},
+#endif
+        {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
         {L"RebootPending", InitializeVariableRebootPending, 0},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},
@@ -1376,33 +1384,6 @@ LExit:
     return hr;
 }
 
-static HRESULT InitializeVariableKnownFolder(
-    __in DWORD_PTR dwpData,
-    __inout BURN_VARIANT* pValue
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczPath = NULL;
-    REFKNOWNFOLDERID rfid = *(KNOWNFOLDERID*)dwpData;
-
-    hr = ShelGetKnownFolder(&sczPath, rfid);
-    if (E_NOTIMPL == hr)
-    {
-        sczPath = NULL;
-        hr = S_OK;
-    }
-    ExitOnFailure(hr, "Failed to get known folder.");
-
-    // set value
-    hr = BVariantSetString(pValue, sczPath ? sczPath : L"", 0);
-    ExitOnFailure(hr, "Failed to set variant value.");
-
-LExit:
-    ReleaseStr(sczPath);
-
-    return hr;
-}
-
 static HRESULT InitializeVariableTempFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
@@ -1434,7 +1415,6 @@ static HRESULT InitializeVariableSystemFolder(
 {
     HRESULT hr = S_OK;
     BOOL f64 = (BOOL)dwpData;
-    BOOL fWow64 = FALSE;
     WCHAR wzSystemFolder[MAX_PATH] = { };
 
 #ifndef _WIN64
@@ -1542,7 +1522,7 @@ static HRESULT InitializeVariablePrivileged(
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
-    return hr; 
+    return hr;
 }
 
 static HRESULT InitializeVariableRebootPending(
@@ -1587,7 +1567,7 @@ LExit:
         ::CoUninitialize();
     }
 
-    return hr; 
+    return hr;
 }
 
 static HRESULT InitializeSystemLanguageID(
@@ -1596,7 +1576,7 @@ static HRESULT InitializeSystemLanguageID(
     )
 {
     UNREFERENCED_PARAMETER(dwpData);
-  
+
     HRESULT hr = S_OK;
     LANGID langid = ::GetSystemDefaultLangID();
 
@@ -1604,7 +1584,7 @@ static HRESULT InitializeSystemLanguageID(
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
-    return hr; 
+    return hr;
 }
 
 static HRESULT InitializeUserLanguageID(
@@ -1613,7 +1593,7 @@ static HRESULT InitializeUserLanguageID(
     )
 {
     UNREFERENCED_PARAMETER(dwpData);
-  
+
     HRESULT hr = S_OK;
     LANGID langid = ::GetUserDefaultLangID();
 
@@ -1621,7 +1601,7 @@ static HRESULT InitializeUserLanguageID(
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
-    return hr; 
+    return hr;
 }
 
 static HRESULT InitializeVariableString(
@@ -1653,5 +1633,39 @@ static HRESULT InitializeVariableNumeric(
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
+    return hr;
+}
+
+static HRESULT InitializeVariableRegistryFolder(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    HKEY hkFolders = NULL;
+    LPWSTR sczPath = NULL;
+
+    int nFolder = (int)dwpData;
+    AssertSz(CSIDL_PROGRAM_FILES == nFolder || CSIDL_PROGRAM_FILES_COMMON == nFolder, "Unknown folder CSIDL.");
+    LPCWSTR wzFolderValue = CSIDL_PROGRAM_FILES_COMMON == nFolder ? L"CommonW6432Dir" : L"ProgramW6432Dir";
+
+    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion", KEY_READ, &hkFolders);
+    if (E_FILENOTFOUND == hr) // on 32-bit machines
+    {
+        ExitFunction();
+    }
+    ExitOnFailure(hr, "Failed to open Windows folder key.");
+
+    hr = RegReadString(hkFolders, wzFolderValue, &sczPath);
+    ExitOnFailure1(hr, "Failed to read folder path for '%ls'.", wzFolderValue);
+
+    // set value
+    hr = BVariantSetString(pValue, sczPath, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    ReleaseStr(sczPath);
+    ReleaseRegKey(hkFolders);
+
     return hr;
 }

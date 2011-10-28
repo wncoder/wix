@@ -94,7 +94,9 @@ typedef struct _BURN_CACHE_ACTION
         } checkpoint;
         struct
         {
+            LPWSTR sczExecutableName;
             LPWSTR sczLayoutDirectory;
+            LPWSTR sczUnverifiedPath;
         } bundleLayout;
         struct
         {
@@ -280,6 +282,7 @@ void PlanUninitializeExecuteAction(
 HRESULT PlanDefaultPackageRequestState(
     __in BURN_PACKAGE_TYPE packageType,
     __in BOOTSTRAPPER_PACKAGE_STATE currentState,
+    __in BOOL fPermanent,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_VARIABLES* pVariables,
     __in_z_opt LPCWSTR wzInstallCondition,
@@ -288,14 +291,10 @@ HRESULT PlanDefaultPackageRequestState(
     );
 HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzExecutableName,
     __in BURN_VARIABLES* pVariables,
     __in BURN_PAYLOADS* pPayloads,
     __out_z LPWSTR* psczLayoutDirectory
-    );
-HRESULT PlanLayoutOnlyPayload(
-    __in BURN_PLAN* pPlan,
-    __in BURN_PAYLOAD* pPayload,
-    __in_z LPCWSTR wzLayoutDirectory
     );
 HRESULT PlanLayoutPackage(
     __in BURN_PLAN* pPlan,

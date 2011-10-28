@@ -51,15 +51,24 @@ HRESULT CacheGetOriginalSourcePath(
     __in_z_opt LPCWSTR wzRelativePath,
     __out_z_opt LPWSTR* psczOriginalSource
     );
-HRESULT CacheCalculatePayloadUnverifiedPath(
+HRESULT CacheCalculateBundleWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __in LPCWSTR wzExecutableName,
+    __deref_out_z LPWSTR* psczWorkingPath
+    );
+HRESULT CacheCalculateBundleLayoutWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczWorkingPath
+    );
+HRESULT CacheCalculatePayloadWorkingPath(
     __in_z LPCWSTR wzBundleId,
     __in BURN_PAYLOAD* pPayload,
-    __deref_out_z LPWSTR* psczUnverifiedPath
+    __deref_out_z LPWSTR* psczWorkingPath
     );
-HRESULT CacheCaclulateContainerUnverifiedPath(
+HRESULT CacheCaclulateContainerWorkingPath(
     __in_z LPCWSTR wzBundleId,
     __in BURN_CONTAINER* pContainer,
-    __deref_out_z LPWSTR* psczUnverifiedPath
+    __deref_out_z LPWSTR* psczWorkingPath
     );
 HRESULT CacheGetCompletedPath(
     __in BOOL fPerMachine,
@@ -84,25 +93,36 @@ void CacheSendErrorCallback(
     );
 HRESULT CacheBundleToWorkingDirectory(
     __in_z LPCWSTR wzBundleId,
+    __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,
     __in BURN_SECTION* pSection,
-    __deref_out_z LPWSTR* psczEngineWorkingPath
+    __deref_out_z_opt LPWSTR* psczEngineWorkingPath
     );
-HRESULT CacheBundle(
-    __in BOOL fPerMachine,
-    __in_z LPCWSTR wzBundleId,
+HRESULT CacheLayoutBundle(
     __in_z LPCWSTR wzExecutableName,
-    __in BURN_PAYLOADS* pUxPayloads
+    __in_z LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzSourceBundlePath
+    );
+HRESULT CacheCompleteBundle(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzExecutableName,
+    __in_z LPCWSTR wzBundleId,
+    __in BURN_PAYLOADS* pUxPayloads,
+    __in_z LPCWSTR wzSourceBundlePath
 #ifdef DEBUG
-    ,
-    __in_z LPCWSTR wzExecutablePath
+    , __in_z LPCWSTR wzExecutablePath
 #endif
     );
-HRESULT CachePayload(
+HRESULT CacheLayoutPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    );
+HRESULT CacheCompletePayload(
     __in BOOL fPerMachine,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzCacheId,
-    __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
     );

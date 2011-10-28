@@ -431,11 +431,11 @@ extern "C" HRESULT ExeEngineExecutePackage(
         hr = VariableFormatString(pVariables, wzArguments, &sczArgumentsFormatted, NULL);
         ExitOnFailure(hr, "Failed to format argument string.");
 
-        hr = StrAllocFormatted(&sczCommand, L"\"%s\" %s", sczExecutablePath, sczArgumentsFormatted);
+        hr = StrAllocFormatted(&sczCommand, L"\"%ls\" %s", sczExecutablePath, sczArgumentsFormatted);
     }
     else
     {
-        hr = StrAllocFormatted(&sczCommand, L"\"%s\"", sczExecutablePath);
+        hr = StrAllocFormatted(&sczCommand, L"\"%ls\"", sczExecutablePath);
     }
     ExitOnFailure(hr, "Failed to create executable command.");
 

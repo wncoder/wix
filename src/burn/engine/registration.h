@@ -149,6 +149,7 @@ HRESULT RegistrationDetectRelatedBundles(
     __in_opt BOOTSTRAPPER_COMMAND* pCommand
     );
 HRESULT RegistrationSessionBegin(
+    __in_z LPCWSTR wzEngineWorkingPath,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,

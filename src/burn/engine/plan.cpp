@@ -25,6 +25,7 @@ static void UninitializeCacheAction(
     );
 static HRESULT GetActionDefaultRequestState(
     __in BOOTSTRAPPER_ACTION action,
+    __in BOOL fPermanent,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     );
 static BOOL AlreadyPlannedCachePackage(
@@ -136,6 +137,7 @@ extern "C" void PlanUninitializeExecuteAction(
 extern "C" HRESULT PlanDefaultPackageRequestState(
     __in BURN_PACKAGE_TYPE packageType,
     __in BOOTSTRAPPER_PACKAGE_STATE currentState,
+    __in BOOL fPermanent,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_VARIABLES* pVariables,
     __in_z_opt LPCWSTR wzInstallCondition,
@@ -165,7 +167,7 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     }
     else // pick the best option for the action state and install condition.
     {
-        hr = GetActionDefaultRequestState(action, &defaultRequestState);
+        hr = GetActionDefaultRequestState(action, fPermanent, &defaultRequestState);
         ExitOnFailure(hr, "Failed to get default request state for action.");
 
         // If there is an install condition (and we're doing an install) evaluate the condition
@@ -189,6 +191,7 @@ LExit:
 
 extern "C" HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzExecutableName,
     __in BURN_VARIABLES* pVariables,
     __in BURN_PAYLOADS* pPayloads,
     __out_z LPWSTR* psczLayoutDirectory
@@ -216,8 +219,14 @@ extern "C" HRESULT PlanLayoutBundle(
 
     pCacheAction->type = BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE;
 
+    hr = StrAllocString(&pCacheAction->bundleLayout.sczExecutableName, wzExecutableName, 0);
+    ExitOnFailure(hr, "Failed to to copy executable name for bundle.");
+
     hr = StrAllocString(&pCacheAction->bundleLayout.sczLayoutDirectory, sczLayoutDirectory, 0);
     ExitOnFailure(hr, "Failed to to copy layout directory for bundle.");
+
+    hr = CacheCalculateBundleLayoutWorkingPath(pPlan->wzBundleId, &pCacheAction->bundleLayout.sczUnverifiedPath);
+    ExitOnFailure(hr, "Failed to calculate bundle layout working path.");
 
     ++pPlan->cOverallProgressTicksTotal;
 
@@ -227,7 +236,7 @@ extern "C" HRESULT PlanLayoutBundle(
         BURN_PAYLOAD* pPayload = pPayloads->rgPayloads + i;
         if (pPayload->fLayoutOnly)
         {
-            hr = PlanLayoutOnlyPayload(pPlan, pPayload, sczLayoutDirectory);
+            hr = AppendCacheOrLayoutPayloadAction(pPlan, NULL, pPayload, sczLayoutDirectory);
             ExitOnFailure(hr, "Failed to plan layout payload.");
         }
     }
@@ -238,21 +247,6 @@ extern "C" HRESULT PlanLayoutBundle(
 LExit:
     ReleaseStr(sczLayoutDirectory);
 
-    return hr;
-}
-
-extern "C" HRESULT PlanLayoutOnlyPayload(
-    __in BURN_PLAN* pPlan,
-    __in BURN_PAYLOAD* pPayload,
-    __in_z LPCWSTR wzLayoutDirectory
-    )
-{
-    HRESULT hr = S_OK;
-
-    hr = AppendCacheOrLayoutPayloadAction(pPlan, NULL, pPayload, wzLayoutDirectory);
-    ExitOnFailure(hr, "Failed to append payload layout only action.");
-
-LExit:
     return hr;
 }
 
@@ -885,6 +879,12 @@ static void UninitializeCacheAction(
         ReleaseHandle(pCacheAction->syncpoint.hEvent);
         break;
 
+    case BURN_CACHE_ACTION_TYPE_LAYOUT_BUNDLE:
+        ReleaseStr(pCacheAction->bundleLayout.sczExecutableName);
+        ReleaseStr(pCacheAction->bundleLayout.sczLayoutDirectory);
+        ReleaseStr(pCacheAction->bundleLayout.sczUnverifiedPath);
+        break;
+
     case BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER:
         ReleaseStr(pCacheAction->resolveContainer.sczUnverifiedPath);
         break;
@@ -906,6 +906,7 @@ static void UninitializeCacheAction(
 
 static HRESULT GetActionDefaultRequestState(
     __in BOOTSTRAPPER_ACTION action,
+    __in BOOL fPermanent,
     __out BOOTSTRAPPER_REQUEST_STATE* pRequestState
     )
 {
@@ -914,19 +915,19 @@ static HRESULT GetActionDefaultRequestState(
     switch (action)
     {
     case BOOTSTRAPPER_ACTION_INSTALL:
-        *pRequestState= BOOTSTRAPPER_REQUEST_STATE_PRESENT;
+        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
         break;
 
     case BOOTSTRAPPER_ACTION_REPAIR:
-        *pRequestState= BOOTSTRAPPER_REQUEST_STATE_REPAIR;
+        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
         break;
 
     case BOOTSTRAPPER_ACTION_UNINSTALL:
-        *pRequestState= BOOTSTRAPPER_REQUEST_STATE_ABSENT;
+        *pRequestState = fPermanent ? BOOTSTRAPPER_REQUEST_STATE_NONE : BOOTSTRAPPER_REQUEST_STATE_ABSENT;
         break;
 
     case BOOTSTRAPPER_ACTION_MODIFY:
-        *pRequestState= BOOTSTRAPPER_REQUEST_STATE_NONE;
+        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
         break;
 
     default:
@@ -1017,9 +1018,9 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
 {
     HRESULT hr = S_OK;
     BURN_CACHE_ACTION* pCacheAction = NULL;
-    LPWSTR sczPayloadUnverifiedPath = NULL;
+    LPWSTR sczPayloadWorkingPath = NULL;
 
-    hr = CacheCalculatePayloadUnverifiedPath(pPlan->wzBundleId, pPayload, &sczPayloadUnverifiedPath);
+    hr = CacheCalculatePayloadWorkingPath(pPlan->wzBundleId, pPayload, &sczPayloadWorkingPath);
     ExitOnFailure(hr, "Failed to calculate unverified path for payload.");
 
     // If the payload is in a container, ensure the container is being acquired
@@ -1037,7 +1038,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
         BURN_EXTRACT_PAYLOAD* pExtractPayload = pCacheAction->extractContainer.rgPayloads + pCacheAction->extractContainer.cPayloads;
         pExtractPayload->pPackage = pPackage;
         pExtractPayload->pPayload = pPayload;
-        hr = StrAllocString(&pExtractPayload->sczUnverifiedPath, sczPayloadUnverifiedPath, 0);
+        hr = StrAllocString(&pExtractPayload->sczUnverifiedPath, sczPayloadWorkingPath, 0);
         ExitOnFailure(hr, "Failed to copy unverified path for payload to extract.");
         ++pCacheAction->extractContainer.cPayloads;
 
@@ -1054,7 +1055,7 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
             pCacheAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD;
             pCacheAction->resolvePayload.pPackage = pPackage;
             pCacheAction->resolvePayload.pPayload = pPayload;
-            hr = StrAllocString(&pCacheAction->resolvePayload.sczUnverifiedPath, sczPayloadUnverifiedPath, 0);
+            hr = StrAllocString(&pCacheAction->resolvePayload.sczUnverifiedPath, sczPayloadWorkingPath, 0);
             ExitOnFailure(hr, "Failed to copy unverified path for payload to acquire.");
 
             pCacheAction = NULL;
@@ -1072,8 +1073,8 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
         pCacheAction->cachePayload.pPackage = pPackage;
         pCacheAction->cachePayload.pPayload = pPayload;
         pCacheAction->cachePayload.fMove = TRUE;
-        pCacheAction->cachePayload.sczUnverifiedPath = sczPayloadUnverifiedPath;
-        sczPayloadUnverifiedPath = NULL;
+        pCacheAction->cachePayload.sczUnverifiedPath = sczPayloadWorkingPath;
+        sczPayloadWorkingPath = NULL;
     }
     else
     {
@@ -1084,14 +1085,14 @@ static HRESULT AppendCacheOrLayoutPayloadAction(
         pCacheAction->layoutPayload.pPackage = pPackage;
         pCacheAction->layoutPayload.pPayload = pPayload;
         pCacheAction->layoutPayload.fMove = TRUE;
-        pCacheAction->layoutPayload.sczUnverifiedPath = sczPayloadUnverifiedPath;
-        sczPayloadUnverifiedPath = NULL;
+        pCacheAction->layoutPayload.sczUnverifiedPath = sczPayloadWorkingPath;
+        sczPayloadWorkingPath = NULL;
     }
 
     pCacheAction = NULL;
 
 LExit:
-    ReleaseStr(sczPayloadUnverifiedPath);
+    ReleaseStr(sczPayloadWorkingPath);
     return hr;
 }
 
@@ -1103,7 +1104,7 @@ static HRESULT CreateOrFindContainerExtractAction(
 {
     HRESULT hr = S_OK;
     DWORD iAction = 0;
-    LPWSTR sczUnverifiedPath = NULL;
+    LPWSTR sczContainerWorkingPath = NULL;
     BURN_CACHE_ACTION* pAcquireContainerAction = NULL;
 
     *ppContainerExtractAction = NULL;
@@ -1150,7 +1151,7 @@ static HRESULT CreateOrFindContainerExtractAction(
     }
     else // ensure the container is acquired before we try to extract from it.
     {
-        hr = CacheCaclulateContainerUnverifiedPath(pPlan->wzBundleId, pContainer, &sczUnverifiedPath);
+        hr = CacheCaclulateContainerWorkingPath(pPlan->wzBundleId, pContainer, &sczContainerWorkingPath);
         ExitOnFailure(hr, "Failed to calculate unverified path for container.");
 
         hr = AppendCacheAction(pPlan, &pAcquireContainerAction);
@@ -1158,8 +1159,8 @@ static HRESULT CreateOrFindContainerExtractAction(
 
         pAcquireContainerAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER;
         pAcquireContainerAction->resolveContainer.pContainer = pContainer;
-        pAcquireContainerAction->resolveContainer.sczUnverifiedPath = sczUnverifiedPath;
-        sczUnverifiedPath = NULL;
+        pAcquireContainerAction->resolveContainer.sczUnverifiedPath = sczContainerWorkingPath;
+        sczContainerWorkingPath = NULL;
 
         pPlan->qwCacheSizeTotal += pContainer->qwFileSize;
     }
@@ -1181,7 +1182,8 @@ static HRESULT CreateOrFindContainerExtractAction(
     }
 
 LExit:
-    ReleaseStr(sczUnverifiedPath);
+    ReleaseStr(sczContainerWorkingPath);
+
     return hr;
 }
 

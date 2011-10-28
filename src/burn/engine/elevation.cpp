@@ -23,6 +23,31 @@
 
 const DWORD BURN_TIMEOUT = 5 * 60 * 1000; // TODO: is 5 minutes good?
 
+typedef enum _BURN_ELEVATION_MESSAGE_TYPE
+{
+    BURN_ELEVATION_MESSAGE_TYPE_UNKNOWN,
+    BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN,
+    BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME,
+    BURN_ELEVATION_MESSAGE_TYPE_SESSION_END,
+    BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES,
+    BURN_ELEVATION_MESSAGE_TYPE_SAVE_STATE,
+    BURN_ELEVATION_MESSAGE_TYPE_LAYOUT_BUNDLE,
+    BURN_ELEVATION_MESSAGE_TYPE_CACHE_OR_LAYOUT_PAYLOAD,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_DEPENDENCY,
+    BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD,
+    BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE,
+
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE,
+    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE,
+} BURN_ELEVATION_MESSAGE_TYPE;
+
+
 // struct
 
 typedef struct _BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT
@@ -112,7 +137,12 @@ static HRESULT OnSaveState(
     __in BYTE* pbData,
     __in DWORD cbData
     );
-static HRESULT OnCachePayload(
+static HRESULT OnLayoutBundle(
+    __in_z LPCWSTR wzExecutableName,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    );
+static HRESULT OnCacheOrLayoutPayload(
     __in BURN_PACKAGES* pPackages,
     __in BURN_PAYLOADS* pPayloads,
     __in BYTE* pbData,
@@ -195,7 +225,7 @@ extern "C" HRESULT ElevationElevate(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
 
-    hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
+    hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
     ExitOnFailure(hr, "Failed to cache engine to working directory.");
 
     hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
@@ -241,10 +271,11 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
+    __in_z LPCWSTR wzEngineWorkingPath,
+    __in_z LPCWSTR wzResumeCommandLine,
     __in BURN_VARIABLES* pVariables,
-    __in DWORD64 qwEstimatedSize,
-    __in_z LPCWSTR wzResumeCommandLine
+    __in BOOTSTRAPPER_ACTION action,
+    __in DWORD64 qwEstimatedSize
     )
 {
     HRESULT hr = S_OK;
@@ -253,14 +284,17 @@ extern "C" HRESULT ElevationSessionBegin(
     DWORD dwResult = 0;
 
     // serialize message data
+    hr = BuffWriteString(&pbData, &cbData, wzEngineWorkingPath);
+    ExitOnFailure(hr, "Failed to write engine working path to message buffer.");
+
+    hr = BuffWriteString(&pbData, &cbData, wzResumeCommandLine);
+    ExitOnFailure(hr, "Failed to write resume command line to message buffer.");
+
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
 
     hr = BuffWriteNumber64(&pbData, &cbData, qwEstimatedSize);
     ExitOnFailure(hr, "Failed to write estimated size to message buffer.");
-
-    hr = BuffWriteString(&pbData, &cbData, wzResumeCommandLine);
-    ExitOnFailure(hr, "Failed to write resume command line to message buffer.");
 
     hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
@@ -394,13 +428,48 @@ LExit:
 }
 
 /*******************************************************************
- ElevationCachePayload - 
+ ElevationLayoutBundle - 
 
 *******************************************************************/
-extern "C" HRESULT ElevationCachePayload(
+extern "C" HRESULT ElevationLayoutBundle(
     __in HANDLE hPipe,
-    __in BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPath
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+    DWORD dwResult = 0;
+
+    // serialize message data
+    hr = BuffWriteString(&pbData, &cbData, wzLayoutDirectory);
+    ExitOnFailure(hr, "Failed to write layout directory to message buffer.");
+
+    hr = BuffWriteString(&pbData, &cbData, wzUnverifiedPath);
+    ExitOnFailure(hr, "Failed to write payload unverified path to message buffer.");
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_LAYOUT_BUNDLE, pbData, cbData, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_LAYOUT_BUNDLE message to per-machine process.");
+
+    hr = (HRESULT)dwResult;
+
+LExit:
+    ReleaseBuffer(pbData);
+
+    return hr;
+}
+
+/*******************************************************************
+ ElevationCacheOrLayoutPayload - 
+
+*******************************************************************/
+extern "C" HRESULT ElevationCacheOrLayoutPayload(
+    __in HANDLE hPipe,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
     )
@@ -411,21 +480,24 @@ extern "C" HRESULT ElevationCachePayload(
     DWORD dwResult = 0;
 
     // serialize message data
-    hr = BuffWriteString(&pbData, &cbData, pPackage->sczId);
+    hr = BuffWriteString(&pbData, &cbData, pPackage ? pPackage->sczId : NULL);
     ExitOnFailure(hr, "Failed to write package id to message buffer.");
 
     hr = BuffWriteString(&pbData, &cbData, pPayload->sczKey);
     ExitOnFailure(hr, "Failed to write payload id to message buffer.");
 
-    hr = BuffWriteString(&pbData, &cbData, wzUnverifiedPayloadPath);
-    ExitOnFailure(hr, "Failed to write payload id to message buffer.");
+    hr = BuffWriteString(&pbData, &cbData, wzLayoutDirectory);
+    ExitOnFailure(hr, "Failed to write layout directory to message buffer.");
 
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fMove); // TODO: This could be a minor security issue.
+    hr = BuffWriteString(&pbData, &cbData, wzUnverifiedPayloadPath);
+    ExitOnFailure(hr, "Failed to write payload unverified path to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fMove);
     ExitOnFailure(hr, "Failed to write move flag to message buffer.");
 
     // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_CACHE_PAYLOAD, pbData, cbData, NULL, NULL, &dwResult);
-    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_CACHE_PAYLOAD message to per-machine process.");
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_CACHE_OR_LAYOUT_PAYLOAD, pbData, cbData, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_CACHE_OR_LAYOUT_PAYLOAD message to per-machine process.");
 
     hr = (HRESULT)dwResult;
 
@@ -1088,8 +1160,12 @@ static HRESULT ProcessElevatedChildCacheMessage(
 
     switch (pMsg->dwMessage)
     {
-    case BURN_ELEVATION_MESSAGE_TYPE_CACHE_PAYLOAD:
-        hrResult = OnCachePayload(pContext->pPackages, pContext->pPayloads, (BYTE*)pMsg->pvData, pMsg->cbData);
+    case BURN_ELEVATION_MESSAGE_TYPE_LAYOUT_BUNDLE:
+        hrResult = OnLayoutBundle(pContext->pRegistration->sczExecutableName, (BYTE*)pMsg->pvData, pMsg->cbData);
+        break;
+
+    case BURN_ELEVATION_MESSAGE_TYPE_CACHE_OR_LAYOUT_PAYLOAD:
+        hrResult = OnCacheOrLayoutPayload(pContext->pPackages, pContext->pPayloads, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE:
@@ -1183,27 +1259,33 @@ static HRESULT OnSessionBegin(
 {
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
+    LPWSTR sczEngineWorkingPath = NULL;
     DWORD action = 0;
     DWORD64 qwEstimatedSize = 0;
 
     // deserialize message data
+    hr = BuffReadString(pbData, cbData, &iData, &sczEngineWorkingPath);
+    ExitOnFailure(hr, "Failed to read engine working path.");
+
+    hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);
+    ExitOnFailure(hr, "Failed to read resume command line.");
+
     hr = BuffReadNumber(pbData, cbData, &iData, &action);
     ExitOnFailure(hr, "Failed to read action.");
 
     hr = BuffReadNumber64(pbData, cbData, &iData, &qwEstimatedSize);
     ExitOnFailure(hr, "Failed to read estimated size.");
 
-    hr = BuffReadString(pbData, cbData, &iData, &pRegistration->sczResumeCommandLine);
-    ExitOnFailure(hr, "Failed to read resume command line.");
-
     hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
     ExitOnFailure(hr, "Failed to read variables.");
 
     // begin session in per-machine process
-    hr =  RegistrationSessionBegin(pRegistration, pVariables, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);
+    hr =  RegistrationSessionBegin(sczEngineWorkingPath, pRegistration, pVariables, pUserExperience, (BOOTSTRAPPER_ACTION)action, qwEstimatedSize, TRUE);
     ExitOnFailure(hr, "Failed to begin registration session.");
 
 LExit:
+    ReleaseStr(sczEngineWorkingPath);
+
     return hr;
 }
 
@@ -1293,7 +1375,36 @@ LExit:
     return hr;
 }
 
-static HRESULT OnCachePayload(
+static HRESULT OnLayoutBundle(
+    __in_z LPCWSTR wzExecutableName,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    )
+{
+    HRESULT hr = S_OK;
+    SIZE_T iData = 0;
+    LPWSTR sczLayoutDirectory = NULL;
+    LPWSTR sczUnverifiedPath = NULL;
+
+    // deserialize message data
+    hr = BuffReadString(pbData, cbData, &iData, &sczLayoutDirectory);
+    ExitOnFailure(hr, "Failed to read layout directory.");
+
+    hr = BuffReadString(pbData, cbData, &iData, &sczUnverifiedPath);
+    ExitOnFailure(hr, "Failed to read unverified bundle path.");
+
+    // Layout the bundle.
+    hr = CacheLayoutBundle(wzExecutableName, sczLayoutDirectory, sczUnverifiedPath);
+    ExitOnFailure1(hr, "Failed to layout bundle from: %ls", sczUnverifiedPath);
+
+LExit:
+    ReleaseStr(sczUnverifiedPath);
+    ReleaseStr(sczLayoutDirectory);
+
+    return hr;
+}
+
+static HRESULT OnCacheOrLayoutPayload(
     __in BURN_PACKAGES* pPackages,
     __in BURN_PAYLOADS* pPayloads,
     __in BYTE* pbData,
@@ -1305,6 +1416,7 @@ static HRESULT OnCachePayload(
     LPWSTR scz = NULL;
     BURN_PACKAGE* pPackage = NULL;
     BURN_PAYLOAD* pPayload = NULL;
+    LPWSTR sczLayoutDirectory = NULL;
     LPWSTR sczUnverifiedPayloadPath = NULL;
     BOOL fMove = FALSE;
 
@@ -1312,8 +1424,11 @@ static HRESULT OnCachePayload(
     hr = BuffReadString(pbData, cbData, &iData, &scz);
     ExitOnFailure(hr, "Failed to read package id.");
 
-    hr = PackageFindById(pPackages, scz, &pPackage);
-    ExitOnFailure1(hr, "Failed to find package: %ls", scz);
+    if (scz && *scz)
+    {
+        hr = PackageFindById(pPackages, scz, &pPackage);
+        ExitOnFailure1(hr, "Failed to find package: %ls", scz);
+    }
 
     hr = BuffReadString(pbData, cbData, &iData, &scz);
     ExitOnFailure(hr, "Failed to read payload id.");
@@ -1321,19 +1436,36 @@ static HRESULT OnCachePayload(
     hr = PayloadFindById(pPayloads, scz, &pPayload);
     ExitOnFailure1(hr, "Failed to find payload: %ls", scz);
 
+    hr = BuffReadString(pbData, cbData, &iData, &sczLayoutDirectory);
+    ExitOnFailure(hr, "Failed to read layout directory.");
+
     hr = BuffReadString(pbData, cbData, &iData, &sczUnverifiedPayloadPath);
     ExitOnFailure(hr, "Failed to read unverified payload path.");
 
     hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&fMove);
     ExitOnFailure(hr, "Failed to read move flag.");
 
-    // cache payload
-    hr = CachePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, NULL, sczUnverifiedPayloadPath, fMove);
-    ExitOnFailure(hr, "Failed to cache payload.");
+    // Layout payload.
+    if (sczLayoutDirectory && *sczLayoutDirectory)
+    {
+        hr = CacheLayoutPayload(pPayload, sczLayoutDirectory, sczUnverifiedPayloadPath, fMove);
+        ExitOnFailure1(hr, "Failed to layout payload from: %ls", sczUnverifiedPayloadPath);
+    }
+    else if (pPackage) // complete payload.
+    {
+        hr = CacheCompletePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, sczUnverifiedPayloadPath, fMove);
+        ExitOnFailure1(hr, "Failed to cache payload from: %ls", sczUnverifiedPayloadPath);
+    }
+    else
+    {
+        hr = E_INVALIDARG;
+        ExitOnRootFailure(hr, "Invalid data passed to cache or layout payload.");
+    }
 
 LExit:
-    ReleaseStr(scz);
     ReleaseStr(sczUnverifiedPayloadPath);
+    ReleaseStr(sczLayoutDirectory);
+    ReleaseStr(scz);
 
     return hr;
 }

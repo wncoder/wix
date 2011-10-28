@@ -25,29 +25,6 @@
 extern "C" {
 #endif
 
-typedef enum _BURN_ELEVATION_MESSAGE_TYPE
-{
-    BURN_ELEVATION_MESSAGE_TYPE_UNKNOWN,
-    BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN,
-    BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME,
-    BURN_ELEVATION_MESSAGE_TYPE_SESSION_END,
-    BURN_ELEVATION_MESSAGE_TYPE_DETECT_RELATED_BUNDLES,
-    BURN_ELEVATION_MESSAGE_TYPE_SAVE_STATE,
-    BURN_ELEVATION_MESSAGE_TYPE_CACHE_PAYLOAD,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSU_PACKAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_DEPENDENCY,
-    BURN_ELEVATION_MESSAGE_TYPE_LAUNCH_EMBEDDED_CHILD,
-    BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE,
-
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE,
-    BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE,
-} BURN_ELEVATION_MESSAGE_TYPE;
-
 
 // Parent (per-user process) side functions.
 HRESULT ElevationElevate(
@@ -56,10 +33,11 @@ HRESULT ElevationElevate(
     );
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
+    __in_z LPCWSTR wzEngineWorkingPath,
+    __in_z LPCWSTR wzResumeCommandLine,
     __in BURN_VARIABLES* pVariables,
-    __in DWORD64 qwEstimatedSize,
-    __in_z LPCWSTR wzResumeCommandLine
+    __in BOOTSTRAPPER_ACTION action,
+    __in DWORD64 qwEstimatedSize
     );
 HRESULT ElevationSessionResume(
     __in HANDLE hPipe,
@@ -80,10 +58,16 @@ HRESULT ElevationSaveState(
     __in_bcount(cbBuffer) BYTE* pbBuffer,
     __in SIZE_T cbBuffer
     );
-HRESULT ElevationCachePayload(
+HRESULT ElevationLayoutBundle(
     __in HANDLE hPipe,
-    __in BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPath
+    );
+HRESULT ElevationCacheOrLayoutPayload(
+    __in HANDLE hPipe,
+    __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
     );

@@ -1968,7 +1968,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         /// <param name="tables">The tables to resolve.</param>
         /// <param name="cabinets">Cabinets containing files that need to be patched.</param>
-        /// <param name="delayedFields">The collection of delayed fields.</param>
+        /// <param name="delayedFields">The collection of delayed fields. Null if resolution of delayed fields is not allowed</param>
         private void ResolveFields(TableCollection tables, Hashtable cabinets, ArrayList delayedFields)
         {
             foreach (Table table in tables)
@@ -1980,16 +1980,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         bool isDefault = true;
                         bool delayedResolve = false;
 
-                        // resolve localization and wix variables
-                        if (field.Data is string)
-                        { 
-                            field.Data = this.WixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)field.Data, false, ref isDefault, ref delayedResolve);
-                            if (delayedResolve)
-                            {
-                                // Check to make sure we're in a scenario where fields are valid to be resolved.
-                                if (null != delayedFields)
+                        // Check to make sure we're in a scenario where we can handle variable resolution.
+                        if (null != delayedFields)
+                        {
+                            // resolve localization and wix variables
+                            if (field.Data is string)
+                            { 
+                                field.Data = this.WixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)field.Data, false, ref isDefault, ref delayedResolve);
+                                if (delayedResolve)
                                 {
-                                    delayedFields.Add(new DelayedField(row, field));
+                                        delayedFields.Add(new DelayedField(row, field));
                                 }
                             }
                         }

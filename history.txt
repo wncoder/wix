@@ -1585,3 +1585,20 @@ PMarcu: SFBUG:3389181 pyro throws null exception when passing wixouts to torch.
 
 WixBuild: Version 3.6.2221.0
 
+BobArnson: SFBUG:3419080 and SFBUG:3309955 - For ProgramFiles[64]Folder and 
+           CommonFiles[64]Folder, use CSIDL to get paths; for the x86 stub, use
+           the registry to get the 64-bit paths.
+
+BobArnso: SFBUG:3427953 - Take a package's permanence into account when
+          determining default request state.
+
+PMarcu: SFBUG:3291297 preprocessor doesn't handle prefixes properly when 
+        resolving variables. Always hit default of $(var.
+
+RobMen: SFBUG:3420641 - correctly handle /layout when launched elevated.
+
+RobMen: SFBUG:3429406 - ensure signed bundles with attached containers stay
+                        signed during modify/uninstall.
+
+EricStJ: SFBUG:3428846 - set SaveOperatingEnvironment=false when harvesting
+                         projects inside msbuild

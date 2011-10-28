@@ -31,6 +31,12 @@ static HRESULT CreateCompletedPath(
     __in LPCWSTR wzCacheId,
     __out LPWSTR* psczCacheDirectory
     );
+static HRESULT VerifyThenTransferPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzCachedPath,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    );
 static HRESULT ResetPathPermissions(
     __in BOOL fPerMachine,
     __in_z LPCWSTR wzPath
@@ -142,36 +148,77 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT CacheCalculatePayloadUnverifiedPath(
+extern "C" HRESULT CacheCalculateBundleWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __in LPCWSTR wzExecutableName,
+    __deref_out_z LPWSTR* psczWorkingPath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczWorkingFolder = NULL;
+
+    hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
+    ExitOnFailure(hr, "Failed to get working folder for bundle.");
+
+    hr = StrAllocFormatted(psczWorkingPath, L"%ls%ls\\%ls", sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, wzExecutableName);
+    ExitOnFailure(hr, "Failed to calculate the bundle working path.");
+
+LExit:
+    ReleaseStr(sczWorkingFolder);
+
+    return hr;
+}
+
+extern "C" HRESULT CacheCalculateBundleLayoutWorkingPath(
+    __in_z LPCWSTR wzBundleId,
+    __deref_out_z LPWSTR* psczWorkingPath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczWorkingFolder = NULL;
+
+    hr = CalculateWorkingFolder(wzBundleId, psczWorkingPath);
+    ExitOnFailure(hr, "Failed to get working folder for bundle layout.");
+
+    hr = StrAllocConcat(psczWorkingPath, wzBundleId, 0);
+    ExitOnFailure(hr, "Failed to append bundle id for bundle layout working path.");
+
+LExit:
+    ReleaseStr(sczWorkingFolder);
+
+    return hr;
+}
+
+extern "C" HRESULT CacheCalculatePayloadWorkingPath(
     __in_z LPCWSTR wzBundleId,
     __in BURN_PAYLOAD* pPayload,
-    __deref_out_z LPWSTR* psczUnverifiedPath
+    __deref_out_z LPWSTR* psczWorkingPath
     )
 {
     HRESULT hr = S_OK;
 
-    hr = CalculateWorkingFolder(wzBundleId, psczUnverifiedPath);
+    hr = CalculateWorkingFolder(wzBundleId, psczWorkingPath);
     ExitOnFailure(hr, "Failed to get working folder for payload.");
 
-    hr = StrAllocConcat(psczUnverifiedPath, pPayload->sczKey, 0);
+    hr = StrAllocConcat(psczWorkingPath, pPayload->sczKey, 0);
     ExitOnFailure(hr, "Failed to append SHA1 hash as payload unverified path.");
 
 LExit:
     return hr;
 }
 
-extern "C" HRESULT CacheCaclulateContainerUnverifiedPath(
+extern "C" HRESULT CacheCaclulateContainerWorkingPath(
     __in_z LPCWSTR wzBundleId,
     __in BURN_CONTAINER* pContainer,
-    __deref_out_z LPWSTR* psczUnverifiedPath
+    __deref_out_z LPWSTR* psczWorkingPath
     )
 {
     HRESULT hr = S_OK;
 
-    hr = CalculateWorkingFolder(wzBundleId, psczUnverifiedPath);
+    hr = CalculateWorkingFolder(wzBundleId, psczWorkingPath);
     ExitOnFailure(hr, "Failed to get working folder for container.");
 
-    hr = StrAllocConcat(psczUnverifiedPath, pContainer->sczHash, 0);
+    hr = StrAllocConcat(psczWorkingPath, pContainer->sczHash, 0);
     ExitOnFailure(hr, "Failed to append SHA1 hash as container unverified path.");
 
 LExit:
@@ -283,14 +330,14 @@ extern "C" void CacheSendErrorCallback(
 
 extern "C" HRESULT CacheBundleToWorkingDirectory(
     __in_z LPCWSTR wzBundleId,
+    __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,
     __in BURN_SECTION* pSection,
-    __deref_out_z LPWSTR* psczEngineWorkingPath
+    __deref_out_z_opt LPWSTR* psczEngineWorkingPath
     )
 {
     HRESULT hr = S_OK;
     LPWSTR sczSourcePath = NULL;
-    LPWSTR wzSourceFileName = NULL;
     LPWSTR sczSourceDirectory = NULL;
     LPWSTR sczWorkingFolder = NULL;
     LPWSTR sczTargetDirectory = NULL;
@@ -301,9 +348,6 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     // Initialize the source and target path names.
     hr = PathForCurrentProcess(&sczSourcePath, NULL);
     ExitOnFailure(hr, "Failed to get current process path.");
-
-    wzSourceFileName = FileFromPath(sczSourcePath);
-    ExitOnNull1(wzSourceFileName, hr, HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "Failed to get file name from engine path: %ls", sczSourcePath);
 
     hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
     ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
@@ -317,7 +361,7 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     hr = DirEnsureExists(sczTargetDirectory, NULL);
     ExitOnFailure(hr, "Failed create bundle working folder.");
 
-    hr = PathConcat(sczTargetDirectory, wzSourceFileName, &sczTargetPath);
+    hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
     ExitOnFailure(hr, "Failed to combine working path with engine file name.");
 
     // Copy the engine without any attached containers to the working path.
@@ -342,8 +386,11 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
         }
     }
 
-    *psczEngineWorkingPath = sczTargetPath;
-    sczTargetPath = NULL;
+    if (psczEngineWorkingPath)
+    {
+        *psczEngineWorkingPath = sczTargetPath;
+        sczTargetPath = NULL;
+    }
 
 LExit:
     ReleaseStr(sczPayloadTargetPath);
@@ -357,29 +404,45 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT CacheBundle(
-    __in BOOL fPerMachine,
-    __in_z LPCWSTR wzBundleId,
+extern "C" HRESULT CacheLayoutBundle(
     __in_z LPCWSTR wzExecutableName,
-    __in BURN_PAYLOADS* pUxPayloads
+    __in_z LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzSourceBundlePath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczTargetPath = NULL;
+
+    hr = PathConcat(wzLayoutDirectory, wzExecutableName, &sczTargetPath);
+    ExitOnFailure(hr, "Failed to combine completed path with engine file name for layout.");
+
+    LogStringLine(REPORT_STANDARD, "Layout bundle from: '%ls' to: '%ls'", wzSourceBundlePath, sczTargetPath);
+
+    hr = FileEnsureMoveWithRetry(wzSourceBundlePath, sczTargetPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+    ExitOnFailure2(hr, "Failed to layout bundle from: '%ls' to '%ls'", wzSourceBundlePath, sczTargetPath);
+
+LExit:
+    ReleaseStr(sczTargetPath);
+
+    return hr;
+}
+
+extern "C" HRESULT CacheCompleteBundle(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzExecutableName,
+    __in_z LPCWSTR wzBundleId,
+    __in BURN_PAYLOADS* pUxPayloads,
+    __in_z LPCWSTR wzSourceBundlePath
 #ifdef DEBUG
     , __in_z LPCWSTR wzExecutablePath
 #endif
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczSourcePath = NULL;
-    LPWSTR sczSourceDirectory = NULL;
     LPWSTR sczTargetDirectory = NULL;
     LPWSTR sczTargetPath = NULL;
+    LPWSTR sczSourceDirectory = NULL;
     LPWSTR sczPayloadSourcePath = NULL;
-
-    // Initialize the source and target path names.
-    hr = PathForCurrentProcess(&sczSourcePath, NULL);
-    ExitOnFailure(hr, "Failed to get current process path.");
-
-    hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
-    ExitOnFailure1(hr, "Failed to get directory from engine working path: %ls", sczSourcePath);
 
     hr = CreateCompletedPath(fPerMachine, wzBundleId, &sczTargetDirectory);
     ExitOnFailure(hr, "Failed to create completed cache path for bundle.");
@@ -389,16 +452,17 @@ extern "C" HRESULT CacheBundle(
 
     Assert(CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, wzExecutablePath, -1, sczTargetPath, -1));
 
-    LogStringLine(REPORT_STANDARD, "Caching executable from: '%ls' to: '%ls'", sczSourcePath, sczTargetPath);
+    LogStringLine(REPORT_STANDARD, "Caching bundle from: '%ls' to: '%ls'", wzSourceBundlePath, sczTargetPath);
 
-    // TODO: replace this copy with the more intelligent copy of only
-    // the burnstub executable and manifest data with fix-up for the
-    // signature.
-    hr = FileEnsureCopyWithRetry(sczSourcePath, sczTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-    ExitOnFailure2(hr, "Failed to cache burn from: '%ls' to '%ls'", sczSourcePath, sczTargetPath);
+    hr = FileEnsureCopyWithRetry(wzSourceBundlePath, sczTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+    ExitOnFailure2(hr, "Failed to cache bundle from: '%ls' to '%ls'", wzSourceBundlePath, sczTargetPath);
 
+    // Reset the path permissions in the cache.
     hr = ResetPathPermissions(fPerMachine, sczTargetPath);
     ExitOnFailure1(hr, "Failed to reset permissions on cached bundle: '%ls'", sczTargetPath);
+
+    hr = PathGetDirectory(wzSourceBundlePath, &sczSourceDirectory);
+    ExitOnFailure1(hr, "Failed to get directory from engine working path: %ls", wzSourceBundlePath);
 
     // Cache external UX payloads to completed path.
     for (DWORD i = 0; i < pUxPayloads->cPayloads; ++i)
@@ -410,26 +474,46 @@ extern "C" HRESULT CacheBundle(
             hr = PathConcat(sczSourceDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
             ExitOnFailure(hr, "Failed to build payload source path.");
 
-            hr = CachePayload(fPerMachine, pPayload, wzBundleId, NULL, sczPayloadSourcePath, FALSE);
+            hr = CacheCompletePayload(fPerMachine, pPayload, wzBundleId, sczPayloadSourcePath, FALSE);
             ExitOnFailure2(hr, "Failed to cache payload: %ls from: %ls", pPayload->sczKey, sczPayloadSourcePath);
         }
     }
 
 LExit:
     ReleaseStr(sczPayloadSourcePath);
+    ReleaseStr(sczSourceDirectory);
     ReleaseStr(sczTargetPath);
     ReleaseStr(sczTargetDirectory);
-    ReleaseStr(sczSourceDirectory);
-    ReleaseStr(sczSourcePath);
 
     return hr;
 }
 
-extern "C" HRESULT CachePayload(
+extern "C" HRESULT CacheLayoutPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCachedPath = NULL;
+
+    hr = PathConcat(wzLayoutDirectory, pPayload->sczFilePath, &sczCachedPath);
+    ExitOnFailure(hr, "Failed to concat complete cached path.");
+
+    hr = VerifyThenTransferPayload(pPayload, sczCachedPath, wzUnverifiedPayloadPath, fMove);
+    ExitOnFailure1(hr, "Failed to layout payload from cached payload: %ls", sczCachedPath);
+
+LExit:
+    ReleaseStr(sczCachedPath);
+
+    return hr;
+}
+
+extern "C" HRESULT CacheCompletePayload(
     __in BOOL fPerMachine,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzCacheId,
-    __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
     )
@@ -437,72 +521,23 @@ extern "C" HRESULT CachePayload(
     HRESULT hr = S_OK;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczCachedPath = NULL;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
 
-    if (NULL == wzLayoutDirectory)
-    {
-        AssertSz(wzCacheId && *wzCacheId, "Cache id is required when caching.");
-
-        hr = CreateCompletedPath(fPerMachine, wzCacheId, &sczCachedDirectory);
-        ExitOnFailure1(hr, "Failed to get cached path for package with cache id: %ls", wzCacheId);
-    }
-    else
-    {
-        hr = StrAllocString(&sczCachedDirectory, wzLayoutDirectory, 0);
-        ExitOnFailure(hr, "Failed to copy layout directory.");
-    }
+    hr = CreateCompletedPath(fPerMachine, wzCacheId, &sczCachedDirectory);
+    ExitOnFailure1(hr, "Failed to get cached path for package with cache id: %ls", wzCacheId);
 
     hr = PathConcat(sczCachedDirectory, pPayload->sczFilePath, &sczCachedPath);
     ExitOnFailure(hr, "Failed to concat complete cached path.");
 
-    // Get the payload on disk actual hash.
-    hFile = ::CreateFileW(wzUnverifiedPayloadPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-    if (INVALID_HANDLE_VALUE == hFile)
-    {
-        ExitWithLastError1(hr, "Failed to open payload in working path: %ls", wzUnverifiedPayloadPath);
-    }
+    hr = VerifyThenTransferPayload(pPayload, sczCachedPath, wzUnverifiedPayloadPath, fMove);
+    ExitOnFailure1(hr, "Failed to complete payload from cached payload: %ls", sczCachedPath);
 
-    // If the payload has a certificate root public key identifier provided, verify the certificate.
-    if (pPayload->pbCertificateRootPublicKeyIdentifier)
-    {
-        hr = CacheVerifyPayloadSignature(pPayload, wzUnverifiedPayloadPath, hFile);
-        ExitOnFailure1(hr, "Failed to verify payload signature: %ls", sczCachedPath);
-    }
-    else if (pPayload->pCatalog) // If catalog files are specified, attempt to verify the file with a catalog file
-    {
-        hr = VerifyPayloadWithCatalog(pPayload, wzUnverifiedPayloadPath, hFile);
-        ExitOnFailure1(hr, "Failed to verify payload signature: %ls", sczCachedPath);
-    }
-    else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
-    {
-        hr = VerifyPayloadHash(pPayload, wzUnverifiedPayloadPath, hFile);
-        ExitOnFailure1(hr, "Failed to verify payload hash: %ls", sczCachedPath);
-    }
-
-    LogStringLine(REPORT_STANDARD, "%ls payload from working path '%ls' to path '%ls'", fMove ? L"Moving" : L"Copying", wzUnverifiedPayloadPath, sczCachedPath);
-
-    if (fMove)
-    {
-        hr = FileEnsureMoveWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-        ExitOnFailure2(hr, "Failed to move %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
-    }
-    else
-    {
-        hr = FileEnsureCopyWithRetry(wzUnverifiedPayloadPath, sczCachedPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-        ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedPayloadPath, sczCachedPath);
-    }
-
-    // Reset the path permissions in the cache (i.e. if we're not doing a layout).
-    if (NULL == wzLayoutDirectory)
-    {
-        hr = ResetPathPermissions(fPerMachine, sczCachedPath);
-        ExitOnFailure1(hr, "Failed to reset permissions on cached payload: %ls", sczCachedPath);
-    }
+    hr = ResetPathPermissions(fPerMachine, sczCachedPath);
+    ExitOnFailure1(hr, "Failed to reset permissions on cached payload: %ls", sczCachedPath);
 
 LExit:
-    ReleaseFileHandle(hFile);
     ReleaseStr(sczCachedPath);
     ReleaseStr(sczCachedDirectory);
+
     return hr;
 }
 
@@ -742,6 +777,60 @@ static HRESULT CreateCompletedPath(
 
 LExit:
     ReleaseStr(sczCacheDirectory);
+    return hr;
+}
+
+
+static HRESULT VerifyThenTransferPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzCachedPath,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+
+    // Get the payload on disk actual hash.
+    hFile = ::CreateFileW(wzUnverifiedPayloadPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hFile)
+    {
+        ExitWithLastError1(hr, "Failed to open payload in working path: %ls", wzUnverifiedPayloadPath);
+    }
+
+    // If the payload has a certificate root public key identifier provided, verify the certificate.
+    if (pPayload->pbCertificateRootPublicKeyIdentifier)
+    {
+        hr = CacheVerifyPayloadSignature(pPayload, wzUnverifiedPayloadPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify payload signature: %ls", wzCachedPath);
+    }
+    else if (pPayload->pCatalog) // If catalog files are specified, attempt to verify the file with a catalog file
+    {
+        hr = VerifyPayloadWithCatalog(pPayload, wzUnverifiedPayloadPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify payload signature: %ls", wzCachedPath);
+    }
+    else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
+    {
+        hr = VerifyPayloadHash(pPayload, wzUnverifiedPayloadPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify payload hash: %ls", wzCachedPath);
+    }
+
+    LogStringLine(REPORT_STANDARD, "%ls payload from working path '%ls' to path '%ls'", fMove ? L"Moving" : L"Copying", wzUnverifiedPayloadPath, wzCachedPath);
+
+    if (fMove)
+    {
+        hr = FileEnsureMoveWithRetry(wzUnverifiedPayloadPath, wzCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to move %ls to %ls", wzUnverifiedPayloadPath, wzCachedPath);
+    }
+    else
+    {
+        hr = FileEnsureCopyWithRetry(wzUnverifiedPayloadPath, wzCachedPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedPayloadPath, wzCachedPath);
+    }
+
+LExit:
+    ReleaseFileHandle(hFile);
+
     return hr;
 }
 

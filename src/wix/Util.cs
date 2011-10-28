@@ -38,6 +38,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private static Hashtable standardDirectories;
         private static Hashtable standardProperties;
 
+        private static bool runningInMsBuild = false;
+
+        /// <summary>
+        /// Set by WixToolTasks to indicate WIX is running inside MSBuild
+        /// </summary>
+        public static bool RunningInMsBuild
+        {
+            get { return runningInMsBuild; }
+            set { runningInMsBuild = value; }
+        }
+
         /// <summary>
         /// Gets (and loads if not yet loaded) the list of standard MSI directories.
         /// </summary>

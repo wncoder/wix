@@ -1212,6 +1212,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                     // this.buildParameters.Loggers = loggers;
                     this.types.buildParametersType.GetProperty("Loggers").SetValue(this.buildParameters, loggers, null);
+
+                    // MSBuild can't handle storing operating enviornments for nested builds.
+                    if (Util.RunningInMsBuild)
+                    {
+                        this.types.buildParametersType.GetProperty("SaveOperatingEnvironment").SetValue(this.buildParameters, false, null);
+                    }
                 }
                 catch (TargetInvocationException tie)
                 {

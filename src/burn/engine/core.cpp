@@ -344,7 +344,7 @@ extern "C" HRESULT CorePlan(
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
         // Plan the bundle's layout.
-        hr = PlanLayoutBundle(&pEngineState->plan, &pEngineState->variables, &pEngineState->payloads, &sczLayoutDirectory);
+        hr = PlanLayoutBundle(&pEngineState->plan, pEngineState->registration.sczExecutableName, &pEngineState->variables, &pEngineState->payloads, &sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to plan the layout of the bundle.");
     }
     else if (pEngineState->registration.fPerMachine) // the registration of this bundle is per-machine then the plan needs to be per-machine as well.
@@ -387,7 +387,7 @@ extern "C" HRESULT CorePlan(
         }
 
         // Remember the default requested state so the engine doesn't get blamed for planning the wrong thing if the UX changes it.
-        hr = PlanDefaultPackageRequestState(pPackage->type, pPackage->currentState, action, &pEngineState->variables, pPackage->sczInstallCondition, pEngineState->command.relationType, &defaultRequested);
+        hr = PlanDefaultPackageRequestState(pPackage->type, pPackage->currentState, !pPackage->fUninstallable, action, &pEngineState->variables, pPackage->sczInstallCondition, pEngineState->command.relationType, &defaultRequested);
         ExitOnFailure(hr, "Failed to set default package state.");
 
         pPackage->requested = defaultRequested;

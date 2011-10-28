@@ -581,6 +581,7 @@ LExit:
 
 *******************************************************************/
 extern "C" HRESULT RegistrationSessionBegin(
+    __in_z LPCWSTR wzEngineWorkingPath,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables,
     __in BURN_USER_EXPERIENCE* pUserExperience,
@@ -592,7 +593,6 @@ extern "C" HRESULT RegistrationSessionBegin(
     HRESULT hr = S_OK;
     DWORD dwSize = 0;
     HKEY hkRegistration = NULL;
-    LPWSTR sczExecutablePath = NULL;
     LPWSTR sczDisplayName = NULL;
 
     // alter registration in the correct process
@@ -601,15 +601,12 @@ extern "C" HRESULT RegistrationSessionBegin(
         // On install, cache executable
         if (BOOTSTRAPPER_ACTION_INSTALL == action)
         {
-            hr = PathForCurrentProcess(&sczExecutablePath, NULL);
-            ExitOnFailure(hr, "Failed to get path for current executing process.");
-
-            hr = CacheBundle(pRegistration->fPerMachine, pRegistration->sczId, pRegistration->sczExecutableName, &pUserExperience->payloads
+            hr = CacheCompleteBundle(pRegistration->fPerMachine, pRegistration->sczExecutableName, pRegistration->sczId, &pUserExperience->payloads, wzEngineWorkingPath
 #ifdef DEBUG
                             , pRegistration->sczCacheExecutablePath
 #endif
                             );
-            ExitOnFailure1(hr, "Failed to cache bundle from path: %ls", sczExecutablePath);
+            ExitOnFailure1(hr, "Failed to cache bundle from path: %ls", wzEngineWorkingPath);
         }
 
         // create registration key
@@ -800,7 +797,6 @@ extern "C" HRESULT RegistrationSessionBegin(
 
 LExit:
     ReleaseStr(sczDisplayName);
-    ReleaseStr(sczExecutablePath);
     ReleaseRegKey(hkRegistration);
 
     return hr;
