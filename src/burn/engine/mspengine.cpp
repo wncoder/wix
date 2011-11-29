@@ -485,14 +485,24 @@ extern "C" HRESULT MspEngineExecutePackage(
 
         hr = WiuConfigureProductEx(pExecuteAction->mspTarget.sczTargetProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_DEFAULT, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to install MSP package.");
+
+        hr = DependencyRegisterPackage(pExecuteAction->mspTarget.pPackage);
+        ExitOnFailure(hr, "Failed to register the package dependency providers.");
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:
         hr = StrAllocConcat(&sczProperties, L" REBOOT=ReallySuppress", 0);
         ExitOnFailure(hr, "Failed to add reboot suppression property on uninstall.");
 
+        // Ignore all dependencies, since the Burn engine already performed the check.
+        hr = StrAllocFormatted(&sczProperties, L"%ls %ls=ALL", sczProperties, DEPENDENCY_IGNOREDEPENDENCIES);
+        ExitOnFailure(hr, "Failed to add the list of dependencies to ignore to the properties.");
+
         hr = WiuRemovePatches(sczPatches, pExecuteAction->mspTarget.sczTargetProductCode, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to uninstall MSP package.");
+
+        hr = DependencyUnregisterPackage(pExecuteAction->mspTarget.pPackage);
+        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
         break;
     }
 

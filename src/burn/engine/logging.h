@@ -117,6 +117,10 @@ LPCSTR LoggingRequestStateToString(
     __in BOOTSTRAPPER_REQUEST_STATE requestState
     );
 
+LPWSTR LoggingStringOrUnknownIfNull(
+    __in LPCWSTR wz
+    );
+
 // Note: this function is not thread safe.
 LPCSTR LoggingVersionToString(
     __in DWORD64 dw64Version

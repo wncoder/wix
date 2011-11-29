@@ -147,6 +147,9 @@
     <ClCompile Include="proc3utl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="wuautil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\aclutil.h">
@@ -276,6 +279,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\iniutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\wuautil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

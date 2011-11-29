@@ -43,7 +43,8 @@ static HRESULT ParseCommandLine(
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
-    __out_z LPWSTR* psczLayoutDirectory
+    __out_z LPWSTR* psczLayoutDirectory,
+    __out_z LPWSTR* psczIgnoreDependencies
     );
 static HRESULT ParsePipeConnection(
     __in LPWSTR* rgArgs,
@@ -75,7 +76,7 @@ extern "C" HRESULT CoreInitialize(
     BURN_CONTAINER_CONTEXT containerContext = { };
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory, &pEngineState->sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     // initialize variables
@@ -318,11 +319,11 @@ extern "C" HRESULT CorePlan(
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
     BOOTSTRAPPER_ACTION_STATE executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
     BOOTSTRAPPER_ACTION_STATE rollbackAction = BOOTSTRAPPER_ACTION_STATE_NONE;
+    BURN_DEPENDENCY_ACTION dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
     BOOL fPlannedCachePackage = FALSE;
     BOOL fPlannedCleanPackage = FALSE;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
     HANDLE hRollbackBoundaryCompleteEvent = NULL;
-    BURN_DEPENDENCY_ACTION dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
 
     LogId(REPORT_STANDARD, MSG_PLAN_BEGIN, pEngineState->packages.cPackages, LoggingBurnActionToString(action));
 
@@ -340,6 +341,9 @@ extern "C" HRESULT CorePlan(
     // we make everywhere.
     pEngineState->plan.action = action;
     pEngineState->plan.wzBundleId = pEngineState->registration.sczId;
+
+    hr = DependencyPlanInitialize(pEngineState, &pEngineState->plan);
+    ExitOnFailure(hr, "Failed to initialize the dependencies for the plan.");
 
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
@@ -366,6 +370,7 @@ extern "C" HRESULT CorePlan(
 
         executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
         rollbackAction = BOOTSTRAPPER_ACTION_STATE_NONE;
+        dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
         fPlannedCachePackage = FALSE;
         fPlannedCleanPackage = FALSE;
 
@@ -406,18 +411,22 @@ extern "C" HRESULT CorePlan(
             }
             else
             {
-                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, &executeAction, &rollbackAction, &fPlannedCachePackage, &fPlannedCleanPackage);
+                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, &executeAction, &rollbackAction, &dependencyAction, &fPlannedCachePackage, &fPlannedCleanPackage);
                 ExitOnFailure(hr, "Failed to plan execute package.");
             }
         }
+        else if (BOOTSTRAPPER_ACTION_LAYOUT != action)
+        {
+            // Make sure the package is properly ref-counted even if no plan is requested.
+            hr = DependencyPlanPackageBegin(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, &dependencyAction);
+            ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
-        // Plan the dependency registration automatically based on current state and requested action. This is done even for BOOTSTRAPPER_ACTION_STATE_NONE
-        // because packages that are present with no requested action are still ref-counted by the bundle.
-        hr = DependencyPlanPackage(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, executeAction, rollbackAction, &dependencyAction);
-        ExitOnFailure1(hr, "Failed to plan dependency registration for package: %ls.", pPackage->sczId);
+            hr = DependencyPlanPackageComplete(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, &dependencyAction);
+            ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pPackage->sczId);
+        }
 
         // Add the checkpoint after each package and dependency registration action.
-        if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction)
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction || BURN_DEPENDENCY_ACTION_NONE != dependencyAction)
         {
             hr = PlanExecuteCheckpoint(&pEngineState->plan);
             ExitOnFailure(hr, "Failed to append execute checkpoint.");
@@ -652,7 +661,8 @@ static HRESULT ParseCommandLine(
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
-    __out_z LPWSTR* psczLayoutDirectory
+    __out_z LPWSTR* psczLayoutDirectory,
+    __out_z LPWSTR* psczIgnoreDependencies
     )
 {
     HRESULT hr = S_OK;
@@ -861,6 +871,22 @@ static HRESULT ParseCommandLine(
             {
                 *pfDisableUnelevate = TRUE;
             }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RUNONCE, -1))
+            {
+                *pMode = BURN_MODE_RUNONCE;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], lstrlenW(BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES), BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES, lstrlenW(BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES)))
+            {
+                // Get a pointer to the next character after the switch.
+                LPCWSTR wzParam = &argv[i][1 + lstrlenW(BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES)];
+                if (L'=' != wzParam[0] || L'\0' == wzParam[1])
+                {
+                    ExitOnRootFailure1(hr = E_INVALIDARG, "Missing required parameter for switch: %ls", BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES);
+                }
+
+                hr = StrAllocString(psczIgnoreDependencies, &wzParam[1], 0);
+                ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
+            }
             else if (lstrlenW(&argv[i][1]) >= lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX) &&
                 CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX), BURN_COMMANDLINE_SWITCH_PREFIX, lstrlenW(BURN_COMMANDLINE_SWITCH_PREFIX)))
             {
@@ -885,8 +911,8 @@ static HRESULT ParseCommandLine(
         }
     }
 
-    // Being elevated trumps all other modes.
-    if (BURN_ELEVATION_STATE_ELEVATED == *pElevationState || BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY == *pElevationState)
+    // Elevation trumps other modes, except RunOnce which is also elevated.
+    if (BURN_MODE_RUNONCE != *pMode && (BURN_ELEVATION_STATE_ELEVATED == *pElevationState || BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY == *pElevationState))
     {
         *pMode = BURN_MODE_ELEVATED;
     }
@@ -1038,3 +1064,4 @@ static HRESULT WaitForCacheThread(
 LExit:
     return hr;
 }
+

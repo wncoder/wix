@@ -140,7 +140,9 @@ extern "C" HRESULT RegistrationParseFromXml(
     {
         ExitOnFailure(hr, "Failed to select ARP node.");
 
-        pRegistration->fRegisterArp = TRUE;
+        // @Register
+        hr = XmlGetYesNoAttribute(pixnArpNode, L"Register", &pRegistration->fRegisterArp);
+        ExitOnFailure(hr, "Failed to get @Register.");
 
         // @DisplayName
         hr = XmlGetAttributeEx(pixnArpNode, L"DisplayName", &pRegistration->sczDisplayName);
@@ -233,14 +235,6 @@ extern "C" HRESULT RegistrationParseFromXml(
             hr = S_OK;
         }
         ExitOnFailure(hr, "Failed to get @DisableModify.");
-
-        // @DisableRepair
-        hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableRepair", &pRegistration->fNoRepair);
-        if (E_NOTFOUND != hr)
-        {
-            ExitOnFailure(hr, "Failed to get @DisableRepair.");
-            pRegistration->fNoRepairDefined = TRUE;
-        }
 
         // @DisableRemove
         hr = XmlGetYesNoAttribute(pixnArpNode, L"DisableRemove", &pRegistration->fNoRemove);
@@ -751,13 +745,6 @@ extern "C" HRESULT RegistrationSessionBegin(
                     ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
                 }
 
-                // NoRepair
-                if (pRegistration->fNoRepairDefined)
-                {
-                    hr = RegWriteNumber(hkRegistration, L"NoRepair", (DWORD)pRegistration->fNoRepair);
-                    ExitOnFailure(hr, "Failed to set NoRepair value.");
-                }
-
                 // NoRemove: should this be allowed?
                 if (pRegistration->fNoRemoveDefined)
                 {
@@ -786,7 +773,7 @@ extern "C" HRESULT RegistrationSessionBegin(
         // Register the bundle dependency key.
         if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
         {
-            hr = DependencyRegister(pRegistration);
+            hr = DependencyRegisterBundle(pRegistration);
             ExitOnFailure(hr, "Failed to register the bundle dependency key.");
         }
 
@@ -902,7 +889,7 @@ extern "C" HRESULT RegistrationSessionEnd(
         if (BURN_RESUME_MODE_NONE == resumeMode)
         {
             // Remove the bundle dependency key.
-            hr = DependencyUnregister(pRegistration);
+            hr = DependencyUnregisterBundle(pRegistration);
             ExitOnFailure(hr, "Failed to remove the bundle dependency key.");
 
             // Delete registration key.
@@ -1020,6 +1007,7 @@ static HRESULT UpdateResumeMode(
     DWORD er = ERROR_SUCCESS;
     HKEY hkRebootRequired = NULL;
     HKEY hkRun = NULL;
+    LPWSTR sczRunOnceCommandLine = NULL;
 
     // write resume information
     if (hkRegistration)
@@ -1034,11 +1022,15 @@ static HRESULT UpdateResumeMode(
     // ensure the run key exists (it should since going active would have written it).
     if (BURN_RESUME_MODE_ACTIVE == resumeMode || fRestartInitiated)
     {
+        // append RunOnce switch
+        hr = StrAllocFormatted(&sczRunOnceCommandLine, L"%ls /%ls", pRegistration->sczResumeCommandLine, BURN_COMMANDLINE_SWITCH_RUNONCE);
+        ExitOnFailure(hr, "Failed to format resume command line for RunOnce.");
+
         // write run key
         hr = RegCreate(pRegistration->hkRoot, REGISTRY_RUN_KEY, KEY_WRITE, &hkRun);
         ExitOnFailure(hr, "Failed to create run key.");
 
-        hr = RegWriteString(hkRun, pRegistration->sczId, pRegistration->sczResumeCommandLine);
+        hr = RegWriteString(hkRun, pRegistration->sczId, sczRunOnceCommandLine);
         ExitOnFailure(hr, "Failed to write run key value.");
     }
     else // delete run key value
@@ -1062,6 +1054,7 @@ static HRESULT UpdateResumeMode(
     }
 
 LExit:
+    ReleaseStr(sczRunOnceCommandLine);
     ReleaseRegKey(hkRebootRequired);
     ReleaseRegKey(hkRun);
 
@@ -1237,8 +1230,8 @@ static HRESULT InitializeRelatedBundleFromKey(
 
     pRelatedBundle->package.Exe.fRepairable = TRUE;
 
-    // Only support progress from engines that are compatible (aka: version greater then or equal to last protocol breaking change).
-    pRelatedBundle->package.Exe.protocol = (FILEMAKEVERSION(3, 6, 1922, 0) <= qwEngineVersion) ? BURN_EXE_PROTOCOL_TYPE_BURN : BURN_EXE_PROTOCOL_TYPE_NONE;
+    // Only support progress from engines that are compatible (aka: version greater than or equal to last protocol breaking change *and* versions that are older or the same as this engine).
+    pRelatedBundle->package.Exe.protocol = (FILEMAKEVERSION(3, 6, 2221, 0) <= qwEngineVersion && qwEngineVersion <= FILEMAKEVERSION(rmj, rmm, rup, 0)) ? BURN_EXE_PROTOCOL_TYPE_BURN : BURN_EXE_PROTOCOL_TYPE_NONE;
 
 LExit:
     ReleaseStr(sczCachePath);

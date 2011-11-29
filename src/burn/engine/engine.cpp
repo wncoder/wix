@@ -42,6 +42,10 @@ static HRESULT RunEmbedded(
     __in HINSTANCE hInstance,
     __in BURN_ENGINE_STATE* pEngineState
     );
+static HRESULT RunRunOnce(
+    __in_z_opt LPCWSTR wzCommandLine,
+    __in int nCmdShow
+    );
 static HRESULT RunApplication(
     __in BURN_ENGINE_STATE* pEngineState,
     __out BOOL* pfReloadApp
@@ -136,6 +140,11 @@ extern "C" HRESULT EngineRun(
         ExitOnFailure(hr, "Failed to run embedded mode.");
         break;
 
+    case BURN_MODE_RUNONCE:
+        hr = RunRunOnce(wzCommandLine, nCmdShow);
+        ExitOnFailure(hr, "Failed to run RunOnce mode.");
+        break;
+
     default:
         hr = E_UNEXPECTED;
         ExitOnFailure(hr, "Invalid run mode.");
@@ -217,6 +226,8 @@ static void UninitializeEngineState(
     __in BURN_ENGINE_STATE* pEngineState
     )
 {
+    ReleaseStr(pEngineState->sczIgnoreDependencies);
+
     PipeConnectionUninitialize(&pEngineState->embeddedConnection);
     PipeConnectionUninitialize(&pEngineState->companionConnection);
 
@@ -419,6 +430,53 @@ static HRESULT RunEmbedded(
     ExitOnFailure(hr, "Failed to run bootstrapper application embedded.");
 
 LExit:
+    return hr;
+}
+
+static HRESULT RunRunOnce(
+    __in_z_opt LPCWSTR wzCommandLine,
+    __in int nCmdShow
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczNewCommandLine = NULL;
+    LPWSTR sczBurnPath = NULL;
+    HANDLE hProcess = NULL;
+    int argc = 0;
+    LPWSTR* argv = NULL;
+
+    // rebuild the command line without the runonce switch
+    if (wzCommandLine && *wzCommandLine)
+    {
+        argv = ::CommandLineToArgvW(wzCommandLine, &argc);
+        ExitOnNullWithLastError(argv, hr, "Failed to get command line.");
+
+        for (int i = 0; i < argc; ++i)
+        {
+            if (!((argv[i][0] == L'-' || argv[i][0] == L'/') && CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_RUNONCE, -1)))
+            {
+                PathCommandLineAppend(&sczNewCommandLine, argv[i]);
+            }
+        }
+    }
+
+    // and re-launch
+    hr = PathForCurrentProcess(&sczBurnPath, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
+
+    hr = ProcExec(sczBurnPath, 0 < sczNewCommandLine ? sczNewCommandLine : L"", nCmdShow, &hProcess);
+    ExitOnFailure1(hr, "Failed to re-launch bundle process after RunOnce: %ls", sczBurnPath);
+
+LExit:
+    if (argv)
+    {
+        ::LocalFree(argv);
+    }
+
+    ReleaseHandle(hProcess);
+    ReleaseStr(sczNewCommandLine);
+    ReleaseStr(sczBurnPath);
+
     return hr;
 }
 

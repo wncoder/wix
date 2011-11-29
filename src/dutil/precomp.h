@@ -47,8 +47,9 @@
 #include <esent.h>
 #include <ahadmin.h>
 #include <userenv.h>
-#include <wtsapi32.h>
 #include <WinIoCtl.h>
+#include <wtsapi32.h>
+#include <wuapi.h>
 
 #include "dutil.h"
 #include "aclutil.h"
@@ -92,5 +93,6 @@
 #include <comutil.h>  // This header is needed for msxml2.h to compile correctly
 #include <msxml2.h>   // This file is needed to include xmlutil.h
 #include "wiutil.h"
+#include "wuautil.h"
 #include "xmlutil.h"
 

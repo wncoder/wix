@@ -36,6 +36,7 @@
             <ComponentRef Id="Main"/>
         </Feature>
         <Property Id="MsiLogging" Value="voicewarmup"/>
+        <PropertyRef Id="TestVersion"/>
         <Upgrade Id="4BDD3F68-8047-4FB6-8E8F-2420705305EE">
             <UpgradeVersion Maximum="$(var.Version)" MigrateFeatures="yes" Property="OLDERVERSIONS"/>
             <UpgradeVersion Minimum="$(var.Version)" OnlyDetect="yes" Property="NEWERVERSIONS"/>
@@ -51,5 +52,8 @@
                 <dep:Provides Key="Microsoft.WiX.$(var.TestName).A,v1.0"/>
             </Component>
         </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <Property Id="TestVersion" Value="$(var.Version)"/>
     </Fragment>
 </Wix>

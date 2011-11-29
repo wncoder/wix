@@ -12,13 +12,14 @@
         <Chain>
             <PackageGroupRef Id="Netfx4Full"/>
             <MsiPackage SourceFile="Products\Hello_World\hello_world.msi" Vital="yes"/>
+            <MsiPackage SourceFile="$(var.Provider.TargetPath)"/>
             <MsiPackage SourceFile="MSIsandMSPs\RtmProduct\product.msi" Vital="yes">
                 <MsiProperty Name="ARPSYSTEMCOMPONENT" Value="1"/>
                 <dep:Provides Key="Microsoft.WiX.Tests.RTM,v1"/>
             </MsiPackage>
             <MspPackage SourceFile="MSIsandMSPs\GDR1\gdr1.msp" Vital="yes"/>
             <MspPackage SourceFile="MSIsandMSPs\LDR2\ldr2.msp" Vital="yes">
-                <dep:Provides Key="Microsoft.WiX.Tests.LDR2,v2"/>
+                <dep:Provides Key="Microsoft.WiX.Tests.LDR2,v2" Version="1.0.1.2"/>
             </MspPackage>
             <ExePackage Id="TestExe1" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/s 5000" Vital="yes"/>
             <ExePackage Id="TestExe2" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/sr 5000-10000" Vital="yes">

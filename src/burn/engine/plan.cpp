@@ -97,6 +97,11 @@ extern "C" void PlanUninitialize(
         MemFree(pPlan->rgCleanActions);
     }
 
+    if (pPlan->rgPlannedProviders)
+    {
+        ReleaseDependencyArray(pPlan->rgPlannedProviders, pPlan->cPlannedProviders);
+    }
+
     memset(pPlan, 0, sizeof(BURN_PLAN));
 }
 
@@ -106,6 +111,10 @@ extern "C" void PlanUninitializeExecuteAction(
 {
     switch (pExecuteAction->type)
     {
+    case BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE:
+        ReleaseStr(pExecuteAction->exePackage.sczIgnoreDependencies);
+        break;
+
     case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
         ReleaseStr(pExecuteAction->msiPackage.sczProductCode);
         ReleaseStr(pExecuteAction->msiPackage.sczLogPath);
@@ -306,9 +315,11 @@ extern "C" HRESULT PlanExecutePackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction,
+    __out BURN_DEPENDENCY_ACTION* pDependencyAction,
     __out BOOL* pfPlannedCachePackage,
     __out BOOL* pfPlannedCleanPackage
     )
@@ -342,6 +353,10 @@ extern "C" HRESULT PlanExecutePackage(
         ExitOnFailure(hr, "Invalid package type.");
     }
     ExitOnFailure1(hr, "Failed to calculate plan actions for package: %ls", pPackage->sczId);
+
+    // Calculate package states based on reference count and plan certain dependency actions prior to planning the package execute action.
+    hr = DependencyPlanPackageBegin(pPackage, pPlan, wzBundleProviderKey, pDependencyAction);
+    ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
     // Exe packages require the package for all operations (even uninstall).
     if (BURN_PACKAGE_TYPE_EXE == pPackage->type)
@@ -417,6 +432,10 @@ extern "C" HRESULT PlanExecutePackage(
     }
     ExitOnFailure1(hr, "Failed to add plan actions for package: %ls", pPackage->sczId);
 
+    // Plan certain dependency actions after planning the package execute action.
+    hr = DependencyPlanPackageComplete(pPackage, pPlan, wzBundleProviderKey, pDependencyAction);
+    ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pPackage->sczId);
+
     // If we are going to take any action on this package, add progress for it.
     if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute || BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
     {
@@ -464,7 +483,12 @@ extern "C" HRESULT PlanRelatedBundles(
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczIgnoreDependencies = NULL;
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+
+    // Get the list of dependencies to ignore to pass to related bundles.
+    hr = DependencyPlanRelatedBundles(pPlan, &sczIgnoreDependencies);
+    ExitOnFailure(hr, "Failed to get the list of dependencies to ignore.");
 
     for (DWORD i = 0; i < pRelatedBundles->cRelatedBundles; ++i)
     {
@@ -479,6 +503,10 @@ extern "C" HRESULT PlanRelatedBundles(
             break;
         case BOOTSTRAPPER_RELATION_PATCH: __fallthrough;
         case BOOTSTRAPPER_RELATION_ADDON:
+            // Addon and patch bundles will be passed a list of dependencies to ignore for planning.
+            hr = StrAllocString(&pRelatedBundle->package.Exe.sczIgnoreDependencies, sczIgnoreDependencies, 0);
+            ExitOnFailure(hr, "Failed to copy the list of dependencies to ignore.");
+
             if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
             {
                 requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
@@ -533,6 +561,8 @@ extern "C" HRESULT PlanRelatedBundles(
     }
 
 LExit:
+    ReleaseStr(sczIgnoreDependencies);
+
     return hr;
 }
 

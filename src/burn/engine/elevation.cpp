@@ -533,6 +533,9 @@ extern "C" HRESULT ElevationExecuteExePackage(
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->exePackage.action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
 
+    hr = BuffWriteString(&pbData, &cbData, pExecuteAction->exePackage.sczIgnoreDependencies);
+    ExitOnFailure(hr, "Failed to write the list of dependencies to ignore to the message buffer.");
+
     hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
 
@@ -1483,6 +1486,7 @@ static HRESULT OnExecuteExePackage(
     SIZE_T iData = 0;
     LPWSTR sczPackage = NULL;
     BURN_EXECUTE_ACTION executeAction = { };
+    LPWSTR sczIgnoreDependencies = NULL;
     BOOTSTRAPPER_APPLY_RESTART exeRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
 
     executeAction.type = BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE;
@@ -1494,6 +1498,9 @@ static HRESULT OnExecuteExePackage(
     hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.exePackage.action);
     ExitOnFailure(hr, "Failed to read action.");
 
+    hr = BuffReadString(pbData, cbData, &iData, &sczIgnoreDependencies);
+    ExitOnFailure(hr, "Failed to read the list of dependencies to ignore.");
+
     hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
     ExitOnFailure(hr, "Failed to read variables.");
 
@@ -1504,11 +1511,19 @@ static HRESULT OnExecuteExePackage(
     }
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
+    // Pass the list of dependencies to ignore, if any, to the related bundle.
+    if (sczIgnoreDependencies && *sczIgnoreDependencies)
+    {
+        hr = StrAllocString(&executeAction.exePackage.sczIgnoreDependencies, sczIgnoreDependencies, 0);
+        ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
+    }
+
     // execute EXE package
     hr = ExeEngineExecutePackage(&executeAction, pVariables, GenericExecuteMessageHandler, hPipe, &exeRestart);
     ExitOnFailure(hr, "Failed to execute EXE package.");
 
 LExit:
+    ReleaseStr(sczIgnoreDependencies);
     ReleaseStr(sczPackage);
     PlanUninitializeExecuteAction(&executeAction);
 
@@ -1775,7 +1790,7 @@ static HRESULT OnExecuteDependencyAction(
 
     // Find the package again.
     hr = PackageFindById(pPackages, sczPackage, &executeAction.dependency.pPackage);
-    ExitOnFailure1(hr, "Failed to find the package: %ls", sczPackage);
+    ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // Execute the dependency action.
     hr = DependencyExecuteAction(&executeAction, TRUE);

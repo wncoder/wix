@@ -122,6 +122,8 @@ typedef struct _BURN_PACKAGE_PAYLOAD
 typedef struct _BURN_DEPENDENCY_PROVIDER
 {
     LPWSTR sczKey;
+    LPWSTR sczVersion;
+    LPWSTR sczDisplayName;
     BOOL fImported;
 } BURN_DEPENDENCY_PROVIDER;
 
@@ -165,7 +167,6 @@ typedef struct _BURN_PACKAGE
 
     BURN_DEPENDENCY_PROVIDER* rgDependencyProviders;
     DWORD cDependencyProviders;
-    BOOL fDependencyProvidersImported;
 
     BURN_PACKAGE_TYPE type;
     union
@@ -176,6 +177,7 @@ typedef struct _BURN_PACKAGE
             LPWSTR sczInstallArguments;
             LPWSTR sczRepairArguments;
             LPWSTR sczUninstallArguments;
+            LPWSTR sczIgnoreDependencies;
             //LPWSTR sczProgressSwitch;
             BOOL fRepairable;
             BURN_EXE_PROTOCOL_TYPE protocol;
@@ -260,6 +262,11 @@ HRESULT PackageFindRelatedById(
     __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in_z LPCWSTR wzId,
     __out BURN_PACKAGE** ppPackage
+    );
+HRESULT PackageGetProperty(
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzProperty,
+    __out_z_opt LPWSTR* psczValue
     );
 
 

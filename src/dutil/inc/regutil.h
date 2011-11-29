@@ -233,6 +233,11 @@ HRESULT DAPI RegWriteQword(
     __in_z_opt LPCWSTR wzName,
     __in DWORD64 qwValue
     );
+HRESULT DAPI RegQueryKey(
+    __in HKEY hk,
+    __out_opt DWORD* pcSubKeys,
+    __out_opt DWORD* pcValues
+    );
 
 #ifdef __cplusplus
 }

@@ -2110,7 +2110,8 @@
         </Message>
         <Message Id="InvalidPlatformParameter" Number="264" SourceLineNumbers="no">
             <Instance>
-                The parameter 'platform' is missing or has an invalid value {0}.  Possible values are x86, x64, or ia64.
+                The parameter '{0}' is missing or has an invalid value {1}.  Possible values are x86, x64, or ia64.
+                <Parameter Type="System.String" Name="name" />
                 <Parameter Type="System.String" Name="value" />
             </Instance>
         </Message>
@@ -2796,6 +2797,19 @@
           Component/@Id='{0}' has a @Guid value '{1}' that duplicates another component in this package. It is recommended to give each component its own unique GUID.
           <Parameter Type="System.String" Name="componentId" />
           <Parameter Type="System.String" Name="guid" />
+        </Instance>
+      </Message>
+      <Message Id="DuplicateProviderDependencyKey" Number="370" SourceLineNumbers="no">
+        <Instance>
+          The provider dependency key '{0}' was already imported from the package with Id '{1}'. Please remove the Provides element with the key '{0}' from the package authoring.
+          <Parameter Type="System.String" Name="providerKey" />
+          <Parameter Type="System.String" Name="packageId" />
+        </Instance>
+      </Message>
+      <Message Id="MissingDependencyVersion" Number="371" SourceLineNumbers="no">
+        <Instance>
+          The provider dependency version was not authored for the package with Id '{0}'. Please author the Provides/@Version attribute for this package.
+          <Parameter Type="System.String" Name="packageId" />
         </Instance>
       </Message>
     </Class>

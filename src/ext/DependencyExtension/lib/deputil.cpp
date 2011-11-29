@@ -20,41 +20,28 @@
 
 #define ARRAY_GROWTH_SIZE 5
 
+static LPCWSTR vcszVersionValue = L"Version";
+static LPCWSTR vcszDisplayNameValue = L"DisplayName";
+static LPCWSTR vcszMinVersionValue = L"MinVersion";
+static LPCWSTR vcszMaxVersionValue = L"MaxVersion";
+static LPCWSTR vcszAttributesValue = L"Attributes";
+
 enum eRequiresAttributes { RequiresAttributesMinVersionInclusive = 256, RequiresAttributesMaxVersionInclusive = 512 };
 
 // We write to Software\Classes explicitly based on the current security context instead of HKCR.
 // See http://msdn.microsoft.com/en-us/library/ms724475(VS.85).aspx for more information.
-LPCWSTR vsczRegistryRoot = L"Software\\Classes\\Installer\\Dependencies\\";
-LPCWSTR vsczRegistryDependents = L"Dependents";
+static LPCWSTR vsczRegistryRoot = L"Software\\Classes\\Installer\\Dependencies\\";
+static LPCWSTR vsczRegistryDependents = L"Dependents";
 
 static HRESULT AllocDependencyKeyName(
     __in_z LPCWSTR wzName,
     __deref_out_z LPWSTR* psczKeyName
     );
 
-static HRESULT OpenARPKey(
-    __in HKEY hkHive,
-    __in_z LPCWSTR wzSubKey,
-    __out HKEY* phkARPKey
-    );
-
-static HRESULT GetDependencyName(
-    __in HKEY hkHive,
-    __in HKEY hkKey,
-    __deref_out_z LPWSTR* psczName
-    );
-
 static HRESULT GetDependencyNameFromKey(
     __in HKEY hkHive,
     __in LPCWSTR wzKey,
     __deref_out_z LPWSTR* psczName
-    );
-
-static HRESULT DependencyArrayAlloc(
-    __deref_inout_ecount_opt(*pcDependencies) DEPENDENCY** prgDependencies,
-    __inout LPUINT pcDependencies,
-    __in_z LPCWSTR wzKey,
-    __in_z_opt LPCWSTR wzName
     );
 
 DAPI_(HRESULT) DepCheckDependency(
@@ -89,10 +76,11 @@ DAPI_(HRESULT) DepCheckDependency(
     {
         ExitOnFailure1(hr, "Failed to open the registry key for dependency \"%ls\".", wzProviderKey);
 
-        hr = RegReadVersion(hkKey, L"Version", &dw64Version);
+        // If there are no registry values, consider the key orphaned and treat it as missing.
+        hr = RegReadVersion(hkKey, vcszVersionValue, &dw64Version);
         if (E_FILENOTFOUND != hr)
         {
-            ExitOnFailure1(hr, "Failed to read the Version registry value for dependency \"%ls\".", wzProviderKey);
+            ExitOnFailure2(hr, "Failed to read the %ls registry value for dependency \"%ls\".", vcszVersionValue, wzProviderKey);
         }
     }
 
@@ -106,7 +94,7 @@ DAPI_(HRESULT) DepCheckDependency(
         }
         else
         {
-            hr = DependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, NULL);
+            hr = DepDependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, NULL);
             ExitOnFailure1(hr, "Failed to add the missing dependency \"%ls\" to the array.", wzProviderKey);
 
             hr = DictAddKey(sdDependencies, wzProviderKey);
@@ -136,10 +124,10 @@ DAPI_(HRESULT) DepCheckDependency(
                 }
                 else
                 {
-                    hr = GetDependencyName(hkHive, hkKey, &sczName);
-                    ExitOnFailure1(hr, "Failed to get the name of the older dependency \"%ls\".", wzProviderKey);
+                    hr = RegReadString(hkKey, vcszDisplayNameValue, &sczName);
+                    ExitOnFailure1(hr, "Failed to get the display name of the older dependency \"%ls\".", wzProviderKey);
 
-                    hr = DependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, sczName);
+                    hr = DepDependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, sczName);
                     ExitOnFailure1(hr, "Failed to add the older dependency \"%ls\" to the dependencies array.", wzProviderKey);
 
                     hr = DictAddKey(sdDependencies, wzProviderKey);
@@ -171,10 +159,10 @@ DAPI_(HRESULT) DepCheckDependency(
                 }
                 else
                 {
-                    hr = GetDependencyName(hkHive, hkKey, &sczName);
-                    ExitOnFailure1(hr, "Failed to get the name of the newer dependency \"%ls\".", wzProviderKey);
+                    hr = RegReadString(hkKey, vcszDisplayNameValue, &sczName);
+                    ExitOnFailure1(hr, "Failed to get the display name of the newer dependency \"%ls\".", wzProviderKey);
 
-                    hr = DependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, sczName);
+                    hr = DepDependencyArrayAlloc(prgDependencies, pcDependencies, wzProviderKey, sczName);
                     ExitOnFailure1(hr, "Failed to add the newer dependency \"%ls\" to the dependencies array.", wzProviderKey);
 
                     hr = DictAddKey(sdDependencies, wzProviderKey);
@@ -256,7 +244,7 @@ DAPI_(HRESULT) DepCheckDependents(
             hr = GetDependencyNameFromKey(hkHive, sczDependentKey, &sczDependentName);
             ExitOnFailure1(hr, "Failed to get the name of the dependent from the key \"%ls\".", sczDependentKey);
 
-            hr = DependencyArrayAlloc(prgDependents, pcDependents, sczDependentKey, sczDependentName);
+            hr = DepDependencyArrayAlloc(prgDependents, pcDependents, sczDependentKey, sczDependentName);
             ExitOnFailure1(hr, "Failed to add the dependent key \"%ls\" to the string array.", sczDependentKey);
         }
     }
@@ -274,8 +262,8 @@ LExit:
 DAPI_(HRESULT) DepRegisterDependency(
     __in HKEY hkHive,
     __in_z LPCWSTR wzProviderKey,
-    __in_z LPCWSTR wzDisplayKey,
     __in_z LPCWSTR wzVersion,
+    __in_z LPCWSTR wzDisplayName,
     __in int iAttributes
     )
 {
@@ -292,19 +280,19 @@ DAPI_(HRESULT) DepRegisterDependency(
     hr = RegCreateEx(hkHive, sczKey, KEY_WRITE, FALSE, NULL, &hkKey, &fCreated);
     ExitOnFailure1(hr, "Failed to create the dependency registry key \"%ls\".", sczKey);
 
-    // Set the display key name as the default value.
-    hr = RegWriteString(hkKey, NULL, wzDisplayKey);
-    ExitOnFailure1(hr, "Failed to set the default registry value to \"%ls\".", wzDisplayKey);
-
     // Set the version.
-    hr = RegWriteString(hkKey, L"Version", wzVersion);
-    ExitOnFailure1(hr, "Failed to set the Version registry value to \"%ls\".", wzVersion);
+    hr = RegWriteString(hkKey, vcszVersionValue, wzVersion);
+    ExitOnFailure2(hr, "Failed to set the %ls registry value to \"%ls\".", vcszVersionValue, wzVersion);
+
+    // Set the display name.
+    hr = RegWriteString(hkKey, vcszDisplayNameValue, wzDisplayName);
+    ExitOnFailure2(hr, "Failed to set the %ls registry value to \"%ls\".", vcszDisplayNameValue, wzDisplayName);
 
     // Set the attributes if non-zero.
     if (0 != iAttributes)
     {
-        hr = RegWriteNumber(hkKey, L"Attributes", static_cast<DWORD>(iAttributes));
-        ExitOnFailure1(hr, "Failed to set the Attributes registry value to %d.", iAttributes);
+        hr = RegWriteNumber(hkKey, vcszAttributesValue, static_cast<DWORD>(iAttributes));
+        ExitOnFailure2(hr, "Failed to set the %ls registry value to %d.", vcszAttributesValue, iAttributes);
     }
 
 LExit:
@@ -346,18 +334,18 @@ DAPI_(HRESULT) DepRegisterDependent(
     ExitOnFailure1(hr, "Failed to create the dependency subkey \"%ls\".", sczKey);
 
     // Set the minimum version if not NULL.
-    hr = RegWriteString(hkKey, L"MinVersion", wzMinVersion);
-    ExitOnFailure1(hr, "Failed to set the MinVersion registry value to \"%ls\".", wzMinVersion);
+    hr = RegWriteString(hkKey, vcszMinVersionValue, wzMinVersion);
+    ExitOnFailure2(hr, "Failed to set the %ls registry value to \"%ls\".", vcszMinVersionValue, wzMinVersion);
 
     // Set the maximum version if not NULL.
-    hr = RegWriteString(hkKey, L"MaxVersion", wzMaxVersion);
-    ExitOnFailure1(hr, "Failed to set the MaxVersion registry value to \"%ls\".", wzMaxVersion);
+    hr = RegWriteString(hkKey, vcszMaxVersionValue, wzMaxVersion);
+    ExitOnFailure2(hr, "Failed to set the %ls registry value to \"%ls\".", vcszMaxVersionValue, wzMaxVersion);
 
     // Set the attributes if non-zero.
     if (0 != iAttributes)
     {
-        hr = RegWriteNumber(hkKey, L"Attributes", static_cast<DWORD>(iAttributes));
-        ExitOnFailure1(hr, "Failed to set the Attributes registry value to %d.", iAttributes);
+        hr = RegWriteNumber(hkKey, vcszAttributesValue, static_cast<DWORD>(iAttributes));
+        ExitOnFailure2(hr, "Failed to set the %ls registry value to %d.", vcszAttributesValue, iAttributes);
     }
 
 LExit:
@@ -406,8 +394,8 @@ DAPI_(HRESULT) DepUnregisterDependent(
     HKEY hkRegistryRoot = NULL;
     HKEY hkDependencyProviderKey = NULL;
     HKEY hkRegistryDependents = NULL;
-    LPWSTR sczSubkey = NULL;
-    DWORD64 qwVersion = 0;
+    DWORD cSubKeys = 0;
+    DWORD cValues = 0;
 
     // Open the root key. We may delete the wzDependencyProviderKey during clean up.
     hr = RegOpen(hkHive, vsczRegistryRoot, KEY_READ, &hkRegistryRoot);
@@ -435,7 +423,7 @@ DAPI_(HRESULT) DepUnregisterDependent(
     hr = RegOpen(hkDependencyProviderKey, vsczRegistryDependents, KEY_READ, &hkRegistryDependents);
     if (E_FILENOTFOUND != hr)
     {
-        ExitOnFailure1(hr, "Failed to open the dependents subkey for \"%ls\".", wzDependencyProviderKey);
+        ExitOnFailure1(hr, "Failed to open the dependents subkey under the dependency \"%ls\".", wzDependencyProviderKey);
     }
     else
     {
@@ -444,14 +432,15 @@ DAPI_(HRESULT) DepUnregisterDependent(
 
     // Delete the wzProviderKey dependent sub-key.
     hr = RegDelete(hkRegistryDependents, wzProviderKey, REG_KEY_DEFAULT, TRUE);
-    ExitOnFailure1(hr, "Failed to delete the dependency subkey \"%ls\".", wzProviderKey);
+    ExitOnFailure2(hr, "Failed to delete the dependent \"%ls\" under the dependency \"%ls\".", wzProviderKey, wzDependencyProviderKey);
 
     // If there are no remaining dependents, delete the Dependents subkey.
-    hr = RegKeyEnum(hkRegistryDependents, 0, &sczSubkey);
-    if (E_NOMOREITEMS != hr)
+    hr = RegQueryKey(hkRegistryDependents, &cSubKeys, NULL);
+    ExitOnFailure1(hr, "Failed to get the number of dependent subkeys under the dependency \"%ls\".", wzDependencyProviderKey);
+    
+    if (0 < cSubKeys)
     {
-        ExitOnFailure1(hr, "Failed to enumerate subkeys under the dependency \"%ls\".", wzDependencyProviderKey);
-        ExitFunction1(S_OK);
+        ExitFunction();
     }
 
     // Release the handle to make sure it's deleted immediately.
@@ -459,15 +448,13 @@ DAPI_(HRESULT) DepUnregisterDependent(
 
     // Fail if there are any subkeys since we just checked.
     hr = RegDelete(hkDependencyProviderKey, vsczRegistryDependents, REG_KEY_DEFAULT, FALSE);
-    ExitOnFailure1(hr, "Failed to delete the dependents subkey for the dependency \"%ls\".", wzDependencyProviderKey);
+    ExitOnFailure1(hr, "Failed to delete the dependents subkey under the dependency \"%ls\".", wzDependencyProviderKey);
 
-    // If the "Version" registry value is not found, delete the provider dependency key.
-    hr = RegReadVersion(hkDependencyProviderKey, L"Version", &qwVersion);
-    if (E_FILENOTFOUND != hr)
-    {
-        ExitOnFailure1(hr, "Failed to read the Version registry value for the dependency \"%ls\".", wzDependencyProviderKey);
-    }
-    else
+    // If there are no values, delete the provider dependency key.
+    hr = RegQueryKey(hkDependencyProviderKey, NULL, &cValues);
+    ExitOnFailure1(hr, "Failed to get the number of values under the dependency \"%ls\".", wzDependencyProviderKey);
+
+    if (0 == cValues)
     {
         // Release the handle to make sure it's deleted immediately.
         ReleaseRegKey(hkDependencyProviderKey);
@@ -478,11 +465,46 @@ DAPI_(HRESULT) DepUnregisterDependent(
     }
 
 LExit:
-    ReleaseStr(sczSubkey);
     ReleaseRegKey(hkRegistryDependents);
     ReleaseRegKey(hkDependencyProviderKey);
     ReleaseRegKey(hkRegistryRoot);
 
+    return hr;
+}
+
+DAPI_(HRESULT) DepDependencyArrayAlloc(
+    __deref_inout_ecount_opt(*pcDependencies) DEPENDENCY** prgDependencies,
+    __inout LPUINT pcDependencies,
+    __in_z LPCWSTR wzKey,
+    __in_z_opt LPCWSTR wzName
+    )
+{
+    HRESULT hr = S_OK;
+    UINT cRequired = 0;
+    DEPENDENCY* pDependency = NULL;
+
+    hr = ::UIntAdd(*pcDependencies, 1, &cRequired);
+    ExitOnFailure(hr, "Failed to increment the number of elements required in the dependency array.");
+
+    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgDependencies), cRequired, sizeof(DEPENDENCY), ARRAY_GROWTH_SIZE);
+    ExitOnFailure(hr, "Failed to allocate memory for the dependency array.");
+
+    pDependency = static_cast<DEPENDENCY*>(&(*prgDependencies)[*pcDependencies]);
+    ExitOnNull(pDependency, hr, E_POINTER, "The dependency element in the array is invalid.");
+
+    hr = StrAllocString(&(pDependency->sczKey), wzKey, 0);
+    ExitOnFailure(hr, "Failed to allocate the string key in the dependency array.");
+
+    if (wzName)
+    {
+        hr = StrAllocString(&(pDependency->sczName), wzName, 0);
+        ExitOnFailure(hr, "Failed to allocate the string name in the dependency array.");
+    }
+
+    // Update the number of current elements in the dependency array.
+    *pcDependencies = cRequired;
+
+LExit:
     return hr;
 }
 
@@ -536,127 +558,6 @@ LExit:
 }
 
 /***************************************************************************
- OpenARPKey - Opens the ARP registry key in the 32- or 64-bit hives.
-
- Note: Returns E_FILENOTFOUND if the key can be opened in neither the
-       32- or 64-bit ARP registry keys.
-***************************************************************************/
-static HRESULT OpenARPKey(
-    __in HKEY hkHive,
-    __in_z LPCWSTR wzSubKey,
-    __out HKEY* phkARPKey
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczARPKey = NULL;
-    HKEY hkARPKey = NULL;
-    BOOL fWow64 = FALSE;
-
-    hr = StrAllocString(&sczARPKey, L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\", 0);
-    ExitOnFailure(hr, "Failed to allocate the root ARP registry key.");
-
-    hr = StrAllocConcat(&sczARPKey, wzSubKey, 0);
-    ExitOnFailure(hr, "Failed to allocate the full ARP registry key.");
-
-    // First attempt to open the native ARP key.
-    hr = RegOpen(hkHive, sczARPKey, KEY_READ, &hkARPKey);
-    if (E_FILENOTFOUND != hr)
-    {
-        ExitOnFailure1(hr, "Failed to open the native ARP registry key\"%ls\".", sczARPKey);
-    }
-    else
-    {
-        // If that failed and we're running under WOW64 open the 64-bit ARP key.
-        hr = ProcWow64(::GetCurrentProcess(), &fWow64);
-        ExitOnFailure(hr, "Failed to determine if process is running under WOW64.");
-
-        if (fWow64)
-        {
-            hr = RegOpen(hkHive, sczARPKey, KEY_READ | KEY_WOW64_64KEY, &hkARPKey);
-            ExitOnFailure1(hr, "Failed to open the 64-bit ARP registry key \"%ls\".", sczARPKey);
-        }
-        else
-        {
-            // Key was found in neither hive.
-            ExitOnRootFailure(hr = E_FILENOTFOUND, "Failed to open the ARP registry key.");
-        }
-    }
-
-    *phkARPKey = hkARPKey;
-
-LExit:
-    ReleaseStr(sczARPKey);
-
-    return hr;
-}
-
-/***************************************************************************
- GetDependencyName - Attempts to get the name of the dependency.
-
-***************************************************************************/
-static HRESULT GetDependencyName(
-    __in HKEY hkHive,
-    __in HKEY hkKey,
-    __deref_out_z LPWSTR* psczName
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczDisplayKey = NULL;
-    HKEY hkARPKey = NULL;
-
-    // First attempt to get the DisplayKey value which will determine the key in ARP.
-    hr = RegReadString(hkKey, L"DisplayKey", &sczDisplayKey);
-    if (E_FILENOTFOUND != hr)
-    {
-        ExitOnFailure(hr, "Failed to get the DisplayKey value for lookup in ARP.");
-    }
-    else
-    {
-        // If that failed, attempt to get the default value which may also indicate the key in ARP.
-        hr = RegReadString(hkKey, NULL, &sczDisplayKey);
-        if (E_FILENOTFOUND != hr)
-        {
-           ExitOnFailure(hr, "Failed to get the default value for lookup in ARP.");
-        }
-        else
-        {
-            // If both failed, we can continue without a display name.
-            ExitFunction1(hr = S_OK);
-        }
-    }
-
-    // Open the appropriate ARP key.
-    hr = OpenARPKey(hkHive, sczDisplayKey, &hkARPKey);
-    if (E_FILENOTFOUND != hr)
-    {
-        ExitOnFailure1(hr, "Failed to open the ARP registry key for \"%ls\".", sczDisplayKey);
-    }
-    else
-    {
-        // We can proceed without a dependency name.
-        ExitFunction1(hr = S_OK);
-    }
-
-    // Read the display name for this product.
-    hr = RegReadString(hkARPKey, L"DisplayName", psczName);
-    if (E_FILENOTFOUND != hr)
-    {
-        ExitOnFailure1(hr, "Failed to get the DisplayName registry value for \"%ls\".", sczDisplayKey);
-    }
-    else
-    {
-        // We can proceed without a dependency name.
-        hr = S_OK;
-    }
-
-LExit:
-    ReleaseRegKey(hkARPKey);
-    ReleaseStr(sczDisplayKey);
-
-    return hr;
-}
-
-/***************************************************************************
  GetDependencyNameFromKey - Attempts to name of the dependency from the key.
 
 ***************************************************************************/
@@ -685,53 +586,20 @@ static HRESULT GetDependencyNameFromKey(
         ExitFunction1(hr = S_OK);
     }
 
-    // Now get the display name from ARP for the key.
-    hr = GetDependencyName(hkHive, hkKey, psczName);
-    ExitOnFailure1(hr, "Failed to get the dependency name for the dependency \"%ls\".", wzProviderKey);
+    // Get the DisplayName if available.
+    hr = RegReadString(hkKey, vcszDisplayNameValue, psczName);
+    if (E_FILENOTFOUND != hr)
+    {
+        ExitOnFailure1(hr, "Failed to get the dependency name for the dependency \"%ls\".", wzProviderKey);
+    }
+    else
+    {
+        ExitFunction1(hr = S_OK);
+    }
 
 LExit:
     ReleaseRegKey(hkKey);
     ReleaseStr(sczKey);
 
-    return hr;
-}
-
-/***************************************************************************
- DependencyArrayAlloc - Allocates or expands an array of DEPENDENCY structs.
-
-***************************************************************************/
-static HRESULT DependencyArrayAlloc(
-    __deref_inout_ecount_opt(*pcDependencies) DEPENDENCY** prgDependencies,
-    __inout LPUINT pcDependencies,
-    __in_z LPCWSTR wzKey,
-    __in_z_opt LPCWSTR wzName
-    )
-{
-    HRESULT hr = S_OK;
-    UINT cRequired = 0;
-    DEPENDENCY* pDependency = NULL;
-
-    hr = ::UIntAdd(*pcDependencies, 1, &cRequired);
-    ExitOnFailure(hr, "Failed to increment the number of elements required in the dependency array.");
-
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgDependencies), cRequired, sizeof(DEPENDENCY), ARRAY_GROWTH_SIZE);
-    ExitOnFailure(hr, "Failed to allocate memory for the dependency array.");
-
-    pDependency = static_cast<DEPENDENCY*>(&(*prgDependencies)[*pcDependencies]);
-    ExitOnNull(pDependency, hr, E_POINTER, "The dependency element in the array is invalid.");
-
-    hr = StrAllocString(&(pDependency->sczKey), wzKey, 0);
-    ExitOnFailure(hr, "Failed to allocate the string key in the dependency array.");
-
-    if (wzName)
-    {
-        hr = StrAllocString(&(pDependency->sczName), wzName, 0);
-        ExitOnFailure(hr, "Failed to allocate the string name in the dependency array.");
-    }
-
-    // Update the number of current elements in the dependency array.
-    *pcDependencies = cRequired;
-
-LExit:
     return hr;
 }

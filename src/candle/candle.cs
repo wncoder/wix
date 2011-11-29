@@ -406,7 +406,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
 
                         if (!CommandLine.IsValidArg(args, ++i))
                         {
-                            this.messageHandler.Display(this, WixErrors.InvalidPlatformParameter(String.Empty));
+                            this.messageHandler.Display(this, WixErrors.InvalidPlatformParameter(parameter, String.Empty));
                             return;
                         }
 
@@ -424,7 +424,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                         }
                         else
                         {
-                            this.messageHandler.Display(this, WixErrors.InvalidPlatformParameter(args[i]));
+                            this.messageHandler.Display(this, WixErrors.InvalidPlatformParameter(parameter, args[i]));
                         }
                     }
                     else if ('p' == parameter[0])

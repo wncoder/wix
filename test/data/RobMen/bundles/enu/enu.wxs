@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Bundle Name="~Bundle enu"
+        Manufacturer="Microsoft Corporation"
+        Version="1.0.1.0"
+        Tag="enu"
+        DisableRemove="yes">
+   <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
+
+   <Chain>
+      <MsiPackage Vital='yes' SourceFile='Package5-en-US.msi' />
+   </Chain>
+</Bundle>
+</Wix>

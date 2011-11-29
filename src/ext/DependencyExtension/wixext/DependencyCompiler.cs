@@ -34,6 +34,18 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
     /// </summary>
     public sealed class DependencyCompiler : CompilerExtension
     {
+        /// <summary>
+        /// Package type when parsing the Provides element.
+        /// </summary>
+        private enum PackageType
+        {
+            None,
+            ExePackage,
+            MsiPackage,
+            MspPackage,
+            MsuPackage
+        }
+
         private XmlSchema schema;
 
         public DependencyCompiler()
@@ -63,7 +75,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     switch (attribute.LocalName)
                     {
                         case "ProviderKey":
-                            this.ParseProviderKeyAttribute(sourceLineNumbers, attribute);
+                            this.ParseProviderKeyAttribute(sourceLineNumbers, parentElement, attribute);
                             break;
                         default:
                             this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
@@ -85,6 +97,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// <param name="contextValues">Extra information about the context in which this element is being parsed.</param>
         public override void ParseElement(SourceLineNumberCollection sourceLineNumbers, XmlElement parentElement, XmlElement element, params string[] contextValues)
         {
+            PackageType packageType = PackageType.None;
+
             switch (parentElement.LocalName)
             {
                 case "Bundle":
@@ -102,25 +116,36 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     }
                     break;
                 case "ExePackage":
+                    packageType = PackageType.ExePackage;
+                    break;
                 case "MsiPackage":
+                    packageType = PackageType.MsiPackage;
+                    break;
                 case "MspPackage":
+                    packageType = PackageType.MspPackage;
+                    break;
                 case "MsuPackage":
-                    string packageId = contextValues[0];
-
-                    switch (element.LocalName)
-                    {
-                        case "Provides":
-                            string keyPath = null;
-                            this.ParseProvidesElement(element, true, ref keyPath, packageId);
-                            break;
-                        default:
-                            this.Core.UnexpectedElement(parentElement, element);
-                            break;
-                    }
+                    packageType = PackageType.MsuPackage;
                     break;
                 default:
                     this.Core.UnexpectedElement(parentElement, element);
                     break;
+            }
+
+            if (PackageType.None != packageType)
+            {
+                string packageId = contextValues[0];
+
+                switch (element.LocalName)
+                {
+                    case "Provides":
+                        string keyPath = null;
+                        this.ParseProvidesElement(element, packageType, ref keyPath, packageId);
+                        break;
+                    default:
+                        this.Core.UnexpectedElement(parentElement, element);
+                        break;
+                }
             }
         }
 
@@ -145,7 +170,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     switch (element.LocalName)
                     {
                         case "Provides":
-                            keyPathType = this.ParseProvidesElement(element, false, ref keyPath, componentId);
+                            keyPathType = this.ParseProvidesElement(element, PackageType.None, ref keyPath, componentId);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -164,11 +189,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// Processes the ProviderKey bundle attribute.
         /// </summary>
         /// <param name="sourceLineNumbers">Source line number for the parent element.</param>
+        /// <param name="parentElement">Parent element of attribute.</param>
         /// <param name="attribute">The XML attribute for the ProviderKey attribute.</param>
-        private void ParseProviderKeyAttribute(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute)
+        private void ParseProviderKeyAttribute(SourceLineNumberCollection sourceLineNumbers, XmlElement parentElement, XmlAttribute attribute)
         {
             string id = null;
             string providerKey = null;
+            int illegalChar = -1;
 
             switch (attribute.LocalName)
             {
@@ -178,6 +205,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 default:
                     this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
                     break;
+            }
+
+            // Make sure the key does not contain any illegal characters or values.
+            if (String.IsNullOrEmpty(providerKey))
+            {
+                this.Core.OnMessage(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, parentElement.LocalName, attribute.LocalName));
+            }
+            else if (0 <= (illegalChar = providerKey.IndexOfAny(DependencyCommon.InvalidCharacters)))
+            {
+                StringBuilder sb = new StringBuilder(DependencyCommon.InvalidCharacters.Length * 2);
+                Array.ForEach<char>(DependencyCommon.InvalidCharacters, c => sb.Append(c).Append(" "));
+
+                this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "ProviderKey", providerKey[illegalChar], sb.ToString()));
+            }
+            else if ("ALL" == providerKey)
+            {
+                this.Core.OnMessage(DependencyErrors.ReservedValue(sourceLineNumbers, parentElement.LocalName, "ProviderKey", providerKey));
             }
 
             // Generate the primary key for the row.
@@ -191,6 +235,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[0] = id;
                 row[1] = id;
                 row[2] = providerKey;
+                row[5] = DependencyCommon.ProvidesAttributesBundle;
             }
         }
 
@@ -198,18 +243,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// Processes the Provides element.
         /// </summary>
         /// <param name="node">The XML node for the Provides element.</param>
-        /// <param name="isPackage">True if authored for a package; otherwise, false if authored for a component.</param>
+        /// <param name="packageType">The type of the package being chained into a bundle, or "None" if building an MSI package.</param>
         /// <param name="keyPath">Explicit key path.</param>
         /// <param name="parentId">The identifier of the parent component or package.</param>
         /// <returns>The type of key path if set.</returns>
-        private CompilerExtension.ComponentKeypathType ParseProvidesElement(XmlNode node, bool isPackage, ref string keyPath, string parentId)
+        private CompilerExtension.ComponentKeypathType ParseProvidesElement(XmlNode node, PackageType packageType, ref string keyPath, string parentId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             CompilerExtension.ComponentKeypathType keyPathType = CompilerExtension.ComponentKeypathType.None;
             string id = null;
             string key = null;
-            string displayKey = null;
+            string version = null;
+            string displayName = null;
             int attributes = 0;
+            int illegalChar = -1;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -223,8 +270,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         case "Key":
                             key = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
-                        case "DisplayKey":
-                            displayKey = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                        case "Version":
+                            version = this.Core.GetAttributeVersionValue(sourceLineNumbers, attrib, true);
+                            break;
+                        case "DisplayName":
+                            displayName = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -237,31 +287,56 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
+            // Make sure the key is valid. The key will default to the ProductCode for MSI packages
+            // and the package code for MSP packages in the binder if not specified.
             if (!String.IsNullOrEmpty(key))
             {
-                // Make sure the key does not contain a semicolon.
-                if (0 <= key.IndexOf(";", StringComparison.Ordinal))
+                // Make sure the key does not contain any illegal characters or values.
+                if (0 <= (illegalChar = key.IndexOfAny(DependencyCommon.InvalidCharacters)))
                 {
-                    this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "Key", ";"));
+                    StringBuilder sb = new StringBuilder(DependencyCommon.InvalidCharacters.Length * 2);
+                    Array.ForEach<char>(DependencyCommon.InvalidCharacters, c => sb.Append(c).Append(" "));
+
+                    this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "Key", key[illegalChar], sb.ToString()));
+                }
+                else if ("ALL" == key)
+                {
+                    this.Core.OnMessage(DependencyErrors.ReservedValue(sourceLineNumbers, node.LocalName, "Key", key));
                 }
             }
-            else if (isPackage)
+            else if (PackageType.ExePackage == packageType || PackageType.MsuPackage == packageType)
             {
                 // Must specify the provider key when authored for a package.
-                if (String.IsNullOrEmpty(key))
-                {
-                    this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Key"));
-                }
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Key"));
             }
-            else
+            else if (PackageType.None == packageType)
             {
                 // Make sure the ProductCode is authored and set the key.
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", "ProductCode");
                 key = "!(bind.property.ProductCode)";
             }
 
+            // The Version attribute should not be authored in or for an MSI package.
+            if (!String.IsNullOrEmpty(version))
+            {
+                switch (packageType)
+                {
+                    case PackageType.None:
+                        this.Core.OnMessage(DependencyWarnings.DiscouragedVersionAttribute(sourceLineNumbers));
+                        break;
+                    case PackageType.MsiPackage:
+                        this.Core.OnMessage(DependencyWarnings.DiscouragedVersionAttribute(sourceLineNumbers, parentId));
+                        break;
+                }
+            }
+            else if (PackageType.MspPackage == packageType || PackageType.MsuPackage == packageType)
+            {
+                // Must specify the Version when authored for packages that do not contain a version.
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Version"));
+            }
+
             // Need the element ID for child element processing, so generate now if not authored.
-            if (null == id)
+            if (String.IsNullOrEmpty(id))
             {
                 id = this.Core.GenerateIdentifier("dep", node.LocalName, parentId, key);
             }
@@ -300,17 +375,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[1] = parentId;
                 row[2] = key;
 
-                if (null != displayKey)
+                if (!String.IsNullOrEmpty(version))
                 {
-                    row[3] = displayKey;
+                    row[3] = version;
+                }
+
+                if (!String.IsNullOrEmpty(displayName))
+                {
+                    row[4] = displayName;
                 }
 
                 if (0 != attributes)
                 {
-                    row[4] = attributes;
+                    row[5] = attributes;
                 }
 
-                if (!isPackage)
+                if (PackageType.None == packageType)
                 {
                     // Reference the custom action to check for dependencies on the current provider.
                     this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyCheck");
@@ -339,19 +419,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     row[1] = -1;
                     row[2] = keyProvides;
                     row[3] = "Version";
-                    row[4] = "[ProductVersion]";
+                    row[4] = !String.IsNullOrEmpty(version) ? version : "[ProductVersion]";
                     row[5] = parentId;
 
-                    if (null != displayKey)
-                    {
-                        row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                        row[0] = this.Core.GenerateIdentifier("reg", id, "DisplayKey");
-                        row[1] = -1;
-                        row[2] = keyProvides;
-                        row[3] = "DisplayKey";
-                        row[4] = displayKey;
-                        row[5] = parentId;
-                    }
+                    row = this.Core.CreateRow(sourceLineNumbers, "Registry");
+                    row[0] = this.Core.GenerateIdentifier("reg", id, "DisplayName");
+                    row[1] = -1;
+                    row[2] = keyProvides;
+                    row[3] = "DisplayName";
+                    row[4] = !String.IsNullOrEmpty(displayName) ? displayName : "[ProductName]";
+                    row[5] = parentId;
 
                     if (0 != attributes)
                     {
@@ -382,6 +459,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             string minVersion = null;
             string maxVersion = null;
             int attributes = 0;
+            int illegalChar = -1;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -439,11 +517,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null == id)
+            if (String.IsNullOrEmpty(id))
             {
                 // Generate an ID only if this element is authored under a Provides element; otherwise, a RequiresRef
                 // element will be necessary and the Id attribute will be required.
-                if (null != providerId)
+                if (!String.IsNullOrEmpty(providerId))
                 {
                     id = this.Core.GenerateIdentifier("dep", node.LocalName, providerKey);
                 }
@@ -453,14 +531,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null == providerKey)
+            if (String.IsNullOrEmpty(providerKey))
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "ProviderKey"));
             }
-            // Make sure the key does not contain a semicolon.
-            else if (0 <= providerKey.IndexOf(";", StringComparison.Ordinal))
+            // Make sure the key does not contain any illegal characters.
+            else if (0 <= (illegalChar = providerKey.IndexOfAny(DependencyCommon.InvalidCharacters)))
             {
-                this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "ProviderKey", ";"));
+                StringBuilder sb = new StringBuilder(DependencyCommon.InvalidCharacters.Length * 2);
+                Array.ForEach<char>(DependencyCommon.InvalidCharacters, c => sb.Append(c).Append(" "));
+
+                this.Core.OnMessage(DependencyErrors.IllegalCharactersInProvider(sourceLineNumbers, "ProviderKey", providerKey[illegalChar], sb.ToString()));
             }
 
 
@@ -478,7 +559,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 // Create the relationship between this WixDependency row and the WixDependencyProvider row.
-                if (null != providerId)
+                if (!String.IsNullOrEmpty(providerId))
                 {
                     // Create the relationship between the WixDependency row and the parent WixDependencyProvider row.
                     row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyRef");
@@ -533,7 +614,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null == id)
+            if (String.IsNullOrEmpty(id))
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "Id"));
             }

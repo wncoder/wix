@@ -19,12 +19,12 @@
 #include "precomp.h"
 
 #define IDNOACTION 0
-#define INITIAL_STRINGDICT_SIZE 10
+#define INITIAL_STRINGDICT_SIZE 4
 
 LPCWSTR vcsDependencyProviderQuery =
-    L"SELECT `WixDependencyProvider`.`WixDependencyProvider`, `WixDependencyProvider`.`Component_`, `WixDependencyProvider`.`ProviderKey`, `WixDependencyProvider`.`DisplayKey`, `WixDependencyProvider`.`Attributes` "
+    L"SELECT `WixDependencyProvider`.`WixDependencyProvider`, `WixDependencyProvider`.`Component_`, `WixDependencyProvider`.`ProviderKey`, `WixDependencyProvider`.`Attributes` "
     L"FROM `WixDependencyProvider`";
-enum eDependencyProviderQuery { dpqId = 1, dpqComponent, dpqProviderKey, dpqDisplayKey, dpqAttributes };
+enum eDependencyProviderQuery { dpqId = 1, dpqComponent, dpqProviderKey, dpqAttributes };
 
 LPCWSTR vcsDependencyQuery =
     L"SELECT `WixDependency`.`WixDependency`, `WixDependencyProvider`.`Component_`, `WixDependency`.`ProviderKey`, `WixDependency`.`MinVersion`, `WixDependency`.`MaxVersion`, `WixDependency`.`Attributes` "
@@ -51,6 +51,10 @@ static HRESULT CreateDependencyRecord(
     __in_ecount(cDependencies) const DEPENDENCY* rgDependencies,
     __in UINT cDependencies,
     __out MSIHANDLE *phRecord
+    );
+
+static LPCWSTR LogDependencyName(
+    __in_z LPCWSTR wzName
     );
 
 /***************************************************************************
@@ -466,25 +470,27 @@ static HRESULT CreateDependencyRecord(
     // Now loop through each dependency and add the key and name to the record.
     for (UINT i = 0; i < cDependencies; i++)
     {
+        const DEPENDENCY* pDependency = &rgDependencies[i];
+
         // Log message type-specific information.
         switch (iMessageId)
         {
         // Send a user message when installing a component that is missing some dependencies.
         case msierrDependencyMissingDependencies:
-            WcaLog(LOGMSG_VERBOSE, "The dependency \"%ls\" is missing or is not the required version.", rgDependencies[i].sczKey);
+            WcaLog(LOGMSG_VERBOSE, "The dependency \"%ls\" is missing or is not the required version.", pDependency->sczKey);
             break;
 
         // Send a user message when uninstalling a component that still has registered dependents.
         case msierrDependencyHasDependents:
-            WcaLog(LOGMSG_VERBOSE, "Found existing dependent \"%ls\".", rgDependencies[i].sczKey);
+            WcaLog(LOGMSG_VERBOSE, "Found dependent \"%ls\", name: \"%ls\".", pDependency->sczKey, LogDependencyName(pDependency->sczName));
             break;
         }
 
-        er = ::MsiRecordSetStringW(hRec, ++iParam, rgDependencies[i].sczKey);
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Failed to set the dependency key \"%ls\" into the message record.", rgDependencies[i].sczKey);
+        er = ::MsiRecordSetStringW(hRec, ++iParam, pDependency->sczKey);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Failed to set the dependency key \"%ls\" into the message record.", pDependency->sczKey);
 
-        er = ::MsiRecordSetStringW(hRec, ++iParam, rgDependencies[i].sczName);
-        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Failed to set the dependency name \"%ls\" into the message record.", rgDependencies[i].sczName);
+        er = ::MsiRecordSetStringW(hRec, ++iParam, pDependency->sczName);
+        ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "Failed to set the dependency name \"%ls\" into the message record.", pDependency->sczName);
     }
 
     // Only assign the out parameter if successful to this point.
@@ -498,4 +504,15 @@ LExit:
     }
 
     return hr;
+}
+
+/***************************************************************************
+ LogDependencyName - Returns the dependency name or "Unknown" if null.
+
+***************************************************************************/
+static LPCWSTR LogDependencyName(
+    __in_z LPCWSTR wzName
+    )
+{
+    return wzName ? wzName : L"Unknown";
 }

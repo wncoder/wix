@@ -1602,3 +1602,42 @@ RobMen: SFBUG:3429406 - ensure signed bundles with attached containers stay
 
 EricStJ: SFBUG:3428846 - set SaveOperatingEnvironment=false when harvesting
                          projects inside msbuild
+
+RobMen: Related bundles should not assume Burn exe protocol is forward
+        compatible and move protocol compatibility to Beta.
+
+RobMen: SFBUG:3423401 - use DisableUninstall and DisableModify to hide bundles
+                        from ARP.
+        Deprecate Bundle/@DisableRepair since that only works for MSI files.
+
+RobMen: Burn now factors in the language for related packages.
+
+PMarcu: Add retries around database commit to handle msi locking issue.
+
+HeathS: Add dependency checks and registration in the Burn engine.
+        SFBUG:3386927 - Properly ref-count packages during upgrade.
+        SFBUG:3387046 - Properly ref-count packages during unintall.
+        SFBUG:3405221 - Properly ref-count packages during rollback.
+        
+BobArnson: When resuming after a reboot, via the RunOnce key, re-launch the 
+           bundle and exit so Windows will finish processing RunOnce and load 
+           the shell. The prior behavior locked the user on a shell-less black
+           desktop until the resumed chain was completed, which is a bit 
+           presumptious.
+
+HeathS: Support old WixDependencyProvider table schema in the binder.
+
+BriaRo: Refactor of Differ.cs in order to make large code blocks resuable.
+
+HeathS: SFBUG:3435047 - Do not register dependencies on failed packages.
+
+BobArnson: Preserve Field.PreviousData during transform diffing, so the 
+           original field value is available in the .wixpdb.
+
+HeathS: Register providers immediately after package execution.
+        SFBUG:3435047 - Do not fail the dependency check for non-vital packages.
+
+AaronSte: Add links to Burn documentation topics that are not currently 
+          reachable in the online docs.
+
+HeathS: Pass dependencies to ignore to packages and related bundles.

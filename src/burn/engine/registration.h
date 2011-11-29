@@ -107,8 +107,6 @@ typedef struct _BURN_REGISTRATION
     LPWSTR sczContact;
     //DWORD64 qwEstimatedSize; // TODO: size should come from disk cost calculation
     BURN_REGISTRATION_MODIFY_TYPE modify;
-    BOOL fNoRepairDefined;
-    BOOL fNoRepair;
     BOOL fNoRemoveDefined;
     BOOL fNoRemove;
 

@@ -185,6 +185,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
     /// </summary>
     public sealed class Database : MsiHandle
     {
+        private const int STG_E_LOCKVIOLATION = unchecked((int)0x80030021);
+
         /// <summary>
         /// Constructor that opens an MSI database.
         /// </summary>
@@ -241,11 +243,25 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
         /// </summary>
         public void Commit()
         {
-            int error = MsiInterop.MsiDatabaseCommit(this.Handle);
-            if (0 != error)
+            // Retry this call 3 times to deal with an MSI internal locking problem.
+            int retryLimit = 3;
+            int error = 0;
+
+            for (int i = 0; i < retryLimit; ++i)
             {
-                throw new MsiException(error);
+                error = MsiInterop.MsiDatabaseCommit(this.Handle);
+
+                if (0 == error)
+                {
+                    return;
+                }
+                else if (STG_E_LOCKVIOLATION != error)
+                {
+                    break;
+                }
             }
+
+            throw new MsiException(error);
         }
 
         /// <summary>

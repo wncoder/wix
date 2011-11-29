@@ -9,6 +9,9 @@
     <ProjectReference Include="packages\Dv1-PerMachine\Dv1.wixproj" />
     <ProjectReference Include="packages\Dv1.0.1-PerMachine\Dv1.0.1.wixproj" />
 
+    <ProjectReference Include="bundles\enu\enu.wixproj" />
+    <ProjectReference Include="bundles\jpn\jpn.wixproj" />
+
     <ProjectReference Include="packages\Package1\Package1.wixproj"/>
     <ProjectReference Include="packages\Package3\Package3.wixproj"/>
 

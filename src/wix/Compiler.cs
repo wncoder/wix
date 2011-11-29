@@ -19664,7 +19664,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoDefaultType compressed = YesNoDefaultType.Default;
             int disableModify = -1;
             YesNoType disableRemove = YesNoType.NotSet;
-            YesNoType disableRepair = YesNoType.NotSet;
             string helpTelephone = null;
             string helpUrl = null;
             string manufacturer = null;
@@ -19721,7 +19720,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             disableRemove = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "DisableRepair":
-                            disableRepair = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            this.core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
                             break;
                         case "HelpTelephone":
                             helpTelephone = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -19783,46 +19782,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (String.IsNullOrEmpty(name))
             {
-                if (!String.IsNullOrEmpty(aboutUrl))
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "AboutUrl", "Name"));
-                }
-
-                if (-1 != disableModify)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "DisableModify", "Name"));
-                }
-
-                if (YesNoType.NotSet != disableRemove)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "DisableRemove", "Name"));
-                }
-
-                if (YesNoType.NotSet != disableRepair)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "DisableRepair", "Name"));
-                }
-
-                if (!String.IsNullOrEmpty(helpTelephone))
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "HelpTelephone", "Name"));
-                }
-
-                if (!String.IsNullOrEmpty(helpUrl))
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "HelpUrl", "Name"));
-                }
-
-                if (!String.IsNullOrEmpty(manufacturer))
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "Manufacturer", "Name"));
-                }
-
-                if (!String.IsNullOrEmpty(updateUrl))
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.LocalName, "UpdateUrl", "Name"));
-                }
-
                 logVariablePrefixAndExtension = String.Concat("WixBundleLog:Setup.log");
             }
             else
@@ -19954,10 +19913,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     row[5] = (YesNoType.Yes == disableRemove) ? 1 : 0;
                 }
-                if (YesNoType.NotSet != disableRepair)
-                {
-                    row[6] = (YesNoType.Yes == disableRepair) ? 1 : 0;
-                }
+                // row[6] - (deprecated) "disable repair"
                 row[7] = helpTelephone;
                 row[8] = helpUrl;
                 row[9] = manufacturer;

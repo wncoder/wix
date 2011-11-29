@@ -70,8 +70,8 @@ DAPI_(HRESULT) DepCheckDependents(
 DAPI_(HRESULT) DepRegisterDependency(
     __in HKEY hkHive,
     __in_z LPCWSTR wzProviderKey,
-    __in_z LPCWSTR wzDisplayKey,
     __in_z LPCWSTR wzVersion,
+    __in_z LPCWSTR wzDisplayName,
     __in int iAttributes
     );
 
@@ -110,6 +110,17 @@ DAPI_(HRESULT) DepUnregisterDependent(
     __in HKEY hkHive,
     __in_z LPCWSTR wzDependencyProviderKey,
     __in_z LPCWSTR wzProviderKey
+    );
+
+/***************************************************************************
+ DependencyArrayAlloc - Allocates or expands an array of DEPENDENCY structs.
+
+***************************************************************************/
+DAPI_(HRESULT) DepDependencyArrayAlloc(
+    __deref_inout_ecount_opt(*pcDependencies) DEPENDENCY** prgDependencies,
+    __inout LPUINT pcDependencies,
+    __in_z LPCWSTR wzKey,
+    __in_z_opt LPCWSTR wzName
     );
 
 /***************************************************************************

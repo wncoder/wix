@@ -3346,8 +3346,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Set the overridable bundle provider key.
             this.SetBundleProviderKey(bundle, bundleInfo);
 
-            // Load the dependencies authored into the manifest.
-            this.ImportDependencyProviders(bundle, allPackages);
+            // Import or generate dependency providers for packages in the manifest.
+            this.ProcessDependencyProviders(bundle, allPackages);
 
             // Generate the core-defined BA manifest tables...
             this.GenerateBAManifestPackageTables(bundle, chain.Packages);
@@ -3517,11 +3517,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.core.OnMessage(WixVerboses.SwitchingToPerUserPackage(package.PackagePayload.FileInfo.FullName));
                     bundleInfo.PerMachine = false;
                 }
-
-                if (bundleInfo.RegistrationInfo == null && package.RegistrationInfo != null)
-                {
-                    bundleInfo.RegistrationInfo = package.RegistrationInfo;
-                }
             }
         }
 
@@ -3529,7 +3524,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             Table wixBundlePropertiesTable = bundle.EnsureTable(this.core.TableDefinitions["WixBundleProperties"]);
             Row row = wixBundlePropertiesTable.CreateRow(null);
-            row[0] = bundleInfo.RegistrationInfo == null ? null : bundleInfo.RegistrationInfo.Name;
+            row[0] = bundleInfo.RegistrationInfo.Name;
             row[1] = bundleInfo.LogPathVariable;
             row[2] = (YesNoDefaultType.Yes == bundleInfo.Compressed) ? "yes" : "no";
         }
@@ -3730,58 +3725,52 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("Version", bundleInfo.Version);
                 writer.WriteAttributeString("ProviderKey", bundleInfo.ProviderKey);
 
-                if (null != bundleInfo.RegistrationInfo)
+                writer.WriteStartElement("Arp");
+                writer.WriteAttributeString("Register", (0 < bundleInfo.RegistrationInfo.DisableModify && bundleInfo.RegistrationInfo.DisableRemove) ? "no" : "yes"); // do not register if disabled modify and remove.
+                writer.WriteAttributeString("DisplayName", bundleInfo.RegistrationInfo.Name);
+                writer.WriteAttributeString("DisplayVersion", bundleInfo.Version);
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
                 {
-                    writer.WriteStartElement("Arp");
-                    writer.WriteAttributeString("DisplayName", bundleInfo.RegistrationInfo.Name);
-                    writer.WriteAttributeString("DisplayVersion", bundleInfo.Version);
-
-                    if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
-                    {
-                        writer.WriteAttributeString("Publisher", bundleInfo.RegistrationInfo.Publisher);
-                    }
-
-                    if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpLink))
-                    {
-                        writer.WriteAttributeString("HelpLink", bundleInfo.RegistrationInfo.HelpLink);
-                    }
-
-                    if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpTelephone))
-                    {
-                        writer.WriteAttributeString("HelpTelephone", bundleInfo.RegistrationInfo.HelpTelephone);
-                    }
-
-                    if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.AboutUrl))
-                    {
-                        writer.WriteAttributeString("AboutUrl", bundleInfo.RegistrationInfo.AboutUrl);
-                    }
-
-                    if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.UpdateUrl))
-                    {
-                        writer.WriteAttributeString("UpdateUrl", bundleInfo.RegistrationInfo.UpdateUrl);
-                    }
-
-                    if (1 == bundleInfo.RegistrationInfo.DisableModify)
-                    {
-                        writer.WriteAttributeString("DisableModify", "yes");
-                    }
-                    else if (2 == bundleInfo.RegistrationInfo.DisableModify)
-                    {
-                        writer.WriteAttributeString("DisableModify", "button");
-                    }
-
-                    if (bundleInfo.RegistrationInfo.DisableRepair)
-                    {
-                        writer.WriteAttributeString("DisableRepair", "yes");
-                    }
-
-                    if (bundleInfo.RegistrationInfo.DisableRemove)
-                    {
-                        writer.WriteAttributeString("DisableRemove", "yes");
-                    }
-                    writer.WriteEndElement();
+                    writer.WriteAttributeString("Publisher", bundleInfo.RegistrationInfo.Publisher);
                 }
-                writer.WriteEndElement();
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpLink))
+                {
+                    writer.WriteAttributeString("HelpLink", bundleInfo.RegistrationInfo.HelpLink);
+                }
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpTelephone))
+                {
+                    writer.WriteAttributeString("HelpTelephone", bundleInfo.RegistrationInfo.HelpTelephone);
+                }
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.AboutUrl))
+                {
+                    writer.WriteAttributeString("AboutUrl", bundleInfo.RegistrationInfo.AboutUrl);
+                }
+
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.UpdateUrl))
+                {
+                    writer.WriteAttributeString("UpdateUrl", bundleInfo.RegistrationInfo.UpdateUrl);
+                }
+
+                if (1 == bundleInfo.RegistrationInfo.DisableModify)
+                {
+                    writer.WriteAttributeString("DisableModify", "yes");
+                }
+                else if (2 == bundleInfo.RegistrationInfo.DisableModify)
+                {
+                    writer.WriteAttributeString("DisableModify", "button");
+                }
+
+                if (bundleInfo.RegistrationInfo.DisableRemove)
+                {
+                    writer.WriteAttributeString("DisableRemove", "yes");
+                }
+                writer.WriteEndElement(); // </Arp>
+
+                writer.WriteEndElement(); // </Register>
 
                 // write the Chain...
                 writer.WriteStartElement("Chain");
@@ -3968,22 +3957,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
             strings["FileVersion"] = bundleInfo.Version;    // string versions do not have to be four parts.
             strings["ProductVersion"] = bundleInfo.Version; // string versions do not have to be four parts.
 
-            if (null != bundleInfo.RegistrationInfo)
+            if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Name))
             {
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Name))
-                {
-                    strings["ProductName"] = bundleInfo.RegistrationInfo.Name;
-                    strings["FileDescription"] = bundleInfo.RegistrationInfo.Name;
-                }
+                strings["ProductName"] = bundleInfo.RegistrationInfo.Name;
+                strings["FileDescription"] = bundleInfo.RegistrationInfo.Name;
+            }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
-                {
-                    strings["CompanyName"] = bundleInfo.RegistrationInfo.Publisher;
-                }
-                else
-                {
-                    strings["CompanyName"] = String.Empty;
-                }
+            if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
+            {
+                strings["CompanyName"] = bundleInfo.RegistrationInfo.Publisher;
+            }
+            else
+            {
+                strings["CompanyName"] = String.Empty;
             }
 
             if (!String.IsNullOrEmpty(bundleInfo.IconPath))
@@ -6817,19 +6803,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Version = (string)row[0];
                 this.Copyright = (string)row[1];
 
-                if (null != row[2])
-                {
-                    this.RegistrationInfo = new RegistrationInfo();
-                    this.RegistrationInfo.Name = (string)row[2];
-                    this.RegistrationInfo.AboutUrl = (string)row[3];
-                    this.RegistrationInfo.DisableModify = (null != row[4]) ? (int)row[4] : 0;
-                    this.RegistrationInfo.DisableRemove = (null != row[5] && 1 == (int)row[5]);
-                    this.RegistrationInfo.DisableRepair = (null != row[6] && 1 == (int)row[6]);
-                    this.RegistrationInfo.HelpTelephone = (string)row[7];
-                    this.RegistrationInfo.HelpLink = (string)row[8];
-                    this.RegistrationInfo.Publisher = (string)row[9];
-                    this.RegistrationInfo.UpdateUrl = (string)row[10];
-                }
+                this.RegistrationInfo = new RegistrationInfo();
+                this.RegistrationInfo.Name = (string)row[2];
+                this.RegistrationInfo.AboutUrl = (string)row[3];
+                this.RegistrationInfo.DisableModify = (null != row[4]) ? (int)row[4] : 0;
+                this.RegistrationInfo.DisableRemove = (null != row[5] && 1 == (int)row[5]);
+                // (deprecated) this.RegistrationInfo.DisableRepair = (null != row[6] && 1 == (int)row[6]);
+                this.RegistrationInfo.HelpTelephone = (string)row[7];
+                this.RegistrationInfo.HelpLink = (string)row[8];
+                this.RegistrationInfo.Publisher = (string)row[9];
+                this.RegistrationInfo.UpdateUrl = (string)row[10];
 
                 if (null != row[11])
                 {
@@ -7015,6 +6998,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private class ChainPackageInfo
         {
             private const string propertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
+            private static readonly Version EmptyVersion = new Version(0, 0, 0, 0);
 
             public ChainPackageInfo(Row row, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
                 : this((string)row[0], (string)row[1], (string)row[2], (string)row[3],
@@ -7204,7 +7188,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string DisplayName { get; private set; }
             public string Description { get; private set; }
 
-            public RegistrationInfo RegistrationInfo { get; private set; }
             public List<PayloadInfo> Payloads { get; private set; }
             public List<RelatedPackage> RelatedPackages { get; private set; }
             public List<MsiFeature> MsiFeatures { get; private set; }
@@ -7504,7 +7487,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // Import any dependency providers from the MSI.
                         if (db.Tables.Contains("WixDependencyProvider"))
                         {
-                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`"))
+                            // Use the old schema (v1) if the Version column does not exist.
+                            bool hasVersion = db.Tables["WixDependencyProvider"].Columns.Contains("Version");
+                            string query = "SELECT `ProviderKey`, `Version`, `DisplayName`, `Attributes` FROM `WixDependencyProvider`";
+
+                            if (!hasVersion)
+                            {
+                                query = "SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`";
+                            }
+
+                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView(query))
                             {
                                 view.Execute();
                                 while (true)
@@ -7517,21 +7509,28 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         }
 
                                         // Import the provider key and attributes.
+                                        ProvidesDependency dependency = null;
                                         string providerKey = record.GetString(1);
-                                        int attributes = record.GetInteger(2);
 
-                                        ProvidesDependency dependency = new ProvidesDependency(providerKey, attributes);
+                                        if (hasVersion)
+                                        {
+                                            string version = record.GetString(2) ?? this.Version;
+                                            string displayName = record.GetString(3) ?? this.DisplayName;
+                                            int attributes = record.GetInteger(4);
+
+                                            dependency = new ProvidesDependency(providerKey, version, displayName, attributes);
+                                        }
+                                        else
+                                        {
+                                            int attributes = record.GetInteger(2);
+
+                                            dependency = new ProvidesDependency(providerKey, this.Version, this.DisplayName, attributes);
+                                        }
+
                                         dependency.Imported = true;
-
                                         this.Provides.Add(dependency);
                                     }
                                 }
-                            }
-
-                            // If any dependencies were imported, add or append the IGNOREDEPENDENCIES property.
-                            if (0 < this.Provides.Count)
-                            {
-                                this.EnsureIgnoreDependencies();
                             }
                         }
                     }
@@ -7628,6 +7627,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(sourcePath);
                     this.DisplayName = versionInfo.ProductName;
                     this.Description = versionInfo.FileDescription;
+
+                    // Use the fixed version info block for the file since the resource text may not be a dotted quad.
+                    Version version = new Version(versionInfo.ProductMajorPart, versionInfo.ProductMinorPart, versionInfo.ProductBuildPart, versionInfo.ProductPrivatePart);
+                    if (ChainPackageInfo.EmptyVersion != version)
+                    {
+                        this.Version = version.ToString();
+                    }
                 }
                 catch (System.IO.IOException e)
                 {
@@ -7651,30 +7657,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                     }
                 }
-            }
-
-            /// <summary>
-            /// Ensures that the IGNOREDEPENDENCIES property exists and contains the burn dependency key variable.
-            /// </summary>
-            private void EnsureIgnoreDependencies()
-            {
-                string ignoreDependencies = "IGNOREDEPENDENCIES";
-                string ignoreDependenciesValue = String.Concat("[", Binder.BURN_BUNDLE_PROVIDER_KEY, "]");
-
-                // Try to find the property.
-                foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
-                {
-                    if (0 == String.CompareOrdinal(ignoreDependencies, propertyInfo.Name))
-                    {
-                        // Append the bundle variable to the property and exit.
-                        propertyInfo.Value = String.Concat(propertyInfo.Value, ";", ignoreDependenciesValue);
-                        return;
-                    }
-                }
-
-                // If we didn't find the property, add it.
-                MsiPropertyInfo ignoreDependenciesProperty = new MsiPropertyInfo(this.Id, ignoreDependencies, ignoreDependenciesValue);
-                this.MsiProperties.Add(ignoreDependenciesProperty);
             }
 
             /// <summary>
@@ -7745,7 +7727,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string AboutUrl { get; set; }
             public string UpdateUrl { get; set; }
             public int DisableModify { get; set; }
-            public bool DisableRepair { get; set; }
             public bool DisableRemove { get; set; }
         }
 
@@ -8137,12 +8118,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         #region DependencyExtension
         /// <summary>
-        /// Imports authored dependency providers for each package in the manifest.
+        /// Imports authored dependency providers for each package in the manifest,
+        /// and generates dependency providers for certain package types that do not
+        /// have a provider defined.
         /// </summary>
         /// <param name="bundle">The <see cref="Output"/> object for the bundle.</param>
         /// <param name="packages">An indexed collection of chained packages.</param>
-        private void ImportDependencyProviders(Output bundle, Dictionary<string, ChainPackageInfo> packages)
+        private void ProcessDependencyProviders(Output bundle, Dictionary<string, ChainPackageInfo> packages)
         {
+            // First import any authored dependencies. These may merge with imported provides from MSI packages.
             Table wixDependencyProviderTable = bundle.Tables["WixDependencyProvider"];
             if (null != wixDependencyProviderTable && 0 < wixDependencyProviderTable.Rows.Count)
             {
@@ -8155,7 +8139,55 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if (packages.TryGetValue(packageId, out package))
                     {
                         ProvidesDependency dependency = new ProvidesDependency(wixDependencyProviderRow);
-                        package.Provides.Add(dependency);
+
+                        if (String.IsNullOrEmpty(dependency.Key))
+                        {
+                            switch (package.ChainPackageType)
+                            {
+                                // The WixDependencyExtension allows an empty Key for MSIs and MSPs.
+                                case Compiler.ChainPackageType.Msi:
+                                    dependency.Key = package.ProductCode;
+                                    break;
+                                case Compiler.ChainPackageType.Msp:
+                                    dependency.Key = package.PatchCode;
+                                    break;
+                            }
+                        }
+
+                        if (String.IsNullOrEmpty(dependency.Version))
+                        {
+                            dependency.Version = package.Version;
+                        }
+
+                        // If the version is still missing, a version could not be harvested from the package and was not authored.
+                        if (String.IsNullOrEmpty(dependency.Version))
+                        {
+                            this.core.OnMessage(WixErrors.MissingDependencyVersion(package.Id));
+                        }
+
+                        if (String.IsNullOrEmpty(dependency.DisplayName))
+                        {
+                            dependency.DisplayName = package.DisplayName;
+                        }
+
+                        if (!package.Provides.Merge(dependency))
+                        {
+                            this.core.OnMessage(WixErrors.DuplicateProviderDependencyKey(dependency.Key, package.Id));
+                        }
+                    }
+                }
+            }
+
+            // Generate providers for MSI packages that still do not have providers.
+            foreach (ChainPackageInfo package in packages.Values)
+            {
+                if (Compiler.ChainPackageType.Msi == package.ChainPackageType && 0 == package.Provides.Count)
+                {
+                    ProvidesDependency dependency = new ProvidesDependency(package.ProductCode, package.Version, package.DisplayName, 0);
+
+                    if (!package.Provides.Merge(dependency))
+                    {
+                        this.core.OnMessage(WixErrors.DuplicateProviderDependencyKey(dependency.Key, package.Id));
                     }
                 }
             }
@@ -8168,12 +8200,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="bundleInfo">The <see cref="BundleInfo"/> containing the provider key and other information for the bundle.</param>
         private void SetBundleProviderKey(Output bundle, BundleInfo bundleInfo)
         {
+            // From DependencyCommon.cs in the WixDependencyExtension.
+            const int ProvidesAttributesBundle = 0x10000;
+
             Table wixDependencyProviderTable = bundle.Tables["WixDependencyProvider"];
             if (null != wixDependencyProviderTable && 0 < wixDependencyProviderTable.Rows.Count)
             {
-                // Only one row should exist in the table.
-                Row wixDependencyProviderRow = wixDependencyProviderTable.Rows[0];
-                bundleInfo.ProviderKey = (string)wixDependencyProviderRow[2];
+                // Search the WixDependencyProvider table for the single bundle provider key.
+                foreach (Row wixDependencyProviderRow in wixDependencyProviderTable.Rows)
+                {
+                    object attributes = wixDependencyProviderRow[5];
+                    if (null != attributes && 0 != (ProvidesAttributesBundle & (int)attributes))
+                    {
+                        bundleInfo.ProviderKey = (string)wixDependencyProviderRow[2];
+                        break;
+                    }
+                }
             }
 
             // Defaults to the bundle ID as the provider key.
@@ -8189,7 +8231,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// </summary>
             /// <param name="row">The <see cref="Row"/> from which data is imported.</param>
             internal ProvidesDependency(Row row)
-                : this((string)row[2], (int?)row[4])
+                : this((string)row[2], (string)row[3], (string)row[4], (int?)row[5])
             {
             }
 
@@ -8198,26 +8240,57 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// </summary>
             /// <param name="key">The unique key of the dependency.</param>
             /// <param name="attributes">Additional attributes for the dependency.</param>
-            internal ProvidesDependency(string key, int? attributes)
+            internal ProvidesDependency(string key, string version, string displayName, int? attributes)
             {
                 this.Key = key;
+                this.Version = version;
+                this.DisplayName = displayName;
                 this.Attributes = attributes;
             }
 
             /// <summary>
-            /// Gets the unique key of the dependency.
+            /// Gets or sets the unique key of the package provider.
             /// </summary>
-            internal string Key { get; private set; }
+            internal string Key { get; set; }
 
             /// <summary>
-            /// Gets the attributes for the dependency.
+            /// Gets or sets the version of the package provider.
             /// </summary>
-            internal int? Attributes { get; private set; }
+            internal string Version { get; set; }
 
             /// <summary>
-            /// Gets whether the dependency was imported from the package.
+            /// Gets or sets the display name of the package provider.
+            /// </summary>
+            internal string DisplayName { get; set; }
+
+            /// <summary>
+            /// Gets or sets the attributes for the dependency.
+            /// </summary>
+            internal int? Attributes { get; set; }
+
+            /// <summary>
+            /// Gets or sets whether the dependency was imported from the package.
             /// </summary>
             internal bool Imported { get; set; }
+
+            /// <summary>
+            /// Gets whether certain properties are the same.
+            /// </summary>
+            /// <param name="other">Another <see cref="ProvidesDependency"/> to compare.</param>
+            /// <remarks>This is not the same as object equality, but only checks a subset of properties
+            /// to determine if the objects are similar and could be merged into a collection.</remarks>
+            /// <returns>True if certain properties are the same.</returns>
+            internal bool Equals(ProvidesDependency other)
+            {
+                if (null != other)
+                {
+                    return this.Key == other.Key &&
+                           this.Version == other.Version &&
+                           this.DisplayName == other.DisplayName;
+                }
+
+                return false;
+            }
 
             /// <summary>
             /// Writes the dependency to the bundle XML manifest.
@@ -8226,8 +8299,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
             internal void WriteXml(XmlTextWriter writer)
             {
                 writer.WriteStartElement("Provides");
-
                 writer.WriteAttributeString("Key", this.Key);
+
+                if (!String.IsNullOrEmpty(this.Version))
+                {
+                    writer.WriteAttributeString("Version", this.Version);
+                }
+
+                if (!String.IsNullOrEmpty(this.DisplayName))
+                {
+                    writer.WriteAttributeString("DisplayName", this.DisplayName);
+                }
 
                 if (this.Imported)
                 {
@@ -8253,9 +8335,37 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             /// <summary>
+            /// Adds the <see cref="ProvidesDependency"/> to the collection if it doesn't already exist.
+            /// </summary>
+            /// <param name="dependency">The <see cref="ProvidesDependency"/> to add to the collection.</param>
+            /// <returns>True if the <see cref="ProvidesDependency"/> was added to the collection; otherwise, false.</returns>
+            /// <exception cref="ArgumentNullException">The <paramref name="dependency"/> parameter is null.</exception>
+            internal bool Merge(ProvidesDependency dependency)
+            {
+                if (null == dependency)
+                {
+                    throw new ArgumentNullException("dependency");
+                }
+
+                // If the dependency key is already in the collection, verify equality for a subset of properties.
+                if (this.Contains(dependency.Key))
+                {
+                    ProvidesDependency current = this[dependency.Key];
+                    if (!current.Equals(dependency))
+                    {
+                        return false;
+                    }
+                }
+
+                base.Add(dependency);
+                return true;
+            }
+
+            /// <summary>
             /// Gets the <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.
             /// </summary>
             /// <param name="dependency">The dependency to index.</param>
+            /// <exception cref="ArgumentNullException">The <paramref name="dependency"/> parameter is null.</exception>
             /// <returns>The <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.</returns>
             protected override string GetKeyForItem(ProvidesDependency dependency)
             {

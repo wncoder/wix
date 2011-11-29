@@ -24,7 +24,8 @@
   <ItemGroup>
     <Reference Include="System" />
     <ProjectReference Include="..\..\..\..\src\ext\BalExtension\mba\core\core.csproj">
-      <Project>{B3887367-D8D7-4FA4-94A7-02A67409905D}</Project>
+      <Project>{015AA197-3CEC-4B06-B635-953B1A9619CF}</Project>
+      <Name>core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="..\..\..\..\WixBuild.Common.targets" />

@@ -127,7 +127,7 @@ MessageId=103
 Severity=Success
 SymbolicName=MSG_DETECTED_RELATED_PACKAGE
 Language=English
-Detected related package: %1!ls!, scope: %2!hs!, version: %3!hs!, operation: %4!hs!
+Detected related package: %1!ls!, scope: %2!hs!, version: %3!hs!, language: %4!u! operation: %5!hs!
 .
 
 MessageId=104
@@ -149,6 +149,13 @@ Severity=Error
 SymbolicName=MSG_FAILED_DETECT_PACKAGE
 Language=English
 Detect failed for package: %2!ls!, error: %1!ls!
+.
+
+MessageId=152
+Severity=Error
+SymbolicName=MSG_FAILED_READ_RELATED_PACKAGE_LANGUAGE
+Language=English
+Detected related package: %2!ls!, but failed to read language: %3!hs!, error: 0x%1!x!
 .
 
 MessageId=199
@@ -260,42 +267,77 @@ MessageId=320
 Severity=Success
 SymbolicName=MSG_DEPENDENCY_BUNDLE_REGISTER
 Language=English
-Registering bundle dependency key: %1!ls!, version %2!ls!
+Registering bundle dependency provider: %1!ls!, version: %2!ls!
 .
 
 MessageId=321
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_NOPROVIDERS
 Language=English
-Removing bundle dependency key: %1!ls!
+Skipping dependency registration on package with no dependency providers: %1!ls!
 .
 
 MessageId=322
-Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE
 Language=English
-Registering bundle dependency on package: %1!ls!
+Skipping cross-scope dependency registration on package: %1!ls!, bundle scope: %2!hs!, package scope: %3!hs!
 .
 
 MessageId=323
 Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
+SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER
 Language=English
-Removing bundle dependency on package: %1!ls!
+Registering package dependency provider: %1!ls!, version: %2!ls!, package: %3!ls!
 .
 
 MessageId=324
 Severity=Warning
-SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE
+SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_MISSING
 Language=English
-Skipping cross-scope bundle dependency registration on package: %1!ls!, bundle scope: %2!hs!, package scope: %3!hs!
+Skipping dependency registration on missing package provider: %1!ls!, package: %2!ls!
 .
 
 MessageId=325
-Severity=Warning
-SymbolicName=MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_REGISTER_DEPENDENCY
 Language=English
-Skipping bundle dependency registration on failed package: %1!ls!
+Registering dependency: %1!ls! on package provider: %2!ls!, package: %3!ls!
+.
+
+MessageId=326
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER_DEPENDENCY
+Language=English
+Removing dependency: %1!ls! on package provider: %2!ls!, package %3!ls!
+.
+
+MessageId=327
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_HASDEPENDENTS
+Language=English
+Will not uninstall package: %1!ls!, found dependents: %2!d!
+.
+
+MessageId=328
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_DEPENDENT
+Language=English
+Found dependent: %1!ls!, name: %2!ls!
+.
+
+MessageId=329
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
+Language=English
+Removing package dependency provider: %1!ls!, package: %2!ls!
+.
+
+MessageId=330
+Severity=Success
+SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
+Language=English
+Removing bundle dependency provider: %1!ls!
 .
 
 MessageId=348

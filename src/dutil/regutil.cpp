@@ -898,3 +898,23 @@ extern "C" HRESULT DAPI RegWriteQword(
 LExit:
     return hr;
 }
+
+/********************************************************************
+ RegQueryKey - queries the key for the number of subkeys and values.
+
+*********************************************************************/
+extern "C" HRESULT DAPI RegQueryKey(
+    __in HKEY hk,
+    __out_opt DWORD* pcSubKeys,
+    __out_opt DWORD* pcValues
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+
+    er = vpfnRegQueryInfoKeyW(hk, NULL, NULL, NULL, pcSubKeys, NULL, NULL, pcValues, NULL, NULL, NULL, NULL);
+    ExitOnWin32Error(er, hr, "Failed to get the number of subkeys and values under registry key.");
+
+LExit:
+    return hr;
+}

@@ -186,6 +186,7 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             BURN_PACKAGE* pPackage;
             BOOTSTRAPPER_ACTION_STATE action;
+            LPWSTR sczIgnoreDependencies;
         } exePackage;
         struct
         {
@@ -268,6 +269,9 @@ typedef struct _BURN_PLAN
 
     BURN_CLEAN_ACTION* rgCleanActions;
     DWORD cCleanActions;
+
+    DEPENDENCY* rgPlannedProviders;
+    UINT cPlannedProviders;
 } BURN_PLAN;
 
 
@@ -308,9 +312,11 @@ HRESULT PlanExecutePackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent,
     __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
     __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction,
+    __out BURN_DEPENDENCY_ACTION* pDependencyAction,
     __out BOOL* pfPlannedCachePackage,
     __out BOOL* pfPlannedCleanPackage
     );

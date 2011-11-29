@@ -390,10 +390,12 @@ extern "C" HRESULT MsiEngineDetectPackage(
 
     HRESULT hr = S_OK;
     LPWSTR sczInstalledVersion = NULL;
+    LPWSTR sczInstalledLanguage = NULL;
     INSTALLSTATE installState = INSTALLSTATE_UNKNOWN;
     BOOTSTRAPPER_RELATED_OPERATION operation = BOOTSTRAPPER_RELATED_OPERATION_NONE;
     WCHAR wzProductCode[MAX_GUID_CHARS + 1] = { };
     DWORD64 qwVersion = 0;
+    UINT uLcid = 0;
     BOOL fPerMachine = FALSE;
     int nResult = 0;
 
@@ -499,6 +501,43 @@ extern "C" HRESULT MsiEngineDetectPackage(
                 continue;
             }
 
+            // Filter by language if necessary.
+            uLcid = 0; // always reset the found language.
+            if (pRelatedMsi->cLanguages)
+            {
+                // If there is a language to get, convert it into an LCID.
+                hr = WiuGetProductInfoEx(wzProductCode, NULL, fPerMachine ? MSIINSTALLCONTEXT_MACHINE : MSIINSTALLCONTEXT_USERUNMANAGED, INSTALLPROPERTY_LANGUAGE, &sczInstalledLanguage);
+                if (SUCCEEDED(hr))
+                {
+                    hr = StrStringToUInt32(sczInstalledLanguage, 0, &uLcid);
+                }
+
+                // Ignore related product where we can't read the language.
+                if (FAILED(hr))
+                {
+                    LogErrorId(hr, MSG_FAILED_READ_RELATED_PACKAGE_LANGUAGE, wzProductCode, sczInstalledLanguage, NULL);
+
+                    hr = S_OK;
+                    continue;
+                }
+
+                BOOL fMatchedLcid = FALSE;
+                for (DWORD iLanguage = 0; iLanguage < pRelatedMsi->cLanguages; ++iLanguage)
+                {
+                    if (uLcid == pRelatedMsi->rgdwLanguages[iLanguage])
+                    {
+                        fMatchedLcid = TRUE;
+                        break;
+                    }
+                }
+
+                // Skip the product if the language did not meet the inclusive/exclusive criteria.
+                if ((pRelatedMsi->fLangInclusive && !fMatchedLcid) || (!pRelatedMsi->fLangInclusive && fMatchedLcid))
+                {
+                    continue;
+                }
+            }
+
             // If this is a detect-only related package then we'll assume a downgrade is taking place, since
             // that is the overwhelmingly common use of detect-only related packages. If not detect-only then
             // it's easy; we're clearly doing a major upgrade.
@@ -512,7 +551,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
                 operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
             }
 
-            LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, wzProductCode, LoggingPerMachineToString(fPerMachine), LoggingVersionToString(qwVersion), LoggingRelatedOperationToString(operation));
+            LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, wzProductCode, LoggingPerMachineToString(fPerMachine), LoggingVersionToString(qwVersion), uLcid, LoggingRelatedOperationToString(operation));
 
             // pass to UX
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, wzProductCode, fPerMachine, qwVersion, operation);
@@ -576,6 +615,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
     }
 
 LExit:
+    ReleaseStr(sczInstalledLanguage);
     ReleaseStr(sczInstalledVersion);
 
     return hr;
@@ -941,6 +981,10 @@ extern "C" HRESULT MsiEngineExecutePackage(
         ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on repair.");
         }
 
+        // Ignore all dependencies, since the Burn engine already performed the check.
+        hr = StrAllocFormatted(&sczProperties, L"%ls %ls=ALL", sczProperties, DEPENDENCY_IGNOREDEPENDENCIES);
+        ExitOnFailure(hr, "Failed to add the list of dependencies to ignore to the properties.");
+
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to run maintanance mode for MSI package.");
         break;
@@ -949,9 +993,25 @@ extern "C" HRESULT MsiEngineExecutePackage(
         hr = StrAllocConcat(&sczProperties, L" REBOOT=ReallySuppress", 0);
         ExitOnFailure(hr, "Failed to add reboot suppression property on uninstall.");
 
+        // Ignore all dependencies, since the Burn engine already performed the check.
+        hr = StrAllocFormatted(&sczProperties, L"%ls %ls=ALL", sczProperties, DEPENDENCY_IGNOREDEPENDENCIES);
+        ExitOnFailure(hr, "Failed to add the list of dependencies to ignore to the properties.");
+
         hr = WiuConfigureProductEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to uninstall MSI package.");
         break;
+    }
+
+    // Register or re-register (may contain updated information) the package if installing, repairing, or updating.
+    if (BOOTSTRAPPER_ACTION_STATE_INSTALL <= pExecuteAction->msiPackage.action && BOOTSTRAPPER_ACTION_STATE_ADMIN_INSTALL != pExecuteAction->msiPackage.action)
+    {
+        hr = DependencyRegisterPackage(pExecuteAction->msiPackage.pPackage);
+        ExitOnFailure(hr, "Failed to register the package dependency providers.");
+    }
+    else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->msiPackage.action)
+    {
+        hr = DependencyUnregisterPackage(pExecuteAction->msiPackage.pPackage);
+        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
     }
 
 LExit:

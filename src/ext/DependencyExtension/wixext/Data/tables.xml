@@ -20,8 +20,10 @@
                 category="identifier" description="The foreign key into the Component table used to determine install state."/>
         <columnDefinition name="ProviderKey" type="string" length="255"
                 category="text" description="The name of the registry key that holds the provider identity."/>
-        <columnDefinition name="DisplayKey" type="string" length="255" nullable="yes"
-                category="text" description="The optional name of the registry key that provides information about the product."/>
+        <columnDefinition name="Version" type="string" length="72" nullable="yes"
+                category="version" description="The version of the package."/>
+        <columnDefinition name="DisplayName" type="string" length="255" nullable="yes"
+                category="text" description="The display name of the package."/>
         <columnDefinition name="Attributes" type="number" length="4" nullable="yes"
                 minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied."/>
     </tableDefinition>

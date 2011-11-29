@@ -101,6 +101,7 @@
       <include name="uriutil.cpp" />
       <include name="userutil.cpp" />
       <include name="wiutil.cpp" />
+      <include name="wuautil.cpp" />
       <include name="xmlutil.cpp" />
     </fileset>
 

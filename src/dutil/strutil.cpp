@@ -2000,7 +2000,7 @@ LExit:
 wcsistr - case insensitive find a substring
 
 ****************************************************************************/
-LPCWSTR wcsistr(
+extern "C" LPCWSTR wcsistr(
     __in_z LPCWSTR wzString,
     __in_z LPCWSTR wzCharSet
     )

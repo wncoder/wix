@@ -134,7 +134,7 @@ namespace Bootstrapper
                 Assert::IsTrue(File::Exists(Path::Combine(cacheDirectory, gcnew String(L"setup.exe"))));
 
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat("\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\" /burn.runonce"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // end session
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
@@ -191,7 +191,7 @@ namespace Bootstrapper
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
                     L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
-                    L"        <Arp DisplayName='Product1' />"
+                    L"        <Arp Register='yes' DisplayName='Product1' />"
                     L"    </Registration>"
                     L"</Bundle>";
 
@@ -226,7 +226,7 @@ namespace Bootstrapper
 
                 // verify that registration was created
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\" /burn.runonce"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
@@ -246,7 +246,7 @@ namespace Bootstrapper
 
                 // verify that registration was updated
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\" /burn.runonce"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
@@ -301,9 +301,9 @@ namespace Bootstrapper
                     L"        <Payload Id='ux.dll' FilePath='ux.dll' Packaging='embedded' SourcePath='ux.dll' Hash='000000000000' />"
                     L"    </UX>"
                     L"    <Registration Id='{D54F896D-1952-43e6-9C67-B5652240618C}' UpgradeCode='{D54F896D-1952-43e6-9C67-B5652240618C}' Tag='foo' ProviderKey='foo' Version='1.0.0.0' ExecutableName='setup.exe' PerMachine='no'>"
-                    L"        <Arp DisplayName='DisplayName1' DisplayVersion='1.2.3.4' Publisher='Publisher1' HelpLink='http://www.microsoft.com/help'"
+                    L"        <Arp Register='yes' DisplayName='DisplayName1' DisplayVersion='1.2.3.4' Publisher='Publisher1' HelpLink='http://www.microsoft.com/help'"
                     L"             HelpTelephone='555-555-5555' AboutUrl='http://www.microsoft.com/about' UpdateUrl='http://www.microsoft.com/update'"
-                    L"             Comments='Comments1' Contact='Contact1' DisableModify='yes' DisableRepair='yes' DisableRemove='yes' />"
+                    L"             Comments='Comments1' Contact='Contact1' DisableModify='yes' DisableRemove='yes' />"
                     L"    </Registration>"
                     L"</Bundle>";
 
@@ -338,7 +338,7 @@ namespace Bootstrapper
 
                 // verify that registration was created
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\" /burn.runonce"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_INSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);
@@ -358,7 +358,6 @@ namespace Bootstrapper
                 Assert::AreEqual(gcnew String(L"Comments1"), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Comments"), nullptr));
                 Assert::AreEqual(gcnew String(L"Contact1"), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Contact"), nullptr));
                 Assert::AreEqual(1, Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"NoModify"), nullptr));
-                Assert::AreEqual(1, Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"NoRepair"), nullptr));
                 Assert::AreEqual(1, Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"NoRemove"), nullptr));
 
                 //
@@ -371,7 +370,7 @@ namespace Bootstrapper
 
                 // verify that registration was updated
                 Assert::AreEqual(Int32(BURN_RESUME_MODE_ACTIVE), Registry::GetValue(gcnew String(TEST_UNINSTALL_KEY), gcnew String(L"Resume"), nullptr));
-                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\""), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
+                Assert::AreEqual(String::Concat(L"\"", Path::Combine(cacheDirectory, gcnew String(L"setup.exe")), L"\" /burn.log.append \"BurnUnitTest.txt\" /burn.runonce"), Registry::GetValue(gcnew String(TEST_RUN_KEY), gcnew String(L"{D54F896D-1952-43e6-9C67-B5652240618C}"), nullptr));
 
                 // delete registration
                 hr = RegistrationSessionEnd(&registration, BOOTSTRAPPER_ACTION_UNINSTALL, FALSE, FALSE, BOOTSTRAPPER_APPLY_RESTART_NONE, FALSE, NULL);

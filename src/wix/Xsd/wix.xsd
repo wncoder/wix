@@ -88,27 +88,26 @@
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
-                            Extensibility point in the WiX XML Schema.  Schema extensions can register additional
-                            elements at this point in the schema.
-                        </xs:documentation>
+              Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+              elements at this point in the schema.
+            </xs:documentation>
           </xs:annotation>
         </xs:any>
       </xs:choice>
       <xs:attribute name="AboutUrl" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        A URL for more information about the bundle to display in Programs and Features (also
-                        known as Add/Remove Programs). If the Bundle/@Name attribute is not specified then
-                        this attribute may not be specified either.
-                    </xs:documentation>
+            A URL for more information about the bundle to display in Programs and Features (also
+            known as Add/Remove Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Copyright" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The legal copyright found in the version resources of final bundle executable. If
-                        this attribute is not provided the copyright will be set to "Copyright (c) [Bundle/@Manufacturer]. All rights reserved.".
-                    </xs:documentation>
+            The legal copyright found in the version resources of final bundle executable. If
+            this attribute is not provided the copyright will be set to "Copyright (c) [Bundle/@Manufacturer]. All rights reserved.".
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Compressed" type="YesNoDefaultTypeUnion">
@@ -122,73 +121,71 @@
             Determines whether the bundle can be modified via the Programs and Features (also known as
             Add/Remove Programs). If the value is "button" then Programs and Features will show a single
             "Uninstall/Change" button. If the value is "yes" then Programs and Features will only show
-            the "Uninstall" button". Finally, if the value is "no", the default, then a "Change" button
-            is shown in addition to the "Uninstall" button. If the Bundle/@Name attribute is not specified
-            then this attribute may not be specified either.
+            the "Uninstall" button". If the value is "no", the default, then a "Change" button is shown.
+            See the DisableRemove attribute for information how to not display the bundle in Programs
+            and Features.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="DisableRemove" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-                        Determines whether the bundle can be removed via the Programs and Features (also
-                        known as Add/Remove Programs). If the Bundle/@Name attribute is not specified then
-                        this attribute may not be specified either.
-                    </xs:documentation>
+            Determines whether the bundle can be removed via the Programs and Features (also
+            known as Add/Remove Programs). If the value is "yes" then the "Uninstall" button will
+            not be displayed. The default is "no" which ensures there is an "Uninstall" button to
+            remove the bundle. If the "DisableModify" attribute is also "yes" or "button" then the
+            bundle will not be displayed in Progams and Features and another mechanism (such as
+            registering as a related bundle addon) must be used to ensure the bundle can be removed.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="DisableRepair" type="YesNoTypeUnion">
         <xs:annotation>
-          <xs:documentation>
-                        Determines whether the bundle can be repaired via the Programs and Features (also
-                        known as Add/Remove Programs). If the Bundle/@Name attribute is not specified then
-                        this attribute may not be specified either.
-                    </xs:documentation>
+          <xs:appinfo>
+            <xse:deprecated />
+          </xs:appinfo>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="HelpTelephone" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        A telephone number for help to display in Programs and Features (also known as
-                        Add/Remove Programs). If the Bundle/@Name attribute is not specified then this attribute
-                        may not be specified either.
-                    </xs:documentation>
+            A telephone number for help to display in Programs and Features (also known as
+            Add/Remove Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="HelpUrl" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        A URL to the help for the bundle to display in Programs and Features (also known as
-                        Add/Remove Programs). If the Bundle/@Name attribute is not specified then this attribute
-                        may not be specified either.
-                    </xs:documentation>
+            A URL to the help for the bundle to display in Programs and Features (also known as
+            Add/Remove Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="IconSourceFile" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        Path to an icon that will replace the default icon in the final Bundle executable.
-                        This icon will also be displayed in Programs and Features (also known as Add/Remove
-                        Programs).
-                    </xs:documentation>
+            Path to an icon that will replace the default icon in the final Bundle executable.
+            This icon will also be displayed in Programs and Features (also known as Add/Remove
+            Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Manufacturer" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The publisher of the bundle to display in Programs and Features (also known as
-                        Add/Remove Programs). If the Bundle/@Name attribute is not specified then this attribute
-                        may not be specified either.
-                    </xs:documentation>
+            The publisher of the bundle to display in Programs and Features (also known as
+            Add/Remove Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Name" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        Then name of the bundle to display in Programs and Features (also known as Add/Remove
-                        Programs). If this attribute is not specified then the bundle will not be visible in
-                        the Programs and Features user interface.
-                    </xs:documentation>
+            Then name of the bundle to display in Programs and Features (also known as Add/Remove
+            Programs). This name can be accessed and overwritten by a BootstrapperApplication
+            using the WixBundleName bundle variable.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="SplashScreenSourceFile" type="xs:string">
@@ -204,36 +201,36 @@
       <xs:attribute name="UpdateUrl" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        A URL for updates of the bundle to display in Programs and Features (also
-                        known as Add/Remove Programs). If the Bundle/@Name attribute is not specified then
-                        this attribute may not be specified either.
-                    </xs:documentation>
+            A URL for updates of the bundle to display in Programs and Features (also
+            known as Add/Remove Programs).
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="UpgradeCode" type="Guid">
         <xs:annotation>
           <xs:documentation>
-                        Unique identifier for a family of bundles. If two bundles have the same UpgradeCode the
-                        bundle with the highest version will be installed.
-                    </xs:documentation>
+            Unique identifier for a family of bundles. If two bundles have the same UpgradeCode the
+            bundle with the highest version will be installed.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Version" type="xs:string" use="required">
         <xs:annotation>
           <xs:documentation>
-                        The version of the bundle. If the Bundle/@Name attribute is specified then
-                        this attribute will be displayed in the Programs and Features user interface.
-                    </xs:documentation>
+            The version of the bundle. Newer versions upgrade earlier versions of the bundles
+            with matching UpgradeCodes.  If the bundle is registered in Programs and Features
+            then this attribute will be displayed in the Programs and Features user interface.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Condition" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The condition of the bundle. If the condition is not met, the bundle will
-                        refuse to run. Conditions are checked before the bootstrapper application is loaded
-                        (before detect), and thus can only reference built-in variables such as
-                        variables which indicate the version of the OS.
-                    </xs:documentation>
+            The condition of the bundle. If the condition is not met, the bundle will
+            refuse to run. Conditions are checked before the bootstrapper application is loaded
+            (before detect), and thus can only reference built-in variables such as
+            variables which indicate the version of the OS.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:anyAttribute namespace="##other" processContents="lax">

@@ -266,6 +266,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
     PROCESS_INFORMATION pi = { };
     GENERIC_EXECUTE_MESSAGE message = { };
     DWORD dwExitCode = 0;
+    BOOL fDoDependency = FALSE;
 
     // get wusa.exe path
     hr = PathGetKnownFolder(CSIDL_SYSTEM, &sczSystemPath);
@@ -354,22 +355,39 @@ extern "C" HRESULT MsuEngineExecutePackage(
     // handle exit code
     switch (dwExitCode)
     {
-    case S_OK:
-    case S_FALSE:
+    case S_OK: __fallthrough;
     case WU_S_ALREADY_INSTALLED:
+        fDoDependency = TRUE;
+        __fallthrough;
+    case S_FALSE: __fallthrough;
     case WU_E_NOT_APPLICABLE:
         *pRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
         hr = S_OK;
         break;
 
     case ERROR_SUCCESS_REBOOT_REQUIRED:
+        fDoDependency = TRUE;
         *pRestart = BOOTSTRAPPER_APPLY_RESTART_REQUIRED;
-        hr = HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED);
+        hr = S_OK;
         break;
 
     default:
         hr = E_UNEXPECTED;
         break;
+    }
+
+    if (fDoDependency)
+    {
+        if (BOOTSTRAPPER_ACTION_STATE_INSTALL == pExecuteAction->msuPackage.action)
+        {
+            hr = DependencyRegisterPackage(pExecuteAction->msuPackage.pPackage);
+            ExitOnFailure(hr, "Failed to register the package dependency providers.");
+        }
+        else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->msuPackage.action)
+        {
+            hr = DependencyUnregisterPackage(pExecuteAction->msuPackage.pPackage);
+            ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+        }
     }
 
 LExit:

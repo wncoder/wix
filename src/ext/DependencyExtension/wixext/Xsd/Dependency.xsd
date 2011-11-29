@@ -66,12 +66,18 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="DisplayKey" type="xs:string">
+            <xs:attribute name="Version" type="VersionType">
                 <xs:annotation>
                     <xs:documentation>
-                        Optional unique registry key name in Programs and Features (also known as Add/Remove Programs) to get display information.
-                        Only author the lowest descendant key which is added under "Software\Microsoft\Windows\CurrentVersion\Uninstall".
-                        The default value uses the Product/@Id attribute value.
+                        The version of the package. For MSI packages, the ProductVersion will be used by default
+                        and this attribute should not be specified.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="DisplayName" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Optional display name of the package. For MSI packages, the ProductName will be used by default.
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>

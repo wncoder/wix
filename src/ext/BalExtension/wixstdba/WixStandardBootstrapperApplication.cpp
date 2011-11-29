@@ -633,9 +633,6 @@ private: // privates
         BalExitOnFailure(hr, "Failed to initialize COM.");
         fComInitialized = TRUE;
 
-        hr = LocInitialize();
-        ExitOnFailure(hr, "Failed to initialize localization.");
-
         hr = ThemeInitialize(pThis->m_hModule);
         BalExitOnFailure(hr, "Failed to initialize theme manager.");
 
@@ -685,7 +682,6 @@ private: // privates
 
         ReleaseTheme(pThis->m_pTheme);
         ThemeUninitialize();
-        LocUninitialize();
 
         // uninitialize COM
         if (fComInitialized)

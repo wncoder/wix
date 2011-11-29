@@ -367,6 +367,13 @@ extern "C" LPCSTR LoggingRequestStateToString(
     }
 }
 
+extern "C" LPWSTR LoggingStringOrUnknownIfNull(
+    __in LPCWSTR wz
+    )
+{
+    return wz ? wz : L"Unknown";
+}
+
 // Note: this function is not thread safe.
 extern "C" LPCSTR LoggingVersionToString(
     __in DWORD64 dw64Version

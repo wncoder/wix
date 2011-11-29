@@ -178,6 +178,7 @@ extern "C" void ExeEnginePackageUninitialize(
     ReleaseStr(pPackage->Exe.sczInstallArguments);
     ReleaseStr(pPackage->Exe.sczRepairArguments);
     ReleaseStr(pPackage->Exe.sczUninstallArguments);
+    ReleaseStr(pPackage->Exe.sczIgnoreDependencies);
     //ReleaseStr(pPackage->Exe.sczProgressSwitch);
     ReleaseMem(pPackage->Exe.rgExitCodes);
 
@@ -358,6 +359,12 @@ extern "C" HRESULT ExeEnginePlanAddPackage(
         pAction->exePackage.pPackage = pPackage;
         pAction->exePackage.action = pPackage->execute;
 
+        if (pPackage->Exe.sczIgnoreDependencies)
+        {
+            hr = StrAllocString(&pAction->exePackage.sczIgnoreDependencies, pPackage->Exe.sczIgnoreDependencies, 0);
+            ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
+        }
+
         LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, NULL); // ignore errors.
     }
 
@@ -370,6 +377,12 @@ extern "C" HRESULT ExeEnginePlanAddPackage(
         pAction->type = BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE;
         pAction->exePackage.pPackage = pPackage;
         pAction->exePackage.action = pPackage->rollback;
+
+        if (pPackage->Exe.sczIgnoreDependencies)
+        {
+            hr = StrAllocString(&pAction->exePackage.sczIgnoreDependencies, pPackage->Exe.sczIgnoreDependencies, 0);
+            ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
+        }
 
         LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, NULL); // ignore errors.
     }
@@ -439,6 +452,13 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     ExitOnFailure(hr, "Failed to create executable command.");
 
+    // Add the list of dependencies to ignore, if any, to the command line.
+    if (pExecuteAction->exePackage.sczIgnoreDependencies)
+    {
+        hr = StrAllocFormatted(&sczCommand, L"%ls -%ls=%ls", sczCommand, BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES, pExecuteAction->exePackage.sczIgnoreDependencies);
+        ExitOnFailure(hr, "Failed to append the list of dependencies to ignore to the command line.");
+    }
+
     // Log before we add the secret pipe name and client token for embedded processes.
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->exePackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->exePackage.action), sczExecutablePath, sczCommand);
 
@@ -478,6 +498,17 @@ extern "C" HRESULT ExeEngineExecutePackage(
 
     hr = HandleExitCode(pExecuteAction->exePackage.pPackage, dwExitCode, pRestart);
     ExitOnRootFailure1(hr, "Process returned error: 0x%x", dwExitCode);
+
+    if (BOOTSTRAPPER_ACTION_STATE_INSTALL == pExecuteAction->exePackage.action)
+    {
+        hr = DependencyRegisterPackage(pExecuteAction->exePackage.pPackage);
+        ExitOnFailure(hr, "Failed to register the package dependency providers.");
+    }
+    else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->exePackage.action)
+    {
+        hr = DependencyUnregisterPackage(pExecuteAction->exePackage.pPackage);
+        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+    }
 
 LExit:
     ReleaseStr(sczArgumentsFormatted);

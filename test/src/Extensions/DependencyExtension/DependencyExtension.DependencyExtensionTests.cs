@@ -24,11 +24,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
     using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using System.Text;
+    using Microsoft.Win32;
 
     [TestClass]
     public sealed class DependencyExtensionTests : WixTests
     {
+        private const int E_INSTALLFAILURE = unchecked((int)0x80070643);
+
         private static readonly string TestDataDirectory = Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data\Extensions\DependencyExtension\DependencyExtensionTests");
+        private static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
 
         // Tables and rows are verified in the auto-generated QTests.
 
@@ -113,7 +117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
                 // Now attempt the uninstall of dependency package A.
                 string logA = MSIExec.UninstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
-                Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found existing dependent"));
+                Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found dependent"));
 
                 // Uninstall in reverse order.
                 MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
@@ -203,7 +207,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
                 // Now attempt the uninstall of upgraded dependency package A1.
                 string logA = MSIExec.UninstallProduct(packageA1, MSIExec.MSIExecReturnCode.SUCCESS);
-                Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found existing dependent"));
+                Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Found dependent"));
 
                 // Uninstall in reverse order.
                 MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
@@ -239,28 +243,32 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             try
             {
                 // Install the bundles.
-                this.InstallBundleWithArguments(bundleA, MSIExec.MSIExecReturnCode.SUCCESS);
-                this.InstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
                 // Make sure the MSIs are installed.
                 Assert.IsTrue(this.IsPackageInstalled(packageA));
                 Assert.IsTrue(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
 
                 // Uninstall in reverse order.
-                this.UninstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
-                this.UninstallBundleWithArguments(bundleA, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
                 // Make sure the MSIs are not installed.
                 Assert.IsFalse(this.IsPackageInstalled(packageB));
                 Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
             }
             finally
             {
-                this.CleanupInstalledBundle(bundleB);
-                this.CleanupInstalledBundle(bundleA);
+                this.CleanupRegistry();
 
                 this.CleanupInstalledProduct(packageB);
                 this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleB);
+                this.CleanupInstalledBundle(bundleA);
             }
         }
 
@@ -286,33 +294,38 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             try
             {
                 // Install the bundles.
-                this.InstallBundleWithArguments(bundleA, MSIExec.MSIExecReturnCode.SUCCESS);
-                this.InstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Make sure the MSIs are installed.
+                // Make sure the MSIs and EXE are installed.
                 Assert.IsTrue(this.IsPackageInstalled(packageA));
                 Assert.IsTrue(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
 
                 // Attempt to uninstall bundleA.
-                this.UninstallBundleWithArguments(bundleA, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Verify packageA is still installed.
+                // Verify packageA and ExeA are still installed.
                 Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
 
                 // Uninstall bundleB now.
-                this.UninstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
                 // Make sure the MSIs are not installed.
                 Assert.IsFalse(this.IsPackageInstalled(packageB));
                 Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
             }
             finally
             {
-                this.CleanupInstalledBundle(bundleB);
-                this.CleanupInstalledBundle(bundleA);
+                this.CleanupRegistry();
 
                 this.CleanupInstalledProduct(packageB);
                 this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleB);
+                this.CleanupInstalledBundle(bundleA);
             }
         }
 
@@ -343,42 +356,256 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             try
             {
                 // Install the bundles.
-                this.InstallBundleWithArguments(bundleA, MSIExec.MSIExecReturnCode.SUCCESS);
-                this.InstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Make sure the MSIs are installed.
+                // Make sure the MSIs and EXE are installed.
                 Assert.IsTrue(this.IsPackageInstalled(packageA));
                 Assert.IsTrue(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
 
                 // Attempt to upgrade bundleA.
-                this.InstallBundleWithArguments(bundleA1, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.InstallBundleWithArguments(bundleA1, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // Verify packageA was uninstalled.
+                // Verify packageA1 was installed and packageA was uninstalled.
+                Assert.IsTrue(this.IsPackageInstalled(packageA1));
                 Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.1.0"));
 
                 // Uninstall bundleA1 and verify that packageA1 is still installed.
-                this.UninstallBundleWithArguments(bundleA1, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleA1, (int)MSIExec.MSIExecReturnCode.SUCCESS);
                 Assert.IsTrue(this.IsPackageInstalled(packageA1));
 
                 // Uninstall bundleB now.
-                this.UninstallBundleWithArguments(bundleB, MSIExec.MSIExecReturnCode.SUCCESS);
+                this.UninstallBundleWithArguments(bundleB, (int)MSIExec.MSIExecReturnCode.SUCCESS);
 
-                // BUG: BundleB does not know about PackageA1 (A,v2), so remove it explicitly.
+                // BUG: BundleB does not know about PackageA1 (A,v2), so remove it explicitly (SFBUG:3307315).
                 MSIExec.UninstallProduct(packageA1, MSIExec.MSIExecReturnCode.SUCCESS);
 
                 // Make sure the MSIs are not installed.
                 Assert.IsFalse(this.IsPackageInstalled(packageB));
                 Assert.IsFalse(this.IsPackageInstalled(packageA1));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
             }
             finally
             {
-                this.CleanupInstalledBundle(bundleA1);
-                this.CleanupInstalledBundle(bundleB);
-                this.CleanupInstalledBundle(bundleA);
+                this.CleanupRegistry();
 
                 this.CleanupInstalledProduct(packageA1);
                 this.CleanupInstalledProduct(packageB);
                 this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleA1);
+                this.CleanupInstalledBundle(bundleB);
+                this.CleanupInstalledBundle(bundleA);
+            }
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Install bundle A, then upgrade it with a slipstream of package A and patch A.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_InstallUpgradeSlipstreamBundle()
+        {
+            // Build the packages.
+            string packageA = BuildPackage("A", null);
+            string packageA1 = BuildPackage("A", "1.0.1.0");
+            string patchA = BuildPatch(packageA, packageA1, "PatchA", null);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("patchA", patchA);
+
+            // Build the bundles.
+            string bundleA = this.BuildBundle("BundleA", null, bindPaths);
+            string bundleC = this.BuildBundle("BundleC", "1.0.1.0", bindPaths);
+
+            try
+            {
+                // Install the base bundle and make sure it's installed.
+                this.InstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+                // Install the upgrade bundle with a slipstreamed patch and make sure the patch is installed.
+                // SFBUG:3387046 - Uninstalling bundle registers a dependency on a package
+                this.InstallBundleWithArguments(bundleC, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(MsiUtils.IsPatchInstalled(patchA));
+
+                // BundleC doesn't carry the EXE, so make sure it's removed.
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+
+                // Repair the upgrade bundle to make sure it does not prompt for source.
+                // SFBUG:3386927 - MSIs get removed from cache during upgrade
+                this.InstallBundleWithArguments(bundleC, (int)MSIExec.MSIExecReturnCode.SUCCESS, "-repair");
+
+                // Uninstall the slipstream bundle and make sure both packages are uninstalled.
+                this.UninstallBundleWithArguments(bundleC, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsFalse(MsiUtils.IsPatchInstalled(patchA));
+                Assert.IsFalse(this.IsPackageInstalled(packageA));
+            }
+            finally
+            {
+                this.CleanupRegistry();
+
+                this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleC);
+                this.CleanupInstalledBundle(bundleA);
+            }
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Install bundle A, then install upgrade bundle D which will fail and roll back.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_RollbackUpgradeBundle()
+        {
+            // Build the packages.
+            string packageA = BuildPackage("A", null);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+
+            // Build the bundles.
+            string bundleA = this.BuildBundle("BundleA", null, bindPaths);
+            string bundleD = this.BuildBundle("BundleD", "1.0.1.0", bindPaths);
+
+            try
+            {
+                // Install the base bundle and make sure it's installed.
+                this.InstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+                // Install the upgrade bundle that will fail and rollback. Make sure packageA is still present.
+                // SFBUG:3405221 - pkg dependecy not removed in rollback if pkg already present
+                this.InstallBundleWithArguments(bundleD, DependencyExtensionTests.E_INSTALLFAILURE);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+                // Uninstall the first bundle and make sure packageA is uninstalled.
+                this.UninstallBundleWithArguments(bundleA, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+            }
+            finally
+            {
+                this.CleanupRegistry();
+
+                this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleD);
+                this.CleanupInstalledBundle(bundleA);
+            }
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs an MSI then fails a non-vital package to test that the bundle still installs successfully.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_FailNonVitalPackage()
+        {
+            // Build the packages.
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("Fail", null);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("packageB", packageB);
+
+            // Build the bundle.
+            string bundleE = this.BuildBundle("BundleE", null, bindPaths);
+
+            try
+            {
+                // Install the bundle and make sure packageA is installed.
+                // SFBUG:3435047 - Make sure during install we don't fail for non-vital packages.
+                this.InstallBundleWithArguments(bundleE, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsFalse(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+
+                // Repair the bundle.
+                // SFBUG:3435047 - Make sure during repair we don't fail for the same reason in a different code path.
+                this.InstallBundleWithArguments(bundleE, (int)MSIExec.MSIExecReturnCode.SUCCESS, "-repair");
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsFalse(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+
+                // Uninstall the bundle and make sure packageA is uninstalled.
+                this.UninstallBundleWithArguments(bundleE, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+            }
+            finally
+            {
+                this.CleanupRegistry();
+
+                this.CleanupInstalledProduct(packageA);
+
+                this.CleanupInstalledBundle(bundleE);
+            }
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs a bundle, then an addon bundle, and uninstalls the main bundle.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_UninstallAddonBundle()
+        {
+            // Build the packages.
+            string packageA = BuildPackage("A", null);
+            string packageB = BuildPackage("B", null);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("packageB", packageB);
+
+            // Build the bundles.
+            string bundleA1 = this.BuildBundle("BundleA", null, bindPaths);
+            string bundleA2 = this.BuildBundle("BundleA", null, bindPaths);
+            string bundleF = this.BuildBundle("BundleF", null, bindPaths);
+
+            try
+            {
+                // Install the base bundle and make sure all packages are installed.
+                this.InstallBundleWithArguments(bundleF, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsPackageInstalled(packageB));
+
+                // Install an addon bundle and make sure all packages are installed.
+                this.InstallBundleWithArguments(bundleA1, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+                // Install a second addon bundle and make sure all packages are installed.
+                this.InstallBundleWithArguments(bundleA2, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+                // Uninstall the base bundle and make sure all packages are uninstalled.
+                this.UninstallBundleWithArguments(bundleF, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsFalse(this.IsPackageInstalled(packageA));
+                Assert.IsFalse(this.IsPackageInstalled(packageB));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+            }
+            finally
+            {
+                this.CleanupRegistry();
+
+                this.CleanupInstalledProduct(packageA);
+                this.CleanupInstalledProduct(packageB);
+
+                this.CleanupInstalledBundle(bundleA2);
+                this.CleanupInstalledBundle(bundleA1);
+                this.CleanupInstalledBundle(bundleF);
             }
         }
 
@@ -406,7 +633,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
             // Compile.
             Candle candle = new Candle();
-            candle.Extensions.Add("WixDependencyExtension");
+            candle.Extensions.AddRange(DependencyExtensionTests.Extensions);
             candle.OtherArguments = String.Concat("-dTestName=", caller);
             if (!String.IsNullOrEmpty(version))
             {
@@ -422,7 +649,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
             // Link.
             Light light = new Light();
-            light.Extensions.Add("WixDependencyExtension");
+            light.Extensions.AddRange(DependencyExtensionTests.Extensions);
             light.ObjectFiles = candle.ExpectedOutputFiles;
             light.OutputFile = package;
             light.SuppressMSIAndMSMValidation = true;
@@ -460,8 +687,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
             // Compile.
             Candle candle = new Candle();
-            candle.Extensions.Add("WixBalExtension");
-            candle.Extensions.Add("WixDependencyExtension");
+            candle.Extensions.AddRange(DependencyExtensionTests.Extensions);
             candle.OtherArguments = String.Concat("-dTestName=", caller);
             if (!String.IsNullOrEmpty(version))
             {
@@ -478,6 +704,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             // Link.
             Light light = new Light();
 
+            // Add the data directory to the named bind paths.
+            bindPaths["data"] = Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data");
+
             // Add each named bind path.
             light.OtherArguments = String.Empty;
             foreach (KeyValuePair<string, string> bindPath in bindPaths)
@@ -488,8 +717,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
                     light.OtherArguments = String.Concat(light.OtherArguments, argument);
                 }
             }
-            light.Extensions.Add("WixBalExtension");
-            light.Extensions.Add("WixDependencyExtension");
+            light.Extensions.AddRange(DependencyExtensionTests.Extensions);
             light.ObjectFiles = candle.ExpectedOutputFiles;
             light.OutputFile = bundle;
             light.WorkingDirectory = TestDataDirectory;
@@ -502,6 +730,82 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         }
 
         /// <summary>
+        /// Builds a patch using given paths for the target and upgrade packages.
+        /// </summary>
+        /// <param name="targetPath">The path to the target MSI.</param>
+        /// <param name="upgradePath">The path to the upgrade MSI.</param>
+        /// <param name="name">The name of the patch to build.</param>
+        /// <param name="version">Optional version for the bundle.</param>
+        /// <returns>The path to the patch.</returns>
+        private string BuildPatch(string targetPath, string upgradePath, string name, string version)
+        {
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(1).GetMethod().Name;
+
+            // Create paths.
+            string source = Path.Combine(TestDataDirectory, String.Concat(name, ".wxs"));
+            string rootDirectory = FileUtilities.GetUniqueFileName();
+            string objDirectory = Path.Combine(rootDirectory, Settings.WixobjFolder);
+            string msiDirectory = Path.Combine(rootDirectory, Settings.MSIFolder);
+            string wixmst = Path.Combine(objDirectory, String.Concat(name, ".wixmst"));
+            string wixmsp = Path.Combine(objDirectory, String.Concat(name, ".wixmsp"));
+            string package = Path.Combine(msiDirectory, String.Concat(name, ".msp"));
+
+            // Add the root directory to be cleaned up.
+            this.TestArtifacts.Add(new DirectoryInfo(rootDirectory));
+
+            // Compile.
+            Candle candle = new Candle();
+            candle.Extensions.AddRange(DependencyExtensionTests.Extensions);
+            candle.OtherArguments = String.Concat("-dTestName=", caller);
+            if (!String.IsNullOrEmpty(version))
+            {
+                candle.OtherArguments = String.Concat(candle.OtherArguments, " -dVersion=", version);
+            }
+            candle.OutputFile = String.Concat(objDirectory, @"\");
+            candle.SourceFiles.Add(source);
+            candle.WorkingDirectory = TestDataDirectory;
+            candle.Run();
+
+            // Make sure the output directory is cleaned up.
+            this.TestArtifacts.Add(new DirectoryInfo(objDirectory));
+
+            // Link.
+            Light light = new Light();
+            light.Extensions.AddRange(DependencyExtensionTests.Extensions);
+            light.ObjectFiles = candle.ExpectedOutputFiles;
+            light.OutputFile = wixmsp;
+            light.SuppressMSIAndMSMValidation = true;
+            light.WorkingDirectory = TestDataDirectory;
+            light.Run();
+
+            // Make sure the output directory is cleaned up.
+            this.TestArtifacts.Add(new DirectoryInfo(msiDirectory));
+
+            // Torch.
+            Torch torch = new Torch();
+            torch.TargetInput = Path.ChangeExtension(targetPath, "wixpdb");
+            torch.UpdatedInput = Path.ChangeExtension(upgradePath, "wixpdb");
+            torch.PreserveUnmodified = true;
+            torch.XmlInput = true;
+            torch.OutputFile = wixmst;
+            torch.WorkingDirectory = TestDataDirectory;
+            torch.Run();
+
+            // Pyro.
+            Pyro pyro = new Pyro();
+            pyro.Baselines.Add(torch.OutputFile, name);
+            pyro.InputFile = light.OutputFile;
+            pyro.OutputFile = package;
+            pyro.WorkingDirectory = TestDataDirectory;
+            pyro.SuppressWarnings.Add("1079");
+            pyro.Run();
+
+            return pyro.OutputFile;
+        }
+
+        /// <summary>
         /// Gets whether the product defined by the package <paramref name="path"/> is installed.
         /// </summary>
         /// <param name="path">The path to the package to test.</param>
@@ -510,6 +814,36 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         {
             string productCode = MsiUtils.GetMSIProductCode(path);
             return MsiUtils.IsProductInstalled(productCode);
+        }
+
+        /// <summary>
+        /// Gets whether the two values are equal.
+        /// </summary>
+        /// <param name="name">The name of the registry value to check.</param>
+        /// <param name="value">The value to check. Pass null to check if the registry value is missing.</param>
+        /// <returns>True if the values are equal; otherwise, false.</returns>
+        private bool IsRegistryValueEqual(string name, string value)
+        {
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(1).GetMethod().Name;
+
+            string key = String.Format(@"Software\WiX\Tests\{0}", caller);
+            string data = null;
+
+            using (RegistryKey reg = Registry.LocalMachine.OpenSubKey(key))
+            {
+                if (null != reg)
+                {
+                    object o = reg.GetValue(name);
+                    if (null != o)
+                    {
+                        data = o.ToString();
+                    }
+                }
+            }
+
+            return String.Equals(data, value);
         }
 
         /// <summary>
@@ -552,6 +886,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             exec.OtherArguments = null != properties ? String.Join(" ", properties) : null;
             exec.Product = path;
 
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(2).GetMethod().Name;
+
+            // Generate the log file name.
+            string logFile = String.Format("{0}_{1:yyyyMMddhhmmss}_{3}_{2}.log", caller, DateTime.UtcNow, Path.GetFileNameWithoutExtension(path), mode);
+            exec.LogFile = Path.Combine(Path.GetTempPath(), logFile);
+
             exec.Run();
 
             return exec.LogFile;
@@ -568,6 +910,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             exec.OtherArguments = "IGNOREDEPENDENCIES=ALL";
             exec.Product = path;
 
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(1).GetMethod().Name;
+
+            // Generate the log file name.
+            string logFile = String.Format("{0}_{1:yyyyMMddhhmmss}_Cleanup_{2}.log", caller, DateTime.UtcNow, Path.GetFileNameWithoutExtension(path));
+            exec.LogFile = Path.Combine(Path.GetTempPath(), logFile);
+
             exec.Run(false);
         }
 
@@ -578,7 +928,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         /// <param name="expectedExitCode">Expected exit code.</param>
         /// <param name="arguments">Optional arguments to pass to the tool.</param>
         /// <returns>Path to the generated log file.</returns>
-        private string InstallBundleWithArguments(string path, MSIExec.MSIExecReturnCode expectedExitCode, params string[] arguments)
+        private string InstallBundleWithArguments(string path, int expectedExitCode, params string[] arguments)
         {
             return this.RunBundleWithArguments(path, expectedExitCode, MSIExec.MSIExecMode.Install, arguments);
         }
@@ -590,7 +940,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         /// <param name="expectedExitCode">Expected exit code.</param>
         /// <param name="arguments">Optional arguments to pass to the tool.</param>
         /// <returns>Path to the generated log file.</returns>
-        private string UninstallBundleWithArguments(string path, MSIExec.MSIExecReturnCode expectedExitCode, params string[] arguments)
+        private string UninstallBundleWithArguments(string path, int expectedExitCode, params string[] arguments)
         {
             return this.RunBundleWithArguments(path, expectedExitCode, MSIExec.MSIExecMode.Uninstall, arguments);
         }
@@ -603,7 +953,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
         /// <param name="mode">Install mode.</param>
         /// <param name="arguments">Optional arguments to pass to the tool.</param>
         /// <returns>Path to the generated log file.</returns>
-        private string RunBundleWithArguments(string path, MSIExec.MSIExecReturnCode expectedExitCode, MSIExec.MSIExecMode mode, params string[] arguments)
+        private string RunBundleWithArguments(string path, int expectedExitCode, MSIExec.MSIExecMode mode, params string[] arguments)
         {
             TestTool bundle = new TestTool(path, null);
             StringBuilder sb = new StringBuilder();
@@ -616,7 +966,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             string caller = stack.GetFrame(2).GetMethod().Name;
 
             // Generate the log file name.
-            string logFile = String.Format("{0}_{3:yyyyMMddhhmmss}_{2}_{1}.log", caller, Path.GetFileNameWithoutExtension(path), mode, DateTime.UtcNow);
+            string logFile = String.Format("{0}_{1:yyyyMMddhhmmss}_{3}_{2}.log", caller, DateTime.UtcNow, Path.GetFileNameWithoutExtension(path), mode);
             sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
 
             // Set operation.
@@ -635,7 +985,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             bundle.Arguments = sb.ToString();
 
             // Run the tool and assert the expected code.
-            bundle.ExpectedExitCode = (int)expectedExitCode;
+            bundle.ExpectedExitCode = expectedExitCode;
             bundle.Run();
 
             // Return the log file name.
@@ -656,15 +1006,27 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             StringBuilder sb = new StringBuilder();
 
             // Run silent uninstall.
-            sb.Append("-quiet -uninstall");
+            sb.Append("-quiet -uninstall -burn.ignoredependencies=ALL");
 
             // Generate the log file name.
-            string logFile = String.Format("{0}_{2:yyyyMMddhhmmss}_Cleanup_{1}.log", caller, Path.GetFileNameWithoutExtension(path), DateTime.UtcNow);
+            string logFile = String.Format("{0}_{1:yyyyMMddhhmmss}_Cleanup_{2}.log", caller, DateTime.UtcNow, Path.GetFileNameWithoutExtension(path));
             sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
 
             bundle.Arguments = sb.ToString();
             bundle.Run();
         }
 
+        /// <summary>
+        /// Ensures that the registry key associated with the test is deleted.
+        /// </summary>
+        private void CleanupRegistry()
+        {
+            // Get the name of the calling method.
+            StackTrace stack = new StackTrace();
+            string caller = stack.GetFrame(1).GetMethod().Name;
+
+            string key = String.Format(@"Software\WiX\Tests\{0}", caller);
+            Registry.LocalMachine.DeleteSubKeyTree(key, false);
+        }
     }
 }

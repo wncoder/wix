@@ -308,7 +308,10 @@ extern "C" void PackageUninitialize(
     {
         for (DWORD i = 0; i < pPackage->cDependencyProviders; ++i)
         {
-            ReleaseStr(pPackage->rgDependencyProviders[i].sczKey);
+            const BURN_DEPENDENCY_PROVIDER* pProvider = &pPackage->rgDependencyProviders[i];
+            ReleaseStr(pProvider->sczKey);
+            ReleaseStr(pProvider->sczVersion);
+            ReleaseStr(pProvider->sczDisplayName);
         }
         MemFree(pPackage->rgDependencyProviders);
     }
@@ -409,6 +412,58 @@ extern "C" HRESULT PackageFindRelatedById(
     }
 
     hr = E_NOTFOUND;
+
+LExit:
+    return hr;
+}
+
+/********************************************************************
+ PackageGetProperty - Determines if the property is defined
+  and optionally copies the property value.
+
+ Note: The caller must free psczValue if requested.
+
+ Note: Returns E_NOTFOUND if the property was not defined or if the
+  package does not support properties.
+
+*********************************************************************/
+extern "C" HRESULT PackageGetProperty(
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzProperty,
+    __out_z_opt LPWSTR* psczValue
+    )
+{
+    HRESULT hr = E_NOTFOUND;
+    BURN_MSIPROPERTY* rgProperties = NULL;
+    DWORD cProperties = 0;
+
+    // For MSIs and MSPs, enumerate the properties looking for wzProperty.
+    if (BURN_PACKAGE_TYPE_MSI == pPackage->type)
+    {
+        rgProperties = pPackage->Msi.rgProperties;
+        cProperties = pPackage->Msi.cProperties;
+    }
+    else if (BURN_PACKAGE_TYPE_MSP == pPackage->type)
+    {
+        rgProperties = pPackage->Msp.rgProperties;
+        cProperties = pPackage->Msp.cProperties;
+    }
+
+    for (DWORD i = 0; i < cProperties; ++i)
+    {
+        const BURN_MSIPROPERTY* pProperty = &rgProperties[i];
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pProperty->sczId, -1, wzProperty, -1))
+        {
+            if (psczValue)
+            {
+                hr = StrAllocString(psczValue, pProperty->sczValue, 0);
+                ExitOnFailure(hr, "Failed to copy the property value.");
+            }
+
+            ExitFunction1(hr = S_OK);
+        }
+    }
 
 LExit:
     return hr;

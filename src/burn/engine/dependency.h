@@ -22,10 +22,15 @@
 extern "C" {
 #endif
 
+// constants
+
+const LPCWSTR DEPENDENCY_IGNOREDEPENDENCIES = L"IGNOREDEPENDENCIES";
+
+
 // function declarations
 
 /********************************************************************
- DependencyParseProvidersFromXml - parses dependency information
+ DependencyParseProvidersFromXml - Parses dependency information
   from the manifest for the specified package.
 
 *********************************************************************/
@@ -35,17 +40,46 @@ HRESULT DependencyParseProvidersFromXml(
     );
 
 /********************************************************************
- DependencyPlanPackage - Updates the dependency registration action
-  depending on the current state and planned action for the package.
+ DependencyPlanInitialize - Initializes the plan.
 
 *********************************************************************/
-HRESULT DependencyPlanPackage(
+HRESULT DependencyPlanInitialize(
+    __in const BURN_ENGINE_STATE* pEngineState,
+    __in BURN_PLAN* pPlan
+    );
+
+/********************************************************************
+ DependencyPlanPackageBegin - Updates the dependency registration
+  action depending on the calculated state for the package.
+
+*********************************************************************/
+HRESULT DependencyPlanPackageBegin(
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey,
-    __in BOOTSTRAPPER_ACTION_STATE executeAction,
-    __in BOOTSTRAPPER_ACTION_STATE rollbackAction,
     __out BURN_DEPENDENCY_ACTION* pDependencyAction
+    );
+
+/********************************************************************
+ DependencyPlanPackageComplete - Updates the dependency registration
+  action depending on the planned action for the package.
+
+*********************************************************************/
+HRESULT DependencyPlanPackageComplete(
+    __in const BURN_PACKAGE* pPackage,
+    __in BURN_PLAN* pPlan,
+    __in_z LPCWSTR wzBundleProviderKey,
+    __inout BURN_DEPENDENCY_ACTION* pDependencyAction
+    );
+
+/********************************************************************
+ DependencyPlanRelatedBundles - Gets the dependencies to ignore as
+  a semicolon-delimited string.
+
+*********************************************************************/
+HRESULT DependencyPlanRelatedBundles(
+    __in const BURN_PLAN *pPlan,
+    __out_z LPWSTR* psczIgnoreDependencies
     );
 
 /********************************************************************
@@ -54,52 +88,46 @@ HRESULT DependencyPlanPackage(
 
 *********************************************************************/
 HRESULT DependencyExecuteAction(
-    __in BURN_EXECUTE_ACTION* pAction,
+    __in const BURN_EXECUTE_ACTION* pAction,
     __in BOOL fPerMachine
     );
 
 /********************************************************************
- DependencyRegister - Registers the bundle dependency provider key.
+ DependencyRegisterBundle - Registers the bundle dependency provider.
 
 *********************************************************************/
-HRESULT DependencyRegister(
+HRESULT DependencyRegisterBundle(
     __in const BURN_REGISTRATION* pRegistration
     );
 
 /********************************************************************
- DependencyRegisterDependent - Registers the bundle as a dependent of each
-  dependency provided by the specified package.
+ DependencyRegisterPackage - Registers each dependency provider
+  defined for the package (if not imported from the package itself).
 
- Note: Returns S_FALSE if the dependency package is missing.
-  Call DepCheckDependencies to check for missing dependency packages.
-
- Note: If the bundle and package are installed in different contexts
-  (per-user vs. per-machine) dependency registration is skipped
-  and this function returns S_FALSE.
+ Note: Returns S_OK if the package is non-vital.
 *********************************************************************/
-HRESULT DependencyRegisterDependent(
-    __in_z LPCWSTR wzBundleProviderKey,
-    __in BOOL fPerMachine,
+HRESULT DependencyRegisterPackage(
     __in const BURN_PACKAGE* pPackage
     );
 
 /********************************************************************
- DependencyUnregister - Removes the bundle dependency provider key.
+ DependencyUnregisterBundle - Removes the bundle dependency provider.
 
- Note: Does not check for existing dependents.
+ Note: Does not check for existing dependents before removing the key.
 *********************************************************************/
-HRESULT DependencyUnregister(
+HRESULT DependencyUnregisterBundle(
     __in const BURN_REGISTRATION* pRegistration
     );
 
 /********************************************************************
- DependencyUnregisterDependent - Removes the bundle as a dependent of each
-  dependency provided by the specified package.
+ DependencyUnregisterPackage - Removes each dependency provider
+  for the package (if not imported from the package itself).
 
+ Note: Returns S_OK if the package is non-vital.
+
+ Note: Does not check for existing dependents before removing the key.
 *********************************************************************/
-HRESULT DependencyUnregisterDependent(
-    __in_z LPCWSTR wzBundleProviderKey,
-    __in BOOL fPerMachine,
+HRESULT DependencyUnregisterPackage(
     __in const BURN_PACKAGE* pPackage
     );
 

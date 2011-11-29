@@ -1262,7 +1262,7 @@ static DWORD CalculatePhaseProgress(
 
 void InitializeMessageData(
     __in_opt MSIHANDLE hRecord,
-    __out LPWSTR** prgsczData,
+    __deref_out_ecount(*pcData) LPWSTR** prgsczData,
     __out DWORD* pcData
     )
 {
@@ -1273,8 +1273,11 @@ void InitializeMessageData(
     if (hRecord)
     {
         cData = ::MsiRecordGetFieldCount(hRecord);
+        if (cData)
+        {
+            rgsczData = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cData, TRUE);
+        }
 
-        rgsczData = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cData, TRUE);
         for (DWORD i = 0; rgsczData && i < cData; ++i)
         {
             DWORD cch = 0;

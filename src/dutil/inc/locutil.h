@@ -34,26 +34,6 @@ struct LOC_STRINGSET
     LOC_STRING* rgLocStrings;
 };
 
-typedef int (WINAPI *PFN_GETUSERDEFAULTLOCALENAME)(
-    __out_ecount(cchLocaleName) LPWSTR lpLocaleName,
-    __in int cchLocaleName
-    );
-
-typedef int (WINAPI *PFN_GETSYSTEMDEFAULTLOCALENAME)(
-    __out_ecount(cchLocaleName) LPWSTR lpLocaleName,
-    __in int cchLocaleName
-    );
-
-typedef LCID (WINAPI *PFN_LOCALENAMETOLCID)(
-    __in LPCWSTR lpName,
-    __in DWORD dwFlags
-    );
-
-HRESULT DAPI LocInitialize(
-    );
-void DAPI LocUninitialize(
-    );
-
 /********************************************************************
  LocProbeForFile - Searches for a localization file on disk.
 

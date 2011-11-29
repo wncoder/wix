@@ -177,8 +177,7 @@ static HRESULT GetColumnValueFixed(
 static HRESULT EnsureLocalColumnConstraints(
     __in ITableDefinition *pTableDefinition,
     __in DBID *pTableID,
-    __in SCE_TABLE_SCHEMA *pTableSchema,
-    __in SCE_DATABASE_SCHEMA *pDatabaseSchema
+    __in SCE_TABLE_SCHEMA *pTableSchema
     );
 static HRESULT EnsureForeignColumnConstraints(
     __in ITableDefinition *pTableDefinition,
@@ -219,7 +218,7 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     IUnknown *pIUnknownSession = NULL;
     IDBDataSourceAdmin *pIDBDataSourceAdmin = NULL; 
     DBPROPSET rgdbpDataSourcePropSet[2] = { };
-    DBPROP rgdbpDataSourceProp[1] = { };
+    DBPROP rgdbpDataSourceProp[2] = { };
     DBPROP rgdbpDataSourceSsceProp[1] = { };
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
@@ -246,6 +245,11 @@ extern "C" HRESULT DAPI SceCreateDatabase(
     rgdbpDataSourceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
     rgdbpDataSourceProp[0].vValue.vt = VT_BSTR;
     rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(sczFile);
+
+    rgdbpDataSourceProp[1].dwPropertyID = DBPROP_INIT_MODE;
+    rgdbpDataSourceProp[1].dwOptions = DBPROPOPTIONS_REQUIRED;
+    rgdbpDataSourceProp[1].vValue.vt = VT_I4;
+    rgdbpDataSourceProp[1].vValue.lVal = DB_MODE_SHARE_DENY_NONE;
 
     // SQL CE doesn't seem to allow us to specify DBPROP_INIT_PROMPT if we include any properties from DBPROPSET_SSCE_DBINIT 
     rgdbpDataSourcePropSet[0].guidPropertySet = DBPROPSET_DBINIT;
@@ -312,7 +316,7 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     SCE_DATABASE *pNewSceDatabase = NULL;
     SCE_DATABASE_INTERNAL *pNewSceDatabaseInternal = NULL;
     DBPROPSET rgdbpDataSourcePropSet[2] = { };
-    DBPROP rgdbpDataSourceProp[1] = { };
+    DBPROP rgdbpDataSourceProp[2] = { };
     DBPROP rgdbpDataSourceSsceProp[1] =  { };
 
     pNewSceDatabase = reinterpret_cast<SCE_DATABASE *>(MemAlloc(sizeof(SCE_DATABASE), TRUE));
@@ -352,6 +356,11 @@ extern "C" HRESULT DAPI SceOpenDatabase(
     rgdbpDataSourceProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
     rgdbpDataSourceProp[0].vValue.vt = VT_BSTR;
     rgdbpDataSourceProp[0].vValue.bstrVal = ::SysAllocString(wzPathToOpen);
+
+    rgdbpDataSourceProp[1].dwPropertyID = DBPROP_INIT_MODE;
+    rgdbpDataSourceProp[1].dwOptions = DBPROPOPTIONS_REQUIRED;
+    rgdbpDataSourceProp[1].vValue.vt = VT_I4;
+    rgdbpDataSourceProp[1].vValue.lVal = DB_MODE_SHARE_DENY_NONE;
 
     // SQL CE doesn't seem to allow us to specify DBPROP_INIT_PROMPT if we include any properties from DBPROPSET_SSCE_DBINIT 
     rgdbpDataSourcePropSet[0].guidPropertySet = DBPROPSET_DBINIT;
@@ -1467,12 +1476,13 @@ static HRESULT EnsureSchema(
     size_t cbAllocSize = 0;
     BOOL fInTransaction = FALSE;
     BOOL fFixedSize = FALSE;
+    BOOL fSchemaNeedsSetup = TRUE;
     DBID tableID = { };
     DBID indexID = { };
-    DBPROPSET rgdbpRowSetPropset[1];
-    DBPROP rgdbpRowSetProp[1];
-    DBPROPSET rgdbpIndexPropset[1];
+    DBPROPSET rgdbpIndexPropSet[1];
+    DBPROPSET rgdbpRowSetPropSet[1];
     DBPROP rgdbpIndexProp[1];
+    DBPROP rgdbpRowSetProp[1];
     DWORD dwColumnProperties = 0;
     DWORD dwColumnPropertyIndex = 0;
     DBCOLUMNDESC *rgColumnDescriptions = NULL;
@@ -1481,10 +1491,11 @@ static HRESULT EnsureSchema(
     SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
     ITableDefinition *pTableDefinition = NULL;
     IIndexDefinition *pIndexDefinition = NULL;
+    IRowsetIndex *pIRowsetIndex = NULL;
 
-    rgdbpRowSetPropset[0].cProperties = 1;
-    rgdbpRowSetPropset[0].guidPropertySet = DBPROPSET_ROWSET;
-    rgdbpRowSetPropset[0].rgProperties = rgdbpRowSetProp;
+    rgdbpRowSetPropSet[0].cProperties = 1;
+    rgdbpRowSetPropSet[0].guidPropertySet = DBPROPSET_ROWSET;
+    rgdbpRowSetPropSet[0].rgProperties = rgdbpRowSetProp;
 
     rgdbpRowSetProp[0].dwPropertyID = DBPROP_IRowsetChange;
     rgdbpRowSetProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
@@ -1492,9 +1503,9 @@ static HRESULT EnsureSchema(
     rgdbpRowSetProp[0].vValue.vt = VT_BOOL;
     rgdbpRowSetProp[0].vValue.boolVal = VARIANT_TRUE;
 
-    rgdbpIndexPropset[0].cProperties = 1;
-    rgdbpIndexPropset[0].guidPropertySet = DBPROPSET_INDEX;
-    rgdbpIndexPropset[0].rgProperties = rgdbpIndexProp;
+    rgdbpIndexPropSet[0].cProperties = 1;
+    rgdbpIndexPropSet[0].guidPropertySet = DBPROPSET_INDEX;
+    rgdbpIndexPropSet[0].rgProperties = rgdbpIndexProp;
 
     rgdbpIndexProp[0].dwPropertyID = DBPROP_INDEX_NULLS;
     rgdbpIndexProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
@@ -1518,7 +1529,7 @@ static HRESULT EnsureSchema(
         tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
 
         // First try to open the table - or if it doesn't exist, create it
-        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
+        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropSet), rgdbpRowSetPropSet, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
         if (DB_E_NOTABLE == hr)
         {
             // The table doesn't exist, so let's create it
@@ -1590,12 +1601,12 @@ static HRESULT EnsureSchema(
                 }
             }
 
-            hr = pTableDefinition->CreateTable(NULL, &tableID, pdsSchema->rgTables[dwTable].cColumns, rgColumnDescriptions, IID_IUnknown, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, NULL, NULL);
+            hr = pTableDefinition->CreateTable(NULL, &tableID, pdsSchema->rgTables[dwTable].cColumns, rgColumnDescriptions, IID_IUnknown, _countof(rgdbpRowSetPropSet), rgdbpRowSetPropSet, NULL, NULL);
             ExitOnFailure1(hr, "Failed to create table: %ls", pdsSchema->rgTables[dwTable].wzName);
 
 #pragma prefast(push)
 #pragma prefast(disable:26010)
-            hr = EnsureLocalColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
+            hr = EnsureLocalColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable);
 #pragma prefast(pop)
             ExitOnFailure1(hr, "Failed to ensure local column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
 
@@ -1612,10 +1623,18 @@ static HRESULT EnsureSchema(
         }
         else
         {
-            ExitOnFailure(hr, "Failed to open table while ensuring schema");
-
             // Close any rowset we opened
             ReleaseNullObject(pdsSchema->rgTables[dwTable].pIRowset);
+
+            if (0 == dwTable && S_OK == hr)
+            {
+                fSchemaNeedsSetup = FALSE;
+                break;
+            }
+            else
+            {
+                ExitOnFailure(hr, "Failed to open table while ensuring schema");
+            }
         }
 
         if (0 < pdsSchema->rgTables[dwTable].cIndexes)
@@ -1625,6 +1644,16 @@ static HRESULT EnsureSchema(
             {
                 indexID.eKind = DBKIND_NAME;
                 indexID.uName.pwszName = pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].wzName;
+
+                // Check if the index exists
+                hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, &indexID, IID_IRowsetIndex, 0, NULL, (IUnknown**) &pIRowsetIndex);
+                if (SUCCEEDED(hr))
+                {
+                    // If it exists, no need to create it
+                    ReleaseNullObject(pIRowsetIndex);
+                    continue;
+                }
+                hr = S_OK;
 
                 hr = ::SizeTMult(sizeof(DBINDEXCOLUMNDESC), pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns, &cbAllocSize);
                 ExitOnFailure1(hr, "Overflow while calculating allocation size for DBINDEXCOLUMNDESC, columns: %u", pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns);
@@ -1641,7 +1670,7 @@ static HRESULT EnsureSchema(
                     rgIndexColumnDescriptions[dwColumnIndex].eIndexColOrder = DBINDEX_COL_ORDER_ASC;
                 }
 
-                hr = pIndexDefinition->CreateIndex(&tableID, &indexID, static_cast<DBORDINAL>(pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns), rgIndexColumnDescriptions, 1, rgdbpIndexPropset, NULL);
+                hr = pIndexDefinition->CreateIndex(&tableID, &indexID, static_cast<DBORDINAL>(pdsSchema->rgTables[dwTable].rgIndexes[dwIndex].cColumns), rgIndexColumnDescriptions, 1, rgdbpIndexPropSet, NULL);
                 if (DB_E_DUPLICATEINDEXID == hr)
                 {
                     // If the index already exists, no worries
@@ -1661,14 +1690,17 @@ static HRESULT EnsureSchema(
     }
 
     // Now once all tables have been created, create foreign key relationships
-    for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
+    if (fSchemaNeedsSetup)
     {
-        tableID.eKind = DBKIND_NAME;
-        tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
+        for (DWORD dwTable = 0; dwTable < pdsSchema->cTables; ++dwTable)
+        {
+            tableID.eKind = DBKIND_NAME;
+            tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
 
-        // Setup any constraints for the table's columns
-        hr = EnsureForeignColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
-        ExitOnFailure1(hr, "Failed to ensure foreign column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
+            // Setup any constraints for the table's columns
+            hr = EnsureForeignColumnConstraints(pTableDefinition, &tableID, pdsSchema->rgTables + dwTable, pdsSchema);
+            ExitOnFailure1(hr, "Failed to ensure foreign column constraints for table: %ls", pdsSchema->rgTables[dwTable].wzName);
+        }
     }
 
     hr = SceCommitTransaction(pDatabase);
@@ -1681,6 +1713,7 @@ static HRESULT EnsureSchema(
 LExit:
     ReleaseObject(pTableDefinition);
     ReleaseObject(pIndexDefinition);
+    ReleaseObject(pIRowsetIndex);
 
     if (fInTransaction)
     {
@@ -1706,12 +1739,12 @@ static HRESULT OpenSchema(
     HRESULT hr = S_OK;
     SCE_DATABASE_INTERNAL *pDatabaseInternal = reinterpret_cast<SCE_DATABASE_INTERNAL *>(pDatabase->sdbHandle);
     DBID tableID = { };
-    DBPROPSET rgdbpRowSetPropset[1];
+    DBPROPSET rgdbpRowSetPropSet[1];
     DBPROP rgdbpRowSetProp[1];
 
-    rgdbpRowSetPropset[0].cProperties = 1;
-    rgdbpRowSetPropset[0].guidPropertySet = DBPROPSET_ROWSET;
-    rgdbpRowSetPropset[0].rgProperties = rgdbpRowSetProp;
+    rgdbpRowSetPropSet[0].cProperties = 1;
+    rgdbpRowSetPropSet[0].guidPropertySet = DBPROPSET_ROWSET;
+    rgdbpRowSetPropSet[0].rgProperties = rgdbpRowSetProp;
 
     rgdbpRowSetProp[0].dwPropertyID = DBPROP_IRowsetChange;
     rgdbpRowSetProp[0].dwOptions = DBPROPOPTIONS_REQUIRED;
@@ -1726,7 +1759,7 @@ static HRESULT OpenSchema(
         tableID.uName.pwszName = const_cast<WCHAR *>(pdsSchema->rgTables[dwTable].wzName);
 
         // And finally, open the table's standard interfaces
-        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropset), rgdbpRowSetPropset, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
+        hr = pDatabaseInternal->pIOpenRowset->OpenRowset(NULL, &tableID, NULL, IID_IRowset, _countof(rgdbpRowSetPropSet), rgdbpRowSetPropSet, reinterpret_cast<IUnknown **>(&pdsSchema->rgTables[dwTable].pIRowset));
         ExitOnFailure(hr, "Failed to re-open table after ensuring all indexes and constraints are created");
 
         hr = pdsSchema->rgTables[dwTable].pIRowset->QueryInterface(IID_IRowsetChange, reinterpret_cast<void **>(&pdsSchema->rgTables[dwTable].pIRowsetChange));
@@ -1959,8 +1992,7 @@ LExit:
 static HRESULT EnsureLocalColumnConstraints(
     __in ITableDefinition *pTableDefinition,
     __in DBID *pTableID,
-    __in SCE_TABLE_SCHEMA *pTableSchema,
-    __in SCE_DATABASE_SCHEMA* /*pDatabaseSchema*/
+    __in SCE_TABLE_SCHEMA *pTableSchema
     )
 {
     HRESULT hr = S_OK;
@@ -1968,8 +2000,6 @@ static HRESULT EnsureLocalColumnConstraints(
     DBCONSTRAINTDESC dbcdConstraint = { };
     DBID dbConstraintID = { };
     DBID dbLocalColumnID = { };
-    //DBID dbForeignTableID = { };
-    //DBID dbForeignColumnID = { };
     ITableDefinitionWithConstraints *pTableDefinitionWithConstraints = NULL;
 
     hr = pTableDefinition->QueryInterface(IID_ITableDefinitionWithConstraints, reinterpret_cast<void **>(&pTableDefinitionWithConstraints));

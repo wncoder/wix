@@ -98,7 +98,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 if (null != row[3])
                 {
-                    provides.DisplayKey = (string)row[3];
+                    provides.Version = (string)row[3];
+                }
+
+                if (null != row[4])
+                {
+                    provides.DisplayName = (string)row[4];
                 }
 
                 // Nothing to parse for attributes currently.
@@ -122,7 +127,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 this.registryValues.Add(keyProvides, null);
                 this.registryValues.Add(keyProvides, "Version");
-                this.registryValues.Add(keyProvides, "DisplayKey");
+                this.registryValues.Add(keyProvides, "DisplayName");
                 this.registryValues.Add(keyProvides, "Attributes");
 
                 // Cache the provider key.

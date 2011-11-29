@@ -20,9 +20,18 @@
     <Class Name="DependencyErrors" ContainerName="DependencyErrorEventArgs" BaseContainerName="WixErrorEventArgs">
         <Message Id="IllegalCharactersInProvider" Number="5400">
             <Instance>
-                The provider key authored into the {0} attribute contains an illegal character, '{1}'. Please author the provider key without this character.
+                The provider key authored into the {0} attribute contains an illegal character, '{1}'. Please author the provider key without any of the following characters: {2}
                 <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.Char" Name="illegalChar" />
                 <Parameter Type="System.String" Name="illegalChars" />
+            </Instance>
+        </Message>
+        <Message Id="ReservedValue" Number="5401">
+            <Instance>
+                The {0}/@{1} attribute value '{2}' is reserved and cannot be used here. Please choose a different value.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="attributeValue" />
             </Instance>
         </Message>
     </Class>
@@ -43,6 +52,15 @@
             <Instance>
                 The property {0} was authored in the package with a value and will be removed. The property should not be authored.
                 <Parameter Type="System.String" Name="name" />
+            </Instance>
+        </Message>
+        <Message Id="DiscouragedVersionAttribute" Number="5434">
+            <Instance>
+                The Provides/@Version attribute should not be specified in an MSI package. The ProductVersion will be used by default.
+            </Instance>
+            <Instance>
+                The Provides/@Version attribute should not be specified for MSI package {0}. The ProductVersion will be used by default.
+                <Parameter Type="System.String" Name="id" />
             </Instance>
         </Message>
     </Class>

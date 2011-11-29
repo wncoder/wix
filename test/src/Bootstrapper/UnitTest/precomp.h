@@ -40,6 +40,8 @@
 #include <strutil.h>
 #include <wiutil.h>
 #include <xmlutil.h>
+#include <dictutil.h>
+#include <deputil.h>
 
 #include <wixver.h>
 

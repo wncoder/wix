@@ -43,7 +43,6 @@ typedef struct _BURN_EXECUTE_CONTEXT
     DWORD cExecutedPackages;
     DWORD cExecutePackagesTotal;
     DWORD* pcOverallProgressTicks;
-    BOOL fLastPackageSucceeded;
 } BURN_EXECUTE_CONTEXT;
 
 
@@ -517,7 +516,6 @@ extern "C" HRESULT ApplyExecute(
     context.pUX = &pEngineState->userExperience;
     context.cExecutePackagesTotal = pEngineState->plan.cExecutePackagesTotal;
     context.pcOverallProgressTicks = pcOverallProgressTicks;
-    context.fLastPackageSucceeded = TRUE;
 
     // Send execute begin to BA.
     nResult = pEngineState->userExperience.pUserExperience->OnExecuteBegin(pEngineState->plan.cExecutePackagesTotal);
@@ -1400,8 +1398,6 @@ static HRESULT ExecuteExePackage(
         ExitOnFailure(hrExecute, "Failed to configure per-user EXE package.");
     }
 
-    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
-    
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
     message.progress.dwPercentage = fRollback ? 0 : 100;
     nResult = GenericExecuteMessageHandler(&message, pContext);
@@ -1453,7 +1449,6 @@ static HRESULT ExecuteMsiPackage(
         ExitOnFailure(hrExecute, "Failed to configure per-user MSI package.");
     }
 
-    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
@@ -1499,7 +1494,6 @@ static HRESULT ExecuteMspPackage(
         ExitOnFailure(hrExecute, "Failed to configure per-user MSP package.");
     }
 
-    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
@@ -1551,8 +1545,6 @@ static HRESULT ExecuteMsuPackage(
         ExitOnFailure(hr, "MSU packages cannot be per-user.");
     }
 
-    pContext->fLastPackageSucceeded = SUCCEEDED(hrExecute);
-
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
     message.progress.dwPercentage = fRollback ? 0 : 100;
     nResult = GenericExecuteMessageHandler(&message, pContext);
@@ -1578,24 +1570,15 @@ static HRESULT ExecuteDependencyAction(
 {
     HRESULT hr = S_OK;
 
-    // Execute the dependency action if the last package was successful.
-    if (pContext->fLastPackageSucceeded)
+    if (pAction->dependency.pPackage->fPerMachine)
     {
-        if (pAction->dependency.pPackage->fPerMachine)
-        {
-            hr = ElevationExecuteDependencyAction(pEngineState->companionConnection.hPipe, pAction);
-            ExitOnFailure(hr, "Failed to register the dependency on per-machine package.");
-        }
-        else
-        {
-            hr = DependencyExecuteAction(pAction, pEngineState->registration.fPerMachine);
-            ExitOnFailure(hr, "Failed to register the dependency on per-user package.");
-        }
+        hr = ElevationExecuteDependencyAction(pEngineState->companionConnection.hPipe, pAction);
+        ExitOnFailure(hr, "Failed to register the dependency on per-machine package.");
     }
     else
     {
-        LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_LASTFAILED, pContext->pExecutingPackage->sczId);
-        hr = S_FALSE;
+        hr = DependencyExecuteAction(pAction, pEngineState->registration.fPerMachine);
+        ExitOnFailure(hr, "Failed to register the dependency on per-user package.");
     }
 
 LExit:
