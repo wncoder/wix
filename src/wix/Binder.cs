@@ -3364,7 +3364,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Copy the burn.exe to a writable location then mark it to be moved to its
             // final build location.
-            string wixExeDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), bundleInfo.Platform.ToString());
+            string stubPlatform;
+            if (Platform.X64 == bundleInfo.Platform) // today, the x64 Burn uses the x86 stub.
+            {
+                stubPlatform = "x86";
+            }
+            else
+            {
+                stubPlatform = bundleInfo.Platform.ToString();
+            }
+            string wixExeDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), stubPlatform);
             string stubFile = Path.Combine(wixExeDirectory, "burn.exe");
             string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleInfo.Path));
 
@@ -3603,6 +3612,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfo> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers, Dictionary<string, CatalogInfo> catalogs)
         {
+            string executableName = Path.GetFileName(bundleInfo.Path);
+
             using (XmlTextWriter writer = new XmlTextWriter(path, Encoding.UTF8))
             {
                 writer.WriteStartDocument();
@@ -3682,7 +3693,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if (Compiler.BurnUXContainerId != container.Id && 0 < container.Payloads.Count)
                     {
                         writer.WriteStartElement("Container");
-                        WriteBurnManifestContainerAttributes(writer, container, attachedContainerIndex);
+                        WriteBurnManifestContainerAttributes(writer, executableName, container, attachedContainerIndex);
                         writer.WriteEndElement();
                         if ("attached" == container.Type)
                         {
@@ -3719,7 +3730,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteStartElement("Registration");
 
                 writer.WriteAttributeString("Id", bundleInfo.Id.ToString("B"));
-                writer.WriteAttributeString("ExecutableName", Path.GetFileName(bundleInfo.Path));
+                writer.WriteAttributeString("ExecutableName", executableName);
                 writer.WriteAttributeString("PerMachine", bundleInfo.PerMachine ? "yes" : "no");
                 writer.WriteAttributeString("Tag", bundleInfo.Tag);
                 writer.WriteAttributeString("Version", bundleInfo.Version);
@@ -3994,21 +4005,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             resources.Save(bundleTempPath);
         }
 
-        private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, ContainerInfo container, int containerIndex)
+        private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, string executableName, ContainerInfo container, int containerIndex)
         {
             writer.WriteAttributeString("Id", container.Id);
-            writer.WriteAttributeString("SourcePath", container.Name);
             if (container.Type == "detached")
             {
+                writer.WriteAttributeString("SourcePath", container.Name);
                 writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
                 writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
                 writer.WriteAttributeString("Packaging", "detached");
             }
             else if (container.Type == "attached")
             {
+                writer.WriteAttributeString("SourcePath", executableName); // attached containers use the name of the bundle since they are attached to the executable.
                 writer.WriteAttributeString("AttachedIndex", containerIndex.ToString(CultureInfo.InvariantCulture));
                 writer.WriteAttributeString("Attached", "yes");
                 writer.WriteAttributeString("Primary", "yes");
+                writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
+                writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
             }
         }
 

@@ -33,6 +33,7 @@ typedef enum _BURN_ELEVATION_MESSAGE_TYPE
     BURN_ELEVATION_MESSAGE_TYPE_SAVE_STATE,
     BURN_ELEVATION_MESSAGE_TYPE_LAYOUT_BUNDLE,
     BURN_ELEVATION_MESSAGE_TYPE_CACHE_OR_LAYOUT_PAYLOAD,
+    BURN_ELEVATION_MESSAGE_TYPE_CACHE_CLEANUP,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_EXE_PACKAGE,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_PACKAGE,
     BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSP_PACKAGE,
@@ -147,6 +148,9 @@ static HRESULT OnCacheOrLayoutPayload(
     __in BURN_PAYLOADS* pPayloads,
     __in BYTE* pbData,
     __in DWORD cbData
+    );
+static void OnCacheCleanup(
+    __in_z LPCWSTR wzBundleId
     );
 static HRESULT OnExecuteExePackage(
     __in HANDLE hPipe,
@@ -347,8 +351,7 @@ LExit:
 *******************************************************************/
 extern "C" HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback,
+    __in BOOL fKeepRegistration,
     __in BOOL fSuspend,
     __in BOOTSTRAPPER_APPLY_RESTART restart
     )
@@ -359,11 +362,8 @@ extern "C" HRESULT ElevationSessionEnd(
     DWORD dwResult = 0;
 
     // serialize message data
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)action);
-    ExitOnFailure(hr, "Failed to write action to message buffer.");
-
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fRollback);
-    ExitOnFailure(hr, "Failed to write rollback flag to message buffer.");
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fKeepRegistration);
+    ExitOnFailure(hr, "Failed to write keep registration flag to message buffer.");
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fSuspend);
     ExitOnFailure(hr, "Failed to write suspend flag to message buffer.");
@@ -506,6 +506,26 @@ LExit:
 
     return hr;
 }
+
+/*******************************************************************
+ ElevationCacheCleanup - 
+
+*******************************************************************/
+extern "C" HRESULT ElevationCacheCleanup(
+    __in HANDLE hPipe
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD dwResult = 0;
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_CACHE_CLEANUP, NULL, 0, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send BURN_ELEVATION_MESSAGE_TYPE_CACHE_CLEANUP message to per-machine process.");
+
+    hr = (HRESULT)dwResult;
+
+LExit:
+    return hr;}
 
 /*******************************************************************
  ElevationExecuteExePackage - 
@@ -1171,6 +1191,11 @@ static HRESULT ProcessElevatedChildCacheMessage(
         hrResult = OnCacheOrLayoutPayload(pContext->pPackages, pContext->pPayloads, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
+    case BURN_ELEVATION_MESSAGE_TYPE_CACHE_CLEANUP:
+        OnCacheCleanup(pContext->pRegistration->sczId);
+        hrResult = S_OK;
+        break;
+
     case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE:
         hrResult = OnCleanPackage(pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
@@ -1321,17 +1346,13 @@ static HRESULT OnSessionEnd(
 {
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
-    DWORD action = 0;
-    DWORD dwRollback = 0;
+    DWORD dwKeepRegistration = 0;
     DWORD dwSuspend = 0;
     DWORD dwRestart = 0;
 
     // deserialize message data
-    hr = BuffReadNumber(pbData, cbData, &iData, &action);
-    ExitOnFailure(hr, "Failed to read action.");
-
-    hr = BuffReadNumber(pbData, cbData, &iData, &dwRollback);
-    ExitOnFailure(hr, "Failed to read rollback flag.");
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwKeepRegistration);
+    ExitOnFailure(hr, "Failed to read keep registration flag.");
 
     hr = BuffReadNumber(pbData, cbData, &iData, &dwSuspend);
     ExitOnFailure(hr, "Failed to read suspend flag.");
@@ -1340,7 +1361,7 @@ static HRESULT OnSessionEnd(
     ExitOnFailure(hr, "Failed to read restart enum.");
 
     // suspend session in per-machine process
-    hr = RegistrationSessionEnd(pRegistration, (BOOTSTRAPPER_ACTION)action, (BOOL)dwRollback, (BOOL)dwSuspend, (BOOTSTRAPPER_APPLY_RESTART)dwRestart, TRUE, NULL);
+    hr = RegistrationSessionEnd(pRegistration, (BOOL)dwKeepRegistration, (BOOL)dwSuspend, (BOOTSTRAPPER_APPLY_RESTART)dwRestart, TRUE, NULL);
     ExitOnFailure(hr, "Failed to suspend registration session.");
 
 LExit:
@@ -1452,12 +1473,12 @@ static HRESULT OnCacheOrLayoutPayload(
     if (sczLayoutDirectory && *sczLayoutDirectory)
     {
         hr = CacheLayoutPayload(pPayload, sczLayoutDirectory, sczUnverifiedPayloadPath, fMove);
-        ExitOnFailure1(hr, "Failed to layout payload from: %ls", sczUnverifiedPayloadPath);
+        ExitOnFailure2(hr, "Failed to layout payload from: %ls to %ls", sczUnverifiedPayloadPath, sczLayoutDirectory);
     }
     else if (pPackage) // complete payload.
     {
         hr = CacheCompletePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, sczUnverifiedPayloadPath, fMove);
-        ExitOnFailure1(hr, "Failed to cache payload from: %ls", sczUnverifiedPayloadPath);
+        ExitOnFailure1(hr, "Failed to cache payload: %ls", pPayload->sczKey);
     }
     else
     {
@@ -1471,6 +1492,13 @@ LExit:
     ReleaseStr(scz);
 
     return hr;
+}
+
+static void OnCacheCleanup(
+    __in_z LPCWSTR wzBundleId
+    )
+{
+    CacheCleanup(TRUE, wzBundleId);
 }
 
 static HRESULT OnExecuteExePackage(

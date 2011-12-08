@@ -43,7 +43,6 @@ static HRESULT ParseCommandLine(
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
-    __out_z LPWSTR* psczLayoutDirectory,
     __out_z LPWSTR* psczIgnoreDependencies
     );
 static HRESULT ParsePipeConnection(
@@ -69,14 +68,13 @@ extern "C" HRESULT CoreInitialize(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczLayoutDirectory = NULL;
     LPWSTR sczStreamName = NULL;
     BYTE* pbBuffer = NULL;
     SIZE_T cbBuffer = 0;
     BURN_CONTAINER_CONTEXT containerContext = { };
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &sczLayoutDirectory, &pEngineState->sczIgnoreDependencies);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     // initialize variables
@@ -104,21 +102,6 @@ extern "C" HRESULT CoreInitialize(
     hr = ManifestLoadXmlFromBuffer(pbBuffer, cbBuffer, pEngineState);
     ExitOnFailure(hr, "Failed to load manifest.");
 
-    // set the registration variables
-    hr = RegistrationSetVariables(&pEngineState->registration, &pEngineState->variables);
-    ExitOnFailure(hr, "Failed to set registration variables.");
-
-    // set registration paths
-    hr = RegistrationSetPaths(&pEngineState->registration);
-    ExitOnFailure(hr, "Failed to set registration paths.");
-
-    // If a layout directory was specified on the command-line, set it as a well-known variable.
-    if (sczLayoutDirectory)
-    {
-        hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, sczLayoutDirectory, FALSE);
-        ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
-    }
-
     // If we're not elevated then we'll be loading the bootstrapper application, so extract
     // the payloads from the BA container.
     if (pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED || pEngineState->elevationState == BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY)
@@ -138,7 +121,6 @@ extern "C" HRESULT CoreInitialize(
 LExit:
     ContainerClose(&containerContext);
     ReleaseStr(sczStreamName);
-    ReleaseStr(sczLayoutDirectory);
     ReleaseMem(pbBuffer);
 
     return hr;
@@ -167,6 +149,9 @@ extern "C" HRESULT CoreQueryRegistration(
     BYTE* pbBuffer = NULL;
     SIZE_T cbBuffer = 0;
     SIZE_T iBuffer = 0;
+
+    // Detect if bundle is already installed.
+    RegistrationDetectInstalled(&pEngineState->registration, &pEngineState->registration.fInstalled);
 
     // detect resume type
     hr = RegistrationDetectResumeType(&pEngineState->registration, &pEngineState->command.resumeType);
@@ -317,13 +302,14 @@ extern "C" HRESULT CorePlan(
     DWORD dwExecuteActionEarlyIndex = 0;
     HANDLE hSyncpointEvent = NULL;
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
-    BOOTSTRAPPER_ACTION_STATE executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
-    BOOTSTRAPPER_ACTION_STATE rollbackAction = BOOTSTRAPPER_ACTION_STATE_NONE;
-    BURN_DEPENDENCY_ACTION dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
     BOOL fPlannedCachePackage = FALSE;
     BOOL fPlannedCleanPackage = FALSE;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
     HANDLE hRollbackBoundaryCompleteEvent = NULL;
+    DWORD iAfterExecuteFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
+    DWORD iBeforeRollbackFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
+    DWORD iAfterExecuteLastNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
+    DWORD iAfterRollbackLastNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
 
     LogId(REPORT_STANDARD, MSG_PLAN_BEGIN, pEngineState->packages.cPackages, LoggingBurnActionToString(action));
 
@@ -335,12 +321,19 @@ extern "C" HRESULT CorePlan(
     ExitOnRootFailure(hr, "UX aborted plan begin.");
 
     // Always reset the plan.
-    PlanUninitialize(&pEngineState->plan);
+    PlanUninitialize(&pEngineState->plan, &pEngineState->packages);
 
     // Remember the overall action state in the plan since it shapes the changes
     // we make everywhere.
     pEngineState->plan.action = action;
     pEngineState->plan.wzBundleId = pEngineState->registration.sczId;
+
+    // By default we want to keep the registration if the bundle was already installed.
+    pEngineState->plan.fKeepRegistrationDefault = pEngineState->registration.fInstalled;
+
+    // Set resume commandline
+    hr = PlanSetResumeCommand(&pEngineState->registration, action, &pEngineState->command, &pEngineState->log);
+    ExitOnFailure(hr, "Failed to set resume command");
 
     hr = DependencyPlanInitialize(pEngineState, &pEngineState->plan);
     ExitOnFailure(hr, "Failed to initialize the dependencies for the plan.");
@@ -368,9 +361,6 @@ extern "C" HRESULT CorePlan(
         pPackage = pEngineState->packages.rgPackages + iPackage;
         BURN_ROLLBACK_BOUNDARY* pEffectiveRollbackBoundary = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pPackage->pRollbackBoundaryBackward : pPackage->pRollbackBoundaryForward;
 
-        executeAction = BOOTSTRAPPER_ACTION_STATE_NONE;
-        rollbackAction = BOOTSTRAPPER_ACTION_STATE_NONE;
-        dependencyAction = BURN_DEPENDENCY_ACTION_NONE;
         fPlannedCachePackage = FALSE;
         fPlannedCleanPackage = FALSE;
 
@@ -411,30 +401,61 @@ extern "C" HRESULT CorePlan(
             }
             else
             {
-                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, &executeAction, &rollbackAction, &dependencyAction, &fPlannedCachePackage, &fPlannedCleanPackage);
+                if (pPackage->fUninstallable)
+                {
+                    if (BURN_PLAN_INVALID_ACTION_INDEX == iBeforeRollbackFirstNonPermanentPackage)
+                    {
+                        iBeforeRollbackFirstNonPermanentPackage = pEngineState->plan.cRollbackActions;
+                    }
+                }
+
+                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, &fPlannedCachePackage, &fPlannedCleanPackage);
                 ExitOnFailure(hr, "Failed to plan execute package.");
+
+                if (pPackage->fUninstallable)
+                {
+                    if (BURN_PLAN_INVALID_ACTION_INDEX == iAfterExecuteFirstNonPermanentPackage)
+                    {
+                        iAfterExecuteFirstNonPermanentPackage = pEngineState->plan.cExecuteActions - 1;
+                    }
+
+                    iAfterExecuteLastNonPermanentPackage = pEngineState->plan.cExecuteActions;
+                    iAfterRollbackLastNonPermanentPackage = pEngineState->plan.cRollbackActions;
+                }
             }
         }
         else if (BOOTSTRAPPER_ACTION_LAYOUT != action)
         {
             // Make sure the package is properly ref-counted even if no plan is requested.
-            hr = DependencyPlanPackageBegin(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, &dependencyAction);
+            hr = DependencyPlanPackageBegin(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
-            hr = DependencyPlanPackageComplete(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey, &dependencyAction);
+            hr = DependencyPlanPackageComplete(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pPackage->sczId);
         }
 
         // Add the checkpoint after each package and dependency registration action.
-        if (BOOTSTRAPPER_ACTION_STATE_NONE != executeAction || BOOTSTRAPPER_ACTION_STATE_NONE != rollbackAction || BURN_DEPENDENCY_ACTION_NONE != dependencyAction)
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute || BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback || BURN_DEPENDENCY_ACTION_NONE != pPackage->dependency)
         {
             hr = PlanExecuteCheckpoint(&pEngineState->plan);
             ExitOnFailure(hr, "Failed to append execute checkpoint.");
         }
 
-        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(executeAction), LoggingActionStateToString(rollbackAction), LoggingBoolToString(fPlannedCachePackage), LoggingBoolToString(fPlannedCleanPackage), LoggingDependencyActionToString(dependencyAction));
+        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(fPlannedCachePackage), LoggingBoolToString(fPlannedCleanPackage), LoggingDependencyActionToString(pPackage->dependency));
 
-        pEngineState->userExperience.pUserExperience->OnPlanPackageComplete(pPackage->sczId, hr, pPackage->currentState, pPackage->requested, executeAction, rollbackAction);
+        pEngineState->userExperience.pUserExperience->OnPlanPackageComplete(pPackage->sczId, hr, pPackage->currentState, pPackage->requested, pPackage->execute, pPackage->rollback);
+    }
+
+    // Insert the "keep registration" and "remove registration" actions in the plan when installing the first time and anytime we are uninstalling respectively.
+    if (!pEngineState->registration.fInstalled && (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_MODIFY == action || BOOTSTRAPPER_ACTION_REPAIR == action))
+    {
+        hr = PlanKeepRegistration(&pEngineState->plan, iAfterExecuteFirstNonPermanentPackage, iBeforeRollbackFirstNonPermanentPackage);
+        ExitOnFailure(hr, "Failed to plan install keep registration.");
+    }
+    else if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
+    {
+        hr = PlanRemoveRegistration(&pEngineState->plan, iAfterExecuteLastNonPermanentPackage, iAfterRollbackLastNonPermanentPackage);
+        ExitOnFailure(hr, "Failed to plan uninstall remove registration.");
     }
 
     // If we still have an open rollback boundary, complete it.
@@ -453,6 +474,10 @@ extern "C" HRESULT CorePlan(
         hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, dwExecuteActionEarlyIndex);
         ExitOnFailure(hr, "Failed to plan related bundles.");
     }
+
+#ifdef DEBUG
+    PlanDump(&pEngineState->plan);
+#endif
 
 LExit:
     if (fActivated)
@@ -500,6 +525,7 @@ extern "C" HRESULT CoreApply(
     DWORD cOverallProgressTicks = 0;
     HANDLE hCacheThread = NULL;
     BOOL fRegistered = FALSE;
+    BOOL fKeepRegistration = pEngineState->plan.fKeepRegistrationDefault;
     BOOL fRollback = FALSE;
     BOOL fSuspend = FALSE;
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
@@ -551,7 +577,7 @@ extern "C" HRESULT CoreApply(
     // Execute only if we are not doing a layout.
     if (!fLayoutOnly)
     {
-        hr = ApplyExecute(pEngineState, hwndParent, hCacheThread, &cOverallProgressTicks, &fRollback, &fSuspend, &restart);
+        hr = ApplyExecute(pEngineState, hwndParent, hCacheThread, &cOverallProgressTicks, &fKeepRegistration, &fRollback, &fSuspend, &restart);
         ExitOnFailure(hr, "Failed to execute apply.");
     }
 
@@ -572,7 +598,7 @@ extern "C" HRESULT CoreApply(
 LExit:
     if (fRegistered)
     {
-        ApplyUnregister(pEngineState, fRollback, fSuspend, restart);
+        ApplyUnregister(pEngineState, fKeepRegistration, fSuspend, restart);
     }
 
     if (fActivated)
@@ -661,7 +687,6 @@ static HRESULT ParseCommandLine(
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
     __out_z LPWSTR* psczLogFile,
-    __out_z LPWSTR* psczLayoutDirectory,
     __out_z LPWSTR* psczIgnoreDependencies
     )
 {
@@ -748,7 +773,7 @@ static HRESULT ParseCommandLine(
                 {
                     ++i;
 
-                    hr = PathExpand(psczLayoutDirectory, argv[i], PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
+                    hr = PathExpand(&pCommand->wzLayoutDirectory, argv[i], PATH_EXPAND_ENVIRONMENT | PATH_EXPAND_FULLPATH);
                     ExitOnFailure(hr, "Failed to copy path for layout directory.");
                 }
             }
@@ -995,14 +1020,11 @@ static HRESULT DetectPackagePayloadsCached(
             hr = FileSize(sczPayloadCachePath, &llSize);
             if (SUCCEEDED(hr) && static_cast<DWORD64>(llSize) == pPackagePayload->pPayload->qwFileSize)
             {
-                // TODO: should we log that the payload was cached?
                 pPackagePayload->fCached = TRUE;
             }
             else
             {
                 fAllPayloadsCached = FALSE; // found a payload that was not cached so our assumption above was wrong.
-
-                // TODO: should we log that the payload was not cached?
                 hr = S_OK;
             }
         }

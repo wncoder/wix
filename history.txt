@@ -1629,7 +1629,8 @@ HeathS: Support old WixDependencyProvider table schema in the binder.
 
 BriaRo: Refactor of Differ.cs in order to make large code blocks resuable.
 
-HeathS: SFBUG:3435047 - Do not register dependencies on failed packages.
+HeathS: SFBUG:3435047 - Do not register dependencies on failed packages.
+
 
 BobArnson: Preserve Field.PreviousData during transform diffing, so the 
            original field value is available in the .wixpdb.
@@ -1641,3 +1642,36 @@ AaronSte: Add links to Burn documentation topics that are not currently
           reachable in the online docs.
 
 HeathS: Pass dependencies to ignore to packages and related bundles.
+
+RobMen: SFBUG:3432935 - prevent infinite loop when retrying or ignoring download
+                        of packages in Burn.
+
+HeathS: Always write bundle registration for detection but allow hiding it.
+
+HeathS: SFBUG:3380917 - Disable CRL checks prior to Vista for offline scenarios.
+
+PMarcu: Adding logging and waits in the retry logic around database commit.
+
+RobMen: SFBUG:3367340;3379176;3431430 - register only after a non-permanent
+                                        package is installed by Burn.
+        Pass layout directory via command to BootstrapperApplication.
+
+HeathS: Create dependency key when registering dependents.
+        Reset package state when resetting the plan.
+
+BobArnson: Add the Retina tool, to extract files embedded in a binary Wixlib
+           and rebuild the Wixlib with potentially updated files. This allows
+           you to Authenticode sign DLLs, for example.
+
+BobArnson: Reset Burn's command action when Plan is called.
+
+RobMen: Burn should not remove registration once installed until uninstall.
+
+RobMen: SFBUG:3426288 - Burn will now prompt for attached container source when
+                        necessary.
+        Burn fix security issue where cached content may not be verified.
+
+RobMen: Fallback to x86 Burn when building a Platform=x64 Bundle.
+
+BobArnson: Add support for keyboard navigation to ThmUtil
+

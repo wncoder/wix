@@ -32,9 +32,13 @@ const LPCWSTR REGISTRY_BUNDLE_PATCH_CODE = L"BundlePatchCode";
 const LPCWSTR REGISTRY_BUNDLE_TAG = L"BundleTag";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 const LPCWSTR REGISTRY_ENGINE_VERSION = L"EngineVersion";
+const LPCWSTR REGISTRY_BUNDLE_INSTALLED = L"Installed";
 
 // internal function declarations
 
+static HRESULT SetPaths(
+    __in BURN_REGISTRATION* pRegistration
+    );
 static HRESULT GetBundleName(
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables,
@@ -245,7 +249,8 @@ extern "C" HRESULT RegistrationParseFromXml(
         }
     }
 
-    hr = S_OK;
+    hr = SetPaths(pRegistration);
+    ExitOnFailure(hr, "Failed to set registration paths.");
 
 LExit:
     ReleaseObject(pixnRegistrationNode);
@@ -350,112 +355,31 @@ LExit:
     return hr;
 }
 
-/*******************************************************************
- RegistrationSetPaths - Initializes file system paths to registration entities.
-
-*******************************************************************/
-extern "C" HRESULT RegistrationSetPaths(
-    __in BURN_REGISTRATION* pRegistration
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczCacheDirectory = NULL;
-
-    // save registration key root
-    pRegistration->hkRoot = pRegistration->fPerMachine ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
-
-    // build uninstall registry key path
-    hr = StrAllocFormatted(&pRegistration->sczRegistrationKey, L"%s\\%s", REGISTRY_UNINSTALL_KEY, pRegistration->sczId);
-    ExitOnFailure(hr, "Failed to build uninstall registry key path.");
-
-    // build cache directory
-    hr = CacheGetCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCacheDirectory);
-    ExitOnFailure(hr, "Failed to build cache directory.");
-
-    // build cached executable path
-    hr = PathConcat(sczCacheDirectory, pRegistration->sczExecutableName, &pRegistration->sczCacheExecutablePath);
-    ExitOnFailure(hr, "Failed to build cached executable path.");
-
-    // build state file path
-    hr = StrAllocFormatted(&pRegistration->sczStateFile, L"%s\\state.rsm", sczCacheDirectory);
-    ExitOnFailure(hr, "Failed to build state file path.");
-
-LExit:
-    ReleaseStr(sczCacheDirectory);
-    return hr;
-}
-
-/*******************************************************************
- RegistrationSetResumeCommand - Initializes resume command string
-
-*******************************************************************/
-extern "C" HRESULT RegistrationSetResumeCommand(
+extern "C" HRESULT RegistrationDetectInstalled(
     __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_COMMAND* pCommand,
-    __in BURN_LOGGING* pLog
+    __out BOOL* pfInstalled
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczLogAppend = NULL;
+    HKEY hkRegistration = NULL;
+    DWORD dwInstalled = 0;
 
-    // build the resume command-line.
-    hr = StrAllocFormatted(&pRegistration->sczResumeCommandLine, L"\"%ls\"", pRegistration->sczCacheExecutablePath);
-    ExitOnFailure(hr, "Failed to copy executable path to resume command-line.");
-
-    if (pLog->sczPath)
+    // open registration key
+    hr = RegOpen(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_QUERY_VALUE, &hkRegistration);
+    if (SUCCEEDED(hr))
     {
-        hr = StrAllocFormatted(&sczLogAppend, L" /%ls \"%ls\"", BURN_COMMANDLINE_SWITCH_LOG_APPEND, pLog->sczPath);
-        ExitOnFailure(hr, "Failed to format append log command-line for resume command-line.");
-
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, sczLogAppend, 0);
-        ExitOnFailure(hr, "Failed to append log command-line to resume command-line");
+        hr = RegReadNumber(hkRegistration, REGISTRY_BUNDLE_INSTALLED, &dwInstalled);
     }
 
-    switch (pCommand->action)
+    // Not finding the key or value is okay.
+    if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
     {
-    case BOOTSTRAPPER_ACTION_REPAIR:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /repair", 0);
-        break;
-    case BOOTSTRAPPER_ACTION_UNINSTALL:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /uninstall", 0);
-        break;
-    }
-    ExitOnFailure(hr, "Failed to append action state to resume command-line");
-
-    switch (pCommand->display)
-    {
-    case BOOTSTRAPPER_DISPLAY_NONE:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /quiet", 0);
-        break;
-    case BOOTSTRAPPER_DISPLAY_PASSIVE:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /passive", 0);
-        break;
-    }
-    ExitOnFailure(hr, "Failed to append display state to resume command-line");
-
-    switch (pCommand->restart)
-    {
-    case BOOTSTRAPPER_RESTART_ALWAYS:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /forcerestart", 0);
-        break;
-    case BOOTSTRAPPER_RESTART_NEVER:
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" /norestart", 0);
-        break;
-    }
-    ExitOnFailure(hr, "Failed to append restart state to resume command-line");
-
-    if (pCommand->wzCommandLine && *pCommand->wzCommandLine)
-    {
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, L" ", 0);
-        ExitOnFailure(hr, "Failed to append space to resume command-line.");
-
-        hr = StrAllocConcat(&pRegistration->sczResumeCommandLine, pCommand->wzCommandLine, 0);
-        ExitOnFailure(hr, "Failed to append command-line to resume command-line.");
+        hr = S_OK;
     }
 
-LExit:
-    ReleaseStr(sczLogAppend);
+    *pfInstalled = (1 == dwInstalled);
 
+    ReleaseRegKey(hkRegistration);
     return hr;
 }
 
@@ -607,168 +531,171 @@ extern "C" HRESULT RegistrationSessionBegin(
         hr = RegCreate(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
         ExitOnFailure(hr, "Failed to create registration key.");
 
-        // ARP registration
-        if (pRegistration->fRegisterArp)
+        // on initial install, or repair, write any ARP values
+        if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
         {
-            // on initial install, or repair, write any ARP values
-            if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
+            // Upgrade information
+            hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_CACHE_PATH, pRegistration->sczCacheExecutablePath);
+            ExitOnFailure(hr, "Failed to write BundleUpgradeCommand value.");
+
+            hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->rgsczUpgradeCodes, pRegistration->cUpgradeCodes);
+            ExitOnFailure(hr, "Failed to write BundleUpgradeCode value.");
+
+            hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_ADDON_CODE, pRegistration->rgsczAddonCodes, pRegistration->cAddonCodes);
+            ExitOnFailure(hr, "Failed to write BundleAddonCode value.");
+
+            hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_DETECT_CODE, pRegistration->rgsczDetectCodes, pRegistration->cDetectCodes);
+            ExitOnFailure(hr, "Failed to write BundleDetectCode value.");
+
+            hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_PATCH_CODE, pRegistration->rgsczPatchCodes, pRegistration->cPatchCodes);
+            ExitOnFailure(hr, "Failed to write BundlePatchCode value.");
+
+            hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
+            ExitOnFailure(hr, "Failed to write BundleVersion value.");
+
+            if (pRegistration->sczTag)
             {
-                // Upgrade information
-                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_CACHE_PATH, pRegistration->sczCacheExecutablePath);
-                ExitOnFailure(hr, "Failed to write BundleUpgradeCommand value.");
-
-                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->rgsczUpgradeCodes, pRegistration->cUpgradeCodes);
-                ExitOnFailure(hr, "Failed to write BundleUpgradeCode value.");
-
-                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_ADDON_CODE, pRegistration->rgsczAddonCodes, pRegistration->cAddonCodes);
-                ExitOnFailure(hr, "Failed to write BundleAddonCode value.");
-
-                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_DETECT_CODE, pRegistration->rgsczDetectCodes, pRegistration->cDetectCodes);
-                ExitOnFailure(hr, "Failed to write BundleDetectCode value.");
-
-                hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_PATCH_CODE, pRegistration->rgsczPatchCodes, pRegistration->cPatchCodes);
-                ExitOnFailure(hr, "Failed to write BundlePatchCode value.");
-
-                hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
-                ExitOnFailure(hr, "Failed to write BundleVersion value.");
-
-                if (pRegistration->sczTag)
-                {
-                    hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_TAG, pRegistration->sczTag);
-                    ExitOnFailure(hr, "Failed to write BundleTag value.");
-                }
-
-                hr = RegWriteStringFormatted(hkRegistration, REGISTRY_ENGINE_VERSION, L"%hs", szVerMajorMinorBuild);
-                ExitOnFailure(hr, "Failed to write EngineVersion value.");
-
-                // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
-                hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
-                ExitOnFailure(hr, "Failed to write DisplayIcon value.");
-
-                // DisplayName: provided by UI
-                hr = GetBundleName(pRegistration, pVariables, &sczDisplayName);
-                hr = RegWriteString(hkRegistration, L"DisplayName", SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
-                ExitOnFailure(hr, "Failed to write DisplayName value.");
-
-                // EstimatedSize
-                qwEstimatedSize /= 1024; // Convert bytes to KB
-                if (0 < qwEstimatedSize)
-                {
-                    // Convert bytes to KB as ARP expects
-                    if (DWORD_MAX < qwEstimatedSize)
-                    {
-                        // ARP doesn't support QWORDs here
-                        dwSize = DWORD_MAX;
-                    }
-                    else
-                    {
-                        dwSize = static_cast<DWORD>(qwEstimatedSize);
-                    }
-
-                    hr = RegWriteNumber(hkRegistration, L"EstimatedSize", dwSize);
-                    ExitOnFailure(hr, "Failed to write EstimatedSize value.");
-                }
-
-                // DisplayVersion: provided by UI
-                if (pRegistration->sczDisplayVersion)
-                {
-                    hr = RegWriteString(hkRegistration, L"DisplayVersion", pRegistration->sczDisplayVersion);
-                    ExitOnFailure(hr, "Failed to write DisplayVersion value.");
-                }
-
-                // Publisher: provided by UI
-                if (pRegistration->sczPublisher)
-                {
-                    hr = RegWriteString(hkRegistration, L"Publisher", pRegistration->sczPublisher);
-                    ExitOnFailure(hr, "Failed to write Publisher value.");
-                }
-
-                // HelpLink: provided by UI
-                if (pRegistration->sczHelpLink)
-                {
-                    hr = RegWriteString(hkRegistration, L"HelpLink", pRegistration->sczHelpLink);
-                    ExitOnFailure(hr, "Failed to write HelpLink value.");
-                }
-
-                // HelpTelephone: provided by UI
-                if (pRegistration->sczHelpTelephone)
-                {
-                    hr = RegWriteString(hkRegistration, L"HelpTelephone", pRegistration->sczHelpTelephone);
-                    ExitOnFailure(hr, "Failed to write HelpTelephone value.");
-                }
-
-                // URLInfoAbout, provided by UI
-                if (pRegistration->sczAboutUrl)
-                {
-                    hr = RegWriteString(hkRegistration, L"URLInfoAbout", pRegistration->sczAboutUrl);
-                    ExitOnFailure(hr, "Failed to write URLInfoAbout value.");
-                }
-
-                // URLUpdateInfo, provided by UI
-                if (pRegistration->sczUpdateUrl)
-                {
-                    hr = RegWriteString(hkRegistration, L"URLUpdateInfo", pRegistration->sczUpdateUrl);
-                    ExitOnFailure(hr, "Failed to write URLUpdateInfo value.");
-                }
-
-                // Comments, provided by UI
-                if (pRegistration->sczComments)
-                {
-                    hr = RegWriteString(hkRegistration, L"Comments", pRegistration->sczComments);
-                    ExitOnFailure(hr, "Failed to write Comments value.");
-                }
-
-                // Contact, provided by UI
-                if (pRegistration->sczContact)
-                {
-                    hr = RegWriteString(hkRegistration, L"Contact", pRegistration->sczContact);
-                    ExitOnFailure(hr, "Failed to write Contact value.");
-                }
-
-                // InstallLocation: provided by UI
-                // TODO: need to figure out what "InstallLocation" means in a chainer. <smile/>
-
-                // NoModify
-                if (BURN_REGISTRATION_MODIFY_DISABLE == pRegistration->modify)
-                {
-                    hr = RegWriteNumber(hkRegistration, L"NoModify", 1);
-                    ExitOnFailure(hr, "Failed to set NoModify value.");
-                }
-                else if (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON != pRegistration->modify) // if support modify (aka: did not disable anything)
-                {
-                    // ModifyPath: [path to exe] /modify
-                    hr = RegWriteStringFormatted(hkRegistration, L"ModifyPath", L"\"%ls\" /modify", pRegistration->sczCacheExecutablePath);
-                    ExitOnFailure(hr, "Failed to write ModifyPath value.");
-
-                    // NoElevateOnModify: 1
-                    hr = RegWriteNumber(hkRegistration, L"NoElevateOnModify", 1);
-                    ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
-                }
-
-                // NoRemove: should this be allowed?
-                if (pRegistration->fNoRemoveDefined)
-                {
-                    hr = RegWriteNumber(hkRegistration, L"NoRemove", (DWORD)pRegistration->fNoRemove);
-                    ExitOnFailure(hr, "Failed to set NoRemove value.");
-                }
-
-                // QuietUninstallString: [path to exe] /uninstall /quiet
-                hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%ls\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
-                ExitOnFailure(hr, "Failed to write QuietUninstallString value.");
-
-                // UninstallString, [path to exe]
-                // If the modify button is to be disabled, we'll add "/modify" to the uninstall string because the button is "Uninstall/Change". Otherwise,
-                // it's just the "Uninstall" button so we add "/uninstall" to make the program just go away.
-                LPCWSTR wzUninstallParameters = (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON == pRegistration->modify) ? L"/modify" : L" /uninstall";
-                hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
-                ExitOnFailure(hr, "Failed to write UninstallString value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_TAG, pRegistration->sczTag);
+                ExitOnFailure(hr, "Failed to write BundleTag value.");
             }
 
-            // TODO: if we are not uninstalling, update estimated size
-            //if (BOOTSTRAPPER_ACTION_UNINSTALL != action)
-            //{
-            //}
+            hr = RegWriteStringFormatted(hkRegistration, REGISTRY_ENGINE_VERSION, L"%hs", szVerMajorMinorBuild);
+            ExitOnFailure(hr, "Failed to write EngineVersion value.");
+
+            // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
+            hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
+            ExitOnFailure(hr, "Failed to write DisplayIcon value.");
+
+            // DisplayName: provided by UI
+            hr = GetBundleName(pRegistration, pVariables, &sczDisplayName);
+            hr = RegWriteString(hkRegistration, L"DisplayName", SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
+            ExitOnFailure(hr, "Failed to write DisplayName value.");
+
+            // EstimatedSize
+            qwEstimatedSize /= 1024; // Convert bytes to KB
+            if (0 < qwEstimatedSize)
+            {
+                // Convert bytes to KB as ARP expects
+                if (DWORD_MAX < qwEstimatedSize)
+                {
+                    // ARP doesn't support QWORDs here
+                    dwSize = DWORD_MAX;
+                }
+                else
+                {
+                    dwSize = static_cast<DWORD>(qwEstimatedSize);
+                }
+
+                hr = RegWriteNumber(hkRegistration, L"EstimatedSize", dwSize);
+                ExitOnFailure(hr, "Failed to write EstimatedSize value.");
+            }
+
+            // DisplayVersion: provided by UI
+            if (pRegistration->sczDisplayVersion)
+            {
+                hr = RegWriteString(hkRegistration, L"DisplayVersion", pRegistration->sczDisplayVersion);
+                ExitOnFailure(hr, "Failed to write DisplayVersion value.");
+            }
+
+            // Publisher: provided by UI
+            if (pRegistration->sczPublisher)
+            {
+                hr = RegWriteString(hkRegistration, L"Publisher", pRegistration->sczPublisher);
+                ExitOnFailure(hr, "Failed to write Publisher value.");
+            }
+
+            // HelpLink: provided by UI
+            if (pRegistration->sczHelpLink)
+            {
+                hr = RegWriteString(hkRegistration, L"HelpLink", pRegistration->sczHelpLink);
+                ExitOnFailure(hr, "Failed to write HelpLink value.");
+            }
+
+            // HelpTelephone: provided by UI
+            if (pRegistration->sczHelpTelephone)
+            {
+                hr = RegWriteString(hkRegistration, L"HelpTelephone", pRegistration->sczHelpTelephone);
+                ExitOnFailure(hr, "Failed to write HelpTelephone value.");
+            }
+
+            // URLInfoAbout, provided by UI
+            if (pRegistration->sczAboutUrl)
+            {
+                hr = RegWriteString(hkRegistration, L"URLInfoAbout", pRegistration->sczAboutUrl);
+                ExitOnFailure(hr, "Failed to write URLInfoAbout value.");
+            }
+
+            // URLUpdateInfo, provided by UI
+            if (pRegistration->sczUpdateUrl)
+            {
+                hr = RegWriteString(hkRegistration, L"URLUpdateInfo", pRegistration->sczUpdateUrl);
+                ExitOnFailure(hr, "Failed to write URLUpdateInfo value.");
+            }
+
+            // Comments, provided by UI
+            if (pRegistration->sczComments)
+            {
+                hr = RegWriteString(hkRegistration, L"Comments", pRegistration->sczComments);
+                ExitOnFailure(hr, "Failed to write Comments value.");
+            }
+
+            // Contact, provided by UI
+            if (pRegistration->sczContact)
+            {
+                hr = RegWriteString(hkRegistration, L"Contact", pRegistration->sczContact);
+                ExitOnFailure(hr, "Failed to write Contact value.");
+            }
+
+            // InstallLocation: provided by UI
+            // TODO: need to figure out what "InstallLocation" means in a chainer. <smile/>
+
+            // NoModify
+            if (BURN_REGISTRATION_MODIFY_DISABLE == pRegistration->modify)
+            {
+                hr = RegWriteNumber(hkRegistration, L"NoModify", 1);
+                ExitOnFailure(hr, "Failed to set NoModify value.");
+            }
+            else if (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON != pRegistration->modify) // if support modify (aka: did not disable anything)
+            {
+                // ModifyPath: [path to exe] /modify
+                hr = RegWriteStringFormatted(hkRegistration, L"ModifyPath", L"\"%ls\" /modify", pRegistration->sczCacheExecutablePath);
+                ExitOnFailure(hr, "Failed to write ModifyPath value.");
+
+                // NoElevateOnModify: 1
+                hr = RegWriteNumber(hkRegistration, L"NoElevateOnModify", 1);
+                ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
+            }
+
+            // NoRemove: should this be allowed?
+            if (pRegistration->fNoRemoveDefined)
+            {
+                hr = RegWriteNumber(hkRegistration, L"NoRemove", (DWORD)pRegistration->fNoRemove);
+                ExitOnFailure(hr, "Failed to set NoRemove value.");
+            }
+
+            // Conditionally hide the ARP entry.
+            if (!pRegistration->fRegisterArp)
+            {
+                hr = RegWriteNumber(hkRegistration, L"SystemComponent", 1);
+                ExitOnFailure(hr, "Failed to set SystemComponent value.");
+            }
+
+            // QuietUninstallString: [path to exe] /uninstall /quiet
+            hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%ls\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
+            ExitOnFailure(hr, "Failed to write QuietUninstallString value.");
+
+            // UninstallString, [path to exe]
+            // If the modify button is to be disabled, we'll add "/modify" to the uninstall string because the button is "Uninstall/Change". Otherwise,
+            // it's just the "Uninstall" button so we add "/uninstall" to make the program just go away.
+            LPCWSTR wzUninstallParameters = (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON == pRegistration->modify) ? L"/modify" : L" /uninstall";
+            hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
+            ExitOnFailure(hr, "Failed to write UninstallString value.");
         }
+
+        // TODO: if we are not uninstalling, update estimated size
+        //if (BOOTSTRAPPER_ACTION_UNINSTALL != action)
+        //{
+        //}
 
         // Register the bundle dependency key.
         if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
@@ -827,8 +754,7 @@ LExit:
  *******************************************************************/
 extern "C" HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback,
+    __in BOOL fKeepRegistration,
     __in BOOL fSuspend,
     __in BOOTSTRAPPER_APPLY_RESTART restart,
     __in BOOL fPerMachineProcess,
@@ -843,11 +769,8 @@ extern "C" HRESULT RegistrationSessionEnd(
 
     // Calculate the correct resume mode. If a restart has been initiated, that trumps all other
     // modes. If the user chose to suspend the install then we'll use that as the resume mode.
-    // Barring those special cases, if the bundle is supposed to be registered in ARP and the
-    // install was successful or the uninstall was unsuccessful, then set resume mode to "ARP".
-    // Finally, (the unspoken case) if we are not registering in ARP or we failed to install
-    // or we successfully uninstalled then the resume mode is none and everything gets cleaned
-    // up.
+    // Barring those special cases, if it was determined that we should keep the registration
+    // do that otherwise the resume mode was initialized to none and registration will be removed.
     if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
     {
         resumeMode = BURN_RESUME_MODE_REBOOT_PENDING;
@@ -856,7 +779,7 @@ extern "C" HRESULT RegistrationSessionEnd(
     {
         resumeMode = BURN_RESUME_MODE_SUSPEND;
     }
-    else if (pRegistration->fRegisterArp && !((BOOTSTRAPPER_ACTION_INSTALL == action && fRollback) || (BOOTSTRAPPER_ACTION_UNINSTALL == action && !fRollback)))
+    else if (fKeepRegistration)
     {
         resumeMode = BURN_RESUME_MODE_ARP;
     }
@@ -971,6 +894,37 @@ extern "C" HRESULT RegistrationLoadState(
 
 // internal helper functions
 
+static HRESULT SetPaths(
+    __in BURN_REGISTRATION* pRegistration
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCacheDirectory = NULL;
+
+    // save registration key root
+    pRegistration->hkRoot = pRegistration->fPerMachine ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
+
+    // build uninstall registry key path
+    hr = StrAllocFormatted(&pRegistration->sczRegistrationKey, L"%s\\%s", REGISTRY_UNINSTALL_KEY, pRegistration->sczId);
+    ExitOnFailure(hr, "Failed to build uninstall registry key path.");
+
+    // build cache directory
+    hr = CacheGetCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCacheDirectory);
+    ExitOnFailure(hr, "Failed to build cache directory.");
+
+    // build cached executable path
+    hr = PathConcat(sczCacheDirectory, pRegistration->sczExecutableName, &pRegistration->sczCacheExecutablePath);
+    ExitOnFailure(hr, "Failed to build cached executable path.");
+
+    // build state file path
+    hr = StrAllocFormatted(&pRegistration->sczStateFile, L"%s\\state.rsm", sczCacheDirectory);
+    ExitOnFailure(hr, "Failed to build state file path.");
+
+LExit:
+    ReleaseStr(sczCacheDirectory);
+    return hr;
+}
+
 static HRESULT GetBundleName(
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables,
@@ -1015,6 +969,17 @@ static HRESULT UpdateResumeMode(
         // write Resume value
         hr = RegWriteNumber(hkRegistration, L"Resume", (DWORD)resumeMode);
         ExitOnFailure(hr, "Failed to write Resume value.");
+
+        // Write the Installed value *only* when the mode is ARP. This will tell us
+        // that the bundle considers itself "installed" on the machine. Note that we
+        // never change the value to "0" after that. The bundle will be considered
+        // "uninstalled" when all of the registration is removed.
+        if (BURN_RESUME_MODE_ARP == resumeMode)
+        {
+            // Write Installed value.
+            hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_INSTALLED, 1);
+            ExitOnFailure(hr, "Failed to write Installed value.");
+        }
     }
 
     // If the engine is active write the run key so we resume if there is an unexpected

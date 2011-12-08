@@ -1,25 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
-    <?foreach platform in x86 ?>
-        <?include caSuffix.wxi ?>
-
-        <Fragment>
-            <BootstrapperApplication Id='WixStandardBootstrapperApplication.RtfLicense$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll'>
-                <PayloadGroupRef Id='WixStdbaRtfLicensePayloads' />
-            </BootstrapperApplication>
-        </Fragment>
-
-        <Fragment>
-            <BootstrapperApplication Id='WixStandardBootstrapperApplication.HyperlinkLicense$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll'>
-                <PayloadGroupRef Id='WixStdbaHyperlinkLicensePayloads' />
-            </BootstrapperApplication>
-        </Fragment>
-
-        <Fragment>
-            <BootstrapperApplication Id='WixStandardBootstrapperApplication.Foundation$(var.Suffix)' SourceFile='!(bindpath.$(var.platform))\wixstdba.dll' />
-        </Fragment>
-    <?endforeach ?>
-
     <!-- RTF License Payload Group -->
     <Fragment>
         <PayloadGroup Id='WixStdbaRtfLicensePayloads'>

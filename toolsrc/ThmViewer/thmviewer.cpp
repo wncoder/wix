@@ -139,13 +139,10 @@ int WINAPI wWinMain(
             hr = E_UNEXPECTED;
             ExitOnFailure(hr, "Unexpected return value from message pump.");
         }
-        else if (!::IsDialogMessageW(msg.hwnd, &msg))
+        else if (!ThemeHandleKeyboardMessage(vpTheme, msg.hwnd, &msg))
         {
-            if (!ThemeTranslateAccelerator(vpTheme, msg.hwnd, &msg))
-            {
-                ::TranslateMessage(&msg);
-                ::DispatchMessageW(&msg);
-            }
+            ::TranslateMessage(&msg);
+            ::DispatchMessageW(&msg);
         }
     }
 

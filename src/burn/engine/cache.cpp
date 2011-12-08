@@ -19,6 +19,7 @@
 #include "precomp.h"
 
 static const LPCWSTR BUNDLE_WORKING_FOLDER_NAME = L".be";
+static const LPCWSTR UNVERFIED_CACHE_FOLDER_NAME = L".unverified";
 static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
 static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
@@ -31,11 +32,25 @@ static HRESULT CreateCompletedPath(
     __in LPCWSTR wzCacheId,
     __out LPWSTR* psczCacheDirectory
     );
+static HRESULT CreateUnverifiedPath(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzPayloadId,
+    __out_z LPWSTR* psczUnverifiedPayloadPath
+    );
 static HRESULT VerifyThenTransferPayload(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzCachedPath,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
+    );
+static HRESULT TransferWorkingPathToUnverifiedPath(
+    __in_z LPCWSTR wzWorkingPath,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    );
+static HRESULT VerifyFileAgainstPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzVerifyPath
     );
 static HRESULT ResetPathPermissions(
     __in BOOL fPerMachine,
@@ -327,7 +342,6 @@ extern "C" void CacheSendErrorCallback(
     }
 }
 
-
 extern "C" HRESULT CacheBundleToWorkingDirectory(
     __in_z LPCWSTR wzBundleId,
     __in_z LPCWSTR wzExecutableName,
@@ -475,7 +489,7 @@ extern "C" HRESULT CacheCompleteBundle(
             ExitOnFailure(hr, "Failed to build payload source path.");
 
             hr = CacheCompletePayload(fPerMachine, pPayload, wzBundleId, sczPayloadSourcePath, FALSE);
-            ExitOnFailure2(hr, "Failed to cache payload: %ls from: %ls", pPayload->sczKey, sczPayloadSourcePath);
+            ExitOnFailure1(hr, "Failed to complete the cache of payload: %ls", pPayload->sczKey);
         }
     }
 
@@ -514,13 +528,14 @@ extern "C" HRESULT CacheCompletePayload(
     __in BOOL fPerMachine,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzCacheId,
-    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in_z LPCWSTR wzWorkingPayloadPath,
     __in BOOL fMove
     )
 {
     HRESULT hr = S_OK;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczCachedPath = NULL;
+    LPWSTR sczUnverifiedPayloadPath = NULL;
 
     hr = CreateCompletedPath(fPerMachine, wzCacheId, &sczCachedDirectory);
     ExitOnFailure1(hr, "Failed to get cached path for package with cache id: %ls", wzCacheId);
@@ -528,13 +543,54 @@ extern "C" HRESULT CacheCompletePayload(
     hr = PathConcat(sczCachedDirectory, pPayload->sczFilePath, &sczCachedPath);
     ExitOnFailure(hr, "Failed to concat complete cached path.");
 
-    hr = VerifyThenTransferPayload(pPayload, sczCachedPath, wzUnverifiedPayloadPath, fMove);
-    ExitOnFailure1(hr, "Failed to complete payload from cached payload: %ls", sczCachedPath);
+    // If the cached file matches what we expected, we're good.
+    hr = VerifyFileAgainstPayload(pPayload, sczCachedPath);
+    if (SUCCEEDED(hr))
+    {
+        LogId(REPORT_STANDARD, MSG_VERIFIED_EXISTING_PAYLOAD, pPayload->sczKey, sczCachedPath);
+        ExitFunction();
+    }
+    else if (E_PATHNOTFOUND != hr && E_FILENOTFOUND != hr)
+    {
+        LogErrorId(hr, MSG_FAILED_VERIFY_PAYLOAD, pPayload->sczKey, sczCachedPath, NULL);
 
-    hr = ResetPathPermissions(fPerMachine, sczCachedPath);
-    ExitOnFailure1(hr, "Failed to reset permissions on cached payload: %ls", sczCachedPath);
+        FileEnsureDelete(sczCachedPath); // if the file existed but did not verify correctly, make it go away.
+    }
+
+    hr = CreateUnverifiedPath(fPerMachine, pPayload->sczKey, &sczUnverifiedPayloadPath);
+    ExitOnFailure(hr, "Failed to create unverified path.");
+
+    // If the working path exists, let's get it into the unverified path so we can reset the ACLs and verify the file.
+    if (FileExistsEx(wzWorkingPayloadPath, NULL))
+    {
+        hr = TransferWorkingPathToUnverifiedPath(wzWorkingPayloadPath, sczUnverifiedPayloadPath, fMove);
+        ExitOnFailure1(hr, "Failed to transfer working path to unverified path for payload: %ls.", pPayload->sczKey);
+    }
+    else if (!FileExistsEx(sczUnverifiedPayloadPath, NULL)) // if the working path and unverified path do not exist, nothing we can do.
+    {
+        hr = E_FILENOTFOUND;
+        ExitOnFailure3(hr, "Failed to find payload: %ls in working path: %ls and unverified path: %ls", pPayload->sczKey, wzWorkingPayloadPath, sczUnverifiedPayloadPath);
+    }
+
+    hr = ResetPathPermissions(fPerMachine, sczUnverifiedPayloadPath);
+    ExitOnFailure1(hr, "Failed to reset permissions on unverified cached payload: %ls", pPayload->sczKey);
+
+    hr = VerifyFileAgainstPayload(pPayload, sczUnverifiedPayloadPath);
+    if (FAILED(hr))
+    {
+        LogErrorId(hr, MSG_FAILED_VERIFY_PAYLOAD, pPayload->sczKey, sczUnverifiedPayloadPath, NULL);
+
+        FileEnsureDelete(sczUnverifiedPayloadPath); // if the file did not verify correctly, make it go away.
+        ExitFunction();
+    }
+
+    LogId(REPORT_STANDARD, MSG_VERIFIED_ACQUIRED_PAYLOAD, pPayload->sczKey, sczUnverifiedPayloadPath, fMove ? "moving" : "copying", sczCachedPath);
+
+    hr = FileEnsureMoveWithRetry(sczUnverifiedPayloadPath, sczCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+    ExitOnFailure1(hr, "Failed to move verified file to complete payload path: %ls", sczCachedPath);
 
 LExit:
+    ReleaseStr(sczUnverifiedPayloadPath);
     ReleaseStr(sczCachedPath);
     ReleaseStr(sczCachedDirectory);
 
@@ -587,7 +643,6 @@ LExit:
     return hr;
 }
 
-
 extern "C" HRESULT CacheRemovePackage(
     __in BOOL fPerMachine,
     __in LPCWSTR wzPackageId
@@ -602,7 +657,6 @@ LExit:
     return hr;
 }
 
-
 extern "C" HRESULT CacheVerifyPayloadSignature(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
@@ -611,6 +665,8 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
 {
     HRESULT hr = S_OK;
     LONG er = ERROR_SUCCESS;
+    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
+    DWORD dwServicePack = 0;
 
     GUID guidAuthenticode = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     WINTRUST_FILE_INFO wfi = { };
@@ -627,6 +683,9 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
     BYTE* pbThumbprint = NULL;
     DWORD cbThumbprint = 0;
 
+    // Windows 2000 and XP do not support cached revocation checks.
+    OsGetVersion(&osVersion, &dwServicePack);
+
     // Verify the payload.
     wfi.cbStruct = sizeof(wfi);
     wfi.pcwszFilePath = wzUnverifiedPayloadPath;
@@ -636,9 +695,9 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
     wtd.pFile = &wfi;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
-    wtd.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL;
+    wtd.dwProvFlags = OS_VERSION_VISTA <= osVersion ? WTD_CACHE_ONLY_URL_RETRIEVAL : WTD_REVOCATION_CHECK_NONE;
     wtd.dwUIChoice = WTD_UI_NONE;
-    wtd.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+    wtd.fdwRevocationChecks = OS_VERSION_VISTA <= osVersion ? WTD_REVOKE_WHOLECHAIN : WTD_REVOKE_NONE;
 
     er = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &guidAuthenticode, &wtd);
     hr = HRESULT_FROM_WIN32(er);
@@ -711,6 +770,74 @@ LExit:
     return hr;
 }
 
+extern "C" void CacheCleanup(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzBundleId
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczFolder = NULL;
+    LPWSTR sczFiles = NULL;
+    LPWSTR sczDelete = NULL;
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAW wfd = { };
+    DWORD cFileName = 0;
+
+    hr = CacheGetCompletedPath(fPerMachine, UNVERFIED_CACHE_FOLDER_NAME, &sczFolder);
+    if (SUCCEEDED(hr))
+    {
+        hr = DirEnsureDeleteEx(sczFolder, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
+    }
+
+    if (!fPerMachine)
+    {
+        hr = CalculateWorkingFolder(wzBundleId, &sczFolder);
+        if (SUCCEEDED(hr))
+        {
+            hr = PathConcat(sczFolder, L"*.*", &sczFiles);
+            if (SUCCEEDED(hr))
+            {
+                hFind = ::FindFirstFileW(sczFiles, &wfd);
+                if (INVALID_HANDLE_VALUE != hFind)
+                {
+                    do
+                    {
+                        // Skip directories.
+                        if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                        {
+                            continue;
+                        }
+
+                        // For extra safety and to silence OACR.
+                        wfd.cFileName[MAX_PATH - 1] = L'\0';
+
+                        // Skip resume files (they end with ".R").
+                        cFileName = lstrlenW(wfd.cFileName);
+                        if (2 < cFileName && L'.' == wfd.cFileName[cFileName - 2] && (L'R' == wfd.cFileName[cFileName - 1] || L'r' == wfd.cFileName[cFileName - 1]))
+                        {
+                            continue;
+                        }
+
+                        hr = PathConcat(sczFolder, wfd.cFileName, &sczDelete);
+                        if (SUCCEEDED(hr))
+                        {
+                            hr = FileEnsureDelete(sczDelete);
+                        }
+                    } while (::FindNextFileW(hFind, &wfd));
+                }
+            }
+        }
+    }
+
+    if (INVALID_HANDLE_VALUE != hFind)
+    {
+        ::FindClose(hFind);
+    }
+
+    ReleaseStr(sczDelete);
+    ReleaseStr(sczFiles);
+    ReleaseStr(sczFolder);
+}
 
 // Internal functions.
 
@@ -780,6 +907,36 @@ LExit:
     return hr;
 }
 
+static HRESULT CreateUnverifiedPath(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzPayloadId,
+    __out_z LPWSTR* psczUnverifiedPayloadPath
+    )
+{
+    static BOOL fUnverifiedCacheFolderCreated = FALSE;
+
+    HRESULT hr = S_OK;
+    LPWSTR sczUnverifiedCacheFolder = NULL;
+
+    hr = CacheGetCompletedPath(fPerMachine, UNVERFIED_CACHE_FOLDER_NAME, &sczUnverifiedCacheFolder);
+    ExitOnFailure(hr, "Failed to get cache directory.");
+
+    if (!fUnverifiedCacheFolderCreated)
+    {
+        hr = DirEnsureExists(sczUnverifiedCacheFolder, NULL);
+        ExitOnFailure1(hr, "Failed to create unverified cache directory: %ls", sczUnverifiedCacheFolder);
+
+        ResetPathPermissions(fPerMachine, sczUnverifiedCacheFolder);
+    }
+
+    hr = PathConcat(sczUnverifiedCacheFolder, wzPayloadId, psczUnverifiedPayloadPath);
+    ExitOnFailure(hr, "Failed to concat payload id to unverified folder path.");
+
+LExit:
+    ReleaseStr(sczUnverifiedCacheFolder);
+
+    return hr;
+}
 
 static HRESULT VerifyThenTransferPayload(
     __in BURN_PAYLOAD* pPayload,
@@ -834,6 +991,71 @@ LExit:
     return hr;
 }
 
+static HRESULT TransferWorkingPathToUnverifiedPath(
+    __in_z LPCWSTR wzWorkingPath,
+    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+
+    if (fMove)
+    {
+        hr = FileEnsureMoveWithRetry(wzWorkingPath, wzUnverifiedPayloadPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to move %ls to %ls", wzWorkingPath, wzUnverifiedPayloadPath);
+    }
+    else
+    {
+        hr = FileEnsureCopyWithRetry(wzWorkingPath, wzUnverifiedPayloadPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzWorkingPath, wzUnverifiedPayloadPath);
+    }
+
+LExit:
+    return hr;
+}
+
+static HRESULT VerifyFileAgainstPayload(
+    __in BURN_PAYLOAD* pPayload,
+    __in_z LPCWSTR wzVerifyPath
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+
+    // Get the payload on disk actual hash.
+    hFile = ::CreateFileW(wzVerifyPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hFile)
+    {
+        hr = HRESULT_FROM_WIN32(::GetLastError());
+        if (E_PATHNOTFOUND == hr || E_FILENOTFOUND == hr)
+        {
+            ExitFunction(); // do not log error when the file was not found.
+        }
+        ExitOnRootFailure1(hr, "Failed to open payload at path: %ls", wzVerifyPath);
+    }
+
+    // If the payload has a certificate root public key identifier provided, verify the certificate.
+    if (pPayload->pbCertificateRootPublicKeyIdentifier)
+    {
+        hr = CacheVerifyPayloadSignature(pPayload, wzVerifyPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify signature of payload: %ls", pPayload->sczKey);
+    }
+    else if (pPayload->pCatalog) // If catalog files are specified, attempt to verify the file with a catalog file
+    {
+        hr = VerifyPayloadWithCatalog(pPayload, wzVerifyPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify catalog signature of payload: %ls", pPayload->sczKey);
+    }
+    else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
+    {
+        hr = VerifyPayloadHash(pPayload, wzVerifyPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify hash of payload: %ls", pPayload->sczKey);
+    }
+
+LExit:
+    ReleaseFileHandle(hFile);
+
+    return hr;
+}
 
 static HRESULT AllocateSid(
     __in WELL_KNOWN_SID_TYPE type,
@@ -1088,13 +1310,13 @@ static HRESULT VerifyPayloadHash(
 
     // TODO: create a cryp hash file that sends progress.
     hr = CrypHashFileHandle(hFile, PROV_RSA_FULL, CALG_SHA1, rgbActualHash, sizeof(rgbActualHash), &qwHashedBytes);
-    ExitOnFailure1(hr, "Failed to calculate hash for payload in working path: %ls", wzUnverifiedPayloadPath);
+    ExitOnFailure1(hr, "Failed to calculate hash for payload at path: %ls", wzUnverifiedPayloadPath);
 
     // Compare hashes.
     if (pPayload->cbHash != sizeof(rgbActualHash) || 0 != memcmp(pPayload->pbHash, rgbActualHash, SHA1_HASH_LEN))
     {
         hr = CRYPT_E_HASH_VALUE;
-        ExitOnFailure1(hr, "Hash mismatch for payload in working path: %ls", wzUnverifiedPayloadPath);
+        ExitOnFailure1(hr, "Hash mismatch for payload at path: %ls", wzUnverifiedPayloadPath);
     }
 
 LExit:
@@ -1108,6 +1330,8 @@ static HRESULT VerifyPayloadWithCatalog(
     )
 {
     HRESULT hr = S_FALSE;
+    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
+    DWORD dwServicePack = 0;
     WINTRUST_DATA WinTrustData = { };
     WINTRUST_CATALOG_INFO WinTrustCatalogInfo = { };
     GUID gSubSystemDriver = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -1157,13 +1381,16 @@ static HRESULT VerifyPayloadWithCatalog(
     hr = StrHexEncode(pbHash, dwHashSize, sczName, dwTagSize);
     ExitOnFailure(hr, "Failed to encode file hash.");
 
+    // Windows 2000 and XP do not support cached revocation checks.
+    OsGetVersion(&osVersion, &dwServicePack);
+
     // Set up the WinVerifyTrust structures
     WinTrustData.cbStruct = sizeof(WINTRUST_DATA);
     WinTrustData.dwUIChoice = WTD_UI_NONE;
-    WinTrustData.fdwRevocationChecks = WTD_REVOKE_WHOLECHAIN;
+    WinTrustData.fdwRevocationChecks = OS_VERSION_VISTA <= osVersion ? WTD_REVOKE_WHOLECHAIN : WTD_REVOKE_NONE;
     WinTrustData.dwUnionChoice = WTD_CHOICE_CATALOG;
     WinTrustData.dwStateAction = WTD_STATEACTION_VERIFY;
-    WinTrustData.dwProvFlags = WTD_CACHE_ONLY_URL_RETRIEVAL;
+    WinTrustData.dwProvFlags = OS_VERSION_VISTA <= osVersion ? WTD_CACHE_ONLY_URL_RETRIEVAL : WTD_REVOCATION_CHECK_NONE;
     WinTrustData.pCatalog = &WinTrustCatalogInfo;
 
     WinTrustCatalogInfo.cbStruct = sizeof(WINTRUST_CATALOG_INFO);
@@ -1173,7 +1400,7 @@ static HRESULT VerifyPayloadWithCatalog(
     WinTrustCatalogInfo.pcwszMemberTag = sczName;
     WinTrustCatalogInfo.pcwszMemberFilePath = sczLowerCaseFile;
     WinTrustCatalogInfo.pcwszCatalogFilePath = pPayload->pCatalog->sczLocalFilePath;
-    hr = WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+    hr = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
 
     // WinVerifyTrust returns 0 for success, a few different Win32 error codes if it can't
     // find the provider, and any other error code is provider specific, so may not
@@ -1183,7 +1410,7 @@ static HRESULT VerifyPayloadWithCatalog(
 
     // Need to close the WinVerifyTrust action
     WinTrustData.dwStateAction = WTD_STATEACTION_CLOSE;
-    hr = WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+    hr = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
     hr = HRESULT_FROM_WIN32(hr);
     ExitOnFailure(hr, "Could not close verify handle.");
 

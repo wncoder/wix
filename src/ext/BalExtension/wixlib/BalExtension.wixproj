@@ -9,13 +9,14 @@
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Cultures>en-us</Cultures>
-    <IncludeSearchPaths>..\..\..\..\inc;..\..\..\ca\inc</IncludeSearchPaths>
+    <IncludeSearchPaths>$(ROOT)inc;..\..\..\..\inc;..\..\..\ca\inc</IncludeSearchPaths>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="BalExtension.wxs" />
     <Compile Include="Mba.wxs" />
     <Compile Include="wixstdba.wxs" />
+    <Compile Include="wixstdba_x86.wxs" />
   </ItemGroup>
 
   <ItemGroup>

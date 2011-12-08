@@ -92,6 +92,7 @@ typedef struct _BURN_CONTAINER
     BURN_DOWNLOAD_SOURCE downloadSource;
 
     DWORD64 qwAttachedOffset;
+    BOOL fActuallyAttached;     // indicates whether an attached container is attached or missing.
 
     //LPWSTR* rgsczPayloads;
     //DWORD cPayloads;
@@ -158,7 +159,7 @@ HRESULT ContainerOpenUX(
 HRESULT ContainerOpen(
     __in BURN_CONTAINER_CONTEXT* pContext,
     __in BURN_CONTAINER* pContainer,
-    __in_opt LPCWSTR wzFilePath
+    __in_z LPCWSTR wzFilePath
     );
 HRESULT ContainerNextStream(
     __inout BURN_CONTAINER_CONTEXT* pContext,

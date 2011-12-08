@@ -68,6 +68,7 @@ typedef struct _BURN_REGISTRATION
 {
     BOOL fPerMachine;
     BOOL fRegisterArp;
+    BOOL fInstalled;
     LPWSTR sczId;
     LPWSTR sczTag;
 
@@ -128,13 +129,9 @@ HRESULT RegistrationSetVariables(
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_VARIABLES* pVariables
     );
-HRESULT RegistrationSetPaths(
-    __in BURN_REGISTRATION* pRegistration
-    );
-HRESULT RegistrationSetResumeCommand(
+HRESULT RegistrationDetectInstalled(
     __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_COMMAND* pCommand,
-    __in BURN_LOGGING* pLog
+    __out BOOL* pfInstalled
     );
 HRESULT RegistrationDetectResumeType(
     __in BURN_REGISTRATION* pRegistration,
@@ -161,8 +158,7 @@ HRESULT RegistrationSessionResume(
     );
 HRESULT RegistrationSessionEnd(
     __in BURN_REGISTRATION* pRegistration,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback,
+    __in BOOL fKeepRegistration,
     __in BOOL fSuspend,
     __in BOOTSTRAPPER_APPLY_RESTART restart,
     __in BOOL fPerMachineProcess,

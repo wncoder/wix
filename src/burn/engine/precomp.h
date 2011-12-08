@@ -40,7 +40,6 @@
 #include <softpub.h>
 #include <strsafe.h>
 #include <intsafe.h>
-#include <wuapi.h>
 #include <mscat.h>
 
 #include <dutil.h>
@@ -62,6 +61,7 @@
 #include <strutil.h>
 #include <svcutil.h>
 #include <wiutil.h>
+#include <wuautil.h>
 #include <xmlutil.h>
 #include <dictutil.h>
 #include <deputil.h>

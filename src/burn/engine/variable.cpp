@@ -1535,8 +1535,6 @@ static HRESULT InitializeVariableRebootPending(
     HRESULT hr = S_OK;
     BOOL fRebootPending = FALSE;
     BOOL fComInitialized = FALSE;
-    ISystemInformation* pSystemInformation = NULL;
-    VARIANT_BOOL bRetVal;
 
     // Do a best effort to ask WU if a reboot is required. If anything goes
     // wrong then let's pretend a reboot is not required.
@@ -1545,14 +1543,11 @@ static HRESULT InitializeVariableRebootPending(
     {
         fComInitialized = TRUE;
 
-        hr = ::CoCreateInstance(__uuidof(SystemInformation), NULL, CLSCTX_INPROC_SERVER, __uuidof(ISystemInformation), reinterpret_cast<LPVOID*>(&pSystemInformation));
-        if (SUCCEEDED(hr))
+        hr = WuaRestartRequired(&fRebootPending);
+        if (FAILED(hr))
         {
-            hr = pSystemInformation->get_RebootRequired(&bRetVal);
-            if (SUCCEEDED(hr))
-            {
-                fRebootPending = (VARIANT_FALSE != bRetVal);
-            }
+            fRebootPending = FALSE;
+            hr = S_OK;
         }
     }
 
@@ -1560,8 +1555,6 @@ static HRESULT InitializeVariableRebootPending(
     ExitOnFailure(hr, "Failed to set reboot pending variant value.");
 
 LExit:
-    ReleaseObject(pSystemInformation);
-
     if (fComInitialized)
     {
         ::CoUninitialize();

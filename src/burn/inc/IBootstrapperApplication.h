@@ -102,6 +102,8 @@ struct BOOTSTRAPPER_COMMAND
 
     // If this was run from a related bundle, specifies the relation type
     BOOTSTRAPPER_RELATION_TYPE relationType;
+
+    LPWSTR wzLayoutDirectory;
 };
 
 

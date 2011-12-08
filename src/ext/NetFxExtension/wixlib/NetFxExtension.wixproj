@@ -7,14 +7,17 @@
     <BindFiles>True</BindFiles>
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <IncludeSearchPaths>$(ROOT)inc;..\..\..\..\inc;..\..\..\ca\inc</IncludeSearchPaths>
     <DefineConstants>
       $(DefineConstants);
       caerrwxi=$(OutputPath)\caerr.wxi;
-      netfxdll=$(OutputPath)\netfxca.dll;
     </DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="NetFxExtension.wxs" />
+    <Compile Include="NetFxExtension_x86.wxs" />
   </ItemGroup>
+
   <Import Project="$(WixTargetsPath)" />
 </Project>

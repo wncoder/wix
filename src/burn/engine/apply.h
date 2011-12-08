@@ -84,6 +84,7 @@ HRESULT ApplyExecute(
     __in_opt HWND hwndParent,
     __in HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
+    __out BOOL* pfKeepRegistration,
     __out BOOL* pfRollback,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart

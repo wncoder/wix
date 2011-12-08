@@ -302,11 +302,11 @@ DAPI_(HRESULT) ThemeLoadRichEditFromResourceToHWnd(
     );
 
 /********************************************************************
- ThemeTranslateAccelerator - will translate the message using the active
+ ThemeHandleKeyboardMessage - will translate the message using the active
                              accelerator table.
 
 *******************************************************************/
-DAPI_(BOOL) ThemeTranslateAccelerator(
+DAPI_(BOOL) ThemeHandleKeyboardMessage(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
     __in MSG* pMsg

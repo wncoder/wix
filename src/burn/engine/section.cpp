@@ -55,6 +55,7 @@ extern "C" HRESULT SectionInitialize(
     HANDLE hFile = INVALID_HANDLE_VALUE;
     DWORD cbRead = 0;
     LARGE_INTEGER li = { };
+    LONGLONG llSize = 0;
     IMAGE_DOS_HEADER dosHeader = { };
     IMAGE_NT_HEADERS ntHeader = { };
     DWORD dwChecksumOffset = 0;
@@ -211,6 +212,9 @@ extern "C" HRESULT SectionInitialize(
         ExitOnRootFailure1(hr, "Failed to read section info, unsupported version: %08x", pBurnSectionHeader->dwVersion);
     }
 
+    hr = FileSizeByHandle(hFile, &llSize);
+    ExitOnFailure(hr, "Failed to get total size of bundle.");
+
     pSection->cbStub = pBurnSectionHeader->dwStubSize;
 
     // If there is an original signature use that to determine the engine size.
@@ -226,6 +230,8 @@ extern "C" HRESULT SectionInitialize(
     {
         pSection->cbEngineSize = pSection->cbStub + pBurnSectionHeader->rgcbContainers[0];
     }
+
+    pSection->qwBundleSize = static_cast<DWORD64>(llSize);
 
     pSection->dwChecksumOffset = dwChecksumOffset;
     pSection->dwCertificateTableOffset = dwCertificateTableOffset;
@@ -263,7 +269,8 @@ extern "C" HRESULT SectionGetAttachedContainerInfo(
     __in DWORD iContainerIndex,
     __in DWORD dwExpectedType,
     __out DWORD64* pqwOffset,
-    __out DWORD64* pqwSize
+    __out DWORD64* pqwSize,
+    __out BOOL* pfPresent
     )
 {
     HRESULT hr = S_OK;
@@ -295,6 +302,9 @@ extern "C" HRESULT SectionGetAttachedContainerInfo(
     }
 
     *pqwSize = pSection->rgcbContainers[iContainerIndex];
+    *pfPresent = (*pqwOffset + *pqwSize) <= pSection->qwBundleSize;
+
+    AssertSz(*pfPresent || pSection->qwBundleSize <= *pqwOffset, "An attached container should either be present or completely absent from the bundle. Found a case where the attached container is partially present which is wrong.");
 
 LExit:
     return hr;

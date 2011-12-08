@@ -181,8 +181,7 @@ LExit:
 extern "C" HRESULT DependencyPlanPackageBegin(
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzBundleProviderKey,
-    __out BURN_DEPENDENCY_ACTION* pDependencyAction
+    __in_z LPCWSTR wzBundleProviderKey
     )
 {
     HRESULT hr = S_OK;
@@ -192,7 +191,7 @@ extern "C" HRESULT DependencyPlanPackageBegin(
     HKEY hkHive = pPackage->fPerMachine ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER;
     BURN_DEPENDENCY_ACTION dependencyExecuteAction = BURN_DEPENDENCY_ACTION_NONE;
     BURN_DEPENDENCY_ACTION dependencyRollbackAction = BURN_DEPENDENCY_ACTION_NONE;
-    *pDependencyAction = BURN_DEPENDENCY_ACTION_NONE;
+    pPackage->dependency = BURN_DEPENDENCY_ACTION_NONE;
 
     // Make sure the package defines at least one provider.
     if (0 == pPackage->cDependencyProviders)
@@ -270,7 +269,7 @@ extern "C" HRESULT DependencyPlanPackageBegin(
         ExitOnFailure1(hr, "Failed to plan the dependency actions for package: %ls", pPackage->sczId);
 
         // Pass the action back to skip post-package planning.
-        *pDependencyAction = dependencyExecuteAction;
+        pPackage->dependency = dependencyExecuteAction;
     }
 
 LExit:
@@ -281,10 +280,9 @@ LExit:
 }
 
 extern "C" HRESULT DependencyPlanPackageComplete(
-    __in const BURN_PACKAGE* pPackage,
+    __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzBundleProviderKey,
-    __inout BURN_DEPENDENCY_ACTION* pDependencyAction
+    __in_z LPCWSTR wzBundleProviderKey
     )
 {
     HRESULT hr = S_OK;
@@ -292,7 +290,7 @@ extern "C" HRESULT DependencyPlanPackageComplete(
     BURN_DEPENDENCY_ACTION dependencyRollbackAction = BURN_DEPENDENCY_ACTION_NONE;
 
     // If the dependency action is already planned, there's nothing to do.
-    if (BURN_DEPENDENCY_ACTION_NONE != *pDependencyAction)
+    if (BURN_DEPENDENCY_ACTION_NONE != pPackage->dependency)
     {
         ExitFunction();
     }
@@ -312,7 +310,7 @@ extern "C" HRESULT DependencyPlanPackageComplete(
         hr = DependencyPlanActions(pPackage, pPlan, wzBundleProviderKey, dependencyExecuteAction, dependencyRollbackAction);
         ExitOnFailure1(hr, "Failed to plan the dependency actions for package: %ls", pPackage->sczId);
 
-        *pDependencyAction = dependencyExecuteAction;
+        pPackage->dependency = dependencyExecuteAction;
     }
 
 LExit:

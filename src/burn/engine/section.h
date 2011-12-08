@@ -29,7 +29,8 @@ extern "C" {
 typedef struct _BURN_SECTION
 {
     DWORD cbStub;
-    DWORD cbEngineSize; // stub + UX container + original certficiate
+    DWORD cbEngineSize;     // stub + UX container + original certficiate
+    DWORD64 qwBundleSize;   // stub + UX container + original certificate [+ attached containers* + final certificate]
 
     DWORD dwChecksumOffset;
     DWORD dwCertificateTableOffset;
@@ -56,7 +57,8 @@ HRESULT SectionGetAttachedContainerInfo(
     __in DWORD iContainerIndex,
     __in DWORD dwExpectedType,
     __out DWORD64* pqwOffset,
-    __out DWORD64* pqwSize
+    __out DWORD64* pqwSize,
+    __out BOOL* pfPresent
     );
 
 #if defined(__cplusplus)

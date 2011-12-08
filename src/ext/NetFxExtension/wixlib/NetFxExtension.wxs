@@ -1198,26 +1198,4 @@
         </Property>
     </Fragment>
 
-    <!-- NetFx NativeImage Custom Action Definitions -->
-    <Fragment>
-        <CustomAction Id="NetFxScheduleNativeImage" BinaryKey="NetFxCA" DllEntry="SchedNetFx" Execute="immediate" Return="check" SuppressModularization="yes" />
-        <CustomAction Id="NetFxExecuteNativeImageInstall" BinaryKey="NetFxCA" DllEntry="ExecNetFx" Execute="deferred" Impersonate="no" Return="ignore" SuppressModularization="yes" />
-        <CustomAction Id="NetFxExecuteNativeImageCommitInstall" BinaryKey="NetFxCA" DllEntry="ExecNetFx" Execute="commit" Impersonate="no" Return="ignore" SuppressModularization="yes" />
-        <CustomAction Id="NetFxExecuteNativeImageUninstall" BinaryKey="NetFxCA" DllEntry="ExecNetFx" Execute="deferred" Impersonate="no" Return="ignore" SuppressModularization="yes" />
-        <CustomAction Id="NetFxExecuteNativeImageCommitUninstall" BinaryKey="NetFxCA" DllEntry="ExecNetFx" Execute="commit" Impersonate="no" Return="ignore" SuppressModularization="yes" />
-
-        <InstallExecuteSequence>
-            <Custom Action="NetFxScheduleNativeImage" Before="InstallFiles" Overridable="yes" />
-            <Custom Action="NetFxExecuteNativeImageCommitUninstall" After="MsiPublishAssemblies" Overridable="yes">RollbackDisabled &lt;&gt; 1</Custom>
-            <Custom Action="NetFxExecuteNativeImageUninstall" After="NetFxExecuteNativeImageCommitUninstall" Overridable="yes">RollbackDisabled = 1</Custom>
-            <Custom Action="NetFxExecuteNativeImageCommitInstall" After="NetFxExecuteNativeImageUninstall" Overridable="yes">RollbackDisabled &lt;&gt; 1</Custom>
-            <Custom Action="NetFxExecuteNativeImageInstall" After="NetFxExecuteNativeImageCommitInstall" Overridable="yes">RollbackDisabled = 1</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
-    <!-- NetFx Custom Action DLL Definitions -->
-    <Fragment>
-        <Binary Id="NetFxCA" SourceFile="$(var.netfxdll)" />
-    </Fragment>
-
 </Wix>

@@ -42,6 +42,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>wixdepca.def</ModuleDefinitionFile>
+      <AdditionalDependencies>dutil_2010.lib;wcautil_2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(WIX_ROOT)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

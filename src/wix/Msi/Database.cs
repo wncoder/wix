@@ -23,6 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
     using System.Globalization;
     using System.IO;
     using System.Text;
+    using System.Threading;
     using Microsoft.Tools.WindowsInstallerXml.Msi.Interop;
 
     /// <summary>
@@ -244,7 +245,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
         public void Commit()
         {
             // Retry this call 3 times to deal with an MSI internal locking problem.
-            int retryLimit = 3;
+            const int retryWait = 300;
+            const int retryLimit = 3;
             int error = 0;
 
             for (int i = 0; i < retryLimit; ++i)
@@ -259,6 +261,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
                 {
                     break;
                 }
+
+                Console.WriteLine("Database commit failed with error: {0}. Retry attempt {1} of {2}", error, i, retryLimit);
+                Thread.Sleep(retryWait);
             }
 
             throw new MsiException(error);

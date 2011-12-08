@@ -45,8 +45,7 @@ HRESULT ElevationSessionResume(
     );
 HRESULT ElevationSessionEnd(
     __in HANDLE hPipe,
-    __in BOOTSTRAPPER_ACTION action,
-    __in BOOL fRollback,
+    __in BOOL fKeepRegistration,
     __in BOOL fSuspend,
     __in BOOTSTRAPPER_APPLY_RESTART restart
     );
@@ -70,6 +69,9 @@ HRESULT ElevationCacheOrLayoutPayload(
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in BOOL fMove
+    );
+HRESULT ElevationCacheCleanup(
+    __in HANDLE hPipe
     );
 HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,

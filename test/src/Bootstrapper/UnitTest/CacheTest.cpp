@@ -58,6 +58,7 @@ namespace Bootstrapper
 
                 package.fPerMachine = FALSE;
                 package.sczCacheId = L"Bootstrapper.CacheTest.CacheSignatureTest";
+                payload.sczKey = L"CacheSignatureTest.PayloadKey";
                 payload.sczFilePath = L"CacheSignatureTest.File";
                 payload.pbCertificateRootPublicKeyIdentifier = pb;
                 payload.cbCertificateRootPublicKeyIdentifier = cb;

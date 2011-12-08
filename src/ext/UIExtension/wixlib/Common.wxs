@@ -75,18 +75,4 @@
             <UIText Id="VolumeCostVolume">!(loc.UITextVolumeCostVolume)</UIText>
         </UI>
     </Fragment>
-
-    <Fragment> 
-        <!-- print EULA functionality -->
-        <CustomAction Id="WixUIPrintEula" BinaryKey="WixUIWixca" DllEntry="PrintEula" Return="ignore" Execute="immediate" />
-    </Fragment>
-
-    <Fragment>    
-        <!-- Validate install directory -->
-        <CustomAction Id="WixUIValidatePath" BinaryKey="WixUIWixca" DllEntry="ValidatePath" Return="ignore" Execute="immediate" />
-    </Fragment>
-
-    <Fragment>
-        <Binary Id="WixUIWixca" SourceFile="$(var.printeulaDll)" />
-    </Fragment>
 </Wix>

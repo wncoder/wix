@@ -78,7 +78,6 @@ DAPI_(HRESULT) DepRegisterDependency(
 /***************************************************************************
  DepRegisterDependent - Registers a dependent under the dependency provider.
 
- Note: Returns E_FILENOTFOUND if the dependency is not registered.
 ***************************************************************************/
 DAPI_(HRESULT) DepRegisterDependent(
     __in HKEY hkHive,

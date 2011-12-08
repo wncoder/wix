@@ -128,8 +128,7 @@ extern "C" HRESULT CatalogLoadFromPayload(
         ExitOnFailure(hr, "Failed to get catalog local file path");
 
         // Get a handle to the file
-        pCatalog->hFile = ::CreateFileW(pCatalog->sczLocalFilePath, GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+        pCatalog->hFile = ::CreateFileW(pCatalog->sczLocalFilePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
         if (INVALID_HANDLE_VALUE == pCatalog->hFile)
         {
             ExitWithLastError1(hr, "Failed to open catalog in working path: %ls", pCatalog->sczLocalFilePath);
@@ -163,8 +162,7 @@ extern "C" HRESULT CatalogElevatedUpdateCatalogFile(
         ExitOnFailure(hr, "Failed to allocated catalog path.");
 
         // Get a handle to the file
-        pCatalog->hFile = ::CreateFileW(pCatalog->sczLocalFilePath, GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+        pCatalog->hFile = ::CreateFileW(pCatalog->sczLocalFilePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
         if (INVALID_HANDLE_VALUE == pCatalog->hFile)
         {
             ExitWithLastError1(hr, "Failed to open catalog in working path: %ls", pCatalog->sczLocalFilePath);

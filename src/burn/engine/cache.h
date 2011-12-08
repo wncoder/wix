@@ -142,7 +142,10 @@ HRESULT CacheVerifyPayloadSignature(
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
     );
-
+void CacheCleanup(
+    __in BOOL fPerMachine,
+    __in_z LPCWSTR wzBundleId
+    );
 
 #ifdef __cplusplus
 }

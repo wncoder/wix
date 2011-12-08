@@ -4,14 +4,13 @@
     <ProjectGuid>{2d4ff07b-26f8-4bef-b41c-e4383f86dc32}</ProjectGuid>
     <OutputName>ui</OutputName>
     <OutputType>Library</OutputType>
-    <IncludeSearchPaths>..\..\..\inc</IncludeSearchPaths>
     <BindFiles>True</BindFiles>
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <!-- Suppress ICE45 until we get a new darice.cub drop that properly supports the ElevationShield control attribute bit -->
     <SuppressIces>ICE45</SuppressIces>
     <Cultures>en-us</Cultures>
-    <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
+    <IncludeSearchPaths>$(ROOT)inc;..\..\..\..\inc;..\..\..\ca\inc</IncludeSearchPaths>
     <DefineConstants>
       $(DefineConstants);
       bannerBmp=$(MSBuildProjectDirectory)\Bitmaps\bannrbmp.bmp;
@@ -21,13 +20,13 @@
       licenseRtf=$(MSBuildProjectDirectory)\license.rtf;
       newIco=$(MSBuildProjectDirectory)\Bitmaps\new.ico;
       upIco=$(MSBuildProjectDirectory)\Bitmaps\up.ico;
-      printeulaDll=$(OutputPath)\PrintEula.dll;
     </DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BrowseDlg.wxs" />
     <Compile Include="CancelDlg.wxs" />
     <Compile Include="Common.wxs" />
+    <Compile Include="Common_x86.wxs" />
     <Compile Include="CustomizeDlg.wxs" />
     <Compile Include="DiskCostDlg.wxs" />
     <Compile Include="ErrorDlg.wxs" />

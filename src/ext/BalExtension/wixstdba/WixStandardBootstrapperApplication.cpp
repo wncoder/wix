@@ -655,7 +655,7 @@ private: // privates
                 hr = E_UNEXPECTED;
                 BalExitOnFailure(hr, "Unexpected return value from message pump.");
             }
-            else if (!ThemeTranslateAccelerator(pThis->m_pTheme, msg.hwnd, &msg))
+            else if (!ThemeHandleKeyboardMessage(pThis->m_pTheme, msg.hwnd, &msg))
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessageW(&msg);

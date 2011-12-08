@@ -941,7 +941,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
         ExitOnFailure(hr, "Failed to add patch properties to argument string.");
     }
 
-    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczProperties);
+    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczProperties ? sczProperties : L"");
 
     //
     // Do the actual action.

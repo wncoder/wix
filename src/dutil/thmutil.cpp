@@ -800,7 +800,7 @@ LExit:
 }
 
 
-DAPI_(BOOL) ThemeTranslateAccelerator(
+DAPI_(BOOL) ThemeHandleKeyboardMessage(
     __in_opt THEME* pTheme,
     __in HWND hWnd,
     __in MSG* pMsg
@@ -808,9 +808,14 @@ DAPI_(BOOL) ThemeTranslateAccelerator(
 {
     BOOL fProcessed = FALSE;
 
-    if (pTheme && pTheme->hActiveAcceleratorTable)
+    if (pTheme)
     {
-        fProcessed = ::TranslateAcceleratorW(hWnd, pTheme->hActiveAcceleratorTable, pMsg);
+        fProcessed = ::IsDialogMessageW(pTheme->hwndParent, pMsg);
+
+        if (!fProcessed && pTheme->hActiveAcceleratorTable)
+        {
+            fProcessed = ::TranslateAcceleratorW(hWnd, pTheme->hActiveAcceleratorTable, pMsg);
+        }
     }
 
     return fProcessed;
@@ -927,6 +932,8 @@ DAPI_(void) ThemeShowPage(
     )
 {
     DWORD iPage = dwPage - 1;
+    HWND hwndFocus = NULL;
+
     if (iPage < pTheme->cPages)
     {
         const THEME_PAGE* pPage = pTheme->rgPages + iPage;
@@ -942,6 +949,11 @@ DAPI_(void) ThemeShowPage(
             else
             {
                 ::ShowWindow(hWnd, nCmdShow);
+
+                if (!hwndFocus && pControl->dwStyle & WS_TABSTOP)
+                {
+                    hwndFocus = hWnd;
+                }
             }
 
             if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
@@ -961,6 +973,11 @@ DAPI_(void) ThemeShowPage(
         if (SW_SHOW == nCmdShow)
         {
             pTheme->hActiveAcceleratorTable = pPage->hAcceleratorTable;
+            
+            if (hwndFocus)
+            {
+                ::PostMessageW(pTheme->hwndParent, WM_NEXTDLGCTL, reinterpret_cast<WPARAM>(hwndFocus), MAKELPARAM(TRUE, 0));
+            }
         }
         else if (pTheme->hActiveAcceleratorTable == pPage->hAcceleratorTable) // we're not showing this page any more, so turn off the accelerator table.
         {

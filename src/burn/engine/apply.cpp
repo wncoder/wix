@@ -51,7 +51,7 @@ typedef struct _BURN_EXECUTE_CONTEXT
 static HRESULT ExtractContainer(
     __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_CONTAINER* pContainer,
-    __in_z_opt LPCWSTR wzContainerPath,
+    __in_z LPCWSTR wzContainerPath,
     __in_ecount(cExtractPayloads) BURN_EXTRACT_PAYLOAD* rgExtractPayloads,
     __in DWORD cExtractPayloads
     );
@@ -125,6 +125,7 @@ static HRESULT DoExecuteAction(
     __in BURN_EXECUTE_CONTEXT* pContext,
     __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
+    __out BOOL* pfKeepRegistration,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
@@ -133,6 +134,7 @@ static HRESULT DoRollbackActions(
     __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
+    __out BOOL* pfKeepRegistration,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
 static HRESULT ExecuteExePackage(
@@ -275,7 +277,7 @@ LExit:
 
 extern "C" HRESULT ApplyUnregister(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in BOOL fRollback,
+    __in BOOL fKeepRegistration,
     __in BOOL fSuspend,
     __in BOOTSTRAPPER_APPLY_RESTART restart
     )
@@ -286,11 +288,11 @@ extern "C" HRESULT ApplyUnregister(
 
     if (pEngineState->registration.fPerMachine)
     {
-        hr = ElevationSessionEnd(pEngineState->companionConnection.hPipe, pEngineState->plan.action, fRollback, fSuspend, restart);
+        hr = ElevationSessionEnd(pEngineState->companionConnection.hPipe, fKeepRegistration, fSuspend, restart);
         ExitOnFailure(hr, "Failed to end session in per-machine process.");
     }
 
-    hr = RegistrationSessionEnd(&pEngineState->registration, pEngineState->plan.action, fRollback, fSuspend, restart, FALSE, &pEngineState->resumeMode);
+    hr = RegistrationSessionEnd(&pEngineState->registration, fKeepRegistration, fSuspend, restart, FALSE, &pEngineState->resumeMode);
     ExitOnFailure(hr, "Failed to end session in per-user process.");
 
 LExit:
@@ -310,7 +312,8 @@ extern "C" HRESULT ApplyCache(
 {
     HRESULT hr = S_OK;
     DWORD dwCheckpoint = 0;
-    DWORD iRetryPoint = 0;
+    BOOL fRetry = FALSE;
+    DWORD iRetryAction = BURN_PLAN_INVALID_ACTION_INDEX;
     BURN_PACKAGE* pStartedPackage = NULL;
     DWORD64 qwCacheProgress = 0;
 
@@ -320,18 +323,35 @@ extern "C" HRESULT ApplyCache(
 
     do
     {
-        // Allow us to retry 
-        DWORD iPackageStartPoint = 0;
-        DWORD iPackageCompletePoint = 0;
+        hr = S_OK;
+        fRetry = FALSE;
 
-        DWORD iPayloadStartPoint = 0;
-        BOOL fRetryPayload = FALSE;
+        // Allow us to retry just a payload.
         BURN_PAYLOAD* pRetryPayload = NULL;
+        DWORD iRetryPayloadAction = BURN_PLAN_INVALID_ACTION_INDEX;
+
+        // Allow us to retry and skip packages.
+        DWORD iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
+        DWORD iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
 
         // cache actions
-        for (DWORD i = iRetryPoint; SUCCEEDED(hr) && i < pPlan->cCacheActions; ++i)
+        for (DWORD i = (BURN_PLAN_INVALID_ACTION_INDEX == iRetryAction) ? 0 : iRetryAction; SUCCEEDED(hr) && i < pPlan->cCacheActions; ++i)
         {
-            BURN_CACHE_ACTION* pCacheAction = &pPlan->rgCacheActions[i];
+            BURN_CACHE_ACTION* pCacheAction = pPlan->rgCacheActions + i;
+            BOOL fRetryPayload = FALSE;
+
+            if (pCacheAction->fSkipUntilRetried)
+            {
+                // If this action was retried, let's make sure it will not be skipped any longer.
+                if (iRetryAction == i)
+                {
+                    pCacheAction->fSkipUntilRetried = FALSE;
+                }
+                else // skip the action.
+                {
+                    continue;
+                }
+            }
 
             switch (pCacheAction->type)
             {
@@ -354,8 +374,8 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_PACKAGE_START:
-                iPackageStartPoint = i; // if we retry this package, we'll start here in the plan.
-                iPackageCompletePoint = pCacheAction->packageStart.iPackageCompleteAction; // if we ignore this package, we'll start after the complete action in the plan.
+                iPackageStartAction = i; // if we retry this package, we'll start here in the plan.
+                iPackageCompleteAction = pCacheAction->packageStart.iPackageCompleteAction; // if we ignore this package, we'll start after the complete action in the plan.
                 pStartedPackage = pCacheAction->packageStart.pPackage;
 
                 nResult = pUX->pUserExperience->OnCachePackageBegin(pStartedPackage->sczId, pCacheAction->packageStart.cCachePayloads, pCacheAction->packageStart.qwCachePayloadSizeTotal);
@@ -367,8 +387,6 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER:
-                iPayloadStartPoint = i;
-
                 hr = AcquireContainerOrPayload(pUX, pVariables, pCacheAction->resolveContainer.pContainer, NULL, NULL, pCacheAction->resolveContainer.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
                 if (FAILED(hr))
                 {
@@ -377,7 +395,12 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER:
-                iPayloadStartPoint = (0 == iPayloadStartPoint) ? i : iPayloadStartPoint; // if no payload start set, use this container as the payload start.
+                // If this action is to be skipped until the acquire action is not skipped and the other
+                // action is still being skipped then skip this action.
+                if (BURN_PLAN_INVALID_ACTION_INDEX != pCacheAction->extractContainer.iSkipUntilAcquiredByAction && pPlan->rgCacheActions[pCacheAction->extractContainer.iSkipUntilAcquiredByAction].fSkipUntilRetried)
+                {
+                    break;
+                }
 
                 hr = ExtractContainer(pUX, pCacheAction->extractContainer.pContainer, pCacheAction->extractContainer.sczContainerUnverifiedPath, pCacheAction->extractContainer.rgPayloads, pCacheAction->extractContainer.cPayloads);
                 if (FAILED(hr))
@@ -387,8 +410,6 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD:
-                iPayloadStartPoint = i;
-
                 hr = AcquireContainerOrPayload(pUX, pVariables, NULL, pCacheAction->resolvePayload.pPackage, pCacheAction->resolvePayload.pPayload, pCacheAction->resolvePayload.sczUnverifiedPath, pPlan->qwCacheSizeTotal, &qwCacheProgress);
                 if (FAILED(hr))
                 {
@@ -397,20 +418,30 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD:
-                pRetryPayload = pCacheAction->cachePayload.pPayload;
                 hr = LayoutOrCachePayload(pUX, pCacheAction->cachePayload.pPackage->fPerMachine ? hPipe : INVALID_HANDLE_VALUE, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove, &fRetryPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_CACHE_PAYLOAD, pCacheAction->cachePayload.pPayload->sczKey, pCacheAction->cachePayload.sczUnverifiedPath, NULL);
                 }
+
+                if (fRetryPayload)
+                {
+                    pRetryPayload = pCacheAction->cachePayload.pPayload;
+                    iRetryPayloadAction = pCacheAction->cachePayload.iTryAgainAction;
+                }
                 break;
 
             case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
-                pRetryPayload = pCacheAction->layoutPayload.pPayload;
                 hr = LayoutOrCachePayload(pUX, hPipe, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove, &fRetryPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_LAYOUT_PAYLOAD, pCacheAction->layoutPayload.pPayload->sczKey, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath);
+                }
+
+                if (fRetryPayload)
+                {
+                    pRetryPayload = pCacheAction->layoutPayload.pPayload;
+                    iRetryPayloadAction = pCacheAction->layoutPayload.iTryAgainAction;
                 }
                 break;
 
@@ -428,8 +459,8 @@ extern "C" HRESULT ApplyCache(
 
                     pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, IDNOACTION);
 
-                    iPackageStartPoint = 0;
-                    iPackageCompletePoint = 0;
+                    iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
+                    iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
                     pStartedPackage = NULL;
                 }
                 break;
@@ -447,16 +478,19 @@ extern "C" HRESULT ApplyCache(
             }
         }
 
-        if (fRetryPayload && iPayloadStartPoint)
+        if (BURN_PLAN_INVALID_ACTION_INDEX != iRetryPayloadAction)
         {
+            Assert(pRetryPayload);
+
             LogErrorId(hr, MSG_APPLY_RETRYING_PAYLOAD, pRetryPayload->sczKey, NULL, NULL);
 
-            iRetryPoint = iPayloadStartPoint;
-            hr = S_FALSE;
+            iRetryAction = iRetryPayloadAction;
+            fRetry = TRUE;
         }
         else if (pStartedPackage)
         {
-            Assert(iPackageStartPoint && iPackageCompletePoint);
+            Assert(BURN_PLAN_INVALID_ACTION_INDEX != iPackageStartAction);
+            Assert(BURN_PLAN_INVALID_ACTION_INDEX != iPackageCompleteAction);
 
             nResult = pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, SUCCEEDED(hr) || pStartedPackage->fVital ? IDNOACTION : IDIGNORE);
             if (FAILED(hr))
@@ -465,23 +499,25 @@ extern "C" HRESULT ApplyCache(
                 {
                     LogErrorId(hr, MSG_APPLY_RETRYING_PACKAGE, pStartedPackage->sczId, NULL, NULL);
 
-                    iRetryPoint = iPackageStartPoint;
-                    hr = S_FALSE;
+                    iRetryAction = iPackageStartAction;
+                    fRetry = TRUE;
                 }
                 else if (IDIGNORE == nResult && !pStartedPackage->fVital) // ignore non-vital download failures.
                 {
-                    LogErrorId(hr, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pStartedPackage->sczId, NULL, NULL);
+                    LogId(REPORT_STANDARD, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pStartedPackage->sczId, hr);
 
                     ++(*pcOverallProgressTicks); // add progress even though we didn't fully cache the package.
 
-                    iRetryPoint = iPackageCompletePoint + 1;
-                    hr = S_FALSE;
+                    iRetryAction = iPackageCompleteAction + 1;
+                    fRetry = TRUE;
                 }
 
+                iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
+                iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
                 pStartedPackage = NULL;
             }
         }
-    } while (S_FALSE == hr);
+    } while (fRetry);
 
 LExit:
     Assert(NULL == pStartedPackage);
@@ -492,6 +528,14 @@ LExit:
         *pfRollback = TRUE;
     }
 
+    // Clean up any remanents in the cache.
+    if (INVALID_HANDLE_VALUE != hPipe)
+    {
+        ElevationCacheCleanup(hPipe);
+    }
+
+    CacheCleanup(FALSE, pPlan->wzBundleId);
+
     pUX->pUserExperience->OnCacheComplete(hr);
     return hr;
 }
@@ -501,6 +545,7 @@ extern "C" HRESULT ApplyExecute(
     __in_opt HWND hwndParent,
     __in HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
+    __out BOOL* pfKeepRegistration,
     __out BOOL* pfRollback,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -541,7 +586,7 @@ extern "C" HRESULT ApplyExecute(
         }
 
         // Execute the action.
-        hr = DoExecuteAction(pEngineState, hwndParent, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfSuspend, pRestart);
+        hr = DoExecuteAction(pEngineState, hwndParent, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfKeepRegistration, pfSuspend, pRestart);
 
         if (*pfSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
         {
@@ -553,12 +598,12 @@ extern "C" HRESULT ApplyExecute(
             // If we failed, but rollback is disabled just bail with our error code.
             if (pEngineState->fDisableRollback)
             {
-                // TODO: should *pfRollback be set to true?
+                *pfRollback = TRUE;
                 break;
             }
             else // the action failed, roll back to previous rollback boundary.
             {
-                HRESULT hrRollback = DoRollbackActions(pEngineState, hwndParent, &context, dwCheckpoint, pRestart);
+                HRESULT hrRollback = DoRollbackActions(pEngineState, hwndParent, &context, dwCheckpoint, pfKeepRegistration, pRestart);
                 UNREFERENCED_PARAMETER(hrRollback);
 
                 // If the rollback boundary is vital, end execution here.
@@ -602,7 +647,7 @@ extern "C" void ApplyClean(
 static HRESULT ExtractContainer(
     __in BURN_USER_EXPERIENCE* /*pUX*/,
     __in BURN_CONTAINER* pContainer,
-    __in_z_opt LPCWSTR wzContainerPath,
+    __in_z LPCWSTR wzContainerPath,
     __in_ecount(cExtractPayloads) BURN_EXTRACT_PAYLOAD* rgExtractPayloads,
     __in DWORD cExtractPayloads
     )
@@ -913,7 +958,7 @@ static HRESULT LayoutOrCachePayload(
             hr = CacheCompletePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, wzUnverifiedPath, fMove);
         }
 
-        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, IDNOACTION);
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, IDTRYAGAIN);
         if (FAILED(hr))
         {
             if (IDRETRY == nResult)
@@ -1172,6 +1217,7 @@ static HRESULT DoExecuteAction(
     __in BURN_EXECUTE_CONTEXT* pContext,
     __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
+    __out BOOL* pfKeepRegistration,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
@@ -1208,7 +1254,7 @@ static HRESULT DoExecuteAction(
                 {
                     hr = E_UNEXPECTED;
                 }
-                ExitOnFailure(hr, "Cache thread exited.");
+                ExitOnFailure(hr, "Cache thread exited unexpectedly.");
 
             case WAIT_FAILED: __fallthrough;
             default:
@@ -1241,6 +1287,10 @@ static HRESULT DoExecuteAction(
             ExitOnFailure(hr, "Failed to execute dependency action.");
             break;
 
+        case BURN_EXECUTE_ACTION_TYPE_REGISTRATION:
+            *pfKeepRegistration = pExecuteAction->registration.fKeep;
+            break;
+
         case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
             *ppRollbackBoundary = pExecuteAction->rollbackBoundary.pRollbackBoundary;
             break;
@@ -1267,6 +1317,7 @@ static HRESULT DoRollbackActions(
     __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
+    __out BOOL* pfKeepRegistration,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
@@ -1324,13 +1375,18 @@ static HRESULT DoRollbackActions(
 
             case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
                 hr = ExecuteMsuPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
-                ExitOnFailure(hr, "Failed to rollback MSU package.");
+                TraceError(hr, "Failed to rollback MSU package.");
+                hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_DEPENDENCY:
                 hr = ExecuteDependencyAction(pEngineState, pRollbackAction, pContext);
                 TraceError(hr, "Failed to rollback dependency action.");
                 hr = S_OK;
+                break;
+
+            case BURN_EXECUTE_ACTION_TYPE_REGISTRATION:
+                *pfKeepRegistration = pRollbackAction->registration.fKeep;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY:
@@ -1565,7 +1621,7 @@ LExit:
 static HRESULT ExecuteDependencyAction(
     __in BURN_ENGINE_STATE* pEngineState,
     __in BURN_EXECUTE_ACTION* pAction,
-    __in BURN_EXECUTE_CONTEXT* pContext
+    __in BURN_EXECUTE_CONTEXT* /*pContext*/
     )
 {
     HRESULT hr = S_OK;

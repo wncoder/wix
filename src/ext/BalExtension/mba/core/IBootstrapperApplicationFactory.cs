@@ -50,6 +50,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [MarshalAs(UnmanagedType.U4)] private readonly ResumeType resume;
         private readonly IntPtr hwndSplashScreen;
         [MarshalAs(UnmanagedType.I4)] private readonly RelationType relation;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        private readonly string wzLayoutDirectory;
 
         /// <summary>
         /// Gets the action for the user experience to perform.
@@ -81,6 +83,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public string CommandLine
         {
             get { return this.wzCommandLine; }
+        }
+
+        /// <summary>
+        /// Gets layout directory.
+        /// </summary>
+        public string LayoutDirectory
+        {
+            get { return this.wzLayoutDirectory; }
         }
 
         /// <summary>

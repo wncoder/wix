@@ -124,7 +124,7 @@ extern "C" HRESULT ContainersParseFromXml(
         // manifest contained and get the offset to the container.
         if (pContainer->fAttached)
         {
-            hr = SectionGetAttachedContainerInfo(pSection, pContainer->dwAttachedIndex, pContainer->type, &pContainer->qwAttachedOffset, &pContainer->qwFileSize);
+            hr = SectionGetAttachedContainerInfo(pSection, pContainer->dwAttachedIndex, pContainer->type, &pContainer->qwAttachedOffset, &pContainer->qwFileSize, &pContainer->fActuallyAttached);
             ExitOnFailure(hr, "Failed to get attached container information.");
         }
 
@@ -173,6 +173,7 @@ extern "C" HRESULT ContainerOpenUX(
 {
     HRESULT hr = S_OK;
     BURN_CONTAINER container = { };
+    LPWSTR sczExecutablePath = NULL;
 
     // open attached container
     container.type = BURN_CONTAINER_TYPE_CABINET;
@@ -180,44 +181,36 @@ extern "C" HRESULT ContainerOpenUX(
     container.fAttached = TRUE;
     container.dwAttachedIndex = 0;
 
-    hr = SectionGetAttachedContainerInfo(pSection, container.dwAttachedIndex, container.type, &container.qwAttachedOffset, &container.qwFileSize);
+    hr = SectionGetAttachedContainerInfo(pSection, container.dwAttachedIndex, container.type, &container.qwAttachedOffset, &container.qwFileSize, &container.fActuallyAttached);
     ExitOnFailure(hr, "Failed to get container information for UX container.");
 
-    hr = ContainerOpen(pContext, &container, NULL);
+    AssertSz(container.fActuallyAttached, "The BA container must always be found attached.");
+
+    hr = PathForCurrentProcess(&sczExecutablePath, NULL);
+    ExitOnFailure(hr, "Failed to get path for executing module.");
+
+    hr = ContainerOpen(pContext, &container, sczExecutablePath);
     ExitOnFailure(hr, "Failed to open attached container.");
 
 LExit:
+    ReleaseStr(sczExecutablePath);
+
     return hr;
 }
 
 extern "C" HRESULT ContainerOpen(
     __in BURN_CONTAINER_CONTEXT* pContext,
     __in BURN_CONTAINER* pContainer,
-    __in_opt LPCWSTR wzFilePath
+    __in_z LPCWSTR wzFilePath
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczExecutablePath = NULL;
     LARGE_INTEGER li = { };
 
     // initialize context
     pContext->type = pContainer->type;
     pContext->qwSize = pContainer->qwFileSize;
     pContext->qwOffset = pContainer->qwAttachedOffset;
-
-    // for a primary container, get the executable module path
-    if (pContainer->fPrimary)
-    {
-        hr = PathForCurrentProcess(&sczExecutablePath, NULL);
-        ExitOnFailure(hr, "Failed to get path for executing module.");
-
-        wzFilePath = sczExecutablePath;
-    }
-    else if (!wzFilePath)
-    {
-        hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Must provide a path for a non-primary container.");
-    }
 
     // open container file
     pContext->hFile = ::CreateFileW(wzFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
@@ -244,8 +237,6 @@ extern "C" HRESULT ContainerOpen(
     ExitOnFailure(hr, "Failed to open container.");
 
 LExit:
-    ReleaseStr(sczExecutablePath);
-
     return hr;
 }
 

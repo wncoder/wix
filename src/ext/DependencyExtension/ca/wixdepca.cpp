@@ -101,7 +101,7 @@ LExit:
  Note: Skipped if DISABLEDEPENDENCYCHECK is set.
 ***************************************************************************/
 static HRESULT ValidateExistentDependencies(
-    __in MSIHANDLE hInstall,
+    __in MSIHANDLE /*hInstall*/,
     __in BOOL fMachineContext
     )
 {
@@ -254,7 +254,7 @@ LExit:
  Note: Skipped if UPGRADINGPRODUCTCODE is set.
 ***************************************************************************/
 static HRESULT ValidateNonexistentDependents(
-    __in MSIHANDLE hInstall,
+    __in MSIHANDLE /*hInstall*/,
     __in BOOL fMachineContext
     )
 {

@@ -221,6 +221,34 @@ Language=English
 Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
 .
 
+MessageId=302
+Severity=Success
+SymbolicName=MSG_ACQUIRED_PAYLOAD
+Language=English
+Acquired payload: %1!ls! to working path: %2!ls! from: %4!ls!.
+.
+
+MessageId=304
+Severity=Success
+SymbolicName=MSG_VERIFIED_EXISTING_PAYLOAD
+Language=English
+Verified existing payload: %1!ls! at path: %2!ls!.
+.
+
+MessageId=305
+Severity=Success
+SymbolicName=MSG_VERIFIED_ACQUIRED_PAYLOAD
+Language=English
+Verified acquired payload: %1!ls! at path: %2!ls!, %3!hs! to: %4!ls!.
+.
+
+MessageId=310
+Severity=Error
+SymbolicName=MSG_FAILED_VERIFY_PAYLOAD
+Language=English
+Failed to verify payload: %2!ls! at path: %3!ls!, error: %1!ls!. Deleting file.
+.
+
 MessageId=311
 Severity=Error
 SymbolicName=MSG_FAILED_ACQUIRE_CONTAINER
@@ -351,7 +379,7 @@ MessageId=349
 Severity=Warning
 SymbolicName=MSG_APPLY_RETRYING_PAYLOAD
 Language=English
-Application requested retry of payload: %1!ls!, encountered error: 0x%2!x!. Retrying...
+Application requested retry of payload: %2!ls!, encountered error: %1!ls!. Retrying...
 .
 
 MessageId=350

@@ -7,23 +7,23 @@
     <BindFiles>True</BindFiles>
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <IncludeSearchPaths>$(ROOT)inc;..\..\..\..\inc;..\..\..\ca\inc</IncludeSearchPaths>
     <DefineConstants>
       $(DefineConstants);
       caerrwxi=$(OutputPath)\caerr.wxi;
-      scaschedDll=$(OutputPath)\scasched.dll;
-      scaexecDll=$(OutputPath)\scaexec.dll;
-      wixcadll=$(OutputPath)\wixca.dll;
-      wixca_x64dll=$(OutputPath_x64)\wixca_x64.dll;
-      wixca_ia64dll=$(OutputPath_ia64)\wixca_ia64.dll;
-      BuildIA64=$(BuildIA64)
     </DefineConstants>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="UtilExtension.wxs" />
+    <Compile Include="UtilExtension_x86.wxs" />
+    <Compile Include="UtilExtension_x64.wxs" />
+    <Compile Include="UtilExtension_ia64.wxs" Condition=" '$(BuildIA64)'!='' and $(BuildIA64)" />
     <EmbeddedResource Include="en-us.wxl" />
     <EmbeddedResource Include="de-de.wxl" />
     <EmbeddedResource Include="ja-jp.wxl" />
     <EmbeddedResource Include="pt-br.wxl" />
   </ItemGroup>
+
   <Import Project="$(WixTargetsPath)" />
 </Project>

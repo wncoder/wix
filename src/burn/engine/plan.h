@@ -26,6 +26,8 @@ extern "C" {
 
 // constants
 
+const DWORD BURN_PLAN_INVALID_ACTION_INDEX = 0xFFFFFFFF;
+
 enum BURN_CACHE_ACTION_TYPE
 {
     BURN_CACHE_ACTION_TYPE_NONE,
@@ -57,13 +59,7 @@ enum BURN_EXECUTE_ACTION_TYPE
     BURN_EXECUTE_ACTION_TYPE_SERVICE_START,
     BURN_EXECUTE_ACTION_TYPE_DEPENDENCY,
     BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY,
-};
-
-enum BURN_DEPENDENCY_ACTION
-{
-    BURN_DEPENDENCY_ACTION_NONE,
-    BURN_DEPENDENCY_ACTION_REGISTER,
-    BURN_DEPENDENCY_ACTION_UNREGISTER,
+    BURN_EXECUTE_ACTION_TYPE_REGISTRATION,
 };
 
 enum BURN_CLEAN_ACTION_TYPE
@@ -86,6 +82,7 @@ typedef struct _BURN_EXTRACT_PAYLOAD
 typedef struct _BURN_CACHE_ACTION
 {
     BURN_CACHE_ACTION_TYPE type;
+    BOOL fSkipUntilRetried;
     union
     {
         struct
@@ -125,6 +122,7 @@ typedef struct _BURN_CACHE_ACTION
         struct
         {
             BURN_CONTAINER* pContainer;
+            DWORD iSkipUntilAcquiredByAction;
             LPWSTR sczContainerUnverifiedPath;
 
             BURN_EXTRACT_PAYLOAD* rgPayloads;
@@ -140,6 +138,7 @@ typedef struct _BURN_CACHE_ACTION
         {
             BURN_PACKAGE* pPackage;
             BURN_PAYLOAD* pPayload;
+            DWORD iTryAgainAction;
             LPWSTR sczUnverifiedPath;
             BOOL fMove;
         } cachePayload;
@@ -147,6 +146,7 @@ typedef struct _BURN_CACHE_ACTION
         {
             BURN_PACKAGE* pPackage;
             BURN_PAYLOAD* pPayload;
+            DWORD iTryAgainAction;
             LPWSTR sczLayoutDirectory;
             LPWSTR sczUnverifiedPath;
             BOOL fMove;
@@ -226,6 +226,10 @@ typedef struct _BURN_EXECUTE_ACTION
         } service;
         struct
         {
+            BOOL fKeep;
+        } registration;
+        struct
+        {
             BURN_ROLLBACK_BOUNDARY* pRollbackBoundary;
         } rollbackBoundary;
         struct
@@ -247,6 +251,7 @@ typedef struct _BURN_PLAN
     BOOTSTRAPPER_ACTION action;
     LPWSTR wzBundleId; // points directly into parent the ENGINE_STATE.
     BOOL fPerMachine;
+    BOOL fKeepRegistrationDefault;
 
     DWORD64 qwCacheSizeTotal;
 
@@ -278,7 +283,8 @@ typedef struct _BURN_PLAN
 // functions
 
 void PlanUninitialize(
-    __in BURN_PLAN* pPlan
+    __in BURN_PLAN* pPlan,
+    __in BURN_PACKAGES* pPackages
     );
 void PlanUninitializeExecuteAction(
     __in BURN_EXECUTE_ACTION* pExecuteAction
@@ -314,9 +320,6 @@ HRESULT PlanExecutePackage(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent,
-    __out BOOTSTRAPPER_ACTION_STATE* pExecuteAction,
-    __out BOOTSTRAPPER_ACTION_STATE* pRollbackAction,
-    __out BURN_DEPENDENCY_ACTION* pDependencyAction,
     __out BOOL* pfPlannedCachePackage,
     __out BOOL* pfPlannedCleanPackage
     );
@@ -330,15 +333,6 @@ HRESULT PlanRelatedBundles(
     __in BURN_VARIABLES* pVariables,
     __inout HANDLE* phSyncpointEvent,
     __in DWORD dwExecuteActionEarlyIndex
-    );
-HRESULT PlanCachePackage(
-    __in BURN_PLAN* pPlan,
-    __in BURN_PACKAGE* pPackage,
-    __out HANDLE* phSyncpointEvent
-    );
-HRESULT PlanCacheSlipstreamMsps(
-    __in BURN_PLAN* pPlan,
-    __in BURN_PACKAGE* pPackage
     );
 HRESULT PlanCleanPackage(
     __in BURN_PLAN* pPlan,
@@ -358,6 +352,11 @@ HRESULT PlanInsertExecuteAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction
     );
+HRESULT PlanInsertRollbackAction(
+    __in DWORD dwIndex,
+    __in BURN_PLAN* pPlan,
+    __out BURN_EXECUTE_ACTION** ppRollbackAction
+    );
 HRESULT PlanAppendExecuteAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction
@@ -365,6 +364,16 @@ HRESULT PlanAppendExecuteAction(
 HRESULT PlanAppendRollbackAction(
     __in BURN_PLAN* pPlan,
     __out BURN_EXECUTE_ACTION** ppExecuteAction
+    );
+HRESULT PlanKeepRegistration(
+    __in BURN_PLAN* pPlan,
+    __in DWORD iAfterExecutePackageAction,
+    __in DWORD iBeforeRollbackPackageAction
+    );
+HRESULT PlanRemoveRegistration(
+    __in BURN_PLAN* pPlan,
+    __in DWORD iAfterExecutePackageAction,
+    __in DWORD iAfterRollbackPackageAction
     );
 HRESULT PlanRollbackBoundaryBegin(
     __in BURN_PLAN* pPlan,
@@ -375,6 +384,12 @@ HRESULT PlanRollbackBoundaryComplete(
     __in BURN_PLAN* pPlan,
     __in HANDLE hEvent
     );
+HRESULT PlanSetResumeCommand(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BOOTSTRAPPER_ACTION action,
+    __in BOOTSTRAPPER_COMMAND* pCommand,
+    __in BURN_LOGGING* pLog
+    );
 //HRESULT AppendExecuteWaitAction(
 //    __in BURN_PLAN* pPlan,
 //    __in HANDLE hEvent
@@ -383,6 +398,12 @@ HRESULT PlanRollbackBoundaryComplete(
 //    __in BURN_PLAN* pPlan,
 //    __in DWORD dwId
 //    );
+
+#ifdef DEBUG
+void PlanDump(
+    __in BURN_PLAN* pPlan
+    );
+#endif
 
 #if defined(__cplusplus)
 }

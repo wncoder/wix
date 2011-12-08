@@ -416,12 +416,6 @@ public: // IBootstrapperEngine
             hr = ContainerFindById(&m_pEngineState->containers, wzPackageOrContainerId, &pContainer);
             ExitOnFailure1(hr, "UX requested unknown container with id: %ls", wzPackageOrContainerId);
 
-            if (pContainer->fPrimary)
-            {
-                hr = HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
-                ExitOnFailure1(hr, "UX denied set source on attached container: %ls", wzPackageOrContainerId);
-            }
-
             hr = StrAllocString(&pContainer->sczSourcePath, wzPath, 0);
             ExitOnFailure(hr, "Failed to set source path for container.");
         }
@@ -469,12 +463,6 @@ public: // IBootstrapperEngine
         {
             hr = ContainerFindById(&m_pEngineState->containers, wzPackageOrContainerId, &pContainer);
             ExitOnFailure1(hr, "UX requested unknown container with id: %ls", wzPackageOrContainerId);
-
-            if (pContainer->fPrimary)
-            {
-                hr = HRESULT_FROM_WIN32(ERROR_INVALID_OPERATION);
-                ExitOnFailure1(hr, "UX denied set download URL on attached container: %ls", wzPackageOrContainerId);
-            }
 
             pDownloadSource = &pContainer->downloadSource;
         }

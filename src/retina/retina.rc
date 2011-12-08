@@ -1,0 +1,18 @@
+//-------------------------------------------------------------------------------------------------
+// <copyright file="retina.rc" company="Microsoft">
+//    Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+//
+// <summary>
+// retina.exe resource file.
+// </summary>
+//-------------------------------------------------------------------------------------------------
+
+#define VER_APP
+#define VER_ORIGINAL_FILENAME "retina.exe"
+#define VER_INTERNAL_NAME "retina"
+#define VER_FILE_DESCRIPTION "WiX Toolset Library Rebuilder"
+#include "wix.rc"
+
+#define MANIFEST_RESOURCE_ID 1
+MANIFEST_RESOURCE_ID RT_MANIFEST "retina.exe.manifest"

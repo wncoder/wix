@@ -18,6 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DependencyExtension.wxs" />
+    <Compile Include="DependencyExtension_x86.wxs" />
     <EmbeddedResource Include="en-us.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />

@@ -322,9 +322,9 @@ DAPI_(HRESULT) DepRegisterDependent(
     hr = AllocDependencyKeyName(wzDependencyProviderKey, &sczDependencyKey);
     ExitOnFailure1(hr, "Failed to allocate the registry key for dependency \"%ls\".", wzDependencyProviderKey);
 
-    // Try to open the dependency key.
-    hr = RegOpen(hkHive, sczDependencyKey, KEY_READ, &hkDependencyKey);
-    ExitOnFailure1(hr, "Failed to open the registry key for the dependency \"%ls\".", wzDependencyProviderKey);
+    // Create the dependency key (or open it if it already exists).
+    hr = RegCreateEx(hkHive, sczDependencyKey, KEY_WRITE, FALSE, NULL, &hkDependencyKey, &fCreated);
+    ExitOnFailure1(hr, "Failed to create the dependency registry key \"%ls\".", sczDependencyKey);
 
     // Create the subkey to register the dependent.
     hr = StrAllocFormatted(&sczKey, L"%ls\\%ls", vsczRegistryDependents, wzProviderKey);

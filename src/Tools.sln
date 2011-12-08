@@ -1,10 +1,12 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lux", "Lux", "{BB0138A0-457A-409C-A6FE-F39546050897}"
 	ProjectSection(SolutionItems) = preProject
 		chm\html\lux.htm = chm\html\lux.htm
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "References", "References", "{163B6562-13E0-4505-9EA4-2B5735AAE05A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuxCustomActions", "lux\ca\LuxCustomActions.csproj", "{E4E8ABBE-1FA6-44F5-BA99-B840C6779A04}"
 EndProject
@@ -25,8 +27,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuxTasks", "lux\tasks\LuxTa
 		{C50F3641-33F8-4865-8581-E369503937FB} = {C50F3641-33F8-4865-8581-E369503937FB}
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "References", "References", "{163B6562-13E0-4505-9EA4-2B5735AAE05A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wix", "wix\Wix.csproj", "{9E03A94C-C70E-45C6-A269-E737BBD8B319}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wconsole", "wconsole\wconsole.csproj", "{4B2BD779-59F7-4BF1-871C-A75952BCA749}"
@@ -42,6 +42,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsInstaller.Package", "DTF\Libraries\WindowsInstaller.Package\WindowsInstaller.Package.csproj", "{1A9940A7-3E29-4428-B753-C4CC66058F1A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "melt", "melt\melt.csproj", "{B92D961C-F7D5-49D3-BFC0-70A3133930A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "retina", "retina\retina.csproj", "{61F9B185-0025-4609-853C-B870EEF88F25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -263,6 +265,22 @@ Global
 		{B92D961C-F7D5-49D3-BFC0-70A3133930A4}.Release|x64.Build.0 = Release|x64
 		{B92D961C-F7D5-49D3-BFC0-70A3133930A4}.Release|x86.ActiveCfg = Release|x86
 		{B92D961C-F7D5-49D3-BFC0-70A3133930A4}.Release|x86.Build.0 = Release|x86
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|ia64.ActiveCfg = Debug|ia64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|ia64.Build.0 = Debug|ia64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|x64.ActiveCfg = Debug|x64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|x64.Build.0 = Debug|x64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|x86.ActiveCfg = Debug|x86
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Debug|x86.Build.0 = Debug|x86
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|ia64.ActiveCfg = Release|ia64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|ia64.Build.0 = Release|ia64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|x64.ActiveCfg = Release|x64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|x64.Build.0 = Release|x64
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|x86.ActiveCfg = Release|x86
+		{61F9B185-0025-4609-853C-B870EEF88F25}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -228,7 +228,7 @@ static DWORD WINAPI DisplayThreadProc(
                     }
                 }
             }
-            else if (!ThemeTranslateAccelerator(pCurrentHandle->pTheme, hwndParent, &msg)) // Window message.
+            else if (!ThemeHandleKeyboardMessage(pCurrentHandle->pTheme, hwndParent, &msg)) // Window message.
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessageW(&msg);

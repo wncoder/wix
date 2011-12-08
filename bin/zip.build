@@ -89,6 +89,8 @@
         <include name="Microsoft.Tools.WindowsInstallerXml.NAntTasks.dll" />
         <include name="pyro.exe" />
         <include name="pyro.exe.config" />
+        <include name="retina.exe" />
+        <include name="retina.exe.config" />
         <include name="sconce2005.dll" />
         <include name="sconce2008.dll" />
         <include name="sconce2010.dll" />

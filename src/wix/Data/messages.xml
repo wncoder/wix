@@ -3574,6 +3574,12 @@
                 The RegistryKey/@Action attribute has been deprecated.  In most cases, you can simply omit @Action.  If you need to force Windows Installer to create an empty key or recursively the key, use the ForceCreateOnInstall or ForceDeleteOnUninstall attributes instead.
             </Instance>
         </Message>
+        <Message Id="NotABinaryWixlib" Number="1139" SourceLineNumbers="no">
+          <Instance>
+            '{0}' is not a binary Wixlib and has no embedded files.
+            <Parameter Type="System.String" Name="wixlib" />
+          </Instance>
+        </Message>
     </Class>
 
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">

@@ -56,8 +56,7 @@ HRESULT DependencyPlanInitialize(
 HRESULT DependencyPlanPackageBegin(
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzBundleProviderKey,
-    __out BURN_DEPENDENCY_ACTION* pDependencyAction
+    __in_z LPCWSTR wzBundleProviderKey
     );
 
 /********************************************************************
@@ -66,10 +65,9 @@ HRESULT DependencyPlanPackageBegin(
 
 *********************************************************************/
 HRESULT DependencyPlanPackageComplete(
-    __in const BURN_PACKAGE* pPackage,
+    __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
-    __in_z LPCWSTR wzBundleProviderKey,
-    __inout BURN_DEPENDENCY_ACTION* pDependencyAction
+    __in_z LPCWSTR wzBundleProviderKey
     );
 
 /********************************************************************

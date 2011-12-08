@@ -53,6 +53,13 @@ enum BURN_PACKAGE_TYPE
     BURN_PACKAGE_TYPE_MSU,
 };
 
+enum BURN_DEPENDENCY_ACTION
+{
+    BURN_DEPENDENCY_ACTION_NONE,
+    BURN_DEPENDENCY_ACTION_REGISTER,
+    BURN_DEPENDENCY_ACTION_UNREGISTER,
+};
+
 
 // structs
 
@@ -161,6 +168,7 @@ typedef struct _BURN_PACKAGE
     BOOTSTRAPPER_REQUEST_STATE requested;       // only valid during Plan.
     BOOTSTRAPPER_ACTION_STATE execute;          // only valid during Plan.
     BOOTSTRAPPER_ACTION_STATE rollback;         // only valid during Plan.
+    BURN_DEPENDENCY_ACTION dependency;          // only valid during Plan.
 
     BURN_PACKAGE_PAYLOAD* rgPayloads;
     DWORD cPayloads;

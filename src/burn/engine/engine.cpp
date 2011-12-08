@@ -243,6 +243,7 @@ static void UninitializeEngineState(
     PackagesUninitialize(&pEngineState->packages);
     CatalogUninitialize(&pEngineState->catalogs);
     SectionUninitialize(&pEngineState->section);
+    ReleaseStr(pEngineState->command.wzLayoutDirectory);
     ReleaseStr(pEngineState->command.wzCommandLine);
 
     ReleaseStr(pEngineState->log.sczExtension);
@@ -322,9 +323,16 @@ static HRESULT RunNormal(
     hr = CoreQueryRegistration(pEngineState);
     ExitOnFailure(hr, "Failed to query registration.");
 
-    // Set resume commandline
-    hr = RegistrationSetResumeCommand(&pEngineState->registration, &pEngineState->command, &pEngineState->log);
-    ExitOnFailure(hr, "Failed to set resume command");
+    // set the registration variables
+    hr = RegistrationSetVariables(&pEngineState->registration, &pEngineState->variables);
+    ExitOnFailure(hr, "Failed to set registration variables.");
+
+    // If a layout directory was specified on the command-line, set it as a well-known variable.
+    if (pEngineState->command.wzLayoutDirectory && *pEngineState->command.wzLayoutDirectory)
+    {
+        hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, pEngineState->command.wzLayoutDirectory, FALSE);
+        ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
+    }
 
     // Ensure the original source is initialized.
     CacheGetOriginalSourcePath(&pEngineState->variables, NULL, NULL);
