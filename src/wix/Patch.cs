@@ -1019,10 +1019,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // copy File table
             Table mainFileTable = mainTransform.Tables["File"];
-            Table mainWixFileTable = mainTransform.Tables["WixFile"];
-            if (null != mainFileTable)
+            if (null != mainFileTable && 0 < mainFileTable.Rows.Count)
             {
                 // We require file source information.
+                Table mainWixFileTable = mainTransform.Tables["WixFile"];
                 if (null == mainWixFileTable)
                 {
                     throw new WixException(WixErrors.AdminImageRequired(productCode));

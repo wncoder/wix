@@ -195,6 +195,10 @@ public: // IBootstrapperEngine
                     if (FAILED(hr))
                     {
                         *pcchOut = cchValue;
+                        if (STRSAFE_E_INSUFFICIENT_BUFFER == hr)
+                        {
+                            hr = E_MOREDATA;
+                        }
                     }
                 }
                 else
@@ -233,6 +237,7 @@ public: // IBootstrapperEngine
                     hr = ::StringCchCopyExW(wzOut, *pcchOut, sczValue, NULL, &cchRemaining, STRSAFE_FILL_BEHIND_NULL);
                     if (STRSAFE_E_INSUFFICIENT_BUFFER == hr)
                     {
+                        hr = E_MOREDATA;
                         ::StringCchLengthW(sczValue, STRSAFE_MAX_CCH, &cchRemaining);
                         *pcchOut = cchRemaining;
                     }

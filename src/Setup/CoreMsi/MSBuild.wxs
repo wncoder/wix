@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+
+-->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+    <Fragment>
+        <Feature Id="Feature_MSBuild" Title="MSBuild Support" Level="1">
+            <ComponentGroupRef Id="MSBuildComponents" />
+        </Feature>
+    </Fragment>
+
+    <Fragment>
+        <ComponentGroup Id="MSBuildComponents" Directory="MSBuildMSWix3xFolder">
+            <Component>
+                <File Source="wix.targets" />
+            </Component>
+
+            <Component>
+                <File Source="wix200x.targets" />
+            </Component>
+
+            <Component>
+                <File Source="wix2010.targets" />
+            </Component>
+
+            <Component>
+                <File Source="wix.ca.targets" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

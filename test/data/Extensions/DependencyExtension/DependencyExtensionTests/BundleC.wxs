@@ -12,15 +12,15 @@
 <?endif?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
-    <Bundle Name="$(var.TestName) - Bundle C" Version="$(var.Version)" UpgradeCode="A517E3D8-887B-4024-8F24-5F039E3CEF27">
+    <Bundle Name="~$(var.TestName) - Bundle C" Version="$(var.Version)" UpgradeCode="A517E3D8-887B-4024-8F24-5F039E3CEF27">
         <Log Prefix="$(var.TestName)_BundleC"/>
         <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
         <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
         <Chain>
-            <MsiPackage Id="PackageA" Name="$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes">
+            <MsiPackage Id="PackageA" Name="~$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes">
                 <SlipstreamMsp Id="PatchA"/>
             </MsiPackage>
-            <MspPackage Id="PatchA" Name="$(var.TestName)_PatchA.msp" Compressed="yes"  SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes"/>
+            <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes"  SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes"/>
         </Chain>
     </Bundle>
 </Wix>

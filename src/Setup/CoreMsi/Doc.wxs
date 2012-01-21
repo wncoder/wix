@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+
+-->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <ComponentGroup Id="DocComponents" Directory="DocFolder">
+            <Component>
+                <File Source="WiX.chm" />
+                <Shortcut Id="WixChmShortcut" Directory="ShortcutFolder" Name="WiX Documentation" Icon="WixSetupIcons.ico" IconIndex="0" Advertise="yes" />
+            </Component>
+
+            <Component>
+                <File Source="msi.chm" />
+                <Shortcut Id="MsiChmShortcut" Directory="ShortcutFolder" Name="MSI SDK Documentation" Icon="WixSetupIcons.ico" IconIndex="0" Advertise="yes" />
+            </Component>
+
+            <Component>
+                <File Source="wix\Xsd\wix.xsd" />
+            </Component>
+
+            <Component>
+                <File Source="wix\Xsd\wixloc.xsd" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

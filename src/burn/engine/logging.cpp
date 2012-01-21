@@ -32,6 +32,9 @@ static DWORD vdwPackageSequence = 0;
 static void CheckLoggingPolicy(
     __out DWORD *pdwAttributes
     );
+static HRESULT GetNonSessionSpecificTempFolder(
+    __deref_out_z LPWSTR* psczNonSessionTempFolder
+    );
 
 
 // function definitions
@@ -42,7 +45,7 @@ extern "C" HRESULT LoggingOpen(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR sczCurrentDir = NULL;
+    LPWSTR sczLoggingBaseFolder = NULL;
 
     // Check if the logging policy is set and configure the logging appropriately.
     CheckLoggingPolicy(&pLog->dwAttributes);
@@ -67,17 +70,20 @@ extern "C" HRESULT LoggingOpen(
     // Open the log approriately.
     if (pLog->sczPath && *pLog->sczPath)
     {
-        hr = DirGetCurrent(&sczCurrentDir);
+        hr = DirGetCurrent(&sczLoggingBaseFolder);
         ExitOnFailure(hr, "Failed to get current directory.");
 
-        hr = LogOpen(sczCurrentDir, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
+        hr = LogOpen(sczLoggingBaseFolder, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
     }
     else if (pLog->sczPrefix && *pLog->sczPrefix)
     {
-        hr = LogOpen(NULL, pLog->sczPrefix, NULL, pLog->sczExtension, FALSE, FALSE, &pLog->sczPath);
+        hr = GetNonSessionSpecificTempFolder(&sczLoggingBaseFolder);
+        ExitOnFailure(hr, "Failed to get non-session specific TEMP folder.");
+
+        hr = LogOpen(sczLoggingBaseFolder, pLog->sczPrefix, NULL, pLog->sczExtension, FALSE, FALSE, &pLog->sczPath);
         ExitOnFailure1(hr, "Failed to open log with prefix: %ls", pLog->sczPrefix);
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
@@ -108,7 +114,7 @@ extern "C" HRESULT LoggingOpen(
     }
 
 LExit:
-    ReleaseStr(sczCurrentDir);
+    ReleaseStr(sczLoggingBaseFolder);
 
     return hr;
 }
@@ -408,7 +414,7 @@ static void CheckLoggingPolicy(
         hr = RegReadString(hk, L"Logging", &sczLoggingPolicy);
         if (SUCCEEDED(hr))
         {
-            LPWSTR wz = sczLoggingPolicy;
+            LPCWSTR wz = sczLoggingPolicy;
             while (*wz)
             {
                 if (L'v' == *wz || L'V' == *wz)
@@ -427,4 +433,48 @@ static void CheckLoggingPolicy(
 
     ReleaseStr(sczLoggingPolicy);
     ReleaseRegKey(hk);
+}
+
+static HRESULT GetNonSessionSpecificTempFolder(
+    __deref_out_z LPWSTR* psczNonSessionTempFolder
+    )
+{
+    HRESULT hr = S_OK;
+    WCHAR wzTempFolder[MAX_PATH] = { };
+    DWORD cchTempFolder = 0;
+    DWORD dwSessionId = 0;
+    LPWSTR sczSessionId = 0;
+    DWORD cchSessionId = 0;
+
+    if (!::GetTempPathW(countof(wzTempFolder), wzTempFolder))
+    {
+        ExitWithLastError(hr, "Failed to get temp folder.");
+    }
+
+    hr = ::StringCchLengthW(wzTempFolder, countof(wzTempFolder), reinterpret_cast<size_t*>(&cchTempFolder));
+    ExitOnFailure(hr, "Failed to get length of temp folder.");
+
+    // If our session id is in the TEMP path then remove that part so we get the non-session
+    // specific temporary folder.
+    if (::ProcessIdToSessionId(::GetCurrentProcessId(), &dwSessionId))
+    {
+        hr = StrAllocFormatted(&sczSessionId, L"%u\\", dwSessionId);
+        ExitOnFailure(hr, "Failed to format session id as a string.");
+
+        hr = ::StringCchLengthW(sczSessionId, STRSAFE_MAX_CCH, reinterpret_cast<size_t*>(&cchSessionId));
+        ExitOnFailure(hr, "Failed to get length of session id string.");
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzTempFolder + cchTempFolder - cchSessionId, cchSessionId, sczSessionId, cchSessionId))
+        {
+            cchTempFolder -= cchSessionId;
+        }
+    }
+
+    hr = StrAllocString(psczNonSessionTempFolder, wzTempFolder, cchTempFolder);
+    ExitOnFailure(hr, "Failed to copy temp folder.");
+
+LExit:
+    ReleaseStr(sczSessionId);
+
+    return hr;
 }

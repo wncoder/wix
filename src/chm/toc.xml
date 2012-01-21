@@ -16,6 +16,7 @@
       <Topic SourceFile="html\heat.htm"/>
       <Topic SourceFile="html\insignia.htm" />
       <Topic SourceFile="html\wixcop.htm"/>
+      <Topic SourceFile="html\lux.htm"/>
       <Topic SourceFile="html\msitowix.htm"/>
       <Topic SourceFile="html\codepage.htm"/>
       <Topic SourceFile="html\msi_useful_links.htm"/>
@@ -197,7 +198,6 @@
         <Topic SourceFile="html\extension_development_preprocessor.htm"/>
         <Topic SourceFile="html\authoring_custom_actions.htm"/>
         <Topic SourceFile="html\localized_extensions.htm"/>
-        <Topic SourceFile="html\lux.htm"/>
       </Topic>
     </Topic>
   </TableOfContents>

@@ -46,7 +46,7 @@ HRESULT DAPI ProcRevertWowFileSystemRedirection(
 
 HRESULT DAPI ProcExec(
     __in_z LPCWSTR wzExecutablePath,
-    __in_z LPCWSTR wzCommandLine,
+    __in_z_opt LPCWSTR wzCommandLine,
     __in int nCmdShow,
     __out HANDLE *phProcess
     );

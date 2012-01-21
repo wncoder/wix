@@ -205,9 +205,10 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_CACHE;
     }
-    // the package is superseded then default to doing nothing except during uninstall of
+    // the package is superseded or obsolete then default to doing nothing except during uninstall of
     // MSPs. Superseded patches are actually installed and can be removed.
-    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && !(BOOTSTRAPPER_ACTION_UNINSTALL == action && BURN_PACKAGE_TYPE_MSP == packageType))
+    else if ((BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState || BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE == currentState) &&
+             !(BOOTSTRAPPER_ACTION_UNINSTALL == action && BURN_PACKAGE_TYPE_MSP == packageType))
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
     }
@@ -256,8 +257,8 @@ extern "C" HRESULT PlanLayoutBundle(
     hr = VariableGetString(pVariables, BURN_BUNDLE_LAYOUT_DIRECTORY, &sczLayoutDirectory);
     if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
     {
-        hr = DirGetCurrent(&sczLayoutDirectory);
-        ExitOnFailure(hr, "Failed to get current directory as layout directory.");
+        hr = CacheGetOriginalSourcePath(pVariables, L"", &sczLayoutDirectory);
+        ExitOnFailure(hr, "Failed to get original source path as layout directory.");
     }
     ExitOnFailure(hr, "Failed to get bundle layout directory property.");
 
@@ -369,7 +370,7 @@ extern "C" HRESULT PlanExecutePackage(
 {
     HRESULT hr = S_OK;
     BOOL fNeedsCache = FALSE;
-    BOOL fPlannedCachePackage = FALSE;
+    BOOL fPlannedAcquirePackage = FALSE;
     BOOL fPlannedCleanPackage = FALSE;
 
     // Calculate execute actions.
@@ -423,7 +424,10 @@ extern "C" HRESULT PlanExecutePackage(
         hr = AddCachePackage(pPlan, pPackage, phSyncpointEvent);
         ExitOnFailure(hr, "Failed to plan cache package.");
 
-        fPlannedCachePackage = TRUE;
+        // If the package was not already cached then we'll trust that AddCachePackage() planned the acquisition
+        // of it. Otherwise, we only did cache operations to verify the cache is valid so we did not plan the
+        // acquisition of the package.
+        fPlannedAcquirePackage = !pPackage->fCached;
     }
 
     // Add the cache and install size to estimated size if it will be on the machine at the end of the install
@@ -452,19 +456,19 @@ extern "C" HRESULT PlanExecutePackage(
     switch (pPackage->type)
     {
     case BURN_PACKAGE_TYPE_EXE:
-        hr = ExeEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        hr = ExeEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
         break;
 
     case BURN_PACKAGE_TYPE_MSI:
-        hr = MsiEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        hr = MsiEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
         break;
 
     case BURN_PACKAGE_TYPE_MSP:
-        hr = MspEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        hr = MspEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
         break;
 
     case BURN_PACKAGE_TYPE_MSU:
-        hr = MsuEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedCachePackage);
+        hr = MsuEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
         break;
 
     default:
@@ -492,9 +496,9 @@ extern "C" HRESULT PlanExecutePackage(
         }
     }
 
-    // If the package is scheduled to be cached or is already cached but we are removing it or the package
+    // If the package is scheduled to be acquired or is already cached but we are removing it or the package
     // is not supposed to stay cached then ensure the package is cleaned up.
-    if ((fPlannedCachePackage || pPackage->fCached) && (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute || !pPackage->fCache))
+    if ((fPlannedAcquirePackage || pPackage->fCached) && (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute || !pPackage->fCache))
     {
         hr = PlanCleanPackage(pPlan, pPackage);
         ExitOnFailure(hr, "Failed to plan clean package.");
@@ -502,7 +506,7 @@ extern "C" HRESULT PlanExecutePackage(
         fPlannedCleanPackage = TRUE;
     }
 
-    *pfPlannedCachePackage = fPlannedCachePackage;
+    *pfPlannedCachePackage = fPlannedAcquirePackage; // tell the caller we planned caching only if we needed to go get the package.
     *pfPlannedCleanPackage = fPlannedCleanPackage;
 
 LExit:

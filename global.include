@@ -1015,6 +1015,53 @@
 
   </target>
 
+  <!--
+    msbuild
+    ==========
+    Arguments:
+      msbuild.project               Required - The project file to build.
+      msbuild.platform              Optional - The platform to build, defaults to current platform.
+      msbuild.target                Optional - The target to build in the project.
+  -->
+  <property name="msbuild.requiredArgs" value="msbuild.project" />
+  <property name="msbuild.optionalArgs" value="msbuild.platform, msbuild.target, msbuild.preserveArgs" />
+  <target name="msbuild" description="Compiles a C++ project by correctly using a precompiled header (if supplied)" >
+    <!-- Check the required arguments -->
+    <property name="args" value="${msbuild.requiredArgs}" />
+    <call target="checkRequiredArgs" />
+
+    <if test="${not property::exists('msbuild.platform')}">
+      <property name="msbuild.platform" value="" />
+    </if>
+    <if test="${not property::exists('msbuild.target')}">
+      <property name="msbuild.target" value="" />
+    </if>
+    <if test="${not property::exists('msbuild.preserveArgs')}">
+      <property name="msbuild.preserveArgs" value="false" />
+    </if>
+
+    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
+      <arg value="/property:Configuration=Debug" if="${debug}" />
+      <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:NantPath=&quot;${NantPath}&quot;" />
+      <arg value="/property:Platform=${msbuild.platform}" if="${msbuild.platform != ''}" />
+      <arg value="/property:BuildIA64=${ia64}" />
+      <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
+      <arg value="/verbosity:${msbuildverbosity}" />
+      <arg value="/target:${msbuild.target}" if="${msbuild.target != ''}" />
+      <arg file="${msbuild.project}" />
+    </exec>
+
+    <!-- Clear the variables for the next call -->
+    <if test="${not property::exists(msbuild.preserveArgs) or not msbuild.preserveArgs}">
+      <property name="args" value="${msbuild.requiredArgs}, ${msbuild.optionalArgs}" />
+      <call target="clearArgs" />
+    </if>
+  </target>
+
   <!-- This prevents this file from being included more than once (by convention, not by syntax) -->
   <property name="global.properties.defined" value="true" readonly="true" />
 

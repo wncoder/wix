@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocCompiler", "DocCompiler\DocCompiler.csproj", "{232C8D2F-F845-452F-A8B8-017E28A35377}"
 	ProjectSection(ProjectDependencies) = postProject
 		{EB323B05-8822-4645-A0E6-ACF401ED92F7} = {EB323B05-8822-4645-A0E6-ACF401ED92F7}

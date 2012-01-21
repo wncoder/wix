@@ -163,7 +163,7 @@
         <columnDefinition name="RestartServiceDelayInSeconds" type="number" length="4" nullable="yes"
                 category="integer" minValue="0" description="Period after which to restart the service after a given failure."/>
         <columnDefinition name="ProgramCommandLine" type="string" length="255" nullable="yes"
-                category="text" description="Command line for program to run if failure action is RUN_COMMAND."/>
+                category="formatted" description="Command line for program to run if failure action is RUN_COMMAND."/>
         <columnDefinition name="RebootMessage" type="string" length="255" nullable="yes"
                 category="text" description="Message to show to users when rebooting if failure action is REBOOT."/>
     </tableDefinition>

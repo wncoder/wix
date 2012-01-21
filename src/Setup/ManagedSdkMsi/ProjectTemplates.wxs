@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (c) Microsoft Corporation.  All rights reserved.
+
+-->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <ComponentGroup Id="ProjectTemplates">
+            <ComponentGroupRef Id="ProjectTemplates2005Components" />
+            <ComponentGroupRef Id="ProjectTemplates2008Components" />
+            <ComponentGroupRef Id="ProjectTemplates2010Components" />
+        </ComponentGroup>
+    </Fragment>
+
+    <Fragment>
+        <!--
+            VS2005
+        -->
+        <PropertyRef Id="VS2005_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" />
+        <PropertyRef Id="VS2005_IDE_VB_PROJECTSYSTEM_INSTALLED" />
+
+        <ComponentGroup Id="ProjectTemplates2005Components" Directory="VsProjectTemplatesWix2005Folder">
+            <Component Transitive="yes">
+                <Condition>VS2005_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionCS_2005.zip" Name="CustomActionCS.zip" Source="CustomActionCS_2005.zip" />
+            </Component>
+
+            <Component Transitive="yes">
+                <Condition>VS2005_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionVB_2005.zip" Name="CustomActionVB.zip" Source="CustomActionVB_2005.zip" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+
+    <Fragment>
+        <!--
+            VS2008
+        -->
+        <PropertyRef Id="VS90_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" />
+        <PropertyRef Id="VS90_IDE_VB_PROJECTSYSTEM_INSTALLED" />
+
+        <ComponentGroup Id="ProjectTemplates2008Components" Directory="VsProjectTemplatesWix2008Folder">
+            <Component Transitive="yes">
+                <Condition>VS90_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionCS_2008.zip" Name="CustomActionCS.zip" Source="CustomActionCS_2008.zip" />
+            </Component>
+
+            <Component Transitive="yes">
+                <Condition>VS90_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionVB_2008.zip" Name="CustomActionVB.zip" Source="CustomActionVB_2008.zip" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+
+    <Fragment>
+        <!--
+            VS2010
+        -->
+        <PropertyRef Id="VS2010_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" />
+        <PropertyRef Id="VS2010_IDE_VB_PROJECTSYSTEM_INSTALLED" />
+
+        <ComponentGroup Id="ProjectTemplates2010Components" Directory="VsProjectTemplatesWix2010Folder">
+            <Component Transitive="yes">
+                <Condition>VS2010_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionCS_2010.zip" Name="CustomActionCS.zip" Source="CustomActionCS_2010.zip" />
+            </Component>
+            <Component Transitive="yes">
+                <Condition>VS2010_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionVB_2010.zip" Name="CustomActionVB.zip" Source="CustomActionVB_2010.zip" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

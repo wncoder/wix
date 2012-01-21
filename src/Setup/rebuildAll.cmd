@@ -29,8 +29,8 @@ nant balextension.build %_S%
 popd
 
 :SkipBurn
-pushd UX
-nant wixux.build %_S%
+pushd WixBA
+nant wixba.build %_S%
 popd
 pushd Bundle
 nant bundle.build %_S%

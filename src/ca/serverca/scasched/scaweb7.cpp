@@ -387,9 +387,13 @@ BOOL CompareBinding(
 
         LPCWSTR pwzHeaderExists = pwzExists + 1;
 
+        BOOL fIpMatches = (0 == lstrcmpW(psw->swaBinding.wzIP, pwzIPExists));   // Explicit IP match
+        fIpMatches |= (0 == lstrcmpW(psw->swaBinding.wzIP, L"*"));              // Authored * matches any IP
+        fIpMatches |= ('\0' != psw->swaBinding.wzIP) &&                         // Unauthored IP
+                      (0 == lstrcmpW(pwzIPExists, L"*"));                       // matches the All Unassigned IP : '*'
+
         // compare the passed in address with the address listed for this web
-        if ((0 == lstrcmpW(psw->swaBinding.wzIP, pwzIPExists) || 0 == lstrcmpW(psw->swaBinding.wzIP, L"*")) &&
-            psw->swaBinding.iPort == iPortExists &&
+        if (fIpMatches && psw->swaBinding.iPort == iPortExists &&
             0 == lstrcmpW(psw->swaBinding.wzHeader, pwzHeaderExists))
         {
             fFound = TRUE;
@@ -478,6 +482,12 @@ HRESULT ScaWebSearch7(
     fInitializedCom = TRUE;
 
     hr = CoCreateInstance(__uuidof(AppHostAdminManager), NULL, CLSCTX_INPROC_SERVER, __uuidof(IAppHostAdminManager), reinterpret_cast<void**> (&pAdminMgr));
+    if (REGDB_E_CLASSNOTREG == hr)
+    {
+        WcaLog(LOGMSG_VERBOSE, "AppHostAdminManager was not registered, cannot find site.");
+        hr = S_OK;
+        ExitFunction();
+    }
     ExitOnFailure(hr, "Failed to CoCreate IAppHostAdminManager");
 
     hr = pAdminMgr->GetAdminSection(UseConstBSTR(bstrSites), UseConstBSTR(bstrAppHostRoot), &pSites);

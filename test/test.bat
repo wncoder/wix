@@ -70,13 +70,11 @@ set WIXTOOLSPATH=%WIX_ROOT%\build\%FLAVOR%\x86
 
 REM -- Attempt to find the tests ---
 set WIXTESTS=%WIXTOOLSPATH%\WixTests.dll
-set IISTESTS=%WIXTOOLSPATH%\IISExtensionTests.dll
-set BURNUNITTESTS=%WIXTOOLSPATH%\UnitTest.dll
+set BURNUNITTESTS=%WIXTOOLSPATH%\BurnUnitTest.dll
 if not exist %WIXTESTS% goto :NoWixTests
 
 REM -- Set test container ---
 set TESTCONTAINERS=/testcontainer:"%WIXTESTS%"
-if exist %IISTESTS% set TESTCONTAINERS= %TESTCONTAINERS% /testcontainer:"%IISTESTS%"
 if exist %BURNUNITTESTS% set TESTCONTAINERS= %TESTCONTAINERS% /testcontainer:"%BURNUNITTESTS%"
 
 

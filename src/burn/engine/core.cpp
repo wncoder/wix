@@ -449,11 +449,23 @@ extern "C" HRESULT CorePlan(
     // Insert the "keep registration" and "remove registration" actions in the plan when installing the first time and anytime we are uninstalling respectively.
     if (!pEngineState->registration.fInstalled && (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_MODIFY == action || BOOTSTRAPPER_ACTION_REPAIR == action))
     {
+        if (BURN_PLAN_INVALID_ACTION_INDEX == iAfterExecuteFirstNonPermanentPackage)
+        {
+            iAfterExecuteFirstNonPermanentPackage = pEngineState->plan.cExecuteActions;
+            iBeforeRollbackFirstNonPermanentPackage = pEngineState->plan.cRollbackActions;
+        }
+
         hr = PlanKeepRegistration(&pEngineState->plan, iAfterExecuteFirstNonPermanentPackage, iBeforeRollbackFirstNonPermanentPackage);
         ExitOnFailure(hr, "Failed to plan install keep registration.");
     }
     else if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
     {
+        if (BURN_PLAN_INVALID_ACTION_INDEX == iAfterExecuteLastNonPermanentPackage)
+        {
+            iAfterExecuteLastNonPermanentPackage = pEngineState->plan.cExecuteActions;
+            iAfterRollbackLastNonPermanentPackage = pEngineState->plan.cRollbackActions;
+        }
+
         hr = PlanRemoveRegistration(&pEngineState->plan, iAfterExecuteLastNonPermanentPackage, iAfterRollbackLastNonPermanentPackage);
         ExitOnFailure(hr, "Failed to plan uninstall remove registration.");
     }

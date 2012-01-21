@@ -19212,9 +19212,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if ("DoAction" == controlEvent && null != argument)
             {
-                // if we're not looking at a standard action then create a reference 
+                // if we're not looking at a standard action or a formatted string then create a reference 
                 // to the custom action.
-                if (!Util.IsStandardAction(argument))
+                if (!Util.IsStandardAction(argument) && !Common.ContainsProperty(argument))
                 {
                     this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", argument);
                 }
@@ -19673,6 +19673,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string upgradeCode = null;
             string version = null;
             string condition = null;
+            string parentName = null;
 
             string fileSystemSafeBundleName = null;
             string logVariablePrefixAndExtension = null;
@@ -19736,6 +19737,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "Name":
                             name = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "ParentName":
+                            parentName = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "SplashScreenSourceFile":
                             splashScreenSourceFile = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -19929,6 +19933,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[15] = condition;
                 row[16] = tag;
                 row[17] = this.currentPlatform.ToString();
+                row[18] = parentName;
             }
         }
 
@@ -20345,6 +20350,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             YesNoDefaultType compressed = YesNoDefaultType.Default;
+            YesNoType suppressSignatureVerification = YesNoType.NotSet;
             string id = null;
             string name = null;
             string sourceFile = null;
@@ -20370,6 +20376,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "DownloadUrl":
                             downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "SuppressSignatureVerification":
+                            suppressSignatureVerification = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -20408,7 +20417,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 id = this.core.GenerateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);
             }
 
-            CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed);
+            CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed, suppressSignatureVerification);
 
             return id;
         }
@@ -20420,7 +20429,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="parentType">ComplexReferenceParentType of parent element</param>
         /// <param name="parentId">Identifier of parent element.</param>
         private void CreatePayloadRow(SourceLineNumberCollection sourceLineNumbers, string id, string name, string sourceFile, string downloadUrl,
-            ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed)
+            ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification)
         {
             if (!this.core.EncounteredError)
             {
@@ -20434,6 +20443,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     row[4] = (YesNoDefaultType.Yes == compressed) ? 1 : 0;
                 }
                 row[5] = sourceFile; // duplicate of sourceFile but in a string column so it won't get resolved to a full path during binding.
+                row[6] = (YesNoType.Yes == suppressSignatureVerification) ? 1 : 0;
 
                 this.CreateGroupAndOrderingRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Payload, id, previousType, previousId);
             }
@@ -20602,6 +20612,70 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
+        /// <summary>
+        /// Parse ExitCode element.
+        /// </summary>
+        /// <param name="node">Element to parse</param>
+        /// <param name="packageId">Id of parent element</param>
+        private void ParseExitCodeElement(XmlNode node, string packageId)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            int value = CompilerCore.IntegerNotSet;
+            string behavior = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Value":
+                            value = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, int.MinValue + 2, int.MaxValue);
+                            break;
+                        case "Behavior":
+                            behavior = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            // hygene: throw an exception if there are any unknown attributes
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (null == behavior)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Behavior"));
+            }
+
+            // hygene: throw an exception if there are any subelements
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "ExitCode");
+                row[0] = packageId;
+                row[1] = value;
+                row[2] = behavior;
+            }
+        }
 
         /// <summary>
         /// Parse Chain element.
@@ -20901,6 +20975,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             int installSize = CompilerCore.IntegerNotSet;
             string msuKB = null;
             YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
+            YesNoType suppressSignatureVerification = YesNoType.NotSet;
             YesNoDefaultType compressed = YesNoDefaultType.Default;
             YesNoType displayInternalUI = YesNoType.NotSet;
             YesNoType enableFeatureSelection = YesNoType.NotSet;
@@ -21007,11 +21082,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
                             break;
-                        case "SuppressLooseFilePayloadGeneration":
-                            this.core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
-
-                            suppressLooseFilePayloadGeneration = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
-                            allowed = (packageType == ChainPackageType.Msi);
+                        case "SuppressSignatureVerification":
+                            suppressSignatureVerification = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         default:
                             allowed = false;
@@ -21147,6 +21219,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "PayloadGroupRef":
                                 this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null);
                                 break;
+                            case "ExitCode":
+                                allowed = (packageType == ChainPackageType.Exe);
+                                if (allowed)
+                                {
+                                    this.ParseExitCodeElement(child, id);
+                                }
+                                break;
                             default:
                                 allowed = false;
                                 break;
@@ -21168,7 +21247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 // We create the package contents as a payload with this package as the parent
                 this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl,
-                    ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null, compressed);
+                    ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification);
 
                 Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
                 row[0] = id;
@@ -21463,6 +21542,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// Parse MsiProperty element
         /// </summary>
         /// <param name="node">Element to parse</param>
+        /// <param name="packageId">Id of parent element</param>
         private void ParseMsiPropertyElement(XmlNode node, string packageId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
@@ -21530,6 +21610,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// Parse SlipstreamMsp element
         /// </summary>
         /// <param name="node">Element to parse</param>
+        /// <param name="packageId">Id of parent element</param>
         private void ParseSlipstreamMspElement(XmlNode node, string packageId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);

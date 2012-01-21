@@ -249,7 +249,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             const int retryLimit = 3;
             int error = 0;
 
-            for (int i = 0; i < retryLimit; ++i)
+            for (int i = 0; i <= retryLimit; ++i)
             {
                 error = MsiInterop.MsiDatabaseCommit(this.Handle);
 
@@ -257,13 +257,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
                 {
                     return;
                 }
-                else if (STG_E_LOCKVIOLATION != error)
+                else
                 {
-                    break;
-                }
+                    MsiException exception = new MsiException(error);
 
-                Console.WriteLine("Database commit failed with error: {0}. Retry attempt {1} of {2}", error, i, retryLimit);
-                Thread.Sleep(retryWait);
+                    // We need to see if the error code is contained in any of the strings in ErrorInfo.
+                    // Join the array together and search for the error code to cover the string array.
+                    if (!String.Join(", ", exception.ErrorInfo).Contains(STG_E_LOCKVIOLATION.ToString()))
+                    {
+                        break;
+                    }
+
+                    Console.WriteLine(String.Format("{0}. Retry attempt {1} of {2}", exception.Message, i, retryLimit));
+                    Thread.Sleep(retryWait);
+                }
             }
 
             throw new MsiException(error);

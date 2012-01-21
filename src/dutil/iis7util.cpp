@@ -253,6 +253,9 @@ extern "C" BOOL DAPI Iis7IsMatchingAppHostElement(
     VARIANT vPropValue;
     ::VariantInit(&vPropValue);
 
+    // Use the default comparator if a comparator is not specified
+    VARIANTCOMPARATORPROC pComparator = pComparison->pComparator ? pComparison->pComparator : CompareVariantDefault;
+
     hr = pElement->get_Name(&bstrElementName);
     ExitOnFailure(hr, "Failed to get name of element");
     if (CSTR_EQUAL != ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, pComparison->sczElementName, -1, bstrElementName, -1))
@@ -263,7 +266,7 @@ extern "C" BOOL DAPI Iis7IsMatchingAppHostElement(
     hr = Iis7GetPropertyVariant(pElement, pComparison->sczAttributeName, &vPropValue);
     ExitOnFailure2(hr, "Failed to get value of %ls attribute of %ls element", pComparison->sczAttributeName, pComparison->sczElementName);
 
-    if (TRUE == pComparison->pComparator(pComparison->pvAttributeValue, &vPropValue))
+    if (TRUE == pComparator(pComparison->pvAttributeValue, &vPropValue))
     {
         fResult = TRUE;
     }

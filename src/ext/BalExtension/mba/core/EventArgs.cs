@@ -1136,7 +1136,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Gets the identifier of the package.
         /// </summary>
-        public string PackagerId
+        public string PackageId
         {
             get { return this.packageId; }
         }

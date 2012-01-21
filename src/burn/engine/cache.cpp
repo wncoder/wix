@@ -665,8 +665,6 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
 {
     HRESULT hr = S_OK;
     LONG er = ERROR_SUCCESS;
-    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
-    DWORD dwServicePack = 0;
 
     GUID guidAuthenticode = WINTRUST_ACTION_GENERIC_VERIFY_V2;
     WINTRUST_FILE_INFO wfi = { };
@@ -683,10 +681,7 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
     BYTE* pbThumbprint = NULL;
     DWORD cbThumbprint = 0;
 
-    // Windows 2000 and XP do not support cached revocation checks.
-    OsGetVersion(&osVersion, &dwServicePack);
-
-    // Verify the payload.
+    // Verify the payload assuming online.
     wfi.cbStruct = sizeof(wfi);
     wfi.pcwszFilePath = wzUnverifiedPayloadPath;
     wfi.hFile = hFile;
@@ -695,13 +690,19 @@ extern "C" HRESULT CacheVerifyPayloadSignature(
     wtd.dwUnionChoice = WTD_CHOICE_FILE;
     wtd.pFile = &wfi;
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
-    wtd.dwProvFlags = OS_VERSION_VISTA <= osVersion ? WTD_CACHE_ONLY_URL_RETRIEVAL : WTD_REVOCATION_CHECK_NONE;
+    wtd.dwProvFlags = WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
     wtd.dwUIChoice = WTD_UI_NONE;
-    wtd.fdwRevocationChecks = OS_VERSION_VISTA <= osVersion ? WTD_REVOKE_WHOLECHAIN : WTD_REVOKE_NONE;
 
     er = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &guidAuthenticode, &wtd);
-    hr = HRESULT_FROM_WIN32(er);
-    ExitOnFailure1(hr, "Failed authenticode verification of payload: %ls", wzUnverifiedPayloadPath);
+    if (er)
+    {
+        // Verify the payload assuming offline.
+        wtd.dwProvFlags |= WTD_CACHE_ONLY_URL_RETRIEVAL;
+
+        er = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &guidAuthenticode, &wtd);
+        hr = HRESULT_FROM_WIN32(hr);
+        ExitOnFailure1(hr, "Failed authenticode verification of payload: %ls", wzUnverifiedPayloadPath);
+    }
 
     // Get handles to the embedded authenticode (PKCS7) cerificate which includes all the certificates, CRLs and CTLs.
     if (!::CryptQueryObject(CERT_QUERY_OBJECT_FILE, wzUnverifiedPayloadPath, CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED_EMBED, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, NULL, NULL, &hCertStore, &hCryptMsg, NULL))
@@ -1330,8 +1331,6 @@ static HRESULT VerifyPayloadWithCatalog(
     )
 {
     HRESULT hr = S_FALSE;
-    OS_VERSION osVersion = OS_VERSION_UNKNOWN;
-    DWORD dwServicePack = 0;
     WINTRUST_DATA WinTrustData = { };
     WINTRUST_CATALOG_INFO WinTrustCatalogInfo = { };
     GUID gSubSystemDriver = WINTRUST_ACTION_GENERIC_VERIFY_V2;
@@ -1381,16 +1380,12 @@ static HRESULT VerifyPayloadWithCatalog(
     hr = StrHexEncode(pbHash, dwHashSize, sczName, dwTagSize);
     ExitOnFailure(hr, "Failed to encode file hash.");
 
-    // Windows 2000 and XP do not support cached revocation checks.
-    OsGetVersion(&osVersion, &dwServicePack);
-
-    // Set up the WinVerifyTrust structures
+    // Set up the WinVerifyTrust structures assuming online.
     WinTrustData.cbStruct = sizeof(WINTRUST_DATA);
     WinTrustData.dwUIChoice = WTD_UI_NONE;
-    WinTrustData.fdwRevocationChecks = OS_VERSION_VISTA <= osVersion ? WTD_REVOKE_WHOLECHAIN : WTD_REVOKE_NONE;
     WinTrustData.dwUnionChoice = WTD_CHOICE_CATALOG;
     WinTrustData.dwStateAction = WTD_STATEACTION_VERIFY;
-    WinTrustData.dwProvFlags = OS_VERSION_VISTA <= osVersion ? WTD_CACHE_ONLY_URL_RETRIEVAL : WTD_REVOCATION_CHECK_NONE;
+    WinTrustData.dwProvFlags = WTD_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT;
     WinTrustData.pCatalog = &WinTrustCatalogInfo;
 
     WinTrustCatalogInfo.cbStruct = sizeof(WINTRUST_CATALOG_INFO);
@@ -1400,13 +1395,21 @@ static HRESULT VerifyPayloadWithCatalog(
     WinTrustCatalogInfo.pcwszMemberTag = sczName;
     WinTrustCatalogInfo.pcwszMemberFilePath = sczLowerCaseFile;
     WinTrustCatalogInfo.pcwszCatalogFilePath = pPayload->pCatalog->sczLocalFilePath;
-    hr = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
 
-    // WinVerifyTrust returns 0 for success, a few different Win32 error codes if it can't
-    // find the provider, and any other error code is provider specific, so may not
-    // be an actual Win32 error code
-    hr = HRESULT_FROM_WIN32(hr);
-    ExitOnFailure1(hr, "Could not verify file %ls.", wzUnverifiedPayloadPath);
+    hr = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+    if (hr)
+    {
+        // Set up the WinVerifyTrust structures assuming online.
+        WinTrustData.dwProvFlags |= WTD_CACHE_ONLY_URL_RETRIEVAL;
+
+        hr = ::WinVerifyTrust(static_cast<HWND>(INVALID_HANDLE_VALUE), &gSubSystemDriver, &WinTrustData);
+
+        // WinVerifyTrust returns 0 for success, a few different Win32 error codes if it can't
+        // find the provider, and any other error code is provider specific, so may not
+        // be an actual Win32 error code
+        hr = HRESULT_FROM_WIN32(hr);
+        ExitOnFailure1(hr, "Could not verify file %ls.", wzUnverifiedPayloadPath);
+    }
 
     // Need to close the WinVerifyTrust action
     WinTrustData.dwStateAction = WTD_STATEACTION_CLOSE;

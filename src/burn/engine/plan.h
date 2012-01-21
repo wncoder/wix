@@ -26,7 +26,7 @@ extern "C" {
 
 // constants
 
-const DWORD BURN_PLAN_INVALID_ACTION_INDEX = 0xFFFFFFFF;
+const DWORD BURN_PLAN_INVALID_ACTION_INDEX = 0x80000000;
 
 enum BURN_CACHE_ACTION_TYPE
 {
@@ -139,6 +139,7 @@ typedef struct _BURN_CACHE_ACTION
             BURN_PACKAGE* pPackage;
             BURN_PAYLOAD* pPayload;
             DWORD iTryAgainAction;
+            DWORD cTryAgainAttempts;
             LPWSTR sczUnverifiedPath;
             BOOL fMove;
         } cachePayload;
@@ -147,6 +148,7 @@ typedef struct _BURN_CACHE_ACTION
             BURN_PACKAGE* pPackage;
             BURN_PAYLOAD* pPayload;
             DWORD iTryAgainAction;
+            DWORD cTryAgainAttempts;
             LPWSTR sczLayoutDirectory;
             LPWSTR sczUnverifiedPath;
             BOOL fMove;

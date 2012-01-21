@@ -934,7 +934,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     }
                                     else if (customRow.Fields[j].Column.IsPrimaryKey)
                                     {
-                                        if (CompilerCore.IsIdentifier(item[1]) || Common.IsValidBinderVariable(item[1]))
+                                        if (CompilerCore.IsIdentifier(item[1]) || Common.IsValidBinderVariable(item[1]) || ColumnCategory.Formatted == customRow.Fields[j].Column.Category)
                                         {
                                             customRow.Fields[j].Data = item[1];
                                         }

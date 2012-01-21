@@ -63,9 +63,11 @@
     </Reference>
     <Reference Include="Microsoft.WizardFramework" >
       <HintPath>$(VS10IDEDir)\Microsoft.WizardFramework.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.WizardFrameworkVS" >
       <HintPath>$(VS10IDEDir)\Microsoft.WizardFrameworkVS.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.VSHelp"/>
     <Reference Include="System" />

@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
   <PropertyGroup>
     <ProjectGuid>{EB323B05-8822-4645-A0E6-ACF401ED92F7}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -7,7 +8,6 @@
     <AssemblyName>WixBuild</AssemblyName>
     <UseDocumentationFile>true</UseDocumentationFile>
     <StyleCopEnabled>true</StyleCopEnabled>
-    <OldToolsVersion>2.0</OldToolsVersion>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FxCopEnabled>false</FxCopEnabled>
   </PropertyGroup>
@@ -20,6 +20,7 @@
     <Compile Include="DeleteRegistry.cs" />
     <Compile Include="DocCompiler.cs" />
     <Compile Include="FlattenXml.cs" />
+    <Compile Include="GenerateUploadMetadata.cs" />
     <Compile Include="MsgGen.cs" />
     <Compile Include="Rc.cs" />
     <Compile Include="AssemblyInfo.cs" />
@@ -39,6 +40,7 @@
       <Link>Microsoft.CSharp.targets</Link>
     </None>
   </ItemGroup>
+
   <!-- Include this before the CSharp targets file -->
   <Import Project="..\..\WixBuild.Common.targets" />
 </Project>

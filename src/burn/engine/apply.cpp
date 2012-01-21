@@ -21,6 +21,8 @@
 #include "precomp.h"
 
 
+const DWORD BURN_CACHE_MAX_RECOMMENDED_VERIFY_TRYAGAIN_ATTEMPTS = 2;
+
 // structs
 
 struct BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT
@@ -80,6 +82,7 @@ static HRESULT LayoutOrCachePayload(
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPath,
     __in BOOL fMove,
+    __in DWORD cTryAgainAttempts,
     __out BOOL* pfRetry
     );
 static HRESULT PromptForSource(
@@ -317,6 +320,10 @@ extern "C" HRESULT ApplyCache(
     BURN_PACKAGE* pStartedPackage = NULL;
     DWORD64 qwCacheProgress = 0;
 
+    // Allow us to retry and skip packages.
+    DWORD iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
+    DWORD iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
+
     int nResult = pUX->pUserExperience->OnCacheBegin();
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted cache.");
@@ -329,10 +336,6 @@ extern "C" HRESULT ApplyCache(
         // Allow us to retry just a payload.
         BURN_PAYLOAD* pRetryPayload = NULL;
         DWORD iRetryPayloadAction = BURN_PLAN_INVALID_ACTION_INDEX;
-
-        // Allow us to retry and skip packages.
-        DWORD iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
-        DWORD iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
 
         // cache actions
         for (DWORD i = (BURN_PLAN_INVALID_ACTION_INDEX == iRetryAction) ? 0 : iRetryAction; SUCCEEDED(hr) && i < pPlan->cCacheActions; ++i)
@@ -418,7 +421,7 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD:
-                hr = LayoutOrCachePayload(pUX, pCacheAction->cachePayload.pPackage->fPerMachine ? hPipe : INVALID_HANDLE_VALUE, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove, &fRetryPayload);
+                hr = LayoutOrCachePayload(pUX, pCacheAction->cachePayload.pPackage->fPerMachine ? hPipe : INVALID_HANDLE_VALUE, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove, pCacheAction->cachePayload.cTryAgainAttempts, &fRetryPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_CACHE_PAYLOAD, pCacheAction->cachePayload.pPayload->sczKey, pCacheAction->cachePayload.sczUnverifiedPath, NULL);
@@ -428,11 +431,13 @@ extern "C" HRESULT ApplyCache(
                 {
                     pRetryPayload = pCacheAction->cachePayload.pPayload;
                     iRetryPayloadAction = pCacheAction->cachePayload.iTryAgainAction;
+
+                    ++pCacheAction->cachePayload.cTryAgainAttempts;
                 }
                 break;
 
             case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
-                hr = LayoutOrCachePayload(pUX, hPipe, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove, &fRetryPayload);
+                hr = LayoutOrCachePayload(pUX, hPipe, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove, pCacheAction->layoutPayload.cTryAgainAttempts, &fRetryPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_LAYOUT_PAYLOAD, pCacheAction->layoutPayload.pPayload->sczKey, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath);
@@ -442,6 +447,8 @@ extern "C" HRESULT ApplyCache(
                 {
                     pRetryPayload = pCacheAction->layoutPayload.pPayload;
                     iRetryPayloadAction = pCacheAction->layoutPayload.iTryAgainAction;
+
+                    ++pCacheAction->layoutPayload.cTryAgainAttempts;
                 }
                 break;
 
@@ -511,16 +518,23 @@ extern "C" HRESULT ApplyCache(
                     iRetryAction = iPackageCompleteAction + 1;
                     fRetry = TRUE;
                 }
-
-                iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
-                iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
-                pStartedPackage = NULL;
             }
+
+            iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
+            iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
+            pStartedPackage = NULL;
+        }
+        else
+        {
+            Assert(BURN_PLAN_INVALID_ACTION_INDEX == iPackageStartAction);
+            Assert(BURN_PLAN_INVALID_ACTION_INDEX == iPackageCompleteAction);
         }
     } while (fRetry);
 
 LExit:
     Assert(NULL == pStartedPackage);
+    Assert(BURN_PLAN_INVALID_ACTION_INDEX == iPackageStartAction);
+    Assert(BURN_PLAN_INVALID_ACTION_INDEX == iPackageCompleteAction);
 
     if (FAILED(hr))
     {
@@ -930,6 +944,7 @@ static HRESULT LayoutOrCachePayload(
     __in_z_opt LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPath,
     __in BOOL fMove,
+    __in DWORD cTryAgainAttempts,
     __out BOOL* pfRetry
     )
 {
@@ -958,7 +973,7 @@ static HRESULT LayoutOrCachePayload(
             hr = CacheCompletePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, wzUnverifiedPath, fMove);
         }
 
-        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, IDTRYAGAIN);
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, FAILED(hr) && cTryAgainAttempts < BURN_CACHE_MAX_RECOMMENDED_VERIFY_TRYAGAIN_ATTEMPTS ? IDTRYAGAIN : IDNOACTION);
         if (FAILED(hr))
         {
             if (IDRETRY == nResult)

@@ -78,6 +78,10 @@ extern "C" HRESULT MsiEngineParsePackageFromXml(
     hr = XmlGetAttributeEx(pixnMsiPackage, L"ProductCode", &pPackage->Msi.sczProductCode);
     ExitOnFailure(hr, "Failed to get @ProductCode.");
 
+    // @Language
+    hr = XmlGetAttributeNumber(pixnMsiPackage, L"Language", &pPackage->Msi.dwLanguage);
+    ExitOnFailure(hr, "Failed to get @Language.");
+
     // @Version
     hr = XmlGetAttributeEx(pixnMsiPackage, L"Version", &scz);
     ExitOnFailure(hr, "Failed to get @Version.");
@@ -426,7 +430,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
         // report related MSI package to UX
         if (BOOTSTRAPPER_RELATED_OPERATION_NONE != operation)
         {
-            LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, pPackage->Msi.sczProductCode, LoggingPerMachineToString(pPackage->fPerMachine), LoggingVersionToString(pPackage->Msi.qwInstalledVersion), LoggingRelatedOperationToString(operation));
+            LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, pPackage->Msi.sczProductCode, LoggingPerMachineToString(pPackage->fPerMachine), LoggingVersionToString(pPackage->Msi.qwInstalledVersion), pPackage->Msi.dwLanguage, LoggingRelatedOperationToString(operation));
 
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, pPackage->Msi.sczProductCode, pPackage->fPerMachine, pPackage->Msi.qwInstalledVersion, operation);
             hr = HRESULT_FROM_VIEW(nResult);
@@ -538,13 +542,20 @@ extern "C" HRESULT MsiEngineDetectPackage(
                 }
             }
 
-            // If this is a detect-only related package then we'll assume a downgrade is taking place, since
-            // that is the overwhelmingly common use of detect-only related packages. If not detect-only then
-            // it's easy; we're clearly doing a major upgrade.
+            // If this is a detect-only related package and we're not installed yet, then we'll assume a downgrade
+            // would taking place since that is the overwhelmingly common use of detect-only related packages. If
+            // not detect-only then it's easy; we're clearly doing a major upgrade.
             if (pRelatedMsi->fOnlyDetect)
             {
-                operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
-                pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED;
+                if (BOOTSTRAPPER_PACKAGE_STATE_ABSENT == pPackage->currentState)
+                {
+                    operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                    pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE;
+                }
+                else // we're already on the machine so the detect-only *must* be for detection purposes only.
+                {
+                    operation = BOOTSTRAPPER_RELATED_OPERATION_NONE;
+                }
             }
             else
             {
@@ -678,7 +689,8 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
     // execute action
     switch (pPackage->currentState)
     {
-    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
+    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
+    case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
         if (BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested)
         {
             // Take a look at the version and determine if this is a potential
@@ -688,42 +700,32 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
             {
                 execute = BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE;
             }
-            else if (qwVersion == qwInstalledVersion) // maintenance install "10.X.X.X" = "10.X.X.X"
+            else if (BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested)
             {
-                execute = (BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) ? BOOTSTRAPPER_ACTION_STATE_REPAIR : (fFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE);
+                execute = BOOTSTRAPPER_ACTION_STATE_REPAIR;
             }
-            else // newer version present "14.X.X.X" < "15.X.X.X", skip
+            else
             {
-                execute = BOOTSTRAPPER_ACTION_STATE_NONE; // TODO: inform about this state to enable warnings
+                execute = fFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE;
             }
         }
-        else if (BOOTSTRAPPER_PACKAGE_STATE_ABSENT == pPackage->requested)
+        else if ((BOOTSTRAPPER_PACKAGE_STATE_ABSENT == pPackage->requested || BOOTSTRAPPER_PACKAGE_STATE_CACHED == pPackage->requested) &&
+                 pPackage->fUninstallable) // removing a package that can be removed.
         {
-            if (!pPackage->fUninstallable) // do not uninstall packages that we don't own.
-            {
-                execute = BOOTSTRAPPER_ACTION_STATE_NONE;
-            }
-            else //if (qwVersion == qwInstalledVersion) // install "10.X.X.X" = "10.X.X.X"
-            {
-                execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
-            }
-            //else
-            //{
-            //    execute = BOOTSTRAPPER_ACTION_STATE_NONE; // TODO: inform about this state to enable warnings
-            //}
+            execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+        }
+        else
+        {
+            execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         }
         break;
 
     case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
     case BOOTSTRAPPER_PACKAGE_STATE_CACHED: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
+    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
         if (BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested)
         {
             execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
-        }
-        else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == pPackage->currentState && BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested && pPackage->fUninstallable)
-        {
-            execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
         }
         else
         {
@@ -740,7 +742,8 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
     BOOTSTRAPPER_PACKAGE_STATE state = BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState;
     switch (state)
     {
-    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
+    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
+    case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
         switch (pPackage->requested)
         {
         case BOOTSTRAPPER_REQUEST_STATE_PRESENT:
@@ -760,19 +763,17 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
 
     case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
     case BOOTSTRAPPER_PACKAGE_STATE_CACHED: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
-        switch (pPackage->requested)
+    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+        // If we requested to put the package on the machine then remove the package during rollback
+        // if the package is uninstallable.
+        if ((BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) &&
+            pPackage->fUninstallable)
         {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == state ? BOOTSTRAPPER_ACTION_STATE_INSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        default:
+            rollback = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+        }
+        else
+        {
             rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
         }
         break;
 

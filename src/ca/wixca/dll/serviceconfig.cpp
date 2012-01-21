@@ -159,7 +159,7 @@ extern "C" UINT __stdcall SchedServiceConfig(
             hr = WcaWriteIntegerToCaData(iData, &pwzCustomActionData);
             ExitOnFailure(hr, "failed to add data to CustomActionData");
 
-            hr = WcaGetRecordString(hRec, QSC_PROGRAMCOMMANDLINE, &pwzData); // null value already dealt w/ properly
+            hr = WcaGetRecordFormattedString(hRec, QSC_PROGRAMCOMMANDLINE, &pwzData); // null value already dealt w/ properly
             ExitOnFailure(hr, "failed to get command line to run on service failure.");
             hr = WcaWriteStringToCaData(pwzData, &pwzCustomActionData);
             ExitOnFailure(hr, "failed to add data to CustomActionData");

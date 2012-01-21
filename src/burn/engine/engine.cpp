@@ -537,10 +537,12 @@ LExit:
         int nResult = pEngineState->userExperience.pUserExperience->OnShutdown();
         if (IDRESTART == nResult)
         {
+            LogId(REPORT_STANDARD, MSG_BA_REQUESTED_RESTART, LoggingBoolToString(pEngineState->fRestart));
             pEngineState->fRestart = TRUE;
         }
         else if (IDRELOAD_BOOTSTRAPPER == nResult)
         {
+            LogId(REPORT_STANDARD, MSG_BA_REQUESTED_RELOAD);
             *pfReloadApp = TRUE;
         }
     }

@@ -23,7 +23,7 @@
   <!-- Include the global build properties -->
   <include buildfile="..\..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
-  <!-- wixux-specific properties -->
+  <!-- wixba-specific properties -->
   <property name="dir.src.setup.bundle" value="${dir.wixroot.src}\setup\Bundle" readonly="true" />
 
 
@@ -38,6 +38,12 @@
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
       <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=x86" />
+      <arg value="/property:BuildIA64=${ia64}" />
+      <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Rebuild" />
       <arg file="${dir.src.setup.bundle}\Bundle.wixproj" />
     </exec>
@@ -48,6 +54,12 @@
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
       <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=x86" />
+      <arg value="/property:BuildIA64=${ia64}" />
+      <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Clean" />
       <arg file="${dir.src.setup.bundle}\Bundle.wixproj" />
     </exec>
@@ -58,6 +70,12 @@
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
       <arg value="/property:Configuration=Release" if="${ship}" />
+      <arg value="/property:Platform=x86" />
+      <arg value="/property:BuildIA64=${ia64}" />
+      <arg value="/property:Build2005=${BuildVC8}" />
+      <arg value="/property:Build2008=${BuildVC9}" />
+      <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Build" />
       <arg file="${dir.src.setup.bundle}\Bundle.wixproj" />
     </exec>

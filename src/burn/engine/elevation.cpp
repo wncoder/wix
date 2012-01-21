@@ -1018,6 +1018,9 @@ static HRESULT ProcessMsiPackageMessages(
             hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &rgwzMsiData[i]);
             ExitOnFailure1(hr, "Failed to read MSI data: %u", i);
         }
+
+        message.cData = cMsiData;
+        message.rgwzData = (LPCWSTR*)rgwzMsiData;
     }
 
     // Process the rest of the message.

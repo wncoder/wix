@@ -17,7 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stub", "stub\stub.vcxproj",
 		{8119537D-E1D9-6591-D51A-49768A2F9C37} = {8119537D-E1D9-6591-D51A-49768A2F9C37}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "..\..\test\src\Bootstrapper\UnitTest\UnitTest.vcxproj", "{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BurnUnitTest", "..\..\test\src\UnitTests\Burn\BurnUnitTest.vcxproj", "{9D1F1BA3-9393-4833-87A3-D5F1FC08EF67}"
 	ProjectSection(ProjectDependencies) = postProject
 		{1244E671-F108-4334-BA52-8A7517F26ECD} = {1244E671-F108-4334-BA52-8A7517F26ECD}
 		{8119537D-E1D9-6591-D51A-49768A2F9C37} = {8119537D-E1D9-6591-D51A-49768A2F9C37}
@@ -25,7 +25,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTest", "..\..\test\src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUX", "..\..\test\src\Burn\TestUX\TestUX.csproj", "{0E7D6866-B968-453C-AB51-C58A1A8C5658}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WixUX", "..\Setup\UX\WixUX.csproj", "{7C27518B-84AD-4679-8EF4-29DF552CF1AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WixBA", "..\Setup\WixBA\WixBA.csproj", "{7C27518B-84AD-4679-8EF4-29DF552CF1AC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host", "..\ext\BalExtension\mba\host\host.vcxproj", "{12C87C77-3547-44F8-8134-29BC915CB19D}"
 EndProject

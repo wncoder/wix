@@ -59,7 +59,7 @@
   <include buildfile="${dir.src.wcautil}\wcautil.build" />
   <include buildfile="${dir.src.winterop}\winterop.build" />
   <include buildfile="${dir.src.wixca}\wixca.build" />
-  <include buildfile="${dir.wixroot}\bin\zip.build" />
+  <include buildfile="${dir.wixroot}\release\zip.build" />
 
   <!-- WixTests build files -->
   <include buildfile="${dir.wixroot.test}\wixtests.build" />
@@ -200,6 +200,11 @@
 
   <!-- Build -->
   <target name="chm.build" description="Peforms a full rebuild (clean then build)">
+    <property name="msbuild.project" value="${dir.src.chm}\chm.proj" />
+    <property name="msbuild.target" value="Rebuild" />
+    <call target="msbuild" />
+
+  <!--
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
       <arg value="/property:Configuration=Release" if="${ship}" />
@@ -207,6 +212,7 @@
       <arg value="/target:Rebuild" />
       <arg file="${dir.src.chm}\chm.proj" />
     </exec>
+  -->
   </target>
 
    <target name="core.build" description="Peforms a full rebuild (clean then build)">
@@ -336,6 +342,10 @@
 
   <!-- Inc -->
   <target name="chm.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
+    <property name="msbuild.project" value="${dir.src.chm}\chm.proj" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
+<!--
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
       <arg value="/property:Configuration=Release" if="${ship}" />
@@ -343,63 +353,37 @@
       <arg value="/target:Build" />
       <arg file="${dir.src.chm}\chm.proj" />
     </exec>
+-->
   </target>
 
    <target name="core.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile, dtf">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:NantPath=&quot;${NantPath}&quot;" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.wixroot.src}\core.sln" />
-    </exec>
+    <property name="msbuild.project" value="${dir.wixroot.src}\core.sln" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
   </target>
 
   <target name="ext.sln.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:BuildIA64=${ia64}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.src.ext}\ext.sln" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\ext.sln" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
 
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:BuildIA64=${ia64}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.wixroot.src}\Tools.sln" />
-    </exec>
+    <property name="msbuild.project" value="${dir.wixroot.src}\Tools.sln" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
 
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:Platform=x86" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
+    <property name="msbuild.platform" value="x86" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
 
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:Platform=x64" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
+    <property name="msbuild.platform" value="x64" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
 
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true" if="${ia64}">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:Platform=ia64" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Build" />
-      <arg file="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
+    <property name="msbuild.platform" value="ia64" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" if="${ia64}" />
   </target>
 </project>

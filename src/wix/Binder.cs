@@ -3079,7 +3079,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // Each catalog is also a payload
                     string payloadId = Common.GenerateIdentifier("pay", true, (string)row[1]);
                     string catalogFile = this.FileManager.ResolveFile((string)row[1], "Catalog", row.SourceLineNumbers, BindStage.Normal);
-                    PayloadInfo payloadInfo = new PayloadInfo(payloadId, Path.GetFileName(catalogFile), catalogFile, true, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
+                    PayloadInfo payloadInfo = new PayloadInfo(payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
 
                     // Add the payload to the UX container
                     allPayloads.Add(payloadInfo.Id, payloadInfo);
@@ -3343,6 +3343,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // Load the ExitCode information...
+            Table exitCodeTable = bundle.Tables["ExitCode"];
+            if (null != exitCodeTable && 0 < exitCodeTable.Rows.Count)
+            {
+                foreach (Row row in exitCodeTable.Rows)
+                {
+                    ExitCodeInfo exitCode = new ExitCodeInfo(row);
+
+                    ChainPackageInfo package;
+                    if (allPackages.TryGetValue(exitCode.PackageId, out package))
+                    {
+                        package.ExitCodes.Add(exitCode);
+                    }
+                    else
+                    {
+                        core.OnMessage(WixErrors.IdentifierNotFound("Package", exitCode.PackageId));
+                    }
+                }
+            }
+
             // Set the overridable bundle provider key.
             this.SetBundleProviderKey(bundle, bundleInfo);
 
@@ -3393,7 +3413,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.CreateBootstrapperApplicationManifest(bundle, baManifestPath, uxPayloads);
 
             // Add the bootstrapper application manifest to the set of UX payloads.
-            PayloadInfo baManifestPayload = new PayloadInfo(Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), "BootstrapperApplicationData.xml", baManifestPath, false, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
+            PayloadInfo baManifestPayload = new PayloadInfo(Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), "BootstrapperApplicationData.xml", baManifestPath, false, true, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
             baManifestPayload.EmbeddedId = string.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloads.Count);
             uxPayloads.Add(baManifestPayload);
 
@@ -3766,6 +3786,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("UpdateUrl", bundleInfo.RegistrationInfo.UpdateUrl);
                 }
 
+                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.ParentName))
+                {
+                    writer.WriteAttributeString("ParentDisplayName", bundleInfo.RegistrationInfo.ParentName);
+                }
+
                 if (1 == bundleInfo.RegistrationInfo.DisableModify)
                 {
                     writer.WriteAttributeString("DisableModify", "yes");
@@ -3848,6 +3873,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     else if (Compiler.ChainPackageType.Msi == package.ChainPackageType)
                     {
                         writer.WriteAttributeString("ProductCode", package.ProductCode);
+                        writer.WriteAttributeString("Language", package.Language);
                         writer.WriteAttributeString("Version", package.Version);
                         writer.WriteAttributeString("DisplayInternalUI", package.DisplayInternalUI ? "yes" : "no");
                     }
@@ -3882,6 +3908,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         writer.WriteStartElement("SlipstreamMsp");
                         writer.WriteAttributeString("Id", slipstreamMsp);
+                        writer.WriteEndElement();
+                    }
+
+                    foreach (ExitCodeInfo exitCode in package.ExitCodes)
+                    {
+                        writer.WriteStartElement("ExitCode");
+                        writer.WriteAttributeString("Type", exitCode.Type);
+                        writer.WriteAttributeString("Code", exitCode.Code);
                         writer.WriteEndElement();
                     }
 
@@ -6717,12 +6751,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // payload files sourced from a cabinet (think WixExtension with embedded binary wixlib) are considered "non-content files".
                 ObjectField field = (ObjectField)row.Fields[2];
                 bool contentFile = String.IsNullOrEmpty(field.CabinetFileId);
-                this.Initialize((string)row[0], (string)row[1], (string)row[2], contentFile, (string)row[3], null, packaging, fileManager);
+                bool suppressSignatureValidation = (row[6] != null && 1 == (int)row[6]);
+                this.Initialize((string)row[0], (string)row[1], (string)row[2], contentFile, suppressSignatureValidation, (string)row[3], null, packaging, fileManager);
             }
 
-            public PayloadInfo(string id, string name, string sourceFile, bool contentFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
+            public PayloadInfo(string id, string name, string sourceFile, bool contentFile, bool suppressSignatureValidation, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
             {
-                this.Initialize(id, name, sourceFile, contentFile, downloadUrl, container, packaging, fileManager);
+                this.Initialize(id, name, sourceFile, contentFile, suppressSignatureValidation, downloadUrl, container, packaging, fileManager);
             }
 
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
@@ -6739,6 +6774,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public bool LayoutOnly { get; set; }
             public string CatalogId { get; set; }
             public string UnresolvedSource { get; private set; }
+            public bool SuppressSignatureValidation { get; private set; }
 
             public string Sha1
             {
@@ -6763,7 +6799,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 get { return this.certificateThumbprint; }
             }
 
-            private void Initialize(string id, string name, string sourceFile, bool contentFile, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
+            private void Initialize(string id, string name, string sourceFile, bool contentFile, bool suppressSignatureValidation, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
             {
                 this.Id = id;
                 this.ContentFile = contentFile;
@@ -6772,12 +6808,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.DownloadUrl = downloadUrl;
                 this.Container = container;
                 this.Packaging = packaging;
+                this.SuppressSignatureValidation = suppressSignatureValidation;
 
-                // Try to get the certificate if this is a signed file.
+                // Try to get the certificate if this is a signed file and we're not suppressing signature validation for this payload.
                 X509Certificate2 certificate = null;
                 try
                 {
-                    certificate = new X509Certificate2(this.FileInfo.FullName);
+                    if (!this.SuppressSignatureValidation)
+                    {
+                        certificate = new X509Certificate2(this.FileInfo.FullName);
+                    }
                 }
                 catch (CryptographicException) // we don't care about non-signed files.
                 {
@@ -6857,6 +6897,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Condition = (string)row[15];
                 this.Tag = (string)row[16];
                 this.Platform = (Platform)Enum.Parse(typeof(Platform), (string)row[17]);
+
+                this.RegistrationInfo.ParentName = (string)row[18];
 
                 // Default provider key is the Id.
                 this.ProviderKey = this.Id.ToString("B");
@@ -7120,6 +7162,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.MsiFeatures = new List<MsiFeature>();
                 this.MsiProperties = new List<MsiPropertyInfo>();
                 this.SlipstreamMsps = new List<string>();
+                this.ExitCodes = new List<ExitCodeInfo>();
                 this.Provides = new ProvidesDependencyCollection();
 
                 // Start the package size with the package's payload size.
@@ -7179,6 +7222,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             public bool PerMachine { get; private set; }
             public string ProductCode { get; private set; }
+            public string Language { get; private set; }
             public string PatchCode { get; private set; }
             public string PatchXml { get; private set; }
             public bool Cache { get; private set; }
@@ -7207,6 +7251,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public List<MsiFeature> MsiFeatures { get; private set; }
             public List<MsiPropertyInfo> MsiProperties { get; private set; }
             public List<string> SlipstreamMsps { get; private set; }
+            public List<ExitCodeInfo> ExitCodes { get; private set; }
             public ProvidesDependencyCollection Provides { get; private set; }
 
             public RollbackBoundaryInfo RollbackBoundary { get; set; }
@@ -7244,6 +7289,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
                     {
                         this.ProductCode = ChainPackageInfo.GetProperty(db, "ProductCode");
+                        this.Language = ChainPackageInfo.GetProperty(db, "ProductLanguage");
                         this.Version = ChainPackageInfo.GetProperty(db, "ProductVersion");
 
                         if (String.IsNullOrEmpty(this.CacheId))
@@ -7406,7 +7452,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
                                         string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
 
-                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                         payloadNew.ParentPackagePayload = this.PackagePayload;
                                         if (null != payloadNew.Container)
                                         {
@@ -7477,7 +7523,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                                 if (!this.IsExistingPayload(name))
                                                 {
-                                                    PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                                    PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                                     payloadNew.ParentPackagePayload = this.PackagePayload;
                                                     if (null != payloadNew.Container)
                                                     {
@@ -7740,6 +7786,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string HelpTelephone { get; set; }
             public string AboutUrl { get; set; }
             public string UpdateUrl { get; set; }
+            public string ParentName { get; set; }
             public int DisableModify { get; set; }
             public bool DisableRemove { get; set; }
         }
@@ -7781,6 +7828,36 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string PackageId { get; private set; }
             public string Name { get; private set; }
             public string Value { get; set; }
+        }
+
+        /// <summary>
+        /// Utility class for Burn ExitCode information.
+        /// </summary>
+        private class ExitCodeInfo
+        {
+            public ExitCodeInfo(Row row)
+                : this((string)row[0], (int)row[1], (string)row[2])
+            {
+            }
+
+            public ExitCodeInfo(string packageId, int value, string behavior)
+            {
+                this.PackageId = packageId;
+                // null value means wildcard
+                if (CompilerCore.IntegerNotSet == value)
+                {
+                    this.Code = "*";
+                }
+                else
+                {
+                    this.Code = value.ToString();
+                }
+                this.Type = behavior;
+            }
+
+            public string PackageId { get; private set; }
+            public string Code { get; private set; }
+            public string Type { get; private set; }
         }
 
         /// <summary>

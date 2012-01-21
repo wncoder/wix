@@ -103,6 +103,7 @@ typedef struct _BURN_REGISTRATION
     LPWSTR sczHelpTelephone;
     LPWSTR sczAboutUrl;
     LPWSTR sczUpdateUrl;
+    LPWSTR sczParentDisplayName;
     LPWSTR sczComments;
     //LPWSTR sczReadme; // TODO: this would be a file path
     LPWSTR sczContact;

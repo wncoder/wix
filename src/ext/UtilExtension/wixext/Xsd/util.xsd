@@ -1075,7 +1075,7 @@
       </xs:attribute>
       <xs:attribute name="ProgramCommandLine" type="xs:string">
         <xs:annotation>
-          <xs:documentation>If any of the three *ActionType attributes is "runCommand", this specifies the command to run when doing so.</xs:documentation>
+          <xs:documentation>If any of the three *ActionType attributes is "runCommand", this specifies the command to run when doing so.  This value is formatted.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="RebootMessage" type="xs:string">

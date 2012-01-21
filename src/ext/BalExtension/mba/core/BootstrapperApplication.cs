@@ -330,6 +330,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
             if (this.AsyncExecution)
             {
+                this.Engine.Log(LogLevel.Verbose, "Creating BA thread to run asynchronously.");
                 Thread uiThread = new Thread(this.Run);
                 uiThread.Name = "UIThread";
                 uiThread.SetApartmentState(ApartmentState.STA);
@@ -337,6 +338,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             }
             else
             {
+                this.Engine.Log(LogLevel.Verbose, "Creating BA thread to run synchronously.");
                 this.Run();
             }
         }

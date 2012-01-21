@@ -60,6 +60,20 @@ Language=English
 This bundle is being run by a related bundle as type '%1!hs!'.
 .
 
+MessageId=4
+Severity=Success
+SymbolicName=MSG_BA_REQUESTED_RESTART
+Language=English
+Bootstrapper application requested restart at shutdown. Planned to restart already: %1!hs!.
+.
+
+MessageId=5
+Severity=Success
+SymbolicName=MSG_BA_REQUESTED_RELOAD
+Language=English
+Bootstrapper application requested to be reloaded.
+.
+
 MessageId=51
 Severity=Error
 SymbolicName=MSG_FAILED_PARSE_CONDITION
@@ -176,14 +190,14 @@ MessageId=201
 Severity=Success
 SymbolicName=MSG_PLANNED_PACKAGE
 Language=English
-Planned package: %1!ls!, state: %2!hs!, default requested: %3!hs!, ux requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, cache: %7!hs!, uncache: %8!hs!, dependency: %9!hs!
+Planned package: %1!ls!, state: %2!hs!, default requested: %3!hs!, ba requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, cache: %7!hs!, uncache: %8!hs!, dependency: %9!hs!
 .
 
 MessageId=202
 Severity=Success
 SymbolicName=MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST
 Language=English
-Planned bundle: %1!ls!, UX requested state: %2!hs! over default: %3!hs!
+Planned bundle: %1!ls!, ba requested state: %2!hs! over default: %3!hs!
 .
 
 MessageId=203

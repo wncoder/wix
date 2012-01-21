@@ -1,0 +1,49 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="QTests.cs" company="Microsoft">
+//     Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+// <summary>
+//     Contains test methods for the QTests
+// </summary>
+//-----------------------------------------------------------------------
+
+namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+{
+    using System;
+    using System.IO;
+    using System.Reflection;
+    using System.Text;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Tools.WindowsInstallerXml.Test;
+
+    /// <summary>
+    /// Contains test methods for the QTests
+    /// </summary>
+    [TestClass]
+    public partial class QTests : WixTests
+    {
+        /// <summary>
+        /// The location of the QTests
+        /// </summary>
+        private static readonly string testDirectory = Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\examples\test");
+
+        /// <summary>
+        /// A WixUnit object used to run the QTests
+        /// </summary>
+        private static WixUnit wixUnit;
+
+        /// <summary>
+        /// Initializes the classes WixUnit object
+        /// </summary>
+        /// <param name="testContext">A TestContext</param>
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            wixUnit = new WixUnit();
+            wixUnit.WorkingDirectory = QTests.testDirectory;
+            wixUnit.VerboseOutput = true;
+            wixUnit.TestFile = Path.Combine(QTests.testDirectory, "tests.xml");
+        }
+    }
+}

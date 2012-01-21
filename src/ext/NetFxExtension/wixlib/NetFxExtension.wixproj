@@ -1,4 +1,4 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="..\..\..\..\WixBuild.Common.targets" />
   <PropertyGroup>
     <ProjectGuid>{45e4a6ac-3190-4e17-83f0-9935ffa5dc2b}</ProjectGuid>
@@ -16,6 +16,13 @@
 
   <ItemGroup>
     <Compile Include="NetFxExtension.wxs" />
+    <Compile Include="NetFx1.wxs" />
+    <Compile Include="NetFx1.1.wxs" />
+    <Compile Include="NetFx2.wxs" />
+    <Compile Include="NetFx3.wxs" />
+    <Compile Include="NetFx3.5.wxs" />
+    <Compile Include="NetFx4.wxs" />
+    <Compile Include="NetFx4.5.wxs" />
     <Compile Include="NetFxExtension_x86.wxs" />
   </ItemGroup>
 

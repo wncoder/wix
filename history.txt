@@ -1675,3 +1675,75 @@ RobMen: Fallback to x86 Burn when building a Platform=x64 Bundle.
 
 BobArnson: Add support for keyboard navigation to ThmUtil
 
+BobArnson: SFBUG:3447325 - CEngineForApplication::FormatString returns 
+           E_MOREDATA in all cases where there isn't enough room.
+
+BobArnson: SFBUG:3431208 - Fix typo.
+           SFBUG:3429419 - Add Lux to the tools list.
+
+HeathS: Allow bundles to register in Installed Updates.
+
+HeathS: Register or unregister the bundle even when no packages are planned.
+
+RobMen: Differentiate minor upgrade from major upgrade in Burn to correctly
+        handle rollback.
+
+RobMen: SFBUG:3459780 - correctly plan rollback of acquired packages.
+
+RobMen: SFBUG:3405230 - store Burn logs in non-session specific TEMP folder
+                        so they don't get deleted on session logoff.
+
+PMarcu: Adding quiet and passive support to the WixUX.
+
+PMarcu: SFBUG 3458184: Can't use property expansion in Control->Publish.
+
+PMarcu: More logging for mysterious DatabaseCommit bug.
+
+PMarcu: SFBUG 3459661: Pyro shouldn't expect a WixFile table when there are 
+                       no files in the File table.
+
+RobMen: Add *Package and Payload/@SuppressSignatureVerification to force
+        Burn to always use hash verification of packages and/or payloads.
+
+EricStJ: SFBUG:3435020 IIS wasn't matching "All Unassigned" IP
+         SFBUG:3445454 Wix product version in VS updated to 3.6
+         SFBUG:3436464 IIS CAs fail when IIS is not installed
+         SFBUG:3432845 ServiceConfig/@ProgramCommandLine is not formatted
+         SFBUG:3431920 IIS7 CA Failure when installing an SSL cert
+                       no files in the File table.
+
+PMarcu: Major overhaul to the WiX installer UI.
+
+PMarcu: Making the eula an htm file and adding highlight on hover to the UI.
+
+PMarcu: Refactoring Progress and Cancel in WixUX as well as adding logging.
+
+PMarcu: Fixing PackagerId to PackageId.
+
+RobMen: burn /layout should go where the bundle is not current directory.
+
+RobMen: Fix Burn to correctly pass extended MSI message data to BA.
+
+RobMen: Prevent restarting all of caching when non-vital package fails to
+        acquire.
+
+PMarcu: Making WixUX handle sub package progress.
+
+PMarcu: Making WixUX handle cache progress.
+
+RobMen: Redesign WiX v3.6 install to take better advantage of Burn.
+
+PMarcu: Update Database commit retry logic.
+
+EricStJ: Support for .NET 4.5 & VS 11
+         Switching to extension install instead of devenv /setup.
+
+RFlaming: Add ExitCode child element of ExePackage element
+
+PMarcu: Finishing the rename of WixUx to WixBA.
+
+PMarcu: Handling cancel on elevate in WixBA
+
+HeathS: SFBUG:3476469 - Do an online certificate check before offline.
+
+WixBuild: Version 3.6.2520.0

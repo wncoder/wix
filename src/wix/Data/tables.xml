@@ -1594,9 +1594,16 @@
         <columnDefinition name="Payload" type="string" length="0" category="identifier" primaryKey="yes"/>
         <columnDefinition name="Name" type="string" length="0" nullable="yes"/>
         <columnDefinition name="SourceFile" type="object" length="0"/>
-        <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes" />
         <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="UnresolvedSourceFile" type="string" length="0"/>
+        <columnDefinition name="SuppressSignatureValidation" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+    </tableDefinition>
+    <tableDefinition name="ExitCode" createSymbols="yes" unreal="yes">
+        <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
+                keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table for the parent Exe."/>
+        <columnDefinition name="Code" type="number" length="0" category="integer" nullable="yes" primaryKey="yes" />
+        <columnDefinition name="Type" type="string" length="0" />
     </tableDefinition>
     <tableDefinition name="WixBundle" unreal="yes">
         <columnDefinition name="Version" type="string" length="24" />
@@ -1617,6 +1624,7 @@
         <columnDefinition name="Condition" type="string" length="0" nullable="yes" />
         <columnDefinition name="Tag" type="string" length="0" nullable="yes" />
         <columnDefinition name="Platform" type="string" length="4" />
+        <columnDefinition name="ParentName" type="string" length="0" nullable="yes" />
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>

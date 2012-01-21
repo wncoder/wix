@@ -12,7 +12,7 @@
 <?endif?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
-    <Product Id="*" Name="$(var.TestName) - Fail" Language="1033" Version="$(var.Version)" Manufacturer="Microsoft Corporation" UpgradeCode="3979D95E-DBE9-4142-A21B-CD9BC9AB8AE9">
+    <Product Id="*" Name="~$(var.TestName) - Fail" Language="1033" Version="$(var.Version)" Manufacturer="Microsoft Corporation" UpgradeCode="3979D95E-DBE9-4142-A21B-CD9BC9AB8AE9">
         <Package Description="Product Fail in test $(var.TestName)" Comments="Test from: wix\test\data\Extensions\DependencyExtension\DependencyExtensionTests\Fail.wxs" Compressed="yes" InstallerVersion="300" InstallScope="perMachine"/>
         <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
         <Directory Id="TARGETDIR" Name="SourceDir">

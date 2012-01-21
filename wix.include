@@ -167,7 +167,7 @@
   <property name="dir.src.ambient.inc" value="${dir.wixroot.src}\ambient\inc" readonly="true" />
   <property name="dir.src.burn" value="${dir.wixroot.src}\burn" readonly="true" />
   <property name="dir.src.burn.engine" value="${dir.src.burn}\engine" readonly="true" />
-  <property name="dir.src.burn.test" value="${dir.wixroot.test}\src\Bootstrapper" readonly="true" />
+  <property name="dir.src.burn.test" value="${dir.wixroot.test}\src\UnitTests\Burn" readonly="true" />
   <property name="dir.src.ca" value="${dir.wixroot.src}\ca" readonly="true" />
   <property name="dir.src.ca.serverca" value="${dir.wixroot.src}\ca\serverca" readonly="true" />
   <property name="dir.src.ca.wcautil" value="${dir.wixroot.src}\ca\wcautil" readonly="true" />

@@ -5,45 +5,62 @@
   Bundle.wixproj - builds the WiX Bundle.
 -->
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\..\WixBuild.Common.targets" />
+
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <ProductVersion>3.6</ProductVersion>
     <ProjectGuid>{196d63b1-29d8-4b4d-9c9c-4f043099066b}</ProjectGuid>
-    <SchemaVersion>2.0</SchemaVersion>
     <OutputName>WiX36</OutputName>
     <OutputType>Bundle</OutputType>
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <Cultures>en-us</Cultures>
+    <DefineConstants>$(DefineConstants);BuildIA64=$(BuildIA64);Build2005=$(Build2005);Build2008=$(Build2008);Build2010=$(Build2010)</DefineConstants>
+    <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Bundle.wxs" />
     <Compile Include="Netfx.wxs" />
     <Compile Include="ProjectAggregator.wxs" />
-    <None Include="License.rtf">
+    <Content Include="License.htm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="SplashScreen.bmp">
+    </Content>
+    <Content Include="SplashScreen.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
-  <Import Project="..\..\..\WixBuild.Common.targets" />
 
-  <PropertyGroup>
-    <Cultures>en-us</Cultures>
-    <DefineConstants>$(DefineConstants);BuildIA64=$(BuildIA64);</DefineConstants>
-    <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
-  </PropertyGroup>
   <ItemGroup>
-    <WixExtension Include="WixBalExtension">
-      <Private>False</Private>
-      <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
-    </WixExtension>
     <BindInputPaths Include="$(WIX_ROOT)external\Netfx4\" />
     <BindInputPaths Include="$(WIX_BUILDROOT)$(WixFlavor)" />
     <BindInputPaths Include="$(OutputPath_x86)" />
     <BindInputPaths Include="$(MSBuildProjectDirectory)" />
     <BindInputPaths Include="$(BindInputPaths)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoreMsi\CoreMsi.wixproj" />
+    <ProjectReference Include="..\ManagedSdkMsi\ManagedSdkMsi.wixproj" />
+    <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi2005.wixproj" Condition=" '$(Build2005)' == 'true' ">
+        <Properties>VisualStudioTargetVersion=2005</Properties>
+    </ProjectReference>
+    <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi2008.wixproj" Condition=" '$(Build2008)' == 'true' ">
+        <Properties>VisualStudioTargetVersion=2008</Properties>
+    </ProjectReference>
+    <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi.wixproj" Condition=" '$(Build2010)' == 'true' ">
+        <Properties>VisualStudioTargetVersion=2010</Properties>
+    </ProjectReference>
+    <ProjectReference Include="..\VotiveMsi\VotiveMsi.wixproj" />
+    <ProjectReference Include="..\WixBA\WixBA.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <WixExtension Include="WixBalExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
+    </WixExtension>
     <WixExtension Include="WixUtilExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>

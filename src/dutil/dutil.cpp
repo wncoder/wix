@@ -71,8 +71,8 @@ extern "C" void DAPI Dutil_AssertMsg(
     int id = IDRETRY;
     HKEY hkDebug = NULL;
     HANDLE hAssertFile = INVALID_HANDLE_VALUE;
-    char szPath[MAX_PATH] = "";
-    DWORD cch;
+    char szPath[MAX_PATH] = { };
+    DWORD cch = 0;
 
     if (fInAssert)
     {
@@ -104,6 +104,7 @@ extern "C" void DAPI Dutil_AssertMsg(
         {
             cch = countof(szPath);
             er = ::RegQueryValueExA(hkDebug, "DeliveryAssertsLog", NULL, NULL, reinterpret_cast<BYTE*>(szPath), &cch);
+            szPath[countof(szPath) - 1] = '\0'; // ensure string is null terminated since registry won't guarantee that.
             if (ERROR_SUCCESS == er)
             {
                 hAssertFile = ::CreateFileA(szPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -165,7 +166,7 @@ extern "C" void DAPI Dutil_Assert(
     )
 {
     HRESULT hr = S_OK;
-    char szMessage[DUTIL_STRING_BUFFER];
+    char szMessage[DUTIL_STRING_BUFFER] = { };
     hr = ::StringCchPrintfA(szMessage, countof(szMessage), "Assertion failed in %s, %i", szFile, iLine);
     if (SUCCEEDED(hr))
     {
@@ -189,7 +190,7 @@ extern "C" void DAPI Dutil_AssertSz(
     )
 {
     HRESULT hr = S_OK;
-    char szMessage[DUTIL_STRING_BUFFER];
+    char szMessage[DUTIL_STRING_BUFFER] = { };
 
     hr = ::StringCchPrintfA(szMessage, countof(szMessage), "Assertion failed in %s, %i\n%s", szFile, iLine, szMsg);
     if (SUCCEEDED(hr))
@@ -242,8 +243,8 @@ extern "C" void DAPI Dutil_Trace(
     AssertSz(REPORT_NONE != rl, "REPORT_NONE is not a valid tracing level");
 
     HRESULT hr = S_OK;
-    char szOutput[DUTIL_STRING_BUFFER];
-    char szMsg[DUTIL_STRING_BUFFER];
+    char szOutput[DUTIL_STRING_BUFFER] = { };
+    char szMsg[DUTIL_STRING_BUFFER] = { };
 
     if (Dutil_rlCurrentTrace < rl)
     {
@@ -318,8 +319,8 @@ extern "C" void DAPI Dutil_TraceError(
     )
 {
     HRESULT hr = S_OK;
-    char szOutput[DUTIL_STRING_BUFFER];
-    char szMsg[DUTIL_STRING_BUFFER];
+    char szOutput[DUTIL_STRING_BUFFER] = { };
+    char szMsg[DUTIL_STRING_BUFFER] = { };
 
     // if this is NOT an error report and we're not logging at this level, bail
     if (REPORT_ERROR != rl && Dutil_rlCurrentTrace < rl)
@@ -430,7 +431,7 @@ extern "C" HRESULT DAPI LoadSystemLibrary(
 {
     HRESULT hr = S_OK;
     DWORD cch = 0;
-    WCHAR wzPath[MAX_PATH] = {};
+    WCHAR wzPath[MAX_PATH] = { };
 
     cch = ::GetSystemDirectoryW(wzPath, MAX_PATH);
     ExitOnNullWithLastError(cch, hr, "Failed to get the Windows system directory.");

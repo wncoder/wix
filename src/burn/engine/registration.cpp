@@ -197,6 +197,13 @@ extern "C" HRESULT RegistrationParseFromXml(
             ExitOnFailure(hr, "Failed to get @UpdateUrl.");
         }
 
+        // @ParentDisplayName
+        hr = XmlGetAttributeEx(pixnArpNode, L"ParentDisplayName", &pRegistration->sczParentDisplayName);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @ParentDisplayName.");
+        }
+
         // @Comments
         hr = XmlGetAttributeEx(pixnArpNode, L"Comments", &pRegistration->sczComments);
         if (E_NOTFOUND != hr)
@@ -310,6 +317,7 @@ extern "C" void RegistrationUninitialize(
     ReleaseStr(pRegistration->sczHelpTelephone);
     ReleaseStr(pRegistration->sczAboutUrl);
     ReleaseStr(pRegistration->sczUpdateUrl);
+    ReleaseStr(pRegistration->sczParentDisplayName);
     ReleaseStr(pRegistration->sczComments);
     ReleaseStr(pRegistration->sczContact);
 
@@ -630,6 +638,17 @@ extern "C" HRESULT RegistrationSessionBegin(
             {
                 hr = RegWriteString(hkRegistration, L"URLUpdateInfo", pRegistration->sczUpdateUrl);
                 ExitOnFailure(hr, "Failed to write URLUpdateInfo value.");
+            }
+
+            // ParentDisplayName
+            if (pRegistration->sczParentDisplayName)
+            {
+                hr = RegWriteString(hkRegistration, L"ParentDisplayName", pRegistration->sczParentDisplayName);
+                ExitOnFailure(hr, "Failed to write ParentDisplayName value.");
+
+                // Need to write the ParentKeyName but can be set to anything.
+                hr = RegWriteString(hkRegistration, L"ParentKeyName", pRegistration->sczParentDisplayName);
+                ExitOnFailure(hr, "Failed to write ParentKeyName value.");
             }
 
             // Comments, provided by UI

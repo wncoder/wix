@@ -154,7 +154,7 @@ LExit:
 
 extern "C" HRESULT DAPI ProcExec(
     __in_z LPCWSTR wzExecutablePath,
-    __in_z LPCWSTR wzCommandLine,
+    __in_z_opt LPCWSTR wzCommandLine,
     __in int nCmdShow,
     __out HANDLE *phProcess
     )
@@ -164,7 +164,7 @@ extern "C" HRESULT DAPI ProcExec(
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
 
-    hr = StrAllocFormatted(&sczFullCommandLine, L"\"%ls\" %ls", wzExecutablePath, wzCommandLine);
+    hr = StrAllocFormatted(&sczFullCommandLine, L"\"%ls\" %ls", wzExecutablePath, wzCommandLine ? wzCommandLine : L"");
     ExitOnFailure(hr, "Failed to allocate full command-line.");
 
     si.cb = sizeof(si);

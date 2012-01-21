@@ -1,6 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
-     xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
     <!--
       Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -17,11 +16,9 @@
     -->
 
     <Fragment>
-        <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\8.0' Value='InstallDir' Variable='VS2005InstallFolder' />
-
         <PackageGroup Id='ProjectAggregator'>
             <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
-                        DownloadUrl='http://wix.sourceforge.net/releases/data/ProjectAggregator2.msi'
+                        DownloadUrl='http://wixtoolset.org/releases/v3.6/ProjectAggregator2.msi'
                         SourceFile='x86\ProjectAggregator2.msi' />
         </PackageGroup>
     </Fragment>

@@ -244,7 +244,7 @@ public: // IBootstrapperApplication
         __in BOOTSTRAPPER_RELATED_OPERATION operation
         )
     {
-        // If we're not doing a pre-req install, remember when our bundle would cause a downgrad.
+        // If we're not doing a pre-req install, remember when our bundle would cause a downgrade.
         if (!m_sczPrereqPackage && BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE == operation)
         {
             m_fDowngrading = TRUE;

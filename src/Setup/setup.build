@@ -23,9 +23,7 @@
   <!-- Include the global build properties -->
   <include buildfile="..\..\wix.include" unless="${property::exists('wix.properties.defined')}" />
 
-  <include buildfile="ux\wixux.build" />
   <include buildfile="icons\setupicons.build" />
-  <include buildfile="msi\msi.build" />
   <include buildfile="bundle\bundle.build" />
 
   <!-- setup directories -->
@@ -38,15 +36,15 @@
   -->
 
   <!-- Build -->
-  <target name="setup.build" depends="wixux.build, setupicons.build, msi.build, bundle.build" description="Performs a full rebuild (clean then build)">
+  <target name="setup.build" depends="setupicons.build, bundle.build" description="Performs a full rebuild (clean then build)">
   </target>
 
   <!-- Clean -->
-  <target name="setup.clean" depends="wixux.clean, setupicons.clean, msi.clean, bundle.clean" description="Cleans the build">
+  <target name="setup.clean" depends="setupicons.clean, bundle.clean" description="Cleans the build">
   </target>
 
   <!-- Inc -->
-  <target name="setup.inc" depends="wixux.inc, setupicons.inc, msi.inc, bundle.inc" description="Performs an incremental build">
+  <target name="setup.inc" depends="setupicons.inc, bundle.inc" description="Performs an incremental build">
   </target>
 
 </project>

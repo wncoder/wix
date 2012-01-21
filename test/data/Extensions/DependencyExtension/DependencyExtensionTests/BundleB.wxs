@@ -20,15 +20,15 @@
 <?endif?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Bundle Name="$(var.TestName) - Bundle B" Version="$(var.Version)" dep:ProviderKey="Microsoft.WiX.$(var.TestName).B">
+    <Bundle Name="~$(var.TestName) - Bundle B" Version="$(var.Version)" dep:ProviderKey="Microsoft.WiX.$(var.TestName).B">
         <Log Prefix="$(var.TestName)_BundleB"/>
         <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
         <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
         <util:RegistrySearch Root="HKLM" Key="Software\WiX\Tests\$(var.TestName)" Value="Version" Variable="ExeA_Version"/>
         <Chain>
-            <MsiPackage Id="PackageA" Name="$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>
-            <MsiPackage Id="PackageB" Name="$(var.TestName)_PackageB.msi" Compressed="yes" SourceFile="!(bindpath.PackageB)" Vital="yes"/>
-            <ExePackage Id="ExeA" Name="$(var.TestName)_ExeA.exe" Compressed="yes" SourceFile="!(bindpath.data)\BurnTestPayloads\Products\TestExe\TestExe.exe" Vital="yes" PerMachine="yes"
+            <MsiPackage Id="PackageA" Name="~$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>
+            <MsiPackage Id="PackageB" Name="~$(var.TestName)_PackageB.msi" Compressed="yes" SourceFile="!(bindpath.PackageB)" Vital="yes"/>
+            <ExePackage Id="ExeA" Name="~$(var.TestName)_ExeA.exe" Compressed="yes" SourceFile="!(bindpath.data)\BurnTestPayloads\Products\TestExe\TestExe.exe" Vital="yes" PerMachine="yes"
                         DetectCondition="ExeA_Version AND ExeA_Version &gt;= v$(var.Version)"
                         InstallCommand="/regw &quot;HKLM\Software\WiX\Tests\$(var.TestName),Version,String,$(var.Version)&quot;"
                         RepairCommand="/regw &quot;HKLM\Software\WiX\Tests\$(var.TestName),Version,String,$(var.Version)&quot;"

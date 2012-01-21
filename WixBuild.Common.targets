@@ -139,6 +139,9 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
     </BindInputPaths>
   </ItemGroup>
 
+  <!-- Include the version properties. -->
+  <Import Project="$(WIX_ROOT)\inc\wixver.targets" />
+
   <!-- Global properties for .wixproj projects -->
   <PropertyGroup>
     <DefineSolutionProperties>false</DefineSolutionProperties>
@@ -148,6 +151,7 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="DeleteRegistry" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="DocCompiler" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="FlattenXml" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
+  <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="GenerateUploadMetadata" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="MsgGen" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="Rc" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
   <UsingTask AssemblyFile="$(OutputPath_x86)WixBuild.dll" TaskName="ReadRegistry" Condition=" '$(MSBuildProjectName)' != 'WixBuild' " />
@@ -631,6 +635,43 @@ Copyright (c) Microsoft Corporation.  All rights reserved.
 
       <Output TaskParameter="Include" ItemName="EmbeddedResource" />
     </CreateItem>
+  </Target>
+
+  <!--
+  ================================================================================================
+  GenerateUploadMetadata
+
+    Generates a .json class file from input files to be uploaded.
+
+    [IN]
+    $(UploadFolder) - Base folder for the items.
+    $(UploadVersion) - Version of the release to upload.
+    @(UploadFiles) - The items to add to the metadata.
+
+    [OUT]
+    $(UploadFolder)\$(UploadVersion).json - The generated .json metadata file.
+  ================================================================================================
+  -->
+  <PropertyGroup>
+    <GenerateUploadMetadataDependsOn>
+    </GenerateUploadMetadataDependsOn>
+  </PropertyGroup>
+  <Target
+    Name="GenerateUploadMetadata"
+    DependsOnTargets="$(GenerateUploadMetadataDependsOn)"
+    Condition=" '@(UploadFiles)' != '' "
+    Inputs="$(MSBuildAllProjects);
+            @(UploadFiles)"
+    Outputs="$(UploadFolder)\v$(UploadVersion).json">
+
+    <GenerateUploadMetadata
+      UploadFiles="@(UploadFiles)"
+      Version="$(UploadVersion)"
+      OutputFile="$(UploadFolder)v$(UploadVersion).json">
+
+      <!-- This will tell MSBuild to clean up the .json file during a Clean build -->
+      <Output TaskParameter="OutputFile" ItemName="FileWrites" />
+    </GenerateUploadMetadata>
   </Target>
 
   <!--

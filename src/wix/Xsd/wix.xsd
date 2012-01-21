@@ -182,9 +182,18 @@
       <xs:attribute name="Name" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-            Then name of the bundle to display in Programs and Features (also known as Add/Remove
+            The name of the bundle to display in Programs and Features (also known as Add/Remove
             Programs). This name can be accessed and overwritten by a BootstrapperApplication
             using the WixBundleName bundle variable.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ParentName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            The name of the parent bundle to display in Installed Updates (also known as Add/Remove
+            Programs). This name is used to nest or group bundles that will appear as updates.
+            If the parent name does not actually exist, a virtual parent is created automatically.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -607,6 +616,7 @@
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="Payload" />
         <xs:element ref="PayloadGroupRef" />
+        <xs:element ref="ExitCode" />
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
@@ -800,6 +810,16 @@
         <xs:documentation>Whether the package payload should be embedded in a container or left as an external payload.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="SuppressSignatureVerification" type="YesNoTypeUnion">
+      <xs:annotation>
+        <xs:documentation>
+          By default, a Bundle will use a package's Authenticode signature to verify the contents. If the package does not
+          have an Authenticode signature then the Bundle will use a hash of the package instead. Set this attribute to "yes"
+          to suppress the default behavior and force the Bundle to always use the hash of the package even when the package
+          is signed.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:anyAttribute namespace="##other" processContents="lax">
       <xs:annotation>
         <xs:documentation>
@@ -983,6 +1003,34 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
+  <xs:element name="ExitCode">
+    <xs:annotation>
+      <xs:documentation>Describes map of exit code returned from executable package to a bootstrapper behavior.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="ExePackage" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Value" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>Exit code returned from executable package. If no value is provided it means all values not explicitly set default to this behavior.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Behavior" use="required">
+        <xs:annotation>
+          <xs:documentation>Choose one of the supported behaviors error codes: success, error, scheduleReboot, forceReboot.</xs:documentation>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="success" />
+            <xs:enumeration value="error" />
+            <xs:enumeration value="scheduleReboot" />
+            <xs:enumeration value="forceReboot" />
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="Payload">
     <xs:annotation>
       <xs:documentation>Describes a payload to a bootstrapper.</xs:documentation>
@@ -1019,6 +1067,16 @@
       <xs:attribute name="DownloadUrl" type="xs:string">
         <xs:annotation>
           <xs:documentation>The URL to use to download the package.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="SuppressSignatureVerification" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+            By default, a Bundle will use a package's Authenticode signature to verify the contents. If the package does not
+            have an Authenticode signature then the Bundle will use a hash of the package instead. Set this attribute to "yes"
+            to suppress the default behavior and force the Bundle to always use the hash of the package even when the package
+            is signed.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>

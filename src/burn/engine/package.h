@@ -196,6 +196,7 @@ typedef struct _BURN_PACKAGE
         struct
         {
             LPWSTR sczProductCode;
+            DWORD dwLanguage;
             DWORD64 qwVersion;
             DWORD64 qwInstalledVersion;
             BOOL fDisplayInternalUI;

@@ -84,12 +84,11 @@ UINT __stdcall ScaFiltersRead7(
         if (*pwzData)
         {
             hr = ScaWebsGetBase7(pswList, pwzData, psf->wzFilterRoot, countof(psf->wzFilterRoot));
-            if (FAILED(hr) && WcaIsUninstalling(isInstalled, isAction))
+            if (FAILED(hr))
             {
-                // If we're uninstalling, don't bother finding the existing web, just leave the filter root empty
+                WcaLog(LOGMSG_VERBOSE, "Could not find site for filter: %ls. Result 0x%x ", psf->wzFilterRoot, hr);
                 hr = S_OK;
             }
-            ExitOnFailure(hr, "Failed to get base of web for Filter");
         }
         else
         {
