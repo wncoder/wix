@@ -21,43 +21,6 @@
       <Topic SourceFile="html\codepage.htm"/>
       <Topic SourceFile="html\msi_useful_links.htm"/>
     </Topic>
-    <Topic SourceFile="html\authoring_getting_started.htm">
-      <Topic SourceFile="html\authoring_first_file.htm"/>
-      <Topic SourceFile="html\authoring_merge_modules.htm"/>
-      <Topic SourceFile="html\merging_msm_into_msi.htm"/>
-      <Topic SourceFile="html\using_custom_actions.htm" />
-      <Topic SourceFile="html\WixUI_index.htm">
-        <Topic SourceFile="html\WixUI_dialog_library.htm"/>
-        <Topic SourceFile="html\WixUI_customizations.htm"/>
-        <Topic SourceFile="html\WixUI_localization.htm"/>
-        <Topic SourceFile="html\WixUI_dialog_reference_toc.htm">
-          <Topic SourceFile="html\WixUI_advanced.htm"/>
-          <Topic SourceFile="html\WixUI_featuretree.htm"/>
-          <Topic SourceFile="html\WixUI_installdir.htm"/>
-          <Topic SourceFile="html\WixUI_minimal.htm"/>
-          <Topic SourceFile="html\WixUI_mondo.htm"/>
-          <Topic SourceFile="html\WixUI_dialogs.htm"/>
-        </Topic>
-      </Topic>
-    </Topic>
-    <Topic SourceFile="html\authoring_bundle_intro.htm">
-      <Topic SourceFile="html\authoring_bundle_skeleton.htm" />
-      <Topic SourceFile="html\authoring_bundle_application.htm" />
-      <Topic SourceFile="html\authoring_bundle_package_manifest.htm" />
-      <Topic SourceFile="html\bundle_built_in_variables.htm" />
-      <Topic SourceFile="html\bundle_define_searches.htm" />
-      <Topic SourceFile="html\bundle_author_chain.htm" />
-
-      <Topic SourceFile="html\wixstdba_intro.htm">
-        <Topic SourceFile="html\wixstdba_license.htm" />
-        <Topic SourceFile="html\wixstdba_branding.htm" />
-        <Topic SourceFile="html\wixstdba_foundation_customization.htm" />
-      </Topic>
-
-      <Topic SourceFile="html\bootstrapper_application.htm">
-        <Topic SourceFile="html\bootstrapper_application_interface.htm" />
-      </Topic>
-    </Topic>
     <Topic SourceFile="html\votive.htm">
       <Topic SourceFile="html\votive_project_templates.htm"/>
       <Topic SourceFile="html\votive_item_templates.htm"/>
@@ -89,7 +52,38 @@
         <Topic SourceFile="html\nant_task_reference_candle.htm" />
         <Topic SourceFile="html\nant_task_reference_light.htm" />
         <Topic SourceFile="html\nant_task_reference_lit.htm" />
+      </Topic>
     </Topic>
+    <Topic SourceFile="html\WixUI_index.htm">
+      <Topic SourceFile="html\WixUI_dialog_library.htm"/>
+      <Topic SourceFile="html\WixUI_customizations.htm"/>
+      <Topic SourceFile="html\WixUI_localization.htm"/>
+      <Topic SourceFile="html\WixUI_dialog_reference_toc.htm">
+        <Topic SourceFile="html\WixUI_advanced.htm"/>
+        <Topic SourceFile="html\WixUI_featuretree.htm"/>
+        <Topic SourceFile="html\WixUI_installdir.htm"/>
+        <Topic SourceFile="html\WixUI_minimal.htm"/>
+        <Topic SourceFile="html\WixUI_mondo.htm"/>
+        <Topic SourceFile="html\WixUI_dialogs.htm"/>
+      </Topic>
+    </Topic>
+    <Topic SourceFile="html\authoring_bundle_intro.htm">
+      <Topic SourceFile="html\authoring_bundle_skeleton.htm" />
+      <Topic SourceFile="html\authoring_bundle_application.htm" />
+      <Topic SourceFile="html\authoring_bundle_package_manifest.htm" />
+      <Topic SourceFile="html\bundle_built_in_variables.htm" />
+      <Topic SourceFile="html\bundle_define_searches.htm" />
+      <Topic SourceFile="html\bundle_author_chain.htm" />
+
+      <Topic SourceFile="html\wixstdba_intro.htm">
+        <Topic SourceFile="html\wixstdba_license.htm" />
+        <Topic SourceFile="html\wixstdba_branding.htm" />
+        <Topic SourceFile="html\wixstdba_foundation_customization.htm" />
+      </Topic>
+
+      <Topic SourceFile="html\bootstrapper_application.htm">
+        <Topic SourceFile="html\bootstrapper_application_interface.htm" />
+      </Topic>
     </Topic>
     <Topic SourceFile="html\howtos\toc.htm">
       <Topic SourceFile="html\howtos\files_and_registry_toc.htm">

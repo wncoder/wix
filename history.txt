@@ -1747,3 +1747,19 @@ PMarcu: Handling cancel on elevate in WixBA
 HeathS: SFBUG:3476469 - Do an online certificate check before offline.
 
 WixBuild: Version 3.6.2520.0
+
+JieJi: Fix payload existence checking in bundle binding.
+
+RobMen: When Burn runs from package cache, do not copy engine to working folder
+        and do not try to cache engine over top itself.
+
+BobArnson: SFBUG:3479213 - Add DownloadUrl interpolation doc
+           SFBUG:3432837 - Remove obsolete doc
+
+HeathS: Skip bad configuration when enumerating products for patches in Burn.
+
+RobMen: SFBUG:3476841 - add missing CPL.txt
+        SFBUG:3476842 - add missing extensions.
+
+WixBuild: Version 3.6.2527.0
+

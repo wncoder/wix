@@ -164,14 +164,37 @@ LExit:
 }
 
 extern "C" HRESULT CacheCalculateBundleWorkingPath(
+    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in LPCWSTR wzExecutableName,
     __deref_out_z LPWSTR* psczWorkingPath
     )
 {
     HRESULT hr = S_OK;
+    int nCompare = 0;
+    LPWSTR sczCurrentProcess = NULL;
     LPWSTR sczWorkingFolder = NULL;
 
+    // If the bundle is running out of the package cache then we use that as the
+    // working folder since we feel safe in the package cache.
+    hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
+
+    hr = CacheGetCompletedPath(fPerMachine, wzBundleId, &sczWorkingFolder);
+    ExitOnFailure1(hr, "Failed to get completed path for bundle: %ls", wzBundleId);
+
+    hr = PathConcat(sczWorkingFolder, wzExecutableName, psczWorkingPath);
+    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
+
+    hr = PathCompare(sczCurrentProcess, *psczWorkingPath, &nCompare);
+    ExitOnFailure1(hr, "Failed to compare current path for bundle: %ls", sczCurrentProcess);
+
+    if (CSTR_EQUAL == nCompare)
+    {
+        ExitFunction();
+    }
+
+    // Otherwise, use the real working folder.
     hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
     ExitOnFailure(hr, "Failed to get working folder for bundle.");
 
@@ -180,6 +203,7 @@ extern "C" HRESULT CacheCalculateBundleWorkingPath(
 
 LExit:
     ReleaseStr(sczWorkingFolder);
+    ReleaseStr(sczCurrentProcess);
 
     return hr;
 }
@@ -343,6 +367,7 @@ extern "C" void CacheSendErrorCallback(
 }
 
 extern "C" HRESULT CacheBundleToWorkingDirectory(
+    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,
@@ -351,6 +376,7 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     )
 {
     HRESULT hr = S_OK;
+    int nCompare = 0;
     LPWSTR sczSourcePath = NULL;
     LPWSTR sczSourceDirectory = NULL;
     LPWSTR sczWorkingFolder = NULL;
@@ -359,10 +385,27 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     LPWSTR sczPayloadSourcePath = NULL;
     LPWSTR sczPayloadTargetPath = NULL;
 
-    // Initialize the source and target path names.
+    // Initialize the source.
     hr = PathForCurrentProcess(&sczSourcePath, NULL);
     ExitOnFailure(hr, "Failed to get current process path.");
 
+    // If the bundle is running out of the package cache then we don't need to copy it to
+    // the working folder since we feel safe in the package cache and will run from there.
+    hr = CacheGetCompletedPath(fPerMachine, wzBundleId, &sczTargetDirectory);
+    ExitOnFailure1(hr, "Failed to get completed path for bundle: %ls", wzBundleId);
+
+    hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
+    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
+
+    hr = PathCompare(sczSourcePath, sczTargetPath, &nCompare);
+    ExitOnFailure1(hr, "Failed to compare current path for bundle: %ls", sczSourcePath);
+
+    if (CSTR_EQUAL == nCompare)
+    {
+        ExitFunction();
+    }
+
+    // Otherwise, carry on putting the bundle in the working folder.
     hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
     ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
 
@@ -400,13 +443,12 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
         }
     }
 
-    if (psczEngineWorkingPath)
+LExit:
+    if (SUCCEEDED(hr) && psczEngineWorkingPath)
     {
-        *psczEngineWorkingPath = sczTargetPath;
-        sczTargetPath = NULL;
+        hr = StrAllocString(psczEngineWorkingPath, sczTargetPath, 0);
     }
 
-LExit:
     ReleaseStr(sczPayloadTargetPath);
     ReleaseStr(sczPayloadSourcePath);
     ReleaseStr(sczTargetPath);
@@ -453,6 +495,7 @@ extern "C" HRESULT CacheCompleteBundle(
     )
 {
     HRESULT hr = S_OK;
+    int nCompare = 0;
     LPWSTR sczTargetDirectory = NULL;
     LPWSTR sczTargetPath = NULL;
     LPWSTR sczSourceDirectory = NULL;
@@ -466,6 +509,17 @@ extern "C" HRESULT CacheCompleteBundle(
 
     Assert(CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, wzExecutablePath, -1, sczTargetPath, -1));
 
+    // If the bundle is running out of the package cache then we don't need to copy it there
+    // (and don't want to since it'll be in use) so bail.
+    hr = PathCompare(wzSourceBundlePath, sczTargetPath, &nCompare);
+    ExitOnFailure1(hr, "Failed to compare completed cache path for bundle: %ls", wzSourceBundlePath);
+
+    if (CSTR_EQUAL == nCompare)
+    {
+        ExitFunction();
+    }
+
+    // Otherwise, carry on putting the bundle in the cache.
     LogStringLine(REPORT_STANDARD, "Caching bundle from: '%ls' to: '%ls'", wzSourceBundlePath, sczTargetPath);
 
     hr = FileEnsureCopyWithRetry(wzSourceBundlePath, sczTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);

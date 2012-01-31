@@ -52,6 +52,7 @@ HRESULT CacheGetOriginalSourcePath(
     __out_z_opt LPWSTR* psczOriginalSource
     );
 HRESULT CacheCalculateBundleWorkingPath(
+    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in LPCWSTR wzExecutableName,
     __deref_out_z LPWSTR* psczWorkingPath
@@ -92,6 +93,7 @@ void CacheSendErrorCallback(
     __out_opt BOOL* pfRetry
     );
 HRESULT CacheBundleToWorkingDirectory(
+    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,

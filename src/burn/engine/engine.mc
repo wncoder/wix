@@ -172,6 +172,13 @@ Language=English
 Detected related package: %2!ls!, but failed to read language: %3!hs!, error: 0x%1!x!
 .
 
+MessageId=170
+Severity=Warning
+SymbolicName=MSG_DETECT_BAD_PRODUCT_CONFIGURATION
+Language=English
+Detected bad configuration for product: %1!ls!
+.
+
 MessageId=199
 Severity=Success
 SymbolicName=MSG_DETECT_COMPLETE

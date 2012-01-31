@@ -22,6 +22,10 @@
             </Component>
 
             <Component>
+                <File Source="WixComPlusExtension.dll" />
+            </Component>
+
+            <Component>
                 <File Source="WixDependencyExtension.dll" />
             </Component>
 
@@ -48,6 +52,10 @@
 
             <Component>
                 <File Source="WixIIsExtension.dll" />
+            </Component>
+
+            <Component>
+                <File Source="WixMsmqExtension.dll" />
             </Component>
 
             <Component>
@@ -83,6 +91,10 @@
             </Component>
 
             <Component>
+                <File Source="ext\ComPlusExtension\wixext\xsd\complus.xsd" />
+            </Component>
+
+            <Component>
                 <File Source="ext\DifxAppExtension\wixext\Xsd\difxapp.xsd" />
             </Component>
 
@@ -96,6 +108,10 @@
 
             <Component>
                 <File Source="ext\IIsExtension\wixext\xsd\iis.xsd" />
+            </Component>
+
+            <Component>
+                <File Source="ext\MsmqExtension\wixext\xsd\msmq.xsd" />
             </Component>
 
             <Component>

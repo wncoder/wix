@@ -727,7 +727,14 @@
     </xs:attribute>
     <xs:attribute name="DownloadUrl" type="xs:string">
       <xs:annotation>
-        <xs:documentation>The URL to use to download the package.</xs:documentation>
+        <xs:documentation>
+          <html:p>The URL to use to download the package. The following substitutions are supported:</html:p>
+          <html:ul>
+          <html:li>{0} is replaced by the package Id.</html:li>
+          <html:li>{1} is replaced by the payload Id.</html:li>
+          <html:li>{0} is replaced by the payload file name.</html:li>
+          </html:ul>
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Id" type="xs:string">
@@ -1066,7 +1073,14 @@
       </xs:attribute>
       <xs:attribute name="DownloadUrl" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The URL to use to download the package.</xs:documentation>
+        <xs:documentation>
+          <html:p>The URL to use to download the package. The following substitutions are supported:</html:p>
+          <html:ul>
+          <html:li>{0} is replaced by the package Id.</html:li>
+          <html:li>{1} is replaced by the payload Id.</html:li>
+          <html:li>{0} is replaced by the payload file name.</html:li>
+          </html:ul>
+        </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="SuppressSignatureVerification" type="YesNoTypeUnion">

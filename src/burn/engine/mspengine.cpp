@@ -112,6 +112,7 @@ extern "C" HRESULT MspEngineDetectInitialize(
     static MSIINSTALLCONTEXT rgContexts[] = { MSIINSTALLCONTEXT_USERUNMANAGED, MSIINSTALLCONTEXT_USERMANAGED, MSIINSTALLCONTEXT_MACHINE };
 
     HRESULT hr = S_OK;
+    DWORD iProduct = 0;
     WCHAR wzProductCode[MAX_GUID_CHARS + 1];
 
     // Erase any previously detected product information.
@@ -123,29 +124,43 @@ extern "C" HRESULT MspEngineDetectInitialize(
 
     // Loop through all products on the machine, testing the collective patch applicability
     // against each product in all contexts. Store the result with the appropriate patch package.
-    for (DWORD iProduct = 0; SUCCEEDED(hr = WiuEnumProducts(iProduct, wzProductCode)); ++iProduct)
+    do
     {
-        for (DWORD i = 0; i < countof(rgContexts); ++i)
+        hr = WiuEnumProducts(iProduct, wzProductCode);
+        if (SUCCEEDED(hr))
         {
-            hr = WiuDeterminePatchSequence(wzProductCode, NULL, rgContexts[i], pPackages->rgPatchInfo, pPackages->cPatchInfo);
-            if (SUCCEEDED(hr))
+            for (DWORD i = 0; i < countof(rgContexts); ++i)
             {
-                for (DWORD iPatchInfo = 0; iPatchInfo < pPackages->cPatchInfo; ++iPatchInfo)
+                hr = WiuDeterminePatchSequence(wzProductCode, NULL, rgContexts[i], pPackages->rgPatchInfo, pPackages->cPatchInfo);
+                if (SUCCEEDED(hr))
                 {
-                    if (ERROR_SUCCESS == pPackages->rgPatchInfo[iPatchInfo].uStatus)
+                    for (DWORD iPatchInfo = 0; iPatchInfo < pPackages->cPatchInfo; ++iPatchInfo)
                     {
-                        BURN_PACKAGE* pPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
+                        if (ERROR_SUCCESS == pPackages->rgPatchInfo[iPatchInfo].uStatus)
+                        {
+                            BURN_PACKAGE* pPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
 
-                        // Note that we do add superseded and obsolete MSP packages. Package Detect and Plan will sort them out later.
-                        hr = AddDetectedTargetProduct(pPackage, rgContexts[i], pPackages->rgPatchInfo[iPatchInfo].dwOrder, wzProductCode);
-                        ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pPackage->sczId);
+                            // Note that we do add superseded and obsolete MSP packages. Package Detect and Plan will sort them out later.
+                            hr = AddDetectedTargetProduct(pPackage, rgContexts[i], pPackages->rgPatchInfo[iPatchInfo].dwOrder, wzProductCode);
+                            ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pPackage->sczId);
+                        }
+                        // TODO: should we log something for this error case?
                     }
-                    // TODO: should we log something for this error case?
                 }
+                // TODO: should we log something for this error case?
             }
-            // TODO: should we log something for this error case?
         }
-    }
+        else if (E_BADCONFIGURATION == hr)
+        {
+            // Skip this product and continue.
+            LogId(REPORT_STANDARD, MSG_DETECT_BAD_PRODUCT_CONFIGURATION, wzProductCode);
+
+            hr = S_OK;
+        }
+
+        ++iProduct;
+
+    } while (SUCCEEDED(hr));
 
     if (E_NOMOREITEMS == hr)
     {

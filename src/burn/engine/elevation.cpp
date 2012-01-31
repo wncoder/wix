@@ -229,7 +229,7 @@ extern "C" HRESULT ElevationElevate(
     hr = HRESULT_FROM_VIEW(nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
 
-    hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
+    hr = CacheBundleToWorkingDirectory(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
     ExitOnFailure(hr, "Failed to cache engine to working directory.");
 
     hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);

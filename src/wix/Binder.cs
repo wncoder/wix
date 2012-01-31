@@ -7446,13 +7446,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     // If we didn't find the Payload as an existing child of the package, we need to
                                     // add it.  We expect the file to exist on-disk in the same relative location as
                                     // the MSI expects to find it...
-                                    if (!this.IsExistingPayload(cabinet))
+                                    string cabinetName = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
+                                    if (!this.IsExistingPayload(cabinetName))
                                     {
                                         string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
                                         string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
-                                        string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
 
-                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
+                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
                                         payloadNew.ParentPackagePayload = this.PackagePayload;
                                         if (null != payloadNew.Container)
                                         {

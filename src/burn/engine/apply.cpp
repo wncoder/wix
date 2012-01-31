@@ -241,7 +241,7 @@ extern "C" HRESULT ApplyRegister(
     }
     else // need to complete registration on the machine.
     {
-        hr = CacheCalculateBundleWorkingPath(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &sczEngineWorkingPath);
+        hr = CacheCalculateBundleWorkingPath(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &sczEngineWorkingPath);
         ExitOnFailure(hr, "Failed to calculate working path for engine.");
 
         // begin new session

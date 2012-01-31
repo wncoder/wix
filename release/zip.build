@@ -3,6 +3,14 @@
   <description>
     Copyright (c) Microsoft Corporation.  All rights reserved.
 
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
+
     zip.build - Create the distribution .zip files (binaries, PDBs, and sources).
   </description>
 
@@ -71,6 +79,7 @@
         <include name="x86\burn.exe" />
         <include name="candle.exe" />
         <include name="candle.exe.config" />
+        <include name="${dir.root}\CPL.TXT" />
         <include name="dark.exe" />
         <include name="dark.exe.config" />
         <include name="heat.exe" />
@@ -137,6 +146,7 @@
 
         <!-- extensions -->
         <include name="WixBalExtension.dll" />
+        <include name="WixComPlusExtension.dll" />
         <include name="WixDifxAppExtension.dll" />
         <include name="${dir.target.wix.x86}\difxapp_x86.wixlib" />
         <include name="${dir.target.wix.x64}\difxapp_x64.wixlib" />
@@ -148,6 +158,7 @@
         <include name="WixGamingExtension.dll" />
         <include name="WixIIsExtension.dll" />
         <include name="WixIsolatedAppExtension.dll" />
+        <include name="WixMsmqExtension.dll" />
         <include name="WixNetFxExtension.dll" />
         <include name="WixOfficeExtension.dll" />
         <include name="WixPSExtension.dll" />
@@ -193,6 +204,9 @@
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\BalExtension\wixext\Xsd">
         <include name="bal.xsd" />
       </fileset>
+      <fileset prefix="doc" basedir="${dir.target.wix}\src\ext\ComPlusExtension\wixext\Xsd">
+        <include name="complus.xsd" />
+      </fileset>
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\DifxAppExtension\wixext\Xsd">
         <include name="difxapp.xsd" />
       </fileset>
@@ -204,6 +218,9 @@
       </fileset>
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\IIsExtension\wixext\xsd">
         <include name="iis.xsd" />
+      </fileset>
+      <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\MsmqExtension\wixext\Xsd">
+        <include name="msmq.xsd" />
       </fileset>
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\NetFxExtension\wixext\Xsd">
         <include name="netfx.xsd" />

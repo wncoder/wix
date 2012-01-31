@@ -294,7 +294,7 @@ static HRESULT RunNormal(
 
         ReleaseHandle(hPipesCreatedEvent);
 
-        hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, NULL);
+        hr = CacheBundleToWorkingDirectory(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, NULL);
         ExitOnFailure(hr, "Failed to cache engine to working directory when launched unelevated.");
     }
 
