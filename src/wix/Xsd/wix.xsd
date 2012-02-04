@@ -732,7 +732,7 @@
           <html:ul>
           <html:li>{0} is replaced by the package Id.</html:li>
           <html:li>{1} is replaced by the payload Id.</html:li>
-          <html:li>{0} is replaced by the payload file name.</html:li>
+          <html:li>{2} is replaced by the payload file name.</html:li>
           </html:ul>
         </xs:documentation>
       </xs:annotation>
@@ -1078,7 +1078,7 @@
           <html:ul>
           <html:li>{0} is replaced by the package Id.</html:li>
           <html:li>{1} is replaced by the payload Id.</html:li>
-          <html:li>{0} is replaced by the payload file name.</html:li>
+          <html:li>{2} is replaced by the payload file name.</html:li>
           </html:ul>
         </xs:documentation>
         </xs:annotation>

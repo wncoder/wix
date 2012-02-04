@@ -149,6 +149,8 @@ extern "C" HRESULT MspEngineDetectInitialize(
                 }
                 // TODO: should we log something for this error case?
             }
+
+            hr = S_OK; // always reset so we test the next product.
         }
         else if (E_BADCONFIGURATION == hr)
         {

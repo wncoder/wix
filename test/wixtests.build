@@ -20,7 +20,6 @@
   -->
   <!-- Include the global build properties -->
   <include buildfile="..\wix.include" unless="${property::exists('wix.properties.defined')}" />
-  <include buildfile="src\Burn\TestUX\testux.build" />
 
   <!-- Check if VS Test is installed -->
   <readregistry property="vspro.10.0" key="SOFTWARE\Microsoft\VisualStudio\10.0\Setup\VS\Pro\ProductDir" hive="LocalMachine" failonerror="false" />
@@ -79,8 +78,8 @@
   <!-- Wix test targets -->
   <target name="wixtests" depends="wixtests.inc" />
   <target name="wixtests.build" depends="wixtests.clean, wixtests.inc" description="Peforms a full rebuild (clean then build)" />
-  <target name="wixtests.clean" depends="migrateQTests.clean, wixtestsmain.clean, testux.clean" description="Cleans the build" />
-  <target name="wixtests.inc" depends="migrateQTests.inc, wixtestsmain.inc, testux.inc" description="Performs an incremental build" />
+  <target name="wixtests.clean" depends="migrateQTests.clean, wixtestsmain.clean" description="Cleans the build" />
+  <target name="wixtests.inc" depends="migrateQTests.inc, wixtestsmain.inc" description="Performs an incremental build" />
 
   <!-- Build -->
   <target name="migrateQTests.build" depends="migrateQTests.clean, migrateQTests.inc" description="Peforms a full rebuild (clean then build)" />

@@ -66,7 +66,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             // Link.
             Light light = new Light();
             light.Extensions.AddRange(this.Extensions);
-            light.OtherArguments = String.Concat("-b data=", Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data\"));
+            light.OtherArguments = String.Format("-b build={0} -b data={1}", Settings.WixBuildDirectory, Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data\"));
             this.BindPaths.ToList().ForEach(kv => light.OtherArguments = String.Concat(light.OtherArguments, " -b ", kv.Key, "=", kv.Value));
             light.ObjectFiles = candle.ExpectedOutputFiles;
             light.OutputFile = bundle;

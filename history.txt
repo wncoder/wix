@@ -1763,3 +1763,10 @@ RobMen: SFBUG:3476841 - add missing CPL.txt
 
 WixBuild: Version 3.6.2527.0
 
+HeathS: Fixed stack overflow issue in the managed bootstrapper application.
+
+RobMen: Use MSIFASTINSTALL for all MsiPackages in Burn to improve default
+        performance.
+
+WixBuild: Version 3.6.2603.0
+

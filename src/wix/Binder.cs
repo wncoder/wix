@@ -7341,6 +7341,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             this.Description = ChainPackageInfo.GetProperty(db, "ARPCOMMENTS");
                         }
 
+                        // Unless the MSI or setup code overrides the default, set MSIFASTINSTALL for best performance.
+                        if (!ChainPackageInfo.HasProperty(db, "MSIFASTINSTALL"))
+                        {
+                            bool fastInstallSet = false;
+                            foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
+                            {
+                                if ("MSIFASTINSTALL".Equals(propertyInfo.Name, StringComparison.Ordinal))
+                                {
+                                    fastInstallSet = true;
+                                    break;
+                                }
+                            }
+
+                            if (!fastInstallSet)
+                            {
+                                this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "MSIFASTINSTALL", "7"));
+                            }
+                        }
+
                         // Represent the Upgrade table as related packages.
                         if (db.Tables.Contains("Upgrade"))
                         {

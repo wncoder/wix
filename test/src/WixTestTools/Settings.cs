@@ -116,6 +116,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
         }
 
         /// <summary>
+        /// The location for the WiX build output
+        /// </summary>
+        public static string WixBuildDirectory { get; set; }
+
+        /// <summary>
         /// The location of the wix.targets file
         /// </summary>
         public static string WixTargetsPath

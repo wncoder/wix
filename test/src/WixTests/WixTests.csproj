@@ -25,6 +25,7 @@
     <Compile Include="BuilderBase.cs" />
     <Compile Include="BundleBuilder.cs" />
     <Compile Include="BundleInstaller.cs" />
+    <Compile Include="Burn\Burn.SlipstreamTests.cs" />
     <Compile Include="PackageBuilder.cs" />
     <Compile Include="PatchBuilder.cs" />
     <Compile Include="WixTests.cs" />
@@ -167,6 +168,23 @@
     <Compile Include="Wixproj\WixprojTests.cs" />
     <Compile Include="Wixproj\WixTaskTests.cs" />
     <Compile Include="Extensions\VSExtension\VSExtension.VSExtensionTests.cs" />
+    <Compile Include="Burn\Burn.BasicTests.cs" />
+    <None Include="..\..\data\Burn\SlipstreamTests\A.wxs">
+      <Link>Burn\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\B.wxs">
+      <Link>Burn\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\BundleA.wxs">
+      <Link>Burn\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\BundleB.wxs">
+      <Link>Burn\BundleB.wxs</Link>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\PatchA.wxs">
+      <Link>Burn\PatchA.wxs</Link>
+    </None>
     <None Include="Tools\Light\Input.InputTests.mtx" />
     <None Include="Tools\Light\Output.OutputTests.mtx" />
   </ItemGroup>
@@ -204,6 +222,7 @@
     <Reference Include="$(OutputPath)wix.dll" />
     <Reference Include="$(OutputPath)Microsoft.Deployment.Compression.dll" />
     <Reference Include="$(OutputPath)Microsoft.Deployment.Compression.Cab.dll" />
+    <Reference Include="$(OutputPath)BootstrapperCore.dll" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Configuration" />

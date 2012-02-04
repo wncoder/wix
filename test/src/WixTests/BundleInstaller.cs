@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="BundleInstaller.DependencySetupTests.cs" company="Microsoft">
+// <copyright file="BundleInstaller.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 //    
 //    The use and distribution terms for this software are covered by the
@@ -10,7 +10,9 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// <summary>Dependency extension functional tests.</summary>
+// <summary>
+//      Provides methos to install bundles.
+// </summary>
 //-----------------------------------------------------------------------
 
 namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
@@ -59,6 +61,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         }
 
         /// <summary>
+        /// Modify the bundle with optional arguments.
+        /// </summary>
+        /// <param name="expectedExitCode">Expected exit code, defaults to success.</param>
+        /// <param name="arguments">Optional arguments to pass to the tool.</param>
+        /// <returns>Path to the generated log file.</returns>
+        public BundleInstaller Modify(int expectedExitCode = (int)MSIExec.MSIExecReturnCode.SUCCESS, params string[] arguments)
+        {
+            this.LastLogFile = this.RunBundleWithArguments(expectedExitCode, MSIExec.MSIExecMode.Modify, arguments);
+            return this;
+        }
+
+        /// <summary>
+        /// Repairs the bundle with optional arguments.
+        /// </summary>
+        /// <param name="expectedExitCode">Expected exit code, defaults to success.</param>
+        /// <param name="arguments">Optional arguments to pass to the tool.</param>
+        /// <returns>Path to the generated log file.</returns>
+        public BundleInstaller Repair(int expectedExitCode = (int)MSIExec.MSIExecReturnCode.SUCCESS, params string[] arguments)
+        {
+            this.LastLogFile = this.RunBundleWithArguments(expectedExitCode, MSIExec.MSIExecMode.Repair, arguments);
+            return this;
+        }
+
+        /// <summary>
         /// Uninstalls the bundle with optional arguments.
         /// </summary>
         /// <param name="expectedExitCode">Expected exit code, defaults to success.</param>
@@ -90,9 +116,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
 
             // Set operation.
-            if (MSIExec.MSIExecMode.Uninstall == mode)
+            switch (mode)
             {
-                sb.Append(" -uninstall");
+                case MSIExec.MSIExecMode.Modify:
+                    sb.Append(" -modify");
+                    break;
+
+                case MSIExec.MSIExecMode.Repair:
+                    sb.Append(" -repair");
+                    break;
+
+                case MSIExec.MSIExecMode.Uninstall:
+                    sb.Append(" -uninstall");
+                    break;
             }
 
             // Add additional arguments.

@@ -436,7 +436,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
             /// <summary>
             /// Repairs a product
             /// </summary>
-            Repair
+            Repair,
+
+            /// <summary>
+            /// Modifies a product
+            /// </summary>
+            Modify,
         }
 
         /// <summary>

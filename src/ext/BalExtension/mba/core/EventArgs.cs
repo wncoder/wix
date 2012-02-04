@@ -420,7 +420,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public class DetectTargetMsiPackageEventArgs : ResultEventArgs
     {
         private string packageId;
-        private string featureId;
+        private string productCode;
         private PackageState state;
 
         /// <summary>
@@ -432,7 +432,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public DetectTargetMsiPackageEventArgs(string packageId, string productCode, PackageState state)
         {
             this.packageId = packageId;
-            this.featureId = productCode;
+            this.productCode = productCode;
             this.state = state;
         }
 
@@ -449,7 +449,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         public string ProductCode
         {
-            get { return this.ProductCode; }
+            get { return this.productCode; }
         }
 
         /// <summary>

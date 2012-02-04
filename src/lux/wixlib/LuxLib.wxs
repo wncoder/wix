@@ -32,6 +32,9 @@
       <Error Id="27123">Test [2] failed: Expression '[3]' evaluated to false.</Error>
       <Error Id="27124">Test [2] failed: Syntax error in expression '[3]'.</Error>
       <Error Id="27125">Test [2] failed: Property '[3]' expected value '[4]' but actual value was '[5]'.</Error>
+      <Error Id="27126">Test [2] could not be run: Index [3] is out of bounds for multi-value property: [4]</Error>
+      <Error Id="27127">Test [2] could not be run: Name/value property has an invalid content count: [4]</Error>
+      <Error Id="27128">Test [2] could not be run: Index [3] is unknown in multi-value property: [4]</Error>
     </UI>
 
     <Property Id="WIXLUXTESTPACKAGE" Value="1" />

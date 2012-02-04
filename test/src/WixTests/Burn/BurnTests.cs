@@ -11,15 +11,17 @@
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
-//     Contains methods test Burn.
+//     Contains methods to help test Burn.
 // </summary>
 //-----------------------------------------------------------------------
 
 namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 {
     using System;
-    using System.Collections.Generic;
+    using System.IO;
+    using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Win32;
 
     [TestClass]
     public class BurnTests : WixTests
@@ -28,56 +30,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         public static string PerMachinePayloadCacheRoot = System.Environment.ExpandEnvironmentVariables(@"%ProgramData%\" + PayloadCacheFolder);
         public static string PerUserPayloadCacheRoot = System.Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\" + PayloadCacheFolder);
 
-        private static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
+        protected static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
 
-        [TestMethod]
-        [Priority(2)]
-        [Description("Installs bundle A then removes it.")]
-        [TestProperty("IsRuntimeTest", "true")]
-        public void Burn_InstallUninstall()
+        protected string GetTestInstallFolder(string additionalPath = null)
         {
-            // Build the packages.
-            string packageA = new PackageBuilder(this, "A") { Extensions = Extensions }.Build().Output;
-            string packageB = new PackageBuilder(this, "B") { Extensions = Extensions }.Build().Output;
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "~Test WiX", this.TestContext.TestName, additionalPath ?? String.Empty);
+        }
 
-            // Create the named bind paths to the packages.
-            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
-            bindPaths.Add("packageA", packageA);
-            bindPaths.Add("packageB", packageB);
+        protected RegistryKey GetTestRegistryRoot(string additionalPath = null)
+        {
+            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, additionalPath ?? String.Empty);
+            return Registry.LocalMachine.OpenSubKey(key);
+        }
 
-            // Build the bundles.
-            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
-            string bundleB = new BundleBuilder(this, "BundleB") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
-
-            try
+        /// <summary>
+        /// Sets the requested state for a package that the TestBA will return to the engine during plan.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="state">State to request.</param>
+        protected void SetPackageRequestedState(string packageId, RequestState state)
+        {
+            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
+            using (RegistryKey packageKey = Registry.LocalMachine.CreateSubKey(key))
             {
-                // Install the bundles.
-                BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
-                BundleInstaller installerB = new BundleInstaller(this, bundleB).Install();
-
-                // Make sure the MSIs and EXE are installed.
-                //Assert.IsTrue(this.IsPackageInstalled(packageA));
-                //Assert.IsTrue(this.IsPackageInstalled(packageB));
-                //Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
-
-                // Attempt to uninstall bundleA.
-                installerA.Uninstall();
-
-                // Verify packageA and ExeA are still installed.
-                //Assert.IsTrue(this.IsPackageInstalled(packageA));
-                //Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
-
-                // Uninstall bundleB now.
-                installerB.Uninstall();
-
-                // Make sure the MSIs are not installed.
-                //Assert.IsFalse(this.IsPackageInstalled(packageB));
-                //Assert.IsFalse(this.IsPackageInstalled(packageA));
-                //Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
-            }
-            finally
-            {
-                //this.CleanupRegistry();
+                packageKey.SetValue("Requested", state.ToString());
             }
         }
     }

@@ -397,7 +397,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             }
             else
             {
-                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                ExitOnRootFailure(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "Billboard was unexpected.");
             }
             break;
 
@@ -447,7 +447,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             }
             else
             {
-                hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+                ExitOnRootFailure(hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA), "Invalid image or image list coordinates.");
             }
             break;
 

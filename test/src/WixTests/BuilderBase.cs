@@ -24,7 +24,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     /// <summary>
     /// Base class for builders.
     /// </summary>
-    public abstract class BuilderBase<T>
+    public abstract class BuilderBase<T> where T : BuilderBase<T>
     {
         private static Stack<BuiltItem> BuiltItems = new Stack<BuiltItem>();
 
@@ -67,6 +67,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         public string[] Extensions { get; set; }
 
         /// <summary>
+        /// Indicates this package is only built, never installed so don't try to clean it up.
+        /// </summary>
+        /// <remarks>Typically this is set for packages that are the "upgrade target" for a patch/</remarks>
+        public bool NeverGetsInstalled { get; set; }
+
+        /// <summary>
         /// Optional key/value colleciton used for preprocessor variables.
         /// </summary>
         public IDictionary<string, string> PreprocessorVariables { get; set; }
@@ -88,9 +94,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         public T Build()
         {
             T t = this.BuildItem();
+            Assert.IsFalse(String.IsNullOrEmpty(t.Output), "A builder must specify its output.");
 
-            Assert.IsFalse(String.IsNullOrEmpty(this.Output), "A builder must specify its output.");
-            BuiltItems.Push(new BuiltItem() { Builder = this, Path = this.Output, TestName = this.test.TestContext.TestName });
+            if (!t.NeverGetsInstalled)
+            {
+                BuiltItems.Push(new BuiltItem() { Builder = this, Path = t.Output, TestName = this.test.TestContext.TestName });
+            }
 
             return t;
         }

@@ -19,15 +19,14 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
 {
     using System;
-    using System.CodeDom.Compiler;
-    using System.IO;
-    using System.Text;
     using System.Collections.Generic;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using System.Diagnostics;
+    using System.IO;
     using System.Runtime.InteropServices;
 
     using Microsoft.Tools.WindowsInstallerXml.Test;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Win32;
 
     /// <summary>
     /// Contains variables and methods used by this test assembly
@@ -73,6 +72,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         /// The name of the environment variable that stores the global seed
         /// </summary>
         private const string seedEnvironmentVariable = "WixTestsSeed";
+
+        /// <summary>
+        /// The name of the environment variable that stores the WiX build output directory.
+        /// </summary>
+        private const string wixBuildPathDirectory = "WixBuildPathDirectory";
 
         /// <summary>
         /// The name of the environment variable that stores the WiX bin directory
@@ -230,6 +234,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             // Set the location of MSBuild
             WixTests.SetMSBuildPaths();
 
+            // Set the location of the built output.
+            WixTests.SetWixBuildDirectory();
+
             // Set the location of the binaries
             WixTests.SetWixToolsPathDirectory();
 
@@ -267,9 +274,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
 
             foreach (TestPropertyAttribute property in customTestMethodProperties)
             {
-                if (property.Name.Equals("IsRuntimeTest") && property.Value.Equals("true") && !this.IsRuntimeTestsEnabled)
+                if (property.Name.Equals("IsRuntimeTest") && property.Value.Equals("true") && !this.IsRuntimeTestsEnabled && !Debugger.IsAttached)
                 {
-                    Assert.Fail("Runtime tests are not enabled on this test environment. To enable Runtime tests set the environment variable '{0}'=true.", WixTests.runtimeTestsEnabledEnvironmentVariable);
+                    Assert.Fail("Runtime tests are not enabled on this test environment. To enable Runtime tests set the environment variable '{0}'=true or run the tests under a debugger.", WixTests.runtimeTestsEnabledEnvironmentVariable);
                 }
 
                 if (property.Name.Equals("Is64BitSpecificTest") && property.Value.Equals("true") && !this.Is64BitMachine)
@@ -302,6 +309,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             MSIExec.UninstallAllInstalledProducts();
             BundleBuilder.CleanupByUninstalling();
 
+            // Remove any registry keys created during this test.
+            string key = String.Format(@"Software\WiX\Tests\{0}", this.TestContext.TestName);
+            Registry.LocalMachine.DeleteSubKeyTree(key, false);
+
             // Update the working directory
             this.workingDirectories.Pop();
             Environment.CurrentDirectory = this.workingDirectories.Peek();
@@ -313,13 +324,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
                 {
                     foreach (FileSystemInfo artifact in this.TestArtifacts)
                     {
-                        if (artifact is DirectoryInfo)
+                        try
                         {
-                            Directory.Delete(artifact.FullName, true);
+                            if (artifact is DirectoryInfo)
+                            {
+                                Directory.Delete(artifact.FullName, true);
+                            }
+                            else
+                            {
+                                artifact.Delete();
+                            }
                         }
-                        else
+                        catch
                         {
-                            artifact.Delete();
                         }
                     }
                 }
@@ -462,6 +479,28 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             Settings.Flavor = flavor;
         }
 
+        /// <summary>
+        /// Sets the default location for the WiX binaries
+        /// </summary>
+        private static void SetWixBuildDirectory()
+        {
+            string wixBuildPathDirectory = Environment.GetEnvironmentVariable(WixTests.wixBuildPathDirectory);
+
+            if (null == wixBuildPathDirectory)
+            {
+                if (string.IsNullOrEmpty(Settings.Flavor))
+                {
+                    Assert.Fail("The build Flavor is not set. Please set the flavor environment variable to the desired build flavor.");
+                }
+                else
+                {
+                    wixBuildPathDirectory = Environment.ExpandEnvironmentVariables(string.Format(@"%WIX_ROOT%\build\{0}\x86", Settings.Flavor));
+                    Console.WriteLine("The environment variable '{0}' was not set. Using the default location '{1}' for the WiX binaries", wixToolsPathEnvironmentVariable, wixBuildPathDirectory);
+                }
+            }
+
+            Settings.WixBuildDirectory = wixBuildPathDirectory;
+        }
 
         /// <summary>
         /// Sets the default location for the WiX binaries

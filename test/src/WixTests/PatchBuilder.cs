@@ -52,7 +52,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             string source = String.IsNullOrEmpty(this.SourceFile) ? Path.Combine(this.test.TestDataDirectory2, String.Concat(this.Name, ".wxs")) : this.SourceFile;
             string rootDirectory = FileUtilities.GetUniqueFileName();
             string objDirectory = Path.Combine(rootDirectory, Settings.WixobjFolder);
-            string msiDirectory = Path.Combine(rootDirectory, Settings.MSIFolder);
+            string msiDirectory = Path.Combine(rootDirectory, Settings.MSPFolder);
             string wixmst = Path.Combine(objDirectory, String.Concat(this.Name, ".wixmst"));
             string wixmsp = Path.Combine(objDirectory, String.Concat(this.Name, ".wixmsp"));
             string package = Path.Combine(msiDirectory, String.Concat(this.Name, ".msp"));

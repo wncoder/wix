@@ -19,7 +19,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Builder.cs" />
@@ -100,6 +99,7 @@
     <Compile Include="Tool.cs" />
     <Compile Include="TorchArguments.cs" />
     <Compile Include="MSIVersions.cs" />
+    <Compile Include="Verifiers\MsiVerifier.cs" />
     <Compile Include="Verifiers\Verifier.cs" />
     <Compile Include="WixCop.cs" />
     <Compile Include="WixCopArguments.cs" />
@@ -112,9 +112,7 @@
     <Compile Include="WixUnit.cs" />
     <Compile Include="WixUnitArguments.cs" />
   </ItemGroup>
-
   <Import Project="..\..\..\WixBuild.Common.targets" />
-
   <ItemGroup>
     <Reference Include="$(OutputPath)Microsoft.Deployment.WindowsInstaller.dll" />
     <Reference Include="$(OutputPath)Microsoft.Deployment.Compression.dll" />

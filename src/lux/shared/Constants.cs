@@ -44,6 +44,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux
         public const int TestFailedExpressionFalse = 27123;
         public const int TestFailedExpressionSyntaxError = 27124;
         public const int TestFailedPropertyValueMismatch = 27125;
-        public const int TestIdMaximumFailure = 27125;
+        public const int TestFailedIndexOutOfBounds = 27126;
+        public const int TestFailedExpectedEvenNameValueContent = 27127;
+        public const int TestFailedIndexUnknown = 27128;
+        public const int TestIdMaximumFailure = 27128;
     }
 }

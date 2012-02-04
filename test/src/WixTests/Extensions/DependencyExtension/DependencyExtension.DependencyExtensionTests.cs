@@ -19,11 +19,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Text;
+
     using Microsoft.Tools.WindowsInstallerXml.Test;
     using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
     using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using System.Text;
     using Microsoft.Win32;
 
     [TestClass]
@@ -33,16 +34,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
         private static readonly string TestDataDirectory = Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data\Extensions\DependencyExtension\DependencyExtensionTests");
         private static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
-
-        /// <summary>
-        /// Cleanup Wix tests.
-        /// </summary>
-        [TestCleanup]
-        public override void CleanUp()
-        {
-            base.CleanUp();
-            this.CleanupRegistry();
-        }
 
         [TestMethod]
         [Priority(2)]
@@ -786,15 +777,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
             // Return the log file name.
             return logFile;
-        }
-
-        /// <summary>
-        /// Ensures that the registry key associated with the test is deleted.
-        /// </summary>
-        private void CleanupRegistry()
-        {
-            string key = String.Format(@"Software\WiX\Tests\{0}", this.TestContext.TestName);
-            Registry.LocalMachine.DeleteSubKeyTree(key, false);
         }
     }
 }
