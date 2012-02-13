@@ -19830,6 +19830,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "BootstrapperApplicationRef":
                                 this.ParseBootstrapperApplicationRefElement(child);
                                 break;
+                            case "OptionalUpdateRegistration":
+                                this.ParseOptionalUpdateRegistrationElement(child, manufacturer, parentName, name);
+                                break;
                             case "Catalog":
                                 this.ParseCatalogElement(child);
                                 break;
@@ -20304,6 +20307,119 @@ namespace Microsoft.Tools.WindowsInstallerXml
             else
             {
                 this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixBootstrapperApplication", id);
+            }
+        }
+
+        /// <summary>
+        /// Parse the OptionalUpdateRegistration element.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        /// <param name="defaultManufacturer">The manufacturer.</param>
+        /// <param name="defaultProductFamily">The product family.</param>
+        /// <param name="defaultName">The bundle name.</param>
+        private void ParseOptionalUpdateRegistrationElement(XmlNode node, string defaultManufacturer, string defaultProductFamily, string defaultName)
+        {
+            const string defaultClassification = "Update";
+
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string manufacturer = null;
+            string department = null;
+            string productFamily = null;
+            string name = null;
+            string classification = defaultClassification;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Manufacturer":
+                            manufacturer = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Department":
+                            department = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "ProductFamily":
+                            productFamily = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Name":
+                            name = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Classification":
+                            classification = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (String.IsNullOrEmpty(manufacturer))
+            {
+                if (!String.IsNullOrEmpty(defaultManufacturer))
+                {
+                    manufacturer = defaultManufacturer;
+                }
+                else
+                {
+                    this.core.OnMessage(WixErrors.ExpectedAttributeInElementOrParent(sourceLineNumbers, node.Name, "Manufacturer", node.ParentNode.Name));
+                }
+            }
+
+            if (String.IsNullOrEmpty(productFamily))
+            {
+                if (!String.IsNullOrEmpty(defaultProductFamily))
+                {
+                    productFamily = defaultProductFamily;
+                }
+            }
+
+            if (String.IsNullOrEmpty(name))
+            {
+                if (!String.IsNullOrEmpty(defaultName))
+                {
+                    name = defaultName;
+                }
+                else
+                {
+                    this.core.OnMessage(WixErrors.ExpectedAttributeInElementOrParent(sourceLineNumbers, node.Name, "Name", node.ParentNode.Name));
+                }
+            }
+
+            if (String.IsNullOrEmpty(classification))
+            {
+                this.core.OnMessage(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, node.Name, "Classification", defaultClassification));
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (!this.core.EncounteredError)
+            {
+                Row row = this.core.CreateRow(sourceLineNumbers, "WixUpdateRegistration");
+                row[0] = manufacturer;
+                row[1] = department;
+                row[2] = productFamily;
+                row[3] = name;
+                row[4] = classification;
             }
         }
 

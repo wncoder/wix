@@ -49,6 +49,16 @@ enum BURN_REGISTRATION_MODIFY_TYPE
 
 // structs
 
+typedef struct _BURN_UPDATE_REGISTRATION
+{
+    BOOL fRegisterUpdate;
+    LPWSTR sczManufacturer;
+    LPWSTR sczDepartment;
+    LPWSTR sczProductFamily;
+    LPWSTR sczName;
+    LPWSTR sczClassification;
+} BURN_UPDATE_REGISTRATION;
+
 typedef struct _BURN_RELATED_BUNDLE
 {
     BOOTSTRAPPER_RELATION_TYPE relationType;
@@ -111,6 +121,9 @@ typedef struct _BURN_REGISTRATION
     BURN_REGISTRATION_MODIFY_TYPE modify;
     BOOL fNoRemoveDefined;
     BOOL fNoRemove;
+
+    // Update registration
+    BURN_UPDATE_REGISTRATION update;
 
     // Related
     BURN_RELATED_BUNDLES relatedBundles;

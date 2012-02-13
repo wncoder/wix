@@ -2999,6 +2999,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             BundleInfo bundleInfo = new BundleInfo(bundleFile, bundleTable.Rows[0]);
 
+            // Get update registration if specified.
+            Table updateRegistrationTable = bundle.Tables["WixUpdateRegistration"];
+            if (null != updateRegistrationTable)
+            {
+                bundleInfo.UpdateRegistrationInfo = new UpdateRegistrationInfo(updateRegistrationTable.Rows[0]);
+            }
+
             // Get the explicit payloads.
             Table payloadTable = bundle.Tables["Payload"];
             Dictionary<string, PayloadInfo> allPayloads = new Dictionary<string, PayloadInfo>(payloadTable.Rows.Count);
@@ -3805,6 +3812,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("DisableRemove", "yes");
                 }
                 writer.WriteEndElement(); // </Arp>
+
+                if (null != bundleInfo.UpdateRegistrationInfo)
+                {
+                    writer.WriteStartElement("Update"); // <Update>
+                    writer.WriteAttributeString("Manufacturer", bundleInfo.UpdateRegistrationInfo.Manufacturer);
+
+                    if (!String.IsNullOrEmpty(bundleInfo.UpdateRegistrationInfo.Department))
+                    {
+                        writer.WriteAttributeString("Department", bundleInfo.UpdateRegistrationInfo.Department);
+                    }
+
+                    if (!String.IsNullOrEmpty(bundleInfo.UpdateRegistrationInfo.ProductFamily))
+                    {
+                        writer.WriteAttributeString("ProductFamily", bundleInfo.UpdateRegistrationInfo.ProductFamily);
+                    }
+
+                    writer.WriteAttributeString("Name", bundleInfo.UpdateRegistrationInfo.Name);
+                    writer.WriteAttributeString("Classification", bundleInfo.UpdateRegistrationInfo.Classification);
+                    writer.WriteEndElement(); // </Update>
+                }
 
                 writer.WriteEndElement(); // </Register>
 
@@ -6924,6 +6951,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string Path { get; private set; }
             public bool PerMachine { get; set; }
             public RegistrationInfo RegistrationInfo { get; set; }
+            public UpdateRegistrationInfo UpdateRegistrationInfo { get; set; }
             public string SplashScreenBitmapPath { get; private set; }
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Tag { get; private set; }
@@ -7808,6 +7836,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string ParentName { get; set; }
             public int DisableModify { get; set; }
             public bool DisableRemove { get; set; }
+        }
+
+        private class UpdateRegistrationInfo
+        {
+            public UpdateRegistrationInfo(Row row)
+            {
+                this.Manufacturer = (string)row[0];
+                this.Department = (string)row[1];
+                this.ProductFamily = (string)row[2];
+                this.Name = (string)row[3];
+                this.Classification = (string)row[4];
+            }
+
+            public string Manufacturer { get; set; }
+            public string Department { get; set; }
+            public string ProductFamily { get; set; }
+            public string Name { get; set; }
+            public string Classification { get; set; }
         }
 
         /// <summary>

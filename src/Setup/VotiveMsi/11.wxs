@@ -21,8 +21,11 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Fragment>
         <PropertyRef Id="VS11DEVENV" />
+        <PropertyRef Id="VS11_ROOT_FOLDER" />
+        <PropertyRef Id="VS11_SCHEMAS_DIR" />
 
-        <ComponentGroup Id="Votive11Components">
+
+      <ComponentGroup Id="Votive11Components">
             <ComponentGroupRef Id="Votive2010BinaryComponents"/>
             <ComponentGroupRef Id="Votive11ExtensionComponents"/>
             <ComponentGroupRef Id="Votive11ItemTemplateComponents" />

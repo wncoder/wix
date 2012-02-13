@@ -23,8 +23,13 @@
     <Bundle Name="~$(var.TestName) - Bundle G" Version="$(var.Version)" UpgradeCode="4B83C1F7-6023-4F6E-944E-8B3D3F07CF66" ParentName="$(var.TestName) - Bundle A">
         <RelatedBundle Id="583B5ECB-04E6-4837-A30C-A1ADCBE24235" Action="Patch" />
         <Log Prefix="$(var.TestName)_BundleG"/>
-        <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
-        <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
+        <Variable Name="TestName" Value="$(var.TestName)" />
+        <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
+            <Payload Name='BootstrapperCore.config' SourceFile='!(bindpath.build)\TestBA.BootstrapperCore.config' />
+            <Payload SourceFile='!(bindpath.build)\TestBA.dll' />
+        </BootstrapperApplicationRef>
+        <WixVariable Id='WixMbaPrereqPackageId' Value='ignored' />
+        <WixVariable Id='WixMbaPrereqLicenseUrl' Value='ignored' />
         <Chain>
             <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes"  SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes"/>
         </Chain>

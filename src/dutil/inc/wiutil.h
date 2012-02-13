@@ -216,6 +216,14 @@ typedef UINT (WINAPI *PFN_MSIENUMRELATEDPRODUCTSW)(
     __in DWORD iProductIndex,
     __out_ecount(MAX_GUID_CHARS + 1) LPWSTR lpProductBuf
     );
+typedef UINT (WINAPI *PFN_MSISOURCELISTADDSOURCEEXW)(
+    __in LPCWSTR szProductCodeOrPatchCode,
+    __in_opt LPCWSTR szUserSid,
+    __in MSIINSTALLCONTEXT dwContext,
+    __in DWORD dwOptions,
+    __in LPCWSTR szSource,
+    __in_opt DWORD dwIndex
+    );
 
 
 HRESULT DAPI WiuInitialize(
@@ -234,7 +242,8 @@ void DAPI WiuFunctionOverride(
     __in_opt PFN_MSISETINTERNALUI pfnMsiSetInternalUI,
     __in_opt PFN_MSISETEXTERNALUIW pfnMsiSetExternalUIW,
     __in_opt PFN_MSIENUMRELATEDPRODUCTSW pfnMsiEnumRelatedProductsW,
-    __in_opt PFN_MSISETEXTERNALUIRECORD pfnMsiSetExternalUIRecord
+    __in_opt PFN_MSISETEXTERNALUIRECORD pfnMsiSetExternalUIRecord,
+    __in_opt PFN_MSISOURCELISTADDSOURCEEXW pfnMsiSourceListAddSourceExW
     );
 HRESULT DAPI WiuGetComponentPath(
     __in_z LPCWSTR wzProductCode,
@@ -326,6 +335,14 @@ HRESULT DAPI WiuRemovePatches(
     __in_z LPCWSTR wzProductCode,
     __in_z LPCWSTR wzPropertyList,
     __out WIU_RESTART* pRestart
+    );
+HRESULT DAPI WiuSourceListAddSourceEx(
+    __in_z LPCWSTR wzProductCodeOrPatchCode,
+    __in_z_opt LPCWSTR wzUserSid,
+    __in MSIINSTALLCONTEXT dwContext,
+    __in DWORD dwCode,
+    __in_z LPCWSTR wzSource,
+    __in_opt DWORD dwIndex
     );
 
 #ifdef __cplusplus

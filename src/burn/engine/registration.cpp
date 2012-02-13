@@ -82,6 +82,23 @@ static HRESULT LoadRelatedBundle(
     __out BOOTSTRAPPER_RELATION_TYPE *pRelationType,
     __out LPWSTR *psczTag
     );
+static HRESULT FormatUpdateRegistrationKey(
+    __in BURN_REGISTRATION* pRegistration,
+    __out_z LPWSTR* psczKey
+    );
+static HRESULT WriteUpdateRegistration(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    );
+static HRESULT RemoveUpdateRegistration(
+    __in BURN_REGISTRATION* pRegistration
+    );
+static HRESULT RegWriteStringVariable(
+    __in HKEY hkKey,
+    __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzVariable,
+    __in LPCWSTR wzName
+    );
 
 
 // function definitions
@@ -98,6 +115,7 @@ extern "C" HRESULT RegistrationParseFromXml(
     HRESULT hr = S_OK;
     IXMLDOMNode* pixnRegistrationNode = NULL;
     IXMLDOMNode* pixnArpNode = NULL;
+    IXMLDOMNode* pixnUpdateNode = NULL;
     LPWSTR scz = NULL;
 
     // select registration node
@@ -256,12 +274,48 @@ extern "C" HRESULT RegistrationParseFromXml(
         }
     }
 
+    // select Update node
+    hr = XmlSelectSingleNode(pixnRegistrationNode, L"Update", &pixnUpdateNode);
+    if (S_FALSE != hr)
+    {
+        ExitOnFailure(hr, "Failed to select Update node.");
+
+        pRegistration->update.fRegisterUpdate = TRUE;
+
+        // @Manufacturer
+        hr = XmlGetAttributeEx(pixnUpdateNode, L"Manufacturer", &pRegistration->update.sczManufacturer);
+        ExitOnFailure(hr, "Failed to get @Manufacturer.");
+
+        // @Department
+        hr = XmlGetAttributeEx(pixnUpdateNode, L"Department", &pRegistration->update.sczDepartment);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @Department.");
+        }
+
+        // @ProductFamily
+        hr = XmlGetAttributeEx(pixnUpdateNode, L"ProductFamily", &pRegistration->update.sczProductFamily);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to get @ProductFamily.");
+        }
+
+        // @Name
+        hr = XmlGetAttributeEx(pixnUpdateNode, L"Name", &pRegistration->update.sczName);
+        ExitOnFailure(hr, "Failed to get @Name.");
+
+        // @Classification
+        hr = XmlGetAttributeEx(pixnUpdateNode, L"Classification", &pRegistration->update.sczClassification);
+        ExitOnFailure(hr, "Failed to get @Classification.");
+    }
+
     hr = SetPaths(pRegistration);
     ExitOnFailure(hr, "Failed to set registration paths.");
 
 LExit:
     ReleaseObject(pixnRegistrationNode);
     ReleaseObject(pixnArpNode);
+    ReleaseObject(pixnUpdateNode);
     ReleaseStr(scz);
 
     return hr;
@@ -320,6 +374,12 @@ extern "C" void RegistrationUninitialize(
     ReleaseStr(pRegistration->sczParentDisplayName);
     ReleaseStr(pRegistration->sczComments);
     ReleaseStr(pRegistration->sczContact);
+
+    ReleaseStr(pRegistration->update.sczManufacturer);
+    ReleaseStr(pRegistration->update.sczDepartment);
+    ReleaseStr(pRegistration->update.sczProductFamily);
+    ReleaseStr(pRegistration->update.sczName);
+    ReleaseStr(pRegistration->update.sczClassification);
 
     if (pRegistration->relatedBundles.rgRelatedBundles)
     {
@@ -709,6 +769,13 @@ extern "C" HRESULT RegistrationSessionBegin(
             LPCWSTR wzUninstallParameters = (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON == pRegistration->modify) ? L"/modify" : L" /uninstall";
             hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
             ExitOnFailure(hr, "Failed to write UninstallString value.");
+
+            // Update registration.
+            if (pRegistration->update.fRegisterUpdate)
+            {
+                hr = WriteUpdateRegistration(pRegistration, pVariables);
+                ExitOnFailure(hr, "Failed to write update registration.");
+            }
         }
 
         // TODO: if we are not uninstalling, update estimated size
@@ -839,6 +906,16 @@ extern "C" HRESULT RegistrationSessionEnd(
             if (E_FILENOTFOUND != hr)
             {
                 ExitOnFailure1(hr, "Failed to delete registration key: %ls", pRegistration->sczRegistrationKey);
+            }
+
+            // Delete update registration key.
+            if (pRegistration->update.fRegisterUpdate)
+            {
+                hr = RemoveUpdateRegistration(pRegistration);
+                if (E_FILENOTFOUND != hr)
+                {
+                    ExitOnFailure(hr, "Failed to delete update registration.");
+                }
             }
 
             hr = CacheRemoveBundle(pRegistration->fPerMachine, pRegistration->sczId);
@@ -1526,6 +1603,134 @@ LExit:
     ReleaseStrArray(rgsczPatchCodes, cPatchCodes);
     ReleaseRegKey(hkBundleId);
     ReleaseStr(sczBundleKey);
+
+    return hr;
+}
+
+static HRESULT FormatUpdateRegistrationKey(
+    __in BURN_REGISTRATION* pRegistration,
+    __out_z LPWSTR* psczKey
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczKey = NULL;
+
+    hr = StrAllocFormatted(&sczKey, L"SOFTWARE\\%ls\\Updates\\", pRegistration->update.sczManufacturer);
+    ExitOnFailure(hr, "Failed to format the key path for update registration.");
+
+    if (pRegistration->update.sczProductFamily)
+    {
+        hr = StrAllocFormatted(&sczKey, L"%ls%ls\\", sczKey, pRegistration->update.sczProductFamily);
+        ExitOnFailure(hr, "Failed to format the key path for update registration.");
+    }
+
+    hr = StrAllocConcat(&sczKey, pRegistration->update.sczName, 0);
+    ExitOnFailure(hr, "Failed to format the key path for update registration.");
+
+    *psczKey = sczKey;
+    sczKey = NULL;
+
+LExit:
+    ReleaseStr(sczKey);
+
+    return hr;
+}
+
+static HRESULT WriteUpdateRegistration(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczKey = NULL;
+    HKEY hkKey = NULL;
+
+    hr = FormatUpdateRegistrationKey(pRegistration, &sczKey);
+    ExitOnFailure(hr, "Failed to get the formatted key path for update registration.");
+
+    hr = RegCreate(pRegistration->hkRoot, sczKey, KEY_WRITE, &hkKey);
+    ExitOnFailure(hr, "Failed to create the key for update registration.");
+
+    hr = RegWriteString(hkKey, L"ThisVersionInstalled", L"Y");
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"ThisVersionInstalled");
+
+    hr = RegWriteString(hkKey, L"PackageName", pRegistration->sczDisplayName);
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"PackageName");
+
+    hr = RegWriteString(hkKey, L"PackageVersion", pRegistration->sczDisplayVersion);
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"PackageVersion");
+
+    hr = RegWriteString(hkKey, L"Publisher", pRegistration->sczPublisher);
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"Publisher");
+
+    if (pRegistration->update.sczDepartment)
+    {
+        hr = RegWriteString(hkKey, L"PublishingGroup", pRegistration->update.sczDepartment);
+        ExitOnFailure1(hr, "Failed to write %ls value.", L"PublishingGroup");
+    }
+
+    hr = RegWriteString(hkKey, L"ReleaseType", pRegistration->update.sczClassification);
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"ReleaseType");
+
+    hr = RegWriteStringVariable(hkKey, pVariables, VARIABLE_LOGONUSER, L"InstalledBy");
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"InstalledBy");
+
+    hr = RegWriteStringVariable(hkKey, pVariables, VARIABLE_DATE, L"InstalledDate");
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"InstalledDate");
+
+    hr = RegWriteStringVariable(hkKey, pVariables, VARIABLE_INSTALLERNAME, L"InstallerName");
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"InstallerName");
+
+    hr = RegWriteStringVariable(hkKey, pVariables, VARIABLE_INSTALLERVERSION, L"InstallerVersion");
+    ExitOnFailure1(hr, "Failed to write %ls value.", L"InstallerVersion");
+
+LExit:
+    ReleaseRegKey(hkKey);
+    ReleaseStr(sczKey);
+
+    return hr;
+}
+
+static HRESULT RemoveUpdateRegistration(
+    __in BURN_REGISTRATION* pRegistration
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczKey = NULL;
+
+    hr = FormatUpdateRegistrationKey(pRegistration, &sczKey);
+    ExitOnFailure(hr, "Failed to format key for update registration.");
+
+    hr = RegDelete(pRegistration->hkRoot, sczKey, REG_KEY_DEFAULT, FALSE);
+    if (E_FILENOTFOUND != hr)
+    {
+        ExitOnFailure1(hr, "Failed to remove update registration key: %ls", sczKey);
+    }
+
+LExit:
+    ReleaseStr(sczKey);
+
+    return hr;
+}
+
+static HRESULT RegWriteStringVariable(
+    __in HKEY hk,
+    __in BURN_VARIABLES* pVariables,
+    __in LPCWSTR wzVariable,
+    __in LPCWSTR wzName
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczValue = NULL;
+
+    hr = VariableGetString(pVariables, wzVariable, &sczValue);
+    ExitOnFailure1(hr, "Failed to get the %ls variable.", wzVariable);
+
+    hr = RegWriteString(hk, wzName, sczValue);
+    ExitOnFailure1(hr, "Failed to write %ls value.", wzName);
+
+LExit:
+    ReleaseStr(sczValue);
 
     return hr;
 }

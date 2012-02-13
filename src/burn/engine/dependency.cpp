@@ -668,14 +668,19 @@ static void DependencyCalculatePlan(
         switch (pPackage->execute)
         {
         case BOOTSTRAPPER_ACTION_STATE_NONE:
-            // Always register the bundle with the package if already installed.
-            switch (pPackage->currentState)
+            // Register the bundle with the package if requested but already installed.
+            switch (pPackage->requested)
             {
-            case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
-            case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED: __fallthrough;
-            case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
-                *pDependencyExecuteAction = BURN_DEPENDENCY_ACTION_REGISTER;
-                break;
+            case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
+            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                switch (pPackage->currentState)
+                {
+                case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
+                case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED: __fallthrough;
+                case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+                    *pDependencyExecuteAction = BURN_DEPENDENCY_ACTION_REGISTER;
+                    break;
+                }
             }
             break;
         case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:

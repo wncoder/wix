@@ -77,6 +77,7 @@
         <xs:element ref="BootstrapperApplication" minOccurs="0" maxOccurs="1" />
         <xs:element ref="BootstrapperApplicationRef" minOccurs="0" maxOccurs="1" />
         <xs:element ref="UX" minOccurs="0" maxOccurs="1" />
+        <xs:element ref="OptionalUpdateRegistration" minOccurs="0" maxOccurs="1" />
         <xs:element ref="Chain" minOccurs="1" maxOccurs="1" />
         <xs:element ref="Container" />
         <xs:element ref="ContainerRef" />
@@ -414,6 +415,64 @@
       <xs:attribute name="SplashScreenSourceFile" type="xs:string">
         <xs:annotation>
           <xs:documentation>See the BootstrapperApplication instead.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OptionalUpdateRegistration">
+    <xs:annotation>
+      <xs:documentation>Writes additional information to the Windows registry that can be used to detect the bundle.
+      This registration is intended primarily for update to an existing product.</xs:documentation>
+      <xs:appinfo>
+        <xse:remarks>
+          <html:p>The attributes are used to write the following registry values to the key:
+          <html:code>SOFTWARE\[Manufacturer]\Updates\[ProductFamily]\[Name]</html:code></html:p>
+          <html:ul>
+            <html:li>ThisVersionInstalled: Y</html:li>
+            <html:li>PackageName: &gt;bundle name&lt;</html:li>
+            <html:li>PackageVersion: &gt;bundle version&lt;</html:li>
+            <html:li>Publisher: [Manufacturer]</html:li>
+            <html:li>PublishingGroup: [Department]</html:li>
+            <html:li>ReleaseType: [Classification]</html:li>
+            <html:li>InstalledBy: [LogonUser]</html:li>
+            <html:li>InstalledDate: [Date]</html:li>
+            <html:li>InstallerName: &gt;installer name&lt;</html:li>
+            <html:li>InstallerVersion: &gt;installer version&lt;</html:li>
+          </html:ul>
+        </xse:remarks>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Manufacturer" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The name of the manufacturer. The default is the Bundle/@Manufacturer attribute,
+          but may also be a short form, ex: WiX instead of Windows Installer XML.
+          An error is generated at build time if neither attribute is specified.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Department" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The name of the department or division publishing the update bundle.
+          The PublishingGroup registry value is not written if this attribute is not specified.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ProductFamily" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The name of the family of products being updated. The default is the Bundle/@ParentName attribute.
+          The corresponding registry key is not created if neither attribute is specified.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Name" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>The name of the bundle. The default is the Bundle/@Name attribute,
+          but may also be a short form, ex: KB12345 instead of Update to Product (KB12345).
+          An error is generated at build time if neither attribute is specified.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Classification" type="xs:string" default="Update">
+        <xs:annotation>
+          <xs:documentation>The release type of the update bundle, such as Update, Security Update, Service Pack, etc.
+          The default value is Update.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>

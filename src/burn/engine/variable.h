@@ -26,6 +26,14 @@ extern "C" {
 #endif
 
 
+// constants
+
+const LPCWSTR VARIABLE_DATE = L"Date";
+const LPCWSTR VARIABLE_LOGONUSER = L"LogonUser";
+const LPCWSTR VARIABLE_INSTALLERNAME = L"InstallerName";
+const LPCWSTR VARIABLE_INSTALLERVERSION = L"InstallerVersion";
+
+
 // typedefs
 
 typedef HRESULT (*PFN_INITIALIZEVARIABLE)(

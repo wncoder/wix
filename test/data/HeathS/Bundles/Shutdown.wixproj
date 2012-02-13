@@ -22,8 +22,8 @@
         <ProjectReference Include="..\Packages\Wait.wixproj">
             <Name>Wait</Name>
         </ProjectReference>
-        <ProjectReference Include="$(TestDir)\src\Burn\TestUX\TestUX.csproj">
-            <Name>TestUX</Name>
+        <ProjectReference Include="$(TestDir)\src\Burn\TestBA\TestBA.csproj">
+            <Name>TestBA</Name>
         </ProjectReference>
     </ItemGroup>
     <Import Project="$(WixTargetsPath)" Condition="Exists('$(WixTargetsPath)')"/>

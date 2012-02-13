@@ -41,6 +41,7 @@
 #include <strsafe.h>
 #include <intsafe.h>
 #include <mscat.h>
+#include <lmcons.h>
 
 #include <dutil.h>
 #include <aclutil.h>
@@ -60,6 +61,7 @@
 #include <shelutil.h>
 #include <strutil.h>
 #include <svcutil.h>
+#include <userutil.h>
 #include <wiutil.h>
 #include <wuautil.h>
 #include <xmlutil.h>

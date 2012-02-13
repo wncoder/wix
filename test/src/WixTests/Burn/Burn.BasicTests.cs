@@ -11,9 +11,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
+    using Microsoft.Deployment.WindowsInstaller;
+    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
 
     [TestClass]
     public class BasicTests : BurnTests
@@ -103,6 +106,49 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             installerA.Uninstall();
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageAv1));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageAv2));
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs a bundle and tests the register source list.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_ValidateMulipleSourcePaths()
+        {
+            // Build the package.
+            string packageA = new PackageBuilder(this, "A") { Extensions = Extensions }.Build().Output;
+            string packageA_Directory = Path.GetDirectoryName(packageA);
+            string packageA_ProductCode = MsiUtils.GetMSIProductCode(packageA);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+
+            // Build the bundle.
+            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+
+            // Install the bundle.
+            BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+
+            // Copy the package using the bundle package name.
+            ProductInstallation product = new ProductInstallation(packageA_ProductCode, null, UserContexts.Machine);
+            string packageA_Copy = Path.Combine(packageA_Directory, product.AdvertisedPackageName);
+            File.Copy(packageA, packageA_Copy);
+            this.TestArtifacts.Add(new FileInfo(packageA_Copy));
+
+            // Repair and recache the MSI.
+            MSIExec.InstallProduct(packageA_Copy, MSIExec.MSIExecReturnCode.SUCCESS, "REINSTALL=ALL REINSTALLMODE=vomus");
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+
+            // Check that the source contains both the original and burn cached paths.
+            SourceList sources = product.SourceList;
+            Assert.AreEqual<int>(2, sources.Count);
+
+            // Attempt to uninstall bundleA.
+            installerA.Uninstall();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
 
             this.CleanTestArtifacts = true;
         }

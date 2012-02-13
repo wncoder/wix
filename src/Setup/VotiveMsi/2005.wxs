@@ -20,9 +20,12 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Fragment>
-        <PropertyRef Id="VS2005DEVENV" />
+      <PropertyRef Id="VS2005DEVENV" />
+      <PropertyRef Id="VS2005_ROOT_FOLDER" />
+      <PropertyRef Id="VS2005_SCHEMAS_DIR" />
+      <PropertyRef Id="VS2005PROJECTAGGREGATOR2" />
 
-        <ComponentGroup Id="Votive2005Components" Directory="BinFolder">
+      <ComponentGroup Id="Votive2005Components" Directory="BinFolder">
             <Component>
                 <File Source="sconce2005.dll" />
             </Component>

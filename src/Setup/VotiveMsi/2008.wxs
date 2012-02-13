@@ -20,9 +20,11 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Fragment>
-        <PropertyRef Id="VS90DEVENV" />
+      <PropertyRef Id="VS90DEVENV" />
+      <PropertyRef Id="VS90_ROOT_FOLDER" />
+      <PropertyRef Id="VS90_SCHEMAS_DIR" />
 
-        <ComponentGroup Id="Votive2008Components" Directory="BinFolder">
+      <ComponentGroup Id="Votive2008Components" Directory="BinFolder">
             <Component>
                 <File Source="sconce2008.dll" />
             </Component>

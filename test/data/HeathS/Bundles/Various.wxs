@@ -13,8 +13,8 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
     <Bundle Name="Various" Version="1.0.0.0" IconSourceFile="Setup.ico" Compressed="yes">
         <BootstrapperApplicationRef Id="ManagedBootstrapperApplicationHost">
-            <Payload Name="BootstrapperCore.config" SourceFile="$(var.TestUX.TargetDir)\TestUX.BootstrapperCore.config"/>
-            <Payload SourceFile="$(var.TestUX.TargetPath)"/>
+            <Payload Name="BootstrapperCore.config" SourceFile="$(var.TestBA.TargetDir)\TestBA.BootstrapperCore.config"/>
+            <Payload SourceFile="$(var.TestBA.TargetPath)"/>
             <Payload SourceFile="NetfxLicense.rtf"/>
         </BootstrapperApplicationRef>
         <Chain>

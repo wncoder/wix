@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation. All rights reserved.
+-->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Fragment>
+        <PackageGroup Id="TestExe">
+            <ExePackage Id="TestExe"
+                        Name="~$(var.TestName)_TestExe.exe"
+                        Compressed="yes"
+                        SourceFile="!(bindpath.data)\BurnTestPayloads\Products\TestExe\TestExe.exe"
+                        Vital="yes"
+                        PerMachine="yes"
+                        InstallCommand="/s 100"
+                        RepairCommand="/s 100"
+                        UninstallCommand="/s 100"/>
+        </PackageGroup>
+    </Fragment>
+</Wix>

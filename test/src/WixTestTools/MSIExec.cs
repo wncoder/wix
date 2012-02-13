@@ -60,15 +60,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
         /// </summary>
         /// <param name="sourceFile">Path the .msi file to install</param>
         /// <param name="expectedExitCode">Expected exit code</param>
+        /// <param name="otherArguments">Other arguments to pass to MSIExec.</param>
         /// <returns>MSIExec log File</returns>
-        public static string InstallProduct(string sourceFile, MSIExecReturnCode expectedExitCode)
+        public static string InstallProduct(string sourceFile, MSIExecReturnCode expectedExitCode, params string[] otherArguments)
         {
             if (String.IsNullOrEmpty(sourceFile))
             {
                 throw new ArgumentException("sourceFile cannot be null or empty");
             }
             string logFile = string.Empty;
-            MSIExecReturnCode exitCode = RunMSIExec(sourceFile, MSIExecMode.Install, expectedExitCode, out logFile);
+            MSIExecReturnCode exitCode = RunMSIExec(sourceFile, MSIExecMode.Install, otherArguments, expectedExitCode, out logFile);
 
             // Add the product to the list of installed products
             if ((MSIExecReturnCode.SUCCESS == exitCode || 
@@ -88,8 +89,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
         /// </summary>
         /// <param name="sourceFile">Path the .msi file to uninstall</param>
         /// <param name="expectedExitCode">Expected exit code</param>
+        /// <param name="otherArguments">Other arguments to pass to MSIExec.</param>
         /// <returns>MSIExec log File</returns>
-        public static string UninstallProduct(string sourceFile, MSIExecReturnCode expectedExitCode)
+        public static string UninstallProduct(string sourceFile, MSIExecReturnCode expectedExitCode, params string[] otherArguments)
         {
             if (String.IsNullOrEmpty(sourceFile))
             {
@@ -97,7 +99,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
             }
             
             string logFile = string.Empty;
-            MSIExecReturnCode exitCode = RunMSIExec(sourceFile, MSIExecMode.Uninstall, expectedExitCode, out logFile);
+            MSIExecReturnCode exitCode = RunMSIExec(sourceFile, MSIExecMode.Uninstall, otherArguments, expectedExitCode, out logFile);
 
             // Remove the product form the list of installed products
             if ((MSIExecReturnCode.SUCCESS == exitCode ||
@@ -116,8 +118,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
         /// </summary>
         /// <param name="sourceFile">Path the .msi file to repair</param>
         /// <param name="expectedExitCode">Expected exit code</param>
+        /// <param name="otherArguments">Other arguments to pass to msiexe.exe.</param>
         /// <returns>MSIExec log File</returns>
-        public static string RepairProduct(string sourceFile, MSIExecReturnCode expectedExitCode)
+        public static string RepairProduct(string sourceFile, MSIExecReturnCode expectedExitCode, params string[] otherArguments)
         {
             if (String.IsNullOrEmpty(sourceFile))
             {
@@ -125,7 +128,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
             }
 
             string logFile = string.Empty;
-            RunMSIExec(sourceFile, MSIExecMode.Repair, expectedExitCode, out logFile);
+            RunMSIExec(sourceFile, MSIExecMode.Repair, otherArguments, expectedExitCode, out logFile);
 
             return logFile;
         }
@@ -145,7 +148,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
                 try
                 {
                     string logFile = string.Empty;
-                    MSIExecReturnCode exitCode = MSIExec.RunMSIExec(sourceFile, MSIExecMode.Uninstall, MSIExecReturnCode.SUCCESS, out logFile);
+                    MSIExecReturnCode exitCode = MSIExec.RunMSIExec(sourceFile, MSIExecMode.Uninstall, null, MSIExecReturnCode.SUCCESS, out logFile);
 
                     if (MSIExecReturnCode.SUCCESS != exitCode)
                     {
@@ -171,13 +174,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
         /// </summary>
         /// <param name="sourceFile">Path the .msi file to use</param>
         /// <param name="mode">Mode of execution for MSIExec</param>
+        /// <param name="otherArguments">Other arguments to pass to MSIExec.</param>
         /// <param name="expectedExitCode">Expected exit code</param>
         /// <returns>MSIExec exit code</returns>
-        private static MSIExecReturnCode RunMSIExec(string sourceFile, MSIExecMode mode, MSIExecReturnCode expectedExitCode, out string logFile)
+        private static MSIExecReturnCode RunMSIExec(string sourceFile, MSIExecMode mode, string[] otherArguments, MSIExecReturnCode expectedExitCode, out string logFile)
         {
             MSIExec msiexec = new MSIExec();
             msiexec.Product = sourceFile;
             msiexec.ExecutionMode = mode;
+            msiexec.OtherArguments = null != otherArguments ? String.Join(" ", otherArguments) : null;
             msiexec.ExpectedExitCode = expectedExitCode;
 
             Result result = msiexec.Run();

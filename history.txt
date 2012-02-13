@@ -1770,3 +1770,18 @@ RobMen: Use MSIFASTINSTALL for all MsiPackages in Burn to improve default
 
 WixBuild: Version 3.6.2603.0
 
+HeathS: SFBUG:3426489 - Write additional registration for update detection.
+
+EricStJ: SFBUG:3483397 - Fix wixtaskspath in wix.ca.targets
+         SFBUG:3481876 - Ensure we reference all necessary VS search props
+
+HeathS: SFBUG:3460518 - Explicitly register package sources when cached.
+
+HeathS: SFBUG:3469206 - Do not register dependencies on packages that are
+        already installed but not installing in the current bundle.
+
+HeathS: SFBUG:3439748 - Warn if dependency providers are in 64-bit components.
+
+
+WixBuild: Version 3.6.2610.0
+

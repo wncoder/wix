@@ -307,7 +307,7 @@ namespace Bootstrapper
                 TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 // set mock API's
-                WiuFunctionOverride(NULL, MsiComponentSearchTest_MsiGetComponentPathW, MsiComponentSearchTest_MsiLocateComponentW, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                WiuFunctionOverride(NULL, MsiComponentSearchTest_MsiGetComponentPathW, MsiComponentSearchTest_MsiLocateComponentW, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
                 LPCWSTR wzDocument =
                     L"<Bundle>"
@@ -384,7 +384,7 @@ namespace Bootstrapper
                 TestThrowOnFailure(hr, L"Failed to initialize variables.");
 
                 // set mock API's
-                WiuFunctionOverride(NULL, NULL, NULL, NULL, MsiProductSearchTest_MsiGetProductInfoW, MsiProductSearchTest_MsiGetProductInfoExW, NULL, NULL, NULL, NULL, NULL, NULL);
+                WiuFunctionOverride(NULL, NULL, NULL, NULL, MsiProductSearchTest_MsiGetProductInfoW, MsiProductSearchTest_MsiGetProductInfoExW, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
                 LPCWSTR wzDocument =
                     L"<Bundle>"

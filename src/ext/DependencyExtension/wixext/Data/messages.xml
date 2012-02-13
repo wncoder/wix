@@ -63,6 +63,12 @@
                 <Parameter Type="System.String" Name="id" />
             </Instance>
         </Message>
+        <Message Id="Win64Component" Number="5435">
+            <Instance>
+                The Provides element should not be authored in the 64-bit component with identifier {0}. The dependency feature may not work if installing this package on 64-bit Windows operating systems prior to Windows 7 and Windows Server 2008 R2. Set the Component/@Win64 attribute to "no" to make sure the dependency feature works correctly on all supported operating systems.
+                <Parameter Type="System.String" Name="componentId" />
+            </Instance>
+        </Message>
     </Class>
     <Class Name="DependencyVerboses" ContainerName="DependencyVerboseEventArgs" BaseContainerName="WixVerboseEventArgs" />
 </Messages>

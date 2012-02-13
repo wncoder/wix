@@ -167,9 +167,18 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 case "Component":
                     string componentId = contextValues[0];
 
+                    // 64-bit components may cause issues downlevel.
+                    bool win64 = false;
+                    Boolean.TryParse(contextValues[2], out win64);
+
                     switch (element.LocalName)
                     {
                         case "Provides":
+                            if (win64)
+                            {
+                                this.Core.OnMessage(DependencyWarnings.Win64Component(sourceLineNumbers, componentId));
+                            }
+
                             keyPathType = this.ParseProvidesElement(element, PackageType.None, ref keyPath, componentId);
                             break;
                         default:

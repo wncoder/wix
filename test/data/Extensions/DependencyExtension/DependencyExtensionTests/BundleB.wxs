@@ -22,8 +22,13 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Bundle Name="~$(var.TestName) - Bundle B" Version="$(var.Version)" dep:ProviderKey="Microsoft.WiX.$(var.TestName).B">
         <Log Prefix="$(var.TestName)_BundleB"/>
-        <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
-        <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
+        <Variable Name="TestName" Value="$(var.TestName)" />
+        <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
+            <Payload Name='BootstrapperCore.config' SourceFile='!(bindpath.build)\TestBA.BootstrapperCore.config' />
+            <Payload SourceFile='!(bindpath.build)\TestBA.dll' />
+        </BootstrapperApplicationRef>
+        <WixVariable Id='WixMbaPrereqPackageId' Value='ignored' />
+        <WixVariable Id='WixMbaPrereqLicenseUrl' Value='ignored' />
         <util:RegistrySearch Root="HKLM" Key="Software\WiX\Tests\$(var.TestName)" Value="Version" Variable="ExeA_Version"/>
         <Chain>
             <MsiPackage Id="PackageA" Name="~$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>

@@ -59,6 +59,10 @@ static HRESULT ConcatPatchProperty(
     __in BURN_PACKAGE* pPackage,
     __inout_z LPWSTR* psczArguments
     );
+static HRESULT RegisterSourceDirectory(
+    __in BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzCacheDirectory
+    );
 
 
 // function definitions
@@ -961,6 +965,9 @@ extern "C" HRESULT MsiEngineExecutePackage(
 
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to install MSI package.");
+
+        hr = RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczCachedDirectory);
+        ExitOnFailure(hr, "Failed to register source directory.");
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE:
@@ -969,6 +976,9 @@ extern "C" HRESULT MsiEngineExecutePackage(
 
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to perform minor upgrade of MSI package.");
+
+        hr = RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczCachedDirectory);
+        ExitOnFailure(hr, "Failed to register source directory.");
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MODIFY: __fallthrough;
@@ -1587,5 +1597,20 @@ LExit:
     ReleaseStr(sczMspPath);
     ReleaseStr(sczCachedDirectory);
     ReleaseStr(sczPatches);
+    return hr;
+}
+
+static HRESULT RegisterSourceDirectory(
+    __in BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzCacheDirectory
+    )
+{
+    HRESULT hr = S_OK;
+    MSIINSTALLCONTEXT dwContext = pPackage->fPerMachine ? MSIINSTALLCONTEXT_MACHINE : MSIINSTALLCONTEXT_USERUNMANAGED;
+
+    hr = WiuSourceListAddSourceEx(pPackage->Msi.sczProductCode, NULL, dwContext, MSICODE_PRODUCT, wzCacheDirectory, 1);
+    ExitOnFailure2(hr, "Failed to register source directory: %ls; product: %ls", wzCacheDirectory, pPackage->Msi.sczProductCode);
+
+LExit:
     return hr;
 }

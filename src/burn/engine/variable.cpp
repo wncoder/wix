@@ -136,6 +136,22 @@ static HRESULT InitializeVariableRegistryFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT InitializeVariableDate(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableInstallerName(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableInstallerVersion(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
+static HRESULT InitializeVariableLogonUser(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 
 
 // function definitions
@@ -159,10 +175,14 @@ extern "C" HRESULT VariableInitialize(
 #endif
         {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMONX86},
         {L"CompatibilityMode", InitializeVariableOsInfo, OS_INFO_VARIABLE_CompatibilityMode},
+        {VARIABLE_DATE, InitializeVariableDate, 0},
         {L"DesktopFolder", InitializeVariableCsidlFolder, CSIDL_DESKTOP},
         {L"FavoritesFolder", InitializeVariableCsidlFolder, CSIDL_FAVORITES},
         {L"FontsFolder", InitializeVariableCsidlFolder, CSIDL_FONTS},
+        {VARIABLE_INSTALLERNAME, InitializeVariableInstallerName, 0},
+        {VARIABLE_INSTALLERVERSION, InitializeVariableInstallerVersion, 0},
         {L"LocalAppDataFolder", InitializeVariableCsidlFolder, CSIDL_LOCAL_APPDATA},
+        {VARIABLE_LOGONUSER, InitializeVariableLogonUser, 0},
         {L"MyPicturesFolder", InitializeVariableCsidlFolder, CSIDL_MYPICTURES},
         {L"NTProductType", InitializeVariableOsInfo, OS_INFO_VARIABLE_NTProductType},
         {L"NTSuiteBackOffice", InitializeVariableOsInfo, OS_INFO_VARIABLE_NTSuiteBackOffice},
@@ -1660,5 +1680,103 @@ LExit:
     ReleaseStr(sczPath);
     ReleaseRegKey(hkFolders);
 
+    return hr;
+}
+
+// Get the date in the same format as Windows Installer.
+static HRESULT InitializeVariableDate(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    SYSTEMTIME systime = { };
+    LPWSTR sczDate = NULL;
+    int cchDate = 0;
+
+    ::GetSystemTime(&systime);
+
+    cchDate = ::GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime, NULL, NULL, cchDate);
+    if (!cchDate)
+    {
+        ExitOnLastError(hr, "Failed to get the required buffer length for the Date.");
+    }
+
+    hr = StrAlloc(&sczDate, cchDate);
+    ExitOnFailure(hr, "Failed to allocate the buffer for the Date.");
+
+    if (!::GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systime, NULL, sczDate, cchDate))
+    {
+        ExitOnLastError(hr, "Failed to get the Date.");
+    }
+
+    // set value
+    hr = BVariantSetString(pValue, sczDate, cchDate);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    ReleaseStr(sczDate);
+
+    return hr;
+}
+
+static HRESULT InitializeVariableInstallerName(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+
+    // set value
+    hr = BVariantSetString(pValue, L"WiX Burn", 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT InitializeVariableInstallerVersion(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczVersion = NULL;
+
+    hr = StrAllocStringAnsi(&sczVersion, szVerMajorMinorBuild, 0, CP_ACP);
+    ExitOnFailure(hr, "Failed to copy the engine version.");
+
+    // set value
+    hr = BVariantSetString(pValue, sczVersion, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    ReleaseStr(sczVersion);
+
+    return hr;
+}
+
+// Get the current user the same as Windows Installer.
+static HRESULT InitializeVariableLogonUser(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    WCHAR wzUserName[UNLEN + 1];
+    DWORD cchUserName = countof(wzUserName);
+
+    if (!::GetUserNameW(wzUserName, &cchUserName))
+    {
+        ExitOnLastError(hr, "Failed to get the user name.");
+    }
+
+    // set value
+    hr = BVariantSetString(pValue, wzUserName, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
     return hr;
 }

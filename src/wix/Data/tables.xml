@@ -1629,6 +1629,13 @@
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
     </tableDefinition>
+    <tableDefinition name="WixUpdateRegistration" unreal="yes">
+        <columnDefinition name="Manufacturer" type="string" length="0" />
+        <columnDefinition name="Department" type="string" length="0" nullable="yes" />
+        <columnDefinition name="ProductFamily" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Name" type="string" length="0" />
+        <columnDefinition name="Classification" type="string" length="0" />
+    </tableDefinition>
     <tableDefinition name="WixCatalog" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
         <columnDefinition name="SourceFile" type="object" length="0"/>

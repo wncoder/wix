@@ -503,6 +503,62 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             Assert.IsFalse(MsiUtils.IsPatchInstalled(patchA));
         }
 
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs two bundles with one bundle not requesting a shared package be installed, then uninstalls.")]
+        [WorkItem(3469206)]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void DependencyExtension_DifferentPackageRequestStates()
+        {
+            // Build the package.
+            string packageA = BuildPackage("A", null);
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+
+            // Build the bundles.
+            string bundleA1 = this.BuildBundle("BundleA", null, bindPaths);
+            string bundleA2 = this.BuildBundle("BundleA", null, bindPaths);
+
+            // Install the base bundle and make sure it's installed.
+            this.InstallBundleWithArguments(bundleA1, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+            Assert.IsTrue(this.IsPackageInstalled(packageA));
+            Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+            // SFBUG:3469206 - install a bundle without installing the shared package, which should not be ref-counted.
+            RegistryKey key = null;
+            string name = @"Software\WiX\Tests\DependencyExtension_DifferentPackageRequestStates\PackageA";
+            try
+            {
+                key = Registry.LocalMachine.CreateSubKey(name);
+                key.SetValue("Requested", "None");
+
+                this.InstallBundleWithArguments(bundleA2, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+                Assert.IsTrue(this.IsPackageInstalled(packageA));
+                Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+            }
+            finally
+            {
+                if (null != key)
+                {
+                    key.Close();
+                    Registry.LocalMachine.DeleteSubKey(name, false);
+                }
+            }
+
+            // Uninstall the first bundle and make sure packageA is uninstalled.
+            this.UninstallBundleWithArguments(bundleA1, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+            Assert.IsFalse(this.IsPackageInstalled(packageA));
+            Assert.IsTrue(this.IsRegistryValueEqual("Version", "1.0.0.0"));
+
+            // Uninstall the second bundle and make sure both packages are uninstalled.
+            this.UninstallBundleWithArguments(bundleA2, (int)MSIExec.MSIExecReturnCode.SUCCESS);
+            Assert.IsFalse(this.IsPackageInstalled(packageA));
+            Assert.IsTrue(this.IsRegistryValueEqual("Version", null));
+        }
+
+        #region Utilities
         /// <summary>
         /// Passes in per-test data to avoid collisions with failed tests when installing dependencies.
         /// </summary>
@@ -778,5 +834,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             // Return the log file name.
             return logFile;
         }
+        #endregion
     }
 }

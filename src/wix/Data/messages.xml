@@ -42,6 +42,12 @@
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
             </Instance>
+            <Instance>
+                The {0}/@{1} attribute's value cannot be an empty string.  To use the default value "{2}", simply remove the entire attribute.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="defaultValue" />
+            </Instance>
         </Message>
         <Message Id="InsufficientVersion" Number="7">
             <Instance>
@@ -685,10 +691,17 @@
         </Message>
         <Message Id="ExpectedAttributeInElementOrParent" Number="49">
             <Instance>
-                The {0}/@{1} attribute was not found; it is required, or it can be specified in a parent {2} element.
+                The {0}/@{1} attribute was not found or empty; it is required, or it can be specified in the parent {2} element.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="parentElementName" />
+            </Instance>
+            <Instance>
+                The {0}/@{1} attribute was not found or empty; it is required, or it can be specified in the parent {2}/@{3} attribute.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="parentElementName" />
+                <Parameter Type="System.String" Name="parentAttributeName" />
             </Instance>
         </Message>
         <Message Id="UnauthorizedAccess" Number="50" SourceLineNumbers="no">

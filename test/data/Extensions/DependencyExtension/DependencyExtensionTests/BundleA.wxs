@@ -23,8 +23,13 @@
     <Bundle Name="~$(var.TestName) - Bundle A" Version="$(var.Version)" UpgradeCode="A517E3D8-887B-4024-8F24-5F039E3CEF27">
         <RelatedBundle Id="583B5ECB-04E6-4837-A30C-A1ADCBE24235" Action="Addon" />
         <Log Prefix="$(var.TestName)_BundleA"/>
-        <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense"/>
-        <WixVariable Id="WixStdbaLicenseUrl" Value="http://wix"/>
+        <Variable Name="TestName" Value="$(var.TestName)" />
+        <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
+            <Payload Name='BootstrapperCore.config' SourceFile='!(bindpath.build)\TestBA.BootstrapperCore.config' />
+            <Payload SourceFile='!(bindpath.build)\TestBA.dll' />
+        </BootstrapperApplicationRef>
+        <WixVariable Id='WixMbaPrereqPackageId' Value='ignored' />
+        <WixVariable Id='WixMbaPrereqLicenseUrl' Value='ignored' />
         <util:RegistrySearch Root="HKLM" Key="Software\WiX\Tests\$(var.TestName)" Value="Version" Variable="ExeA_Version"/>
         <Chain>
             <MsiPackage Id="PackageA" Name="~$(var.TestName)_PackageA.msi" Compressed="yes" SourceFile="!(bindpath.packageA)" Vital="yes"/>

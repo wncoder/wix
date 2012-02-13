@@ -46,12 +46,14 @@ static PFN_MSIDETERMINEPATCHSEQUENCEW vpfnMsiDeterminePatchSequenceW = NULL;
 static PFN_MSIGETPATCHINFOEXW vpfnMsiGetPatchInfoExW = NULL;
 static PFN_MSIGETPRODUCTINFOEXW vpfnMsiGetProductInfoExW = NULL;
 static PFN_MSISETEXTERNALUIRECORD vpfnMsiSetExternalUIRecord = NULL;
+static PFN_MSISOURCELISTADDSOURCEEXW vpfnMsiSourceListAddSourceExW = NULL;
 
 static HMODULE vhMsiDll = NULL;
 static PFN_MSIDETERMINEPATCHSEQUENCEW vpfnMsiDeterminePatchSequenceWFromLibrary = NULL;
 static PFN_MSIGETPATCHINFOEXW vpfnMsiGetPatchInfoExWFromLibrary = NULL;
 static PFN_MSIGETPRODUCTINFOEXW vpfnMsiGetProductInfoExWFromLibrary = NULL;
 static PFN_MSISETEXTERNALUIRECORD vpfnMsiSetExternalUIRecordFromLibrary = NULL;
+static PFN_MSISOURCELISTADDSOURCEEXW vpfnMsiSourceListAddSourceExWFromLibrary = NULL;
 static BOOL vfWiuInitialized = FALSE;
 
 // internal function declarations
@@ -158,6 +160,12 @@ extern "C" HRESULT DAPI WiuInitialize(
         vpfnMsiSetExternalUIRecord = vpfnMsiSetExternalUIRecordFromLibrary;
     }
 
+    //static PFN_MSISOURCELISTADDSOURCEEXW vpfnMsiSourceListAddSourceExW = NULL;
+    vpfnMsiSourceListAddSourceExWFromLibrary = reinterpret_cast<PFN_MSISOURCELISTADDSOURCEEXW>(::GetProcAddress(vhMsiDll, "MsiSourceListAddSourceExW"));
+    if (NULL == vpfnMsiSourceListAddSourceExW)
+    {
+        vpfnMsiSourceListAddSourceExW = vpfnMsiSourceListAddSourceExWFromLibrary;
+    }
 
     vfWiuInitialized = TRUE;
 
@@ -181,6 +189,7 @@ extern "C" void DAPI WiuUninitialize(
         vpfnMsiGetProductInfoExWFromLibrary = NULL;
         vpfnMsiGetPatchInfoExWFromLibrary = NULL;
         vpfnMsiDeterminePatchSequenceWFromLibrary = NULL;
+        vpfnMsiSourceListAddSourceExWFromLibrary = NULL;
     }
 
     vfWiuInitialized = FALSE;
@@ -204,7 +213,8 @@ extern "C" void DAPI WiuFunctionOverride(
     __in_opt PFN_MSISETINTERNALUI pfnMsiSetInternalUI,
     __in_opt PFN_MSISETEXTERNALUIW pfnMsiSetExternalUIW,
     __in_opt PFN_MSIENUMRELATEDPRODUCTSW pfnMsiEnumRelatedProductsW,
-    __in_opt PFN_MSISETEXTERNALUIRECORD pfnMsiSetExternalUIRecord
+    __in_opt PFN_MSISETEXTERNALUIRECORD pfnMsiSetExternalUIRecord,
+    __in_opt PFN_MSISOURCELISTADDSOURCEEXW pfnMsiSourceListAddSourceExW
     )
 {
     vpfnMsiEnableLogW = pfnMsiEnableLogW ? pfnMsiEnableLogW : ::MsiEnableLogW;
@@ -217,9 +227,9 @@ extern "C" void DAPI WiuFunctionOverride(
     vpfnMsiSetInternalUI = pfnMsiSetInternalUI ? pfnMsiSetInternalUI : ::MsiSetInternalUI;
     vpfnMsiSetExternalUIW = pfnMsiSetExternalUIW ? pfnMsiSetExternalUIW : ::MsiSetExternalUIW;
     vpfnMsiEnumRelatedProductsW = pfnMsiEnumRelatedProductsW ? pfnMsiEnumRelatedProductsW : ::MsiEnumRelatedProductsW;
-
     vpfnMsiGetProductInfoExW = pfnMsiGetProductInfoExW ? pfnMsiGetProductInfoExW : vpfnMsiGetProductInfoExWFromLibrary;
     vpfnMsiSetExternalUIRecord = pfnMsiSetExternalUIRecord ? pfnMsiSetExternalUIRecord : vpfnMsiSetExternalUIRecordFromLibrary;
+    vpfnMsiSourceListAddSourceExW = pfnMsiSourceListAddSourceExW ? pfnMsiSourceListAddSourceExW : vpfnMsiSourceListAddSourceExWFromLibrary;
 }
 
 
@@ -687,6 +697,26 @@ extern "C" HRESULT DAPI WiuRemovePatches(
     er = vpfnMsiRemovePatchesW(wzPatchList, wzProductCode, INSTALLTYPE_SINGLE_INSTANCE, wzPropertyList);
     er = CheckForRestartErrorCode(er, pRestart);
     ExitOnWin32Error(er, hr, "Failed to remove patches.");
+
+LExit:
+    return hr;
+}
+
+
+extern "C" HRESULT DAPI WiuSourceListAddSourceEx(
+    __in_z LPCWSTR wzProductCodeOrPatchCode,
+    __in_z_opt LPCWSTR wzUserSid,
+    __in MSIINSTALLCONTEXT dwContext,
+    __in DWORD dwCode,
+    __in_z LPCWSTR wzSource,
+    __in_opt DWORD dwIndex
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+
+    er = vpfnMsiSourceListAddSourceExW(wzProductCodeOrPatchCode, wzUserSid, dwContext, MSISOURCETYPE_NETWORK | dwCode, wzSource, dwIndex);
+    ExitOnWin32Error(er, hr, "Failed to add source.");
 
 LExit:
     return hr;

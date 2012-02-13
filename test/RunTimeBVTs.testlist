@@ -1,3 +1,4 @@
 Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.BasicTests
+Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.RegistrationTests
 Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn.SlipstreamTests
 Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyExtension

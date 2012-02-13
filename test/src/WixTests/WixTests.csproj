@@ -169,21 +169,49 @@
     <Compile Include="Wixproj\WixTaskTests.cs" />
     <Compile Include="Extensions\VSExtension\VSExtension.VSExtensionTests.cs" />
     <Compile Include="Burn\Burn.BasicTests.cs" />
+    <Compile Include="Burn\Burn.RegistrationTests.cs" />
+    <None Include="..\..\data\Burn\BasicTests\A.wxs">
+      <Link>Burn\BasicTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\BasicTests\B.wxs">
+      <Link>Burn\BasicTests\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\BasicTests\BundleA.wxs">
+      <Link>Burn\BasicTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\BasicTests\BundleB.wxs">
+      <Link>Burn\BasicTests\BundleB.wxs</Link>
+    </None>
     <None Include="..\..\data\Burn\SlipstreamTests\A.wxs">
-      <Link>Burn\A.wxs</Link>
+      <Link>Burn\SlipstreamTests\A.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\B.wxs">
-      <Link>Burn\B.wxs</Link>
+      <Link>Burn\SlipstreamTests\B.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\BundleA.wxs">
-      <Link>Burn\BundleA.wxs</Link>
+      <Link>Burn\SlipstreamTests\BundleA.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\BundleB.wxs">
-      <Link>Burn\BundleB.wxs</Link>
+      <Link>Burn\SlipstreamTests\BundleB.wxs</Link>
       <SubType>Designer</SubType>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\PatchA.wxs">
-      <Link>Burn\PatchA.wxs</Link>
+      <Link>Burn\SlipstreamTests\PatchA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RegistrationTests\BundleA.wxs">
+      <Link>Burn\RegistrationTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RegistrationTests\BundleB.wxs">
+      <Link>Burn\RegistrationTests\BundleB.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RegistrationTests\BundleC.wxs">
+      <Link>Burn\RegistrationTests\BundleC.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RegistrationTests\BundleD.wxs">
+      <Link>Burn\RegistrationTests\BundleD.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RegistrationTests\TestExe.wxs">
+      <Link>Burn\RegistrationTests\TestExe.wxs</Link>
     </None>
     <None Include="Tools\Light\Input.InputTests.mtx" />
     <None Include="Tools\Light\Output.OutputTests.mtx" />
