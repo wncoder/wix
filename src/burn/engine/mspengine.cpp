@@ -27,11 +27,19 @@
 
 // internal function declarations
 
+static void DeterminePatchChainedTarget(
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_PACKAGE* pMspPackage,
+    __in LPCWSTR wzTargetProductCode,
+    __out BURN_PACKAGE** ppChainedTargetPackage,
+    __out BOOL* pfSlipstreamed
+    );
 static HRESULT AddDetectedTargetProduct(
-    BURN_PACKAGE* pPackage,
-    MSIINSTALLCONTEXT context,
-    DWORD dwOrder,
-    LPCWSTR wzProductCode
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_PACKAGE* pPackage,
+    __in MSIINSTALLCONTEXT context,
+    __in DWORD dwOrder,
+    __in_z LPCWSTR wzProductCode
     );
 static HRESULT PlanTargetProduct(
     __in BOOTSTRAPPER_DISPLAY display,
@@ -138,11 +146,12 @@ extern "C" HRESULT MspEngineDetectInitialize(
                     {
                         if (ERROR_SUCCESS == pPackages->rgPatchInfo[iPatchInfo].uStatus)
                         {
-                            BURN_PACKAGE* pPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
+                            BURN_PACKAGE* pMspPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
+                            Assert(BURN_PACKAGE_TYPE_MSP == pMspPackage->type);
 
                             // Note that we do add superseded and obsolete MSP packages. Package Detect and Plan will sort them out later.
-                            hr = AddDetectedTargetProduct(pPackage, rgContexts[i], pPackages->rgPatchInfo[iPatchInfo].dwOrder, wzProductCode);
-                            ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pPackage->sczId);
+                            hr = AddDetectedTargetProduct(pPackages, pMspPackage, rgContexts[i], pPackages->rgPatchInfo[iPatchInfo].dwOrder, wzProductCode);
+                            ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pMspPackage->sczId);
                         }
                         // TODO: should we log something for this error case?
                     }
@@ -150,7 +159,7 @@ extern "C" HRESULT MspEngineDetectInitialize(
                 // TODO: should we log something for this error case?
             }
 
-            hr = S_OK; // always reset so we test the next product.
+            hr = S_OK; // always reset so we test all possible target products.
         }
         else if (E_BADCONFIGURATION == hr)
         {
@@ -168,11 +177,9 @@ extern "C" HRESULT MspEngineDetectInitialize(
     {
         hr = S_OK;
     }
-
     ExitOnFailure(hr, "Failed to test patches applicability against all products on the machine.");
 
 LExit:
-
     return hr;
 }
 
@@ -193,8 +200,8 @@ extern "C" HRESULT MspEngineDetectPackage(
     {
         // Start the package state at the the highest state then loop through all the
         // target product codes and end up setting the current state to the lowest
-        // package state applied to the the target proudct codes.
-        pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE;
+        // package state applied to the the target product codes.
+        pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED;
 
         for (DWORD i = 0; i < pPackage->Msp.cTargetProductCodes; ++i)
         {
@@ -304,40 +311,43 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
             break;
         }
 
-        // Calculate the rollback action.
-        switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
+        // Calculate the rollback action if there is an execute action.
+        if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
         {
-        case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
-            switch (requested)
+            switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
             {
-            case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-                rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+            case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
+                switch (requested)
+                {
+                case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
+                    rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                    break;
+
+                default:
+                    rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+                }
+                break;
+
+            case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
+            case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
+                switch (requested)
+                {
+                case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
+                case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                    rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+
+                default:
+                    rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+                }
                 break;
 
             default:
                 rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;
             }
-            break;
-
-        case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
-        case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
-            switch (requested)
-            {
-            case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-                rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
-                break;
-
-            default:
-                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-                break;
-            }
-            break;
-
-        default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
         }
 
         pTargetProduct->execute = execute;
@@ -437,8 +447,6 @@ extern "C" HRESULT MspEngineExecutePackage(
         BURN_PACKAGE* pMspPackage = pExecuteAction->mspTarget.rgOrderedPatches[i].pPackage;
         AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Invalid package type added to ordered patches.");
 
-        // TODO: send UX message that we are adding this patch to the execution.
-
         if (BOOTSTRAPPER_ACTION_STATE_INSTALL == pExecuteAction->mspTarget.action)
         {
             hr = CacheGetCompletedPath(pMspPackage->fPerMachine, pMspPackage->sczCacheId, &sczCachedDirectory);
@@ -483,7 +491,7 @@ extern "C" HRESULT MspEngineExecutePackage(
     hr = MsiEngineConcatProperties(pExecuteAction->mspTarget.pPackage->Msp.rgProperties, pExecuteAction->mspTarget.pPackage->Msp.cProperties, pVariables, fRollback, &sczProperties);
     ExitOnFailure(hr, "Failed to add properties to argument string.");
 
-    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pExecuteAction->mspTarget.action), sczMspPath, sczProperties);
+    LogId(REPORT_STANDARD, MSG_APPLYING_PATCH_PACKAGE, pExecuteAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pExecuteAction->mspTarget.action), sczMspPath, sczProperties, pExecuteAction->mspTarget.sczTargetProductCode);
 
     //
     // Do the actual action.
@@ -549,14 +557,41 @@ LExit:
     return hr;
 }
 
+extern "C" void MspEngineSlipstreamUpdateState(
+    __in BURN_PACKAGE* pPackage,
+    __in BOOTSTRAPPER_ACTION_STATE execute,
+    __in BOOTSTRAPPER_ACTION_STATE rollback
+    )
+{
+    Assert(BURN_PACKAGE_TYPE_MSP == pPackage->type);
+
+    // If the dependency manager set our state then that means something else
+    // is dependent on our package. That trumps whatever the slipstream update
+    // state might set.
+    if (!pPackage->fDependencyManagerWasHere)
+    {
+        // The highest aggregate action state found will be returned.
+        if (pPackage->execute < execute)
+        {
+            pPackage->execute = execute;
+        }
+
+        if (pPackage->rollback < rollback)
+        {
+            pPackage->rollback = rollback;
+        }
+    }
+}
+
 
 // internal helper functions
 
 static HRESULT AddDetectedTargetProduct(
-    BURN_PACKAGE* pPackage,
-    MSIINSTALLCONTEXT context,
-    DWORD dwOrder,
-    LPCWSTR wzProductCode
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_PACKAGE* pPackage,
+    __in MSIINSTALLCONTEXT context,
+    __in DWORD dwOrder,
+    __in_z LPCWSTR wzProductCode
     )
 {
     HRESULT hr = S_OK;
@@ -567,6 +602,10 @@ static HRESULT AddDetectedTargetProduct(
     hr = ::StringCchCopyW(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode, countof(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode), wzProductCode);
     ExitOnFailure(hr, "Failed to copy target product code.");
 
+    DeterminePatchChainedTarget(pPackages, pPackage, wzProductCode, 
+                                &pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].pChainedTargetPackage,
+                                &pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].fSlipstream);
+
     pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].context = context;
     pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].dwOrder = dwOrder;
     ++pPackage->Msp.cTargetProductCodes;
@@ -575,6 +614,45 @@ LExit:
     return hr;
 }
 
+static void DeterminePatchChainedTarget(
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_PACKAGE* pMspPackage,
+    __in LPCWSTR wzTargetProductCode,
+    __out BURN_PACKAGE** ppChainedTargetPackage,
+    __out BOOL* pfSlipstreamed
+    )
+{
+    BURN_PACKAGE* pTargetMsiPackage = NULL;
+    BOOL fSlipstreamed = FALSE;
+
+    for (DWORD iPackage = 0; iPackage < pPackages->cPackages; ++iPackage)
+    {
+        BURN_PACKAGE* pPackage = pPackages->rgPackages + iPackage;
+
+        if (BURN_PACKAGE_TYPE_MSI == pPackage->type && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzTargetProductCode, -1, pPackage->Msi.sczProductCode, -1))
+        {
+            pTargetMsiPackage = pPackage;
+
+            for (DWORD j = 0; j < pPackage->Msi.cSlipstreamMspPackages; ++j)
+            {
+                BURN_PACKAGE* pSlipstreamMsp = pPackage->Msi.rgpSlipstreamMspPackages[j];
+                if (pSlipstreamMsp == pMspPackage)
+                {
+                    AssertSz(!fSlipstreamed, "An MSP should only show up as a slipstreamed patch in an MSI once.");
+                    fSlipstreamed = TRUE;
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
+    *ppChainedTargetPackage = pTargetMsiPackage;
+    *pfSlipstreamed = fSlipstreamed;
+
+    return;
+}
 
 static HRESULT PlanTargetProduct(
     __in BOOTSTRAPPER_DISPLAY display,
@@ -627,6 +705,8 @@ static HRESULT PlanTargetProduct(
         pAction->mspTarget.pPackage = pPackage;
         pAction->mspTarget.fPerMachineTarget = (MSIINSTALLCONTEXT_MACHINE == pTargetProduct->context);
         pAction->mspTarget.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msp.fDisplayInternalUI, display);
+        pAction->mspTarget.pChainedTargetPackage = pTargetProduct->pChainedTargetPackage;
+        pAction->mspTarget.fSlipstream = pTargetProduct->fSlipstream;
         hr = StrAllocString(&pAction->mspTarget.sczTargetProductCode, pTargetProduct->wzTargetProductCode, 0);
         ExitOnFailure(hr, "Failed to copy target product code.");
 
@@ -636,7 +716,7 @@ static HRESULT PlanTargetProduct(
             pPlan->fPerMachine = TRUE;
         }
 
-        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, pAction->mspTarget.sczTargetProductCode, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
     }
 
     // Add our target product to the array and sort based on their order determined during detection.

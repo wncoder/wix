@@ -21,6 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     using System.IO;
     using System.Linq;
     using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
     /// Provides methods for building a Patch.
@@ -33,14 +34,66 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         }
 
         /// <summary>
-        /// Ges and sets the path to the target MSI.
+        /// Gets and sets the path to the target MSI.
         /// </summary>
-        public string TargetPath { get; set; }
+        public string TargetPath
+        {
+            get
+            {
+                if (this.TargetPaths != null)
+                {
+                    return this.TargetPaths[0];
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            set
+            {
+                this.TargetPaths = new string[] { value };
+            }
+        }
 
         /// <summary>
         /// Gets and sets the path to the upgrade MSI.
         /// </summary>
-        public string UpgradePath { get; set; }
+        public string UpgradePath
+        {
+            get
+            {
+                if (this.UpgradePaths != null)
+                {
+                    return this.UpgradePaths[0];
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            set
+            {
+                this.UpgradePaths = new string[] { value };
+            }
+        }
+
+        /// <summary>
+        /// Gets and sets the paths to the target MSIs.
+        /// </summary>
+        /// <remarks>
+        /// The order of target paths correlates to the order of upgrade paths.
+        /// </remarks>
+        public string[] TargetPaths { get; set; }
+
+        /// <summary>
+        /// Gets and sets the paths to the upgrade MSIs.
+        /// </summary>
+        /// <remarks>
+        /// The order of upgrade paths correlates to the order of target paths.
+        /// </remarks>
+        public string[] UpgradePaths { get; set; }
 
         /// <summary>
         /// Builds a patch using given paths for the target and upgrade packages.
@@ -53,7 +106,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             string rootDirectory = FileUtilities.GetUniqueFileName();
             string objDirectory = Path.Combine(rootDirectory, Settings.WixobjFolder);
             string msiDirectory = Path.Combine(rootDirectory, Settings.MSPFolder);
-            string wixmst = Path.Combine(objDirectory, String.Concat(this.Name, ".wixmst"));
             string wixmsp = Path.Combine(objDirectory, String.Concat(this.Name, ".wixmsp"));
             string package = Path.Combine(msiDirectory, String.Concat(this.Name, ".msp"));
 
@@ -87,19 +139,28 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             // Make sure the output directory is cleaned up.
             this.test.TestArtifacts.Add(new DirectoryInfo(msiDirectory));
 
-            // Torch.
-            Torch torch = new Torch();
-            torch.TargetInput = Path.ChangeExtension(this.TargetPath, "wixpdb");
-            torch.UpdatedInput = Path.ChangeExtension(this.UpgradePath, "wixpdb");
-            torch.PreserveUnmodified = true;
-            torch.XmlInput = true;
-            torch.OutputFile = wixmst;
-            torch.WorkingDirectory = this.test.TestDataDirectory2;
-            torch.Run();
-
             // Pyro.
             Pyro pyro = new Pyro();
-            pyro.Baselines.Add(torch.OutputFile, this.Name);
+
+            Assert.IsNotNull(this.TargetPaths);
+            Assert.IsNotNull(this.UpgradePaths);
+            Assert.AreEqual<int>(this.TargetPaths.Length, this.UpgradePaths.Length);
+
+            for (int i = 0; i < this.TargetPaths.Length; ++i)
+            {
+                // Torch.
+                Torch torch = new Torch();
+                torch.TargetInput = Path.ChangeExtension(this.TargetPaths[i], "wixpdb");
+                torch.UpdatedInput = Path.ChangeExtension(this.UpgradePaths[i], "wixpdb");
+                torch.PreserveUnmodified = true;
+                torch.XmlInput = true;
+                torch.OutputFile = Path.Combine(objDirectory, String.Concat(Path.GetRandomFileName(), ".wixmst"));
+                torch.WorkingDirectory = this.test.TestDataDirectory2;
+                torch.Run();
+
+                pyro.Baselines.Add(torch.OutputFile, this.Name);
+            }
+
             pyro.InputFile = light.OutputFile;
             pyro.OutputFile = package;
             pyro.WorkingDirectory = this.test.TestDataDirectory2;

@@ -278,6 +278,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
+        Result OnExecutePatchTarget(
+            [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
+            [MarshalAs(UnmanagedType.LPWStr)] string wzTargetProductCode
+            );
+
+        [PreserveSig]
+        [return: MarshalAs(UnmanagedType.I4)]
         Result OnExecuteProgress(
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] int dwProgressPercentage,
@@ -443,11 +450,36 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public enum RelatedOperation
     {
         None,
+
+        /// <summary>
+        /// The related bundle or package will be downgraded.
+        /// </summary>
         Downgrade,
+
+        /// <summary>
+        /// The related package will be upgraded as a minor revision.
+        /// </summary>
         MinorUpdate,
+
+        /// <summary>
+        /// The related bundle or package will be upgraded as a major revision.
+        /// </summary>
         MajorUpgrade,
+
+        /// <summary>
+        /// The related bundle will be removed.
+        /// </summary>
         Remove,
-        Repair
+
+        /// <summary>
+        /// The related bundle will be installed.
+        /// </summary>
+        Install,
+
+        /// <summary>
+        /// The related bundle will be repaired.
+        /// </summary>
+        Repair,
     };
 
     /// <summary>

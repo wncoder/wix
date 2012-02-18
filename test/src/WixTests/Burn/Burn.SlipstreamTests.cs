@@ -102,56 +102,60 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             this.CleanTestArtifacts = true;
         }
 
-        //[TestMethod]
-        //[Priority(2)]
-        //[Description("Installs bundle with slipstreamed package A and package B then removes both package A and patch A at same time.")]
-        ////[TestProperty("IsRuntimeTest", "true")]
-        //public void Burn_SlipstreamRemovePackageAndPatch()
-        //{
-        //    string patchedVersion = "1.0.1.0";
-        //    // Build the packages.
-        //    string packageA = new PackageBuilder(this, "A").Build().Output;
-        //    string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
-        //    string patchA = new PatchBuilder(this, "PatchA") { TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
-        //    string packageB = new PackageBuilder(this, "B").Build().Output;
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle with slipstreamed package A and package B then removes both package A and patch A at same time.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_SlipstreamRemovePackageAndPatch()
+        {
+            string patchedVersion = "1.0.1.0";
 
-        //    // Create the named bind paths to the packages.
-        //    Dictionary<string, string> bindPaths = new Dictionary<string, string>();
-        //    bindPaths.Add("packageA", packageA);
-        //    bindPaths.Add("patchA", patchA);
-        //    bindPaths.Add("packageB", packageB);
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A").Build().Output;
+            string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
+            string patchA = new PatchBuilder(this, "PatchA") { TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
+            string packageB = new PackageBuilder(this, "B").Build().Output;
 
-        //    // Create bundle and install everything.
-        //    string bundleB = new BundleBuilder(this, "BundleB") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
-        //    BundleInstaller install = new BundleInstaller(this, bundleB).Install();
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("patchA", patchA);
+            bindPaths.Add("packageB", packageB);
 
-        //    string packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
-        //    Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package A payload installed at: ", packageSourceCodeInstalled));
-        //    using (RegistryKey root = this.GetTestRegistryRoot())
-        //    {
-        //        string actualVersion = root.GetValue("A") as string;
-        //        Assert.AreEqual(patchedVersion, actualVersion);
-        //    }
+            // Create bundle and install everything.
+            string bundleB = new BundleBuilder(this, "BundleB") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+            BundleInstaller install = new BundleInstaller(this, bundleB).Install();
 
-        //    packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
-        //    Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package B payload installed at: ", packageSourceCodeInstalled));
+            string packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
+            Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package A payload installed at: ", packageSourceCodeInstalled));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(patchedVersion, actualVersion);
+            }
 
-        //    // Remove package A and it's patch should go with it.
-        //    this.SetPackageRequestedState("packageA", Bootstrapper.RequestState.Absent);
-        //    this.SetPackageRequestedState("patchA", Bootstrapper.RequestState.Absent);
-        //    install.Modify();
+            packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
+            Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package B payload installed at: ", packageSourceCodeInstalled));
 
-        //    packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
-        //    Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("After modify, should *not* have found Package A payload installed at: ", packageSourceCodeInstalled));
+            // Remove package A and it's patch should go with it.
+            this.SetPackageRequestedState("packageA", Bootstrapper.RequestState.Absent);
+            this.SetPackageRequestedState("patchA", Bootstrapper.RequestState.Absent);
+            install.Modify();
 
-        //    // Remove.
-        //    install.Uninstall();
+            this.ResetPackageStates("packageA");
+            this.ResetPackageStates("patchA");
 
-        //    packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
-        //    Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("After uninstall bundle, should *not* have found Package B payload installed at: ", packageSourceCodeInstalled));
-        //    Assert.IsNull(this.GetTestRegistryRoot(), "Test registry key should have been removed during uninstall.");
+            packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
+            Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("After modify, should *not* have found Package A payload installed at: ", packageSourceCodeInstalled));
 
-        //    this.CleanTestArtifacts = true;
-        //}
+            // Remove.
+            install.Uninstall();
+
+            packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
+            Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("After uninstall bundle, should *not* have found Package B payload installed at: ", packageSourceCodeInstalled));
+            Assert.IsNull(this.GetTestRegistryRoot(), "Test registry key should have been removed during uninstall.");
+
+            this.CleanTestArtifacts = true;
+        }
     }
 }

@@ -38,7 +38,8 @@ HRESULT ExeEngineDetectPackage(
     __in BURN_VARIABLES* pVariables
     );
 HRESULT ExeEnginePlanCalculatePackage(
-    __in BURN_PACKAGE* pPackage
+    __in BURN_PACKAGE* pPackage,
+    __in BOOL fRelatedBundle
     );
 HRESULT ExeEnginePlanAddPackage(
     __in_opt DWORD *pdwInsertSequence,

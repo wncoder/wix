@@ -713,7 +713,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
                 execute = fFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE;
             }
         }
-        else if ((BOOTSTRAPPER_PACKAGE_STATE_ABSENT == pPackage->requested || BOOTSTRAPPER_PACKAGE_STATE_CACHED == pPackage->requested) &&
+        else if ((BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_CACHE == pPackage->requested) &&
                  pPackage->fUninstallable) // removing a package that can be removed.
         {
             execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
@@ -724,9 +724,9 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
         }
         break;
 
+    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE: __fallthrough;
     case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_CACHED: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+    case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
         if (BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested)
         {
             execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
@@ -742,48 +742,50 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
         ExitOnRootFailure1(hr, "Invalid package current state result encountered during plan: %d", pPackage->currentState);
     }
 
-    // rollback action
-    BOOTSTRAPPER_PACKAGE_STATE state = BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState;
-    switch (state)
+    // Calculate the rollback action if there is an execute action.
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
-        switch (pPackage->requested)
+        switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
         {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT:
-            rollback = fRollbackFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE;
+        case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
+        case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
+            switch (pPackage->requested)
+            {
+            case BOOTSTRAPPER_REQUEST_STATE_PRESENT:
+                rollback = fRollbackFeatureActionDelta ? BOOTSTRAPPER_ACTION_STATE_MODIFY : BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
+                rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                break;
+            default:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            }
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+
+        case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE: __fallthrough;
+        case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
+        case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
+            // If we requested to put the package on the machine then remove the package during rollback
+            // if the package is uninstallable.
+            if ((BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) &&
+                pPackage->fUninstallable)
+            {
+                rollback = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+            }
+            else
+            {
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+            }
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
-            break;
+
         default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
+            hr = E_INVALIDARG;
+            ExitOnRootFailure(hr, "Invalid package detection result encountered.");
         }
-        break;
-
-    case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_CACHED: __fallthrough;
-    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
-        // If we requested to put the package on the machine then remove the package during rollback
-        // if the package is uninstallable.
-        if ((BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested) &&
-            pPackage->fUninstallable)
-        {
-            rollback = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
-        }
-        else
-        {
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-        }
-        break;
-
-    default:
-        hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Invalid package detection result encountered.");
     }
 
     // return values
@@ -860,7 +862,7 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
         pAction->msiPackage.rgFeatures = rgFeatureActions;
         rgFeatureActions = NULL;
 
-        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
 
@@ -877,8 +879,17 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
         pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
         rgRollbackFeatureActions = NULL;
 
-        LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
+    }
+
+    // Update any slipstream patches' state.
+    for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
+    {
+        BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[i];
+        AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
+
+        MspEngineSlipstreamUpdateState(pMspPackage, pPackage->execute, pPackage->rollback);
     }
 
 LExit:
@@ -971,6 +982,14 @@ extern "C" HRESULT MsiEngineExecutePackage(
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE:
+        // If feature selection is not enabled, then reinstall the existing features to ensure they get
+        // updated.
+        if (0 == pExecuteAction->msiPackage.pPackage->Msi.cFeatures)
+        {
+            hr = StrAllocConcat(&sczProperties, L" REINSTALL=ALL", 0);
+            ExitOnFailure(hr, "Failed to add reinstall all property on minor upgrade.");
+        }
+
         hr = StrAllocConcat(&sczProperties, L" REINSTALLMODE=\"vomus\" REBOOT=ReallySuppress", 0);
         ExitOnFailure(hr, "Failed to add reinstall mode and reboot suppression properties on minor upgrade.");
 

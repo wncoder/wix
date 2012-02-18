@@ -82,6 +82,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
             }
         }
 
+        protected override void OnExecutePatchTarget(ExecutePatchTargetEventArgs args)
+        {
+            this.Engine.Log(LogLevel.Verbose, String.Format("TEST: OnExecutePatchTarget - Patch Package: {0}, Target Product Code: {1}", args.PackageId, args.TargetProductCode));
+        }
+
         protected override void OnApplyComplete(ApplyCompleteEventArgs args)
         {
             // Output what the privileges are now.

@@ -118,14 +118,23 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="HelpMessage" xml:space="preserve">
-    <value><![CDATA[ usage:  insignia.exe [-?]  databaseFile [databaseFile ...]
-
-   -sw[N]     suppress all warnings or a specific message ID
-              (example: -sw1009 -sw1103)
-   -swall     suppress all warnings (deprecated)
-   -v         verbose output
-   -wx[N]     treat all warnings or a specific message ID as an error
-              (example: -wx1009 -wx1103)
-   -wxall     treat all warnings as errors (deprecated)]]></value>
+    <value><![CDATA[ usage: insignia.exe [-?] [-nologo] [-o[ut] outputPath] [@responseFile]
+           [-im databaseFile|-ib bundleFile|-ab bundlePath bundleWithAttachedContainerPath]
+   -im        specify the database file to inscribe
+   -ib        specify the bundle file from which to extract the engine.
+              The engine is stored in the file specified by -o
+   -ab        Reattach the engine to a bundle. 
+   -nologo    skip printing insignia logo information
+   -o[ut]     specify output file. Defaults to databaseFile or bundleFile.
+              If out is a directory name ending in '\', output to a file with
+               the same name as the databaseFile or bundleFile in that directory
+    -sw[N]     suppress all warnings or a specific message ID
+               (example: -sw1009 -sw1103)
+    -swall     suppress all warnings (deprecated)
+    -v         verbose output
+    -wx[N]     treat all warnings or a specific message ID as an error
+               (example: -wx1009 -wx1103)
+   -wxall     treat all warnings as errors (deprecated)
+   -? | -help this help information]]></value>
   </data>
 </root>

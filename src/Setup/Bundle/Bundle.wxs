@@ -51,6 +51,7 @@
 
             <PackageGroupRef Id='NativeSdkPackages' />
 
+            <!-- Votive needs to be last as it runs devenv /setup -->
             <MsiPackage Vital='yes' Name='data\votive.msi' SourceFile='x86\data\votive.msi'
                         InstallCondition='VS2005InstallFolder OR VS2008InstallFolder OR VS2010InstallFolder OR VS11InstallFolder'
                         DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}' />

@@ -170,6 +170,7 @@ typedef struct _BURN_ORDERED_PATCHES
 typedef struct _BURN_EXECUTE_ACTION
 {
     BURN_EXECUTE_ACTION_TYPE type;
+    BOOL fDeleted; // used to skip an action after it was planned since deleting actions out of the plan is too hard.
     union
     {
         struct
@@ -208,6 +209,8 @@ typedef struct _BURN_EXECUTE_ACTION
         {
             BURN_PACKAGE* pPackage;
             LPWSTR sczTargetProductCode;
+            BURN_PACKAGE* pChainedTargetPackage;
+            BOOL fSlipstream;
             BOOL fPerMachineTarget;
             LPWSTR sczLogPath;
             INSTALLUILEVEL uiLevel;
@@ -321,9 +324,7 @@ HRESULT PlanExecutePackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzBundleProviderKey,
-    __inout HANDLE* phSyncpointEvent,
-    __out BOOL* pfPlannedCachePackage,
-    __out BOOL* pfPlannedCleanPackage
+    __inout HANDLE* phSyncpointEvent
     );
 HRESULT PlanRelatedBundles(
     __in BOOTSTRAPPER_ACTION action,
@@ -336,7 +337,11 @@ HRESULT PlanRelatedBundles(
     __inout HANDLE* phSyncpointEvent,
     __in DWORD dwExecuteActionEarlyIndex
     );
+HRESULT PlanRemoveUnnecessaryActions(
+    __in BURN_PLAN* pPlan
+    );
 HRESULT PlanCleanPackage(
+    __in BOOTSTRAPPER_ACTION action,
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
     );

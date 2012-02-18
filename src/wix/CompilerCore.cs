@@ -131,7 +131,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private const string LegalShortFilenameCharacters = @"[^\\\?|><:/\*""\+,;=\[\]\. ]"; // illegal: \ ? | > < : / * " + , ; = [ ] . (space)
         private static readonly Regex LegalShortFilename = new Regex(String.Concat("^", LegalShortFilenameCharacters, @"{1,8}(\.", LegalShortFilenameCharacters, "{0,3})?$"), RegexOptions.Compiled);
 
-        private const string LegalLongFilenameCharacters = @"[^\\\?|><:/\*""]"; // illegal: \ ? | > < : / * "
+        private const string IllegalLongFilenameCharacters = @"[\\\?|><:/\*""]"; // illegal: \ ? | > < : / * "
+        private static readonly Regex IllegalLongFilename = new Regex(IllegalLongFilenameCharacters, RegexOptions.Compiled);
+
+        private const string LegalLongFilenameCharacters = @"[^\\\?|><:/\*""]";  // opposite of illegal above.
         private static readonly Regex LegalLongFilename = new Regex(String.Concat("^", LegalLongFilenameCharacters, @"{1,259}$"), RegexOptions.Compiled);
 
         private const string LegalRelativeLongFilenameCharacters = @"[^\?|><:/\*""]"; // (like legal long, but we allow '\') illegal: ? | > < : / * "
@@ -477,6 +480,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 return (nonPeriodFound && CompilerCore.LegalLongFilename.IsMatch(filename));
             }
+        }
+
+        /// <summary>
+        /// Replaces the illegal filename characters to create a legal name.
+        /// </summary>
+        /// <param name="filename">Filename to make valid.</param>
+        /// <param name="replace">Replacement string for invalid characters in filename.</param>
+        /// <returns>Valid filename.</returns>
+        public static string MakeValidLongFileName(string filename, string replace)
+        {
+            return CompilerCore.IllegalLongFilename.Replace(filename, replace);
         }
 
         /// <summary>

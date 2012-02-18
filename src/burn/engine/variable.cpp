@@ -1685,12 +1685,11 @@ LExit:
 
 // Get the date in the same format as Windows Installer.
 static HRESULT InitializeVariableDate(
-    __in DWORD_PTR dwpData,
+    __in DWORD_PTR /*dwpData*/,
     __inout BURN_VARIANT* pValue
     )
 {
     HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
     SYSTEMTIME systime = { };
     LPWSTR sczDate = NULL;
     int cchDate = 0;
@@ -1722,7 +1721,7 @@ LExit:
 }
 
 static HRESULT InitializeVariableInstallerName(
-    __in DWORD_PTR dwpData,
+    __in DWORD_PTR /*dwpData*/,
     __inout BURN_VARIANT* pValue
     )
 {
@@ -1737,7 +1736,7 @@ LExit:
 }
 
 static HRESULT InitializeVariableInstallerVersion(
-    __in DWORD_PTR dwpData,
+    __in DWORD_PTR /*dwpData*/,
     __inout BURN_VARIANT* pValue
     )
 {
@@ -1759,12 +1758,11 @@ LExit:
 
 // Get the current user the same as Windows Installer.
 static HRESULT InitializeVariableLogonUser(
-    __in DWORD_PTR dwpData,
+    __in DWORD_PTR /*dwpData*/,
     __inout BURN_VARIANT* pValue
     )
 {
     HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
     WCHAR wzUserName[UNLEN + 1];
     DWORD cchUserName = countof(wzUserName);
 

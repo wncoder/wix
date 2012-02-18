@@ -26,6 +26,9 @@ extern "C" {
 struct _BURN_RELATED_BUNDLES;
 typedef _BURN_RELATED_BUNDLES BURN_RELATED_BUNDLES;
 
+struct _BURN_PACKAGE;
+typedef _BURN_PACKAGE BURN_PACKAGE;
+
 // constants
 
 enum BURN_EXE_EXIT_CODE_TYPE
@@ -75,6 +78,8 @@ typedef struct _BURN_MSPTARGETPRODUCT
     MSIINSTALLCONTEXT context;
     DWORD dwOrder;
     WCHAR wzTargetProductCode[39];
+    BURN_PACKAGE* pChainedTargetPackage;
+    BOOL fSlipstream;
 
     BOOTSTRAPPER_PACKAGE_STATE patchPackageState; // only valid after Detect.
     BOOTSTRAPPER_ACTION_STATE execute;            // only valid during Plan.
@@ -166,9 +171,12 @@ typedef struct _BURN_PACKAGE
     BOOL fCached;                               // only valid after Detect.
     BOOTSTRAPPER_PACKAGE_STATE expected;        // only valid during Plan.
     BOOTSTRAPPER_REQUEST_STATE requested;       // only valid during Plan.
+    BOOL fAcquire;                              // only valid during Plan.
+    BOOL fUncache;                              // only valid during Plan.
     BOOTSTRAPPER_ACTION_STATE execute;          // only valid during Plan.
     BOOTSTRAPPER_ACTION_STATE rollback;         // only valid during Plan.
     BURN_DEPENDENCY_ACTION dependency;          // only valid during Plan.
+    BOOL fDependencyManagerWasHere;             // only valid during Plan.
 
     BURN_PACKAGE_PAYLOAD* rgPayloads;
     DWORD cPayloads;

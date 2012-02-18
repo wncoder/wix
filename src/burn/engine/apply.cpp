@@ -585,6 +585,10 @@ extern "C" HRESULT ApplyExecute(
     for (DWORD i = 0; i < pEngineState->plan.cExecuteActions; ++i)
     {
         BURN_EXECUTE_ACTION* pExecuteAction = &pEngineState->plan.rgExecuteActions[i];
+        if (pExecuteAction->fDeleted)
+        {
+            continue;
+        }
 
         // If we are seeking the next rollback boundary, skip if this action wasn't it.
         if (fSeekNextRollbackBoundary)
@@ -1237,6 +1241,8 @@ static HRESULT DoExecuteAction(
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     )
 {
+    Assert(!pExecuteAction->fDeleted);
+
     HRESULT hr = S_OK;
     HANDLE rghWait[2] = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
@@ -1345,6 +1351,10 @@ static HRESULT DoRollbackActions(
     for (DWORD i = 0; i < pEngineState->plan.cRollbackActions; ++i)
     {
         BURN_EXECUTE_ACTION* pRollbackAction = &pEngineState->plan.rgRollbackActions[i];
+        if (pRollbackAction->fDeleted)
+        {
+            continue;
+        }
 
         if (BURN_EXECUTE_ACTION_TYPE_CHECKPOINT == pRollbackAction->type)
         {
@@ -1362,9 +1372,13 @@ static HRESULT DoRollbackActions(
         // i has to be a signed integer so it doesn't get decremented to 0xFFFFFFFF.
         for (int i = iCheckpoint - 1; i >= 0; --i)
         {
-            BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
             BURN_EXECUTE_ACTION* pRollbackAction = &pEngineState->plan.rgRollbackActions[i];
+            if (pRollbackAction->fDeleted)
+            {
+                continue;
+            }
 
+            BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
             switch (pRollbackAction->type)
             {
             case BURN_EXECUTE_ACTION_TYPE_CHECKPOINT:
@@ -1553,6 +1567,16 @@ static HRESULT ExecuteMspPackage(
     hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
     ExitOnRootFailure(hr, "UX aborted execute MSP package begin.");
 
+    // Now send all the patches that target this product code.
+    for (DWORD i = 0; i < pExecuteAction->mspTarget.cOrderedPatches; ++i)
+    {
+        BURN_PACKAGE* pMspPackage = pExecuteAction->mspTarget.rgOrderedPatches[i].pPackage;
+
+        nResult = pEngineState->userExperience.pUserExperience->OnExecutePatchTarget(pMspPackage->sczId, pExecuteAction->mspTarget.sczTargetProductCode);
+        hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+        ExitOnRootFailure(hr, "BA aborted execute MSP target.");
+    }
+
     // execute package
     if (pExecuteAction->mspTarget.fPerMachineTarget)
     {
@@ -1669,7 +1693,7 @@ static HRESULT CleanPackage(
     }
     else
     {
-        hr = CacheRemovePackage(FALSE, pPackage->sczCacheId);
+        hr = CacheRemovePackage(FALSE, pPackage->sczId, pPackage->sczCacheId);
     }
 
     return hr;

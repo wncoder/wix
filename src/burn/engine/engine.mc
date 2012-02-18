@@ -134,7 +134,7 @@ MessageId=102
 Severity=Success
 SymbolicName=MSG_DETECTED_RELATED_BUNDLE
 Language=English
-Detected related bundle: %1!ls!, scope: %2!hs!, version: %3!hs!, operation: %4!hs!
+Detected related bundle: %1!ls!, type: %2!hs!, scope: %3!hs!, version: %4!hs!, operation: %5!hs!
 .
 
 MessageId=103
@@ -221,6 +221,20 @@ Language=English
 Plan %1!u! msi features for package: %2!ls!
 .
 
+MessageId=205
+Severity=Warning
+SymbolicName=MSG_PLAN_SKIP_PATCH_ACTION
+Language=English
+Plan %5!hs! skipped patch: %1!ls!, action: %2!hs! because chained target package: %3!ls! being uninstalled
+.
+
+MessageId=206
+Severity=Warning
+SymbolicName=MSG_PLAN_SKIP_SLIPSTREAM_ACTION
+Language=English
+Plan %5!hs! skipped patch: %1!ls!, action: %2!hs! because slipstreamed into chained target package: %3!ls!, action: %4!hs!
+.
+
 MessageId=299
 Severity=Success
 SymbolicName=MSG_PLAN_COMPLETE
@@ -261,6 +275,13 @@ Severity=Success
 SymbolicName=MSG_VERIFIED_ACQUIRED_PAYLOAD
 Language=English
 Verified acquired payload: %1!ls! at path: %2!ls!, %3!hs! to: %4!ls!.
+.
+
+MessageId=306
+Severity=Success
+SymbolicName=MSG_APPLYING_PATCH_PACKAGE
+Language=English
+Applying package: %1!ls!, target: %5!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
 .
 
 MessageId=310

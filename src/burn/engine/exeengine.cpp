@@ -212,7 +212,8 @@ LExit:
 // PlanCalculate - calculates the execute and rollback state for the requested package state.
 //
 extern "C" HRESULT ExeEnginePlanCalculatePackage(
-    __in BURN_PACKAGE* pPackage
+    __in BURN_PACKAGE* pPackage,
+    __in BOOL fRelatedBundle
     )
 {
     HRESULT hr = S_OK;
@@ -237,7 +238,7 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
         switch (pPackage->requested)
         {
         case BOOTSTRAPPER_REQUEST_STATE_PRESENT:
-            execute = BOOTSTRAPPER_ACTION_STATE_NONE;
+            execute = fRelatedBundle ? BOOTSTRAPPER_ACTION_STATE_INSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             execute = pPackage->Exe.fRepairable ? BOOTSTRAPPER_ACTION_STATE_REPAIR : BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -270,44 +271,47 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
         ExitOnRootFailure1(hr, "Invalid package current state: %d.", pPackage->currentState);
     }
 
-    // rollback action
-    switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
+    // Calculate the rollback action if there is an execute action.
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
-        switch (pPackage->requested)
+        switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
         {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+        case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
+            switch (pPackage->requested)
+            {
+            case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
+            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
+                rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                break;
+            default:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            }
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
-            break;
-        default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        }
-        break;
 
-    case BOOTSTRAPPER_PACKAGE_STATE_ABSENT:
-        switch (pPackage->requested)
-        {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+        case BOOTSTRAPPER_PACKAGE_STATE_ABSENT:
+            switch (pPackage->requested)
+            {
+            case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
+            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            default:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            }
             break;
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        }
-        break;
 
-    default:
-        hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Invalid package expected state.");
+        default:
+            hr = E_INVALIDARG;
+            ExitOnRootFailure(hr, "Invalid package expected state.");
+        }
     }
 
     // return values
@@ -365,7 +369,7 @@ extern "C" HRESULT ExeEnginePlanAddPackage(
             ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
         }
 
-        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, NULL); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, FALSE, pLog, pVariables, NULL); // ignore errors.
     }
 
     // add rollback action
@@ -384,7 +388,7 @@ extern "C" HRESULT ExeEnginePlanAddPackage(
             ExitOnFailure(hr, "Failed to allocate the list of dependencies to ignore.");
         }
 
-        LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, NULL); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, TRUE, pLog, pVariables, NULL); // ignore errors.
     }
 
 LExit:
@@ -550,13 +554,25 @@ static HRESULT HandleExitCode(
         }
     }
 
-    // If we didn't find a matching code then say that 0 == success and
-    // everything else is an error.
+    // If we didn't find a matching code then treat 0 as success, the standard restarts codes as restarts
+    // and everything else as an error.
     if (BURN_EXE_EXIT_CODE_TYPE_NONE == typeCode)
     {
         if (0 == dwExitCode)
         {
             typeCode = BURN_EXE_EXIT_CODE_TYPE_SUCCESS;
+        }
+        else if (ERROR_SUCCESS_REBOOT_REQUIRED == dwExitCode ||
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED) == dwExitCode ||
+                 ERROR_SUCCESS_RESTART_REQUIRED == dwExitCode ||
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_RESTART_REQUIRED) == dwExitCode)
+        {
+            typeCode = BURN_EXE_EXIT_CODE_TYPE_SCHEDULE_REBOOT;
+        }
+        else if (ERROR_SUCCESS_REBOOT_INITIATED == dwExitCode ||
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED) == dwExitCode)
+        {
+            typeCode = BURN_EXE_EXIT_CODE_TYPE_FORCE_REBOOT;
         }
         else
         {

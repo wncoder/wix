@@ -224,6 +224,7 @@ extern "C" HRESULT ElevationElevate(
     int nResult = IDOK;
     LPWSTR sczEngineWorkingPath = NULL;
     HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
+    LPWSTR sczError = NULL;
 
     nResult = pEngineState->userExperience.pUserExperience->OnElevate();
     hr = HRESULT_FROM_VIEW(nResult);
@@ -252,12 +253,19 @@ extern "C" HRESULT ElevationElevate(
         else if (HRESULT_FROM_WIN32(ERROR_CANCELLED) == hr ||   // the user clicked "Cancel" on the elevation prompt or
                  HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) == hr) // the elevation prompt timed out, provide the notification with the option to retry.
         {
-            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_CANCELLED, NULL, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL, IDNOACTION);
+            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT); // treat the failure to elevate as a user choice.
+            if (FAILED(StrAllocFromError(&sczError, hr, NULL)))
+            {
+                ReleaseNullStr(sczError);
+            }
+
+            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_INSTALL_USEREXIT, sczError, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL, IDNOACTION);
         }
     } while (IDRETRY == nResult);
     ExitOnFailure(hr, "Failed to elevate.");
 
 LExit:
+    ReleaseStr(sczError);
     ReleaseHandle(hPipesCreatedEvent);
     ReleaseStr(sczEngineWorkingPath);
 
@@ -1963,7 +1971,7 @@ static HRESULT OnCleanPackage(
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // Remove the package from the cache.
-    hr = CacheRemovePackage(TRUE, pPackage->sczCacheId);
+    hr = CacheRemovePackage(TRUE, pPackage->sczId, pPackage->sczCacheId);
     ExitOnFailure1(hr, "Failed to remove from cache package: %ls", pPackage->sczId);
 
 LExit:

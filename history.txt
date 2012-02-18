@@ -1782,6 +1782,47 @@ HeathS: SFBUG:3469206 - Do not register dependencies on packages that are
 
 HeathS: SFBUG:3439748 - Warn if dependency providers are in 64-bit components.
 
-
 WixBuild: Version 3.6.2610.0
+
+RobMen: Treat access denied error from elevation prompt as user cancel in Burn.
+
+RobMen: SFBUG:3433490;3197930;3203296 - fix Burn handling of patches.
+
+RobMen: SFBUG:3482871 - ensure MSP log filenames don't overwrite in Burn.
+
+RobMen: SFBUG:3482872 - add the target product code to Burn log when patching.
+
+RobMen: SFBUG:3463125;3474274 - disable Burn elevate code.
+
+RobMen: SFBUG:3485168 - send the BA target ProductCodes when patching via Burn.
+
+RobMen: Display error message when Burn provided invalid log path and disable
+        default logging on error.
+
+RobMen: Handle standard restart return codes by default for .EXEs in Burn.
+
+RobMen: SFBUG:3481704 - fix Burn cleanup to correctly remove obsoleted packages.
+
+RobMen: Only plan rollback actions if Burn plans an execute action.
+
+RobMen: SFBUG:3479775 - correctly uninstall superseded packages in Burn.
+        SFBUG:3458976 - send REINSTALL=ALL when feature selection is disabled
+                        in Burn.
+
+EricStJ: SFBUG:3484606 Add back native custom action projects.
+
+EricStJ: Clean up bundle project templates to use appropriate targets path.
+
+RobMen: SFBUG:3472564 - update insignia documentation.
+
+RobMen: SFBUG:3486506 - ensure Bundle log prefix is always a valid filename.
+
+HeathS: Added recently new variables to the documentation.
+
+HeathS: Support for sticky patch and addon bundles.
+        Support for patch and addon related bundles to target upgrade codes.
+
+RobMen: Display related bundles in plan in Burn log.
+
+WixBuild: Version 3.6.2617.0
 

@@ -142,39 +142,42 @@ extern "C" HRESULT MsuEnginePlanCalculatePackage(
         ExitOnRootFailure(hr, "Invalid package state.");
     }
 
-    // rollback action
-    switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
+    // Calculate the rollback action if there is an execute action.
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != execute)
     {
-    case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
-        switch (pPackage->requested)
+        switch (BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN != pPackage->expected ? pPackage->expected : pPackage->currentState)
         {
-        case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
-            rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+        case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
+            switch (pPackage->requested)
+            {
+            case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
+                rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                break;
+
+            default:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            }
+            break;
+
+        case BOOTSTRAPPER_PACKAGE_STATE_ABSENT:
+            switch (pPackage->requested)
+            {
+            case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
+            case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
+                rollback = fAllowUninstall ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+
+            default:
+                rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+                break;
+            }
             break;
 
         default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
+            hr = E_INVALIDARG;
+            ExitOnRootFailure(hr, "Invalid package expected state.");
         }
-        break;
-
-    case BOOTSTRAPPER_PACKAGE_STATE_ABSENT:
-        switch (pPackage->requested)
-        {
-        case BOOTSTRAPPER_REQUEST_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-            rollback = fAllowUninstall ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-
-        default:
-            rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-            break;
-        }
-        break;
-
-    default:
-        hr = E_INVALIDARG;
-        ExitOnRootFailure(hr, "Invalid package expected state.");
     }
 
     // return values
@@ -226,7 +229,7 @@ extern "C" HRESULT MsuEnginePlanAddPackage(
         pAction->msuPackage.pPackage = pPackage;
         pAction->msuPackage.action = pPackage->execute;
 
-        LoggingSetPackageVariable(pPackage, FALSE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, FALSE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
     }
 
     // add rollback action
@@ -239,7 +242,7 @@ extern "C" HRESULT MsuEnginePlanAddPackage(
         pAction->msuPackage.pPackage = pPackage;
         pAction->msuPackage.action = pPackage->rollback;
 
-        LoggingSetPackageVariable(pPackage, TRUE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, NULL, TRUE, pLog, pVariables, &pAction->msuPackage.sczLogPath); // ignore errors.
     }
 
 LExit:

@@ -25,6 +25,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     using System.Runtime.InteropServices;
 
     using Microsoft.Tools.WindowsInstallerXml.Test;
+    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
 
@@ -312,6 +313,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             // Remove any registry keys created during this test.
             string key = String.Format(@"Software\WiX\Tests\{0}", this.TestContext.TestName);
             Registry.LocalMachine.DeleteSubKeyTree(key, false);
+
+            MsiVerifier.Reset();
 
             // Update the working directory
             this.workingDirectories.Pop();

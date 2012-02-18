@@ -1230,6 +1230,43 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     }
 
     /// <summary>
+    /// Additional arguments used when the engine executes one or more patches targeting a product.
+    /// </summary>
+    [Serializable]
+    public class ExecutePatchTargetEventArgs : ResultEventArgs
+    {
+        private string packageId;
+        private string targetProductCode;
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="ExecutePatchTargetEventArgs"/> class.
+        /// </summary>
+        /// <param name="packageId">The identity of the package to act on.</param>
+        /// <param name="targetProductCode">The product code of the target of the patch.</param>
+        public ExecutePatchTargetEventArgs(string packageId, string targetProductCode)
+        {
+            this.packageId = packageId;
+            this.targetProductCode = targetProductCode;
+        }
+
+        /// <summary>
+        /// Gets the identity of the package to act on.
+        /// </summary>
+        public string PackageId
+        {
+            get { return this.packageId; }
+        }
+
+        /// <summary>
+        /// Gets the product code being targeted.
+        /// </summary>
+        public string TargetProductCode
+        {
+            get { return this.targetProductCode; }
+        }
+    }
+
+    /// <summary>
     /// Additional arguments used when the engine has encountered an error.
     /// </summary>
     [Serializable]

@@ -56,5 +56,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
                 packageKey.SetValue("Requested", state.ToString());
             }
         }
+
+        /// <summary>
+        /// Resets the state for a package that the TestBA will return to the engine during plan.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        protected void ResetPackageStates(string packageId)
+        {
+            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
+            Registry.LocalMachine.DeleteSubKey(key);
+        }
     }
 }

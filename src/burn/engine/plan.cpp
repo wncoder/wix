@@ -89,6 +89,11 @@ static BURN_CACHE_ACTION* ProcessSharedPayload(
     __in BURN_PLAN* pPlan,
     __in BURN_PAYLOAD* pPayload
     );
+static HRESULT RemoveUnnecessaryActions(
+    __in BOOL fExecute,
+    __in BURN_EXECUTE_ACTION* rgActions,
+    __in DWORD cActions
+    );
 
 // function definitions
 
@@ -205,16 +210,28 @@ extern "C" HRESULT PlanDefaultPackageRequestState(
     {
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_CACHE;
     }
-    // the package is superseded or obsolete then default to doing nothing except during uninstall of
-    // MSPs. Superseded patches are actually installed and can be removed.
-    else if ((BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState || BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE == currentState) &&
-             !(BOOTSTRAPPER_ACTION_UNINSTALL == action && BURN_PACKAGE_TYPE_MSP == packageType))
-    {
-        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
-    }
     else if (BOOTSTRAPPER_RELATION_PATCH == relationType && BURN_PACKAGE_TYPE_MSP == packageType)
     {
-        // If we're run from a related bundle as a patch, don't do anything to our MSP packages inside
+        // For patch related bundles, only install a patch if currently absent during install, modify, or repair.
+        if (BOOTSTRAPPER_PACKAGE_STATE_ABSENT == currentState && BOOTSTRAPPER_ACTION_INSTALL <= action)
+        {
+            *pRequestState = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
+        }
+        else
+        {
+            *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
+        }
+    }
+    else if (BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED == currentState && !BOOTSTRAPPER_ACTION_UNINSTALL == action)
+    {
+        // Superseded means the package is on the machine but not active, so only uninstall operations are allowed.
+        // All other operations do nothing.
+        *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
+    }
+    else if (BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE == currentState && !(BOOTSTRAPPER_ACTION_UNINSTALL == action && BURN_PACKAGE_TYPE_MSP == packageType))
+    {
+        // Obsolete means the package is not on the machine and should not be installed, *except* patches can be obsolete
+        // and present so allow them to be removed during uninstall. Everyone else, gets nothing.
         *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
     }
     else // pick the best option for the action state and install condition.
@@ -363,21 +380,17 @@ extern "C" HRESULT PlanExecutePackage(
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzBundleProviderKey,
-    __inout HANDLE* phSyncpointEvent,
-    __out BOOL* pfPlannedCachePackage,
-    __out BOOL* pfPlannedCleanPackage
+    __inout HANDLE* phSyncpointEvent
     )
 {
     HRESULT hr = S_OK;
     BOOL fNeedsCache = FALSE;
-    BOOL fPlannedAcquirePackage = FALSE;
-    BOOL fPlannedCleanPackage = FALSE;
 
     // Calculate execute actions.
     switch (pPackage->type)
     {
     case BURN_PACKAGE_TYPE_EXE:
-        hr = ExeEnginePlanCalculatePackage(pPackage);
+        hr = ExeEnginePlanCalculatePackage(pPackage, FALSE);
         break;
 
     case BURN_PACKAGE_TYPE_MSI:
@@ -423,11 +436,6 @@ extern "C" HRESULT PlanExecutePackage(
 
         hr = AddCachePackage(pPlan, pPackage, phSyncpointEvent);
         ExitOnFailure(hr, "Failed to plan cache package.");
-
-        // If the package was not already cached then we'll trust that AddCachePackage() planned the acquisition
-        // of it. Otherwise, we only did cache operations to verify the cache is valid so we did not plan the
-        // acquisition of the package.
-        fPlannedAcquirePackage = !pPackage->fCached;
     }
 
     // Add the cache and install size to estimated size if it will be on the machine at the end of the install
@@ -456,19 +464,19 @@ extern "C" HRESULT PlanExecutePackage(
     switch (pPackage->type)
     {
     case BURN_PACKAGE_TYPE_EXE:
-        hr = ExeEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
+        hr = ExeEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, pPackage->fAcquire);
         break;
 
     case BURN_PACKAGE_TYPE_MSI:
-        hr = MsiEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
+        hr = MsiEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, pPackage->fAcquire);
         break;
 
     case BURN_PACKAGE_TYPE_MSP:
-        hr = MspEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
+        hr = MspEnginePlanAddPackage(NULL, display, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, pPackage->fAcquire);
         break;
 
     case BURN_PACKAGE_TYPE_MSU:
-        hr = MsuEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, fPlannedAcquirePackage);
+        hr = MsuEnginePlanAddPackage(NULL, pPackage, pPlan, pLog, pVariables, *phSyncpointEvent, pPackage->fAcquire);
         break;
 
     default:
@@ -495,19 +503,6 @@ extern "C" HRESULT PlanExecutePackage(
             pPlan->fPerMachine = TRUE;
         }
     }
-
-    // If the package is scheduled to be acquired or is already cached but we are removing it or the package
-    // is not supposed to stay cached then ensure the package is cleaned up.
-    if ((fPlannedAcquirePackage || pPackage->fCached) && (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute || !pPackage->fCache))
-    {
-        hr = PlanCleanPackage(pPlan, pPackage);
-        ExitOnFailure(hr, "Failed to plan clean package.");
-
-        fPlannedCleanPackage = TRUE;
-    }
-
-    *pfPlannedCachePackage = fPlannedAcquirePackage; // tell the caller we planned caching only if we needed to go get the package.
-    *pfPlannedCleanPackage = fPlannedCleanPackage;
 
 LExit:
     return hr;
@@ -556,6 +551,10 @@ extern "C" HRESULT PlanRelatedBundles(
                 // Uninstall addons early in the chain, before other packages are installed
                 pdwInsertIndex = &dwExecuteActionEarlyIndex;
             }
+            else if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_MODIFY == action)
+            {
+                requested = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
+            }
             else if (BOOTSTRAPPER_ACTION_REPAIR == action)
             {
                 requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
@@ -585,7 +584,7 @@ extern "C" HRESULT PlanRelatedBundles(
         {
             pRelatedBundle->package.requested = requested;
 
-            hr = ExeEnginePlanCalculatePackage(&pRelatedBundle->package);
+            hr = ExeEnginePlanCalculatePackage(&pRelatedBundle->package, TRUE);
             ExitOnFailure1(hr, "Failed to calcuate plan for related bundle: %ls", pRelatedBundle->package.sczId);
 
             hr = ExeEnginePlanAddPackage(pdwInsertIndex, &pRelatedBundle->package, pPlan, pLog, pVariables, *phSyncpointEvent, FALSE);
@@ -609,21 +608,78 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT PlanRemoveUnnecessaryActions(
+    __in BURN_PLAN* pPlan
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = RemoveUnnecessaryActions(TRUE, pPlan->rgExecuteActions, pPlan->cExecuteActions);
+    ExitOnFailure(hr, "Failed to remove unnecessary execute actions.");
+
+    hr = RemoveUnnecessaryActions(FALSE, pPlan->rgRollbackActions, pPlan->cRollbackActions);
+    ExitOnFailure(hr, "Failed to remove unnecessary execute actions.");
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT PlanCleanPackage(
+    __in BOOTSTRAPPER_ACTION action,
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage
     )
 {
     HRESULT hr = S_OK;
+    BOOL fPlanCleanPackage = FALSE;
     BURN_CLEAN_ACTION* pCleanAction = NULL;
 
-    hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCleanActions), pPlan->cCleanActions + 1, sizeof(BURN_CLEAN_ACTION), 5);
-    ExitOnFailure(hr, "Failed to grow plan's array of clean actions.");
+    // The following is a complex set of logic that determines when a package should be cleaned
+    // from the cache. Start by noting that we only clean if the package is being acquired or
+    // already cached.
+    if (pPackage->fAcquire || pPackage->fCached)
+    {
+        // The following are all different reasons why the package should be cleaned from the cache.
+        // The else-ifs are used to make the conditions easier to see (rather than have them combined
+        // in one huge condition).
+        if (!pPackage->fCache)  // easy, package is not supposed to stay cached.
+        {
+            fPlanCleanPackage = TRUE;
+        }
+        else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed and
+                    BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute)      // actually being removed.
+        {
+            fPlanCleanPackage = TRUE;
+        }
+        else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed but
+                    BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is do nothing and
+                    !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
+                    BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
+        {
+            fPlanCleanPackage = TRUE;
+        }
+        else if (BOOTSTRAPPER_ACTION_UNINSTALL == action &&                   // uninstalling and
+                    BOOTSTRAPPER_REQUEST_STATE_NONE == pPackage->requested &&    // requested do nothing (aka: default) and
+                    BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&       // execute is still do nothing and
+                    !pPackage->fDependencyManagerWasHere &&                      // dependency manager didn't change execute and
+                    BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState) // currently not installed.
+        {
+            fPlanCleanPackage = TRUE;
+        }
+    }
 
-    pCleanAction = pPlan->rgCleanActions + pPlan->cCleanActions;
-    ++pPlan->cCleanActions;
+    if (fPlanCleanPackage)
+    {
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(&pPlan->rgCleanActions), pPlan->cCleanActions + 1, sizeof(BURN_CLEAN_ACTION), 5);
+        ExitOnFailure(hr, "Failed to grow plan's array of clean actions.");
 
-    pCleanAction->pPackage = pPackage;
+        pCleanAction = pPlan->rgCleanActions + pPlan->cCleanActions;
+        ++pPlan->cCleanActions;
+
+        pCleanAction->pPackage = pPackage;
+
+        pPackage->fUncache = TRUE;
+    }
 
 LExit:
     return hr;
@@ -1014,9 +1070,12 @@ static void ResetPlannedPackageState(
     // Reset package state that is a result of planning.
     pPackage->expected = BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN;
     pPackage->requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+    pPackage->fAcquire = FALSE;
+    pPackage->fUncache = FALSE;
     pPackage->execute = BOOTSTRAPPER_ACTION_STATE_NONE;
     pPackage->rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
     pPackage->dependency = BURN_DEPENDENCY_ACTION_NONE;
+    pPackage->fDependencyManagerWasHere = FALSE;
 
     if (BURN_PACKAGE_TYPE_MSI == pPackage->type && pPackage->Msi.rgFeatures)
     {
@@ -1164,6 +1223,10 @@ static HRESULT AddCachePackage(
     *phSyncpointEvent = pCacheAction->syncpoint.hEvent;
 
     ++pPlan->cOverallProgressTicksTotal;
+
+    // If the package was not already cached then note that we planned the cache here. Otherwise, we only did cache
+    // operations to verify the cache is valid so we did not plan the acquisition of the package.
+    pPackage->fAcquire = !pPackage->fCached;
 
 LExit:
     return hr;
@@ -1619,6 +1682,40 @@ static BURN_CACHE_ACTION* ProcessSharedPayload(
     }
 
     return pAcquireAction;
+}
+
+static HRESULT RemoveUnnecessaryActions(
+    __in BOOL fExecute,
+    __in BURN_EXECUTE_ACTION* rgActions,
+    __in DWORD cActions
+    )
+{
+    HRESULT hr = S_OK;
+    LPCSTR szExecuteOrRollback = fExecute ? "execute" : "rollback";
+
+    for (DWORD i = 0; i < cActions; ++i)
+    {
+        BURN_EXECUTE_ACTION* pAction = rgActions + i;
+
+        // If this MSP targets a package in the chain, check the target's execute state
+        // to see if this patch should be skipped.
+        if (BURN_EXECUTE_ACTION_TYPE_MSP_TARGET == pAction->type && pAction->mspTarget.pChainedTargetPackage)
+        {
+            BOOTSTRAPPER_ACTION_STATE chainedTargetPackageAction = fExecute ? pAction->mspTarget.pChainedTargetPackage->execute : pAction->mspTarget.pChainedTargetPackage->rollback;
+            if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == chainedTargetPackageAction)
+            {
+                LogId(REPORT_STANDARD, MSG_PLAN_SKIP_PATCH_ACTION, pAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pAction->mspTarget.action), pAction->mspTarget.pChainedTargetPackage->sczId, LoggingActionStateToString(chainedTargetPackageAction), szExecuteOrRollback);
+                pAction->fDeleted = TRUE;
+            }
+            else if (pAction->mspTarget.fSlipstream && BOOTSTRAPPER_ACTION_STATE_UNINSTALL < chainedTargetPackageAction && BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pAction->mspTarget.action)
+            {
+                LogId(REPORT_STANDARD, MSG_PLAN_SKIP_SLIPSTREAM_ACTION, pAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pAction->mspTarget.action), pAction->mspTarget.pChainedTargetPackage->sczId, LoggingActionStateToString(chainedTargetPackageAction), szExecuteOrRollback);
+                pAction->fDeleted = TRUE;
+            }
+        }
+    }
+
+    return hr;
 }
 
 

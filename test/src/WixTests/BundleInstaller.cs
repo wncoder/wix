@@ -112,8 +112,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             sb.Append(" -quiet");
 
             // Generate the log file name.
-            string logFile = String.Format("{0}_{1:yyyyMMddhhmmss}_{3}_{2}.log", this.TestName, DateTime.UtcNow, Path.GetFileNameWithoutExtension(this.Bundle), mode);
-            sb.AppendFormat(" -log {0}", Path.Combine(Path.GetTempPath(), logFile));
+            string logFile = Path.Combine(Path.GetTempPath(), String.Format("{0}_{1:yyyyMMddhhmmss}_{3}_{2}.log", this.TestName, DateTime.UtcNow, Path.GetFileNameWithoutExtension(this.Bundle), mode));
+            sb.AppendFormat(" -log \"{0}\"", logFile);
 
             // Set operation.
             switch (mode)

@@ -60,13 +60,16 @@ typedef struct _BURN_LOGGING
 
 HRESULT LoggingOpen(
     __in BURN_LOGGING* pLog,
-    __in BURN_VARIABLES* pVariables
+    __in BURN_VARIABLES* pVariables,
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in_z LPCWSTR wzBundleName
     );
 
 void LoggingIncrementPackageSequence();
 
 HRESULT LoggingSetPackageVariable(
     __in BURN_PACKAGE* pPackage,
+    __in_z_opt LPCWSTR wzSuffix,
     __in BOOL fRollback,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
@@ -107,6 +110,10 @@ LPCSTR LoggingMsiFeatureActionToString(
 
 LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
+    );
+
+LPCSTR LoggingRelationTypeToString(
+    __in BOOTSTRAPPER_RELATION_TYPE type
     );
 
 LPCSTR LoggingRelatedOperationToString(

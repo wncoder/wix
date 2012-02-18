@@ -302,8 +302,6 @@ extern "C" HRESULT CorePlan(
     DWORD dwExecuteActionEarlyIndex = 0;
     HANDLE hSyncpointEvent = NULL;
     BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
-    BOOL fPlannedCachePackage = FALSE;
-    BOOL fPlannedCleanPackage = FALSE;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
     HANDLE hRollbackBoundaryCompleteEvent = NULL;
     DWORD iAfterExecuteFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
@@ -361,9 +359,6 @@ extern "C" HRESULT CorePlan(
         pPackage = pEngineState->packages.rgPackages + iPackage;
         BURN_ROLLBACK_BOUNDARY* pEffectiveRollbackBoundary = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pPackage->pRollbackBoundaryBackward : pPackage->pRollbackBoundaryForward;
 
-        fPlannedCachePackage = FALSE;
-        fPlannedCleanPackage = FALSE;
-
         // If the package marks the start of a rollback boundary, start a new one.
         if (pEffectiveRollbackBoundary)
         {
@@ -409,7 +404,7 @@ extern "C" HRESULT CorePlan(
                     }
                 }
 
-                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, &fPlannedCachePackage, &fPlannedCleanPackage);
+                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent);
                 ExitOnFailure(hr, "Failed to plan execute package.");
 
                 if (pPackage->fUninstallable)
@@ -440,8 +435,6 @@ extern "C" HRESULT CorePlan(
             hr = PlanExecuteCheckpoint(&pEngineState->plan);
             ExitOnFailure(hr, "Failed to append execute checkpoint.");
         }
-
-        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(fPlannedCachePackage), LoggingBoolToString(fPlannedCleanPackage), LoggingDependencyActionToString(pPackage->dependency));
 
         pEngineState->userExperience.pUserExperience->OnPlanPackageComplete(pPackage->sczId, hr, pPackage->currentState, pPackage->requested, pPackage->execute, pPackage->rollback);
     }
@@ -480,11 +473,34 @@ extern "C" HRESULT CorePlan(
         hRollbackBoundaryCompleteEvent = NULL;
     }
 
+    // Remove unnecessary actions.
+    hr = PlanRemoveUnnecessaryActions(&pEngineState->plan);
+    ExitOnFailure(hr, "Failed to remove unnecessary actions from plan.");
+
+    // Plan clean up.
+    for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
+    {
+        DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pEngineState->packages.cPackages - 1 - i : i;
+        pPackage = pEngineState->packages.rgPackages + iPackage;
+
+        hr = PlanCleanPackage(action, &pEngineState->plan, pPackage);
+        ExitOnFailure(hr, "Failed to plan clean package.");
+    }
+
     // Plan the update of related bundles last as long as we are not doing layout only.
     if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
         hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, dwExecuteActionEarlyIndex);
         ExitOnFailure(hr, "Failed to plan related bundles.");
+    }
+
+    // Finally, display the plan in the log.
+    for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
+    {
+        DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pEngineState->packages.cPackages - 1 - i : i;
+        pPackage = pEngineState->packages.rgPackages + iPackage;
+
+        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(pPackage->fAcquire), LoggingBoolToString(pPackage->fUncache), LoggingDependencyActionToString(pPackage->dependency));
     }
 
 #ifdef DEBUG

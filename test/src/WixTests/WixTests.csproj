@@ -26,6 +26,7 @@
     <Compile Include="BundleBuilder.cs" />
     <Compile Include="BundleInstaller.cs" />
     <Compile Include="Burn\Burn.SlipstreamTests.cs" />
+    <Compile Include="Burn\Burn.PatchTests.cs" />
     <Compile Include="PackageBuilder.cs" />
     <Compile Include="PatchBuilder.cs" />
     <Compile Include="WixTests.cs" />
@@ -170,6 +171,7 @@
     <Compile Include="Extensions\VSExtension\VSExtension.VSExtensionTests.cs" />
     <Compile Include="Burn\Burn.BasicTests.cs" />
     <Compile Include="Burn\Burn.RegistrationTests.cs" />
+    <Compile Include="Burn\Burn.RelatedBundleTests.cs" />
     <None Include="..\..\data\Burn\BasicTests\A.wxs">
       <Link>Burn\BasicTests\A.wxs</Link>
     </None>
@@ -181,6 +183,25 @@
     </None>
     <None Include="..\..\data\Burn\BasicTests\BundleB.wxs">
       <Link>Burn\BasicTests\BundleB.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\A.wxs">
+      <Link>Burn\PatchTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\B.wxs">
+      <Link>Burn\PatchTests\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\BundleA.wxs">
+      <Link>Burn\PatchTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\BundleB.wxs">
+      <Link>Burn\PatchTests\BundleB.wxs</Link>
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\PatchA.wxs">
+      <Link>Burn\PatchTests\PatchA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PatchTests\PatchBundleA.wxs">
+      <Link>Burn\PatchTests\PatchBundleA.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\A.wxs">
       <Link>Burn\SlipstreamTests\A.wxs</Link>
@@ -212,6 +233,33 @@
     </None>
     <None Include="..\..\data\Burn\RegistrationTests\TestExe.wxs">
       <Link>Burn\RegistrationTests\TestExe.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\A.wxs">
+      <Link>Burn\RelatedBundleTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\B.wxs">
+      <Link>Burn\RelatedBundleTests\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\C.wxs">
+      <Link>Burn\RelatedBundleTests\C.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\D.wxs">
+      <Link>Burn\RelatedBundleTests\D.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\PatchA.wxs">
+      <Link>Burn\RelatedBundleTests\PatchA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\BundleA.wxs">
+      <Link>Burn\RelatedBundleTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\BundleB.wxs">
+      <Link>Burn\RelatedBundleTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\BundleC.wxs">
+      <Link>Burn\RelatedBundleTests\BundleC.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\RelatedBundleTests\BundleD.wxs">
+      <Link>Burn\RelatedBundleTests\BundleD.wxs</Link>
     </None>
     <None Include="Tools\Light\Input.InputTests.mtx" />
     <None Include="Tools\Light\Output.OutputTests.mtx" />

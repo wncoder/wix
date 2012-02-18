@@ -246,6 +246,7 @@ extern "C" HRESULT DependencyPlanPackageBegin(
             LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_DEPENDENT, pDependency->sczKey, LoggingStringOrUnknownIfNull(pDependency->sczName));
         }
 
+        pPackage->fDependencyManagerWasHere = TRUE;
         pPackage->execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         pPackage->rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
     }
@@ -676,8 +677,7 @@ static void DependencyCalculatePlan(
                 switch (pPackage->currentState)
                 {
                 case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
-                case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED: __fallthrough;
-                case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+                case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
                     *pDependencyExecuteAction = BURN_DEPENDENCY_ACTION_REGISTER;
                     break;
                 }
@@ -703,6 +703,7 @@ static void DependencyCalculatePlan(
     case BURN_DEPENDENCY_ACTION_REGISTER:
         switch (pPackage->currentState)
         {
+        case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE: __fallthrough;
         case BOOTSTRAPPER_PACKAGE_STATE_ABSENT: __fallthrough;
         case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
             *pDependencyRollbackAction = BURN_DEPENDENCY_ACTION_UNREGISTER;
@@ -713,8 +714,7 @@ static void DependencyCalculatePlan(
         switch (pPackage->currentState)
         {
         case BOOTSTRAPPER_PACKAGE_STATE_PRESENT: __fallthrough;
-        case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED: __fallthrough;
-        case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+        case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
             *pDependencyRollbackAction = BURN_DEPENDENCY_ACTION_REGISTER;
             break;
         }

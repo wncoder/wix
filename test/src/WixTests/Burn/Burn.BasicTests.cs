@@ -64,6 +64,102 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
         [TestMethod]
         [Priority(2)]
+        [Description("Installs bundle A then upgrades it to v2.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_MajorUpgrade()
+        {
+            string v2Version = "2.0.0.0";
+
+            // Build the packages.
+            string packageAv1 = new PackageBuilder(this, "A").Build().Output;
+            string packageAv2 = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", v2Version } } }.Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPathsv1 = new Dictionary<string, string>() { { "packageA", packageAv1 } };
+            Dictionary<string, string> bindPathsv2 = new Dictionary<string, string>() { { "packageA", packageAv2 } };
+
+            // Build the bundles.
+            string bundleAv1 = new BundleBuilder(this, "BundleA") { BindPaths = bindPathsv1, Extensions = Extensions }.Build().Output;
+            string bundleAv2 = new BundleBuilder(this, "BundleA") { BindPaths = bindPathsv2, Extensions = Extensions, PreprocessorVariables = new Dictionary<string, string>() { { "Version", v2Version } } }.Build().Output;
+
+            // Initialize with first bundle.
+            BundleInstaller installerAv1 = new BundleInstaller(this, bundleAv1).Install();
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageAv1));
+
+            // Install second bundle which will major upgrade away v1.
+            BundleInstaller installerAv2 = new BundleInstaller(this, bundleAv2).Install();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageAv1));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageAv2));
+
+            // Uninstall the second bundle and everything should be gone.
+            installerAv2.Uninstall();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageAv1));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageAv2));
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle A then bundle B with a minor upgrade of A.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_SharedMinorUpgrade()
+        {
+            string productCode = Guid.NewGuid().ToString("B").ToUpperInvariant();
+            string originalVersion = "1.0.0.0";
+            string v11Version = "1.0.1.0";
+
+            // Build the packages.
+            string packageAv1 = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "ProductCode", productCode } } }.Build().Output;
+            string packageAv11 = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "ProductCode", productCode }, { "Version", v11Version } } }.Build().Output;
+            string packageB = new PackageBuilder(this, "B").Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPathsA = new Dictionary<string, string>() { { "packageA", packageAv1 } };
+            Dictionary<string, string> bindPathsB = new Dictionary<string, string>() { { "packageA", packageAv11 }, { "packageB", packageB } };
+
+            // Build the bundles.
+            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPathsA, Extensions = Extensions }.Build().Output;
+            string bundleB = new BundleBuilder(this, "BundleB") { BindPaths = bindPathsB, Extensions = Extensions }.Build().Output;
+
+            // Initialize with first bundle.
+            BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
+            Assert.IsTrue(MsiVerifier.IsProductInstalled(productCode));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(originalVersion, actualVersion);
+            }
+
+            // Install second bundle which will minor upgrade .
+            BundleInstaller installerB = new BundleInstaller(this, bundleB).Install();
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageB));
+            Assert.IsTrue(MsiVerifier.IsProductInstalled(productCode));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(v11Version, actualVersion);
+            }
+
+            // Uninstall the second bundle and only the minor upgrade MSI should be left.
+            installerB.Uninstall();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
+            Assert.IsTrue(MsiVerifier.IsProductInstalled(productCode));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(v11Version, actualVersion);
+            }
+
+            // Now everything should be gone.
+            installerA.Uninstall();
+            Assert.IsFalse(MsiVerifier.IsProductInstalled(productCode));
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
         [Description("Installs bundle A then removes it.")]
         [TestProperty("IsRuntimeTest", "true")]
         public void Burn_MajorUpgradeRemovesPackageFixedByRepair()
@@ -114,7 +210,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         [Priority(2)]
         [Description("Installs a bundle and tests the register source list.")]
         [TestProperty("IsRuntimeTest", "true")]
-        public void Burn_ValidateMulipleSourcePaths()
+        public void Burn_ValidateMultipleSourcePaths()
         {
             // Build the package.
             string packageA = new PackageBuilder(this, "A") { Extensions = Extensions }.Build().Output;

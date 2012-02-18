@@ -210,11 +210,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public enum PackageState
     {
         Unknown,
+        Obsolete,
         Absent,
         Cached,
         Present,
         Superseded,
-        Obsolete,
     }
 
     /// <summary>

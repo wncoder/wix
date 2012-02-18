@@ -27,6 +27,7 @@
         <Feature Id="NativeSdkFeature" Title="Native $(var.VisualStudioTargetVersion) SDK" Level="1">
             <ComponentGroupRef Id="HeaderComponents" />
             <ComponentGroupRef Id="LibComponents" />
+            <ComponentGroupRef Id="ProjectTemplates" />
         </Feature>
     </Product>
 

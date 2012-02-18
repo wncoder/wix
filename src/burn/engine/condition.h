@@ -42,6 +42,7 @@ HRESULT ConditionGlobalCheck(
     __in BURN_VARIABLES* pVariables,
     __in BURN_CONDITION* pBlock,
     __in BOOTSTRAPPER_DISPLAY display,
+    __in_z LPCWSTR wzBundleName,
     __out DWORD *pdwExitCode,
     __out BOOL *pfContinueExecution
     );

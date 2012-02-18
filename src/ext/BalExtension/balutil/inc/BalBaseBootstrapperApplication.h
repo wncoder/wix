@@ -374,6 +374,14 @@ public: // IBurnUserExperience
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
+    virtual STDMETHODIMP_(int) OnExecutePatchTarget(
+        __in_z LPCWSTR /*wzPackageId*/,
+        __in_z LPCWSTR /*wzTargetProductCode*/
+        )
+    {
+        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+    }
+
     virtual STDMETHODIMP_(int) OnError(
         __in_z LPCWSTR wzPackageId,
         __in DWORD dwCode,

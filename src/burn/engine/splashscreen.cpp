@@ -91,6 +91,34 @@ LExit:
     ReleaseHandle(rgSplashScreenEvents[0]);
 }
 
+extern "C" HRESULT SplashScreenDisplayError(
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in_z LPCWSTR wzBundleName,
+    __in HRESULT hrError
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczDisplayString = NULL;
+
+    hr = StrAllocFromError(&sczDisplayString, hrError, NULL);
+    ExitOnFailure(hr, "Failed to allocate string to display error message");
+
+    Trace1(REPORT_STANDARD, "Error message displayed because: %ls", sczDisplayString);
+
+    if (BOOTSTRAPPER_DISPLAY_NONE == display || BOOTSTRAPPER_DISPLAY_PASSIVE == display || BOOTSTRAPPER_DISPLAY_EMBEDDED == display)
+    {
+        // Don't display the error dialog in these modes
+        ExitFunction1(hr = S_OK);
+    }
+
+    ::MessageBoxW(NULL, sczDisplayString, wzBundleName, MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+
+LExit:
+    ReleaseStr(sczDisplayString);
+
+    return hr;
+}
+
 
 static DWORD WINAPI ThreadProc(
     __in LPVOID pvContext

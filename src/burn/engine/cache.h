@@ -133,11 +133,12 @@ HRESULT CacheRemoveWorkingFolder(
     );
 HRESULT CacheRemoveBundle(
     __in BOOL fPerMachine,
-    __in LPCWSTR wzPackageId
+    __in_z LPCWSTR wzPackageId
     );
 HRESULT CacheRemovePackage(
     __in BOOL fPerMachine,
-    __in LPCWSTR wzPackageId
+    __in_z LPCWSTR wzPackageId,
+    __in_z LPCWSTR wzCacheId
     );
 HRESULT CacheVerifyPayloadSignature(
     __in BURN_PAYLOAD* pPayload,

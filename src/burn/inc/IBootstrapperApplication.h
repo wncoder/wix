@@ -58,6 +58,7 @@ enum BOOTSTRAPPER_RELATED_OPERATION
     BOOTSTRAPPER_RELATED_OPERATION_MINOR_UPDATE,
     BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE,
     BOOTSTRAPPER_RELATED_OPERATION_REMOVE,
+    BOOTSTRAPPER_RELATED_OPERATION_INSTALL,
     BOOTSTRAPPER_RELATED_OPERATION_REPAIR,
 };
 
@@ -519,6 +520,18 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     STDMETHOD_(int, OnExecutePackageBegin)(
         __in_z LPCWSTR wzPackageId,
         __in BOOL fExecute
+        ) = 0;
+
+    // OnExecutePatchTarget - called when the engine executes one or more patches targeting
+    //                        a product.
+    //
+    // Return:
+    //  IDCANCEL instructs the engine to stop applying.
+    //
+    //  IDNOACTION instructs the engine to continue.
+    STDMETHOD_(int, OnExecutePatchTarget)(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzTargetProductCode
         ) = 0;
 
     // OnExecuteProgress - called when the engine makes progress executing a package.

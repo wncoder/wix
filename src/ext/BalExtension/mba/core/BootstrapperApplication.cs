@@ -241,6 +241,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public event EventHandler<ExecutePackageBeginEventArgs> ExecutePackageBegin;
 
         /// <summary>
+        /// Fired when the engine executes one or more patches targeting a product.
+        /// </summary>
+        public event EventHandler<ExecutePatchTargetEventArgs> ExecutePatchTarget;
+
+        /// <summary>
         /// Fired when the engine has encountered an error.
         /// </summary>
         public event EventHandler<ErrorEventArgs> Error;
@@ -831,6 +836,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
+        /// Called when the engine executes one or more patches targeting a product.
+        /// </summary>
+        /// <param name="args">Additional arguments for this event.</param>
+        protected virtual void OnExecutePatchTarget(ExecutePatchTargetEventArgs args)
+        {
+            EventHandler<ExecutePatchTargetEventArgs> handler = this.ExecutePatchTarget;
+            if (null != handler)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
         /// Called when the engine has encountered an error.
         /// </summary>
         /// <param name="args">Additional arguments for this event.</param>
@@ -1213,6 +1231,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         {
             ExecutePackageBeginEventArgs args = new ExecutePackageBeginEventArgs(wzPackageId, fExecute);
             this.OnExecutePackageBegin(args);
+
+            return args.Result;
+        }
+
+        Result IBootstrapperApplication.OnExecutePatchTarget(string wzPackageId, string wzTargetProductCode)
+        {
+            ExecutePatchTargetEventArgs args = new ExecutePatchTargetEventArgs(wzPackageId, wzTargetProductCode);
+            this.OnExecutePatchTarget(args);
 
             return args.Result;
         }

@@ -72,6 +72,11 @@ HRESULT MspEngineExecutePackage(
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
+void MspEngineSlipstreamUpdateState(
+    __in BURN_PACKAGE* pMspPackage,
+    __in BOOTSTRAPPER_ACTION_STATE execute,
+    __in BOOTSTRAPPER_ACTION_STATE rollback
+    );
 
 
 #if defined(__cplusplus)

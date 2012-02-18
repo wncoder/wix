@@ -273,7 +273,7 @@ static HRESULT RunNormal(
     BOOL fReloadApp = FALSE;
 
     // Initialize logging.
-    hr = LoggingOpen(&pEngineState->log, &pEngineState->variables);
+    hr = LoggingOpen(&pEngineState->log, &pEngineState->variables, pEngineState->command.display, pEngineState->registration.sczDisplayName);
     ExitOnFailure(hr, "Failed to open log.");
 
     // When launched explicitly unelevated, create the pipes so the elevated process can connect.
@@ -299,7 +299,7 @@ static HRESULT RunNormal(
     }
 
     // Ensure we're on a supported operating system.
-    hr = ConditionGlobalCheck(&pEngineState->variables, &pEngineState->condition, pEngineState->command.display, &pEngineState->userExperience.dwExitCode, &fContinueExecution);
+    hr = ConditionGlobalCheck(&pEngineState->variables, &pEngineState->condition, pEngineState->command.display, pEngineState->registration.sczDisplayName, &pEngineState->userExperience.dwExitCode, &fContinueExecution);
     ExitOnFailure(hr, "Failed to check global conditions");
 
     if (!fContinueExecution)

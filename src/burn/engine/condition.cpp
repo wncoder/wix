@@ -143,10 +143,6 @@ static HRESULT CompareVersionValues(
     __in DWORD64 qwRightOperand,
     __out BOOL* pfResult
     );
-static HRESULT DisplayError(
-    BOOTSTRAPPER_DISPLAY display,
-    HRESULT hrError
-    );
 
 
 // function definitions
@@ -193,6 +189,7 @@ extern "C" HRESULT ConditionGlobalCheck(
     __in BURN_VARIABLES* pVariables,
     __in BURN_CONDITION* pCondition,
     __in BOOTSTRAPPER_DISPLAY display,
+    __in_z LPCWSTR wzBundleName,
     __out DWORD *pdwExitCode,
     __out BOOL *pfContinueExecution
     )
@@ -222,7 +219,7 @@ extern "C" HRESULT ConditionGlobalCheck(
     if (!fSuccess)
     {
         // Display the error messagebox, as long as we're in an appropriate display mode
-        hr = DisplayError(display, hrError);
+        hr = SplashScreenDisplayError(display, wzBundleName, hrError);
         ExitOnFailure(hr, "Failed to display error dialog");
 
         *pdwExitCode = static_cast<DWORD>(hrError);
@@ -977,32 +974,5 @@ static HRESULT CompareVersionValues(
     }
 
 LExit:
-    return hr;
-}
-
-static HRESULT DisplayError(
-    BOOTSTRAPPER_DISPLAY display,
-    HRESULT hrError
-    )
-{
-    HRESULT hr = S_OK;
-    LPWSTR sczDisplayString = NULL;
-
-    hr = StrAllocFromError(&sczDisplayString, hrError, NULL);
-    ExitOnFailure(hr, "Failed to allocate string to display error message");
-
-    Trace1(REPORT_STANDARD, "Error message displayed because: %ls", sczDisplayString);
-
-    if (BOOTSTRAPPER_DISPLAY_NONE == display || BOOTSTRAPPER_DISPLAY_PASSIVE == display || BOOTSTRAPPER_DISPLAY_EMBEDDED == display)
-    {
-        // Don't display the error dialog in these modes
-        ExitFunction1(hr = S_OK);
-    }
-
-    ::MessageBox(NULL, sczDisplayString, sczDisplayString, MB_OK | MB_ICONERROR);
-
-LExit:
-    ReleaseStr(sczDisplayString);
-
     return hr;
 }

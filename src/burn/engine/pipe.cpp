@@ -356,7 +356,7 @@ HRESULT PipeLaunchParentProcess(
     __in int nCmdShow,
     __in_z LPWSTR sczConnectionName,
     __in_z LPWSTR sczSecret,
-    __in BOOL fDisableUnelevate
+    __in BOOL /*fDisableUnelevate*/
     )
 {
     HRESULT hr = S_OK;
@@ -373,6 +373,7 @@ HRESULT PipeLaunchParentProcess(
     hr = StrAllocFormatted(&sczParameters, L"%ls -%ls %ls %ls %u", wzCommandLine, BURN_COMMANDLINE_SWITCH_UNELEVATED, sczConnectionName, sczSecret, dwProcessId);
     ExitOnFailure(hr, "Failed to allocate parameters for elevated process.");
 
+#ifdef ENABLE_UNELEVATE
     if (fDisableUnelevate)
     {
         hr = ProcExec(sczBurnPath, sczParameters, nCmdShow, &hProcess);
@@ -392,6 +393,10 @@ HRESULT PipeLaunchParentProcess(
             }
         }
     }
+#else
+    hr = ProcExec(sczBurnPath, sczParameters, nCmdShow, &hProcess);
+    ExitOnFailure1(hr, "Failed to launch parent process with unelevate disabled: %ls", sczBurnPath);
+#endif
 
 LExit:
     ReleaseHandle(hProcess);

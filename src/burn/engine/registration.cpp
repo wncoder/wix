@@ -1367,7 +1367,7 @@ static HRESULT DetectRelatedBundlesForKey(
             hr = LoadRelatedBundle(pRegistration, hkUninstallKey, fPerMachine, sczBundleId, &relationType, &sczTag);
             if (SUCCEEDED(hr))
             {
-                BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->relatedBundles.rgRelatedBundles + pRegistration->relatedBundles.cRelatedBundles - 1;
+                const BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->relatedBundles.rgRelatedBundles + pRegistration->relatedBundles.cRelatedBundles - 1;
 
                 if (pUX)
                 {
@@ -1376,15 +1376,18 @@ static HRESULT DetectRelatedBundlesForKey(
                     switch (relationType)
                     {
                     case BOOTSTRAPPER_RELATION_UPGRADE:
-                        if (BOOTSTRAPPER_ACTION_INSTALL == pCommand->action)
+                        if (pCommand)
                         {
-                            if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
+                            if (BOOTSTRAPPER_ACTION_INSTALL == pCommand->action)
                             {
-                                operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
-                            }
-                            else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
-                            {
-                                operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                                if (pRegistration->qwVersion > pRelatedBundle->qwVersion)
+                                {
+                                    operation = BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE;
+                                }
+                                else if (pRegistration->qwVersion < pRelatedBundle->qwVersion)
+                                {
+                                    operation = BOOTSTRAPPER_RELATED_OPERATION_DOWNGRADE;
+                                }
                             }
                         }
                         break;
@@ -1396,6 +1399,10 @@ static HRESULT DetectRelatedBundlesForKey(
                             if (BOOTSTRAPPER_ACTION_UNINSTALL == pCommand->action)
                             {
                                 operation = BOOTSTRAPPER_RELATED_OPERATION_REMOVE;
+                            }
+                            else if (BOOTSTRAPPER_ACTION_INSTALL == pCommand->action || BOOTSTRAPPER_ACTION_MODIFY == pCommand->action)
+                            {
+                                operation = BOOTSTRAPPER_RELATED_OPERATION_INSTALL;
                             }
                             else if (BOOTSTRAPPER_ACTION_REPAIR == pCommand->action)
                             {
@@ -1413,7 +1420,7 @@ static HRESULT DetectRelatedBundlesForKey(
                         break;
                     }
 
-                    LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->package.sczId, LoggingPerMachineToString(pRelatedBundle->package.fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
+                    LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->package.sczId, LoggingRelationTypeToString(relationType), LoggingPerMachineToString(pRelatedBundle->package.fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
 
                     int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->package.sczId, sczTag, pRelatedBundle->package.fPerMachine, pRelatedBundle->qwVersion, operation);
                     hr = HRESULT_FROM_VIEW(nResult);
@@ -1435,8 +1442,8 @@ static HRESULT LoadRelatedBundle(
     __in HKEY hkUninstallKey,
     __in BOOL fPerMachine,
     __in_z LPCWSTR sczBundleId,
-    __out BOOTSTRAPPER_RELATION_TYPE *pRelationType,
-    __out LPWSTR *psczTag
+    __out BOOTSTRAPPER_RELATION_TYPE* pRelationType,
+    __out LPWSTR* psczTag
     )
 {
     HRESULT hr = S_OK;
@@ -1444,13 +1451,13 @@ static HRESULT LoadRelatedBundle(
     LPWSTR sczBundleKey = NULL;
     LPWSTR sczId = NULL;
     HKEY hkBundleId = NULL;
-    LPWSTR *rgsczUpgradeCodes = NULL;
+    LPWSTR* rgsczUpgradeCodes = NULL;
     DWORD cUpgradeCodes = 0;
-    LPWSTR *rgsczAddonCodes = NULL;
+    LPWSTR* rgsczAddonCodes = NULL;
     DWORD cAddonCodes = 0;
-    LPWSTR *rgsczDetectCodes = NULL;
+    LPWSTR* rgsczDetectCodes = NULL;
     DWORD cDetectCodes = 0;
-    LPWSTR *rgsczPatchCodes = NULL;
+    LPWSTR* rgsczPatchCodes = NULL;
     DWORD cPatchCodes = 0;
     LPWSTR sczCachePath = NULL;
     LPWSTR sczTag = NULL;
@@ -1462,13 +1469,14 @@ static HRESULT LoadRelatedBundle(
     }
     ExitOnFailure1(hr, "Failed to open bundle registry key: %ls", sczBundleKey);
 
+    // All remaining operations should treat all related bundles as non-vital.
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes, &cUpgradeCodes);
     if (HRESULT_FROM_WIN32(ERROR_INVALID_DATATYPE) == hr)
     {
-        TraceError(hr, "Failed to read upgrade code as REG_MULTI_SZ - trying again as REG_SZ in case of older products");
+        TraceError(hr, "Failed to read upgrade codes as REG_MULTI_SZ. Trying again as REG_SZ in case of older bundles.");
 
-        rgsczUpgradeCodes = reinterpret_cast<LPWSTR *>(MemAlloc(sizeof(LPWSTR), TRUE));
-        ExitOnNull(rgsczUpgradeCodes, hr, E_OUTOFMEMORY, "Failed to allocate list for a single upgrade code from older registry format");
+        rgsczUpgradeCodes = reinterpret_cast<LPWSTR*>(MemAlloc(sizeof(LPWSTR), TRUE));
+        ExitOnNull(rgsczUpgradeCodes, hr, E_OUTOFMEMORY, "Failed to allocate list for a single upgrade code from older bundle.");
 
         hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_UPGRADE_CODE, &rgsczUpgradeCodes[0]);
         if (SUCCEEDED(hr))
@@ -1476,95 +1484,137 @@ static HRESULT LoadRelatedBundle(
             cUpgradeCodes = 1;
         }
     }
+
+    // Compare upgrade codes.
     if (SUCCEEDED(hr))
     {
-        // Both them and us must have one of the same upgrade code to cause an upgrade relation
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR *>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        // Upgrade relationship: when their upgrade codes match our upgrade codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
         }
         else
         {
-            ExitOnFailure(hr, "Failed to do array search for upgrade code match");
+            ExitOnFailure(hr, "Failed to do array search for upgrade code match.");
 
             fRelated = TRUE;
             *pRelationType = BOOTSTRAPPER_RELATION_UPGRADE;
             goto Finish;
         }
-    }
 
-    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_ADDON_CODE, &rgsczAddonCodes, &cAddonCodes);
-    if (SUCCEEDED(hr))
-    {
-        // Addon relation only occurs when their addon code matches one of our detect codes
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        // Detect relationship: when their upgrade codes match our detect codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
         }
         else
         {
-            ExitOnFailure(hr, "Failed to do array search for addon code match");
+            ExitOnFailure(hr, "Failed to do array search for detect code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DETECT;
+            goto Finish;
+        }
+
+        ReleaseNullStrArray(rgsczUpgradeCodes, cUpgradeCodes);
+    }
+
+    // Compare addon codes.
+    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_ADDON_CODE, &rgsczAddonCodes, &cAddonCodes);
+    if (SUCCEEDED(hr))
+    {
+        // Addon relationship: when their addon codes match our detect codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
 
             fRelated = TRUE;
             *pRelationType = BOOTSTRAPPER_RELATION_ADDON;
             goto Finish;
         }
-    }
 
-    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_PATCH_CODE, &rgsczPatchCodes, &cPatchCodes);
-    if (SUCCEEDED(hr))
-    {
-        // Patch relation only occurs when their addon code matches one of our detect codes
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczPatchCodes), cPatchCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        // Addon relationship: when their addon codes match our upgrade codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
         }
         else
         {
-            ExitOnFailure(hr, "Failed to do array search for patch code match");
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_ADDON;
+            goto Finish;
+        }
+
+        ReleaseNullStrArray(rgsczAddonCodes, cAddonCodes);
+    }
+
+    // Compare patch codes.
+    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_PATCH_CODE, &rgsczPatchCodes, &cPatchCodes);
+    if (SUCCEEDED(hr))
+    {
+        // Patch relationship: when their patch codes match our detect codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczPatchCodes), cPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for patch code match.");
 
             fRelated = TRUE;
             *pRelationType = BOOTSTRAPPER_RELATION_PATCH;
             goto Finish;
         }
+
+        // Patch relationship: when their patch codes match our upgrade codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczPatchCodes), cPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for patch code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_PATCH;
+            goto Finish;
+        }
+
+        ReleaseNullStrArray(rgsczPatchCodes, cPatchCodes);
     }
 
-    // Ignore failure
-    RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_DETECT_CODE, &rgsczDetectCodes, &cDetectCodes);
-
-    // Detect relation occurs when one of our detect codes matches any of their codes.
-    // Since we already matched their addon codes to our detect codes, we just have to check the other two
-    // detection types: their detect codes and their upgrade codes
-    hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczDetectCodes), cDetectCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
-    if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+    // Compare detect codes.
+    hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_DETECT_CODE, &rgsczDetectCodes, &cDetectCodes);
+    if (SUCCEEDED(hr))
     {
-        hr = S_OK;
-    }
-    else
-    {
-        ExitOnFailure(hr, "Failed to do array search for detect code match");
+        // Detect relationship: when their detect codes match our detect codes.
+        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczDetectCodes), cDetectCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for detect code match.");
 
-        fRelated = TRUE;
-        *pRelationType = BOOTSTRAPPER_RELATION_DETECT;
-        goto Finish;
-    }
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DETECT;
+            goto Finish;
+        }
 
-    // Here we check against their upgrades, as described in the larger comment above
-    hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR *>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR *>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
-    if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
-    {
-        hr = S_OK;
-    }
-    else
-    {
-        ExitOnFailure(hr, "Failed to do array search for detect code match");
-
-        fRelated = TRUE;
-        *pRelationType = BOOTSTRAPPER_RELATION_DETECT;
-        goto Finish;
+        ReleaseNullStrArray(rgsczDetectCodes, cDetectCodes);
     }
 
 Finish:

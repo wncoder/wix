@@ -19790,7 +19790,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
             else
             {
-                fileSystemSafeBundleName = name.Replace(' ', '_'); // TODO: ensure only allowable path characters are in "name".
+                // Ensure only allowable path characters are in "name" (and change spaces to underscores).
+                fileSystemSafeBundleName = CompilerCore.MakeValidLongFileName(name.Replace(' ', '_'), "_");
                 logVariablePrefixAndExtension = String.Concat("WixBundleLog:", fileSystemSafeBundleName, ".log");
             }
 

@@ -67,7 +67,8 @@ static HRESULT CopyEngineWithSignatureFixup(
 static HRESULT RemoveBundleOrPackage(
     __in BOOL fBundle,
     __in BOOL fPerMachine,
-    __in LPCWSTR wzId
+    __in_z LPCWSTR wzBundleOrPackageId,
+    __in_z LPCWSTR wzCacheId
     );
 static HRESULT VerifyPayloadHash(
     __in BURN_PAYLOAD* pPayload,
@@ -685,12 +686,12 @@ LExit:
 
 extern "C" HRESULT CacheRemoveBundle(
     __in BOOL fPerMachine,
-    __in LPCWSTR wzBundleId
+    __in_z LPCWSTR wzBundleId
     )
 {
     HRESULT hr = S_OK;
 
-    hr = RemoveBundleOrPackage(TRUE, fPerMachine, wzBundleId);
+    hr = RemoveBundleOrPackage(TRUE, fPerMachine, wzBundleId, wzBundleId);
     ExitOnFailure1(hr, "Failed to remove bundle id: %ls.", wzBundleId);
 
 LExit:
@@ -699,12 +700,13 @@ LExit:
 
 extern "C" HRESULT CacheRemovePackage(
     __in BOOL fPerMachine,
-    __in LPCWSTR wzPackageId
+    __in_z LPCWSTR wzPackageId,
+    __in_z LPCWSTR wzCacheId
     )
 {
     HRESULT hr = S_OK;
 
-    hr = RemoveBundleOrPackage(FALSE, fPerMachine, wzPackageId);
+    hr = RemoveBundleOrPackage(FALSE, fPerMachine, wzPackageId, wzCacheId);
     ExitOnFailure1(hr, "Failed to remove package id: %ls.", wzPackageId);
 
 LExit:
@@ -1316,7 +1318,8 @@ LExit:
 static HRESULT RemoveBundleOrPackage(
     __in BOOL fBundle,
     __in BOOL fPerMachine,
-    __in LPCWSTR wzId
+    __in_z LPCWSTR wzBundleOrPackageId,
+    __in_z LPCWSTR wzCacheId
     )
 {
     HRESULT hr = S_OK;
@@ -1326,13 +1329,13 @@ static HRESULT RemoveBundleOrPackage(
     hr = CacheGetCompletedPath(fPerMachine, L"", &sczRootCacheDirectory);
     ExitOnFailure(hr, "Failed to calculate root cache path.");
 
-    hr = PathConcat(sczRootCacheDirectory, wzId, &sczDirectory);
+    hr = PathConcat(sczRootCacheDirectory, wzCacheId, &sczDirectory);
     ExitOnFailure(hr, "Failed to combine id to root cache path.");
 
     hr = PathBackslashTerminate(&sczDirectory);
     ExitOnFailure(hr, "Failed to ensure cache directory to remove was backslash terminated.");
 
-    LogId(REPORT_STANDARD, fBundle ? MSG_UNCACHE_BUNDLE : MSG_UNCACHE_PACKAGE, wzId, sczDirectory);
+    LogId(REPORT_STANDARD, fBundle ? MSG_UNCACHE_BUNDLE : MSG_UNCACHE_PACKAGE, wzBundleOrPackageId, sczDirectory);
 
     hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
     if (E_PATHNOTFOUND == hr)

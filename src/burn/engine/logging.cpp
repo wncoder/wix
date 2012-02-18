@@ -41,7 +41,9 @@ static HRESULT GetNonSessionSpecificTempFolder(
 
 extern "C" HRESULT LoggingOpen(
     __in BURN_LOGGING* pLog,
-    __in BURN_VARIABLES* pVariables
+    __in BURN_VARIABLES* pVariables,
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in_z LPCWSTR wzBundleName
     )
 {
     HRESULT hr = S_OK;
@@ -74,7 +76,15 @@ extern "C" HRESULT LoggingOpen(
         ExitOnFailure(hr, "Failed to get current directory.");
 
         hr = LogOpen(sczLoggingBaseFolder, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
-        ExitOnFailure1(hr, "Failed to open log: %ls", pLog->sczPath);
+        if (FAILED(hr))
+        {
+            HRESULT hrOriginal = hr;
+
+            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_LOG_FAILURE);
+            SplashScreenDisplayError(display, wzBundleName, hr);
+
+            ExitOnFailure1(hrOriginal, "Failed to open log: %ls", pLog->sczPath);
+        }
 
         pLog->state = BURN_LOGGING_STATE_OPEN;
     }
@@ -83,10 +93,19 @@ extern "C" HRESULT LoggingOpen(
         hr = GetNonSessionSpecificTempFolder(&sczLoggingBaseFolder);
         ExitOnFailure(hr, "Failed to get non-session specific TEMP folder.");
 
+        // Best effort to open default logging.
         hr = LogOpen(sczLoggingBaseFolder, pLog->sczPrefix, NULL, pLog->sczExtension, FALSE, FALSE, &pLog->sczPath);
-        ExitOnFailure1(hr, "Failed to open log with prefix: %ls", pLog->sczPrefix);
+        if (FAILED(hr))
+        {
+            LogDisable();
+            pLog->state = BURN_LOGGING_STATE_DISABLED;
 
-        pLog->state = BURN_LOGGING_STATE_OPEN;
+            hr = S_OK;
+        }
+        else
+        {
+            pLog->state = BURN_LOGGING_STATE_OPEN;
+        }
     }
     else // no logging enabled.
     {
@@ -126,6 +145,7 @@ extern "C" void LoggingIncrementPackageSequence()
 
 extern "C" HRESULT LoggingSetPackageVariable(
     __in BURN_PACKAGE* pPackage,
+    __in_z_opt LPCWSTR wzSuffix,
     __in BOOL fRollback,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
@@ -138,7 +158,7 @@ extern "C" HRESULT LoggingSetPackageVariable(
     if ((!fRollback && pPackage->sczLogPathVariable && *pPackage->sczLogPathVariable) ||
         (fRollback && pPackage->sczRollbackLogPathVariable && *pPackage->sczRollbackLogPathVariable))
     {
-        hr = StrAllocFormatted(&sczLogPath, L"%ls_%u_%ls%ls.%ls", pLog->sczPrefix, vdwPackageSequence, pPackage->sczId, fRollback ? L"_rollback" : L"", pLog->sczExtension);
+        hr = StrAllocFormatted(&sczLogPath, L"%ls%hs%ls_%u_%ls%ls.%ls", pLog->sczPrefix, wzSuffix && *wzSuffix ? "_" : "", wzSuffix && *wzSuffix ? wzSuffix : L"", vdwPackageSequence, pPackage->sczId, fRollback ? L"_rollback" : L"", pLog->sczExtension);
         ExitOnFailure(hr, "Failed to allocate path for package log.");
 
         hr = VariableSetString(pVariables, fRollback ? pPackage->sczRollbackLogPathVariable : pPackage->sczLogPathVariable, sczLogPath, FALSE);
@@ -258,6 +278,8 @@ extern "C" LPCSTR LoggingPackageStateToString(
     {
     case BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN:
         return "Unknown";
+    case BOOTSTRAPPER_PACKAGE_STATE_OBSOLETE:
+        return "Obsolete";
     case BOOTSTRAPPER_PACKAGE_STATE_ABSENT:
         return "Absent";
     case BOOTSTRAPPER_PACKAGE_STATE_CACHED:
@@ -329,6 +351,27 @@ extern "C" LPCSTR LoggingPerMachineToString(
     return "PerUser";
 }
 
+extern "C" LPCSTR LoggingRelationTypeToString(
+    __in BOOTSTRAPPER_RELATION_TYPE type
+    )
+{
+    switch (type)
+    {
+    case BOOTSTRAPPER_RELATION_NONE:
+        return "None";
+    case BOOTSTRAPPER_RELATION_DETECT:
+        return "Detect";
+    case BOOTSTRAPPER_RELATION_UPGRADE:
+        return "Upgrade";
+    case BOOTSTRAPPER_RELATION_ADDON:
+        return "Addon";
+    case BOOTSTRAPPER_RELATION_PATCH:
+        return "Patch";
+    default:
+        return "Invalid";
+    }
+}
+
 extern "C" LPCSTR LoggingRelatedOperationToString(
     __in BOOTSTRAPPER_RELATED_OPERATION operation
     )
@@ -345,6 +388,8 @@ extern "C" LPCSTR LoggingRelatedOperationToString(
         return "MajorUpgrade";
     case BOOTSTRAPPER_RELATED_OPERATION_REMOVE:
         return "Remove";
+    case BOOTSTRAPPER_RELATED_OPERATION_INSTALL:
+        return "Install";
     case BOOTSTRAPPER_RELATED_OPERATION_REPAIR:
         return "Repair";
     default:
