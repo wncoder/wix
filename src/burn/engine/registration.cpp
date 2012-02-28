@@ -33,6 +33,26 @@ const LPCWSTR REGISTRY_BUNDLE_TAG = L"BundleTag";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 const LPCWSTR REGISTRY_ENGINE_VERSION = L"EngineVersion";
 const LPCWSTR REGISTRY_BUNDLE_INSTALLED = L"Installed";
+const LPCWSTR REGISTRY_BUNDLE_DISPLAY_ICON = L"DisplayIcon";
+const LPCWSTR REGISTRY_BUNDLE_DISPLAY_NAME = L"DisplayName";
+const LPCWSTR REGISTRY_BUNDLE_DISPLAY_VERSION = L"DisplayVersion";
+const LPCWSTR REGISTRY_BUNDLE_ESTIMATED_SIZE = L"EstimatedSize";
+const LPCWSTR REGISTRY_BUNDLE_PUBLISHER = L"Publisher";
+const LPCWSTR REGISTRY_BUNDLE_HELP_LINK = L"HelpLink";
+const LPCWSTR REGISTRY_BUNDLE_HELP_TELEPHONE = L"HelpTelephone";
+const LPCWSTR REGISTRY_BUNDLE_URL_INFO_ABOUT = L"URLInfoAbout";
+const LPCWSTR REGISTRY_BUNDLE_URL_UPDATE_INFO = L"URLUpdateInfo";
+const LPCWSTR REGISTRY_BUNDLE_PARENT_DISPLAY_NAME = L"ParentDisplayName";
+const LPCWSTR REGISTRY_BUNDLE_PARENT_KEY_NAME = L"ParentKeyName";
+const LPCWSTR REGISTRY_BUNDLE_COMMENTS = L"Comments";
+const LPCWSTR REGISTRY_BUNDLE_CONTACT = L"Contact";
+const LPCWSTR REGISTRY_BUNDLE_NO_MODIFY = L"NoModify";
+const LPCWSTR REGISTRY_BUNDLE_MODIFY_PATH = L"ModifyPath";
+const LPCWSTR REGISTRY_BUNDLE_NO_ELEVATE_ON_MODIFY = L"NoElevateOnModify";
+const LPCWSTR REGISTRY_BUNDLE_NO_REMOVE = L"NoRemove";
+const LPCWSTR REGISTRY_BUNDLE_SYSTEM_COMPONENT = L"SystemComponent";
+const LPCWSTR REGISTRY_BUNDLE_QUIET_UNINSTALL_STRING = L"QuietUninstallString";
+const LPCWSTR REGISTRY_BUNDLE_UNINSTALL_STRING = L"UninstallString";
 
 // internal function declarations
 
@@ -604,40 +624,40 @@ extern "C" HRESULT RegistrationSessionBegin(
         {
             // Upgrade information
             hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_CACHE_PATH, pRegistration->sczCacheExecutablePath);
-            ExitOnFailure(hr, "Failed to write BundleUpgradeCommand value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_CACHE_PATH);
 
             hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_UPGRADE_CODE, pRegistration->rgsczUpgradeCodes, pRegistration->cUpgradeCodes);
-            ExitOnFailure(hr, "Failed to write BundleUpgradeCode value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_UPGRADE_CODE);
 
             hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_ADDON_CODE, pRegistration->rgsczAddonCodes, pRegistration->cAddonCodes);
-            ExitOnFailure(hr, "Failed to write BundleAddonCode value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_ADDON_CODE);
 
             hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_DETECT_CODE, pRegistration->rgsczDetectCodes, pRegistration->cDetectCodes);
-            ExitOnFailure(hr, "Failed to write BundleDetectCode value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_DETECT_CODE);
 
             hr = RegWriteStringArray(hkRegistration, REGISTRY_BUNDLE_PATCH_CODE, pRegistration->rgsczPatchCodes, pRegistration->cPatchCodes);
-            ExitOnFailure(hr, "Failed to write BundlePatchCode value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_PATCH_CODE);
 
             hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
-            ExitOnFailure(hr, "Failed to write BundleVersion value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_VERSION);
 
             if (pRegistration->sczTag)
             {
                 hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_TAG, pRegistration->sczTag);
-                ExitOnFailure(hr, "Failed to write BundleTag value.");
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_TAG);
             }
 
             hr = RegWriteStringFormatted(hkRegistration, REGISTRY_ENGINE_VERSION, L"%hs", szVerMajorMinorBuild);
-            ExitOnFailure(hr, "Failed to write EngineVersion value.");
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_ENGINE_VERSION);
 
             // DisplayIcon: [path to exe] and ",0" to refer to the first icon in the executable.
-            hr = RegWriteStringFormatted(hkRegistration, L"DisplayIcon", L"%s,0", pRegistration->sczCacheExecutablePath);
-            ExitOnFailure(hr, "Failed to write DisplayIcon value.");
+            hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_DISPLAY_ICON, L"%s,0", pRegistration->sczCacheExecutablePath);
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_DISPLAY_ICON);
 
             // DisplayName: provided by UI
             hr = GetBundleName(pRegistration, pVariables, &sczDisplayName);
-            hr = RegWriteString(hkRegistration, L"DisplayName", SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
-            ExitOnFailure(hr, "Failed to write DisplayName value.");
+            hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_DISPLAY_NAME, SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_DISPLAY_NAME);
 
             // EstimatedSize
             qwEstimatedSize /= 1024; // Convert bytes to KB
@@ -654,75 +674,75 @@ extern "C" HRESULT RegistrationSessionBegin(
                     dwSize = static_cast<DWORD>(qwEstimatedSize);
                 }
 
-                hr = RegWriteNumber(hkRegistration, L"EstimatedSize", dwSize);
-                ExitOnFailure(hr, "Failed to write EstimatedSize value.");
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_ESTIMATED_SIZE, dwSize);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_ESTIMATED_SIZE);
             }
 
             // DisplayVersion: provided by UI
             if (pRegistration->sczDisplayVersion)
             {
-                hr = RegWriteString(hkRegistration, L"DisplayVersion", pRegistration->sczDisplayVersion);
-                ExitOnFailure(hr, "Failed to write DisplayVersion value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_DISPLAY_VERSION, pRegistration->sczDisplayVersion);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_DISPLAY_VERSION);
             }
 
             // Publisher: provided by UI
             if (pRegistration->sczPublisher)
             {
-                hr = RegWriteString(hkRegistration, L"Publisher", pRegistration->sczPublisher);
-                ExitOnFailure(hr, "Failed to write Publisher value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_PUBLISHER, pRegistration->sczPublisher);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_PUBLISHER);
             }
 
             // HelpLink: provided by UI
             if (pRegistration->sczHelpLink)
             {
-                hr = RegWriteString(hkRegistration, L"HelpLink", pRegistration->sczHelpLink);
-                ExitOnFailure(hr, "Failed to write HelpLink value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_HELP_LINK, pRegistration->sczHelpLink);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_HELP_LINK);
             }
 
             // HelpTelephone: provided by UI
             if (pRegistration->sczHelpTelephone)
             {
-                hr = RegWriteString(hkRegistration, L"HelpTelephone", pRegistration->sczHelpTelephone);
-                ExitOnFailure(hr, "Failed to write HelpTelephone value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_HELP_TELEPHONE, pRegistration->sczHelpTelephone);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_HELP_TELEPHONE);
             }
 
             // URLInfoAbout, provided by UI
             if (pRegistration->sczAboutUrl)
             {
-                hr = RegWriteString(hkRegistration, L"URLInfoAbout", pRegistration->sczAboutUrl);
-                ExitOnFailure(hr, "Failed to write URLInfoAbout value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_URL_INFO_ABOUT, pRegistration->sczAboutUrl);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_URL_INFO_ABOUT);
             }
 
             // URLUpdateInfo, provided by UI
             if (pRegistration->sczUpdateUrl)
             {
-                hr = RegWriteString(hkRegistration, L"URLUpdateInfo", pRegistration->sczUpdateUrl);
-                ExitOnFailure(hr, "Failed to write URLUpdateInfo value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_URL_UPDATE_INFO, pRegistration->sczUpdateUrl);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_URL_UPDATE_INFO);
             }
 
             // ParentDisplayName
             if (pRegistration->sczParentDisplayName)
             {
-                hr = RegWriteString(hkRegistration, L"ParentDisplayName", pRegistration->sczParentDisplayName);
-                ExitOnFailure(hr, "Failed to write ParentDisplayName value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_PARENT_DISPLAY_NAME, pRegistration->sczParentDisplayName);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_PARENT_DISPLAY_NAME);
 
                 // Need to write the ParentKeyName but can be set to anything.
-                hr = RegWriteString(hkRegistration, L"ParentKeyName", pRegistration->sczParentDisplayName);
-                ExitOnFailure(hr, "Failed to write ParentKeyName value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_PARENT_KEY_NAME, pRegistration->sczParentDisplayName);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_PARENT_KEY_NAME);
             }
 
             // Comments, provided by UI
             if (pRegistration->sczComments)
             {
-                hr = RegWriteString(hkRegistration, L"Comments", pRegistration->sczComments);
-                ExitOnFailure(hr, "Failed to write Comments value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_COMMENTS, pRegistration->sczComments);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_COMMENTS);
             }
 
             // Contact, provided by UI
             if (pRegistration->sczContact)
             {
-                hr = RegWriteString(hkRegistration, L"Contact", pRegistration->sczContact);
-                ExitOnFailure(hr, "Failed to write Contact value.");
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_CONTACT, pRegistration->sczContact);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_CONTACT);
             }
 
             // InstallLocation: provided by UI
@@ -731,44 +751,44 @@ extern "C" HRESULT RegistrationSessionBegin(
             // NoModify
             if (BURN_REGISTRATION_MODIFY_DISABLE == pRegistration->modify)
             {
-                hr = RegWriteNumber(hkRegistration, L"NoModify", 1);
-                ExitOnFailure(hr, "Failed to set NoModify value.");
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_NO_MODIFY, 1);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_NO_MODIFY);
             }
             else if (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON != pRegistration->modify) // if support modify (aka: did not disable anything)
             {
                 // ModifyPath: [path to exe] /modify
-                hr = RegWriteStringFormatted(hkRegistration, L"ModifyPath", L"\"%ls\" /modify", pRegistration->sczCacheExecutablePath);
-                ExitOnFailure(hr, "Failed to write ModifyPath value.");
+                hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_MODIFY_PATH, L"\"%ls\" /modify", pRegistration->sczCacheExecutablePath);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_MODIFY_PATH);
 
                 // NoElevateOnModify: 1
-                hr = RegWriteNumber(hkRegistration, L"NoElevateOnModify", 1);
-                ExitOnFailure(hr, "Failed to set NoElevateOnModify value.");
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_NO_ELEVATE_ON_MODIFY, 1);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_NO_ELEVATE_ON_MODIFY);
             }
 
             // NoRemove: should this be allowed?
             if (pRegistration->fNoRemoveDefined)
             {
-                hr = RegWriteNumber(hkRegistration, L"NoRemove", (DWORD)pRegistration->fNoRemove);
-                ExitOnFailure(hr, "Failed to set NoRemove value.");
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_NO_REMOVE, (DWORD)pRegistration->fNoRemove);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_NO_REMOVE);
             }
 
             // Conditionally hide the ARP entry.
             if (!pRegistration->fRegisterArp)
             {
-                hr = RegWriteNumber(hkRegistration, L"SystemComponent", 1);
-                ExitOnFailure(hr, "Failed to set SystemComponent value.");
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_SYSTEM_COMPONENT, 1);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_SYSTEM_COMPONENT);
             }
 
             // QuietUninstallString: [path to exe] /uninstall /quiet
-            hr = RegWriteStringFormatted(hkRegistration, L"QuietUninstallString", L"\"%ls\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
-            ExitOnFailure(hr, "Failed to write QuietUninstallString value.");
+            hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_QUIET_UNINSTALL_STRING, L"\"%ls\" /uninstall /quiet", pRegistration->sczCacheExecutablePath);
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_QUIET_UNINSTALL_STRING);
 
             // UninstallString, [path to exe]
             // If the modify button is to be disabled, we'll add "/modify" to the uninstall string because the button is "Uninstall/Change". Otherwise,
             // it's just the "Uninstall" button so we add "/uninstall" to make the program just go away.
             LPCWSTR wzUninstallParameters = (BURN_REGISTRATION_MODIFY_DISABLE_BUTTON == pRegistration->modify) ? L"/modify" : L" /uninstall";
-            hr = RegWriteStringFormatted(hkRegistration, L"UninstallString", L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
-            ExitOnFailure(hr, "Failed to write UninstallString value.");
+            hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_UNINSTALL_STRING, L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
+            ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_UNINSTALL_STRING);
 
             // Update registration.
             if (pRegistration->update.fRegisterUpdate)
@@ -1423,7 +1443,7 @@ static HRESULT DetectRelatedBundlesForKey(
                     LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_BUNDLE, pRelatedBundle->package.sczId, LoggingRelationTypeToString(relationType), LoggingPerMachineToString(pRelatedBundle->package.fPerMachine), LoggingVersionToString(pRelatedBundle->qwVersion), LoggingRelatedOperationToString(operation));
 
                     int nResult = pUX->pUserExperience->OnDetectRelatedBundle(pRelatedBundle->package.sczId, sczTag, pRelatedBundle->package.fPerMachine, pRelatedBundle->qwVersion, operation);
-                    hr = HRESULT_FROM_VIEW(nResult);
+                    hr = UserExperienceInterpretResult(pUX, MB_OKCANCEL, nResult);
                     ExitOnRootFailure(hr, "UX aborted detect related bundle.");
                 }
             }

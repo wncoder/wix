@@ -247,6 +247,7 @@ static HRESULT OnNetFxFilesInUse(
 
     // send message
     message.type = GENERIC_EXECUTE_MESSAGE_FILES_IN_USE;
+    message.dwAllowedResults = MB_ABORTRETRYIGNORE;
     message.filesInUse.cFiles = cFiles;
     message.filesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
     dwResponse = (DWORD)pfnMessageHandler(&message, pvContext);
@@ -271,6 +272,7 @@ static HRESULT OnNetFxProgress(
 
     // send message
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = 100 * (DWORD)bProgress / BYTE_MAX;
     dwResponse = (DWORD)pfnMessageHandler(&message, pvContext);
 

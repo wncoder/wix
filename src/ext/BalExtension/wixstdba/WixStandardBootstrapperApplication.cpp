@@ -119,6 +119,7 @@ enum WIXSTDBA_CONTROL
 
     // Success page
     WIXSTDBA_CONTROL_LAUNCH_BUTTON,
+    WIXSTDBA_CONTROL_SUCCESS_RESTART_TEXT,
     WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON,
     WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON,
 
@@ -126,6 +127,7 @@ enum WIXSTDBA_CONTROL
     WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT,
     WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK,
     WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT,
+    WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT,
     WIXSTDBA_CONTROL_FAILURE_RESTART_BUTTON,
     WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON,
 };
@@ -163,12 +165,14 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, L"ProgressCancelButton" },
 
     { WIXSTDBA_CONTROL_LAUNCH_BUTTON, L"LaunchButton" },
+    { WIXSTDBA_CONTROL_SUCCESS_RESTART_TEXT, L"SuccessRestartText" },
     { WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON, L"SuccessRestartButton" },
     { WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON, L"SuccessCancelButton" },
 
     { WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT, L"FailureLogFileText" },
     { WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK, L"FailureLogFileLink" },
     { WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, L"FailureMessageText" },
+    { WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT, L"FailureRestartText" },
     { WIXSTDBA_CONTROL_FAILURE_RESTART_BUTTON, L"FailureRestartButton" },
     { WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON, L"FailureCancelButton" },
 };
@@ -541,6 +545,8 @@ public: // IBootstrapperApplication
     {
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_PACKAGE_TEXT, L"");
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_PROGRESS_PACKAGE_TEXT, L"");
+        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, FALSE); // no more cancel.
+
         SetState(WIXSTDBA_STATE_EXECUTED, S_OK); // we always return success here and let OnApplyComplete() deal with the error.
     }
 
@@ -802,6 +808,12 @@ private: // privates
 
         hr = LocLoadFromFile(sczLocPath, &m_pLocStrings);
         BalExitOnFailure1(hr, "Failed to load loc file from path: %ls", sczLocPath);
+
+        hr = StrAllocString(&m_sczConfirmCloseMessage, L"#(loc.ConfirmCancelMessage)", 0);
+        ExitOnFailure(hr, "Failed to initialize confirm message loc identifier.");
+
+        hr = LocLocalizeString(m_pLocStrings, &m_sczConfirmCloseMessage);
+        BalExitOnFailure1(hr, "Failed to localize confirm close message: %ls", m_sczConfirmCloseMessage);
 
     LExit:
         ReleaseStr(sczLocPath);
@@ -1271,6 +1283,8 @@ private: // privates
         hr = m_pEngine->Apply(m_hWnd);
         BalExitOnFailure(hr, "Failed to start applying packages.");
 
+        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, TRUE); // ensure the cancel button is enabled before starting.
+
     LExit:
         if (FAILED(hr))
         {
@@ -1357,6 +1371,7 @@ private: // privates
                     }
 
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_SUCCESS_RESTART_TEXT, fShowRestartButton);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON, fShowRestartButton);
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_FAILURE] == dwNewPageId) // on the "Failure" page, show error message and check if the restart button should be enabled.
@@ -1397,6 +1412,7 @@ private: // privates
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT, fShowLogLink);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK, fShowLogLink);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, fShowErrorMessage);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT, fShowRestartButton);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_RESTART_BUTTON, fShowRestartButton);
                 }
 
@@ -1452,15 +1468,21 @@ private: // privates
         {
             fClose = TRUE;
         }
-        else
+        else // prompt the user or force the cancel if there is no UI.
         {
-            // Force the cancel if we are not showing UI.
-            // TODO: make prompt localizable string.
-            fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display, L"Are you sure you want to cancel?", m_pTheme->sczCaption);
+            fClose = PromptCancel(m_hWnd, BOOTSTRAPPER_DISPLAY_FULL != m_command.display, m_sczConfirmCloseMessage ? m_sczConfirmCloseMessage : L"Are you sure you want to cancel?", m_pTheme->sczCaption);
+        }
+
+        // If we're doing progress then we never close, we just cancel to let rollback occur.
+        if (WIXSTDBA_STATE_APPLYING <= m_state && WIXSTDBA_STATE_APPLIED > m_state)
+        {
+            // If we canceled disable cancel button since clicking it again is silly.
             if (fClose)
             {
-                // TODO: disable all the cancel buttons.
+                ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, FALSE);
             }
+
+            fClose = FALSE;
         }
 
         return fClose;
@@ -1812,8 +1834,6 @@ private: // privates
         HRESULT hr = S_OK;
         BOOL fResult = FALSE;
 
-        ReleaseNullStr(m_sczFailedMessage);
-
         for (DWORD i = 0; i < m_Conditions.cConditions; ++i)
         {
             BAL_CONDITION* pCondition = m_Conditions.rgConditions + i;
@@ -1827,6 +1847,8 @@ private: // privates
                 BalExitOnFailure1(hr, "Bundle condition evaluated to false: %ls", pCondition->sczCondition);
             }
         }
+
+        ReleaseNullStr(m_sczFailedMessage);
 
     LExit:
         return hr;
@@ -1856,6 +1878,7 @@ public:
         m_pLocStrings = NULL;
         memset(&m_Bundle, 0, sizeof(m_Bundle));
         memset(&m_Conditions, 0, sizeof(m_Conditions));
+        m_sczConfirmCloseMessage = NULL;
         m_sczFailedMessage = NULL;
 
         m_sczLanguage = NULL;
@@ -1894,6 +1917,7 @@ public:
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
         ReleaseStr(m_sczFailedMessage);
+        ReleaseStr(m_sczConfirmCloseMessage);
         BalConditionsUninitialize(&m_Conditions);
         BalInfoUninitialize(&m_Bundle);
         LocFree(m_pLocStrings);
@@ -1914,6 +1938,7 @@ private:
     BAL_INFO_BUNDLE m_Bundle;
     BAL_CONDITIONS m_Conditions;
     LPWSTR m_sczFailedMessage;
+    LPWSTR m_sczConfirmCloseMessage;
 
     LPWSTR m_sczLanguage;
     THEME* m_pTheme;

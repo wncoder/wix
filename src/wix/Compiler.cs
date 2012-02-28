@@ -21199,6 +21199,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
                             break;
+                        case "SuppressLooseFilePayloadGeneration":
+                            this.core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name));
+                            suppressLooseFilePayloadGeneration = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
+                            break;
                         case "SuppressSignatureVerification":
                             suppressSignatureVerification = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;

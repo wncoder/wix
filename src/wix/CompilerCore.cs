@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // The base compiler extension.  Any of these methods can be overridden to change
 // the behavior of the compiler.
@@ -117,7 +117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// </summary>
     public sealed class CompilerCore : IMessageHandler
     {
-        private const string W3SchemaPrefix = "http://www.w3.org/";
+        internal const string W3SchemaPrefix = "http://www.w3.org/";
         public const int IntegerNotSet = int.MinValue;
         public const int IllegalInteger = int.MinValue + 1;
         public const long LongNotSet = long.MinValue;
@@ -126,7 +126,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public static readonly Version IllegalVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
 
         private static readonly Regex AmbiguousFilename = new Regex(@"^.{6}\~\d", RegexOptions.Compiled);
-        private static readonly Regex LegalIdentifierCharacters = new Regex(@"^[_A-Za-z][0-9A-Za-z_\.]*$", RegexOptions.Compiled);
 
         private const string LegalShortFilenameCharacters = @"[^\\\?|><:/\*""\+,;=\[\]\. ]"; // illegal: \ ? | > < : / * " + , ; = [ ] . (space)
         private static readonly Regex LegalShortFilename = new Regex(String.Concat("^", LegalShortFilenameCharacters, @"{1,8}(\.", LegalShortFilenameCharacters, "{0,3})?$"), RegexOptions.Compiled);
@@ -154,7 +153,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 "AdminToolsFolder",
                 "AppDataFolder",
                 "CommonAppDataFolder",
-                //"CommonFiles64Folder",
+                "CommonFiles64Folder",
                 "CommonFilesFolder",
                 "CompatibilityMode",
                 "DesktopFolder",
@@ -172,7 +171,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 "NTSuiteWebServer",
                 "PersonalFolder",
                 "Privileged",
-                //"ProgramFiles64Folder",
+                "ProgramFiles64Folder",
                 "ProgramFilesFolder",
                 "ProgramMenuFolder",
                 "SendToFolder",
@@ -324,7 +323,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             return false;
-        }        
+        }
 
         /// <summary>
         /// Verifies that a filename is ambiguous.
@@ -348,15 +347,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>true if the value is an identifier; false otherwise.</returns>
         public static bool IsIdentifier(string value)
         {
-            if (!String.IsNullOrEmpty(value))
-            {
-                if (LegalIdentifierCharacters.IsMatch(value))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return Common.IsIdentifier(value);
         }
 
         /// <summary>
@@ -830,7 +821,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute)
         {
-            return this.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly);
+            return Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, this.OnMessage);
         }
 
         /// <summary>
@@ -844,7 +835,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, bool canBeEmpty)
         {
-            return this.GetAttributeValue(sourceLineNumbers, attribute, canBeEmpty ? EmptyRule.CanBeEmpty : EmptyRule.CanBeWhitespaceOnly);
+            return Common.GetAttributeValue(sourceLineNumbers, attribute, canBeEmpty ? EmptyRule.CanBeEmpty : EmptyRule.CanBeWhitespaceOnly, this.OnMessage);
         }
 
         /// <summary>
@@ -857,20 +848,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, EmptyRule emptyRule)
         {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            if ((emptyRule == EmptyRule.MustHaveNonWhitespaceCharacters && String.IsNullOrEmpty(attribute.Value.Trim())) ||
-                (emptyRule == EmptyRule.CanBeWhitespaceOnly && String.IsNullOrEmpty(attribute.Value)))
-            {
-                this.OnMessage(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name));
-
-                return String.Empty;
-            }
-
-            return attribute.Value;
+            return Common.GetAttributeValue(sourceLineNumbers, attribute, emptyRule, this.OnMessage);
         }
 
         /// <summary>
@@ -966,44 +944,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public int GetAttributeIntegerValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, int minimum, int maximum)
         {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            Debug.Assert(minimum > IntegerNotSet && minimum > IllegalInteger, "The legal values for this attribute collide with at least one sentinel used during parsing.");
-
-            string value = this.GetAttributeValue(sourceLineNumbers, attribute);
-
-            if (0 < value.Length)
-            {
-                try
-                {
-                    int integer = Convert.ToInt32(value, CultureInfo.InvariantCulture.NumberFormat);
-
-                    if (IntegerNotSet == integer || IllegalInteger == integer)
-                    {
-                        this.OnMessage(WixErrors.IntegralValueSentinelCollision(sourceLineNumbers, integer));
-                    }
-                    else if (minimum > integer || maximum < integer)
-                    {
-                        this.OnMessage(WixErrors.IntegralValueOutOfRange(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, integer, minimum, maximum));
-                        integer = IllegalInteger;
-                    }
-
-                    return integer;
-                }
-                catch (FormatException)
-                {
-                    this.OnMessage(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-                catch (OverflowException)
-                {
-                    this.OnMessage(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-            }
-
-            return IllegalInteger;
+            return Common.GetAttributeIntegerValue(sourceLineNumbers, attribute, minimum, maximum, this.OnMessage);
         }
 
         /// <summary>
@@ -1094,7 +1035,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Get an integer attribute value or localize variable and displays an error for 
+        /// Get an integer attribute value or localize variable and displays an error for
         /// an illegal value.
         /// </summary>
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
@@ -1259,35 +1200,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeIdentifierValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute)
         {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            string value = this.GetAttributeValue(sourceLineNumbers, attribute);
-
-            if (IsIdentifier(value))
-            {
-                if (72 < value.Length)
-                {
-                    this.OnMessage(WixWarnings.IdentifierTooLong(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-
-                return value;
-            }
-            else
-            {
-                if (value.StartsWith("[", StringComparison.Ordinal) && value.EndsWith("]", StringComparison.Ordinal))
-                {
-                    this.OnMessage(WixErrors.IllegalIdentifierLooksLikeFormatted(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-                else
-                {
-                    this.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-
-                return String.Empty;
-            }
+            return Common.GetAttributeIdentifierValue(sourceLineNumbers, attribute, this.OnMessage);
         }
 
         /// <summary>
@@ -1541,7 +1454,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public int GetAttributeMsidbRegistryRootValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, bool allowHkmu)
         {
             Wix.RegistryRootType registryRoot = this.GetAttributeRegistryRootValue(sourceLineNumbers, attribute, allowHkmu);
-                
+
             switch (registryRoot)
             {
                 case Wix.RegistryRootType.NotSet:
@@ -1830,11 +1743,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public void UnsupportedExtensionAttribute(SourceLineNumberCollection sourceLineNumbers, XmlAttribute extensionAttribute)
         {
-            // ignore elements defined by the W3C because we'll assume they are always right
-            if (!extensionAttribute.NamespaceURI.StartsWith(CompilerCore.W3SchemaPrefix, StringComparison.Ordinal))
-            {
-                this.OnMessage(WixErrors.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute.OwnerElement.Name, extensionAttribute.Name));
-            }
+            Common.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute, this.OnMessage);
         }
 
         /// <summary>

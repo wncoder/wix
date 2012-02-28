@@ -1125,10 +1125,10 @@ static INT SendMsiMessage(
     InitializeMessageData(hRecord, &rgsczData, &cData);
 
     message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
+    message.dwAllowedResults = uiFlags;
     message.cData = cData;
     message.rgwzData = (LPCWSTR*)rgsczData;
     message.msiMessage.mt = mt;
-    message.msiMessage.uiFlags = uiFlags;
     message.msiMessage.wzMessage = wzMessage;
     nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
 
@@ -1169,11 +1169,11 @@ static INT SendErrorMessage(
     InitializeMessageData(hRecord, &rgsczData, &cData);
 
     message.type = WIU_MSI_EXECUTE_MESSAGE_ERROR;
+    message.dwAllowedResults = uiFlags;
     message.nResultRecommendation = nResult;
     message.cData = cData;
     message.rgwzData = (LPCWSTR*)rgsczData;
     message.error.dwErrorCode = dwErrorCode;
-    message.error.uiFlags = uiFlags;
     message.error.wzMessage = wzMessage;
     nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
 
@@ -1194,6 +1194,7 @@ static INT SendFilesInUseMessage(
     InitializeMessageData(hRecord, &rgsczData, &cData);
 
     message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE;
+    message.dwAllowedResults = MB_ABORTRETRYIGNORE;
     message.cData = cData;
     message.rgwzData = (LPCWSTR*)rgsczData;
     message.msiFilesInUse.cFiles = message.cData;       // point the files in use information to the message record information.
@@ -1249,6 +1250,7 @@ static INT SendProgressUpdate(
 #endif
 
     message.type = WIU_MSI_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = dwPercentage;
     nResult = pContext->pfnMessageHandler(&message, pContext->pvContext);
 

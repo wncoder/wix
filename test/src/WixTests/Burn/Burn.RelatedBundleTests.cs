@@ -347,5 +347,65 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
             this.CleanTestArtifacts = true;
         }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle A, addon bundle C, patches bundle C with bundle E, then uninstalls bundle A.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_InstallUninstallAddonPatchRelatedBundle()
+        {
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A").Build().Output;
+            string packageC1 = new PackageBuilder(this, "C").Build().Output;
+            string packageC2 = new PackageBuilder(this, "C") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", "1.0.1.0" } } }.Build().Output;
+            string packageD = new PackageBuilder(this, "D").Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("packageC", packageC1);
+            bindPaths.Add("packageD", packageD);
+
+            // Build the base and addon bundles.
+            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+            string bundleC = new BundleBuilder(this, "BundleC") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+
+            // Update path to C2 and build the addon patch bundle.
+            bindPaths["packageC"] = packageC2;
+            string bundleE = new BundleBuilder(this, "BundleE") { BindPaths = bindPaths, Extensions = Extensions, PreprocessorVariables = new Dictionary<string, string>() { { "Version", "1.0.1.0" } } }.Build().Output;
+
+            // Install the base and addon bundles.
+            BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
+            BundleInstaller installerC = new BundleInstaller(this, bundleC).Install();
+
+            // Test that packages A and C1 but not D are installed.
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageC1));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageC2));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD));
+
+            // Install the patch to the addon.
+            BundleInstaller installerE = new BundleInstaller(this, bundleE).Install();
+
+            // Test that packages A and C2 but not D are installed, and that C1 was upgraded.
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageC1));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageC2));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD));
+
+            // Attempt to uninstall bundleA.
+            installerA.Uninstall();
+
+            // Test that uninstalling bundle A detected and removed bundle C, which removed bundle E (can't easily reference log).
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerA.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Addon, scope: PerMachine, version: 1\.0\.0\.0, operation: Remove"));
+
+            // Test that all packages are uninstalled.
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageC1));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageC2));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD));
+
+            this.CleanTestArtifacts = true;
+        }
     }
 }

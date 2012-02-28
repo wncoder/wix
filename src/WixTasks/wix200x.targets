@@ -63,7 +63,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
     <WixTasksPath Condition=" '$(WixTasksPath)' == '' ">$(MSBuildExtensionsPath)\..\WiX Toolset v3.6\bin\WixTasks.dll</WixTasksPath>
     <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Lux.targets</LuxTargetsPath>
-    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\..\WiX Toolset XML v3.6\bin\LuxTasks.dll</LuxTasksPath>
+    <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\..\WiX Toolset v3.6\bin\LuxTasks.dll</LuxTasksPath>
     <LuxTargetsPath Condition=" '$(LuxTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Lux.targets</LuxTargetsPath>
     <LuxTasksPath Condition=" '$(LuxTasksPath)' == '' ">$(MSBuildExtensionsPath)\..\WiX Toolset v3.6\bin\LuxTasks.dll</LuxTasksPath>
   </PropertyGroup>

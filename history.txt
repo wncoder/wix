@@ -1826,3 +1826,50 @@ RobMen: Display related bundles in plan in Burn log.
 
 WixBuild: Version 3.6.2617.0
 
+BobArnson: SFBUG:3447325 - clean up message if all conditions pass
+
+BobArnson: SFBUG:3419080 - use CSIDL_PROGRAM_FILES for 32-bit Program Files
+
+EricStJ: Fix typo in native custom action project template setup authoring.
+
+BobArnson: SFBUG:3431541 - handle Tab/Shift+Tab for rich-edit control
+
+BobArnson: - Add Hypertext control to ThmUtil (using Syslink commctrl)
+           - Add Hypertext/Richedit link handling to ThmUtil
+
+RobMen (jbtibor): SFBUG:3467540 - fix WixUI_ro-RO.wxl file.
+
+PMarcu: Adjusting retry message on failure of database commit.
+
+HeathS: Ignore the return code when registering MSI package source.
+
+RobMen: SFBUG:3431330;3458417 - wixstdba uninstall cancel now rollback.
+        SFBUG:3431449 - disable wixsdtba cancel button appropriately.
+        SFBUG:3476390 - fix wixstdba crash when cancelling.
+
+WixBuild: Version 3.6.2624.0
+
+RobMen: Prevent hang if Burn pipe communication fail during initialization.
+
+RobMen: Improve cancel handling in Burn during parallel cache and rollback.
+
+greggm: Add more support for Vista-and-later firewall rules: descriptions and
+        application+port/protocol rules.
+
+RobMen: SFBUG:3428949 - enable wixstdba to show hyperlinks in failure messages.
+        SFBUG:3431333 - enable wixstdba cancel confirmation to be localized.
+
+HeathS: Reduced number of strings compiled into the executable.
+
+HeathS: Added related bundle test for chained uninstall.
+
+RobMen: Burn will continue without logging when appending to ensure setup
+        always resumes after restart.
+
+BobArnson: Add <Control> to .wxl schema: Override size, location, and text of
+           MSI UI controls.
+
+RobMen: SFBUG:3428804 - show restart message in wixstdba appropriately.
+
+WixBuild: Version 3.6.2627.0
+

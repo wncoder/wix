@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // Binder core of the Windows Installer Xml toolset.
 // </summary>
@@ -1376,7 +1376,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Index the Component table for non-directory & non-registry key paths.
             foreach (Row row in componentTable.Rows)
             {
-                if (null != row.Fields[5].Data && 
+                if (null != row.Fields[5].Data &&
                     0 != ((int)row.Fields[3].Data & MsiInterop.MsidbComponentAttributesRegistryKeyPath))
                 {
                     componentKeyPath.Add(row.Fields[0].Data.ToString(), row.Fields[5].Data.ToString());
@@ -1581,6 +1581,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 variableCache = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             }
+
+            this.LocalizeUI(output.Tables);
 
             // process the summary information table before the other tables
             string modularizationGuid = this.BindDatabaseSummaryInfo(output, out longNames, out compressed);
@@ -1964,6 +1966,53 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Localize dialogs and controls.
+        /// </summary>
+        /// <param name="tables">The tables to localize.</param>
+        private void LocalizeUI(TableCollection tables)
+        {
+            Table controlTable = tables["Control"];
+            if (null != controlTable)
+            {
+                foreach (Row row in controlTable.Rows)
+                {
+                    string dialog = (string)row[0];
+                    string control = (string)row[1];
+                    LocalizedControl localizedControl = this.Localizer.GetLocalizedControl(dialog, control);
+                    if (null != localizedControl)
+                    {
+                        if (CompilerCore.IntegerNotSet != localizedControl.X)
+                        {
+                            row[3] = localizedControl.X.ToString();
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Y)
+                        {
+                            row[4] = localizedControl.Y.ToString();
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Width)
+                        {
+                            row[5] = localizedControl.Width.ToString();
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Height)
+                        {
+                            row[6] = localizedControl.Height.ToString();
+                        }
+
+                        row[7] = (int)row[7] | localizedControl.Attributes;
+
+                        if (!String.IsNullOrEmpty(localizedControl.Text))
+                        {
+                            row[9] = localizedControl.Text;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Resolve source fields in the tables included in the output
         /// </summary>
         /// <param name="tables">The tables to resolve.</param>
@@ -1985,7 +2034,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             // resolve localization and wix variables
                             if (field.Data is string)
-                            { 
+                            {
                                 field.Data = this.WixVariableResolver.ResolveVariables(row.SourceLineNumbers, (string)field.Data, false, ref isDefault, ref delayedResolve);
                                 if (delayedResolve)
                                 {
@@ -2641,7 +2690,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         if (1 == i)
                                         {
                                             // File.Component_ changes should not come from the shared file rows
-                                            // that contain the file information as each individual transform might 
+                                            // that contain the file information as each individual transform might
                                             // have different changes (or no changes at all).
                                         }
                                         // File.Attributes should not changed for binary deltas
@@ -3066,7 +3115,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
 
-            // TODO: need to check Compiler.BurnUXContainerId and send a message if it is not set otherwise 
+            // TODO: need to check Compiler.BurnUXContainerId and send a message if it is not set otherwise
             //         there is an exception thrown "ight.exe : error LGHT0001 : The given key was not present in the dictionary."
             List<PayloadInfo> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
 
@@ -3257,14 +3306,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // not C and B. The fix is to label packages with a "backwards"
             // rollback boundary used during uninstall. The backwards rollback
             // boundaries are assigned to the package *before* the next rollback
-            // boundary. Using our example from above again, I'll mark the 
+            // boundary. Using our example from above again, I'll mark the
             // backwards rollback boundaries prime (aka: with ').
             //      install:    1 A B 1' 2 C 2'
             //      uninstall:  2' C 2 1' B A 1
             //
             // If the marked boundaries are ignored during install you get the
             // same thing as above (good) and if the non-marked boundaries are
-            // ignored during uninstall then A and B are correctly grouped. 
+            // ignored during uninstall then A and B are correctly grouped.
             // Here's what it looks like without all the markers:
             //      install:    1 A B 2 C
             //      uninstall:  2 C 1 B A
@@ -4191,7 +4240,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                         }
                     }
-                    
+
                     VerifyInterop.WinTrustCatalogInfo catalogData = new VerifyInterop.WinTrustCatalogInfo();
                     VerifyInterop.WinTrustData trustData = new VerifyInterop.WinTrustData();
                     try
@@ -7183,7 +7232,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.LogPathVariable = logPathVariable;
                 this.RollbackLogPathVariable = rollbackPathVariable;
 
-                this.DisplayInternalUI = (YesNoType.Yes == displayInternalUI); 
+                this.DisplayInternalUI = (YesNoType.Yes == displayInternalUI);
 
                 this.Payloads = new List<PayloadInfo>();
                 this.RelatedPackages = new List<RelatedPackage>();
@@ -7430,7 +7479,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // If feature selection is enabled, represent the Feature table in the manifest.
                         if (YesNoType.Yes == enableFeatureSelection && db.Tables.Contains("Feature"))
                         {
-                            using (Microsoft.Deployment.WindowsInstaller.View featureView = db.OpenView("SELECT `Component_` FROM `FeatureComponents` WHERE `Feature_` = ?"), 
+                            using (Microsoft.Deployment.WindowsInstaller.View featureView = db.OpenView("SELECT `Component_` FROM `FeatureComponents` WHERE `Feature_` = ?"),
                                         componentView = db.OpenView("SELECT `FileSize` FROM `File` WHERE `Component_` = ?"))
                             {
                                 using (Microsoft.Deployment.WindowsInstaller.Record featureRecord = new Microsoft.Deployment.WindowsInstaller.Record(1),
@@ -7461,7 +7510,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 componentView.Execute(componentRecord);
 
                                                 // Loop over all the files
-                                                
+
                                                 while (true)
                                                 {
                                                     using (Microsoft.Deployment.WindowsInstaller.Record fileResultRecord = componentView.Fetch())

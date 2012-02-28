@@ -29,6 +29,7 @@ static ULONG_PTR vgdiToken = 0;
 static ULONG_PTR vgdiHookToken = 0;
 static HMODULE vhHyperlinkRegisteredModule = NULL;
 static HMODULE vhModuleRichEd = NULL;
+static HCURSOR vhCursorHand = NULL;
 
 enum INTERNAL_CONTROL_STYLE
 {
@@ -118,9 +119,6 @@ static HRESULT FindImageList(
     __in_z LPCWSTR wzImageListName,
     __out HIMAGELIST *phImageList
     );
-static WORD FindControlVirtualKey(
-    LPCWSTR wzText
-    );
 static HRESULT DrawBillboard(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis,
@@ -189,6 +187,16 @@ static void FreeColumn(
 static void FreeTab(
     __in THEME_TAB* pTab
     );
+static HRESULT OnRichEditEnLink(
+    __in LPARAM lParam,
+    __in HWND hWndRichEdit,
+    __in HWND hWnd
+    );
+static BOOL ControlIsType(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in THEME_CONTROL_TYPE type
+    );
 
 
 DAPI_(HRESULT) ThemeInitialize(
@@ -202,6 +210,8 @@ DAPI_(HRESULT) ThemeInitialize(
     hr = XmlInitialize();
     ExitOnFailure(hr, "Failed to initialize XML.");
 
+    vhCursorHand = ::LoadCursorA(NULL, IDC_HAND);
+
     // Base the theme hyperlink class on a button but give it the "hand" icon.
     if (!::GetClassInfoW(NULL, WC_BUTTONW, &wcHyperlink))
     {
@@ -211,7 +221,7 @@ DAPI_(HRESULT) ThemeInitialize(
     wcHyperlink.lpszClassName = THEME_WC_HYPERLINK;
 #pragma prefast(push)
 #pragma prefast(disable:25068)
-    wcHyperlink.hCursor = ::LoadCursorA(NULL, IDC_HAND);
+    wcHyperlink.hCursor = vhCursorHand;
 #pragma prefast(pop)
 
     if (!::RegisterClassW(&wcHyperlink))
@@ -227,7 +237,7 @@ DAPI_(HRESULT) ThemeInitialize(
     ExitOnGdipFailure(gdiStatus, hr, "Failed to initialize GDI+.");
 
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC  = ICC_PROGRESS_CLASS | ICC_LISTVIEW_CLASSES | ICC_TREEVIEW_CLASSES | ICC_TAB_CLASSES;
+    icex.dwICC  = ICC_PROGRESS_CLASS | ICC_LISTVIEW_CLASSES | ICC_TREEVIEW_CLASSES | ICC_TAB_CLASSES | ICC_LINK_CLASS;
     ::InitCommonControlsEx(&icex);
 
     (*vgso.NotificationHook)(&vgdiHookToken);
@@ -439,6 +449,10 @@ DAPI_(HRESULT) ThemeLoadControls(
             dwWindowBits |= BS_OWNERDRAW;
             break;
 
+        case THEME_CONTROL_TYPE_HYPERTEXT:
+            wzWindowClass = WC_LINK;
+            break;
+
         case THEME_CONTROL_TYPE_IMAGE: // images are basically just owner drawn static controls (so we can draw .jpgs and .pngs instead of just bitmaps).
             if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
             {
@@ -556,6 +570,11 @@ DAPI_(HRESULT) ThemeLoadControls(
                     }
                 }
             }
+            else if (THEME_CONTROL_TYPE_RICHEDIT == pControl->type)
+            {
+                ::SendMessageW(pControl->hWnd, EM_AUTOURLDETECT, static_cast<WPARAM>(TRUE), 0);
+                ::SendMessageW(pControl->hWnd, EM_SETEVENTMASK, 0, ENM_KEYEVENTS | ENM_LINK);
+            }
             else if (THEME_CONTROL_TYPE_TAB == pControl->type)
             {
                 ULONG_PTR hbrBackground = 0;
@@ -587,32 +606,6 @@ DAPI_(HRESULT) ThemeLoadControls(
             {
                 ::SendMessageW(pControl->hWnd, WM_SETFONT, (WPARAM)pControlFont->hFont, FALSE);
             }
-        }
-    }
-
-    // Load the page accelerator tables now.
-    for (DWORD i = 0; i < pTheme->cPages; ++i)
-    {
-        THEME_PAGE* pPage = pTheme->rgPages + i;
-        ACCEL rgAccel[256] = { }; // should be more than enough accelerators for any given page.
-        DWORD cAccel = 0;
-
-        for (DWORD iControl = 0; iControl < pPage->cControlIndices && cAccel < countof(rgAccel); ++iControl)
-        {
-            THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[iControl];
-            WORD wAcceleratorId = FindControlVirtualKey(pControl->sczText);
-            if (wAcceleratorId)
-            {
-                rgAccel[cAccel].cmd = pControl->wId;
-                rgAccel[cAccel].fVirt = FALT;
-                rgAccel[cAccel].key = wAcceleratorId;
-                ++cAccel;
-            }
-        }
-
-        if (cAccel)
-        {
-            pPage->hAcceleratorTable = ::CreateAcceleratorTableW(rgAccel, cAccel);
         }
     }
 
@@ -802,23 +795,11 @@ LExit:
 
 DAPI_(BOOL) ThemeHandleKeyboardMessage(
     __in_opt THEME* pTheme,
-    __in HWND hWnd,
+    __in HWND /*hWnd*/,
     __in MSG* pMsg
     )
 {
-    BOOL fProcessed = FALSE;
-
-    if (pTheme)
-    {
-        fProcessed = ::IsDialogMessageW(pTheme->hwndParent, pMsg);
-
-        if (!fProcessed && pTheme->hActiveAcceleratorTable)
-        {
-            fProcessed = ::TranslateAcceleratorW(hWnd, pTheme->hActiveAcceleratorTable, pMsg);
-        }
-    }
-
-    return fProcessed;
+    return pTheme ? ::IsDialogMessageW(pTheme->hwndParent, pMsg) : FALSE;
 }
 
 
@@ -878,6 +859,45 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
                 ::EndPaint(hWnd, &ps);
             }
             return 0;
+
+        case WM_NOTIFY:
+            if (lParam)
+            {
+                LPNMHDR pnmhdr = reinterpret_cast<LPNMHDR>(lParam);
+                switch (pnmhdr->code)
+                {
+                // Tab/Shift+Tab support for rich-edit control
+                case EN_MSGFILTER:
+                    {
+                    MSGFILTER* msgFilter = reinterpret_cast<MSGFILTER*>(lParam);
+                    if (WM_KEYDOWN == msgFilter->msg && VK_TAB == msgFilter->wParam)
+                    {
+                        BOOL fShift = 0x8000 & ::GetKeyState(VK_SHIFT);
+                        HWND hwndFocus = ::GetNextDlgTabItem(hWnd, msgFilter->nmhdr.hwndFrom, fShift);
+                        ::SetFocus(hwndFocus);
+                        return 1;
+                    }
+                    break;
+                    }
+
+                // Hyperlink clicks from rich-edit control
+                case EN_LINK:
+                    return SUCCEEDED(OnRichEditEnLink(lParam, pnmhdr->hwndFrom, hWnd));
+
+                // Clicks on a hypertext/syslink control
+                case NM_CLICK: __fallthrough;
+                case NM_RETURN:
+                    if (ControlIsType(pTheme, static_cast<DWORD>(pnmhdr->idFrom), THEME_CONTROL_TYPE_HYPERTEXT))
+                    {
+                        PNMLINK pnmlink = reinterpret_cast<PNMLINK>(lParam);
+                        LITEM litem = pnmlink->item;
+                        ShelExec(litem.szUrl, NULL, L"open", NULL, SW_SHOWDEFAULT, hWnd, NULL);
+                        return 1;
+                    }
+
+                    return 0;
+                }
+            }
         }
     }
 
@@ -950,7 +970,7 @@ DAPI_(void) ThemeShowPage(
             {
                 ::ShowWindow(hWnd, nCmdShow);
 
-                if (!hwndFocus && pControl->dwStyle & WS_TABSTOP)
+                if (!hwndFocus && SW_HIDE != nCmdShow && pControl->dwStyle & WS_TABSTOP)
                 {
                     hwndFocus = hWnd;
                 }
@@ -969,19 +989,9 @@ DAPI_(void) ThemeShowPage(
             }
         }
 
-        // If we're showing the page, use that as the new accelerator table.
-        if (SW_SHOW == nCmdShow)
+        if (hwndFocus)
         {
-            pTheme->hActiveAcceleratorTable = pPage->hAcceleratorTable;
-            
-            if (hwndFocus)
-            {
-                ::PostMessageW(pTheme->hwndParent, WM_NEXTDLGCTL, reinterpret_cast<WPARAM>(hwndFocus), MAKELPARAM(TRUE, 0));
-            }
-        }
-        else if (pTheme->hActiveAcceleratorTable == pPage->hAcceleratorTable) // we're not showing this page any more, so turn off the accelerator table.
-        {
-            pTheme->hActiveAcceleratorTable = NULL;
+            ::SetFocus(hwndFocus);
         }
     }
 }
@@ -1207,7 +1217,7 @@ DAPI_(BOOL) ThemeSetControlColor(
     else
     {
         const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        pFont = (THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
+        pFont = (!pControl || THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
     }
 
     if (pFont)
@@ -2177,6 +2187,10 @@ static HRESULT ParseControls(
         {
             type = THEME_CONTROL_TYPE_HYPERLINK;
         }
+        else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Hypertext", -1))
+        {
+            type = THEME_CONTROL_TYPE_HYPERTEXT;
+        }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"Image", -1) ||
                  CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrType, -1, L"i", 1))
         {
@@ -2841,30 +2855,6 @@ LExit:
 }
 
 
-static WORD FindControlVirtualKey(
-    LPCWSTR wzText
-    )
-{
-    WORD wAcceleratorId = 0;
-
-    // Search for the "&" that marks accelerators with underscores.
-    for (LPCWSTR pwz = wzText; pwz && *pwz; ++pwz)
-    {
-        if ('&' == *pwz)
-        {
-            WCHAR wchNext = *(pwz + 1);
-            if (wchNext && '&' != wchNext)
-            {
-                wAcceleratorId = ::VkKeyScanW(wchNext) & 0xFF;
-                break;
-            }
-        }
-    }
-
-    return wAcceleratorId;
-}
-
-
 static HRESULT DrawBillboard(
     __in THEME* pTheme,
     __in DRAWITEMSTRUCT* pdis,
@@ -3081,12 +3071,6 @@ static void FreePage(
 {
     if (pPage)
     {
-        if (pPage->hAcceleratorTable)
-        {
-            ::DestroyAcceleratorTable(pPage->hAcceleratorTable);
-            pPage->hAcceleratorTable = NULL;
-        }
-
         ReleaseStr(pPage->sczName);
         ReleaseMem(pPage->rgdwControlIndices);
     }
@@ -3275,4 +3259,63 @@ static void CALLBACK BillboardTimerProc(
             ::KillTimer(hwnd, idEvent);
         }
     }
+}
+
+static HRESULT OnRichEditEnLink(
+    __in LPARAM lParam,
+    __in HWND hWndRichEdit,
+    __in HWND hWnd
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczLink = NULL;
+    ENLINK* link = reinterpret_cast<ENLINK*>(lParam);
+
+    switch (link->msg)
+    {
+    case WM_LBUTTONDOWN:
+        {
+        hr = StrAlloc(&sczLink, link->chrg.cpMax - link->chrg.cpMin + 2);
+        ExitOnFailure(hr, "Failed to allocate string for link");
+
+        TEXTRANGEW tr;
+        tr.chrg.cpMin = link->chrg.cpMin;
+        tr.chrg.cpMax = link->chrg.cpMax;
+        tr.lpstrText = sczLink;
+
+        if (0 < ::SendMessageW(hWndRichEdit, EM_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr)))
+        {
+            hr = ShelExec(sczLink, NULL, L"open", NULL, SW_SHOWDEFAULT, hWnd, NULL);
+            ExitOnFailure1(hr, "Failed to launch link: %ls", sczLink);
+        }
+        
+        break;
+        }
+
+    case WM_SETCURSOR:
+        ::SetCursor(vhCursorHand);
+        break;
+    }
+
+LExit:
+    ReleaseStr(sczLink);
+
+    return hr;
+}
+
+static BOOL ControlIsType(
+    __in THEME* pTheme,
+    __in DWORD dwControl,
+    __in THEME_CONTROL_TYPE type
+    )
+{
+    BOOL fIsType = FALSE;
+    HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
+    if (hWnd)
+    {
+        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        fIsType = (type == pControl->type);
+    }
+
+    return fIsType;
 }

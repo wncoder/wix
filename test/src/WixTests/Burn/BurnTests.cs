@@ -30,17 +30,44 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         public static string PerMachinePayloadCacheRoot = System.Environment.ExpandEnvironmentVariables(@"%ProgramData%\" + PayloadCacheFolder);
         public static string PerUserPayloadCacheRoot = System.Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\" + PayloadCacheFolder);
 
-        protected static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
-
-        protected string GetTestInstallFolder(string additionalPath = null)
+        /// <summary>
+        /// Slows the cache progress of a package.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="delay">Sets or removes the delay on a package being cached.</param>
+        protected void SetPackageSlowCache(string packageId, int? delay)
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "~Test WiX", this.TestContext.TestName, additionalPath ?? String.Empty);
+            this.SetPackageState(packageId, "SlowCache", delay.HasValue ? delay.ToString() : null);
         }
 
-        protected RegistryKey GetTestRegistryRoot(string additionalPath = null)
+        /// <summary>
+        /// Cancels the cache of a package at a particular progress point.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="cancelPoint">Sets or removes the cancel progress on a package being cached.</param>
+        protected void SetPackageCancelCacheAtProgress(string packageId, int? cancelPoint)
         {
-            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, additionalPath ?? String.Empty);
-            return Registry.LocalMachine.OpenSubKey(key);
+            this.SetPackageState(packageId, "CancelCacheAtProgress", cancelPoint.HasValue ? cancelPoint.ToString() : null);
+        }
+
+        /// <summary>
+        /// Slows the execute progress of a package.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="delay">Sets or removes the delay on a package being executed.</param>
+        protected void SetPackageSlowExecute(string packageId, int? delay)
+        {
+            this.SetPackageState(packageId, "SlowExecute", delay.HasValue ? delay.ToString() : null);
+        }
+
+        /// <summary>
+        /// Cancels the execute of a package at a particular progress point.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="cancelPoint">Sets or removes the cancel progress on a package being executed.</param>
+        protected void SetPackageCancelExecuteAtProgress(string packageId, int? cancelPoint)
+        {
+            this.SetPackageState(packageId, "CancelExecuteAtProgress", cancelPoint.HasValue ? cancelPoint.ToString() : null);
         }
 
         /// <summary>
@@ -50,11 +77,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         /// <param name="state">State to request.</param>
         protected void SetPackageRequestedState(string packageId, RequestState state)
         {
-            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
-            using (RegistryKey packageKey = Registry.LocalMachine.CreateSubKey(key))
-            {
-                packageKey.SetValue("Requested", state.ToString());
-            }
+            this.SetPackageState(packageId, "Requested", state.ToString());
         }
 
         /// <summary>
@@ -65,6 +88,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         {
             string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
             Registry.LocalMachine.DeleteSubKey(key);
+        }
+
+        private void SetPackageState(string packageId, string name, string value)
+        {
+            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
+            using (RegistryKey packageKey = Registry.LocalMachine.CreateSubKey(key))
+            {
+                if (String.IsNullOrEmpty(value))
+                {
+                    packageKey.DeleteValue(name, false);
+                }
+                else
+                {
+                    packageKey.SetValue(name, value);
+                }
+            }
         }
     }
 }

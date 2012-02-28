@@ -41,6 +41,7 @@ struct BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT
 typedef struct _BURN_EXECUTE_CONTEXT
 {
     BURN_USER_EXPERIENCE* pUX;
+    BOOL fRollback;
     BURN_PACKAGE* pExecutingPackage;
     DWORD cExecutedPackages;
     DWORD cExecutePackagesTotal;
@@ -76,7 +77,7 @@ static HRESULT AcquireContainerOrPayload(
     );
 static HRESULT LayoutOrCachePayload(
     __in BURN_USER_EXPERIENCE* pUX,
-    __in_opt HANDLE hPipe,
+    __in HANDLE hPipe,
     __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
@@ -124,7 +125,7 @@ static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
-    __in HANDLE hCacheThread,
+    __in_opt HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
@@ -197,6 +198,7 @@ static int MsiExecuteMessageHandler(
     );
 static HRESULT ReportOverallProgressTicks(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BOOL fRollback,
     __in DWORD cOverallProgressTicksTotal,
     __in DWORD cOverallProgressTicks
     );
@@ -221,7 +223,7 @@ extern "C" HRESULT ApplyRegister(
     LPWSTR sczEngineWorkingPath = NULL;
 
     int nResult = pEngineState->userExperience.pUserExperience->OnRegisterBegin();
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, FALSE, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted register begin.");
 
     // If we have a resume mode that suggests the bundle is on the machine.
@@ -325,7 +327,7 @@ extern "C" HRESULT ApplyCache(
     DWORD iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
 
     int nResult = pUX->pUserExperience->OnCacheBegin();
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted cache.");
 
     do
@@ -368,7 +370,7 @@ extern "C" HRESULT ApplyCache(
                 {
                     ++(*pcOverallProgressTicks);
 
-                    hr = ReportOverallProgressTicks(pUX, pPlan->cOverallProgressTicksTotal, *pcOverallProgressTicks);
+                    hr = ReportOverallProgressTicks(pUX, FALSE, pPlan->cOverallProgressTicksTotal, *pcOverallProgressTicks);
                     if (FAILED(hr))
                     {
                         LogErrorId(hr, MSG_USER_CANCELED, L"layout bundle", NULL, NULL);
@@ -382,7 +384,7 @@ extern "C" HRESULT ApplyCache(
                 pStartedPackage = pCacheAction->packageStart.pPackage;
 
                 nResult = pUX->pUserExperience->OnCachePackageBegin(pStartedPackage->sczId, pCacheAction->packageStart.cCachePayloads, pCacheAction->packageStart.qwCachePayloadSizeTotal);
-                hr = HRESULT_FROM_VIEW(nResult);
+                hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_USER_CANCELED, L"begin cache package", pStartedPackage->sczId, NULL);
@@ -455,7 +457,7 @@ extern "C" HRESULT ApplyCache(
             case BURN_CACHE_ACTION_TYPE_PACKAGE_STOP:
                 AssertSz(pStartedPackage == pCacheAction->packageStop.pPackage, "Expected package started cached to be the same as the package checkpointed.");
 
-                hr = ReportOverallProgressTicks(pUX, pPlan->cOverallProgressTicksTotal, *pcOverallProgressTicks + 1);
+                hr = ReportOverallProgressTicks(pUX, FALSE, pPlan->cOverallProgressTicksTotal, *pcOverallProgressTicks + 1);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_USER_CANCELED, L"end cache package", NULL, NULL);
@@ -500,6 +502,7 @@ extern "C" HRESULT ApplyCache(
             Assert(BURN_PLAN_INVALID_ACTION_INDEX != iPackageCompleteAction);
 
             nResult = pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, SUCCEEDED(hr) || pStartedPackage->fVital ? IDNOACTION : IDIGNORE);
+            nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_ABORTRETRYIGNORE, nResult);
             if (FAILED(hr))
             {
                 if (IDRETRY == nResult)
@@ -557,7 +560,7 @@ LExit:
 extern "C" HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_opt HWND hwndParent,
-    __in HANDLE hCacheThread,
+    __in_opt HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
     __out BOOL* pfKeepRegistration,
     __out BOOL* pfRollback,
@@ -578,7 +581,7 @@ extern "C" HRESULT ApplyExecute(
 
     // Send execute begin to BA.
     nResult = pEngineState->userExperience.pUserExperience->OnExecuteBegin(pEngineState->plan.cExecutePackagesTotal);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, FALSE, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "BA aborted execute begin.");
 
     // Do execute actions.
@@ -763,13 +766,14 @@ static HRESULT LayoutBundle(
             progress.fCancel = FALSE;
 
             int nResult = pUX->pUserExperience->OnCacheAcquireBegin(NULL, NULL, BOOTSTRAPPER_CACHE_OPERATION_COPY, sczBundlePath);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "BA aborted cache acquire begin.");
 
             hr = CopyPayload(&progress, sczBundlePath, wzUnverifiedPath);
             // Error handling happens after sending complete message to BA.
 
             nResult = pUX->pUserExperience->OnCacheAcquireComplete(NULL, NULL, hr, IDNOACTION);
+            nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYCANCEL, nResult);
             if (FAILED(hr) && IDRETRY == nResult)
             {
                 hr = S_FALSE;
@@ -785,7 +789,7 @@ static HRESULT LayoutBundle(
         do
         {
             int nResult = pUX->pUserExperience->OnCacheVerifyBegin(NULL, NULL);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted cache verify begin.");
 
             if (INVALID_HANDLE_VALUE != hPipe)
@@ -800,6 +804,7 @@ static HRESULT LayoutBundle(
             nResult = pUX->pUserExperience->OnCacheVerifyComplete(NULL, NULL, hr, IDNOACTION);
             if (FAILED(hr))
             {
+                nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYTRYAGAIN, nResult);
                 if (IDRETRY == nResult)
                 {
                     hr = S_FALSE; // retry verify.
@@ -835,8 +840,8 @@ static HRESULT AcquireContainerOrPayload(
 
     HRESULT hr = S_OK;
     int nEquivalentPaths = 0;
-    LPWSTR wzPackageOrContainerId = pContainer ? pContainer->sczId : pPackage ? pPackage->sczId : NULL;
-    LPWSTR wzPayloadId = pPayload ? pPayload->sczKey : NULL;
+    LPCWSTR wzPackageOrContainerId = pContainer ? pContainer->sczId : pPackage ? pPackage->sczId : NULL;
+    LPCWSTR wzPayloadId = pPayload ? pPayload->sczKey : NULL;
     LPWSTR sczSourceFullPath = NULL;
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
     BOOL fRetry = FALSE;
@@ -900,7 +905,7 @@ static HRESULT AcquireContainerOrPayload(
         if (fCopy)
         {
             int nResult = pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_COPY, sczSourceFullPath);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "BA aborted cache acquire begin.");
 
             hr = CopyPayload(&progress, sczSourceFullPath, wzDestinationPath);
@@ -909,7 +914,7 @@ static HRESULT AcquireContainerOrPayload(
         else if (fDownload)
         {
             int nResult = pUX->pUserExperience->OnCacheAcquireBegin(wzPackageOrContainerId, wzPayloadId, BOOTSTRAPPER_CACHE_OPERATION_DOWNLOAD, wzDownloadUrl);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "BA aborted cache download payload begin.");
 
             hr = DownloadPayload(&progress, wzDestinationPath);
@@ -919,6 +924,7 @@ static HRESULT AcquireContainerOrPayload(
         if (fCopy || fDownload)
         {
             int nResult = pUX->pUserExperience->OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hr, IDNOACTION);
+            nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYCANCEL, nResult);
             if (FAILED(hr) && IDRETRY == nResult)
             {
                 fRetry = TRUE;
@@ -942,7 +948,7 @@ LExit:
 
 static HRESULT LayoutOrCachePayload(
     __in BURN_USER_EXPERIENCE* pUX,
-    __in_opt HANDLE hPipe,
+    __in HANDLE hPipe,
     __in_opt BURN_PACKAGE* pPackage,
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
@@ -959,7 +965,7 @@ static HRESULT LayoutOrCachePayload(
     do
     {
         int nResult = pUX->pUserExperience->OnCacheVerifyBegin(pPackage ? pPackage->sczId : NULL, pPayload->sczKey);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted cache verify begin.");
 
         if (INVALID_HANDLE_VALUE != hPipe) // pass the decision off to the elevated process.
@@ -978,6 +984,7 @@ static HRESULT LayoutOrCachePayload(
         }
 
         nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, FAILED(hr) && cTryAgainAttempts < BURN_CACHE_MAX_RECOMMENDED_VERIFY_TRYAGAIN_ATTEMPTS ? IDTRYAGAIN : IDNOACTION);
+        nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYTRYAGAIN, nResult);
         if (FAILED(hr))
         {
             if (IDRETRY == nResult)
@@ -1152,6 +1159,7 @@ static DWORD CALLBACK CacheProgressRoutine(
     DWORD dwOverallPercentage = static_cast<DWORD>(qwCacheProgress * 100 / pProgress->qwTotalCacheSize);
 
     int nResult = pProgress->pUX->pUserExperience->OnCacheAcquireProgress(wzPackageOrContainerId, wzPayloadId, TotalBytesTransferred.QuadPart, TotalFileSize.QuadPart, dwOverallPercentage);
+    nResult = UserExperienceCheckExecuteResult(pProgress->pUX, FALSE, MB_OKCANCEL, nResult);
     switch (nResult)
     {
     case IDOK: __fallthrough;
@@ -1232,7 +1240,7 @@ static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
-    __in HANDLE hCacheThread,
+    __in_opt HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __inout BURN_ROLLBACK_BOUNDARY** ppRollbackBoundary,
     __out DWORD* pdwCheckpoint,
@@ -1247,6 +1255,8 @@ static HRESULT DoExecuteAction(
     HANDLE rghWait[2] = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
     BOOL fRetry = FALSE;
+
+    pContext->fRollback = FALSE;
 
     do
     {
@@ -1346,6 +1356,8 @@ static HRESULT DoRollbackActions(
     DWORD iCheckpoint = 0;
     BOOL fRetryIgnored = FALSE;
     BOOL fSuspendIgnored = FALSE;
+
+    pContext->fRollback = TRUE;
 
     // scan to last checkpoint
     for (DWORD i = 0; i < pEngineState->plan.cRollbackActions; ++i)
@@ -1458,17 +1470,19 @@ static HRESULT ExecuteExePackage(
     GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
 
+    Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->exePackage.pPackage;
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->exePackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted execute EXE package begin.");
 
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = fRollback ? 100 : 0;
     nResult = GenericExecuteMessageHandler(&message, pContext);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, message.dwAllowedResults, nResult);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
     // Execute package.
@@ -1484,15 +1498,16 @@ static HRESULT ExecuteExePackage(
     }
 
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = fRollback ? 0 : 100;
     nResult = GenericExecuteMessageHandler(&message, pContext);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, message.dwAllowedResults, nResult);
     ExitOnRootFailure(hr, "UX aborted EXE progress.");
 
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
-    hr = ReportOverallProgressTicks(&pEngineState->userExperience, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
+    hr = ReportOverallProgressTicks(&pEngineState->userExperience, fRollback, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
     ExitOnRootFailure(hr, "UX aborted EXE package execute progress.");
 
 LExit:
@@ -1515,11 +1530,12 @@ static HRESULT ExecuteMsiPackage(
     HRESULT hrExecute = S_OK;
     int nResult = 0;
 
+    Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->msiPackage.pPackage;
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->msiPackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted execute MSI package begin.");
 
     // execute package
@@ -1537,7 +1553,7 @@ static HRESULT ExecuteMsiPackage(
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
-    hr = ReportOverallProgressTicks(&pEngineState->userExperience, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
+    hr = ReportOverallProgressTicks(&pEngineState->userExperience, fRollback, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
     ExitOnRootFailure(hr, "UX aborted MSI package execute progress.");
 
 LExit:
@@ -1560,11 +1576,12 @@ static HRESULT ExecuteMspPackage(
     HRESULT hrExecute = S_OK;
     int nResult = 0;
 
+    Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->mspTarget.pPackage;
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->mspTarget.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted execute MSP package begin.");
 
     // Now send all the patches that target this product code.
@@ -1573,7 +1590,7 @@ static HRESULT ExecuteMspPackage(
         BURN_PACKAGE* pMspPackage = pExecuteAction->mspTarget.rgOrderedPatches[i].pPackage;
 
         nResult = pEngineState->userExperience.pUserExperience->OnExecutePatchTarget(pMspPackage->sczId, pExecuteAction->mspTarget.sczTargetProductCode);
-        hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+        hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "BA aborted execute MSP target.");
     }
 
@@ -1592,7 +1609,7 @@ static HRESULT ExecuteMspPackage(
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
-    hr = ReportOverallProgressTicks(&pEngineState->userExperience, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
+    hr = ReportOverallProgressTicks(&pEngineState->userExperience, fRollback, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
     ExitOnRootFailure(hr, "UX aborted MSP package execute progress.");
 
 LExit:
@@ -1615,17 +1632,19 @@ static HRESULT ExecuteMsuPackage(
     GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
 
+    Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->msuPackage.pPackage;
 
     // send package execute begin to UX
     nResult = pEngineState->userExperience.pUserExperience->OnExecutePackageBegin(pExecuteAction->msuPackage.pPackage->sczId, !fRollback);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted execute MSU package begin.");
 
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = fRollback ? 100 : 0;
     nResult = GenericExecuteMessageHandler(&message, pContext);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, message.dwAllowedResults, nResult);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
     // execute package
@@ -1641,15 +1660,16 @@ static HRESULT ExecuteMsuPackage(
     }
 
     message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+    message.dwAllowedResults = MB_OKCANCEL;
     message.progress.dwPercentage = fRollback ? 0 : 100;
     nResult = GenericExecuteMessageHandler(&message, pContext);
-    hr = HRESULT_FROM_VIEW_IF_ROLLBACK(nResult, fRollback);
+    hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, fRollback, message.dwAllowedResults, nResult);
     ExitOnRootFailure(hr, "UX aborted MSU progress.");
 
     pContext->cExecutedPackages += fRollback ? -1 : 1;
     (*pContext->pcOverallProgressTicks) += fRollback ? -1 : 1;
 
-    hr = ReportOverallProgressTicks(&pEngineState->userExperience, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
+    hr = ReportOverallProgressTicks(&pEngineState->userExperience, fRollback, pEngineState->plan.cOverallProgressTicksTotal, *pContext->pcOverallProgressTicks);
     ExitOnRootFailure(hr, "UX aborted MSU package execute progress.");
 
 LExit:
@@ -1705,20 +1725,24 @@ static int GenericExecuteMessageHandler(
     )
 {
     BURN_EXECUTE_CONTEXT* pContext = (BURN_EXECUTE_CONTEXT*)pvContext;
+    int nResult = IDNOACTION;
 
     switch (pMessage->type)
     {
     case GENERIC_EXECUTE_MESSAGE_PROGRESS:
         {
             DWORD dwOverallProgress = ((pContext->cExecutedPackages * 100 + pMessage->progress.dwPercentage) * 100) / (pContext->cExecutePackagesTotal * 100);
-            return pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
+            nResult = pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
         }
+        break;
+
     case GENERIC_EXECUTE_MESSAGE_FILES_IN_USE:
-        return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->filesInUse.cFiles, pMessage->filesInUse.rgwzFiles);
-    
-    default:
-        return IDOK;
+        nResult = pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->filesInUse.cFiles, pMessage->filesInUse.rgwzFiles);
+        break;
     }
+
+    nResult = UserExperienceCheckExecuteResult(pContext->pUX, pContext->fRollback, pMessage->dwAllowedResults, nResult);
+    return nResult;
 }
 
 static int MsiExecuteMessageHandler(
@@ -1727,31 +1751,37 @@ static int MsiExecuteMessageHandler(
     )
 {
     BURN_EXECUTE_CONTEXT* pContext = (BURN_EXECUTE_CONTEXT*)pvContext;
+    int nResult = IDNOACTION;
 
     switch (pMessage->type)
     {
     case WIU_MSI_EXECUTE_MESSAGE_PROGRESS:
         {
         DWORD dwOverallProgress = ((pContext->cExecutedPackages * 100 + pMessage->progress.dwPercentage) * 100) / (pContext->cExecutePackagesTotal * 100);
-        return pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
+        nResult = pContext->pUX->pUserExperience->OnExecuteProgress(pContext->pExecutingPackage->sczId, pMessage->progress.dwPercentage, dwOverallProgress);
         }
+        break;
 
     case WIU_MSI_EXECUTE_MESSAGE_ERROR:
-        return pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->error.uiFlags, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
+        nResult = pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->dwAllowedResults, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
+        break;
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:
-        return pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->msiMessage.uiFlags, pMessage->msiMessage.wzMessage, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
+        nResult = pContext->pUX->pUserExperience->OnExecuteMsiMessage(pContext->pExecutingPackage->sczId, pMessage->msiMessage.mt, pMessage->dwAllowedResults, pMessage->msiMessage.wzMessage, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
+        break;
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
-        return pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
-
-    default:
-        return IDOK;
+        nResult = pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->msiFilesInUse.cFiles, pMessage->msiFilesInUse.rgwzFiles);
+        break;
     }
+
+    nResult = UserExperienceCheckExecuteResult(pContext->pUX, pContext->fRollback, pMessage->dwAllowedResults, nResult);
+    return nResult;
 }
 
 static HRESULT ReportOverallProgressTicks(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BOOL fRollback,
     __in DWORD cOverallProgressTicksTotal,
     __in DWORD cOverallProgressTicks
     )
@@ -1759,7 +1789,7 @@ static HRESULT ReportOverallProgressTicks(
     HRESULT hr = S_OK;
 
     int nResult = pUX->pUserExperience->OnProgress(0, cOverallProgressTicks * 100 / cOverallProgressTicksTotal);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretExecuteResult(pUX, fRollback, MB_OKCANCEL, nResult);
 
     return hr;
 }

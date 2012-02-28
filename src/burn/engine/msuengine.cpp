@@ -329,9 +329,10 @@ extern "C" HRESULT MsuEngineExecutePackage(
     do
     {
         message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+        message.dwAllowedResults = MB_OKCANCEL;
         message.progress.dwPercentage = 50;
         nResult = pfnGenericMessageHandler(&message, pvContext);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = (IDOK == nResult || IDNOACTION == nResult) ? S_OK : IDCANCEL == nResult ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE);
         ExitOnRootFailure(hr, "Bootstrapper application aborted during MSU progress.");
 
         // wait for process to terminate

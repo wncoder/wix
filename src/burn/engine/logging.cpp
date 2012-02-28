@@ -22,6 +22,8 @@
 
 
 static DWORD vdwPackageSequence = 0;
+static const DWORD LOG_OPEN_RETRY_COUNT = 3;
+static const DWORD LOG_OPEN_RETRY_WAIT = 2000;
 
 // structs
 
@@ -72,21 +74,51 @@ extern "C" HRESULT LoggingOpen(
     // Open the log approriately.
     if (pLog->sczPath && *pLog->sczPath)
     {
+        DWORD cRetry = 0;
+
         hr = DirGetCurrent(&sczLoggingBaseFolder);
         ExitOnFailure(hr, "Failed to get current directory.");
 
-        hr = LogOpen(sczLoggingBaseFolder, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
+        // Try pretty hard to open the log file when appending.
+        do
+        {
+            if (0 < cRetry)
+            {
+                ::Sleep(LOG_OPEN_RETRY_WAIT);
+            }
+
+            hr = LogOpen(sczLoggingBaseFolder, pLog->sczPath, NULL, NULL, pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND, FALSE, &pLog->sczPath);
+            if (pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND && HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr)
+            {
+                ++cRetry;
+            }
+        } while (cRetry > 0 && cRetry <= LOG_OPEN_RETRY_COUNT);
+
         if (FAILED(hr))
         {
-            HRESULT hrOriginal = hr;
+            // Log is not open, so note that.
+            LogDisable();
+            pLog->state = BURN_LOGGING_STATE_DISABLED;
 
-            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_LOG_FAILURE);
-            SplashScreenDisplayError(display, wzBundleName, hr);
+            if (pLog->dwAttributes & BURN_LOGGING_ATTRIBUTE_APPEND)
+            {
+                // If appending, ignore the failure and continue.
+                hr = S_OK;
+            }
+            else // specifically tried to create a log file so show an error if appropriate and bail.
+            {
+                HRESULT hrOriginal = hr;
 
-            ExitOnFailure1(hrOriginal, "Failed to open log: %ls", pLog->sczPath);
+                hr = HRESULT_FROM_WIN32(ERROR_INSTALL_LOG_FAILURE);
+                SplashScreenDisplayError(display, wzBundleName, hr);
+
+                ExitOnFailure1(hrOriginal, "Failed to open log: %ls", pLog->sczPath);
+            }
         }
-
-        pLog->state = BURN_LOGGING_STATE_OPEN;
+        else
+        {
+            pLog->state = BURN_LOGGING_STATE_OPEN;
+        }
     }
     else if (pLog->sczPrefix && *pLog->sczPrefix)
     {

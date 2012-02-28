@@ -29,7 +29,7 @@ extern "C" {
 // Parent (per-user process) side functions.
 HRESULT ElevationElevate(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent
+    __in_opt HWND hwndParent
     );
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,

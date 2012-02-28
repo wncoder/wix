@@ -180,6 +180,7 @@
                 <xs:element ref="Checkbox" />
                 <xs:element ref="Editbox" />
                 <xs:element ref="Hyperlink" />
+                <xs:element ref="Hypertext" />
                 <xs:element ref="ListView" />
                 <xs:element ref="Image" />
                 <xs:element ref="Progressbar" />
@@ -384,6 +385,31 @@
                     <xs:attribute name="SelectedFontId" type="xs:nonNegativeInteger" use="required">
                         <xs:annotation>
                             <xs:documentation>Numeric identifier to the Font element that serves as the font when the control is selected.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="Hypertext">
+        <xs:annotation>
+            <xs:documentation>Defines a text block with support for HTML &lt;a&gt; tags.</xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://wixtoolset.org/schemas/thmutil/2010" ref="Page" />
+                <xse:parent namespace="http://wixtoolset.org/schemas/thmutil/2010" ref="Theme" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>Text to display as the link. Use HTML &lt;a href="URL"&gt; to create a link.</xs:documentation>
+                    </xs:annotation>
+                    <xs:attributeGroup ref="CommonControlAttributes" />
+                    <xs:attribute name="FontId" type="xs:nonNegativeInteger" use="required">
+                        <xs:annotation>
+                            <xs:documentation>Numeric identifier to the Font element that serves as the unselected font.</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
                 </xs:extension>

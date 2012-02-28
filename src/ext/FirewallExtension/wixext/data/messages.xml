@@ -29,10 +29,5 @@
                 The FirewallException element doesn't identify the target of the firewall exception. To create an application exception, nest the FirewallException element under a File element or provide a value for the File or Program attributes. To create a port exception, provide a value for the Port attribute.
             </Instance>
         </Message>
-        <Message Id="TooManyExceptionsSpecified" Number="6404">
-            <Instance>
-                The FirewallException element specifies both application and port exceptions. To create an application exception, nest the FirewallException element under a File element or provide a value for the File or Program attributes. To create a port exception, provide a value for the Port attribute.
-            </Instance>
-        </Message>
     </Class>
 </Messages>

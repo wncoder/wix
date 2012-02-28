@@ -179,7 +179,7 @@ static HRESULT OnEmbeddedErrorMessage(
 
     message.error.wzMessage = sczMessage;
 
-    hr = BuffReadNumber(pbData, cbData, &iData, &message.error.dwUIHint);
+    hr = BuffReadNumber(pbData, cbData, &iData, &message.dwAllowedResults);
     ExitOnFailure(hr, "Failed to read UI hint from buffer.");
 
     *pdwResult = (DWORD)pfnMessageHandler(&message, pvContext);

@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // Common Wix utility methods and types.
 // </summary>
@@ -19,12 +19,15 @@
 namespace Microsoft.Tools.WindowsInstallerXml
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Xml;
+    using Wix = Microsoft.Tools.WindowsInstallerXml.Serialize;
 
     /// <summary>
     /// Common Wix utility methods and types.
@@ -96,7 +99,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         // via mask FILE_ALL_ACCESS  ( 0x0040 )
         // FILE_READ_ATTRIBUTES      ( 0x0080 )
         // FILE_WRITE_ATTRIBUTES     ( 0x0100 )
-        // 
+        //
         // STANDARD_RIGHTS_REQUIRED  (0x000F0000L)
         // FILE_ALL_ACCESS           (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF)
         internal static readonly string[] FilePermissions = { "Read", "Write", "Append", "ReadExtendedAttributes", "WriteExtendedAttributes", "Execute", "FileAllRights", "ReadAttributes", "WriteAttributes" };
@@ -105,6 +108,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         private static readonly Regex PropertySearch = new Regex(@"\[[#$!]?[a-zA-Z_][a-zA-Z0-9_\.]*]", RegexOptions.Singleline);
         private static readonly Regex AddPrefix = new Regex(@"^[^a-zA-Z_]", RegexOptions.Compiled);
+        private static readonly Regex LegalIdentifierCharacters = new Regex(@"^[_A-Za-z][0-9A-Za-z_\.]*$", RegexOptions.Compiled);
         private static readonly Regex IllegalIdentifierCharacters = new Regex(@"[^A-Za-z0-9_\.]|\.{2,}", RegexOptions.Compiled); // non 'words' and assorted valid characters
 
         /// <summary>
@@ -427,5 +431,197 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Get an attribute value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <param name="emptyRule">A rule for the contents of the value. If the contents do not follow the rule, an error is thrown.</param>
+        /// <param name="messageHandler">A delegate that receives error messages.</param>
+        /// <returns>The attribute's value.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        internal static string GetAttributeValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, EmptyRule emptyRule, Action<MessageEventArgs> messageHandler)
+        {
+            if (null == attribute)
+            {
+                throw new ArgumentNullException("attribute");
+            }
+
+            if ((emptyRule == EmptyRule.MustHaveNonWhitespaceCharacters && String.IsNullOrEmpty(attribute.Value.Trim())) ||
+                (emptyRule == EmptyRule.CanBeWhitespaceOnly && String.IsNullOrEmpty(attribute.Value)))
+            {
+                if (null != messageHandler)
+                {
+                    messageHandler(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name));
+                }
+
+                return String.Empty;
+            }
+
+            return attribute.Value;
+        }
+
+        /// <summary>
+        /// Verifies that a value is a legal identifier.
+        /// </summary>
+        /// <param name="value">The value to verify.</param>
+        /// <returns>true if the value is an identifier; false otherwise.</returns>
+        public static bool IsIdentifier(string value)
+        {
+            if (!String.IsNullOrEmpty(value))
+            {
+                if (LegalIdentifierCharacters.IsMatch(value))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get an identifier attribute value and displays an error for an illegal identifier value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <param name="messageHandler">A delegate that receives error messages.</param>
+        /// <returns>The attribute's identifier value or a special value if an error occurred.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        internal static string GetAttributeIdentifierValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, Action<MessageEventArgs> messageHandler)
+        {
+            if (null == attribute)
+            {
+                throw new ArgumentNullException("attribute");
+            }
+
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+
+            if (Common.IsIdentifier(value))
+            {
+                if (72 < value.Length && null != messageHandler)
+                {
+                    messageHandler(WixWarnings.IdentifierTooLong(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                }
+
+                return value;
+            }
+            else
+            {
+                if (value.StartsWith("[", StringComparison.Ordinal) && value.EndsWith("]", StringComparison.Ordinal) && null != messageHandler)
+                {
+                    messageHandler(WixErrors.IllegalIdentifierLooksLikeFormatted(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                }
+                else if (null != messageHandler)
+                {
+                    messageHandler(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                }
+
+                return String.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Get an integer attribute value and displays an error for an illegal integer value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <param name="minimum">The minimum legal value.</param>
+        /// <param name="maximum">The maximum legal value.</param>
+        /// <param name="messageHandler">A delegate that receives error messages.</param>
+        /// <returns>The attribute's integer value or a special value if an error occurred during conversion.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        public static int GetAttributeIntegerValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, int minimum, int maximum, Action<MessageEventArgs> messageHandler)
+        {
+            if (null == attribute)
+            {
+                throw new ArgumentNullException("attribute");
+            }
+
+            Debug.Assert(minimum > CompilerCore.IntegerNotSet && minimum > CompilerCore.IllegalInteger, "The legal values for this attribute collide with at least one sentinel used during parsing.");
+
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+
+            if (0 < value.Length)
+            {
+                try
+                {
+                    int integer = Convert.ToInt32(value, CultureInfo.InvariantCulture.NumberFormat);
+
+                    if (CompilerCore.IntegerNotSet == integer || CompilerCore.IllegalInteger == integer)
+                    {
+                        messageHandler(WixErrors.IntegralValueSentinelCollision(sourceLineNumbers, integer));
+                    }
+                    else if (minimum > integer || maximum < integer)
+                    {
+                        messageHandler(WixErrors.IntegralValueOutOfRange(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, integer, minimum, maximum));
+                        integer = CompilerCore.IllegalInteger;
+                    }
+
+                    return integer;
+                }
+                catch (FormatException)
+                {
+                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                }
+                catch (OverflowException)
+                {
+                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                }
+            }
+
+            return CompilerCore.IllegalInteger;
+        }
+
+        /// <summary>
+        /// Gets a yes/no value and displays an error for an illegal yes/no value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <param name="messageHandler">A delegate that receives error messages.</param>
+        /// <returns>The attribute's YesNoType value.</returns>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        internal static YesNoType GetAttributeYesNoValue(SourceLineNumberCollection sourceLineNumbers, XmlAttribute attribute, Action<MessageEventArgs> messageHandler)
+        {
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+
+            if (0 < value.Length)
+            {
+                switch (Wix.Enums.ParseYesNoType(value))
+                {
+                    case Wix.YesNoType.no:
+                        return YesNoType.No;
+                    case Wix.YesNoType.yes:
+                        return YesNoType.Yes;
+                    case Wix.YesNoType.NotSet:
+                        // Previous code never returned 'NotSet'!
+                        break;
+                    default:
+                        if (null != messageHandler)
+                        {
+                            messageHandler(WixErrors.IllegalYesNoValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                        }
+                        break;
+                }
+            }
+
+            return YesNoType.IllegalValue;
+        }
+
+        /// <summary>
+        /// Display an unsupported extension attribute error.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="extensionAttribute">The extension attribute.</param>
+        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        internal static void UnsupportedExtensionAttribute(SourceLineNumberCollection sourceLineNumbers, XmlAttribute extensionAttribute, Action<MessageEventArgs> messageHandler)
+        {
+            // ignore elements defined by the W3C because we'll assume they are always right
+            if (!extensionAttribute.NamespaceURI.StartsWith(CompilerCore.W3SchemaPrefix, StringComparison.Ordinal) && null != messageHandler)
+            {
+                messageHandler(WixErrors.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute.OwnerElement.Name, extensionAttribute.Name));
+            }
+        }
+
     }
 }

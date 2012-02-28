@@ -59,7 +59,7 @@ static HRESULT ConcatPatchProperty(
     __in BURN_PACKAGE* pPackage,
     __inout_z LPWSTR* psczArguments
     );
-static HRESULT RegisterSourceDirectory(
+static void RegisterSourceDirectory(
     __in BURN_PACKAGE* pPackage,
     __in_z LPCWSTR wzCacheDirectory
     );
@@ -437,7 +437,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
             LogId(REPORT_STANDARD, MSG_DETECTED_RELATED_PACKAGE, pPackage->Msi.sczProductCode, LoggingPerMachineToString(pPackage->fPerMachine), LoggingVersionToString(pPackage->Msi.qwInstalledVersion), pPackage->Msi.dwLanguage, LoggingRelatedOperationToString(operation));
 
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, pPackage->Msi.sczProductCode, pPackage->fPerMachine, pPackage->Msi.qwInstalledVersion, operation);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted detect related MSI package.");
         }
     }
@@ -570,7 +570,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
 
             // pass to UX
             nResult = pUserExperience->pUserExperience->OnDetectRelatedMsiPackage(pPackage->sczId, wzProductCode, fPerMachine, qwVersion, operation);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted detect related MSI package.");
         }
     }
@@ -578,8 +578,6 @@ extern "C" HRESULT MsiEngineDetectPackage(
     // detect features
     if (pPackage->Msi.cFeatures)
     {
-        LogId(REPORT_STANDARD, MSG_DETECT_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
-
         for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
         {
             BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
@@ -620,11 +618,9 @@ extern "C" HRESULT MsiEngineDetectPackage(
                 ExitOnRootFailure(hr, "Invalid state value.");
             }
 
-            LogId(REPORT_STANDARD, MSG_DETECTED_MSI_FEATURE, pPackage->sczId, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState));
-
             // pass to UX
             nResult = pUserExperience->pUserExperience->OnDetectMsiFeature(pPackage->sczId, pFeature->sczId, pFeature->currentState);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted detect.");
         }
     }
@@ -676,7 +672,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
 
             // send MSI feature plan message to UX
             nResult = pUserExperience->pUserExperience->OnPlanMsiFeature(pPackage->sczId, pFeature->sczId, &featureRequestedState);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted plan MSI feature.");
 
             // calculate feature actions
@@ -977,8 +973,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to install MSI package.");
 
-        hr = RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczCachedDirectory);
-        ExitOnFailure(hr, "Failed to register source directory.");
+        RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczMsiPath);
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MINOR_UPGRADE:
@@ -996,8 +991,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
         hr = WiuInstallProduct(sczMsiPath, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to perform minor upgrade of MSI package.");
 
-        hr = RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczCachedDirectory);
-        ExitOnFailure(hr, "Failed to register source directory.");
+        RegisterSourceDirectory(pExecuteAction->msiPackage.pPackage, sczMsiPath);
         break;
 
     case BOOTSTRAPPER_ACTION_STATE_MODIFY: __fallthrough;
@@ -1028,6 +1022,15 @@ extern "C" HRESULT MsiEngineExecutePackage(
         ExitOnFailure(hr, "Failed to add the list of dependencies to ignore to the properties.");
 
         hr = WiuConfigureProductEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT, sczProperties, &restart);
+        if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
+        {
+            if (!fRollback)
+            {
+                LogId(REPORT_STANDARD, MSG_ATTEMPTED_UNINSTALL_ABSENT_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId);
+            }
+
+            hr = S_OK;
+        }
         ExitOnFailure(hr, "Failed to uninstall MSI package.");
         break;
     }
@@ -1619,17 +1622,23 @@ LExit:
     return hr;
 }
 
-static HRESULT RegisterSourceDirectory(
+static void RegisterSourceDirectory(
     __in BURN_PACKAGE* pPackage,
-    __in_z LPCWSTR wzCacheDirectory
+    __in_z LPCWSTR wzMsiPath
     )
 {
     HRESULT hr = S_OK;
+    LPWSTR sczMsiDirectory = NULL;
     MSIINSTALLCONTEXT dwContext = pPackage->fPerMachine ? MSIINSTALLCONTEXT_MACHINE : MSIINSTALLCONTEXT_USERUNMANAGED;
 
-    hr = WiuSourceListAddSourceEx(pPackage->Msi.sczProductCode, NULL, dwContext, MSICODE_PRODUCT, wzCacheDirectory, 1);
-    ExitOnFailure2(hr, "Failed to register source directory: %ls; product: %ls", wzCacheDirectory, pPackage->Msi.sczProductCode);
+    hr = PathGetDirectory(wzMsiPath, &sczMsiDirectory);
+    ExitOnFailure1(hr, "Failed to get directory for path: %ls", wzMsiPath);
+
+    hr = WiuSourceListAddSourceEx(pPackage->Msi.sczProductCode, NULL, dwContext, MSICODE_PRODUCT, sczMsiDirectory, 1);
+    ExitOnFailure2(hr, "Failed to register source directory: %ls; product: %ls", sczMsiDirectory, pPackage->Msi.sczProductCode);
 
 LExit:
-    return hr;
+    ReleaseStr(sczMsiDirectory);
+
+    return;
 }

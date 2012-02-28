@@ -249,7 +249,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
             const int retryLimit = 3;
             int error = 0;
 
-            for (int i = 0; i <= retryLimit; ++i)
+            for (int i = 1; i <= retryLimit; ++i)
             {
                 error = MsiInterop.MsiDatabaseCommit(this.Handle);
 
@@ -268,7 +268,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Msi
                         break;
                     }
 
-                    Console.WriteLine(String.Format("{0}. Retry attempt {1} of {2}", exception.Message, i, retryLimit));
+                    Console.WriteLine(String.Format("Failed to create the database. Info: {0}. Retrying ({1} of {2})", String.Join(", ", exception.ErrorInfo), i, retryLimit));
                     Thread.Sleep(retryWait);
                 }
             }

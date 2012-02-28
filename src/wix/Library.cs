@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // Object that represents a library file.
 // </summary>
@@ -369,8 +369,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 bool done = false;
 
-                // loop through all the fields in a row
-                while (!done && reader.Read())
+                while (!done && (XmlNodeType.Element == reader.NodeType || reader.Read()))
                 {
                     switch (reader.NodeType)
                     {

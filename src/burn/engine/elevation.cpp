@@ -209,7 +209,7 @@ static HRESULT OnDetectRelatedBundles(
 
 extern "C" HRESULT ElevationElevate(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in HWND hwndParent
+    __in_opt HWND hwndParent
     )
 {
     Assert(BURN_MODE_ELEVATED != pEngineState->mode);
@@ -227,7 +227,7 @@ extern "C" HRESULT ElevationElevate(
     LPWSTR sczError = NULL;
 
     nResult = pEngineState->userExperience.pUserExperience->OnElevate();
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
 
     hr = CacheBundleToWorkingDirectory(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
@@ -977,6 +977,7 @@ static HRESULT ProcessGenericExecuteMessages(
         ExitOnFailure(hr, "Failed to read total.");
 
         message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+        message.dwAllowedResults = MB_OKCANCEL;
         message.progress.dwPercentage = 100 * dwProgress / dwTotal;
         // send message
         dwResult = (DWORD)pContext->pfnGenericMessageHandler(&message, pContext->pvContext);
@@ -1031,6 +1032,9 @@ static HRESULT ProcessMsiPackageMessages(
         message.rgwzData = (LPCWSTR*)rgwzMsiData;
     }
 
+    hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, (DWORD*)&message.dwAllowedResults);
+    ExitOnFailure(hr, "Failed to read UI flags.");
+
     // Process the rest of the message.
     switch (pMsg->dwMessage)
     {
@@ -1052,9 +1056,6 @@ static HRESULT ProcessMsiPackageMessages(
         hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &message.error.dwErrorCode);
         ExitOnFailure(hr, "Failed to read error code.");
 
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, (DWORD*)&message.error.uiFlags);
-        ExitOnFailure(hr, "Failed to read UI flags.");
-
         hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &sczMessage);
         ExitOnFailure(hr, "Failed to read message.");
         message.error.wzMessage = sczMessage;
@@ -1069,9 +1070,6 @@ static HRESULT ProcessMsiPackageMessages(
 
         hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, (DWORD*)&message.msiMessage.mt);
         ExitOnFailure(hr, "Failed to read message type.");
-
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, (DWORD*)&message.msiMessage.uiFlags);
-        ExitOnFailure(hr, "Failed to read UI flags.");
 
         hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &sczMessage);
         ExitOnFailure(hr, "Failed to read message.");
@@ -1271,6 +1269,7 @@ static HRESULT OnGenericExecuteFilesInUse(
 
     // send message
     message.type = GENERIC_EXECUTE_MESSAGE_FILES_IN_USE;
+    message.dwAllowedResults = MB_ABORTRETRYIGNORE;
     message.filesInUse.cFiles = cFiles;
     message.filesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
     *pdwResult = (DWORD)pfnMessageHandler(&message, pvContext);
@@ -1851,6 +1850,9 @@ static int GenericExecuteMessageHandler(
     SIZE_T cbData = 0;
 
     // serialize message data
+    hr = BuffWriteNumber(&pbData, &cbData, pMessage->dwAllowedResults);
+    ExitOnFailure(hr, "Failed to write UI flags.");
+
     hr = BuffWriteNumber(&pbData, &cbData, pMessage->progress.dwPercentage);
     ExitOnFailure(hr, "Failed to write progress percentage to message buffer.");
 
@@ -1889,6 +1891,9 @@ static int MsiExecuteMessageHandler(
         ExitOnFailure(hr, "Failed to write MSI data to message buffer.");
     }
 
+    hr = BuffWriteNumber(&pbData, &cbData, pMessage->dwAllowedResults);
+    ExitOnFailure(hr, "Failed to write UI flags.");
+
     switch (pMessage->type)
     {
     case WIU_MSI_EXECUTE_MESSAGE_PROGRESS:
@@ -1905,9 +1910,6 @@ static int MsiExecuteMessageHandler(
         hr = BuffWriteNumber(&pbData, &cbData, pMessage->error.dwErrorCode);
         ExitOnFailure(hr, "Failed to write error code to message buffer.");
 
-        hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pMessage->error.uiFlags);
-        ExitOnFailure(hr, "Failed to write UI flags to message buffer.");
-
         hr = BuffWriteString(&pbData, &cbData, pMessage->error.wzMessage);
         ExitOnFailure(hr, "Failed to write message to message buffer.");
 
@@ -1920,9 +1922,6 @@ static int MsiExecuteMessageHandler(
         hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pMessage->msiMessage.mt);
         ExitOnFailure(hr, "Failed to write MSI message type to message buffer.");
 
-        hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pMessage->msiMessage.uiFlags);
-        ExitOnFailure(hr, "Failed to write UI flags to message buffer.");
-
         hr = BuffWriteString(&pbData, &cbData, pMessage->msiMessage.wzMessage);
         ExitOnFailure(hr, "Failed to write message to message buffer.");
 
@@ -1931,7 +1930,7 @@ static int MsiExecuteMessageHandler(
         break;
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_FILES_IN_USE:
-        // NOTE: we do not serialize message data here because all our files in use are in the data above.
+        // NOTE: we do not serialize other message data here because all the "files in use" are in the data above.
 
         // set message id
         dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE;

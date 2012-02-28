@@ -117,6 +117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             int profile = CompilerCore.IntegerNotSet;
             string scope = null;
             string remoteAddresses = null;
+            string description = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -210,6 +211,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                                     break;
                             }
                             break;
+                        case "Description":
+                            description = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
                         default:
                             this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
                             break;
@@ -281,12 +285,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 this.Core.OnMessage(FirewallErrors.NoExceptionSpecified(sourceLineNumbers));
             }
 
-            // must not specify both File/Program and Port
-            if ((!String.IsNullOrEmpty(fileId) || !String.IsNullOrEmpty(file) || !String.IsNullOrEmpty(program)) && !String.IsNullOrEmpty(port))
-            {
-                this.Core.OnMessage(FirewallErrors.TooManyExceptionsSpecified(sourceLineNumbers));
-            }
-
             if (!this.Core.EncounteredError)
             {
                 // at this point, File attribute and File parent element are treated the same
@@ -303,8 +301,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 if (!String.IsNullOrEmpty(port))
                 {
                     row[3] = port;
-                    // default protocol is "TCP"
-                    row[4] = CompilerCore.IntegerNotSet == protocol ? FirewallConstants.NET_FW_IP_PROTOCOL_TCP : protocol;
+                    
+                    if (CompilerCore.IntegerNotSet == protocol)
+                    {
+                        // default protocol is "TCP"
+                        protocol = FirewallConstants.NET_FW_IP_PROTOCOL_TCP;
+                    }
+                }
+
+                if (CompilerCore.IntegerNotSet != protocol)
+                {
+                    row[4] =  protocol;
                 }
 
                 if (!String.IsNullOrEmpty(fileId))
@@ -326,6 +333,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[7] = CompilerCore.IntegerNotSet == profile ? FirewallConstants.NET_FW_PROFILE2_ALL : profile;
 
                 row[8] = componentId;
+
+                row[9] = description;
 
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixSchedFirewallExceptionsInstall");
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixSchedFirewallExceptionsUninstall");

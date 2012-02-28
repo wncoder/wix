@@ -36,6 +36,7 @@ enum THEME_CONTROL_TYPE
     THEME_CONTROL_TYPE_CHECKBOX,
     THEME_CONTROL_TYPE_EDITBOX,
     THEME_CONTROL_TYPE_HYPERLINK,
+    THEME_CONTROL_TYPE_HYPERTEXT,
     THEME_CONTROL_TYPE_IMAGE,
     THEME_CONTROL_TYPE_PROGRESSBAR,
     THEME_CONTROL_TYPE_RICHEDIT,
@@ -141,8 +142,6 @@ struct THEME_PAGE
     WORD wId;
     LPWSTR sczName;
 
-    HACCEL hAcceleratorTable;
-
     DWORD cControlIndices;
     DWORD* rgdwControlIndices;
 };
@@ -187,7 +186,6 @@ struct THEME
 
     // state variables that should be ignored
     HWND hwndParent; // parent for loaded controls
-    HACCEL hActiveAcceleratorTable; // currently active accelerator table
     HWND hwndHover; // current hwnd hovered over
 };
 

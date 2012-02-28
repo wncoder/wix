@@ -487,9 +487,10 @@ extern "C" HRESULT ExeEngineExecutePackage(
         do
         {
             message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
+            message.dwAllowedResults = MB_OKCANCEL;
             message.progress.dwPercentage = 50;
             nResult = pfnGenericMessageHandler(&message, pvContext);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = (IDOK == nResult || IDNOACTION == nResult) ? S_OK : IDCANCEL == nResult ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE);
             ExitOnRootFailure(hr, "Bootstrapper application aborted during EXE progress.");
 
             hr = ProcWaitForCompletion(pi.hProcess, 500, &dwExitCode);
@@ -563,14 +564,14 @@ static HRESULT HandleExitCode(
             typeCode = BURN_EXE_EXIT_CODE_TYPE_SUCCESS;
         }
         else if (ERROR_SUCCESS_REBOOT_REQUIRED == dwExitCode ||
-                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED) == dwExitCode ||
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED) == static_cast<HRESULT>(dwExitCode) ||
                  ERROR_SUCCESS_RESTART_REQUIRED == dwExitCode ||
-                 HRESULT_FROM_WIN32(ERROR_SUCCESS_RESTART_REQUIRED) == dwExitCode)
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_RESTART_REQUIRED) == static_cast<HRESULT>(dwExitCode))
         {
             typeCode = BURN_EXE_EXIT_CODE_TYPE_SCHEDULE_REBOOT;
         }
         else if (ERROR_SUCCESS_REBOOT_INITIATED == dwExitCode ||
-                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED) == dwExitCode)
+                 HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_INITIATED) == static_cast<HRESULT>(dwExitCode))
         {
             typeCode = BURN_EXE_EXIT_CODE_TYPE_FORCE_REBOOT;
         }

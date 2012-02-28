@@ -1229,7 +1229,7 @@
             </xs:documentation>
       <xs:appinfo>
         <xse:remarks>
-          <html:p>You can specify any valid Windows code by integer like 1252, or by web name like Windows-1252. See <html:a href="codepage.htm">Code Pages</html:a> for more information.</html:p>
+          <html:p>You can specify any valid Windows code page by integer like 1252, or by web name like Windows-1252. See <html:a href="codepage.htm">Code Pages</html:a> for more information.</html:p>
         </xse:remarks>
       </xs:appinfo>
     </xs:annotation>

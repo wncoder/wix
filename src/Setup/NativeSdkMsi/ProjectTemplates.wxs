@@ -6,7 +6,7 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
-        <ComponentGroup Id="ProjectTemplates" Directory="VsItemTemplatesWix$(var.VisualStudioTargetVersion)Folder">
+        <ComponentGroup Id="ProjectTemplates" Directory="VsProjectTemplatesWix$(var.VisualStudioTargetVersion)Folder">
           <Component>
             <File Name="CustomActionCPP_$(var.VisualStudioTargetVersion).zip" />
           </Component>

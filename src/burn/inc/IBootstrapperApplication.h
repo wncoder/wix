@@ -339,7 +339,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     STDMETHOD_(int, OnError)(
         __in_z_opt LPCWSTR wzPackageId,
         __in DWORD dwCode,
-        __in_z LPCWSTR wzError,
+        __in_z_opt LPCWSTR wzError,
         __in DWORD uiFlags,
         __in DWORD cData,
         __in_ecount_z_opt(cData) LPCWSTR* rgwzData,
@@ -404,7 +404,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //
     //  IDNOACTION instructs the engine to continue.
     STDMETHOD_(int, OnCacheAcquireProgress)(
-        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
         __in DWORD64 dw64Progress,
         __in DWORD64 dw64Total,
@@ -442,7 +442,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //
     //  All other return codes are ignored.
     STDMETHOD_(int, OnCacheAcquireComplete)(
-        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPackageOrContainerId,
         __in_z_opt LPCWSTR wzPayloadId,
         __in HRESULT hrStatus,
         __in int nRecommendation
@@ -456,8 +456,8 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //
     //  IDNOACTION instructs the engine to continue.
     STDMETHOD_(int, OnCacheVerifyBegin)(
-        __in_z LPCWSTR wzPackageId,
-        __in_z LPCWSTR wzPayloadId
+        __in_z_opt LPCWSTR wzPackageId,
+        __in_z_opt LPCWSTR wzPayloadId
         ) = 0;
 
     // OnCacheVerifyComplete - called after the engine verifies and copies
@@ -472,8 +472,8 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //
     //  All other return codes are ignored.
     STDMETHOD_(int, OnCacheVerifyComplete)(
-        __in_z LPCWSTR wzPackageId,
-        __in_z LPCWSTR wzPayloadId,
+        __in_z_opt LPCWSTR wzPackageId,
+        __in_z_opt LPCWSTR wzPayloadId,
         __in HRESULT hrStatus,
         __in int nRecommendation
         ) = 0;

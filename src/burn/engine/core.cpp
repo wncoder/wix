@@ -197,7 +197,7 @@ extern "C" HRESULT CoreDetect(
     ExitOnFailure(hr, "Engine cannot start detect because it is busy with another action.");
 
     int nResult = pEngineState->userExperience.pUserExperience->OnDetectBegin(pEngineState->packages.cPackages);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted detect begin.");
 
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
@@ -220,7 +220,7 @@ extern "C" HRESULT CoreDetect(
         pPackage = pEngineState->packages.rgPackages + i;
 
         nResult = pEngineState->userExperience.pUserExperience->OnDetectPackageBegin(pPackage->sczId);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted detect package begin.");
 
         // Detect the cache state of the package.
@@ -268,8 +268,32 @@ extern "C" HRESULT CoreDetect(
         //     pPackage->currentState = BOOTSTRAPPER_PACKAGE_STATE_CACHED;
         //}
 
-        LogId(REPORT_STANDARD, MSG_DETECTED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingBoolToString(pPackage->fCached));
         pEngineState->userExperience.pUserExperience->OnDetectPackageComplete(pPackage->sczId, hr, pPackage->currentState);
+    }
+
+    // Log the detected states.
+    for (DWORD iPackage = 0; iPackage < pEngineState->packages.cPackages; ++iPackage)
+    {
+        pPackage = pEngineState->packages.rgPackages + iPackage;
+
+        LogId(REPORT_STANDARD, MSG_DETECTED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingBoolToString(pPackage->fCached));
+
+        if (BURN_PACKAGE_TYPE_MSI == pPackage->type)
+        {
+            for (DWORD iFeature = 0; iFeature < pPackage->Msi.cFeatures; ++iFeature)
+            {
+                const BURN_MSIFEATURE* pFeature = pPackage->Msi.rgFeatures + iFeature;
+                LogId(REPORT_STANDARD, MSG_DETECTED_MSI_FEATURE, pPackage->sczId, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState));
+            }
+        }
+        else if (BURN_PACKAGE_TYPE_MSP == pPackage->type)
+        {
+            for (DWORD iTargetProduct = 0; iTargetProduct < pPackage->Msp.cTargetProductCodes; ++iTargetProduct)
+            {
+                const BURN_MSPTARGETPRODUCT* pTargetProduct = pPackage->Msp.rgTargetProducts + iTargetProduct;
+                LogId(REPORT_STANDARD, MSG_DETECTED_MSP_TARGET, pPackage->sczId, pTargetProduct->wzTargetProductCode, LoggingPackageStateToString(pTargetProduct->patchPackageState));
+            }
+        }
     }
 
 LExit:
@@ -315,7 +339,7 @@ extern "C" HRESULT CorePlan(
     ExitOnFailure(hr, "Engine cannot start plan because it is busy with another action.");
 
     int nResult = pEngineState->userExperience.pUserExperience->OnPlanBegin(pEngineState->packages.cPackages);
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted plan begin.");
 
     // Always reset the plan.
@@ -383,7 +407,7 @@ extern "C" HRESULT CorePlan(
         pPackage->requested = defaultRequested;
 
         nResult = pEngineState->userExperience.pUserExperience->OnPlanPackageBegin(pPackage->sczId, &pPackage->requested);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted plan package begin.");
 
         // If the the package is in a requested state, plan it.
@@ -564,8 +588,10 @@ extern "C" HRESULT CoreApply(
     hr = UserExperienceActivateEngine(&pEngineState->userExperience, &fActivated);
     ExitOnFailure(hr, "Engine cannot start apply because it is busy with another action.");
 
+    UserExperienceExecuteReset(&pEngineState->userExperience); // ensure any previous attempts to execute are reset.
+
     int nResult = pEngineState->userExperience.pUserExperience->OnApplyBegin();
-    hr = HRESULT_FROM_VIEW(nResult);
+    hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted apply begin.");
 
     // If the plan contains per-machine contents, let's make sure we are elevated.
@@ -597,7 +623,7 @@ extern "C" HRESULT CoreApply(
     if (!pEngineState->fParallelCacheAndExecute)
     {
         hr = WaitForCacheThread(hCacheThread);
-        ExitOnFailure(hr, "Failed while waiting for cache thread to complete before executing.");
+        ExitOnFailure(hr, "Failed while caching, aborting execution.");
 
         ReleaseHandle(hCacheThread);
     }
@@ -606,17 +632,20 @@ extern "C" HRESULT CoreApply(
     if (!fLayoutOnly)
     {
         hr = ApplyExecute(pEngineState, hwndParent, hCacheThread, &cOverallProgressTicks, &fKeepRegistration, &fRollback, &fSuspend, &restart);
-        ExitOnFailure(hr, "Failed to execute apply.");
+        UserExperienceExecutePhaseComplete(&pEngineState->userExperience, hr); // signal that execute completed.
     }
 
     // Wait for cache thread to terminate, this should return immediately (unless we're waiting for layout to complete).
     if (hCacheThread)
     {
-        hr = WaitForCacheThread(hCacheThread);
-        ExitOnFailure(hr, "Failed while waiting for cache thread to complete after execution.");
+        HRESULT hrCached = WaitForCacheThread(hCacheThread);
+        if (SUCCEEDED(hr))
+        {
+            hr = hrCached;
+        }
     }
 
-    if (fRollback || fSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
+    if (FAILED(hr) || fRollback || fSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart)
     {
         ExitFunction();
     }
@@ -1034,9 +1063,9 @@ static HRESULT DetectPackagePayloadsCached(
         hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachePath);
         ExitOnFailure(hr, "Failed to get completed cache path.");
 
-        fAllPayloadsCached = TRUE; // assume all payloads will be cached.
+        fAllPayloadsCached = DirExists(sczCachePath, NULL); // assume all payloads will be cached if the cache directory exists.
 
-        for (DWORD i = 0; i < pPackage->cPayloads; ++i)
+        for (DWORD i = 0; fAllPayloadsCached && i < pPackage->cPayloads; ++i)
         {
             BURN_PACKAGE_PAYLOAD* pPackagePayload = pPackage->rgPayloads + i;
 
@@ -1052,6 +1081,13 @@ static HRESULT DetectPackagePayloadsCached(
             }
             else
             {
+                if (static_cast<DWORD64>(llSize) != pPackagePayload->pPayload->qwFileSize)
+                {
+                    hr = HRESULT_FROM_WIN32(ERROR_FILE_CORRUPT);
+                }
+
+                LogId(REPORT_STANDARD, MSG_DETECT_PACKAGE_NOT_FULLY_CACHED, pPackage->sczId, pPackagePayload->pPayload->sczKey, hr);
+
                 fAllPayloadsCached = FALSE; // found a payload that was not cached so our assumption above was wrong.
                 hr = S_OK;
             }
@@ -1079,14 +1115,15 @@ static DWORD WINAPI CacheThreadProc(
 
     // initialize COM
     hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    ExitOnFailure(hr, "Failed to initialize COM.");
+    ExitOnFailure(hr, "Failed to initialize COM on cache thread.");
     fComInitialized = TRUE;
 
     // cache packages
     hr = ApplyCache(&pEngineState->userExperience, &pEngineState->variables, &pEngineState->plan, pEngineState->companionConnection.hCachePipe, pcOverallProgressTicks, pfRollback);
-    ExitOnFailure(hr, "Failed to cache packages.");
 
 LExit:
+    UserExperienceExecutePhaseComplete(&pEngineState->userExperience, hr); // signal that cache completed.
+
     if (fComInitialized)
     {
         ::CoUninitialize();

@@ -136,6 +136,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     }
                 }
 
+                if (!row.IsColumnEmpty(9))
+                {
+                    fire.Description = (string)row[9];
+                }
+
                 Wix.Component component = (Wix.Component)this.Core.GetIndexedElement("Component", (string)row[8]);
                 if (null != component)
                 {

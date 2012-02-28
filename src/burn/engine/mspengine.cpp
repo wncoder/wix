@@ -242,7 +242,7 @@ extern "C" HRESULT MspEngineDetectPackage(
             }
 
             nResult = pUserExperience->pUserExperience->OnDetectTargetMsiPackage(pPackage->sczId, pTargetProduct->wzTargetProductCode, pTargetProduct->patchPackageState);
-            hr = HRESULT_FROM_VIEW(nResult);
+            hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
             ExitOnRootFailure(hr, "UX aborted detect target MSI package.");
         }
     }
@@ -272,7 +272,7 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
         BOOTSTRAPPER_ACTION_STATE rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
 
         int nResult = pUserExperience->pUserExperience->OnPlanTargetMsiPackage(pPackage->sczId, pTargetProduct->wzTargetProductCode, &requested);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted plan target MSI package.");
 
         // Calculate the execute action.

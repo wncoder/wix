@@ -35,12 +35,13 @@ enum GENERIC_EXECUTE_MESSAGE_TYPE
 typedef struct _GENERIC_EXECUTE_MESSAGE
 {
     GENERIC_EXECUTE_MESSAGE_TYPE type;
+    DWORD dwAllowedResults;
+
     union
     {
         struct
         {
             DWORD dwErrorCode;
-            DWORD dwUIHint;
             LPCWSTR wzMessage;
         } error;
         struct
@@ -82,7 +83,7 @@ HRESULT ApplyCache(
 HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_opt HWND hwndParent,
-    __in HANDLE hCacheThread,
+    __in_opt HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
     __out BOOL* pfKeepRegistration,
     __out BOOL* pfRollback,

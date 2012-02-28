@@ -571,7 +571,7 @@ extern "C" HRESULT PlanRelatedBundles(
         defaultRequested = requested;
 
         int nResult = pUserExperience->pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
-        hr = HRESULT_FROM_VIEW(nResult);
+        hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted plan related bundle.");
 
         // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.

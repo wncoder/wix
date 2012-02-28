@@ -58,6 +58,7 @@ enum WIU_MSI_EXECUTE_MESSAGE_TYPE
 typedef struct _WIU_MSI_EXECUTE_MESSAGE
 {
     WIU_MSI_EXECUTE_MESSAGE_TYPE type;
+    DWORD dwAllowedResults;
 
     DWORD cData;
     LPCWSTR* rgwzData;
@@ -73,13 +74,11 @@ typedef struct _WIU_MSI_EXECUTE_MESSAGE
         struct
         {
             DWORD dwErrorCode;
-            UINT uiFlags;
             LPCWSTR wzMessage;
         } error;
         struct
         {
             INSTALLMESSAGE mt;
-            UINT uiFlags;
             LPCWSTR wzMessage;
         } msiMessage;
         struct

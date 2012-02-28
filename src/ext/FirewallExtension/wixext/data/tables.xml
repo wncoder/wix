@@ -32,5 +32,7 @@
             category="integer" minValue="1" maxValue="2147483647" description="Profile (1=domain; 2=private; 4=public; 2147483647=all)." />
         <columnDefinition name="Component_" type="string" length="72" modularize="column"
             keyTable="Component" keyColumn="1" category="identifier" description="Foreign key into the Component table referencing component that controls the firewall configuration."/>
+        <columnDefinition name="Description" type="string" length="255" nullable="yes"
+            category="formatted" description="Description displayed in Windows Firewall manager for this firewall rule."/>
     </tableDefinition>
 </tableDefinitions>

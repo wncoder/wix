@@ -24,6 +24,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
         private ManualResetEvent wait;
         private int result;
 
+        private int sleepDuringCache;
+        private int cancelCacheAtProgress;
+        private int sleepDuringExecute;
+        private int cancelExecuteAtProgress;
+
         /// <summary>
         /// Initializes test user experience.
         /// </summary>
@@ -43,7 +48,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
             this.Engine.Detect();
 
             this.wait.WaitOne();
-            this.Engine.Quit(this.result);
+            this.Engine.Quit(this.result & 0xFFFF); // return plain old Win32 error, not HRESULT.
         }
 
         protected override void OnDetectComplete(DetectCompleteEventArgs args)
@@ -79,6 +84,60 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
             else
             {
                 this.wait.Set();
+            }
+        }
+
+        protected override void OnCachePackageBegin(CachePackageBeginEventArgs args)
+        {
+            string slowProgress = ReadPackageAction(args.PackageId, "SlowCache");
+            if (String.IsNullOrEmpty(slowProgress) || !Int32.TryParse(slowProgress, out this.sleepDuringCache))
+            {
+                this.sleepDuringCache = 0;
+            }
+
+            string cancelCache = ReadPackageAction(args.PackageId, "CancelCacheAtProgress");
+            if (String.IsNullOrEmpty(cancelCache) || !Int32.TryParse(cancelCache, out this.cancelCacheAtProgress))
+            {
+                this.cancelCacheAtProgress = -1;
+            }
+        }
+
+        protected override void OnCacheAcquireProgress(CacheAcquireProgressEventArgs args)
+        {
+            if (this.cancelCacheAtProgress > 0 && this.cancelCacheAtProgress <= args.Progress)
+            {
+                args.Result = Result.Cancel;
+            }
+            else if (this.sleepDuringCache > 0)
+            {
+                Thread.Sleep(this.sleepDuringCache);
+            }
+        }
+
+        protected override void OnExecutePackageBegin(ExecutePackageBeginEventArgs args)
+        {
+            string slowProgress = ReadPackageAction(args.PackageId, "SlowExecute");
+            if (String.IsNullOrEmpty(slowProgress) || !Int32.TryParse(slowProgress, out this.sleepDuringExecute))
+            {
+                this.sleepDuringExecute = 0;
+            }
+
+            string cancelExecute = ReadPackageAction(args.PackageId, "CancelExecuteAtProgress");
+            if (String.IsNullOrEmpty(cancelExecute) || !Int32.TryParse(cancelExecute, out this.cancelExecuteAtProgress))
+            {
+                this.cancelExecuteAtProgress = -1;
+            }
+        }
+
+        protected override void OnExecuteProgress(ExecuteProgressEventArgs args)
+        {
+            if (this.cancelExecuteAtProgress > 0 && this.cancelExecuteAtProgress <= args.ProgressPercentage)
+            {
+                args.Result = Result.Cancel;
+            }
+            else if (this.sleepDuringExecute > 0)
+            {
+                Thread.Sleep(this.sleepDuringExecute);
             }
         }
 

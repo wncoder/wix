@@ -153,9 +153,16 @@ Detected package: %1!ls!, feature: %2!ls!, state: %3!hs!
 
 MessageId=105
 Severity=Success
-SymbolicName=MSG_DETECT_MSI_FEATURES
+SymbolicName=MSG_DETECTED_MSP_TARGET
 Language=English
-Detect %1!u! msi features for package: %2!ls!
+Detected package: %1!u! target: %2!u!, state: %3!hs!
+.
+
+MessageId=120
+Severity=Warning
+SymbolicName=MSG_DETECT_PACKAGE_NOT_FULLY_CACHED
+Language=English
+Detected partially cached package: %1!ls!, invalid payload: %2!ls!, reason: 0x%3!x!
 .
 
 MessageId=151
@@ -282,6 +289,13 @@ Severity=Success
 SymbolicName=MSG_APPLYING_PATCH_PACKAGE
 Language=English
 Applying package: %1!ls!, target: %5!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
+.
+
+MessageId=307
+Severity=Warning
+SymbolicName=MSG_ATTEMPTED_UNINSTALL_ABSENT_PACKAGE
+Language=English
+Attempted to uninstall absent package: %1!ls!. Continuing...
 .
 
 MessageId=310

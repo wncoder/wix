@@ -38,6 +38,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         #region Static Variables
 
         /// <summary>
+        /// Common extensions for building packages and bundles.
+        /// </summary>
+        protected static readonly string[] Extensions = new string[] { "WixBalExtension", "WixDependencyExtension", "WixUtilExtension" };
+
+        /// <summary>
         /// Stores the original value of the WIX environment variable before the test run
         /// </summary>
         private static string OriginalWIXValue;
@@ -355,6 +360,33 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             {
                 Assert.Inconclusive(@"The WIX_ROOT environment variable must be set to the WiX root directory (eg. c:\delivery\dev\wix)");
             }
+        }
+
+        /// <summary>
+        /// Gets the test install directory for the current test.
+        /// </summary>
+        /// <param name="additionalPath">Additional subdirectories under the test install directory.</param>
+        /// <returns>Full path to the test install directory.</returns>
+        /// <remarks>
+        /// The package or bundle must install into [ProgramFilesFolder]\~Test WiX\[TestName]\([Additional]).
+        /// </remarks>
+        protected string GetTestInstallFolder(string additionalPath = null)
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "~Test WiX", this.TestContext.TestName, additionalPath ?? String.Empty);
+        }
+
+        /// <summary>
+        /// Opens and gets the test registry key for the current test.
+        /// </summary>
+        /// <param name="additionalPath">Additional subkeys under the test registry key.</param>
+        /// <returns>Full path to the test registry key.</returns>
+        /// <remarks>
+        /// The package must write into HKLM\Software\WiX\Tests\[TestName]\([Additional]).
+        /// </remarks>
+        protected RegistryKey GetTestRegistryRoot(string additionalPath = null)
+        {
+            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, additionalPath ?? String.Empty);
+            return Registry.LocalMachine.OpenSubKey(key);
         }
 
         /// <summary>

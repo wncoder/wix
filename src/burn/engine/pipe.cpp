@@ -19,8 +19,8 @@
 #include "precomp.h"
 
 static const DWORD PIPE_64KB = 64 * 1024;
-static const DWORD PIPE_WAIT_FOR_CONNECTION = 500;  // wait half a second,
-static const DWORD PIPE_RETRY_FOR_CONNECTION = 600; // for up to 3 minutes.
+static const DWORD PIPE_WAIT_FOR_CONNECTION = 100;   // wait a 10th of a second,
+static const DWORD PIPE_RETRY_FOR_CONNECTION = 1800; // for up to 3 minutes.
 
 static const LPCWSTR PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls";
 static const LPCWSTR CACHE_PIPE_NAME_FORMAT_STRING = L"\\\\.\\pipe\\%ls.Cache";
@@ -466,16 +466,56 @@ extern "C" HRESULT PipeWaitForChildConnect(
     for (DWORD i = 0; i < countof(hPipes) && INVALID_HANDLE_VALUE != hPipes[i]; ++i)
     {
         HANDLE hPipe = hPipes[i];
+        DWORD dwPipeState = PIPE_READMODE_BYTE | PIPE_NOWAIT;
 
-        // TODO: use overlapped I/O to allow the connection to timeout instead of waiting forever for a client that may never show.
-        if (!::ConnectNamedPipe(hPipe, NULL))
+        // Temporarily make the pipe non-blocking so we will not get stuck in ::ConnectNamedPipe() forever
+        // if the child decides not to show up.
+        if (!::SetNamedPipeHandleState(hPipe, &dwPipeState, NULL, NULL))
         {
-            DWORD er = ::GetLastError();
-            if (ERROR_PIPE_CONNECTED != er)
+            ExitWithLastError(hr, "Failed to set pipe to non-blocking.");
+        }
+
+        // Loop for a while waiting for a connection from child process.
+        DWORD cRetry = 0;
+        do
+        {
+            if (!::ConnectNamedPipe(hPipe, NULL))
             {
-                hr = HRESULT_FROM_WIN32(er);
-                ExitOnRootFailure(hr, "Failed to connect to pipe.");
+                DWORD er = ::GetLastError();
+                if (ERROR_PIPE_CONNECTED == er)
+                {
+                    hr = S_OK;
+                    break;
+                }
+                else if (ERROR_PIPE_LISTENING == er)
+                {
+                    if (cRetry < PIPE_RETRY_FOR_CONNECTION)
+                    {
+                        hr = HRESULT_FROM_WIN32(er);
+                    }
+                    else
+                    {
+                        hr = HRESULT_FROM_WIN32(ERROR_TIMEOUT);
+                        break;
+                    }
+
+                    ++cRetry;
+                    ::Sleep(PIPE_WAIT_FOR_CONNECTION);
+                }
+                else
+                {
+                    hr = HRESULT_FROM_WIN32(er);
+                    break;
+                }
             }
+        } while (HRESULT_FROM_WIN32(ERROR_PIPE_LISTENING) == hr);
+        ExitOnRootFailure(hr, "Failed to wait for child to connect to pipe.");
+
+        // Put the pipe back in blocking mode.
+        dwPipeState = PIPE_READMODE_BYTE | PIPE_WAIT;
+        if (!::SetNamedPipeHandleState(hPipe, &dwPipeState, NULL, NULL))
+        {
+            ExitWithLastError(hr, "Failed to reset pipe to blocking.");
         }
 
         // Prove we are the one that created the elevated process by passing the secret.
@@ -606,6 +646,11 @@ extern "C" HRESULT PipeChildConnect(
         if (INVALID_HANDLE_VALUE == pConnection->hPipe)
         {
             hr = HRESULT_FROM_WIN32(::GetLastError());
+            if (E_FILENOTFOUND == hr) // if the pipe isn't created, call it a timeout waiting on the parent.
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_TIMEOUT);
+            }
+
             ::Sleep(PIPE_WAIT_FOR_CONNECTION);
         }
         else // we have a connection, go with it.

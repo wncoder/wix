@@ -19,6 +19,14 @@
 #include "precomp.h"
 
 
+// internal function declarations
+
+static int FilterResult(
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    );
+
+
 // function definitions
 
 /*******************************************************************
@@ -229,4 +237,213 @@ extern "C" HRESULT UserExperienceEnsureEngineInactive(
 
 LExit:
     return hr;
+}
+
+extern "C" void UserExperienceExecuteReset(
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    )
+{
+    pUserExperience->hrApplyError = S_OK;
+}
+
+extern "C" void UserExperienceExecutePhaseComplete(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in HRESULT hrResult
+    )
+{
+    if (FAILED(hrResult))
+    {
+        pUserExperience->hrApplyError = hrResult;
+    }
+}
+
+extern "C" int UserExperienceCheckExecuteResult(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BOOL fRollback,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    )
+{
+    // Do not allow canceling while rolling back.
+    if (fRollback && (IDCANCEL == nResult || IDABORT == nResult))
+    {
+        nResult = IDNOACTION;
+    }
+    else if (FAILED(pUserExperience->hrApplyError) && !fRollback) // if we failed cancel except not during rollback.
+    {
+        nResult = IDCANCEL;
+    }
+
+    nResult = FilterResult(dwAllowedResults, nResult);
+    return nResult;
+}
+
+extern "C" HRESULT UserExperienceInterpretResult(
+    __in BURN_USER_EXPERIENCE* /*pUserExperience*/,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    )
+{
+    int nFilteredResult = FilterResult(dwAllowedResults, nResult);
+    return IDOK == nFilteredResult || IDNOACTION == nFilteredResult ? S_OK : IDCANCEL == nFilteredResult || IDABORT == nFilteredResult ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE);
+}
+
+extern "C" HRESULT UserExperienceInterpretExecuteResult(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BOOL fRollback,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    )
+{
+    HRESULT hr = S_OK;
+
+    // If we failed return that error unless this is rollback which should roll on.
+    if (FAILED(pUserExperience->hrApplyError) && !fRollback)
+    {
+        hr = pUserExperience->hrApplyError;
+    }
+    else
+    {
+        int nCheckedResult = UserExperienceCheckExecuteResult(pUserExperience, fRollback, dwAllowedResults, nResult);
+        hr = IDOK == nCheckedResult || IDNOACTION == nCheckedResult ? S_OK : IDCANCEL == nCheckedResult || IDABORT == nCheckedResult ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE);
+    }
+
+    return hr;
+}
+
+
+// internal functions
+
+static int FilterResult(
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    )
+{
+    if (IDNOACTION == nResult || IDERROR == nResult) // do nothing and errors pass through.
+    {
+    }
+    else
+    {
+        switch (dwAllowedResults)
+        {
+        case MB_OK:
+            nResult = IDOK;
+            break;
+
+        case MB_OKCANCEL:
+            if (IDOK == nResult || IDYES == nResult)
+            {
+                nResult = IDOK;
+            }
+            else if (IDCANCEL == nResult || IDABORT == nResult || IDNO == nResult)
+            {
+                nResult = IDCANCEL;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_ABORTRETRYIGNORE:
+            if (IDCANCEL == nResult || IDABORT == nResult)
+            {
+                nResult = IDABORT;
+            }
+            else if (IDRETRY == nResult || IDTRYAGAIN == nResult)
+            {
+                nResult = IDRETRY;
+            }
+            else if (IDIGNORE == nResult)
+            {
+                nResult = IDIGNORE;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_YESNO:
+            if (IDOK == nResult || IDYES == nResult)
+            {
+                nResult = IDYES;
+            }
+            else if (IDCANCEL == nResult || IDABORT == nResult || IDNO == nResult)
+            {
+                nResult = IDNO;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_YESNOCANCEL:
+            if (IDOK == nResult || IDYES == nResult)
+            {
+                nResult = IDYES;
+            }
+            else if (IDNO == nResult)
+            {
+                nResult = IDNO;
+            }
+            else if (IDCANCEL == nResult || IDABORT == nResult)
+            {
+                nResult = IDCANCEL;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_RETRYCANCEL:
+            if (IDRETRY == nResult || IDTRYAGAIN == nResult)
+            {
+                nResult = IDRETRY;
+            }
+            else if (IDCANCEL == nResult || IDABORT == nResult)
+            {
+                nResult = IDABORT;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_CANCELTRYCONTINUE:
+            if (IDCANCEL == nResult || IDABORT == nResult)
+            {
+                nResult = IDABORT;
+            }
+            else if (IDRETRY == nResult || IDTRYAGAIN == nResult)
+            {
+                nResult = IDRETRY;
+            }
+            else if (IDCONTINUE == nResult || IDIGNORE == nResult)
+            {
+                nResult = IDCONTINUE;
+            }
+            else
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        case MB_RETRYTRYAGAIN: // custom return code.
+            if (IDRETRY != nResult && IDTRYAGAIN != nResult)
+            {
+                nResult = IDNOACTION;
+            }
+            break;
+
+        default:
+            AssertSz(FALSE, "Unknown allowed results.");
+            break;
+        }
+    }
+
+    return nResult;
 }

@@ -196,10 +196,11 @@ extern "C" HRESULT VariableInitialize(
         {L"Privileged", InitializeVariablePrivileged, 0},
 #if defined(_WIN64)
         {L"ProgramFiles64Folder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES},
+        {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
 #else
         {L"ProgramFiles64Folder", InitializeVariableRegistryFolder, CSIDL_PROGRAM_FILES},
+        {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES},
 #endif
-        {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILESX86},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
         {L"RebootPending", InitializeVariableRebootPending, 0},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},

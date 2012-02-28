@@ -10,7 +10,7 @@
 //    
 //    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // Parses localization files and localizes database values.
 // </summary>
@@ -20,6 +20,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Globalization;
     using System.IO;
@@ -33,6 +34,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
     {
         private int codepage;
         private Hashtable variables;
+        private Dictionary<string, LocalizedControl> localizedControls;
 
         /// <summary>
         /// Instantiate a new Localizer.
@@ -41,6 +43,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             this.codepage = -1;
             this.variables = new Hashtable();
+            this.localizedControls = new Dictionary<string, LocalizedControl>();
         }
 
         /// <summary>
@@ -81,6 +84,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.OnMessage(WixErrors.DuplicateLocalizationIdentifier(wixVariableRow.SourceLineNumbers, wixVariableRow.Id));
                 }
             }
+
+            foreach (KeyValuePair<string, LocalizedControl> localizedControl in localization.LocalizedControls)
+            {
+                if (!this.localizedControls.ContainsKey(localizedControl.Key))
+                {
+                    this.localizedControls.Add(localizedControl.Key, localizedControl.Value);
+                }
+            }
         }
 
         /// <summary>
@@ -100,6 +111,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Get a localized control.
+        /// </summary>
+        /// <param name="dialog">The optional id of the control's dialog.</param>
+        /// <param name="control">The id of the control.</param>
+        /// <returns>The localized control or null if it wasn't found.</returns>
+        public LocalizedControl GetLocalizedControl(string dialog, string control)
+        {
+            LocalizedControl localizedControl;
+            this.localizedControls.TryGetValue(LocalizedControl.GetKey(dialog, control), out localizedControl);
+            return localizedControl;
         }
 
         /// <summary>

@@ -24,8 +24,9 @@ extern "C" {
 #endif
 
 
-#define HRESULT_FROM_VIEW(n) IDOK == n || IDNOACTION == n ? S_OK : IDCANCEL == n || IDABORT == n ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE)
-#define HRESULT_FROM_VIEW_IF_ROLLBACK(n,r) IDOK == n || IDNOACTION == n || (r && (IDCANCEL == n || IDABORT == n)) ? S_OK : IDCANCEL == n || IDABORT == n ? HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) : HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE)
+// constants
+
+const DWORD MB_RETRYTRYAGAIN = 0xF;
 
 
 // structs
@@ -47,6 +48,9 @@ typedef struct _BURN_USER_EXPERIENCE
                                         // steps (detect, plan, apply), and cannot accept requests from the UX.
                                         // This flag should be cleared by the engine prior to UX callbacks that
                                         // allows altering of the engine state.
+
+    HRESULT hrApplyError;               // Tracks is an error occurs during apply that requires the cache or
+                                        // execute threads to bail.
 
     DWORD dwExitCode;                   // Exit code returned by the user experience for the engine overall.
 } BURN_USER_EXPERIENCE;
@@ -86,8 +90,30 @@ void UserExperienceDeactivateEngine(
 HRESULT UserExperienceEnsureEngineInactive(
     __in BURN_USER_EXPERIENCE* pUserExperience
     );
-
-
+void UserExperienceExecuteReset(
+    __in BURN_USER_EXPERIENCE* pUserExperience
+    );
+void UserExperienceExecutePhaseComplete(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in HRESULT hrResult
+    );
+HRESULT UserExperienceInterpretResult(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    );
+int UserExperienceCheckExecuteResult(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BOOL fRollback,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    );
+HRESULT UserExperienceInterpretExecuteResult(
+    __in BURN_USER_EXPERIENCE* pUserExperience,
+    __in BOOL fRollback,
+    __in DWORD dwAllowedResults,
+    __in int nResult
+    );
 #if defined(__cplusplus)
 }
 #endif

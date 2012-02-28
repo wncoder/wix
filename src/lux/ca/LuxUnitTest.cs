@@ -441,7 +441,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux.CustomActions
             List<string> valueList = this.Session[this.Property].Split(this.valueSeparator.ToCharArray()).ToList<string>();
             if (valueList.Count <= this.index)
             {
-                this.Logger.Log(Constants.TestFailedIndexOutOfBounds, this.index.ToString(), valueList.ToString());
+                this.Logger.Log(Constants.TestFailedIndexOutOfBounds, this.WixUnitTestId, this.index.ToString(), this.Session[this.Property]);
                 this.Result = LuxTestResult.Error;
                 return;
             }
@@ -492,7 +492,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux.CustomActions
             // make sure that there are enough values to create key value pairs
             if ((valueList.Count % 2) != 0)
             {
-                this.Logger.Log(Constants.TestFailedExpectedEvenNameValueContent, valueList.ToString());
+                this.Logger.Log(Constants.TestFailedExpectedEvenNameValueContent, this.WixUnitTestId, this.Session[this.Property]);
                 this.Result = LuxTestResult.Error;
                 return;
             }
@@ -510,7 +510,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Lux.CustomActions
             }
             else
             {
-                this.Logger.Log(Constants.TestFailedIndexUnknown, this.index.ToString(), valueList.ToString());
+                this.Logger.Log(Constants.TestFailedIndexUnknown, this.WixUnitTestId, this.index, this.Session[this.Property]);
                 this.Result = LuxTestResult.Error;
             }
 
