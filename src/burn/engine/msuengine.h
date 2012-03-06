@@ -51,6 +51,7 @@ HRESULT MsuEnginePlanAddPackage(
     );
 HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart

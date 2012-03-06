@@ -100,7 +100,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         // The following constants must stay in sync with src\burn\engine\core.h
         private const string BURN_BUNDLE_NAME = "WixBundleName";
         private const string BURN_BUNDLE_ORIGINAL_SOURCE = "WixBundleOriginalSource";
-        private const string BURN_BUNDLE_PROVIDER_KEY = "WixBundleProviderKey";
+        private const string BURN_BUNDLE_LAST_USED_SOURCE = "WixBundleLastUsedSource";
 
         private string emptyFile;
 
@@ -2976,6 +2976,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             wellKnownVariable[3] = 0;
             wellKnownVariable[4] = 1;
 
+            wellKnownVariable = variableTable.CreateRow(null);
+            wellKnownVariable[0] = Binder.BURN_BUNDLE_LAST_USED_SOURCE;
+            wellKnownVariable[3] = 0;
+            wellKnownVariable[4] = 1;
+
             // To make lookups easier, we load the variable table bottom-up, so
             // that we can index by ID.
             List<VariableInfo> allVariables = new List<VariableInfo>(variableTable.Rows.Count);
@@ -4120,14 +4125,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             writer.WriteAttributeString("Id", container.Id);
             if (container.Type == "detached")
             {
-                writer.WriteAttributeString("SourcePath", container.Name);
+                writer.WriteAttributeString("FilePath", container.Name);
                 writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
                 writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
                 writer.WriteAttributeString("Packaging", "detached");
             }
             else if (container.Type == "attached")
             {
-                writer.WriteAttributeString("SourcePath", executableName); // attached containers use the name of the bundle since they are attached to the executable.
+                writer.WriteAttributeString("FilePath", executableName); // attached containers use the name of the bundle since they are attached to the executable.
                 writer.WriteAttributeString("AttachedIndex", containerIndex.ToString(CultureInfo.InvariantCulture));
                 writer.WriteAttributeString("Attached", "yes");
                 writer.WriteAttributeString("Primary", "yes");
@@ -6975,9 +6980,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Platform = (Platform)Enum.Parse(typeof(Platform), (string)row[17]);
 
                 this.RegistrationInfo.ParentName = (string)row[18];
+                this.UpgradeCode = (string)row[19];
 
-                // Default provider key is the Id.
-                this.ProviderKey = this.Id.ToString("B");
+                // Default provider key is the UpgradeCode and Version.
+                this.ProviderKey = String.Concat(this.UpgradeCode, "v", this.Version);
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
@@ -7006,6 +7012,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string Tag { get; private set; }
             public Platform Platform { get; private set; }
             public string Version { get; private set; }
+            public string UpgradeCode { get; private set; }
             public string ProviderKey { get; internal set; }
         }
 
@@ -7110,12 +7117,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 this.Id = row[0].ToString();
 
-                this.Vital = YesNoType.NotSet;
-                if (null != row[10])
-                {
-                    this.Vital = (1 == (int)row[10]) ? YesNoType.Yes : YesNoType.No;
-                }
-
+                this.Vital = (null == row[10] || 1 == (int)row[10]) ? YesNoType.Yes : YesNoType.No;
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
 
@@ -7146,28 +7148,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             public ChainPackageInfo(string id, string packageType, string payloadId, string installCondition,
                                     string installCommand, string repairCommand, string uninstallCommand,
-                                    object cacheData, string cacheId, object permanentData, object vitalData, object perMachineData,
+                                    object cacheData, string cacheId, object attributesData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
                                     string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
                                     object enableFeatureSelectionData, object forcePerMachineData, object displayInternalUIData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
             {
+                BundlePackageAttributes attributes = (null == attributesData) ? 0 : (BundlePackageAttributes)attributesData;
+
                 YesNoType cache = YesNoType.NotSet;
                 if (null != cacheData)
                 {
                     cache = (1 == (int)cacheData) ? YesNoType.Yes : YesNoType.No;
                 }
 
-                YesNoType permanent = YesNoType.NotSet;
-                if (null != permanentData)
-                {
-                    permanent = (1 == (int)permanentData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType vital = YesNoType.NotSet;
-                if (null != vitalData)
-                {
-                    vital = (1 == (int)vitalData) ? YesNoType.Yes : YesNoType.No;
-                }
+                YesNoType vital = (null == vitalData || 1 == (int)vitalData) ? YesNoType.Yes : YesNoType.No;
 
                 YesNoType perMachine = YesNoType.NotSet;
                 if (null != perMachineData)
@@ -7223,7 +7217,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.ProductCode = null;
                 this.Cache = (YesNoType.No != cache); // true unless it's specifically prohibited.
                 this.CacheId = cacheId;
-                this.Permanent = (YesNoType.Yes == permanent); // true only when specifically requested.
+                this.Permanent = (BundlePackageAttributes.Permanent == (attributes & BundlePackageAttributes.Permanent));
+                this.Visible = (BundlePackageAttributes.Visible == (attributes & BundlePackageAttributes.Visible));
                 this.Vital = (YesNoType.Yes == vital); // true only when specifically requested.
                 this.DetectCondition = detectCondition;
                 this.MsuKB = msuKB;
@@ -7306,6 +7301,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string CacheId { get; private set; }
             public bool Permanent { get; private set; }
             public string Version { get; private set; }
+            public bool Visible { get; private set; }
             public bool Vital { get; private set; }
             public bool Repairable { get; private set; }
             public string DetectCondition { get; private set; }
@@ -7416,6 +7412,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
                         {
                             this.Description = ChainPackageInfo.GetProperty(db, "ARPCOMMENTS");
+                        }
+
+                        // Ensure the MSI package is appropriately marked visible or not.
+                        bool alreadyVisible = !ChainPackageInfo.HasProperty(db, "ARPSYSTEMCOMPONENT");
+                        if (alreadyVisible != this.Visible) // if not already set to the correct visibility.
+                        {
+                            // If the authoring specifically added "ARPSYSTEMCOMPONENT", don't do it again.
+                            bool sysComponentSet = false;
+                            foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
+                            {
+                                if ("ARPSYSTEMCOMPONENT".Equals(propertyInfo.Name, StringComparison.Ordinal))
+                                {
+                                    sysComponentSet = true;
+                                    break;
+                                }
+                            }
+
+                            if (!sysComponentSet)
+                            {
+                                this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "ARPSYSTEMCOMPONENT", this.Visible ? "" : "1"));
+                            }
                         }
 
                         // Unless the MSI or setup code overrides the default, set MSIFASTINSTALL for best performance.
@@ -8423,7 +8440,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            // Defaults to the bundle ID as the provider key.
+            // Defaults to the bundle UpgradeCode as the provider key.
         }
 
         /// <summary>

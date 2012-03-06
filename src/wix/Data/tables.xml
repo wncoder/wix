@@ -1625,6 +1625,7 @@
         <columnDefinition name="Tag" type="string" length="0" nullable="yes" />
         <columnDefinition name="Platform" type="string" length="4" />
         <columnDefinition name="ParentName" type="string" length="0" nullable="yes" />
+        <columnDefinition name="UpgradeCode" type="string" length="38" category="guid" />
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1658,7 +1659,7 @@
         <columnDefinition name="UninstallCommand" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Cache" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="CacheId" type="string" length="0" nullable="yes"/>
-        <columnDefinition name="Permanent" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="Attributes" type="number" length="4" nullable="no" minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied to this package."/>
         <columnDefinition name="Vital" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
         <columnDefinition name="DetectCondition" type="string" length="0" nullable="yes"/>

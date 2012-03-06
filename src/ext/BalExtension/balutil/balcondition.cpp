@@ -24,7 +24,7 @@
 DAPI_(HRESULT) BalConditionsParseFromXml(
     __in BAL_CONDITIONS* pConditions,
     __in IXMLDOMDocument* pixdManifest,
-    __in_opt LOC_STRINGSET* pLocStringSet
+    __in_opt WIX_LOCALIZATION* pWixLoc
     )
 {
     HRESULT hr = S_OK;
@@ -56,9 +56,9 @@ DAPI_(HRESULT) BalConditionsParseFromXml(
         hr = XmlGetAttributeEx(pNode, L"Message", &prgConditions[iCondition].sczMessage);
         ExitOnFailure(hr, "Failed to get message for condition.");
 
-        if (pLocStringSet && prgConditions[iCondition].sczMessage && *prgConditions[iCondition].sczMessage)
+        if (pWixLoc && prgConditions[iCondition].sczMessage && *prgConditions[iCondition].sczMessage)
         {
-            hr = LocLocalizeString(pLocStringSet, &prgConditions[iCondition].sczMessage);
+            hr = LocLocalizeString(pWixLoc, &prgConditions[iCondition].sczMessage);
             ExitOnFailure(hr, "Failed to localize condition message.");
         }
 

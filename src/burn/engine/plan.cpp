@@ -163,7 +163,6 @@ extern "C" void PlanUninitializeExecuteAction(
         break;
 
     case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-        ReleaseStr(pExecuteAction->msiPackage.sczProductCode);
         ReleaseStr(pExecuteAction->msiPackage.sczLogPath);
         ReleaseMem(pExecuteAction->msiPackage.rgFeatures);
         ReleaseMem(pExecuteAction->msiPackage.rgOrderedPatches);
@@ -188,6 +187,20 @@ extern "C" void PlanUninitializeExecuteAction(
         ReleaseStr(pExecuteAction->dependency.sczBundleProviderKey);
         break;
     }
+}
+
+extern "C" HRESULT PlanSetVariables(
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = VariableSetNumeric(pVariables, BURN_BUNDLE_ACTION, action, TRUE);
+    ExitOnFailure(hr, "Failed to set the bundle action built-in variable.");
+
+LExit:
+    return hr;
 }
 
 extern "C" HRESULT PlanDefaultPackageRequestState(
@@ -261,6 +274,7 @@ LExit:
 extern "C" HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzExecutableName,
+    __in DWORD64 qwBundleSize,
     __in BURN_VARIABLES* pVariables,
     __in BURN_PAYLOADS* pPayloads,
     __out_z LPWSTR* psczLayoutDirectory
@@ -268,14 +282,18 @@ extern "C" HRESULT PlanLayoutBundle(
 {
     HRESULT hr = S_OK;
     BURN_CACHE_ACTION* pCacheAction = NULL;
+    LPWSTR sczExecutablePath = NULL;
     LPWSTR sczLayoutDirectory = NULL;
 
     // Get the layout directory.
     hr = VariableGetString(pVariables, BURN_BUNDLE_LAYOUT_DIRECTORY, &sczLayoutDirectory);
     if (E_NOTFOUND == hr) // if not set, use the current directory as the layout directory.
     {
-        hr = CacheGetOriginalSourcePath(pVariables, L"", &sczLayoutDirectory);
-        ExitOnFailure(hr, "Failed to get original source path as layout directory.");
+        hr = PathForCurrentProcess(&sczExecutablePath, NULL);
+        ExitOnFailure(hr, "Failed to get path for current executing process as layout directory.");
+
+        hr = PathGetDirectory(sczExecutablePath, &sczLayoutDirectory);
+        ExitOnFailure(hr, "Failed to get executing process as layout directory.");
     }
     ExitOnFailure(hr, "Failed to get bundle layout directory property.");
 
@@ -297,6 +315,10 @@ extern "C" HRESULT PlanLayoutBundle(
     hr = CacheCalculateBundleLayoutWorkingPath(pPlan->wzBundleId, &pCacheAction->bundleLayout.sczUnverifiedPath);
     ExitOnFailure(hr, "Failed to calculate bundle layout working path.");
 
+    pCacheAction->bundleLayout.qwBundleSize = qwBundleSize;
+
+    pPlan->qwCacheSizeTotal += qwBundleSize;
+
     ++pPlan->cOverallProgressTicksTotal;
 
     // Plan the layout of layout-only payloads.
@@ -317,6 +339,7 @@ extern "C" HRESULT PlanLayoutBundle(
 
 LExit:
     ReleaseStr(sczLayoutDirectory);
+    ReleaseStr(sczExecutablePath);
 
     return hr;
 }
@@ -637,7 +660,7 @@ extern "C" HRESULT PlanCleanPackage(
     // The following is a complex set of logic that determines when a package should be cleaned
     // from the cache. Start by noting that we only clean if the package is being acquired or
     // already cached.
-    if (pPackage->fAcquire || pPackage->fCached)
+    if (pPackage->fAcquire || BURN_CACHE_STATE_PARTIAL == pPackage->cache || BURN_CACHE_STATE_COMPLETE == pPackage->cache)
     {
         // The following are all different reasons why the package should be cleaned from the cache.
         // The else-ifs are used to make the conditions easier to see (rather than have them combined
@@ -647,22 +670,22 @@ extern "C" HRESULT PlanCleanPackage(
             fPlanCleanPackage = TRUE;
         }
         else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed and
-                    BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute)      // actually being removed.
+                 BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute)      // actually being removed.
         {
             fPlanCleanPackage = TRUE;
         }
         else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed but
-                    BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is do nothing and
-                    !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
-                    BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
+                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is do nothing and
+                 !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
+                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
         {
             fPlanCleanPackage = TRUE;
         }
-        else if (BOOTSTRAPPER_ACTION_UNINSTALL == action &&                   // uninstalling and
-                    BOOTSTRAPPER_REQUEST_STATE_NONE == pPackage->requested &&    // requested do nothing (aka: default) and
-                    BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&       // execute is still do nothing and
-                    !pPackage->fDependencyManagerWasHere &&                      // dependency manager didn't change execute and
-                    BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState) // currently not installed.
+        else if (BOOTSTRAPPER_ACTION_UNINSTALL == action &&                     // uninstalling and
+                 BOOTSTRAPPER_REQUEST_STATE_NONE == pPackage->requested &&      // requested do nothing (aka: default) and
+                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is still do nothing and
+                 !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
+                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
         {
             fPlanCleanPackage = TRUE;
         }
@@ -1069,6 +1092,7 @@ static void ResetPlannedPackageState(
 {
     // Reset package state that is a result of planning.
     pPackage->expected = BOOTSTRAPPER_PACKAGE_STATE_UNKNOWN;
+    pPackage->defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
     pPackage->requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
     pPackage->fAcquire = FALSE;
     pPackage->fUncache = FALSE;
@@ -1224,9 +1248,9 @@ static HRESULT AddCachePackage(
 
     ++pPlan->cOverallProgressTicksTotal;
 
-    // If the package was not already cached then note that we planned the cache here. Otherwise, we only did cache
-    // operations to verify the cache is valid so we did not plan the acquisition of the package.
-    pPackage->fAcquire = !pPackage->fCached;
+    // If the package was not already fully cached then note that we planned the cache here. Otherwise, we only
+    // did cache operations to verify the cache is valid so we did not plan the acquisition of the package.
+    pPackage->fAcquire = (BURN_CACHE_STATE_COMPLETE != pPackage->cache);
 
 LExit:
     return hr;
@@ -1633,6 +1657,8 @@ static HRESULT AddExtractPayload(
     ExitOnFailure(hr, "Failed to copy unverified path for payload to extract.");
     ++pCacheAction->extractContainer.cPayloads;
 
+    pCacheAction->extractContainer.qwTotalExtractSize += pPayload->qwFileSize;
+
 LExit:
     return hr;
 }
@@ -1810,7 +1836,7 @@ static void ExecuteActionLog(
         break;
 
     case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-        LogStringLine(REPORT_STANDARD, "%ls action[%u]: MSI_PACKAGE package id: %ls, action: %hs, product code: %ls, ui level: %u, log path: %ls, logging attrib: %u", wzBase, iAction, pAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pAction->msiPackage.action), pAction->msiPackage.sczProductCode, pAction->msiPackage.uiLevel, pAction->msiPackage.sczLogPath, pAction->msiPackage.dwLoggingAttributes);
+        LogStringLine(REPORT_STANDARD, "%ls action[%u]: MSI_PACKAGE package id: %ls, action: %hs, ui level: %u, log path: %ls, logging attrib: %u", wzBase, iAction, pAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pAction->msiPackage.action), pAction->msiPackage.uiLevel, pAction->msiPackage.sczLogPath, pAction->msiPackage.dwLoggingAttributes);
         for (DWORD j = 0; j < pAction->msiPackage.cPatches; ++j)
         {
             LogStringLine(REPORT_STANDARD, "      Patch[%u]: order: %u, msp package id: %ls", j, pAction->msiPackage.rgOrderedPatches->dwOrder, pAction->msiPackage.rgOrderedPatches[j].dwOrder, pAction->msiPackage.rgOrderedPatches[j].pPackage->sczId);

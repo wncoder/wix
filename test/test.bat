@@ -137,6 +137,10 @@ if %VERBOSE% == true (
 
 REM -- call mstest and capture the output ---
 echo.
+echo Backing up dependency registration to Dependencies.hiv
+reg.exe save HKLM\Software\Classes\Installer\Dependencies Dependencies.hiv /y > nul 2>&1
+
+echo.
 echo Running tests
 
 @echo on
@@ -166,6 +170,11 @@ goto :Cleanup
 
 REM -- Test Run Completed Successfully ---
 :TestRunPassed
+echo.
+echo Restoring dependency registration
+if exist "Dependencies.hiv" reg.exe restore HKLM\Software\Classes\Installer\Dependencies Dependencies.hiv > nul 2>&1
+if errorlevel 0 del /q Dependencies.hiv
+
 echo.
 echo -------------------------------
 echo   Test Run Result:   Passed

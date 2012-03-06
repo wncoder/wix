@@ -582,18 +582,18 @@ extern "C" HRESULT MsiEngineDetectPackage(
         {
             BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
 
-            // get current state
-            if (BOOTSTRAPPER_PACKAGE_STATE_PRESENT == pPackage->currentState) // only try to detect features if the product is installed
+            // Try to detect features state if the product is present on the machine.
+            if (BOOTSTRAPPER_PACKAGE_STATE_PRESENT <= pPackage->currentState)
             {
                 hr = WiuQueryFeatureState(pPackage->Msi.sczProductCode, pFeature->sczId, &installState);
                 ExitOnFailure(hr, "Failed to query feature state.");
 
-                if (INSTALLSTATE_UNKNOWN == installState) // in case of an upgrade this could happen
+                if (INSTALLSTATE_UNKNOWN == installState) // in case of an upgrade a feature could be removed.
                 {
                     installState = INSTALLSTATE_ABSENT;
                 }
             }
-            else
+            else // MSI not installed then the features can't be either.
             {
                 installState = INSTALLSTATE_ABSENT;
             }
@@ -648,8 +648,6 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
     DWORD64 qwInstalledVersion = pPackage->Msi.qwInstalledVersion;
     BOOTSTRAPPER_ACTION_STATE execute = BOOTSTRAPPER_ACTION_STATE_NONE;
     BOOTSTRAPPER_ACTION_STATE rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
-    BOOTSTRAPPER_FEATURE_STATE featureRequestedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
-    BOOTSTRAPPER_FEATURE_STATE featureExpectedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
     BOOL fFeatureActionDelta = FALSE;
     BOOL fRollbackFeatureActionDelta = FALSE;
     int nResult = 0;
@@ -662,13 +660,19 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
         for (DWORD i = 0; i < pPackage->Msi.cFeatures; ++i)
         {
             BURN_MSIFEATURE* pFeature = &pPackage->Msi.rgFeatures[i];
+            BOOTSTRAPPER_FEATURE_STATE defaultFeatureRequestedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
+            BOOTSTRAPPER_FEATURE_STATE featureRequestedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
+            BOOTSTRAPPER_FEATURE_STATE featureExpectedState = BOOTSTRAPPER_FEATURE_STATE_UNKNOWN;
 
             // evaluate feature conditions
-            hr = EvaluateActionStateConditions(pVariables, pFeature->sczAddLocalCondition, pFeature->sczAddSourceCondition, pFeature->sczAdvertiseCondition, &featureRequestedState);
+            hr = EvaluateActionStateConditions(pVariables, pFeature->sczAddLocalCondition, pFeature->sczAddSourceCondition, pFeature->sczAdvertiseCondition, &defaultFeatureRequestedState);
             ExitOnFailure(hr, "Failed to evaluate requested state conditions.");
 
             hr = EvaluateActionStateConditions(pVariables, pFeature->sczRollbackAddLocalCondition, pFeature->sczRollbackAddSourceCondition, pFeature->sczRollbackAdvertiseCondition, &featureExpectedState);
             ExitOnFailure(hr, "Failed to evaluate expected state conditions.");
+
+            // Remember the default feature requested state so the engine doesn't get blamed for planning the wrong thing if the UX changes it.
+            featureRequestedState = defaultFeatureRequestedState;
 
             // send MSI feature plan message to UX
             nResult = pUserExperience->pUserExperience->OnPlanMsiFeature(pPackage->sczId, pFeature->sczId, &featureRequestedState);
@@ -682,7 +686,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
             hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_ACTION_NONE == pFeature->execute ? featureExpectedState : pFeature->currentState, FALSE, &pFeature->rollback, &fRollbackFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate rollback feature state.");
 
-            LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(pFeature->execute), LoggingMsiFeatureActionToString(pFeature->rollback));
+            LogId(REPORT_STANDARD, MSG_PLANNED_MSI_FEATURE, pFeature->sczId, LoggingMsiFeatureStateToString(pFeature->currentState), LoggingMsiFeatureStateToString(defaultFeatureRequestedState), LoggingMsiFeatureStateToString(featureRequestedState), LoggingMsiFeatureActionToString(pFeature->execute), LoggingMsiFeatureActionToString(pFeature->rollback));
         }
     }
 
@@ -837,6 +841,29 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
         ExitOnFailure(hr, "Failed to plan package cache syncpoint");
     }
 
+    // add rollback action
+    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
+    {
+        hr = PlanAppendRollbackAction(pPlan, &pAction);
+        ExitOnFailure(hr, "Failed to append rollback action.");
+
+        pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
+        pAction->msiPackage.pPackage = pPackage;
+        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
+        pAction->msiPackage.action = pPackage->rollback;
+        pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
+        rgRollbackFeatureActions = NULL;
+
+        LoggingSetPackageVariable(pPackage, NULL, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
+        pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
+
+        // Plan a checkpoint between rollback and execute so that we always attempt
+        // rollback in the case that the MSI was not able to rollback itself (e.g.
+        // user pushes cancel after InstallFinalize).
+        hr = PlanExecuteCheckpoint(pPlan);
+        ExitOnFailure(hr, "Failed to append execute checkpoint.");
+    }
+
     // add execute action
     if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute)
     {
@@ -859,23 +886,6 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
         rgFeatureActions = NULL;
 
         LoggingSetPackageVariable(pPackage, NULL, FALSE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
-        pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
-    }
-
-    // add rollback action
-    if (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback)
-    {
-        hr = PlanAppendRollbackAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append rollback action.");
-
-        pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
-        pAction->msiPackage.pPackage = pPackage;
-        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
-        pAction->msiPackage.action = pPackage->rollback;
-        pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
-        rgRollbackFeatureActions = NULL;
-
-        LoggingSetPackageVariable(pPackage, NULL, TRUE, pLog, pVariables, &pAction->msiPackage.sczLogPath); // ignore errors.
         pAction->msiPackage.dwLoggingAttributes = pLog->dwAttributes;
     }
 
@@ -909,9 +919,41 @@ extern "C" HRESULT MsiEngineExecutePackage(
     WIU_MSI_EXECUTE_CONTEXT context = { };
     WIU_RESTART restart = WIU_RESTART_NONE;
 
+    LPWSTR sczInstalledVersion = NULL;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczMsiPath = NULL;
     LPWSTR sczProperties = NULL;
+    LPWSTR sczObfuscatedProperties = NULL;
+
+    // During rollback, if the package is already in the rollback state we expect don't
+    // touch it again.
+    if (fRollback)
+    {
+        if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->msiPackage.action)
+        {
+            hr = WiuGetProductInfoEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, NULL, pExecuteAction->msiPackage.pPackage->fPerMachine ? MSIINSTALLCONTEXT_MACHINE : MSIINSTALLCONTEXT_USERUNMANAGED, INSTALLPROPERTY_VERSIONSTRING, &sczInstalledVersion);
+            if (FAILED(hr))  // package not present.
+            {
+                LogId(REPORT_STANDARD, MSG_ROLLBACK_PACKAGE_SKIPPED, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), LoggingPackageStateToString(BOOTSTRAPPER_PACKAGE_STATE_ABSENT));
+
+                hr = S_OK;
+                ExitFunction();
+            }
+        }
+        else if (BOOTSTRAPPER_ACTION_STATE_INSTALL == pExecuteAction->msiPackage.action)
+        {
+            hr = WiuGetProductInfoEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, NULL, pExecuteAction->msiPackage.pPackage->fPerMachine ? MSIINSTALLCONTEXT_MACHINE : MSIINSTALLCONTEXT_USERUNMANAGED, INSTALLPROPERTY_VERSIONSTRING, &sczInstalledVersion);
+            if (SUCCEEDED(hr))  // package present.
+            {
+                LogId(REPORT_STANDARD, MSG_ROLLBACK_PACKAGE_SKIPPED, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), LoggingPackageStateToString(BOOTSTRAPPER_PACKAGE_STATE_PRESENT));
+
+                hr = S_OK;
+                ExitFunction();
+            }
+
+            hr = S_OK;
+        }
+    }
 
     // Default to "verbose" logging and set extra debug mode only if explicitly required.
     DWORD dwLogMode = INSTALLLOGMODE_VERBOSE;
@@ -939,21 +981,30 @@ extern "C" HRESULT MsiEngineExecutePackage(
     }
 
     // set up properties
-    hr = MsiEngineConcatProperties(pExecuteAction->msiPackage.pPackage->Msi.rgProperties, pExecuteAction->msiPackage.pPackage->Msi.cProperties, pVariables, fRollback, &sczProperties);
+    hr = MsiEngineConcatProperties(pExecuteAction->msiPackage.pPackage->Msi.rgProperties, pExecuteAction->msiPackage.pPackage->Msi.cProperties, pVariables, fRollback, &sczProperties, FALSE);
     ExitOnFailure(hr, "Failed to add properties to argument string.");
+
+    hr = MsiEngineConcatProperties(pExecuteAction->msiPackage.pPackage->Msi.rgProperties, pExecuteAction->msiPackage.pPackage->Msi.cProperties, pVariables, fRollback, &sczObfuscatedProperties, TRUE);
+    ExitOnFailure(hr, "Failed to add obfuscated properties to argument string.");
 
     // add feature action properties
     hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczProperties);
     ExitOnFailure(hr, "Failed to add feature action properties to argument string.");
+
+    hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczObfuscatedProperties);
+    ExitOnFailure(hr, "Failed to add feature action properties to obfuscated argument string.");
 
     // add patch properties, except on uninstall because that can confuse the Windows Installer in some situations.
     if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL != pExecuteAction->msiPackage.action)
     {
         hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczProperties);
         ExitOnFailure(hr, "Failed to add patch properties to argument string.");
+
+        hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczObfuscatedProperties);
+        ExitOnFailure(hr, "Failed to add patch properties to obfuscated argument string.");
     }
 
-    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczProperties ? sczProperties : L"");
+    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, LoggingRollbackOrExecute(fRollback), pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczObfuscatedProperties ? sczObfuscatedProperties : L"");
 
     //
     // Do the actual action.
@@ -1024,11 +1075,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
         hr = WiuConfigureProductEx(pExecuteAction->msiPackage.pPackage->Msi.sczProductCode, INSTALLLEVEL_DEFAULT, INSTALLSTATE_ABSENT, sczProperties, &restart);
         if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
         {
-            if (!fRollback)
-            {
-                LogId(REPORT_STANDARD, MSG_ATTEMPTED_UNINSTALL_ABSENT_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId);
-            }
-
+            LogId(REPORT_STANDARD, MSG_ATTEMPTED_UNINSTALL_ABSENT_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId);
             hr = S_OK;
         }
         ExitOnFailure(hr, "Failed to uninstall MSI package.");
@@ -1051,8 +1098,10 @@ LExit:
     WiuUninitializeExternalUI(&context);
 
     ReleaseStr(sczProperties);
+    ReleaseStr(sczObfuscatedProperties);
     ReleaseStr(sczMsiPath);
     ReleaseStr(sczCachedDirectory);
+    ReleaseStr(sczInstalledVersion);
 
     switch (restart)
     {
@@ -1077,7 +1126,8 @@ extern "C" HRESULT MsiEngineConcatProperties(
     __in DWORD cProperties,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
-    __deref_out_z LPWSTR* psczProperties
+    __deref_out_z LPWSTR* psczProperties,
+    __in BOOL fObfuscateHiddenVariables
     )
 {
     HRESULT hr = S_OK;
@@ -1090,7 +1140,14 @@ extern "C" HRESULT MsiEngineConcatProperties(
         BURN_MSIPROPERTY* pProperty = &rgProperties[i];
 
         // format property value
-        hr = VariableFormatString(pVariables, (fRollback && pProperty->sczRollbackValue) ? pProperty->sczRollbackValue : pProperty->sczValue, &sczValue, NULL);
+        if (fObfuscateHiddenVariables)
+        {
+            hr = VariableFormatStringObfuscated(pVariables, (fRollback && pProperty->sczRollbackValue) ? pProperty->sczRollbackValue : pProperty->sczValue, &sczValue, NULL);
+        }
+        else
+        {
+            hr = VariableFormatString(pVariables, (fRollback && pProperty->sczRollbackValue) ? pProperty->sczRollbackValue : pProperty->sczValue, &sczValue, NULL);
+        }
         ExitOnFailure(hr, "Failed to format property value.");
 
         // escape property value
@@ -1635,7 +1692,11 @@ static void RegisterSourceDirectory(
     ExitOnFailure1(hr, "Failed to get directory for path: %ls", wzMsiPath);
 
     hr = WiuSourceListAddSourceEx(pPackage->Msi.sczProductCode, NULL, dwContext, MSICODE_PRODUCT, sczMsiDirectory, 1);
-    ExitOnFailure2(hr, "Failed to register source directory: %ls; product: %ls", sczMsiDirectory, pPackage->Msi.sczProductCode);
+    if (FAILED(hr))
+    {
+        LogId(REPORT_VERBOSE, MSG_SOURCELIST_REGISTER, sczMsiDirectory, pPackage->Msi.sczProductCode, hr);
+        ExitFunction();
+    }
 
 LExit:
     ReleaseStr(sczMsiDirectory);

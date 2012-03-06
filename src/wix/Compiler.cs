@@ -19772,6 +19772,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixWarnings.InvalidModuleOrBundleVersion(sourceLineNumbers, "Bundle", version));
             }
 
+            if (String.IsNullOrEmpty(upgradeCode))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.LocalName, "UpgradeCode"));
+            }
+
             if (String.IsNullOrEmpty(copyright))
             {
                 if (String.IsNullOrEmpty(manufacturer))
@@ -19938,6 +19943,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[16] = tag;
                 row[17] = this.currentPlatform.ToString();
                 row[18] = parentName;
+                row[19] = upgradeCode;
             }
         }
 
@@ -21081,6 +21087,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string logPathVariable = (packageType == ChainPackageType.Msu) ? String.Empty : null;
             string rollbackPathVariable = (packageType == ChainPackageType.Msu) ? String.Empty : null;
             YesNoType permanent = YesNoType.NotSet;
+            YesNoType visible = YesNoType.NotSet;
             YesNoType vital = YesNoType.Yes;
             string installCommand = null;
             string repairCommand = null;
@@ -21097,6 +21104,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoType displayInternalUI = YesNoType.NotSet;
             YesNoType enableFeatureSelection = YesNoType.NotSet;
             YesNoType forcePerMachine = YesNoType.NotSet;
+            BundlePackageAttributes attributes = BundlePackageAttributes.None;
 
             string[] expectedNetFx4Args = new string[] { "/q", "/norestart", "/chainingpackage" };
 
@@ -21160,6 +21168,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "Permanent":
                             permanent = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Visible":
+                            visible = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msi);
                             break;
                         case "Vital":
                             vital = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -21367,6 +21379,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!this.core.EncounteredError)
             {
+                if (YesNoType.Yes == permanent)
+                {
+                    attributes |= BundlePackageAttributes.Permanent;
+                }
+
+                if (YesNoType.Yes == visible)
+                {
+                    attributes |= BundlePackageAttributes.Visible;
+                }
+
                 // We create the package contents as a payload with this package as the parent
                 this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl,
                     ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification);
@@ -21387,10 +21409,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 row[8] = cacheId;
 
-                if (YesNoType.NotSet != permanent)
-                {
-                    row[9] = (YesNoType.Yes == permanent) ? 1 : 0;
-                }
+                row[9] = (int)attributes;
 
                 if (YesNoType.NotSet != vital)
                 {
@@ -22138,10 +22157,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!this.core.EncounteredError)
             {
-                WixVariableRow wixVariableRow = (WixVariableRow)this.core.CreateRow(sourceLineNumbers, "WixVariable");
-                wixVariableRow.Id = id;
-                wixVariableRow.Value = value;
-                wixVariableRow.Overridable = overridable;
+                this.core.CreateWixVariableRow(sourceLineNumbers, id, value, overridable);
             }
         }
 

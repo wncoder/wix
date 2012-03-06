@@ -88,6 +88,7 @@ typedef struct _BURN_CONTAINER
     DWORD dwAttachedIndex;
     DWORD64 qwFileSize;
     LPWSTR sczHash;
+    LPWSTR sczFilePath;         // relative path to container.
     LPWSTR sczSourcePath;
     BURN_DOWNLOAD_SOURCE downloadSource;
 

@@ -56,6 +56,13 @@ enum OS_INFO_VARIABLE
 
 // internal function declarations
 
+static HRESULT FormatString(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzIn,
+    __out_z_opt LPWSTR* psczOut,
+    __out_opt DWORD* pcchOut,
+    __in BOOL fObfuscateHiddenVariables
+    );
 static HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
@@ -152,6 +159,11 @@ static HRESULT InitializeVariableLogonUser(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT IsVariableHidden(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzVariable,
+    __out BOOL* pfHidden
+    );
 
 
 // function definitions
@@ -219,6 +231,8 @@ extern "C" HRESULT VariableInitialize(
         {L"VersionNT64", InitializeVariableOsInfo, OS_INFO_VARIABLE_VersionNT64},
         {L"WindowsFolder", InitializeVariableCsidlFolder, CSIDL_WINDOWS},
         {L"WindowsVolume", InitializeVariableWindowsVolumeFolder, 0},
+        {BURN_BUNDLE_ACTION, InitializeVariableNumeric, 0},
+        {BURN_BUNDLE_INSTALLED, InitializeVariableNumeric, 0},
         {BURN_BUNDLE_ELEVATED, InitializeVariableNumeric, 0},
         {BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)L""},
         {BURN_BUNDLE_TAG, InitializeVariableString, (DWORD_PTR)L""},
@@ -620,182 +634,17 @@ extern "C" HRESULT VariableFormatString(
     __out_opt DWORD* pcchOut
     )
 {
-    HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
-    LPWSTR sczUnformatted = NULL;
-    LPWSTR sczFormat = NULL;
-    LPCWSTR wzRead = NULL;
-    LPCWSTR wzOpen = NULL;
-    LPCWSTR wzClose = NULL;
-    LPWSTR scz = NULL;
-    LPWSTR* rgVariables = NULL;
-    DWORD cVariables = 0;
-    DWORD cch = 0;
-    MSIHANDLE hRecord = NULL;
+    return FormatString(pVariables, wzIn, psczOut, pcchOut, FALSE);
+}
 
-    ::EnterCriticalSection(&pVariables->csAccess);
-
-    // allocate buffer for format string
-    hr = StrAlloc(&sczFormat, lstrlenW(wzIn) + 1);
-    ExitOnFailure(hr, "Failed to allocate buffer for format string.");
-
-    // read out variables from the unformatted string and build a format string
-    wzRead = wzIn;
-    for (;;)
-    {
-        // scan for opening '['
-        wzOpen = wcschr(wzRead, L'[');
-        if (!wzOpen)
-        {
-            // end reached, append the remainder of the string and end loop
-            hr = StrAllocConcat(&sczFormat, wzRead, 0);
-            ExitOnFailure(hr, "Failed to append string.");
-            break;
-        }
-
-        // scan for closing ']'
-        wzClose = wcschr(wzOpen + 1, L']');
-        if (!wzClose)
-        {
-            // end reached, treat unterminated expander as literal
-            hr = StrAllocConcat(&sczFormat, wzRead, 0);
-            ExitOnFailure(hr, "Failed to append string.");
-            break;
-        }
-        cch = wzClose - wzOpen - 1;
-
-        if (0 == cch)
-        {
-            // blank, copy all text including the terminator
-            hr = StrAllocConcat(&sczFormat, wzRead, (DWORD_PTR)(wzClose - wzRead) + 1);
-            ExitOnFailure(hr, "Failed to append string.");
-        }
-        else
-        {
-            // append text preceding expander
-            if (wzOpen > wzRead)
-            {
-                hr = StrAllocConcat(&sczFormat, wzRead, (DWORD_PTR)(wzOpen - wzRead));
-                ExitOnFailure(hr, "Failed to append string.");
-            }
-
-            // get variable name
-            hr = StrAllocString(&scz, wzOpen + 1, cch);
-            ExitOnFailure(hr, "Failed to get variable name.");
-
-            // allocate space in variable array
-            if (rgVariables)
-            {
-                LPVOID pv = MemReAlloc(rgVariables, sizeof(LPWSTR) * (cVariables + 1), TRUE);
-                ExitOnNull(pv, hr, E_OUTOFMEMORY, "Failed to reallocate variable array.");
-                rgVariables = (LPWSTR*)pv;
-            }
-            else
-            {
-                rgVariables = (LPWSTR*)MemAlloc(sizeof(LPWSTR) * (cVariables + 1), TRUE);
-                ExitOnNull(rgVariables, hr, E_OUTOFMEMORY, "Failed to allocate variable array.");
-            }
-
-            // set variable value
-            if (2 <= cch && L'\\' == wzOpen[1])
-            {
-                // escape sequence, copy character
-                hr = StrAllocString(&rgVariables[cVariables], &wzOpen[2], 1);
-            }
-            else
-            {
-                // get formatted variable value
-                hr = VariableGetFormatted(pVariables, scz, &rgVariables[cVariables]);
-                if (E_NOTFOUND == hr) // variable not found
-                {
-                    hr = StrAllocString(&rgVariables[cVariables], L"", 0);
-                }
-            }
-            ExitOnFailure(hr, "Failed to set variable value.");
-            ++cVariables;
-
-            // append placeholder to format string
-            hr = StrAllocFormatted(&scz, L"[%d]", cVariables);
-            ExitOnFailure(hr, "Failed to format placeholder string.");
-
-            hr = StrAllocConcat(&sczFormat, scz, 0);
-            ExitOnFailure(hr, "Failed to append placeholder.");
-        }
-
-        // update read pointer
-        wzRead = wzClose + 1;
-    }
-
-    // create record
-    hRecord = ::MsiCreateRecord(cVariables);
-    ExitOnNull(hRecord, hr, E_OUTOFMEMORY, "Failed to allocate record.");
-
-    // set format string
-    er = ::MsiRecordSetStringW(hRecord, 0, sczFormat);
-    ExitOnWin32Error(er, hr, "Failed to set record format string.");
-
-    // copy record fields
-    for (DWORD i = 0; i < cVariables; ++i)
-    {
-        if (*rgVariables[i]) // not setting if blank
-        {
-            er = ::MsiRecordSetStringW(hRecord, i + 1, rgVariables[i]);
-            ExitOnWin32Error(er, hr, "Failed to set record string.");
-        }
-    }
-
-    // get formatted character count
-    cch = 0;
-#pragma prefast(push)
-#pragma prefast(disable:6298)
-    er = ::MsiFormatRecordW(NULL, hRecord, L"", &cch);
-#pragma prefast(pop)
-    if (ERROR_MORE_DATA != er)
-    {
-        ExitOnWin32Error(er, hr, "Failed to get formatted length.");
-    }
-
-    // return formatted string
-    if (psczOut)
-    {
-        hr = StrAlloc(&scz, ++cch);
-        ExitOnFailure(hr, "Failed to allocate string.");
-
-        er = ::MsiFormatRecordW(NULL, hRecord, scz, &cch);
-        ExitOnWin32Error(er, hr, "Failed to format record.");
-
-        hr = StrAllocString(psczOut, scz, 0);
-        ExitOnFailure(hr, "Failed to copy string.");
-    }
-
-    // return character count
-    if (pcchOut)
-    {
-        *pcchOut = cch;
-    }
-
-LExit:
-    ::LeaveCriticalSection(&pVariables->csAccess);
-
-    if (rgVariables)
-    {
-        for (DWORD i = 0; i < cVariables; ++i)
-        {
-            ReleaseStr(rgVariables[i]);
-        }
-        MemFree(rgVariables);
-    }
-
-    if (hRecord)
-    {
-        ::MsiCloseHandle(hRecord);
-    }
-
-    ReleaseStr(sczUnformatted);
-    ReleaseStr(sczFormat);
-    ReleaseStr(scz);
-
-    return hr;
+extern "C" HRESULT VariableFormatStringObfuscated(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzIn,
+    __out_z_opt LPWSTR* psczOut,
+    __out_opt DWORD* pcchOut
+    )
+{
+    return FormatString(pVariables, wzIn, psczOut, pcchOut, TRUE);
 }
 
 extern "C" HRESULT VariableEscapeString(
@@ -1007,6 +856,206 @@ LExit:
 
 // internal function definitions
 
+static HRESULT FormatString(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzIn,
+    __out_z_opt LPWSTR* psczOut,
+    __out_opt DWORD* pcchOut,
+    __in BOOL fObfuscateHiddenVariables
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    LPWSTR sczUnformatted = NULL;
+    LPWSTR sczFormat = NULL;
+    LPCWSTR wzRead = NULL;
+    LPCWSTR wzOpen = NULL;
+    LPCWSTR wzClose = NULL;
+    LPWSTR scz = NULL;
+    LPWSTR* rgVariables = NULL;
+    DWORD cVariables = 0;
+    DWORD cch = 0;
+    BOOL fHidden = FALSE;
+    MSIHANDLE hRecord = NULL;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
+
+    // allocate buffer for format string
+    hr = StrAlloc(&sczFormat, lstrlenW(wzIn) + 1);
+    ExitOnFailure(hr, "Failed to allocate buffer for format string.");
+
+    // read out variables from the unformatted string and build a format string
+    wzRead = wzIn;
+    for (;;)
+    {
+        // scan for opening '['
+        wzOpen = wcschr(wzRead, L'[');
+        if (!wzOpen)
+        {
+            // end reached, append the remainder of the string and end loop
+            hr = StrAllocConcat(&sczFormat, wzRead, 0);
+            ExitOnFailure(hr, "Failed to append string.");
+            break;
+        }
+
+        // scan for closing ']'
+        wzClose = wcschr(wzOpen + 1, L']');
+        if (!wzClose)
+        {
+            // end reached, treat unterminated expander as literal
+            hr = StrAllocConcat(&sczFormat, wzRead, 0);
+            ExitOnFailure(hr, "Failed to append string.");
+            break;
+        }
+        cch = wzClose - wzOpen - 1;
+
+        if (0 == cch)
+        {
+            // blank, copy all text including the terminator
+            hr = StrAllocConcat(&sczFormat, wzRead, (DWORD_PTR)(wzClose - wzRead) + 1);
+            ExitOnFailure(hr, "Failed to append string.");
+        }
+        else
+        {
+            // append text preceding expander
+            if (wzOpen > wzRead)
+            {
+                hr = StrAllocConcat(&sczFormat, wzRead, (DWORD_PTR)(wzOpen - wzRead));
+                ExitOnFailure(hr, "Failed to append string.");
+            }
+
+            // get variable name
+            hr = StrAllocString(&scz, wzOpen + 1, cch);
+            ExitOnFailure(hr, "Failed to get variable name.");
+
+            // allocate space in variable array
+            if (rgVariables)
+            {
+                LPVOID pv = MemReAlloc(rgVariables, sizeof(LPWSTR) * (cVariables + 1), TRUE);
+                ExitOnNull(pv, hr, E_OUTOFMEMORY, "Failed to reallocate variable array.");
+                rgVariables = (LPWSTR*)pv;
+            }
+            else
+            {
+                rgVariables = (LPWSTR*)MemAlloc(sizeof(LPWSTR) * (cVariables + 1), TRUE);
+                ExitOnNull(rgVariables, hr, E_OUTOFMEMORY, "Failed to allocate variable array.");
+            }
+
+            // set variable value
+            if (2 <= cch && L'\\' == wzOpen[1])
+            {
+                // escape sequence, copy character
+                hr = StrAllocString(&rgVariables[cVariables], &wzOpen[2], 1);
+            }
+            else
+            {
+                if (fObfuscateHiddenVariables)
+                {
+                    hr = IsVariableHidden(pVariables, scz, &fHidden);
+                    ExitOnFailure1(hr, "Failed to determine variable visibility: '%ls'.", scz);
+                }
+
+                if (fHidden)
+                {
+                    hr = StrAllocString(&rgVariables[cVariables], L"*****", 0);
+                }
+                else
+                {
+                    // get formatted variable value
+                    hr = VariableGetFormatted(pVariables, scz, &rgVariables[cVariables]);
+                    if (E_NOTFOUND == hr) // variable not found
+                    {
+                        hr = StrAllocString(&rgVariables[cVariables], L"", 0);
+                    }
+                }
+            }
+            ExitOnFailure(hr, "Failed to set variable value.");
+            ++cVariables;
+
+            // append placeholder to format string
+            hr = StrAllocFormatted(&scz, L"[%d]", cVariables);
+            ExitOnFailure(hr, "Failed to format placeholder string.");
+
+            hr = StrAllocConcat(&sczFormat, scz, 0);
+            ExitOnFailure(hr, "Failed to append placeholder.");
+        }
+
+        // update read pointer
+        wzRead = wzClose + 1;
+    }
+
+    // create record
+    hRecord = ::MsiCreateRecord(cVariables);
+    ExitOnNull(hRecord, hr, E_OUTOFMEMORY, "Failed to allocate record.");
+
+    // set format string
+    er = ::MsiRecordSetStringW(hRecord, 0, sczFormat);
+    ExitOnWin32Error(er, hr, "Failed to set record format string.");
+
+    // copy record fields
+    for (DWORD i = 0; i < cVariables; ++i)
+    {
+        if (*rgVariables[i]) // not setting if blank
+        {
+            er = ::MsiRecordSetStringW(hRecord, i + 1, rgVariables[i]);
+            ExitOnWin32Error(er, hr, "Failed to set record string.");
+        }
+    }
+
+    // get formatted character count
+    cch = 0;
+#pragma prefast(push)
+#pragma prefast(disable:6298)
+    er = ::MsiFormatRecordW(NULL, hRecord, L"", &cch);
+#pragma prefast(pop)
+    if (ERROR_MORE_DATA != er)
+    {
+        ExitOnWin32Error(er, hr, "Failed to get formatted length.");
+    }
+
+    // return formatted string
+    if (psczOut)
+    {
+        hr = StrAlloc(&scz, ++cch);
+        ExitOnFailure(hr, "Failed to allocate string.");
+
+        er = ::MsiFormatRecordW(NULL, hRecord, scz, &cch);
+        ExitOnWin32Error(er, hr, "Failed to format record.");
+
+        hr = StrAllocString(psczOut, scz, 0);
+        ExitOnFailure(hr, "Failed to copy string.");
+    }
+
+    // return character count
+    if (pcchOut)
+    {
+        *pcchOut = cch;
+    }
+
+LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
+    if (rgVariables)
+    {
+        for (DWORD i = 0; i < cVariables; ++i)
+        {
+            ReleaseStr(rgVariables[i]);
+        }
+        MemFree(rgVariables);
+    }
+
+    if (hRecord)
+    {
+        ::MsiCloseHandle(hRecord);
+    }
+
+    ReleaseStr(sczUnformatted);
+    ReleaseStr(sczFormat);
+    ReleaseStr(scz);
+
+    return hr;
+}
+
 static HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
@@ -1203,7 +1252,6 @@ static HRESULT SetVariableValue(
         // invalid intent for the opposite condition; not possible from external callers so just assert
         AssertSz(FALSE, "Intent to overwrite non-built-in variable.");
     }
-
 
     // log value when not overwriting a built-in variable
     if (fLog && !fOverwriteBuiltIn)
@@ -1779,3 +1827,34 @@ static HRESULT InitializeVariableLogonUser(
 LExit:
     return hr;
 }
+
+static HRESULT IsVariableHidden(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzVariable,
+    __out BOOL* pfHidden
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_VARIABLE* pVariable = NULL;
+
+    ::EnterCriticalSection(&pVariables->csAccess);
+
+    hr = GetVariable(pVariables, wzVariable, &pVariable);
+    if (E_NOTFOUND == hr)
+    {
+        // A missing variable does not need its data hidden.
+        *pfHidden = FALSE;
+
+        hr = S_OK;
+        ExitFunction();
+    }
+    ExitOnFailure1(hr, "Failed to get visibility of variable: %ls", wzVariable);
+
+    *pfHidden = pVariable->fHidden;
+
+LExit:
+    ::LeaveCriticalSection(&pVariables->csAccess);
+
+    return hr;
+}
+

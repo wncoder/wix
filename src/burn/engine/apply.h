@@ -63,6 +63,10 @@ typedef int (*PFN_GENERICMESSAGEHANDLER)(
     );
 
 
+HRESULT ApplyLock(
+    __in BOOL fPerMachine,
+    __out HANDLE* phLock
+    );
 HRESULT ApplyRegister(
     __in BURN_ENGINE_STATE* pEngineState
     );

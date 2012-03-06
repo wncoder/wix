@@ -23,9 +23,16 @@ static const LPCWSTR UNVERFIED_CACHE_FOLDER_NAME = L".unverified";
 static const DWORD FILE_OPERATION_RETRY_COUNT = 3;
 static const DWORD FILE_OPERATION_RETRY_WAIT = 2000;
 
+static BOOL vfInitializedCache = FALSE;
+static BOOL vfRunningFromCache = FALSE;
+
 static HRESULT CalculateWorkingFolder(
     __in_z LPCWSTR wzBundleId,
     __deref_out_z LPWSTR* psczWorkingFolder
+    );
+static HRESULT GetLastUsedSourceFolder(
+    __in BURN_VARIABLES* pVariables,
+    __out_z LPWSTR* psczLastSource
     );
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
@@ -87,6 +94,52 @@ static HRESULT GetVerifiedCertificateChain(
     __out PCCERT_CHAIN_CONTEXT* ppChainContext
     );
 
+
+extern "C" HRESULT CacheInitialize(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCurrentPath = NULL;
+    LPWSTR sczCompletedFolder = NULL;
+    LPWSTR sczCompletedPath = NULL;
+    LPWSTR sczOriginalSource = NULL;
+    int nCompare = 0;
+
+    hr = PathForCurrentProcess(&sczCurrentPath, NULL);
+    ExitOnFailure(hr, "Failed to get current process path.");
+
+    hr = CacheGetCompletedPath(pRegistration->fPerMachine, pRegistration->sczId, &sczCompletedFolder);
+    ExitOnFailure(hr, "Failed to get completed path for bundle.");
+
+    hr = PathConcat(sczCompletedFolder, pRegistration->sczExecutableName, &sczCompletedPath);
+    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
+
+    hr = PathCompare(sczCurrentPath, sczCompletedPath, &nCompare);
+    ExitOnFailure1(hr, "Failed to compare current path for bundle: %ls", sczCurrentPath);
+
+    vfRunningFromCache = (CSTR_EQUAL == nCompare);
+
+    // If we're not running from the cache, ensure the original source is set.
+    if (!vfRunningFromCache)
+    {
+        // If the original source has not been set already then set it where the bundle is
+        // running from right now. This value will be persisted and we'll use it when launched
+        // from the package cache since none of our packages will be relative to that location.
+        hr = VariableGetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, &sczOriginalSource);
+        if (E_NOTFOUND == hr)
+        {
+            hr = VariableSetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, sczCurrentPath, FALSE);
+            ExitOnFailure(hr, "Failed to set original source variable.");
+        }
+    }
+
+    vfInitializedCache = TRUE;
+
+LExit:
+    return hr;
+}
 
 extern "C" HRESULT CacheEnsureWorkingFolder(
     __in_z LPCWSTR wzBundleId,
@@ -165,46 +218,34 @@ LExit:
 }
 
 extern "C" HRESULT CacheCalculateBundleWorkingPath(
-    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in LPCWSTR wzExecutableName,
     __deref_out_z LPWSTR* psczWorkingPath
     )
 {
+    Assert(vfInitializedCache);
+
     HRESULT hr = S_OK;
-    int nCompare = 0;
-    LPWSTR sczCurrentProcess = NULL;
     LPWSTR sczWorkingFolder = NULL;
 
     // If the bundle is running out of the package cache then we use that as the
     // working folder since we feel safe in the package cache.
-    hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
-    ExitOnFailure(hr, "Failed to get current process path.");
-
-    hr = CacheGetCompletedPath(fPerMachine, wzBundleId, &sczWorkingFolder);
-    ExitOnFailure1(hr, "Failed to get completed path for bundle: %ls", wzBundleId);
-
-    hr = PathConcat(sczWorkingFolder, wzExecutableName, psczWorkingPath);
-    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
-
-    hr = PathCompare(sczCurrentProcess, *psczWorkingPath, &nCompare);
-    ExitOnFailure1(hr, "Failed to compare current path for bundle: %ls", sczCurrentProcess);
-
-    if (CSTR_EQUAL == nCompare)
+    if (vfRunningFromCache)
     {
-        ExitFunction();
+        hr = PathForCurrentProcess(psczWorkingPath, NULL);
+        ExitOnFailure(hr, "Failed to get current process path.");
     }
+    else // Otherwise, use the real working folder.
+    {
+        hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
+        ExitOnFailure(hr, "Failed to get working folder for bundle.");
 
-    // Otherwise, use the real working folder.
-    hr = CalculateWorkingFolder(wzBundleId, &sczWorkingFolder);
-    ExitOnFailure(hr, "Failed to get working folder for bundle.");
-
-    hr = StrAllocFormatted(psczWorkingPath, L"%ls%ls\\%ls", sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, wzExecutableName);
-    ExitOnFailure(hr, "Failed to calculate the bundle working path.");
+        hr = StrAllocFormatted(psczWorkingPath, L"%ls%ls\\%ls", sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, wzExecutableName);
+        ExitOnFailure(hr, "Failed to calculate the bundle working path.");
+    }
 
 LExit:
     ReleaseStr(sczWorkingFolder);
-    ReleaseStr(sczCurrentProcess);
 
     return hr;
 }
@@ -299,6 +340,157 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT CacheFindLocalSource(
+    __in_z LPCWSTR wzSourcePath,
+    __in BURN_VARIABLES* pVariables,
+    __out BOOL* pfFound,
+    __out_z LPWSTR* psczSourceFullPath
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCurrentProcess = NULL;
+    LPWSTR sczCurrentProcessFolder = NULL;
+    LPWSTR sczCurrentPath = NULL;
+    LPWSTR sczLastSourcePath = NULL;
+    LPWSTR sczLastSourceFolder = NULL;
+    LPCWSTR rgwzSearchPaths[2] = { };
+    DWORD cSearchPaths = 0;
+
+    // If the source path provided is a full path, obviously that is where we should be looking.
+    if (PathIsAbsolute(wzSourcePath))
+    {
+        rgwzSearchPaths[0] = wzSourcePath;
+        cSearchPaths = 1;
+    }
+    else
+    {
+        // If we're not running from cache or we couldn't get the last source, use
+        // the current process location first. In the case where we are in the cache
+        // and couldn't find a last used source we unfortunately will be picking the
+        // bundle cache path which isn't likely to have what we are looking for.
+        hr = GetLastUsedSourceFolder(pVariables, &sczLastSourceFolder);
+        if (!vfRunningFromCache || FAILED(hr))
+        {
+            hr = PathForCurrentProcess(&sczCurrentProcess, NULL);
+            ExitOnFailure(hr, "Failed to get path to current process.");
+
+            hr = PathGetDirectory(sczCurrentProcess, &sczCurrentProcessFolder);
+            ExitOnFailure(hr, "Failed to get current process directory.");
+
+            hr = PathConcat(sczCurrentProcessFolder, wzSourcePath, &sczCurrentPath);
+            ExitOnFailure(hr, "Failed to combine last source with source.");
+
+            rgwzSearchPaths[0] = sczCurrentPath;
+            cSearchPaths = 1;
+        }
+
+        // If we have a last used source and it does not duplicate the existing search path,
+        // add the last used source to the search path second.
+        if (sczLastSourceFolder && *sczLastSourceFolder)
+        {
+            hr = PathConcat(sczLastSourceFolder, wzSourcePath, &sczLastSourcePath);
+            ExitOnFailure(hr, "Failed to combine last source with source.");
+
+            if (0 == cSearchPaths || CSTR_EQUAL != ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, rgwzSearchPaths[0], -1, sczLastSourcePath, -1))
+            {
+                rgwzSearchPaths[cSearchPaths] = sczLastSourcePath;
+                ++cSearchPaths;
+            }
+        }
+    }
+
+    *pfFound = FALSE; // assume we won't find the file locally.
+
+    for (DWORD i = 0; i < cSearchPaths; ++i)
+    {
+        // If the file exists locally, copy its path.
+        if (FileExistsEx(rgwzSearchPaths[i], NULL))
+        {
+            hr = StrAllocString(psczSourceFullPath, rgwzSearchPaths[i], 0);
+            ExitOnFailure(hr, "Failed to copy source path.");
+
+            *pfFound = TRUE;
+            break;
+        }
+    }
+
+    // If nothing was found, return the first thing in our search path as the
+    // best path where we thought we should have found the file.
+    if (!*pfFound)
+    {
+        hr = StrAllocString(psczSourceFullPath, rgwzSearchPaths[0], 0);
+        ExitOnFailure(hr, "Failed to copy source path.");
+    }
+
+LExit:
+    ReleaseStr(sczCurrentPath);
+    ReleaseStr(sczCurrentProcessFolder);
+    ReleaseStr(sczCurrentProcess);
+    ReleaseStr(sczLastSourceFolder);
+    ReleaseStr(sczLastSourcePath);
+
+    return hr;
+}
+
+extern "C" HRESULT CacheSetLastUsedSource(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzSourcePath,
+    __in_z LPCWSTR wzRelativePath
+    )
+{
+    HRESULT hr = S_OK;
+    size_t cchSourcePath = 0;
+    size_t cchRelativePath = 0;
+    size_t iSourceRelativePath = 0;
+    LPWSTR sczSourceFolder = NULL;
+    LPWSTR sczLastSourceFolder = NULL;
+    int nCompare = 0;
+
+    hr = ::StringCchLengthW(wzSourcePath, STRSAFE_MAX_CCH, &cchSourcePath);
+    ExitOnFailure(hr, "Failed to determine length of source path.");
+
+    hr = ::StringCchLengthW(wzRelativePath, STRSAFE_MAX_CCH, &cchRelativePath);
+    ExitOnFailure(hr, "Failed to determine length of relative path.");
+
+    // If the source path is smaller than the relative path (plus space for "X:\") then we know they
+    // are not relative to each other.
+    if (cchSourcePath < cchRelativePath + 3)
+    {
+        ExitFunction();
+    }
+
+    // If the source path ends with the relative path then this source could be a new path.
+    iSourceRelativePath = cchSourcePath - cchRelativePath;
+    if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, wzSourcePath + iSourceRelativePath, -1, wzRelativePath, -1))
+    {
+        hr = StrAllocString(&sczSourceFolder, wzSourcePath, iSourceRelativePath);
+        ExitOnFailure(hr, "Failed to trim source folder.");
+
+        hr = VariableGetString(pVariables, BURN_BUNDLE_LAST_USED_SOURCE, &sczLastSourceFolder);
+        if (SUCCEEDED(hr))
+        {
+            nCompare = ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, sczSourceFolder, -1, sczLastSourceFolder, -1);
+        }
+        else if (E_NOTFOUND == hr)
+        {
+            nCompare = CSTR_GREATER_THAN;
+            hr = S_OK;
+        }
+
+        if (CSTR_EQUAL != nCompare)
+        {
+            hr = VariableSetString(pVariables, BURN_BUNDLE_LAST_USED_SOURCE, sczSourceFolder, FALSE);
+            ExitOnFailure(hr, "Failed to set last source.");
+        }
+    }
+
+LExit:
+    ReleaseStr(sczLastSourceFolder);
+    ReleaseStr(sczSourceFolder);
+
+    return hr;
+}
+
 extern "C" HRESULT CacheSendProgressCallback(
     __in BURN_CACHE_CALLBACK* pCallback,
     __in DWORD64 dw64Progress,
@@ -368,7 +560,6 @@ extern "C" void CacheSendErrorCallback(
 }
 
 extern "C" HRESULT CacheBundleToWorkingDirectory(
-    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,
@@ -376,8 +567,9 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
     __deref_out_z_opt LPWSTR* psczEngineWorkingPath
     )
 {
+    Assert(vfInitializedCache);
+
     HRESULT hr = S_OK;
-    int nCompare = 0;
     LPWSTR sczSourcePath = NULL;
     LPWSTR sczSourceDirectory = NULL;
     LPWSTR sczWorkingFolder = NULL;
@@ -392,55 +584,48 @@ extern "C" HRESULT CacheBundleToWorkingDirectory(
 
     // If the bundle is running out of the package cache then we don't need to copy it to
     // the working folder since we feel safe in the package cache and will run from there.
-    hr = CacheGetCompletedPath(fPerMachine, wzBundleId, &sczTargetDirectory);
-    ExitOnFailure1(hr, "Failed to get completed path for bundle: %ls", wzBundleId);
-
-    hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
-    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
-
-    hr = PathCompare(sczSourcePath, sczTargetPath, &nCompare);
-    ExitOnFailure1(hr, "Failed to compare current path for bundle: %ls", sczSourcePath);
-
-    if (CSTR_EQUAL == nCompare)
+    if (vfRunningFromCache)
     {
-        ExitFunction();
+        hr = StrAllocString(&sczTargetPath, sczSourcePath, 0);
+        ExitOnFailure(hr, "Failed to use current process path as target path.");
     }
-
-    // Otherwise, carry on putting the bundle in the working folder.
-    hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
-    ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
-
-    hr = CacheEnsureWorkingFolder(wzBundleId, &sczWorkingFolder);
-    ExitOnFailure(hr, "Failed to create working path to copy engine.");
-
-    hr = PathConcat(sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, &sczTargetDirectory);
-    ExitOnFailure(hr, "Failed to calculate the bundle working folder target name.");
-
-    hr = DirEnsureExists(sczTargetDirectory, NULL);
-    ExitOnFailure(hr, "Failed create bundle working folder.");
-
-    hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
-    ExitOnFailure(hr, "Failed to combine working path with engine file name.");
-
-    // Copy the engine without any attached containers to the working path.
-    hr = CopyEngineWithSignatureFixup(sczSourcePath, sczTargetPath, pSection);
-    ExitOnFailure2(hr, "Failed to copy engine: '%ls' to working path: %ls", sczSourcePath, sczTargetPath);
-
-    // Copy external UX payloads to working path.
-    for (DWORD i = 0; i < pUxPayloads->cPayloads; ++i)
+    else // otherwise, carry on putting the bundle in the working folder.
     {
-        BURN_PAYLOAD* pPayload = &pUxPayloads->rgPayloads[i];
+        hr = PathGetDirectory(sczSourcePath, &sczSourceDirectory);
+        ExitOnFailure1(hr, "Failed to get directory from engine path: %ls", sczSourcePath);
 
-        if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
+        hr = CacheEnsureWorkingFolder(wzBundleId, &sczWorkingFolder);
+        ExitOnFailure(hr, "Failed to create working path to copy engine.");
+
+        hr = PathConcat(sczWorkingFolder, BUNDLE_WORKING_FOLDER_NAME, &sczTargetDirectory);
+        ExitOnFailure(hr, "Failed to calculate the bundle working folder target name.");
+
+        hr = DirEnsureExists(sczTargetDirectory, NULL);
+        ExitOnFailure(hr, "Failed create bundle working folder.");
+
+        hr = PathConcat(sczTargetDirectory, wzExecutableName, &sczTargetPath);
+        ExitOnFailure(hr, "Failed to combine working path with engine file name.");
+
+        // Copy the engine without any attached containers to the working path.
+        hr = CopyEngineWithSignatureFixup(sczSourcePath, sczTargetPath, pSection);
+        ExitOnFailure2(hr, "Failed to copy engine: '%ls' to working path: %ls", sczSourcePath, sczTargetPath);
+
+        // Copy external UX payloads to working path.
+        for (DWORD i = 0; i < pUxPayloads->cPayloads; ++i)
         {
-            hr = PathConcat(sczSourceDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
-            ExitOnFailure(hr, "Failed to build payload source path for working copy.");
+            BURN_PAYLOAD* pPayload = &pUxPayloads->rgPayloads[i];
 
-            hr = PathConcat(sczTargetDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
-            ExitOnFailure(hr, "Failed to build payload target path for working copy.");
+            if (BURN_PAYLOAD_PACKAGING_EXTERNAL == pPayload->packaging)
+            {
+                hr = PathConcat(sczSourceDirectory, pPayload->sczSourcePath, &sczPayloadSourcePath);
+                ExitOnFailure(hr, "Failed to build payload source path for working copy.");
 
-            hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
-            ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
+                hr = PathConcat(sczTargetDirectory, pPayload->sczFilePath, &sczPayloadTargetPath);
+                ExitOnFailure(hr, "Failed to build payload target path for working copy.");
+
+                hr = FileEnsureCopyWithRetry(sczPayloadSourcePath, sczPayloadTargetPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+                ExitOnFailure2(hr, "Failed to copy UX payload from: '%ls' to: '%ls'", sczPayloadSourcePath, sczPayloadTargetPath);
+            }
         }
     }
 
@@ -918,6 +1103,28 @@ LExit:
     return hr;
 }
 
+static HRESULT GetLastUsedSourceFolder(
+    __in BURN_VARIABLES* pVariables,
+    __out_z LPWSTR* psczLastSource
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczOriginalSource = NULL;
+
+    hr = VariableGetString(pVariables, BURN_BUNDLE_LAST_USED_SOURCE, psczLastSource);
+    if (E_NOTFOUND == hr)
+    {
+        // Try the original source folder.
+        hr = VariableGetString(pVariables, BURN_BUNDLE_ORIGINAL_SOURCE, &sczOriginalSource);
+        if (SUCCEEDED(hr))
+        {
+            hr = PathGetDirectory(sczOriginalSource, psczLastSource);
+        }
+    }
+
+    return hr;
+}
+
 static HRESULT CreateCompletedPath(
     __in BOOL fPerMachine,
     __in LPCWSTR wzId,
@@ -1337,16 +1544,32 @@ static HRESULT RemoveBundleOrPackage(
 
     LogId(REPORT_STANDARD, fBundle ? MSG_UNCACHE_BUNDLE : MSG_UNCACHE_PACKAGE, wzBundleOrPackageId, sczDirectory);
 
-    hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
-    if (E_PATHNOTFOUND == hr)
+    // Try really hard to remove the cache directory.
+    hr = E_FAIL;
+    for (DWORD iRetry = 0; FAILED(hr) && iRetry < FILE_OPERATION_RETRY_COUNT; ++iRetry)
     {
-        // TODO: should we log that the bundle was already removed?
+        if (0 < iRetry)
+        {
+            ::Sleep(FILE_OPERATION_RETRY_WAIT);
+        }
+
+        hr = DirEnsureDeleteEx(sczDirectory, DIR_DELETE_FILES | DIR_DELETE_RECURSE | DIR_DELETE_SCHEDULE);
+        if (E_PATHNOTFOUND == hr)
+        {
+            break;
+        }
+    }
+
+    if (FAILED(hr))
+    {
+        LogId(REPORT_STANDARD, fBundle ? MSG_UNABLE_UNCACHE_BUNDLE : MSG_UNABLE_UNCACHE_PACKAGE, wzBundleOrPackageId, sczDirectory, hr);
         hr = S_OK;
     }
-    ExitOnFailure1(hr, "Failed to remove cached directory: %ls", sczDirectory);
-
-    // Try to remove root package cache in the off chance it is now empty.
-    DirEnsureDeleteEx(sczRootCacheDirectory, DIR_DELETE_SCHEDULE);
+    else
+    {
+        // Try to remove root package cache in the off chance it is now empty.
+        DirEnsureDeleteEx(sczRootCacheDirectory, DIR_DELETE_SCHEDULE);
+    }
 
 LExit:
     ReleaseStr(sczDirectory);

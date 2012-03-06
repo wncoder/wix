@@ -31,6 +31,13 @@ HRESULT ElevationElevate(
     __in BURN_ENGINE_STATE* pEngineState,
     __in_opt HWND hwndParent
     );
+HRESULT ElevationApplyInitialize(
+    __in HANDLE hPipe,
+    __in BURN_AU_PAUSE_ACTION auAction
+    );
+HRESULT ElevationApplyUninitialize(
+    __in HANDLE hPipe
+    );
 HRESULT ElevationSessionBegin(
     __in HANDLE hPipe,
     __in_z LPCWSTR wzEngineWorkingPath,
@@ -77,6 +84,7 @@ HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -104,6 +112,7 @@ HRESULT ElevationExecuteMspPackage(
 HRESULT ElevationExecuteMsuPackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericExecuteProgress,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -135,9 +144,12 @@ HRESULT ElevationChildPumpMessages(
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_USER_EXPERIENCE* pUserExperience,
+    __out HANDLE* phLock,
+    __out BOOL* pfDisabledAutomaticUpdates,
     __out DWORD* pdwChildExitCode,
     __out BOOL* pfRestart
     );
+HRESULT ElevationChildResumeAutomaticUpdates();
 
 #ifdef __cplusplus
 }

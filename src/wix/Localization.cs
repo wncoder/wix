@@ -142,6 +142,78 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteEndElement();
             }
 
+            foreach (string controlKey in this.localizedControls.Keys)
+            {
+                writer.WriteStartElement("Control", XmlNamespaceUri);
+
+                string dialog = null;
+                string control = null;
+                if (0 < controlKey.IndexOf('/'))
+                {
+                    string[] controlKeys = controlKey.Split('/');
+                    dialog = controlKeys[0];
+                    control = controlKeys[1];
+                }
+                else
+                {
+                    control = controlKey;
+                }
+
+                if (!String.IsNullOrEmpty(dialog))
+                {
+                    writer.WriteAttributeString("Dialog", dialog);
+                }
+
+                if (!String.IsNullOrEmpty(control))
+                {
+                    writer.WriteAttributeString("Control", control);
+                }
+
+                LocalizedControl localizedControl = this.localizedControls[controlKey];
+
+                if (CompilerCore.IntegerNotSet != localizedControl.X)
+                {
+                    writer.WriteAttributeString("X", localizedControl.X.ToString());
+                }
+
+                if (CompilerCore.IntegerNotSet != localizedControl.Y)
+                {
+                    writer.WriteAttributeString("Y", localizedControl.Y.ToString());
+                }
+
+                if (CompilerCore.IntegerNotSet != localizedControl.Width)
+                {
+                    writer.WriteAttributeString("Width", localizedControl.Width.ToString());
+                }
+
+                if (CompilerCore.IntegerNotSet != localizedControl.Height)
+                {
+                    writer.WriteAttributeString("Height", localizedControl.Height.ToString());
+                }
+
+                if (MsiInterop.MsidbControlAttributesRTLRO == (localizedControl.Attributes & MsiInterop.MsidbControlAttributesRTLRO))
+                {
+                    writer.WriteAttributeString("RightToLeft", "yes");
+                }
+
+                if (MsiInterop.MsidbControlAttributesRightAligned == (localizedControl.Attributes & MsiInterop.MsidbControlAttributesRightAligned))
+                {
+                    writer.WriteAttributeString("RightAligned", "yes");
+                }
+
+                if (MsiInterop.MsidbControlAttributesLeftScroll == (localizedControl.Attributes & MsiInterop.MsidbControlAttributesLeftScroll))
+                {
+                    writer.WriteAttributeString("LeftScroll", "yes");
+                }
+
+                if (!String.IsNullOrEmpty(localizedControl.Text))
+                {
+                    writer.WriteCData(localizedControl.Text);
+                }
+
+                writer.WriteEndElement();
+            }
+
             writer.WriteEndElement();
         }
 

@@ -28,10 +28,25 @@ struct LOC_STRING
     BOOL bOverridable;
 };
 
-struct LOC_STRINGSET
+const int LOC_CONTROL_NOT_SET = INT_MAX;
+
+struct LOC_CONTROL
+{
+    LPWSTR wzControl;
+    int nX;
+    int nY;
+    int nWidth;
+    int nHeight;
+    LPWSTR wzText;
+};
+
+struct WIX_LOCALIZATION
 {
     DWORD cLocStrings;
     LOC_STRING* rgLocStrings;
+
+    DWORD cLocControls;
+    LOC_CONTROL* rgLocControls;
 };
 
 /********************************************************************
@@ -51,7 +66,7 @@ HRESULT DAPI LocProbeForFile(
 *******************************************************************/
 HRESULT DAPI LocLoadFromFile(
     __in_z LPCWSTR wzWxlFile,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     );
 
 /********************************************************************
@@ -63,7 +78,7 @@ HRESULT DAPI LocLoadFromFile(
 HRESULT DAPI LocLoadFromResource(
     __in HMODULE hModule,
     __in_z LPCSTR szResource,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     );
 
 /********************************************************************
@@ -71,7 +86,7 @@ HRESULT DAPI LocLoadFromResource(
 
 *******************************************************************/
 void DAPI LocFree(
-    __in_opt LOC_STRINGSET* pLocStringSet
+    __in_opt WIX_LOCALIZATION* pWixLoc
     );
 
 /********************************************************************
@@ -79,8 +94,17 @@ void DAPI LocFree(
                     correct sub string
 *******************************************************************/
 HRESULT DAPI LocLocalizeString(
-    __in const LOC_STRINGSET* pLocStringSet,
+    __in const WIX_LOCALIZATION* pWixLoc,
     __inout LPWSTR* psczInput
+    );
+
+/********************************************************************
+ LocGetControl - returns a control's localization information
+*******************************************************************/
+HRESULT DAPI LocGetControl(
+    __in const WIX_LOCALIZATION* pWixLoc,
+    __in_z LPCWSTR wzId,
+    __out LOC_CONTROL** ppLocControl
     );
 
 #ifdef __cplusplus

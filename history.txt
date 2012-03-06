@@ -1873,3 +1873,68 @@ RobMen: SFBUG:3428804 - show restart message in wixstdba appropriately.
 
 WixBuild: Version 3.6.2627.0
 
+BobArnson: SFBUG:3288872 - add Control loc overrides to fi-FI localization.
+
+BobArnson: SFBUG:3302804 - prevent hidden variables from showing up in log.
+
+RobMen: SFBUG:3459756 - pause autoupdates during execution in Burn.
+        Only allow one Burn to be executing at at time.
+
+RobMen: SFBUG:3488534 - launch maintenance mode when Bundle already installed.
+        Add WixBundleInstalled and WixBundleAction built-in variables.
+
+RobMen: Improve logging about cached packages in Burn.
+
+RobMen: Disable check to allow only one Burn to be executing at a time due to
+        embedded and related bundle handling.
+
+HeathS: Improved logging when source list registration failed.
+
+RobMen: Fix progress from embedded/related bundles in Burn.
+
+BobArnson: SFBUG:3439124 - Use Control localization in locutil to localize
+           ThmUtil controls.
+
+RobMen: Implement WixBundleLastUsedSource in Burn to better handle prompt for
+        source scenarios.
+
+RobMen: Fix Burn progress for repair/uninstall and layout.
+        Improve Burn acquisition logging a little more.
+
+BobArnson: Switch from Hyperlink to Hypertext controls in WixStdBA themes.
+           Localization string ids have changed.
+
+RobMen: SFBUG:3495355 - fix feature selection for superseded MSIs in Burn.
+
+HeathS: Changed default bundle provider key to UpgradeCode and Version.
+
+RobMen: SFBUG:3487838 - Fix per-user packages in Burn.
+
+RobMen: SFBUG:3196900 - Burn attempts rollback of MSI packages even if the
+                        cancel happened after MSI finalized installation.
+        Add execute state to log during Burn apply.
+
+BobArnson:  Fix SFBUG:3496347 - tell the rich-edit control how much text is 
+              coming.
+            Add WixStandardBootstrapperApplication and 
+              WixManagedBootstrapperApplicationHost to BalUtilExtension to 
+              simplify authoring of BA options (instead of undiscoverable 
+              WixVariables).
+            Add bal:WixStandardBootstrapperApplication/@SuppressOptionsUI to 
+              hide the Options button if a bundle installation directory 
+              shouldn't be supported.
+            Add bal:WixStandardBootstrapperApplication/@SuppressDowngradeFailure 
+              to let attempted downgrades happen. This is useful for 
+              redistributable bundles where a later version major-upgrades 
+              prior versions and where a product that ships with a prior 
+              version shouldn't cause an error when a later version of the 
+              redistributable is already present.
+            Support localized strings for license file and URL.
+
+RobMen: Default Burn packages and rollback boundaries to be vital.
+        Add MsiPackage/@Visible to control MSI visibility in ARP.
+
+BobArnson: Use ClearType when available for ThmUtil controls.
+
+WixBuild: Version 3.6.2705.0
+

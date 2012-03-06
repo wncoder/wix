@@ -42,6 +42,10 @@ typedef struct _BURN_CACHE_CALLBACK
 
 // functions
 
+HRESULT CacheInitialize(
+    __in BURN_REGISTRATION* pRegistration,
+    __in BURN_VARIABLES* pVariables
+    );
 HRESULT CacheEnsureWorkingFolder(
     __in LPCWSTR wzBundleId,
     __deref_out_z_opt LPWSTR* psczWorkingFolder
@@ -52,7 +56,6 @@ HRESULT CacheGetOriginalSourcePath(
     __out_z_opt LPWSTR* psczOriginalSource
     );
 HRESULT CacheCalculateBundleWorkingPath(
-    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in LPCWSTR wzExecutableName,
     __deref_out_z LPWSTR* psczWorkingPath
@@ -80,6 +83,17 @@ HRESULT CacheGetResumePath(
     __in_z LPCWSTR wzPayloadWorkingPath,
     __deref_out_z LPWSTR* psczResumePath
     );
+HRESULT CacheFindLocalSource(
+    __in_z LPCWSTR wzSourcePath,
+    __in BURN_VARIABLES* pVariables,
+    __out BOOL* pfFound,
+    __out_z LPWSTR* psczSourceFullPath
+    );
+HRESULT CacheSetLastUsedSource(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzSourcePath,
+    __in_z LPCWSTR wzRelativePath
+    );
 HRESULT CacheSendProgressCallback(
     __in BURN_CACHE_CALLBACK* pCallback,
     __in DWORD64 dw64Progress,
@@ -93,7 +107,6 @@ void CacheSendErrorCallback(
     __out_opt BOOL* pfRetry
     );
 HRESULT CacheBundleToWorkingDirectory(
-    __in BOOL fPerMachine,
     __in_z LPCWSTR wzBundleId,
     __in_z LPCWSTR wzExecutableName,
     __in BURN_PAYLOADS* pUxPayloads,

@@ -26,6 +26,8 @@ const DWORD BURN_TIMEOUT = 5 * 60 * 1000; // TODO: is 5 minutes good?
 typedef enum _BURN_ELEVATION_MESSAGE_TYPE
 {
     BURN_ELEVATION_MESSAGE_TYPE_UNKNOWN,
+    BURN_ELEVATION_MESSAGE_TYPE_APPLY_INITIALIZE,
+    BURN_ELEVATION_MESSAGE_TYPE_APPLY_UNINITIALIZE,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_RESUME,
     BURN_ELEVATION_MESSAGE_TYPE_SESSION_END,
@@ -67,6 +69,8 @@ typedef struct _BURN_ELEVATION_CHILD_MESSAGE_CONTEXT
 {
     DWORD dwLoggingTlsId;
     HANDLE hPipe;
+    HANDLE* phLock;
+    BOOL* pfDisabledAutomaticUpdates;
     BURN_PACKAGES* pPackages;
     BURN_RELATED_BUNDLES* pRelatedBundles;
     BURN_PAYLOADS* pPayloads;
@@ -115,6 +119,15 @@ static HRESULT OnGenericExecuteFilesInUse(
     __in PFN_GENERICMESSAGEHANDLER pfnMessageHandler,
     __in LPVOID pvContext,
     __out DWORD* pdwResult
+    );
+static HRESULT OnApplyInitialize(
+    __in HANDLE* phLock,
+    __in BOOL* pfDisabledWindowsUpdate,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    );
+static HRESULT OnApplyUninitialize(
+    __in HANDLE* phLock
     );
 static HRESULT OnSessionBegin(
     __in BURN_REGISTRATION* pRegistration,
@@ -222,16 +235,12 @@ extern "C" HRESULT ElevationElevate(
 
     HRESULT hr = S_OK;
     int nResult = IDOK;
-    LPWSTR sczEngineWorkingPath = NULL;
     HANDLE hPipesCreatedEvent = INVALID_HANDLE_VALUE;
     LPWSTR sczError = NULL;
 
     nResult = pEngineState->userExperience.pUserExperience->OnElevate();
     hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted elevation requirement.");
-
-    hr = CacheBundleToWorkingDirectory(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &sczEngineWorkingPath);
-    ExitOnFailure(hr, "Failed to cache engine to working directory.");
 
     hr = PipeCreateNameAndSecret(&pEngineState->companionConnection.sczName, &pEngineState->companionConnection.sczSecret);
     ExitOnFailure(hr, "Failed to create pipe name and client token.");
@@ -244,7 +253,7 @@ extern "C" HRESULT ElevationElevate(
         nResult = IDOK;
 
         // Create the elevated process and if successful, wait for it to connect.
-        hr = PipeLaunchChildProcess(sczEngineWorkingPath, &pEngineState->companionConnection, TRUE, hwndParent);
+        hr = PipeLaunchChildProcess(pEngineState->sczBundleEngineWorkingPath, &pEngineState->companionConnection, TRUE, hwndParent);
         if (SUCCEEDED(hr))
         {
             hr = PipeWaitForChildConnect(&pEngineState->companionConnection);
@@ -267,12 +276,58 @@ extern "C" HRESULT ElevationElevate(
 LExit:
     ReleaseStr(sczError);
     ReleaseHandle(hPipesCreatedEvent);
-    ReleaseStr(sczEngineWorkingPath);
 
     if (FAILED(hr))
     {
         PipeConnectionUninitialize(&pEngineState->companionConnection);
     }
+
+    return hr;
+}
+
+extern "C" HRESULT ElevationApplyInitialize(
+    __in HANDLE hPipe,
+    __in BURN_AU_PAUSE_ACTION auAction
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+    DWORD dwResult = 0;
+
+    // serialize message data
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)auAction);
+    ExitOnFailure(hr, "Failed to write action to message buffer.");
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_APPLY_INITIALIZE, pbData, cbData, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send message to per-machine process.");
+
+    hr = (HRESULT)dwResult;
+
+LExit:
+    ReleaseBuffer(pbData);
+
+    return hr;
+}
+
+extern "C" HRESULT ElevationApplyUninitialize(
+    __in HANDLE hPipe
+    )
+{
+    HRESULT hr = S_OK;
+    BYTE* pbData = NULL;
+    SIZE_T cbData = 0;
+    DWORD dwResult = 0;
+
+    // send message
+    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_APPLY_UNINITIALIZE, pbData, cbData, NULL, NULL, &dwResult);
+    ExitOnFailure(hr, "Failed to send message to per-machine process.");
+
+    hr = (HRESULT)dwResult;
+
+LExit:
+    ReleaseBuffer(pbData);
 
     return hr;
 }
@@ -543,6 +598,7 @@ extern "C" HRESULT ElevationExecuteExePackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -560,6 +616,9 @@ extern "C" HRESULT ElevationExecuteExePackage(
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->exePackage.action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, fRollback);
+    ExitOnFailure(hr, "Failed to write rollback.");
 
     hr = BuffWriteString(&pbData, &cbData, pExecuteAction->exePackage.sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to write the list of dependencies to ignore to the message buffer.");
@@ -730,6 +789,7 @@ LExit:
 extern "C" HRESULT ElevationExecuteMsuPackage(
     __in HANDLE hPipe,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -750,6 +810,9 @@ extern "C" HRESULT ElevationExecuteMsuPackage(
 
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->msuPackage.action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, fRollback);
+    ExitOnFailure(hr, "Failed to write rollback.");
 
     // send message
     context.pfnGenericMessageHandler = pfnGenericMessageHandler;
@@ -844,6 +907,8 @@ extern "C" HRESULT ElevationChildPumpMessages(
     __in BURN_VARIABLES* pVariables,
     __in BURN_REGISTRATION* pRegistration,
     __in BURN_USER_EXPERIENCE* pUserExperience,
+    __out HANDLE* phLock,
+    __out BOOL* pfDisabledAutomaticUpdates,
     __out DWORD* pdwChildExitCode,
     __out BOOL* pfRestart
     )
@@ -865,6 +930,8 @@ extern "C" HRESULT ElevationChildPumpMessages(
 
     context.dwLoggingTlsId = dwLoggingTlsId;
     context.hPipe = hPipe;
+    context.phLock = phLock;
+    context.pfDisabledAutomaticUpdates = pfDisabledAutomaticUpdates;
     context.pPackages = pPackages;
     context.pRelatedBundles = pRelatedBundles;
     context.pPayloads = pPayloads;
@@ -891,6 +958,16 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT ElevationChildResumeAutomaticUpdates()
+{
+    HRESULT hr = S_OK;
+
+    hr = WuaResumeAutomaticUpdates();
+    ExitOnFailure(hr, "Failed to resume automatic updates after pausing them, continuing...");
+
+LExit:
+    return hr;
+}
 
 // internal function definitions
 
@@ -960,8 +1037,8 @@ static HRESULT ProcessGenericExecuteMessages(
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
     BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT* pContext = static_cast<BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT*>(pvContext);
+    DWORD dwAllowedResults = 0;
     DWORD dwProgress = 0;
-    DWORD dwTotal = 0;
     DWORD dwResult = 0;
     GENERIC_EXECUTE_MESSAGE message = { };
 
@@ -970,15 +1047,15 @@ static HRESULT ProcessGenericExecuteMessages(
     {
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS:
         // read message parameters
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwProgress);
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwAllowedResults);
         ExitOnFailure(hr, "Failed to read progress.");
 
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwTotal);
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwProgress);
         ExitOnFailure(hr, "Failed to read total.");
 
         message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
-        message.dwAllowedResults = MB_OKCANCEL;
-        message.progress.dwPercentage = 100 * dwProgress / dwTotal;
+        message.dwAllowedResults = dwAllowedResults;
+        message.progress.dwPercentage = dwProgress;
         // send message
         dwResult = (DWORD)pContext->pfnGenericMessageHandler(&message, pContext->pvContext);
         break;
@@ -986,6 +1063,7 @@ static HRESULT ProcessGenericExecuteMessages(
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE:
         hr = OnGenericExecuteFilesInUse(pMsg->pvData, pMsg->cbData, pContext->pfnGenericMessageHandler, pContext->pvContext, &dwResult);
         break;
+
     default:
         hr = E_INVALIDARG;
         ExitOnRootFailure(hr, "Invalid package message.");
@@ -1125,6 +1203,14 @@ static HRESULT ProcessElevatedChildMessage(
 
     switch (pMsg->dwMessage)
     {
+    case BURN_ELEVATION_MESSAGE_TYPE_APPLY_INITIALIZE:
+        hrResult = OnApplyInitialize(pContext->phLock, pContext->pfDisabledAutomaticUpdates, (BYTE*)pMsg->pvData, pMsg->cbData);
+        break;
+
+    case BURN_ELEVATION_MESSAGE_TYPE_APPLY_UNINITIALIZE:
+        hrResult = OnApplyUninitialize(pContext->phLock);
+        break;
+
     case BURN_ELEVATION_MESSAGE_TYPE_SESSION_BEGIN:
         hrResult = OnSessionBegin(pContext->pRegistration, pContext->pVariables, pContext->pUserExperience, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
@@ -1285,6 +1371,64 @@ LExit:
     }
 
     return hr;
+}
+
+static HRESULT OnApplyInitialize(
+    __in HANDLE* phLock,
+    __in BOOL* pfDisabledWindowsUpdate,
+    __in BYTE* pbData,
+    __in DWORD cbData
+    )
+{
+    HRESULT hr = S_OK;
+    SIZE_T iData = 0;
+    DWORD dwAUAction = 0;
+
+    // deserialize message data
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwAUAction);
+    ExitOnFailure(hr, "Failed to read action.");
+
+    // initialize.
+    hr = ApplyLock(TRUE, phLock);
+    ExitOnFailure(hr, "Failed to acquire lock due to setup in other session.");
+
+    // Attempt to pause AU with best effort.
+    if (BURN_AU_PAUSE_ACTION_IFELEVATED == dwAUAction || BURN_AU_PAUSE_ACTION_IFELEVATED_NORESUME == dwAUAction)
+    {
+        hr = WuaPauseAutomaticUpdates();
+        if (FAILED(hr))
+        {
+            LogId(REPORT_STANDARD, MSG_FAILED_PAUSE_AU, hr);
+            hr = S_OK;
+        }
+        else if (BURN_AU_PAUSE_ACTION_IFELEVATED == dwAUAction)
+        {
+            *pfDisabledWindowsUpdate = TRUE;
+        }
+    }
+
+    // TODO: start a system restore point.
+
+LExit:
+    return hr;
+}
+
+static HRESULT OnApplyUninitialize(
+    __in HANDLE* phLock
+    )
+{
+    Assert(phLock);
+
+    // TODO: end system restore point.
+
+    if (*phLock)
+    {
+        ::ReleaseMutex(*phLock);
+        ::CloseHandle(*phLock);
+        *phLock = NULL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT OnSessionBegin(
@@ -1523,6 +1667,7 @@ static HRESULT OnExecuteExePackage(
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
     LPWSTR sczPackage = NULL;
+    DWORD dwRollback = 0;
     BURN_EXECUTE_ACTION executeAction = { };
     LPWSTR sczIgnoreDependencies = NULL;
     BOOTSTRAPPER_APPLY_RESTART exeRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
@@ -1535,6 +1680,9 @@ static HRESULT OnExecuteExePackage(
 
     hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.exePackage.action);
     ExitOnFailure(hr, "Failed to read action.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwRollback);
+    ExitOnFailure(hr, "Failed to read rollback.");
 
     hr = BuffReadString(pbData, cbData, &iData, &sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to read the list of dependencies to ignore.");
@@ -1557,7 +1705,7 @@ static HRESULT OnExecuteExePackage(
     }
 
     // execute EXE package
-    hr = ExeEngineExecutePackage(&executeAction, pVariables, GenericExecuteMessageHandler, hPipe, &exeRestart);
+    hr = ExeEngineExecutePackage(&executeAction, pVariables, static_cast<BOOL>(dwRollback), GenericExecuteMessageHandler, hPipe, &exeRestart);
     ExitOnFailure(hr, "Failed to execute EXE package.");
 
 LExit:
@@ -1762,6 +1910,7 @@ static HRESULT OnExecuteMsuPackage(
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
     LPWSTR sczPackage = NULL;
+    DWORD dwRollback = 0;
     BURN_EXECUTE_ACTION executeAction = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
 
@@ -1777,11 +1926,14 @@ static HRESULT OnExecuteMsuPackage(
     hr = BuffReadNumber(pbData, cbData, &iData, reinterpret_cast<DWORD*>(&executeAction.msuPackage.action));
     ExitOnFailure(hr, "Failed to read action.");
 
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwRollback);
+    ExitOnFailure(hr, "Failed to read rollback.");
+
     hr = PackageFindById(pPackages, sczPackage, &executeAction.msuPackage.pPackage);
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // execute MSU package
-    hr = MsuEngineExecutePackage(&executeAction, GenericExecuteMessageHandler, hPipe, &restart);
+    hr = MsuEngineExecutePackage(&executeAction, static_cast<BOOL>(dwRollback), GenericExecuteMessageHandler, hPipe, &restart);
     ExitOnFailure(hr, "Failed to execute MSU package.");
 
 LExit:

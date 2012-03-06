@@ -259,7 +259,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                if (!unreal && !hasPrimaryKeyColumn)
+                if (!unreal && !bootstrapperApplicationData && !hasPrimaryKeyColumn)
                 {
                     throw new WixException(WixErrors.RealTableMissingPrimaryKeyColumn(SourceLineNumberCollection.FromUri(reader.BaseURI), name));
                 }

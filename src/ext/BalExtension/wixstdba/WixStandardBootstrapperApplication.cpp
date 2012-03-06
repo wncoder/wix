@@ -124,7 +124,6 @@ enum WIXSTDBA_CONTROL
     WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON,
 
     // Failure page
-    WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT,
     WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK,
     WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT,
     WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT,
@@ -169,12 +168,11 @@ static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON, L"SuccessRestartButton" },
     { WIXSTDBA_CONTROL_SUCCESS_CANCEL_BUTTON, L"SuccessCancelButton" },
 
-    { WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT, L"FailureLogFileText" },
     { WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK, L"FailureLogFileLink" },
     { WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, L"FailureMessageText" },
     { WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT, L"FailureRestartText" },
     { WIXSTDBA_CONTROL_FAILURE_RESTART_BUTTON, L"FailureRestartButton" },
-    { WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON, L"FailureCancelButton" },
+    { WIXSTDBA_CONTROL_FAILURE_CANCEL_BUTTON, L"FailureCloseButton" },
 };
 
 class CWixStandardBootstrapperApplication : public CBalBaseBootstrapperApplication
@@ -372,14 +370,18 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnCacheAcquireProgress(
-        __in_z LPCWSTR /*wzPackageOrContainerId*/,
-        __in_z_opt LPCWSTR /*wzPayloadId*/,
-        __in DWORD64 /*dw64Progress*/,
-        __in DWORD64 /*dw64Total*/,
+        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPayloadId,
+        __in DWORD64 dw64Progress,
+        __in DWORD64 dw64Total,
         __in DWORD dwOverallPercentage
         )
     {
         WCHAR wzProgress[5] = { };
+
+#ifdef DEBUG
+        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "WIXSTDBA: OnCacheAcquireProgress() - container/package: %ls, payload: %ls, progress: %I64u, total: %I64u, overall progress: %u%%", wzPackageOrContainerId, wzPayloadId, dw64Progress, dw64Total, dwOverallPercentage);
+#endif
 
         ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallPercentage);
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_CACHE_PROGRESS_TEXT, wzProgress);
@@ -389,7 +391,7 @@ public: // IBootstrapperApplication
         m_dwCalculatedCacheProgress = dwOverallPercentage * WIXSTDBA_ACQUIRE_PERCENTAGE / 100;
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
 
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return __super::OnCacheAcquireProgress(wzPackageOrContainerId, wzPayloadId, dw64Progress, dw64Total, dwOverallPercentage);
     }
 
 
@@ -457,6 +459,10 @@ public: // IBootstrapperApplication
         WCHAR wzProgress[5] = { };
         int nResult = IDNOACTION;
 
+#ifdef DEBUG
+        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "WIXSTDBA: OnProgress() - progress: %u%%, overall progress: %u%%", dwProgressPercentage, dwOverallProgressPercentage);
+#endif
+
         if (BOOTSTRAPPER_DISPLAY_EMBEDDED == m_command.display)
         {
             hr = m_pEngine->SendEmbeddedProgress(dwProgressPercentage, dwOverallProgressPercentage, &nResult);
@@ -495,12 +501,16 @@ public: // IBootstrapperApplication
 
 
     virtual int __stdcall  OnExecuteProgress(
-        __in_z LPCWSTR /*wzPackageId*/,
-        __in DWORD /*dwProgressPercentage*/,
+        __in_z LPCWSTR wzPackageId,
+        __in DWORD dwProgressPercentage,
         __in DWORD dwOverallProgressPercentage
         )
     {
         WCHAR wzProgress[5] = { };
+
+#ifdef DEBUG
+        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "WIXSTDBA: OnExecuteProgress() - package: %ls, progress: %u%%, overall progress: %u%%", wzPackageId, dwProgressPercentage, dwOverallProgressPercentage);
+#endif
 
         ::StringCchPrintfW(wzProgress, countof(wzProgress), L"%u%%", dwOverallProgressPercentage);
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_TEXT, wzProgress);
@@ -510,7 +520,7 @@ public: // IBootstrapperApplication
         m_dwCalculatedExecuteProgress = dwOverallProgressPercentage * (100 - WIXSTDBA_ACQUIRE_PERCENTAGE) / 100;
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
 
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
+        return __super::OnExecuteProgress(wzPackageId, dwProgressPercentage, dwOverallProgressPercentage);
     }
 
 
@@ -613,6 +623,12 @@ public: // IBootstrapperApplication
         m_fRestartRequired = (BOOTSTRAPPER_APPLY_RESTART_NONE != restart && BOOTSTRAPPER_RESTART_NEVER < m_command.restart);
         // If a restart is required and we're not displaying a UI or we are not supposed to prompt for restart then allow the restart.
         m_fAllowRestart = m_fRestartRequired && (BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_RESTART_PROMPT < m_command.restart);
+
+        // If we are showing UI, wait a beat before moving to the final screen.
+        if (BOOTSTRAPPER_DISPLAY_NONE < m_command.display)
+        {
+            ::Sleep(250);
+        }
 
         SetState(WIXSTDBA_STATE_APPLIED, hrStatus);
 
@@ -726,7 +742,7 @@ private: // privates
         hr = BalInfoParseFromXml(&m_Bundle, pixdManifest);
         BalExitOnFailure(hr, "Failed to load bundle information.");
 
-        hr = BalConditionsParseFromXml(&m_Conditions, pixdManifest, m_pLocStrings);
+        hr = BalConditionsParseFromXml(&m_Conditions, pixdManifest, m_pWixLoc);
         BalExitOnFailure(hr, "Failed to load conditions from XML.");
 
         if (m_fPrereq)
@@ -806,13 +822,13 @@ private: // privates
         hr = LocProbeForFile(wzModulePath, wzLocFileName, wzLanguage, &sczLocPath);
         BalExitOnFailure2(hr, "Failed to probe for loc file: %ls in path: %ls", wzLocFileName, wzModulePath);
 
-        hr = LocLoadFromFile(sczLocPath, &m_pLocStrings);
+        hr = LocLoadFromFile(sczLocPath, &m_pWixLoc);
         BalExitOnFailure1(hr, "Failed to load loc file from path: %ls", sczLocPath);
 
         hr = StrAllocString(&m_sczConfirmCloseMessage, L"#(loc.ConfirmCancelMessage)", 0);
         ExitOnFailure(hr, "Failed to initialize confirm message loc identifier.");
 
-        hr = LocLocalizeString(m_pLocStrings, &m_sczConfirmCloseMessage);
+        hr = LocLocalizeString(m_pWixLoc, &m_sczConfirmCloseMessage);
         BalExitOnFailure1(hr, "Failed to localize confirm close message: %ls", m_sczConfirmCloseMessage);
 
     LExit:
@@ -838,10 +854,10 @@ private: // privates
         hr = ThemeLoadFromFile(sczThemePath, &m_pTheme);
         BalExitOnFailure1(hr, "Failed to load theme from path: %ls", sczThemePath);
 
-        hr = ThemeLocalize(m_pTheme, m_pLocStrings);
+        hr = ThemeLocalize(m_pTheme, m_pWixLoc);
         BalExitOnFailure1(hr, "Failed to localize theme: %ls", sczThemePath);
 
-        // Update the caption if there are any formated strings in it.
+        // Update the caption if there are any formatted strings in it.
         hr = BalFormatString(m_pTheme->sczCaption, &sczCaption);
         if (SUCCEEDED(hr))
         {
@@ -899,6 +915,7 @@ private: // privates
     {
         HRESULT hr = S_OK;
         IXMLDOMNode* pNode = NULL;
+        DWORD dwBool = 0;
 
         hr = XmlSelectSingleNode(pixdManifest, L"/BootstrapperApplicationData/WixStdbaInformation", &pNode);
         if (S_FALSE == hr)
@@ -920,6 +937,38 @@ private: // privates
             hr = S_OK;
         }
         BalExitOnFailure(hr, "Failed to get license URL.");
+
+        ReleaseObject(pNode);
+
+        hr = XmlSelectSingleNode(pixdManifest, L"/BootstrapperApplicationData/WixStdbaOptions", &pNode);
+        if (S_FALSE == hr)
+        {
+            ExitFunction1(hr = S_OK);
+        }
+        BalExitOnFailure(hr, "Failed to read wixstdba options from BootstrapperApplication.xml manifest.");
+
+        hr = XmlGetAttributeNumber(pNode, L"SuppressOptionsUI", &dwBool);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (SUCCEEDED(hr))
+        {
+            m_fSuppressOptionsUI = 0 < dwBool;
+        }
+        BalExitOnFailure(hr, "Failed to get SuppressOptionsUI value.");
+
+        dwBool = 0;
+        hr = XmlGetAttributeNumber(pNode, L"SuppressDowngradeFailure", &dwBool);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (SUCCEEDED(hr))
+        {
+            m_fSuppressDowngradeFailure = 0 < dwBool;
+        }
+        BalExitOnFailure(hr, "Failed to get SuppressDowngradeFailure value.");
 
     LExit:
         ReleaseObject(pNode);
@@ -1059,10 +1108,6 @@ private: // privates
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
-            case WIXSTDBA_CONTROL_EULA_LINK:
-                pBA->OnClickEulaLink();
-                return 0;
-
             case WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX:
                 pBA->OnClickAcceptCheckbox();
                 return 0;
@@ -1099,10 +1144,6 @@ private: // privates
                 pBA->OnClickLaunchButton();
                 return 0;
 
-            case WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK:
-                pBA->OnClickLogFileLink();
-                return 0;
-
             case WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_FAILURE_RESTART_BUTTON:
                 pBA->OnClickRestartButton();
@@ -1116,6 +1157,27 @@ private: // privates
             case WIXSTDBA_CONTROL_CLOSE_BUTTON:
                 pBA->OnClickCloseButton();
                 return 0;
+            }
+            break;
+
+        case WM_NOTIFY:
+            if (lParam)
+            {
+                LPNMHDR pnmhdr = reinterpret_cast<LPNMHDR>(lParam);
+                switch (pnmhdr->code)
+                {
+                case NM_CLICK: __fallthrough;
+                case NM_RETURN:
+                    switch (static_cast<DWORD>(pnmhdr->idFrom))
+                    {
+                    case WIXSTDBA_CONTROL_EULA_LINK:
+                        pBA->OnClickEulaLink();
+                        return 1;
+                    case WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK:
+                        pBA->OnClickLogFileLink();
+                        return 1;
+                    }
+                }
             }
             break;
         }
@@ -1174,22 +1236,30 @@ private: // privates
             hr = (m_sczLicenseFile && *m_sczLicenseFile) ? S_OK : E_INVALIDDATA;
             if (SUCCEEDED(hr))
             {
-                hr = BalFormatString(m_sczLicenseFile, &sczLicenseFormatted);
+                hr = StrAllocString(&sczLicenseFormatted, m_sczLicenseFile, 0);
                 if (SUCCEEDED(hr))
                 {
-                    hr = PathRelativeToModule(&sczLicensePath, sczLicenseFormatted, m_hModule);
+                    hr = LocLocalizeString(m_pWixLoc, &sczLicenseFormatted);
                     if (SUCCEEDED(hr))
                     {
-                        hr = PathGetDirectory(sczLicensePath, &sczLicenseDirectory);
+                        hr = BalFormatString(sczLicenseFormatted, &sczLicenseFormatted);
                         if (SUCCEEDED(hr))
                         {
-                            hr = StrAllocString(&sczLicenseFilename, PathFile(sczLicenseFormatted), 0);
+                            hr = PathRelativeToModule(&sczLicensePath, sczLicenseFormatted, m_hModule);
                             if (SUCCEEDED(hr))
                             {
-                                hr = LocProbeForFile(sczLicenseDirectory, sczLicenseFilename, m_sczLanguage, &sczLicensePath);
+                                hr = PathGetDirectory(sczLicensePath, &sczLicenseDirectory);
                                 if (SUCCEEDED(hr))
                                 {
-                                    hr = ThemeLoadRichEditFromFile(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT, sczLicensePath, m_hModule);
+                                    hr = StrAllocString(&sczLicenseFilename, PathFile(sczLicenseFormatted), 0);
+                                    if (SUCCEEDED(hr))
+                                    {
+                                        hr = LocProbeForFile(sczLicenseDirectory, sczLicenseFilename, m_sczLanguage, &sczLicensePath);
+                                        if (SUCCEEDED(hr))
+                                        {
+                                            hr = ThemeLoadRichEditFromFile(m_pTheme, WIXSTDBA_CONTROL_EULA_RICHEDIT, sczLicensePath, m_hModule);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1252,8 +1322,15 @@ private: // privates
         // If we are going to apply a downgrade, bail.
         if (m_fDowngrading && BOOTSTRAPPER_ACTION_UNINSTALL < action)
         {
-            hr = HRESULT_FROM_WIN32(ERROR_PRODUCT_VERSION);
-            BalExitOnFailure(hr, "Cannot install a product when a newer version is installed.");
+            if (m_fSuppressDowngradeFailure)
+            {
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "A newer version of this product is installed but downgrade failure has been suppressed; continuing...");
+            }
+            else
+            {
+                hr = HRESULT_FROM_WIN32(ERROR_PRODUCT_VERSION);
+                BalExitOnFailure(hr, "Cannot install a product when a newer version is installed.");
+            }
         }
 
         SetState(WIXSTDBA_STATE_PLANNING, hr);
@@ -1341,8 +1418,8 @@ private: // privates
                     BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || !ThemeControlEnabled(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
 
-                    // If there is an "Options" page and the "Options" button exists then enable the button.
-                    BOOL fOptionsEnabled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON);
+                    // If there is an "Options" page, the "Options" button exists, and it hasn't been suppressed, then enable the button.
+                    BOOL fOptionsEnabled = m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] && ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON) && !m_fSuppressOptionsUI;
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_OPTIONS_BUTTON, fOptionsEnabled);
                 }
                 else if (m_rgdwPageIds[WIXSTDBA_PAGE_OPTIONS] == dwNewPageId)
@@ -1409,7 +1486,6 @@ private: // privates
                         }
                     }
 
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_LOGFILE_TEXT, fShowLogLink);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_LOGFILE_LINK, fShowLogLink);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, fShowErrorMessage);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_FAILURE_RESTART_TEXT, fShowRestartButton);
@@ -1634,8 +1710,14 @@ private: // privates
         LPWSTR sczLicensePath = NULL;
         URI_PROTOCOL protocol = URI_PROTOCOL_UNKNOWN;
 
-        hr = BalFormatString(m_sczLicenseUrl, &sczLicenseUrl);
-        BalExitOnFailure1(hr, "Failed to get format license URL: %ls", m_sczLicenseUrl);
+        hr = StrAllocString(&sczLicenseUrl, m_sczLicenseUrl, 0);
+        BalExitOnFailure1(hr, "Failed to copy license URL: %ls", m_sczLicenseUrl);
+
+        hr = LocLocalizeString(m_pWixLoc, &sczLicenseUrl);
+        BalExitOnFailure1(hr, "Failed to localize license URL: %ls", m_sczLicenseUrl);
+
+        hr = BalFormatString(sczLicenseUrl, &sczLicenseUrl);
+        BalExitOnFailure1(hr, "Failed to get formatted license URL: %ls", m_sczLicenseUrl);
 
         hr = UriProtocol(sczLicenseUrl, &protocol);
         if (FAILED(hr) || URI_PROTOCOL_UNKNOWN == protocol)
@@ -1874,8 +1956,21 @@ public:
         {
             m_command.action = BOOTSTRAPPER_ACTION_INSTALL;
         }
+        else // maybe modify the action state if the bundle is or is not already installed.
+        {
+            LONGLONG llInstalled = 0;
+            HRESULT hr = pEngine->GetVariableNumeric(L"WixBundleInstalled", &llInstalled);
+            if (SUCCEEDED(hr) && 0 < llInstalled && BOOTSTRAPPER_ACTION_INSTALL == m_command.action)
+            {
+                m_command.action = BOOTSTRAPPER_ACTION_MODIFY;
+            }
+            else if (0 == llInstalled && (BOOTSTRAPPER_ACTION_MODIFY == m_command.action || BOOTSTRAPPER_ACTION_REPAIR == m_command.action))
+            {
+                m_command.action = BOOTSTRAPPER_ACTION_INSTALL;
+            }
+        }
 
-        m_pLocStrings = NULL;
+        m_pWixLoc = NULL;
         memset(&m_Bundle, 0, sizeof(m_Bundle));
         memset(&m_Conditions, 0, sizeof(m_Conditions));
         m_sczConfirmCloseMessage = NULL;
@@ -1897,6 +1992,8 @@ public:
 
         m_sczLicenseFile = NULL;
         m_sczLicenseUrl = NULL;
+        m_fSuppressOptionsUI = FALSE;
+        m_fSuppressDowngradeFailure = FALSE;
 
         m_fPrereq = fPrereq;
         m_sczPrereqPackage = NULL;
@@ -1920,7 +2017,7 @@ public:
         ReleaseStr(m_sczConfirmCloseMessage);
         BalConditionsUninitialize(&m_Conditions);
         BalInfoUninitialize(&m_Bundle);
-        LocFree(m_pLocStrings);
+        LocFree(m_pWixLoc);
 
         ReleaseStr(m_sczLanguage);
         ReleaseStr(m_sczLicenseFile);
@@ -1934,7 +2031,7 @@ private:
     BOOTSTRAPPER_COMMAND m_command;
     IBootstrapperEngine* m_pEngine;
 
-    LOC_STRINGSET* m_pLocStrings;
+    WIX_LOCALIZATION* m_pWixLoc;
     BAL_INFO_BUNDLE m_Bundle;
     BAL_CONDITIONS m_Conditions;
     LPWSTR m_sczFailedMessage;
@@ -1960,6 +2057,8 @@ private:
 
     LPWSTR m_sczLicenseFile;
     LPWSTR m_sczLicenseUrl;
+    BOOL m_fSuppressOptionsUI;
+    BOOL m_fSuppressDowngradeFailure;
 
     BOOL m_fPrereq;
     LPWSTR m_sczPrereqPackage;

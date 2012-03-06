@@ -258,7 +258,7 @@ DAPI_(void) ThemeUnloadControls(
 *******************************************************************/
 DAPI_(HRESULT) ThemeLocalize(
     __in THEME *pTheme,
-    __in const LOC_STRINGSET *pLocStringSet
+    __in const WIX_LOCALIZATION *pLocStringSet
     );
 
 DAPI_(HRESULT) ThemeLoadStrings(

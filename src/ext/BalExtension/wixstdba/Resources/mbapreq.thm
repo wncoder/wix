@@ -11,8 +11,7 @@
     <Text X="80" Y="11" Width="-11" Height="96" FontId="1" Visible="yes">#(loc.Title)</Text>
 
     <Page Name="Install">
-        <Text X="11" Y="121" Width="400" Height="17" FontId="3">#(loc.InstallLicenseLabel)</Text>
-        <Hyperlink Name="EulaHyperlink" X="11" Y="138" Width="75" Height="17" TabStop="yes" FontId="4" HoverFontId="4" SelectedFontId="4">#(loc.InstallLicenseTerms)</Hyperlink>
+        <Hypertext Name="EulaHyperlink" X="11" Y="121" Width="-11" Height="34" TabStop="yes" FontId="3">#(loc.InstallLicenseTerms)</Hypertext>
         <Button Name="InstallButton" X="-91" Y="-11" Width="130" Height="23" TabStop="yes" FontId="0">#(loc.InstallAcceptAndInstallButton)</Button>
         <Button Name="WelcomeCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.InstallDeclineButton)</Button>
     </Page>
@@ -24,13 +23,11 @@
         <Button Name="ProgressCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.ProgressCancelButton)</Button>
     </Page>
     <Page Name="Failure">
-        <Text X="11" Y="112" Width="-11" Height="30" FontId="2">#(loc.FailedHeader)</Text>
-        <Text X="11" Y="153" Width="-11" Height="40" FontId="3">#(loc.FailureLabel)</Text>
-        <Text Name="FailureLogFileText" X="11" Y="170" Width="160" Height="17" FontId="3" HideWhenDisabled="yes">#(loc.FailureLabel2)</Text>
-        <Hyperlink Name="FailureLogFileLink" X="170" Y="170" Width="40" Height="17" TabStop="yes" FontId="4" HoverFontId="4" SelectedFontId="4" HideWhenDisabled="yes">#(loc.FailureLogLinkText)</Hyperlink>
-        <Hypertext Name="FailureMessageText" X="22" Y="195" Width="-11" Height="51" FontId="3" HideWhenDisabled="yes"/>
+        <Text X="11" Y="80" Width="-11" Height="30" FontId="2">#(loc.FailureHeader)</Text>
+        <Hypertext Name="FailureLogFileLink" X="11" Y="121" Width="-11" Height="51" FontId="3" TabStop="yes" HideWhenDisabled="yes">#(loc.FailureLogLinkText)</Hypertext>
+        <Hypertext Name="FailureMessageText" X="22" Y="195" Width="-11" Height="51" FontId="3" TabStop="yes" HideWhenDisabled="yes"/>
         <Text Name="FailureRestartText" X="-11" Y="-51" Width="400" Height="34" FontId="3" HideWhenDisabled="yes">#(loc.FailureRestartText)</Text>
         <Button Name="FailureRestartButton" X="-91" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0" HideWhenDisabled="yes">#(loc.FailureRestartButton)</Button>
-        <Button Name="FailureCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.FailureCloseButton)</Button>
+        <Button Name="FailureCloseButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.FailureCloseButton)</Button>
     </Page>
 </Theme>

@@ -216,7 +216,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="UpgradeCode" type="Guid">
+      <xs:attribute name="UpgradeCode" type="Guid" use="required">
         <xs:annotation>
           <xs:documentation>
             Unique identifier for a family of bundles. If two bundles have the same UpgradeCode the
@@ -581,6 +581,15 @@
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="Visible" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies whether the MSI will be displayed in Programs and Features (also known as Add/Remove Programs). If "yes" is
+            specified the MSI package information will be displayed in Programs and Features. The default "no" indicates the MSI
+            will not be displayed.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
     </xs:complexType>
   </xs:element>
   <xs:element name="MspPackage">
@@ -757,10 +766,9 @@
       <xs:attribute name="Vital" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>
-            Specifies whether the rollback boundary aborts the chain. If "yes" is specified and
-            the rollback boundary is encountered then the chain will fail and rollback or stop. The
-            default "no" indicates that the chain should continue successfuly at the next rollback
-            boundary.
+            Specifies whether the rollback boundary aborts the chain. The default "yes" indicates that if
+            the rollback boundary is encountered then the chain will fail and rollback or stop. If "no"
+            is specified then the chain should continue successfuly at the next rollback boundary.
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
@@ -864,10 +872,9 @@
     <xs:attribute name="Vital" type="YesNoTypeUnion">
       <xs:annotation>
         <xs:documentation>
-            Specifies whether the package must succeed for the chain to continue. If "yes" is
-            specified and the package fails then the chain will fail and rollback or stop. The
-            default "no" indicates that the chain should continue even if the package reports
-            a failure.
+            Specifies whether the package must succeed for the chain to continue. The default "yes"
+            inidicates that if the package fails then the chain will fail and rollback or stop. If
+            "no" is specified then the chain will continue even if the package reports failure.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

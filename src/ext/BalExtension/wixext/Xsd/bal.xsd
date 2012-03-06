@@ -51,4 +51,110 @@
             </xs:simpleContent>
         </xs:complexType>
     </xs:element>
+
+    <xs:element name="WixStandardBootstrapperApplication">
+        <xs:annotation>
+            <xs:documentation>
+                Configures WixStandardBootstrapperApplication for a Bundle.
+            </xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="BootstrapperApplicationRef" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="LicenseFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the RTF license file. Cannot be used simultaneously with LicenseUrl.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LicenseUrl" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>URL target of the license link. Cannot be used simultaneously with LicenseFile.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LogoFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the logo graphic.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="ThemeFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the theme XML.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LocalizationFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the theme localization .wxl file.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="SuppressOptionsUI" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>If set to "yes", the Options button will not be shown and the user will not be able to choose an installation directory.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="SuppressDowngradeFailure" type="YesNoType">
+                <xs:annotation>
+                    <xs:documentation>If set to "yes", attempting to installer a downgraded version of a bundle will be treated as a successful do-nothing operation.
+                    The default behavior (or when explicitly set to "no") is to treat downgrade attempts as failures. </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="WixManagedBootstrapperApplicationHost">
+        <xs:annotation>
+            <xs:documentation>
+                Configures the ManagedBootstrapperApplicationHost for a Bundle.
+            </xs:documentation>
+            <xs:appinfo>
+                <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="BootstrapperApplicationRef" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="LicenseFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the RTF license file. Cannot be used simultaneously with LicenseUrl.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LicenseUrl" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>URL target of the license link. Cannot be used simultaneously with LicenseFile.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LogoFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the logo graphic.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="ThemeFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the theme XML.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="LocalizationFile" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Source file of the theme localization .wxl file.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="NetFxPackageId" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>
+                        Identifier of the bundle package that contains the .NET Framework. ManagedBootstrapperApplicationHost uses
+                        this identifier to determine whether .NET needs to be installed before the managed bootstrapper application
+                        can be launched.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="YesNoType">
+        <xs:annotation>
+            <xs:documentation>Values of this type will either be "yes" or "no".</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="no"/>
+            <xs:enumeration value="yes"/>
+        </xs:restriction>
+    </xs:simpleType>
 </xs:schema>

@@ -68,6 +68,13 @@ Bootstrapper application requested restart at shutdown. Planned to restart alrea
 .
 
 MessageId=5
+Severity=Warning
+SymbolicName=MSG_RESTARTING
+Language=English
+Restarting computer...
+.
+
+MessageId=6
 Severity=Success
 SymbolicName=MSG_BA_REQUESTED_RELOAD
 Language=English
@@ -218,7 +225,7 @@ MessageId=203
 Severity=Success
 SymbolicName=MSG_PLANNED_MSI_FEATURE
 Language=English
-Planned feature: %1!ls!, state: %2!hs!, requested: %3!hs!, execute action: %4!hs!, rollback action: %5!hs!
+Planned feature: %1!ls!, state: %2!hs!, default requested %3!hs!, ba requested: %4!hs!, execute action: %5!hs!, rollback action: %6!hs!
 .
 
 MessageId=204
@@ -260,7 +267,7 @@ MessageId=301
 Severity=Success
 SymbolicName=MSG_APPLYING_PACKAGE
 Language=English
-Applying package: %1!ls!, action: %2!hs!, path: %3!ls!, arguments: '%4!ls!'
+Applying %1!hs! package: %2!ls!, action: %3!hs!, path: %4!ls!, arguments: '%5!ls!'
 .
 
 MessageId=302
@@ -296,6 +303,13 @@ Severity=Warning
 SymbolicName=MSG_ATTEMPTED_UNINSTALL_ABSENT_PACKAGE
 Language=English
 Attempted to uninstall absent package: %1!ls!. Continuing...
+.
+
+MessageId=308
+Severity=Warning
+SymbolicName=MSG_FAILED_PAUSE_AU
+Language=English
+Automatic updates could not be paused due to error: 0x%1!x!. Continuing...
 .
 
 MessageId=310
@@ -345,6 +359,13 @@ Severity=Error
 SymbolicName=MSG_FAILED_LAYOUT_PAYLOAD
 Language=English
 Failed to layout payload: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
+.
+
+MessageId=317
+Severity=Success
+SymbolicName=MSG_ROLLBACK_PACKAGE_SKIPPED
+Language=English
+Skipped rollback of package: %1!ls!, action: %2!hs!, already: %3!hs!
 .
 
 MessageId=320
@@ -424,6 +445,62 @@ Language=English
 Removing bundle dependency provider: %1!ls!
 .
 
+MessageId=335
+Severity=Success
+SymbolicName=MSG_ACQUIRE_BUNDLE_PAYLOAD
+Language=English
+Acquiring bundle payload: %2!ls!, %3!hs! from: %4!ls!
+.
+
+MessageId=336
+Severity=Success
+SymbolicName=MSG_ACQUIRE_CONTAINER
+Language=English
+Acquiring container: %1!ls!, %3!hs! from: %4!ls!
+.
+
+MessageId=337
+Severity=Success
+SymbolicName=MSG_ACQUIRE_CONTAINER_PAYLOAD
+Language=English
+Acquiring container: %1!ls!, payload: %2!ls!, %3!hs! from: %4!ls!
+.
+
+MessageId=338
+Severity=Success
+SymbolicName=MSG_ACQUIRE_PACKAGE_PAYLOAD
+Language=English
+Acquiring package: %1!ls!, payload: %2!ls!, %3!hs! from: %4!ls!
+.
+
+MessageId=340
+Severity=Warning
+SymbolicName=MSG_PROMPT_BUNDLE_PAYLOAD_SOURCE
+Language=English
+Prompt for source of bundle payload: %2!ls!, path: %3!ls!
+.
+
+MessageId=341
+Severity=Warning
+SymbolicName=MSG_PROMPT_CONTAINER_SOURCE
+Language=English
+Prompt for source of container: %1!ls!, path: %3!ls!
+.
+
+MessageId=342
+Severity=Warning
+SymbolicName=MSG_PROMPT_CONTAINER_PAYLOAD_SOURCE
+Language=English
+Prompt for source of container: %1!ls!, payload: %2!ls!, path: %3!ls!
+.
+
+MessageId=343
+Severity=Warning
+SymbolicName=MSG_PROMPT_PACKAGE_PAYLOAD_SOURCE
+Language=English
+Prompt for source of package: %1!ls!, payload: %2!ls!, path: %3!ls!
+.
+
 MessageId=348
 Severity=Warning
 SymbolicName=MSG_APPLY_RETRYING_PACKAGE
@@ -457,6 +534,27 @@ Severity=Success
 SymbolicName=MSG_UNCACHE_BUNDLE
 Language=English
 Removing cached bundle: %1!ls!, from path: %2!ls!
+.
+
+MessageId=353
+Severity=Warning
+SymbolicName=MSG_UNABLE_UNCACHE_PACKAGE
+Language=English
+Unable to remove cached package: %1!ls!, from path: %2!ls!, reason: 0x%3!x!. Continuing...
+.
+
+MessageId=354
+Severity=Warning
+SymbolicName=MSG_UNABLE_UNCACHE_BUNDLE
+Language=English
+Unable to remove cached bundle: %1!ls!, from path: %2!ls!, reason: 0x%3!x!. Continuing...
+.
+
+MessageId=355
+Severity=Warning
+SymbolicName=MSG_SOURCELIST_REGISTER
+Language=English
+Unable to register source directory: %1!ls!, product: %2!ls!, reason: 0x%3!x!. Continuing...
 .
 
 MessageId=399

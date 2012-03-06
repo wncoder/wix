@@ -89,6 +89,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
 
         protected override void OnCachePackageBegin(CachePackageBeginEventArgs args)
         {
+            this.Engine.Log(LogLevel.Standard, String.Format("TESTBA: OnCachePackageBegin() - package: {0}, payloads to cache: {1}", args.PackageId, args.CachePayloads));
+
             string slowProgress = ReadPackageAction(args.PackageId, "SlowCache");
             if (String.IsNullOrEmpty(slowProgress) || !Int32.TryParse(slowProgress, out this.sleepDuringCache))
             {
@@ -104,6 +106,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
 
         protected override void OnCacheAcquireProgress(CacheAcquireProgressEventArgs args)
         {
+            this.Engine.Log(LogLevel.Standard, String.Format("TESTBA: OnCacheAcquireProgress() - container/package: {0}, payload: {1}, progress: {2}, total: {3}, overall progress: {4}%", args.PackageOrContainerId, args.PayloadId, args.Progress, args.Total, args.OverallPercentage));
+
             if (this.cancelCacheAtProgress > 0 && this.cancelCacheAtProgress <= args.Progress)
             {
                 args.Result = Result.Cancel;
@@ -116,6 +120,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
 
         protected override void OnExecutePackageBegin(ExecutePackageBeginEventArgs args)
         {
+            this.Engine.Log(LogLevel.Standard, String.Format("TESTBA: OnExecutePackageBegin() - package: {0}, rollback: {1}", args.PackageId, !args.ShouldExecute));
+
             string slowProgress = ReadPackageAction(args.PackageId, "SlowExecute");
             if (String.IsNullOrEmpty(slowProgress) || !Int32.TryParse(slowProgress, out this.sleepDuringExecute))
             {
@@ -131,6 +137,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
 
         protected override void OnExecuteProgress(ExecuteProgressEventArgs args)
         {
+            this.Engine.Log(LogLevel.Standard, String.Format("TESTBA: OnExecuteProgress() - package: {0}, progress: {1}%, overall progress: {2}%", args.PackageId, args.ProgressPercentage, args.OverallPercentage));
+
             if (this.cancelExecuteAtProgress > 0 && this.cancelExecuteAtProgress <= args.ProgressPercentage)
             {
                 args.Result = Result.Cancel;
@@ -144,6 +152,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
         protected override void OnExecutePatchTarget(ExecutePatchTargetEventArgs args)
         {
             this.Engine.Log(LogLevel.Verbose, String.Format("TEST: OnExecutePatchTarget - Patch Package: {0}, Target Product Code: {1}", args.PackageId, args.TargetProductCode));
+        }
+
+        protected override void OnProgress(ProgressEventArgs args)
+        {
+            this.Engine.Log(LogLevel.Standard, String.Format("TESTBA: OnProgress() - progress: {0}%, overall progress: {1}%", args.ProgressPercentage, args.OverallPercentage));
         }
 
         protected override void OnApplyComplete(ApplyCompleteEventArgs args)

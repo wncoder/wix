@@ -219,6 +219,8 @@ extern "C" LPCSTR LoggingBurnActionToString(
         return "Unknown";
     case BOOTSTRAPPER_ACTION_HELP:
         return "Help";
+    case BOOTSTRAPPER_ACTION_LAYOUT:
+        return "Layout";
     case BOOTSTRAPPER_ACTION_UNINSTALL:
         return "Uninstall";
     case BOOTSTRAPPER_ACTION_INSTALL:
@@ -320,6 +322,23 @@ extern "C" LPCSTR LoggingPackageStateToString(
         return "Present";
     case BOOTSTRAPPER_PACKAGE_STATE_SUPERSEDED:
         return "Superseded";
+    default:
+        return "Invalid";
+    }
+}
+
+extern "C" LPCSTR LoggingCacheStateToString(
+    __in BURN_CACHE_STATE cacheState
+    )
+{
+    switch (cacheState)
+    {
+    case BURN_CACHE_STATE_NONE:
+        return "None";
+    case BURN_CACHE_STATE_PARTIAL:
+        return "Partial";
+    case BURN_CACHE_STATE_COMPLETE:
+        return "Complete";
     default:
         return "Invalid";
     }
@@ -448,6 +467,13 @@ extern "C" LPCSTR LoggingRequestStateToString(
     default:
         return "Invalid";
     }
+}
+
+extern "C" LPCSTR LoggingRollbackOrExecute(
+    __in BOOL fRollback
+    )
+{
+    return fRollback ? "rollback" : "execute";
 }
 
 extern "C" LPWSTR LoggingStringOrUnknownIfNull(

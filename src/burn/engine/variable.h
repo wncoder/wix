@@ -133,6 +133,12 @@ HRESULT VariableFormatString(
     __out_z_opt LPWSTR* psczOut,
     __out_opt DWORD* pcchOut
     );
+HRESULT VariableFormatStringObfuscated(
+    __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzIn,
+    __out_z_opt LPWSTR* psczOut,
+    __out_opt DWORD* pcchOut
+    );
 HRESULT VariableEscapeString(
     __in_z LPCWSTR wzIn,
     __out_z LPWSTR* psczOut

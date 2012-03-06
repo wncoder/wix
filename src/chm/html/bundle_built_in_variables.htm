@@ -57,9 +57,13 @@
         <li>VersionNT64 - version value representing the OS version if 64-bit. Undefined if running a 32-bit operating system.</li>
         <li>WindowsFolder - gets the well-known folder for CSIDL_WINDOWS.</li>
         <li>WindowsVolume - gets the well-known folder for the windows volume.</li>
+        <li>WixBundleAction - set to the numeric value of BOOTSTRAPPER_ACTION from the command-line and updated during the call to IBootstrapperEngine::Plan().</li>
         <li>WixBundleDirectoryLayout - set to the folder provided to the -layout switch (default is directory containin the bundle executable). This variable can also be set by the bootstrapper application to modify where files will be laid out.</li>
         <li>WixBundleElevated - gets whether the bundle was launched elevated and will be set to 1 once the bundle is elevated. Use this variable, for example, to show or hide the elevation shield in the bootstrapper application UI.</li>
+        <li>WixBundleInstalled - gets whether the bundle was already installed and will be set to 1 once the bundle is installed.</li>
+        <li>WixBundleLastUsedSource - gets the path of the last successful source resolution for a container or payload.</li>
         <li>WixBundleName - gets the name of the bundle (from Bundle/@Name). This variable can also be set by the bootstrapper application to modify the bundle name at runtime.</li>
+        <li>WixBundleOriginalSource - gets the source path from where the bundle was originally installed.</li>
         <li>WixBundleProviderKey - gets the bundle dependency provider key.</li>
         <li>WixBundleTag - gets the developer-defined tag string for this bundle (from Bundle/@Tag).</li>
     </ul>

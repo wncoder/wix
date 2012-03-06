@@ -71,7 +71,8 @@ HRESULT MsiEngineConcatProperties(
     __in DWORD cProperties,
     __in BURN_VARIABLES* pVariables,
     __in BOOL fRollback,
-    __deref_out_z LPWSTR* psczProperties
+    __deref_out_z LPWSTR* psczProperties,
+    __in BOOL fObfuscateHiddenVariables
     );
 INSTALLUILEVEL MsiEngineCalculateInstallLevel(
     __in BOOL fDisplayInternalUI,

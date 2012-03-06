@@ -251,6 +251,7 @@ LExit:
 
 extern "C" HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -314,7 +315,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
         ExitOnFailure(hr, "Failed to append log path to MSU command-line.");
     }
 
-    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->msuPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msuPackage.action), sczMsuPath ? sczMsuPath : pExecuteAction->msuPackage.pPackage->Msu.sczKB, sczCommand);
+    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, LoggingRollbackOrExecute(fRollback), pExecuteAction->msuPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msuPackage.action), sczMsuPath ? sczMsuPath : pExecuteAction->msuPackage.pPackage->Msu.sczKB, sczCommand);
 
     hr = EnsureWUServiceEnabled(&schWu, &fWuWasDisabled);
     ExitOnFailure(hr, "Failed to ensure WU service was enabled to install MSU package.");

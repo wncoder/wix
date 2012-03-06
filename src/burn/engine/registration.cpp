@@ -428,6 +428,12 @@ extern "C" HRESULT RegistrationSetVariables(
     HRESULT hr = S_OK;
     LPWSTR scz = NULL;
 
+    if (pRegistration->fInstalled)
+    {
+        hr = VariableSetNumeric(pVariables, BURN_BUNDLE_INSTALLED, 1, TRUE);
+        ExitOnFailure(hr, "Failed to set the bundle installed built-in variable.");
+    }
+
     // Ensure the registration bundle name is updated.
     hr = GetBundleName(pRegistration, pVariables, &scz);
     ExitOnFailure(hr, "Failed to intitialize bundle name.");

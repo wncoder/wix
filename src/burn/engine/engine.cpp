@@ -212,6 +212,7 @@ static void InitializeEngineState(
 {
     BOOL fElevated = FALSE;
 
+    pEngineState->automaticUpdates = BURN_AU_PAUSE_ACTION_IFELEVATED;
     pEngineState->dwElevatedLoggingTlsId = TLS_OUT_OF_INDEXES;
     ::InitializeCriticalSection(&pEngineState->csActive);
     ::InitializeCriticalSection(&pEngineState->userExperience.csEngineActive);
@@ -230,6 +231,7 @@ static void UninitializeEngineState(
 
     PipeConnectionUninitialize(&pEngineState->embeddedConnection);
     PipeConnectionUninitialize(&pEngineState->companionConnection);
+    ReleaseStr(pEngineState->sczBundleEngineWorkingPath)
 
     ReleaseHandle(pEngineState->hMessageWindowThread);
 
@@ -276,6 +278,10 @@ static HRESULT RunNormal(
     hr = LoggingOpen(&pEngineState->log, &pEngineState->variables, pEngineState->command.display, pEngineState->registration.sczDisplayName);
     ExitOnFailure(hr, "Failed to open log.");
 
+    // Ensure the cache functions are initialized since we might use them soon.
+    hr = CacheInitialize(&pEngineState->registration, &pEngineState->variables);
+    ExitOnFailure(hr, "Failed to initialize internal cache functionality.");
+
     // When launched explicitly unelevated, create the pipes so the elevated process can connect.
     if (BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY == pEngineState->elevationState)
     {
@@ -293,9 +299,6 @@ static HRESULT RunNormal(
         ExitOnFailure(hr, "Failed to connect to elevated parent process.");
 
         ReleaseHandle(hPipesCreatedEvent);
-
-        hr = CacheBundleToWorkingDirectory(pEngineState->registration.fPerMachine, pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, NULL);
-        ExitOnFailure(hr, "Failed to cache engine to working directory when launched unelevated.");
     }
 
     // Ensure we're on a supported operating system.
@@ -323,7 +326,10 @@ static HRESULT RunNormal(
     hr = CoreQueryRegistration(pEngineState);
     ExitOnFailure(hr, "Failed to query registration.");
 
-    // set the registration variables
+    // Set some built-in variables before loading the BA.
+    hr = PlanSetVariables(pEngineState->command.action, &pEngineState->variables);
+    ExitOnFailure(hr, "Failed to set action variables.");
+
     hr = RegistrationSetVariables(&pEngineState->registration, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to set registration variables.");
 
@@ -333,9 +339,6 @@ static HRESULT RunNormal(
         hr = VariableSetString(&pEngineState->variables, BURN_BUNDLE_LAYOUT_DIRECTORY, pEngineState->command.wzLayoutDirectory, FALSE);
         ExitOnFailure(hr, "Failed to set layout directory variable to value provided from command-line.");
     }
-
-    // Ensure the original source is initialized.
-    CacheGetOriginalSourcePath(&pEngineState->variables, NULL, NULL);
 
     do
     {
@@ -373,6 +376,8 @@ static HRESULT RunElevated(
     )
 {
     HRESULT hr = S_OK;
+    HANDLE hLock = NULL;
+    BOOL fDisabledAutomaticUpdates = FALSE;
 
     // If we were launched elevated implicitly, launch an unelevated copy of ourselves.
     if (BURN_ELEVATION_STATE_ELEVATED == pEngineState->elevationState)
@@ -412,12 +417,23 @@ static HRESULT RunElevated(
     ExitOnFailure(hr, "Failed to create the message window.");
 
     // Pump messages from parent process.
-    hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &pEngineState->userExperience.dwExitCode, &pEngineState->fRestart);
+    hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &hLock, &fDisabledAutomaticUpdates, &pEngineState->userExperience.dwExitCode, &pEngineState->fRestart);
     ExitOnFailure(hr, "Failed to pump messages from parent process.");
 
 LExit:
     // If the message window is still around, close it.
     UiCloseMessageWindow(pEngineState);
+
+    if (fDisabledAutomaticUpdates)
+    {
+        ElevationChildResumeAutomaticUpdates();
+    }
+
+    if (hLock)
+    {
+        ::ReleaseMutex(hLock);
+        ::CloseHandle(hLock);
+    }
 
     return hr;
 }
@@ -623,6 +639,8 @@ static HRESULT Restart()
     HRESULT hr = S_OK;
     HANDLE hProcessToken = NULL;
     TOKEN_PRIVILEGES priv = { };
+
+    LogId(REPORT_STANDARD, MSG_RESTARTING);
 
     if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hProcessToken))
     {

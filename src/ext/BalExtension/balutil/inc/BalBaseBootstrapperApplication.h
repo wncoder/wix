@@ -421,14 +421,6 @@ public: // IBurnUserExperience
         return CheckCanceled() ? IDCANCEL : IDNOACTION;
     }
 
-    virtual STDMETHODIMP_(int) OnDownloadProgress(
-        __in DWORD /*dwProgressPercentage*/,
-        __in DWORD /*dwOverallProgressPercentage*/
-        )
-    {
-        return CheckCanceled() ? IDCANCEL : IDNOACTION;
-    }
-
     virtual STDMETHODIMP_(int)  OnExecuteProgress(
         __in_z LPCWSTR /*wzPackageId*/,
         __in DWORD /*dwProgressPercentage*/,

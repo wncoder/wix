@@ -662,6 +662,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Creates a WixVariable row in the active section.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source and line number of current row.</param>
+        public void CreateWixVariableRow(SourceLineNumberCollection sourceLineNumbers, string id, string value, bool overridable)
+        {
+            WixVariableRow wixVariableRow = (WixVariableRow)this.CreateRow(sourceLineNumbers, "WixVariable");
+            wixVariableRow.Id = id;
+            wixVariableRow.Value = value;
+            wixVariableRow.Overridable = overridable;
+        }
+
+        /// <summary>
         /// Adds a patch resource reference to the list of resoures to be filtered when producing a patch. This method should only be used when processing children of a patch family.
         /// </summary>
         /// <param name="sourceLineNumbers">Source and line number of current row.</param>

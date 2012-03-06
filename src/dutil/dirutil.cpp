@@ -207,7 +207,13 @@ extern "C" HRESULT DAPI DirEnsureDeleteEx(
 
     if (-1 == (dwAttrib = ::GetFileAttributesW(wzPath)))
     {
-        ExitWithLastError1(hr, "Failed to get attributes for path: %ls", wzPath);
+        er = ::GetLastError();
+        if (ERROR_FILE_NOT_FOUND == er) // change "file not found" to "path not found" since we were looking for a directory.
+        {
+            er = ERROR_PATH_NOT_FOUND;
+        }
+        hr = HRESULT_FROM_WIN32(er);
+        ExitOnRootFailure1(hr, "Failed to get attributes for path: %ls", wzPath);
     }
 
     if (dwAttrib & FILE_ATTRIBUTE_DIRECTORY)

@@ -39,6 +39,7 @@ static HRESULT ParseCommandLine(
     __in BURN_PIPE_CONNECTION* pCompanionConnection,
     __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
+    __out BURN_AU_PAUSE_ACTION* pAutomaticUpdates,
     __out BURN_ELEVATION_STATE* pElevationState,
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
@@ -74,7 +75,7 @@ extern "C" HRESULT CoreInitialize(
     BURN_CONTAINER_CONTEXT containerContext = { };
 
     // parse command line
-    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczIgnoreDependencies);
+    hr = ParseCommandLine(wzCommandLine, &pEngineState->command, &pEngineState->companionConnection, &pEngineState->embeddedConnection, &pEngineState->mode, &pEngineState->automaticUpdates, &pEngineState->elevationState, &pEngineState->fDisableUnelevate, &pEngineState->log.dwAttributes, &pEngineState->log.sczPath, &pEngineState->sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to parse command line.");
 
     // initialize variables
@@ -276,7 +277,7 @@ extern "C" HRESULT CoreDetect(
     {
         pPackage = pEngineState->packages.rgPackages + iPackage;
 
-        LogId(REPORT_STANDARD, MSG_DETECTED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingBoolToString(pPackage->fCached));
+        LogId(REPORT_STANDARD, MSG_DETECTED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingCacheStateToString(pPackage->cache));
 
         if (BURN_PACKAGE_TYPE_MSI == pPackage->type)
         {
@@ -325,7 +326,6 @@ extern "C" HRESULT CorePlan(
     BURN_PACKAGE* pPackage = NULL;
     DWORD dwExecuteActionEarlyIndex = 0;
     HANDLE hSyncpointEvent = NULL;
-    BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
     HANDLE hRollbackBoundaryCompleteEvent = NULL;
     DWORD iAfterExecuteFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
@@ -350,6 +350,9 @@ extern "C" HRESULT CorePlan(
     pEngineState->plan.action = action;
     pEngineState->plan.wzBundleId = pEngineState->registration.sczId;
 
+    hr = PlanSetVariables(action, &pEngineState->variables);
+    ExitOnFailure(hr, "Failed to update action.");
+
     // By default we want to keep the registration if the bundle was already installed.
     pEngineState->plan.fKeepRegistrationDefault = pEngineState->registration.fInstalled;
 
@@ -363,7 +366,7 @@ extern "C" HRESULT CorePlan(
     if (BOOTSTRAPPER_ACTION_LAYOUT == action)
     {
         // Plan the bundle's layout.
-        hr = PlanLayoutBundle(&pEngineState->plan, pEngineState->registration.sczExecutableName, &pEngineState->variables, &pEngineState->payloads, &sczLayoutDirectory);
+        hr = PlanLayoutBundle(&pEngineState->plan, pEngineState->registration.sczExecutableName, pEngineState->section.qwBundleSize, &pEngineState->variables, &pEngineState->payloads, &sczLayoutDirectory);
         ExitOnFailure(hr, "Failed to plan the layout of the bundle.");
     }
     else if (pEngineState->registration.fPerMachine) // the registration of this bundle is per-machine then the plan needs to be per-machine as well.
@@ -401,10 +404,10 @@ extern "C" HRESULT CorePlan(
         }
 
         // Remember the default requested state so the engine doesn't get blamed for planning the wrong thing if the UX changes it.
-        hr = PlanDefaultPackageRequestState(pPackage->type, pPackage->currentState, !pPackage->fUninstallable, action, &pEngineState->variables, pPackage->sczInstallCondition, pEngineState->command.relationType, &defaultRequested);
+        hr = PlanDefaultPackageRequestState(pPackage->type, pPackage->currentState, !pPackage->fUninstallable, action, &pEngineState->variables, pPackage->sczInstallCondition, pEngineState->command.relationType, &pPackage->defaultRequested);
         ExitOnFailure(hr, "Failed to set default package state.");
 
-        pPackage->requested = defaultRequested;
+        pPackage->requested = pPackage->defaultRequested;
 
         nResult = pEngineState->userExperience.pUserExperience->OnPlanPackageBegin(pPackage->sczId, &pPackage->requested);
         hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
@@ -524,7 +527,7 @@ extern "C" HRESULT CorePlan(
         DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pEngineState->packages.cPackages - 1 - i : i;
         pPackage = pEngineState->packages.rgPackages + iPackage;
 
-        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(pPackage->fAcquire), LoggingBoolToString(pPackage->fUncache), LoggingDependencyActionToString(pPackage->dependency));
+        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(pPackage->defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(pPackage->fAcquire), LoggingBoolToString(pPackage->fUncache), LoggingDependencyActionToString(pPackage->dependency));
     }
 
 #ifdef DEBUG
@@ -555,6 +558,12 @@ extern "C" HRESULT CoreElevate(
     // If the elevated companion pipe isn't created yet, let's make that happen.
     if (INVALID_HANDLE_VALUE == pEngineState->companionConnection.hPipe)
     {
+        if (!pEngineState->sczBundleEngineWorkingPath)
+        {
+            hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &pEngineState->sczBundleEngineWorkingPath);
+            ExitOnFailure(hr, "Failed to cache engine to working directory.");
+        }
+
         hr = ElevationElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to actually elevate.");
 
@@ -574,8 +583,10 @@ extern "C" HRESULT CoreApply(
     HRESULT hr = S_OK;
     BOOL fLayoutOnly = (BOOTSTRAPPER_ACTION_LAYOUT == pEngineState->plan.action);
     BOOL fActivated = FALSE;
+    HANDLE hLock = NULL;
     DWORD cOverallProgressTicks = 0;
     HANDLE hCacheThread = NULL;
+    BOOL fElevated = FALSE;
     BOOL fRegistered = FALSE;
     BOOL fKeepRegistration = pEngineState->plan.fKeepRegistrationDefault;
     BOOL fRollback = FALSE;
@@ -594,13 +605,28 @@ extern "C" HRESULT CoreApply(
     hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted apply begin.");
 
-    // If the plan contains per-machine contents, let's make sure we are elevated.
+    hr = ApplyLock(FALSE, &hLock);
+    ExitOnFailure(hr, "Another per-user setup is already executing.");
+
+    // Ensure the engine is cached to the working path.
+    if (!pEngineState->sczBundleEngineWorkingPath)
+    {
+        hr = CacheBundleToWorkingDirectory(pEngineState->registration.sczId, pEngineState->registration.sczExecutableName, &pEngineState->userExperience.payloads, &pEngineState->section, &pEngineState->sczBundleEngineWorkingPath);
+        ExitOnFailure(hr, "Failed to cache engine to working directory.");
+    }
+
+    // If the plan contains per-machine contents, let's make sure we are elevated and locked at the machine level.
     if (pEngineState->plan.fPerMachine)
     {
         AssertSz(!fLayoutOnly, "A Layout plan should never require elevation.");
 
         hr = CoreElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to elevate.");
+
+        hr = ElevationApplyInitialize(pEngineState->companionConnection.hPipe, pEngineState->automaticUpdates);
+        ExitOnFailure(hr, "Another per-machine setup is already executing.");
+
+        fElevated = TRUE;
     }
 
     // Register only if we are not doing a layout.
@@ -658,6 +684,17 @@ LExit:
         ApplyUnregister(pEngineState, fKeepRegistration, fSuspend, restart);
     }
 
+    if (fElevated)
+    {
+        ElevationApplyUninitialize(pEngineState->companionConnection.hPipe);
+    }
+
+    if (hLock)
+    {
+        ::ReleaseMutex(hLock);
+        ::CloseHandle(hLock);
+    }
+
     if (fActivated)
     {
         UserExperienceDeactivateEngine(&pEngineState->userExperience);
@@ -666,7 +703,7 @@ LExit:
     ReleaseHandle(hCacheThread);
 
     nResult = pEngineState->userExperience.pUserExperience->OnApplyComplete(hr, restart);
-    if (IDRESTART == nResult)
+    if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart || IDRESTART == nResult)
     {
         pEngineState->fRestart = TRUE;
     }
@@ -740,6 +777,7 @@ static HRESULT ParseCommandLine(
     __in BURN_PIPE_CONNECTION* pCompanionConnection,
     __in BURN_PIPE_CONNECTION* pEmbeddedConnection,
     __out BURN_MODE* pMode,
+    __out BURN_AU_PAUSE_ACTION* pAutomaticUpdates,
     __out BURN_ELEVATION_STATE* pElevationState,
     __out BOOL* pfDisableUnelevate,
     __out DWORD *pdwLoggingAttributes,
@@ -861,6 +899,18 @@ static HRESULT ParseCommandLine(
                 if (BOOTSTRAPPER_ACTION_UNKNOWN == pCommand->action)
                 {
                     pCommand->action = BOOTSTRAPPER_ACTION_INSTALL;
+                }
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"noaupause", -1))
+            {
+                *pAutomaticUpdates = BURN_AU_PAUSE_ACTION_NONE;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, L"keepaupaused", -1))
+            {
+                // Switch /noaupause takes precedence.
+                if (BURN_AU_PAUSE_ACTION_NONE != *pAutomaticUpdates)
+                {
+                    *pAutomaticUpdates = BURN_AU_PAUSE_ACTION_IFELEVATED_NORESUME;
                 }
             }
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, &argv[i][1], -1, BURN_COMMANDLINE_SWITCH_LOG_APPEND, -1))
@@ -1054,7 +1104,7 @@ static HRESULT DetectPackagePayloadsCached(
 {
     HRESULT hr = S_OK;
     LPWSTR sczCachePath = NULL;
-    BOOL fAllPayloadsCached = FALSE;
+    BURN_CACHE_STATE cache = BURN_CACHE_STATE_NONE; // assume the package will not be cached.
     LPWSTR sczPayloadCachePath = NULL;
     LONGLONG llSize = 0;
 
@@ -1063,38 +1113,43 @@ static HRESULT DetectPackagePayloadsCached(
         hr = CacheGetCompletedPath(pPackage->fPerMachine, pPackage->sczCacheId, &sczCachePath);
         ExitOnFailure(hr, "Failed to get completed cache path.");
 
-        fAllPayloadsCached = DirExists(sczCachePath, NULL); // assume all payloads will be cached if the cache directory exists.
-
-        for (DWORD i = 0; fAllPayloadsCached && i < pPackage->cPayloads; ++i)
+        // If the cached directory exists, we have something.
+        if (DirExists(sczCachePath, NULL))
         {
-            BURN_PACKAGE_PAYLOAD* pPackagePayload = pPackage->rgPayloads + i;
+            cache = BURN_CACHE_STATE_COMPLETE; // assume all payloads are cached.
 
-            hr = PathConcat(sczCachePath, pPackagePayload->pPayload->sczFilePath, &sczPayloadCachePath);
-            ExitOnFailure(hr, "Failed to concat payload cache path.");
+            // Check all payloads to see if any are missing or not the right size.
+            for (DWORD i = 0; i < pPackage->cPayloads; ++i)
+            {
+                BURN_PACKAGE_PAYLOAD* pPackagePayload = pPackage->rgPayloads + i;
 
-            // TODO: should we do a full on hash verification on the file to ensure the exact right
-            //       file is cached?
-            hr = FileSize(sczPayloadCachePath, &llSize);
-            if (SUCCEEDED(hr) && static_cast<DWORD64>(llSize) == pPackagePayload->pPayload->qwFileSize)
-            {
-                pPackagePayload->fCached = TRUE;
-            }
-            else
-            {
-                if (static_cast<DWORD64>(llSize) != pPackagePayload->pPayload->qwFileSize)
+                hr = PathConcat(sczCachePath, pPackagePayload->pPayload->sczFilePath, &sczPayloadCachePath);
+                ExitOnFailure(hr, "Failed to concat payload cache path.");
+
+                // TODO: should we do a full on hash verification on the file to ensure the exact right
+                //       file is cached?
+                hr = FileSize(sczPayloadCachePath, &llSize);
+                if (SUCCEEDED(hr) && static_cast<DWORD64>(llSize) == pPackagePayload->pPayload->qwFileSize)
                 {
-                    hr = HRESULT_FROM_WIN32(ERROR_FILE_CORRUPT);
+                    pPackagePayload->fCached = TRUE;
                 }
+                else
+                {
+                    if (static_cast<DWORD64>(llSize) != pPackagePayload->pPayload->qwFileSize)
+                    {
+                        hr = HRESULT_FROM_WIN32(ERROR_FILE_CORRUPT);
+                    }
 
-                LogId(REPORT_STANDARD, MSG_DETECT_PACKAGE_NOT_FULLY_CACHED, pPackage->sczId, pPackagePayload->pPayload->sczKey, hr);
+                    LogId(REPORT_STANDARD, MSG_DETECT_PACKAGE_NOT_FULLY_CACHED, pPackage->sczId, pPackagePayload->pPayload->sczKey, hr);
 
-                fAllPayloadsCached = FALSE; // found a payload that was not cached so our assumption above was wrong.
-                hr = S_OK;
+                    cache = BURN_CACHE_STATE_PARTIAL; // found a payload that was not cached so we are partial.
+                    hr = S_OK;
+                }
             }
         }
     }
 
-    pPackage->fCached = fAllPayloadsCached;
+    pPackage->cache = cache;
 
 LExit:
     ReleaseStr(sczPayloadCachePath);

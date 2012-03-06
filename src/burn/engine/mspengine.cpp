@@ -436,6 +436,7 @@ extern "C" HRESULT MspEngineExecutePackage(
     LPWSTR sczMspPath = NULL;
     LPWSTR sczPatches = NULL;
     LPWSTR sczProperties = NULL;
+    LPWSTR sczObfuscatedProperties = NULL;
 
     // default to "verbose" logging
     DWORD dwLogMode = WIU_LOG_DEFAULT | INSTALLLOGMODE_VERBOSE;
@@ -488,10 +489,13 @@ extern "C" HRESULT MspEngineExecutePackage(
     }
 
     // set up properties
-    hr = MsiEngineConcatProperties(pExecuteAction->mspTarget.pPackage->Msp.rgProperties, pExecuteAction->mspTarget.pPackage->Msp.cProperties, pVariables, fRollback, &sczProperties);
+    hr = MsiEngineConcatProperties(pExecuteAction->mspTarget.pPackage->Msp.rgProperties, pExecuteAction->mspTarget.pPackage->Msp.cProperties, pVariables, fRollback, &sczProperties, FALSE);
     ExitOnFailure(hr, "Failed to add properties to argument string.");
 
-    LogId(REPORT_STANDARD, MSG_APPLYING_PATCH_PACKAGE, pExecuteAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pExecuteAction->mspTarget.action), sczMspPath, sczProperties, pExecuteAction->mspTarget.sczTargetProductCode);
+    hr = MsiEngineConcatProperties(pExecuteAction->mspTarget.pPackage->Msp.rgProperties, pExecuteAction->mspTarget.pPackage->Msp.cProperties, pVariables, fRollback, &sczObfuscatedProperties, TRUE);
+    ExitOnFailure(hr, "Failed to add properties to obfuscated argument string.");
+
+    LogId(REPORT_STANDARD, MSG_APPLYING_PATCH_PACKAGE, pExecuteAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pExecuteAction->mspTarget.action), sczMspPath, sczObfuscatedProperties, pExecuteAction->mspTarget.sczTargetProductCode);
 
     //
     // Do the actual action.
@@ -537,6 +541,7 @@ LExit:
     ReleaseStr(sczCachedDirectory);
     ReleaseStr(sczMspPath);
     ReleaseStr(sczProperties);
+    ReleaseStr(sczObfuscatedProperties);
     ReleaseStr(sczPatches);
 
     switch (restart)

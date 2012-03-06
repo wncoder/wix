@@ -99,12 +99,16 @@ extern "C" HRESULT ContainersParseFromXml(
             ExitOnFailure(hr, "Failed to get @AttachedIndex.");
         }
 
-        // @SourcePath
-        hr = XmlGetAttributeEx(pixnNode, L"SourcePath", &pContainer->sczSourcePath);
+        // @FilePath
+        hr = XmlGetAttributeEx(pixnNode, L"FilePath", &pContainer->sczFilePath);
         if (E_NOTFOUND != hr)
         {
-            ExitOnFailure(hr, "Failed to get @SourcePath.");
+            ExitOnFailure(hr, "Failed to get @FilePath.");
         }
+
+        // The source path starts as the file path.
+        hr = StrAllocString(&pContainer->sczSourcePath, pContainer->sczFilePath, 0);
+        ExitOnFailure(hr, "Failed to copy @FilePath");
 
         // @DownloadUrl
         hr = XmlGetAttributeEx(pixnNode, L"DownloadUrl", &pContainer->downloadSource.sczUrl);
@@ -155,6 +159,7 @@ extern "C" void ContainersUninitialize(
             ReleaseStr(pContainer->sczId);
             ReleaseStr(pContainer->sczHash);
             ReleaseStr(pContainer->sczSourcePath);
+            ReleaseStr(pContainer->sczFilePath);
             ReleaseStr(pContainer->downloadSource.sczUrl);
             ReleaseStr(pContainer->downloadSource.sczUser);
             ReleaseStr(pContainer->downloadSource.sczPassword);

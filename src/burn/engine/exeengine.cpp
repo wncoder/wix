@@ -398,6 +398,7 @@ LExit:
 extern "C" HRESULT ExeEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_VARIABLES* pVariables,
+    __in BOOL fRollback,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -407,9 +408,11 @@ extern "C" HRESULT ExeEngineExecutePackage(
     int nResult = IDNOACTION;
     LPCWSTR wzArguments = NULL;
     LPWSTR sczArgumentsFormatted = NULL;
+    LPWSTR sczArgumentsObfuscated = NULL;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczExecutablePath = NULL;
     LPWSTR sczCommand = NULL;
+    LPWSTR sczCommandObfuscated = NULL;
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
     DWORD dwExitCode = 0;
@@ -449,22 +452,34 @@ extern "C" HRESULT ExeEngineExecutePackage(
         ExitOnFailure(hr, "Failed to format argument string.");
 
         hr = StrAllocFormatted(&sczCommand, L"\"%ls\" %s", sczExecutablePath, sczArgumentsFormatted);
+        ExitOnFailure(hr, "Failed to create executable command.");
+
+        hr = VariableFormatStringObfuscated(pVariables, wzArguments, &sczArgumentsObfuscated, NULL);
+        ExitOnFailure(hr, "Failed to format obfuscated argument string.");
+
+        hr = StrAllocFormatted(&sczCommandObfuscated, L"\"%ls\" %s", sczExecutablePath, sczArgumentsObfuscated);
     }
     else
     {
         hr = StrAllocFormatted(&sczCommand, L"\"%ls\"", sczExecutablePath);
+        ExitOnFailure(hr, "Failed to create executable command.");
+
+        hr = StrAllocFormatted(&sczCommandObfuscated, L"\"%ls\"", sczExecutablePath);
     }
-    ExitOnFailure(hr, "Failed to create executable command.");
+    ExitOnFailure(hr, "Failed to create obfuscated executable command.");
 
     // Add the list of dependencies to ignore, if any, to the command line.
     if (pExecuteAction->exePackage.sczIgnoreDependencies)
     {
         hr = StrAllocFormatted(&sczCommand, L"%ls -%ls=%ls", sczCommand, BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES, pExecuteAction->exePackage.sczIgnoreDependencies);
         ExitOnFailure(hr, "Failed to append the list of dependencies to ignore to the command line.");
+
+        hr = StrAllocFormatted(&sczCommandObfuscated, L"%ls -%ls=%ls", sczCommandObfuscated, BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES, pExecuteAction->exePackage.sczIgnoreDependencies);
+        ExitOnFailure(hr, "Failed to append the list of dependencies to ignore to the obfuscated command line.");
     }
 
     // Log before we add the secret pipe name and client token for embedded processes.
-    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, pExecuteAction->exePackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->exePackage.action), sczExecutablePath, sczCommand);
+    LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, LoggingRollbackOrExecute(fRollback), pExecuteAction->exePackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->exePackage.action), sczExecutablePath, sczCommandObfuscated);
 
     if (BURN_EXE_PROTOCOL_TYPE_BURN == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
@@ -517,9 +532,11 @@ extern "C" HRESULT ExeEngineExecutePackage(
 
 LExit:
     ReleaseStr(sczArgumentsFormatted);
+    ReleaseStr(sczArgumentsObfuscated);
     ReleaseStr(sczCachedDirectory);
     ReleaseStr(sczExecutablePath);
     ReleaseStr(sczCommand);
+    ReleaseStr(sczCommandObfuscated);
 
     ReleaseHandle(pi.hThread);
     ReleaseHandle(pi.hProcess);

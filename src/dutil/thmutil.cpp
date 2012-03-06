@@ -55,7 +55,7 @@ static HRESULT ParseTheme(
     );
 static HRESULT LocalizeTheme(
     __in THEME *pTheme,
-    __in const LOC_STRINGSET *pLocStringSet
+    __in const WIX_LOCALIZATION *pWixLoc
     );
 static HRESULT ParseImage(
     __in_opt HMODULE hModule,
@@ -631,31 +631,67 @@ DAPI_(void) ThemeUnloadControls(
 
 DAPI_(HRESULT) ThemeLocalize(
     __in THEME *pTheme,
-    __in const LOC_STRINGSET *pLocStringSet
+    __in const WIX_LOCALIZATION *pWixLoc
     )
 {
     HRESULT hr = S_OK;
+    LOC_CONTROL* pLocControl = NULL;
 
-    hr = LocLocalizeString(pLocStringSet, &pTheme->sczCaption);
+    hr = LocLocalizeString(pWixLoc, &pTheme->sczCaption);
     ExitOnFailure(hr, "Failed to localize theme caption.");
 
     for (DWORD i = 0; i < pTheme->cControls; ++i)
     {
         THEME_CONTROL* pControl = pTheme->rgControls + i;
 
-        hr = LocLocalizeString(pLocStringSet, &pControl->sczText);
+        hr = LocLocalizeString(pWixLoc, &pControl->sczText);
         ExitOnFailure(hr, "Failed to localize control text.");
 
         for (DWORD j = 0; j < pControl->cColumns; ++j)
         {
-            hr = LocLocalizeString(pLocStringSet, &pControl->ptcColumns[j].pszName);
+            hr = LocLocalizeString(pWixLoc, &pControl->ptcColumns[j].pszName);
             ExitOnFailure(hr, "Failed to localize column text.");
         }
 
         for (DWORD j = 0; j < pControl->cTabs; ++j)
         {
-            hr = LocLocalizeString(pLocStringSet, &pControl->pttTabs[j].pszName);
+            hr = LocLocalizeString(pWixLoc, &pControl->pttTabs[j].pszName);
             ExitOnFailure(hr, "Failed to localize tab text.");
+        }
+
+        // localize controls size, location, and text
+        hr = LocGetControl(pWixLoc, pControl->sczName, &pLocControl);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+            continue;
+        }
+        ExitOnFailure(hr, "Failed to localize control.");
+
+        if (LOC_CONTROL_NOT_SET != pLocControl->nX)
+        {
+            pControl->nX = pLocControl->nX;
+        }
+
+        if (LOC_CONTROL_NOT_SET != pLocControl->nY)
+        {
+            pControl->nY = pLocControl->nY;
+        }
+
+        if (LOC_CONTROL_NOT_SET != pLocControl->nWidth)
+        {
+            pControl->nWidth = pLocControl->nWidth;
+        }
+
+        if (LOC_CONTROL_NOT_SET != pLocControl->nHeight)
+        {
+            pControl->nHeight = pLocControl->nHeight;
+        }
+
+        if (pLocControl->wzText && 0 < wcslen(pLocControl->wzText))
+        {
+            hr = StrAllocString(&pControl->sczText, pLocControl->wzText, 0);
+            ExitOnFailure(hr, "Failed to localize control text.");
         }
     }
 
@@ -739,8 +775,14 @@ DAPI_(HRESULT) ThemeLoadRichEditFromFile(
     }
     else
     {
-        EDITSTREAM es = { };
+        LONGLONG llRtfSize;
+        hr = FileSizeByHandle(hFile, &llRtfSize);
+        if (SUCCEEDED(hr))
+        {
+            ::SendMessageW(hWnd, EM_EXLIMITTEXT, 0, static_cast<LPARAM>(llRtfSize));
+        }
 
+        EDITSTREAM es = { };
         es.pfnCallback = RichEditStreamFromFileHandleCallback;
         es.dwCookie = reinterpret_cast<DWORD_PTR>(hFile);
 
@@ -1795,7 +1837,7 @@ static HRESULT ParseFonts(
     pTheme->rgFonts = static_cast<THEME_FONT*>(MemAlloc(sizeof(THEME_FONT) * pTheme->cFonts, TRUE));
     ExitOnNull(pTheme->rgFonts, hr, E_OUTOFMEMORY, "Failed to allocate theme fonts.");
 
-    lf.lfQuality = ANTIALIASED_QUALITY;
+    lf.lfQuality = CLEARTYPE_QUALITY;
 
     while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
     {

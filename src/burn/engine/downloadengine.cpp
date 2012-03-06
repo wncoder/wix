@@ -97,7 +97,6 @@ static HRESULT OpenRequest(
     );
 static HRESULT SendRequest(
     __in HINTERNET hUrl,
-    __in_z LPCWSTR wzMethod,
     __inout_z LPWSTR* psczUrl,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
@@ -507,7 +506,7 @@ static HRESULT MakeRequest(
         hr = OpenRequest(hConnect, wzMethod, uri.scheme, uri.sczPath, uri.sczQueryString, wzHeaders, &hUrl);
         ExitOnFailure1(hr, "Failed to open internet URL: %ls", *psczSourceUrl);
 
-        hr = SendRequest(hUrl, wzMethod, psczSourceUrl, &fRetry, pfRangeRequestsAccepted);
+        hr = SendRequest(hUrl, psczSourceUrl, &fRetry, pfRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to send request to URL: %ls", *psczSourceUrl);
     } while (fRetry);
 
@@ -578,7 +577,6 @@ LExit:
 
 static HRESULT SendRequest(
     __in HINTERNET hUrl,
-    __in_z LPCWSTR wzMethod,
     __inout_z LPWSTR* psczUrl,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
@@ -595,8 +593,6 @@ static HRESULT SendRequest(
     // Check the http status code.
     hr = InternetQueryInfoNumber(hUrl, HTTP_QUERY_STATUS_CODE, &lCode);
     ExitOnFailure1(hr, "Failed to get HTTP status code for URL: %ls", *psczUrl);
-
-    LogStringLine(REPORT_STANDARD, "Download engine HTTP %d %ls to %ls", lCode, wzMethod, *psczUrl);
 
     switch (lCode)
     {

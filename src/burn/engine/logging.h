@@ -100,6 +100,10 @@ LPCSTR LoggingPackageStateToString(
     __in BOOTSTRAPPER_PACKAGE_STATE packageState
     );
 
+LPCSTR LoggingCacheStateToString(
+    __in BURN_CACHE_STATE cacheState
+    );
+
 LPCSTR LoggingMsiFeatureStateToString(
     __in BOOTSTRAPPER_FEATURE_STATE featureState
     );
@@ -122,6 +126,10 @@ LPCSTR LoggingRelatedOperationToString(
 
 LPCSTR LoggingRequestStateToString(
     __in BOOTSTRAPPER_REQUEST_STATE requestState
+    );
+
+LPCSTR LoggingRollbackOrExecute(
+    __in BOOL fRollback
     );
 
 LPWSTR LoggingStringOrUnknownIfNull(

@@ -21,16 +21,25 @@
 // prototypes
 static HRESULT ParseWxl(
     __in IXMLDOMDocument* pixd,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     );
 static HRESULT ParseWxlStrings(
     __in IXMLDOMElement* pElement,
-    __in LOC_STRINGSET* pLocStringSet
+    __in WIX_LOCALIZATION* pWixLoc
+    );
+static HRESULT ParseWxlControls(
+    __in IXMLDOMElement* pElement,
+    __in WIX_LOCALIZATION* pWixLoc
     );
 static HRESULT ParseWxlString(
     __in IXMLDOMNode* pixn,
     __in DWORD dwIdx,
-    __in LOC_STRINGSET* pLocStringSet
+    __in WIX_LOCALIZATION* pWixLoc
+    );
+static HRESULT ParseWxlControl(
+    __in IXMLDOMNode* pixn,
+    __in DWORD dwIdx,
+    __in WIX_LOCALIZATION* pWixLoc
     );
 
 extern "C" HRESULT DAPI LocProbeForFile(
@@ -109,7 +118,7 @@ LExit:
 
 extern "C" HRESULT DAPI LocLoadFromFile(
     __in_z LPCWSTR wzWxlFile,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     )
 {
     HRESULT hr = S_OK;
@@ -118,7 +127,7 @@ extern "C" HRESULT DAPI LocLoadFromFile(
     hr = XmlLoadDocumentFromFile(wzWxlFile, &pixd);
     ExitOnFailure(hr, "Failed to load WXL file as XML document.");
 
-    hr = ParseWxl(pixd, ppLocStringSet);
+    hr = ParseWxl(pixd, ppWixLoc);
     ExitOnFailure(hr, "Failed to parse WXL.");
 
 LExit:
@@ -130,7 +139,7 @@ LExit:
 extern "C" HRESULT DAPI LocLoadFromResource(
     __in HMODULE hModule,
     __in_z LPCSTR szResource,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     )
 {
     HRESULT hr = S_OK;
@@ -148,7 +157,7 @@ extern "C" HRESULT DAPI LocLoadFromResource(
     hr = XmlLoadDocument(sczXml, &pixd);
     ExitOnFailure(hr, "Failed to load theme resource as XML document.");
 
-    hr = ParseWxl(pixd, ppLocStringSet);
+    hr = ParseWxl(pixd, ppWixLoc);
     ExitOnFailure(hr, "Failed to parse WXL.");
 
 LExit:
@@ -159,35 +168,68 @@ LExit:
 }
 
 extern "C" void DAPI LocFree(
-    __in_opt LOC_STRINGSET* pLocStringSet
+    __in_opt WIX_LOCALIZATION* pWixLoc
     )
 {
-    if (pLocStringSet)
+    if (pWixLoc)
     {
-        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
+        for (DWORD idx = 0; idx < pWixLoc->cLocStrings; ++idx)
         {
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzId);
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
+            ReleaseStr(pWixLoc->rgLocStrings[idx].wzId);
+            ReleaseStr(pWixLoc->rgLocStrings[idx].wzText);
         }
 
-        ReleaseMem(pLocStringSet->rgLocStrings);
-        ReleaseMem(pLocStringSet);
+        for (DWORD idx = 0; idx < pWixLoc->cLocControls; ++idx)
+        {
+            ReleaseStr(pWixLoc->rgLocControls[idx].wzControl);
+            ReleaseStr(pWixLoc->rgLocControls[idx].wzText);
+        }
+
+        ReleaseMem(pWixLoc->rgLocStrings);
+        ReleaseMem(pWixLoc->rgLocControls);
+        ReleaseMem(pWixLoc);
     }
 }
 
 extern "C" HRESULT DAPI LocLocalizeString(
-    __in const LOC_STRINGSET* pLocStringSet,
+    __in const WIX_LOCALIZATION* pWixLoc,
     __inout LPWSTR* ppsczInput
     )
 {
-    Assert(ppsczInput && pLocStringSet);
+    Assert(ppsczInput && pWixLoc);
     HRESULT hr = S_OK;
 
-    for (DWORD i = 0; i < pLocStringSet->cLocStrings; ++i)
+    for (DWORD i = 0; i < pWixLoc->cLocStrings; ++i)
     {
-        hr = StrReplaceStringAll(ppsczInput, pLocStringSet->rgLocStrings[i].wzId, pLocStringSet->rgLocStrings[i].wzText);
+        hr = StrReplaceStringAll(ppsczInput, pWixLoc->rgLocStrings[i].wzId, pWixLoc->rgLocStrings[i].wzText);
         ExitOnFailure(hr, "Localizing string failed.");
     }
+
+LExit:
+    return hr;
+}
+
+extern "C" HRESULT DAPI LocGetControl(
+    __in const WIX_LOCALIZATION* pWixLoc,
+    __in_z LPCWSTR wzId,
+    __out LOC_CONTROL** ppLocControl
+    )
+{
+    HRESULT hr = S_OK;
+    LOC_CONTROL* pLocControl = NULL;
+
+    for (DWORD i = 0; i < pWixLoc->cLocControls; ++i)
+    {
+        pLocControl = &pWixLoc->rgLocControls[i];
+
+        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, pLocControl->wzControl, -1, wzId, -1))
+        {
+            *ppLocControl = pLocControl;
+            ExitFunction1(hr = S_OK);
+        }
+    }
+
+    hr = E_NOTFOUND;
 
 LExit:
     return hr;
@@ -197,30 +239,33 @@ LExit:
 
 static HRESULT ParseWxl(
     __in IXMLDOMDocument* pixd,
-    __out LOC_STRINGSET** ppLocStringSet
+    __out WIX_LOCALIZATION** ppWixLoc
     )
 {
     HRESULT hr = S_OK;
     IXMLDOMElement *pWxlElement = NULL;
-    LOC_STRINGSET* pLocStringSet = NULL;
+    WIX_LOCALIZATION* pWixLoc = NULL;
 
-    pLocStringSet = static_cast<LOC_STRINGSET*>(MemAlloc(sizeof(LOC_STRINGSET), TRUE));
-    ExitOnNull(pLocStringSet, hr, E_OUTOFMEMORY, "Failed to allocate memory for Wxl file.");
+    pWixLoc = static_cast<WIX_LOCALIZATION*>(MemAlloc(sizeof(WIX_LOCALIZATION), TRUE));
+    ExitOnNull(pWixLoc, hr, E_OUTOFMEMORY, "Failed to allocate memory for Wxl file.");
 
     // read the WixLocalization tag
     hr = pixd->get_documentElement(&pWxlElement);
     ExitOnFailure(hr, "Failed to get localization element.");
 
-    // store the strings in a node list
-    hr = ParseWxlStrings(pWxlElement, pLocStringSet);
+    // store the strings and controls in a node list
+    hr = ParseWxlStrings(pWxlElement, pWixLoc);
     ExitOnFailure(hr, "Parsing localization strings failed.");
 
-    *ppLocStringSet = pLocStringSet;
-    pLocStringSet = NULL;
+    hr = ParseWxlControls(pWxlElement, pWixLoc);
+    ExitOnFailure(hr, "Parsing localization controls failed.");
+
+    *ppWixLoc = pWixLoc;
+    pWixLoc = NULL;
 
 LExit:
     ReleaseObject(pWxlElement);
-    ReleaseMem(pLocStringSet);
+    ReleaseMem(pWixLoc);
 
     return hr;
 }
@@ -228,7 +273,7 @@ LExit:
 
 static HRESULT ParseWxlStrings(
     __in IXMLDOMElement* pElement,
-    __in LOC_STRINGSET* pLocStringSet
+    __in WIX_LOCALIZATION* pWixLoc
     )
 {
     HRESULT hr = S_OK;
@@ -236,37 +281,92 @@ static HRESULT ParseWxlStrings(
     IXMLDOMNodeList* pixnl = NULL;
     DWORD dwIdx = 0;
 
-    hr = XmlSelectNodes(pElement, L"*", &pixnl);
-    ExitOnLastError(hr, "Failed to get child nodes of Wxl File.");
+    hr = XmlSelectNodes(pElement, L"String", &pixnl);
+    ExitOnLastError(hr, "Failed to get String child nodes of Wxl File.");
 
-    hr = pixnl->get_length(reinterpret_cast<long*>(&pLocStringSet->cLocStrings));
-    ExitOnLastError(hr, "Failed to get number of child nodes in Wxl File.");
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pWixLoc->cLocStrings));
+    ExitOnLastError(hr, "Failed to get number of String child nodes in Wxl File.");
 
-    pLocStringSet->rgLocStrings = static_cast<LOC_STRING*>(MemAlloc(sizeof(LOC_STRING) * pLocStringSet->cLocStrings, TRUE));
-    ExitOnNull(pLocStringSet->rgLocStrings, hr, E_OUTOFMEMORY, "Failed to allocate memory for localization strings.");
-
-    while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
+    if (0 < pWixLoc->cLocStrings)
     {
-        hr = ParseWxlString(pixn, dwIdx, pLocStringSet);
-        ExitOnFailure(hr, "Failed to parse localization string.");
+        pWixLoc->rgLocStrings = static_cast<LOC_STRING*>(MemAlloc(sizeof(LOC_STRING) * pWixLoc->cLocStrings, TRUE));
+        ExitOnNull(pWixLoc->rgLocStrings, hr, E_OUTOFMEMORY, "Failed to allocate memory for localization strings.");
 
-        ++dwIdx;
-        ReleaseNullObject(pixn);
-    }
-
-    hr = S_OK;
-    ExitOnFailure(hr, "Failed to enumerate all localization strings.");
-
-LExit:
-    if (FAILED(hr) && pLocStringSet->rgLocStrings)
-    {
-        for (DWORD idx = 0; idx < pLocStringSet->cLocStrings; ++idx)
+        while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
         {
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzId);
-            ReleaseStr(pLocStringSet->rgLocStrings[idx].wzText);
+            hr = ParseWxlString(pixn, dwIdx, pWixLoc);
+            ExitOnFailure(hr, "Failed to parse localization string.");
+
+            ++dwIdx;
+            ReleaseNullObject(pixn);
         }
 
-        ReleaseMem(pLocStringSet->rgLocStrings);
+        hr = S_OK;
+        ExitOnFailure(hr, "Failed to enumerate all localization strings.");
+    }
+
+LExit:
+    if (FAILED(hr) && pWixLoc->rgLocStrings)
+    {
+        for (DWORD idx = 0; idx < pWixLoc->cLocStrings; ++idx)
+        {
+            ReleaseStr(pWixLoc->rgLocStrings[idx].wzId);
+            ReleaseStr(pWixLoc->rgLocStrings[idx].wzText);
+        }
+
+        ReleaseMem(pWixLoc->rgLocStrings);
+    }
+
+    ReleaseObject(pixn);
+    ReleaseObject(pixnl);
+
+    return hr;
+}
+
+static HRESULT ParseWxlControls(
+    __in IXMLDOMElement* pElement,
+    __in WIX_LOCALIZATION* pWixLoc
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNode* pixn = NULL;
+    IXMLDOMNodeList* pixnl = NULL;
+    DWORD dwIdx = 0;
+
+    hr = XmlSelectNodes(pElement, L"Control", &pixnl);
+    ExitOnLastError(hr, "Failed to get Control child nodes of Wxl File.");
+
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pWixLoc->cLocControls));
+    ExitOnLastError(hr, "Failed to get number of Control child nodes in Wxl File.");
+
+    if (0 < pWixLoc->cLocControls)
+    {
+        pWixLoc->rgLocControls = static_cast<LOC_CONTROL*>(MemAlloc(sizeof(LOC_CONTROL) * pWixLoc->cLocControls, TRUE));
+        ExitOnNull(pWixLoc->rgLocControls, hr, E_OUTOFMEMORY, "Failed to allocate memory for localized controls.");
+
+        while (S_OK == (hr = XmlNextElement(pixnl, &pixn, NULL)))
+        {
+            hr = ParseWxlControl(pixn, dwIdx, pWixLoc);
+            ExitOnFailure(hr, "Failed to parse localized control.");
+
+            ++dwIdx;
+            ReleaseNullObject(pixn);
+        }
+
+        hr = S_OK;
+        ExitOnFailure(hr, "Failed to enumerate all localized controls.");
+    }
+
+LExit:
+    if (FAILED(hr) && pWixLoc->rgLocControls)
+    {
+        for (DWORD idx = 0; idx < pWixLoc->cLocControls; ++idx)
+        {
+            ReleaseStr(pWixLoc->rgLocControls[idx].wzControl);
+            ReleaseStr(pWixLoc->rgLocControls[idx].wzText);
+        }
+
+        ReleaseMem(pWixLoc->rgLocControls);
     }
 
     ReleaseObject(pixn);
@@ -278,14 +378,14 @@ LExit:
 static HRESULT ParseWxlString(
     __in IXMLDOMNode* pixn,
     __in DWORD dwIdx,
-    __in LOC_STRINGSET* pLocStringSet
+    __in WIX_LOCALIZATION* pWixLoc
     )
 {
     HRESULT hr = S_OK;
     LOC_STRING* pLocString = NULL;
     BSTR bstrText = NULL;
 
-    pLocString = pLocStringSet->rgLocStrings + dwIdx;
+    pLocString = pWixLoc->rgLocStrings + dwIdx;
 
     // Id
     hr = XmlGetAttribute(pixn, L"Id", &bstrText);
@@ -313,6 +413,60 @@ static HRESULT ParseWxlString(
 
     hr = StrAllocString(&pLocString->wzText, bstrText, 0);
     ExitOnFailure(hr, "Failed to duplicate Xml text in Wxl file.");
+
+LExit:
+    ReleaseBSTR(bstrText);
+
+    return hr;
+}
+
+static HRESULT ParseWxlControl(
+    __in IXMLDOMNode* pixn,
+    __in DWORD dwIdx,
+    __in WIX_LOCALIZATION* pWixLoc
+    )
+{
+    HRESULT hr = S_OK;
+    LOC_CONTROL* pLocControl = NULL;
+    BSTR bstrText = NULL;
+
+    pLocControl = pWixLoc->rgLocControls + dwIdx;
+
+    // Id
+    hr = XmlGetAttribute(pixn, L"Control", &bstrText);
+    ExitOnFailure(hr, "Failed to get Xml attribute Control in Wxl file.");
+
+    hr = StrAllocString(&pLocControl->wzControl, bstrText, 0);
+    ExitOnFailure(hr, "Failed to duplicate Xml attribute Control in Wxl file.");
+
+    ReleaseNullBSTR(bstrText);
+
+    // X
+    pLocControl->nX = LOC_CONTROL_NOT_SET;
+    hr = XmlGetAttributeNumber(pixn, L"X", reinterpret_cast<DWORD*>(&pLocControl->nX));
+    ExitOnFailure(hr, "Failed to get control X attribute.");
+
+    // Y
+    pLocControl->nY = LOC_CONTROL_NOT_SET;
+    hr = XmlGetAttributeNumber(pixn, L"Y", reinterpret_cast<DWORD*>(&pLocControl->nY));
+    ExitOnFailure(hr, "Failed to get control Y attribute.");
+
+    // Width
+    pLocControl->nWidth = LOC_CONTROL_NOT_SET;
+    hr = XmlGetAttributeNumber(pixn, L"Width", reinterpret_cast<DWORD*>(&pLocControl->nWidth));
+    ExitOnFailure(hr, "Failed to get control width attribute.");
+
+    // Height
+    pLocControl->nHeight = LOC_CONTROL_NOT_SET;
+    hr = XmlGetAttributeNumber(pixn, L"Height", reinterpret_cast<DWORD*>(&pLocControl->nHeight));
+    ExitOnFailure(hr, "Failed to get control height attribute.");
+
+    // Text
+    hr = XmlGetText(pixn, &bstrText);
+    ExitOnFailure(hr, "Failed to get control text in Wxl file.");
+
+    hr = StrAllocString(&pLocControl->wzText, bstrText, 0);
+    ExitOnFailure(hr, "Failed to duplicate control text in Wxl file.");
 
 LExit:
     ReleaseBSTR(bstrText);

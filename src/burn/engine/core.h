@@ -42,13 +42,16 @@ const LPCWSTR BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES = L"burn.ignoredependen
 const LPCWSTR BURN_COMMANDLINE_SWITCH_PREFIX = L"burn.";
 
 const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
+const LPCWSTR BURN_BUNDLE_ACTION = L"WixBundleAction";
+const LPCWSTR BURN_BUNDLE_INSTALLED = L"WixBundleInstalled";
 const LPCWSTR BURN_BUNDLE_ELEVATED = L"WixBundleElevated";
+const LPCWSTR BURN_BUNDLE_PROVIDER_KEY = L"WixBundleProviderKey";
 const LPCWSTR BURN_BUNDLE_TAG = L"WixBundleTag";
 
 // The following constants must stay in sync with src\wix\Binder.cs
 const LPCWSTR BURN_BUNDLE_NAME = L"WixBundleName";
 const LPCWSTR BURN_BUNDLE_ORIGINAL_SOURCE = L"WixBundleOriginalSource";
-const LPCWSTR BURN_BUNDLE_PROVIDER_KEY = L"WixBundleProviderKey";
+const LPCWSTR BURN_BUNDLE_LAST_USED_SOURCE = L"WixBundleLastUsedSource";
 
 
 // enums
@@ -67,6 +70,13 @@ enum BURN_ELEVATION_STATE
     BURN_ELEVATION_STATE_UNELEVATED_EXPLICITLY,
     BURN_ELEVATION_STATE_ELEVATED,
     BURN_ELEVATION_STATE_ELEVATED_EXPLICITLY,
+};
+
+enum BURN_AU_PAUSE_ACTION
+{
+    BURN_AU_PAUSE_ACTION_NONE,
+    BURN_AU_PAUSE_ACTION_IFELEVATED,
+    BURN_AU_PAUSE_ACTION_IFELEVATED_NORESUME,
 };
 
 
@@ -110,10 +120,12 @@ typedef struct _BURN_ENGINE_STATE
     BURN_PLAN plan;
 
     BURN_MODE mode;
+    BURN_AU_PAUSE_ACTION automaticUpdates;
 
     BURN_ELEVATION_STATE elevationState;
     DWORD dwElevatedLoggingTlsId;
 
+    LPWSTR sczBundleEngineWorkingPath;
     BURN_PIPE_CONNECTION companionConnection;
     BURN_PIPE_CONNECTION embeddedConnection;
 

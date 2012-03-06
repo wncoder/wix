@@ -94,6 +94,7 @@ typedef struct _BURN_CACHE_ACTION
             LPWSTR sczExecutableName;
             LPWSTR sczLayoutDirectory;
             LPWSTR sczUnverifiedPath;
+            DWORD64 qwBundleSize;
         } bundleLayout;
         struct
         {
@@ -122,6 +123,7 @@ typedef struct _BURN_CACHE_ACTION
         struct
         {
             BURN_CONTAINER* pContainer;
+            DWORD64 qwTotalExtractSize;
             DWORD iSkipUntilAcquiredByAction;
             LPWSTR sczContainerUnverifiedPath;
 
@@ -194,7 +196,6 @@ typedef struct _BURN_EXECUTE_ACTION
         struct
         {
             BURN_PACKAGE* pPackage;
-            LPWSTR sczProductCode;
             LPWSTR sczLogPath;
             DWORD dwLoggingAttributes;
             INSTALLUILEVEL uiLevel;
@@ -294,6 +295,10 @@ void PlanUninitialize(
 void PlanUninitializeExecuteAction(
     __in BURN_EXECUTE_ACTION* pExecuteAction
     );
+HRESULT PlanSetVariables(
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_VARIABLES* pVariables
+    );
 HRESULT PlanDefaultPackageRequestState(
     __in BURN_PACKAGE_TYPE packageType,
     __in BOOTSTRAPPER_PACKAGE_STATE currentState,
@@ -307,6 +312,7 @@ HRESULT PlanDefaultPackageRequestState(
 HRESULT PlanLayoutBundle(
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzExecutableName,
+    __in DWORD64 qwBundleSize,
     __in BURN_VARIABLES* pVariables,
     __in BURN_PAYLOADS* pPayloads,
     __out_z LPWSTR* psczLayoutDirectory
