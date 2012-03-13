@@ -185,6 +185,7 @@ typedef struct _BURN_PACKAGE
     BOOTSTRAPPER_ACTION_STATE rollback;         // only valid during Plan.
     BURN_DEPENDENCY_ACTION dependency;          // only valid during Plan.
     BOOL fDependencyManagerWasHere;             // only valid during Plan.
+    HRESULT hrCacheResult;                      // only valid during Apply.
 
     BURN_PACKAGE_PAYLOAD* rgPayloads;
     DWORD cPayloads;

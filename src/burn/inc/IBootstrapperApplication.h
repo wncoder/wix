@@ -51,6 +51,13 @@ enum BOOTSTRAPPER_RESUME_TYPE
 };
 
 
+enum BOOTSTRAPPER_ERROR_TYPE
+{
+    BOOTSTRAPPER_ERROR_TYPE_ELEVATE,            // error occurred trying to elevate.
+    BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER,  // error came from windows installer.
+};
+
+
 enum BOOTSTRAPPER_RELATED_OPERATION
 {
     BOOTSTRAPPER_RELATED_OPERATION_NONE,
@@ -86,6 +93,7 @@ enum BOOTSTRAPPER_RELATION_TYPE
     BOOTSTRAPPER_RELATION_UPGRADE,
     BOOTSTRAPPER_RELATION_ADDON,
     BOOTSTRAPPER_RELATION_PATCH,
+    BOOTSTRAPPER_RELATION_DEPENDENT,
 };
 
 
@@ -337,6 +345,7 @@ DECLARE_INTERFACE_IID_(IBootstrapperApplication, IUnknown, "53C31D56-49C0-426B-A
     //  IDNOACTION instructs the engine to pass the error through to default
     //             handling which usually results in the apply failing.
     STDMETHOD_(int, OnError)(
+        __in BOOTSTRAPPER_ERROR_TYPE errorType,
         __in_z_opt LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z_opt LPCWSTR wzError,

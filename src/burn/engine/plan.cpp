@@ -94,10 +94,14 @@ static HRESULT RemoveUnnecessaryActions(
     __in BURN_EXECUTE_ACTION* rgActions,
     __in DWORD cActions
     );
+static HRESULT FinalizeSlipstreamPatchActions(
+    __in BURN_EXECUTE_ACTION* rgActions,
+    __in DWORD cActions
+    );
 
 // function definitions
 
-extern "C" void PlanUninitialize(
+extern "C" void PlanReset(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGES* pPackages
     )
@@ -165,6 +169,7 @@ extern "C" void PlanUninitializeExecuteAction(
     case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
         ReleaseStr(pExecuteAction->msiPackage.sczLogPath);
         ReleaseMem(pExecuteAction->msiPackage.rgFeatures);
+        ReleaseMem(pExecuteAction->msiPackage.rgSlipstreamPatches);
         ReleaseMem(pExecuteAction->msiPackage.rgOrderedPatches);
         break;
 
@@ -402,7 +407,7 @@ extern "C" HRESULT PlanExecutePackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
-    __in LPCWSTR wzBundleProviderKey,
+    __in_z LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent
     )
 {
@@ -435,7 +440,7 @@ extern "C" HRESULT PlanExecutePackage(
     ExitOnFailure1(hr, "Failed to calculate plan actions for package: %ls", pPackage->sczId);
 
     // Calculate package states based on reference count and plan certain dependency actions prior to planning the package execute action.
-    hr = DependencyPlanPackageBegin(pPackage, pPlan, wzBundleProviderKey);
+    hr = DependencyPlanPackageBegin(NULL, pPackage, pPlan, wzBundleProviderKey);
     ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
     // Exe packages require the package for all operations (even uninstall).
@@ -539,28 +544,29 @@ extern "C" HRESULT PlanRelatedBundles(
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent,
     __in DWORD dwExecuteActionEarlyIndex
     )
 {
     HRESULT hr = S_OK;
     LPWSTR sczIgnoreDependencies = NULL;
-    BOOTSTRAPPER_REQUEST_STATE defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
 
     // Get the list of dependencies to ignore to pass to related bundles.
-    hr = DependencyPlanRelatedBundles(pPlan, &sczIgnoreDependencies);
+    hr = DependencyAllocIgnoreDependencies(pPlan, &sczIgnoreDependencies);
     ExitOnFailure(hr, "Failed to get the list of dependencies to ignore.");
 
     for (DWORD i = 0; i < pRelatedBundles->cRelatedBundles; ++i)
     {
         DWORD *pdwInsertIndex = NULL;
         BURN_RELATED_BUNDLE* pRelatedBundle = pRelatedBundles->rgRelatedBundles + i;
-        BOOTSTRAPPER_REQUEST_STATE requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+        pRelatedBundle->package.defaultRequested = BOOTSTRAPPER_REQUEST_STATE_NONE;
+        pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_NONE;
 
         switch (pRelatedBundle->relationType)
         {
         case BOOTSTRAPPER_RELATION_UPGRADE:
-            requested = qwBundleVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
+            pRelatedBundle->package.requested = qwBundleVersion > pRelatedBundle->qwVersion ? BOOTSTRAPPER_REQUEST_STATE_ABSENT : BOOTSTRAPPER_REQUEST_STATE_NONE;
             break;
         case BOOTSTRAPPER_RELATION_PATCH: __fallthrough;
         case BOOTSTRAPPER_RELATION_ADDON:
@@ -570,20 +576,22 @@ extern "C" HRESULT PlanRelatedBundles(
 
             if (BOOTSTRAPPER_ACTION_UNINSTALL == action)
             {
-                requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
-                // Uninstall addons early in the chain, before other packages are installed
+                pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_ABSENT;
+
+                // Uninstall addons and patches early in the chain, before other packages are uninstalled.
                 pdwInsertIndex = &dwExecuteActionEarlyIndex;
             }
             else if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_MODIFY == action)
             {
-                requested = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
+                pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
             }
             else if (BOOTSTRAPPER_ACTION_REPAIR == action)
             {
-                requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
+                pRelatedBundle->package.requested = BOOTSTRAPPER_REQUEST_STATE_REPAIR;
             }
             break;
-        case BOOTSTRAPPER_RELATION_DETECT:
+        case BOOTSTRAPPER_RELATION_DETECT: __fallthrough;
+        case BOOTSTRAPPER_RELATION_DEPENDENT:
             break;
         default:
             hr = E_UNEXPECTED;
@@ -591,37 +599,69 @@ extern "C" HRESULT PlanRelatedBundles(
             break;
         }
 
-        defaultRequested = requested;
+        pRelatedBundle->package.defaultRequested = pRelatedBundle->package.requested;
 
-        int nResult = pUserExperience->pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &requested);
+        int nResult = pUserExperience->pUserExperience->OnPlanRelatedBundle(pRelatedBundle->package.sczId, &pRelatedBundle->package.requested);
         hr = UserExperienceInterpretResult(pUserExperience, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted plan related bundle.");
 
         // Log when the UX changed the bundle state so the engine doesn't get blamed for planning the wrong thing.
-        if (requested != defaultRequested)
+        if (pRelatedBundle->package.requested != pRelatedBundle->package.defaultRequested)
         {
-            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(requested), LoggingRequestStateToString(defaultRequested));
+            LogId(REPORT_STANDARD, MSG_PLANNED_BUNDLE_UX_CHANGED_REQUEST, pRelatedBundle->package.sczId, LoggingRequestStateToString(pRelatedBundle->package.requested), LoggingRequestStateToString(pRelatedBundle->package.defaultRequested));
         }
 
-        if (BOOTSTRAPPER_REQUEST_STATE_NONE != requested)
+        if (BOOTSTRAPPER_REQUEST_STATE_NONE != pRelatedBundle->package.requested)
         {
-            pRelatedBundle->package.requested = requested;
-
             hr = ExeEnginePlanCalculatePackage(&pRelatedBundle->package, TRUE);
             ExitOnFailure1(hr, "Failed to calcuate plan for related bundle: %ls", pRelatedBundle->package.sczId);
+
+            // Calculate package states based on reference count for addon and patch related bundles.
+            if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
+            {
+                hr = DependencyPlanPackageBegin(pdwInsertIndex, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
+                ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pRelatedBundle->package.sczId);
+
+                // If uninstalling a related bundle, make sure the bundle is uninstalled after removing registration.
+                if (pdwInsertIndex && BOOTSTRAPPER_ACTION_UNINSTALL == action)
+                {
+                    ++(*pdwInsertIndex);
+                }
+            }
 
             hr = ExeEnginePlanAddPackage(pdwInsertIndex, &pRelatedBundle->package, pPlan, pLog, pVariables, *phSyncpointEvent, FALSE);
             ExitOnFailure1(hr, "Failed to add to plan related bundle: %ls", pRelatedBundle->package.sczId);
 
-            LoggingIncrementPackageSequence();
-            ++pPlan->cExecutePackagesTotal;
-            ++pPlan->cOverallProgressTicksTotal;
+            // Calculate package states based on reference count for addon and patch related bundles.
+            if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
+            {
+                hr = DependencyPlanPackageComplete(&pRelatedBundle->package, pPlan, wzBundleProviderKey);
+                ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pRelatedBundle->package.sczId);
+            }
+
+            // If we are going to take any action on this package, add progress for it.
+            if (BOOTSTRAPPER_ACTION_STATE_NONE != pRelatedBundle->package.execute || BOOTSTRAPPER_ACTION_STATE_NONE != pRelatedBundle->package.execute)
+            {
+                LoggingIncrementPackageSequence();
+
+                ++pPlan->cExecutePackagesTotal;
+                ++pPlan->cOverallProgressTicksTotal;
+            }
 
             // If package is per-machine and is being executed, flag the plan to be per-machine as well.
             if (pRelatedBundle->package.fPerMachine)
             {
                 pPlan->fPerMachine = TRUE;
             }
+        }
+        else if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
+        {
+            // Make sure the package is properly ref-counted even if no plan is requested.
+            hr = DependencyPlanPackageBegin(pdwInsertIndex, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
+            ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pRelatedBundle->package.sczId);
+
+            hr = DependencyPlanPackageComplete(&pRelatedBundle->package, pPlan, wzBundleProviderKey);
+            ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pRelatedBundle->package.sczId);
         }
     }
 
@@ -631,7 +671,7 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT PlanRemoveUnnecessaryActions(
+extern "C" HRESULT PlanFinalizeActions(
     __in BURN_PLAN* pPlan
     )
 {
@@ -642,6 +682,9 @@ extern "C" HRESULT PlanRemoveUnnecessaryActions(
 
     hr = RemoveUnnecessaryActions(FALSE, pPlan->rgRollbackActions, pPlan->cRollbackActions);
     ExitOnFailure(hr, "Failed to remove unnecessary execute actions.");
+
+    hr = FinalizeSlipstreamPatchActions(pPlan->rgExecuteActions, pPlan->cExecuteActions);
+    ExitOnFailure(hr, "Failed to finalize slipstream execute actions.");
 
 LExit:
     return hr;
@@ -721,7 +764,7 @@ extern "C" HRESULT PlanExecuteCacheSyncAndRollback(
     hr = PlanAppendExecuteAction(pPlan, &pAction);
     ExitOnFailure(hr, "Failed to append wait action for caching.");
 
-    pAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
+    pAction->type = BURN_EXECUTE_ACTION_TYPE_WAIT_SYNCPOINT;
     pAction->syncpoint.hEvent = hCacheEvent;
 
     if (fPlanPackageCacheRollback)
@@ -900,16 +943,11 @@ LExit:
 
 extern "C" HRESULT PlanRollbackBoundaryBegin(
     __in BURN_PLAN* pPlan,
-    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
-    __out HANDLE* phEvent
+    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary
     )
 {
     HRESULT hr = S_OK;
     BURN_EXECUTE_ACTION* pExecuteAction = NULL;
-
-    // Create sync event.
-    *phEvent = ::CreateEventW(NULL, TRUE, FALSE, NULL);
-    ExitOnNullWithLastError(*phEvent, hr, "Failed to create event.");
 
     // Add begin rollback boundary to execute plan.
     hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
@@ -925,33 +963,17 @@ extern "C" HRESULT PlanRollbackBoundaryBegin(
     pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_ROLLBACK_BOUNDARY;
     pExecuteAction->rollbackBoundary.pRollbackBoundary = pRollbackBoundary;
 
-    // Add execute sync-point.
-    hr = PlanAppendExecuteAction(pPlan, &pExecuteAction);
-    ExitOnFailure(hr, "Failed to append wait for rollback boundary action.");
-
-    pExecuteAction->type = BURN_EXECUTE_ACTION_TYPE_SYNCPOINT;
-    pExecuteAction->syncpoint.hEvent = *phEvent;
-
 LExit:
     return hr;
 }
 
 extern "C" HRESULT PlanRollbackBoundaryComplete(
-    __in BURN_PLAN* pPlan,
-    __in HANDLE hEvent
+    __in BURN_PLAN* pPlan
     )
 {
     HRESULT hr = S_OK;
-    BURN_CACHE_ACTION* pCacheAction = NULL;
     BURN_EXECUTE_ACTION* pExecuteAction = NULL;
     DWORD dwCheckpointId = 0;
-
-    // Add cache sync-point.
-    hr = AppendCacheAction(pPlan, &pCacheAction);
-    ExitOnFailure(hr, "Failed to add syncpoint to cache plan.");
-
-    pCacheAction->type = BURN_CACHE_ACTION_TYPE_SYNCPOINT;
-    pCacheAction->syncpoint.hEvent = hEvent;
 
     // Add checkpoints.
     dwCheckpointId = GetNextCheckpointId();
@@ -1057,7 +1079,7 @@ static void UninitializeCacheAction(
 {
     switch (pCacheAction->type)
     {
-    case BURN_CACHE_ACTION_TYPE_SYNCPOINT:
+    case BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT:
         ReleaseHandle(pCacheAction->syncpoint.hEvent);
         break;
 
@@ -1240,7 +1262,7 @@ static HRESULT AddCachePackage(
     hr = AppendCacheAction(pPlan, &pCacheAction);
     ExitOnFailure(hr, "Failed to append cache action.");
 
-    pCacheAction->type = BURN_CACHE_ACTION_TYPE_SYNCPOINT;
+    pCacheAction->type = BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT;
     pCacheAction->syncpoint.hEvent = ::CreateEventW(NULL, TRUE, FALSE, NULL);
     ExitOnNullWithLastError(pCacheAction->syncpoint.hEvent, hr, "Failed to create syncpoint event.");
 
@@ -1295,7 +1317,7 @@ static BOOL AlreadyPlannedCachePackage(
         {
             if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, pCacheAction->packageStop.pPackage->sczId, -1, wzPackageId, -1))
             {
-                if (iCacheAction + 1 < pPlan->cCacheActions && BURN_CACHE_ACTION_TYPE_SYNCPOINT == pPlan->rgCacheActions[iCacheAction + 1].type)
+                if (iCacheAction + 1 < pPlan->cCacheActions && BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT == pPlan->rgCacheActions[iCacheAction + 1].type)
                 {
                     *phSyncpointEvent = pPlan->rgCacheActions[iCacheAction + 1].syncpoint.hEvent;
                 }
@@ -1744,6 +1766,47 @@ static HRESULT RemoveUnnecessaryActions(
     return hr;
 }
 
+static HRESULT FinalizeSlipstreamPatchActions(
+    __in BURN_EXECUTE_ACTION* rgActions,
+    __in DWORD cActions
+    )
+{
+    HRESULT hr = S_OK;
+
+    for (DWORD i = 0; i < cActions; ++i)
+    {
+        BURN_EXECUTE_ACTION* pAction = rgActions + i;
+
+        // If this MSI package contains slipstream patches, store patch actions here.
+        if (BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE == pAction->type && pAction->msiPackage.pPackage->Msi.cSlipstreamMspPackages)
+        {
+            BURN_PACKAGE* pPackage = pAction->msiPackage.pPackage;
+            pAction->msiPackage.rgSlipstreamPatches = (BOOTSTRAPPER_ACTION_STATE*)MemAlloc(sizeof(BOOTSTRAPPER_ACTION_STATE) * pPackage->Msi.cSlipstreamMspPackages, TRUE);
+            ExitOnNull(pAction->msiPackage.rgSlipstreamPatches, hr, E_OUTOFMEMORY, "Failed to allocate memory for patch actions.");
+
+            for (DWORD j = 0; j < pPackage->Msi.cSlipstreamMspPackages; ++j)
+            {
+                BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[j];
+                AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
+
+                pAction->msiPackage.rgSlipstreamPatches[j] = pMspPackage->execute;
+                for (DWORD k = 0; k < pMspPackage->Msp.cTargetProductCodes; ++k)
+                {
+                    BURN_MSPTARGETPRODUCT* pTargetProduct = pMspPackage->Msp.rgTargetProducts + k;
+                    if (pPackage == pTargetProduct->pChainedTargetPackage)
+                    {
+                        pAction->msiPackage.rgSlipstreamPatches[j] = pTargetProduct->execute;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+LExit:
+    return hr;
+}
+
 
 #ifdef DEBUG
 
@@ -1800,7 +1863,7 @@ static void CacheActionLog(
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: ROLLBACK_PACKAGE id: %ls, skip until retried: %hs", wzBase, iAction, pAction->rollbackPackage.pPackage->sczId, LoggingBoolToString(pAction->fSkipUntilRetried));
         break;
 
-    case BURN_CACHE_ACTION_TYPE_SYNCPOINT:
+    case BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT:
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: SIGNAL_SYNCPOINT event handle: 0x%x, skip until retried: %hs", wzBase, iAction, pAction->syncpoint.hEvent, LoggingBoolToString(pAction->fSkipUntilRetried));
         break;
 
@@ -1863,7 +1926,7 @@ static void ExecuteActionLog(
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: ROLLBACK_BOUNDARY id: %ls, vital: %ls", wzBase, iAction, pAction->rollbackBoundary.pRollbackBoundary->sczId, pAction->rollbackBoundary.pRollbackBoundary->fVital ? L"yes" : L"no");
         break;
 
-    case BURN_EXECUTE_ACTION_TYPE_SYNCPOINT:
+    case BURN_EXECUTE_ACTION_TYPE_WAIT_SYNCPOINT:
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: WAIT_SYNCPOINT event handle: 0x%x", wzBase, iAction, pAction->syncpoint.hEvent);
         break;
 

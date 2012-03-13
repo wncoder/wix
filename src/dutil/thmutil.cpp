@@ -145,7 +145,7 @@ static HRESULT DrawProgressBar(
     __in const THEME_CONTROL* pControl
     );
 static BOOL DrawHoverControl(
-    __in HWND hWnd,
+    __in THEME* pTheme,
     __in BOOL fHover
     );
 static DWORD CALLBACK RichEditStreamFromFileHandleCallback(
@@ -159,12 +159,6 @@ static DWORD CALLBACK RichEditStreamFromMemoryCallback(
     __in_bcount(cb) LPBYTE pbBuff,
     __in LONG cb,
     __in LONG *pcb
-    );
-static void CALLBACK BillboardTimerProc(
-    __in HWND hwnd,
-    __in UINT uMsg,
-    __in UINT_PTR idEvent,
-    __in DWORD dwTime
     );
 static void FreeFont(
     __in THEME_FONT* pFont
@@ -187,15 +181,24 @@ static void FreeColumn(
 static void FreeTab(
     __in THEME_TAB* pTab
     );
+static void CALLBACK OnBillboardTimer(
+    __in const THEME* pTheme,
+    __in HWND hwnd,
+    __in UINT_PTR idEvent
+    );
 static HRESULT OnRichEditEnLink(
     __in LPARAM lParam,
     __in HWND hWndRichEdit,
     __in HWND hWnd
     );
 static BOOL ControlIsType(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl,
     __in THEME_CONTROL_TYPE type
+    );
+static const THEME_CONTROL* FindControlFromHWnd(
+    __in const THEME* pTheme,
+    __in HWND hWnd
     );
 
 
@@ -522,8 +525,6 @@ DAPI_(HRESULT) ThemeLoadControls(
 
             pControl->hWnd = ::CreateWindowExW(dwWindowExBits, wzWindowClass, pControl->sczText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
             ExitOnNullWithLastError(pControl->hWnd, hr, "Failed to create window.");
-
-            ::SetWindowLongPtrW(pControl->hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pControl));
 
             if (THEME_CONTROL_TYPE_EDITBOX == pControl->type)
             {
@@ -902,6 +903,10 @@ extern "C" LRESULT CALLBACK ThemeDefWindowProc(
             }
             return 0;
 
+        case WM_TIMER:
+            OnBillboardTimer(pTheme, hWnd, wParam);
+            break;
+
         case WM_NOTIFY:
             if (lParam)
             {
@@ -1048,8 +1053,8 @@ DAPI_(BOOL) ThemeControlExists(
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
     if (hWnd)
     {
-        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        fExists = (hWnd == pControl->hWnd);
+        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
+        fExists = (pControl && hWnd == pControl->hWnd);
     }
 
     return fExists;
@@ -1163,8 +1168,9 @@ DAPI_(HRESULT) ThemeDrawControl(
     )
 {
     HRESULT hr = S_OK;
-    const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(pdis->hwndItem, GWLP_USERDATA));
+    const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, pdis->hwndItem);
 
+    AssertSz(pControl, "Expected control window from owner draw window.");
     AssertSz(pControl->hWnd == pdis->hwndItem, "Expected control window to match owner draw window.");
     AssertSz(pControl->nWidth < 1 || pControl->nWidth == pdis->rcItem.right - pdis->rcItem.left, "Expected control window width to match owner draw window width.");
     AssertSz(pControl->nHeight < 1 || pControl->nHeight == pdis->rcItem.bottom - pdis->rcItem.top, "Expected control window height to match owner draw window height.");
@@ -1217,14 +1223,14 @@ DAPI_(BOOL) ThemeHoverControl(
     {
         if (pTheme->hwndHover && pTheme->hwndHover != hwndParent)
         {
-            DrawHoverControl(pTheme->hwndHover, FALSE);
+            DrawHoverControl(pTheme, FALSE);
         }
 
         pTheme->hwndHover = hwndControl;
 
         if (pTheme->hwndHover && pTheme->hwndHover != hwndParent)
         {
-            fHovered = DrawHoverControl(pTheme->hwndHover, TRUE);
+            fHovered = DrawHoverControl(pTheme, TRUE);
         }
     }
 
@@ -1258,7 +1264,7 @@ DAPI_(BOOL) ThemeSetControlColor(
     }
     else
     {
-        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
         pFont = (!pControl || THEME_INVALID_ID == pControl->dwFontId) ? NULL : pTheme->rgFonts + pControl->dwFontId;
     }
 
@@ -1299,13 +1305,13 @@ DAPI_(HRESULT) ThemeStartBillboard(
 
     if (hWnd)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
+        THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, hWnd));
+        if (pControl && THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
         {
             WORD wStart = static_cast<WORD>((iImage < pControl->cBillboards) ? iImage : (pControl->dwData < pControl->cBillboards) ? pControl->dwData : 0);
 
             pControl->dwData = wStart;
-            if (!::SetTimer(pTheme->hwndParent, pControl->wId, pControl->wBillboardInterval, BillboardTimerProc))
+            if (!::SetTimer(pTheme->hwndParent, pControl->wId, pControl->wBillboardInterval, NULL))
             {
                 ExitWithLastError(hr, "Failed to start billboard.");
             }
@@ -1329,8 +1335,8 @@ DAPI_(HRESULT) ThemeStopBillboard(
 
     if (hWnd)
     {
-        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
+        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
+        if (pControl && THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
         {
             if (::KillTimer(pTheme->hwndParent, pControl->wId))
             {
@@ -1354,31 +1360,34 @@ DAPI_(HRESULT) ThemeSetProgressControl(
 
     if (hWnd)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        DWORD dwCurrentProgress = LOWORD(pControl->dwData);
-
-        if (dwCurrentProgress != dwProgressPercentage)
+        THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, hWnd));
+        if (pControl)
         {
-            DWORD dwColor = HIWORD(pControl->dwData);
-            pControl->dwData = MAKEDWORD(dwProgressPercentage, dwColor);
+            DWORD dwCurrentProgress = LOWORD(pControl->dwData);
 
-            if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
+            if (dwCurrentProgress != dwProgressPercentage)
             {
-                if (!::InvalidateRect(hWnd, NULL, FALSE))
+                DWORD dwColor = HIWORD(pControl->dwData);
+                pControl->dwData = MAKEDWORD(dwProgressPercentage, dwColor);
+
+                if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
                 {
-                    ExitWithLastError(hr, "Failed to invalidate progress bar window.");
+                    if (!::InvalidateRect(hWnd, NULL, FALSE))
+                    {
+                        ExitWithLastError(hr, "Failed to invalidate progress bar window.");
+                    }
                 }
+                else
+                {
+                    ::SendMessageW(hWnd, PBM_SETPOS, dwProgressPercentage, 0);
+                }
+
+                hr = S_OK;
             }
             else
             {
-                ::SendMessageW(hWnd, PBM_SETPOS, dwProgressPercentage, 0);
+                hr = S_FALSE;
             }
-
-            hr = S_OK;
-        }
-        else
-        {
-            hr = S_FALSE;
         }
     }
 
@@ -1397,10 +1406,10 @@ DAPI_(HRESULT) ThemeSetProgressControlColor(
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
     if (hWnd)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, hWnd));
 
         // Only set color on owner draw progress bars.
-        if (pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
+        if (pControl && pControl->hImage || (pTheme->hImage && 0 <= pControl->nSourceX && 0 <= pControl->nSourceY))
         {
             DWORD dwCurrentColor = HIWORD(pControl->dwData);
 
@@ -1824,15 +1833,15 @@ static HRESULT ParseFonts(
     COLORREF crBackground = THEME_INVISIBLE_COLORREF;
 
     hr = XmlSelectNodes(pElement, L"Font|f", &pixnl);
-    if (S_FALSE == hr)
-    {
-        hr = S_OK;
-        ExitFunction();
-    }
     ExitOnFailure(hr, "Failed to find font elements.");
 
     hr = pixnl->get_length(reinterpret_cast<long*>(&pTheme->cFonts));
     ExitOnFailure(hr, "Failed to count the number of theme fonts.");
+
+    if (0 == pTheme->cFonts)
+    {
+        ExitFunction1(hr = S_OK);
+    }
 
     pTheme->rgFonts = static_cast<THEME_FONT*>(MemAlloc(sizeof(THEME_FONT) * pTheme->cFonts, TRUE));
     ExitOnNull(pTheme->rgFonts, hr, E_OUTOFMEMORY, "Failed to allocate theme fonts.");
@@ -1984,10 +1993,6 @@ static HRESULT ParsePages(
     DWORD iPage = 0;
 
     hr = XmlSelectNodes(pElement, L"Page", &pixnl);
-    if (S_FALSE == hr)
-    {
-        ExitFunction1(hr = S_OK);
-    }
     ExitOnFailure(hr, "Failed to find page elements.");
 
     hr = pixnl->get_length(reinterpret_cast<long*>(&pTheme->cPages));
@@ -2059,10 +2064,6 @@ static HRESULT ParseImageLists(
     int iRetVal = 0;
 
     hr = XmlSelectNodes(pElement, L"ImageList", &pixnlImageLists);
-    if (S_FALSE == hr)
-    {
-        ExitFunction1(hr = S_OK);
-    }
     ExitOnFailure(hr, "Failed to find ImageList elements.");
 
     hr = pixnlImageLists->get_length(reinterpret_cast<long*>(&pTheme->cImageLists));
@@ -2087,11 +2088,11 @@ static HRESULT ParseImageLists(
         hr = XmlSelectNodes(pixnImageList, L"Image|i", &pixnlImages);
         ExitOnFailure(hr, "Failed to select child Image|i nodes");
 
-        if (S_FALSE != hr)
-        {
-            hr = pixnlImages->get_length(reinterpret_cast<long*>(&dwImageCount));
-            ExitOnFailure(hr, "Failed to count the number of images in list.");
+        hr = pixnlImages->get_length(reinterpret_cast<long*>(&dwImageCount));
+        ExitOnFailure(hr, "Failed to count the number of images in list.");
 
+        if (0 < dwImageCount)
+        {
             i = 0;
             while (S_OK == (hr = XmlNextElement(pixnlImages, &pixnImage, NULL)))
             {
@@ -2156,10 +2157,6 @@ static HRESULT ParseControls(
     DWORD iPageControl = 0;
 
     hr = XmlSelectNodes(pElement, L"*", &pixnl);
-    if (S_FALSE == hr)
-    {
-        ExitFunction1(hr = S_OK);
-    }
     ExitOnFailure(hr, "Failed to find control elements.");
 
     hr = pixnl->get_length(reinterpret_cast<long*>(&cNewControls));
@@ -2395,7 +2392,7 @@ static HRESULT ParseControl(
             hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
         }
     }
-    ExitOnFailure(hr, "Failed to find control weight attribute.");
+    ExitOnFailure(hr, "Failed to find control height attribute.");
 
     // Parse the optional background resource image.
     hr = ParseImage(hModule, wzRelativePath, pixn, &pControl->hImage);
@@ -2722,11 +2719,11 @@ static HRESULT ParseBillboards(
     hr = XmlSelectNodes(pixn, L"Image", &pixnl);
     ExitOnFailure(hr, "Failed to select child billboard image nodes.");
 
-    if (S_FALSE != hr)
-    {
-        hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cBillboards));
-        ExitOnFailure(hr, "Failed to count the number of billboard images.");
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cBillboards));
+    ExitOnFailure(hr, "Failed to count the number of billboard images.");
 
+    if (0 < pControl->cBillboards)
+    {
         hr = ::SizeTMult(sizeof(THEME_BILLBOARD), pControl->cBillboards, &cbAllocSize);
         ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_BILLBOARD structs", pControl->cBillboards);
 
@@ -2779,10 +2776,11 @@ static HRESULT ParseColumns(
     hr = XmlSelectNodes(pixn, L"Column|c", &pixnl);
     ExitOnFailure(hr, "Failed to select child column nodes");
 
-    if (S_FALSE != hr)
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cColumns));
+    ExitOnFailure(hr, "Failed to count the number of control columns.");
+
+    if (0 < pControl->cColumns)
     {
-        hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cColumns));
-        ExitOnFailure(hr, "Failed to count the number of control columns.");
 
         hr = ::SizeTMult(sizeof(THEME_COLUMN), pControl->cColumns, &cbAllocSize);
         ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_COLUMN structs", pControl->cColumns);
@@ -2839,11 +2837,11 @@ static HRESULT ParseTabs(
     hr = XmlSelectNodes(pixn, L"Tab|t", &pixnl);
     ExitOnFailure(hr, "Failed to select child tab nodes");
 
-    if (S_FALSE != hr)
-    {
-        hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cTabs));
-        ExitOnFailure(hr, "Failed to count the number of tabs.");
+    hr = pixnl->get_length(reinterpret_cast<long*>(&pControl->cTabs));
+    ExitOnFailure(hr, "Failed to count the number of tabs.");
 
+    if (0 < pControl->cTabs)
+    {
         hr = ::SizeTMult(sizeof(THEME_TAB), pControl->cTabs, &cbAllocSize);
         ExitOnFailure1(hr, "Overflow while calculating allocation size for %u THEME_TAB structs", pControl->cTabs);
 
@@ -3078,17 +3076,16 @@ static HRESULT DrawProgressBar(
 
 
 static BOOL DrawHoverControl(
-    __in HWND hWnd,
+    __in THEME* pTheme,
     __in BOOL fHover
     )
 {
     BOOL fChangedHover = FALSE;
-    THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-    AssertSz(pControl->hWnd == hWnd, "Expected control's window to be the same as the window's user data.");
+    THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, pTheme->hwndHover));
 
     // Only hyperlinks and owner-drawn buttons have hover states.
-    if (THEME_CONTROL_TYPE_HYPERLINK == pControl->type ||
-        (THEME_CONTROL_TYPE_BUTTON == pControl->type && (pControl->hImage || pControl->nSourceX)))
+    if (pControl && (THEME_CONTROL_TYPE_HYPERLINK == pControl->type ||
+        (THEME_CONTROL_TYPE_BUTTON == pControl->type && (pControl->hImage || pControl->nSourceX))))
     {
         if (fHover)
         {
@@ -3272,33 +3269,35 @@ static DWORD CALLBACK RichEditStreamFromMemoryCallback(
 }
 
 
-static void CALLBACK BillboardTimerProc(
+static void CALLBACK OnBillboardTimer(
+    __in const THEME* pTheme,
     __in HWND hwnd,
-    __in UINT /*uMsg*/,
-    __in UINT_PTR idEvent,
-    __in DWORD /*dwTime*/
+    __in UINT_PTR idEvent
     )
 {
     HWND hwndControl = ::GetDlgItem(hwnd, static_cast<int>(idEvent));
 
     if (hwndControl)
     {
-        THEME_CONTROL* pControl = reinterpret_cast<THEME_CONTROL*>(::GetWindowLongPtrW(hwndControl, GWLP_USERDATA));
-        AssertSz(THEME_CONTROL_TYPE_BILLBOARD == pControl->type, "Only billboard controls should have the BillboardTimerProc().");
+        THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, hwndControl));
+        AssertSz(pControl && THEME_CONTROL_TYPE_BILLBOARD == pControl->type, "Only billboard controls should have the BillboardTimerProc().");
 
-        ++pControl->dwData;
-        if (pControl->dwData < pControl->cBillboards)
+        if (pControl)
         {
-            ::InvalidateRect(hwndControl, NULL, FALSE);
-        }
-        else if (pControl->fBillboardLoops)
-        {
-            pControl->dwData = 0;
-            ::InvalidateRect(hwndControl, NULL, FALSE);
-        }
-        else // no more looping
-        {
-            ::KillTimer(hwnd, idEvent);
+            ++pControl->dwData;
+            if (pControl->dwData < pControl->cBillboards)
+            {
+                ::InvalidateRect(hwndControl, NULL, FALSE);
+            }
+            else if (pControl->fBillboardLoops)
+            {
+                pControl->dwData = 0;
+                ::InvalidateRect(hwndControl, NULL, FALSE);
+            }
+            else // no more looping
+            {
+                ::KillTimer(hwnd, idEvent);
+            }
         }
     }
 }
@@ -3346,18 +3345,35 @@ LExit:
 }
 
 static BOOL ControlIsType(
-    __in THEME* pTheme,
+    __in const THEME* pTheme,
     __in DWORD dwControl,
-    __in THEME_CONTROL_TYPE type
+    __in const THEME_CONTROL_TYPE type
     )
 {
     BOOL fIsType = FALSE;
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
     if (hWnd)
     {
-        const THEME_CONTROL* pControl = reinterpret_cast<const THEME_CONTROL*>(::GetWindowLongPtrW(hWnd, GWLP_USERDATA));
-        fIsType = (type == pControl->type);
+        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
+        fIsType = (pControl && type == pControl->type);
     }
 
     return fIsType;
+}
+
+static const THEME_CONTROL* FindControlFromHWnd(
+    __in const THEME* pTheme,
+    __in HWND hWnd
+    )
+{
+    // as we can't use GWLP_USERDATA (SysLink controls on Windows XP uses it too)...
+    for (DWORD i = 0; i < pTheme->cControls; ++i)
+    {
+        if (hWnd == pTheme->rgControls[i].hWnd)
+        {
+            return pTheme->rgControls + i;
+        }
+    }
+
+    return NULL;
 }

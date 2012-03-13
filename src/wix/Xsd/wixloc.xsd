@@ -33,7 +33,7 @@
         <xs:complexType>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="String" />
-                <xs:element ref="Control" />
+                <xs:element ref="UI" />
             </xs:choice>
             <xs:attribute name="Codepage" type="xs:string">
                 <xs:annotation>
@@ -74,7 +74,7 @@
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="Control">
+    <xs:element name="UI">
         <xs:annotation>
             <xs:documentation>Allows a localization to override the position, size, and content of controls.</xs:documentation>
         </xs:annotation>
@@ -84,7 +84,7 @@
               <xs:documentation>Identifies the dialog the control to localize is in.</xs:documentation>
             </xs:annotation>
           </xs:attribute>
-            <xs:attribute name="Control" use="required" type="xs:string">
+            <xs:attribute name="Control" type="xs:string">
             <xs:annotation>
               <xs:documentation>Combined with the Dialog attribute, identifies the control to localize.</xs:documentation>
             </xs:annotation>

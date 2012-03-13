@@ -70,6 +70,10 @@ HRESULT DAPI LogRename(
     __in_z LPCWSTR wzNewPath
     );
 
+void DAPI LogClose(
+    __in BOOL fFooter
+    );
+
 void DAPI LogUninitialize(
     __in BOOL fFooter
     );

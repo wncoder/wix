@@ -36,7 +36,7 @@ enum BURN_CACHE_ACTION_TYPE
     BURN_CACHE_ACTION_TYPE_PACKAGE_START,
     BURN_CACHE_ACTION_TYPE_PACKAGE_STOP,
     BURN_CACHE_ACTION_TYPE_ROLLBACK_PACKAGE,
-    BURN_CACHE_ACTION_TYPE_SYNCPOINT,
+    BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER,
     BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD,
@@ -49,7 +49,7 @@ enum BURN_EXECUTE_ACTION_TYPE
 {
     BURN_EXECUTE_ACTION_TYPE_NONE,
     BURN_EXECUTE_ACTION_TYPE_CHECKPOINT,
-    BURN_EXECUTE_ACTION_TYPE_SYNCPOINT,
+    BURN_EXECUTE_ACTION_TYPE_WAIT_SYNCPOINT,
     BURN_EXECUTE_ACTION_TYPE_UNCACHE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_EXE_PACKAGE,
     BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE,
@@ -202,6 +202,7 @@ typedef struct _BURN_EXECUTE_ACTION
             BOOTSTRAPPER_ACTION_STATE action;
 
             BOOTSTRAPPER_FEATURE_ACTION* rgFeatures;
+            BOOTSTRAPPER_ACTION_STATE* rgSlipstreamPatches;
 
             BURN_ORDERED_PATCHES* rgOrderedPatches;
             DWORD cPatches;
@@ -288,7 +289,7 @@ typedef struct _BURN_PLAN
 
 // functions
 
-void PlanUninitialize(
+void PlanReset(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGES* pPackages
     );
@@ -329,7 +330,7 @@ HRESULT PlanExecutePackage(
     __in BURN_PACKAGE* pPackage,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
-    __in LPCWSTR wzBundleProviderKey,
+    __in_z LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent
     );
 HRESULT PlanRelatedBundles(
@@ -340,10 +341,11 @@ HRESULT PlanRelatedBundles(
     __in BURN_PLAN* pPlan,
     __in BURN_LOGGING* pLog,
     __in BURN_VARIABLES* pVariables,
+    __in_z LPCWSTR wzBundleProviderKey,
     __inout HANDLE* phSyncpointEvent,
     __in DWORD dwExecuteActionEarlyIndex
     );
-HRESULT PlanRemoveUnnecessaryActions(
+HRESULT PlanFinalizeActions(
     __in BURN_PLAN* pPlan
     );
 HRESULT PlanCleanPackage(
@@ -390,12 +392,10 @@ HRESULT PlanRemoveRegistration(
     );
 HRESULT PlanRollbackBoundaryBegin(
     __in BURN_PLAN* pPlan,
-    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary,
-    __out HANDLE* phEvent
+    __in BURN_ROLLBACK_BOUNDARY* pRollbackBoundary
     );
 HRESULT PlanRollbackBoundaryComplete(
-    __in BURN_PLAN* pPlan,
-    __in HANDLE hEvent
+    __in BURN_PLAN* pPlan
     );
 HRESULT PlanSetResumeCommand(
     __in BURN_REGISTRATION* pRegistration,

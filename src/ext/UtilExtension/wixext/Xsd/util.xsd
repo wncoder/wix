@@ -126,6 +126,18 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
+  <xs:element name="ComponentSearchRef">
+    <xs:annotation>
+      <xs:documentation>References a ComponentSearch.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
+    </xs:complexType>
+  </xs:element>
   <xs:element name="DirectorySearch">
     <xs:annotation>
       <xs:documentation>Describes a directory search.</xs:documentation>
@@ -158,6 +170,18 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DirectorySearchRef">
+    <xs:annotation>
+      <xs:documentation>References a DirectorySearch.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
     </xs:complexType>
   </xs:element>
   <xs:element name="EventSource">
@@ -299,6 +323,18 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FileSearchRef">
+    <xs:annotation>
+      <xs:documentation>References a FileSearch.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
     </xs:complexType>
   </xs:element>
   <xs:element name="FileShare">
@@ -789,6 +825,18 @@
       </xs:attribute>
     </xs:complexType>
   </xs:element>
+  <xs:element name="ProductSearchRef">
+    <xs:annotation>
+      <xs:documentation>References a ProductSearch.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
+    </xs:complexType>
+  </xs:element>
   <xs:element name="RemoveFolderEx">
       <xs:annotation>
           <xs:appinfo>
@@ -1004,6 +1052,18 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
+  <xs:element name="RegistrySearchRef">
+    <xs:annotation>
+      <xs:documentation>References a RegistrySearch.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="Id" type="xs:string" use="required" />
+    </xs:complexType>
+  </xs:element>
   <xs:element name="ServiceConfig">
     <xs:annotation>
       <xs:documentation>Service configuration information for failure actions.</xs:documentation>

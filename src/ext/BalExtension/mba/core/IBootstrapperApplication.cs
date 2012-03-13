@@ -169,6 +169,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [PreserveSig]
         [return: MarshalAs(UnmanagedType.I4)]
         Result OnError(
+            [MarshalAs(UnmanagedType.U4)] ErrorType errorType,
             [MarshalAs(UnmanagedType.LPWStr)] string wzPackageId,
             [MarshalAs(UnmanagedType.U4)] int dwCode,
             [MarshalAs(UnmanagedType.LPWStr)] string wzError,
@@ -446,6 +447,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// </summary>
         Arp,
     }
+
+    /// <summary>
+    /// Indicates what caused the error.
+    /// </summary>
+    public enum ErrorType
+    {
+        /// <summary>
+        /// The error occurred trying to elevate.
+        /// </summary>
+        Elevate,
+
+        /// <summary>
+        /// The error came from the Windows Installer.
+        /// </summary>
+        WindowsInstaller,
+    };
 
     public enum RelatedOperation
     {

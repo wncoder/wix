@@ -1243,9 +1243,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             return args.Result;
         }
 
-        Result IBootstrapperApplication.OnError(string wzPackageId, int dwCode, string wzError, int dwUIHint, int cData, string[] rgwzData, int nRecommendation)
+        Result IBootstrapperApplication.OnError(ErrorType errorType, string wzPackageId, int dwCode, string wzError, int dwUIHint, int cData, string[] rgwzData, int nRecommendation)
         {
-            ErrorEventArgs args = new ErrorEventArgs(wzPackageId, dwCode, wzError, dwUIHint, rgwzData, nRecommendation);
+            ErrorEventArgs args = new ErrorEventArgs(errorType, wzPackageId, dwCode, wzError, dwUIHint, rgwzData, nRecommendation);
             this.OnError(args);
 
             return args.Result;

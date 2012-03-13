@@ -13562,7 +13562,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if (null != id)
                 {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "Id", "Action", "none"));
+                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name, "Id", "ForceCreateOnInstall", "ForceDeleteOnUninstall", "yes", true));
                 }
             }
 
@@ -20807,8 +20807,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseChainElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            YesNoType disableRollback = YesNoType.NotSet;
-            YesNoType parallelCache = YesNoType.NotSet;
+            BundleChainAttributes attributes = BundleChainAttributes.None;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -20817,10 +20816,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     switch (attrib.LocalName)
                     {
                         case "DisableRollback":
-                            disableRollback = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
+                            {
+                                attributes |= BundleChainAttributes.DisableRollback;
+                            }
+                            break;
+                        case "DisableSystemRestore":
+                            if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
+                            {
+                                attributes |= BundleChainAttributes.DisableSystemRestore;
+                            }
                             break;
                         case "ParallelCache":
-                            parallelCache = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
+                            {
+                                attributes |= BundleChainAttributes.ParallelCache;
+                            }
                             break;
                         default:
                             this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -20887,8 +20898,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (!this.core.EncounteredError)
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "WixChain");
-                row[0] = YesNoType.Yes == disableRollback ? 1 : 0;
-                row[1] = YesNoType.Yes == parallelCache ? 1 : 0;
+                row[0] = (int)attributes;
             }
         }
 

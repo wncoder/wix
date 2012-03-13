@@ -113,6 +113,7 @@ typedef struct _BURN_ENGINE_STATE
     HANDLE hMessageWindowThread;
 
     BOOL fDisableRollback;
+    BOOL fDisableSystemRestore;
     BOOL fParallelCacheAndExecute;
 
     BURN_LOGGING log;

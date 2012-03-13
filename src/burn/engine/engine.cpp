@@ -77,6 +77,7 @@ extern "C" HRESULT EngineRun(
     BOOL fWiuInitialized = FALSE;
     BOOL fXmlInitialized = FALSE;
     LPWSTR sczExePath = NULL;
+    BOOL fRunNormal = FALSE;
     BOOL fRestart = FALSE;
 
     BURN_ENGINE_STATE engineState = { };
@@ -126,6 +127,8 @@ extern "C" HRESULT EngineRun(
     switch (engineState.mode)
     {
     case BURN_MODE_NORMAL:
+        fRunNormal = TRUE;
+
         hr = RunNormal(hInstance, &engineState);
         ExitOnFailure(hr, "Failed to run per-user mode.");
         break;
@@ -136,6 +139,8 @@ extern "C" HRESULT EngineRun(
         break;
 
     case BURN_MODE_EMBEDDED:
+        fRunNormal = TRUE;
+
         hr = RunEmbedded(hInstance, &engineState);
         ExitOnFailure(hr, "Failed to run embedded mode.");
         break;
@@ -157,16 +162,11 @@ extern "C" HRESULT EngineRun(
 LExit:
     ReleaseStr(sczExePath);
 
-    if (fLogInitialized)
+    // If anything went wrong but the log was never open, try to open a "failure" log
+    // and that will dump anything captured in the log memory buffer to the log.
+    if (FAILED(hr) && BURN_LOGGING_STATE_CLOSED == engineState.log.state)
     {
-        // If anything went wrong but the log was never open, try to open a "failure" log
-        // and that will dump anything captured in the log memory buffer to the log.
-        if (FAILED(hr) && BURN_LOGGING_STATE_CLOSED == engineState.log.state)
-        {
-            LogOpen(NULL, L"Setup", L"_Failed", L"txt", FALSE, FALSE, NULL);
-        }
-
-        LogUninitialize(FALSE);
+        LogOpen(NULL, L"Setup", L"_Failed", L"txt", FALSE, FALSE, NULL);
     }
 
     UserExperienceRemove(&engineState.userExperience);
@@ -195,9 +195,19 @@ LExit:
         ::CoUninitialize();
     }
 
-    if (fRestart)
+    if (fRunNormal)
     {
-        Restart();
+        LogId(REPORT_STANDARD, MSG_EXITING, FAILED(hr) ? (int)hr : *pdwExitCode);
+
+        if (fRestart)
+        {
+            Restart();
+        }
+    }
+
+    if (fLogInitialized)
+    {
+        LogUninitialize(FALSE);
     }
 
     return hr;
@@ -352,6 +362,8 @@ LExit:
     // If the message window is still around, close it.
     UiCloseMessageWindow(pEngineState);
 
+    VariablesDump(&pEngineState->variables);
+
     // end per-machine process if running
     if (INVALID_HANDLE_VALUE != pEngineState->companionConnection.hPipe)
     {
@@ -409,18 +421,23 @@ static HRESULT RunElevated(
         ExitWithLastError(hr, "Failed to set elevated pipe into thread local storage for logging.");
     }
 
-    // Override logging to write over the pipe.
-    LogRedirect(RedirectLoggingOverPipe, pEngineState);
-
     // Create a top-level window to prevent shutting down the elevated process.
     hr = UiCreateMessageWindow(hInstance, pEngineState);
     ExitOnFailure(hr, "Failed to create the message window.");
 
+    SrpInitialize(TRUE);
+
+    // Override logging to write over the pipe.
+    LogRedirect(RedirectLoggingOverPipe, pEngineState);
+
     // Pump messages from parent process.
     hr = ElevationChildPumpMessages(pEngineState->dwElevatedLoggingTlsId, pEngineState->companionConnection.hPipe, pEngineState->companionConnection.hCachePipe, &pEngineState->packages, &pEngineState->registration.relatedBundles, &pEngineState->payloads, &pEngineState->variables, &pEngineState->registration, &pEngineState->userExperience, &hLock, &fDisabledAutomaticUpdates, &pEngineState->userExperience.dwExitCode, &pEngineState->fRestart);
+    LogRedirect(NULL, NULL); // reset logging so the next failure gets written to "log buffer" for the failure log.
     ExitOnFailure(hr, "Failed to pump messages from parent process.");
 
 LExit:
+    LogRedirect(NULL, NULL); // we're done talking to the child so always reset logging now.
+
     // If the message window is still around, close it.
     UiCloseMessageWindow(pEngineState);
 
@@ -609,27 +626,53 @@ static HRESULT DAPI RedirectLoggingOverPipe(
     __in_opt LPVOID pvContext
     )
 {
+    static BOOL s_fCurrentlyLoggingToPipe = FALSE;
+
     HRESULT hr = S_OK;
     BURN_ENGINE_STATE* pEngineState = static_cast<BURN_ENGINE_STATE*>(pvContext);
+    BOOL fStartedLogging = FALSE;
     HANDLE hPipe = INVALID_HANDLE_VALUE;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
     DWORD dwResult = 0;
 
-    hPipe = ::TlsGetValue(pEngineState->dwElevatedLoggingTlsId);
+    // Prevent this function from being called recursively.
+    if (s_fCurrentlyLoggingToPipe)
+    {
+        ExitFunction();
+    }
+
+    s_fCurrentlyLoggingToPipe = TRUE;
+    fStartedLogging = TRUE;
 
     // Make sure the current thread set the pipe in TLS.
-    Assert(hPipe);
+    hPipe = ::TlsGetValue(pEngineState->dwElevatedLoggingTlsId);
+    if (!hPipe || INVALID_HANDLE_VALUE == hPipe)
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_PIPE_NOT_CONNECTED);
+        ExitFunction();
+    }
 
+    // Do not log or use ExitOnFailure() macro here because they will be discarded
+    // by the recursive block at the top of this function.
     hr = BuffWriteStringAnsi(&pbData, &cbData, szString);
-    ExitOnFailure(hr, "Failed to write string to buffer.");
-
-    hr = PipeSendMessage(hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_LOG), pbData, cbData, NULL, NULL, &dwResult);
-    ExitOnFailure(hr, "Failed to post log message over pipe.");
-    hr = (HRESULT)dwResult;
+    if (SUCCEEDED(hr))
+    {
+        hr = PipeSendMessage(hPipe, static_cast<DWORD>(BURN_PIPE_MESSAGE_TYPE_LOG), pbData, cbData, NULL, NULL, &dwResult);
+        if (SUCCEEDED(hr))
+        {
+            hr = (HRESULT)dwResult;
+        }
+    }
 
 LExit:
     ReleaseBuffer(pbData);
+
+    // We started logging so remember to say we are no longer logging.
+    if (fStartedLogging)
+    {
+        s_fCurrentlyLoggingToPipe = FALSE;
+    }
 
     return hr;
 }

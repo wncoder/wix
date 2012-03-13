@@ -1642,8 +1642,7 @@
         <columnDefinition name="SourceFile" type="object" length="0"/>
     </tableDefinition>
     <tableDefinition name="WixChain" unreal="yes">
-      <columnDefinition name="DisableRollback" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
-      <columnDefinition name="ParallelCache" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="Attributes" type="number" length="4" nullable="no" minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied to the chain."/>
     </tableDefinition>
     <tableDefinition name="ChainPackageGroup" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>

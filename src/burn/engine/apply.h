@@ -63,6 +63,10 @@ typedef int (*PFN_GENERICMESSAGEHANDLER)(
     );
 
 
+void ApplyReset(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_PACKAGES* pPackages
+    );
 HRESULT ApplyLock(
     __in BOOL fPerMachine,
     __out HANDLE* phLock

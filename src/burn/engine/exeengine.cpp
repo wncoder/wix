@@ -468,8 +468,8 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     ExitOnFailure(hr, "Failed to create obfuscated executable command.");
 
-    // Add the list of dependencies to ignore, if any, to the command line.
-    if (pExecuteAction->exePackage.sczIgnoreDependencies)
+    // Add the list of dependencies to ignore, if any, to the burn command line.
+    if (pExecuteAction->exePackage.sczIgnoreDependencies && BURN_EXE_PROTOCOL_TYPE_BURN == pExecuteAction->exePackage.pPackage->Exe.protocol)
     {
         hr = StrAllocFormatted(&sczCommand, L"%ls -%ls=%ls", sczCommand, BURN_COMMANDLINE_SWITCH_IGNOREDEPENDENCIES, pExecuteAction->exePackage.sczIgnoreDependencies);
         ExitOnFailure(hr, "Failed to append the list of dependencies to ignore to the command line.");

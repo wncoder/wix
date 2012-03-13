@@ -222,6 +222,20 @@ static HRESULT ExecutePackageComplete(
 
 // function definitions
 
+extern "C" void ApplyReset(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_PACKAGES* pPackages
+    )
+{
+    UserExperienceExecuteReset(pUX);
+
+    for (DWORD i = 0; i < pPackages->cPackages; ++i)
+    {
+        BURN_PACKAGE* pPackage = pPackages->rgPackages + i;
+        pPackage->hrCacheResult = S_OK;
+    }
+}
+
 extern "C" HRESULT ApplyLock(
     __in BOOL /*fPerMachine*/,
     __out HANDLE* /*phLock*/
@@ -260,6 +274,13 @@ extern "C" HRESULT ApplyRegister(
     int nResult = pEngineState->userExperience.pUserExperience->OnRegisterBegin();
     hr = UserExperienceInterpretExecuteResult(&pEngineState->userExperience, FALSE, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted register begin.");
+
+    // Detect related bundles so they can be registered correctly.
+    if (pEngineState->registration.fPerMachine)
+    {
+        hr = ElevationDetectRelatedBundles(pEngineState->companionConnection.hPipe);
+        ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
+    }
 
     // If we have a resume mode that suggests the bundle is on the machine.
     if (BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING < pEngineState->command.resumeType)
@@ -300,12 +321,6 @@ extern "C" HRESULT ApplyRegister(
     {
         LogErrorId(hr, MSG_STATE_NOT_SAVED, NULL, NULL, NULL);
         hr = S_OK;
-    }
-
-    if (pEngineState->registration.fPerMachine)
-    {
-        hr = ElevationDetectRelatedBundles(pEngineState->companionConnection.hPipe);
-        ExitOnFailure(hr, "Failed to detect related bundles in elevated process");
     }
 
 LExit:
@@ -520,13 +535,15 @@ extern "C" HRESULT ApplyCache(
 
                     pUX->pUserExperience->OnCachePackageComplete(pStartedPackage->sczId, hr, IDNOACTION);
 
+                    pStartedPackage->hrCacheResult = hr;
+
                     iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
                     iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
                     pStartedPackage = NULL;
                 }
                 break;
 
-            case BURN_CACHE_ACTION_TYPE_SYNCPOINT:
+            case BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT:
                 if (!::SetEvent(pCacheAction->syncpoint.hEvent))
                 {
                     ExitWithLastError(hr, "Failed to set syncpoint event.");
@@ -580,6 +597,8 @@ extern "C" HRESULT ApplyCache(
                     fRetry = TRUE;
                 }
             }
+
+            pStartedPackage->hrCacheResult = hr;
 
             iPackageStartAction = BURN_PLAN_INVALID_ACTION_INDEX;
             iPackageCompleteAction = BURN_PLAN_INVALID_ACTION_INDEX;
@@ -1383,7 +1402,7 @@ static HRESULT DoExecuteAction(
             *pdwCheckpoint = pExecuteAction->checkpoint.dwId;
             break;
 
-        case BURN_EXECUTE_ACTION_TYPE_SYNCPOINT:
+        case BURN_EXECUTE_ACTION_TYPE_WAIT_SYNCPOINT:
             // wait for cache sync-point
             rghWait[0] = pExecuteAction->syncpoint.hEvent;
             rghWait[1] = hCacheThread;
@@ -1587,6 +1606,12 @@ static HRESULT ExecuteExePackage(
     GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
 
+    if (FAILED(pExecuteAction->exePackage.pPackage->hrCacheResult))
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_SKIPPED_FAILED_CACHED_PACKAGE, pExecuteAction->exePackage.pPackage->sczId, pExecuteAction->exePackage.pPackage->hrCacheResult);
+        ExitFunction1(hr = S_OK);
+    }
+
     Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->exePackage.pPackage;
 
@@ -1647,6 +1672,12 @@ static HRESULT ExecuteMsiPackage(
     HRESULT hrExecute = S_OK;
     int nResult = 0;
 
+    if (FAILED(pExecuteAction->msiPackage.pPackage->hrCacheResult))
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_SKIPPED_FAILED_CACHED_PACKAGE, pExecuteAction->msiPackage.pPackage->sczId, pExecuteAction->msiPackage.pPackage->hrCacheResult);
+        ExitFunction1(hr = S_OK);
+    }
+
     Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->msiPackage.pPackage;
 
@@ -1692,6 +1723,12 @@ static HRESULT ExecuteMspPackage(
     HRESULT hr = S_OK;
     HRESULT hrExecute = S_OK;
     int nResult = 0;
+
+    if (FAILED(pExecuteAction->mspTarget.pPackage->hrCacheResult))
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_SKIPPED_FAILED_CACHED_PACKAGE, pExecuteAction->mspTarget.pPackage->sczId, pExecuteAction->mspTarget.pPackage->hrCacheResult);
+        ExitFunction1(hr = S_OK);
+    }
 
     Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->mspTarget.pPackage;
@@ -1748,6 +1785,12 @@ static HRESULT ExecuteMsuPackage(
     HRESULT hrExecute = S_OK;
     GENERIC_EXECUTE_MESSAGE message = { };
     int nResult = 0;
+
+    if (FAILED(pExecuteAction->msuPackage.pPackage->hrCacheResult))
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_SKIPPED_FAILED_CACHED_PACKAGE, pExecuteAction->msuPackage.pPackage->sczId, pExecuteAction->msuPackage.pPackage->hrCacheResult);
+        ExitFunction1(hr = S_OK);
+    }
 
     Assert(pContext->fRollback == fRollback);
     pContext->pExecutingPackage = pExecuteAction->msuPackage.pPackage;
@@ -1880,7 +1923,7 @@ static int MsiExecuteMessageHandler(
         break;
 
     case WIU_MSI_EXECUTE_MESSAGE_ERROR:
-        nResult = pContext->pUX->pUserExperience->OnError(pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->dwAllowedResults, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
+        nResult = pContext->pUX->pUserExperience->OnError(BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER, pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->dwAllowedResults, pMessage->cData, pMessage->rgwzData, pMessage->nResultRecommendation);
         break;
 
     case WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE:

@@ -144,20 +144,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (string controlKey in this.localizedControls.Keys)
             {
-                writer.WriteStartElement("Control", XmlNamespaceUri);
+                writer.WriteStartElement("UI", XmlNamespaceUri);
 
-                string dialog = null;
-                string control = null;
-                if (0 < controlKey.IndexOf('/'))
-                {
-                    string[] controlKeys = controlKey.Split('/');
-                    dialog = controlKeys[0];
-                    control = controlKeys[1];
-                }
-                else
-                {
-                    control = controlKey;
-                }
+                string[] controlKeys = controlKey.Split('/');
+                string dialog = controlKeys[0];
+                string control = controlKeys[1];
 
                 if (!String.IsNullOrEmpty(dialog))
                 {
@@ -397,8 +388,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "String":
                                 this.ParseString(child);
                                 break;
-                            case "Control":
-                                this.ParseControl(child);
+                            case "UI":
+                                this.ParseUI(child);
                                 break;
                             default:
                                 throw new WixException(WixErrors.UnexpectedElement(sourceLineNumbers, node.Name, child.Name));
@@ -476,7 +467,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         /// <param name="node">Element to parse.</param>
         /// <param name="localization">The localization being parsed.</param>
-        private void ParseControl(XmlNode node)
+        private void ParseUI(XmlNode node)
         {
             string dialog = null;
             string control = null;
@@ -542,9 +533,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             text = node.InnerText;
 
-            if (null == control)
+            if (String.IsNullOrEmpty(control) && String.IsNullOrEmpty(dialog))
             {
-                throw new WixException(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Control"));
+                throw new WixException(WixErrors.ExpectedAttributesWithOtherAttribute(sourceLineNumbers, node.Name, "Dialog", "Control"));
             }
 
             this.localizedControls.Add(LocalizedControl.GetKey(dialog, control), new LocalizedControl(x, y, width, height, attribs, text));
@@ -591,7 +582,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>The localized control id.</returns>
         public static string GetKey(string dialog, string control)
         {
-            return String.IsNullOrEmpty(dialog) ? control : String.Concat(dialog, "/", control);
+            return String.Concat(String.IsNullOrEmpty(dialog) ? String.Empty : dialog, "/", String.IsNullOrEmpty(control) ? String.Empty : control);
         }
     }
 }

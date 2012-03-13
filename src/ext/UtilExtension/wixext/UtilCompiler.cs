@@ -294,11 +294,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         case "User":
                             this.ParseUserElement(element, null);
                             break;
-                        case "DirectorySearch":
-                        case "FileSearch":
-                        case "RegistrySearch":
                         case "ComponentSearch":
+                        case "ComponentSearchRef":
+                        case "DirectorySearch":
+                        case "DirectorySearchRef":
+                        case "FileSearch":
+                        case "FileSearchRef":
                         case "ProductSearch":
+                        case "ProductSearchRef":
+                        case "RegistrySearch":
+                        case "RegistrySearchRef":
                             // These will eventually be supported under Module/Product, but are not yet.
                             if (parentElement.LocalName == "Bundle" || parentElement.LocalName == "Fragment")
                             {
@@ -306,20 +311,35 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                                 // these out of the nested switch and back into the surrounding one.
                                 switch (element.LocalName)
                                 {
+                                    case "ComponentSearch":
+                                        this.ParseComponentSearchElement(element);
+                                        break;
+                                    case "ComponentSearchRef":
+                                        this.ParseComponentSearchRefElement(element);
+                                        break;
                                     case "DirectorySearch":
                                         this.ParseDirectorySearchElement(element);
+                                        break;
+                                    case "DirectorySearchRef":
+                                        this.ParseWixSearchRefElement(element);
                                         break;
                                     case "FileSearch":
                                         this.ParseFileSearchElement(element);
                                         break;
-                                    case "RegistrySearch":
-                                        this.ParseRegistrySearchElement(element);
-                                        break;
-                                    case "ComponentSearch":
-                                        this.ParseComponentSearchElement(element);
+                                    case "FileSearchRef":
+                                        this.ParseWixSearchRefElement(element);
                                         break;
                                     case "ProductSearch":
                                         this.ParseProductSearchElement(element);
+                                        break;
+                                    case "ProductSearchRef":
+                                        this.ParseWixSearchRefElement(element);
+                                        break;
+                                    case "RegistrySearch":
+                                        this.ParseRegistrySearchElement(element);
+                                        break;
+                                    case "RegistrySearchRef":
+                                        this.ParseWixSearchRefElement(element);
                                         break;
                                 }
                             }
@@ -527,6 +547,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[1] = guid;
                 row[2] = productCode;
                 row[3] = (int)attributes;
+            }
+        }
+
+        /// <summary>
+        /// Parses a ComponentSearchRef element
+        /// </summary>
+        /// <param name="node">Element to parse.</param>
+        private void ParseComponentSearchRefElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string refId = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            refId = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixComponentSearch", refId);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            // find unexpected child elements
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
             }
         }
 
@@ -914,6 +981,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 CreateWixFileSearchRow(sourceLineNumbers, id, path, attributes);
+            }
+        }
+
+        /// <summary>
+        /// Parses a DirectorySearchRef, FileSearchRef, ProductSearchRef, and RegistrySearchRef elements
+        /// </summary>
+        /// <param name="node">Element to parse.</param>
+        private void ParseWixSearchRefElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string refId = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Id":
+                            refId = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixSearch", refId);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            // find unexpected child elements
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
             }
         }
 
@@ -1321,7 +1435,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// </summary>
         /// <param name="node">Element to parse.</param>
         /// <param name="userId">Required user id to be joined to the group.</param>
-        private void ParseGroupRefElement(XmlNode node, String userId)
+        private void ParseGroupRefElement(XmlNode node, string userId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string groupId = null;

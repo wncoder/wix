@@ -405,6 +405,7 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnError(
+        __in BOOTSTRAPPER_ERROR_TYPE /*errorType*/,
         __in LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR wzError,

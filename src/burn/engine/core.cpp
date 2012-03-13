@@ -59,6 +59,11 @@ static DWORD WINAPI CacheThreadProc(
 static HRESULT WaitForCacheThread(
     __in HANDLE hCacheThread
     );
+static void LogPackages(
+    __in const BURN_PACKAGES* pPackages,
+    __in const BURN_RELATED_BUNDLES* pRelatedBundles,
+    __in const BOOTSTRAPPER_ACTION action
+    );
 
 
 // function definitions
@@ -327,7 +332,6 @@ extern "C" HRESULT CorePlan(
     DWORD dwExecuteActionEarlyIndex = 0;
     HANDLE hSyncpointEvent = NULL;
     BURN_ROLLBACK_BOUNDARY* pRollbackBoundary = NULL;
-    HANDLE hRollbackBoundaryCompleteEvent = NULL;
     DWORD iAfterExecuteFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
     DWORD iBeforeRollbackFirstNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
     DWORD iAfterExecuteLastNonPermanentPackage = BURN_PLAN_INVALID_ACTION_INDEX;
@@ -343,7 +347,7 @@ extern "C" HRESULT CorePlan(
     ExitOnRootFailure(hr, "UX aborted plan begin.");
 
     // Always reset the plan.
-    PlanUninitialize(&pEngineState->plan, &pEngineState->packages);
+    PlanReset(&pEngineState->plan, &pEngineState->packages);
 
     // Remember the overall action state in the plan since it shapes the changes
     // we make everywhere.
@@ -376,7 +380,7 @@ extern "C" HRESULT CorePlan(
 
     // Remember the early index, because we want to be able to insert some related bundles
     // into the plan before other executed packages. This particularly occurs for uninstallation
-    // of addons, which should be uninstalled before the main product.
+    // of addons and patches, which should be uninstalled before the main product.
     dwExecuteActionEarlyIndex = pEngineState->plan.cExecuteActions;
 
     // Plan the packages.
@@ -392,12 +396,12 @@ extern "C" HRESULT CorePlan(
             // Complete previous rollback boundary.
             if (pRollbackBoundary)
             {
-                hr = PlanRollbackBoundaryComplete(&pEngineState->plan, hRollbackBoundaryCompleteEvent);
+                hr = PlanRollbackBoundaryComplete(&pEngineState->plan);
                 ExitOnFailure(hr, "Failed to plan rollback boundary complete.");
             }
 
             // Start new rollback boundary.
-            hr = PlanRollbackBoundaryBegin(&pEngineState->plan, pEffectiveRollbackBoundary, &hRollbackBoundaryCompleteEvent);
+            hr = PlanRollbackBoundaryBegin(&pEngineState->plan, pEffectiveRollbackBoundary);
             ExitOnFailure(hr, "Failed to plan rollback boundary begin.");
 
             pRollbackBoundary = pEffectiveRollbackBoundary;
@@ -449,7 +453,7 @@ extern "C" HRESULT CorePlan(
         else if (BOOTSTRAPPER_ACTION_LAYOUT != action)
         {
             // Make sure the package is properly ref-counted even if no plan is requested.
-            hr = DependencyPlanPackageBegin(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
+            hr = DependencyPlanPackageBegin(NULL, pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
             hr = DependencyPlanPackageComplete(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
@@ -493,15 +497,14 @@ extern "C" HRESULT CorePlan(
     // If we still have an open rollback boundary, complete it.
     if (pRollbackBoundary)
     {
-        hr = PlanRollbackBoundaryComplete(&pEngineState->plan, hRollbackBoundaryCompleteEvent);
+        hr = PlanRollbackBoundaryComplete(&pEngineState->plan);
         ExitOnFailure(hr, "Failed to plan rollback boundary begin.");
 
         pRollbackBoundary = NULL;
-        hRollbackBoundaryCompleteEvent = NULL;
     }
 
     // Remove unnecessary actions.
-    hr = PlanRemoveUnnecessaryActions(&pEngineState->plan);
+    hr = PlanFinalizeActions(&pEngineState->plan);
     ExitOnFailure(hr, "Failed to remove unnecessary actions from plan.");
 
     // Plan clean up.
@@ -517,18 +520,12 @@ extern "C" HRESULT CorePlan(
     // Plan the update of related bundles last as long as we are not doing layout only.
     if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
-        hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, &hSyncpointEvent, dwExecuteActionEarlyIndex);
+        hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, dwExecuteActionEarlyIndex);
         ExitOnFailure(hr, "Failed to plan related bundles.");
     }
 
-    // Finally, display the plan in the log.
-    for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
-    {
-        DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pEngineState->packages.cPackages - 1 - i : i;
-        pPackage = pEngineState->packages.rgPackages + iPackage;
-
-        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(pPackage->defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(pPackage->fAcquire), LoggingBoolToString(pPackage->fUncache), LoggingDependencyActionToString(pPackage->dependency));
-    }
+    // Finally, display all packages and related bundles in the log.
+    LogPackages(&pEngineState->packages, &pEngineState->registration.relatedBundles, action);
 
 #ifdef DEBUG
     PlanDump(&pEngineState->plan);
@@ -599,11 +596,19 @@ extern "C" HRESULT CoreApply(
     hr = UserExperienceActivateEngine(&pEngineState->userExperience, &fActivated);
     ExitOnFailure(hr, "Engine cannot start apply because it is busy with another action.");
 
-    UserExperienceExecuteReset(&pEngineState->userExperience); // ensure any previous attempts to execute are reset.
+    // Ensure any previous attempts to execute are reset.
+    ApplyReset(&pEngineState->userExperience, &pEngineState->packages);
 
     int nResult = pEngineState->userExperience.pUserExperience->OnApplyBegin();
     hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted apply begin.");
+
+    if (BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING == pEngineState->command.resumeType)
+    {
+        restart = BOOTSTRAPPER_APPLY_RESTART_REQUIRED;
+        hr = HRESULT_FROM_WIN32(ERROR_FAIL_NOACTION_REBOOT);
+        ExitFunction();
+    }
 
     hr = ApplyLock(FALSE, &hLock);
     ExitOnFailure(hr, "Another per-user setup is already executing.");
@@ -623,7 +628,7 @@ extern "C" HRESULT CoreApply(
         hr = CoreElevate(pEngineState, hwndParent);
         ExitOnFailure(hr, "Failed to elevate.");
 
-        hr = ElevationApplyInitialize(pEngineState->companionConnection.hPipe, pEngineState->automaticUpdates);
+        hr = ElevationApplyInitialize(pEngineState->companionConnection.hPipe, &pEngineState->variables, pEngineState->plan.action, pEngineState->automaticUpdates, !pEngineState->fDisableSystemRestore);
         ExitOnFailure(hr, "Another per-machine setup is already executing.");
 
         fElevated = TRUE;
@@ -1207,3 +1212,42 @@ LExit:
     return hr;
 }
 
+static void LogPackages(
+    __in const BURN_PACKAGES* pPackages,
+    __in const BURN_RELATED_BUNDLES* pRelatedBundles,
+    __in const BOOTSTRAPPER_ACTION action
+    )
+{
+    // Display related bundles first if uninstalling.
+    if (BOOTSTRAPPER_ACTION_UNINSTALL == action && 0 < pRelatedBundles->cRelatedBundles)
+    {
+        for (int i = pRelatedBundles->cRelatedBundles - 1; 0 <= i; --i)
+        {
+            const BURN_RELATED_BUNDLE* pRelatedBundle = &pRelatedBundles->rgRelatedBundles[i];
+            const BURN_PACKAGE* pPackage = &pRelatedBundle->package;
+
+            LogId(REPORT_STANDARD, MSG_PLANNED_RELATED_BUNDLE, pPackage->sczId, LoggingRelationTypeToString(pRelatedBundle->relationType), LoggingRequestStateToString(pPackage->defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingDependencyActionToString(pPackage->dependency));
+        }
+    }
+
+    // Display all the packages in the log.
+    for (DWORD i = 0; i < pPackages->cPackages; ++i)
+    {
+        const DWORD iPackage = (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? pPackages->cPackages - 1 - i : i;
+        const BURN_PACKAGE* pPackage = &pPackages->rgPackages[iPackage];
+
+        LogId(REPORT_STANDARD, MSG_PLANNED_PACKAGE, pPackage->sczId, LoggingPackageStateToString(pPackage->currentState), LoggingRequestStateToString(pPackage->defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingBoolToString(pPackage->fAcquire), LoggingBoolToString(pPackage->fUncache), LoggingDependencyActionToString(pPackage->dependency));
+    }
+
+    // Display related bundles last if installing, modifying, or repairing.
+    if (BOOTSTRAPPER_ACTION_UNINSTALL < action && 0 < pRelatedBundles->cRelatedBundles)
+    {
+        for (DWORD i = 0; i < pRelatedBundles->cRelatedBundles; ++i)
+        {
+            const BURN_RELATED_BUNDLE* pRelatedBundle = &pRelatedBundles->rgRelatedBundles[i];
+            const BURN_PACKAGE* pPackage = &pRelatedBundle->package;
+
+            LogId(REPORT_STANDARD, MSG_PLANNED_RELATED_BUNDLE, pPackage->sczId, LoggingRelationTypeToString(pRelatedBundle->relationType), LoggingRequestStateToString(pPackage->defaultRequested), LoggingRequestStateToString(pPackage->requested), LoggingActionStateToString(pPackage->execute), LoggingActionStateToString(pPackage->rollback), LoggingDependencyActionToString(pPackage->dependency));
+        }
+    }
+}

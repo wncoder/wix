@@ -252,17 +252,26 @@ LExit:
 }
 
 
+extern "C" void DAPI LogClose(
+    __in BOOL fFooter
+    )
+{
+    if (INVALID_HANDLE_VALUE != LogUtil_hLog && fFooter)
+    {
+        LogFooter();
+    }
+
+    ReleaseFileHandle(LogUtil_hLog);
+    ReleaseNullStr(LogUtil_sczLogPath);
+    ReleaseNullStr(LogUtil_sczPreInitBuffer);
+}
+
+
 extern "C" void DAPI LogUninitialize(
     __in BOOL fFooter
     )
 {
-    if (INVALID_HANDLE_VALUE != LogUtil_hLog && LogUtil_sczLogPath)
-    {
-        if (fFooter)
-        {
-            LogFooter();
-        }
-    }
+    LogClose(fFooter);
 
     if (LogUtil_fInitializedCriticalSection)
     {
@@ -273,9 +282,6 @@ extern "C" void DAPI LogUninitialize(
     LogUtil_hModule = NULL;
     LogUtil_fDisabled = FALSE;
 
-    ReleaseFileHandle(LogUtil_hLog);
-    ReleaseNullStr(LogUtil_sczLogPath);
-    ReleaseNullStr(LogUtil_sczPreInitBuffer);
     ReleaseNullStr(LogUtil_sczSpecialBeginLine);
     ReleaseNullStr(LogUtil_sczSpecialAfterTimeStamp);
     ReleaseNullStr(LogUtil_sczSpecialEndLine);
@@ -876,8 +882,6 @@ static HRESULT LogStringWork(
     DWORD dwProcessId = 0;
     DWORD dwThreadId = 0;
     SYSTEMTIME st = { };
-    TIME_ZONE_INFORMATION tzi = { };
-    DWORD dwAbsBias = 0;
     LPWSTR scz = NULL;
     LPCWSTR wzLogData = NULL;
     LPSTR sczMultiByte = NULL;
@@ -899,13 +903,8 @@ static HRESULT LogStringWork(
 
         // get the time relative to GMT.
         ::GetLocalTime(&st);
-        ::GetTimeZoneInformation(&tzi);
-        dwAbsBias = abs(tzi.Bias);
 
         // add line prefix and trailing newline
-//        hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu.%03hu%wc%02u:%02u]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
-//            dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, 0 >= tzi.Bias ? L'+' : L'-', dwAbsBias / 60, dwAbsBias % 60,
-//            LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : L"", sczString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : L"\r\n");
         hr = StrAllocFormatted(&scz, L"%ls[%04X:%04X][%04hu-%02hu-%02huT%02hu:%02hu:%02hu]:%ls %ls%ls", LogUtil_sczSpecialBeginLine ? LogUtil_sczSpecialBeginLine : L"",
             dwProcessId, dwThreadId, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
             LogUtil_sczSpecialAfterTimeStamp ? LogUtil_sczSpecialAfterTimeStamp : L"", sczString, LogUtil_sczSpecialEndLine ? LogUtil_sczSpecialEndLine : L"\r\n");

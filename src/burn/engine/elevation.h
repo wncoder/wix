@@ -33,7 +33,10 @@ HRESULT ElevationElevate(
     );
 HRESULT ElevationApplyInitialize(
     __in HANDLE hPipe,
-    __in BURN_AU_PAUSE_ACTION auAction
+    __in BURN_VARIABLES* pVariables,
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_AU_PAUSE_ACTION auAction,
+    __in BOOL fTakeSystemRestorePoint
     );
 HRESULT ElevationApplyUninitialize(
     __in HANDLE hPipe

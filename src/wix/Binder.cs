@@ -1971,6 +1971,45 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="tables">The tables to localize.</param>
         private void LocalizeUI(TableCollection tables)
         {
+            Table dialogTable = tables["Dialog"];
+            if (null != dialogTable)
+            {
+                foreach (Row row in dialogTable.Rows)
+                {
+                    string dialog = (string)row[0];
+                    LocalizedControl localizedControl = this.Localizer.GetLocalizedControl(dialog, null);
+                    if (null != localizedControl)
+                    {
+                        if (CompilerCore.IntegerNotSet != localizedControl.X)
+                        {
+                            row[1] = localizedControl.X;
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Y)
+                        {
+                            row[2] = localizedControl.Y;
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Width)
+                        {
+                            row[3] = localizedControl.Width;
+                        }
+
+                        if (CompilerCore.IntegerNotSet != localizedControl.Height)
+                        {
+                            row[4] = localizedControl.Height;
+                        }
+
+                        row[5] = (int)row[5] | localizedControl.Attributes;
+
+                        if (!String.IsNullOrEmpty(localizedControl.Text))
+                        {
+                            row[6] = localizedControl.Text;
+                        }
+                    }
+                }
+            }
+
             Table controlTable = tables["Control"];
             if (null != controlTable)
             {
@@ -3894,6 +3933,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (chain.DisableRollback)
                 {
                     writer.WriteAttributeString("DisableRollback", "yes");
+                }
+
+                if (chain.DisableSystemRestore)
+                {
+                    writer.WriteAttributeString("DisableSystemRestore", "yes");
                 }
 
                 if (chain.ParallelCache)
@@ -6982,8 +7026,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.RegistrationInfo.ParentName = (string)row[18];
                 this.UpgradeCode = (string)row[19];
 
-                // Default provider key is the UpgradeCode and Version.
-                this.ProviderKey = String.Concat(this.UpgradeCode, "v", this.Version);
+                // Default provider key is the Id.
+                this.ProviderKey = this.Id.ToString("B");
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
@@ -7042,14 +7086,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             public ChainInfo(Row row)
             {
-                this.DisableRollback = (null != row[0] && 1 == (int)row[0]);
-                this.ParallelCache = (null != row[1] && 1 == (int)row[1]);
+                BundleChainAttributes attributes = (null == row[0]) ? BundleChainAttributes.None : (BundleChainAttributes)row[0];
+
+                this.DisableRollback = (BundleChainAttributes.DisableRollback == (attributes & BundleChainAttributes.DisableRollback));
+                this.DisableSystemRestore = (BundleChainAttributes.DisableSystemRestore == (attributes & BundleChainAttributes.DisableSystemRestore));
+                this.ParallelCache = (BundleChainAttributes.ParallelCache == (attributes & BundleChainAttributes.ParallelCache));
                 this.Packages = new List<ChainPackageInfo>();
                 this.RollbackBoundaries = new List<RollbackBoundaryInfo>();
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
 
             public bool DisableRollback { get; private set; }
+            public bool DisableSystemRestore { get; private set; }
             public bool ParallelCache { get; private set; }
             public List<ChainPackageInfo> Packages { get; private set; }
             public List<RollbackBoundaryInfo> RollbackBoundaries { get; private set; }
@@ -7457,6 +7505,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // Represent the Upgrade table as related packages.
                         if (db.Tables.Contains("Upgrade"))
                         {
+                            string upgradeCode = ChainPackageInfo.GetProperty(db, "UpgradeCode");
                             using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `UpgradeCode`, `VersionMin`, `VersionMax`, `Language`, `Attributes` FROM `Upgrade`"))
                             {
                                 view.Execute();
@@ -7482,7 +7531,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         }
 
                                         int attributes = record.GetInteger(5);
-                                        related.OnlyDetect = (attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect;
+                                        // when an Upgrade row has an upgrade code different than this package's upgrade code, don't count it as a possible downgrade to this package
+                                        related.OnlyDetect = ((attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect) && upgradeCode.Equals(related.Id, StringComparison.OrdinalIgnoreCase);
                                         related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
                                         related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
                                         related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;
@@ -8440,7 +8490,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            // Defaults to the bundle UpgradeCode as the provider key.
+            // Defaults to the bundle ID as the provider key.
         }
 
         /// <summary>

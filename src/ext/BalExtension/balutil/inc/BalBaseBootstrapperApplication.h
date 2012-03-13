@@ -383,6 +383,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnError(
+        __in BOOTSTRAPPER_ERROR_TYPE /*errorType*/,
         __in_z LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR /*wzError*/,

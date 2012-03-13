@@ -231,6 +231,9 @@
     <None Include="..\..\data\Burn\FailureTests\BundleB.wxs">
       <Link>Burn\FailureTests\BundleB.wxs</Link>
     </None>
+    <None Include="..\..\data\Burn\FailureTests\BundleC.wxs">
+      <Link>Burn\FailureTests\BundleC.wxs</Link>
+    </None>
     <None Include="..\..\data\Burn\PatchTests\A.wxs">
       <Link>Burn\PatchTests\A.wxs</Link>
     </None>

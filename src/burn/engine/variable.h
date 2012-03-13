@@ -78,6 +78,9 @@ HRESULT VariablesParseFromXml(
 void VariablesUninitialize(
     __in BURN_VARIABLES* pVariables
     );
+void VariablesDump(
+    __in BURN_VARIABLES* pVariables
+    );
 HRESULT VariableGetNumeric(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,

@@ -411,6 +411,46 @@ extern "C" void VariablesUninitialize(
     }
 }
 
+extern "C" void VariablesDump(
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczValue = NULL;
+
+    for (DWORD i = 0; i < pVariables->cVariables; ++i)
+    {
+        BURN_VARIABLE* pVariable = &pVariables->rgVariables[i];
+        if (pVariable)
+        {
+            hr = StrAllocFormatted(&sczValue, L"%ls = [%ls]", pVariable->sczName, pVariable->sczName);
+            if (SUCCEEDED(hr))
+            {
+                if (pVariable->fHidden)
+                {
+                    hr = VariableFormatStringObfuscated(pVariables, sczValue, &sczValue, NULL);
+                }
+                else
+                {
+                    hr = VariableFormatString(pVariables, sczValue, &sczValue, NULL);
+                }
+            }
+
+            if (FAILED(hr))
+            {
+                // already logged; best-effort to dump the rest on our way out the door
+                continue;
+            }
+
+            LogId(REPORT_VERBOSE, MSG_VARIABLE_DUMP, sczValue);
+
+            ReleaseNullStr(sczValue);
+        }
+    }
+
+    ReleaseStr(sczValue);
+}
+
 extern "C" HRESULT VariableGetNumeric(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,

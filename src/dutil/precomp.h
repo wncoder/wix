@@ -46,6 +46,7 @@
 #include <stddef.h>
 #include <esent.h>
 #include <ahadmin.h>
+#include <SRRestorePtAPI.h>
 #include <userenv.h>
 #include <WinIoCtl.h>
 #include <wtsapi32.h>
@@ -85,6 +86,7 @@
 #include "apuputil.h" // NOTE: this must come after atomutil.h and rssutil.h since it uses them.
 //#include "sqlutil.h" - see sqlutil.cpp why this *must* be commented out
 #include "shelutil.h"
+#include "srputil.h"
 #include "strutil.h"
 #include "timeutil.h"
 #include "timeutil.h"

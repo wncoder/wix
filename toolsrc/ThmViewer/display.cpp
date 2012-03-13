@@ -187,7 +187,10 @@ static DWORD WINAPI DisplayThreadProc(
                     {
                         wc.hIcon = reinterpret_cast<HICON>(pCurrentHandle->pTheme->hIcon);
                         wc.hCursor = ::LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
-                        wc.hbrBackground = pCurrentHandle->pTheme->rgFonts[pCurrentHandle->pTheme->dwFontId].hBackground;
+                        if (0 < pCurrentHandle->pTheme->cFonts)
+                        {
+                            wc.hbrBackground = pCurrentHandle->pTheme->rgFonts[pCurrentHandle->pTheme->dwFontId].hBackground;
+                        }
                         atomWc = ::RegisterClassW(&wc);
                         if (!atomWc)
                         {

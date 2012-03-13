@@ -24,6 +24,11 @@
         <PropertyRef Id="VS2010_ROOT_FOLDER" />
         <PropertyRef Id="VS2010_SCHEMAS_DIR" />
 
+        <CustomActionRef Id="VS2010Setup" />
+        <UI>
+            <ProgressText Action="VS2010Setup" Template="[1]">Updating Visual Studio 2010 registration</ProgressText>
+        </UI>
+
       <ComponentGroup Id="Votive2010Components">
             <ComponentGroupRef Id="Votive2010BinaryComponents"/>
             <ComponentGroupRef Id="Votive2010ExtensionComponents"/>

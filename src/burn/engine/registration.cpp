@@ -29,6 +29,7 @@ const LPCWSTR REGISTRY_BUNDLE_UPGRADE_CODE = L"BundleUpgradeCode";
 const LPCWSTR REGISTRY_BUNDLE_ADDON_CODE = L"BundleAddonCode";
 const LPCWSTR REGISTRY_BUNDLE_DETECT_CODE = L"BundleDetectCode";
 const LPCWSTR REGISTRY_BUNDLE_PATCH_CODE = L"BundlePatchCode";
+const LPCWSTR REGISTRY_BUNDLE_PROVIDER_KEY = L"BundleProviderKey";
 const LPCWSTR REGISTRY_BUNDLE_TAG = L"BundleTag";
 const LPCWSTR REGISTRY_BUNDLE_VERSION = L"BundleVersion";
 const LPCWSTR REGISTRY_ENGINE_VERSION = L"EngineVersion";
@@ -82,11 +83,15 @@ static HRESULT InitializeRelatedBundleFromKey(
     __inout BURN_RELATED_BUNDLE *pRelatedBundle,
     __out LPWSTR *psczTag
     );
-static HRESULT FindMatchingStringBetweenArrays(
-    __in_ecount(cValues) LPCWSTR *rgwzStringArray1,
-    __in DWORD cStringArray1,
-    __in_ecount(cValues) LPCWSTR *rgwzStringArray2,
-    __in DWORD cStringArray2
+static HRESULT StringArrayToStringList(
+    __in_ecount(cStringArray) const LPCWSTR* rgwzStringArray,
+    __in const DWORD cStringArray,
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdStringList
+    );
+static HRESULT CompareStringListToStringArray(
+    __in_bcount(STRINGDICT_HANDLE_BYTES) const STRINGDICT_HANDLE sdStringList,
+    __in_ecount(cStringArray) const LPCWSTR* rgwzStringArray,
+    __in const DWORD cStringArray
     );
 static HRESULT DetectRelatedBundlesForKey(
     __in_opt BURN_USER_EXPERIENCE* pUX,
@@ -646,6 +651,12 @@ extern "C" HRESULT RegistrationSessionBegin(
 
             hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_VERSION, L"%hu.%hu.%hu.%hu", (WORD)(pRegistration->qwVersion >> 48), (WORD)(pRegistration->qwVersion >> 32), (WORD)(pRegistration->qwVersion >> 16), (WORD)(pRegistration->qwVersion));
             ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_VERSION);
+
+            if (pRegistration->sczProviderKey)
+            {
+                hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_PROVIDER_KEY, pRegistration->sczProviderKey);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_PROVIDER_KEY);
+            }
 
             if (pRegistration->sczTag)
             {
@@ -1240,6 +1251,7 @@ static HRESULT InitializeRelatedBundleFromKey(
     HRESULT hr = S_OK;
     DWORD64 qwEngineVersion = 0;
     LPWSTR sczCachePath = NULL;
+    LPWSTR sczBundleProviderKey = NULL;
     LPCWSTR wzRelationTypeCommandLine = NULL;
 
     switch (pRelatedBundle->relationType)
@@ -1255,6 +1267,8 @@ static HRESULT InitializeRelatedBundleFromKey(
         break;
     case BOOTSTRAPPER_RELATION_PATCH:
         wzRelationTypeCommandLine = BURN_COMMANDLINE_SWITCH_RELATED_PATCH;
+        break;
+    case BOOTSTRAPPER_RELATION_DEPENDENT:
         break;
     case BOOTSTRAPPER_RELATION_NONE: __fallthrough;
     default:
@@ -1275,6 +1289,28 @@ static HRESULT InitializeRelatedBundleFromKey(
 
     hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_CACHE_PATH, &sczCachePath);
     ExitOnFailure1(hr, "Failed to read cache path from registry for bundle: %ls", wzBundleId);
+
+    hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_PROVIDER_KEY, &sczBundleProviderKey);
+    if (E_FILENOTFOUND != hr)
+    {
+        ExitOnFailure1(hr, "Failed to read provider key from registry for bundle: %ls", wzBundleId);
+
+        pRelatedBundle->package.rgDependencyProviders = (BURN_DEPENDENCY_PROVIDER*)MemAlloc(sizeof(BURN_DEPENDENCY_PROVIDER), TRUE);
+        ExitOnNull(pRelatedBundle->package.rgDependencyProviders, hr, E_OUTOFMEMORY, "Failed to allocate memory for dependency providers.");
+        pRelatedBundle->package.cDependencyProviders = 1;
+
+        pRelatedBundle->package.rgDependencyProviders[0].sczKey = sczBundleProviderKey;
+        sczBundleProviderKey = NULL;
+
+        hr = FileVersionToStringEx(pRelatedBundle->qwVersion, &pRelatedBundle->package.rgDependencyProviders[0].sczVersion);
+        ExitOnFailure1(hr, "Failed to copy version for bundle: %ls", wzBundleId);
+
+        hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_DISPLAY_NAME, &pRelatedBundle->package.rgDependencyProviders[0].sczDisplayName);
+        if (E_FILENOTFOUND != hr)
+        {
+            ExitOnFailure1(hr, "Failed to copy display name for bundle: %ls", wzBundleId);
+        }
+    }
 
     hr = RegReadString(hkBundleId, REGISTRY_BUNDLE_TAG, psczTag);
     if (E_FILENOTFOUND == hr)
@@ -1321,28 +1357,64 @@ static HRESULT InitializeRelatedBundleFromKey(
     pRelatedBundle->package.Exe.protocol = (FILEMAKEVERSION(3, 6, 2221, 0) <= qwEngineVersion && qwEngineVersion <= FILEMAKEVERSION(rmj, rmm, rup, 0)) ? BURN_EXE_PROTOCOL_TYPE_BURN : BURN_EXE_PROTOCOL_TYPE_NONE;
 
 LExit:
+    ReleaseStr(sczBundleProviderKey);
     ReleaseStr(sczCachePath);
 
     return hr;
 }
 
-static HRESULT FindMatchingStringBetweenArrays(
-    __in_ecount(cValues) LPCWSTR *rgwzStringArray1,
-    __in DWORD cStringArray1,
-    __in_ecount(cValues) LPCWSTR *rgwzStringArray2,
-    __in DWORD cStringArray2
+static HRESULT StringArrayToStringList(
+    __in_ecount(cStringArray) const LPCWSTR* rgwzStringArray,
+    __in const DWORD cStringArray,
+    __out_bcount(STRINGDICT_HANDLE_BYTES) STRINGDICT_HANDLE* psdStringList
+    )
+{
+    HRESULT hr = S_OK;
+    STRINGDICT_HANDLE sd = NULL;
+
+    hr = DictCreateStringList(&sd, cStringArray, DICT_FLAG_CASEINSENSITIVE);
+    ExitOnFailure(hr, "Failed to create the string dictionary.");
+
+    for (DWORD i = 0; i < cStringArray; ++i)
+    {
+        const LPCWSTR wzKey = rgwzStringArray[i];
+
+        hr = DictKeyExists(sd, wzKey);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to check the string dictionary.");
+        }
+        else
+        {
+            hr = DictAddKey(sd, wzKey);
+            ExitOnFailure1(hr, "Failed to add \"%ls\" to the string dictionary.", wzKey);
+        }
+    }
+
+    *psdStringList = sd;
+    sd = NULL;
+
+LExit:
+    ReleaseDict(sd);
+
+    return hr;
+}
+
+static HRESULT CompareStringListToStringArray(
+    __in_bcount(STRINGDICT_HANDLE_BYTES) const STRINGDICT_HANDLE sdStringList,
+    __in_ecount(cStringArray) const LPCWSTR* rgwzStringArray,
+    __in const DWORD cStringArray
     )
 {
     HRESULT hr = S_OK;
 
-    for (DWORD i = 0; i < cStringArray1; ++i)
+    for (DWORD i = 0; i < cStringArray; ++i)
     {
-        for (DWORD j = 0; j < cStringArray2; ++j)
+        hr = DictKeyExists(sdStringList, rgwzStringArray[i]);
+        if (E_NOTFOUND != hr)
         {
-            if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, rgwzStringArray2[j], -1, rgwzStringArray1[i], -1))
-            {
-                ExitFunction1(hr = S_OK);
-            }
+            ExitOnFailure(hr, "Failed to check the string dictionary.");
+            ExitFunction1(hr = S_OK);
         }
     }
 
@@ -1437,7 +1509,8 @@ static HRESULT DetectRelatedBundlesForKey(
                         }
                         break;
 
-                    case BOOTSTRAPPER_RELATION_DETECT:
+                    case BOOTSTRAPPER_RELATION_DETECT: __fallthrough;
+                    case BOOTSTRAPPER_RELATION_DEPENDENT:
                         break;
 
                     default:
@@ -1479,12 +1552,16 @@ static HRESULT LoadRelatedBundle(
     HKEY hkBundleId = NULL;
     LPWSTR* rgsczUpgradeCodes = NULL;
     DWORD cUpgradeCodes = 0;
+    STRINGDICT_HANDLE sdUpgradeCodes = NULL;
     LPWSTR* rgsczAddonCodes = NULL;
     DWORD cAddonCodes = 0;
+    STRINGDICT_HANDLE sdAddonCodes = NULL;
     LPWSTR* rgsczDetectCodes = NULL;
     DWORD cDetectCodes = 0;
+    STRINGDICT_HANDLE sdDetectCodes = NULL;
     LPWSTR* rgsczPatchCodes = NULL;
     DWORD cPatchCodes = 0;
+    STRINGDICT_HANDLE sdPatchCodes = NULL;
     LPWSTR sczCachePath = NULL;
     LPWSTR sczTag = NULL;
 
@@ -1514,8 +1591,11 @@ static HRESULT LoadRelatedBundle(
     // Compare upgrade codes.
     if (SUCCEEDED(hr))
     {
+        hr = StringArrayToStringList(rgsczUpgradeCodes, cUpgradeCodes, &sdUpgradeCodes);
+        ExitOnFailure1(hr, "Failed to create string dictionary for %hs.", "upgrade codes");
+
         // Upgrade relationship: when their upgrade codes match our upgrade codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        hr = CompareStringListToStringArray(sdUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1530,7 +1610,7 @@ static HRESULT LoadRelatedBundle(
         }
 
         // Detect relationship: when their upgrade codes match our detect codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczUpgradeCodes), cUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        hr = CompareStringListToStringArray(sdUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1544,6 +1624,37 @@ static HRESULT LoadRelatedBundle(
             goto Finish;
         }
 
+        // Dependent relationship: when their upgrade codes match our addon codes.
+        hr = CompareStringListToStringArray(sdUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczAddonCodes), pRegistration->cAddonCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DEPENDENT;
+            goto Finish;
+        }
+
+        // Dependent relationship: when their upgrade codes match our patch codes.
+        hr = CompareStringListToStringArray(sdUpgradeCodes, const_cast<LPCWSTR*>(pRegistration->rgsczPatchCodes), pRegistration->cPatchCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DEPENDENT;
+            goto Finish;
+        }
+
+        ReleaseNullDict(sdUpgradeCodes);
         ReleaseNullStrArray(rgsczUpgradeCodes, cUpgradeCodes);
     }
 
@@ -1551,8 +1662,11 @@ static HRESULT LoadRelatedBundle(
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_ADDON_CODE, &rgsczAddonCodes, &cAddonCodes);
     if (SUCCEEDED(hr))
     {
+        hr = StringArrayToStringList(rgsczAddonCodes, cAddonCodes, &sdAddonCodes);
+        ExitOnFailure1(hr, "Failed to create string dictionary for %hs.", "addon codes");
+
         // Addon relationship: when their addon codes match our detect codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        hr = CompareStringListToStringArray(sdAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1567,7 +1681,7 @@ static HRESULT LoadRelatedBundle(
         }
 
         // Addon relationship: when their addon codes match our upgrade codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczAddonCodes), cAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        hr = CompareStringListToStringArray(sdAddonCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1581,6 +1695,7 @@ static HRESULT LoadRelatedBundle(
             goto Finish;
         }
 
+        ReleaseNullDict(sdAddonCodes);
         ReleaseNullStrArray(rgsczAddonCodes, cAddonCodes);
     }
 
@@ -1588,8 +1703,11 @@ static HRESULT LoadRelatedBundle(
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_PATCH_CODE, &rgsczPatchCodes, &cPatchCodes);
     if (SUCCEEDED(hr))
     {
+        hr = StringArrayToStringList(rgsczPatchCodes, cPatchCodes, &sdPatchCodes);
+        ExitOnFailure1(hr, "Failed to create string dictionary for %hs.", "patch codes");
+
         // Patch relationship: when their patch codes match our detect codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczPatchCodes), cPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        hr = CompareStringListToStringArray(sdPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1604,7 +1722,7 @@ static HRESULT LoadRelatedBundle(
         }
 
         // Patch relationship: when their patch codes match our upgrade codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczPatchCodes), cPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
+        hr = CompareStringListToStringArray(sdPatchCodes, const_cast<LPCWSTR*>(pRegistration->rgsczUpgradeCodes), pRegistration->cUpgradeCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1618,6 +1736,7 @@ static HRESULT LoadRelatedBundle(
             goto Finish;
         }
 
+        ReleaseNullDict(sdPatchCodes);
         ReleaseNullStrArray(rgsczPatchCodes, cPatchCodes);
     }
 
@@ -1625,8 +1744,11 @@ static HRESULT LoadRelatedBundle(
     hr = RegReadStringArray(hkBundleId, REGISTRY_BUNDLE_DETECT_CODE, &rgsczDetectCodes, &cDetectCodes);
     if (SUCCEEDED(hr))
     {
+        hr = StringArrayToStringList(rgsczDetectCodes, cDetectCodes, &sdDetectCodes);
+        ExitOnFailure1(hr, "Failed to create string dictionary for %hs.", "detect codes");
+
         // Detect relationship: when their detect codes match our detect codes.
-        hr = FindMatchingStringBetweenArrays(const_cast<LPCWSTR*>(rgsczDetectCodes), cDetectCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
+        hr = CompareStringListToStringArray(sdDetectCodes, const_cast<LPCWSTR*>(pRegistration->rgsczDetectCodes), pRegistration->cDetectCodes);
         if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
         {
             hr = S_OK;
@@ -1640,6 +1762,37 @@ static HRESULT LoadRelatedBundle(
             goto Finish;
         }
 
+        // Dependent relationship: when their detect codes match our addon codes.
+        hr = CompareStringListToStringArray(sdDetectCodes, const_cast<LPCWSTR*>(pRegistration->rgsczAddonCodes), pRegistration->cAddonCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DEPENDENT;
+            goto Finish;
+        }
+
+        // Dependent relationship: when their detect codes match our patch codes.
+        hr = CompareStringListToStringArray(sdDetectCodes, const_cast<LPCWSTR*>(pRegistration->rgsczPatchCodes), pRegistration->cPatchCodes);
+        if (HRESULT_FROM_WIN32(ERROR_NO_MATCH) == hr)
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            ExitOnFailure(hr, "Failed to do array search for addon code match.");
+
+            fRelated = TRUE;
+            *pRelationType = BOOTSTRAPPER_RELATION_DEPENDENT;
+            goto Finish;
+        }
+
+        ReleaseNullDict(sdDetectCodes);
         ReleaseNullStrArray(rgsczDetectCodes, cDetectCodes);
     }
 
@@ -1673,9 +1826,13 @@ Finish:
 LExit:
     ReleaseStr(sczCachePath);
     ReleaseStr(sczId);
+    ReleaseDict(sdUpgradeCodes);
     ReleaseStrArray(rgsczUpgradeCodes, cUpgradeCodes);
+    ReleaseDict(sdAddonCodes);
     ReleaseStrArray(rgsczAddonCodes, cAddonCodes);
+    ReleaseDict(sdDetectCodes);
     ReleaseStrArray(rgsczDetectCodes, cDetectCodes);
+    ReleaseDict(sdPatchCodes);
     ReleaseStrArray(rgsczPatchCodes, cPatchCodes);
     ReleaseRegKey(hkBundleId);
     ReleaseStr(sczBundleKey);

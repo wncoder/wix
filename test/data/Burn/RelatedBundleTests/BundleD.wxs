@@ -26,7 +26,7 @@
     <WixVariable Id='WixMbaPrereqPackageId' Value='ignored' />
     <WixVariable Id='WixMbaPrereqLicenseUrl' Value='ignored' />
 
-    <Chain>
+    <Chain DisableSystemRestore="yes">
       <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes" SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes" />
     </Chain>
   </Bundle>

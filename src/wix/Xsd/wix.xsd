@@ -505,6 +505,18 @@
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
+      <xs:attribute name="DisableSystemRestore" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies whether the bundle will attempt to create a system
+            restore point when executing the chain. If "yes" is specified then
+            a system restore point will not be created. The default is "no" which
+            indicates a system restore point will be created when the bundle is
+            installed, uninstalled, repaired, modified, etc. If the system restore
+            point cannot be created, the bundle will log the issue and continue.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="ParallelCache" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>

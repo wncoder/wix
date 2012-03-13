@@ -59,6 +59,7 @@
 #include <regutil.h>
 #include <resrutil.h>
 #include <shelutil.h>
+#include <srputil.h>
 #include <strutil.h>
 #include <svcutil.h>
 #include <userutil.h>

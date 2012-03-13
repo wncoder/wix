@@ -1938,3 +1938,41 @@ BobArnson: Use ClearType when available for ThmUtil controls.
 
 WixBuild: Version 3.6.2705.0
 
+RobMen: SFBUG:3459758 - Burn support for system restore points.
+
+RobMen: SFBUG:3497028 - Burn parallel cache proceeds after each package.
+        Ignoring cache failure no longer tries to execute package later.
+
+HeathS: SFBUG:3460475 - Support reference counts for related bundles.
+
+BobArnson: SFBUG:3496929 - Look up controls as we can't rely on using 
+           GWLP_USERDATA for SysLink controls on Windows XP.
+
+BobArnson: SFBUG:3497031 - Dump Burn variables at the end of the chain log.
+
+RobMen: Error on pending reboots during apply instead of plan in Burn to be
+        consistent.
+
+RobMen: Add an error type to error messages sent from Burn.
+
+BobArnson: SFBUG:3497286 - Switch WixStdBA doc to use 
+           bal:WixStandardBootstrapperApplication.
+
+BobArnson: SFBUG:3497026 - Add util:ComponentSearchRef, 
+           util:DirectorySearchRef, util:FileSearchRef, util:ProductSearchRef,
+           and util:RegistrySearchRef to reference bundle search authoring.
+
+JieJi: SFBUG:3463228 Msi with slipstream patches -- PATCH property shouldn't be
+       on command line for repair and uninstall.
+
+BobArnson: SFBUG:3497024 - When an Upgrade row has an upgrade code different 
+           than a package's upgrade code, don't count it as a possible 
+           downgrade to that package.
+
+BobArnson: SFBUG:3445447 - Pick a better error message template.
+
+BobArnson: Change WixLoc.Control to WixLoc.UI to support localizing attributes
+           of dialogs in addition to individual controls.
+
+WixBuild: Version 3.6.2712.0
+

@@ -108,5 +108,41 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
             this.CleanTestArtifacts = true;
         }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle C with missing non-vital package successfully.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_MissingNonVitalPackage()
+        {
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A") { Extensions = Extensions }.Build().Output;
+            string packageB = new PackageBuilder(this, "B") { Extensions = Extensions }.Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("packageB", packageB);
+
+            // Build the bundle.
+            string bundleC = new BundleBuilder(this, "BundleC") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+
+            // Delete the non-vital package to force the ignorable failure.
+            File.Delete(Path.Combine(Path.GetDirectoryName(bundleC), "~Burn_MissingNonVitalPackage_PackageA.msi"));
+
+            // Install the bundle.
+            BundleInstaller installerC = new BundleInstaller(this, bundleC).Install();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerC.LastLogFile, "Skipping apply of package: PackageA due to cache error: 0x80070002. Continuing..."));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageB));
+
+            // Uninstall bundle.
+            installerC.Uninstall();
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
+
+            this.CleanTestArtifacts = true;
+        }
+
     }
 }

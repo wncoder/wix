@@ -81,6 +81,13 @@ Language=English
 Bootstrapper application requested to be reloaded.
 .
 
+MessageId=7
+Severity=Success
+SymbolicName=MSG_EXITING
+Language=English
+Exit code: 0x%1!x!
+.
+
 MessageId=51
 Severity=Error
 SymbolicName=MSG_FAILED_PARSE_CONDITION
@@ -249,6 +256,13 @@ Language=English
 Plan %5!hs! skipped patch: %1!ls!, action: %2!hs! because slipstreamed into chained target package: %3!ls!, action: %4!hs!
 .
 
+MessageId=207
+Severity=Success
+SymbolicName=MSG_PLANNED_RELATED_BUNDLE
+Language=English
+Planned related bundle: %1!ls!, type: %2!hs!, default requested: %3!hs!, ba requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, dependency: %7!hs!
+.
+
 MessageId=299
 Severity=Success
 SymbolicName=MSG_PLAN_COMPLETE
@@ -310,6 +324,13 @@ Severity=Warning
 SymbolicName=MSG_FAILED_PAUSE_AU
 Language=English
 Automatic updates could not be paused due to error: 0x%1!x!. Continuing...
+.
+
+MessageId=309
+Severity=Warning
+SymbolicName=MSG_APPLY_SKIPPED_FAILED_CACHED_PACKAGE
+Language=English
+Skipping apply of package: %1!ls! due to cache error: 0x%2!x!. Continuing...
 .
 
 MessageId=310
@@ -445,6 +466,34 @@ Language=English
 Removing bundle dependency provider: %1!ls!
 .
 
+MessageId=331
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_STARTING
+Language=English
+Creating a system restore point.
+.
+
+MessageId=332
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_SUCCEEDED
+Language=English
+Created a system restore point.
+.
+
+MessageId=333
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_DISABLED
+Language=English
+System restore disabled, system restore point not created.
+.
+
+MessageId=334
+Severity=Warning
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_FAILED
+Language=English
+Could not create system restore point, error: 0x%1!x!. Continuing...
+.
+
 MessageId=335
 Severity=Success
 SymbolicName=MSG_ACQUIRE_BUNDLE_PAYLOAD
@@ -569,6 +618,13 @@ Severity=Success
 SymbolicName=MSG_SYSTEM_SHUTDOWN
 Language=English
 Received system request to shut down the process: critical: %1!hs!, elevated: %2!hs!, allowed: %3!hs!
+.
+
+MessageId=410
+Severity=Success
+SymbolicName=MSG_VARIABLE_DUMP
+Language=English
+Variable: %1!ls!
 .
 
 MessageId=500

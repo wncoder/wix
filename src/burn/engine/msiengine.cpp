@@ -57,6 +57,7 @@ static HRESULT ConcatFeatureActionProperties(
     );
 static HRESULT ConcatPatchProperty(
     __in BURN_PACKAGE* pPackage,
+    __in_opt BOOTSTRAPPER_ACTION_STATE* rgSlipstreamPatchActions,
     __inout_z LPWSTR* psczArguments
     );
 static void RegisterSourceDirectory(
@@ -990,19 +991,16 @@ extern "C" HRESULT MsiEngineExecutePackage(
     // add feature action properties
     hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczProperties);
     ExitOnFailure(hr, "Failed to add feature action properties to argument string.");
-
+    
     hr = ConcatFeatureActionProperties(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgFeatures, &sczObfuscatedProperties);
     ExitOnFailure(hr, "Failed to add feature action properties to obfuscated argument string.");
 
-    // add patch properties, except on uninstall because that can confuse the Windows Installer in some situations.
-    if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL != pExecuteAction->msiPackage.action)
-    {
-        hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczProperties);
-        ExitOnFailure(hr, "Failed to add patch properties to argument string.");
+    // add slipstream patch properties
+    hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgSlipstreamPatches, &sczProperties);
+    ExitOnFailure(hr, "Failed to add patch properties to argument string.");
 
-        hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, &sczObfuscatedProperties);
-        ExitOnFailure(hr, "Failed to add patch properties to obfuscated argument string.");
-    }
+    hr = ConcatPatchProperty(pExecuteAction->msiPackage.pPackage, pExecuteAction->msiPackage.rgSlipstreamPatches, &sczObfuscatedProperties);
+    ExitOnFailure(hr, "Failed to add patch properties to obfuscated argument string.");
 
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, LoggingRollbackOrExecute(fRollback), pExecuteAction->msiPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msiPackage.action), sczMsiPath, sczObfuscatedProperties ? sczObfuscatedProperties : L"");
 
@@ -1629,6 +1627,7 @@ LExit:
 
 static HRESULT ConcatPatchProperty(
     __in BURN_PACKAGE* pPackage,
+    __in_opt BOOTSTRAPPER_ACTION_STATE* rgSlipstreamPatchActions,
     __inout_z LPWSTR* psczArguments
     )
 {
@@ -1637,39 +1636,47 @@ static HRESULT ConcatPatchProperty(
     LPWSTR sczMspPath = NULL;
     LPWSTR sczPatches = NULL;
 
-    for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
+    // If there are slipstream patch actions, build up their patch action.
+    if (rgSlipstreamPatchActions)
     {
-        BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[i];
-        AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
-
-        hr = CacheGetCompletedPath(pMspPackage->fPerMachine, pMspPackage->sczCacheId, &sczCachedDirectory);
-        ExitOnFailure1(hr, "Failed to get cached path for MSP package: %ls", pMspPackage->sczId);
-
-        hr = PathConcat(sczCachedDirectory, pMspPackage->rgPayloads[0].pPayload->sczFilePath, &sczMspPath);
-        ExitOnFailure(hr, "Failed to build MSP path.");
-
-        if (!sczPatches)
+        for (DWORD i = 0; i < pPackage->Msi.cSlipstreamMspPackages; ++i)
         {
-            hr = StrAllocConcat(&sczPatches, L" PATCH=\"", 0);
-            ExitOnFailure(hr, "Failed to prefix with PATCH property.");
+            BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[i];
+            AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
+
+            BOOTSTRAPPER_ACTION_STATE patchExecuteAction = rgSlipstreamPatchActions[i];
+            if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < patchExecuteAction)
+            {
+                hr = CacheGetCompletedPath(pMspPackage->fPerMachine, pMspPackage->sczCacheId, &sczCachedDirectory);
+                ExitOnFailure1(hr, "Failed to get cached path for MSP package: %ls", pMspPackage->sczId);
+
+                hr = PathConcat(sczCachedDirectory, pMspPackage->rgPayloads[0].pPayload->sczFilePath, &sczMspPath);
+                ExitOnFailure(hr, "Failed to build MSP path.");
+
+                if (!sczPatches)
+                {
+                    hr = StrAllocConcat(&sczPatches, L" PATCH=\"", 0);
+                    ExitOnFailure(hr, "Failed to prefix with PATCH property.");
+                }
+                else
+                {
+                    hr = StrAllocConcat(&sczPatches, L";", 0);
+                    ExitOnFailure(hr, "Failed to semi-colon delimit patches.");
+                }
+
+                hr = StrAllocConcat(&sczPatches, sczMspPath, 0);
+                ExitOnFailure(hr, "Failed to append patch path.");
+            }
         }
-        else
+
+        if (sczPatches)
         {
-            hr = StrAllocConcat(&sczPatches, L";", 0);
-            ExitOnFailure(hr, "Failed to semi-colon delimit patches.");
+            hr = StrAllocConcat(&sczPatches, L"\"", 0);
+            ExitOnFailure(hr, "Failed to close the quoted PATCH property.");
+
+            hr = StrAllocConcat(psczArguments, sczPatches, 0);
+            ExitOnFailure(hr, "Failed to append PATCH property.");
         }
-
-        hr = StrAllocConcat(&sczPatches, sczMspPath, 0);
-        ExitOnFailure(hr, "Failed to append patch path.");
-    }
-
-    if (sczPatches)
-    {
-        hr = StrAllocConcat(&sczPatches, L"\"", 0);
-        ExitOnFailure(hr, "Failed to close the quoted PATCH property.");
-
-        hr = StrAllocConcat(psczArguments, sczPatches, 0);
-        ExitOnFailure(hr, "Failed to append PATCH property.");
     }
 
 LExit:

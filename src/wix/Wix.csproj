@@ -20,6 +20,7 @@
     <Compile Include="BinderCore.cs" />
     <Compile Include="BinderExtension.cs" />
     <Compile Include="BinderFileManager.cs" />
+    <Compile Include="BundleChainAttributes.cs" />
     <Compile Include="BundlePackageAttributes.cs" />
     <Compile Include="BurnCommon.cs" />
     <Compile Include="BurnReader.cs" />

@@ -619,11 +619,7 @@ public: // IBootstrapperEngine
     {
         HRESULT hr = S_OK;
 
-        if (BOOTSTRAPPER_RESUME_TYPE_REBOOT_PENDING == m_pEngineState->command.resumeType)
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_FAIL_NOACTION_REBOOT);
-        }
-        else if (!::PostThreadMessageW(m_dwThreadId, WM_BURN_PLAN, 0, action))
+        if (!::PostThreadMessageW(m_dwThreadId, WM_BURN_PLAN, 0, action))
         {
             ExitWithLastError(hr, "Failed to post plan message.");
         }

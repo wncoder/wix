@@ -82,6 +82,7 @@
     <ClCompile Include="sceutil.cpp" />
     <ClCompile Include="shelutil.cpp" />
     <ClCompile Include="sqlutil.cpp" />
+    <ClCompile Include="srputil.cpp" />
     <ClCompile Include="strutil.cpp" />
     <ClCompile Include="svcutil.cpp" />
     <ClCompile Include="thmutil.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="inc\sceutil.h" />
     <ClInclude Include="inc\shelutil.h" />
     <ClInclude Include="inc\sqlutil.h" />
+    <ClInclude Include="inc\srputil.h" />
     <ClInclude Include="inc\strutil.h" />
     <ClInclude Include="inc\svcutil.h" />
     <ClInclude Include="inc\thmutil.h" />

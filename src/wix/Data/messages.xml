@@ -508,6 +508,15 @@
                 <Parameter Type="System.String" Name="otherAttributeName2" />
             </Instance>
             <Instance>
+                The {0}/@{1} attribute can only be specified with one of the following attributes: {2} or {3} present with value '{4}'.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="otherAttributeName1" />
+                <Parameter Type="System.String" Name="otherAttributeName2" />
+                <Parameter Type="System.String" Name="otherAttributeValue" />
+                <Parameter Type="System.Boolean" Name="uniquifier" />
+            </Instance>
+            <Instance>
                 The {0}/@{1} attribute can only be specified with one of the following attributes: {2}, {3}, or {4} present.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />

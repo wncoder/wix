@@ -455,9 +455,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
             // SFBUG:3469206 - install a bundle without installing the shared package, which should not be ref-counted.
             this.SetPackageRequestedState("PackageA", Bootstrapper.RequestState.None);
-            this.SetPackageRequestedState("PackageB", Bootstrapper.RequestState.None);
-            BundleInstaller installerB = new BundleInstaller(this, bundleB).Install();
 
+            // Also don't install packageB since it has an authored dependency on packageA and would fail this test case.
+            this.SetPackageRequestedState("PackageB", Bootstrapper.RequestState.None);
+
+            BundleInstaller installerB = new BundleInstaller(this, bundleB).Install();
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             using (RegistryKey root = this.GetTestRegistryRoot())

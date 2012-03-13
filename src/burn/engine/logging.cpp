@@ -418,6 +418,8 @@ extern "C" LPCSTR LoggingRelationTypeToString(
         return "Addon";
     case BOOTSTRAPPER_RELATION_PATCH:
         return "Patch";
+    case BOOTSTRAPPER_RELATION_DEPENDENT:
+        return "Dependent";
     default:
         return "Invalid";
     }

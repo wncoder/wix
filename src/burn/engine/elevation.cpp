@@ -121,6 +121,7 @@ static HRESULT OnGenericExecuteFilesInUse(
     __out DWORD* pdwResult
     );
 static HRESULT OnApplyInitialize(
+    __in BURN_VARIABLES* pVariables,
     __in HANDLE* phLock,
     __in BOOL* pfDisabledWindowsUpdate,
     __in BYTE* pbData,
@@ -195,6 +196,7 @@ static HRESULT OnExecuteMsuPackage(
     );
 static HRESULT OnExecuteDependencyAction(
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BYTE* pbData,
     __in DWORD cbData
     );
@@ -268,7 +270,7 @@ extern "C" HRESULT ElevationElevate(
                 ReleaseNullStr(sczError);
             }
 
-            nResult = pEngineState->userExperience.pUserExperience->OnError(NULL, ERROR_INSTALL_USEREXIT, sczError, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL, IDNOACTION);
+            nResult = pEngineState->userExperience.pUserExperience->OnError(BOOTSTRAPPER_ERROR_TYPE_ELEVATE, NULL, ERROR_INSTALL_USEREXIT, sczError, MB_ICONERROR | MB_RETRYCANCEL, 0, NULL, IDNOACTION);
         }
     } while (IDRETRY == nResult);
     ExitOnFailure(hr, "Failed to elevate.");
@@ -287,7 +289,10 @@ LExit:
 
 extern "C" HRESULT ElevationApplyInitialize(
     __in HANDLE hPipe,
-    __in BURN_AU_PAUSE_ACTION auAction
+    __in BURN_VARIABLES* pVariables,
+    __in BOOTSTRAPPER_ACTION action,
+    __in BURN_AU_PAUSE_ACTION auAction,
+    __in BOOL fTakeSystemRestorePoint
     )
 {
     HRESULT hr = S_OK;
@@ -296,8 +301,17 @@ extern "C" HRESULT ElevationApplyInitialize(
     DWORD dwResult = 0;
 
     // serialize message data
-    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)auAction);
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)auAction);
+    ExitOnFailure(hr, "Failed to write update action to message buffer.");
+
+    hr = BuffWriteNumber(&pbData, &cbData, (DWORD)fTakeSystemRestorePoint);
+    ExitOnFailure(hr, "Failed to write system restore point action to message buffer.");
+    
+    hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
+    ExitOnFailure(hr, "Failed to write variables.");
 
     // send message
     hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_APPLY_INITIALIZE, pbData, cbData, NULL, NULL, &dwResult);
@@ -679,13 +693,19 @@ extern "C" HRESULT ElevationExecuteMsiPackage(
     hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->msiPackage.action);
     ExitOnFailure(hr, "Failed to write action to message buffer.");
 
+    // Feature actions.
     for (DWORD i = 0; i < pExecuteAction->msiPackage.pPackage->Msi.cFeatures; ++i)
     {
         hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->msiPackage.rgFeatures[i]);
         ExitOnFailure(hr, "Failed to write feature action to message buffer.");
     }
 
-    // TODO: patches
+    // Slipstream patches actions.
+    for (DWORD i = 0; i < pExecuteAction->msiPackage.pPackage->Msi.cSlipstreamMspPackages; ++i)
+    {
+        hr = BuffWriteNumber(&pbData, &cbData, (DWORD)pExecuteAction->msiPackage.rgSlipstreamPatches[i]);
+        ExitOnFailure(hr, "Failed to write slipstream patch action to message buffer.");
+    }
 
     hr = VariableSerialize(pVariables, FALSE, &pbData, &cbData);
     ExitOnFailure(hr, "Failed to write variables.");
@@ -1204,7 +1224,7 @@ static HRESULT ProcessElevatedChildMessage(
     switch (pMsg->dwMessage)
     {
     case BURN_ELEVATION_MESSAGE_TYPE_APPLY_INITIALIZE:
-        hrResult = OnApplyInitialize(pContext->phLock, pContext->pfDisabledAutomaticUpdates, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnApplyInitialize(pContext->pVariables, pContext->phLock, pContext->pfDisabledAutomaticUpdates, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_APPLY_UNINITIALIZE:
@@ -1248,7 +1268,7 @@ static HRESULT ProcessElevatedChildMessage(
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_DEPENDENCY:
-        hrResult = OnExecuteDependencyAction(pContext->pPackages, (BYTE*)pMsg->pvData, pMsg->cbData);
+        hrResult = OnExecuteDependencyAction(pContext->pPackages, pContext->pRelatedBundles, (BYTE*)pMsg->pvData, pMsg->cbData);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_CLEAN_PACKAGE:
@@ -1374,6 +1394,7 @@ LExit:
 }
 
 static HRESULT OnApplyInitialize(
+    __in BURN_VARIABLES* pVariables,
     __in HANDLE* phLock,
     __in BOOL* pfDisabledWindowsUpdate,
     __in BYTE* pbData,
@@ -1382,11 +1403,23 @@ static HRESULT OnApplyInitialize(
 {
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
+    DWORD dwAction = 0;
     DWORD dwAUAction = 0;
+    DWORD dwTakeSystemRestorePoint = 0;
+    LPWSTR sczBundleName = NULL;
 
     // deserialize message data
-    hr = BuffReadNumber(pbData, cbData, &iData, &dwAUAction);
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwAction);
     ExitOnFailure(hr, "Failed to read action.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwAUAction);
+    ExitOnFailure(hr, "Failed to read update action.");
+
+    hr = BuffReadNumber(pbData, cbData, &iData, &dwTakeSystemRestorePoint);
+    ExitOnFailure(hr, "Failed to read sysem restore point action.");
+
+    hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
+    ExitOnFailure(hr, "Failed to read variables.");
 
     // initialize.
     hr = ApplyLock(TRUE, phLock);
@@ -1407,9 +1440,38 @@ static HRESULT OnApplyInitialize(
         }
     }
 
-    // TODO: start a system restore point.
+    if (dwTakeSystemRestorePoint)
+    {
+        hr = VariableGetString(pVariables, BURN_BUNDLE_NAME, &sczBundleName);
+        if (FAILED(hr))
+        {
+            hr = S_OK;
+            ExitFunction();
+        }
+
+        LogId(REPORT_STANDARD, MSG_SYSTEM_RESTORE_POINT_STARTING);
+
+        BOOTSTRAPPER_ACTION action = static_cast<BOOTSTRAPPER_ACTION>(dwAction);
+        SRP_ACTION restoreAction = (BOOTSTRAPPER_ACTION_INSTALL == action) ? SRP_ACTION_INSTALL : (BOOTSTRAPPER_ACTION_UNINSTALL == action) ? SRP_ACTION_UNINSTALL : SRP_ACTION_MODIFY;
+        hr = SrpCreateRestorePoint(sczBundleName, restoreAction);
+        if (SUCCEEDED(hr))
+        {
+            LogId(REPORT_STANDARD, MSG_SYSTEM_RESTORE_POINT_SUCCEEDED);
+        }
+        else if (E_NOTIMPL == hr)
+        {
+            LogId(REPORT_STANDARD, MSG_SYSTEM_RESTORE_POINT_DISABLED);
+            hr = S_OK;
+        }
+        else if (FAILED(hr))
+        {
+            LogId(REPORT_STANDARD, MSG_SYSTEM_RESTORE_POINT_FAILED, hr);
+            hr = S_OK;
+        }
+    }
 
 LExit:
+    ReleaseStr(sczBundleName);
     return hr;
 }
 
@@ -1765,6 +1827,7 @@ static HRESULT OnExecuteMsiPackage(
     hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.msiPackage.action);
     ExitOnFailure(hr, "Failed to read action.");
 
+    // Read feature actions.
     if (executeAction.msiPackage.pPackage->Msi.cFeatures)
     {
         executeAction.msiPackage.rgFeatures = (BOOTSTRAPPER_FEATURE_ACTION*)MemAlloc(executeAction.msiPackage.pPackage->Msi.cFeatures * sizeof(BOOTSTRAPPER_FEATURE_ACTION), TRUE);
@@ -1777,7 +1840,18 @@ static HRESULT OnExecuteMsiPackage(
         }
     }
 
-    // TODO: patches
+    // Read slipstream patches actions.
+    if (executeAction.msiPackage.pPackage->Msi.cSlipstreamMspPackages)
+    {
+        executeAction.msiPackage.rgSlipstreamPatches = (BOOTSTRAPPER_ACTION_STATE*)MemAlloc(executeAction.msiPackage.pPackage->Msi.cSlipstreamMspPackages * sizeof(BOOTSTRAPPER_ACTION_STATE), TRUE);
+        ExitOnNull(executeAction.msiPackage.rgSlipstreamPatches, hr, E_OUTOFMEMORY, "Failed to allocate memory for slipstream patch actions.");
+        
+        for (DWORD i = 0; i < executeAction.msiPackage.pPackage->Msi.cSlipstreamMspPackages; ++i)
+        {
+            hr = BuffReadNumber(pbData, cbData, &iData, (DWORD*)&executeAction.msiPackage.rgSlipstreamPatches[i]);
+            ExitOnFailure(hr, "Failed to read slipstream action.");
+        }
+    }
 
     hr = VariableDeserialize(pVariables, pbData, cbData, &iData);
     ExitOnFailure(hr, "Failed to read variables.");
@@ -1957,6 +2031,7 @@ LExit:
 
 static HRESULT OnExecuteDependencyAction(
     __in BURN_PACKAGES* pPackages,
+    __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BYTE* pbData,
     __in DWORD cbData
     )
@@ -1980,6 +2055,10 @@ static HRESULT OnExecuteDependencyAction(
 
     // Find the package again.
     hr = PackageFindById(pPackages, sczPackage, &executeAction.dependency.pPackage);
+    if (E_NOTFOUND == hr)
+    {
+        hr = PackageFindRelatedById(pRelatedBundles, sczPackage, &executeAction.dependency.pPackage);
+    }
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // Execute the dependency action.

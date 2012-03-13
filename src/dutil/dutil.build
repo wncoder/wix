@@ -94,6 +94,7 @@
       <include name="sceutil.cpp" />
       <include name="shelutil.cpp" />
       <include name="sqlutil.cpp" />
+      <include name="srputil.cpp" />
       <include name="strutil.cpp" />
       <include name="svcutil.cpp" />
       <include name="thmutil.cpp" />

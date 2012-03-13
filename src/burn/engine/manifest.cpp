@@ -73,6 +73,13 @@ extern "C" HRESULT ManifestLoadXmlFromBuffer(
             ExitOnFailure(hr, "Failed to to get Chain/@DisableRollback");
         }
 
+        // parse disable system restore
+        hr = XmlGetYesNoAttribute(pixnChain, L"DisableSystemRestore", &pEngineState->fDisableSystemRestore);
+        if (E_NOTFOUND != hr)
+        {
+            ExitOnFailure(hr, "Failed to to get Chain/@DisableSystemRestore");
+        }
+
         // parse parallel cache
         hr = XmlGetYesNoAttribute(pixnChain, L"ParallelCache", &pEngineState->fParallelCacheAndExecute);
         if (E_NOTFOUND != hr)

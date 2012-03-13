@@ -24,6 +24,10 @@
         <PropertyRef Id="VS11_ROOT_FOLDER" />
         <PropertyRef Id="VS11_SCHEMAS_DIR" />
 
+        <CustomActionRef Id="VS11Setup" />
+        <UI>
+            <ProgressText Action="VS11Setup" Template="[1]">Updating Visual Studio 11 registration</ProgressText>
+        </UI>
 
       <ComponentGroup Id="Votive11Components">
             <ComponentGroupRef Id="Votive2010BinaryComponents"/>

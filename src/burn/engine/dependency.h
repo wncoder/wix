@@ -49,11 +49,22 @@ HRESULT DependencyPlanInitialize(
     );
 
 /********************************************************************
+ DependencyAllocIgnoreDependencies - Allocates the dependencies to
+  ignore as a semicolon-delimited string.
+
+*********************************************************************/
+HRESULT DependencyAllocIgnoreDependencies(
+    __in const BURN_PLAN *pPlan,
+    __out_z LPWSTR* psczIgnoreDependencies
+    );
+
+/********************************************************************
  DependencyPlanPackageBegin - Updates the dependency registration
   action depending on the calculated state for the package.
 
 *********************************************************************/
 HRESULT DependencyPlanPackageBegin(
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -68,16 +79,6 @@ HRESULT DependencyPlanPackageComplete(
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
-    );
-
-/********************************************************************
- DependencyPlanRelatedBundles - Gets the dependencies to ignore as
-  a semicolon-delimited string.
-
-*********************************************************************/
-HRESULT DependencyPlanRelatedBundles(
-    __in const BURN_PLAN *pPlan,
-    __out_z LPWSTR* psczIgnoreDependencies
     );
 
 /********************************************************************

@@ -26,8 +26,8 @@
     <WixVariable Id='WixMbaPrereqPackageId' Value='ignored' />
     <WixVariable Id='WixMbaPrereqLicenseUrl' Value='ignored' />
 
-    <Chain>
-      <MsiPackage Id="PackageC" Name="~$(var.TestName)_PackageC.msi" Compressed="yes" SourceFile="!(bindpath.packageC)" Vital="yes" />
+    <Chain DisableSystemRestore="yes">
+      <MsiPackage Id="PackageC" Name="~$(var.TestName)_PackageC.msi" Compressed="yes" SourceFile="!(bindpath.packageC)" Vital="yes" Visible="yes" />
     </Chain>
   </Bundle>
 </Wix>

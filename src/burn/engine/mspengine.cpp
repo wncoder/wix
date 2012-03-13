@@ -282,12 +282,31 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
             switch (requested)
             {
             case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-                execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                switch (pTargetProduct->pChainedTargetPackage->execute)
+                {
+                case BOOTSTRAPPER_ACTION_STATE_REPAIR: __fallthrough;
+                case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:
+                    execute = BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+
+                default:
+                    execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
+                    break;
+                }
                 break;
 
             case BOOTSTRAPPER_REQUEST_STATE_ABSENT: __fallthrough;
             case BOOTSTRAPPER_REQUEST_STATE_CACHE:
-                execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+                switch (pTargetProduct->pChainedTargetPackage->execute)
+                {
+                case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:
+                    execute = BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+
+                default:
+                    execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
+                    break;
+                }
                 break;
 
             default:

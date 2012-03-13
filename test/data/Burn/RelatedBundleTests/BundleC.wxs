@@ -28,9 +28,9 @@
 
     <util:RegistrySearch Variable="PackageB_Installed" Root="HKLM" Key="Software\WiX\Tests\$(var.TestName)" Value="B" Result="exists"/>
 
-    <Chain>
-      <MsiPackage Id="PackageC" Name="~$(var.TestName)_PackageC.msi" Compressed="yes" SourceFile="!(bindpath.packageC)" Vital="yes" />
-      <MsiPackage Id="PackageD" Name="~$(var.TestName)_PackageD.msi" Compressed="yes" SourceFile="!(bindpath.packageD)" Vital="yes" InstallCondition="PackageB_Installed"/>
+    <Chain DisableSystemRestore="yes">
+      <MsiPackage Id="PackageC" Name="~$(var.TestName)_PackageC.msi" Compressed="yes" SourceFile="!(bindpath.packageC)" Vital="yes" Visible="yes" />
+      <MsiPackage Id="PackageD" Name="~$(var.TestName)_PackageD.msi" Compressed="yes" SourceFile="!(bindpath.packageD)" Vital="yes" Visible="yes" InstallCondition="PackageB_Installed"/>
     </Chain>
   </Bundle>
 </Wix>

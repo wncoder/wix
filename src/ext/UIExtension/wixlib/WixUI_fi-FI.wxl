@@ -14,10 +14,10 @@
     You must not remove this notice, or any other, from this software.
     -->
 
-    <Control Dialog="ErrorDlg" Control="R" Width="64" />
-    <Control Dialog="FilesInUse" Control="Retry" X="296" Width="64" />
-    <Control Dialog="FilesInUse" Control="Ignore" X="227" />
-    <Control Dialog="FilesInUse" Control="Exit" X="158" />
+    <UI Dialog="ErrorDlg" Control="R" Width="64" />
+    <UI Dialog="FilesInUse" Control="Retry" X="296" Width="64" />
+    <UI Dialog="FilesInUse" Control="Ignore" X="227" />
+    <UI Dialog="FilesInUse" Control="Exit" X="158" />
 
     <String Id="WixUIBack" Overridable="yes">&amp;Edellinen</String>
     <String Id="WixUINext" Overridable="yes">&amp;Seuraava</String>

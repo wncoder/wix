@@ -103,6 +103,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
             BundleInstaller installerD = new BundleInstaller(this, bundleD).Install();
 
+            // Make sure that bundle D detected dependent bundle A.
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerD.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Dependent, scope: PerMachine, version: 1\.0\.0\.0, operation: None"));
+
             // Test that packageA1 and patchA are installed.
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA1));
             using (RegistryKey root = this.GetTestRegistryRoot())
@@ -131,9 +134,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             // Test that packageA is still installed (ref-counted).
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA1));
 
-            // TODO: After bundle ref-counting, operation should be None.
-            // Test that uninstalling bundle A detected and would remove bundle D.
+            // Test that uninstalling bundle A detected bundle D (ref-counted).
             Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerA.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Patch, scope: PerMachine, version: 1\.0\.1\.0, operation: Remove"));
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerA.LastLogFile, @"Will not uninstall package: \{[0-9A-Za-z\-]{36}\}, found dependents: 1"));
 
             // Attempt to uninstall bundleB.
             installerB.Uninstall();
@@ -143,8 +146,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB1));
             Assert.IsNull(this.GetTestRegistryRoot());
 
-            // TODO: After bundle ref-counting, operation should be Remove.
-            // Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerB.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Patch, scope: PerMachine, version: 1\.0\.1\.0, operation: Remove"));
+            // Test that uninstalling bundle B detected and removed bundle D (ref-counted).
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerB.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Patch, scope: PerMachine, version: 1\.0\.1\.0, operation: Remove"));
 
             this.CleanTestArtifacts = true;
         }
@@ -221,6 +224,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             BundleInstaller installerA = new BundleInstaller(this, bundleA).Install();
             BundleInstaller installerC = new BundleInstaller(this, bundleC).Install();
 
+            // Make sure that bundle C detected dependent bundle A.
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerC.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Dependent, scope: PerMachine, version: 1\.0\.0\.0, operation: None"));
+
             // Test that packages A and C but not D are installed.
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageC));
@@ -244,9 +250,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             // Test that packageA is still installed (ref-counted).
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
 
-            // TODO: After bundle ref-counting, operation should be None.
-            // Test that uninstalling bundle A detected and would remove bundle C.
+            // Test that uninstalling bundle A detected bundle C (ref-counted).
             Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerA.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Addon, scope: PerMachine, version: 1\.0\.0\.0, operation: Remove"));
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerA.LastLogFile, @"Will not uninstall package: \{[0-9A-Za-z\-]{36}\}, found dependents: 1"));
 
             // Attempt to uninstall bundleB.
             installerB.Uninstall();
@@ -257,8 +263,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageC));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD));
 
-            // TODO: After bundle ref-counting, operation should be Remove.
-            // Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerB.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Addon, scope: PerMachine, version: 1\.0\.0\.0, operation: Remove"));
+            // Test that uninstalling bundle B detected and removed bundle C (ref-counted).
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerB.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Addon, scope: PerMachine, version: 1\.0\.0\.0, operation: Remove"));
 
             this.CleanTestArtifacts = true;
         }

@@ -62,6 +62,61 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         [Priority(2)]
         [Description("Installs bundle with slipstream then removes it.")]
         [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_SlipstreamRepair()
+        {
+            string patchedVersion = "1.0.1.0";
+
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A").Build().Output;
+            string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
+            string patchA = new PatchBuilder(this, "PatchA") { TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("patchA", patchA);
+
+            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+            BundleInstaller install = new BundleInstaller(this, bundleA).Install();
+
+            string packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
+            Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package A payload installed at: ", packageSourceCodeInstalled));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(patchedVersion, actualVersion);
+            }
+
+            // Delete the installed file and registry key.
+            File.Delete(packageSourceCodeInstalled);
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                root.DeleteValue("A");
+            }
+
+            // Repair and verify the repair fixed everything.
+            install.Repair();
+
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(patchedVersion, actualVersion);
+            }
+            Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package A payload repaired at: ", packageSourceCodeInstalled));
+
+            // Clean up.
+            install.Uninstall();
+
+            Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("Package A payload should have been removed by uninstall from: ", packageSourceCodeInstalled));
+            Assert.IsNull(this.GetTestRegistryRoot(), "Test registry key should have been removed during uninstall.");
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle with slipstream then removes it.")]
+        [TestProperty("IsRuntimeTest", "true")]
         public void Burn_SlipstreamRemovePatchAlone()
         {
             string patchedVersion = "1.0.1.0";

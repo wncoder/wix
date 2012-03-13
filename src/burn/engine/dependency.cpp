@@ -53,6 +53,7 @@ static void DependencyCalculatePlan(
     );
 
 static HRESULT DependencyPlanActions(
+    __in_opt DWORD *pdwInsertSequence,
     __in const BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey,
@@ -178,7 +179,26 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT DependencyAllocIgnoreDependencies(
+    __in const BURN_PLAN *pPlan,
+    __out_z LPWSTR* psczIgnoreDependencies
+    )
+{
+    HRESULT hr = S_OK;
+
+    // Join the list of dependencies to ignore for each related bundle.
+    if (0 < pPlan->cPlannedProviders)
+    {
+        hr = DependencyJoinIgnoreDependencies(psczIgnoreDependencies, pPlan->rgPlannedProviders, pPlan->cPlannedProviders);
+        ExitOnFailure(hr, "Failed to join the list of dependencies to ignore.");
+    }
+
+LExit:
+    return hr;
+}
+
 extern "C" HRESULT DependencyPlanPackageBegin(
+    __in_opt DWORD *pdwInsertSequence,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -266,7 +286,7 @@ extern "C" HRESULT DependencyPlanPackageBegin(
     // If the dependency execution action is to unregister, add the dependency actions to the plan.
     if (BURN_DEPENDENCY_ACTION_UNREGISTER == dependencyExecuteAction)
     {
-        hr = DependencyPlanActions(pPackage, pPlan, wzBundleProviderKey, dependencyExecuteAction, dependencyRollbackAction);
+        hr = DependencyPlanActions(pdwInsertSequence, pPackage, pPlan, wzBundleProviderKey, dependencyExecuteAction, dependencyRollbackAction);
         ExitOnFailure1(hr, "Failed to plan the dependency actions for package: %ls", pPackage->sczId);
 
         // Pass the action back to skip post-package planning.
@@ -308,28 +328,10 @@ extern "C" HRESULT DependencyPlanPackageComplete(
     // If the dependency execution action is to register, add the dependency actions to the plan.
     if (BURN_DEPENDENCY_ACTION_REGISTER == dependencyExecuteAction)
     {
-        hr = DependencyPlanActions(pPackage, pPlan, wzBundleProviderKey, dependencyExecuteAction, dependencyRollbackAction);
+        hr = DependencyPlanActions(NULL, pPackage, pPlan, wzBundleProviderKey, dependencyExecuteAction, dependencyRollbackAction);
         ExitOnFailure1(hr, "Failed to plan the dependency actions for package: %ls", pPackage->sczId);
 
         pPackage->dependency = dependencyExecuteAction;
-    }
-
-LExit:
-    return hr;
-}
-
-extern "C" HRESULT DependencyPlanRelatedBundles(
-    __in const BURN_PLAN *pPlan,
-    __out_z LPWSTR* psczIgnoreDependencies
-    )
-{
-    HRESULT hr = S_OK;
-
-    // Join the list of dependencies to ignore for each related bundle.
-    if (0 < pPlan->cPlannedProviders)
-    {
-        hr = DependencyJoinIgnoreDependencies(psczIgnoreDependencies, pPlan->rgPlannedProviders, pPlan->cPlannedProviders);
-        ExitOnFailure(hr, "Failed to join the list of dependencies to ignore.");
     }
 
 LExit:
@@ -382,6 +384,29 @@ extern "C" HRESULT DependencyRegisterBundle(
     // Register the bundle provider key.
     hr = DepRegisterDependency(pRegistration->hkRoot, pRegistration->sczProviderKey, sczVersion, pRegistration->sczDisplayName, 0);
     ExitOnFailure(hr, "Failed to register the bundle dependency provider.");
+
+    // Register each dependent related bundle.
+    for (DWORD i = 0; i < pRegistration->relatedBundles.cRelatedBundles; ++i)
+    {
+        const BURN_RELATED_BUNDLE* pRelatedBundle = pRegistration->relatedBundles.rgRelatedBundles + i;
+
+        if (BOOTSTRAPPER_RELATION_DEPENDENT == pRelatedBundle->relationType)
+        {
+            for (DWORD j = 0; j < pRelatedBundle->package.cDependencyProviders; ++j)
+            {
+                const BURN_DEPENDENCY_PROVIDER* pProvider = pRelatedBundle->package.rgDependencyProviders + j;
+
+                LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_REGISTER_DEPENDENCY, pRegistration->sczProviderKey, pProvider->sczKey, pRelatedBundle->package.sczId);
+
+                // Register all dependent related bundles as non-vital.
+                hr = DepRegisterDependent(pRegistration->hkRoot, pRegistration->sczProviderKey, pProvider->sczKey, NULL, NULL, 0);
+                if (E_FILENOTFOUND != hr)
+                {
+                    ExitOnFailure1(hr, "Failed to register the dependency on package dependency provider: %ls", pProvider->sczKey);
+                }
+            }
+        }
+    }
 
 LExit:
     ReleaseStr(sczVersion);
@@ -727,6 +752,7 @@ static void DependencyCalculatePlan(
 
 *********************************************************************/
 static HRESULT DependencyPlanActions(
+    __in_opt DWORD *pdwInsertSequence,
     __in const BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey,
@@ -740,8 +766,16 @@ static HRESULT DependencyPlanActions(
     // Add the execute plan.
     if (BURN_DEPENDENCY_ACTION_NONE != dependencyExecuteAction)
     {
-        hr = PlanAppendExecuteAction(pPlan, &pAction);
-        ExitOnFailure(hr, "Failed to append execute action.");
+        if (NULL != pdwInsertSequence)
+        {
+            hr = PlanInsertExecuteAction(*pdwInsertSequence, pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to insert execute action.");
+        }
+        else
+        {
+            hr = PlanAppendExecuteAction(pPlan, &pAction);
+            ExitOnFailure(hr, "Failed to append execute action.");
+        }
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_DEPENDENCY;
         pAction->dependency.pPackage = const_cast<BURN_PACKAGE*>(pPackage);

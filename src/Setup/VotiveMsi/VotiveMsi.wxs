@@ -101,7 +101,7 @@
             <Custom Action="CA_SetLatestDevenvCommand_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
             <Custom Action="CA_SetLatestDevenvCommand_2008" After="CostFinalize"><![CDATA[VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
             <Custom Action="CA_SetLatestDevenvCommand_2010" After="CostFinalize"><![CDATA[VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenvCommand_11" After="CostFinalize"><![CDATA[VS2010DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenvCommand_11" After="CostFinalize"><![CDATA[VS11DEVENV]]></Custom>
         </InstallExecuteSequence>
     </Fragment>
 </Wix>

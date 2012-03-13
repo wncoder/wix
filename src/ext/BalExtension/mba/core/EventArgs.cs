@@ -1272,6 +1272,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     [Serializable]
     public class ErrorEventArgs : ResultEventArgs
     {
+        private ErrorType errorType;
         private string packageId;
         private int errorCode;
         private string errorMessage;
@@ -1281,20 +1282,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// <summary>
         /// Creates a new instance of the <see cref="ErrorEventArgs"/> class.
         /// </summary>
+        /// <param name="errorType">The error type.</param>
         /// <param name="packageId">The identity of the package that yielded the error.</param>
         /// <param name="errorCode">The error code.</param>
         /// <param name="errorMessage">The error message.</param>
         /// <param name="uiHint">Recommended display flags for an error dialog.</param>
         /// <param name="data">The exteded data for the error.</param>
         /// <param name="recommendation">Recommended result from engine.</param>
-        public ErrorEventArgs(string packageId, int errorCode, string errorMessage, int uiHint, string[] data, int recommendation)
+        public ErrorEventArgs(ErrorType errorType, string packageId, int errorCode, string errorMessage, int uiHint, string[] data, int recommendation)
             : base(recommendation)
         {
+            this.errorType = errorType;
             this.packageId = packageId;
             this.errorCode = errorCode;
             this.errorMessage = errorMessage;
             this.uiHint = uiHint;
             this.data = new ReadOnlyCollection<string>(data ?? new string [] { });
+        }
+
+        /// <summary>
+        /// Gets the type of error that occurred.
+        /// </summary>
+        public ErrorType ErrorType
+        {
+            get { return this.errorType; }
         }
 
         /// <summary>

@@ -17,7 +17,7 @@
     <Package Compressed="yes" InstallerVersion="300" InstallScope="perMachine"/>
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
-    <MediaTemplate />
+    <MediaTemplate EmbedCab="yes" />
 
     <Property Id="MsiLogging" Value="voicewarmup"/>
     <PropertyRef Id="TestVersion"/>

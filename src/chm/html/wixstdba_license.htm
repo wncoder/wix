@@ -18,10 +18,15 @@
 <pre>    &lt;?xml version=&quot;1.0&quot;&gt;
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
       &lt;Bundle&gt;
-        &lt;BootstrapperApplicationRef Id=&quot;WixStandardBootstrapperApplication.RtfLicense&quot; /&gt;
-<strong class="highlight">        &lt;WixVariable Id=&quot;WixStdbaLicenseRtf&quot; Value=&quot;path\to\license.rtf&quot; /&gt;</strong>
+        &lt;BootstrapperApplicationRef Id=&quot;WixStandardBootstrapperApplication.RtfLicense&quot;&gt;
+          &lt;bal:WixStandardBootstrapperApplication
+            <strong class="highlight">LicenseFile="path\to\license.rtf"</strong>
+            LogoFile="path\to\customlogo.png"
+            /&gt;
+        &lt;/BootstrapperApplicationRef&gt;
 
         &lt;Chain&gt;
+          ...
         &lt;/Chain&gt;
       &lt;/Bundle&gt;
     &lt;/Wix&gt;</pre>
@@ -31,10 +36,15 @@
 <pre>    &lt;?xml version=&quot;1.0&quot;&gt;
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;
       &lt;Bundle&gt;
-        &lt;BootstrapperApplicationRef Id=&quot;WixStandardBootstrapperApplication.HyperlinkLicense&quot; /&gt;
-<strong class="highlight">        &lt;WixVariable Id=&quot;WixStdbaLicenseUrl&quot; Value=&quot;http://example.com/license.html&quot; /&gt;</strong>
+        &lt;BootstrapperApplicationRef Id=&quot;WixStandardBootstrapperApplication.HyperlinkLicense&quot;&gt;
+          &lt;bal:WixStandardBootstrapperApplication
+            <strong class="highlight">LicenseUrl="http://example.com/license.html"</strong>
+            LogoFile="path\to\customlogo.png"
+            /&gt;
+        &lt;/BootstrapperApplicationRef&gt;
 
         &lt;Chain&gt;
+          ...
         &lt;/Chain&gt;
       &lt;/Bundle&gt;
     &lt;/Wix&gt;</pre>
