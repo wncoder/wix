@@ -43,9 +43,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
         protected override void Run()
         {
             this.action = this.Command.Action;
-
             this.TestVariables();
-            this.Engine.Detect();
+
+            int redetectCount = 0;
+            string redetect = this.ReadPackageAction(null, "RedetectCount");
+            if (String.IsNullOrEmpty(redetect) || !Int32.TryParse(redetect, out redetectCount))
+            {
+                redetectCount = 0;
+            }
+
+            do
+            {
+                this.Engine.Detect();
+                this.Engine.Log(LogLevel.Standard, String.Format("Completed detection phase: {0} re-runs remaining", redetectCount));
+            } while (0 < redetectCount--);
 
             this.wait.WaitOne();
             this.Engine.Quit(this.result & 0xFFFF); // return plain old Win32 error, not HRESULT.
@@ -254,7 +265,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.BA
         private string ReadPackageAction(string packageId, string state)
         {
             string testName = this.Engine.StringVariables["TestName"];
-            using (RegistryKey testKey = Registry.LocalMachine.OpenSubKey(String.Format(@"Software\WiX\Tests\{0}\{1}", testName, packageId)))
+            using (RegistryKey testKey = Registry.LocalMachine.OpenSubKey(String.Format(@"Software\WiX\Tests\TestBAControl\{0}\{1}", testName, String.IsNullOrEmpty(packageId) ? String.Empty : packageId)))
             {
                 return testKey == null ? null : testKey.GetValue(state) as string;
             }

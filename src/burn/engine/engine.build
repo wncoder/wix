@@ -63,6 +63,7 @@
       <include name="container.cpp" />
       <include name="core.cpp" />
       <include name="dependency.cpp" />
+      <include name="detect.cpp" />
       <include name="downloadengine.cpp" />
       <include name="elevation.cpp" />
       <include name="embedded.cpp" />

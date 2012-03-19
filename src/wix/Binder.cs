@@ -7180,7 +7180,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         private class ChainPackageInfo
         {
-            private const string propertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
+            private const string PropertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
+            private const string PatchMetadataFormat = "SELECT `Value` FROM `MsiPatchMetadata` WHERE `Property` = '{0}'";
             private static readonly Version EmptyVersion = new Version(0, 0, 0, 0);
 
             public ChainPackageInfo(Row row, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
@@ -7804,6 +7805,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.PatchCode = sumInfo.RevisionNumber.Substring(0, 38);
                     }
 
+                    using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
+                    {
+                        this.DisplayName = ChainPackageInfo.GetPatchMetadataProperty(db, "DisplayName");
+                    }
+
                     this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
                 }
                 catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
@@ -7925,7 +7931,34 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // quick sanity check that we'll be creating a valid query...
                 // TODO: Are there any other special characters we should be looking for?
                 Debug.Assert(!property.Contains("'"));
-                return String.Format(CultureInfo.InvariantCulture, propertySqlFormat, property);
+                return String.Format(CultureInfo.InvariantCulture, ChainPackageInfo.PropertySqlFormat, property);
+            }
+
+            /// <summary>
+            /// Queries a Windows Installer patch database for a Property value from the MsiPatchMetadata table.
+            /// </summary>
+            /// <param name="db">Database to query.</param>
+            /// <param name="property">Property to examine.</param>
+            /// <returns>String value for result or null if query doesn't match a single result.</returns>
+            private static string GetPatchMetadataProperty(Microsoft.Deployment.WindowsInstaller.Database db, string property)
+            {
+                try
+                {
+                    return db.ExecuteScalar(PatchMetadataPropertyQuery(property)).ToString();
+                }
+                catch (Microsoft.Deployment.WindowsInstaller.InstallerException)
+                {
+                }
+
+                return null;
+            }
+
+            private static string PatchMetadataPropertyQuery(string property)
+            {
+                // quick sanity check that we'll be creating a valid query...
+                // TODO: Are there any other special characters we should be looking for?
+                Debug.Assert(!property.Contains("'"));
+                return String.Format(CultureInfo.InvariantCulture, ChainPackageInfo.PatchMetadataFormat, property);
             }
         }
 

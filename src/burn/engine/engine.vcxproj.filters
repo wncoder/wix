@@ -117,6 +117,9 @@
     <ClCompile Include="section.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="detect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="precomp.h">
@@ -228,6 +231,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="section.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="detect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1976,3 +1976,16 @@ BobArnson: Change WixLoc.Control to WixLoc.UI to support localizing attributes
 
 WixBuild: Version 3.6.2712.0
 
+BobArnson: Harvest patch metadata DisplayName for MspPackages.
+
+JieJi: Fixed SizeParamIndex for interop declaration.
+
+RobMen: Improve logging about restarts and re-allow elevated process to execute
+        the restart.
+
+RobMen: SFBUG:3505052 - correctly set MSP rollback logging variable.
+        Reset detect state when re-running detect.
+        Fix Burn crash while planning non-slipstream patches.
+
+WixBuild: Version 3.6.2719.0
+

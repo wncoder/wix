@@ -402,6 +402,23 @@ extern "C" LPCSTR LoggingPerMachineToString(
     return "PerUser";
 }
 
+extern "C" LPCSTR LoggingRestartToString(
+    __in BOOTSTRAPPER_APPLY_RESTART restart
+    )
+{
+    switch (restart)
+    {
+    case BOOTSTRAPPER_APPLY_RESTART_NONE:
+        return "None";
+    case BOOTSTRAPPER_APPLY_RESTART_REQUIRED:
+        return "Required";
+    case BOOTSTRAPPER_APPLY_RESTART_INITIATED:
+        return "Initiated";
+    default:
+        return "Invalid";
+    }
+}
+
 extern "C" LPCSTR LoggingRelationTypeToString(
     __in BOOTSTRAPPER_RELATION_TYPE type
     )

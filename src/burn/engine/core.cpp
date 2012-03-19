@@ -206,6 +206,10 @@ extern "C" HRESULT CoreDetect(
     hr = UserExperienceInterpretResult(&pEngineState->userExperience, MB_OKCANCEL, nResult);
     ExitOnRootFailure(hr, "UX aborted detect begin.");
 
+    // Always reset the detect state which means the plan should be reset too.
+    DetectReset(&pEngineState->packages);
+    PlanReset(&pEngineState->plan, &pEngineState->packages);
+
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to execute searches.");
 
@@ -713,7 +717,7 @@ LExit:
         pEngineState->fRestart = TRUE;
     }
 
-    LogId(REPORT_STANDARD, MSG_APPLY_COMPLETE, hr, LoggingBoolToString(pEngineState->fRestart));
+    LogId(REPORT_STANDARD, MSG_APPLY_COMPLETE, hr, LoggingRestartToString(restart), LoggingBoolToString(pEngineState->fRestart));
 
     return hr;
 }

@@ -175,7 +175,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
             [MarshalAs(UnmanagedType.LPWStr)] string wzError,
             [MarshalAs(UnmanagedType.U4)] int uiFlags,
             [MarshalAs(UnmanagedType.U4)] int cData,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData,
+            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 5, ArraySubType = UnmanagedType.LPWStr), In] string[] rgwzData,
             [MarshalAs(UnmanagedType.I4)] int nRecommendation
             );
 

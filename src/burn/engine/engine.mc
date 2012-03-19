@@ -72,6 +72,7 @@ Severity=Warning
 SymbolicName=MSG_RESTARTING
 Language=English
 Restarting computer...
+=======================================
 .
 
 MessageId=6
@@ -85,7 +86,7 @@ MessageId=7
 Severity=Success
 SymbolicName=MSG_EXITING
 Language=English
-Exit code: 0x%1!x!
+Exit code: 0x%1!x!, restarting: %2!hs!
 .
 
 MessageId=51
@@ -169,7 +170,7 @@ MessageId=105
 Severity=Success
 SymbolicName=MSG_DETECTED_MSP_TARGET
 Language=English
-Detected package: %1!u! target: %2!u!, state: %3!hs!
+Detected package: %1!ls! target: %2!ls!, state: %3!hs!
 .
 
 MessageId=120
@@ -610,7 +611,7 @@ MessageId=399
 Severity=Success
 SymbolicName=MSG_APPLY_COMPLETE
 Language=English
-Apply complete, result: 0x%1!x! restart: %2!hs!
+Apply complete, result: 0x%1!x!, restart: %2!hs!, ba requested restart:  %3!hs!
 .
 
 MessageId=400

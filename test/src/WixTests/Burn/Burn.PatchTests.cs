@@ -72,5 +72,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
             this.CleanTestArtifacts = true;
         }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs patch bundle with repeated Detect phases.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_PatchRedetect()
+        {
+            this.SetRedetectCount(1);
+            this.Burn_PatchInstallUninstall();
+        }
     }
 }

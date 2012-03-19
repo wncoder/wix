@@ -116,6 +116,10 @@ LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
     );
 
+LPCSTR LoggingRestartToString(
+    __in BOOTSTRAPPER_APPLY_RESTART restart
+    );
+
 LPCSTR LoggingRelationTypeToString(
     __in BOOTSTRAPPER_RELATION_TYPE type
     );

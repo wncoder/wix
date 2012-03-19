@@ -111,7 +111,7 @@ typedef struct _BURN_MSIFEATURE
     LPWSTR sczRollbackAdvertiseCondition;
     BOOL fRepair;
 
-    BOOTSTRAPPER_FEATURE_STATE currentState; // only valid after Detect.
+    BOOTSTRAPPER_FEATURE_STATE currentState;   // only valid after Detect.
     BOOTSTRAPPER_FEATURE_ACTION execute;       // only valid during Plan.
     BOOTSTRAPPER_FEATURE_ACTION rollback;      // only valid during Plan.
 } BURN_MSIFEATURE;

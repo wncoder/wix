@@ -123,12 +123,15 @@ extern "C" HRESULT MspEngineDetectInitialize(
     DWORD iProduct = 0;
     WCHAR wzProductCode[MAX_GUID_CHARS + 1];
 
-    // Erase any previously detected product information.
+#ifdef DEBUG
+    // All patch info should be initialized to zero.
     for (DWORD i = 0; i < pPackages->cPatchInfo; ++i)
     {
         BURN_PACKAGE* pPackage = pPackages->rgPatchInfoToPackage[i];
-        ReleaseNullMem(pPackage->Msp.rgTargetProducts);
+        Assert(!pPackage->Msp.cTargetProductCodes);
+        Assert(!pPackage->Msp.rgTargetProducts);
     }
+#endif
 
     // Loop through all products on the machine, testing the collective patch applicability
     // against each product in all contexts. Store the result with the appropriate patch package.
@@ -282,30 +285,34 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
             switch (requested)
             {
             case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
-                switch (pTargetProduct->pChainedTargetPackage->execute)
+                // If the patch targets a package in the chain and the target package is already being
+                // repaired or uninstalled, don't do anything to the patch (because the target package
+                // will do the operation for us).
+                if (pTargetProduct->pChainedTargetPackage &&
+                    (BOOTSTRAPPER_ACTION_STATE_REPAIR == pTargetProduct->pChainedTargetPackage->execute ||
+                     BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pTargetProduct->pChainedTargetPackage->execute))
                 {
-                case BOOTSTRAPPER_ACTION_STATE_REPAIR: __fallthrough;
-                case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:
                     execute = BOOTSTRAPPER_ACTION_STATE_NONE;
-                    break;
-
-                default:
+                }
+                else
+                {
                     execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
-                    break;
                 }
                 break;
 
             case BOOTSTRAPPER_REQUEST_STATE_ABSENT: __fallthrough;
             case BOOTSTRAPPER_REQUEST_STATE_CACHE:
-                switch (pTargetProduct->pChainedTargetPackage->execute)
+                // If the patch is not uninstallable or the patch targets a package in the chain and
+                // the target package is already being uninstalled, don't do anything to the patch
+                // (because the target package will do the operation for us).
+                if (!pPackage->fUninstallable ||
+                    (pTargetProduct->pChainedTargetPackage && BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pTargetProduct->pChainedTargetPackage->execute))
                 {
-                case BOOTSTRAPPER_ACTION_STATE_UNINSTALL:
                     execute = BOOTSTRAPPER_ACTION_STATE_NONE;
-                    break;
-
-                default:
-                    execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
-                    break;
+                }
+                else
+                {
+                    execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
                 }
                 break;
 
@@ -740,7 +747,7 @@ static HRESULT PlanTargetProduct(
             pPlan->fPerMachine = TRUE;
         }
 
-        LoggingSetPackageVariable(pPackage, pAction->mspTarget.sczTargetProductCode, FALSE, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
+        LoggingSetPackageVariable(pPackage, pAction->mspTarget.sczTargetProductCode, fRollback, pLog, pVariables, &pAction->mspTarget.sczLogPath); // ignore errors.
     }
 
     // Add our target product to the array and sort based on their order determined during detection.

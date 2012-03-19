@@ -318,6 +318,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             // Remove any registry keys created during this test.
             string key = String.Format(@"Software\WiX\Tests\{0}", this.TestContext.TestName);
             Registry.LocalMachine.DeleteSubKeyTree(key, false);
+            Registry.LocalMachine.DeleteSubKeyTree(@"Software\WiX\Tests\TestBAControl", false);
 
             MsiVerifier.Reset();
 
@@ -386,7 +387,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
         protected RegistryKey GetTestRegistryRoot(string additionalPath = null)
         {
             string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, additionalPath ?? String.Empty);
-            return Registry.LocalMachine.OpenSubKey(key);
+            return Registry.LocalMachine.OpenSubKey(key, true);
         }
 
         /// <summary>

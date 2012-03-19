@@ -85,6 +85,7 @@
 #include "userexperience.h"
 #include "package.h"
 #include "registration.h"
+#include "detect.h"
 #include "plan.h"
 #include "logging.h"
 #include "pipe.h"

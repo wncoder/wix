@@ -197,17 +197,22 @@ LExit:
 
     if (fRunNormal)
     {
-        LogId(REPORT_STANDARD, MSG_EXITING, FAILED(hr) ? (int)hr : *pdwExitCode);
+        LogId(REPORT_STANDARD, MSG_EXITING, FAILED(hr) ? (int)hr : *pdwExitCode, LoggingBoolToString(fRestart));
 
         if (fRestart)
         {
-            Restart();
+            LogId(REPORT_STANDARD, MSG_RESTARTING);
         }
     }
 
     if (fLogInitialized)
     {
         LogUninitialize(FALSE);
+    }
+
+    if (fRestart)
+    {
+        Restart();
     }
 
     return hr;
@@ -683,8 +688,6 @@ static HRESULT Restart()
     HANDLE hProcessToken = NULL;
     TOKEN_PRIVILEGES priv = { };
 
-    LogId(REPORT_STANDARD, MSG_RESTARTING);
-
     if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hProcessToken))
     {
         ExitWithLastError(hr, "Failed to get process token.");
@@ -701,6 +704,11 @@ static HRESULT Restart()
     {
         ExitWithLastError(hr, "Failed to adjust token to add shutdown privileges.");
     }
+
+    // Wait a second to let the companion process (assuming we did an elevated install) to get to the
+    // point where it too is thinking about restarting the computer. Only one will schedule the restart
+    // but both will have their log files closed and otherwise be ready to exit.
+    ::Sleep(1000);
 
     if (!vpfnInitiateSystemShutdownExW(NULL, NULL, 0, FALSE, TRUE, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_MINOR_INSTALLATION | SHTDN_REASON_FLAG_PLANNED))
     {

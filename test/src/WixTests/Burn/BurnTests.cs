@@ -81,18 +81,27 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
         }
 
         /// <summary>
+        /// Sets the number of times to re-run the Detect phase.
+        /// </summary>
+        /// <param name="state">Number of times to run Detect (after the first, normal, Detect).</param>
+        protected void SetRedetectCount(int redetectCount)
+        {
+            this.SetPackageState(null, "RedetectCount", redetectCount.ToString());
+        }
+
+        /// <summary>
         /// Resets the state for a package that the TestBA will return to the engine during plan.
         /// </summary>
         /// <param name="packageId">Package identity.</param>
         protected void ResetPackageStates(string packageId)
         {
-            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
+            string key = String.Format(@"Software\WiX\Tests\TestBAControl\{0}\{1}", this.TestContext.TestName, packageId ?? String.Empty);
             Registry.LocalMachine.DeleteSubKey(key);
         }
 
         private void SetPackageState(string packageId, string name, string value)
         {
-            string key = String.Format(@"Software\WiX\Tests\{0}\{1}", this.TestContext.TestName, packageId);
+            string key = String.Format(@"Software\WiX\Tests\TestBAControl\{0}\{1}", this.TestContext.TestName, packageId ?? String.Empty);
             using (RegistryKey packageKey = Registry.LocalMachine.CreateSubKey(key))
             {
                 if (String.IsNullOrEmpty(value))
