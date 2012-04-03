@@ -113,13 +113,6 @@ static HRESULT ProcessResult(
     __in DWORD dwResult,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
     );
-static HRESULT OnGenericExecuteFilesInUse(
-    __in LPVOID pvData,
-    __in DWORD cbData,
-    __in PFN_GENERICMESSAGEHANDLER pfnMessageHandler,
-    __in LPVOID pvContext,
-    __out DWORD* pdwResult
-    );
 static HRESULT OnApplyInitialize(
     __in BURN_VARIABLES* pVariables,
     __in HANDLE* phLock,
@@ -1057,31 +1050,56 @@ static HRESULT ProcessGenericExecuteMessages(
     HRESULT hr = S_OK;
     SIZE_T iData = 0;
     BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT* pContext = static_cast<BURN_ELEVATION_GENERIC_MESSAGE_CONTEXT*>(pvContext);
-    DWORD dwAllowedResults = 0;
-    DWORD dwProgress = 0;
-    DWORD dwResult = 0;
+    LPWSTR sczMessage = NULL;
+    DWORD cFiles = 0;
+    LPWSTR* rgwzFiles = NULL;
     GENERIC_EXECUTE_MESSAGE message = { };
 
+    hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &message.dwAllowedResults);
+    ExitOnFailure(hr, "Failed to allowed results.");
+    
     // Process the message.
     switch (pMsg->dwMessage)
     {
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS:
-        // read message parameters
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwAllowedResults);
-        ExitOnFailure(hr, "Failed to read progress.");
-
-        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &dwProgress);
-        ExitOnFailure(hr, "Failed to read total.");
-
         message.type = GENERIC_EXECUTE_MESSAGE_PROGRESS;
-        message.dwAllowedResults = dwAllowedResults;
-        message.progress.dwPercentage = dwProgress;
-        // send message
-        dwResult = (DWORD)pContext->pfnGenericMessageHandler(&message, pContext->pvContext);
+
+        // read message parameters
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &message.progress.dwPercentage);
+        ExitOnFailure(hr, "Failed to progress.");
+        break;
+
+    case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR:
+        message.type = GENERIC_EXECUTE_MESSAGE_ERROR;
+
+        // read message parameters
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &message.error.dwErrorCode);
+        ExitOnFailure(hr, "Failed to read error code.");
+
+        hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &sczMessage);
+        ExitOnFailure(hr, "Failed to read message.");
+
+        message.error.wzMessage = sczMessage;
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE:
-        hr = OnGenericExecuteFilesInUse(pMsg->pvData, pMsg->cbData, pContext->pfnGenericMessageHandler, pContext->pvContext, &dwResult);
+        message.type = GENERIC_EXECUTE_MESSAGE_FILES_IN_USE;
+        
+        // read message parameters
+        hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &cFiles);
+        ExitOnFailure(hr, "Failed to read file count.");
+
+        rgwzFiles = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cFiles, TRUE);
+        ExitOnNull(rgwzFiles, hr, E_OUTOFMEMORY, "Failed to allocate buffer for files in use.");
+
+        for (DWORD i = 0; i < cFiles; ++i)
+        {
+            hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &rgwzFiles[i]);
+            ExitOnFailure1(hr, "Failed to read file name: %u", i);
+        }
+
+        message.filesInUse.cFiles = cFiles;
+        message.filesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
         break;
 
     default:
@@ -1090,9 +1108,20 @@ static HRESULT ProcessGenericExecuteMessages(
         break;
     }
 
-    *pdwResult = dwResult;
+    // send message
+    *pdwResult =  (DWORD)pContext->pfnGenericMessageHandler(&message, pContext->pvContext);;
 
 LExit:
+    ReleaseStr(sczMessage);
+
+    if (rgwzFiles)
+    {
+        for (DWORD i = 0; i <= cFiles; ++i)
+        {
+            ReleaseStr(rgwzFiles[i]);
+        }
+        MemFree(rgwzFiles);
+    }
     return hr;
 }
 
@@ -1108,7 +1137,6 @@ static HRESULT ProcessMsiPackageMessages(
     DWORD cMsiData = 0;
     LPWSTR* rgwzMsiData = NULL;
     BURN_ELEVATION_MSI_MESSAGE_CONTEXT* pContext = static_cast<BURN_ELEVATION_MSI_MESSAGE_CONTEXT*>(pvContext);
-    DWORD dwResult = 0;
     LPWSTR sczMessage = NULL;
 
     // Read MSI extended message data.
@@ -1142,9 +1170,6 @@ static HRESULT ProcessMsiPackageMessages(
 
         hr = BuffReadNumber((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &message.progress.dwPercentage);
         ExitOnFailure(hr, "Failed to read progress.");
-
-        // send message
-        dwResult = (DWORD)pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR:
@@ -1157,9 +1182,6 @@ static HRESULT ProcessMsiPackageMessages(
         hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &sczMessage);
         ExitOnFailure(hr, "Failed to read message.");
         message.error.wzMessage = sczMessage;
-
-        // send message
-        dwResult = (DWORD)pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_MSI_MESSAGE:
@@ -1172,18 +1194,12 @@ static HRESULT ProcessMsiPackageMessages(
         hr = BuffReadString((BYTE*)pMsg->pvData, pMsg->cbData, &iData, &sczMessage);
         ExitOnFailure(hr, "Failed to read message.");
         message.msiMessage.wzMessage = sczMessage;
-
-        // send message
-        dwResult = (DWORD)pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
 
     case BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE:
         message.type = WIU_MSI_EXECUTE_MESSAGE_MSI_MESSAGE;
         message.msiFilesInUse.cFiles = cMsiData;
         message.msiFilesInUse.rgwzFiles = (LPCWSTR*)rgwzMsiData;
-
-        // send message
-        dwResult = (DWORD)pContext->pfnMessageHandler(&message, pContext->pvContext);
         break;
 
     default:
@@ -1191,8 +1207,9 @@ static HRESULT ProcessMsiPackageMessages(
         ExitOnRootFailure(hr, "Invalid package message.");
         break;
     }
-
-    *pdwResult = dwResult;
+    
+    // send message
+    *pdwResult = (DWORD)pContext->pfnMessageHandler(&message, pContext->pvContext);
 
 LExit:
     ReleaseStr(sczMessage);
@@ -1341,53 +1358,6 @@ static HRESULT ProcessResult(
     {
         *pRestart = BOOTSTRAPPER_APPLY_RESTART_INITIATED;
         hr = S_OK;
-    }
-
-    return hr;
-}
-
-static HRESULT OnGenericExecuteFilesInUse(
-    __in LPVOID pvData,
-    __in DWORD cbData,
-    __in PFN_GENERICMESSAGEHANDLER pfnMessageHandler,
-    __in LPVOID pvContext,
-    __out DWORD* pdwResult
-    )
-{
-    HRESULT hr = S_OK;
-    SIZE_T iData = 0;
-    DWORD cFiles = 0;
-    LPWSTR* rgwzFiles = NULL;
-    GENERIC_EXECUTE_MESSAGE message = { };
-
-    // read message parameters
-    hr = BuffReadNumber((BYTE*)pvData, cbData, &iData, &cFiles);
-    ExitOnFailure(hr, "Failed to read file count.");
-
-    rgwzFiles = (LPWSTR*)MemAlloc(sizeof(LPWSTR*) * cFiles, TRUE);
-    ExitOnNull(rgwzFiles, hr, E_OUTOFMEMORY, "Failed to allocate buffer.");
-
-    for (DWORD i = 0; i < cFiles; ++i)
-    {
-        hr = BuffReadString((BYTE*)pvData, cbData, &iData, &rgwzFiles[i]);
-        ExitOnFailure1(hr, "Failed to read file name: %u", i);
-    }
-
-    // send message
-    message.type = GENERIC_EXECUTE_MESSAGE_FILES_IN_USE;
-    message.dwAllowedResults = MB_ABORTRETRYIGNORE;
-    message.filesInUse.cFiles = cFiles;
-    message.filesInUse.rgwzFiles = (LPCWSTR*)rgwzFiles;
-    *pdwResult = (DWORD)pfnMessageHandler(&message, pvContext);
-
-LExit:
-    if (rgwzFiles)
-    {
-        for (DWORD i = 0; i <= cFiles; ++i)
-        {
-            ReleaseStr(rgwzFiles[i]);
-        }
-        MemFree(rgwzFiles);
     }
 
     return hr;
@@ -2079,19 +2049,48 @@ static int GenericExecuteMessageHandler(
     HANDLE hPipe = (HANDLE)pvContext;
     BYTE* pbData = NULL;
     SIZE_T cbData = 0;
+    DWORD dwMessage = 0;
 
-    // serialize message data
     hr = BuffWriteNumber(&pbData, &cbData, pMessage->dwAllowedResults);
     ExitOnFailure(hr, "Failed to write UI flags.");
 
-    hr = BuffWriteNumber(&pbData, &cbData, pMessage->progress.dwPercentage);
-    ExitOnFailure(hr, "Failed to write progress percentage to message buffer.");
+    switch(pMessage->type)
+    {
+    case GENERIC_EXECUTE_MESSAGE_PROGRESS:
+        // serialize message data
+        hr = BuffWriteNumber(&pbData, &cbData, pMessage->progress.dwPercentage);
+        ExitOnFailure(hr, "Failed to write progress percentage to message buffer.");
 
-    hr = BuffWriteNumber(&pbData, &cbData, 100);
-    ExitOnFailure(hr, "Failed to write progress total to message buffer.");
+        dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS;
+        break;
+
+    case GENERIC_EXECUTE_MESSAGE_ERROR:
+        // serialize message data
+        hr = BuffWriteNumber(&pbData, &cbData, pMessage->error.dwErrorCode);
+        ExitOnFailure(hr, "Failed to write error code to message buffer.");
+
+        hr = BuffWriteString(&pbData, &cbData, pMessage->error.wzMessage);
+        ExitOnFailure(hr, "Failed to write message to message buffer.");
+
+        dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_ERROR;
+        break;
+
+    case GENERIC_EXECUTE_MESSAGE_FILES_IN_USE:
+        hr = BuffWriteNumber(&pbData, &cbData, pMessage->filesInUse.cFiles);
+        ExitOnFailure(hr, "Failed to count of files in use to message buffer.");
+
+        for (DWORD i = 0; i < pMessage->filesInUse.cFiles; ++i)
+        {
+            hr = BuffWriteString(&pbData, &cbData, pMessage->filesInUse.rgwzFiles[i]);
+            ExitOnFailure(hr, "Failed to write file in use to message buffer.");
+        }
+
+        dwMessage = BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_FILES_IN_USE;
+        break;
+    }
 
     // send message
-    hr = PipeSendMessage(hPipe, BURN_ELEVATION_MESSAGE_TYPE_EXECUTE_PROGRESS, pbData, cbData, NULL, NULL, reinterpret_cast<DWORD*>(&nResult));
+    hr = PipeSendMessage(hPipe, dwMessage, pbData, cbData, NULL, NULL, reinterpret_cast<DWORD*>(&nResult));
     ExitOnFailure(hr, "Failed to send message to per-user process.");
 
 LExit:

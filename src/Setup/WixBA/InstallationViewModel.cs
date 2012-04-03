@@ -21,12 +21,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
-    using IO = System.IO;
     using System.Reflection;
     using System.Windows;
     using System.Windows.Input;
     using System.Windows.Interop;
     using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
+    using IO = System.IO;
+    using WinForms = System.Windows.Forms;
 
     /// <summary>
     /// The states of the installation view model.
@@ -67,6 +68,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         private ICommand tryAgainCommand;
 
         private string message;
+        private DateTime cachePackageStart;
+        private DateTime executePackageStart;
 
         /// <summary>
         /// Creates a new model of the installation view.
@@ -85,6 +88,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             WixBA.Model.Bootstrapper.PlanPackageBegin += this.PlanPackageBegin;
             WixBA.Model.Bootstrapper.PlanComplete += this.PlanComplete;
             WixBA.Model.Bootstrapper.ApplyBegin += this.ApplyBegin;
+            WixBA.Model.Bootstrapper.CacheAcquireBegin += this.CacheAcquireBegin;
+            WixBA.Model.Bootstrapper.CacheAcquireComplete += this.CacheAcquireComplete;
+            WixBA.Model.Bootstrapper.ExecutePackageBegin += this.ExecutePackageBegin;
+            WixBA.Model.Bootstrapper.ExecutePackageComplete += this.ExecutePackageComplete;
             WixBA.Model.Bootstrapper.Error += this.ExecuteError;
             WixBA.Model.Bootstrapper.ResolveSource += this.ResolveSource;
             WixBA.Model.Bootstrapper.ApplyComplete += this.ApplyComplete;
@@ -99,6 +106,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                 base.OnPropertyChanged("ExitEnabled");
                 base.OnPropertyChanged("RepairEnabled");
                 base.OnPropertyChanged("InstallEnabled");
+                base.OnPropertyChanged("TryAgainEnabled");
                 base.OnPropertyChanged("UninstallEnabled");
             }
         }
@@ -438,9 +446,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                     this.root.State = InstallationState.DetectedNewer;
                 }
 
-                // If we're not waiting for the user to click install, dispatch plan with the default action.
-                if (WixBA.Model.Command.Display != Display.Full)
+                if (LaunchAction.Layout == WixBA.Model.Command.Action)
                 {
+                    PlanLayout();
+                }
+                else if (WixBA.Model.Command.Display != Display.Full)
+                {
+                    // If we're not waiting for the user to click install, dispatch plan with the default action.
                     WixBA.Model.Engine.Log(LogLevel.Verbose, "Invoking automatic plan for non-interactive mode.");
                     WixBA.Dispatcher.Invoke((Action)delegate()
                     {
@@ -455,9 +467,53 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             }
         }
 
+        private void PlanLayout()
+        {
+            // Either default or set the layout directory
+            if (String.IsNullOrEmpty(WixBA.Model.Command.LayoutDirectory))
+            {
+                WixBA.Model.LayoutDirectory = IO.Directory.GetCurrentDirectory();
+                
+                // Ask the user for layout folder if one wasn't provided and we're in full UI mode
+                if (WixBA.Model.Command.Display == Display.Full)
+                {
+                    WixBA.Dispatcher.Invoke((Action)delegate()
+                    {
+                        WinForms.FolderBrowserDialog browserDialog = new WinForms.FolderBrowserDialog();
+                        browserDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+
+                        // Default to the current directory.
+                        browserDialog.SelectedPath = WixBA.Model.LayoutDirectory;
+                        WinForms.DialogResult result = browserDialog.ShowDialog();
+
+                        if (WinForms.DialogResult.OK == result)
+                        {
+                            WixBA.Model.LayoutDirectory = browserDialog.SelectedPath;
+                            this.Plan(WixBA.Model.Command.Action);
+                        }
+                        else
+                        {
+                            WixBA.View.Close();
+                        }
+                    }
+                    );
+                }
+            }
+            else
+            {
+                WixBA.Model.LayoutDirectory = WixBA.Model.Command.LayoutDirectory;
+
+                WixBA.Dispatcher.Invoke((Action)delegate()
+                {
+                    this.Plan(WixBA.Model.Command.Action);
+                }
+                );
+            }
+        }
+
         private void PlanPackageBegin(object sender, PlanPackageBeginEventArgs e)
         {
-            if (e.PackageId.Equals(WixBA.Model.Engine.StringVariables["MbaNetfxPackageId"], StringComparison.Ordinal))
+            if (WixBA.Model.Engine.StringVariables.Contains("MbaNetfxPackageId") && e.PackageId.Equals(WixBA.Model.Engine.StringVariables["MbaNetfxPackageId"], StringComparison.Ordinal))
             {
                 e.State = RequestState.None;
             }
@@ -480,6 +536,30 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         private void ApplyBegin(object sender, ApplyBeginEventArgs e)
         {
             this.downloadRetries.Clear();
+        }
+
+        private void CacheAcquireBegin(object sender, CacheAcquireBeginEventArgs e)
+        {
+            this.cachePackageStart = DateTime.Now;
+        }
+
+        private void CacheAcquireComplete(object sender, CacheAcquireCompleteEventArgs e)
+        {
+            this.AddPackageTelemetry("Cache", e.PackageOrContainerId ?? String.Empty, DateTime.Now.Subtract(this.cachePackageStart).TotalMilliseconds, e.Status);
+        }
+
+        private void ExecutePackageBegin(object sender, ExecutePackageBeginEventArgs e)
+        {
+            this.executePackageStart = e.ShouldExecute ? DateTime.Now : DateTime.MinValue;
+        }
+
+        private void ExecutePackageComplete(object sender, ExecutePackageCompleteEventArgs e)
+        {
+            if (DateTime.MinValue < this.executePackageStart)
+            {
+                this.AddPackageTelemetry("Execute", e.PackageId ?? String.Empty, DateTime.Now.Subtract(this.executePackageStart).TotalMilliseconds, e.Status);
+                this.executePackageStart = DateTime.MinValue;
+            }
         }
 
         private void ExecuteError(object sender, ErrorEventArgs e)
@@ -521,6 +601,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
 
         private void ApplyComplete(object sender, ApplyCompleteEventArgs e)
         {
+            WixBA.Model.Result = e.Status; // remember the final result of the apply.
+
             // If we're not in Full UI mode, we need to alert the dispatcher to stop and close the window for passive.
             if (Bootstrapper.Display.Full != WixBA.Model.Command.Display)
             {
@@ -545,6 +627,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             if (this.root.State != this.root.PreApplyState)
             {
                 this.root.State = Hresult.Succeeded(e.Status) ? InstallationState.Applied : InstallationState.Failed;
+            }
+        }
+
+        private void AddPackageTelemetry(string prefix, string id, double time, int result)
+        {
+            lock (this)
+            {
+                string key = String.Format("{0}Time_{1}", prefix, id);
+                string value = time.ToString();
+                WixBA.Model.Telemetry.Add(new KeyValuePair<string, string>(key, value));
+
+                key = String.Format("{0}Result_{1}", prefix, id);
+                value = String.Concat("0x", result.ToString("x"));
+                WixBA.Model.Telemetry.Add(new KeyValuePair<string, string>(key, value));
             }
         }
     }

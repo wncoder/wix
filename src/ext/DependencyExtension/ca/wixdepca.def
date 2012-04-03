@@ -3,4 +3,5 @@
 LIBRARY      "wixdepca"
 
 EXPORTS
+	WixDependencyRequire
 	WixDependencyCheck

@@ -58,7 +58,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             string packageB = BuildPackage("B", null);
 
             string logB = MSIExec.InstallProduct(packageB, MSIExec.MSIExecReturnCode.ERROR_INSTALL_FAILURE);
-            Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"WixDependencyCheck:  The dependency ""Microsoft.WiX.DependencyExtension_MissingDependency.A,v1.0"" is missing or is not the required version."));
+            Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"WixDependencyRequire:  The dependency ""Microsoft.WiX.DependencyExtension_MissingDependency.A,v1.0"" is missing or is not the required version."));
         }
 
         [TestMethod]
@@ -70,7 +70,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
             string packageB = BuildPackage("B", null);
 
             string logB = InstallProductWithProperties(packageB, MSIExec.MSIExecReturnCode.SUCCESS, "DISABLEDEPENDENCYCHECK=1");
-            Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"WixDependencyCheck:  Skipping the dependency check since DISABLEDEPENDENCYCHECK is set."));
+            Assert.IsTrue(LogVerifier.MessageInLogFile(logB, @"Skipping action: WixDependencyRequire (condition is false)"));
 
             MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
         }
@@ -110,7 +110,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
 
             // Now attempt the uninstall of dependency package A.
             string logA = UninstallProductWithProperties(packageA, MSIExec.MSIExecReturnCode.SUCCESS, "IGNOREDEPENDENCIES=ALL");
-            Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"WixDependencyCheck:  Skipping the dependencies check since IGNOREDEPENDENCIES contains ""ALL""."));
+            Assert.IsTrue(LogVerifier.MessageInLogFile(logA, @"Skipping action: WixDependencyCheck (condition is false)"));
 
             MSIExec.UninstallProduct(packageB, MSIExec.MSIExecReturnCode.SUCCESS);
         }

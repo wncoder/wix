@@ -108,7 +108,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     switch (element.LocalName)
                     {
                         case "Requires":
-                            this.ParseRequiresElement(element, null);
+                            this.ParseRequiresElement(element, null, false);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -359,10 +359,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         switch (child.LocalName)
                         {
                             case "Requires":
-                                this.ParseRequiresElement(child, id);
+                                this.ParseRequiresElement(child, id, PackageType.None == packageType);
                                 break;
                             case "RequiresRef":
-                                this.ParseRequiresRefElement(child, id);
+                                this.ParseRequiresRefElement(child, id, PackageType.None == packageType);
                                 break;
                             default:
                                 this.Core.UnexpectedElement(node, child);
@@ -401,7 +401,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 if (PackageType.None == packageType)
                 {
-                    // Reference the custom action to check for dependencies on the current provider.
+                    // Reference the Check custom action to check for dependencies on the current provider.
                     this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyCheck");
 
                     // Generate registry rows for the provider using binder properties.
@@ -460,7 +460,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// </summary>
         /// <param name="node">The XML node for the Requires element.</param>
         /// <param name="providerId">The parent provider identifier.</param>
-        private void ParseRequiresElement(XmlNode node, string providerId)
+        /// <param name="requiresAction">Whether the Requires custom action should be referenced.</param>
+        private void ParseRequiresElement(XmlNode node, string providerId, bool requiresAction)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string id = null;
@@ -556,6 +557,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (!this.Core.EncounteredError)
             {
+                // Reference the Require custom action if required.
+                if (requiresAction)
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyRequire");
+                }
+
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependency");
                 row[0] = id;
                 row[1] = providerKey;
@@ -583,7 +590,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         /// </summary>
         /// <param name="node">The XML node for the RequiresRef element.</param>
         /// <param name="providerId">The parent provider identifier.</param>
-        private void ParseRequiresRefElement(XmlNode node, string providerId)
+        /// <param name="requiresAction">Whether the Requires custom action should be referenced.</param>
+        private void ParseRequiresRefElement(XmlNode node, string providerId, bool requiresAction)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string id = null;
@@ -630,6 +638,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (!this.Core.EncounteredError)
             {
+                // Reference the Require custom action if required.
+                if (requiresAction)
+                {
+                    this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "CustomAction", "WixDependencyRequire");
+                }
+
                 // Create a link dependency on the row that contains information we'll need during bind.
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "WixDependency", id);
 

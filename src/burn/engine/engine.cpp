@@ -115,8 +115,15 @@ extern "C" HRESULT EngineRun(
     ExitOnFailure(hr, "Failed to initialize XML util.");
     fXmlInitialized = TRUE;
 
+    OSVERSIONINFOEXW ovix = { };
+    ovix.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+    if (!::GetVersionExW((LPOSVERSIONINFOW)&ovix))
+    {
+        ExitWithLastError(hr, "Failed to get OS info.");
+    }
+
     PathForCurrentProcess(&sczExePath, NULL); // Ignore failure.
-    LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, sczExePath, wzCommandLine ? wzCommandLine : L"");
+    LogId(REPORT_STANDARD, MSG_BURN_INFO, szVerMajorMinorBuild, ovix.dwMajorVersion, ovix.dwMinorVersion, ovix.dwBuildNumber, ovix.wServicePackMajor, sczExePath, wzCommandLine ? wzCommandLine : L"");
     ReleaseNullStr(sczExePath);
 
     // initialize core

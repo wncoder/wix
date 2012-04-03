@@ -19,6 +19,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml.UX
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Net;
     using System.Reflection;
@@ -30,6 +31,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
     public class Model
     {
         private Version version;
+        private const string BurnBundleLayoutDirectoryVariable = "WixBundleLayoutDirectory";
 
         /// <summary>
         /// Creates a new model for the UX.
@@ -38,6 +40,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         public Model(BootstrapperApplication bootstrapper)
         {
             this.Bootstrapper = bootstrapper;
+            this.Telemetry = new List<KeyValuePair<string, string>>();
         }
 
         /// <summary>
@@ -56,6 +59,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         public Engine Engine { get { return this.Bootstrapper.Engine; } }
 
         /// <summary>
+        /// Gets the key/value pairs used in telemetry.
+        /// </summary>
+        public List<KeyValuePair<string, string>> Telemetry { get; private set; }
+
+        /// <summary>
+        /// Get or set the final result of the installation.
+        /// </summary>
+        public int Result { get; set; }
+
+        /// <summary>
         /// Get the version of the install.
         /// </summary>
         public Version Version
@@ -71,6 +84,27 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                 }
 
                 return this.version;
+            }
+        }
+
+        /// <summary>
+        /// Get or set the path for the layout to be created.
+        /// </summary>
+        public string LayoutDirectory
+        {
+            get
+            {
+                if (!this.Engine.StringVariables.Contains(BurnBundleLayoutDirectoryVariable))
+                {
+                    return null;
+                }
+
+                return this.Engine.StringVariables[BurnBundleLayoutDirectoryVariable];
+            }
+
+            set
+            {
+                this.Engine.StringVariables[BurnBundleLayoutDirectoryVariable] = value;
             }
         }
 

@@ -544,6 +544,7 @@
         <xs:element ref="SlipstreamMsp" />
         <xs:element ref="Payload" />
         <xs:element ref="PayloadGroupRef" />
+        <xs:element ref="RemotePayload" />
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
@@ -617,6 +618,7 @@
         <xs:element ref="MsiProperty" />
         <xs:element ref="Payload" />
         <xs:element ref="PayloadGroupRef" />
+        <xs:element ref="RemotePayload" />
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
@@ -659,6 +661,7 @@
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="Payload" />
         <xs:element ref="PayloadGroupRef" />
+        <xs:element ref="RemotePayload" />
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
             <xs:documentation>
@@ -696,6 +699,7 @@
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="Payload" />
         <xs:element ref="PayloadGroupRef" />
+        <xs:element ref="RemotePayload" />
         <xs:element ref="ExitCode" />
         <xs:any namespace="##other" processContents="lax">
           <xs:annotation>
@@ -1129,6 +1133,9 @@
       </xs:appinfo>
     </xs:annotation>
     <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="1">
+        <xs:element ref="RemotePayload" />
+      </xs:choice>
       <xs:attribute name="Id" type="xs:string">
         <xs:annotation>
           <xs:documentation>The identifier of Payload element.</xs:documentation>
@@ -1208,6 +1215,58 @@
       <xs:attribute name="Id" type="xs:string" use="required">
         <xs:annotation>
           <xs:documentation>The identifier of the PayloadGroup element to reference.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RemotePayload">
+    <xs:annotation>
+      <xs:documentation>Describes a information about a remote file payload that is not available at the time of building the bundle.  
+      The parent must specify DownloadUrl and must not specify SourceFile when using this element.</xs:documentation>
+      <xs:appinfo>
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="BootstrapperApplication" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="ExePackage" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsiPackage" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MspPackage" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsuPackage" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="UX" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Payload" />
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:attribute name="CertificatePublicKey" type="HexType">
+        <xs:annotation>
+          <xs:documentation>Public key of the authenticode certificate used to sign the RemotePayload.  Include this attribute if the remote file is signed.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="CertificateThumbprint" type="HexType">
+        <xs:annotation>
+          <xs:documentation>Thumbprint of the authenticode certificate used to sign the RemotePayload.  Include this attribute if the remote file is signed.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Description" type="xs:string" use="required">
+        <xs:annotation>
+          <xs:documentation>Description of the file from version resouces.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Hash" type="HexType" use="required">
+        <xs:annotation>
+          <xs:documentation>SHA-1 hash of the RemotePayload.  Include this attribute if the remote file is unsigned or SuppressSignatureVerification is set to Yes.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="ProductName" type="xs:string" use="required">
+        <xs:annotation>
+        <xs:documentation>Product name of the file from version resouces.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Size" type="xs:integer" use="required">
+        <xs:annotation>
+          <xs:documentation>Size of the remote file in bytes.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Version" type="VersionType" use="required">
+        <xs:annotation>
+          <xs:documentation>Version of the remote file</xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>

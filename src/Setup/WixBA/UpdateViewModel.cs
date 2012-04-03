@@ -31,6 +31,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
     /// </summary>
     public enum UpdateState
     {
+        Unknown,
         Initializing,
         Checking,
         Current,
@@ -59,6 +60,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             this.root = root;
             this.root.PropertyChanged += new System.ComponentModel.PropertyChangedEventHandler(this.RootPropertyChanged);
 
+            this.State = UpdateState.Unknown;
+
             this.worker = new BackgroundWorker();
             this.worker.DoWork += new DoWorkEventHandler(worker_DoWork);
         }
@@ -69,7 +72,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             {
                 if (this.checkCommand == null)
                 {
-                    this.checkCommand = new RelayCommand(param => this.Refresh(), param => this.State == UpdateState.Current || this.State == UpdateState.Failed);
+                    this.checkCommand = new RelayCommand(param => this.Refresh(), param => this.State == UpdateState.Unknown);
                 }
 
                 return this.checkCommand;
@@ -84,6 +87,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         public bool CheckVisible
         {
             get { return this.CheckCommand.CanExecute(this) || this.State == UpdateState.Initializing; }
+        }
+
+        public bool IsUpToDate
+        {
+            get { return this.State == UpdateState.Current; }
         }
 
         public ICommand LaunchCommand
@@ -129,6 +137,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                     base.OnPropertyChanged("CheckVisible");
                     base.OnPropertyChanged("CheckEnabled");
                     base.OnPropertyChanged("CheckingEnabled");
+                    base.OnPropertyChanged("IsUpToDate");
                     base.OnPropertyChanged("LaunchEnabled");
                 }
             }
@@ -157,6 +166,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
 
                     case UpdateState.Failed:
                         return "Failed to check for updates";
+
+                    case UpdateState.Unknown:
+                        return "Check for updates.";
 
                     default:
                         return "Unexpected state";

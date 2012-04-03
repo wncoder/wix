@@ -421,7 +421,7 @@ extern "C" void VariablesDump(
     for (DWORD i = 0; i < pVariables->cVariables; ++i)
     {
         BURN_VARIABLE* pVariable = &pVariables->rgVariables[i];
-        if (pVariable)
+        if (pVariable && BURN_VARIANT_TYPE_NONE != pVariable->Value.Type)
         {
             hr = StrAllocFormatted(&sczValue, L"%ls = [%ls]", pVariable->sczName, pVariable->sczName);
             if (SUCCEEDED(hr))

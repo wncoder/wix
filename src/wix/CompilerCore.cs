@@ -655,8 +655,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>New row.</returns>
         public Row CreateRow(SourceLineNumberCollection sourceLineNumbers, string tableName)
         {
+            return this.CreateRow(sourceLineNumbers, tableName, this.activeSection);
+        }
+
+        /// <summary>
+        /// Creates a row in the active given <paramref name="section"/>.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source and line number of current row.</param>
+        /// <param name="tableName">Name of table to create row in.</param>
+        /// <param name="section">The section to which the row is added. If null, the row is added to the active section.</param>
+        /// <returns>New row.</returns>
+        internal Row CreateRow(SourceLineNumberCollection sourceLineNumbers, string tableName, Section section)
+        {
+            if (null == section)
+            {
+                throw new ArgumentNullException("section");
+            }
+
             TableDefinition tableDefinition = this.tableDefinitions[tableName];
-            Table table = this.activeSection.Tables.EnsureTable(this.activeSection, tableDefinition);
+            Table table = section.Tables.EnsureTable(section, tableDefinition);
 
             return table.CreateRow(sourceLineNumbers);
         }
@@ -1838,10 +1855,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>New section.</returns>
         internal Section CreateActiveSection(string id, SectionType type, int codepage)
         {
-            Section newSection = new Section(id, type, codepage);
-
-            this.intermediate.Sections.Add(newSection);
+            Section newSection = this.CreateSection(id, type, codepage);
             this.activeSection = newSection;
+
+            return newSection;
+        }
+
+        /// <summary>
+        /// Creates a new section.
+        /// </summary>
+        /// <param name="id">Unique identifier for the section.</param>
+        /// <param name="type">Type of section to create.</param>
+        /// <param name="codepage">Codepage for the resulting database for this ection.</param>
+        /// <returns>New section.</returns>
+        internal Section CreateSection(string id, SectionType type, int codepage)
+        {
+            Section newSection = new Section(id, type, codepage);
+            this.intermediate.Sections.Add(newSection);
 
             return newSection;
         }

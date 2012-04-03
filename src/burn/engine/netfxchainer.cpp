@@ -203,19 +203,24 @@ static void NetFxRespond(
 }
 
 static HRESULT NetFxGetResult(
-    __in NetFxChainer* pChainer
+    __in NetFxChainer* pChainer,
+    __out HRESULT* phrInternalError
     )
 {
     HRESULT hr = S_OK;
     ::WaitForSingleObject(pChainer->hMutex, INFINITE);
 
-    if (S_OK != pChainer->pData->hrInstallFinished)
-    {
-        hr = pChainer->pData->hrInstallFinished;
-    }
-    else
+    hr = pChainer->pData->hrInstallFinished;
+
+    if (FAILED(pChainer->pData->hrDownloadFinished) && // Download failed
+       (S_OK == hr || E_ABORT == hr))                  // Install succeeded or was aborted
     {
         hr = pChainer->pData->hrDownloadFinished;
+    }
+
+    if (phrInternalError)
+    {
+        *phrInternalError = pChainer->pData->hrInternalError;
     }
 
     ::ReleaseMutex(pChainer->hMutex);
@@ -284,6 +289,26 @@ static HRESULT OnNetFxProgress(
     return S_OK;
 }
 
+static HRESULT OnNetFxError(
+    __in NetFxChainer* pNetfxChainer,
+    __in HRESULT hrError,
+    __in PFN_GENERICMESSAGEHANDLER pfnMessageHandler,
+    __in LPVOID pvContext
+    )
+{
+    GENERIC_EXECUTE_MESSAGE message = { };
+    DWORD dwResponse = 0;
+
+    // send message
+    message.type = GENERIC_EXECUTE_MESSAGE_ERROR;
+    message.dwAllowedResults = MB_OK;
+    message.error.dwErrorCode = hrError;
+    message.error.wzMessage = NULL;
+    dwResponse = (DWORD)pfnMessageHandler(&message, pvContext);
+
+    return S_OK;
+}
+
 static HRESULT ProcessNetFxMessage(
     __in NetFxChainer* pNetfxChainer,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
@@ -340,6 +365,7 @@ extern "C" HRESULT NetFxRunChainer(
     NetFxChainer* pNetfxChainer = NULL;
     STARTUPINFOW si = { };
     PROCESS_INFORMATION pi = { };
+    HRESULT hrInternalError = 0;
 
     // Create the unique name suffix.
     rs = ::UuidCreate(&guid);
@@ -378,7 +404,7 @@ extern "C" HRESULT NetFxRunChainer(
         if (WAIT_OBJECT_0 == er)
         {
             // Process has exited
-            *pdwExitCode = NetFxGetResult(pNetfxChainer);
+            *pdwExitCode = NetFxGetResult(pNetfxChainer, &hrInternalError);
             if (E_PENDING == *pdwExitCode)
             {
                 if (!::GetExitCodeProcess(pi.hProcess, pdwExitCode))
@@ -386,6 +412,12 @@ extern "C" HRESULT NetFxRunChainer(
                     ExitWithLastError(hr, "Failed to get netfx return code.");
                 }
             }
+            else if (FAILED(hrInternalError))
+            {
+                // push internal error message
+                OnNetFxError(pNetfxChainer, hrInternalError, pfnGenericMessageHandler, pvContext);
+                ExitOnFailure(hr, "Failed to send internal error message from netfx chainer.");
+            }           
 
             break;
         }

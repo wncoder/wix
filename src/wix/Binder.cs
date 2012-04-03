@@ -3101,20 +3101,41 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Get the explicit payloads.
             Table payloadTable = bundle.Tables["Payload"];
-            Dictionary<string, PayloadInfo> allPayloads = new Dictionary<string, PayloadInfo>(payloadTable.Rows.Count);
+            Dictionary<string, PayloadInfoRow> allPayloads = new Dictionary<string, PayloadInfoRow>(payloadTable.Rows.Count);
+
+            Table payloadInfoTable = bundle.EnsureTable(core.TableDefinitions["PayloadInfo"]);
+
+            foreach (PayloadInfoRow row in payloadInfoTable.Rows)
+            {
+                allPayloads.Add(row.Id, row);
+            }
+
             foreach (Row row in payloadTable.Rows)
             {
-                PayloadInfo payloadInfo = new PayloadInfo(row, this.FileManager);
-                if (payloadInfo.Packaging == PayloadInfo.PackagingType.Unknown)
+                string id = (string)row[0];
+
+                PayloadInfoRow payloadInfo = null;
+
+                if (allPayloads.ContainsKey(id))
+                {
+                    payloadInfo = allPayloads[id];
+                }
+                else
+                {
+                    allPayloads.Add(id, payloadInfo = new PayloadInfoRow(row.SourceLineNumbers, payloadInfoTable));
+                }
+
+                payloadInfo.FillFromPayloadRow(bundle, row);
+
+                if (payloadInfo.Packaging == PackagingType.Unknown)
                 {
                     payloadInfo.Packaging = bundleInfo.DefaultPackagingType;
                 }
-                allPayloads.Add(payloadInfo.Id, payloadInfo);
             }
 
             Dictionary<string, ContainerInfo> containers = new Dictionary<string, ContainerInfo>();
             Dictionary<string, bool> payloadsAddedToContainers = new Dictionary<string, bool>();
-            List<PayloadInfo> payloadsInDefaultAttachedContainer = new List<PayloadInfo>();
+            List<PayloadInfoRow> payloadsInDefaultAttachedContainer = new List<PayloadInfoRow>();
 
             // Create the list of containers.
             Table containerTable = bundle.Tables["Container"];
@@ -3141,14 +3162,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (Enum.GetName(typeof(ComplexReferenceChildType), ComplexReferenceChildType.Payload) == rowChildType)
                 {
-                    PayloadInfo payload = allPayloads[rowChildName];
+                    PayloadInfoRow payload = allPayloads[rowChildName];
 
                     if (Enum.GetName(typeof(ComplexReferenceParentType), ComplexReferenceParentType.Container) == rowParentType)
                     {
                         ContainerInfo container = containers[rowParentName];
                         container.Payloads.Add(payload);
 
-                        payload.Container = container;
+                        payload.Container = container.Id;
                         payloadsAddedToContainers.Add(rowChildName, false);
                     }
                     else if (Enum.GetName(typeof(ComplexReferenceParentType), ComplexReferenceParentType.Layout) == rowParentType)
@@ -3161,7 +3182,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // TODO: need to check Compiler.BurnUXContainerId and send a message if it is not set otherwise
             //         there is an exception thrown "ight.exe : error LGHT0001 : The given key was not present in the dictionary."
-            List<PayloadInfo> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
+            List<PayloadInfoRow> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
 
             // If we didn't get any UX payloads, it's an error!
             if (0 == uxPayloads.Count)
@@ -3179,7 +3200,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // Each catalog is also a payload
                     string payloadId = Common.GenerateIdentifier("pay", true, (string)row[1]);
                     string catalogFile = this.FileManager.ResolveFile((string)row[1], "Catalog", row.SourceLineNumbers, BindStage.Normal);
-                    PayloadInfo payloadInfo = new PayloadInfo(payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
+                    PayloadInfoRow payloadInfo = new PayloadInfoRow(row.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
 
                     // Add the payload to the UX container
                     allPayloads.Add(payloadInfo.Id, payloadInfo);
@@ -3205,7 +3226,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else // package
                 {
-                    ChainPackageInfo packageInfo = new ChainPackageInfo(row, wixGroupTable, allPayloads, this.FileManager, this.core);
+                    ChainPackageInfo packageInfo = new ChainPackageInfo(row, wixGroupTable, allPayloads, containers, this.FileManager, this.core, bundle);
                     allPackages.Add(packageInfo.Id, packageInfo);
                 }
             }
@@ -3220,16 +3241,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if (!payloadsAddedToContainers.ContainsKey(payloadName))
                 {
-                    PayloadInfo payload = allPayloads[payloadName];
-                    if (PayloadInfo.PackagingType.Embedded == payload.Packaging)
+                    PayloadInfoRow payload = allPayloads[payloadName];
+                    if (PackagingType.Embedded == payload.Packaging)
                     {
-                        payload.Container = containers["WixAttachedContainer"];
+                        payload.Container = containers["WixAttachedContainer"].Id;
                         payloadsInDefaultAttachedContainer.Add(payload);
                     }
-                    else
+                    else if (!String.IsNullOrEmpty(payload.FullFileName))
                     {
                         FileTransfer transfer;
-                        if (FileTransfer.TryCreate(payload.FileInfo.FullName, Path.Combine(layoutDirectory, payload.FileName), false, "Payload", payload.SourceLineNumbers, out transfer))
+                        if (FileTransfer.TryCreate(payload.FullFileName, Path.Combine(layoutDirectory, payload.Name), false, "Payload", payload.SourceLineNumbers, out transfer))
                         {
                             fileTransfers.Add(transfer);
                         }
@@ -3240,17 +3261,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Give the UX payloads their embedded IDs...
             for (int uxPayloadIndex = 0; uxPayloadIndex < uxPayloads.Count; ++uxPayloadIndex)
             {
-                PayloadInfo payload = uxPayloads[uxPayloadIndex];
+                PayloadInfoRow payload = uxPayloads[uxPayloadIndex];
 
                 // In theory, UX payloads could be embedded in the UX CAB, external to the
                 // bundle EXE, or even downloaded. The current engine requires the UX to be
                 // fully present before any downloading starts, so that rules out downloading.
                 // Also, the burn engine does not currently copy external UX payloads into
                 // the temporary UX directory correctly, so we don't allow external either.
-                if (PayloadInfo.PackagingType.Embedded != payload.Packaging)
+                if (PackagingType.Embedded != payload.Packaging)
                 {
-                    core.OnMessage(WixWarnings.UxPayloadsOnlySupportEmbedding(payload.SourceLineNumbers, payload.FileInfo.FullName));
-                    payload.Packaging = PayloadInfo.PackagingType.Embedded;
+                    core.OnMessage(WixWarnings.UxPayloadsOnlySupportEmbedding(payload.SourceLineNumbers, payload.FullFileName));
+                    payload.Packaging = PackagingType.Embedded;
                 }
 
                 payload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloadIndex);
@@ -3264,7 +3285,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // If catalog files exist, non-UX payloads should validate with the catalog
             if (catalogs.Count > 0)
             {
-                foreach (PayloadInfo payloadInfo in allPayloads.Values)
+                foreach (PayloadInfoRow payloadInfo in allPayloads.Values)
                 {
                     if (String.IsNullOrEmpty(payloadInfo.EmbeddedId))
                     {
@@ -3386,11 +3407,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Give all embedded payloads that don't have an embedded ID yet an embedded ID.
             int payloadIndex = 0;
-            foreach (PayloadInfo payload in allPayloads.Values)
+            foreach (PayloadInfoRow payload in allPayloads.Values)
             {
-                Debug.Assert(PayloadInfo.PackagingType.Unknown != payload.Packaging);
+                Debug.Assert(PackagingType.Unknown != payload.Packaging);
 
-                if (PayloadInfo.PackagingType.Embedded == payload.Packaging && String.IsNullOrEmpty(payload.EmbeddedId))
+                if (PackagingType.Embedded == payload.Packaging && String.IsNullOrEmpty(payload.EmbeddedId))
                 {
                     payload.EmbeddedId = String.Format(CultureInfo.InvariantCulture, BurnCommon.BurnAttachedContainerEmbeddedIdFormat, payloadIndex);
                     ++payloadIndex;
@@ -3479,7 +3500,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Start creating the bundle.
             this.PopulateBundleInfoFromChain(bundleInfo, chain.Packages);
-
+            this.PopulateChainInfoTables(bundle, chain.Packages);
             this.GenerateBAManifestBundleTables(bundle, bundleInfo);
 
             // Copy the burn.exe to a writable location then mark it to be moved to its
@@ -3513,7 +3534,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.CreateBootstrapperApplicationManifest(bundle, baManifestPath, uxPayloads);
 
             // Add the bootstrapper application manifest to the set of UX payloads.
-            PayloadInfo baManifestPayload = new PayloadInfo(Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), "BootstrapperApplicationData.xml", baManifestPath, false, true, null, containers[Compiler.BurnUXContainerId], PayloadInfo.PackagingType.Embedded, this.FileManager);
+            PayloadInfoRow baManifestPayload = new PayloadInfoRow(null /*TODO*/, bundle, Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), 
+                "BootstrapperApplicationData.xml", baManifestPath, false, true, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
             baManifestPayload.EmbeddedId = string.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloads.Count);
             uxPayloads.Add(baManifestPayload);
 
@@ -3623,7 +3645,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[8] = package.Permanent ? "yes" : "no";
                 row[9] = package.LogPathVariable;
                 row[10] = package.RollbackLogPathVariable;
-                row[11] = (PayloadInfo.PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
+                row[11] = (PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
@@ -3643,8 +3665,33 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 if (bundleInfo.PerMachine && !package.PerMachine)
                 {
-                    this.core.OnMessage(WixVerboses.SwitchingToPerUserPackage(package.PackagePayload.FileInfo.FullName));
+                    this.core.OnMessage(WixVerboses.SwitchingToPerUserPackage(package.PackagePayload.FullFileName));
                     bundleInfo.PerMachine = false;
+                }
+            }
+        }
+
+        private void PopulateChainInfoTables(Output bundle, List<ChainPackageInfo> chainPackages)
+        {
+            foreach (ChainPackageInfo package in chainPackages)
+            {
+                switch (package.ChainPackageType)
+                {
+                    case Compiler.ChainPackageType.Msi:
+                        Table chainMsiPackageTable = bundle.EnsureTable(this.core.TableDefinitions["ChainMsiPackage"]);
+                        ChainMsiPackageRow row = (ChainMsiPackageRow)chainMsiPackageTable.CreateRow(null);
+                        row.ChainPackage = package.Id;
+                        row.ProductCode = package.ProductCode;
+                        row.ProductLanguage = Convert.ToInt32(package.Language, CultureInfo.InvariantCulture);
+                        row.ProductName = package.DisplayName;
+                        row.ProductVersion = package.Version;
+                        if (!String.IsNullOrEmpty(package.UpgradeCode))
+                        {
+                            row.UpgradeCode = package.UpgradeCode;
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -3674,18 +3721,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     cab.AddFile(manifestFile, "0");
                 }
 
-                foreach (PayloadInfo payload in container.Payloads)
+                foreach (PayloadInfoRow payload in container.Payloads)
                 {
-                    Debug.Assert(PayloadInfo.PackagingType.Embedded == payload.Packaging);
-                    this.core.OnMessage(WixVerboses.LoadingPayload(payload.FileInfo.FullName));
-                    cab.AddFile(payload.FileInfo.FullName, payload.EmbeddedId);
+                    Debug.Assert(PackagingType.Embedded == payload.Packaging);
+                    this.core.OnMessage(WixVerboses.LoadingPayload(payload.FullFileName));
+                    cab.AddFile(payload.FullFileName, payload.EmbeddedId);
                 }
 
                 cab.Complete();
             }
         }
 
-        private void CreateBootstrapperApplicationManifest(Output bundle, string path, List<PayloadInfo> uxPayloads)
+        private void CreateBootstrapperApplicationManifest(Output bundle, string path, List<PayloadInfoRow> uxPayloads)
         {
             using (XmlTextWriter writer = new XmlTextWriter(path, Encoding.Unicode))
             {
@@ -3730,7 +3777,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfo> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers, Dictionary<string, CatalogInfo> catalogs)
+        private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfoRow> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers, Dictionary<string, CatalogInfo> catalogs)
         {
             string executableName = Path.GetFileName(bundleInfo.Path);
 
@@ -3785,11 +3832,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 // write the UX allPayloads...
-                List<PayloadInfo> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
-                foreach (PayloadInfo payload in uxPayloads)
+                List<PayloadInfoRow> uxPayloads = containers[Compiler.BurnUXContainerId].Payloads;
+                foreach (PayloadInfoRow payload in uxPayloads)
                 {
                     writer.WriteStartElement("Payload");
-                    WriteBurnManifestPayloadAttributes(writer, payload, true, this.FileManager);
+                    WriteBurnManifestPayloadAttributes(writer, payload, true, this.FileManager, allPayloads);
                     writer.WriteEndElement();
                 }
 
@@ -3822,18 +3869,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
                 }
 
-                foreach (PayloadInfo payload in allPayloads.Values)
+                foreach (PayloadInfoRow payload in allPayloads.Values)
                 {
-                    if (PayloadInfo.PackagingType.Embedded == payload.Packaging && Compiler.BurnUXContainerId != payload.Container.Id)
+                    if (PackagingType.Embedded == payload.Packaging && Compiler.BurnUXContainerId != payload.Container)
                     {
                         writer.WriteStartElement("Payload");
-                        WriteBurnManifestPayloadAttributes(writer, payload, true, this.FileManager);
+                        WriteBurnManifestPayloadAttributes(writer, payload, true, this.FileManager, allPayloads);
                         writer.WriteEndElement();
                     }
-                    else if (PayloadInfo.PackagingType.External == payload.Packaging)
+                    else if (PackagingType.External == payload.Packaging)
                     {
                         writer.WriteStartElement("Payload");
-                        WriteBurnManifestPayloadAttributes(writer, payload, false, this.FileManager);
+                        WriteBurnManifestPayloadAttributes(writer, payload, false, this.FileManager, allPayloads);
                         writer.WriteEndElement();
                     }
                 }
@@ -4084,7 +4131,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("Id", package.PackagePayload.Id);
                     writer.WriteEndElement();
 
-                    foreach (PayloadInfo payload in package.Payloads)
+                    foreach (PayloadInfoRow payload in package.Payloads)
                     {
                         if (payload.Id != package.PackagePayload.Id)
                         {
@@ -4185,33 +4232,33 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void WriteBurnManifestPayloadAttributes(XmlTextWriter writer, PayloadInfo payload, bool embeddedOnly, BinderFileManager fileManager)
+        private void WriteBurnManifestPayloadAttributes(XmlTextWriter writer, PayloadInfoRow payload, bool embeddedOnly, BinderFileManager fileManager, Dictionary<string, PayloadInfoRow> allPayloads)
         {
-            Debug.Assert(!embeddedOnly || PayloadInfo.PackagingType.Embedded == payload.Packaging);
+            Debug.Assert(!embeddedOnly || PackagingType.Embedded == payload.Packaging);
 
             writer.WriteAttributeString("Id", payload.Id);
-            writer.WriteAttributeString("FilePath", payload.FileName);
+            writer.WriteAttributeString("FilePath", payload.Name);
             writer.WriteAttributeString("FileSize", payload.FileSize.ToString(CultureInfo.InvariantCulture));
-            writer.WriteAttributeString("Hash", payload.Sha1);
+            writer.WriteAttributeString("Hash", payload.Hash);
 
             if (payload.LayoutOnly)
             {
                 writer.WriteAttributeString("LayoutOnly", "yes");
             }
 
-            if (!String.IsNullOrEmpty(payload.CertificatePublicKeyIdentifier))
+            if (!String.IsNullOrEmpty(payload.PublicKey))
             {
-                writer.WriteAttributeString("CertificateRootPublicKeyIdentifier", payload.CertificatePublicKeyIdentifier);
+                writer.WriteAttributeString("CertificateRootPublicKeyIdentifier", payload.PublicKey);
             }
 
-            if (!String.IsNullOrEmpty(payload.CertificateThumbprint))
+            if (!String.IsNullOrEmpty(payload.Thumbprint))
             {
-                writer.WriteAttributeString("CertificateRootThumbprint", payload.CertificateThumbprint);
+                writer.WriteAttributeString("CertificateRootThumbprint", payload.Thumbprint);
             }
 
             switch (payload.Packaging)
             {
-                case PayloadInfo.PackagingType.Embedded: // this means it's in a container.
+                case PackagingType.Embedded: // this means it's in a container.
                     if (!String.IsNullOrEmpty(payload.DownloadUrl))
                     {
                         this.core.OnMessage(WixWarnings.DownloadUrlNotSupportedForEmbeddedPayloads(payload.SourceLineNumbers, payload.Id));
@@ -4220,16 +4267,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("Packaging", "embedded");
                     writer.WriteAttributeString("SourcePath", payload.EmbeddedId);
 
-                    if (Compiler.BurnUXContainerId != payload.Container.Id)
+                    if (Compiler.BurnUXContainerId != payload.Container)
                     {
-                        writer.WriteAttributeString("Container", payload.Container.Id);
+                        writer.WriteAttributeString("Container", payload.Container);
                     }
                     break;
 
-                case PayloadInfo.PackagingType.External:
-                    string packageId = payload.ParentPackagePayload != null ? payload.ParentPackagePayload.Id : null;
-                    string parentUrl = payload.ParentPackagePayload == null ? null : payload.ParentPackagePayload.DownloadUrl;
-                    string resolvedUrl = fileManager.ResolveUrl(payload.DownloadUrl, parentUrl, packageId, payload.Id, payload.FileName);
+                case PackagingType.External:
+                    string packageId = payload.ParentPackagePayload;
+                    string parentUrl = payload.ParentPackagePayload == null ? null : allPayloads[payload.ParentPackagePayload].DownloadUrl;
+                    string resolvedUrl = fileManager.ResolveUrl(payload.DownloadUrl, parentUrl, packageId, payload.Id, payload.Name);
                     if (!String.IsNullOrEmpty(resolvedUrl))
                     {
                         writer.WriteAttributeString("DownloadUrl", resolvedUrl);
@@ -4240,7 +4287,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
 
                     writer.WriteAttributeString("Packaging", "external");
-                    writer.WriteAttributeString("SourcePath", payload.FileName);
+                    writer.WriteAttributeString("SourcePath", payload.Name);
                     break;
             }
 
@@ -4250,7 +4297,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void VerifyPayloadWithCatalog(PayloadInfo payloadInfo, Dictionary<string, CatalogInfo> catalogs)
+        private void VerifyPayloadWithCatalog(PayloadInfoRow payloadInfo, Dictionary<string, CatalogInfo> catalogs)
         {
             bool validated = false;
 
@@ -4263,7 +4310,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     byte[] cryptHashBytes = new byte[cryptHashSize];
                     int error;
                     IntPtr fileHandle = IntPtr.Zero;
-                    using (FileStream payloadStream = payloadInfo.FileInfo.OpenRead())
+                    using (FileStream payloadStream = File.OpenRead(payloadInfo.FullFileName))
                     {
                         // Get the file handle
                         fileHandle = payloadStream.SafeFileHandle.DangerousGetHandle();
@@ -4285,7 +4332,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                             if (0 != error)
                             {
-                                this.core.OnMessage(WixErrors.CatalogFileHashFailed(payloadInfo.FileInfo.FullName, error));
+                                this.core.OnMessage(WixErrors.CatalogFileHashFailed(payloadInfo.FullFileName, error));
                             }
                         }
                     }
@@ -4308,7 +4355,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         catalogData.pcwszMemberTag = hashString.ToString();
 
                         // The file names need to be lower case for older OSes
-                        catalogData.pcwszMemberFilePath = payloadInfo.FileInfo.FullName.ToLowerInvariant();
+                        catalogData.pcwszMemberFilePath = payloadInfo.FullFileName.ToLowerInvariant();
                         catalogData.pcwszCatalogFilePath = catalog.FileInfo.FullName.ToLowerInvariant();
 
                         // Create WINTRUST_DATA structure
@@ -4352,7 +4399,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Error message if the file was not validated by one of the catalogs
             if (!validated)
             {
-                this.core.OnMessage(WixErrors.CatalogVerificationFailed(payloadInfo.FileInfo.FullName));
+                this.core.OnMessage(WixErrors.CatalogVerificationFailed(payloadInfo.FullFileName));
             }
         }
 
@@ -6382,7 +6429,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     cabinetName = cabinetName.Substring(1);
                 }
 
-                this.core.OnMessage(WixWarnings.EmptyCabinet(mediaRow.SourceLineNumbers, cabinetName));
+                // If building a patch, remind them to run -p for torch.
+                if (OutputType.Patch == output.Type)
+                {
+                    this.core.OnMessage(WixWarnings.EmptyCabinet(mediaRow.SourceLineNumbers, cabinetName, true));
+                }
+                else
+                {
+                    this.core.OnMessage(WixWarnings.EmptyCabinet(mediaRow.SourceLineNumbers, cabinetName));
+                }
             }
 
             CabinetBuildOption cabinetBuildOption = this.FileManager.ResolveCabinet(fileRows, ref tempCabinetFile);
@@ -6586,7 +6641,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         /// <param name="path">Path to write file.</param>
         /// <param name="payloads">Collection of payloads whose source will be written to file.</param>
-        private void CreateContentsFile(string path, IEnumerable<PayloadInfo> payloads)
+        private void CreateContentsFile(string path, IEnumerable<PayloadInfoRow> payloads)
         {
             string directory = Path.GetDirectoryName(path);
             if (!Directory.Exists(directory))
@@ -6596,11 +6651,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             using (StreamWriter contents = new StreamWriter(path, false))
             {
-                foreach (PayloadInfo payload in payloads)
+                foreach (PayloadInfoRow payload in payloads)
                 {
                     if (payload.ContentFile)
                     {
-                        contents.WriteLine(payload.FileInfo.FullName);
+                        contents.WriteLine(payload.FullFileName);
                     }
                 }
             }
@@ -6846,128 +6901,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Payload info for binding Bundles.
-        /// </summary>
-        private class PayloadInfo
-        {
-            private string certificatePublicKeyIdentifier;
-            private string certificateThumbprint;
-            private string sha1;
-
-            public enum PackagingType
-            {
-                Unknown,
-                Embedded,
-                External,
-            }
-
-            public PayloadInfo(Row row, BinderFileManager fileManager)
-            {
-                this.SourceLineNumbers = row.SourceLineNumbers;
-
-                PackagingType packaging = PackagingType.Unknown;
-                if (null != row[4])
-                {
-                    int compressed = (int)row[4];
-                    packaging = (compressed == 1) ? PackagingType.Embedded : PackagingType.External;
-                }
-                this.UnresolvedSource = (string)row[5];
-
-                // payload files sourced from a cabinet (think WixExtension with embedded binary wixlib) are considered "non-content files".
-                ObjectField field = (ObjectField)row.Fields[2];
-                bool contentFile = String.IsNullOrEmpty(field.CabinetFileId);
-                bool suppressSignatureValidation = (row[6] != null && 1 == (int)row[6]);
-                this.Initialize((string)row[0], (string)row[1], (string)row[2], contentFile, suppressSignatureValidation, (string)row[3], null, packaging, fileManager);
-            }
-
-            public PayloadInfo(string id, string name, string sourceFile, bool contentFile, bool suppressSignatureValidation, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
-            {
-                this.Initialize(id, name, sourceFile, contentFile, suppressSignatureValidation, downloadUrl, container, packaging, fileManager);
-            }
-
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-            public string Id { get; private set; }
-            public bool ContentFile { get; private set; }
-            public FileInfo FileInfo { get; private set; }
-            public string FileName { get; private set; }
-            public long FileSize { get { return this.FileInfo.Length; } }
-            public string DownloadUrl { get; private set; }
-            public string EmbeddedId { get; set; }
-            public PackagingType Packaging { get; set; }
-            public PayloadInfo ParentPackagePayload { get; set; }
-            public ContainerInfo Container { get; set; }
-            public bool LayoutOnly { get; set; }
-            public string CatalogId { get; set; }
-            public string UnresolvedSource { get; private set; }
-            public bool SuppressSignatureValidation { get; private set; }
-
-            public string Sha1
-            {
-                get
-                {
-                    if (String.IsNullOrEmpty(this.sha1))
-                    {
-                        this.sha1 = Common.GetFileHash(this.FileInfo);
-                    }
-
-                    return this.sha1;
-                }
-            }
-
-            public string CertificatePublicKeyIdentifier
-            {
-                get { return this.certificatePublicKeyIdentifier; }
-            }
-
-            public string CertificateThumbprint
-            {
-                get { return this.certificateThumbprint; }
-            }
-
-            private void Initialize(string id, string name, string sourceFile, bool contentFile, bool suppressSignatureValidation, string downloadUrl, ContainerInfo container, PackagingType packaging, BinderFileManager fileManager)
-            {
-                this.Id = id;
-                this.ContentFile = contentFile;
-                this.FileInfo = new FileInfo(sourceFile);
-                this.FileName = name;
-                this.DownloadUrl = downloadUrl;
-                this.Container = container;
-                this.Packaging = packaging;
-                this.SuppressSignatureValidation = suppressSignatureValidation;
-
-                // Try to get the certificate if this is a signed file and we're not suppressing signature validation for this payload.
-                X509Certificate2 certificate = null;
-                try
-                {
-                    if (!this.SuppressSignatureValidation)
-                    {
-                        certificate = new X509Certificate2(this.FileInfo.FullName);
-                    }
-                }
-                catch (CryptographicException) // we don't care about non-signed files.
-                {
-                }
-
-                // If there is a certificate, remember its hashed public key identifier and thumbprint.
-                if (null != certificate)
-                {
-                    byte[] publicKeyIdentifierHash = new byte[128];
-                    uint publicKeyIdentifierHashSize = (uint)publicKeyIdentifierHash.Length;
-
-                    Microsoft.Tools.WindowsInstallerXml.Cab.Interop.NativeMethods.HashPublicKeyInfo(certificate.Handle, publicKeyIdentifierHash, ref publicKeyIdentifierHashSize);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < publicKeyIdentifierHashSize; ++i)
-                    {
-                        sb.AppendFormat("{0:X2}", publicKeyIdentifierHash[i]);
-                    }
-
-                    this.certificatePublicKeyIdentifier = sb.ToString();
-                    this.certificateThumbprint = certificate.Thumbprint;
-                }
-            }
-        }
-
-        /// <summary>
         /// Bundle info for binding Bundles.
         /// </summary>
         private class BundleInfo
@@ -7031,11 +6964,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             public YesNoDefaultType Compressed = YesNoDefaultType.Default;
-            public PayloadInfo.PackagingType DefaultPackagingType
+            public PackagingType DefaultPackagingType
             {
                 get
                 {
-                    return (this.Compressed == YesNoDefaultType.No) ? PayloadInfo.PackagingType.External : PayloadInfo.PackagingType.Embedded;
+                    return (this.Compressed == YesNoDefaultType.No) ? PackagingType.External : PackagingType.Embedded;
                 }
 
                 private set {}
@@ -7107,9 +7040,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <summary>
         /// Container info for binding Bundles.
         /// </summary>
-        private class ContainerInfo
+        internal class ContainerInfo
         {
-            private List<PayloadInfo> payloads = new List<PayloadInfo>();
+            private List<PayloadInfoRow> payloads = new List<PayloadInfoRow>();
 
             public ContainerInfo(Row row, BinderFileManager fileManager)
                 : this((string)row[0], (string)row[1], (string)row[2], fileManager)
@@ -7136,7 +7069,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public FileInfo FileInfo { get; set; }
             public long FileSize { get { return this.FileInfo.Length; } }
 
-            public List<PayloadInfo> Payloads
+            public List<PayloadInfoRow> Payloads
             {
                 get
                 {
@@ -7182,15 +7115,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             private const string PropertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
             private const string PatchMetadataFormat = "SELECT `Value` FROM `MsiPatchMetadata` WHERE `Property` = '{0}'";
-            private static readonly Version EmptyVersion = new Version(0, 0, 0, 0);
 
-            public ChainPackageInfo(Row row, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
+            public ChainPackageInfo(Row row, Table wixGroupTable, Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, BinderFileManager fileManager, BinderCore core, Output bundle)
                 : this((string)row[0], (string)row[1], (string)row[2], (string)row[3],
                        (string)row[4], (string)row[5], (string)row[6],
                        row[7], (string)row[8], row[9], row[10], row[11],
                        (string)row[12], (string)row[13], row[14],
                        (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
-                       row[20], row[21], row[22], wixGroupTable, allPayloads, fileManager, core)
+                       row[20], row[21], row[22], wixGroupTable, allPayloads, containers, fileManager, core, bundle)
             {
                 this.SourceLineNumbers = row.SourceLineNumbers;
             }
@@ -7200,7 +7132,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     object cacheData, string cacheId, object attributesData, object vitalData, object perMachineData,
                                     string detectCondition, string msuKB, object repairableData,
                                     string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
-                                    object enableFeatureSelectionData, object forcePerMachineData, object displayInternalUIData, Table wixGroupTable, Dictionary<string, PayloadInfo> allPayloads, BinderFileManager fileManager, BinderCore core)
+                                    object enableFeatureSelectionData, object forcePerMachineData, object displayInternalUIData, Table wixGroupTable,
+                                    Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, 
+                                    BinderFileManager fileManager, BinderCore core, Output bundle)
             {
                 BundlePackageAttributes attributes = (null == attributesData) ? 0 : (BundlePackageAttributes)attributesData;
 
@@ -7250,7 +7184,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.Id = id;
                 this.ChainPackageType = (Compiler.ChainPackageType)Enum.Parse(typeof(Compiler.ChainPackageType), packageType, true);
-                PayloadInfo packagePayload;
+                PayloadInfoRow packagePayload;
                 if (!allPayloads.TryGetValue(payloadId, out packagePayload))
                 {
                     core.OnMessage(WixErrors.IdentifierNotFound("Payload", payloadId));
@@ -7278,7 +7212,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 this.DisplayInternalUI = (YesNoType.Yes == displayInternalUI);
 
-                this.Payloads = new List<PayloadInfo>();
+                this.Payloads = new List<PayloadInfoRow>();
                 this.RelatedPackages = new List<RelatedPackage>();
                 this.MsiFeatures = new List<MsiFeature>();
                 this.MsiProperties = new List<MsiPropertyInfo>();
@@ -7287,7 +7221,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.Provides = new ProvidesDependencyCollection();
 
                 // Start the package size with the package's payload size.
-                this.Size = this.PackagePayload.FileInfo.Length;
+                this.Size = this.PackagePayload.FileSize;
 
                 // get all contained payloads...
                 foreach (Row row in wixGroupTable.Rows)
@@ -7300,7 +7234,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if ("Package" == rowParentType && this.Id == rowParentName &&
                         "Payload" == rowChildType && this.PackagePayload.Id != rowChildName)
                     {
-                        PayloadInfo payload = allPayloads[rowChildName];
+                        PayloadInfoRow payload = allPayloads[rowChildName];
                         this.Payloads.Add(payload);
 
                         this.Size += payload.FileSize; // add each payload to the total size of the package.
@@ -7313,7 +7247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 switch (this.ChainPackageType)
                 {
                     case Compiler.ChainPackageType.Msi:
-                        this.ResolveMsiPackage(fileManager, core, allPayloads, suppressLooseFilePayloadGeneration, enableFeatureSelection, forcePerMachine);
+                        this.ResolveMsiPackage(fileManager, core, allPayloads, containers, suppressLooseFilePayloadGeneration, enableFeatureSelection, forcePerMachine, bundle);
                         break;
                     case Compiler.ChainPackageType.Msp:
                         this.ResolveMspPackage(core);
@@ -7335,7 +7269,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public SourceLineNumberCollection SourceLineNumbers { get; private set; }
             public string Id { get; private set; }
             public Compiler.ChainPackageType ChainPackageType { get; private set; }
-            public PayloadInfo PackagePayload { get; private set; }
+            public PayloadInfoRow PackagePayload { get; private set; }
             public string InstallCondition { get; private set; }
             public string InstallCommand { get; private set; }
             public string RepairCommand { get; private set; }
@@ -7343,6 +7277,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             public bool PerMachine { get; private set; }
             public string ProductCode { get; private set; }
+            public string UpgradeCode { get; private set; }
             public string Language { get; private set; }
             public string PatchCode { get; private set; }
             public string PatchXml { get; private set; }
@@ -7368,7 +7303,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public string DisplayName { get; private set; }
             public string Description { get; private set; }
 
-            public List<PayloadInfo> Payloads { get; private set; }
+            public List<PayloadInfoRow> Payloads { get; private set; }
             public List<RelatedPackage> RelatedPackages { get; private set; }
             public List<MsiFeature> MsiFeatures { get; private set; }
             public List<MsiPropertyInfo> MsiProperties { get; private set; }
@@ -7383,9 +7318,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// Initializes package state from the MSI contents.
             /// </summary>
             /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfo> allPayloads, YesNoType suppressLooseFilePayloadGeneration, YesNoType enableFeatureSelection, YesNoType forcePerMachine)
+            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, YesNoType suppressLooseFilePayloadGeneration, YesNoType enableFeatureSelection, YesNoType forcePerMachine, Output bundle)
             {
-                string sourcePath = this.PackagePayload.FileInfo.FullName;
+                string sourcePath = this.PackagePayload.FullFileName;
                 bool longNamesInImage = false;
                 bool compressed = false;
                 try
@@ -7503,10 +7438,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             }
                         }
 
-                        // Represent the Upgrade table as related packages.
-                        if (db.Tables.Contains("Upgrade"))
+                        this.UpgradeCode = ChainPackageInfo.GetProperty(db, "UpgradeCode");
+
+                            // Represent the Upgrade table as related packages.
+                        if (db.Tables.Contains("Upgrade") && !String.IsNullOrEmpty(this.UpgradeCode))
                         {
-                            string upgradeCode = ChainPackageInfo.GetProperty(db, "UpgradeCode");
                             using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `UpgradeCode`, `VersionMin`, `VersionMax`, `Language`, `Attributes` FROM `Upgrade`"))
                             {
                                 view.Execute();
@@ -7533,7 +7469,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                         int attributes = record.GetInteger(5);
                                         // when an Upgrade row has an upgrade code different than this package's upgrade code, don't count it as a possible downgrade to this package
-                                        related.OnlyDetect = ((attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect) && upgradeCode.Equals(related.Id, StringComparison.OrdinalIgnoreCase);
+                                        related.OnlyDetect = ((attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect) && this.UpgradeCode.Equals(related.Id, StringComparison.OrdinalIgnoreCase);
                                         related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
                                         related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
                                         related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;
@@ -7610,17 +7546,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     // If we didn't find the Payload as an existing child of the package, we need to
                                     // add it.  We expect the file to exist on-disk in the same relative location as
                                     // the MSI expects to find it...
-                                    string cabinetName = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), cabinet);
+                                    string cabinetName = Path.Combine(Path.GetDirectoryName(this.PackagePayload.Name), cabinet);
                                     if (!this.IsExistingPayload(cabinetName))
                                     {
                                         string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
-                                        string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
+                                        string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSourceFile, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
 
-                                        PayloadInfo payloadNew = new PayloadInfo(generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
-                                        payloadNew.ParentPackagePayload = this.PackagePayload;
-                                        if (null != payloadNew.Container)
+                                        PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
+                                        payloadNew.ParentPackagePayload = this.PackagePayload.Id;
+                                        if (!String.IsNullOrEmpty(payloadNew.Container))
                                         {
-                                            payloadNew.Container.Payloads.Add(payloadNew);
+                                            containers[payloadNew.Container].Payloads.Add(payloadNew);
                                         }
 
                                         this.Payloads.Add(payloadNew);
@@ -7682,16 +7618,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                             {
                                                 string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
                                                 string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
-                                                string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSource, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
-                                                string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.FileName), fileSourcePath);
+                                                string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSourceFile, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
+                                                string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.Name), fileSourcePath);
 
                                                 if (!this.IsExistingPayload(name))
                                                 {
-                                                    PayloadInfo payloadNew = new PayloadInfo(generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging, fileManager);
-                                                    payloadNew.ParentPackagePayload = this.PackagePayload;
-                                                    if (null != payloadNew.Container)
+                                                    PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
+                                                    payloadNew.ParentPackagePayload = this.PackagePayload.Id;
+                                                    if (String.IsNullOrEmpty(payloadNew.Container))
                                                     {
-                                                        payloadNew.Container.Payloads.Add(payloadNew);
+                                                        containers[payloadNew.Container].Payloads.Add(payloadNew);
                                                     }
 
                                                     this.Payloads.Add(payloadNew);
@@ -7777,11 +7713,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // expected relative location of the external file specified in the MSI with
                 // the destination @Name of the payload... the @SourceFile path on the payload
                 // may be something completely different!
-                foreach (PayloadInfo payload in this.Payloads)
+                foreach (PayloadInfoRow payload in this.Payloads)
                 {
-                    if (payloadName.Equals(payload.FileName, StringComparison.OrdinalIgnoreCase))
+                    if (payloadName.Equals(payload.Name, StringComparison.OrdinalIgnoreCase))
                     {
-                        payload.ParentPackagePayload = this.PackagePayload;
+                        payload.ParentPackagePayload = this.PackagePayload.Id;
                         return true;
                     }
                 }
@@ -7795,7 +7731,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// <param name="core">BinderCore for messages.</param>
             private void ResolveMspPackage(BinderCore core)
             {
-                string sourcePath = this.PackagePayload.FileInfo.FullName;
+                string sourcePath = this.PackagePayload.FullFileName;
 
                 try
                 {
@@ -7834,7 +7770,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (String.IsNullOrEmpty(this.CacheId))
                 {
-                    this.CacheId = this.PackagePayload.Sha1;
+                    this.CacheId = this.PackagePayload.Hash;
                 }
             }
 
@@ -7844,30 +7780,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// <param name="core">BinderCore for messages.</param>
             private void ResolveExePackage(BinderCore core)
             {
-                string sourcePath = this.PackagePayload.FileInfo.FullName;
-
                 if (String.IsNullOrEmpty(this.CacheId))
                 {
-                    this.CacheId = this.PackagePayload.Sha1;
+                    this.CacheId = this.PackagePayload.Hash;
                 }
 
-                try
-                {
-                    FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(sourcePath);
-                    this.DisplayName = versionInfo.ProductName;
-                    this.Description = versionInfo.FileDescription;
-
-                    // Use the fixed version info block for the file since the resource text may not be a dotted quad.
-                    Version version = new Version(versionInfo.ProductMajorPart, versionInfo.ProductMinorPart, versionInfo.ProductBuildPart, versionInfo.ProductPrivatePart);
-                    if (ChainPackageInfo.EmptyVersion != version)
-                    {
-                        this.Version = version.ToString();
-                    }
-                }
-                catch (System.IO.IOException e)
-                {
-                    core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
-                }
+                this.Version = this.PackagePayload.Version;
+                this.DisplayName = this.PackagePayload.ProductName;
+                this.Description = this.PackagePayload.Description;
             }
 
             /// <summary>

@@ -62,13 +62,13 @@
             <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource StatusTextStyle}" DataContext="{Binding ProgressViewModel}" Visibility="{Binding ProgressEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{Binding Message}"/>
             <Image Grid.Row="1" Grid.Column="2" Source="resources\gear.png" DataContext="{Binding ProgressViewModel}" Visibility="{Binding ProgressEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Image.RenderTransform>
-                    <RotateTransform x:Name="ProgressRotateTransform" Angle="100"/>
+                    <RotateTransform x:Name="ProgressRotateTransform" Angle="1"/>
                 </Image.RenderTransform>
                 <Image.Triggers>
                     <EventTrigger RoutedEvent="Image.Loaded">
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="ProgressRotateTransform" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" RepeatBehavior="Forever"/>
+                                <DoubleAnimation Storyboard.TargetName="ProgressRotateTransform" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" Duration="0:0:4" RepeatBehavior="Forever"/>
                             </Storyboard>
                         </BeginStoryboard>
                     </EventTrigger>
@@ -76,26 +76,29 @@
             </Image>
 
             <!-- Check for Update -->
-            <Button Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" IsEnabled="{Binding CheckEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Visibility="{Binding CheckVisible}">Up to Date</Button>
-            <!-- TODO: Change text based on Current or Failed -->
+            <Button Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" Command="{Binding CheckCommand}" IsEnabled="{Binding CheckEnabled}" Visibility="{Binding CheckVisible, Converter={StaticResource BooleanToVisibilityConverter}}">Check for Updates</Button>
             <Image Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" Visibility="{Binding CheckEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Source="resources\wrench.png"/>
-            
+
             <!-- Checking for Update-->
-            <Button Grid.Row="2" Grid.Column="0" IsEnabled="False" DataContext="{Binding UpdateViewModel}" Visibility="{Binding UpdatingEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">Updating</Button>
-            <Image Grid.Row="2" Grid.Column="0" Source="resources\gear.png" DataContext="{Binding UpdateViewModel}" Visibility="{Binding UpdatingEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Button Grid.Row="2" Grid.Column="0" IsEnabled="False" DataContext="{Binding UpdateViewModel}" Visibility="{Binding CheckingEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">Checking for Updates</Button>
+            <Image Grid.Row="2" Grid.Column="0" Source="resources\gear.png" DataContext="{Binding UpdateViewModel}" Visibility="{Binding CheckingEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Image.RenderTransform>
-                    <RotateTransform x:Name="UpdateRotateTransform" Angle="100"/>
+                    <RotateTransform x:Name="UpdateRotateTransform" Angle="1"/>
                 </Image.RenderTransform>
                 <Image.Triggers>
                     <EventTrigger RoutedEvent="Image.Loaded">
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="UpdateRotateTransform" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" RepeatBehavior="Forever"/>
+                                <DoubleAnimation Storyboard.TargetName="UpdateRotateTransform" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" Duration="0:0:4" RepeatBehavior="Forever"/>
                             </Storyboard>
                         </BeginStoryboard>
                     </EventTrigger>
                 </Image.Triggers>
             </Image>
+            
+            <!-- Up To Date -->
+            <Button Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" IsEnabled="False" Visibility="{Binding IsUpToDate, Converter={StaticResource BooleanToVisibilityConverter}}">Up To Date</Button>
+            <Image Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" Visibility="{Binding IsUpToDate, Converter={StaticResource BooleanToVisibilityConverter}}" Source="resources\wrench.png"/>
             
             <!-- Update Available -->
             <Button Grid.Row="2" Grid.Column="0" DataContext="{Binding UpdateViewModel}" Command="{Binding LaunchCommand}" Visibility="{Binding LaunchEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">Update Available</Button>

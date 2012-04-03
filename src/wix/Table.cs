@@ -130,6 +130,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 case "BBControl":
                     row = new BBControlRow(sourceLineNumbers, this);
                     break;
+                case "ChainMsiPackage":
+                    row = new ChainMsiPackageRow(sourceLineNumbers, this);
+                    break;
                 case "Component":
                     row = new ComponentRow(sourceLineNumbers, this);
                     break;
@@ -141,6 +144,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     break;
                 case "Media":
                     row = new MediaRow(sourceLineNumbers, this);
+                    break;
+                case "PayloadInfo":
+                    row = new PayloadInfoRow(sourceLineNumbers, this);
                     break;
                 case "Upgrade":
                     row = new UpgradeRow(sourceLineNumbers, this);

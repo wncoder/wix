@@ -1989,3 +1989,43 @@ RobMen: SFBUG:3505052 - correctly set MSP rollback logging variable.
 
 WixBuild: Version 3.6.2719.0
 
+PMarcu: SFBUG:3477462 - Adding /layout support to WixBA.
+
+RobMen: SFBUG:3509882 - correctly interpret WUSA reboot return code.
+
+JieJi: Fix crash in slipstream install rollback, where the patch rollback
+       actions were not planned correctly. 
+
+
+HeathS: SFBUG:3438238 - Fix warning message to pass -p to torch.exe.
+
+HeathS: SFBUG:3509974 - Add Product properties to separate fragments.
+
+PMarcu: Fit and finish in WixBA - Slowing down gears and fixing update tile.
+
+WixBuild: Version 3.6.2726.0
+
+BobArnson: Don't log built-in variables unless they've been used. 
+           Add Windows version to Burn log.
+
+RobMen: Install Custom Action templates on VS 11.
+
+HeathS: Split dependency custom action to improve performance.
+
+BobArnson: Persist data about MSI packages in the bundle .wixpdb.
+
+RobMen: Simplistic telemetry for WiX toolset install.
+
+EricStJ: SFBUG:3498743 iis:WebAppPool MaxCpuUsage off by x10 
+         NetFx chainer errors were not reported correctly.  
+         Error message handler for wixstdba wasn't working
+         Added support for RemotePayloads.  Added NetFx packagegroups.
+         Devenv.exe /setup isn't needed for VS2010.
+
+HeathS: Added Win8 Express detection and fixed other VS11 detection.
+
+EricStJ: Put NetFx packages under redist folder in layout.
+         Fix NetFx package detection.
+
+WixBuild: Version 3.6.2803.0
+

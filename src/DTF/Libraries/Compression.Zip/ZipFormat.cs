@@ -226,7 +226,7 @@ namespace Microsoft.Deployment.Compression.Zip
                 Encoding.UTF8 : Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage));
 
             byte[] fileNameBytes = reader.ReadBytes(fileNameLength);
-            this.fileName = headerEncoding.GetString(fileNameBytes);
+            this.fileName = headerEncoding.GetString(fileNameBytes).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
             List<ZipExtraFileField> fields = new List<ZipExtraFileField>();
             while (extraFieldLength > 0)

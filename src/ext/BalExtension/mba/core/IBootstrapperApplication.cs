@@ -462,6 +462,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// The error came from the Windows Installer.
         /// </summary>
         WindowsInstaller,
+
+        /// <summary>
+        /// The error came from an EXE Package.
+        /// </summary>
+        ExePackage,
     };
 
     public enum RelatedOperation

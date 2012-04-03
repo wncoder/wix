@@ -29,8 +29,8 @@
     <String Id="AdvancedWelcomeEulaDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="AdvancedWelcomeEulaDlgTitle" Overridable="yes">{\WixUI_Font_Title}請閱讀 [ProductName] 授權合約</String>
     <String Id="AdvancedWelcomeEulaDlgLicenseAcceptedCheckBox" Overridable="yes">我接受授權合約中的條款(&amp;A)</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">按一下 [安裝] 以預設選項為所有使用者安裝產品。按一下 [進階] 可變更安裝選項。</String>
-    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">按一下 [安裝] 以預設選項僅為您安裝產品。按一下 [進階] 可變更安裝選項。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerMachine" Overridable="yes">按一下 [\[]安裝[\]] 以預設選項為所有使用者安裝產品。按一下 [\[]進階[\]] 可變更安裝選項。</String>
+    <String Id="AdvancedWelcomeEulaDlgDescriptionPerUser" Overridable="yes">按一下 [\[]安裝[\]] 以預設選項僅為您安裝產品。按一下 [\[]進階[\]] 可變更安裝選項。</String>
     <String Id="AdvancedWelcomeEulaDlgInstall" Overridable="yes">安裝(&amp;I)</String>
     <String Id="AdvancedWelcomeEulaDlgAdvanced" Overridable="yes">進階(&amp;D)</String>
     <String Id="Advanced_Font_Normal_Size" Overridable="yes">9</String>
@@ -112,7 +112,7 @@
     <String Id="InstallDirDlg_Title" Overridable="yes">[ProductName] 安裝程式</String>
     <String Id="InstallDirDlgChange" Overridable="yes">變更(&amp;C)...</String>
     <String Id="InstallDirDlgTitle" Overridable="yes">{\WixUI_Font_Title}目的地資料夾</String>
-    <String Id="InstallDirDlgDescription" Overridable="yes">按一下 [下一步] 安裝至預設資料夾，或按一下 [變更] 選擇其他位置。</String>
+    <String Id="InstallDirDlgDescription" Overridable="yes">按一下 [\[]下一步[\]] 安裝至預設資料夾，或按一下 [\[]變更[\]] 選擇其他位置。</String>
     <String Id="InstallDirDlgBannerBitmap" Overridable="yes">WixUI_Bmp_Banner</String>
     <String Id="InstallDirDlgFolderLabel" Overridable="yes">安裝 [ProductName] 到:</String>
 
@@ -477,7 +477,7 @@
     <String Id="Error1606" Overridable="yes">無法存取網路位置 [2]。</String>
     <String Id="Error1607" Overridable="yes">繼續安裝之前應先關閉下列應用程式:</String>
     <String Id="Error1608" Overridable="yes">在此機器上，找不到與本產品相容的舊版產品。</String>
-    <String Id="Error1609" Overridable="yes">套用安全性設定時發生錯誤。[2] 不是有效的使用者或群組。可能是因為套件有問題，或連線至網路上的網域控制站時發生問題。請檢查您的網路連線再按一下 [重試]，或按一下 [取消] 結束安裝。{{找不到使用者的 SID，系統錯誤 [3]}}</String>
+    <String Id="Error1609" Overridable="yes">套用安全性設定時發生錯誤。[2] 不是有效的使用者或群組。可能是因為套件有問題，或連線至網路上的網域控制站時發生問題。請檢查您的網路連線再按一下 [\[]重試[\]]，或按一下 [\[]取消[\]] 結束安裝。{{找不到使用者的 SID，系統錯誤 [3]}}</String>
     <String Id="Error1701" Overridable="yes">金鑰 [2] 無效。請檢查您輸入的金鑰是否正確。</String>
     <String Id="Error1702" Overridable="yes">安裝程式必須重新啟動您的系統才能繼續設定 [2]。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>
     <String Id="Error1703" Overridable="yes">您必須重新啟動系統，才能使對 [2] 的設定變更生效。請按一下 [\[]是[\]] 立即重新啟動，或如果您想要稍後手動重新啟動請按一下 [\[]否[\]]。</String>

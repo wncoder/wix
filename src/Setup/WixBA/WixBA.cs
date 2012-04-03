@@ -19,11 +19,14 @@
 namespace Microsoft.Tools.WindowsInstallerXml.UX
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Windows;
+    using System.IO;
+    using System.Net;
+    using System.Text;
     using System.Windows.Input;
-    using Threading = System.Windows.Threading;
     using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
+    using Threading = System.Windows.Threading;
 
     /// <summary>
     /// The WiX toolset user experience.
@@ -95,7 +98,49 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
 
             Threading.Dispatcher.Run();
 
-            this.Engine.Quit(0);
+            this.PostTelemetry();
+            this.Engine.Quit(WixBA.Model.Result);
+        }
+
+        private void PostTelemetry()
+        {
+            string result = String.Concat("0x", WixBA.Model.Result.ToString("x"));
+
+            StringBuilder telemetryData = new StringBuilder();
+            foreach (KeyValuePair<string, string> kvp in WixBA.Model.Telemetry)
+            {
+                telemetryData.AppendFormat("{0}={1}+", kvp.Key, kvp.Value);
+            }
+            telemetryData.AppendFormat("Result={0}", result);
+
+            byte[] data = Encoding.UTF8.GetBytes(telemetryData.ToString());
+
+            try
+            {
+                HttpWebRequest post = WixBA.Model.CreateWebRequest(String.Format("http://wixtoolset.org/telemetry/v{0}/?r={1}", WixBA.Model.Version.ToString(), result));
+                post.Method = "POST";
+                post.ContentType = "application/x-www-form-urlencoded";
+                post.ContentLength = data.Length;
+
+                using (Stream postStream = post.GetRequestStream())
+                {
+                    postStream.Write(data, 0, data.Length);
+                }
+
+                HttpWebResponse response = (HttpWebResponse)post.GetResponse();
+            }
+            catch (ArgumentException)
+            {
+            }
+            catch (FormatException)
+            {
+            }
+            catch (OverflowException)
+            {
+            }
+            catch (WebException)
+            {
+            }
         }
     }
 }

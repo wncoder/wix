@@ -81,76 +81,14 @@
         </InstallExecuteSequence>
     </Fragment>
 
-    <!-- Indicates whether the Visual C# 11 Express IDE component is installed.  -->
-    <!-- If this property is set, that means Visual C# 11 Express Edition is     -->
-    <!-- installed on the system.                                                  -->
-    <Fragment>
-        <Property Id="VCSHARP11EXPRESS_IDE" Secure="yes">
-            <ComponentSearch Id="SearchForVcsExpressIde11Component" Guid="A4945167-D8A4-4B10-9B78-99C2CDC243EC" Type="file" >
-                <FileSearch Id="VcsExpressIde11" Name="vcsexpress.exe"/>
-            </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Custom action definition to run vcsexpress.exe /setup                     -->
-    <Fragment>
-        <CustomAction Id="VCSHARP11Setup" Property="VCSHARP11EXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VCSHARP11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VCSHARP11Setup" Before="InstallFinalize" Overridable="yes">VCSHARP11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
-    <!-- Custom action definition to run vcsexpress.exe /InstallVSTemplates        -->
-    <Fragment>
-        <CustomAction Id="VCSHARP11InstallVSTemplates" Property="VCSHARP11EXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VCSHARP11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VCSHARP11InstallVSTemplates" Before="InstallFinalize" Overridable="yes">VCSHARP11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
     <!-- Indicates whether the Visual C# project system is installed as a part of  -->
     <!-- Visual Studio 11 standard or higher. If this property is set, that      -->
     <!-- means Visual Studio 11 standard or higher is installed and the Visual   -->
     <!-- C# language tools were installed as a part of VS 11 setup.              -->
     <Fragment>
         <Property Id="VS11_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVCS11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}" Name="DefaultProjectExtension" Type="raw" />
+            <RegistrySearch Id="SearchForVCS11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC#" Name="ProductDir" Type="raw" />
         </Property>
-    </Fragment>
-
-    <!-- Indicates whether the Visual Basic 11 Express IDE component is installed. -->
-    <!-- If this property is set, that means Visual Basic 11 Express Edition is    -->
-    <!-- installed on the system.                                                    -->
-    <Fragment>
-        <Property Id="VB11EXPRESS_IDE" Secure="yes">
-            <ComponentSearch Id="SearchForVbExpressIde11Component" Guid="3EDEF607-9E3A-4A64-BFE1-104979CF2899" Type="file">
-                <FileSearch Id="VbExpressIde11" Name="vbexpress.exe"/>
-            </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Custom action definition to run vbexpress.exe /setup                        -->
-    <Fragment>
-        <CustomAction Id="VB11Setup" Property="VB11EXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VB11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VB11Setup" Before="InstallFinalize" Overridable="yes">VB11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
-    <!-- Custom action definition to run vbexpress.exe /InstallVSTemplates           -->
-    <Fragment>
-        <CustomAction Id="VB11InstallVSTemplates" Property="VB11EXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VB11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VB11InstallVSTemplates" Before="InstallFinalize" Overridable="yes">VB11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
     </Fragment>
 
     <!-- Indicates whether the Visual Basic project system is installed as a part of -->
@@ -159,7 +97,7 @@
     <!-- Basic language tools were installed as a part of VS 11 setup.             -->
     <Fragment>
         <Property Id="VS11_IDE_VB_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVB11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{F184B08F-C81C-45f6-A57F-5ABD9991F28F}" Name="DefaultProjectExtension" Type="raw" />
+            <RegistrySearch Id="SearchForVB11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VB" Name="ProductDir" Type="raw" />
         </Property>
     </Fragment>
 
@@ -168,27 +106,23 @@
     <!-- installed on the system.                                                             -->
     <Fragment>
         <Property Id="VWD11EXPRESS_IDE" Secure="yes">
-            <ComponentSearch Id="SearchForVwdExpressIde11Component" Guid="771B6CF7-C8D2-4D85-BACD-ED01600256DC" Type="file">
-                <FileSearch Id="VwdExpressIde11" Name="vwdexpress.exe"/>
+            <ComponentSearch Id="SearchForVwdExpressIde11Component" Guid="92A0CBA0-BF39-422D-87FA-AB64564CD136" Type="file">
+                <FileSearch Id="VwdExpressIde11" Name="vwdexpress.exe" />
             </ComponentSearch>
         </Property>
     </Fragment>
-
     <!-- Custom action definition to run vwdexpress.exe /setup                               -->
     <Fragment>
         <CustomAction Id="VWD11Setup" Property="VWD11EXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
         <PropertyRef Id="VWD11EXPRESS_IDE" />
-
         <InstallExecuteSequence>
             <Custom Action="VWD11Setup" Before="InstallFinalize" Overridable="yes">VWD11EXPRESS_IDE</Custom>
         </InstallExecuteSequence>
     </Fragment>
-
     <!-- Custom action definition to run vwdexpress.exe /InstallVSTemplates                  -->
     <Fragment>
         <CustomAction Id="VWD11InstallVSTemplates" Property="VWD11EXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
         <PropertyRef Id="VWD11EXPRESS_IDE" />
-
         <InstallExecuteSequence>
             <Custom Action="VWD11InstallVSTemplates" Before="InstallFinalize" Overridable="yes">VWD11EXPRESS_IDE</Custom>
         </InstallExecuteSequence>
@@ -200,39 +134,9 @@
     <!-- Web Developer language tools were installed as a part of VS 11 setup.             -->
     <Fragment>
         <Property Id="VS11_IDE_VWD_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVWD11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{E24C65DC-7377-472B-9ABA-BC803B73C61A}" Name="DefaultProjectExtension" Type="raw" />
+            <ComponentSearch Id="SearchForVWD11ProjectSystemUnderVSSetup" Guid="03E73DF8-BED3-44BB-BE2E-BAC10FAE723E" />
+            <ComponentSearch Id="SearchForVWD11ProjectSystemUnderVWDSetup" Guid="3D7D4A9F-E3D7-4F13-9907-AF4F3CD75D33" Type="directory" />
         </Property>
-    </Fragment>
-
-    <!-- Indicates whether the Visual C++ 11 Express IDE component is installed. -->
-    <!-- If this property is set, that means Visual C++ 11 Express Edition is    -->
-    <!-- installed on the system.                                                  -->
-    <Fragment>
-        <Property Id="VC11EXPRESS_IDE" Secure="yes">
-            <ComponentSearch Id="SearchForVcExpressIde11Component" Guid="B455E8D3-90CB-47F6-AB7B-9B31E5DE6266" Type="file">
-                <FileSearch Id="VcExpressIde11" Name="vcexpress.exe"/>
-            </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Custom action definition to run vcexpress.exe /setup                      -->
-    <Fragment>
-        <CustomAction Id="VC11Setup" Property="VC11EXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VC11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VC11Setup" Before="InstallFinalize" Overridable="yes">VC11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
-    <!-- Custom action definition to run vcexpress.exe /InstallVSTemplates         -->
-    <Fragment>
-        <CustomAction Id="VC11InstallVSTemplates" Property="VC11EXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VC11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VC11InstallVSTemplates" Before="InstallFinalize" Overridable="yes">VC11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
     </Fragment>
 
     <!-- Indicates whether the Visual C++ project system is installed as a part of -->
@@ -241,39 +145,8 @@
     <!-- C++ language tools were installed as a part of VS 11 setup.             -->
     <Fragment>
         <Property Id="VS11_IDE_VC_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVC11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}" Name="DefaultProjectExtension" Type="raw" />
+            <RegistrySearch Id="SearchForVC11ProjectSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC" Name="ProductDir" Type="raw" />
         </Property>
-    </Fragment>
-
-    <!-- Indicates whether the Visual Studio 11 Express for Windows Phone IDE component is  -->
-    <!-- installed. If this property is set, that means Visual Studio 11 Express for        -->
-    <!-- Windows Phone is installed on the system.                                            -->
-    <Fragment>
-        <Property Id="VPD11EXPRESS_IDE" Secure="yes">
-            <ComponentSearch Id="SearchForVpdExpressIde11Component" Guid="80C81DB2-E95B-4C03-A559-C664E8411DDF" Type="file">
-                <FileSearch Id="VpdExpressIde11" Name="vpdexpress.exe"/>
-            </ComponentSearch>
-        </Property>
-    </Fragment>
-
-    <!-- Custom action definition to run vpdexpress.exe /setup                                -->
-    <Fragment>
-        <CustomAction Id="VPD11Setup" Property="VPD11EXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VPD11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VPD11Setup" Before="InstallFinalize" Overridable="yes">VPD11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
-    </Fragment>
-
-    <!-- Custom action definition to run vpdexpress.exe /InstallVSTemplates                   -->
-    <Fragment>
-        <CustomAction Id="VPD11InstallVSTemplates" Property="VPD11EXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
-        <PropertyRef Id="VPD11EXPRESS_IDE" />
-
-        <InstallExecuteSequence>
-            <Custom Action="VPD11InstallVSTemplates" Before="InstallFinalize" Overridable="yes">VPD11EXPRESS_IDE</Custom>
-        </InstallExecuteSequence>
     </Fragment>
 
     <!-- Indicates whether the Visual Studio 11 Team Test project system is installed -->
@@ -286,21 +159,15 @@
     <!-- Indicates whether the Visual Studio 11 Database project system is installed -->
     <Fragment>
         <Property Id="VS11_IDE_DB_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVSTS11DBSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{C8D11400-126E-41CD-887F-60BD40844F9E}" Name="Package" Type="raw" />
-        </Property>
-    </Fragment>
-
-    <!-- Indicates whether the Visual Studio 11 Deployment project system (setup project) is installed -->
-    <Fragment>
-        <Property Id="VS11_IDE_VSD_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVSTS11VSDSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{54435603-DBB4-11D2-8724-00A0C9A8B90C}" Name="Package" Type="raw" />
+            <ComponentSearch Id="SearchForVS11DBSystemUnderVSSetup" Guid="E781FFA7-55F5-4E8C-9275-7B7EF035B13B" />
         </Property>
     </Fragment>
 
     <!-- Indicates whether the Windows Installer XML project system is installed for VS11 -->
     <Fragment>
         <Property Id="VS11_IDE_WIX_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVSTS11WixSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{930C7802-8A8C-48F9-8165-68863BCCD9DD}" Name="Package" Type="raw" />
+            <!-- Component search for the .pkgdef file for VS11 -->
+            <ComponentSearch Id="SearchForVS11WixSystemUnderVSSetup" Guid="55489E7A-7DCA-5228-975E-39C51BE332D9" />
         </Property>
     </Fragment>
 
@@ -314,7 +181,34 @@
     <!-- Indicates whether the Visual Studio F# project system is installed -->
     <Fragment>
         <Property Id="VS11_IDE_FSHARP_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVSTS11FSharpSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Projects\{f2a71f9b-5d33-465a-a702-920d77279786}" Name="Package" Type="raw" />
+            <RegistrySearch Id="SearchForVSTS11FSharpSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\11.0\Setup\F#" Name="ProductDir" Type="raw" />
         </Property>
+    </Fragment>
+
+    <!-- Indicates whether the Visual Studio Express for Windows IDE component is installed. -->
+    <!-- If this property is set, that means Visual Studio Express for Windows is installed  -->
+    <!-- on the system.                                                                      -->
+    <Fragment>
+        <Property Id="VS11WINEXPRESS_IDE" Secure="yes">
+            <ComponentSearch Id="SearchForVS11WinExpressIdeComponent" Guid="A7A5FD99-1DFE-4AA8-A563-4DF5E0DD89E1" Type="file">
+                <FileSearch Id="VS11WinExpressIde" Name="vswinexpress.exe" />
+            </ComponentSearch>
+        </Property>
+    </Fragment>
+    <!-- Custom action definition to run vswinexpress.exe /setup                             -->
+    <Fragment>
+        <CustomAction Id="VS11WinExpressSetup" Property="VS11WINEXPRESS_IDE" ExeCommand="/setup" Execute="deferred" Return="ignore" Impersonate="no" />
+        <PropertyRef Id="VS11WINEXPRESS_IDE" />
+        <InstallExecuteSequence>
+            <Custom Action="VS11WinExpressSetup" Before="InstallFinalize" Overridable="yes">VS11WINEXPRESS_IDE</Custom>
+        </InstallExecuteSequence>
+    </Fragment>
+    <!-- Custom action definition to run vswinexpress.exe /InstallVSTemplates                -->
+    <Fragment>
+        <CustomAction Id="VS11WinExpressInstallVSTemplates" Property="VS11WINEXPRESS_IDE" ExeCommand="/InstallVSTemplates" Execute="deferred" Return="ignore" Impersonate="no" />
+        <PropertyRef Id="VS11WINEXPRESS_IDE" />
+        <InstallExecuteSequence>
+            <Custom Action="VS11WinExpressInstallVSTemplates" Before="InstallFinalize" Overridable="yes">VS11WINEXPRESS_IDE</Custom>
+        </InstallExecuteSequence>
     </Fragment>
 </Wix>

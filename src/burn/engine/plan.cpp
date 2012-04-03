@@ -95,6 +95,7 @@ static HRESULT RemoveUnnecessaryActions(
     __in DWORD cActions
     );
 static HRESULT FinalizeSlipstreamPatchActions(
+    __in BOOL fExecute,
     __in BURN_EXECUTE_ACTION* rgActions,
     __in DWORD cActions
     );
@@ -683,8 +684,11 @@ extern "C" HRESULT PlanFinalizeActions(
     hr = RemoveUnnecessaryActions(FALSE, pPlan->rgRollbackActions, pPlan->cRollbackActions);
     ExitOnFailure(hr, "Failed to remove unnecessary execute actions.");
 
-    hr = FinalizeSlipstreamPatchActions(pPlan->rgExecuteActions, pPlan->cExecuteActions);
+    hr = FinalizeSlipstreamPatchActions(TRUE, pPlan->rgExecuteActions, pPlan->cExecuteActions);
     ExitOnFailure(hr, "Failed to finalize slipstream execute actions.");
+
+    hr = FinalizeSlipstreamPatchActions(FALSE, pPlan->rgRollbackActions, pPlan->cRollbackActions);
+    ExitOnFailure(hr, "Failed to finalize slipstream rollback actions.");
 
 LExit:
     return hr;
@@ -1767,6 +1771,7 @@ static HRESULT RemoveUnnecessaryActions(
 }
 
 static HRESULT FinalizeSlipstreamPatchActions(
+    __in BOOL fExecute,
     __in BURN_EXECUTE_ACTION* rgActions,
     __in DWORD cActions
     )
@@ -1789,13 +1794,13 @@ static HRESULT FinalizeSlipstreamPatchActions(
                 BURN_PACKAGE* pMspPackage = pPackage->Msi.rgpSlipstreamMspPackages[j];
                 AssertSz(BURN_PACKAGE_TYPE_MSP == pMspPackage->type, "Only MSP packages can be slipstream patches.");
 
-                pAction->msiPackage.rgSlipstreamPatches[j] = pMspPackage->execute;
+                pAction->msiPackage.rgSlipstreamPatches[j] = fExecute ? pMspPackage->execute : pMspPackage->rollback;
                 for (DWORD k = 0; k < pMspPackage->Msp.cTargetProductCodes; ++k)
                 {
                     BURN_MSPTARGETPRODUCT* pTargetProduct = pMspPackage->Msp.rgTargetProducts + k;
                     if (pPackage == pTargetProduct->pChainedTargetPackage)
                     {
-                        pAction->msiPackage.rgSlipstreamPatches[j] = pTargetProduct->execute;
+                        pAction->msiPackage.rgSlipstreamPatches[j] = fExecute ? pTargetProduct->execute : pTargetProduct->rollback;
                         break;
                     }
                 }

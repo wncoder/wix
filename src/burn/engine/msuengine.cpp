@@ -21,6 +21,7 @@
 
 // constants
 
+#define WU_S_REBOOT_REQUIRED        0x00240005L
 #define WU_S_ALREADY_INSTALLED      0x00240006L
 #define WU_E_NOT_APPLICABLE         0x80240017L
 
@@ -350,8 +351,8 @@ extern "C" HRESULT MsuEngineExecutePackage(
         ExitWithLastError(hr, "Failed to get process exit code.");
     }
 
-    // TODO: Verify the rumor that wusa.exe always returns HRESULTs. We'll normalize the restart required
-    // error code for now.
+    // We'll normalize the restart required error code from wusa.exe just in case. Most likely
+    // that on reboot we'll actually get WU_S_REBOOT_REQUIRED.
     if (HRESULT_FROM_WIN32(ERROR_SUCCESS_REBOOT_REQUIRED) == static_cast<HRESULT>(dwExitCode))
     {
         dwExitCode = ERROR_SUCCESS_REBOOT_REQUIRED;
@@ -370,7 +371,8 @@ extern "C" HRESULT MsuEngineExecutePackage(
         hr = S_OK;
         break;
 
-    case ERROR_SUCCESS_REBOOT_REQUIRED:
+    case ERROR_SUCCESS_REBOOT_REQUIRED: __fallthrough;
+    case WU_S_REBOOT_REQUIRED:
         fDoDependency = TRUE;
         *pRestart = BOOTSTRAPPER_APPLY_RESTART_REQUIRED;
         hr = S_OK;

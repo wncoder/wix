@@ -2834,6 +2834,23 @@
           <Parameter Type="System.String" Name="packageId" />
         </Instance>
       </Message>
+
+      <Message Id="UnexpectedElementWithAttribute" Number="372">
+        <Instance>
+          The {0} element cannot have a child element '{1}' when attribute '{2}' is set.
+          <Parameter Type="System.String" Name="elementName" />
+          <Parameter Type="System.String" Name="childElementName" />
+          <Parameter Type="System.String" Name="attribute" />
+        </Instance>
+      </Message>
+      <Message Id="ExpectedAttributeWithElement" Number="373">
+        <Instance>
+          The {0} element must have attribute '{1}' when child element '{2}' is present.
+          <Parameter Type="System.String" Name="elementName" />
+          <Parameter Type="System.String" Name="attribute" />
+          <Parameter Type="System.String" Name="childElementName" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
@@ -3226,6 +3243,11 @@
             <Instance>
                 The cabinet '{0}' does not contain any files.  If this installation contains no files, this warning can likely be safely ignored.  Otherwise, please add files to the cabinet or remove it.
                 <Parameter Type="System.String" Name="cabinetName" />
+            </Instance>
+            <Instance>
+                The cabinet '{0}' does not contain any files.  If this patch contains no files, this warning can likely be safely ignored.  Otherwise, try passing -p to torch.exe when first building the transforms, or add a ComponentRef to your PatchFamily authoring to pull changed files into the cabinet.
+                <Parameter Type="System.String" Name="cabinetName" />
+                <Parameter Type="System.Boolean" Name="isPatch" />
             </Instance>
         </Message>
         <Message Id="DeprecatedRegistryElement" Number="1080">

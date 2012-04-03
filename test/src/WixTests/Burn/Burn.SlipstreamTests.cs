@@ -212,5 +212,50 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
 
             this.CleanTestArtifacts = true;
         }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle with slipstreamed package A and package B and trigger error rollback.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_SlipstreamFailureRollback()
+        {
+            string patchedVersion = "1.0.1.0";
+
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A").Build().Output;
+            string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
+            string patchA = new PatchBuilder(this, "PatchA") { TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
+            string packageB = new PackageBuilder(this, "B").Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("patchA", patchA);
+            bindPaths.Add("packageB", packageB);
+
+            // Create a folder with same name as the file to be installed in package B, this will trigger error in B and rollback A
+            string errorTriggeringFolder = this.GetTestInstallFolder(@"B\B.wxs");
+            if (!Directory.Exists(errorTriggeringFolder))
+            {
+                Directory.CreateDirectory(errorTriggeringFolder);
+            }
+
+            // Create bundle and install everything.
+            string bundleB = new BundleBuilder(this, "BundleB") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+            BundleInstaller install = new BundleInstaller(this, bundleB).Install((int)MSIExec.MSIExecReturnCode.ERROR_INSTALL_FAILURE);
+
+            // Nothing should exist after the rollback
+            string packageSourceCodeInstalled = this.GetTestInstallFolder(@"A\A.wxs");
+            Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("Should NOT have found Package A payload installed at: ", packageSourceCodeInstalled));
+
+            packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
+            Assert.IsFalse(File.Exists(packageSourceCodeInstalled), String.Concat("Should NOT have found Package B payload installed at: ", packageSourceCodeInstalled));
+            Assert.IsNull(this.GetTestRegistryRoot(), "Test registry key should NOT exist after rollback.");
+            
+            // Delete the directory
+            Directory.Delete(errorTriggeringFolder);
+
+            this.CleanTestArtifacts = true;
+        }
     }
 }

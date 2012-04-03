@@ -1599,6 +1599,28 @@
         <columnDefinition name="UnresolvedSourceFile" type="string" length="0"/>
         <columnDefinition name="SuppressSignatureValidation" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
     </tableDefinition>
+    <tableDefinition name="PayloadInfo" createSymbols="yes" unreal="yes">
+        <columnDefinition name="Payload" type="string" length="0" category="identifier" primaryKey="yes"/>
+        <columnDefinition name="Name" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="SourceFile" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="UnresolvedSourceFile" type="string" length="0" nullable="yes" />
+        <columnDefinition name="SuppressSignatureValidation" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="FileSize" type="number" length="4" minValue="0" maxValue="2147483647" nullable="yes" />
+        <columnDefinition name="Version" type="string" length="24" nullable="yes" />
+        <columnDefinition name="ProductName" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Description" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Hash" type="string" length="0" nullable="yes" />
+        <columnDefinition name="PublicKey" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Thumbprint" type="string" length="0" nullable="yes" />
+        <columnDefinition name="CatalogId" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Container" type="string" length="0" nullable="yes" />
+        <columnDefinition name="ContentFile" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="EmbeddedId" type="string" length="0" nullable="yes" />
+        <columnDefinition name="LayoutOnly" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="ParentPackagePayload" type="string" length="0" nullable="yes" />
+    </tableDefinition>
     <tableDefinition name="ExitCode" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
                 keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table for the parent Exe."/>
@@ -1672,6 +1694,15 @@
         <columnDefinition name="EnableFeatureSelection" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="ForcePerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="DisplayInternalUI" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+    </tableDefinition>
+    <tableDefinition name="ChainMsiPackage" createSymbols="yes" unreal="yes">
+        <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
+                keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
+        <columnDefinition name="ProductCode" type="string" length="38" category="guid" />
+        <columnDefinition name="UpgradeCode" type="string" length="38" category="guid" nullable="yes" />
+        <columnDefinition name="ProductVersion" type="string" length="20" />
+        <columnDefinition name="ProductLanguage" type="number" length="2" />
+        <columnDefinition name="ProductName" type="string" length="0" />
     </tableDefinition>
     <tableDefinition name="MsiProperty" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
@@ -1757,5 +1788,52 @@
                 category="text" description="Set of values that are permitted"/>
         <columnDefinition name="Description" type="string" length="255" nullable="yes"
                 category="text" description="Description of column"/>
+    </tableDefinition>
+    <!-- WixSearch tables are used by multiple extensions and binder knows about them. -->
+    <tableDefinition name="WixSearch" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch" type="string" length="72" category="identifier" primaryKey="yes" />
+        <columnDefinition name="Variable" type="string" length="72" category="identifier" nullable="yes" />
+        <columnDefinition name="Condition" type="string" length="255" category="condition" nullable="yes" />
+    </tableDefinition>
+    <tableDefinition name="WixSearchRelation" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="ParentId_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
+    </tableDefinition>
+    <tableDefinition name="WixFileSearch" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="Path" type="string" category="text" length="255" />
+        <columnDefinition name="MinVersion" type="string" length="24" category="version" nullable="yes" />
+        <columnDefinition name="MaxVersion" type="string" length="24" category="version" nullable="yes" />
+        <columnDefinition name="MinSize" type="number" length="4" category="doubleInteger" nullable="yes" />
+        <columnDefinition name="MaxSize" type="number" length="4" category="doubleInteger" nullable="yes" />
+        <columnDefinition name="MinDate" type="number" length="4" category="doubleInteger" nullable="yes" />
+        <columnDefinition name="MaxDate" type="number" length="4" category="doubleInteger" nullable="yes" />
+        <columnDefinition name="Languages" type="string" category="text" length="0" nullable="yes" />
+        <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
+    </tableDefinition>
+    <tableDefinition name="WixRegistrySearch" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="Root" type="number" length="2" category="doubleInteger" />
+        <columnDefinition name="Key" type="string" category="text" length="255" />
+        <columnDefinition name="Value" type="string" category="text" length="255" nullable="yes" />
+        <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
+    </tableDefinition>
+    <tableDefinition name="WixComponentSearch" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="Guid" type="string" length="38" category="guid" />
+        <columnDefinition name="ProductCode" type="string" length="38" category="guid" nullable="yes" />
+        <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
+    </tableDefinition>
+    <tableDefinition name="WixProductSearch" createSymbols="yes" unreal="yes">
+        <columnDefinition name="WixSearch_" type="string" length="72" category="identifier" primaryKey="yes"
+                keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
+        <columnDefinition name="Guid" type="string" length="38" category="guid" />
+        <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
     </tableDefinition>
 </tableDefinitions>

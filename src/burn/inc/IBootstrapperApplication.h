@@ -55,6 +55,7 @@ enum BOOTSTRAPPER_ERROR_TYPE
 {
     BOOTSTRAPPER_ERROR_TYPE_ELEVATE,            // error occurred trying to elevate.
     BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER,  // error came from windows installer.
+    BOOTSTRAPPER_ERROR_TYPE_EXE_PACKAGE,        // error came from an exe package.
 };
 
 

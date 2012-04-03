@@ -32,12 +32,12 @@ LPCWSTR vcsDependencyQuery =
     L"WHERE `WixDependency`.`WixDependency` = `WixDependencyRef`.`WixDependency_` AND `WixDependencyProvider`.`WixDependencyProvider` = `WixDependencyRef`.`WixDependencyProvider_`";
 enum eDependencyComponentQuery { dqId = 1, dqComponent, dqProviderKey, dqMinVersion, dqMaxVersion, dqAttributes };
 
-static HRESULT ValidateExistentDependencies(
+static HRESULT EnsureRequiredDependencies(
     __in MSIHANDLE hInstall,
     __in BOOL fMachineContext
     );
 
-static HRESULT ValidateNonexistentDependents(
+static HRESULT EnsureAbsentDependents(
     __in MSIHANDLE hInstall,
     __in BOOL fMachineContext
     );
@@ -56,6 +56,38 @@ static HRESULT CreateDependencyRecord(
 static LPCWSTR LogDependencyName(
     __in_z LPCWSTR wzName
     );
+
+/***************************************************************************
+ WixDependencyRequire - Checks that all required dependencies are installed.
+
+***************************************************************************/
+extern "C" UINT __stdcall WixDependencyRequire(
+    __in MSIHANDLE hInstall
+    )
+{
+    HRESULT hr = S_OK;
+    UINT er = ERROR_SUCCESS;
+    BOOL fMachineContext = FALSE;
+
+    hr = WcaInitialize(hInstall, "WixDependencyRequire");
+    ExitOnFailure(hr, "Failed to initialize.");
+
+    hr = RegInitialize();
+    ExitOnFailure(hr, "Failed to initialize the registry functions.");
+
+    // Determine whether we're installing per-user or per-machine.
+    fMachineContext = WcaIsPropertySet("ALLUSERS");
+
+    // Check for any provider components being (re)installed that their requirements are already installed.
+    hr = EnsureRequiredDependencies(hInstall, fMachineContext);
+    ExitOnFailure(hr, "Failed to ensure required dependencies for (re)installing components.");
+
+LExit:
+    RegUninitialize();
+
+    er = FAILED(hr) ? ERROR_INSTALL_FAILURE : ERROR_SUCCESS;
+    return WcaFinalize(er);
+}
 
 /***************************************************************************
  WixDependencyCheck - Check dependencies based on component state.
@@ -79,13 +111,9 @@ extern "C" UINT __stdcall WixDependencyCheck(
     // Determine whether we're installing per-user or per-machine.
     fMachineContext = WcaIsPropertySet("ALLUSERS");
 
-    // Check for any provider components being (re)installed that their requirements are already installed.
-    hr = ValidateExistentDependencies(hInstall, fMachineContext);
-    ExitOnFailure(hr, "Failed to validate existent dependencies for (re)installing components.");
-
-    // Check for any dependencies for provider components being uninstalled.
-    hr = ValidateNonexistentDependents(hInstall, fMachineContext);
-    ExitOnFailure(hr, "Failed to validate nonexistent dependents for uninstalling components.");
+    // Check for any dependents of provider components being uninstalled.
+    hr = EnsureAbsentDependents(hInstall, fMachineContext);
+    ExitOnFailure(hr, "Failed to ensure absent dependents for uninstalling components.");
 
 LExit:
     RegUninitialize();
@@ -95,12 +123,12 @@ LExit:
 }
 
 /***************************************************************************
- ValidateExistentDependencies - Check that dependencies are installed for
+ EnsureRequiredDependencies - Check that dependencies are installed for
   any provider component that is being installed or reinstalled.
 
  Note: Skipped if DISABLEDEPENDENCYCHECK is set.
 ***************************************************************************/
-static HRESULT ValidateExistentDependencies(
+static HRESULT EnsureRequiredDependencies(
     __in MSIHANDLE /*hInstall*/,
     __in BOOL fMachineContext
     )
@@ -121,13 +149,6 @@ static HRESULT ValidateExistentDependencies(
     DEPENDENCY* rgDependencies = NULL;
     UINT cDependencies = 0;
     PMSIHANDLE hDependencyRec = NULL;
-
-    // Skip the dependency check if requested.
-    if (WcaIsPropertySet("DISABLEDEPENDENCYCHECK"))
-    {
-        WcaLog(LOGMSG_STANDARD, "Skipping the dependency check since DISABLEDEPENDENCYCHECK is set.");
-        ExitFunction();
-    }
 
     // Skip the dependency check if the WixDependency table is missing (no dependencies to check for).
     hr = WcaTableExists(L"WixDependency");
@@ -248,12 +269,12 @@ LExit:
 }
 
 /***************************************************************************
- ValidateNonexistentDependents - Checks that there are no dependents
+ EnsureAbsentDependents - Checks that there are no dependents
   registered for providers that are being uninstalled.
 
  Note: Skipped if UPGRADINGPRODUCTCODE is set.
 ***************************************************************************/
-static HRESULT ValidateNonexistentDependents(
+static HRESULT EnsureAbsentDependents(
     __in MSIHANDLE /*hInstall*/,
     __in BOOL fMachineContext
     )
@@ -272,13 +293,6 @@ static HRESULT ValidateNonexistentDependents(
     DEPENDENCY* rgDependents = NULL;
     UINT cDependents = 0;
     PMSIHANDLE hDependencyRec = NULL;
-
-    // Skip the dependency check if requested nested as part of a major ugprade.
-    if (WcaIsPropertySet("UPGRADINGPRODUCTCODE"))
-    {
-        WcaLog(LOGMSG_STANDARD, "Skipping the dependents check since UPGRADINGPRODUCTCODE is set.");
-        ExitFunction();
-    }
 
     // Split the IGNOREDEPENDENCIES property for use below if set. If it is "ALL", then quit now.
     hr = SplitIgnoredDependents(&sdIgnoredDependents);

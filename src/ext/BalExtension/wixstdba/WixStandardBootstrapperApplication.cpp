@@ -411,7 +411,8 @@ public: // IBootstrapperApplication
         __in_z LPCWSTR wzError,
         __in DWORD dwUIHint,
         __in DWORD /*cData*/,
-        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/
+        __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/,
+        __in int nRecommendation
         )
     {
         int nResult = IDNOACTION;

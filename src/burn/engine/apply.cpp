@@ -1896,6 +1896,10 @@ static int GenericExecuteMessageHandler(
         }
         break;
 
+    case GENERIC_EXECUTE_MESSAGE_ERROR:
+        nResult = pContext->pUX->pUserExperience->OnError(BOOTSTRAPPER_ERROR_TYPE_EXE_PACKAGE, pContext->pExecutingPackage->sczId, pMessage->error.dwErrorCode, pMessage->error.wzMessage, pMessage->dwAllowedResults, 0, NULL, IDNOACTION);
+        break;
+
     case GENERIC_EXECUTE_MESSAGE_FILES_IN_USE:
         nResult = pContext->pUX->pUserExperience->OnExecuteFilesInUse(pContext->pExecutingPackage->sczId, pMessage->filesInUse.cFiles, pMessage->filesInUse.rgwzFiles);
         break;

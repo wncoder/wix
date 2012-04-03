@@ -68,6 +68,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
                 }
             }
 
+            // If the output directory is not set, set it to the temp directory.
+            if (String.IsNullOrEmpty(outputDirectory))
+            {
+                outputDirectory = tempDirectory;
+            }
+            commandLine.AppendFormat(" -out \"{0}\\\\\"", outputDirectory);
+
             // handle any previous outputs
             if (usePreviousOutput)
             {
@@ -103,18 +110,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
                             commandLine.AppendFormat(" \"{0}\"", sourceFile);
                             wixCopCommandLine.AppendFormat(" \"{0}\"", sourceFile);
 
-                            previousUnitResults.OutputFiles.Add(Path.Combine(tempDirectory, wixobjFile));
+                            previousUnitResults.OutputFiles.Add(Path.Combine(outputDirectory, wixobjFile));
                             break;
                     }
                 }
             }
-
-            // If the output directory is not set, set it to the temp directory.
-            if (null == outputDirectory || String.Empty == outputDirectory)
-            {
-                outputDirectory = tempDirectory;
-            }
-            commandLine.AppendFormat(" -out \"{0}{1}\\\"", outputDirectory, Path.DirectorySeparatorChar);
 
             // run WixCop if it hasn't been suppressed
             if (!suppressWixCop)

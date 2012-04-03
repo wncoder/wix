@@ -3826,7 +3826,8 @@ static HRESULT CreateAppPool(
                 ExitOnFailure(hr, "Failed to read cpu pct");
                 hr = pAppPoolElement->GetElementByName(ScopeBSTR(IIS_CONFIG_CPU), &pElement);
                 ExitOnFailure(hr, "Failed to get AppPool cpu element");
-                hr = Iis7PutPropertyInteger(pElement, IIS_CONFIG_LIMIT, iData * 100);
+                // limit is maximum percentage of CPU time (in 1/1000ths of one percent)
+                hr = Iis7PutPropertyInteger(pElement, IIS_CONFIG_LIMIT, iData * 1000);
                 ExitOnFailure(hr, "Failed to set AppPool cpu limit");
                 ReleaseNullObject(pElement);
                 break;

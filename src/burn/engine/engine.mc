@@ -43,14 +43,14 @@ MessageId=1
 Severity=Success
 SymbolicName=MSG_BURN_INFO
 Language=English
-Burn v%1!hs!, path: %2!ls!, cmdline: '%3!ls!'
+Burn v%1!hs!, Windows v%2!d!.%3!d! (Build %4!d!: Service Pack %5!d!), path: %6!ls!, cmdline: '%7!ls!'
 .
 
 MessageId=2
 Severity=Warning
 SymbolicName=MSG_BURN_UNKNOWN_PRIVATE_SWITCH
 Language=English
-Unknown burn internal commandline switch encountered: '%1!ls!'.
+Unknown burn internal command-line switch encountered: '%1!ls!'.
 .
 
 MessageId=3

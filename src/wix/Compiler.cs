@@ -140,7 +140,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             RollbackBoundary,
         }
 
-
         /// <summary>
         /// Gets or sets the platform which the compiler will use when defaulting 64-bit attributes and elements.
         /// </summary>
@@ -419,8 +418,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="admin">Flag if property is an admin property.</param>
         /// <param name="secure">Flag if property is a secure property.</param>
         /// <param name="hidden">Flag if property is to be hidden.</param>
+        /// <param name="fragment">Adds the property to a new section.</param>
         [SuppressMessage("Microsoft.Performance", "CA1807:AvoidUnnecessaryStringCreation", MessageId = "property")]
-        private void AddProperty(SourceLineNumberCollection sourceLineNumbers, string property, string value, bool admin, bool secure, bool hidden)
+        private void AddProperty(SourceLineNumberCollection sourceLineNumbers, string property, string value, bool admin, bool secure, bool hidden, bool fragment)
         {
             // properties without a valid identifier should not be processed any further
             if (null == property || 0 == property.Length)
@@ -451,7 +451,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Property");
+                Section section = this.core.ActiveSection;
+
+                // Add the row to a separate section if requested.
+                if (fragment)
+                {
+                    string id = String.Concat(this.core.ActiveSection.Id, ".", property);
+                    int codepage = this.core.ActiveSection.Codepage;
+
+                    section = this.core.CreateSection(id, SectionType.Fragment, codepage);
+
+                    // Reference the property in the active section.
+                    this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", property);
+                }
+
+                Row row = this.core.CreateRow(sourceLineNumbers, "Property", section);
                 row[0] = property;
 
                 // allow row to exist with no value so that PropertyRefs can be made for *Search elements
@@ -463,7 +477,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (admin || hidden || secure)
                 {
-                    WixPropertyRow wixPropertyRow = (WixPropertyRow)this.core.CreateRow(sourceLineNumbers, "WixProperty");
+                    WixPropertyRow wixPropertyRow = (WixPropertyRow)this.core.CreateRow(sourceLineNumbers, "WixProperty", section);
                     wixPropertyRow.Id = property;
                     wixPropertyRow.Admin = admin;
                     wixPropertyRow.Hidden = hidden;
@@ -12926,14 +12940,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.compilingProduct = true;
                 this.core.CreateActiveSection(productCode, SectionType.Product, codepage);
 
-                this.AddProperty(sourceLineNumbers, "Manufacturer", manufacturer, false, false, false);
-                this.AddProperty(sourceLineNumbers, "ProductCode", productCode, false, false, false);
-                this.AddProperty(sourceLineNumbers, "ProductLanguage", this.activeLanguage, false, false, false);
-                this.AddProperty(sourceLineNumbers, "ProductName", this.activeName, false, false, false);
-                this.AddProperty(sourceLineNumbers, "ProductVersion", version, false, false, false);
+                this.AddProperty(sourceLineNumbers, "Manufacturer", manufacturer, false, false, false, true);
+                this.AddProperty(sourceLineNumbers, "ProductCode", productCode, false, false, false, true);
+                this.AddProperty(sourceLineNumbers, "ProductLanguage", this.activeLanguage, false, false, false, true);
+                this.AddProperty(sourceLineNumbers, "ProductName", this.activeName, false, false, false, true);
+                this.AddProperty(sourceLineNumbers, "ProductVersion", version, false, false, false, true);
                 if (null != upgradeCode)
                 {
-                    this.AddProperty(sourceLineNumbers, "UpgradeCode", upgradeCode, false, false, false);
+                    this.AddProperty(sourceLineNumbers, "UpgradeCode", upgradeCode, false, false, false, true);
                 }
 
                 Dictionary<string, string> contextValues = new Dictionary<string, string>();
@@ -13426,7 +13440,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // if we're doing AppSearch get that setup
             if (0 < signatures.Count)
             {
-                this.AddProperty(sourceLineNumbers, id, value, admin, secure, hidden);
+                this.AddProperty(sourceLineNumbers, id, value, admin, secure, hidden, false);
             }
             else // just a normal old property
             {
@@ -13438,7 +13452,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else // there is a value and/or a flag set, do that
                 {
-                    this.AddProperty(sourceLineNumbers, id, value, admin, secure, hidden);
+                    this.AddProperty(sourceLineNumbers, id, value, admin, secure, hidden, false);
                 }
             }
 
@@ -20189,7 +20203,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ComplexReferenceChildType previousType = ComplexReferenceChildType.Unknown;
 
             // The BootstrapperApplication element acts like a Payload element so delegate to the "Payload" attribute parsing code to parse and create a Payload entry.
-            id = this.ParsePayloadElementAttributes(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId, false);
+            id = this.ParsePayloadElementContent(node, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId, false);
             if (null != id)
             {
                 previousId = id;
@@ -20211,6 +20225,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "PayloadGroupRef":
                                 previousId = this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Container, Compiler.BurnUXContainerId, previousType, previousId);
                                 previousType = ComplexReferenceChildType.PayloadGroup;
+                                break;
+                            case "RemotePayload":
+                                // Handled by ParsePayloadElementContent
                                 break;
                             default:
                                 this.core.UnexpectedElement(node, child);
@@ -20441,7 +20458,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PayloadGroup == previousType || ComplexReferenceChildType.Payload == previousType);
 
-            string id = ParsePayloadElementAttributes(node, parentType, parentId, previousType, previousId, true);
+            string id = ParsePayloadElementContent(node, parentType, parentId, previousType, previousId, true);
 
             foreach (XmlNode child in node.ChildNodes)
             {
@@ -20449,7 +20466,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     if (child.NamespaceURI == this.schema.TargetNamespace)
                     {
-                        this.core.UnexpectedElement(node, child);
+                        switch (child.LocalName)
+                        {
+                            case "RemotePayload":
+                                // Handled by ParsePayloadElementContent
+                                break;
+                            default:
+                                this.core.UnexpectedElement(node, child);
+                                break;
+                        }
                     }
                     else
                     {
@@ -20467,7 +20492,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="node">Element to parse</param>
         /// <param name="parentType">ComplexReferenceParentType of parent element.</param>
         /// <param name="parentId">Identifier of parent element.</param>
-        private string ParsePayloadElementAttributes(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required)
+        private string ParsePayloadElementContent(XmlNode node, ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, bool required)
         {
             Debug.Assert(ComplexReferenceParentType.PayloadGroup == parentType || ComplexReferenceParentType.Package == parentType || ComplexReferenceParentType.Container == parentType);
 
@@ -20478,6 +20503,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string name = null;
             string sourceFile = null;
             string downloadUrl = null;
+            PayloadInfoRow remotePayload = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -20520,9 +20546,36 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 return null;
             }
 
-            if (null == sourceFile)
+            foreach (XmlNode child in node.ChildNodes)
             {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "SourceFile"));
+                // We only handle the elements we care about.  Let caller handle other children.
+                if ((XmlNodeType.Element == child.NodeType) && (child.NamespaceURI == this.schema.TargetNamespace) && (child.LocalName == "RemotePayload"))
+                {
+                    if (null != remotePayload)
+                    {
+                        SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
+                        this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name, child.LocalName));
+                    }
+                    remotePayload = this.ParseRemotePayloadElement(child, id);
+                }
+            }
+
+            if (null != sourceFile && null != remotePayload)
+            {
+                this.core.OnMessage(WixErrors.UnexpectedElementWithAttribute(sourceLineNumbers, node.Name, "RemotePayload", "SourceFile"));
+            }
+            else if (null == sourceFile && null == remotePayload)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttributeOrElement(sourceLineNumbers, node.Name, "SourceFile", "RemotePayload"));
+            }
+            else if (null == sourceFile)
+            {
+                sourceFile = String.Empty;
+            }
+
+            if (null == downloadUrl && null != remotePayload)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttributeWithElement(sourceLineNumbers, node.Name, "DownloadUrl", "RemotePayload"));
             }
 
             if (Compiler.BurnUXContainerId == parentId)
@@ -20540,9 +20593,81 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 id = this.core.GenerateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);
             }
 
+            if (null != remotePayload)
+            {
+                remotePayload.Id = id;
+            }
+
             CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed, suppressSignatureVerification);
 
             return id;
+        }
+
+        private PayloadInfoRow ParseRemotePayloadElement(XmlNode node, string payload)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            PayloadInfoRow remotePayload = (PayloadInfoRow)this.core.CreateRow(sourceLineNumbers, "PayloadInfo");
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "CertificatePublicKey":
+                            remotePayload.PublicKey = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "CertificateThumbprint":
+                            remotePayload.Thumbprint = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Description":
+                            remotePayload.Description = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Hash":
+                            remotePayload.Hash = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "ProductName":
+                            remotePayload.ProductName = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Size":
+                            remotePayload.FileSize = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, int.MaxValue);
+                            break;
+                        case "Version":
+                            remotePayload.Version = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            if (String.IsNullOrEmpty(remotePayload.Description))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Description"));
+            }
+            if (String.IsNullOrEmpty(remotePayload.Hash))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Hash"));
+            }
+            if (String.IsNullOrEmpty(remotePayload.ProductName))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "ProductName"));
+            }
+            if (0 == remotePayload.FileSize)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Size"));
+            }
+            if (String.IsNullOrEmpty(remotePayload.Version))
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Version"));
+            }
+
+            return remotePayload;
         }
 
         /// <summary>
@@ -20551,8 +20676,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="node">Element to parse</param>
         /// <param name="parentType">ComplexReferenceParentType of parent element</param>
         /// <param name="parentId">Identifier of parent element.</param>
-        private void CreatePayloadRow(SourceLineNumberCollection sourceLineNumbers, string id, string name, string sourceFile, string downloadUrl,
-            ComplexReferenceParentType parentType, string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification)
+        private void CreatePayloadRow(SourceLineNumberCollection sourceLineNumbers, string id, string name, string sourceFile, string downloadUrl, ComplexReferenceParentType parentType,
+            string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification)
         {
             if (!this.core.EncounteredError)
             {
@@ -21115,6 +21240,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoType enableFeatureSelection = YesNoType.NotSet;
             YesNoType forcePerMachine = YesNoType.NotSet;
             BundlePackageAttributes attributes = BundlePackageAttributes.None;
+            PayloadInfoRow remotePayload = null;
 
             string[] expectedNetFx4Args = new string[] { "/q", "/norestart", "/chainingpackage" };
 
@@ -21246,16 +21372,38 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                // We need to handle RemotePayload up front because it effects value of sourceFile which is used in Id generation.  Id is needed by other child elements.
+                if ((XmlNodeType.Element == child.NodeType) && (child.NamespaceURI == this.schema.TargetNamespace) && (child.LocalName == "RemotePayload"))
+                {
+                    if (null != remotePayload)
+                    {
+                        SourceLineNumberCollection childSourceLineNumbers = Preprocessor.GetSourceLineNumbers(child);
+                        this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name, child.LocalName));
+                    }
+                    remotePayload = this.ParseRemotePayloadElement(child, id);
+                }
+            }
+
             if (String.IsNullOrEmpty(sourceFile))
             {
                 if (String.IsNullOrEmpty(name))
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttributesWithOtherAttribute(sourceLineNumbers, node.Name, "Name", "SourceFile"));
                 }
-                else
+                else if (null == remotePayload)
                 {
                     sourceFile = Path.Combine("SourceDir", name);
                 }
+                else
+                {
+                    sourceFile = String.Empty;  // SourceFile is required it cannot be null.
+                }
+            }
+            else if (null != remotePayload)
+            {
+                this.core.OnMessage(WixErrors.UnexpectedElementWithAttribute(sourceLineNumbers, node.Name, "RemotePayload", "SourceFile"));
             }
             else if (sourceFile.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
             {
@@ -21267,6 +21415,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     sourceFile = Path.Combine(sourceFile, Path.GetFileName(name));
                 }
+            }
+
+            if (null == downloadUrl && null != remotePayload)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttributeWithElement(sourceLineNumbers, node.Name, "DownloadUrl", "RemotePayload"));
             }
 
             if (String.IsNullOrEmpty(id))
@@ -21288,6 +21441,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name, "Id", id));
                 }
+            }
+
+            if (null != remotePayload)
+            {
+                remotePayload.Id = id;
             }
 
             if (null == logPathVariable)
@@ -21370,6 +21528,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     this.ParseExitCodeElement(child, id);
                                 }
                                 break;
+                            case "RemotePayload":
+                                // Handled previously
+                                break;
                             default:
                                 allowed = false;
                                 break;
@@ -21400,8 +21561,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 // We create the package contents as a payload with this package as the parent
-                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl,
-                    ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification);
+                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, ComplexReferenceParentType.Package, id, 
+                    ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification);
 
                 Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
                 row[0] = id;
