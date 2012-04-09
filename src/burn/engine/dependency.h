@@ -65,6 +65,7 @@ HRESULT DependencyAllocIgnoreDependencies(
 *********************************************************************/
 HRESULT DependencyPlanPackageBegin(
     __in_opt DWORD *pdwInsertSequence,
+    __in BOOL fPerMachine,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -76,6 +77,7 @@ HRESULT DependencyPlanPackageBegin(
 
 *********************************************************************/
 HRESULT DependencyPlanPackageComplete(
+    __in BOOL fPerMachine,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -87,8 +89,8 @@ HRESULT DependencyPlanPackageComplete(
 
 *********************************************************************/
 HRESULT DependencyExecuteAction(
-    __in const BURN_EXECUTE_ACTION* pAction,
-    __in BOOL fPerMachine
+    __in BOOL fPerMachine,
+    __in const BURN_EXECUTE_ACTION* pAction
     );
 
 /********************************************************************

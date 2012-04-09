@@ -439,7 +439,7 @@ extern "C" HRESULT CorePlan(
                     }
                 }
 
-                hr = PlanExecutePackage(pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent);
+                hr = PlanExecutePackage(pEngineState->registration.fPerMachine, pEngineState->command.display, &pEngineState->userExperience, &pEngineState->plan, pPackage, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent);
                 ExitOnFailure(hr, "Failed to plan execute package.");
 
                 if (pPackage->fUninstallable)
@@ -457,10 +457,10 @@ extern "C" HRESULT CorePlan(
         else if (BOOTSTRAPPER_ACTION_LAYOUT != action)
         {
             // Make sure the package is properly ref-counted even if no plan is requested.
-            hr = DependencyPlanPackageBegin(NULL, pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
+            hr = DependencyPlanPackageBegin(NULL, pEngineState->registration.fPerMachine, pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
-            hr = DependencyPlanPackageComplete(pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
+            hr = DependencyPlanPackageComplete(pEngineState->registration.fPerMachine, pPackage, &pEngineState->plan, pEngineState->registration.sczProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pPackage->sczId);
         }
 
@@ -524,7 +524,7 @@ extern "C" HRESULT CorePlan(
     // Plan the update of related bundles last as long as we are not doing layout only.
     if (BOOTSTRAPPER_ACTION_LAYOUT != action)
     {
-        hr = PlanRelatedBundles(action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, dwExecuteActionEarlyIndex);
+        hr = PlanRelatedBundles(pEngineState->registration.fPerMachine, action, &pEngineState->userExperience, &pEngineState->registration.relatedBundles, pEngineState->registration.qwVersion, &pEngineState->plan, &pEngineState->log, &pEngineState->variables, pEngineState->registration.sczProviderKey, &hSyncpointEvent, dwExecuteActionEarlyIndex);
         ExitOnFailure(hr, "Failed to plan related bundles.");
     }
 

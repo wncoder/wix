@@ -300,7 +300,8 @@
     <!-- Indicates whether the Windows Installer XML project system is installed for VS2010 -->
     <Fragment>
         <Property Id="VS2010_IDE_WIX_PROJECTSYSTEM_INSTALLED" Secure="yes">
-            <RegistrySearch Id="SearchForVSTS2010WixSystemUnderVSSetup" Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\10.0\Projects\{930C7802-8A8C-48F9-8165-68863BCCD9DD}" Name="Package" Type="raw" />
+            <!-- Component search for the .pkgdef file for VS2010 -->
+            <ComponentSearch Id="SearchForVS2010WixSystemUnderVSSetup" Guid="3C5BA30B-0713-5E28-8EEA-171E7A5E4864" Type="file" />
         </Property>
     </Fragment>
 

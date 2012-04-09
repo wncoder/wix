@@ -324,6 +324,7 @@ HRESULT PlanLayoutPackage(
     __in_z LPCWSTR wzLayoutDirectory
     );
 HRESULT PlanExecutePackage(
+    __in BOOL fPerMachine,
     __in BOOTSTRAPPER_DISPLAY display,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BURN_PLAN* pPlan,
@@ -334,6 +335,7 @@ HRESULT PlanExecutePackage(
     __inout HANDLE* phSyncpointEvent
     );
 HRESULT PlanRelatedBundles(
+    __in BOOL fPerMachine,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BURN_RELATED_BUNDLES* pRelatedBundles,

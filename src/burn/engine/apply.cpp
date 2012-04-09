@@ -1852,7 +1852,7 @@ static HRESULT ExecuteDependencyAction(
     }
     else
     {
-        hr = DependencyExecuteAction(pAction, pEngineState->registration.fPerMachine);
+        hr = DependencyExecuteAction(pEngineState->registration.fPerMachine, pAction);
         ExitOnFailure(hr, "Failed to register the dependency on per-user package.");
     }
 

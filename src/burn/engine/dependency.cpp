@@ -62,15 +62,15 @@ static HRESULT DependencyPlanActions(
     );
 
 static HRESULT DependencyRegisterPackageDependency(
-    __in_z LPCWSTR wzDependentProviderKey,
     __in BOOL fPerMachine,
-    __in const BURN_PACKAGE* pPackage
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzDependentProviderKey
     );
 
 static HRESULT DependencyUnregisterPackageDependency(
-    __in_z LPCWSTR wzDependentProviderKey,
     __in BOOL fPerMachine,
-    __in const BURN_PACKAGE* pPackage
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzDependentProviderKey
     );
 
 
@@ -199,6 +199,7 @@ LExit:
 
 extern "C" HRESULT DependencyPlanPackageBegin(
     __in_opt DWORD *pdwInsertSequence,
+    __in BOOL fPerMachine,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -217,7 +218,14 @@ extern "C" HRESULT DependencyPlanPackageBegin(
     if (0 == pPackage->cDependencyProviders)
     {
         LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_SKIP_NOPROVIDERS, pPackage->sczId);
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
+    }
+
+    // Make sure the package is in the same scope as the bundle.
+    if (fPerMachine != pPackage->fPerMachine)
+    {
+        LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE, pPackage->sczId, LoggingPerMachineToString(fPerMachine), LoggingPerMachineToString(pPackage->fPerMachine));
+        ExitFunction1(hr = S_OK);
     }
 
     // If we're uninstalling the package, check if any dependents are registered.
@@ -301,6 +309,7 @@ LExit:
 }
 
 extern "C" HRESULT DependencyPlanPackageComplete(
+    __in BOOL fPerMachine,
     __in BURN_PACKAGE* pPackage,
     __in BURN_PLAN* pPlan,
     __in_z LPCWSTR wzBundleProviderKey
@@ -313,14 +322,21 @@ extern "C" HRESULT DependencyPlanPackageComplete(
     // If the dependency action is already planned, there's nothing to do.
     if (BURN_DEPENDENCY_ACTION_NONE != pPackage->dependency)
     {
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
 
     // Make sure the package defines at least one provider.
     if (0 == pPackage->cDependencyProviders)
     {
         // Already logged the dependency plan will be skipped.
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
+    }
+
+    // Make sure the package is in the same scope as the bundle.
+    if (fPerMachine != pPackage->fPerMachine)
+    {
+        // We already logged the message in DependencyPlanPackageBegin.
+        ExitFunction1(hr = S_OK);
     }
 
     DependencyCalculatePlan(pPackage, pPlan->action, &dependencyExecuteAction, &dependencyRollbackAction);
@@ -339,8 +355,8 @@ LExit:
 }
 
 extern "C" HRESULT DependencyExecuteAction(
-    __in const BURN_EXECUTE_ACTION* pAction,
-    __in BOOL fPerMachine
+    __in BOOL fPerMachine,
+    __in const BURN_EXECUTE_ACTION* pAction
     )
 {
     AssertSz(BURN_EXECUTE_ACTION_TYPE_DEPENDENCY == pAction->type, "Execute action type not supported by this function.");
@@ -351,12 +367,12 @@ extern "C" HRESULT DependencyExecuteAction(
     // Register or unregister the bundle as a dependent of each package dependency provider.
     if (BURN_DEPENDENCY_ACTION_REGISTER == pAction->dependency.action)
     {
-        hr = DependencyRegisterPackageDependency(pAction->dependency.sczBundleProviderKey, fPerMachine, pPackage);
+        hr = DependencyRegisterPackageDependency(fPerMachine, pPackage, pAction->dependency.sczBundleProviderKey);
         ExitOnFailure(hr, "Failed to register the dependency on the package provider.");
     }
     else if (BURN_DEPENDENCY_ACTION_UNREGISTER == pAction->dependency.action)
     {
-        hr = DependencyUnregisterPackageDependency(pAction->dependency.sczBundleProviderKey, fPerMachine, pPackage);
+        hr = DependencyUnregisterPackageDependency(fPerMachine, pPackage, pAction->dependency.sczBundleProviderKey);
         ExitOnFailure(hr, "Failed to unregister the dependency from the package provider.");
     }
 
@@ -571,7 +587,7 @@ static HRESULT DependencyJoinIgnoreDependencies(
     // Make sure we pass back an empty string if there are no dependencies.
     if (0 == cDependencies)
     {
-        ExitFunction();
+        ExitFunction1(hr = S_OK);
     }
 
     // Create a dictionary to hold unique dependencies.
@@ -809,9 +825,9 @@ LExit:
 
 *********************************************************************/
 static HRESULT DependencyRegisterPackageDependency(
-    __in_z LPCWSTR wzDependentProviderKey,
     __in BOOL fPerMachine,
-    __in const BURN_PACKAGE* pPackage
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzDependentProviderKey
     )
 {
     HRESULT hr = S_OK;
@@ -855,9 +871,9 @@ LExit:
 
 *********************************************************************/
 static HRESULT DependencyUnregisterPackageDependency(
-    __in_z LPCWSTR wzDependentProviderKey,
     __in BOOL fPerMachine,
-    __in const BURN_PACKAGE* pPackage
+    __in const BURN_PACKAGE* pPackage,
+    __in_z LPCWSTR wzDependentProviderKey
     )
 {
     HRESULT hr = S_OK;

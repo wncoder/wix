@@ -195,6 +195,9 @@
     <None Include="..\..\data\Burn\DependencyTests\C.wxs">
       <Link>Burn\DependencyTests\C.wxs</Link>
     </None>
+    <None Include="..\..\data\Burn\DependencyTests\D.wxs">
+      <Link>Burn\DependencyTests\D.wxs</Link>
+    </None>
     <None Include="..\..\data\Burn\DependencyTests\PatchA.wxs">
       <Link>Burn\DependencyTests\PatchA.wxs</Link>
     </None>
@@ -218,6 +221,9 @@
     </None>
     <None Include="..\..\data\Burn\DependencyTests\BundleG.wxs">
       <Link>Burn\DependencyTests\BundleG.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\DependencyTests\BundleH.wxs">
+      <Link>Burn\DependencyTests\BundleH.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\FailureTests\A.wxs">
       <Link>Burn\FailureTests\A.wxs</Link>

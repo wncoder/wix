@@ -402,6 +402,7 @@ LExit:
 }
 
 extern "C" HRESULT PlanExecutePackage(
+    __in BOOL fPerMachine,
     __in BOOTSTRAPPER_DISPLAY display,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BURN_PLAN* pPlan,
@@ -441,7 +442,7 @@ extern "C" HRESULT PlanExecutePackage(
     ExitOnFailure1(hr, "Failed to calculate plan actions for package: %ls", pPackage->sczId);
 
     // Calculate package states based on reference count and plan certain dependency actions prior to planning the package execute action.
-    hr = DependencyPlanPackageBegin(NULL, pPackage, pPlan, wzBundleProviderKey);
+    hr = DependencyPlanPackageBegin(NULL, fPerMachine, pPackage, pPlan, wzBundleProviderKey);
     ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pPackage->sczId);
 
     // Exe packages require the package for all operations (even uninstall).
@@ -515,7 +516,7 @@ extern "C" HRESULT PlanExecutePackage(
     ExitOnFailure1(hr, "Failed to add plan actions for package: %ls", pPackage->sczId);
 
     // Plan certain dependency actions after planning the package execute action.
-    hr = DependencyPlanPackageComplete(pPackage, pPlan, wzBundleProviderKey);
+    hr = DependencyPlanPackageComplete(fPerMachine, pPackage, pPlan, wzBundleProviderKey);
     ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pPackage->sczId);
 
     // If we are going to take any action on this package, add progress for it.
@@ -538,6 +539,7 @@ LExit:
 }
 
 extern "C" HRESULT PlanRelatedBundles(
+    __in BOOL fPerMachine,
     __in BOOTSTRAPPER_ACTION action,
     __in BURN_USER_EXPERIENCE* pUserExperience,
     __in BURN_RELATED_BUNDLES* pRelatedBundles,
@@ -620,7 +622,7 @@ extern "C" HRESULT PlanRelatedBundles(
             // Calculate package states based on reference count for addon and patch related bundles.
             if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
             {
-                hr = DependencyPlanPackageBegin(pdwInsertIndex, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
+                hr = DependencyPlanPackageBegin(pdwInsertIndex, fPerMachine, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
                 ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pRelatedBundle->package.sczId);
 
                 // If uninstalling a related bundle, make sure the bundle is uninstalled after removing registration.
@@ -636,7 +638,7 @@ extern "C" HRESULT PlanRelatedBundles(
             // Calculate package states based on reference count for addon and patch related bundles.
             if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
             {
-                hr = DependencyPlanPackageComplete(&pRelatedBundle->package, pPlan, wzBundleProviderKey);
+                hr = DependencyPlanPackageComplete(fPerMachine, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
                 ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pRelatedBundle->package.sczId);
             }
 
@@ -658,10 +660,10 @@ extern "C" HRESULT PlanRelatedBundles(
         else if (BOOTSTRAPPER_RELATION_ADDON == pRelatedBundle->relationType || BOOTSTRAPPER_RELATION_PATCH == pRelatedBundle->relationType)
         {
             // Make sure the package is properly ref-counted even if no plan is requested.
-            hr = DependencyPlanPackageBegin(pdwInsertIndex, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
+            hr = DependencyPlanPackageBegin(pdwInsertIndex, fPerMachine, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to unregister package: %ls", pRelatedBundle->package.sczId);
 
-            hr = DependencyPlanPackageComplete(&pRelatedBundle->package, pPlan, wzBundleProviderKey);
+            hr = DependencyPlanPackageComplete(fPerMachine, &pRelatedBundle->package, pPlan, wzBundleProviderKey);
             ExitOnFailure1(hr, "Failed to plan dependency actions to register package: %ls", pRelatedBundle->package.sczId);
         }
     }

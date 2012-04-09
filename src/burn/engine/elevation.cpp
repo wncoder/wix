@@ -2032,7 +2032,7 @@ static HRESULT OnExecuteDependencyAction(
     ExitOnFailure1(hr, "Failed to find package: %ls", sczPackage);
 
     // Execute the dependency action.
-    hr = DependencyExecuteAction(&executeAction, TRUE);
+    hr = DependencyExecuteAction(TRUE, &executeAction);
     ExitOnFailure(hr, "Failed to execute dependency action.");
 
 LExit:

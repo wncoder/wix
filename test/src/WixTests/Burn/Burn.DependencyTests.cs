@@ -60,6 +60,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -114,6 +116,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -182,6 +186,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA1));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -235,6 +241,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             installerC.Uninstall();
             Assert.IsFalse(MsiUtils.IsPatchInstalled(patchA));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -280,6 +288,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             installerA.Uninstall();
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -324,6 +334,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             installerE.Uninstall();
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -378,6 +390,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             Assert.IsNull(this.GetTestRegistryRoot());
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -420,6 +434,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA1));
             Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageB));
             Assert.IsFalse(MsiUtils.IsPatchInstalled(patchA));
+
+            this.CleanTestArtifacts = true;
         }
 
         [TestMethod]
@@ -487,6 +503,67 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             {
                 Assert.IsNull(root.GetValue("Version"));
             }
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installed bundle v1 with per-user and per-machine packages, then upgrades only the per-user package.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_MixedScopeUpgradedBundle()
+        {
+            const string upgradeVersion = "1.0.1.0";
+
+            // Build the packages.
+            string packageA = new PackageBuilder(this, "A") { Extensions = Extensions }.Build().Output;
+            string packageD1 = new PackageBuilder(this, "D") { Extensions = Extensions }.Build().Output;
+            string packageD2 = new PackageBuilder(this, "D") { Extensions = Extensions, PreprocessorVariables = new Dictionary<string, string>() { { "Version", upgradeVersion } } }.Build().Output;
+
+            // Create the named bind paths to the packages.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", packageA);
+            bindPaths.Add("packageD", packageD1);
+
+            // Build the base bundle.
+            string bundleH1 = new BundleBuilder(this, "BundleH") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+
+            // Override the path for D1 to D2 and build the upgrade bundle.
+            bindPaths["packageD"] = packageD2;
+            string bundleH2 = new BundleBuilder(this, "BundleH") { BindPaths = bindPaths, Extensions = Extensions, PreprocessorVariables = new Dictionary<string, string>() { { "Version", upgradeVersion } } }.Build().Output;
+
+            // Install the base bundle.
+            BundleInstaller installerH1 = new BundleInstaller(this, bundleH1).Install();
+
+            // Make sure the MSIs are installed.
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageD1));
+
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerH1.LastLogFile, @"Skipping cross-scope dependency registration on package: PackageA, bundle scope: PerUser, package scope: PerMachine"));
+
+            // Install the upgrade bundle. Verify the base bundle was removed.
+            BundleInstaller installerH2 = new BundleInstaller(this, bundleH2).Install();
+
+            // Verify packageD2 was installed and packageD1 was uninstalled.
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD1));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageD2));
+
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerH2.LastLogFile, @"Skipping cross-scope dependency registration on package: PackageA, bundle scope: PerUser, package scope: PerMachine"));
+            Assert.IsTrue(LogVerifier.MessageInLogFileRegex(installerH2.LastLogFile, @"Detected related bundle: \{[0-9A-Za-z\-]{36}\}, type: Upgrade, scope: PerUser, version: 1\.0\.0\.0, operation: MajorUpgrade"));
+
+            // Uninstall the upgrade bundle now.
+            installerH2.Uninstall();
+
+            // Verify that permanent packageA is still installed and then remove.
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));
+            MSIExec.UninstallProduct(packageA, MSIExec.MSIExecReturnCode.SUCCESS);
+
+            // Make sure the MSIs were uninstalled.
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageA));
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(packageD2));
+
+            this.CleanTestArtifacts = true;
         }
     }
-}
+}   

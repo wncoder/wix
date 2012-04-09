@@ -2027,5 +2027,11 @@ HeathS: Added Win8 Express detection and fixed other VS11 detection.
 EricStJ: Put NetFx packages under redist folder in layout.
          Fix NetFx package detection.
 
+HeathS: Fixed detection for WiX in VS2010.
+
+HeathS: SFBUG:3509727 - Register bundle dependency only in the bundle's scope.
+
 WixBuild: Version 3.6.2803.0
+
+WixBuild: Version 3.6.2809.0
 

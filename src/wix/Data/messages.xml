@@ -3624,6 +3624,11 @@
             <Parameter Type="System.String" Name="wixlib" />
           </Instance>
         </Message>
+        <Message Id="NoPerMachineDependencies" Number="1140" SourceLineNumbers="no">
+            <Instance>
+                Bundle dependencies will not be registered on per-machine packages for a per-user bundle. Either make sure that all packages are installed per-machine, or author any per-machine dependencies as permanent packages.
+            </Instance>
+        </Message>
     </Class>
 
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">

@@ -3661,6 +3661,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         private void PopulateBundleInfoFromChain(BundleInfo bundleInfo, List<ChainPackageInfo> chainPackages)
         {
+            bool hasPerMachineNonPermanentPackages = false;
+
             foreach (ChainPackageInfo package in chainPackages)
             {
                 if (bundleInfo.PerMachine && !package.PerMachine)
@@ -3668,6 +3670,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     this.core.OnMessage(WixVerboses.SwitchingToPerUserPackage(package.PackagePayload.FullFileName));
                     bundleInfo.PerMachine = false;
                 }
+                else if (package.PerMachine && 0 < package.Provides.Count && !package.Permanent)
+                {
+                    hasPerMachineNonPermanentPackages = true;
+                }
+            }
+
+            // We will only register packages in the same scope as the bundle.
+            // Warn if any packages with providers are in a different scope
+            // and not permanent (permanents typically don't need a ref-count).
+            if (!bundleInfo.PerMachine && hasPerMachineNonPermanentPackages)
+            {
+                this.core.OnMessage(WixWarnings.NoPerMachineDependencies());
             }
         }
 
@@ -7625,7 +7639,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 {
                                                     PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
                                                     payloadNew.ParentPackagePayload = this.PackagePayload.Id;
-                                                    if (String.IsNullOrEmpty(payloadNew.Container))
+                                                    if (!String.IsNullOrEmpty(payloadNew.Container))
                                                     {
                                                         containers[payloadNew.Container].Payloads.Add(payloadNew);
                                                     }
