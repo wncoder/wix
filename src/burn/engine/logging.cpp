@@ -390,6 +390,29 @@ extern "C" LPCSTR LoggingMsiFeatureActionToString(
     }
 }
 
+extern "C" LPCSTR LoggingMsiInstallContext(
+    __in MSIINSTALLCONTEXT context
+    )
+{
+    switch (context)
+    {
+    case MSIINSTALLCONTEXT_ALL:
+        return "All";
+    case MSIINSTALLCONTEXT_ALLUSERMANAGED:
+        return "AllUserManaged";
+    case MSIINSTALLCONTEXT_MACHINE:
+        return "Machine";
+    case MSIINSTALLCONTEXT_NONE:
+        return "None";
+    case MSIINSTALLCONTEXT_USERMANAGED:
+        return "UserManaged";
+    case MSIINSTALLCONTEXT_USERUNMANAGED:
+        return "UserUnmanaged";
+    default:
+        return "Invalid";
+    }
+}
+
 extern "C" LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
     )

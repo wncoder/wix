@@ -109,12 +109,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Verifiers
         /// <returns>The number of matches</returns>
         public int EntireFileAtOnce(Regex regex)
         {
-            // Read in the entire log file at once.
-            StreamReader sr = new StreamReader(logFile);
-            string logFileText = sr.ReadToEnd();
-            sr.Close();
-            sr.Dispose();
-
+            string logFileText = this.ReadLogFile();
             return regex.Matches(logFileText).Count;
         }
 
@@ -125,12 +120,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Verifiers
         /// <returns>The number of matches</returns>
         public bool EntireFileAtOncestr(string regex)
         {
-            // Read in the entire log file at once.
-            StreamReader sr = new StreamReader(logFile);
-            string logFileText = sr.ReadToEnd();
-            sr.Close();
-            sr.Dispose();
-
+            string logFileText = this.ReadLogFile();
             return logFileText.Contains(regex);
         }
         /// <summary>
@@ -245,6 +235,34 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Verifiers
         {
             LogVerifier logVerifier = new LogVerifier(logFileName);
             return logVerifier.EntireFileAtOnce(regexMessage) > 0;
+        }
+
+        /// <summary>
+        /// Read in the entire log file at once.
+        /// </summary>
+        /// <returns>Contents of log file.</returns>
+        private string ReadLogFile()
+        {
+            // Retry a few times.
+            for (int retry = 0; ; ++retry)
+            {
+                try
+                {
+                    using (StreamReader sr = new StreamReader(this.logFile))
+                    {
+                        return sr.ReadToEnd();
+                    }
+                }
+                catch // we'll catch everything a few times until we give up.
+                {
+                    if (retry > 4)
+                    {
+                        throw;
+                    }
+
+                    System.Threading.Thread.Sleep(1000);
+                }
+            }
         }
     }
 }

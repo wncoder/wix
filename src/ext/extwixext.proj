@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ProjectReference Include="BalExtension\wixext\WixBalExtension.csproj" />
+    <ProjectReference Include="ComPlusExtension\wixext\WixComPlusExtension.csproj" />
+    <ProjectReference Include="DependencyExtension\wixext\DependencyExtension.csproj" />
+    <ProjectReference Include="DifxAppExtension\wixext\WixDifxAppExtension.csproj" />
+    <ProjectReference Include="DirectXExtension\wixext\WixDirectXExtension.csproj" />
+    <ProjectReference Include="FirewallExtension\wixext\WixFirewallExtension.csproj" />
+    <ProjectReference Include="GamingExtension\wixext\WixGamingExtension.csproj" />
+    <ProjectReference Include="IIsExtension\wixext\WixIIsExtension.csproj" />
+    <ProjectReference Include="MsmqExtension\wixext\WixMsmqExtension.csproj" />
+    <ProjectReference Include="PreProcExampleExtension\wixext\PreProcExampleExtension.csproj" />
+    <ProjectReference Include="PSExtension\wixext\WixPSExtension.csproj" />
+    <ProjectReference Include="SqlExtension\wixext\WixSqlExtension.csproj" />
+    <ProjectReference Include="TagExtension\wixext\WixTagExtension.csproj" />
+    <ProjectReference Include="UIExtension\wixext\WixUIExtension.csproj" />
+    <ProjectReference Include="UtilExtension\wixext\WixUtilExtension.csproj" />
+    <ProjectReference Include="ValidatorExampleExtension\wixext\ValidatorExampleExtension.csproj" />
+    <ProjectReference Include="VSExtension\wixext\WixVSExtension.csproj" />
+
+    <ProjectReference Include="NetFxExtension\wixlib\NetFxExtension.wixproj" />
+    <ProjectReference Include="NetFxExtension\wixext\WixNetFxExtension.csproj" />
+  </ItemGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(ProjectReference)" />
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectReference)" Targets="Clean" />
+  </Target>
+
+  <Target Name="Rebuild"
+          DependsOnTargets="Clean;Build" />
+</Project>

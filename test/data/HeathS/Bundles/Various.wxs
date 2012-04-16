@@ -11,9 +11,9 @@
     You must not remove this notice, or any other, from this software.
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
-    <Bundle Name="Various" Version="1.0.0.0" IconSourceFile="Setup.ico" Compressed="yes">
-        <BootstrapperApplicationRef Id="ManagedBootstrapperApplicationHost">
-            <Payload Name="BootstrapperCore.config" SourceFile="$(var.TestBA.TargetDir)\TestBA.BootstrapperCore.config"/>
+    <Bundle Name="Various" Version="1.0.0.0" UpgradeCode="B6E3E73E-A337-4FC2-846E-8B2695B5F1EE" IconSourceFile="Setup.ico" Compressed="yes">
+        <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
+            <Payload Name='BootstrapperCore.config' SourceFile='$(var.TestBA.TargetDir)\TestBA.BootstrapperCore.config' />
             <Payload SourceFile="$(var.TestBA.TargetPath)"/>
             <Payload SourceFile="NetfxLicense.rtf"/>
         </BootstrapperApplicationRef>
@@ -25,16 +25,17 @@
                 <MsiProperty Name="ARPSYSTEMCOMPONENT" Value="1"/>
                 <dep:Provides Key="Microsoft.WiX.Tests.RTM,v1"/>
             </MsiPackage>
-            <MspPackage SourceFile="MSIsandMSPs\GDR1\gdr1.msp" Vital="yes"/>
-            <MspPackage SourceFile="MSIsandMSPs\LDR2\ldr2.msp" Vital="yes">
+            <MspPackage SourceFile="MSIsandMSPs\GDR1\gdr1.msp" Vital="yes" PerMachine="yes"/>
+            <MspPackage SourceFile="MSIsandMSPs\LDR2\ldr2.msp" Vital="yes" PerMachine="yes">
                 <dep:Provides Key="Microsoft.WiX.Tests.LDR2,v2" Version="1.0.1.2"/>
             </MspPackage>
-            <ExePackage Id="TestExe1" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/s 5000" Vital="yes"/>
-            <ExePackage Id="TestExe2" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/sr 5000-10000" Vital="yes">
+            <ExePackage Id="TestExe1" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/s 5000" Vital="yes" PerMachine="yes"/>
+            <ExePackage Id="TestExe2" SourceFile="Products\TestExe\TestExe.exe" InstallCommand="/sr 5000-10000" Vital="yes" PerMachine="yes">
                 <dep:Provides Key="Microsoft.WiX.Tests.TestExe2,v1">
                     <dep:Requires ProviderKey="Microsoft.WiX.Tests.RTM,v1"/>
                 </dep:Provides>
             </ExePackage>
         </Chain>
+        <Variable Name="TestName" Type="string" Value="HeathS_Various"/>
     </Bundle>
 </Wix>

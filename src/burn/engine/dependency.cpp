@@ -67,7 +67,7 @@ static HRESULT DependencyRegisterPackageDependency(
     __in_z LPCWSTR wzDependentProviderKey
     );
 
-static HRESULT DependencyUnregisterPackageDependency(
+static void DependencyUnregisterPackageDependency(
     __in BOOL fPerMachine,
     __in const BURN_PACKAGE* pPackage,
     __in_z LPCWSTR wzDependentProviderKey
@@ -248,7 +248,7 @@ extern "C" HRESULT DependencyPlanPackageBegin(
                 const BURN_DEPENDENCY_PROVIDER* pProvider = &pPackage->rgDependencyProviders[i];
 
                 hr = DepCheckDependents(hkHive, pProvider->sczKey, 0, sdIgnoredDependents, &rgDependents, &cDependents);
-                if (E_FILENOTFOUND != hr || pPackage->fVital)
+                if (E_FILENOTFOUND != hr)
                 {
                     ExitOnFailure1(hr, "Failed dependents check on package provider: %ls", pProvider->sczKey);
                 }
@@ -372,8 +372,7 @@ extern "C" HRESULT DependencyExecuteAction(
     }
     else if (BURN_DEPENDENCY_ACTION_UNREGISTER == pAction->dependency.action)
     {
-        hr = DependencyUnregisterPackageDependency(fPerMachine, pPackage, pAction->dependency.sczBundleProviderKey);
-        ExitOnFailure(hr, "Failed to unregister the dependency from the package provider.");
+        DependencyUnregisterPackageDependency(fPerMachine, pPackage, pAction->dependency.sczBundleProviderKey);
     }
 
 LExit:
@@ -462,30 +461,25 @@ LExit:
     return hr;
 }
 
-extern "C" HRESULT DependencyUnregisterBundle(
+extern "C" void DependencyUnregisterBundle(
     __in const BURN_REGISTRATION* pRegistration
     )
 {
     HRESULT hr = S_OK;
 
-    LogId(REPORT_VERBOSE, MSG_DEPENDENCY_BUNDLE_UNREGISTER, pRegistration->sczProviderKey);
-
     // Remove the bundle provider key.
     hr = DepUnregisterDependency(pRegistration->hkRoot, pRegistration->sczProviderKey);
-    if (E_FILENOTFOUND != hr)
+    if (SUCCEEDED(hr))
     {
-        ExitOnFailure(hr, "Failed to remove the bundle dependency provider.");
+        LogId(REPORT_VERBOSE, MSG_DEPENDENCY_BUNDLE_UNREGISTERED, pRegistration->sczProviderKey);
     }
-    else
+    else if (FAILED(hr) && E_FILENOTFOUND != hr)
     {
-        hr = S_OK;
+        LogId(REPORT_VERBOSE, MSG_DEPENDENCY_BUNDLE_UNREGISTERED_FAILED, pRegistration->sczProviderKey, hr);
     }
-
-LExit:
-    return hr;
 }
 
-extern "C" HRESULT DependencyUnregisterPackage(
+extern "C" void DependencyUnregisterPackage(
     __in const BURN_PACKAGE* pPackage
     )
 {
@@ -500,28 +494,18 @@ extern "C" HRESULT DependencyUnregisterPackage(
 
             if (!pProvider->fImported)
             {
-                LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTER, pProvider->sczKey, pPackage->sczId);
-
                 hr = DepUnregisterDependency(hkRoot, pProvider->sczKey);
-                if (E_FILENOTFOUND != hr)
+                if (SUCCEEDED(hr))
                 {
-                    ExitOnFailure1(hr, "Failed to remove the package dependency provider: %ls", pProvider->sczKey);
+                    LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTERED, pProvider->sczKey, pPackage->sczId);
                 }
-                else
+                else if (FAILED(hr) && E_FILENOTFOUND != hr)
                 {
-                    hr = S_OK;
+                    LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTERED_FAILED, pProvider->sczKey, pPackage->sczId, hr);
                 }
             }
         }
     }
-
-LExit:
-    if (!pPackage->fVital)
-    {
-        hr = S_OK;
-    }
-
-    return hr;
 }
 
 
@@ -870,7 +854,7 @@ LExit:
   as a dependent of a package.
 
 *********************************************************************/
-static HRESULT DependencyUnregisterPackageDependency(
+static void DependencyUnregisterPackageDependency(
     __in BOOL fPerMachine,
     __in const BURN_PACKAGE* pPackage,
     __in_z LPCWSTR wzDependentProviderKey
@@ -883,7 +867,7 @@ static HRESULT DependencyUnregisterPackageDependency(
     if (fPerMachine != pPackage->fPerMachine)
     {
         LogId(REPORT_STANDARD, MSG_DEPENDENCY_PACKAGE_SKIP_WRONGSCOPE, pPackage->sczId, LoggingPerMachineToString(fPerMachine), LoggingPerMachineToString(pPackage->fPerMachine));
-        ExitFunction1(hr = S_OK);
+        return;
     }
 
     // Loop through each package provider and remove the bundle dependency key.
@@ -893,20 +877,16 @@ static HRESULT DependencyUnregisterPackageDependency(
         {
             const BURN_DEPENDENCY_PROVIDER* pProvider = &pPackage->rgDependencyProviders[i];
 
-            LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTER_DEPENDENCY, wzDependentProviderKey, pProvider->sczKey, pPackage->sczId);
 
             hr = DepUnregisterDependent(hkRoot, pProvider->sczKey, wzDependentProviderKey);
-            if (E_FILENOTFOUND != hr)
+            if (SUCCEEDED(hr))
             {
-                ExitOnFailure1(hr, "Failed to remove the dependency from package dependency provider: %ls", pProvider->sczKey);
+                LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTERED_DEPENDENCY, wzDependentProviderKey, pProvider->sczKey, pPackage->sczId);
             }
-            else
+            else if (FAILED(hr) && E_FILENOTFOUND != hr)
             {
-                hr = S_OK;
+                LogId(REPORT_VERBOSE, MSG_DEPENDENCY_PACKAGE_UNREGISTERED_DEPENDENCY_FAILED, wzDependentProviderKey, pProvider->sczKey, pPackage->sczId, hr);
             }
         }
     }
-
-LExit:
-    return hr;
 }

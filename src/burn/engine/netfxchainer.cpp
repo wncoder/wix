@@ -290,7 +290,7 @@ static HRESULT OnNetFxProgress(
 }
 
 static HRESULT OnNetFxError(
-    __in NetFxChainer* pNetfxChainer,
+    __in NetFxChainer* /*pNetfxChainer*/,
     __in HRESULT hrError,
     __in PFN_GENERICMESSAGEHANDLER pfnMessageHandler,
     __in LPVOID pvContext

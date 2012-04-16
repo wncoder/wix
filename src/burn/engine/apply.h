@@ -63,6 +63,8 @@ typedef int (*PFN_GENERICMESSAGEHANDLER)(
     );
 
 
+void ApplyInitialize();
+void ApplyUninitialize();
 void ApplyReset(
     __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_PACKAGES* pPackages

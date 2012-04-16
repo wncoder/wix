@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    The table definitions for the Windows Installer XML Toolset Software Id Tag Extension.
+-->
+<tableDefinitions xmlns="http://schemas.microsoft.com/wix/2006/tables">
+    <tableDefinition name="WixTag" unreal="yes">
+        <columnDefinition name="File_" type="string" length="72" modularize="column"
+            keyTable="File" keyColumn="1" category="identifier" description="The file representing the software id tag."/>
+        <columnDefinition name="Regid" type="string" length="0"
+            category="text" description="The regid for the software id tag."/>
+        <columnDefinition name="Name" type="string" length="0"
+            category="text" description="The name for the software id tag."/>
+        <columnDefinition name="Attributes" type="number" length="4"
+                minValue="0" maxValue="2147483647" description="A 32-bit word that specifies bits of software id tag."/>
+    </tableDefinition>
+</tableDefinitions>

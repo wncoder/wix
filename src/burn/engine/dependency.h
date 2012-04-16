@@ -116,7 +116,7 @@ HRESULT DependencyRegisterPackage(
 
  Note: Does not check for existing dependents before removing the key.
 *********************************************************************/
-HRESULT DependencyUnregisterBundle(
+void DependencyUnregisterBundle(
     __in const BURN_REGISTRATION* pRegistration
     );
 
@@ -124,11 +124,9 @@ HRESULT DependencyUnregisterBundle(
  DependencyUnregisterPackage - Removes each dependency provider
   for the package (if not imported from the package itself).
 
- Note: Returns S_OK if the package is non-vital.
-
  Note: Does not check for existing dependents before removing the key.
 *********************************************************************/
-HRESULT DependencyUnregisterPackage(
+void DependencyUnregisterPackage(
     __in const BURN_PACKAGE* pPackage
     );
 

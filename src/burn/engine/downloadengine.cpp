@@ -115,6 +115,7 @@ extern "C" HRESULT WininetDownloadUrl(
     HRESULT hr = S_OK;
     LPWSTR sczUrl = NULL;
     HINTERNET hSession = NULL;
+    DWORD dwConnectionTimeout = 0;
     LPWSTR sczResumePath = NULL;
     HANDLE hResumeFile = INVALID_HANDLE_VALUE;
     DWORD64 dw64ResumeOffset = 0;
@@ -128,6 +129,14 @@ extern "C" HRESULT WininetDownloadUrl(
 
     hSession = ::InternetOpenW(L"Burn", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ExitOnNullWithLastError(hSession, hr, "Failed to open internet session");
+
+    // Make a best effort to set the connection timeout to 2 minutes or whatever policy says.
+    PolcReadNumber(BURN_POLICY_REGISTRY_PATH, L"DownloadConnectionTimeout", 2 * 60, &dwConnectionTimeout);
+    if (0 < dwConnectionTimeout)
+    {
+        dwConnectionTimeout *= 1000; // convert to milliseconds.
+        ::InternetSetOptionW(hSession, INTERNET_OPTION_CONNECT_TIMEOUT, &dwConnectionTimeout, sizeof(dwConnectionTimeout));
+    }
 
     // Get the resource size and creation time from the internet.
     hr = GetResourceMetadata(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, &dw64Size, &ftCreated);

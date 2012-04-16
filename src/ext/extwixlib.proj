@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ProjectReference Include="BalExtension\wixlib\BalExtension.wixproj" />
+    <ProjectReference Include="ComPlusExtension\wixlib\ComPlusExtension.wixproj" />
+    <ProjectReference Include="DependencyExtension\wixlib\DependencyExtension.wixproj" />
+    <ProjectReference Include="DifxAppExtension\wixlib\DIFxAppExtension.wixproj" />
+    <ProjectReference Include="DirectXExtension\wixlib\DirectXExtension.wixproj" />
+    <ProjectReference Include="FirewallExtension\wixlib\FirewallExtension.wixproj" />
+    <ProjectReference Include="GamingExtension\wixlib\GamingExtension.wixproj" />
+    <ProjectReference Include="IIsExtension\wixlib\IIsExtension.wixproj" />
+    <ProjectReference Include="IsolatedAppExtension\wixlib\IsolatedAppExtension.wixproj" />
+    <ProjectReference Include="MsmqExtension\wixlib\MsmqExtension.wixproj" />
+    <ProjectReference Include="OfficeExtension\wixlib\OfficeExtension.wixproj" />
+    <ProjectReference Include="PSExtension\wixlib\PSExtension.wixproj" />
+    <ProjectReference Include="SqlExtension\wixlib\SqlExtension.wixproj" />
+    <ProjectReference Include="UIExtension\wixlib\UIExtension.wixproj" />
+    <ProjectReference Include="UtilExtension\wixlib\UtilExtension.wixproj" />
+    <ProjectReference Include="VSExtension\wixlib\VSExtension.wixproj" />
+  </ItemGroup>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(ProjectReference)" />
+  </Target>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(ProjectReference)" Targets="Clean" />
+  </Target>
+
+  <Target Name="Rebuild"
+          DependsOnTargets="Clean;Build" />
+</Project>

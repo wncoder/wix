@@ -526,8 +526,7 @@ extern "C" HRESULT ExeEngineExecutePackage(
     }
     else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->exePackage.action)
     {
-        hr = DependencyUnregisterPackage(pExecuteAction->exePackage.pPackage);
-        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+        DependencyUnregisterPackage(pExecuteAction->exePackage.pPackage);
     }
 
 LExit:

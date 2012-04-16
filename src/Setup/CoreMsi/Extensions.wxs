@@ -71,6 +71,10 @@
             </Component>
 
             <Component>
+                <File Source="WixTagExtension.dll" />
+            </Component>
+
+            <Component>
                 <File Source="WixUIExtension.dll" />
             </Component>
 
@@ -124,6 +128,10 @@
 
             <Component>
                 <File Source="ext\SqlExtension\wixext\Xsd\sql.xsd" />
+            </Component>
+
+            <Component>
+                <File Source="ext\TagExtension\wixext\Xsd\tag.xsd"/>
             </Component>
 
             <Component>

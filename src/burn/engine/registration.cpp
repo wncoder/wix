@@ -935,8 +935,7 @@ extern "C" HRESULT RegistrationSessionEnd(
         if (BURN_RESUME_MODE_NONE == resumeMode)
         {
             // Remove the bundle dependency key.
-            hr = DependencyUnregisterBundle(pRegistration);
-            ExitOnFailure(hr, "Failed to remove the bundle dependency key.");
+            DependencyUnregisterBundle(pRegistration);
 
             // Delete registration key.
             hr = RegDelete(pRegistration->hkRoot, pRegistration->sczRegistrationKey, REG_KEY_DEFAULT, FALSE);

@@ -172,6 +172,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 case "WixProperty":
                     row = new WixPropertyRow(sourceLineNumbers, this);
                     break;
+                case "WixBundlePatchTargetCode":
+                    row = new WixBundlePatchTargetCodeRow(sourceLineNumbers, this);
+                    break;
                 case "WixSimpleReference":
                     row = new WixSimpleReferenceRow(sourceLineNumbers, this);
                     break;

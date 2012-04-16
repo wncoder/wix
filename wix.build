@@ -227,14 +227,13 @@
   </target>
 
   <target name="ext.sln.build" description="Peforms a full rebuild (clean then build)">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:BuildIA64=${ia64}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Rebuild" />
-      <arg file="${dir.src.ext}\ext.sln" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\extwixlib.proj" />
+    <property name="msbuild.target" value="Rebuild" />
+    <call target="msbuild" />
+
+    <property name="msbuild.project" value="${dir.src.ext}\extwixext.proj" />
+    <property name="msbuild.target" value="Rebuild" />
+    <call target="msbuild" />
 
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
@@ -294,14 +293,13 @@
   </target>
 
   <target name="ext.sln.clean" description="Cleans the build">
-    <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
-      <arg value="/property:Configuration=Debug" if="${debug}" />
-      <arg value="/property:Configuration=Release" if="${ship}" />
-      <arg value="/property:BuildIA64=${ia64}" />
-      <arg value="/verbosity:${msbuildverbosity}" />
-      <arg value="/target:Clean" />
-      <arg file="${dir.src.ext}\ext.sln" />
-    </exec>
+    <property name="msbuild.project" value="${dir.src.ext}\extwixlib.proj" />
+    <property name="msbuild.target" value="Clean" />
+    <call target="msbuild" />
+
+    <property name="msbuild.project" value="${dir.src.ext}\extwixext.proj" />
+    <property name="msbuild.target" value="Clean" />
+    <call target="msbuild" />
 
     <exec program="msbuild.exe" basedir="${wix.settings.msbuildframework}" failonerror="true">
       <arg value="/property:Configuration=Debug" if="${debug}" />
@@ -363,7 +361,11 @@
   </target>
 
   <target name="ext.sln.inc" description="Performs an incremental build" depends="makeDirs, createKeyFile">
-    <property name="msbuild.project" value="${dir.src.ext}\ext.sln" />
+    <property name="msbuild.project" value="${dir.src.ext}\extwixlib.proj" />
+    <property name="msbuild.target" value="Build" />
+    <call target="msbuild" />
+
+    <property name="msbuild.project" value="${dir.src.ext}\extwixext.proj" />
     <property name="msbuild.target" value="Build" />
     <call target="msbuild" />
 

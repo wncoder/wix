@@ -43,6 +43,7 @@ static PFN_MSIENUMRELATEDPRODUCTSW vpfnMsiEnumRelatedProductsW = ::MsiEnumRelate
 
 // MSI 3.0+
 static PFN_MSIDETERMINEPATCHSEQUENCEW vpfnMsiDeterminePatchSequenceW = NULL;
+static PFN_MSIENUMPRODUCTSEXW vpfnMsiEnumProductsExW = NULL;
 static PFN_MSIGETPATCHINFOEXW vpfnMsiGetPatchInfoExW = NULL;
 static PFN_MSIGETPRODUCTINFOEXW vpfnMsiGetProductInfoExW = NULL;
 static PFN_MSISETEXTERNALUIRECORD vpfnMsiSetExternalUIRecord = NULL;
@@ -50,6 +51,7 @@ static PFN_MSISOURCELISTADDSOURCEEXW vpfnMsiSourceListAddSourceExW = NULL;
 
 static HMODULE vhMsiDll = NULL;
 static PFN_MSIDETERMINEPATCHSEQUENCEW vpfnMsiDeterminePatchSequenceWFromLibrary = NULL;
+static PFN_MSIENUMPRODUCTSEXW vpfnMsiEnumProductsExWFromLibrary = NULL;
 static PFN_MSIGETPATCHINFOEXW vpfnMsiGetPatchInfoExWFromLibrary = NULL;
 static PFN_MSIGETPRODUCTINFOEXW vpfnMsiGetProductInfoExWFromLibrary = NULL;
 static PFN_MSISETEXTERNALUIRECORD vpfnMsiSetExternalUIRecordFromLibrary = NULL;
@@ -142,6 +144,12 @@ extern "C" HRESULT DAPI WiuInitialize(
         vpfnMsiDeterminePatchSequenceW = vpfnMsiDeterminePatchSequenceWFromLibrary;
     }
 
+    vpfnMsiEnumProductsExWFromLibrary = reinterpret_cast<PFN_MSIENUMPRODUCTSEXW>(::GetProcAddress(vhMsiDll, "MsiEnumProductsExW"));
+    if (NULL == vpfnMsiEnumProductsExW)
+    {
+        vpfnMsiEnumProductsExW = vpfnMsiEnumProductsExWFromLibrary;
+    }
+
     vpfnMsiGetPatchInfoExWFromLibrary = reinterpret_cast<PFN_MSIGETPATCHINFOEXW>(::GetProcAddress(vhMsiDll, "MsiGetPatchInfoExW"));
     if (NULL == vpfnMsiGetPatchInfoExW)
     {
@@ -188,6 +196,7 @@ extern "C" void DAPI WiuUninitialize(
         vpfnMsiSetExternalUIRecordFromLibrary = NULL;
         vpfnMsiGetProductInfoExWFromLibrary = NULL;
         vpfnMsiGetPatchInfoExWFromLibrary = NULL;
+        vpfnMsiEnumProductsExWFromLibrary = NULL;
         vpfnMsiDeterminePatchSequenceWFromLibrary = NULL;
         vpfnMsiSourceListAddSourceExWFromLibrary = NULL;
     }
@@ -519,6 +528,7 @@ LExit:
     return hr;
 }
 
+
 extern "C" HRESULT DAPI WiuEnumProducts(
     __in DWORD iProductIndex,
     __out_ecount(MAX_GUID_CHARS + 1) LPWSTR wzProductCode
@@ -528,6 +538,37 @@ extern "C" HRESULT DAPI WiuEnumProducts(
     DWORD er = ERROR_SUCCESS;
 
     er = vpfnMsiEnumProductsW(iProductIndex, wzProductCode);
+    if (ERROR_NO_MORE_ITEMS == er)
+    {
+        ExitFunction1(hr = HRESULT_FROM_WIN32(er));
+    }
+    ExitOnWin32Error(er, hr, "Failed to enumerate products.");
+
+LExit:
+    return hr;
+}
+
+
+extern "C" HRESULT DAPI WiuEnumProductsEx(
+    __in_z_opt LPCWSTR wzProductCode,
+    __in_z_opt LPCWSTR wzUserSid,
+    __in DWORD dwContext,
+    __in DWORD dwIndex,
+    __out_opt WCHAR wzInstalledProductCode[39],
+    __out_opt MSIINSTALLCONTEXT *pdwInstalledContext,
+    __out_opt LPWSTR wzSid,
+    __inout_opt LPDWORD pcchSid
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+
+    if (!vpfnMsiEnumProductsExW)
+    {
+        ExitFunction1(hr = E_NOTIMPL);
+    }
+
+    er = vpfnMsiEnumProductsExW(wzProductCode, wzUserSid, dwContext, dwIndex, wzInstalledProductCode, pdwInstalledContext, wzSid, pcchSid);
     if (ERROR_NO_MORE_ITEMS == er)
     {
         ExitFunction1(hr = HRESULT_FROM_WIN32(er));

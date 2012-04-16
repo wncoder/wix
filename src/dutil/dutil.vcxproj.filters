@@ -153,6 +153,9 @@
     <ClCompile Include="srputil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="polcutil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\aclutil.h">
@@ -288,6 +291,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\srputil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\polcutil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

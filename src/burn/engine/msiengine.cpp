@@ -1088,8 +1088,7 @@ extern "C" HRESULT MsiEngineExecutePackage(
     }
     else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->msiPackage.action)
     {
-        hr = DependencyUnregisterPackage(pExecuteAction->msiPackage.pPackage);
-        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+        DependencyUnregisterPackage(pExecuteAction->msiPackage.pPackage);
     }
 
 LExit:

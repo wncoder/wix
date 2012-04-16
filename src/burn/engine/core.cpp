@@ -213,9 +213,6 @@ extern "C" HRESULT CoreDetect(
     hr = SearchesExecute(&pEngineState->searches, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to execute searches.");
 
-    hr = RegistrationDetectRelatedBundles(BURN_MODE_ELEVATED == pEngineState->mode, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
-    ExitOnFailure(hr, "Failed to detect bundles.");
-
     // Detecting MSPs requires special initialization before processing each package but
     // only do the detection if there are actually patch packages to detect because it
     // can be expensive.
@@ -224,6 +221,9 @@ extern "C" HRESULT CoreDetect(
         hr = MspEngineDetectInitialize(&pEngineState->packages);
         ExitOnFailure(hr, "Failed to initialize MSP engine detection.");
     }
+
+    hr = RegistrationDetectRelatedBundles(BURN_MODE_ELEVATED == pEngineState->mode, &pEngineState->userExperience, &pEngineState->registration, &pEngineState->command);
+    ExitOnFailure(hr, "Failed to detect bundles.");
 
     for (DWORD i = 0; i < pEngineState->packages.cPackages; ++i)
     {
@@ -617,6 +617,9 @@ extern "C" HRESULT CoreApply(
     hr = ApplyLock(FALSE, &hLock);
     ExitOnFailure(hr, "Another per-user setup is already executing.");
 
+    // Initialize only after getting a lock.
+    ApplyInitialize();
+
     // Ensure the engine is cached to the working path.
     if (!pEngineState->sczBundleEngineWorkingPath)
     {
@@ -697,6 +700,8 @@ LExit:
     {
         ElevationApplyUninitialize(pEngineState->companionConnection.hPipe);
     }
+
+    ApplyUninitialize();
 
     if (hLock)
     {

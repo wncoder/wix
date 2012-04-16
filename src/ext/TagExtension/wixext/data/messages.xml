@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+
+    The messages for the Windows Installer XML Toolset Gaming Extension.
+-->
+<Messages Namespace="Microsoft.Tools.WindowsInstallerXml.Extensions" Resources="Data.Messages" xmlns="http://schemas.microsoft.com/genmsgs/2004/07/messages">
+    <Class Name="TagErrors" ContainerName="TagErrorEventArgs" BaseContainerName="WixErrorEventArgs">
+        <Message Id="IllegalName" Number="6601">
+            <Instance>
+                The Tag/@Name attribute value, '{1}', contains invalid filename identifiers. The Tag/@Name may have defaulted from the {0}/@Name attrbute. If so, use the Tag/@Name attribute to provide a valid filename. Any character except for the follow may be used: \ ? | > &lt; : / * ".
+                <Parameter Type="System.String" Name="parentElement" />
+                <Parameter Type="System.String" Name="name" />
+            </Instance>
+        </Message>
+    </Class>
+</Messages>

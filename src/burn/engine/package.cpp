@@ -26,6 +26,10 @@ static HRESULT ParsePayloadRefsFromXml(
     __in BURN_PAYLOADS* pPayloads,
     __in IXMLDOMNode* pixnPackage
     );
+static HRESULT ParsePatchTargetCode(
+    __in BURN_PACKAGES* pPackages,
+    __in IXMLDOMNode* pixnBundle
+    );
 static HRESULT FindRollbackBoundaryById(
     __in BURN_PACKAGES* pPackages,
     __in_z LPCWSTR wzId,
@@ -282,6 +286,9 @@ extern "C" HRESULT PackagesParseFromXml(
 
     AssertSz(pPackages->cPatchInfo == cMspPackages, "Count of packages patch info should be equal to the number of MSP packages.");
 
+    hr = ParsePatchTargetCode(pPackages, pixnBundle);
+    ExitOnFailure(hr, "Failed to parse target product codes.");
+
     hr = S_OK;
 
 LExit:
@@ -355,6 +362,15 @@ extern "C" void PackagesUninitialize(
             PackageUninitialize(pPackages->rgPackages + i);
         }
         MemFree(pPackages->rgPackages);
+    }
+
+    if (pPackages->rgPatchTargetCodes)
+    {
+        for (DWORD i = 0; i < pPackages->cPatchTargetCodes; ++i)
+        {
+            ReleaseStr(pPackages->rgPatchTargetCodes[i].sczTargetCode);
+        }
+        MemFree(pPackages->rgPatchTargetCodes);
     }
 
     ReleaseMem(pPackages->rgPatchInfo);
@@ -529,6 +545,67 @@ LExit:
     ReleaseObject(pixnNodes);
     ReleaseObject(pixnNode);
     ReleaseStr(sczId);
+
+    return hr;
+}
+
+static HRESULT ParsePatchTargetCode(
+    __in BURN_PACKAGES* pPackages,
+    __in IXMLDOMNode* pixnBundle
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNodeList* pixnNodes = NULL;
+    IXMLDOMNode* pixnNode = NULL;
+    DWORD cNodes = 0;
+    BSTR bstrNodeText = NULL;
+    BOOL fProduct;
+
+    hr = XmlSelectNodes(pixnBundle, L"PatchTargetCode", &pixnNodes);
+    ExitOnFailure(hr, "Failed to select PatchTargetCode nodes.");
+
+    hr = pixnNodes->get_length((long*)&cNodes);
+    ExitOnFailure(hr, "Failed to get PatchTargetCode node count.");
+
+    if (!cNodes)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+
+    pPackages->rgPatchTargetCodes = (BURN_PATCH_TARGETCODE*)MemAlloc(sizeof(BURN_PATCH_TARGETCODE) * cNodes, TRUE);
+    ExitOnNull(pPackages->rgPatchTargetCodes, hr, E_OUTOFMEMORY, "Failed to allocate memory for patch targetcodes.");
+
+    pPackages->cPatchTargetCodes = cNodes;
+
+    for (DWORD i = 0; i < cNodes; ++i)
+    {
+        BURN_PATCH_TARGETCODE* pTargetCode = pPackages->rgPatchTargetCodes + i;
+
+        hr = XmlNextElement(pixnNodes, &pixnNode, NULL);
+        ExitOnFailure(hr, "Failed to get next node.");
+
+        hr = XmlGetAttributeEx(pixnNode, L"TargetCode", &pTargetCode->sczTargetCode);
+        ExitOnFailure(hr, "Failed to get @TargetCode attribute.");
+
+        hr = XmlGetYesNoAttribute(pixnNode, L"Product", &fProduct);
+        if (E_NOTFOUND == hr)
+        {
+            fProduct = FALSE;
+            hr = S_OK;
+        }
+        ExitOnFailure(hr, "Failed to get @Product.");
+
+        pTargetCode->type = fProduct ? BURN_PATCH_TARGETCODE_TYPE_PRODUCT : BURN_PATCH_TARGETCODE_TYPE_UPGRADE;
+
+        // prepare next iteration
+        ReleaseNullBSTR(bstrNodeText);
+        ReleaseNullObject(pixnNode);
+    }
+
+LExit:
+    ReleaseBSTR(bstrNodeText);
+    ReleaseObject(pixnNode);
+    ReleaseObject(pixnNodes);
 
     return hr;
 }

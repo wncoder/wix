@@ -392,8 +392,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
         }
         else if (BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pExecuteAction->msuPackage.action)
         {
-            hr = DependencyUnregisterPackage(pExecuteAction->msuPackage.pPackage);
-            ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+            DependencyUnregisterPackage(pExecuteAction->msuPackage.pPackage);
         }
     }
 

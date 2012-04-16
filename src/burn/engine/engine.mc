@@ -173,6 +173,13 @@ Language=English
 Detected package: %1!ls! target: %2!ls!, state: %3!hs!
 .
 
+MessageId=106
+Severity=Success
+SymbolicName=MSG_DETECT_CALCULATE_PATCH_APPLICABILITY
+Language=English
+Calculating patch applicability for target product code: %1!ls!, context: %2!hs!
+.
+
 MessageId=120
 Severity=Warning
 SymbolicName=MSG_DETECT_PACKAGE_NOT_FULLY_CACHED
@@ -390,6 +397,13 @@ Language=English
 Skipped rollback of package: %1!ls!, action: %2!hs!, already: %3!hs!
 .
 
+MessageId=318
+Severity=Success
+SymbolicName=MSG_APPLY_COMPLETED_PACKAGE
+Language=English
+Applied %1!hs! package: %2!ls!, result: 0x%3!x!, restart: %4!hs!
+.
+
 MessageId=320
 Severity=Success
 SymbolicName=MSG_DEPENDENCY_BUNDLE_REGISTER
@@ -434,9 +448,9 @@ Registering dependency: %1!ls! on package provider: %2!ls!, package: %3!ls!
 
 MessageId=326
 Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER_DEPENDENCY
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTERED_DEPENDENCY
 Language=English
-Removing dependency: %1!ls! on package provider: %2!ls!, package %3!ls!
+Removed dependency: %1!ls! on package provider: %2!ls!, package %3!ls!
 .
 
 MessageId=327
@@ -455,44 +469,37 @@ Found dependent: %1!ls!, name: %2!ls!
 
 MessageId=329
 Severity=Success
-SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTER
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTERED
 Language=English
-Removing package dependency provider: %1!ls!, package: %2!ls!
+Removed package dependency provider: %1!ls!, package: %2!ls!
 .
 
 MessageId=330
 Severity=Success
-SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTER
+SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTERED
 Language=English
-Removing bundle dependency provider: %1!ls!
+Removed bundle dependency provider: %1!ls!
 .
 
 MessageId=331
-Severity=Success
-SymbolicName=MSG_SYSTEM_RESTORE_POINT_STARTING
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTERED_DEPENDENCY_FAILED
 Language=English
-Creating a system restore point.
+Could not remove dependency: %1!ls! on package provider: %2!ls!, package %3!ls!, error: 0x%4!x!
 .
 
 MessageId=332
-Severity=Success
-SymbolicName=MSG_SYSTEM_RESTORE_POINT_SUCCEEDED
+Severity=Warning
+SymbolicName=MSG_DEPENDENCY_PACKAGE_UNREGISTERED_FAILED
 Language=English
-Created a system restore point.
+Could not remove package dependency provider: %1!ls!, package: %2!ls!, error: 0x%3!x!
 .
 
 MessageId=333
-Severity=Success
-SymbolicName=MSG_SYSTEM_RESTORE_POINT_DISABLED
-Language=English
-System restore disabled, system restore point not created.
-.
-
-MessageId=334
 Severity=Warning
-SymbolicName=MSG_SYSTEM_RESTORE_POINT_FAILED
+SymbolicName=MSG_DEPENDENCY_BUNDLE_UNREGISTERED_FAILED
 Language=English
-Could not create system restore point, error: 0x%1!x!. Continuing...
+Could not remove bundle dependency provider: %1!ls!, error: 0x%2!x!
 .
 
 MessageId=335
@@ -569,7 +576,7 @@ MessageId=350
 Severity=Warning
 SymbolicName=MSG_APPLY_CONTINUING_NONVITAL_PACKAGE
 Language=English
-Applying non-vital package: %1!ls!, encountered error: 0x%2!x!. Continuing...
+Applied non-vital package: %1!ls!, encountered error: 0x%2!x!. Continuing...
 .
 
 MessageId=351
@@ -605,6 +612,34 @@ Severity=Warning
 SymbolicName=MSG_SOURCELIST_REGISTER
 Language=English
 Unable to register source directory: %1!ls!, product: %2!ls!, reason: 0x%3!x!. Continuing...
+.
+
+MessageId=360
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_STARTING
+Language=English
+Creating a system restore point.
+.
+
+MessageId=361
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_SUCCEEDED
+Language=English
+Created a system restore point.
+.
+
+MessageId=362
+Severity=Success
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_DISABLED
+Language=English
+System restore disabled, system restore point not created.
+.
+
+MessageId=363
+Severity=Warning
+SymbolicName=MSG_SYSTEM_RESTORE_POINT_FAILED
+Language=English
+Could not create system restore point, error: 0x%1!x!. Continuing...
 .
 
 MessageId=399

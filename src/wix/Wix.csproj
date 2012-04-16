@@ -152,6 +152,7 @@
     <Compile Include="VerifyInterop.cs" />
     <Compile Include="WarningEventArgs.cs" />
     <Compile Include="AppCommon.cs" />
+    <Compile Include="WixBundlePatchTargetCodeRow.cs" />
     <Compile Include="WixExtension.cs" />
     <Compile Include="WixFileRow.cs" />
     <Compile Include="WixGenericMessageEventArgs.cs" />

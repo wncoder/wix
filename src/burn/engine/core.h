@@ -28,6 +28,8 @@ extern "C" {
 
 // constants
 
+const LPCWSTR BURN_POLICY_REGISTRY_PATH = L"WiX\\Burn";
+
 const LPCWSTR BURN_COMMANDLINE_SWITCH_ELEVATED = L"burn.elevated";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_EMBEDDED = L"burn.embedded";
 const LPCWSTR BURN_COMMANDLINE_SWITCH_RUNONCE = L"burn.runonce";

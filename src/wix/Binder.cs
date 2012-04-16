@@ -4006,6 +4006,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("ParallelCache", "yes");
                 }
 
+                // Build up the list of target codes from all the MSPs in the chain.
+                List<WixBundlePatchTargetCodeRow> targetCodes = new List<WixBundlePatchTargetCodeRow>();
+
                 foreach (ChainPackageInfo package in chain.Packages)
                 {
                     writer.WriteStartElement(String.Format(CultureInfo.InvariantCulture, "{0}Package", package.ChainPackageType));
@@ -4068,6 +4071,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         writer.WriteAttributeString("PatchCode", package.PatchCode);
                         writer.WriteAttributeString("PatchXml", package.PatchXml);
                         writer.WriteAttributeString("DisplayInternalUI", package.DisplayInternalUI ? "yes" : "no");
+
+                        // If there is still a chance that all of our patches will target a narrow set of
+                        // product codes, add the patch list to the overall list.
+                        if (null != targetCodes)
+                        {
+                            if (null != package.TargetCodes)
+                            {
+                                targetCodes.AddRange(package.TargetCodes);
+                            }
+                            else // we have a patch that targets the world, so throw the whole list away.
+                            {
+                                targetCodes = null;
+                            }
+                        }
                     }
                     else if (Compiler.ChainPackageType.Msu == package.ChainPackageType)
                     {
@@ -4155,11 +4172,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                     }
 
-                    writer.WriteEndElement();
+                    writer.WriteEndElement(); // </XxxPackage>
                 }
-                writer.WriteEndElement();
+                writer.WriteEndElement(); // </Chain>
 
-                writer.WriteEndDocument();
+                if (null != targetCodes)
+                {
+                    foreach (WixBundlePatchTargetCodeRow targetCode in targetCodes)
+                    {
+                        writer.WriteStartElement("PatchTargetCode");
+                        writer.WriteAttributeString("TargetCode", targetCode.TargetCode);
+                        writer.WriteAttributeString("Product", targetCode.Product ? "yes" : "no");
+                        writer.WriteEndElement();
+                    }
+                }
+
+                writer.WriteEndDocument(); // </BurnManifest>
             }
         }
 
@@ -7264,7 +7292,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.ResolveMsiPackage(fileManager, core, allPayloads, containers, suppressLooseFilePayloadGeneration, enableFeatureSelection, forcePerMachine, bundle);
                         break;
                     case Compiler.ChainPackageType.Msp:
-                        this.ResolveMspPackage(core);
+                        this.ResolveMspPackage(core, bundle);
                         break;
                     case Compiler.ChainPackageType.Msu:
                         this.ResolveMsuPackage(core);
@@ -7324,6 +7352,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public List<string> SlipstreamMsps { get; private set; }
             public List<ExitCodeInfo> ExitCodes { get; private set; }
             public ProvidesDependencyCollection Provides { get; private set; }
+            public List<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
 
             public RollbackBoundaryInfo RollbackBoundary { get; set; }
             public string RollbackBoundaryBackwardId { get; set; }
@@ -7743,7 +7772,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             /// Initializes package state from the MSP contents.
             /// </summary>
             /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMspPackage(BinderCore core)
+            private void ResolveMspPackage(BinderCore core, Output bundle)
             {
                 string sourcePath = this.PackagePayload.FullFileName;
 
@@ -7761,6 +7790,45 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     }
 
                     this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
+
+                    List<WixBundlePatchTargetCodeRow> targetCodes = new List<WixBundlePatchTargetCodeRow>();
+                    XmlDocument doc = new XmlDocument();
+                    doc.LoadXml(this.PatchXml);
+
+                    XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+                    nsmgr.AddNamespace("p", "http://www.microsoft.com/msi/patch_applicability.xsd");
+                    foreach (XmlNode node in doc.SelectNodes("/p:MsiPatch/p:TargetProduct", nsmgr))
+                    {
+                        // If this patch targes a product code, this is the best case.
+                        XmlNode targetCode = node.SelectSingleNode("p:TargetProductCode", nsmgr);
+                        bool targetProduct = false;
+                        if (null != targetCode)
+                        {
+                            targetProduct = true;
+                        }
+                        else // maybe targets and upgrade code?
+                        {
+                            targetCode = node.SelectSingleNode("p:UpgradeCode", nsmgr);
+                            if (null != targetCode)
+                            {
+                                targetProduct = false;
+                            }
+                            else // this patch targets a unknown number of products, throw away the whole list and stop looking.
+                            {
+                                targetCodes = null;
+                                break;
+                            }
+                        }
+
+                        Table table = bundle.EnsureTable(core.TableDefinitions["WixBundlePatchTargetCode"]);
+                        WixBundlePatchTargetCodeRow row = (WixBundlePatchTargetCodeRow)table.CreateRow(this.PackagePayload.SourceLineNumbers);
+                        row.MspPackageId = this.PackagePayload.Id;
+                        row.TargetCode = targetCode.InnerText;
+                        row.Product = targetProduct;
+                        targetCodes.Add(row);
+                    }
+
+                    this.TargetCodes = targetCodes;
                 }
                 catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
                 {

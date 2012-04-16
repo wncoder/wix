@@ -70,6 +70,12 @@ enum BURN_DEPENDENCY_ACTION
     BURN_DEPENDENCY_ACTION_UNREGISTER,
 };
 
+enum BURN_PATCH_TARGETCODE_TYPE
+{
+    BURN_PATCH_TARGETCODE_TYPE_UNKNOWN,
+    BURN_PATCH_TARGETCODE_TYPE_PRODUCT,
+    BURN_PATCH_TARGETCODE_TYPE_UPGRADE,
+};
 
 // structs
 
@@ -151,6 +157,12 @@ typedef struct _BURN_ROLLBACK_BOUNDARY
     LPWSTR sczId;
     BOOL fVital;
 } BURN_ROLLBACK_BOUNDARY;
+
+typedef struct _BURN_PATCH_TARGETCODE
+{
+    LPWSTR sczTargetCode;
+    BURN_PATCH_TARGETCODE_TYPE type;
+} BURN_PATCH_TARGETCODE;
 
 typedef struct _BURN_PACKAGE
 {
@@ -258,6 +270,9 @@ typedef struct _BURN_PACKAGES
 
     BURN_PACKAGE* rgPackages;
     DWORD cPackages;
+
+    BURN_PATCH_TARGETCODE* rgPatchTargetCodes;
+    DWORD cPatchTargetCodes;
 
     MSIPATCHSEQUENCEINFOW* rgPatchInfo;
     BURN_PACKAGE** rgPatchInfoToPackage; // direct lookup from patch information to the (MSP) package it describes.

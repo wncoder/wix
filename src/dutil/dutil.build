@@ -82,6 +82,7 @@
       <include name="osutil.cpp" />
       <include name="pathutil.cpp" />
       <include name="perfutil.cpp" />
+      <include name="polcutil.cpp" />
       <include name="procutil.cpp" />
       <include name="proc2utl.cpp" />
       <include name="proc3utl.cpp" />

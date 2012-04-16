@@ -55,6 +55,7 @@
 #include <memutil.h>
 #include <osutil.h>
 #include <pathutil.h>
+#include <polcutil.h>
 #include <procutil.h>
 #include <regutil.h>
 #include <resrutil.h>

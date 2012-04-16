@@ -1,13 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
-using System.Diagnostics;
+﻿//-------------------------------------------------------------------------------------------------
+// <copyright file="PayloadInfoRow.cs" company="Microsoft">
+//    Copyright (c) Microsoft Corporation.  All rights reserved.
+// </copyright>
+// 
+// <summary>
+// Row for payload information.
+// </summary>
+//-------------------------------------------------------------------------------------------------
 
 namespace Microsoft.Tools.WindowsInstallerXml
 {
+    using System;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Security.Cryptography;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
+
     public enum PackagingType
     {
         Unknown,
@@ -18,9 +27,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// <summary>
     /// Specialization of a row for the PayloadInfo table.
     /// </summary>
-    class PayloadInfoRow : Row
+    public class PayloadInfoRow : Row
     {
         private static readonly Version EmptyVersion = new Version(0, 0, 0, 0);
+
         /// <summary>
         /// Creates a PayloadInfoRow row that does not belong to a table.
         /// </summary>
@@ -57,7 +67,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.Resolve();
         }
-
 
         public string Id
         {

@@ -621,7 +621,7 @@ static HRESULT FileSearchVersion(
 
     // get file version
     hr = FileVersion(sczPath, &uliVersion.HighPart, &uliVersion.LowPart);
-    if (E_NOTFOUND == hr)
+    if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
     {
         fNotFound = TRUE;
         LogStringLine(REPORT_STANDARD, "File not found while checking file version. Path = '%ls'", sczPath);
@@ -633,11 +633,6 @@ static HRESULT FileSearchVersion(
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
-    if (FAILED(hr) && !fNotFound)
-    {
-        LogStringLine(REPORT_STANDARD, "FileSearchVersion failed: ID '%ls', HRESULT 0x%x", pSearch->sczKey, hr);
-    }
-
     ReleaseStr(sczPath);
     return hr;
 }

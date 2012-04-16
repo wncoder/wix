@@ -214,6 +214,7 @@ static HRESULT ExecutePackageComplete(
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
+    __in BOOL fRollback,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart,
     __out BOOL* pfRetry,
     __out BOOL* pfSuspend
@@ -221,6 +222,17 @@ static HRESULT ExecutePackageComplete(
 
 
 // function definitions
+
+extern "C" void ApplyInitialize()
+{
+    // Prevent the system from sleeping.
+    ::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+}
+
+extern "C" void ApplyUninitialize()
+{
+    ::SetThreadExecutionState(ES_CONTINUOUS);
+}
 
 extern "C" void ApplyReset(
     __in BURN_USER_EXPERIENCE* pUX,
@@ -739,6 +751,7 @@ extern "C" void ApplyClean(
         hr = CleanPackage(hPipe, pCleanAction->pPackage);
     }
 }
+
 
 // internal helper functions
 
@@ -1653,7 +1666,7 @@ static HRESULT ExecuteExePackage(
     ExitOnRootFailure(hr, "UX aborted EXE package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->exePackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->exePackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1705,7 +1718,7 @@ static HRESULT ExecuteMsiPackage(
     ExitOnRootFailure(hr, "UX aborted MSI package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msiPackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msiPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1767,7 +1780,7 @@ static HRESULT ExecuteMspPackage(
     ExitOnRootFailure(hr, "UX aborted MSP package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1833,7 +1846,7 @@ static HRESULT ExecuteMsuPackage(
     ExitOnRootFailure(hr, "UX aborted MSU package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1963,6 +1976,7 @@ static HRESULT ExecutePackageComplete(
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
+    __in BOOL fRollback,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart,
     __out BOOL* pfRetry,
     __out BOOL* pfSuspend
@@ -1989,6 +2003,10 @@ static HRESULT ExecutePackageComplete(
     {
         LogId(REPORT_STANDARD, MSG_APPLY_CONTINUING_NONVITAL_PACKAGE, pPackage->sczId, hrExecute);
         hr = S_OK;
+    }
+    else
+    {
+        LogId(REPORT_STANDARD, MSG_APPLY_COMPLETED_PACKAGE, LoggingRollbackOrExecute(fRollback), pPackage->sczId, hr, LoggingRestartToString(*pRestart));
     }
 
     return hr;

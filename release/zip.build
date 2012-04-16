@@ -163,6 +163,7 @@
         <include name="WixOfficeExtension.dll" />
         <include name="WixPSExtension.dll" />
         <include name="WixSqlExtension.dll" />
+        <include name="WixTagExtension.dll" />
         <include name="WixUIExtension.dll" />
         <include name="WixUtilExtension.dll" />
         <include name="WixVSExtension.dll" />

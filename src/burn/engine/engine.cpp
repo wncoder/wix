@@ -76,6 +76,7 @@ extern "C" HRESULT EngineRun(
     BOOL fRegInitialized = FALSE;
     BOOL fWiuInitialized = FALSE;
     BOOL fXmlInitialized = FALSE;
+    OSVERSIONINFOEXW ovix = { };
     LPWSTR sczExePath = NULL;
     BOOL fRunNormal = FALSE;
     BOOL fRestart = FALSE;
@@ -115,7 +116,6 @@ extern "C" HRESULT EngineRun(
     ExitOnFailure(hr, "Failed to initialize XML util.");
     fXmlInitialized = TRUE;
 
-    OSVERSIONINFOEXW ovix = { };
     ovix.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
     if (!::GetVersionExW((LPOSVERSIONINFOW)&ovix))
     {

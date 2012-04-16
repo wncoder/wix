@@ -112,6 +112,10 @@ LPCSTR LoggingMsiFeatureActionToString(
     __in BOOTSTRAPPER_FEATURE_ACTION featureAction
     );
 
+LPCSTR LoggingMsiInstallContext(
+    __in MSIINSTALLCONTEXT context
+    );
+
 LPCSTR LoggingPerMachineToString(
     __in BOOL fPerMachine
     );

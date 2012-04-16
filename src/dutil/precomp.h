@@ -77,6 +77,7 @@
 #include "osutil.h"
 #include "pathutil.h"
 #include "perfutil.h"
+#include "polcutil.h"
 #include "procutil.h"
 #include "regutil.h"
 #include "resrutil.h"

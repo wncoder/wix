@@ -1627,6 +1627,11 @@
         <columnDefinition name="Code" type="number" length="0" category="integer" nullable="yes" primaryKey="yes" />
         <columnDefinition name="Type" type="string" length="0" />
     </tableDefinition>
+    <tableDefinition name="WixBundlePatchTargetCode" createSymbols="yes" unreal="yes">
+        <columnDefinition name="PackageId" type="string" length="0" category="identifier" primaryKey="yes"/>
+        <columnDefinition name="TargetCode" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Product" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+    </tableDefinition>
     <tableDefinition name="WixBundle" unreal="yes">
         <columnDefinition name="Version" type="string" length="24" />
         <columnDefinition name="Copyright" type="string" length="0" nullable="yes" />

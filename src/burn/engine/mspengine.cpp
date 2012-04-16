@@ -24,22 +24,39 @@
 
 // structs
 
+struct POSSIBLE_TARGETPRODUCT
+{
+    WCHAR wzProductCode[39];
+    MSIINSTALLCONTEXT context;
+};
 
 // internal function declarations
 
+static HRESULT GetPossibleTargetProductCodes(
+    __in BURN_PACKAGES*     pPackages,
+    __deref_inout_ecount_opt(*pcPossibleTargetProductCodes) POSSIBLE_TARGETPRODUCT** prgPossibleTargetProductCodes,
+    __inout DWORD* pcPossibleTargetProductCodes
+    );
+static HRESULT AddPossibleTargetProduct(
+    __in STRINGDICT_HANDLE sdUniquePossibleTargetProductCodes,
+    __in_z LPCWSTR wzPossibleTargetProductCode,
+    __in MSIINSTALLCONTEXT context,
+    __deref_inout_ecount_opt(*pcPossibleTargetProducts) POSSIBLE_TARGETPRODUCT** prgPossibleTargetProducts,
+    __inout DWORD* pcPossibleTargetProducts
+    );
+static HRESULT AddDetectedTargetProduct(
+    __in BURN_PACKAGES* pPackages,
+    __in BURN_PACKAGE* pPackage,
+    __in DWORD dwOrder,
+    __in_z LPCWSTR wzProductCode,
+    __in MSIINSTALLCONTEXT context
+    );
 static void DeterminePatchChainedTarget(
     __in BURN_PACKAGES* pPackages,
     __in BURN_PACKAGE* pMspPackage,
     __in LPCWSTR wzTargetProductCode,
     __out BURN_PACKAGE** ppChainedTargetPackage,
     __out BOOL* pfSlipstreamed
-    );
-static HRESULT AddDetectedTargetProduct(
-    __in BURN_PACKAGES* pPackages,
-    __in BURN_PACKAGE* pPackage,
-    __in MSIINSTALLCONTEXT context,
-    __in DWORD dwOrder,
-    __in_z LPCWSTR wzProductCode
     );
 static HRESULT PlanTargetProduct(
     __in BOOTSTRAPPER_DISPLAY display,
@@ -117,11 +134,9 @@ extern "C" HRESULT MspEngineDetectInitialize(
 {
     AssertSz(pPackages->cPatchInfo, "MspEngineDetectInitialize() should only be called if there are MSP packages.");
 
-    static MSIINSTALLCONTEXT rgContexts[] = { MSIINSTALLCONTEXT_USERUNMANAGED, MSIINSTALLCONTEXT_USERMANAGED, MSIINSTALLCONTEXT_MACHINE };
-
     HRESULT hr = S_OK;
-    DWORD iProduct = 0;
-    WCHAR wzProductCode[MAX_GUID_CHARS + 1];
+    POSSIBLE_TARGETPRODUCT* rgPossibleTargetProductCodes = NULL;
+    DWORD cPossibleTargetProductCodes = 0;
 
 #ifdef DEBUG
     // All patch info should be initialized to zero.
@@ -133,56 +148,44 @@ extern "C" HRESULT MspEngineDetectInitialize(
     }
 #endif
 
-    // Loop through all products on the machine, testing the collective patch applicability
-    // against each product in all contexts. Store the result with the appropriate patch package.
-    do
+    // Figure out which product codes to target on the machine. In the worst case all products on the machine
+    // will be returned.
+    hr = GetPossibleTargetProductCodes(pPackages, &rgPossibleTargetProductCodes, &cPossibleTargetProductCodes);
+    ExitOnFailure(hr, "Failed to get possible target product codes.");
+
+    // Loop through possible target products, testing the collective patch applicability against each product in
+    // the appropriate context. Store the result with the appropriate patch package.
+    for (UINT iSearch = 0; iSearch < cPossibleTargetProductCodes; ++iSearch)
     {
-        hr = WiuEnumProducts(iProduct, wzProductCode);
+        POSSIBLE_TARGETPRODUCT* pPossibleTargetProduct = rgPossibleTargetProductCodes + iSearch;
+
+        LogId(REPORT_STANDARD, MSG_DETECT_CALCULATE_PATCH_APPLICABILITY, pPossibleTargetProduct->wzProductCode, LoggingMsiInstallContext(pPossibleTargetProduct->context));
+
+        hr = WiuDeterminePatchSequence(pPossibleTargetProduct->wzProductCode, NULL, pPossibleTargetProduct->context, pPackages->rgPatchInfo, pPackages->cPatchInfo);
         if (SUCCEEDED(hr))
         {
-            for (DWORD i = 0; i < countof(rgContexts); ++i)
+            for (DWORD iPatchInfo = 0; iPatchInfo < pPackages->cPatchInfo; ++iPatchInfo)
             {
-                hr = WiuDeterminePatchSequence(wzProductCode, NULL, rgContexts[i], pPackages->rgPatchInfo, pPackages->cPatchInfo);
-                if (SUCCEEDED(hr))
+                if (ERROR_SUCCESS == pPackages->rgPatchInfo[iPatchInfo].uStatus)
                 {
-                    for (DWORD iPatchInfo = 0; iPatchInfo < pPackages->cPatchInfo; ++iPatchInfo)
-                    {
-                        if (ERROR_SUCCESS == pPackages->rgPatchInfo[iPatchInfo].uStatus)
-                        {
-                            BURN_PACKAGE* pMspPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
-                            Assert(BURN_PACKAGE_TYPE_MSP == pMspPackage->type);
+                    BURN_PACKAGE* pMspPackage = pPackages->rgPatchInfoToPackage[iPatchInfo];
+                    Assert(BURN_PACKAGE_TYPE_MSP == pMspPackage->type);
 
-                            // Note that we do add superseded and obsolete MSP packages. Package Detect and Plan will sort them out later.
-                            hr = AddDetectedTargetProduct(pPackages, pMspPackage, rgContexts[i], pPackages->rgPatchInfo[iPatchInfo].dwOrder, wzProductCode);
-                            ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pMspPackage->sczId);
-                        }
-                        // TODO: should we log something for this error case?
-                    }
+                    // Note that we do add superseded and obsolete MSP packages. Package Detect and Plan will sort them out later.
+                    hr = AddDetectedTargetProduct(pPackages, pMspPackage, pPackages->rgPatchInfo[iPatchInfo].dwOrder, pPossibleTargetProduct->wzProductCode, pPossibleTargetProduct->context);
+                    ExitOnFailure1(hr, "Failed to add target product code to package: %ls", pMspPackage->sczId);
                 }
                 // TODO: should we log something for this error case?
             }
-
-            hr = S_OK; // always reset so we test all possible target products.
         }
-        else if (E_BADCONFIGURATION == hr)
-        {
-            // Skip this product and continue.
-            LogId(REPORT_STANDARD, MSG_DETECT_BAD_PRODUCT_CONFIGURATION, wzProductCode);
+        // TODO: should we log something for this error case?
 
-            hr = S_OK;
-        }
-
-        ++iProduct;
-
-    } while (SUCCEEDED(hr));
-
-    if (E_NOMOREITEMS == hr)
-    {
-        hr = S_OK;
+        hr = S_OK; // always reset so we test all possible target products.
     }
-    ExitOnFailure(hr, "Failed to test patches applicability against all products on the machine.");
 
 LExit:
+    ReleaseMem(rgPossibleTargetProductCodes);
+
     return hr;
 }
 
@@ -556,8 +559,7 @@ extern "C" HRESULT MspEngineExecutePackage(
         hr = WiuRemovePatches(sczPatches, pExecuteAction->mspTarget.sczTargetProductCode, sczProperties, &restart);
         ExitOnFailure(hr, "Failed to uninstall MSP package.");
 
-        hr = DependencyUnregisterPackage(pExecuteAction->mspTarget.pPackage);
-        ExitOnFailure(hr, "Failed to unregister the package dependency providers.");
+        DependencyUnregisterPackage(pExecuteAction->mspTarget.pPackage);
         break;
     }
 
@@ -617,12 +619,148 @@ extern "C" void MspEngineSlipstreamUpdateState(
 
 // internal helper functions
 
+static HRESULT GetPossibleTargetProductCodes(
+    __in BURN_PACKAGES* pPackages,
+    __deref_inout_ecount_opt(*pcPossibleTargetProducts) POSSIBLE_TARGETPRODUCT** prgPossibleTargetProducts,
+    __inout DWORD* pcPossibleTargetProducts
+    )
+{
+    HRESULT hr = S_OK;
+    STRINGDICT_HANDLE sdUniquePossibleTargetProductCodes = NULL;
+    WCHAR wzPossibleTargetProductCode[MAX_GUID_CHARS + 1];
+
+    // Use a dictionary to ensure we capture unique product codes. Otherwise, we could end up
+    // doing patch applicability for the same product code multiple times and that would confuse
+    // everything down stream.
+    hr = DictCreateStringList(&sdUniquePossibleTargetProductCodes, 5, DICT_FLAG_NONE);
+    ExitOnFailure(hr, "Failed to create unique target product codes.");
+
+    // If the patches target a specific set of product/upgrade codes, search only those. This
+    // should be much faster than searching all packages on the machine.
+    if (pPackages->rgPatchTargetCodes)
+    {
+        for (DWORD i = 0; i < pPackages->cPatchTargetCodes; ++i)
+        {
+            BURN_PATCH_TARGETCODE* pTargetCode = pPackages->rgPatchTargetCodes + i;
+
+            // If targeting a product, add the unique product code to the list.
+            if (BURN_PATCH_TARGETCODE_TYPE_PRODUCT == pTargetCode->type)
+            {
+                hr = AddPossibleTargetProduct(sdUniquePossibleTargetProductCodes, pTargetCode->sczTargetCode, MSIINSTALLCONTEXT_NONE, prgPossibleTargetProducts, pcPossibleTargetProducts);
+                ExitOnFailure(hr, "Failed to add product code to possible target product codes.");
+            }
+            else // must be an upgrade code.
+            {
+                Assert(BURN_PATCH_TARGETCODE_TYPE_UPGRADE == pTargetCode->type);
+
+                // Enumerate all unique related products to the target upgrade code.
+                for (DWORD iProduct = 0; SUCCEEDED(hr); ++iProduct)
+                {
+                    hr = WiuEnumRelatedProducts(pTargetCode->sczTargetCode, iProduct, wzPossibleTargetProductCode);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = AddPossibleTargetProduct(sdUniquePossibleTargetProductCodes, wzPossibleTargetProductCode, MSIINSTALLCONTEXT_NONE, prgPossibleTargetProducts, pcPossibleTargetProducts);
+                        ExitOnFailure(hr, "Failed to add upgrade product code to possible target product codes.");
+                    }
+                    else if (E_BADCONFIGURATION == hr)
+                    {
+                        // Skip product's with bad configuration and continue.
+                        LogId(REPORT_STANDARD, MSG_DETECT_BAD_PRODUCT_CONFIGURATION, wzPossibleTargetProductCode);
+
+                        hr = S_OK;
+                    }
+                }
+
+                if (E_NOMOREITEMS == hr)
+                {
+                    hr = S_OK;
+                }
+                ExitOnFailure1(hr, "Failed to enumerate all products to patch related to upgrade code: %ls", pTargetCode->sczTargetCode);
+            }
+        }
+    }
+    else // one more more patches didn't target specific products so we'll search everything on the machine.
+    {
+        for (DWORD iProduct = 0; SUCCEEDED(hr); ++iProduct)
+        {
+            MSIINSTALLCONTEXT context = MSIINSTALLCONTEXT_NONE;
+
+            hr = WiuEnumProductsEx(NULL, NULL, MSIINSTALLCONTEXT_ALL, iProduct, wzPossibleTargetProductCode, &context, NULL, NULL);
+            if (SUCCEEDED(hr))
+            {
+                hr = AddPossibleTargetProduct(sdUniquePossibleTargetProductCodes, wzPossibleTargetProductCode, context, prgPossibleTargetProducts, pcPossibleTargetProducts);
+                ExitOnFailure(hr, "Failed to add product code to search product codes.");
+            }
+            else if (E_BADCONFIGURATION == hr)
+            {
+                // Skip product's with bad configuration and continue.
+                LogId(REPORT_STANDARD, MSG_DETECT_BAD_PRODUCT_CONFIGURATION, wzPossibleTargetProductCode);
+
+                hr = S_OK;
+            }
+        }
+
+        if (E_NOMOREITEMS == hr)
+        {
+            hr = S_OK;
+        }
+        ExitOnFailure(hr, "Failed to enumerate all products on the machine for patches applicability.");
+    }
+
+LExit:
+    ReleaseDict(sdUniquePossibleTargetProductCodes);
+
+    return hr;
+}
+
+static HRESULT AddPossibleTargetProduct(
+    __in STRINGDICT_HANDLE sdUniquePossibleTargetProductCodes,
+    __in_z LPCWSTR wzPossibleTargetProductCode,
+    __in MSIINSTALLCONTEXT context,
+    __deref_inout_ecount_opt(*pcPossibleTargetProducts) POSSIBLE_TARGETPRODUCT** prgPossibleTargetProducts,
+    __inout DWORD* pcPossibleTargetProducts
+    )
+{
+    HRESULT hr = S_OK;
+
+    // Only add this possible target code if we haven't queried for it already.
+    if (E_NOTFOUND == DictKeyExists(sdUniquePossibleTargetProductCodes, wzPossibleTargetProductCode))
+    {
+        // If the install context is not known, ask the Windows Installer for it. If we can't get the context
+        // then bail.
+        if (MSIINSTALLCONTEXT_NONE == context)
+        {
+            hr = WiuEnumProductsEx(wzPossibleTargetProductCode, NULL, MSIINSTALLCONTEXT_ALL, 0, NULL, &context, NULL, NULL);
+            if (FAILED(hr))
+            {
+                ExitFunction1(hr = S_OK);
+            }
+        }
+
+        hr = DictAddKey(sdUniquePossibleTargetProductCodes, wzPossibleTargetProductCode);
+        ExitOnFailure(hr, "Failed to add possible target code to unique product codes.");
+
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgPossibleTargetProducts), *pcPossibleTargetProducts, sizeof(POSSIBLE_TARGETPRODUCT), 3);
+        ExitOnFailure(hr, "Failed to grow array of possible target products.");
+
+        hr = ::StringCchCopyW((*prgPossibleTargetProducts)[*pcPossibleTargetProducts].wzProductCode, countof(prgPossibleTargetProducts[*pcPossibleTargetProducts]->wzProductCode), wzPossibleTargetProductCode);
+        ExitOnFailure(hr, "Failed to copy possible target product code.");
+
+        (*prgPossibleTargetProducts)[*pcPossibleTargetProducts].context = context;
+
+        ++(*pcPossibleTargetProducts);
+    }
+
+LExit:
+    return hr;
+}
+
 static HRESULT AddDetectedTargetProduct(
     __in BURN_PACKAGES* pPackages,
     __in BURN_PACKAGE* pPackage,
-    __in MSIINSTALLCONTEXT context,
     __in DWORD dwOrder,
-    __in_z LPCWSTR wzProductCode
+    __in_z LPCWSTR wzProductCode,
+    __in MSIINSTALLCONTEXT context
     )
 {
     HRESULT hr = S_OK;
@@ -633,7 +771,7 @@ static HRESULT AddDetectedTargetProduct(
     hr = ::StringCchCopyW(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode, countof(pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].wzTargetProductCode), wzProductCode);
     ExitOnFailure(hr, "Failed to copy target product code.");
 
-    DeterminePatchChainedTarget(pPackages, pPackage, wzProductCode, 
+    DeterminePatchChainedTarget(pPackages, pPackage, wzProductCode,
                                 &pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].pChainedTargetPackage,
                                 &pPackage->Msp.rgTargetProducts[pPackage->Msp.cTargetProductCodes].fSlipstream);
 
