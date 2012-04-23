@@ -717,7 +717,7 @@ LExit:
     ReleaseHandle(hCacheThread);
 
     nResult = pEngineState->userExperience.pUserExperience->OnApplyComplete(hr, restart);
-    if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == restart || IDRESTART == nResult)
+    if (IDRESTART == nResult)
     {
         pEngineState->fRestart = TRUE;
     }

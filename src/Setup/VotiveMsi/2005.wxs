@@ -79,40 +79,55 @@
 
         <ComponentGroup Id="Votive$(var.VsVersion)SchemaComponents" Directory="VS2005_SCHEMAS_DIR">
             <Component>
-                <File Id="ThmutilSchema$(var.VsVersion)" Source="thmutil.xsd" />
+                <File Id="LuxSchema$(var.VsVersion)" Source="lux\wixext\Xsd\lux.xsd" />
             </Component>
             <Component>
-                <File Id="WixSchema$(var.VsVersion)" Source="wix.xsd" />
+                <File Id="ThmutilSchema$(var.VsVersion)" Source="dutil\Xsd\thmutil.xsd" />
             </Component>
             <Component>
-                <File Id="WixLocSchema$(var.VsVersion)" Source="wixloc.xsd" />
+                <File Id="WixSchema$(var.VsVersion)" Source="wix\Xsd\wix.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdDifxApp$(var.VsVersion)" Source="difxapp.xsd" />
+                <File Id="WixLocSchema$(var.VsVersion)" Source="wix\Xsd\wixloc.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdFirewall$(var.VsVersion)" Source="firewall.xsd" />
+                <File Id="ExtensionXsdBalSchema$(var.VsVersion)" Source="ext\BalExtension\wixext\Xsd\bal.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdGaming$(var.VsVersion)" Source="gaming.xsd" />
+                <File Id="ExtensionXsdComplus$(var.VsVersion)" Source="ext\ComPlusExtension\wixext\xsd\complus.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdIis$(var.VsVersion)" Source="iis.xsd" />
+                <File Id="ExtensionXsdDifxApp$(var.VsVersion)" Source="ext\DifxAppExtension\wixext\Xsd\difxapp.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdNetFx$(var.VsVersion)" Source="netfx.xsd" />
+                <File Id="ExtensionXsdFirewall$(var.VsVersion)" Source="ext\FirewallExtension\wixext\Xsd\firewall.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdPS$(var.VsVersion)" Source="ps.xsd" />
+                <File Id="ExtensionXsdGaming$(var.VsVersion)" Source="ext\GamingExtension\wixext\Xsd\gaming.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdSql$(var.VsVersion)" Source="sql.xsd" />
+                <File Id="ExtensionXsdIis$(var.VsVersion)" Source="ext\IIsExtension\wixext\xsd\iis.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdUtil$(var.VsVersion)" Source="util.xsd" />
+                <File Id="ExtensionXsdMsmq$(var.VsVersion)" Source="ext\MsmqExtension\wixext\xsd\msmq.xsd" />
             </Component>
             <Component>
-                <File Id="ExtensionXsdVS$(var.VsVersion)" Source="vs.xsd" />
+                <File Id="ExtensionXsdNetFx$(var.VsVersion)" Source="ext\NetFxExtension\wixext\Xsd\netfx.xsd" />
+            </Component>
+            <Component>
+                <File Id="ExtensionXsdPS$(var.VsVersion)" Source="ext\PSExtension\wixext\xsd\ps.xsd" />
+            </Component>
+            <Component>
+                <File Id="ExtensionXsdSql$(var.VsVersion)" Source="ext\SqlExtension\wixext\Xsd\sql.xsd" />
+            </Component>
+            <Component>
+                <File Id="ExtensionXsdTag$(var.VsVersion)" Source="ext\TagExtension\wixext\Xsd\tag.xsd" />
+            </Component>
+            <Component>
+                <File Id="ExtensionXsdUtil$(var.VsVersion)" Source="ext\UtilExtension\wixext\Xsd\util.xsd" />
+            </Component>
+            <Component>
+                <File Id="ExtensionXsdVS$(var.VsVersion)" Source="ext\VSExtension\wixext\xsd\vs.xsd" />
             </Component>
         </ComponentGroup>
 

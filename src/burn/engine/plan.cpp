@@ -448,11 +448,11 @@ extern "C" HRESULT PlanExecutePackage(
     // Exe packages require the package for all operations (even uninstall).
     if (BURN_PACKAGE_TYPE_EXE == pPackage->type)
     {
-        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute || BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback);
+        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->execute);
     }
     else // the other engine types can uninstall without the original package.
     {
-        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->execute || BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->rollback);
+        fNeedsCache = (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->execute);
     }
 
     if (fNeedsCache)
@@ -467,6 +467,14 @@ extern "C" HRESULT PlanExecutePackage(
         hr = AddCachePackage(pPlan, pPackage, phSyncpointEvent);
         ExitOnFailure(hr, "Failed to plan cache package.");
     }
+    else if (BURN_CACHE_STATE_COMPLETE != pPackage->cache && // if the package is not in the cache, disable any rollback that would require the package from the cache.
+             (BOOTSTRAPPER_ACTION_STATE_UNINSTALL < pPackage->rollback || (BURN_PACKAGE_TYPE_EXE == pPackage->type && BOOTSTRAPPER_ACTION_STATE_NONE != pPackage->rollback))
+            )
+    {
+        LogId(REPORT_STANDARD, MSG_PLAN_DISABLING_ROLLBACK_NO_CACHE, pPackage->sczId, LoggingCacheStateToString(pPackage->cache), LoggingActionStateToString(pPackage->rollback));
+        pPackage->rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+    }
+
 
     // Add the cache and install size to estimated size if it will be on the machine at the end of the install
     if (BOOTSTRAPPER_REQUEST_STATE_PRESENT == pPackage->requested || (BOOTSTRAPPER_PACKAGE_STATE_PRESENT == pPackage->currentState && BOOTSTRAPPER_REQUEST_STATE_ABSENT < pPackage->requested))

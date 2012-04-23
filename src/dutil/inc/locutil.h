@@ -40,8 +40,12 @@ struct LOC_CONTROL
     LPWSTR wzText;
 };
 
+const int WIX_LOCALIZATION_LANGUAGE_NOT_SET = INT_MAX;
+
 struct WIX_LOCALIZATION
 {
+    DWORD dwLangId;
+
     DWORD cLocStrings;
     LOC_STRING* rgLocStrings;
 

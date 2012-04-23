@@ -609,6 +609,7 @@
     <xs:annotation>
       <xs:documentation>Describes a single msp package to install.</xs:documentation>
       <xs:appinfo>
+        <xse:seeAlso ref="SlipstreamMsp" />
         <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Chain" />
         <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="PackageGroup" />
       </xs:appinfo>
@@ -645,6 +646,14 @@
       <xs:attribute name="PerMachine" type="YesNoTypeUnion">
         <xs:annotation>
           <xs:documentation>Indicates the package must be executed elevated. The default is "no".</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Slipstream" type="YesNoTypeUnion">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies whether to automatically slipstream the patch for any target msi packages in the chain. The default is "no".
+            Even when the value is "no", you can still author the SlipstreamMsp element under MsiPackage elements as desired.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -989,12 +998,13 @@
   </xs:element>
   <xs:element name="SlipstreamMsp">
     <xs:annotation>
-      <xs:documentation>
-                Specifies a patch included in the same bundle that is installed when the parent MSI package
-                is installed.
-            </xs:documentation>
+      <xs:documentation>Specifies a patch included in the same bundle that is installed when the parent MSI package is installed.</xs:documentation>
       <xs:appinfo>
+        <xse:seeAlso ref="MspPackage" />
         <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="MsiPackage" />
+        <xse:remarks>
+          <html:p>You can also specify that any MspPackage elements in the chain are automatically slipstreamed by setting the Slipstream attribute of an MspPackage to "yes". This will reduce the amount of authoring you need to write and will determine which msi packages can slipstream patches when building a bundle.</html:p>
+        </xse:remarks>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexType>

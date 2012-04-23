@@ -2050,3 +2050,35 @@ RobMen: Add Software Id Tag extension that implements ISO/IEC 19770-2 spec.
 
 WixBuild: Version 3.6.2816.0
 
+BobArnson: Expose .wxl language as LCID; use it to show WixStdBA error messages
+           localized to the loaded .wxl's locale, if a particular error message
+           is available as a system string.
+
+RobMen: Fix Burn crash when processing files in use message from exe packages.
+
+RobMen: SFBUG:3519134 - correctly install XSDs for Visual Studio.
+        SFBUG:3519138 - fix May in timeutil.cpp.
+        SFBUG:3519014 - remove links to dead documentation.
+        SFBUG:3518547 - add Bundle/@Version to Burn built-in variables.
+
+RobMen: SFBUG:3518549 - center the wixstdba on the monitor.
+        SFBUG:3518511 - show Bundle engine icon in wixstdba if theme doesn't
+                        provide one.
+
+RobMen: Do not prompt for source in Burn just to get rollback packages.
+
+RobMen: SFBUG:3519429 - add Tag extension to wix.chm.
+
+RobMen: SFBUG:3518709 - correctly schedule VsixPackage custom actions in
+                        per-machine install.
+
+RobMen: SFBUG:3517306 - wixstdba correctly implements help page.
+
+RobMen: SFBUG:3518448 - Allow BA to postpone force reboots.
+
+HeathS: SFBUG:3517597 - Added support to automatically slipstream MSPs.
+
+RobMen: SFBUG:3519867 - fix DirectorySearch and FileSearch elements.
+
+WixBuild: Version 3.6.2823.0
+

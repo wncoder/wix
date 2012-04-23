@@ -128,6 +128,7 @@
     <Compile Include="ProcessedStreamEventHandler.cs" />
     <Compile Include="Row.cs" />
     <Compile Include="RowCollection.cs" />
+    <Compile Include="RowDictionary.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="SectionCollection.cs" />
     <Compile Include="Serialize\CodeDomInterfaces.cs" />

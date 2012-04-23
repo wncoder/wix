@@ -232,6 +232,9 @@
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\SqlExtension\wixext\Xsd">
         <include name="sql.xsd" />
       </fileset>
+      <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\TagExtension\wixext\Xsd">
+        <include name="tag.xsd" />
+      </fileset>
       <fileset prefix="doc" basedir="${dir.wixroot}\src\ext\UtilExtension\wixext\Xsd">
         <include name="util.xsd" />
       </fileset>

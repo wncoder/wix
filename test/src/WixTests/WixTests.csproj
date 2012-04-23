@@ -272,8 +272,15 @@
       <Link>Burn\SlipstreamTests\BundleB.wxs</Link>
       <SubType>Designer</SubType>
     </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\BundleC.wxs">
+      <Link>Burn\SlipstreamTests\BundleC.wxs</Link>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="..\..\data\Burn\SlipstreamTests\PatchA.wxs">
       <Link>Burn\SlipstreamTests\PatchA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SlipstreamTests\PatchB.wxs">
+      <Link>Burn\SlipstreamTests\PatchB.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\RegistrationTests\BundleA.wxs">
       <Link>Burn\RegistrationTests\BundleA.wxs</Link>

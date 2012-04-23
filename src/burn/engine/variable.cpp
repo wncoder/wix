@@ -155,6 +155,10 @@ static HRESULT InitializeVariableInstallerVersion(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT InitializeVariableVersion(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 static HRESULT InitializeVariableLogonUser(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
@@ -236,6 +240,7 @@ extern "C" HRESULT VariableInitialize(
         {BURN_BUNDLE_ELEVATED, InitializeVariableNumeric, 0},
         {BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)L""},
         {BURN_BUNDLE_TAG, InitializeVariableString, (DWORD_PTR)L""},
+        {BURN_BUNDLE_VERSION, InitializeVariableVersion, 0},
     };
 
     for (DWORD i = 0; i < countof(vrgBuiltInVariables); ++i)
@@ -1842,6 +1847,21 @@ static HRESULT InitializeVariableInstallerVersion(
 LExit:
     ReleaseStr(sczVersion);
 
+    return hr;
+}
+
+static HRESULT InitializeVariableVersion(
+    __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+
+    // set value
+    hr = BVariantSetVersion(pValue, static_cast<DWORD64>(dwpData));
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
     return hr;
 }
 

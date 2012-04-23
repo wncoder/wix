@@ -28,6 +28,7 @@
     <BindInputPaths Include="$(OutputPath_x86)" />
     <BindInputPaths Include="$(OutputPath_x64)" />
     <BindInputPaths Include="$(OutputPath_ia64)" />
+    <BindInputPaths Include="$(WIX_ROOT)src" />
     <BindInputPaths Include="$(WIX_ROOT)src\dutil\inc" />
     <BindInputPaths Include="$(WIX_ROOT)src\dutil\xsd" />
   </ItemGroup>

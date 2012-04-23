@@ -449,6 +449,9 @@ extern "C" HRESULT RegistrationSetVariables(
     hr = VariableSetString(pVariables, BURN_BUNDLE_TAG, pRegistration->sczTag, TRUE);
     ExitOnFailure(hr, "Failed to overwrite the bundle tag built-in variable.");
 
+    hr = VariableSetVersion(pVariables, BURN_BUNDLE_VERSION, pRegistration->qwVersion, TRUE);
+    ExitOnFailure(hr, "Failed to overwrite the bundle tag built-in variable.");
+
 LExit:
     ReleaseStr(scz);
     return hr;

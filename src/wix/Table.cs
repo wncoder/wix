@@ -123,6 +123,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <returns>Row created in table.</returns>
         public Row CreateRow(SourceLineNumberCollection sourceLineNumbers)
         {
+            return this.CreateRow(sourceLineNumbers, true);
+        }
+
+        /// <summary>
+        /// Creates a new row in the table.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Original source lines for this row.</param>
+        /// <param name="add">Specifies whether to only create the row or add it to the table automatically.</param>
+        /// <returns>Row created in table.</returns>
+        public Row CreateRow(SourceLineNumberCollection sourceLineNumbers, bool add)
+        {
             Row row;
 
             switch (this.Name)
@@ -187,7 +198,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     break;
             }
 
-            this.rows.Add(row);
+            if (add)
+            {
+                this.rows.Add(row);
+            }
 
             return row;
         }

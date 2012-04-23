@@ -31,7 +31,7 @@ namespace CfgTests
             ExitOnFailure(hr, "Failed to get directory to temp INI file");
 
             hr = DirEnsureDelete(sczTempIniFileDir, TRUE, TRUE);
-            if (E_FILENOTFOUND == hr)
+            if (E_PATHNOTFOUND == hr)
             {
                 hr = S_OK;
             }

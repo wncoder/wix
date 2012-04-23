@@ -15,6 +15,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
     using System.Text;
 
     /// <summary>
+    /// Attributes for the PatchTargetCode table.
+    /// </summary>
+    [Flags]
+    public enum WixBundlePatchTargetCodeAttributes : int
+    {
+        None = 0,
+
+        /// <summary>
+        /// The transform targets a specific ProductCode.
+        /// </summary>
+        TargetsProductCode = 1,
+
+        /// <summary>
+        /// The transform targets a specific UpgradeCode.
+        /// </summary>
+        TargetsUpgradeCode = 2,
+    }
+
+    /// <summary>
     /// Specialization of a row for the PatchTargetCode table.
     /// </summary>
     public class WixBundlePatchTargetCodeRow : Row
@@ -51,10 +70,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
             set { this.Fields[1].Data = value; }
         }
 
-        public bool Product
+        public WixBundlePatchTargetCodeAttributes Attributes
         {
-            get { return (null != this.Fields[2].Data) && (1 == (int)this.Fields[2].Data); }
-            set { this.Fields[2].Data = value ? 1 : 0; }
+            get { return (WixBundlePatchTargetCodeAttributes)this.Fields[2].Data; }
+            set { this.Fields[2].Data = (int)value; }
+        }
+
+        public bool TargetsProductCode
+        {
+            get { return 0 != (WixBundlePatchTargetCodeAttributes.TargetsProductCode & this.Attributes); }
+        }
+
+        public bool TargetsUpgradeCode
+        {
+            get { return 0 != (WixBundlePatchTargetCodeAttributes.TargetsUpgradeCode & this.Attributes); }
         }
     }
 }

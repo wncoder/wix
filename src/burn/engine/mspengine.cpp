@@ -178,7 +178,10 @@ extern "C" HRESULT MspEngineDetectInitialize(
                 // TODO: should we log something for this error case?
             }
         }
-        // TODO: should we log something for this error case?
+        else
+        {
+            LogId(REPORT_STANDARD, MSG_DETECT_FAILED_CALCULATE_PATCH_APPLICABILITY, pPossibleTargetProduct->wzProductCode, LoggingMsiInstallContext(pPossibleTargetProduct->context), hr);
+        }
 
         hr = S_OK; // always reset so we test all possible target products.
     }

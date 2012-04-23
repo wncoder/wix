@@ -27,6 +27,7 @@ enum WIXSTDBA_STATE
     WIXSTDBA_STATE_OPTIONS,
     WIXSTDBA_STATE_INITIALIZING,
     WIXSTDBA_STATE_INITIALIZED,
+    WIXSTDBA_STATE_HELP,
     WIXSTDBA_STATE_DETECTING,
     WIXSTDBA_STATE_DETECTED,
     WIXSTDBA_STATE_PLANNING,
@@ -42,7 +43,8 @@ enum WIXSTDBA_STATE
 
 enum WM_WIXSTDBA
 {
-    WM_WIXSTDBA_DETECT_PACKAGES = WM_APP + 100,
+    WM_WIXSTDBA_SHOW_HELP = WM_APP + 100,
+    WM_WIXSTDBA_DETECT_PACKAGES,
     WM_WIXSTDBA_PLAN_PACKAGES,
     WM_WIXSTDBA_APPLY_PACKAGES,
     WM_WIXSTDBA_CHANGE_STATE,
@@ -81,6 +83,9 @@ enum WIXSTDBA_CONTROL
     // Non-paged controls
     WIXSTDBA_CONTROL_CLOSE_BUTTON = THEME_FIRST_ASSIGN_CONTROL_ID,
     WIXSTDBA_CONTROL_MINIMIZE_BUTTON,
+
+    // Help page
+    WIXSTDBA_CONTROL_HELP_CANCEL_BUTTON,
 
     // Welcome page
     WIXSTDBA_CONTROL_INSTALL_BUTTON,
@@ -134,6 +139,8 @@ enum WIXSTDBA_CONTROL
 static THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { WIXSTDBA_CONTROL_CLOSE_BUTTON, L"CloseButton" },
     { WIXSTDBA_CONTROL_MINIMIZE_BUTTON, L"MinimizeButton" },
+
+    { WIXSTDBA_CONTROL_HELP_CANCEL_BUTTON, L"HelpCancelButton" },
 
     { WIXSTDBA_CONTROL_INSTALL_BUTTON, L"InstallButton" },
     { WIXSTDBA_CONTROL_OPTIONS_BUTTON, L"OptionsButton" },
@@ -405,14 +412,14 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(int) OnError(
-        __in BOOTSTRAPPER_ERROR_TYPE /*errorType*/,
+        __in BOOTSTRAPPER_ERROR_TYPE errorType,
         __in LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR wzError,
         __in DWORD dwUIHint,
         __in DWORD /*cData*/,
         __in_ecount_z_opt(cData) LPCWSTR* /*rgwzData*/,
-        __in int nRecommendation
+        __in int /*nRecommendation*/
         )
     {
         int nResult = IDNOACTION;
@@ -431,7 +438,7 @@ public: // IBootstrapperApplication
             BalRetryErrorOccurred(wzPackageId, dwCode);
 
             // If no error message was provided, use the error code to try and get an error message.
-            if (!wzError || !*wzError)
+            if (!wzError || !*wzError || BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER != errorType)
             {
                 HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
                 if (FAILED(hr) || !sczError || !*sczError)
@@ -669,7 +676,7 @@ private: // privates
 
         // Okay, we're ready for packages now.
         pThis->SetState(WIXSTDBA_STATE_INITIALIZED, hr);
-        ::PostMessageW(pThis->m_hWnd, WM_WIXSTDBA_DETECT_PACKAGES, 0, 0);
+        ::PostMessageW(pThis->m_hWnd, BOOTSTRAPPER_ACTION_HELP == pThis->m_command.action ? WM_WIXSTDBA_SHOW_HELP : WM_WIXSTDBA_DETECT_PACKAGES, 0, 0);
 
         // message pump
         while (0 != (fRet = ::GetMessageW(&msg, NULL, 0, 0)))
@@ -826,6 +833,11 @@ private: // privates
 
         hr = LocLoadFromFile(sczLocPath, &m_pWixLoc);
         BalExitOnFailure1(hr, "Failed to load loc file from path: %ls", sczLocPath);
+
+        if (WIX_LOCALIZATION_LANGUAGE_NOT_SET != m_pWixLoc->dwLangId)
+        {
+            ::SetThreadLocale(m_pWixLoc->dwLangId);
+        }
 
         hr = StrAllocString(&m_sczConfirmCloseMessage, L"#(loc.ConfirmCancelMessage)", 0);
         ExitOnFailure(hr, "Failed to initialize confirm message loc identifier.");
@@ -984,13 +996,29 @@ private: // privates
     HRESULT CreateMainWindow()
     {
         HRESULT hr = S_OK;
+        HICON hIcon = reinterpret_cast<HICON>(m_pTheme->hIcon);
         WNDCLASSW wc = { };
         DWORD dwWindowStyle = 0;
+        int x = CW_USEDEFAULT;
+        int y = CW_USEDEFAULT;
+        POINT ptCursor = { };
+        HMONITOR hMonitor = NULL;
+        MONITORINFO mi = { };
+
+        // If the theme did not provide an icon, try using the icon from the bundle engine.
+        if (!hIcon)
+        {
+            HMODULE hBootstrapperEngine = ::GetModuleHandleW(NULL);
+            if (hBootstrapperEngine)
+            {
+                hIcon = ::LoadIconW(hBootstrapperEngine, MAKEINTRESOURCEW(1));
+            }
+        }
 
         // Register the window class and create the window.
         wc.lpfnWndProc = CWixStandardBootstrapperApplication::WndProc;
         wc.hInstance = m_hModule;
-        wc.hIcon = reinterpret_cast<HICON>(m_pTheme->hIcon);
+        wc.hIcon = hIcon;
         wc.hCursor = ::LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
         wc.hbrBackground = m_pTheme->rgFonts[m_pTheme->dwFontId].hBackground;
         wc.lpszMenuName = NULL;
@@ -1009,7 +1037,22 @@ private: // privates
             dwWindowStyle &= ~WS_VISIBLE;
         }
 
-        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->sczCaption, dwWindowStyle, CW_USEDEFAULT, CW_USEDEFAULT, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
+        // Center the window on the monitor with the mouse.
+        if (::GetCursorPos(&ptCursor))
+        {
+            hMonitor = ::MonitorFromPoint(ptCursor, MONITOR_DEFAULTTONEAREST);
+            if (hMonitor)
+            {
+                mi.cbSize = sizeof(mi);
+                if (::GetMonitorInfoW(hMonitor, &mi))
+                {
+                    x = mi.rcWork.left + (mi.rcWork.right  - mi.rcWork.left - m_pTheme->nWidth) / 2;
+                    y = mi.rcWork.top  + (mi.rcWork.bottom - mi.rcWork.top  - m_pTheme->nHeight) / 2;
+                }
+            }
+        }
+
+        m_hWnd = ::CreateWindowExW(0, wc.lpszClassName, m_pTheme->sczCaption, dwWindowStyle, x, y, m_pTheme->nWidth, m_pTheme->nHeight, HWND_DESKTOP, NULL, m_hModule, this);
         ExitOnNullWithLastError(m_hWnd, hr, "Failed to create window.");
 
         hr = S_OK;
@@ -1091,6 +1134,10 @@ private: // privates
             ::PostQuitMessage(0);
             break;
 
+        case WM_WIXSTDBA_SHOW_HELP:
+            pBA->OnShowHelp();
+            return 0;
+
         case WM_WIXSTDBA_DETECT_PACKAGES:
             pBA->OnDetect();
             return 0;
@@ -1151,6 +1198,7 @@ private: // privates
                 pBA->OnClickRestartButton();
                 return 0;
 
+            case WIXSTDBA_CONTROL_HELP_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_WELCOME_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_MODIFY_CANCEL_BUTTON: __fallthrough;
             case WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON: __fallthrough;
@@ -1284,6 +1332,19 @@ private: // privates
         ReleaseStr(sczText);
 
         return SUCCEEDED(hr);
+    }
+
+
+    //
+    // OnShowHelp - display the help page.
+    //
+    void OnShowHelp()
+    {
+        SetState(WIXSTDBA_STATE_HELP, S_OK);
+
+        m_pEngine->CloseSplashScreen();
+
+        return;
     }
 
 
@@ -1541,8 +1602,8 @@ private: // privates
     {
         BOOL fClose = FALSE;
 
-        // If we've already succeeded or failed, just close (prompts are annoying if the bootstrapper is done).
-        if (WIXSTDBA_STATE_APPLIED <= m_state)
+        // If we've already succeeded or failed or showing the help page, just close (prompts are annoying if the bootstrapper is done).
+        if (WIXSTDBA_STATE_APPLIED <= m_state || WIXSTDBA_STATE_HELP == m_state)
         {
             fClose = TRUE;
         }
@@ -1834,7 +1895,14 @@ private: // privates
         {
             switch (state)
             {
-            case WIXSTDBA_STATE_INITIALIZED: __fallthrough;
+            case WIXSTDBA_STATE_INITIALIZED:
+                *pdwPageId = BOOTSTRAPPER_ACTION_HELP == m_command.action ? m_rgdwPageIds[WIXSTDBA_PAGE_HELP] : m_rgdwPageIds[WIXSTDBA_PAGE_LOADING];
+                break;
+
+            case WIXSTDBA_STATE_HELP:
+                *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_HELP];
+                break;
+
             case WIXSTDBA_STATE_DETECTING:
                 *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_LOADING] ? m_rgdwPageIds[WIXSTDBA_PAGE_LOADING] : m_rgdwPageIds[WIXSTDBA_PAGE_PROGRESS_PASSIVE] ? m_rgdwPageIds[WIXSTDBA_PAGE_PROGRESS_PASSIVE] : m_rgdwPageIds[WIXSTDBA_PAGE_PROGRESS];
                 break;
@@ -1863,7 +1931,14 @@ private: // privates
                 *pdwPageId = 0;
                 break;
 
-            case WIXSTDBA_STATE_INITIALIZED: __fallthrough;
+            case WIXSTDBA_STATE_INITIALIZED:
+                *pdwPageId = BOOTSTRAPPER_ACTION_HELP == m_command.action ? m_rgdwPageIds[WIXSTDBA_PAGE_HELP] : m_rgdwPageIds[WIXSTDBA_PAGE_LOADING];
+                break;
+
+            case WIXSTDBA_STATE_HELP:
+                *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_HELP];
+                break;
+
             case WIXSTDBA_STATE_DETECTING:
                 *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_LOADING];
                 break;
@@ -1871,10 +1946,6 @@ private: // privates
             case WIXSTDBA_STATE_DETECTED:
                 switch (m_command.action)
                 {
-                case BOOTSTRAPPER_ACTION_HELP:
-                    *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_HELP] ? m_rgdwPageIds[WIXSTDBA_PAGE_HELP] : m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL];
-                    break;
-
                 case BOOTSTRAPPER_ACTION_INSTALL:
                     *pdwPageId = m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL];
                     break;
@@ -1953,8 +2024,8 @@ public:
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));
 
-        // Pre-req BA shouldn't be doing layout
-        if (fPrereq && BOOTSTRAPPER_ACTION_LAYOUT == m_command.action)
+        // Pre-req BA should only show help or do an install (to launch the Managed BA which can then do the right action).
+        if (fPrereq && BOOTSTRAPPER_ACTION_HELP != m_command.action && BOOTSTRAPPER_ACTION_INSTALL != m_command.action)
         {
             m_command.action = BOOTSTRAPPER_ACTION_INSTALL;
         }

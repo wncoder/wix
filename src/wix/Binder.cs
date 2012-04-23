@@ -3231,6 +3231,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // Determine patches to automatically slipstream.
+            this.AutomaticallySlipstreamPatches(bundle, allPackages.Values);
+
             // NOTE: All payloads should be generated before here with the exception of specific engine and ux data files.
 
             ArrayList fileTransfers = new ArrayList();
@@ -3659,6 +3662,91 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
+        private void AutomaticallySlipstreamPatches(Output bundle, ICollection<ChainPackageInfo> packages)
+        {
+            List<ChainPackageInfo> msiPackages = new List<ChainPackageInfo>();
+            Dictionary<string, List<WixBundlePatchTargetCodeRow>> targetsProductCode = new Dictionary<string, List<WixBundlePatchTargetCodeRow>>();
+            Dictionary<string, List<WixBundlePatchTargetCodeRow>> targetsUpgradeCode = new Dictionary<string, List<WixBundlePatchTargetCodeRow>>();
+
+            foreach (ChainPackageInfo package in packages)
+            {
+                if (Compiler.ChainPackageType.Msi == package.ChainPackageType)
+                {
+                    // Keep track of all MSI packages.
+                    msiPackages.Add(package);
+                }
+                else if (Compiler.ChainPackageType.Msp == package.ChainPackageType && package.Slipstream)
+                {
+                    // Index target ProductCodes and UpgradeCodes for slipstreamed MSPs.
+                    foreach (WixBundlePatchTargetCodeRow row in package.TargetCodes)
+                    {
+                        if (row.TargetsProductCode)
+                        {
+                            List<WixBundlePatchTargetCodeRow> rows;
+                            if (!targetsProductCode.TryGetValue(row.TargetCode, out rows))
+                            {
+                                rows = new List<WixBundlePatchTargetCodeRow>();
+                                targetsProductCode.Add(row.TargetCode, rows);
+                            }
+
+                            rows.Add(row);
+                        }
+                        else if (row.TargetsUpgradeCode)
+                        {
+                            List<WixBundlePatchTargetCodeRow> rows;
+                            if (!targetsUpgradeCode.TryGetValue(row.TargetCode, out rows))
+                            {
+                                rows = new List<WixBundlePatchTargetCodeRow>();
+                                targetsUpgradeCode.Add(row.TargetCode, rows);
+                            }
+                        }
+                    }
+                }
+            }
+
+            Table slipstreamMspTable = bundle.EnsureTable(this.core.TableDefinitions["SlipstreamMsp"]);
+            RowDictionary<Row> slipstreamMspRows = new RowDictionary<Row>(slipstreamMspTable);
+
+            // Loop through the MSI and slipstream patches targeting it.
+            foreach (ChainPackageInfo msi in msiPackages)
+            {
+                List<WixBundlePatchTargetCodeRow> rows;
+                if (targetsProductCode.TryGetValue(msi.ProductCode, out rows))
+                {
+                    foreach (WixBundlePatchTargetCodeRow row in rows)
+                    {
+                        Row slipstreaMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
+                        slipstreaMspRow[0] = msi.Id;
+                        slipstreaMspRow[1] = row.MspPackageId;
+
+                        if (slipstreamMspRows.TryAdd(slipstreaMspRow))
+                        {
+                            slipstreamMspTable.Rows.Add(slipstreaMspRow);
+                        }
+                    }
+
+                    rows = null;
+                }
+
+                if (targetsUpgradeCode.TryGetValue(msi.UpgradeCode, out rows))
+                {
+                    foreach (WixBundlePatchTargetCodeRow row in rows)
+                    {
+                        Row slipstreaMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
+                        slipstreaMspRow[0] = msi.Id;
+                        slipstreaMspRow[1] = row.MspPackageId;
+
+                        if (slipstreamMspRows.TryAdd(slipstreaMspRow))
+                        {
+                            slipstreamMspTable.Rows.Add(slipstreaMspRow);
+                        }
+                    }
+
+                    rows = null;
+                }
+            }
+        }
+
         private void PopulateBundleInfoFromChain(BundleInfo bundleInfo, List<ChainPackageInfo> chainPackages)
         {
             bool hasPerMachineNonPermanentPackages = false;
@@ -4076,7 +4164,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         // product codes, add the patch list to the overall list.
                         if (null != targetCodes)
                         {
-                            if (null != package.TargetCodes)
+                            if (!package.TargetUnspecified)
                             {
                                 targetCodes.AddRange(package.TargetCodes);
                             }
@@ -4182,7 +4270,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         writer.WriteStartElement("PatchTargetCode");
                         writer.WriteAttributeString("TargetCode", targetCode.TargetCode);
-                        writer.WriteAttributeString("Product", targetCode.Product ? "yes" : "no");
+                        writer.WriteAttributeString("Product", targetCode.TargetsProductCode ? "yes" : "no");
                         writer.WriteEndElement();
                     }
                 }
@@ -7244,6 +7332,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.CacheId = cacheId;
                 this.Permanent = (BundlePackageAttributes.Permanent == (attributes & BundlePackageAttributes.Permanent));
                 this.Visible = (BundlePackageAttributes.Visible == (attributes & BundlePackageAttributes.Visible));
+                this.Slipstream = (BundlePackageAttributes.Slipstream == (attributes & BundlePackageAttributes.Slipstream));
                 this.Vital = (YesNoType.Yes == vital); // true only when specifically requested.
                 this.DetectCondition = detectCondition;
                 this.MsuKB = msuKB;
@@ -7261,6 +7350,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.SlipstreamMsps = new List<string>();
                 this.ExitCodes = new List<ExitCodeInfo>();
                 this.Provides = new ProvidesDependencyCollection();
+                this.TargetCodes = new RowDictionary<WixBundlePatchTargetCodeRow>();
 
                 // Start the package size with the package's payload size.
                 this.Size = this.PackagePayload.FileSize;
@@ -7328,6 +7418,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public bool Permanent { get; private set; }
             public string Version { get; private set; }
             public bool Visible { get; private set; }
+            public bool Slipstream { get; private set; }
             public bool Vital { get; private set; }
             public bool Repairable { get; private set; }
             public string DetectCondition { get; private set; }
@@ -7352,7 +7443,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             public List<string> SlipstreamMsps { get; private set; }
             public List<ExitCodeInfo> ExitCodes { get; private set; }
             public ProvidesDependencyCollection Provides { get; private set; }
-            public List<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
+            public RowDictionary<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
+            public bool TargetUnspecified { get; private set; }
 
             public RollbackBoundaryInfo RollbackBoundary { get; set; }
             public string RollbackBoundaryBackwardId { get; set; }
@@ -7791,44 +7883,46 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
 
-                    List<WixBundlePatchTargetCodeRow> targetCodes = new List<WixBundlePatchTargetCodeRow>();
                     XmlDocument doc = new XmlDocument();
                     doc.LoadXml(this.PatchXml);
 
                     XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
                     nsmgr.AddNamespace("p", "http://www.microsoft.com/msi/patch_applicability.xsd");
+
                     foreach (XmlNode node in doc.SelectNodes("/p:MsiPatch/p:TargetProduct", nsmgr))
                     {
                         // If this patch targes a product code, this is the best case.
                         XmlNode targetCode = node.SelectSingleNode("p:TargetProductCode", nsmgr);
-                        bool targetProduct = false;
+                        WixBundlePatchTargetCodeAttributes attributes = WixBundlePatchTargetCodeAttributes.None;
+
                         if (null != targetCode)
                         {
-                            targetProduct = true;
+                            attributes = WixBundlePatchTargetCodeAttributes.TargetsProductCode;
                         }
                         else // maybe targets and upgrade code?
                         {
                             targetCode = node.SelectSingleNode("p:UpgradeCode", nsmgr);
                             if (null != targetCode)
                             {
-                                targetProduct = false;
+                                attributes = WixBundlePatchTargetCodeAttributes.TargetsUpgradeCode;
                             }
-                            else // this patch targets a unknown number of products, throw away the whole list and stop looking.
+                            else // this patch targets a unknown number of products
                             {
-                                targetCodes = null;
-                                break;
+                                this.TargetUnspecified = true;
                             }
                         }
 
                         Table table = bundle.EnsureTable(core.TableDefinitions["WixBundlePatchTargetCode"]);
-                        WixBundlePatchTargetCodeRow row = (WixBundlePatchTargetCodeRow)table.CreateRow(this.PackagePayload.SourceLineNumbers);
+                        WixBundlePatchTargetCodeRow row = (WixBundlePatchTargetCodeRow)table.CreateRow(this.PackagePayload.SourceLineNumbers, false);
                         row.MspPackageId = this.PackagePayload.Id;
                         row.TargetCode = targetCode.InnerText;
-                        row.Product = targetProduct;
-                        targetCodes.Add(row);
-                    }
+                        row.Attributes = attributes;
 
-                    this.TargetCodes = targetCodes;
+                        if (this.TargetCodes.TryAdd(row))
+                        {
+                            table.Rows.Add(row);
+                        }
+                    }
                 }
                 catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
                 {
@@ -8227,7 +8321,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteStartElement((0 == (this.Attributes & WixFileSearchAttributes.IsDirectory)) ? "FileSearch" : "DirectorySearch");
                 this.WriteWixSearchAttributes(writer);
                 writer.WriteAttributeString("Path", this.Path);
-                writer.WriteAttributeString("Type", (0 == (this.Attributes & WixFileSearchAttributes.WantVersion)) ? "exists" : "version");
+                if (WixFileSearchAttributes.WantExists == (this.Attributes & WixFileSearchAttributes.WantExists))
+                {
+                    writer.WriteAttributeString("Type", "exists");
+                }
+                else if (WixFileSearchAttributes.WantVersion == (this.Attributes & WixFileSearchAttributes.WantVersion))
+                {
+                    // Can never get here for DirectorySearch.
+                    writer.WriteAttributeString("Type", "version");
+                }
+                else
+                {
+                    writer.WriteAttributeString("Type", "path");
+                }
                 writer.WriteEndElement();
             }
         }

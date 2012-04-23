@@ -10,6 +10,11 @@
     <Image X="11" Y="11" Width="64" Height="64" ImageFile="logo.png" Visible="yes"/>
     <Text X="80" Y="11" Width="-11" Height="64" FontId="1" Visible="yes">#(loc.Title)</Text>
 
+    <Page Name="Help">
+        <Text X="11" Y="80" Width="-11" Height="30" FontId="2">#(loc.HelpHeader)</Text>
+        <Text X="11" Y="112" Width="-11" Height="-40" FontId="3">#(loc.HelpText)</Text>
+        <Button Name="HelpCancelButton" X="-11" Y="-11" Width="75" Height="23" TabStop="yes" FontId="0">#(loc.HelpCloseButton)</Button>
+    </Page>
     <Page Name="Install">
         <Hypertext Name="EulaHyperlink" X="11" Y="121" Width="-11" Height="51" TabStop="yes" FontId="3" HideWhenDisabled="yes">#(loc.InstallLicenseLinkText)</Hypertext>
         <Checkbox Name="EulaAcceptCheckbox" X="-11" Y="-41" Width="246" Height="17" TabStop="yes" FontId="3" HideWhenDisabled="yes">#(loc.InstallAcceptCheckbox)</Checkbox>

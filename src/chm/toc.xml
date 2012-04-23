@@ -169,6 +169,7 @@
       <XmlSchema SourceFile="..\ext\NetFxExtension\wixext\Xsd\netfx.xsd"/>
       <XmlSchema SourceFile="..\ext\OfficeExtension\wixext\Xsd\OfficeAddin.xsd"/>
       <XmlSchema SourceFile="..\ext\PSExtension\wixext\Xsd\ps.xsd"/>
+      <XmlSchema SourceFile="..\ext\TagExtension\wixext\Xsd\tag.xsd"/>
       <XmlSchema SourceFile="..\ext\SqlExtension\wixext\Xsd\sql.xsd"/>
       <XmlSchema SourceFile="..\ext\UtilExtension\wixext\Xsd\util.xsd"/>
       <XmlSchema SourceFile="..\ext\VSExtension\wixext\Xsd\vs.xsd"/>

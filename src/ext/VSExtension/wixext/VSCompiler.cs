@@ -36,6 +36,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         internal const int MsidbCustomActionTypeContinue         = 0x00000040;  // ignore action return status; continue running
         internal const int MsidbCustomActionTypeRollback         = 0x00000100;  // in conjunction with InScript: queue in Rollback script
         internal const int MsidbCustomActionTypeInScript         = 0x00000400;  // queue for execution within script
+        internal const int MsidbCustomActionTypeNoImpersonate    = 0x00000800;  // queue for not impersonating
 
         private XmlSchema schema;
 
@@ -723,7 +724,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         private void ParseVsixPackageElement(XmlNode node, string componentId, string fileId)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string propertyId = "VS2010_VSIX_INSTALLER_PATH";
+            string propertyId = "VS_VSIX_INSTALLER_PATH";
             string packageId = null;
             YesNoType permanent = YesNoType.NotSet;
             string target = null;
@@ -846,14 +847,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 // Ensure there is a reference to the package file (even if we are a child under it).
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "File", fileId);
 
-                string cmdlinePrefix = "/q [WixVsixAdmin]";
+                string cmdlinePrefix = "/q ";
 
                 if (!String.IsNullOrEmpty(target))
                 {
                     cmdlinePrefix = String.Format("{0} /skuName:{1} /skuVersion:{2}", cmdlinePrefix, target, targetVersion);
                 }
 
-                string installAfter = "SetWixVsixAdmin"; // by default, come after the action that sets the VsixInstaller.exe /admin switch
+                string installAfter = "WriteRegistryValues"; // by default, come after the registry key registration.
                 int installExtraBits = VSCompiler.MsidbCustomActionTypeInScript;
 
                 // If the package is not vital, mark the install action as continue.
@@ -863,31 +864,45 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
                 else // the package is vital so ensure there is a rollback action scheduled.
                 {
-                    string rollbackName = this.Core.GenerateIdentifier("vpr", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
-                    string rollbackCmdLine = String.Concat(cmdlinePrefix, " /u:", packageId);
-                    int rollbackExtraBits = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeRollback | VSCompiler.MsidbCustomActionTypeInScript;
-                    string rollbackCondition = String.Format("NOT Installed AND ${0}=2 AND ?{0}>2", componentId); // NOT Installed && Component being installed but not installed already.
+                    string rollbackNamePerUser = this.Core.GenerateIdentifier("vru", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                    string rollbackNamePerMachine = this.Core.GenerateIdentifier("vrm", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                    string rollbackCmdLinePerUser = String.Concat(cmdlinePrefix, " /u:", packageId);
+                    string rollbackCmdLinePerMachine = String.Concat(rollbackCmdLinePerUser, " /admin");
+                    int rollbackExtraBitsPerUser = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeRollback | VSCompiler.MsidbCustomActionTypeInScript;
+                    int rollbackExtraBitsPerMachine = rollbackExtraBitsPerUser | VSCompiler.MsidbCustomActionTypeNoImpersonate;
+                    string rollbackConditionPerUser = String.Format("NOT ALLUSERS AND NOT Installed AND ${0}=2 AND ?{0}>2", componentId); // NOT Installed && Component being installed but not installed already.
+                    string rollbackConditionPerMachine = String.Format("ALLUSERS AND NOT Installed AND ${0}=2 AND ?{0}>2", componentId); // NOT Installed && Component being installed but not installed already.
 
-                    SchedulePropertyExeAction(sourceLineNumbers, rollbackName, propertyId, rollbackCmdLine, rollbackExtraBits, rollbackCondition, null, "SetWixVsixAdmin");
+                    this.SchedulePropertyExeAction(sourceLineNumbers, rollbackNamePerUser, propertyId, rollbackCmdLinePerUser, rollbackExtraBitsPerUser, rollbackConditionPerUser, null, installAfter);
+                    this.SchedulePropertyExeAction(sourceLineNumbers, rollbackNamePerMachine, propertyId, rollbackCmdLinePerMachine, rollbackExtraBitsPerMachine, rollbackConditionPerMachine, null, rollbackNamePerUser);
 
-                    installAfter = rollbackName;
+                    installAfter = rollbackNamePerMachine;
                 }
 
-                string installName = this.Core.GenerateIdentifier("vpi", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
-                string installCmdLine = String.Format("{0} \"[#{1}]\"", cmdlinePrefix, fileId);
-                string installCondition = String.Format("${0}=3", componentId); // only execute if the Component being installed.
+                string installNamePerUser = this.Core.GenerateIdentifier("viu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                string installNamePerMachine = this.Core.GenerateIdentifier("vim", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                string installCmdLinePerUser = String.Format("{0} \"[#{1}]\"", cmdlinePrefix, fileId);
+                string installCmdLinePerMachine = String.Concat(installCmdLinePerUser, " /admin");
+                string installConditionPerUser = String.Format("NOT ALLUSERS AND ${0}=3", componentId); // only execute if the Component being installed.
+                string installConditionPerMachine = String.Format("ALLUSERS AND ${0}=3", componentId); // only execute if the Component being installed.
 
-                SchedulePropertyExeAction(sourceLineNumbers, installName, propertyId, installCmdLine, installExtraBits, installCondition, null, installAfter);
+                this.SchedulePropertyExeAction(sourceLineNumbers, installNamePerUser, propertyId, installCmdLinePerUser, installExtraBits, installConditionPerUser, null, installAfter);
+                this.SchedulePropertyExeAction(sourceLineNumbers, installNamePerMachine, propertyId, installCmdLinePerMachine, installExtraBits | VSCompiler.MsidbCustomActionTypeNoImpersonate, installConditionPerMachine, null, installNamePerUser);
 
                 // If not permanent, schedule the uninstall custom action.
                 if (permanent != YesNoType.Yes)
                 {
-                    string uninstallName = this.Core.GenerateIdentifier("vpu", componentId, fileId, target ?? String.Empty, targetVersion ?? String.Empty);
-                    string uninstallCmdLine = String.Concat(cmdlinePrefix, " /u:", packageId);
-                    int uninstallExtraBits = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeInScript;
-                    string uninstallCondition = String.Format("${0}=2 AND ?{0}>2", componentId); // Only execute if component is being uninstalled.
+                    string uninstallNamePerUser = this.Core.GenerateIdentifier("vuu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                    string uninstallNamePerMachine = this.Core.GenerateIdentifier("vum", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                    string uninstallCmdLinePerUser = String.Concat(cmdlinePrefix, " /u:", packageId);
+                    string uninstallCmdLinePerMachine = String.Concat(uninstallCmdLinePerUser, " /admin");
+                    int uninstallExtraBitsPerUser = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeInScript;
+                    int uninstallExtraBitsPerMachine = uninstallExtraBitsPerUser | VSCompiler.MsidbCustomActionTypeNoImpersonate;
+                    string uninstallConditionPerUser = String.Format("NOT ALLUSERS AND ${0}=2 AND ?{0}>2", componentId); // Only execute if component is being uninstalled.
+                    string uninstallConditionPerMachine = String.Format("ALLUSERS AND ${0}=2 AND ?{0}>2", componentId); // Only execute if component is being uninstalled.
 
-                    SchedulePropertyExeAction(sourceLineNumbers, uninstallName, propertyId, uninstallCmdLine, uninstallExtraBits, uninstallCondition, "InstallFinalize", null);
+                    this.SchedulePropertyExeAction(sourceLineNumbers, uninstallNamePerUser, propertyId, uninstallCmdLinePerUser, uninstallExtraBitsPerUser, uninstallConditionPerUser, "InstallFinalize", null);
+                    this.SchedulePropertyExeAction(sourceLineNumbers, uninstallNamePerMachine, propertyId, uninstallCmdLinePerMachine, uninstallExtraBitsPerMachine, uninstallConditionPerMachine, "InstallFinalize", null);
                 }
             }
         }

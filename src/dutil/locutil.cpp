@@ -253,6 +253,15 @@ static HRESULT ParseWxl(
     hr = pixd->get_documentElement(&pWxlElement);
     ExitOnFailure(hr, "Failed to get localization element.");
 
+    // get the Language attribute if present
+    pWixLoc->dwLangId = WIX_LOCALIZATION_LANGUAGE_NOT_SET;
+    hr = XmlGetAttributeNumber(pWxlElement, L"Language", &pWixLoc->dwLangId);
+    if (S_FALSE == hr)
+    {
+        hr = S_OK;
+    }
+    ExitOnFailure(hr, "Failed to get Language value.");
+
     // store the strings and controls in a node list
     hr = ParseWxlStrings(pWxlElement, pWixLoc);
     ExitOnFailure(hr, "Parsing localization strings failed.");

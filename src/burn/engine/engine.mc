@@ -187,6 +187,13 @@ Language=English
 Detected partially cached package: %1!ls!, invalid payload: %2!ls!, reason: 0x%3!x!
 .
 
+MessageId=121
+Severity=Warning
+SymbolicName=MSG_DETECT_FAILED_CALCULATE_PATCH_APPLICABILITY
+Language=English
+Could not calculate patch applicability for target product code: %1!ls!, context: %2!hs!, reason: 0x%3!x!
+.
+
 MessageId=151
 Severity=Error
 SymbolicName=MSG_FAILED_DETECT_PACKAGE
@@ -269,6 +276,13 @@ Severity=Success
 SymbolicName=MSG_PLANNED_RELATED_BUNDLE
 Language=English
 Planned related bundle: %1!ls!, type: %2!hs!, default requested: %3!hs!, ba requested: %4!hs!, execute: %5!hs!, rollback: %6!hs!, dependency: %7!hs!
+.
+
+MessageId=208
+Severity=Warning
+SymbolicName=MSG_PLAN_DISABLING_ROLLBACK_NO_CACHE
+Language=English
+Plan disabled rollback for package: %1!ls!, due to incomplete cache: %2!hs!, original rollback action: %3!hs!
 .
 
 MessageId=299

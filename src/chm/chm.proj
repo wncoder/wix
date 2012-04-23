@@ -9,7 +9,7 @@
     <PropertyGroup>
         <HelpTableOfContents>toc.xml</HelpTableOfContents>
         <HelpFileName>wix.chm</HelpFileName>
-        <HelpFile>$(OutputPath)$(HelpFileName)</HelpFile>
+        <HelpFile>$(OutputPath_x86)$(HelpFileName)</HelpFile>
         <IntermediateHelpFile>$(IntermediateOutputPath)$(HelpFileName)</IntermediateHelpFile>
     </PropertyGroup>
 

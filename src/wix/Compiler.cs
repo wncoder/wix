@@ -21241,6 +21241,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             YesNoType forcePerMachine = YesNoType.NotSet;
             BundlePackageAttributes attributes = BundlePackageAttributes.None;
             PayloadInfoRow remotePayload = null;
+            YesNoType slipstream = YesNoType.NotSet;
 
             string[] expectedNetFx4Args = new string[] { "/q", "/norestart", "/chainingpackage" };
 
@@ -21354,6 +21355,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "SuppressSignatureVerification":
                             suppressSignatureVerification = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Slipstream":
+                            slipstream = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            allowed = (packageType == ChainPackageType.Msp);
                             break;
                         default:
                             allowed = false;
@@ -21558,6 +21563,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 if (YesNoType.Yes == visible)
                 {
                     attributes |= BundlePackageAttributes.Visible;
+                }
+
+                if (YesNoType.Yes == slipstream)
+                {
+                    attributes |= BundlePackageAttributes.Slipstream;
                 }
 
                 // We create the package contents as a payload with this package as the parent

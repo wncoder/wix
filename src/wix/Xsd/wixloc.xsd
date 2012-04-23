@@ -45,6 +45,11 @@
                     <xs:documentation>Culture of the localization strings.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="Language" type="xs:integer">
+                <xs:annotation>
+                    <xs:documentation>The decimal language ID (LCID) for the culture.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
 

@@ -49,6 +49,7 @@ const LPCWSTR BURN_BUNDLE_INSTALLED = L"WixBundleInstalled";
 const LPCWSTR BURN_BUNDLE_ELEVATED = L"WixBundleElevated";
 const LPCWSTR BURN_BUNDLE_PROVIDER_KEY = L"WixBundleProviderKey";
 const LPCWSTR BURN_BUNDLE_TAG = L"WixBundleTag";
+const LPCWSTR BURN_BUNDLE_VERSION = L"WixBundleVersion";
 
 // The following constants must stay in sync with src\wix\Binder.cs
 const LPCWSTR BURN_BUNDLE_NAME = L"WixBundleName";

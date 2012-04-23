@@ -1116,7 +1116,7 @@ LExit:
 
     if (rgwzFiles)
     {
-        for (DWORD i = 0; i <= cFiles; ++i)
+        for (DWORD i = 0; i < cFiles; ++i)
         {
             ReleaseStr(rgwzFiles[i]);
         }

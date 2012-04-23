@@ -25,11 +25,19 @@ static HRESULT DirectorySearchExists(
     __in BURN_SEARCH* pSearch,
     __in BURN_VARIABLES* pVariables
     );
+static HRESULT DirectorySearchPath(
+    __in BURN_SEARCH* pSearch,
+    __in BURN_VARIABLES* pVariables
+    );
 static HRESULT FileSearchExists(
     __in BURN_SEARCH* pSearch,
     __in BURN_VARIABLES* pVariables
     );
 static HRESULT FileSearchVersion(
+    __in BURN_SEARCH* pSearch,
+    __in BURN_VARIABLES* pVariables
+    );
+static HRESULT FileSearchPath(
     __in BURN_SEARCH* pSearch,
     __in BURN_VARIABLES* pVariables
     );
@@ -128,6 +136,10 @@ extern "C" HRESULT SearchesParseFromXml(
             {
                 pSearch->DirectorySearch.Type = BURN_DIRECTORY_SEARCH_TYPE_EXISTS;
             }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"path", -1))
+            {
+                pSearch->DirectorySearch.Type = BURN_DIRECTORY_SEARCH_TYPE_PATH;
+            }
             else
             {
                 hr = E_INVALIDARG;
@@ -153,6 +165,10 @@ extern "C" HRESULT SearchesParseFromXml(
             else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"version", -1))
             {
                 pSearch->FileSearch.Type = BURN_FILE_SEARCH_TYPE_VERSION;
+            }
+            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"path", -1))
+            {
+                pSearch->FileSearch.Type = BURN_FILE_SEARCH_TYPE_PATH;
             }
             else
             {
@@ -410,6 +426,9 @@ extern "C" HRESULT SearchesExecute(
             case BURN_DIRECTORY_SEARCH_TYPE_EXISTS:
                 hr = DirectorySearchExists(pSearch, pVariables);
                 break;
+            case BURN_DIRECTORY_SEARCH_TYPE_PATH:
+                hr = DirectorySearchPath(pSearch, pVariables);
+                break;
             default:
                 hr = E_UNEXPECTED;
             }
@@ -422,6 +441,9 @@ extern "C" HRESULT SearchesExecute(
                 break;
             case BURN_FILE_SEARCH_TYPE_VERSION:
                 hr = FileSearchVersion(pSearch, pVariables);
+                break;
+            case BURN_FILE_SEARCH_TYPE_PATH:
+                hr = FileSearchPath(pSearch, pVariables);
                 break;
             default:
                 hr = E_UNEXPECTED;
@@ -452,6 +474,7 @@ extern "C" HRESULT SearchesExecute(
         default:
             hr = E_UNEXPECTED;
         }
+
         if (FAILED(hr))
         {
             TraceError1(hr, "Search failed. Id = '%ls'", pSearch->sczKey);
@@ -517,7 +540,6 @@ static HRESULT DirectorySearchExists(
     )
 {
     HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
     LPWSTR sczPath = NULL;
     BOOL fExists = FALSE;
 
@@ -525,18 +547,13 @@ static HRESULT DirectorySearchExists(
     hr = VariableFormatString(pVariables, pSearch->DirectorySearch.sczPath, &sczPath, NULL);
     ExitOnFailure(hr, "Failed to format variable string.");
 
-    // find directory
     DWORD dwAttributes = ::GetFileAttributesW(sczPath);
     if (INVALID_FILE_ATTRIBUTES == dwAttributes)
     {
-        er = ::GetLastError();
-        if (ERROR_FILE_NOT_FOUND == er || ERROR_PATH_NOT_FOUND == er)
+        hr = HRESULT_FROM_WIN32(::GetLastError());
+        if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
         {
-            LogStringLine(REPORT_STANDARD, "Directory not found. Path = '%ls'", sczPath);
-        }
-        else
-        {
-            ExitOnWin32Error1(er, hr, "Failed get to file attributes. '%ls'", pSearch->DirectorySearch.sczPath);
+            hr = S_OK; // didn't find file, fExists still is false.
         }
     }
     else if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -544,17 +561,56 @@ static HRESULT DirectorySearchExists(
         fExists = TRUE;
     }
 
+    // else must have found a file.
+    ExitOnFailure2(hr, "Failed while searching directory search: %ls, for path: %ls", pSearch->sczKey, sczPath);
+
     // set variable
     hr = VariableSetNumeric(pVariables, pSearch->sczVariable, fExists, FALSE);
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
-    if (FAILED(hr))
+    ReleaseStr(sczPath);
+
+    return hr;
+}
+
+static HRESULT DirectorySearchPath(
+    __in BURN_SEARCH* pSearch,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczPath = NULL;
+
+    // format path
+    hr = VariableFormatString(pVariables, pSearch->DirectorySearch.sczPath, &sczPath, NULL);
+    ExitOnFailure(hr, "Failed to format variable string.");
+
+    DWORD dwAttributes = ::GetFileAttributesW(sczPath);
+    if (INVALID_FILE_ATTRIBUTES == dwAttributes)
     {
-        LogStringLine(REPORT_STANDARD, "DirectorySearchExists failed: ID '%ls', HRESULT 0x%x", pSearch->sczKey, hr);
+        hr = HRESULT_FROM_WIN32(::GetLastError());
+    }
+    else if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath, FALSE);
+        ExitOnFailure(hr, "Failed to set directory search path variable.");
+    }
+    else // must have found a file.
+    {
+        hr = E_PATHNOTFOUND;
     }
 
+    if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
+    {
+        LogStringLine(REPORT_STANDARD, "Directory search: %ls, did not find path: %ls, reason: 0x%x", pSearch->sczKey, sczPath, hr);
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure2(hr, "Failed while searching directory search: %ls, for path: %ls", pSearch->sczKey, sczPath);
+
+LExit:
     ReleaseStr(sczPath);
+
     return hr;
 }
 
@@ -577,9 +633,9 @@ static HRESULT FileSearchExists(
     if (INVALID_FILE_ATTRIBUTES == dwAttributes)
     {
         er = ::GetLastError();
-        if (ERROR_FILE_NOT_FOUND == er)
+        if (ERROR_FILE_NOT_FOUND == er || ERROR_PATH_NOT_FOUND == er)
         {
-            LogStringLine(REPORT_STANDARD, "File not found. Path = '%ls'", sczPath);
+            LogStringLine(REPORT_STANDARD, "File search: %ls, did not find path: %ls", pSearch->sczKey, sczPath);
         }
         else
         {
@@ -596,11 +652,6 @@ static HRESULT FileSearchExists(
     ExitOnFailure(hr, "Failed to set variable.");
 
 LExit:
-    if (FAILED(hr))
-    {
-        LogStringLine(REPORT_STANDARD, "FileSearchExists failed: ID '%ls', HRESULT 0x%x", pSearch->sczKey, hr);
-    }
-
     ReleaseStr(sczPath);
     return hr;
 }
@@ -612,7 +663,6 @@ static HRESULT FileSearchVersion(
 {
     HRESULT hr = S_OK;
     ULARGE_INTEGER uliVersion = { };
-    BOOL fNotFound = FALSE;
     LPWSTR sczPath = NULL;
 
     // format path
@@ -623,8 +673,8 @@ static HRESULT FileSearchVersion(
     hr = FileVersion(sczPath, &uliVersion.HighPart, &uliVersion.LowPart);
     if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
     {
-        fNotFound = TRUE;
-        LogStringLine(REPORT_STANDARD, "File not found while checking file version. Path = '%ls'", sczPath);
+        LogStringLine(REPORT_STANDARD, "File search: %ls, did not find path: %ls", pSearch->sczKey, sczPath);
+        ExitFunction1(hr = S_OK);
     }
     ExitOnFailure(hr, "Failed get file version.");
 
@@ -634,6 +684,46 @@ static HRESULT FileSearchVersion(
 
 LExit:
     ReleaseStr(sczPath);
+    return hr;
+}
+
+static HRESULT FileSearchPath(
+    __in BURN_SEARCH* pSearch,
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczPath = NULL;
+
+    // format path
+    hr = VariableFormatString(pVariables, pSearch->FileSearch.sczPath, &sczPath, NULL);
+    ExitOnFailure(hr, "Failed to format variable string.");
+
+    DWORD dwAttributes = ::GetFileAttributesW(sczPath);
+    if (INVALID_FILE_ATTRIBUTES == dwAttributes)
+    {
+        hr = HRESULT_FROM_WIN32(::GetLastError());
+    }
+    else if (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) // found a directory.
+    {
+        hr = E_FILENOTFOUND;
+    }
+    else // found our file.
+    {
+        hr = VariableSetString(pVariables, pSearch->sczVariable, sczPath, FALSE);
+        ExitOnFailure(hr, "Failed to set variable to file search path.");
+    }
+
+    if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
+    {
+        LogStringLine(REPORT_STANDARD, "File search: %ls, did not find path: %ls", pSearch->sczKey, sczPath);
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure2(hr, "Failed while searching file search: %ls, for path: %ls", pSearch->sczKey, sczPath);
+
+LExit:
+    ReleaseStr(sczPath);
+
     return hr;
 }
 
