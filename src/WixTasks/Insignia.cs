@@ -119,9 +119,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         protected override int ExecuteTool(string pathToTool, string responseFileCommands, string commandLineCommands)
         {
             int returnCode = base.ExecuteTool(pathToTool, responseFileCommands, commandLineCommands);
-            if (returnCode == 1)
+            if (0 == returnCode) // successfully did work.
             {
                 this.Output = this.OutputFile;
+            }
+            else if (-1 == returnCode) // no work done.
+            {
                 returnCode = 0;
             }
 

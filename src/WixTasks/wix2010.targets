@@ -106,6 +106,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   <UsingTask TaskName="ResolveNonMSBuildProjectOutput" AssemblyName="Microsoft.Build.Tasks.v4.0, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <UsingTask TaskName="ResolveVCProjectOutput" AssemblyName="Microsoft.Build.Tasks.v4.0, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
 
+  <UsingTask TaskName="CreateItemAvoidingInference" AssemblyFile="$(WixTasksPath)" />
   <UsingTask TaskName="CreateProjectReferenceDefineConstants" AssemblyFile="$(WixTasksPath)" />
   <UsingTask TaskName="WixAssignCulture" AssemblyFile="$(WixTasksPath)" />
   <UsingTask TaskName="ResolveWixReferences" AssemblyFile="$(WixTasksPath)"/>
@@ -291,10 +292,6 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     <TargetPath Condition=" '$(TargetPath)' == '' ">$(TargetDir)$(TargetFileName)</TargetPath>
     <TargetPdbPath Condition=" '$(TargetPdbPath)' == '' ">$(TargetPdbDir)$(TargetPdbName)</TargetPdbPath>
   </PropertyGroup>
-
-  <ItemGroup>
-    <SignTargetPath Include="$(TargetPath)" Condition=" '$(SignOutput)' == 'true' AND '$(SuppressLayout)' != 'true' " />
-  </ItemGroup>
 
   <!--
   IDE Macros available only from integrated builds. The following properties are 'macros' that are
@@ -1406,6 +1403,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     </InternalSignDependsOn>
     <InternalSignDependsOn Condition=" '$(OutputType)' == 'Package' ">
       GetCabsToSign;
+      GetMsiToSign;
       InternalSignCabs;
       InscribeMsi;
       InternalSignMsi;
@@ -1463,7 +1461,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       Name="GetCabsToSign"
       Inputs="@(SignTargetPath)"
       Outputs="$(IntermediateOutputPath)$(SignedFile)">
-    <GetCabList Database="@(SignTargetPath)">
+    <GetCabList Database="%(SignTargetPath.FullPath)">
       <Output TaskParameter="CabList" ItemName="SignCabs" />
       <Output TaskParameter="CabList" ItemName="FileWrites" />
     </GetCabList>
@@ -1475,8 +1473,20 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Condition=" '@(SignCabs)' != '' " />
 
   <Target
+      Name="GetMsiToSign"
+      Inputs="@(SignTargetPath)"
+      Outputs="$(IntermediateOutputPath)$(SignedFile)">
+    <CreateItemAvoidingInference InputProperties="@(SignTargetPath)">
+      <Output TaskParameter="OuputItems" ItemName="SignMsi" />
+      <Output TaskParameter="OuputItems" ItemName="FileWrites" />
+    </CreateItemAvoidingInference>
+  </Target>
+
+  <Target
     Name="InternalSignMsi"
     DependsOnTargets="SignMsi"
+    Inputs="@(SignTargetPath)"
+    Outputs="$(IntermediateOutputPath)$(SignedFile)"
     Condition=" '@(SignMsi)' != '' " />
 
   <Target
@@ -2105,11 +2115,12 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       Name="InscribeMsi"
       DependsOnTargets="$(InscribeMsiDependsOn)"
       Inputs="@(SignTargetPath)"
-      Outputs="$(IntermediateOutputPath)$(SignedFile)">
+      Outputs="$(IntermediateOutputPath)$(SignedFile)"
+      Condition=" '@(SignCabs)' != '' ">
 
     <Insignia
-        DatabaseFile="@(SignTargetPath)"
-        OutputFile="@(SignTargetPath)"
+        DatabaseFile="%(SignTargetPath.FullPath)"
+        OutputFile="%(SignTargetPath.FullPath)"
         ToolPath="$(WixToolPath)"
         NoLogo="$(InscribeNoLogo)"
         RunAsSeparateProcess="$(RunWixToolsOutOfProc)"
@@ -2118,10 +2129,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
         TreatWarningsAsErrors="$(InscribeTreatWarningsAsErrors)"
         TreatSpecificWarningsAsErrors="$(InscribeTreatSpecificWarningsAsErrors)"
         VerboseOutput="$(InscribeVerboseOutput)"
-        AdditionalOptions="$(InscribeAdditionalOptions)">
-      <Output TaskParameter="Output" ItemName="SignMsi" />
-      <Output TaskParameter="Output" ItemName="FileWrites" />
-    </Insignia>
+        AdditionalOptions="$(InscribeAdditionalOptions)" />
   </Target>
 
   <!--
@@ -2351,6 +2359,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       <Output TaskParameter="Value"
               PropertyName="TargetPdbPath"/>
     </CreateProperty>
+
+    <!-- Set the sign target items, if we're signing output. -->
+    <CreateItem
+      Include="@(_TargetPathItems)"
+      Condition=" '$(SignOutput)' == 'true' AND '$(SuppressLayout)' != 'true' ">
+      <Output TaskParameter="Include"
+              ItemName="SignTargetPath"/>
+    </CreateItem>
   </Target>
 
   <!--
@@ -2380,11 +2396,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     Name="ReadPreviousBindInputsAndBuiltOutputs"
     Condition=" ('$(OutputType)' == 'Bundle' or '$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module')">
 
-    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)">
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.Identity)$(BindContentsFileExtension)">
       <Output TaskParameter="Lines" ItemName="_BindInputs" />
     </ReadLinesFromFile>
 
-    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)">
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.Identity)$(BindBuiltOutputsFileExtension)">
       <Output TaskParameter="Lines" ItemName="_BindBuiltOutputs" />
     </ReadLinesFromFile>
 
@@ -2431,7 +2447,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
             @(_ResolvedWixExtensionPaths);
             $(MSBuildAllProjects);
             @(_BindInputs)"
-    Outputs="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension);@(_BindBuiltOutputs)"
+    Outputs="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.Identity)$(BindBuiltOutputsFileExtension);@(_BindBuiltOutputs)"
     DependsOnTargets="$(LinkDependsOn)"
     Condition=" ('$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
@@ -2449,9 +2465,9 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       BackwardsCompatibleGuidGeneration="$(BackwardsCompatibleGuidGeneration)" 
       BindInputPaths="@(LinkerBindInputPaths)"
       BindFiles="$(LinkerBindFiles)"
-      BindContentsFile="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension)"
-      BindOutputsFile="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)"
-      BindBuiltOutputsFile="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)"
+      BindContentsFile="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.Identity)$(BindContentsFileExtension)"
+      BindOutputsFile="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.Identity)$(BindOutputsFileExtension)"
+      BindBuiltOutputsFile="$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.Identity)$(BindBuiltOutputsFileExtension)"
       CabinetCachePath="$(CabinetCachePath)"
       CabinetCreationThreadCount="$(CabinetCreationThreadCount)"
       Cultures="%(CultureGroup.Identity)"
@@ -2522,11 +2538,11 @@ Copyright (c) Microsoft Corporation. All rights reserved.
     AfterTargets="Link"
     Condition=" ('$(OutputType)' == 'Bundle' or '$(OutputType)' == 'Package' or '$(OutputType)' == 'PatchCreation' or '$(OutputType)' == 'Module' or '$(OutputType)' == 'Bundle')">
 
-    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension)">
+    <ReadLinesFromFile File="$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.Identity)$(BindOutputsFileExtension)">
       <Output TaskParameter="Lines" ItemName="FileWrites"/>
     </ReadLinesFromFile>
 
-    <CreateItem Include="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.OutputFolder)$(BindContentsFileExtension);$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindOutputsFileExtension);$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.OutputFolder)$(BindBuiltOutputsFileExtension)">
+    <CreateItem Include="$(IntermediateOutputPath)$(BindContentsFilePrefix)%(CultureGroup.Identity)$(BindContentsFileExtension);$(IntermediateOutputPath)$(BindOutputsFilePrefix)%(CultureGroup.Identity)$(BindOutputsFileExtension);$(IntermediateOutputPath)$(BindBuiltOutputsFilePrefix)%(CultureGroup.Identity)$(BindBuiltOutputsFileExtension)">
       <Output TaskParameter="Include" ItemName="FileWrites" />
     </CreateItem>
 

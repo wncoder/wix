@@ -2082,3 +2082,45 @@ RobMen: SFBUG:3519867 - fix DirectorySearch and FileSearch elements.
 
 WixBuild: Version 3.6.2823.0
 
+RobMen: SFBUG:3520061 - allow hidden disabled controls to be shown when enabled.
+
+RobMen: SFBUG:3455375;3488539 - correctly sign MSI files with embedded cabinets
+                                and multiple .wxl files.
+        SFBUG:3503338 - fix *BindXxxFile* file names.
+        SFBUG:3518707 - change insignia to return 0 on success and -1 when doing
+                        nothing.
+
+RobMen: SFBUG:3521055 - expand wixstdba help text to show up better on WinXP.
+
+RobMen: SFBUG:3514067 - correctly handle force reboot in wixstdba.
+
+RobMen: SFBUG:3521186 - fix specifying_cultures_to_build.htm documentation.
+
+RobMen: SFBUG:3521102 - ensure folders from registry lookups are backslash
+                        terminated.
+
+RobMen: SFBUG:3520036 - support blank license URL in wixstdba.
+
+RobMen: SFBUG:3518390 - primary keys do not have to be identifiers but 
+                        identifiers do.
+        SFBUG:3515332 - error if component/@Id cannot be determined.
+        Add Tag XSD to schema index HTML page.
+
+HeathS: SFBUG:3521813 - Fixed row lookup to correctly use primary key.
+
+HeathS: SFBUG:3519053 - Revert default component context to None for compat.
+
+RobMen: Add "first" to SetProperty and SetDirectory and allow multiple Sets to
+        the same identifier with different conditions and/or sequences.
+
+RobMen: Fix Software Id Tag to install correctly for per-user and per-machine.
+        Add software identity tags for WiX toolset.
+
+RobMen: Simplify Software Id Tag authoring by making Feature attribute optional.
+
+BobArnson: Fix SFBUG:3512811 by switching to yet another set of registry 
+           entries that are present on XP and later.
+
+
+WixBuild: Version 3.6.2830.0
+

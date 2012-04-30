@@ -29,7 +29,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         private UserContexts context;
 
         internal InstallationPart(string id, string productCode)
-	    : this(id, productCode, null, UserContexts.All)
+	    : this(id, productCode, null, UserContexts.None)
         {
         }
 

@@ -932,7 +932,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                             this.OnMessage(WixErrors.IllegalIntegerValue(row.SourceLineNumbers, customTableDefinition.Columns[i].Name, customTableDefinition.Name, item[1]));
                                         }
                                     }
-                                    else if (customRow.Fields[j].Column.IsPrimaryKey)
+                                    else if (ColumnCategory.Identifier == customRow.Fields[j].Column.Category)
                                     {
                                         if (CompilerCore.IsIdentifier(item[1]) || Common.IsValidBinderVariable(item[1]) || ColumnCategory.Formatted == customRow.Fields[j].Column.Category)
                                         {

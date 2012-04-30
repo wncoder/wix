@@ -38,6 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <WixExtension Include="WixTagExtension">
+      <HintPath>$(OutputPath_x86)WixTagExtension.dll</HintPath>
+    </WixExtension>
     <WixExtension Include="WixUtilExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>

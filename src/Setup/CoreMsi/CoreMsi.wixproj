@@ -41,6 +41,12 @@
     <ProjectReference Include="..\CommonLib\CommonLib.wixproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <WixExtension Include="WixTagExtension">
+      <HintPath>$(OutputPath_x86)WixTagExtension.dll</HintPath>
+    </WixExtension>
+  </ItemGroup>
+
   <Target Name="Rebuild">
     <!-- Provide a default Rebuild target if $(WixTargetsPath) doesn't exist like when cleaning the entire project  -->
   </Target>

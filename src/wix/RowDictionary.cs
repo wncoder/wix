@@ -21,7 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <summary>
         /// Creates an empty <see cref="RowDictionary"/>.
         /// </summary>
-        public RowDictionary() : this(null)
+        public RowDictionary() : base(StringComparer.InvariantCulture)
         {
         }
 
@@ -32,13 +32,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <remarks>
         /// Rows added to the index are not automatically added to the given <paramref name="table"/>.
         /// </remarks>
-        public RowDictionary(Table table)
+        public RowDictionary(Table table) : this()
         {
             if (null != table && 0 < table.Rows.Count)
             {
-                foreach (Row row in table.Rows)
+                foreach (T row in table.Rows)
                 {
-                    this.TryAdd((T)row);
+                    this.TryAdd(row);
                 }
             }
         }
@@ -52,7 +52,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </returns>
         public bool TryAdd(T row)
         {
-            if (!base.Contains(row))
+            string key = this.GetKeyForItem(row);
+
+            if (!base.Contains(key))
             {
                 base.Add(row);
                 return true;

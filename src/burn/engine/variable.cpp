@@ -28,6 +28,7 @@ typedef const struct _BUILT_IN_VARIABLE_DECLARATION
     LPCWSTR wzVariable;
     PFN_INITIALIZEVARIABLE pfnInitialize;
     DWORD_PTR dwpInitializeData;
+    BOOL fPersist;
 } BUILT_IN_VARIABLE_DECLARATION;
 
 
@@ -53,6 +54,12 @@ enum OS_INFO_VARIABLE
     OS_INFO_VARIABLE_TerminalServer,
 };
 
+enum SET_VARIABLE
+{
+    SET_VARIABLE_NOT_BUILTIN,
+    SET_VARIABLE_OVERRIDE_BUILTIN,
+    SET_VARIABLE_OVERRIDE_PERSISTED_BUILTINS,
+};
 
 // internal function declarations
 
@@ -67,7 +74,8 @@ static HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
     __in PFN_INITIALIZEVARIABLE pfnInitialize,
-    __in DWORD_PTR dwpInitializeData
+    __in DWORD_PTR dwpInitializeData,
+    __in BOOL fPersist
     );
 static HRESULT GetVariable(
     __in BURN_VARIABLES* pVariables,
@@ -88,7 +96,7 @@ static HRESULT SetVariableValue(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
     __in BURN_VARIANT* pVariant,
-    __in BOOL fOverwriteBuiltIn,
+    __in SET_VARIABLE setBuiltin,
     __in BOOL fLog
     );
 static HRESULT InitializeVariableOsInfo(
@@ -236,6 +244,7 @@ extern "C" HRESULT VariableInitialize(
         {L"WindowsFolder", InitializeVariableCsidlFolder, CSIDL_WINDOWS},
         {L"WindowsVolume", InitializeVariableWindowsVolumeFolder, 0},
         {BURN_BUNDLE_ACTION, InitializeVariableNumeric, 0},
+        {BURN_BUNDLE_FORCED_RESTART_PACKAGE, InitializeVariableString, NULL, TRUE},
         {BURN_BUNDLE_INSTALLED, InitializeVariableNumeric, 0},
         {BURN_BUNDLE_ELEVATED, InitializeVariableNumeric, 0},
         {BURN_BUNDLE_PROVIDER_KEY, InitializeVariableString, (DWORD_PTR)L""},
@@ -247,7 +256,7 @@ extern "C" HRESULT VariableInitialize(
     {
         BUILT_IN_VARIABLE_DECLARATION* pBuiltInVariable = &vrgBuiltInVariables[i];
 
-        hr = AddBuiltInVariable(pVariables, pBuiltInVariable->wzVariable, pBuiltInVariable->pfnInitialize, pBuiltInVariable->dwpInitializeData);
+        hr = AddBuiltInVariable(pVariables, pBuiltInVariable->wzVariable, pBuiltInVariable->pfnInitialize, pBuiltInVariable->dwpInitializeData, pBuiltInVariable->fPersist);
         ExitOnFailure1(hr, "Failed to add built-in variable: %ls.", pBuiltInVariable->wzVariable);
     }
 
@@ -629,7 +638,7 @@ extern "C" HRESULT VariableSetNumeric(
     variant.llValue = llValue;
     variant.Type = BURN_VARIANT_TYPE_NUMERIC;
 
-    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn ? SET_VARIABLE_OVERRIDE_BUILTIN : SET_VARIABLE_NOT_BUILTIN, TRUE);
 }
 
 extern "C" HRESULT VariableSetString(
@@ -644,7 +653,7 @@ extern "C" HRESULT VariableSetString(
     variant.sczValue = (LPWSTR)wzValue;
     variant.Type = BURN_VARIANT_TYPE_STRING;
 
-    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn ? SET_VARIABLE_OVERRIDE_BUILTIN : SET_VARIABLE_NOT_BUILTIN, TRUE);
 }
 
 extern "C" HRESULT VariableSetVersion(
@@ -659,7 +668,7 @@ extern "C" HRESULT VariableSetVersion(
     variant.qwValue = qwValue;
     variant.Type = BURN_VARIANT_TYPE_VERSION;
 
-    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn, TRUE);
+    return SetVariableValue(pVariables, wzVariable, &variant, fOverwriteBuiltIn ? SET_VARIABLE_OVERRIDE_BUILTIN : SET_VARIABLE_NOT_BUILTIN, TRUE);
 }
 
 extern "C" HRESULT VariableSetVariant(
@@ -669,7 +678,7 @@ extern "C" HRESULT VariableSetVariant(
     __in BOOL fOverwriteBuiltIn
     )
 {
-    return SetVariableValue(pVariables, wzVariable, pVariant, fOverwriteBuiltIn, TRUE);
+    return SetVariableValue(pVariables, wzVariable, pVariant, fOverwriteBuiltIn ? SET_VARIABLE_OVERRIDE_BUILTIN : SET_VARIABLE_NOT_BUILTIN, TRUE);
 }
 
 extern "C" HRESULT VariableFormatString(
@@ -767,19 +776,9 @@ extern "C" HRESULT VariableSerialize(
     for (DWORD i = 0; i < pVariables->cVariables; ++i)
     {
         BURN_VARIABLE* pVariable = &pVariables->rgVariables[i];
-        fIncluded = TRUE;
 
-        // if variable is built-in, don't serialized
-        if (pVariable->fBuiltIn)
-        {
-            fIncluded = FALSE;
-        }
-
-        // if we are persisting, exclude variables that should not be persisted
-        if (fPersisting && !pVariable->fPersisted)
-        {
-            fIncluded = FALSE;
-        }
+        // If we are persisting, include only variables that should be persisted. When not persisting, skip all the built-ins.
+        fIncluded = fPersisting ? pVariable->fPersisted : !pVariable->fBuiltIn;
 
         // write included flag
         hr = BuffWriteNumber(ppbBuffer, piBuffer, (DWORD)fIncluded);
@@ -882,7 +881,7 @@ extern "C" HRESULT VariableDeserialize(
         }
 
         // set variable
-        hr = SetVariableValue(pVariables, sczName, &value, FALSE, FALSE);
+        hr = SetVariableValue(pVariables, sczName, &value, SET_VARIABLE_OVERRIDE_PERSISTED_BUILTINS, FALSE);
         ExitOnFailure(hr, "Failed to set variable.");
 
         // clean up
@@ -1105,7 +1104,8 @@ static HRESULT AddBuiltInVariable(
     __in BURN_VARIABLES* pVariables,
     __in LPCWSTR wzVariable,
     __in PFN_INITIALIZEVARIABLE pfnInitialize,
-    __in DWORD_PTR dwpInitializeData
+    __in DWORD_PTR dwpInitializeData,
+    __in BOOL fPersist
     )
 {
     HRESULT hr = S_OK;
@@ -1124,6 +1124,7 @@ static HRESULT AddBuiltInVariable(
 
     // set variable values
     pVariable = &pVariables->rgVariables[iVariable];
+    pVariable->fPersisted = fPersist;
     pVariable->fBuiltIn = TRUE;
     pVariable->pfnInitialize = pfnInitialize;
     pVariable->dwpInitializeData = dwpInitializeData;
@@ -1269,7 +1270,7 @@ static HRESULT SetVariableValue(
     __in BURN_VARIABLES* pVariables,
     __in_z LPCWSTR wzVariable,
     __in BURN_VARIANT* pVariant,
-    __in BOOL fOverwriteBuiltIn,
+    __in SET_VARIABLE setBuiltin,
     __in BOOL fLog
     )
 {
@@ -1287,19 +1288,27 @@ static HRESULT SetVariableValue(
         hr = InsertVariable(pVariables, wzVariable, iVariable);
         ExitOnFailure1(hr, "Failed to insert variable '%ls'.", wzVariable);
     }
-    else if (!fOverwriteBuiltIn && pVariables->rgVariables[iVariable].fBuiltIn)
+    else if (pVariables->rgVariables[iVariable].fBuiltIn) // built-in variables must be overridden
     {
-        hr = E_INVALIDARG;
-        ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
+        if (SET_VARIABLE_OVERRIDE_BUILTIN == setBuiltin ||
+            (SET_VARIABLE_OVERRIDE_PERSISTED_BUILTINS == setBuiltin && pVariables->rgVariables[iVariable].fPersisted))
+        {
+            hr = S_OK;
+        }
+        else
+        {
+            hr = E_INVALIDARG;
+            ExitOnRootFailure1(hr, "Attempt to set built-in variable value: %ls", wzVariable);
+        }
     }
-    else if (fOverwriteBuiltIn && !pVariables->rgVariables[iVariable].fBuiltIn)
+    else // must *not* be a built-in variable so caller should not have tried to override it as a built-in.
     {
-        // invalid intent for the opposite condition; not possible from external callers so just assert
-        AssertSz(FALSE, "Intent to overwrite non-built-in variable.");
+        // Not possible from external callers so just assert.
+        AssertSz(SET_VARIABLE_OVERRIDE_BUILTIN != setBuiltin, "Intent to overwrite non-built-in variable.");
     }
 
     // log value when not overwriting a built-in variable
-    if (fLog && !fOverwriteBuiltIn)
+    if (fLog && SET_VARIABLE_NOT_BUILTIN == setBuiltin)
     {
         if (pVariables->rgVariables[iVariable].fHidden)
         {
@@ -1317,7 +1326,14 @@ static HRESULT SetVariableValue(
                 break;
 
             case BURN_VARIANT_TYPE_STRING:
-                LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, pVariant->sczValue);
+                if (!pVariant->sczValue)
+                {
+                    LogStringLine(REPORT_STANDARD, "Unsetting variable '%ls'", wzVariable, pVariant->sczValue);
+                }
+                else
+                {
+                    LogStringLine(REPORT_STANDARD, "Setting string variable '%ls' to value '%ls'", wzVariable, pVariant->sczValue);
+                }
                 break;
 
             case BURN_VARIANT_TYPE_VERSION:
@@ -1752,19 +1768,28 @@ static HRESULT InitializeVariableRegistryFolder(
     HKEY hkFolders = NULL;
     LPWSTR sczPath = NULL;
 
-    int nFolder = (int)dwpData;
-    AssertSz(CSIDL_PROGRAM_FILES == nFolder || CSIDL_PROGRAM_FILES_COMMON == nFolder, "Unknown folder CSIDL.");
-    LPCWSTR wzFolderValue = CSIDL_PROGRAM_FILES_COMMON == nFolder ? L"CommonW6432Dir" : L"ProgramW6432Dir";
+#if !defined(_WIN64)
+    BOOL fIsWow64 = FALSE;
 
-    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion", KEY_READ, &hkFolders);
-    if (E_FILENOTFOUND == hr) // on 32-bit machines
+    ProcWow64(::GetCurrentProcess(), &fIsWow64);
+    if (!fIsWow64) // on 32-bit machines, variables aren't set
     {
         ExitFunction();
     }
+#endif
+
+    int nFolder = (int)dwpData;
+    AssertSz(CSIDL_PROGRAM_FILES == nFolder || CSIDL_PROGRAM_FILES_COMMON == nFolder, "Unknown folder CSIDL.");
+    LPCWSTR wzFolderValue = CSIDL_PROGRAM_FILES_COMMON == nFolder ? L"CommonFilesDir" : L"ProgramFilesDir";
+
+    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", KEY_READ | KEY_WOW64_64KEY, &hkFolders);
     ExitOnFailure(hr, "Failed to open Windows folder key.");
 
     hr = RegReadString(hkFolders, wzFolderValue, &sczPath);
     ExitOnFailure1(hr, "Failed to read folder path for '%ls'.", wzFolderValue);
+
+    hr = PathBackslashTerminate(&sczPath);
+    ExitOnFailure(hr, "Failed to ensure path was backslash terminated.");
 
     // set value
     hr = BVariantSetString(pValue, sczPath, 0);

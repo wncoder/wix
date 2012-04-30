@@ -134,7 +134,7 @@ namespace Microsoft.Deployment.WindowsInstaller
         /// <param name="componentCode">component GUID</param>
         /// <param name="productCode">ProductCode GUID</param>
         public ComponentInstallation(string componentCode, string productCode)
-            : this(componentCode, productCode, null, UserContexts.All)
+            : this(componentCode, productCode, null, UserContexts.None)
         {
         }
 

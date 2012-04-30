@@ -45,6 +45,7 @@ const LPCWSTR BURN_COMMANDLINE_SWITCH_PREFIX = L"burn.";
 
 const LPCWSTR BURN_BUNDLE_LAYOUT_DIRECTORY = L"WixBundleLayoutDirectory";
 const LPCWSTR BURN_BUNDLE_ACTION = L"WixBundleAction";
+const LPCWSTR BURN_BUNDLE_FORCED_RESTART_PACKAGE = L"WixBundleForcedRestartPackage";
 const LPCWSTR BURN_BUNDLE_INSTALLED = L"WixBundleInstalled";
 const LPCWSTR BURN_BUNDLE_ELEVATED = L"WixBundleElevated";
 const LPCWSTR BURN_BUNDLE_PROVIDER_KEY = L"WixBundleProviderKey";

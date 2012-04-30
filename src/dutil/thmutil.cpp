@@ -1068,7 +1068,16 @@ DAPI_(void) ThemeControlEnable(
     )
 {
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
-    ::EnableWindow(hWnd, fEnable);
+    if (hWnd)
+    {
+        ::EnableWindow(hWnd, fEnable);
+
+        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
+        if (pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED)
+        {
+            ::ShowWindow(hWnd, fEnable ? SW_SHOW : SW_HIDE);
+        }
+    }
 }
 
 

@@ -191,7 +191,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             licenseFile = this.Core.GetAttributeValue(sourceLineNumbers, attrib, false);
                             break;
                         case "LicenseUrl":
-                            licenseUrl = this.Core.GetAttributeValue(sourceLineNumbers, attrib, false);
+                            licenseUrl = this.Core.GetAttributeValue(sourceLineNumbers, attrib, true);
                             break;
                         case "LogoFile":
                             logoFile = this.Core.GetAttributeValue(sourceLineNumbers, attrib, false);
@@ -234,7 +234,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (String.IsNullOrEmpty(licenseFile) == String.IsNullOrEmpty(licenseUrl))
+            if (String.IsNullOrEmpty(licenseFile) && null == licenseUrl)
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "LicenseFile", "LicenseUrl", true));
             }
@@ -246,7 +246,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     this.Core.CreateWixVariableRow(sourceLineNumbers, "WixStdbaLicenseRtf", licenseFile, false);
                 }
 
-                if (!String.IsNullOrEmpty(licenseUrl))
+                if (null != licenseUrl)
                 {
                     this.Core.CreateWixVariableRow(sourceLineNumbers, "WixStdbaLicenseUrl", licenseUrl, false);
                 }

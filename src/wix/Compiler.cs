@@ -2732,6 +2732,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // If an id was not determined by now, we have to error.
+            if (null == id)
+            {
+                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+
             // finally add the Component table row
             if (!this.core.EncounteredError)
             {
@@ -16066,15 +16072,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseSetDirectoryElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string actionName = null;
             string id = null;
             string condition = null;
             string[] sequences = new string[] { "InstallUISequence", "InstallExecuteSequence" }; // default to "both"
+            int extraBits = 0;
             string value = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
                 switch (attrib.LocalName)
                 {
+                    case "Action":
+                        actionName = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                        break;
                     case "Id":
                         id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                         this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Directory", id);
@@ -16091,6 +16102,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     break;
                                 case Wix.SequenceType.ui:
                                     sequences = new string[] { "InstallUISequence" };
+                                    break;
+                                case Wix.SequenceType.first:
+                                    extraBits = MsiInterop.MsidbCustomActionTypeFirstSequence;
+                                    // default puts it in both sequence which is what we want
                                     break;
                                 case Wix.SequenceType.both:
                                     // default so no work necessary.
@@ -16112,6 +16127,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (null == id)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+            else if (String.IsNullOrEmpty(actionName))
+            {
+                actionName = String.Concat("Set", id);
             }
 
             if (null == value)
@@ -16138,11 +16157,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // add the row and any references needed
             if (!this.core.EncounteredError)
             {
-                string actionName = String.Concat("Set", id);
-
                 Row row = this.core.CreateRow(sourceLineNumbers, "CustomAction");
                 row[0] = actionName;
-                row[1] = MsiInterop.MsidbCustomActionTypeProperty | MsiInterop.MsidbCustomActionTypeTextData;
+                row[1] = MsiInterop.MsidbCustomActionTypeProperty | MsiInterop.MsidbCustomActionTypeTextData | extraBits;
                 row[2] = id;
                 row[3] = value;
 
@@ -16167,17 +16184,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private void ParseSetPropertyElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string actionName = null;
             string id = null;
             string afterAction = null;
             string beforeAction = null;
             string condition = null;
             string[] sequences = new string[] { "InstallUISequence", "InstallExecuteSequence" }; // default to "both"
+            int extraBits = 0;
             string value = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
                 switch (attrib.LocalName)
                 {
+                    case "Action":
+                        actionName = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                        break;
                     case "Id":
                         id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                         break;
@@ -16200,6 +16222,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 case Wix.SequenceType.ui:
                                     sequences = new string[] { "InstallUISequence" };
                                     break;
+                                case Wix.SequenceType.first:
+                                    extraBits = MsiInterop.MsidbCustomActionTypeFirstSequence;
+                                    // default puts it in both sequence which is what we want
+                                    break;
                                 case Wix.SequenceType.both:
                                     // default so no work necessary.
                                     break;
@@ -16220,6 +16246,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (null == id)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Id"));
+            }
+            else if (String.IsNullOrEmpty(actionName))
+            {
+                actionName = String.Concat("Set", id);
             }
 
             if (null == value)
@@ -16255,8 +16285,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // add the row and any references needed
             if (!this.core.EncounteredError)
             {
-                string actionName = String.Concat("Set", id);
-
                 // action that is scheduled to occur before/after itself
                 if (beforeAction == actionName)
                 {
@@ -16269,7 +16297,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 Row row = this.core.CreateRow(sourceLineNumbers, "CustomAction");
                 row[0] = actionName;
-                row[1] = MsiInterop.MsidbCustomActionTypeProperty | MsiInterop.MsidbCustomActionTypeTextData;
+                row[1] = MsiInterop.MsidbCustomActionTypeProperty | MsiInterop.MsidbCustomActionTypeTextData | extraBits;
                 row[2] = id;
                 row[3] = value;
 

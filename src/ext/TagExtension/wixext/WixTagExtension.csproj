@@ -31,6 +31,9 @@
       <CommonNamespace>Microsoft.Tools.WindowsInstallerXml.Serialize</CommonNamespace>
       <Namespace>Microsoft.Tools.WindowsInstallerXml.Extensions.Serialize.Tag</Namespace>
     </XsdGenSource>
+    <EmbeddedResource Include="$(OutputPath)\tag.wixlib">
+      <Link>Data\tag.wixlib</Link>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="..\..\..\..\WixBuild.Common.targets" />
   <ItemGroup>

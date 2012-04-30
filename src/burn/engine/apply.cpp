@@ -211,6 +211,7 @@ static HRESULT ReportOverallProgressTicks(
     );
 static HRESULT ExecutePackageComplete(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
@@ -232,6 +233,19 @@ extern "C" void ApplyInitialize()
 extern "C" void ApplyUninitialize()
 {
     ::SetThreadExecutionState(ES_CONTINUOUS);
+}
+
+extern "C" HRESULT ApplySetVariables(
+    __in BURN_VARIABLES* pVariables
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = VariableSetString(pVariables, BURN_BUNDLE_FORCED_RESTART_PACKAGE, NULL, TRUE);
+    ExitOnFailure(hr, "Failed to set the bundle forced restart package built-in variable.");
+
+LExit:
+    return hr;
 }
 
 extern "C" void ApplyReset(
@@ -1666,7 +1680,7 @@ static HRESULT ExecuteExePackage(
     ExitOnRootFailure(hr, "UX aborted EXE package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->exePackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, &pEngineState->variables, pExecuteAction->exePackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1718,7 +1732,7 @@ static HRESULT ExecuteMsiPackage(
     ExitOnRootFailure(hr, "UX aborted MSI package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msiPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, &pEngineState->variables, pExecuteAction->msiPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1780,7 +1794,7 @@ static HRESULT ExecuteMspPackage(
     ExitOnRootFailure(hr, "UX aborted MSP package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->mspTarget.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, &pEngineState->variables, pExecuteAction->mspTarget.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1846,7 +1860,7 @@ static HRESULT ExecuteMsuPackage(
     ExitOnRootFailure(hr, "UX aborted MSU package execute progress.");
 
 LExit:
-    hr = ExecutePackageComplete(&pEngineState->userExperience, pExecuteAction->msuPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
+    hr = ExecutePackageComplete(&pEngineState->userExperience, &pEngineState->variables, pExecuteAction->msuPackage.pPackage, hr, hrExecute, fRollback, pRestart, pfRetry, pfSuspend);
     return hr;
 }
 
@@ -1973,6 +1987,7 @@ static HRESULT ReportOverallProgressTicks(
 
 static HRESULT ExecutePackageComplete(
     __in BURN_USER_EXPERIENCE* pUX,
+    __in BURN_VARIABLES* pVariables,
     __in BURN_PACKAGE* pPackage,
     __in HRESULT hrOverall,
     __in HRESULT hrExecute,
@@ -1992,6 +2007,13 @@ static HRESULT ExecutePackageComplete(
     }
     *pfRetry = (FAILED(hrExecute) && IDRETRY == nResult); // allow retry only on failures.
     *pfSuspend = (IDSUSPEND == nResult);
+
+    // Remember this package as the package that initiated the forced restart.
+    if (BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
+    {
+        // Best effort to set the forced restart package variable.
+        VariableSetString(pVariables, BURN_BUNDLE_FORCED_RESTART_PACKAGE, pPackage->sczId, TRUE);
+    }
 
     // If we're retrying, leave a message in the log file and say everything is okay.
     if (*pfRetry)

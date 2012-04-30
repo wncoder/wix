@@ -13,6 +13,7 @@
     <ProjectReference Include="MsmqExtension\wixlib\MsmqExtension.wixproj" />
     <ProjectReference Include="OfficeExtension\wixlib\OfficeExtension.wixproj" />
     <ProjectReference Include="PSExtension\wixlib\PSExtension.wixproj" />
+    <ProjectReference Include="TagExtension\wixlib\TagExtension.wixproj" />
     <ProjectReference Include="SqlExtension\wixlib\SqlExtension.wixproj" />
     <ProjectReference Include="UIExtension\wixlib\UIExtension.wixproj" />
     <ProjectReference Include="UtilExtension\wixlib\UtilExtension.wixproj" />

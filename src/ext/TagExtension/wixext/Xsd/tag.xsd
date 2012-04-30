@@ -18,9 +18,7 @@
         <xs:annotation>
             <xs:documentation>
                This extension implements the ISO/IEC 19770-2 specification. A SWID tag file
-               will be generated an inserted into the Product or Bundle. Note: in a reference
-               to the CommonAppDataFolder will be created when the Tag is used in a Product.
-               A Directory element must be provided to define the source for CommonAppDataFolder.
+               will be generated an inserted into the Product or Bundle.
             </xs:documentation>
             <xs:appinfo>
                 <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
@@ -43,15 +41,15 @@
                     <xs:documentation>
                       The regid for the software id tag. A regid follows the format:  "regid" + "."
                       + YYYY-MM + "." + reverse domain order. The YYYY-MM is the year and month the
-                      domain was first owned. For example: "regid.199-06.com.microsoft".
+                      domain was first owned. For example: "regid.1995-08.com.example".
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="Feature" type="xs:string">
                 <xs:annotation>
-                    <xs:documentation>The feature used to install the tag. It is recommended that this
-                    feature always be installed. This attribute is required when the tag is part of a
-                    Product and ignored when part of a Bundle.</xs:documentation>
+                    <xs:documentation>Optional attribute to explicitly set the Feature when defining the software id tag
+                    in a Product. By default the software id tag will always be installed by a top-level hidden feature.
+                    It is recommended to <html:strong>not</html:strong> set this attribute.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
             <xs:attribute name="Licensed" type="YesNoType">

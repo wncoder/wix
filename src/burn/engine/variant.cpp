@@ -146,19 +146,27 @@ extern "C" HRESULT BVariantSetNumeric(
 
 extern "C" HRESULT BVariantSetString(
     __in BURN_VARIANT* pVariant,
-    __in_z LPCWSTR wzValue,
+    __in_z_opt LPCWSTR wzValue,
     __in DWORD_PTR cchValue
     )
 {
     HRESULT hr = S_OK;
 
-    if (BURN_VARIANT_TYPE_STRING != pVariant->Type)
+    if (!wzValue) // if we're nulling out the string, make the variable NONE.
     {
-        memset(pVariant, 0, sizeof(BURN_VARIANT));
+        BVariantUninitialize(pVariant);
     }
-    hr = StrAllocString(&pVariant->sczValue, wzValue, cchValue);
-    ExitOnFailure(hr, "Failed to copy string.");
-    pVariant->Type = BURN_VARIANT_TYPE_STRING;
+    else // assign the value.
+    {
+        if (BURN_VARIANT_TYPE_STRING != pVariant->Type)
+        {
+            memset(pVariant, 0, sizeof(BURN_VARIANT));
+        }
+
+        hr = StrAllocString(&pVariant->sczValue, wzValue, cchValue);
+        ExitOnFailure(hr, "Failed to copy string.");
+        pVariant->Type = BURN_VARIANT_TYPE_STRING;
+    }
 
 LExit:
     return hr;
@@ -189,33 +197,24 @@ extern "C" HRESULT BVariantCopy(
 {
     HRESULT hr = S_OK;
 
-    // If the variant is changing types then reset the variant.
-    if (pTarget->Type != pSource->Type)
-    {
-        BVariantUninitialize(pTarget);
-    }
-
     switch (pSource->Type)
     {
     case BURN_VARIANT_TYPE_NONE:
-        pTarget->Type = BURN_VARIANT_TYPE_NONE;
+        BVariantUninitialize(pTarget);
         break;
     case BURN_VARIANT_TYPE_NUMERIC:
-        pTarget->llValue = pSource->llValue;
-        pTarget->Type = BURN_VARIANT_TYPE_NUMERIC;
+        hr = BVariantSetNumeric(pTarget, pSource->llValue);
         break;
     case BURN_VARIANT_TYPE_STRING:
-        hr = StrAllocString(&pTarget->sczValue, pSource->sczValue, 0);
-        ExitOnFailure(hr, "Failed to copy variant value.");
-        pTarget->Type = BURN_VARIANT_TYPE_STRING;
+        hr = BVariantSetString(pTarget, pSource->sczValue, 0);
         break;
     case BURN_VARIANT_TYPE_VERSION:
-        pTarget->qwValue = pSource->qwValue;
-        pTarget->Type = BURN_VARIANT_TYPE_VERSION;
+        hr = BVariantSetVersion(pTarget, pSource->qwValue);
         break;
     default:
         hr = E_INVALIDARG;
     }
+    ExitOnFailure(hr, "Failed to copy variant.");
 
 LExit:
     return hr;

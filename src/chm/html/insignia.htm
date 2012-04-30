@@ -29,13 +29,13 @@
   </p>
 
   <pre>  &lt;Target Name="SignCabs"&gt;
-    &lt;Exec Command=&quot;Signtool.exe sign /a &amp;quot;@(SignCabs)&amp;quot;&quot; /&gt;
+    &lt;Exec Command=&quot;Signtool.exe sign /a &amp;quot;%(SignCabs.FullPath)&amp;quot;&quot; /&gt;
   &lt;/Target&gt;</pre>
 
   <p>Finally, override the "SignMsi" target. Here's a similar example, also using signtool.exe.</p>
 
   <pre>  &lt;Target Name=&quot;SignMsi&quot;&gt;
-    &lt;Exec Command=&quot;signtool.exe sign /a &amp;quot;@(SignMsi)&amp;quot;&quot; /&gt;
+    &lt;Exec Command=&quot;signtool.exe sign /a &amp;quot;%(SignMsi.FullPath)&amp;quot;&quot; /&gt;
   &lt;/Target&gt;</pre>
 
   <p>This will cause the build process, after linking the MSI, to sign any external cabs, inscribe your MSI

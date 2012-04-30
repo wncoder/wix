@@ -77,7 +77,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string name = null;
             string regid = null;
-            string feature = null;
+            string feature = "WixSwidTag";
             YesNoType licensed = YesNoType.NotSet;
 
             foreach (XmlAttribute attrib in node.Attributes)
@@ -147,14 +147,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Regid"));
             }
 
-            if (null == feature)
-            {
-                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Feature"));
-            }
-
             if (!this.Core.EncounteredError)
             {
-                string directoryId = "CommonAppDataFolder";
+                string directoryId = "WixTagFolder";
                 string fileId = this.Core.GenerateIdentifier("tag", regid, ".product.tag");
                 string fileName = String.Concat(regid, " ", name, ".swidtag");
                 string shortName = this.Core.GenerateShortName(fileName, false, false);

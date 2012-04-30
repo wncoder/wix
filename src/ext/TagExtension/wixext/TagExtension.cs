@@ -20,6 +20,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
     {
         private TagBinder binderExtension;
         private TagCompiler compilerExtension;
+        private Library library;
         private TableDefinitionCollection tableDefinitions;
 
         /// <summary>
@@ -71,6 +72,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 return this.tableDefinitions;
             }
+        }
+
+        /// <summary>
+        /// Gets the library associated with this extension.
+        /// </summary>
+        /// <param name="tableDefinitions">The table definitions to use while loading the library.</param>
+        /// <returns>The library for this extension.</returns>
+        public override Library GetLibrary(TableDefinitionCollection tableDefinitions)
+        {
+            if (null == this.library)
+            {
+                this.library = LoadLibraryHelper(Assembly.GetExecutingAssembly(), "Microsoft.Tools.WindowsInstallerXml.Extensions.Data.tag.wixlib", tableDefinitions);
+            }
+
+            return this.library;
         }
     }
 }

@@ -1,0 +1,19 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <Import Project="..\..\..\..\WixBuild.Common.targets" />
+  <PropertyGroup>
+    <ProjectGuid>{47bd326b-88f2-428f-9145-3397dd404e64}</ProjectGuid>
+    <OutputName>tag</OutputName>
+    <OutputType>Library</OutputType>
+    <BindFiles>True</BindFiles>
+    <Pedantic>True</Pedantic>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <Cultures>en-us</Cultures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="TagFeature.wxs" />
+    <Compile Include="TagFolder.wxs" />
+  </ItemGroup>
+
+  <Import Project="$(WixTargetsPath)" />
+</Project>

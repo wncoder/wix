@@ -546,16 +546,8 @@ public: // IBootstrapperEngine
 
         if (wzVariable && *wzVariable)
         {
-            if (wzValue)
-            {
-                hr = VariableSetString(&m_pEngineState->variables, wzVariable, wzValue, FALSE);
-                ExitOnFailure(hr, "Failed to set numeric variable.");
-            }
-            else
-            {
-                hr = E_NOTIMPL;
-                ExitOnFailure(hr, "UX cannot erase variables by passing a NULL string, yet.");
-            }
+            hr = VariableSetString(&m_pEngineState->variables, wzVariable, wzValue, FALSE);
+            ExitOnFailure(hr, "Failed to set numeric variable.");
         }
         else
         {

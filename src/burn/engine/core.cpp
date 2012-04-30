@@ -361,8 +361,8 @@ extern "C" HRESULT CorePlan(
     hr = PlanSetVariables(action, &pEngineState->variables);
     ExitOnFailure(hr, "Failed to update action.");
 
-    // By default we want to keep the registration if the bundle was already installed.
-    pEngineState->plan.fKeepRegistrationDefault = pEngineState->registration.fInstalled;
+    // By default we want to keep the registration if the bundle was already installed or we are planning after a restart.
+    pEngineState->plan.fKeepRegistrationDefault = (pEngineState->registration.fInstalled || BOOTSTRAPPER_RESUME_TYPE_REBOOT == pEngineState->command.resumeType);
 
     // Set resume commandline
     hr = PlanSetResumeCommand(&pEngineState->registration, action, &pEngineState->command, &pEngineState->log);
@@ -619,6 +619,9 @@ extern "C" HRESULT CoreApply(
 
     // Initialize only after getting a lock.
     ApplyInitialize();
+
+    hr = ApplySetVariables(&pEngineState->variables);
+    ExitOnFailure(hr, "Failed to set initial apply variables.");
 
     // Ensure the engine is cached to the working path.
     if (!pEngineState->sczBundleEngineWorkingPath)

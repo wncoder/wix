@@ -72,7 +72,7 @@ HRESULT BVariantSetNumeric(
     );
 HRESULT BVariantSetString(
     __in BURN_VARIANT* pVariant,
-    __in_z LPCWSTR wzValue,
+    __in_z_opt LPCWSTR wzValue,
     __in DWORD_PTR cchValue
     );
 HRESULT BVariantSetVersion(

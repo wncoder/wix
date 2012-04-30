@@ -25,6 +25,7 @@
     <Compile Include="Candle.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="ConvertReferences.cs" />
+    <Compile Include="CreateItemAvoidingInference.cs" />
     <Compile Include="CreateProjectReferenceDefineConstants.cs" />
     <Compile Include="FileSearchHelperMethods.cs" />
     <Compile Include="GenerateCompileWithObjectPath.cs" />

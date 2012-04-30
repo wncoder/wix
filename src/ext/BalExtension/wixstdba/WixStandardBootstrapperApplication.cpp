@@ -289,9 +289,9 @@ public: // IBootstrapperApplication
 
         SetState(WIXSTDBA_STATE_DETECTED, hrStatus);
 
-        // If we're not interacting with the user or we're doing a layout then automatically
-        // start planning
-        if (BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_ACTION_LAYOUT == m_command.action)
+        // If we're not interacting with the user or we're doing a layout or we're just after a force restart
+        // then automatically start planning.
+        if (BOOTSTRAPPER_DISPLAY_FULL > m_command.display || BOOTSTRAPPER_ACTION_LAYOUT == m_command.action || BOOTSTRAPPER_RESUME_TYPE_REBOOT == m_command.resumeType)
         {
             if (SUCCEEDED(hrStatus))
             {
@@ -334,7 +334,17 @@ public: // IBootstrapperApplication
                 *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
             }
         }
-        // else, not doing a pre-req install so just do the default behavior.
+        else if (m_sczAfterForcedRestartPackage) // after force restart skip packages until after the package that caused the restart.
+        {
+            BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Skipping package: %ls, after restart because it was applied before the restart.", wzPackageId);
+
+            *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
+
+            if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, m_sczAfterForcedRestartPackage, -1))
+            {
+                ReleaseNullStr(m_sczAfterForcedRestartPackage);
+            }
+        }
 
         return CheckCanceled() ? IDCANCEL : IDOK;
     }
@@ -2033,13 +2043,27 @@ public:
         {
             LONGLONG llInstalled = 0;
             HRESULT hr = pEngine->GetVariableNumeric(L"WixBundleInstalled", &llInstalled);
-            if (SUCCEEDED(hr) && 0 < llInstalled && BOOTSTRAPPER_ACTION_INSTALL == m_command.action)
+            if (SUCCEEDED(hr) && BOOTSTRAPPER_RESUME_TYPE_REBOOT != m_command.resumeType && 0 < llInstalled && BOOTSTRAPPER_ACTION_INSTALL == m_command.action)
             {
                 m_command.action = BOOTSTRAPPER_ACTION_MODIFY;
             }
             else if (0 == llInstalled && (BOOTSTRAPPER_ACTION_MODIFY == m_command.action || BOOTSTRAPPER_ACTION_REPAIR == m_command.action))
             {
                 m_command.action = BOOTSTRAPPER_ACTION_INSTALL;
+            }
+        }
+
+        // When resuming from restart, try to find the package that forced the restart. We'll use this information
+        // during planning.
+        m_sczAfterForcedRestartPackage = NULL;
+
+        if (BOOTSTRAPPER_RESUME_TYPE_REBOOT == m_command.resumeType)
+        {
+            // Ensure the forced restart package variable is null even if it is an empty string.
+            HRESULT hr = BalGetStringVariable(L"WixBundleForcedRestartPackage", &m_sczAfterForcedRestartPackage);
+            if (FAILED(hr) || !m_sczAfterForcedRestartPackage || !*m_sczAfterForcedRestartPackage)
+            {
+                ReleaseNullStr(m_sczAfterForcedRestartPackage);
             }
         }
 
@@ -2096,6 +2120,7 @@ public:
         ReleaseStr(m_sczLicenseFile);
         ReleaseStr(m_sczLicenseUrl);
         ReleaseStr(m_sczPrereqPackage);
+        ReleaseStr(m_sczAfterForcedRestartPackage);
         ReleaseNullObject(m_pEngine);
     }
 
@@ -2103,6 +2128,8 @@ private:
     HMODULE m_hModule;
     BOOTSTRAPPER_COMMAND m_command;
     IBootstrapperEngine* m_pEngine;
+
+    LPWSTR m_sczAfterForcedRestartPackage;
 
     WIX_LOCALIZATION* m_pWixLoc;
     BAL_INFO_BUNDLE m_Bundle;

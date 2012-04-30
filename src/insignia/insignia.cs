@@ -167,7 +167,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Tools
                 }
             }
 
-            return inscribed ? 1 : this.messageHandler.LastErrorNumber;
+            // On success but nothing inscribed then return -1. Otherwise, return whatever last error number
+            // was (which could be zero if successfully inscribed).
+            return (0 == this.messageHandler.LastErrorNumber && !inscribed) ? -1 : this.messageHandler.LastErrorNumber;
         }
 
         /// <summary>

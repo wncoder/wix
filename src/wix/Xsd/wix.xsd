@@ -691,7 +691,11 @@
       </xs:attribute>
       <xs:attribute name="KB" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The knowledge base identifier for the MSU.</xs:documentation>
+          <xs:documentation>
+            The knowledge base identifier for the MSU. The KB attribute must be specified to enable the MSU package to
+            be uninstalled. Even then MSU uninstallation is only supported on Windows 7 and later. When the KB attribute
+            is specified, the Permanent attribute will the control whether the package is uninstalled.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -9004,6 +9008,14 @@
                         The condition that determines whether the Directory is set. If the condition evaluates to false, the SetDirectory is skipped.
                     </xs:documentation>
           </xs:annotation>
+          <xs:attribute name="Action" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                                By default the action is "Set" + Id attribute's value. This optional attribute can override the action name in the case
+                                where multiple SetDirectory elements target the same Id (probably with mutually exclusive conditions).
+                            </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="Id" type="xs:string">
             <xs:annotation>
               <xs:documentation>
@@ -9065,6 +9077,14 @@
                         The condition that determines whether the Property is set. If the condition evaluates to false, the Set is skipped.
                     </xs:documentation>
           </xs:annotation>
+          <xs:attribute name="Action" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                                By default the action is "Set" + Id attribute's value. This optional attribute can override the action name in the case
+                                where multiple SetProperty elements target the same Id (probably with mutually exclusive conditions).
+                            </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="After" type="xs:string">
             <xs:annotation>
               <xs:documentation>The name of the standard or custom action after which this action should be performed. Mutually exclusive with the Before attribute. A Before or After attribute is required when setting a Property.</xs:documentation>
@@ -12787,6 +12807,13 @@
         <xs:annotation>
           <xs:documentation>
                         Schedules the assignment in the InstallUISequence and the InstallExecuteSequence.
+                    </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="first">
+        <xs:annotation>
+          <xs:documentation>
+                        Schedules the assignment to run in the InstallUISequence or the InstallExecuteSequence if the InstallUISequence is skipped.
                     </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

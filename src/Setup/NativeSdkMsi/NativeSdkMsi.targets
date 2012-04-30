@@ -42,6 +42,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <WixExtension Include="WixTagExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixTagExtension.dll</HintPath>
+    </WixExtension>
     <WixExtension Include="WixVSExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixVSExtension.dll</HintPath>

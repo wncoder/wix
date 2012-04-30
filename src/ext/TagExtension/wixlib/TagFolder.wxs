@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) Microsoft Corporation.  All rights reserved.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="TARGETDIR">
+            <Directory Id="WixTagFolder" Name="swidtags" ComponentGuidGenerationSeed="0F673797-85FC-49D8-A0D8-B5C81C7C9CDC" />
+        </DirectoryRef>
+
+        <SetProperty Action="SetWixTagFolderPerUser" Id="WixTagFolder" Value="[LocalAppDataFolder]" Sequence="both" Before="CostFinalize">NOT ALLUSERS</SetProperty>
+        <SetProperty Action="SetWixTagFolderPerMachine" Id="WixTagFolder" Value="[CommonAppDataFolder]" Sequence="both" Before="CostFinalize">ALLUSERS</SetProperty>
+    </Fragment>
+</Wix>

@@ -109,14 +109,13 @@ extern "C" HRESULT DAPI OsIsRunningPrivileged(
         ExitFunction1(hr = S_OK);
     }
 
-    er = ::GetLastError();
-    hr = HRESULT_FROM_WIN32(er);
     // If it's invalid argument, this means they don't support TokenElevationType, and we should fallback to another check
-    if (E_INVALIDARG == hr)
+    er = ::GetLastError();
+    if (ERROR_INVALID_FUNCTION == er)
     {
-        hr = S_OK;
+        er = ERROR_SUCCESS;
     }
-    ExitOnFailure(hr, "Failed to get process token information.");
+    ExitOnWin32Error(er, hr, "Failed to get process token information.");
 
     // Fallback to this check for some OS's (like XP)
     *pfPrivileged = ::AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdministratorsGroup);

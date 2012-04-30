@@ -14,9 +14,10 @@
 
 <?include WixVer.wxi ?>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="*" Name="WiX Toolset v$(var.WixVersion) Votive Package" Language="1033" Manufacturer="Microsoft Corporation" Version="$(var.WixVersion)" UpgradeCode="B6D64CBC-7075-4A94-AD48-DB084C0E70B1">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:swid="http://schemas.microsoft.com/wix/TagExtension">
+    <Product Id="*" Name="WiX Toolset v$(var.WixMajorMinor) Visual Studio Integration" Language="1033" Manufacturer="Microsoft Corporation" Version="$(var.WixVersion)" UpgradeCode="B6D64CBC-7075-4A94-AD48-DB084C0E70B1">
         <Package Compressed="yes" InstallerVersion="200" SummaryCodepage="1252" InstallScope="perMachine" />
+        <swid:Tag Regid="regid.1991-05.com.microsoft" />
 
         <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed." />
 
@@ -24,7 +25,7 @@
 
         <Property Id="ARPSYSTEMCOMPONENT" Value="1" />
 
-        <Feature Id="VotiveFeature" Title="Votive 200x" Level="1">            
+        <Feature Id="VotiveFeature" Title="Votive 200x" Level="1">
             <Feature Id="Intellisense2005" Title="IntelliSense 2005" Description="Schea files for IntelliSense in the Visual Studio 2005 editor" Level="0" TypicalDefault="install">
                 <Condition Level="1">VS2005DEVENV OR VS2005_ROOT_FOLDER OR REMOVE</Condition>
                 <ComponentGroupRef Id="Votive2005SchemaComponents" />
