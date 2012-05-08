@@ -52,6 +52,9 @@ typedef struct _BURN_USER_EXPERIENCE
     HRESULT hrApplyError;               // Tracks is an error occurs during apply that requires the cache or
                                         // execute threads to bail.
 
+    HWND hwndApply;                     // The window handle provided at the beginning of Apply(). Only valid
+                                        // during apply.
+
     DWORD dwExitCode;                   // Exit code returned by the user experience for the engine overall.
 } BURN_USER_EXPERIENCE;
 

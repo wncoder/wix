@@ -467,6 +467,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         /// The error came from an EXE Package.
         /// </summary>
         ExePackage,
+
+        /// <summary>
+        /// The error came while trying to authenticate with an HTTP server.
+        /// </summary>
+        HttpServerAuthentication,
+
+        /// <summary>
+        /// The error came while trying to authenticate with an HTTP proxy.
+        /// </summary>
+        HttpProxyAuthentication,
     };
 
     public enum RelatedOperation

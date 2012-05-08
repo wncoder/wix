@@ -44,6 +44,12 @@ static HRESULT CreateUnverifiedPath(
     __in_z LPCWSTR wzPayloadId,
     __out_z LPWSTR* psczUnverifiedPayloadPath
     );
+static HRESULT VerifyThenTransferContainer(
+    __in BURN_CONTAINER* pContainer,
+    __in_z LPCWSTR wzCachedPath,
+    __in_z LPCWSTR wzUnverifiedContainerPath,
+    __in BOOL fMove
+    );
 static HRESULT VerifyThenTransferPayload(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzCachedPath,
@@ -77,8 +83,9 @@ static HRESULT RemoveBundleOrPackage(
     __in_z LPCWSTR wzBundleOrPackageId,
     __in_z LPCWSTR wzCacheId
     );
-static HRESULT VerifyPayloadHash(
-    __in BURN_PAYLOAD* pPayload,
+static HRESULT VerifyHash(
+    __in BYTE* pbHash,
+    __in DWORD cbHash,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
     );
@@ -742,6 +749,28 @@ LExit:
     return hr;
 }
 
+extern "C" HRESULT CacheLayoutContainer(
+    __in BURN_CONTAINER* pContainer,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedContainerPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczCachedPath = NULL;
+
+    hr = PathConcat(wzLayoutDirectory, pContainer->sczFilePath, &sczCachedPath);
+    ExitOnFailure(hr, "Failed to concat complete cached path.");
+
+    hr = VerifyThenTransferContainer(pContainer, sczCachedPath, wzUnverifiedContainerPath, fMove);
+    ExitOnFailure1(hr, "Failed to layout container from cached path: %ls", sczCachedPath);
+
+LExit:
+    ReleaseStr(sczCachedPath);
+
+    return hr;
+}
+
 extern "C" HRESULT CacheLayoutPayload(
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
@@ -1202,6 +1231,49 @@ LExit:
     return hr;
 }
 
+static HRESULT VerifyThenTransferContainer(
+    __in BURN_CONTAINER* pContainer,
+    __in_z LPCWSTR wzCachedPath,
+    __in_z LPCWSTR wzUnverifiedContainerPath,
+    __in BOOL fMove
+    )
+{
+    HRESULT hr = S_OK;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+
+    // Get the container on disk actual hash.
+    hFile = ::CreateFileW(wzUnverifiedContainerPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (INVALID_HANDLE_VALUE == hFile)
+    {
+        ExitWithLastError1(hr, "Failed to open container in working path: %ls", wzUnverifiedContainerPath);
+    }
+
+    // Container should have a hash we can use to verify with.
+    if (pContainer->pbHash)
+    {
+        hr = VerifyHash(pContainer->pbHash, pContainer->cbHash, wzUnverifiedContainerPath, hFile);
+        ExitOnFailure1(hr, "Failed to verify container hash: %ls", wzCachedPath);
+    }
+
+    LogStringLine(REPORT_STANDARD, "%ls container from working path '%ls' to path '%ls'", fMove ? L"Moving" : L"Copying", wzUnverifiedContainerPath, wzCachedPath);
+
+    if (fMove)
+    {
+        hr = FileEnsureMoveWithRetry(wzUnverifiedContainerPath, wzCachedPath, TRUE, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to move %ls to %ls", wzUnverifiedContainerPath, wzCachedPath);
+    }
+    else
+    {
+        hr = FileEnsureCopyWithRetry(wzUnverifiedContainerPath, wzCachedPath, TRUE, FILE_OPERATION_RETRY_COUNT, FILE_OPERATION_RETRY_WAIT);
+        ExitOnFailure2(hr, "Failed to copy %ls to %ls", wzUnverifiedContainerPath, wzCachedPath);
+    }
+
+LExit:
+    ReleaseFileHandle(hFile);
+
+    return hr;
+}
+
 static HRESULT VerifyThenTransferPayload(
     __in BURN_PAYLOAD* pPayload,
     __in_z LPCWSTR wzCachedPath,
@@ -1232,7 +1304,7 @@ static HRESULT VerifyThenTransferPayload(
     }
     else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
     {
-        hr = VerifyPayloadHash(pPayload, wzUnverifiedPayloadPath, hFile);
+        hr = VerifyHash(pPayload->pbHash, pPayload->cbHash, wzUnverifiedPayloadPath, hFile);
         ExitOnFailure1(hr, "Failed to verify payload hash: %ls", wzCachedPath);
     }
 
@@ -1311,7 +1383,7 @@ static HRESULT VerifyFileAgainstPayload(
     }
     else if (pPayload->pbHash) // the payload should have a hash we can use to verify it.
     {
-        hr = VerifyPayloadHash(pPayload, wzVerifyPath, hFile);
+        hr = VerifyHash(pPayload->pbHash, pPayload->cbHash, wzVerifyPath, hFile);
         ExitOnFailure1(hr, "Failed to verify hash of payload: %ls", pPayload->sczKey);
     }
 
@@ -1579,8 +1651,9 @@ LExit:
 }
 
 
-static HRESULT VerifyPayloadHash(
-    __in BURN_PAYLOAD* pPayload,
+static HRESULT VerifyHash(
+    __in BYTE* pbHash,
+    __in DWORD cbHash,
     __in_z LPCWSTR wzUnverifiedPayloadPath,
     __in HANDLE hFile
     )
@@ -1591,13 +1664,13 @@ static HRESULT VerifyPayloadHash(
 
     // TODO: create a cryp hash file that sends progress.
     hr = CrypHashFileHandle(hFile, PROV_RSA_FULL, CALG_SHA1, rgbActualHash, sizeof(rgbActualHash), &qwHashedBytes);
-    ExitOnFailure1(hr, "Failed to calculate hash for payload at path: %ls", wzUnverifiedPayloadPath);
+    ExitOnFailure1(hr, "Failed to calculate hash for path: %ls", wzUnverifiedPayloadPath);
 
     // Compare hashes.
-    if (pPayload->cbHash != sizeof(rgbActualHash) || 0 != memcmp(pPayload->pbHash, rgbActualHash, SHA1_HASH_LEN))
+    if (cbHash != sizeof(rgbActualHash) || 0 != memcmp(pbHash, rgbActualHash, SHA1_HASH_LEN))
     {
         hr = CRYPT_E_HASH_VALUE;
-        ExitOnFailure1(hr, "Hash mismatch for payload at path: %ls", wzUnverifiedPayloadPath);
+        ExitOnFailure1(hr, "Hash mismatch for path: %ls", wzUnverifiedPayloadPath);
     }
 
 LExit:

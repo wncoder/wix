@@ -445,19 +445,27 @@ public: // IBootstrapperApplication
         }
         else if (BOOTSTRAPPER_DISPLAY_FULL == m_command.display)
         {
-            BalRetryErrorOccurred(wzPackageId, dwCode);
-
-            // If no error message was provided, use the error code to try and get an error message.
-            if (!wzError || !*wzError || BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER != errorType)
+            // If this is an authentication failure, let the engine try to handle it for us.
+            if (BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_SERVER == errorType || BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_PROXY == errorType)
             {
-                HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
-                if (FAILED(hr) || !sczError || !*sczError)
-                {
-                    StrAllocFormatted(&sczError, L"0x%x", dwCode);
-                }
+                nResult = IDTRYAGAIN;
             }
+            else // show a generic error message box.
+            {
+                BalRetryErrorOccurred(wzPackageId, dwCode);
 
-            nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
+                // If no error message was provided, use the error code to try and get an error message.
+                if (!wzError || !*wzError || BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER != errorType)
+                {
+                    HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
+                    if (FAILED(hr) || !sczError || !*sczError)
+                    {
+                        StrAllocFormatted(&sczError, L"0x%x", dwCode);
+                    }
+                }
+
+                nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
+            }
         }
         else // just take note of the error code and let things continue.
         {
@@ -2029,7 +2037,7 @@ public:
         __in BOOL fPrereq,
         __in IBootstrapperEngine* pEngine,
         __in const BOOTSTRAPPER_COMMAND* pCommand
-        ) : CBalBaseBootstrapperApplication(pEngine, pCommand->restart, 3, 3000)
+        ) : CBalBaseBootstrapperApplication(pEngine, pCommand, 3, 3000)
     {
         m_hModule = hModule;
         memcpy_s(&m_command, sizeof(m_command), pCommand, sizeof(BOOTSTRAPPER_COMMAND));

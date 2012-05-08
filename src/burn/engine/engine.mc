@@ -399,19 +399,27 @@ Failed to layout bundle: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
 
 MessageId=316
 Severity=Error
+SymbolicName=MSG_FAILED_LAYOUT_CONTAINER
+Language=English
+Failed to layout container: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
+.
+
+
+MessageId=317
+Severity=Error
 SymbolicName=MSG_FAILED_LAYOUT_PAYLOAD
 Language=English
 Failed to layout payload: %2!ls! to layout directory: %3!ls!, error: %1!ls!.
 .
 
-MessageId=317
+MessageId=318
 Severity=Success
 SymbolicName=MSG_ROLLBACK_PACKAGE_SKIPPED
 Language=English
 Skipped rollback of package: %1!ls!, action: %2!hs!, already: %3!hs!
 .
 
-MessageId=318
+MessageId=319
 Severity=Success
 SymbolicName=MSG_APPLY_COMPLETED_PACKAGE
 Language=English

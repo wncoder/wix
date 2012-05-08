@@ -743,7 +743,7 @@ static HRESULT AddPossibleTargetProduct(
         hr = DictAddKey(sdUniquePossibleTargetProductCodes, wzPossibleTargetProductCode);
         ExitOnFailure(hr, "Failed to add possible target code to unique product codes.");
 
-        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgPossibleTargetProducts), *pcPossibleTargetProducts, sizeof(POSSIBLE_TARGETPRODUCT), 3);
+        hr = MemEnsureArraySize(reinterpret_cast<LPVOID*>(prgPossibleTargetProducts), *pcPossibleTargetProducts + 1, sizeof(POSSIBLE_TARGETPRODUCT), 3);
         ExitOnFailure(hr, "Failed to grow array of possible target products.");
 
         hr = ::StringCchCopyW((*prgPossibleTargetProducts)[*pcPossibleTargetProducts].wzProductCode, countof(prgPossibleTargetProducts[*pcPossibleTargetProducts]->wzProductCode), wzPossibleTargetProductCode);

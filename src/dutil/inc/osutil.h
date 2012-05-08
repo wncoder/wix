@@ -39,8 +39,14 @@ void DAPI OsGetVersion(
     __out OS_VERSION* pVersion,
     __out DWORD* pdwServicePack
     );
+HRESULT DAPI OsCouldRunPrivileged(
+    __out BOOL* pfPrivileged
+    );
 HRESULT DAPI OsIsRunningPrivileged(
     __out BOOL* pfPrivileged
+    );
+HRESULT DAPI OsIsUacEnabled(
+    __out BOOL* pfUacEnabled
     );
 
 #ifdef __cplusplus

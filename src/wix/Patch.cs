@@ -549,9 +549,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Hashtable customActionTable = new Hashtable();
             Hashtable directoryTableAdds = new Hashtable();
             Hashtable featureTableAdds = new Hashtable();
-            ArrayList keptComponentTableAdds = new ArrayList();
+            Hashtable keptComponents = new Hashtable();
             Hashtable keptDirectories = new Hashtable();
             Hashtable keptFeatures = new Hashtable();
+            Hashtable keptLockPermissions = new Hashtable();
+            Hashtable keptMsiLockPermissionExs = new Hashtable();
+            
+            Dictionary<string, List<string>> componentCreateFolderIndex = new Dictionary<string,List<string>>();
+            Dictionary<string, List<Row>> directoryLockPermissionsIndex = new Dictionary<string,List<Row>>();
+            Dictionary<string, List<Row>> directoryMsiLockPermissionsExIndex = new Dictionary<string,List<Row>>();
 
             foreach (Row patchRefRow in patchRefTable.Rows)
             {
@@ -593,7 +599,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // throw away sections not referenced
             int keptRows = 0;
             Table directoryTable = null;
-            Table featureTable = null;
+            Table featureTable = null;;
+            Table lockPermissionsTable = null;
+            Table msiLockPermissionsTable = null;
+
             foreach (Table table in transform.Tables)
             {
                 if ("_SummaryInformation" == table.Name)
@@ -614,6 +623,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 for (int i = 0; i < table.Rows.Count; i++)
                 {
                     Row row = table.Rows[i];
+
+                    if (table.Name == "CreateFolder")
+                    {
+                        string createFolderComponentId = (string)row[1];
+
+                        List<string> directoryList;
+                        if (!componentCreateFolderIndex.TryGetValue(createFolderComponentId, out directoryList))
+                        {
+                            directoryList = new List<string>();
+                            componentCreateFolderIndex.Add(createFolderComponentId, directoryList);
+                        }
+
+                        directoryList.Add((string)row[0]);
+                    }
 
                     if (table.Name == "CustomAction")
                     {
@@ -659,6 +682,42 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         }
                     }
 
+                    if (table.Name == "LockPermissions")
+                    {
+                        lockPermissionsTable = table;
+                        if ("CreateFolder" == (string)row[1])
+                        {
+                            string directoryId = (string)row[0];
+
+                            List<Row> rowList;
+                            if (!directoryLockPermissionsIndex.TryGetValue(directoryId, out rowList))
+                            {
+                                rowList = new List<Row>();
+                                directoryLockPermissionsIndex.Add(directoryId, rowList);
+                            }
+
+                            rowList.Add(row);
+                        }
+                    }
+
+                    if (table.Name == "MsiLockPermissionsEx")
+                    {
+                        msiLockPermissionsTable = table;
+                        if ("CreateFolder" == (string)row[1])
+                        {
+                            string directoryId = (string)row[0];
+
+                            List<Row> rowList;
+                            if (!directoryMsiLockPermissionsExIndex.TryGetValue(directoryId, out rowList))
+                            {
+                                rowList = new List<Row>();
+                                directoryMsiLockPermissionsExIndex.Add(directoryId, rowList);
+                            }
+
+                            rowList.Add(row);
+                        }
+                    }
+
                     if (null == row.SectionId)
                     {
                         table.Rows.RemoveAt(i);
@@ -677,10 +736,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         {
                             if ("Component" == table.Name)
                             {
-                                if (RowOperation.Add == row.Operation)
-                                {
-                                    keptComponentTableAdds.Add(row);
-                                }
+                                keptComponents.Add((string)row[0], row);
                             }
 
                             if ("Directory" == table.Name)
@@ -708,43 +764,87 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             if (null != directoryTable)
             {
-                foreach (Row componentRow in keptComponentTableAdds)
+                foreach (Row componentRow in keptComponents.Values)
                 {
-                    // make sure each added component has its required directory and feature heirarchy.
-                    string directoryId = (string)componentRow[2];
-                    while (null != directoryId && directoryTableAdds.ContainsKey(directoryId))
-                    {
-                        Row directoryRow = (Row)directoryTableAdds[directoryId];
-
-                        if (!keptDirectories.ContainsKey(directoryId))
-                        {
-                            directoryTable.Rows.Add(directoryRow);
-                            keptDirectories.Add(directoryRow[0], null);
-                            keptRows++;
-                        }
-
-                        directoryId = (string)directoryRow[1];
-                    }
-
                     string componentId = (string)componentRow[0];
 
-                    if (componentFeatureAddsIndex.ContainsKey(componentId))
+                    if (RowOperation.Add == componentRow.Operation)
                     {
-                        foreach (string featureId in (ArrayList)componentFeatureAddsIndex[componentId])
+                        // make sure each added component has its required directory and feature heirarchy.
+                        string directoryId = (string)componentRow[2];
+                        while (null != directoryId && directoryTableAdds.ContainsKey(directoryId))
                         {
-                            string currentFeatureId = featureId;
-                            while (null != currentFeatureId && featureTableAdds.ContainsKey(currentFeatureId))
-                            {
-                                Row featureRow = (Row)featureTableAdds[currentFeatureId];
+                            Row directoryRow = (Row)directoryTableAdds[directoryId];
 
-                                if (!keptFeatures.ContainsKey(currentFeatureId))
+                            if (!keptDirectories.ContainsKey(directoryId))
+                            {
+                                directoryTable.Rows.Add(directoryRow);
+                                keptDirectories.Add(directoryRow[0], null);
+                                keptRows++;
+                            }
+
+                            directoryId = (string)directoryRow[1];
+                        }
+
+                        if (componentFeatureAddsIndex.ContainsKey(componentId))
+                        {
+                            foreach (string featureId in (ArrayList)componentFeatureAddsIndex[componentId])
+                            {
+                                string currentFeatureId = featureId;
+                                while (null != currentFeatureId && featureTableAdds.ContainsKey(currentFeatureId))
                                 {
-                                    featureTable.Rows.Add(featureRow);
-                                    keptFeatures.Add(featureRow[0], null);
-                                    keptRows++;
+                                    Row featureRow = (Row)featureTableAdds[currentFeatureId];
+
+                                    if (!keptFeatures.ContainsKey(currentFeatureId))
+                                    {
+                                        featureTable.Rows.Add(featureRow);
+                                        keptFeatures.Add(featureRow[0], null);
+                                        keptRows++;
+                                    }
+
+                                    currentFeatureId = (string)featureRow[1];
+                                }
+                            }
+                        }
+                    }
+
+                    // Hook in changes LockPermissions and MsiLockPermissions for folders for each component that has been kept.
+                    foreach (string keptComponentId in keptComponents.Keys)
+                    {
+                        List<string> directoryList;
+                        if (componentCreateFolderIndex.TryGetValue(keptComponentId, out directoryList))
+                        {
+                            foreach (string directoryId in directoryList)
+                            {
+                                List<Row> lockPermissionsRowList;
+                                if (directoryLockPermissionsIndex.TryGetValue(directoryId, out lockPermissionsRowList))
+                                {
+                                    foreach (Row lockPermissionsRow in lockPermissionsRowList)
+                                    {
+                                        string key = lockPermissionsRow.GetPrimaryKey('/');
+                                        if (!keptLockPermissions.ContainsKey(key))
+                                        {
+                                            lockPermissionsTable.Rows.Add(lockPermissionsRow);
+                                            keptLockPermissions.Add(key, null);
+                                            keptRows++;
+                                        }
+                                    }
                                 }
 
-                                currentFeatureId = (string)featureRow[1];
+                                List<Row> msiLockPermissionsExRowList;
+                                if (directoryLockPermissionsIndex.TryGetValue(directoryId, out msiLockPermissionsExRowList))
+                                {
+                                    foreach (Row msiLockPermissionsExRow in msiLockPermissionsExRowList)
+                                    {
+                                        string key = msiLockPermissionsExRow.GetPrimaryKey('/');
+                                        if (!keptMsiLockPermissionExs.ContainsKey(key))
+                                        {
+                                            msiLockPermissionsTable.Rows.Add(msiLockPermissionsExRow);
+                                            keptMsiLockPermissionExs.Add(key, null);
+                                            keptRows++;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

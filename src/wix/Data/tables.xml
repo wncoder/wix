@@ -1484,6 +1484,9 @@
         <columnDefinition name="RetainOffsets" type="preserved" length="0" nullable="yes"
                 category="text"/>
     </tableDefinition>
+    <tableDefinition name="WixBindUpdatedFiles" unreal="yes">
+        <columnDefinition name="File_" type="string" length="0" primaryKey="yes" modularize="column" keyTable="File" keyColumn="1" category="identifier" />
+    </tableDefinition>
     <tableDefinition name="WixFragment" createSymbols="yes" unreal="yes">
         <columnDefinition name="WixFragment" type="string" length="0" primaryKey="yes"/>
     </tableDefinition>

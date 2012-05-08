@@ -577,15 +577,55 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                     {
                         this.Message = e.ErrorMessage;
 
-                        WixBA.View.Dispatcher.Invoke((Action)delegate()
+                        if (Display.Full == WixBA.Model.Command.Display)
                         {
-                            MessageBox.Show(WixBA.View, e.ErrorMessage, "WiX Toolset", MessageBoxButton.OK, MessageBoxImage.Error);
+                            // On HTTP authentication errors, have the engine try to do authentication for us.
+                            if (ErrorType.HttpServerAuthentication == e.ErrorType || ErrorType.HttpProxyAuthentication == e.ErrorType)
+                            {
+                                e.Result = Result.TryAgain;
+                            }
+                            else // show an error dialog.
+                            {
+                                MessageBoxButton msgbox = MessageBoxButton.OK;
+                                switch (e.UIHint & 0xF)
+                                {
+                                    case 0:
+                                        msgbox = MessageBoxButton.OK;
+                                        break;
+                                    case 1:
+                                        msgbox = MessageBoxButton.OKCancel;
+                                        break;
+                                    // There is no 2! That would have been MB_ABORTRETRYIGNORE.
+                                    case 3:
+                                        msgbox = MessageBoxButton.YesNoCancel;
+                                        break;
+                                    case 4:
+                                        msgbox = MessageBoxButton.YesNo;
+                                        break;
+                                    // default: stay with MBOK since an exact match is not available.
+                                }
+
+                                MessageBoxResult result = MessageBoxResult.None;
+                                WixBA.View.Dispatcher.Invoke((Action)delegate()
+                                    {
+                                        result = MessageBox.Show(WixBA.View, e.ErrorMessage, "WiX Toolset", msgbox, MessageBoxImage.Error);
+                                    }
+                                    );
+
+                                // If there was a match from the UI hint to the msgbox value, use the result from the
+                                // message box. Otherwise, we'll ignore it and return the default to Burn.
+                                if ((e.UIHint & 0xF) == (int)msgbox)
+                                {
+                                    e.Result = (Result)result;
+                                }
+                            }
                         }
-                            );
                     }
                 }
-
-                e.Result = this.root.Canceled ? Result.Cancel : Result.Ok;
+                else // canceled, so always return cancel.
+                {
+                    e.Result = Result.Cancel;
+                }
             }
         }
 

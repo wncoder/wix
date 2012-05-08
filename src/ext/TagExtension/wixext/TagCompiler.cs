@@ -149,7 +149,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (!this.Core.EncounteredError)
             {
-                string directoryId = "WixTagFolder";
+                string directoryId = "WixTagRegidFolder";
                 string fileId = this.Core.GenerateIdentifier("tag", regid, ".product.tag");
                 string fileName = String.Concat(regid, " ", name, ".swidtag");
                 string shortName = this.Core.GenerateShortName(fileName, false, false);
@@ -179,6 +179,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 wixFileRow.Attributes = 1;
                 wixFileRow.Source = String.Concat("%TEMP%\\", fileName);
 
+                this.Core.EnsureTable(sourceLineNumbers, "SoftwareIdentificationTag");
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixTag");
                 row[0] = fileId;
                 row[1] = regid;

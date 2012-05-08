@@ -39,6 +39,7 @@ enum BURN_CACHE_ACTION_TYPE
     BURN_CACHE_ACTION_TYPE_SIGNAL_SYNCPOINT,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER,
     BURN_CACHE_ACTION_TYPE_EXTRACT_CONTAINER,
+    BURN_CACHE_ACTION_TYPE_LAYOUT_CONTAINER,
     BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD,
     BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD,
     BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD,
@@ -130,6 +131,16 @@ typedef struct _BURN_CACHE_ACTION
             BURN_EXTRACT_PAYLOAD* rgPayloads;
             DWORD cPayloads;
         } extractContainer;
+        struct
+        {
+            BURN_PACKAGE* pPackage;
+            BURN_CONTAINER* pContainer;
+            DWORD iTryAgainAction;
+            DWORD cTryAgainAttempts;
+            LPWSTR sczLayoutDirectory;
+            LPWSTR sczUnverifiedPath;
+            BOOL fMove;
+        } layoutContainer;
         struct
         {
             BURN_PACKAGE* pPackage;
@@ -321,7 +332,7 @@ HRESULT PlanLayoutBundle(
 HRESULT PlanLayoutPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,
-    __in_z LPCWSTR wzLayoutDirectory
+    __in_z_opt LPCWSTR wzLayoutDirectory
     );
 HRESULT PlanExecutePackage(
     __in BOOL fPerMachine,

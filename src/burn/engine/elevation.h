@@ -72,12 +72,13 @@ HRESULT ElevationLayoutBundle(
     __in_z LPCWSTR wzLayoutDirectory,
     __in_z LPCWSTR wzUnverifiedPath
     );
-HRESULT ElevationCacheOrLayoutPayload(
+HRESULT ElevationCacheOrLayoutContainerOrPayload(
     __in HANDLE hPipe,
+    __in_opt BURN_CONTAINER* pContainer,
     __in_opt BURN_PACKAGE* pPackage,
-    __in BURN_PAYLOAD* pPayload,
+    __in_opt BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,
-    __in_z LPCWSTR wzUnverifiedPayloadPath,
+    __in_z LPCWSTR wzUnverifiedPath,
     __in BOOL fMove
     );
 HRESULT ElevationCacheCleanup(
@@ -141,6 +142,7 @@ HRESULT ElevationChildPumpMessages(
     __in DWORD dwLoggingTlsId,
     __in HANDLE hPipe,
     __in HANDLE hCachePipe,
+    __in BURN_CONTAINERS* pContainers,
     __in BURN_PACKAGES* pPackages,
     __in BURN_RELATED_BUNDLES* pRelatedBundles,
     __in BURN_PAYLOADS* pPayloads,

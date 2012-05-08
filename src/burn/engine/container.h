@@ -92,6 +92,8 @@ typedef struct _BURN_CONTAINER
     LPWSTR sczSourcePath;
     BURN_DOWNLOAD_SOURCE downloadSource;
 
+    BYTE* pbHash;
+    DWORD cbHash;
     DWORD64 qwAttachedOffset;
     BOOL fActuallyAttached;     // indicates whether an attached container is attached or missing.
 

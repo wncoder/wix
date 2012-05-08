@@ -20,6 +20,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
     {
         private TagBinder binderExtension;
         private TagCompiler compilerExtension;
+        private TagDecompiler decompilerExtension;
         private Library library;
         private TableDefinitionCollection tableDefinitions;
 
@@ -54,6 +55,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
 
                 return this.compilerExtension;
+            }
+        }
+
+        /// <summary>
+        /// Gets the optional decompiler extension.
+        /// </summary>
+        /// <value>The optional decompiler extension.</value>
+        public override DecompilerExtension DecompilerExtension
+        {
+            get
+            {
+                if (null == this.decompilerExtension)
+                {
+                    this.decompilerExtension = new TagDecompiler();
+                }
+
+                return this.decompilerExtension;
             }
         }
 

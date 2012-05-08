@@ -620,6 +620,8 @@ extern "C" HRESULT CoreApply(
     // Initialize only after getting a lock.
     ApplyInitialize();
 
+    pEngineState->userExperience.hwndApply = hwndParent;
+
     hr = ApplySetVariables(&pEngineState->variables);
     ExitOnFailure(hr, "Failed to set initial apply variables.");
 
@@ -635,7 +637,7 @@ extern "C" HRESULT CoreApply(
     {
         AssertSz(!fLayoutOnly, "A Layout plan should never require elevation.");
 
-        hr = CoreElevate(pEngineState, hwndParent);
+        hr = CoreElevate(pEngineState, pEngineState->userExperience.hwndApply);
         ExitOnFailure(hr, "Failed to elevate.");
 
         hr = ElevationApplyInitialize(pEngineState->companionConnection.hPipe, &pEngineState->variables, pEngineState->plan.action, pEngineState->automaticUpdates, !pEngineState->fDisableSystemRestore);
@@ -672,7 +674,7 @@ extern "C" HRESULT CoreApply(
     // Execute only if we are not doing a layout.
     if (!fLayoutOnly)
     {
-        hr = ApplyExecute(pEngineState, hwndParent, hCacheThread, &cOverallProgressTicks, &fKeepRegistration, &fRollback, &fSuspend, &restart);
+        hr = ApplyExecute(pEngineState, hCacheThread, &cOverallProgressTicks, &fKeepRegistration, &fRollback, &fSuspend, &restart);
         UserExperienceExecutePhaseComplete(&pEngineState->userExperience, hr); // signal that execute completed.
     }
 
@@ -703,6 +705,8 @@ LExit:
     {
         ElevationApplyUninitialize(pEngineState->companionConnection.hPipe);
     }
+
+    pEngineState->userExperience.hwndApply = NULL;
 
     ApplyUninitialize();
 

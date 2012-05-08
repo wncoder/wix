@@ -244,6 +244,7 @@ extern "C" void UserExperienceExecuteReset(
     )
 {
     pUserExperience->hrApplyError = S_OK;
+    pUserExperience->hwndApply = NULL;
 }
 
 extern "C" void UserExperienceExecutePhaseComplete(

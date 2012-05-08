@@ -183,17 +183,17 @@ static HRESULT ReadXmlConfigTable(
         if (0 < lstrlenW(pwzData))
         {
             hr = StringCchCopyW((*ppxfcTail)->wzComponent, countof((*ppxfcTail)->wzComponent), pwzData);
-            ExitOnFailure1(hr, "failed to copy component: %ls", (*ppxfcTail)->wzComponent);
+            ExitOnFailure(hr, "failed to copy component id");
 
             er = ::MsiGetComponentStateW(WcaGetInstallHandle(), (*ppxfcTail)->wzComponent, &(*ppxfcTail)->isInstalled, &(*ppxfcTail)->isAction);
-            ExitOnFailure1(hr = HRESULT_FROM_WIN32(er), "failed to get install state for Component: %ls", pwzData);
+            ExitOnFailure(hr = HRESULT_FROM_WIN32(er), "failed to get install state for component id");
         }
 
         // Get the xml file
         hr = WcaGetRecordFormattedString(hRec, xfqFile, &pwzData);
         ExitOnFailure1(hr, "failed to get xml file for XmlConfig: %ls", (*ppxfcTail)->wzId);
         hr = StringCchCopyW((*ppxfcTail)->wzFile, countof((*ppxfcTail)->wzFile), pwzData);
-        ExitOnFailure1(hr, "failed to copy xml file: %ls", (*ppxfcTail)->wzFile);
+        ExitOnFailure(hr, "failed to copy xml file path");
 
         // Figure out if the file is already on the machine or if it's being installed
         hr = WcaGetRecordString(hRec, xfqFile, &pwzData);
@@ -219,13 +219,13 @@ static HRESULT ReadXmlConfigTable(
         hr = WcaGetRecordFormattedString(hRec, xfqName, &pwzData);
         ExitOnFailure1(hr, "failed to get Name for XmlConfig: %ls", (*ppxfcTail)->wzId);
         hr = StringCchCopyW((*ppxfcTail)->wzName, countof((*ppxfcTail)->wzName), pwzData);
-        ExitOnFailure1(hr, "failed to copy name: %ls", (*ppxfcTail)->wzName);
+        ExitOnFailure(hr, "failed to copy name of element");
 
         // Get the value
         hr = WcaGetRecordFormattedString(hRec, xfqValue, &pwzData);
         ExitOnFailure1(hr, "failed to get Value for XmlConfig: %ls", (*ppxfcTail)->wzId);
         hr = StrAllocString(&(*ppxfcTail)->pwzValue, pwzData, 0);
-        ExitOnFailure1(hr, "failed to allocate buffer for value: %ls", (*ppxfcTail)->pwzValue);
+        ExitOnFailure(hr, "failed to allocate buffer for value");
 
         // Get the component attributes
         hr = WcaGetRecordInteger(hRec, xfqCompAttributes, &(*ppxfcTail)->iCompAttributes);
@@ -488,7 +488,7 @@ extern "C" UINT __stdcall SchedXmlConfig(
         {
             // Remember the file we're currently working on
             hr = StrAllocString(&pwzCurrentFile, pxfc->wzFile, 0);
-            ExitOnFailure1(hr, "failed to copy file name: %ls", pxfc->wzFile);
+            ExitOnFailure(hr, "failed to copy file name");
 
             fCurrentFileChanged = TRUE;
         }

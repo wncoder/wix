@@ -86,6 +86,39 @@ extern "C" void DAPI OsGetVersion(
     *pdwServicePack = vdwOsServicePack;
 }
 
+extern "C" HRESULT DAPI OsCouldRunPrivileged(
+    __out BOOL* pfPrivileged
+    )
+{
+    HRESULT hr = S_OK;
+    BOOL fUacEnabled = FALSE;
+    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    PSID AdministratorsGroup = NULL;
+
+    // Do a best effort check to see if UAC is enabled on this machine.
+    OsIsUacEnabled(&fUacEnabled);
+
+    // If UAC is enabled then the process could run privileged by asking to elevate.
+    if (fUacEnabled)
+    {
+        *pfPrivileged = TRUE;
+    }
+    else // no UAC so only privilged if user is in administrators group.
+    {
+        *pfPrivileged = ::AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdministratorsGroup);
+        if (*pfPrivileged)
+        {
+            if (!::CheckTokenMembership(NULL, AdministratorsGroup, pfPrivileged))
+            {
+                 *pfPrivileged = FALSE;
+            }
+        }
+    }
+
+    ReleaseSid(AdministratorsGroup);
+    return hr;
+}
+
 extern "C" HRESULT DAPI OsIsRunningPrivileged(
     __out BOOL* pfPrivileged
     )
@@ -94,9 +127,9 @@ extern "C" HRESULT DAPI OsIsRunningPrivileged(
     UINT er = ERROR_SUCCESS;
     HANDLE hToken = NULL;
     TOKEN_ELEVATION_TYPE elevationType = TokenElevationTypeDefault;
+    DWORD dwSize = 0;
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
     PSID AdministratorsGroup = NULL;
-    DWORD dwSize = 0;
 
     if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
     {
@@ -124,7 +157,7 @@ extern "C" HRESULT DAPI OsIsRunningPrivileged(
         if (!::CheckTokenMembership(NULL, AdministratorsGroup, pfPrivileged))
         {
              *pfPrivileged = FALSE;
-        } 
+        }
     }
 
 LExit:
@@ -134,6 +167,38 @@ LExit:
     {
         ::CloseHandle(hToken);
     }
+
+    return hr;
+}
+
+extern "C" HRESULT DAPI OsIsUacEnabled(
+    __out BOOL* pfUacEnabled
+    )
+{
+    HRESULT hr = S_OK;
+    HKEY hk = NULL;
+    DWORD dwUacEnabled = 0;
+
+    *pfUacEnabled = FALSE; // assume UAC not enabled.
+
+    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", KEY_READ, &hk);
+    if (E_FILENOTFOUND == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to open system policy key to detect UAC.");
+
+    hr = RegReadNumber(hk, L"EnableLUA", &dwUacEnabled);
+    if (E_FILENOTFOUND == hr)
+    {
+        ExitFunction1(hr = S_OK);
+    }
+    ExitOnFailure(hr, "Failed to read registry value to detect UAC.");
+
+    *pfUacEnabled = (0 != dwUacEnabled);
+
+LExit:
+    ReleaseRegKey(hk);
 
     return hr;
 }

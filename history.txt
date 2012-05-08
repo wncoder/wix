@@ -2121,6 +2121,34 @@ RobMen: Simplify Software Id Tag authoring by making Feature attribute optional.
 BobArnson: Fix SFBUG:3512811 by switching to yet another set of registry 
            entries that are present on XP and later.
 
-
 WixBuild: Version 3.6.2830.0
 
+RobMen: SFBUG:3522358 - add CommonFiles6432Folder and ProgramFiles6432Folder to
+                        pick the "best native" folder for 64-bit and 32-bit.
+        SFBUG:3522498 - fix Burn Privileged variable to better match MSI
+                        behavior and update documentation for other Burn
+                        variables that differ slightly.
+
+RobMen: SFBUG:3521855 - fix crash in Burn plan dump of MSP target codes.
+
+RobMen: Fix /layout so containers are correctly laid out instead of extracted
+        and will install from that layout.
+
+HeathS: Refactored binder to remove nested classes.
+
+RobMen: SFBUG:3073004 - Burn engine now supports prompting for server/proxy
+                        authentication credentials during download.
+        SFBUG:3481691 - WixBA will prompt when installed behind proxy.
+
+PMarcu: SFBUG:3502982 - Allowing admin image patching of permissions tables.
+
+RobMen: Default Feature/@Level to "1"
+        SFBUG:3523723 - fix wixstdba documentation.
+        SFBUG:3524147 - reduce use of variables in error messages.
+
+RobMen: Allow Binder extensions to process output after variable resolution.
+        Place software id tag in correc folder and always use 4 part version.
+        Use ProductCode as software tag unique id in WiX v3.6.
+        Populate SoftwareTagId table for later harvesting.
+
+WixBuild: Version 3.6.2907.0

@@ -8249,11 +8249,12 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute name="Level" type="xs:integer" use="required">
+      <xs:attribute name="Level" type="xs:integer">
         <xs:annotation>
           <xs:documentation>
                     Sets the install level of this feature.  A value of 0 will disable the feature.  Processing the
-                    Condition Table can modify the level value (this is set via the Condition child element).
+                    Condition Table can modify the level value (this is set via the Condition child element). The
+                    default value is "1".
                 </xs:documentation>
         </xs:annotation>
       </xs:attribute>

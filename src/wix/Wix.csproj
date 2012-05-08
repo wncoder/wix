@@ -19,6 +19,7 @@
     <Compile Include="Binder.cs" />
     <Compile Include="BinderCore.cs" />
     <Compile Include="BinderExtension.cs" />
+    <Compile Include="BinderExtensionEx.cs" />
     <Compile Include="BinderFileManager.cs" />
     <Compile Include="BundleChainAttributes.cs" />
     <Compile Include="BundlePackageAttributes.cs" />
@@ -170,6 +171,28 @@
     </Compile>
     <Compile Include="WixVariableResolver.cs" />
     <Compile Include="WixVariableRow.cs" />
+    <Compile Include="BundleInfo.cs" />
+    <Compile Include="CatalogInfo.cs" />
+    <Compile Include="ChainInfo.cs" />
+    <Compile Include="ChainPackageInfo.cs" />
+    <Compile Include="ContainerInfo.cs" />
+    <Compile Include="ExitCodeInfo.cs" />
+    <Compile Include="MsiFeature.cs" />
+    <Compile Include="MsiPropertyInfo.cs" />
+    <Compile Include="ProvidesDependency.cs" />
+    <Compile Include="ProvidesDependencyCollection.cs" />
+    <Compile Include="RegistrationInfo.cs" />
+    <Compile Include="RelatedBundleInfo.cs" />
+    <Compile Include="RelatedPackage.cs" />
+    <Compile Include="ResolvedDirectory.cs" />
+    <Compile Include="RollbackBoundaryInfo.cs" />
+    <Compile Include="UpdateRegistrationInfo.cs" />
+    <Compile Include="VariableInfo.cs" />
+    <Compile Include="WixComponentSearchInfo.cs" />
+    <Compile Include="WixFileSearchInfo.cs" />
+    <Compile Include="WixProductSearchInfo.cs" />
+    <Compile Include="WixRegistrySearchInfo.cs" />
+    <Compile Include="WixSearchInfo.cs" />
     <EmbeddedFlattenedResource Include="Data\actions.xml">
       <LogicalName>$(RootNamespace).Data.actions.xml</LogicalName>
     </EmbeddedFlattenedResource>

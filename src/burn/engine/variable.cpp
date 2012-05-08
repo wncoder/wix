@@ -151,6 +151,10 @@ static HRESULT InitializeVariableRegistryFolder(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
     );
+static HRESULT InitializeVariable6432Folder(
+        __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    );
 static HRESULT InitializeVariableDate(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
@@ -170,6 +174,10 @@ static HRESULT InitializeVariableVersion(
 static HRESULT InitializeVariableLogonUser(
     __in DWORD_PTR dwpData,
     __inout BURN_VARIANT* pValue
+    );
+static HRESULT Get64bitFolderFromRegistry(
+    __in int nFolder,
+    __deref_out_z LPWSTR* psczPath
     );
 static HRESULT IsVariableHidden(
     __in BURN_VARIABLES* pVariables,
@@ -194,10 +202,12 @@ extern "C" HRESULT VariableInitialize(
         {L"CommonAppDataFolder", InitializeVariableCsidlFolder, CSIDL_COMMON_APPDATA},
 #if defined(_WIN64)
         {L"CommonFiles64Folder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMON},
+        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMONX86},
 #else
         {L"CommonFiles64Folder", InitializeVariableRegistryFolder, CSIDL_PROGRAM_FILES_COMMON},
+        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMON},
 #endif
-        {L"CommonFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES_COMMONX86},
+        {L"CommonFiles6432Folder", InitializeVariable6432Folder, CSIDL_PROGRAM_FILES_COMMON},
         {L"CompatibilityMode", InitializeVariableOsInfo, OS_INFO_VARIABLE_CompatibilityMode},
         {VARIABLE_DATE, InitializeVariableDate, 0},
         {L"DesktopFolder", InitializeVariableCsidlFolder, CSIDL_DESKTOP},
@@ -225,6 +235,7 @@ extern "C" HRESULT VariableInitialize(
         {L"ProgramFiles64Folder", InitializeVariableRegistryFolder, CSIDL_PROGRAM_FILES},
         {L"ProgramFilesFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAM_FILES},
 #endif
+        {L"ProgramFiles6432Folder", InitializeVariable6432Folder, CSIDL_PROGRAM_FILES},
         {L"ProgramMenuFolder", InitializeVariableCsidlFolder, CSIDL_PROGRAMS},
         {L"RebootPending", InitializeVariableRebootPending, 0},
         {L"SendToFolder", InitializeVariableCsidlFolder, CSIDL_SENDTO},
@@ -1643,9 +1654,9 @@ static HRESULT InitializeVariablePrivileged(
     HRESULT hr = S_OK;
     BOOL fPrivileged = FALSE;
 
-    // check if process is running privileged
-    hr = OsIsRunningPrivileged(&fPrivileged);
-    ExitOnFailure(hr, "Failed to check if process is running privileged.");
+    // check if process could run privileged.
+    hr = OsCouldRunPrivileged(&fPrivileged);
+    ExitOnFailure(hr, "Failed to check if process could run privileged.");
 
     // set value
     hr = BVariantSetNumeric(pValue, fPrivileged);
@@ -1765,7 +1776,7 @@ static HRESULT InitializeVariableRegistryFolder(
     )
 {
     HRESULT hr = S_OK;
-    HKEY hkFolders = NULL;
+    int nFolder = (int)dwpData;
     LPWSTR sczPath = NULL;
 
 #if !defined(_WIN64)
@@ -1778,18 +1789,8 @@ static HRESULT InitializeVariableRegistryFolder(
     }
 #endif
 
-    int nFolder = (int)dwpData;
-    AssertSz(CSIDL_PROGRAM_FILES == nFolder || CSIDL_PROGRAM_FILES_COMMON == nFolder, "Unknown folder CSIDL.");
-    LPCWSTR wzFolderValue = CSIDL_PROGRAM_FILES_COMMON == nFolder ? L"CommonFilesDir" : L"ProgramFilesDir";
-
-    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", KEY_READ | KEY_WOW64_64KEY, &hkFolders);
-    ExitOnFailure(hr, "Failed to open Windows folder key.");
-
-    hr = RegReadString(hkFolders, wzFolderValue, &sczPath);
-    ExitOnFailure1(hr, "Failed to read folder path for '%ls'.", wzFolderValue);
-
-    hr = PathBackslashTerminate(&sczPath);
-    ExitOnFailure(hr, "Failed to ensure path was backslash terminated.");
+    hr = Get64bitFolderFromRegistry(nFolder, &sczPath);
+    ExitOnFailure(hr, "Failed to get 64-bit folder.");
 
     // set value
     hr = BVariantSetString(pValue, sczPath, 0);
@@ -1797,7 +1798,42 @@ static HRESULT InitializeVariableRegistryFolder(
 
 LExit:
     ReleaseStr(sczPath);
-    ReleaseRegKey(hkFolders);
+
+    return hr;
+}
+
+static HRESULT InitializeVariable6432Folder(
+        __in DWORD_PTR dwpData,
+    __inout BURN_VARIANT* pValue
+    )
+{
+    HRESULT hr = S_OK;
+    int nFolder = (int)dwpData;
+    LPWSTR sczPath = NULL;
+
+#if !defined(_WIN64)
+    BOOL fIsWow64 = FALSE;
+
+    // If 32-bit use shell-folder.
+    ProcWow64(::GetCurrentProcess(), &fIsWow64);
+    if (!fIsWow64)
+    {
+        hr = ShelGetFolder(&sczPath, nFolder);
+        ExitOnRootFailure(hr, "Failed to get shell folder.");
+    }
+    else
+#endif
+    {
+        hr = Get64bitFolderFromRegistry(nFolder, &sczPath);
+        ExitOnFailure(hr, "Failed to get 64-bit folder.");
+    }
+
+    // set value
+    hr = BVariantSetString(pValue, sczPath, 0);
+    ExitOnFailure(hr, "Failed to set variant value.");
+
+LExit:
+    ReleaseStr(sczPath);
 
     return hr;
 }
@@ -1910,6 +1946,32 @@ static HRESULT InitializeVariableLogonUser(
     ExitOnFailure(hr, "Failed to set variant value.");
 
 LExit:
+    return hr;
+}
+
+static HRESULT Get64bitFolderFromRegistry(
+    __in int nFolder,
+    __deref_out_z LPWSTR* psczPath
+    )
+{
+    HRESULT hr = S_OK;
+    HKEY hkFolders = NULL;
+
+    AssertSz(CSIDL_PROGRAM_FILES == nFolder || CSIDL_PROGRAM_FILES_COMMON == nFolder, "Unknown folder CSIDL.");
+    LPCWSTR wzFolderValue = CSIDL_PROGRAM_FILES_COMMON == nFolder ? L"CommonFilesDir" : L"ProgramFilesDir";
+
+    hr = RegOpen(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion", KEY_READ | KEY_WOW64_64KEY, &hkFolders);
+    ExitOnFailure(hr, "Failed to open Windows folder key.");
+
+    hr = RegReadString(hkFolders, wzFolderValue, psczPath);
+    ExitOnFailure1(hr, "Failed to read folder path for '%ls'.", wzFolderValue);
+
+    hr = PathBackslashTerminate(psczPath);
+    ExitOnFailure(hr, "Failed to ensure path was backslash terminated.");
+
+LExit:
+    ReleaseRegKey(hkFolders);
+
     return hr;
 }
 

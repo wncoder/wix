@@ -990,7 +990,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="compressed">Specifies the package is compressed.</param>
         /// <param name="useLongName">Specifies the package uses long file names.</param>
         /// <returns>Source path of file relative to package directory.</returns>
-        private static string GetFileSourcePath(Hashtable directories, string directoryId, string fileName, bool compressed, bool useLongName)
+        internal static string GetFileSourcePath(Hashtable directories, string directoryId, string fileName, bool compressed, bool useLongName)
         {
             string fileSourcePath = Installer.GetName(fileName, true, useLongName);
 
@@ -1761,7 +1761,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // update file version, hash, assembly, etc.. information
             this.core.OnMessage(WixVerboses.UpdatingFileInformation());
-            this.UpdateFileInformation(output, fileRows, autoMediaAssigner.MediaRows, variableCache, modularizationGuid);
+            Hashtable indexedFileRows = this.UpdateFileInformation(output, fileRows, autoMediaAssigner.MediaRows, variableCache, modularizationGuid);
 
             // set generated component guids
             this.SetComponentGuids(output);
@@ -1776,6 +1776,33 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (delayedFields.Count != 0)
             {
                 this.ResolveDelayedFields(output, delayedFields, variableCache, modularizationGuid);
+            }
+
+            // stop processing if an error previously occurred
+            if (this.core.EncounteredError)
+            {
+                return false;
+            }
+
+            // Extended binder extensions can be called now that fields are resolved.
+            foreach (BinderExtension extension in this.extensions)
+            {
+                BinderExtensionEx extensionEx = extension as BinderExtensionEx;
+                if (null != extensionEx)
+                {
+                    output.EnsureTable(this.core.TableDefinitions["WixBindUpdatedFiles"]);
+                    extensionEx.DatabaseAfterResolvedFields(output);
+                }
+            }
+
+            Table updatedFiles = output.Tables["WixBindUpdatedFiles"];
+            if (null != updatedFiles)
+            {
+                foreach (Row updatedFile in updatedFiles.Rows)
+                {
+                    FileRow updatedFileRow = (FileRow)indexedFileRows[updatedFile[0]];
+                    this.UpdateFileRow(output, null, modularizationGuid, indexedFileRows, updatedFileRow, true);
+                }
             }
 
             // stop processing if an error previously occurred
@@ -5552,7 +5579,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="mediaRows">The indexed media rows.</param>
         /// <param name="infoCache">A hashtable to populate with the file information (optional).</param>
         /// <param name="modularizationGuid">The modularization guid (used in case of a merge module).</param>
-        private void UpdateFileInformation(Output output, FileRowCollection fileRows, MediaRowCollection mediaRows, IDictionary<string, string> infoCache, string modularizationGuid)
+        private Hashtable UpdateFileInformation(Output output, FileRowCollection fileRows, MediaRowCollection mediaRows, IDictionary<string, string> infoCache, string modularizationGuid)
         {
             // Index for all the fileId's
             // NOTE: When dealing with patches, there is a file table for each transform. In most cases, the data in these rows will be the same, however users of this index need to be aware of this.
@@ -5656,411 +5683,421 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Table fileTable = output.Tables["File"];
             if (null == fileTable)
             {
-                return;
+                return fileRowIndex;
             }
 
             // gather information about files that did not come from merge modules
-            foreach (FileRow fileRow in fileTable.Rows)
+            foreach (FileRow row in fileTable.Rows)
             {
-                FileInfo fileInfo = null;
+                UpdateFileRow(output, infoCache, modularizationGuid, fileRowIndex, row, false);
+            }
 
-                if (!this.suppressFileHashAndInfo || (!this.suppressAssemblies && FileAssemblyType.NotAnAssembly != fileRow.AssemblyType))
+            return fileRowIndex;
+        }
+
+        private void UpdateFileRow(Output output, IDictionary<string, string> infoCache, string modularizationGuid, Hashtable fileRowIndex, FileRow fileRow, bool overwriteHash)
+        {
+            FileInfo fileInfo = null;
+
+            if (!this.suppressFileHashAndInfo || (!this.suppressAssemblies && FileAssemblyType.NotAnAssembly != fileRow.AssemblyType))
+            {
+                try
                 {
+                    fileInfo = new FileInfo(fileRow.Source);
+                }
+                catch (ArgumentException)
+                {
+                    this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
+                    return;
+                }
+                catch (PathTooLongException)
+                {
+                    this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
+                    return;
+                }
+                catch (NotSupportedException)
+                {
+                    this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
+                    return;
+                }
+            }
+
+            if (!this.suppressFileHashAndInfo)
+            {
+                if (fileInfo.Exists)
+                {
+                    string version;
+                    string language;
+
+                    using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        if (Int32.MaxValue < fileStream.Length)
+                        {
+                            throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
+                        }
+
+                        fileRow.FileSize = Convert.ToInt32(fileStream.Length, CultureInfo.InvariantCulture);
+                    }
+
                     try
                     {
-                        fileInfo = new FileInfo(fileRow.Source);
+                        Installer.GetFileVersion(fileInfo.FullName, out version, out language);
                     }
-                    catch (ArgumentException)
+                    catch (Win32Exception e)
                     {
-                        this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
-                        continue;
-                    }
-                    catch (PathTooLongException)
-                    {
-                        this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
-                        continue;
-                    }
-                    catch (NotSupportedException)
-                    {
-                        this.core.OnMessage(WixErrors.InvalidFileName(fileRow.SourceLineNumbers, fileRow.Source));
-                        continue;
-                    }
-                }
-
-                if (!this.suppressFileHashAndInfo)
-                {
-                    if (fileInfo.Exists)
-                    {
-                        string version;
-                        string language;
-
-                        using (FileStream fileStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        if (0x2 == e.NativeErrorCode) // ERROR_FILE_NOT_FOUND
                         {
-                            if (Int32.MaxValue < fileStream.Length)
-                            {
-                                throw new WixException(WixErrors.FileTooLarge(fileRow.SourceLineNumbers, fileRow.Source));
-                            }
-
-                            fileRow.FileSize = Convert.ToInt32(fileStream.Length, CultureInfo.InvariantCulture);
+                            throw new WixException(WixErrors.FileNotFound(fileRow.SourceLineNumbers, fileInfo.FullName));
                         }
-
-                        try
+                        else
                         {
-                            Installer.GetFileVersion(fileInfo.FullName, out version, out language);
-                        }
-                        catch (Win32Exception e)
-                        {
-                            if (0x2 == e.NativeErrorCode) // ERROR_FILE_NOT_FOUND
-                            {
-                                throw new WixException(WixErrors.FileNotFound(fileRow.SourceLineNumbers, fileInfo.FullName));
-                            }
-                            else
-                            {
-                                throw new WixException(WixErrors.Win32Exception(e.NativeErrorCode, e.Message));
-                            }
-                        }
-
-                        // If there is no version, it is assumed there is no language because it won't matter in the versioning of the install.
-                        if (0 == version.Length)   // unversioned files have their hashes added to the MsiFileHash table
-                        {
-                            if (null != fileRow.Version)
-                            {
-                                // Check if this is a companion file. If its not, it is a default version.
-                                if (!fileRowIndex.ContainsKey(fileRow.Version))
-                                {
-                                    this.core.OnMessage(WixWarnings.DefaultVersionUsedForUnversionedFile(fileRow.SourceLineNumbers, fileRow.Version, fileRow.File));
-                                }
-                            }
-                            else
-                            {
-                                if (null != fileRow.Language)
-                                {
-                                    this.core.OnMessage(WixWarnings.DefaultLanguageUsedForUnversionedFile(fileRow.SourceLineNumbers, fileRow.Language, fileRow.File));
-                                }
-
-                                int[] hash;
-                                try
-                                {
-                                    Installer.GetFileHash(fileInfo.FullName, 0, out hash);
-                                }
-                                catch (Win32Exception e)
-                                {
-                                    if (0x2 == e.NativeErrorCode) // ERROR_FILE_NOT_FOUND
-                                    {
-                                        throw new WixException(WixErrors.FileNotFound(fileRow.SourceLineNumbers, fileInfo.FullName));
-                                    }
-                                    else
-                                    {
-                                        throw new WixException(WixErrors.Win32Exception(e.NativeErrorCode, fileInfo.FullName, e.Message));
-                                    }
-                                }
-
-                                Table msiFileHashTable = output.EnsureTable(this.core.TableDefinitions["MsiFileHash"]);
-                                Row msiFileHashRow = msiFileHashTable.CreateRow(fileRow.SourceLineNumbers);
-                                msiFileHashRow[0] = fileRow.File;
-                                msiFileHashRow[1] = 0;
-                                msiFileHashRow[2] = hash[0];
-                                msiFileHashRow[3] = hash[1];
-                                msiFileHashRow[4] = hash[2];
-                                msiFileHashRow[5] = hash[3];
-                                fileRow.HashRow = msiFileHashRow;
-                            }
-                        }
-                        else // update the file row with the version and language information
-                        {
-                            // Check if the version field references a fileId because this would mean it has a companion file and the version should not be overwritten.
-                            if (null == fileRow.Version || !fileRowIndex.ContainsKey(fileRow.Version))
-                            {
-                                fileRow.Version = version;
-                            }
-
-                            if (null != fileRow.Language && 0 == language.Length)
-                            {
-                                this.core.OnMessage(WixWarnings.DefaultLanguageUsedForVersionedFile(fileRow.SourceLineNumbers, fileRow.Language, fileRow.File));
-                            }
-                            else
-                            {
-                                fileRow.Language = language;
-                            }
-
-                            // Populate the binder variables for this file information if requested.
-                            if (null != infoCache)
-                            {
-                                if (!String.IsNullOrEmpty(fileRow.Version))
-                                {
-                                    string key = String.Format(CultureInfo.InvariantCulture, "fileversion.{0}", Demodularize(output, modularizationGuid, fileRow.File));
-                                    infoCache[key] = fileRow.Version;
-                                }
-
-                                if (!String.IsNullOrEmpty(fileRow.Language))
-                                {
-                                    string key = String.Format(CultureInfo.InvariantCulture, "filelanguage.{0}", Demodularize(output, modularizationGuid, fileRow.File));
-                                    infoCache[key] = fileRow.Language;
-                                }
-                            }
+                            throw new WixException(WixErrors.Win32Exception(e.NativeErrorCode, e.Message));
                         }
                     }
-                    else
-                    {
-                        this.core.OnMessage(WixErrors.CannotFindFile(fileRow.SourceLineNumbers, fileRow.File, fileRow.FileName, fileRow.Source));
-                    }
-                }
 
-                // if we're not suppressing automagically grabbing assembly information and this is a
-                // CLR assembly, load the assembly and get the assembly name information
-                if (!this.suppressAssemblies)
-                {
-                    if (FileAssemblyType.DotNetAssembly == fileRow.AssemblyType)
+                    // If there is no version, it is assumed there is no language because it won't matter in the versioning of the install.
+                    if (0 == version.Length)   // unversioned files have their hashes added to the MsiFileHash table
                     {
-                        StringDictionary assemblyNameValues = new StringDictionary();
-
-                        CLRInterop.IReferenceIdentity referenceIdentity = null;
-                        Guid referenceIdentityGuid = CLRInterop.ReferenceIdentityGuid;
-                        uint result = CLRInterop.GetAssemblyIdentityFromFile(fileInfo.FullName, ref referenceIdentityGuid, out referenceIdentity);
-                        if (0 == result && null != referenceIdentity)
+                        if (null != fileRow.Version)
                         {
-                            string culture = referenceIdentity.GetAttribute(null, "Culture");
-                            if (null != culture)
+                            // Check if this is a companion file. If its not, it is a default version.
+                            if (!fileRowIndex.ContainsKey(fileRow.Version))
                             {
-                                assemblyNameValues.Add("Culture", culture);
-                            }
-                            else
-                            {
-                                assemblyNameValues.Add("Culture", "neutral");
-                            }
-
-                            string name = referenceIdentity.GetAttribute(null, "Name");
-                            if (null != name)
-                            {
-                                assemblyNameValues.Add("Name", name);
-                            }
-
-                            string processorArchitecture = referenceIdentity.GetAttribute(null, "ProcessorArchitecture");
-                            if (null != processorArchitecture)
-                            {
-                                assemblyNameValues.Add("ProcessorArchitecture", processorArchitecture);
-                            }
-
-                            string publicKeyToken = referenceIdentity.GetAttribute(null, "PublicKeyToken");
-                            if (null != publicKeyToken)
-                            {
-                                if (!String.Equals(publicKeyToken, "neutral", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    publicKeyToken = publicKeyToken.ToUpperInvariant();
-                                }
-                                else
-                                {
-                                    // Managed code expects "null" instead of "neutral", and
-                                    // this won't be installed to the GAC since it's not signed anyway.
-                                    publicKeyToken = "null";
-                                }
-
-                                assemblyNameValues.Add("PublicKeyToken", publicKeyToken);
-                            }
-                            else if (fileRow.AssemblyApplication == null)
-                            {
-                                throw new WixException(WixErrors.GacAssemblyNoStrongName(fileRow.SourceLineNumbers, fileInfo.FullName, fileRow.Component));
-                            }
-
-                            string version = referenceIdentity.GetAttribute(null, "Version");
-                            if (null != version)
-                            {
-                                assemblyNameValues.Add("Version", version);
+                                this.core.OnMessage(WixWarnings.DefaultVersionUsedForUnversionedFile(fileRow.SourceLineNumbers, fileRow.Version, fileRow.File));
                             }
                         }
                         else
                         {
-                            this.core.OnMessage(WixErrors.InvalidAssemblyFile(fileRow.SourceLineNumbers, fileInfo.FullName, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", result)));
-                            continue;
-                        }
-
-                        Table assemblyNameTable = output.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
-                        if (assemblyNameValues.ContainsKey("name"))
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "name", assemblyNameValues["name"], infoCache, modularizationGuid);
-                        }
-
-                        string fileVersion = null;
-                        if (this.setMsiAssemblyNameFileVersion)
-                        {
-                            string language;
-
-                            Installer.GetFileVersion(fileInfo.FullName, out fileVersion, out language);
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "fileVersion", fileVersion, infoCache, modularizationGuid);
-                        }
-
-                        if (assemblyNameValues.ContainsKey("version"))
-                        {
-                            string assemblyVersion = assemblyNameValues["version"];
-
-                            if (!this.exactAssemblyVersions)
+                            if (null != fileRow.Language)
                             {
-                                // there is a bug in fusion that requires the assembly's "version" attribute
-                                // to be equal to or longer than the "fileVersion" in length when its present;
-                                // the workaround is to prepend zeroes to the last version number in the assembly version
-                                if (this.setMsiAssemblyNameFileVersion && null != fileVersion && fileVersion.Length > assemblyVersion.Length)
-                                {
-                                    string padding = new string('0', fileVersion.Length - assemblyVersion.Length);
-                                    string[] assemblyVersionNumbers = assemblyVersion.Split('.');
+                                this.core.OnMessage(WixWarnings.DefaultLanguageUsedForUnversionedFile(fileRow.SourceLineNumbers, fileRow.Language, fileRow.File));
+                            }
 
-                                    if (assemblyVersionNumbers.Length > 0)
-                                    {
-                                        assemblyVersionNumbers[assemblyVersionNumbers.Length - 1] = String.Concat(padding, assemblyVersionNumbers[assemblyVersionNumbers.Length - 1]);
-                                        assemblyVersion = String.Join(".", assemblyVersionNumbers);
-                                    }
+                            int[] hash;
+                            try
+                            {
+                                Installer.GetFileHash(fileInfo.FullName, 0, out hash);
+                            }
+                            catch (Win32Exception e)
+                            {
+                                if (0x2 == e.NativeErrorCode) // ERROR_FILE_NOT_FOUND
+                                {
+                                    throw new WixException(WixErrors.FileNotFound(fileRow.SourceLineNumbers, fileInfo.FullName));
+                                }
+                                else
+                                {
+                                    throw new WixException(WixErrors.Win32Exception(e.NativeErrorCode, fileInfo.FullName, e.Message));
                                 }
                             }
 
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "version", assemblyVersion, infoCache, modularizationGuid);
-                        }
-
-                        if (assemblyNameValues.ContainsKey("culture"))
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "culture", assemblyNameValues["culture"], infoCache, modularizationGuid);
-                        }
-
-                        if (assemblyNameValues.ContainsKey("publicKeyToken"))
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "publicKeyToken", assemblyNameValues["publicKeyToken"], infoCache, modularizationGuid);
-                        }
-
-                        if (null != fileRow.ProcessorArchitecture && 0 < fileRow.ProcessorArchitecture.Length)
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", fileRow.ProcessorArchitecture, infoCache, modularizationGuid);
-                        }
-
-                        if (assemblyNameValues.ContainsKey("processorArchitecture"))
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", assemblyNameValues["processorArchitecture"], infoCache, modularizationGuid);
-                        }
-
-                        // add the assembly name to the information cache
-                        if (null != infoCache)
-                        {
-                            string key = String.Concat("assemblyfullname.", Demodularize(output, modularizationGuid, fileRow.File));
-                            string assemblyName = String.Concat(assemblyNameValues["name"], ", version=", assemblyNameValues["version"], ", culture=", assemblyNameValues["culture"], ", publicKeyToken=", String.IsNullOrEmpty(assemblyNameValues["publicKeyToken"]) ? "null" : assemblyNameValues["publicKeyToken"]);
-                            if (assemblyNameValues.ContainsKey("processorArchitecture"))
+                            if (null == fileRow.HashRow)
                             {
-                                assemblyName = String.Concat(assemblyName, ", processorArchitecture=", assemblyNameValues["processorArchitecture"]);
+                                Table msiFileHashTable = output.EnsureTable(this.core.TableDefinitions["MsiFileHash"]);
+                                fileRow.HashRow = msiFileHashTable.CreateRow(fileRow.SourceLineNumbers);
                             }
 
-                            infoCache[key] = assemblyName;
+                            fileRow.HashRow[0] = fileRow.File;
+                            fileRow.HashRow[1] = 0;
+                            fileRow.HashRow[2] = hash[0];
+                            fileRow.HashRow[3] = hash[1];
+                            fileRow.HashRow[4] = hash[2];
+                            fileRow.HashRow[5] = hash[3];
                         }
                     }
-                    else if (FileAssemblyType.Win32Assembly == fileRow.AssemblyType)
+                    else // update the file row with the version and language information
                     {
-                        // Able to use the index because only the Source field is used and it is used only for more complete error messages.
-                        FileRow fileManifestRow = (FileRow)fileRowIndex[fileRow.AssemblyManifest];
-
-                        if (null == fileManifestRow)
+                        // Check if the version field references a fileId because this would mean it has a companion file and the version should not be overwritten.
+                        if (null == fileRow.Version || !fileRowIndex.ContainsKey(fileRow.Version))
                         {
-                            this.core.OnMessage(WixErrors.MissingManifestForWin32Assembly(fileRow.SourceLineNumbers, fileRow.File, fileRow.AssemblyManifest));
+                            fileRow.Version = version;
                         }
 
-                        string type = null;
-                        string name = null;
-                        string version = null;
-                        string processorArchitecture = null;
-                        string publicKeyToken = null;
-
-                        // loading the dom is expensive we want more performant APIs than the DOM
-                        // Navigator is cheaper than dom.  Perhaps there is a cheaper API still.
-                        try
+                        if (null != fileRow.Language && 0 == language.Length)
                         {
-                            XPathDocument doc = new XPathDocument(fileManifestRow.Source);
-                            XPathNavigator nav = doc.CreateNavigator();
-                            nav.MoveToRoot();
+                            this.core.OnMessage(WixWarnings.DefaultLanguageUsedForVersionedFile(fileRow.SourceLineNumbers, fileRow.Language, fileRow.File));
+                        }
+                        else
+                        {
+                            fileRow.Language = language;
+                        }
 
-                            // this assumes a particular schema for a win32 manifest and does not
-                            // provide error checking if the file does not conform to schema.
-                            // The fallback case here is that nothing is added to the MsiAssemblyName
-                            // table for an out of tolerance Win32 manifest.  Perhaps warnings needed.
-                            if (nav.MoveToFirstChild())
+                        // Populate the binder variables for this file information if requested.
+                        if (null != infoCache)
+                        {
+                            if (!String.IsNullOrEmpty(fileRow.Version))
                             {
-                                while (nav.NodeType != XPathNodeType.Element || nav.Name != "assembly")
+                                string key = String.Format(CultureInfo.InvariantCulture, "fileversion.{0}", Demodularize(output, modularizationGuid, fileRow.File));
+                                infoCache[key] = fileRow.Version;
+                            }
+
+                            if (!String.IsNullOrEmpty(fileRow.Language))
+                            {
+                                string key = String.Format(CultureInfo.InvariantCulture, "filelanguage.{0}", Demodularize(output, modularizationGuid, fileRow.File));
+                                infoCache[key] = fileRow.Language;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    this.core.OnMessage(WixErrors.CannotFindFile(fileRow.SourceLineNumbers, fileRow.File, fileRow.FileName, fileRow.Source));
+                }
+            }
+
+            // if we're not suppressing automagically grabbing assembly information and this is a
+            // CLR assembly, load the assembly and get the assembly name information
+            if (!this.suppressAssemblies)
+            {
+                if (FileAssemblyType.DotNetAssembly == fileRow.AssemblyType)
+                {
+                    StringDictionary assemblyNameValues = new StringDictionary();
+
+                    CLRInterop.IReferenceIdentity referenceIdentity = null;
+                    Guid referenceIdentityGuid = CLRInterop.ReferenceIdentityGuid;
+                    uint result = CLRInterop.GetAssemblyIdentityFromFile(fileInfo.FullName, ref referenceIdentityGuid, out referenceIdentity);
+                    if (0 == result && null != referenceIdentity)
+                    {
+                        string culture = referenceIdentity.GetAttribute(null, "Culture");
+                        if (null != culture)
+                        {
+                            assemblyNameValues.Add("Culture", culture);
+                        }
+                        else
+                        {
+                            assemblyNameValues.Add("Culture", "neutral");
+                        }
+
+                        string name = referenceIdentity.GetAttribute(null, "Name");
+                        if (null != name)
+                        {
+                            assemblyNameValues.Add("Name", name);
+                        }
+
+                        string processorArchitecture = referenceIdentity.GetAttribute(null, "ProcessorArchitecture");
+                        if (null != processorArchitecture)
+                        {
+                            assemblyNameValues.Add("ProcessorArchitecture", processorArchitecture);
+                        }
+
+                        string publicKeyToken = referenceIdentity.GetAttribute(null, "PublicKeyToken");
+                        if (null != publicKeyToken)
+                        {
+                            if (!String.Equals(publicKeyToken, "neutral", StringComparison.OrdinalIgnoreCase))
+                            {
+                                publicKeyToken = publicKeyToken.ToUpperInvariant();
+                            }
+                            else
+                            {
+                                // Managed code expects "null" instead of "neutral", and
+                                // this won't be installed to the GAC since it's not signed anyway.
+                                publicKeyToken = "null";
+                            }
+
+                            assemblyNameValues.Add("PublicKeyToken", publicKeyToken);
+                        }
+                        else if (fileRow.AssemblyApplication == null)
+                        {
+                            throw new WixException(WixErrors.GacAssemblyNoStrongName(fileRow.SourceLineNumbers, fileInfo.FullName, fileRow.Component));
+                        }
+
+                        string version = referenceIdentity.GetAttribute(null, "Version");
+                        if (null != version)
+                        {
+                            assemblyNameValues.Add("Version", version);
+                        }
+                    }
+                    else
+                    {
+                        this.core.OnMessage(WixErrors.InvalidAssemblyFile(fileRow.SourceLineNumbers, fileInfo.FullName, String.Format(CultureInfo.InvariantCulture, "HRESULT: 0x{0:x8}", result)));
+                        return;
+                    }
+
+                    Table assemblyNameTable = output.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
+                    if (assemblyNameValues.ContainsKey("name"))
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "name", assemblyNameValues["name"], infoCache, modularizationGuid);
+                    }
+
+                    string fileVersion = null;
+                    if (this.setMsiAssemblyNameFileVersion)
+                    {
+                        string language;
+
+                        Installer.GetFileVersion(fileInfo.FullName, out fileVersion, out language);
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "fileVersion", fileVersion, infoCache, modularizationGuid);
+                    }
+
+                    if (assemblyNameValues.ContainsKey("version"))
+                    {
+                        string assemblyVersion = assemblyNameValues["version"];
+
+                        if (!this.exactAssemblyVersions)
+                        {
+                            // there is a bug in fusion that requires the assembly's "version" attribute
+                            // to be equal to or longer than the "fileVersion" in length when its present;
+                            // the workaround is to prepend zeroes to the last version number in the assembly version
+                            if (this.setMsiAssemblyNameFileVersion && null != fileVersion && fileVersion.Length > assemblyVersion.Length)
+                            {
+                                string padding = new string('0', fileVersion.Length - assemblyVersion.Length);
+                                string[] assemblyVersionNumbers = assemblyVersion.Split('.');
+
+                                if (assemblyVersionNumbers.Length > 0)
                                 {
-                                    nav.MoveToNext();
-                                }
-
-                                if (nav.MoveToFirstChild())
-                                {
-                                    bool hasNextSibling = true;
-                                    while (nav.NodeType != XPathNodeType.Element || nav.Name != "assemblyIdentity" && hasNextSibling)
-                                    {
-                                        hasNextSibling = nav.MoveToNext();
-                                    }
-                                    if (!hasNextSibling)
-                                    {
-                                        this.core.OnMessage(WixErrors.InvalidManifestContent(fileRow.SourceLineNumbers, fileManifestRow.Source));
-                                        continue;
-                                    }
-
-                                    if (nav.MoveToAttribute("type", String.Empty))
-                                    {
-                                        type = nav.Value;
-                                        nav.MoveToParent();
-                                    }
-
-                                    if (nav.MoveToAttribute("name", String.Empty))
-                                    {
-                                        name = nav.Value;
-                                        nav.MoveToParent();
-                                    }
-
-                                    if (nav.MoveToAttribute("version", String.Empty))
-                                    {
-                                        version = nav.Value;
-                                        nav.MoveToParent();
-                                    }
-
-                                    if (nav.MoveToAttribute("processorArchitecture", String.Empty))
-                                    {
-                                        processorArchitecture = nav.Value;
-                                        nav.MoveToParent();
-                                    }
-
-                                    if (nav.MoveToAttribute("publicKeyToken", String.Empty))
-                                    {
-                                        publicKeyToken = nav.Value;
-                                        nav.MoveToParent();
-                                    }
+                                    assemblyVersionNumbers[assemblyVersionNumbers.Length - 1] = String.Concat(padding, assemblyVersionNumbers[assemblyVersionNumbers.Length - 1]);
+                                    assemblyVersion = String.Join(".", assemblyVersionNumbers);
                                 }
                             }
                         }
-                        catch (FileNotFoundException fe)
+
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "version", assemblyVersion, infoCache, modularizationGuid);
+                    }
+
+                    if (assemblyNameValues.ContainsKey("culture"))
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "culture", assemblyNameValues["culture"], infoCache, modularizationGuid);
+                    }
+
+                    if (assemblyNameValues.ContainsKey("publicKeyToken"))
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "publicKeyToken", assemblyNameValues["publicKeyToken"], infoCache, modularizationGuid);
+                    }
+
+                    if (null != fileRow.ProcessorArchitecture && 0 < fileRow.ProcessorArchitecture.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", fileRow.ProcessorArchitecture, infoCache, modularizationGuid);
+                    }
+
+                    if (assemblyNameValues.ContainsKey("processorArchitecture"))
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", assemblyNameValues["processorArchitecture"], infoCache, modularizationGuid);
+                    }
+
+                    // add the assembly name to the information cache
+                    if (null != infoCache)
+                    {
+                        string key = String.Concat("assemblyfullname.", Demodularize(output, modularizationGuid, fileRow.File));
+                        string assemblyName = String.Concat(assemblyNameValues["name"], ", version=", assemblyNameValues["version"], ", culture=", assemblyNameValues["culture"], ", publicKeyToken=", String.IsNullOrEmpty(assemblyNameValues["publicKeyToken"]) ? "null" : assemblyNameValues["publicKeyToken"]);
+                        if (assemblyNameValues.ContainsKey("processorArchitecture"))
                         {
-                            this.core.OnMessage(WixErrors.FileNotFound(SourceLineNumberCollection.FromFileName(fileManifestRow.Source), fe.FileName, "AssemblyManifest"));
-                        }
-                        catch (XmlException xe)
-                        {
-                            this.core.OnMessage(WixErrors.InvalidXml(SourceLineNumberCollection.FromFileName(fileManifestRow.Source), "manifest", xe.Message));
+                            assemblyName = String.Concat(assemblyName, ", processorArchitecture=", assemblyNameValues["processorArchitecture"]);
                         }
 
-                        Table assemblyNameTable = output.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
-                        if (null != name && 0 < name.Length)
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "name", name, infoCache, modularizationGuid);
-                        }
+                        infoCache[key] = assemblyName;
+                    }
+                }
+                else if (FileAssemblyType.Win32Assembly == fileRow.AssemblyType)
+                {
+                    // Able to use the index because only the Source field is used and it is used only for more complete error messages.
+                    FileRow fileManifestRow = (FileRow)fileRowIndex[fileRow.AssemblyManifest];
 
-                        if (null != version && 0 < version.Length)
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "version", version, infoCache, modularizationGuid);
-                        }
+                    if (null == fileManifestRow)
+                    {
+                        this.core.OnMessage(WixErrors.MissingManifestForWin32Assembly(fileRow.SourceLineNumbers, fileRow.File, fileRow.AssemblyManifest));
+                    }
 
-                        if (null != type && 0 < type.Length)
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "type", type, infoCache, modularizationGuid);
-                        }
+                    string type = null;
+                    string name = null;
+                    string version = null;
+                    string processorArchitecture = null;
+                    string publicKeyToken = null;
 
-                        if (null != processorArchitecture && 0 < processorArchitecture.Length)
-                        {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", processorArchitecture, infoCache, modularizationGuid);
-                        }
+                    // loading the dom is expensive we want more performant APIs than the DOM
+                    // Navigator is cheaper than dom.  Perhaps there is a cheaper API still.
+                    try
+                    {
+                        XPathDocument doc = new XPathDocument(fileManifestRow.Source);
+                        XPathNavigator nav = doc.CreateNavigator();
+                        nav.MoveToRoot();
 
-                        if (null != publicKeyToken && 0 < publicKeyToken.Length)
+                        // this assumes a particular schema for a win32 manifest and does not
+                        // provide error checking if the file does not conform to schema.
+                        // The fallback case here is that nothing is added to the MsiAssemblyName
+                        // table for an out of tolerance Win32 manifest.  Perhaps warnings needed.
+                        if (nav.MoveToFirstChild())
                         {
-                            SetMsiAssemblyName(output, assemblyNameTable, fileRow, "publicKeyToken", publicKeyToken, infoCache, modularizationGuid);
+                            while (nav.NodeType != XPathNodeType.Element || nav.Name != "assembly")
+                            {
+                                nav.MoveToNext();
+                            }
+
+                            if (nav.MoveToFirstChild())
+                            {
+                                bool hasNextSibling = true;
+                                while (nav.NodeType != XPathNodeType.Element || nav.Name != "assemblyIdentity" && hasNextSibling)
+                                {
+                                    hasNextSibling = nav.MoveToNext();
+                                }
+                                if (!hasNextSibling)
+                                {
+                                    this.core.OnMessage(WixErrors.InvalidManifestContent(fileRow.SourceLineNumbers, fileManifestRow.Source));
+                                    return;
+                                }
+
+                                if (nav.MoveToAttribute("type", String.Empty))
+                                {
+                                    type = nav.Value;
+                                    nav.MoveToParent();
+                                }
+
+                                if (nav.MoveToAttribute("name", String.Empty))
+                                {
+                                    name = nav.Value;
+                                    nav.MoveToParent();
+                                }
+
+                                if (nav.MoveToAttribute("version", String.Empty))
+                                {
+                                    version = nav.Value;
+                                    nav.MoveToParent();
+                                }
+
+                                if (nav.MoveToAttribute("processorArchitecture", String.Empty))
+                                {
+                                    processorArchitecture = nav.Value;
+                                    nav.MoveToParent();
+                                }
+
+                                if (nav.MoveToAttribute("publicKeyToken", String.Empty))
+                                {
+                                    publicKeyToken = nav.Value;
+                                    nav.MoveToParent();
+                                }
+                            }
                         }
+                    }
+                    catch (FileNotFoundException fe)
+                    {
+                        this.core.OnMessage(WixErrors.FileNotFound(SourceLineNumberCollection.FromFileName(fileManifestRow.Source), fe.FileName, "AssemblyManifest"));
+                    }
+                    catch (XmlException xe)
+                    {
+                        this.core.OnMessage(WixErrors.InvalidXml(SourceLineNumberCollection.FromFileName(fileManifestRow.Source), "manifest", xe.Message));
+                    }
+
+                    Table assemblyNameTable = output.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
+                    if (null != name && 0 < name.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "name", name, infoCache, modularizationGuid);
+                    }
+
+                    if (null != version && 0 < version.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "version", version, infoCache, modularizationGuid);
+                    }
+
+                    if (null != type && 0 < type.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "type", type, infoCache, modularizationGuid);
+                    }
+
+                    if (null != processorArchitecture && 0 < processorArchitecture.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "processorArchitecture", processorArchitecture, infoCache, modularizationGuid);
+                    }
+
+                    if (null != publicKeyToken && 0 < publicKeyToken.Length)
+                    {
+                        SetMsiAssemblyName(output, assemblyNameTable, fileRow, "publicKeyToken", publicKeyToken, infoCache, modularizationGuid);
                     }
                 }
             }
@@ -6887,33 +6924,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
-        /// Structure used for resolved directory information.
-        /// </summary>
-        private struct ResolvedDirectory
-        {
-            /// <summary>The directory parent.</summary>
-            public string DirectoryParent;
-
-            /// <summary>The name of this directory.</summary>
-            public string Name;
-
-            /// <summary>The path of this directory.</summary>
-            public string Path;
-
-            /// <summary>
-            /// Constructor for ResolvedDirectory.
-            /// </summary>
-            /// <param name="directoryParent">Parent directory.</param>
-            /// <param name="name">The directory name.</param>
-            public ResolvedDirectory(string directoryParent, string name)
-            {
-                this.DirectoryParent = directoryParent;
-                this.Name = name;
-                this.Path = null;
-            }
-        }
-
-        /// <summary>
         /// Callback object for configurable merge modules.
         /// </summary>
         private sealed class ConfigurationCallback : IMsmConfigureModule
@@ -7030,1505 +7040,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        /// <summary>
-        /// Bundle info for binding Bundles.
-        /// </summary>
-        private class BundleInfo
-        {
-            public BundleInfo(string bundleFile, Row row)
-            {
-                this.Id = Guid.NewGuid();
-                this.Path = System.IO.Path.GetFullPath(bundleFile);
-                this.PerMachine = true; // default to per-machine but the first-per user package would flip it.
-
-                this.SourceLineNumbers = row.SourceLineNumbers;
-                this.Version = (string)row[0];
-                this.Copyright = (string)row[1];
-
-                this.RegistrationInfo = new RegistrationInfo();
-                this.RegistrationInfo.Name = (string)row[2];
-                this.RegistrationInfo.AboutUrl = (string)row[3];
-                this.RegistrationInfo.DisableModify = (null != row[4]) ? (int)row[4] : 0;
-                this.RegistrationInfo.DisableRemove = (null != row[5] && 1 == (int)row[5]);
-                // (deprecated) this.RegistrationInfo.DisableRepair = (null != row[6] && 1 == (int)row[6]);
-                this.RegistrationInfo.HelpTelephone = (string)row[7];
-                this.RegistrationInfo.HelpLink = (string)row[8];
-                this.RegistrationInfo.Publisher = (string)row[9];
-                this.RegistrationInfo.UpdateUrl = (string)row[10];
-
-                if (null != row[11])
-                {
-                    Compressed = (1 == (int)row[11]) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
-                }
-
-                if (null != row[12])
-                {
-                    string[] logVariableAndPrefixExtension = ((string)row[12]).Split(':');
-                    this.LogPathVariable = logVariableAndPrefixExtension[0];
-
-                    string logPrefixAndExtension = logVariableAndPrefixExtension[1];
-                    int extensionIndex = logPrefixAndExtension.LastIndexOf('.');
-                    this.LogPrefix = logPrefixAndExtension.Substring(0, extensionIndex);
-                    this.LogExtension = logPrefixAndExtension.Substring(extensionIndex + 1);
-                }
-
-                if (null != row[13])
-                {
-                    this.IconPath = (string)row[13];
-                }
-
-                if (null != row[14])
-                {
-                    this.SplashScreenBitmapPath = (string)row[14];
-                }
-
-                this.Condition = (string)row[15];
-                this.Tag = (string)row[16];
-                this.Platform = (Platform)Enum.Parse(typeof(Platform), (string)row[17]);
-
-                this.RegistrationInfo.ParentName = (string)row[18];
-                this.UpgradeCode = (string)row[19];
-
-                // Default provider key is the Id.
-                this.ProviderKey = this.Id.ToString("B");
-            }
-
-            public YesNoDefaultType Compressed = YesNoDefaultType.Default;
-            public PackagingType DefaultPackagingType
-            {
-                get
-                {
-                    return (this.Compressed == YesNoDefaultType.No) ? PackagingType.External : PackagingType.Embedded;
-                }
-
-                private set {}
-            }
-            public Guid Id { get; private set; }
-            public string Condition { get; private set; }
-            public string Copyright { get; private set; }
-            public string IconPath { get; private set; }
-            public string LogPathVariable { get; private set; }
-            public string LogPrefix { get; private set; }
-            public string LogExtension { get; private set; }
-            public string Path { get; private set; }
-            public bool PerMachine { get; set; }
-            public RegistrationInfo RegistrationInfo { get; set; }
-            public UpdateRegistrationInfo UpdateRegistrationInfo { get; set; }
-            public string SplashScreenBitmapPath { get; private set; }
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-            public string Tag { get; private set; }
-            public Platform Platform { get; private set; }
-            public string Version { get; private set; }
-            public string UpgradeCode { get; private set; }
-            public string ProviderKey { get; internal set; }
-        }
-
-        private class CatalogInfo
-        {
-            public CatalogInfo(Row row, string payloadId)
-            {
-                this.Initialize((string)row[0], (string)row[1], payloadId);
-            }
-
-            private void Initialize(string id, string sourceFile, string payloadId)
-            {
-                this.Id = id;
-                this.FileInfo = new FileInfo(sourceFile);
-                this.PayloadId = payloadId;
-            }
-
-            public string Id { get; private set; }
-            public FileInfo FileInfo { get; private set; }
-            public string PayloadId { get; private set; }
-        }
-
-        /// <summary>
-        /// Chain info for binding Bundles.
-        /// </summary>
-        private class ChainInfo
-        {
-            public ChainInfo(Row row)
-            {
-                BundleChainAttributes attributes = (null == row[0]) ? BundleChainAttributes.None : (BundleChainAttributes)row[0];
-
-                this.DisableRollback = (BundleChainAttributes.DisableRollback == (attributes & BundleChainAttributes.DisableRollback));
-                this.DisableSystemRestore = (BundleChainAttributes.DisableSystemRestore == (attributes & BundleChainAttributes.DisableSystemRestore));
-                this.ParallelCache = (BundleChainAttributes.ParallelCache == (attributes & BundleChainAttributes.ParallelCache));
-                this.Packages = new List<ChainPackageInfo>();
-                this.RollbackBoundaries = new List<RollbackBoundaryInfo>();
-                this.SourceLineNumbers = row.SourceLineNumbers;
-            }
-
-            public bool DisableRollback { get; private set; }
-            public bool DisableSystemRestore { get; private set; }
-            public bool ParallelCache { get; private set; }
-            public List<ChainPackageInfo> Packages { get; private set; }
-            public List<RollbackBoundaryInfo> RollbackBoundaries { get; private set; }
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-        }
-
-        /// <summary>
-        /// Container info for binding Bundles.
-        /// </summary>
-        internal class ContainerInfo
-        {
-            private List<PayloadInfoRow> payloads = new List<PayloadInfoRow>();
-
-            public ContainerInfo(Row row, BinderFileManager fileManager)
-                : this((string)row[0], (string)row[1], (string)row[2], fileManager)
-            {
-                this.SourceLineNumbers = row.SourceLineNumbers;
-            }
-
-            public ContainerInfo(string id, string name, string type, BinderFileManager fileManager)
-            {
-                this.Id = id;
-                this.Name = name;
-                this.Type = type;
-                this.FileManager = fileManager;
-                this.TempPath = Path.Combine(fileManager.TempFilesLocation, name);
-                this.FileInfo = new FileInfo(this.TempPath);
-            }
-
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-            public BinderFileManager FileManager { get; private set; }
-            public string Id { get; private set; }
-            public string Name { get; private set; }
-            public string Type { get; private set; }
-            public string TempPath { get; private set; }
-            public FileInfo FileInfo { get; set; }
-            public long FileSize { get { return this.FileInfo.Length; } }
-
-            public List<PayloadInfoRow> Payloads
-            {
-                get
-                {
-                    return this.payloads;
-                }
-                set
-                {
-                    this.payloads = value;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Rollback boundary info for binding Bundles.
-        /// </summary>
-        private class RollbackBoundaryInfo
-        {
-            public RollbackBoundaryInfo(string id)
-            {
-                this.Default = true;
-                this.Id = id;
-                this.Vital = YesNoType.Yes;
-            }
-
-            public RollbackBoundaryInfo(Row row)
-            {
-                this.Id = row[0].ToString();
-
-                this.Vital = (null == row[10] || 1 == (int)row[10]) ? YesNoType.Yes : YesNoType.No;
-                this.SourceLineNumbers = row.SourceLineNumbers;
-            }
-
-            public bool Default { get; private set; }
-            public string Id { get; private set; }
-            public YesNoType Vital { get; private set; }
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-        }
-
-        /// <summary>
-        /// Chain package info for binding Bundles.
-        /// </summary>
-        private class ChainPackageInfo
-        {
-            private const string PropertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
-            private const string PatchMetadataFormat = "SELECT `Value` FROM `MsiPatchMetadata` WHERE `Property` = '{0}'";
-
-            public ChainPackageInfo(Row row, Table wixGroupTable, Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, BinderFileManager fileManager, BinderCore core, Output bundle)
-                : this((string)row[0], (string)row[1], (string)row[2], (string)row[3],
-                       (string)row[4], (string)row[5], (string)row[6],
-                       row[7], (string)row[8], row[9], row[10], row[11],
-                       (string)row[12], (string)row[13], row[14],
-                       (string)row[15], (string)row[16], (string)row[17], (int)row[18], row[19],
-                       row[20], row[21], row[22], wixGroupTable, allPayloads, containers, fileManager, core, bundle)
-            {
-                this.SourceLineNumbers = row.SourceLineNumbers;
-            }
-
-            public ChainPackageInfo(string id, string packageType, string payloadId, string installCondition,
-                                    string installCommand, string repairCommand, string uninstallCommand,
-                                    object cacheData, string cacheId, object attributesData, object vitalData, object perMachineData,
-                                    string detectCondition, string msuKB, object repairableData,
-                                    string logPathVariable, string rollbackPathVariable, string protocol, int installSize, object suppressLooseFilePayloadGenerationData,
-                                    object enableFeatureSelectionData, object forcePerMachineData, object displayInternalUIData, Table wixGroupTable,
-                                    Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, 
-                                    BinderFileManager fileManager, BinderCore core, Output bundle)
-            {
-                BundlePackageAttributes attributes = (null == attributesData) ? 0 : (BundlePackageAttributes)attributesData;
-
-                YesNoType cache = YesNoType.NotSet;
-                if (null != cacheData)
-                {
-                    cache = (1 == (int)cacheData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType vital = (null == vitalData || 1 == (int)vitalData) ? YesNoType.Yes : YesNoType.No;
-
-                YesNoType perMachine = YesNoType.NotSet;
-                if (null != perMachineData)
-                {
-                    perMachine = (1 == (int)perMachineData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType repairable = YesNoType.NotSet;
-                if (null != repairableData)
-                {
-                    repairable = (1 == (int)repairableData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType suppressLooseFilePayloadGeneration = YesNoType.NotSet;
-                if (null != suppressLooseFilePayloadGenerationData)
-                {
-                    suppressLooseFilePayloadGeneration = (1 == (int)suppressLooseFilePayloadGenerationData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType enableFeatureSelection = YesNoType.NotSet;
-                if (null != enableFeatureSelectionData)
-                {
-                    enableFeatureSelection = (1 == (int)enableFeatureSelectionData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType forcePerMachine = YesNoType.NotSet;
-                if (null != forcePerMachineData)
-                {
-                    forcePerMachine = (1 == (int)forcePerMachineData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                YesNoType displayInternalUI = YesNoType.NotSet;
-                if (null != displayInternalUIData)
-                {
-                    displayInternalUI = (1 == (int)displayInternalUIData) ? YesNoType.Yes : YesNoType.No;
-                }
-
-                this.Id = id;
-                this.ChainPackageType = (Compiler.ChainPackageType)Enum.Parse(typeof(Compiler.ChainPackageType), packageType, true);
-                PayloadInfoRow packagePayload;
-                if (!allPayloads.TryGetValue(payloadId, out packagePayload))
-                {
-                    core.OnMessage(WixErrors.IdentifierNotFound("Payload", payloadId));
-                    return;
-                }
-                this.PackagePayload = packagePayload;
-                this.InstallCondition = installCondition;
-                this.InstallCommand = installCommand;
-                this.RepairCommand = repairCommand;
-                this.UninstallCommand = uninstallCommand;
-
-                this.PerMachine = (YesNoType.Yes == perMachine); // initiallly true only when specifically requested.
-                this.ProductCode = null;
-                this.Cache = (YesNoType.No != cache); // true unless it's specifically prohibited.
-                this.CacheId = cacheId;
-                this.Permanent = (BundlePackageAttributes.Permanent == (attributes & BundlePackageAttributes.Permanent));
-                this.Visible = (BundlePackageAttributes.Visible == (attributes & BundlePackageAttributes.Visible));
-                this.Slipstream = (BundlePackageAttributes.Slipstream == (attributes & BundlePackageAttributes.Slipstream));
-                this.Vital = (YesNoType.Yes == vital); // true only when specifically requested.
-                this.DetectCondition = detectCondition;
-                this.MsuKB = msuKB;
-                this.Protocol = protocol;
-                this.Repairable = (YesNoType.Yes == repairable); // true only when specifically requested.
-                this.LogPathVariable = logPathVariable;
-                this.RollbackLogPathVariable = rollbackPathVariable;
-
-                this.DisplayInternalUI = (YesNoType.Yes == displayInternalUI);
-
-                this.Payloads = new List<PayloadInfoRow>();
-                this.RelatedPackages = new List<RelatedPackage>();
-                this.MsiFeatures = new List<MsiFeature>();
-                this.MsiProperties = new List<MsiPropertyInfo>();
-                this.SlipstreamMsps = new List<string>();
-                this.ExitCodes = new List<ExitCodeInfo>();
-                this.Provides = new ProvidesDependencyCollection();
-                this.TargetCodes = new RowDictionary<WixBundlePatchTargetCodeRow>();
-
-                // Start the package size with the package's payload size.
-                this.Size = this.PackagePayload.FileSize;
-
-                // get all contained payloads...
-                foreach (Row row in wixGroupTable.Rows)
-                {
-                    string rowParentName = (string)row[0];
-                    string rowParentType = (string)row[1];
-                    string rowChildName = (string)row[2];
-                    string rowChildType = (string)row[3];
-
-                    if ("Package" == rowParentType && this.Id == rowParentName &&
-                        "Payload" == rowChildType && this.PackagePayload.Id != rowChildName)
-                    {
-                        PayloadInfoRow payload = allPayloads[rowChildName];
-                        this.Payloads.Add(payload);
-
-                        this.Size += payload.FileSize; // add each payload to the total size of the package.
-                    }
-                }
-
-                // Default the install size to the calculated package size.
-                this.InstallSize = this.Size;
-
-                switch (this.ChainPackageType)
-                {
-                    case Compiler.ChainPackageType.Msi:
-                        this.ResolveMsiPackage(fileManager, core, allPayloads, containers, suppressLooseFilePayloadGeneration, enableFeatureSelection, forcePerMachine, bundle);
-                        break;
-                    case Compiler.ChainPackageType.Msp:
-                        this.ResolveMspPackage(core, bundle);
-                        break;
-                    case Compiler.ChainPackageType.Msu:
-                        this.ResolveMsuPackage(core);
-                        break;
-                    case Compiler.ChainPackageType.Exe:
-                        this.ResolveExePackage(core);
-                        break;
-                }
-
-                if (CompilerCore.IntegerNotSet != installSize)
-                {
-                    this.InstallSize = installSize;
-                }
-            }
-
-            public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-            public string Id { get; private set; }
-            public Compiler.ChainPackageType ChainPackageType { get; private set; }
-            public PayloadInfoRow PackagePayload { get; private set; }
-            public string InstallCondition { get; private set; }
-            public string InstallCommand { get; private set; }
-            public string RepairCommand { get; private set; }
-            public string UninstallCommand { get; private set; }
-
-            public bool PerMachine { get; private set; }
-            public string ProductCode { get; private set; }
-            public string UpgradeCode { get; private set; }
-            public string Language { get; private set; }
-            public string PatchCode { get; private set; }
-            public string PatchXml { get; private set; }
-            public bool Cache { get; private set; }
-            public string CacheId { get; private set; }
-            public bool Permanent { get; private set; }
-            public string Version { get; private set; }
-            public bool Visible { get; private set; }
-            public bool Slipstream { get; private set; }
-            public bool Vital { get; private set; }
-            public bool Repairable { get; private set; }
-            public string DetectCondition { get; private set; }
-
-            public long Size { get; private set; }
-            public long InstallSize { get; private set; }
-
-            public string LogPathVariable { get; private set; }
-            public string RollbackLogPathVariable { get; private set; }
-
-            public bool DisplayInternalUI { get; private set; }
-
-            public string MsuKB { get; private set; }
-            public string Protocol { get; private set; }
-            public string DisplayName { get; private set; }
-            public string Description { get; private set; }
-
-            public List<PayloadInfoRow> Payloads { get; private set; }
-            public List<RelatedPackage> RelatedPackages { get; private set; }
-            public List<MsiFeature> MsiFeatures { get; private set; }
-            public List<MsiPropertyInfo> MsiProperties { get; private set; }
-            public List<string> SlipstreamMsps { get; private set; }
-            public List<ExitCodeInfo> ExitCodes { get; private set; }
-            public ProvidesDependencyCollection Provides { get; private set; }
-            public RowDictionary<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
-            public bool TargetUnspecified { get; private set; }
-
-            public RollbackBoundaryInfo RollbackBoundary { get; set; }
-            public string RollbackBoundaryBackwardId { get; set; }
-
-            /// <summary>
-            /// Initializes package state from the MSI contents.
-            /// </summary>
-            /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsiPackage(BinderFileManager fileManager, BinderCore core, Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, YesNoType suppressLooseFilePayloadGeneration, YesNoType enableFeatureSelection, YesNoType forcePerMachine, Output bundle)
-            {
-                string sourcePath = this.PackagePayload.FullFileName;
-                bool longNamesInImage = false;
-                bool compressed = false;
-                try
-                {
-                    // Read data out of the msi database...
-                    using (Microsoft.Deployment.WindowsInstaller.SummaryInfo sumInfo = new Microsoft.Deployment.WindowsInstaller.SummaryInfo(sourcePath, false))
-                    {
-                        // 1 is the Word Count summary information stream bit that means
-                        // the MSI uses short file names when set. We care about long file
-                        // names so check when the bit is not set.
-                        longNamesInImage = 0 == (sumInfo.WordCount & 1);
-
-                        // 2 is the Word Count summary information stream bit that means
-                        // files are compressed in the MSI by default when the bit is set.
-                        compressed = 2 == (sumInfo.WordCount & 2);
-
-                        // 8 is the Word Count summary information stream bit that means
-                        // "Elevated privileges are not required to install this package."
-                        // in MSI 4.5 and below, if this bit is 0, elevation is required.
-                        this.PerMachine = 0 == (sumInfo.WordCount & 8);
-                    }
-
-                    using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
-                    {
-                        this.ProductCode = ChainPackageInfo.GetProperty(db, "ProductCode");
-                        this.Language = ChainPackageInfo.GetProperty(db, "ProductLanguage");
-                        this.Version = ChainPackageInfo.GetProperty(db, "ProductVersion");
-
-                        if (String.IsNullOrEmpty(this.CacheId))
-                        {
-                            this.CacheId = String.Format("{0}v{1}", this.ProductCode, this.Version);
-                        }
-
-                        this.DisplayName = ChainPackageInfo.GetProperty(db, "ProductName");
-
-                        this.VerifyMsiProperties(core);
-
-                        if (YesNoType.Yes == forcePerMachine)
-                        {
-                            if (!this.PerMachine)
-                            {
-                                core.OnMessage(WixWarnings.PerUserButForcingPerMachine(this.PackagePayload.SourceLineNumbers, sourcePath));
-                                this.PerMachine = true; // ensure that we think the MSI is per-machine.
-                            }
-
-                            this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "ALLUSERS", "1")); // force ALLUSERS=1 via the MSI command-line.
-                        }
-                        else if (ChainPackageInfo.HasProperty(db, "ALLUSERS"))
-                        {
-                            string allusers = ChainPackageInfo.GetProperty(db, "ALLUSERS");
-                            if (allusers.Equals("1", StringComparison.Ordinal))
-                            {
-                                if (!this.PerMachine)
-                                {
-                                    core.OnMessage(WixErrors.PerUserButAllUsersEquals1(this.PackagePayload.SourceLineNumbers, sourcePath));
-                                }
-                            }
-                            else if (allusers.Equals("2", StringComparison.Ordinal))
-                            {
-                                core.OnMessage(WixWarnings.DiscouragedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, this.PerMachine ? "machine" : "user"));
-                            }
-                            else
-                            {
-                                core.OnMessage(WixErrors.UnsupportedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, allusers));
-                            }
-                        }
-                        else if (this.PerMachine) // not forced per-machine and no ALLUSERS property, flip back to per-user
-                        {
-                            core.OnMessage(WixWarnings.ImplicitlyPerUser(this.PackagePayload.SourceLineNumbers, sourcePath));
-                            this.PerMachine = false;
-                        }
-
-                        if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
-                        {
-                            this.Description = ChainPackageInfo.GetProperty(db, "ARPCOMMENTS");
-                        }
-
-                        // Ensure the MSI package is appropriately marked visible or not.
-                        bool alreadyVisible = !ChainPackageInfo.HasProperty(db, "ARPSYSTEMCOMPONENT");
-                        if (alreadyVisible != this.Visible) // if not already set to the correct visibility.
-                        {
-                            // If the authoring specifically added "ARPSYSTEMCOMPONENT", don't do it again.
-                            bool sysComponentSet = false;
-                            foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
-                            {
-                                if ("ARPSYSTEMCOMPONENT".Equals(propertyInfo.Name, StringComparison.Ordinal))
-                                {
-                                    sysComponentSet = true;
-                                    break;
-                                }
-                            }
-
-                            if (!sysComponentSet)
-                            {
-                                this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "ARPSYSTEMCOMPONENT", this.Visible ? "" : "1"));
-                            }
-                        }
-
-                        // Unless the MSI or setup code overrides the default, set MSIFASTINSTALL for best performance.
-                        if (!ChainPackageInfo.HasProperty(db, "MSIFASTINSTALL"))
-                        {
-                            bool fastInstallSet = false;
-                            foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
-                            {
-                                if ("MSIFASTINSTALL".Equals(propertyInfo.Name, StringComparison.Ordinal))
-                                {
-                                    fastInstallSet = true;
-                                    break;
-                                }
-                            }
-
-                            if (!fastInstallSet)
-                            {
-                                this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "MSIFASTINSTALL", "7"));
-                            }
-                        }
-
-                        this.UpgradeCode = ChainPackageInfo.GetProperty(db, "UpgradeCode");
-
-                            // Represent the Upgrade table as related packages.
-                        if (db.Tables.Contains("Upgrade") && !String.IsNullOrEmpty(this.UpgradeCode))
-                        {
-                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `UpgradeCode`, `VersionMin`, `VersionMax`, `Language`, `Attributes` FROM `Upgrade`"))
-                            {
-                                view.Execute();
-                                while (true)
-                                {
-                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
-                                    {
-                                        if (null == record)
-                                        {
-                                            break;
-                                        }
-
-                                        RelatedPackage related = new RelatedPackage();
-                                        related.Id = record.GetString(1);
-                                        related.MinVersion = record.GetString(2);
-                                        related.MaxVersion = record.GetString(3);
-
-                                        string languages = record.GetString(4);
-                                        if (!String.IsNullOrEmpty(languages))
-                                        {
-                                            string[] splitLanguages = languages.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                                            related.Languages.AddRange(splitLanguages);
-                                        }
-
-                                        int attributes = record.GetInteger(5);
-                                        // when an Upgrade row has an upgrade code different than this package's upgrade code, don't count it as a possible downgrade to this package
-                                        related.OnlyDetect = ((attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect) && this.UpgradeCode.Equals(related.Id, StringComparison.OrdinalIgnoreCase);
-                                        related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
-                                        related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
-                                        related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;
-
-                                        this.RelatedPackages.Add(related);
-                                    }
-                                }
-                            }
-                        }
-
-                        // If feature selection is enabled, represent the Feature table in the manifest.
-                        if (YesNoType.Yes == enableFeatureSelection && db.Tables.Contains("Feature"))
-                        {
-                            using (Microsoft.Deployment.WindowsInstaller.View featureView = db.OpenView("SELECT `Component_` FROM `FeatureComponents` WHERE `Feature_` = ?"),
-                                        componentView = db.OpenView("SELECT `FileSize` FROM `File` WHERE `Component_` = ?"))
-                            {
-                                using (Microsoft.Deployment.WindowsInstaller.Record featureRecord = new Microsoft.Deployment.WindowsInstaller.Record(1),
-                                              componentRecord = new Microsoft.Deployment.WindowsInstaller.Record(1))
-                                {
-                                    foreach (string featureName in db.ExecuteStringQuery("SELECT `Feature` FROM `Feature`"))
-                                    {
-                                        MsiFeature feature = new MsiFeature();
-                                        feature.Name = featureName;
-                                        feature.Size = 0;
-                                        this.MsiFeatures.Add(feature);
-
-                                        // Determine Feature Size
-                                        featureRecord.SetString(1, featureName);
-                                        featureView.Execute(featureRecord);
-
-                                        // Loop over all the components
-                                        while (true)
-                                        {
-                                            using (Microsoft.Deployment.WindowsInstaller.Record componentResultRecord = featureView.Fetch())
-                                            {
-                                                if (null == componentResultRecord)
-                                                {
-                                                    break;
-                                                }
-                                                string component = componentResultRecord.GetString(1);
-                                                componentRecord.SetString(1, component);
-                                                componentView.Execute(componentRecord);
-
-                                                // Loop over all the files
-
-                                                while (true)
-                                                {
-                                                    using (Microsoft.Deployment.WindowsInstaller.Record fileResultRecord = componentView.Fetch())
-                                                    {
-                                                        if (null == fileResultRecord)
-                                                        {
-                                                            break;
-                                                        }
-
-                                                        string fileSize = fileResultRecord.GetString(1);
-                                                        feature.Size += Convert.ToInt32(fileSize, CultureInfo.InvariantCulture.NumberFormat);
-                                                    }
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Add all external cabinets as package payloads.
-                        if (db.Tables.Contains("Media"))
-                        {
-                            foreach (string cabinet in db.ExecuteStringQuery("SELECT `Cabinet` FROM `Media`"))
-                            {
-                                if (!String.IsNullOrEmpty(cabinet) && !cabinet.StartsWith("#", StringComparison.Ordinal))
-                                {
-                                    // If we didn't find the Payload as an existing child of the package, we need to
-                                    // add it.  We expect the file to exist on-disk in the same relative location as
-                                    // the MSI expects to find it...
-                                    string cabinetName = Path.Combine(Path.GetDirectoryName(this.PackagePayload.Name), cabinet);
-                                    if (!this.IsExistingPayload(cabinetName))
-                                    {
-                                        string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
-                                        string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSourceFile, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
-
-                                        PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
-                                        payloadNew.ParentPackagePayload = this.PackagePayload.Id;
-                                        if (!String.IsNullOrEmpty(payloadNew.Container))
-                                        {
-                                            containers[payloadNew.Container].Payloads.Add(payloadNew);
-                                        }
-
-                                        this.Payloads.Add(payloadNew);
-                                        allPayloads.Add(payloadNew.Id, payloadNew);
-
-                                        this.Size += payloadNew.FileSize; // add the newly added payload to the package size.
-                                    }
-                                }
-                            }
-                        }
-
-                        // Add all external files as package payloads and calculate the total install size as the rollup of
-                        // File table's sizes.
-                        this.InstallSize = 0;
-                        if (db.Tables.Contains("Component") && db.Tables.Contains("Directory") && db.Tables.Contains("File"))
-                        {
-                            Hashtable directories = new Hashtable();
-
-                            // Load up the directory hash table so we will be able to resolve source paths
-                            // for files in the MSI database.
-                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`"))
-                            {
-                                view.Execute();
-                                while (true)
-                                {
-                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
-                                    {
-                                        if (null == record)
-                                        {
-                                            break;
-                                        }
-                                        string sourceName = Installer.GetName(record.GetString(3), true, longNamesInImage);
-                                        directories.Add(record.GetString(1), new ResolvedDirectory(record.GetString(2), sourceName));
-                                    }
-                                }
-                            }
-
-                            // Resolve the source paths to external files and add each file size to the total
-                            // install size of the package.
-                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView("SELECT `Directory_`, `File`, `FileName`, `File`.`Attributes`, `FileSize` FROM `Component`, `File` WHERE `Component`.`Component`=`File`.`Component_`"))
-                            {
-                                view.Execute();
-                                while (true)
-                                {
-                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
-                                    {
-                                        if (null == record)
-                                        {
-                                            break;
-                                        }
-
-                                        // Skip adding the loose files as payloads if it was suppressed.
-                                        if (suppressLooseFilePayloadGeneration != YesNoType.Yes)
-                                        {
-                                            // If the file is explicitly uncompressed or the MSI is uncompressed and the file is not
-                                            // explicitly marked compressed then this is an external file.
-                                            if (MsiInterop.MsidbFileAttributesNoncompressed == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesNoncompressed) ||
-                                                (!compressed && 0 == (record.GetInteger(4) & MsiInterop.MsidbFileAttributesCompressed)))
-                                            {
-                                                string generatedId = Common.GenerateIdentifier("f", true, this.PackagePayload.Id, record.GetString(2));
-                                                string fileSourcePath = Binder.GetFileSourcePath(directories, record.GetString(1), record.GetString(3), compressed, longNamesInImage);
-                                                string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSourceFile, fileSourcePath, "File", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
-                                                string name = Path.Combine(Path.GetDirectoryName(this.PackagePayload.Name), fileSourcePath);
-
-                                                if (!this.IsExistingPayload(name))
-                                                {
-                                                    PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
-                                                    payloadNew.ParentPackagePayload = this.PackagePayload.Id;
-                                                    if (!String.IsNullOrEmpty(payloadNew.Container))
-                                                    {
-                                                        containers[payloadNew.Container].Payloads.Add(payloadNew);
-                                                    }
-
-                                                    this.Payloads.Add(payloadNew);
-                                                    allPayloads.Add(payloadNew.Id, payloadNew);
-
-                                                    this.Size += payloadNew.FileSize; // add the newly added payload to the package size.
-                                                }
-                                            }
-                                        }
-
-                                        this.InstallSize += record.GetInteger(5);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Import any dependency providers from the MSI.
-                        if (db.Tables.Contains("WixDependencyProvider"))
-                        {
-                            // Use the old schema (v1) if the Version column does not exist.
-                            bool hasVersion = db.Tables["WixDependencyProvider"].Columns.Contains("Version");
-                            string query = "SELECT `ProviderKey`, `Version`, `DisplayName`, `Attributes` FROM `WixDependencyProvider`";
-
-                            if (!hasVersion)
-                            {
-                                query = "SELECT `ProviderKey`, `Attributes` FROM `WixDependencyProvider`";
-                            }
-
-                            using (Microsoft.Deployment.WindowsInstaller.View view = db.OpenView(query))
-                            {
-                                view.Execute();
-                                while (true)
-                                {
-                                    using (Microsoft.Deployment.WindowsInstaller.Record record = view.Fetch())
-                                    {
-                                        if (null == record)
-                                        {
-                                            break;
-                                        }
-
-                                        // Import the provider key and attributes.
-                                        ProvidesDependency dependency = null;
-                                        string providerKey = record.GetString(1);
-
-                                        if (hasVersion)
-                                        {
-                                            string version = record.GetString(2) ?? this.Version;
-                                            string displayName = record.GetString(3) ?? this.DisplayName;
-                                            int attributes = record.GetInteger(4);
-
-                                            dependency = new ProvidesDependency(providerKey, version, displayName, attributes);
-                                        }
-                                        else
-                                        {
-                                            int attributes = record.GetInteger(2);
-
-                                            dependency = new ProvidesDependency(providerKey, this.Version, this.DisplayName, attributes);
-                                        }
-
-                                        dependency.Imported = true;
-                                        this.Provides.Add(dependency);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
-                {
-                    core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
-                }
-            }
-
-            /// <summary>
-            /// Determines whether a payload with the same name already exists.
-            /// </summary>
-            /// <param name="payloadName">Payload to search for.</param>
-            /// <returns>true if payload already exists; false otherwise</returns>
-            private bool IsExistingPayload(string payloadName)
-            {
-                // Before adding the external file as another payload, we have to check to
-                // see if it's already in the payload list. To do this, we have to match the
-                // expected relative location of the external file specified in the MSI with
-                // the destination @Name of the payload... the @SourceFile path on the payload
-                // may be something completely different!
-                foreach (PayloadInfoRow payload in this.Payloads)
-                {
-                    if (payloadName.Equals(payload.Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        payload.ParentPackagePayload = this.PackagePayload.Id;
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            /// <summary>
-            /// Initializes package state from the MSP contents.
-            /// </summary>
-            /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMspPackage(BinderCore core, Output bundle)
-            {
-                string sourcePath = this.PackagePayload.FullFileName;
-
-                try
-                {
-                    // Read data out of the msp database...
-                    using (Microsoft.Deployment.WindowsInstaller.SummaryInfo sumInfo = new Microsoft.Deployment.WindowsInstaller.SummaryInfo(sourcePath, false))
-                    {
-                        this.PatchCode = sumInfo.RevisionNumber.Substring(0, 38);
-                    }
-
-                    using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
-                    {
-                        this.DisplayName = ChainPackageInfo.GetPatchMetadataProperty(db, "DisplayName");
-                    }
-
-                    this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
-
-                    XmlDocument doc = new XmlDocument();
-                    doc.LoadXml(this.PatchXml);
-
-                    XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
-                    nsmgr.AddNamespace("p", "http://www.microsoft.com/msi/patch_applicability.xsd");
-
-                    foreach (XmlNode node in doc.SelectNodes("/p:MsiPatch/p:TargetProduct", nsmgr))
-                    {
-                        // If this patch targes a product code, this is the best case.
-                        XmlNode targetCode = node.SelectSingleNode("p:TargetProductCode", nsmgr);
-                        WixBundlePatchTargetCodeAttributes attributes = WixBundlePatchTargetCodeAttributes.None;
-
-                        if (null != targetCode)
-                        {
-                            attributes = WixBundlePatchTargetCodeAttributes.TargetsProductCode;
-                        }
-                        else // maybe targets and upgrade code?
-                        {
-                            targetCode = node.SelectSingleNode("p:UpgradeCode", nsmgr);
-                            if (null != targetCode)
-                            {
-                                attributes = WixBundlePatchTargetCodeAttributes.TargetsUpgradeCode;
-                            }
-                            else // this patch targets a unknown number of products
-                            {
-                                this.TargetUnspecified = true;
-                            }
-                        }
-
-                        Table table = bundle.EnsureTable(core.TableDefinitions["WixBundlePatchTargetCode"]);
-                        WixBundlePatchTargetCodeRow row = (WixBundlePatchTargetCodeRow)table.CreateRow(this.PackagePayload.SourceLineNumbers, false);
-                        row.MspPackageId = this.PackagePayload.Id;
-                        row.TargetCode = targetCode.InnerText;
-                        row.Attributes = attributes;
-
-                        if (this.TargetCodes.TryAdd(row))
-                        {
-                            table.Rows.Add(row);
-                        }
-                    }
-                }
-                catch (Microsoft.Deployment.WindowsInstaller.InstallerException e)
-                {
-                    core.OnMessage(WixErrors.UnableToReadPackageInformation(this.PackagePayload.SourceLineNumbers, sourcePath, e.Message));
-                    return;
-                }
-
-                if (String.IsNullOrEmpty(this.CacheId))
-                {
-                    this.CacheId = this.PatchCode;
-                }
-            }
-
-            /// <summary>
-            /// Initializes package state from the MSU contents.
-            /// </summary>
-            /// <param name="core">BinderCore for messages.</param>
-            private void ResolveMsuPackage(BinderCore core)
-            {
-                this.PerMachine = true; // MSUs are always per-machine.
-
-                if (String.IsNullOrEmpty(this.CacheId))
-                {
-                    this.CacheId = this.PackagePayload.Hash;
-                }
-            }
-
-            /// <summary>
-            /// Initializes package state from the EXE contents.
-            /// </summary>
-            /// <param name="core">BinderCore for messages.</param>
-            private void ResolveExePackage(BinderCore core)
-            {
-                if (String.IsNullOrEmpty(this.CacheId))
-                {
-                    this.CacheId = this.PackagePayload.Hash;
-                }
-
-                this.Version = this.PackagePayload.Version;
-                this.DisplayName = this.PackagePayload.ProductName;
-                this.Description = this.PackagePayload.Description;
-            }
-
-            /// <summary>
-            /// Verifies that only allowed properties are passed to the MSI.
-            /// </summary>
-            /// <param name="core">BinderCore for messages.</param>
-            private void VerifyMsiProperties(BinderCore core)
-            {
-                foreach (string disallowed in new string[] { "ACTION", "ALLUSERS", "REBOOT", "REINSTALL", "REINSTALLMODE" })
-                {
-                    foreach (MsiPropertyInfo propertyInfo in this.MsiProperties)
-                    {
-                        if (disallowed.Equals(propertyInfo.Name, StringComparison.Ordinal))
-                        {
-                            core.OnMessage(WixErrors.DisallowedMsiProperty(this.PackagePayload.SourceLineNumbers, disallowed));
-                        }
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Queries a Windows Installer database to determine if one or more rows exist in the Property table.
-            /// </summary>
-            /// <param name="db">Database to query.</param>
-            /// <param name="property">Property to examine.</param>
-            /// <returns>True if query matches at least one result.</returns>
-            private static bool HasProperty(Microsoft.Deployment.WindowsInstaller.Database db, string property)
-            {
-                try
-                {
-                    return 0 < db.ExecuteQuery(PropertyQuery(property)).Count;
-                }
-                catch (Microsoft.Deployment.WindowsInstaller.InstallerException)
-                {
-                }
-
-                return false;
-            }
-
-            /// <summary>
-            /// Queries a Windows Installer database for a Property value.
-            /// </summary>
-            /// <param name="db">Database to query.</param>
-            /// <param name="property">Property to examine.</param>
-            /// <returns>String value for result or null if query doesn't match a single result.</returns>
-            private static string GetProperty(Microsoft.Deployment.WindowsInstaller.Database db, string property)
-            {
-                try
-                {
-                    return db.ExecuteScalar(PropertyQuery(property)).ToString();
-                }
-                catch (Microsoft.Deployment.WindowsInstaller.InstallerException)
-                {
-                }
-
-                return null;
-            }
-
-            private static string PropertyQuery(string property)
-            {
-                // quick sanity check that we'll be creating a valid query...
-                // TODO: Are there any other special characters we should be looking for?
-                Debug.Assert(!property.Contains("'"));
-                return String.Format(CultureInfo.InvariantCulture, ChainPackageInfo.PropertySqlFormat, property);
-            }
-
-            /// <summary>
-            /// Queries a Windows Installer patch database for a Property value from the MsiPatchMetadata table.
-            /// </summary>
-            /// <param name="db">Database to query.</param>
-            /// <param name="property">Property to examine.</param>
-            /// <returns>String value for result or null if query doesn't match a single result.</returns>
-            private static string GetPatchMetadataProperty(Microsoft.Deployment.WindowsInstaller.Database db, string property)
-            {
-                try
-                {
-                    return db.ExecuteScalar(PatchMetadataPropertyQuery(property)).ToString();
-                }
-                catch (Microsoft.Deployment.WindowsInstaller.InstallerException)
-                {
-                }
-
-                return null;
-            }
-
-            private static string PatchMetadataPropertyQuery(string property)
-            {
-                // quick sanity check that we'll be creating a valid query...
-                // TODO: Are there any other special characters we should be looking for?
-                Debug.Assert(!property.Contains("'"));
-                return String.Format(CultureInfo.InvariantCulture, ChainPackageInfo.PatchMetadataFormat, property);
-            }
-        }
-
-        /// <summary>
-        /// Msi Feature Information.
-        /// </summary>
-        private class MsiFeature
-        {
-            public string Name { get; set; }
-            public int Size { get; set; }
-        }
-
-        /// <summary>
-        /// Add/Remove Programs registration for the bundle.
-        /// </summary>
-        private class RegistrationInfo
-        {
-            public string Name { get; set; }
-            public string Publisher { get; set; }
-            public string HelpLink { get; set; }
-            public string HelpTelephone { get; set; }
-            public string AboutUrl { get; set; }
-            public string UpdateUrl { get; set; }
-            public string ParentName { get; set; }
-            public int DisableModify { get; set; }
-            public bool DisableRemove { get; set; }
-        }
-
-        private class UpdateRegistrationInfo
-        {
-            public UpdateRegistrationInfo(Row row)
-            {
-                this.Manufacturer = (string)row[0];
-                this.Department = (string)row[1];
-                this.ProductFamily = (string)row[2];
-                this.Name = (string)row[3];
-                this.Classification = (string)row[4];
-            }
-
-            public string Manufacturer { get; set; }
-            public string Department { get; set; }
-            public string ProductFamily { get; set; }
-            public string Name { get; set; }
-            public string Classification { get; set; }
-        }
-
-        /// <summary>
-        /// Related packages. Typically represents Upgrade table from an MsiPackage.
-        /// </summary>
-        private class RelatedPackage
-        {
-            private List<string> languages = new List<string>();
-
-            public string Id { get; set; }
-            public string MinVersion { get; set; }
-            public string MaxVersion { get; set; }
-            public List<string> Languages { get { return this.languages; } }
-            public bool MinInclusive { get; set; }
-            public bool MaxInclusive { get; set; }
-            public bool LangInclusive { get; set; }
-            public bool OnlyDetect { get; set; }
-        }
-
-        /// <summary>
-        /// Utility class for Burn MsiProperty information.
-        /// </summary>
-        private class MsiPropertyInfo
-        {
-            public MsiPropertyInfo(Row row)
-                : this((string)row[0], (string)row[1], (string)row[2])
-            {
-            }
-
-            public MsiPropertyInfo(string packageId, string name, string value)
-            {
-                this.PackageId = packageId;
-                this.Name = name;
-                this.Value = value;
-            }
-
-            public string PackageId { get; private set; }
-            public string Name { get; private set; }
-            public string Value { get; set; }
-        }
-
-        /// <summary>
-        /// Utility class for Burn ExitCode information.
-        /// </summary>
-        private class ExitCodeInfo
-        {
-            public ExitCodeInfo(Row row)
-                : this((string)row[0], (int)row[1], (string)row[2])
-            {
-            }
-
-            public ExitCodeInfo(string packageId, int value, string behavior)
-            {
-                this.PackageId = packageId;
-                // null value means wildcard
-                if (CompilerCore.IntegerNotSet == value)
-                {
-                    this.Code = "*";
-                }
-                else
-                {
-                    this.Code = value.ToString();
-                }
-                this.Type = behavior;
-            }
-
-            public string PackageId { get; private set; }
-            public string Code { get; private set; }
-            public string Type { get; private set; }
-        }
-
-        /// <summary>
-        /// Utility class for Burn RelatedBundle information.
-        /// </summary>
-        private class RelatedBundleInfo
-        {
-            public RelatedBundleInfo(Row row)
-                : this((string)row[0], (int)row[1])
-            {
-            }
-
-            public RelatedBundleInfo(string id, int action)
-            {
-                this.Id = id;
-                this.Action = (Wix.RelatedBundle.ActionType)action;
-            }
-
-            public string Id { get; private set; }
-            public Wix.RelatedBundle.ActionType Action { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest element for a RelatedBundle.
-            /// </summary>
-            /// <param name="writer"></param>
-            public void WriteXml(XmlTextWriter writer)
-            {
-                string actionString = this.Action.ToString();
-
-                writer.WriteStartElement("RelatedBundle");
-                writer.WriteAttributeString("Id", this.Id);
-                writer.WriteAttributeString("Action", Convert.ToString(this.Action));
-                writer.WriteEndElement();
-            }
-        }
-
-        /// <summary>
-        /// Utility class for Burn variable information.
-        /// </summary>
-        private class VariableInfo
-        {
-            public VariableInfo(Row row)
-                : this((string)row[0], (string)row[1], (string)row[2], (int)row[3] == 1 ? true : false, (int)row[4] == 1 ? true : false)
-            {
-            }
-
-            public VariableInfo(string id, string value, string type, bool hidden, bool persisted)
-            {
-                this.Id = id;
-                this.Value = value;
-                this.Type = type;
-                this.Hidden = hidden;
-                this.Persisted = persisted;
-            }
-
-            public bool Hidden { get; private set; }
-            public string Id { get; private set; }
-            public bool Persisted { get; private set; }
-            public string Value { get; private set; }
-            public string Type { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest markup for a variable.
-            /// </summary>
-            /// <param name="writer"></param>
-            public void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement("Variable");
-                writer.WriteAttributeString("Id", this.Id);
-                if (null != this.Type)
-                {
-                    writer.WriteAttributeString("Value", this.Value);
-                    writer.WriteAttributeString("Type", this.Type);
-                }
-                writer.WriteAttributeString("Hidden", this.Hidden ? "yes" : "no");
-                writer.WriteAttributeString("Persisted", this.Persisted ? "yes" : "no");
-                writer.WriteEndElement();
-            }
-        }
-
-        /// <summary>
-        /// Utility base class for all WixSearches
-        /// </summary>
-        private abstract class WixSearchInfo
-        {
-            public WixSearchInfo(string id)
-            {
-                this.Id = id;
-            }
-
-            public void AddWixSearchRowInfo(Row row)
-            {
-                Debug.Assert((string)row[0] == Id);
-                Variable = (string)row[1];
-                Condition = (string)row[2];
-            }
-
-            public string Id { get; private set; }
-            public string Variable { get; private set; }
-            public string Condition { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup a search.
-            /// </summary>
-            /// <param name="writer"></param>
-            public virtual void WriteXml(XmlTextWriter writer)
-            {
-            }
-
-            /// <summary>
-            /// Writes attributes common to all WixSearch elements.
-            /// </summary>
-            /// <param name="writer"></param>
-            protected void WriteWixSearchAttributes(XmlTextWriter writer)
-            {
-                writer.WriteAttributeString("Id", this.Id);
-                writer.WriteAttributeString("Variable", this.Variable);
-                if (!String.IsNullOrEmpty(this.Condition))
-                {
-                    writer.WriteAttributeString("Condition", this.Condition);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Utility class for all WixFileSearches (file and directory searches)
-        /// </summary>
-        private class WixFileSearchInfo : WixSearchInfo
-        {
-            public WixFileSearchInfo(Row row)
-                : this((string)row[0], (string)row[1], (int)row[9])
-            {
-            }
-
-            public WixFileSearchInfo(string id, string path, int attributes)
-                : base(id)
-            {
-                this.Path = path;
-                this.Attributes = (WixFileSearchAttributes)attributes;
-            }
-
-            public string Path { get; private set; }
-            public WixFileSearchAttributes Attributes { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup for a file/directory search.
-            /// </summary>
-            /// <param name="writer"></param>
-            public override void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement((0 == (this.Attributes & WixFileSearchAttributes.IsDirectory)) ? "FileSearch" : "DirectorySearch");
-                this.WriteWixSearchAttributes(writer);
-                writer.WriteAttributeString("Path", this.Path);
-                if (WixFileSearchAttributes.WantExists == (this.Attributes & WixFileSearchAttributes.WantExists))
-                {
-                    writer.WriteAttributeString("Type", "exists");
-                }
-                else if (WixFileSearchAttributes.WantVersion == (this.Attributes & WixFileSearchAttributes.WantVersion))
-                {
-                    // Can never get here for DirectorySearch.
-                    writer.WriteAttributeString("Type", "version");
-                }
-                else
-                {
-                    writer.WriteAttributeString("Type", "path");
-                }
-                writer.WriteEndElement();
-            }
-        }
-
-        /// <summary>
-        /// Utility class for all WixRegistrySearches
-        /// </summary>
-        private class WixRegistrySearchInfo : WixSearchInfo
-        {
-            public WixRegistrySearchInfo(Row row)
-                : this((string)row[0], (int)row[1], (string)row[2], (string)row[3], (int)row[4])
-            {
-            }
-
-            public WixRegistrySearchInfo(string id, int root, string key, string value, int attributes)
-                : base(id)
-            {
-                this.Root = root;
-                this.Key = key;
-                this.Value = value;
-                this.Attributes = (WixRegistrySearchAttributes)attributes;
-            }
-
-            public int Root { get; private set; }
-            public string Key { get; private set; }
-            public string Value { get; private set; }
-            public WixRegistrySearchAttributes Attributes { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup for a registry search.
-            /// </summary>
-            /// <param name="writer"></param>
-            public override void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement("RegistrySearch");
-                this.WriteWixSearchAttributes(writer);
-
-                switch (this.Root)
-                {
-                    case Msi.Interop.MsiInterop.MsidbRegistryRootClassesRoot:
-                        writer.WriteAttributeString("Root", "HKCR");
-                        break;
-                    case Msi.Interop.MsiInterop.MsidbRegistryRootCurrentUser:
-                        writer.WriteAttributeString("Root", "HKCU");
-                        break;
-                    case Msi.Interop.MsiInterop.MsidbRegistryRootLocalMachine:
-                        writer.WriteAttributeString("Root", "HKLM");
-                        break;
-                    case Msi.Interop.MsiInterop.MsidbRegistryRootUsers:
-                        writer.WriteAttributeString("Root", "HKU");
-                        break;
-                }
-
-                writer.WriteAttributeString("Key", this.Key);
-
-                if (!String.IsNullOrEmpty(this.Value))
-                {
-                    writer.WriteAttributeString("Value", this.Value);
-                }
-
-                bool existenceOnly = 0 != (this.Attributes & WixRegistrySearchAttributes.WantExists);
-
-                writer.WriteAttributeString("Type", existenceOnly ? "exists" : "value");
-
-                if (0 != (this.Attributes & WixRegistrySearchAttributes.Win64))
-                {
-                    writer.WriteAttributeString("Win64", "yes");
-                }
-
-                if (!existenceOnly)
-                {
-                    if (0 != (this.Attributes & WixRegistrySearchAttributes.ExpandEnvironmentVariables))
-                    {
-                        writer.WriteAttributeString("ExpandEnvironment", "yes");
-                    }
-
-                    // We *always* say this is VariableType="string". If we end up
-                    // needing to be more specific, we will have to expand the "Format"
-                    // attribute to allow "number" and "version".
-
-                    writer.WriteAttributeString("VariableType", "string");
-                }
-
-                writer.WriteEndElement();
-            }
-        }
-
-        /// <summary>
-        /// Utility class for all WixComponentSearches
-        /// </summary>
-        private class WixComponentSearchInfo : WixSearchInfo
-        {
-            public WixComponentSearchInfo(Row row)
-                : this((string)row[0], (string)row[1], (string)row[2], (int)row[3])
-            {
-            }
-
-            public WixComponentSearchInfo(string id, string guid, string productCode, int attributes)
-                : base(id)
-            {
-                this.Guid = guid;
-                this.ProductCode = productCode;
-                this.Attributes = (WixComponentSearchAttributes)attributes;
-            }
-
-            public string Guid { get; private set; }
-            public string ProductCode { get; private set; }
-            public WixComponentSearchAttributes Attributes { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup for a component search.
-            /// </summary>
-            /// <param name="writer"></param>
-            public override void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement("MsiComponentSearch");
-                this.WriteWixSearchAttributes(writer);
-
-                writer.WriteAttributeString("ComponentId", this.Guid);
-
-                if (!String.IsNullOrEmpty(this.ProductCode))
-                {
-                    writer.WriteAttributeString("ProductCode", this.ProductCode);
-                }
-
-                if (0 != (this.Attributes & WixComponentSearchAttributes.KeyPath))
-                {
-                    writer.WriteAttributeString("Type", "keyPath");
-                }
-                else if (0 != (this.Attributes & WixComponentSearchAttributes.State))
-                {
-                    writer.WriteAttributeString("Type", "state");
-                }
-                else if (0 != (this.Attributes & WixComponentSearchAttributes.WantDirectory))
-                {
-                    writer.WriteAttributeString("Type", "directory");
-                }
-
-                writer.WriteEndElement();
-            }
-        }
-
-
-        /// <summary>
-        /// Utility class for all WixProductSearches
-        /// </summary>
-        private class WixProductSearchInfo : WixSearchInfo
-        {
-            public WixProductSearchInfo(Row row)
-                : this((string)row[0], (string)row[1], (int)row[2])
-            {
-            }
-
-            public WixProductSearchInfo(string id, string productCode, int attributes)
-                : base(id)
-            {
-                this.ProductCode = productCode;
-                this.Attributes = (WixProductSearchAttributes)attributes;
-            }
-
-            public string ProductCode { get; private set; }
-            public WixProductSearchAttributes Attributes { get; private set; }
-
-            /// <summary>
-            /// Generates Burn manifest and ParameterInfo-style markup for a product search.
-            /// </summary>
-            /// <param name="writer"></param>
-            public override void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement("MsiProductSearch");
-                this.WriteWixSearchAttributes(writer);
-
-                writer.WriteAttributeString("ProductCode", this.ProductCode);
-
-                if (0 != (this.Attributes & WixProductSearchAttributes.Version))
-                {
-                    writer.WriteAttributeString("Type", "version");
-                }
-                else if (0 != (this.Attributes & WixProductSearchAttributes.Language))
-                {
-                    writer.WriteAttributeString("Type", "language");
-                }
-                else if (0 != (this.Attributes & WixProductSearchAttributes.State))
-                {
-                    writer.WriteAttributeString("Type", "state");
-                }
-                else if (0 != (this.Attributes & WixProductSearchAttributes.Assignment))
-                {
-                    writer.WriteAttributeString("Type", "assignment");
-                }
-
-                writer.WriteEndElement();
-            }
-        }
-
         #region DependencyExtension
         /// <summary>
         /// Imports authored dependency providers for each package in the manifest,
@@ -8632,163 +7143,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // Defaults to the bundle ID as the provider key.
-        }
-
-        /// <summary>
-        /// Represents an authored or imported dependency provider.
-        /// </summary>
-        private sealed class ProvidesDependency
-        {
-            /// <summary>
-            /// Creates a new instance of the <see cref="ProviderDependency"/> class from a <see cref="Row"/>.
-            /// </summary>
-            /// <param name="row">The <see cref="Row"/> from which data is imported.</param>
-            internal ProvidesDependency(Row row)
-                : this((string)row[2], (string)row[3], (string)row[4], (int?)row[5])
-            {
-            }
-
-            /// <summary>
-            /// Creates a new instance of the <see cref="ProviderDependency"/> class.
-            /// </summary>
-            /// <param name="key">The unique key of the dependency.</param>
-            /// <param name="attributes">Additional attributes for the dependency.</param>
-            internal ProvidesDependency(string key, string version, string displayName, int? attributes)
-            {
-                this.Key = key;
-                this.Version = version;
-                this.DisplayName = displayName;
-                this.Attributes = attributes;
-            }
-
-            /// <summary>
-            /// Gets or sets the unique key of the package provider.
-            /// </summary>
-            internal string Key { get; set; }
-
-            /// <summary>
-            /// Gets or sets the version of the package provider.
-            /// </summary>
-            internal string Version { get; set; }
-
-            /// <summary>
-            /// Gets or sets the display name of the package provider.
-            /// </summary>
-            internal string DisplayName { get; set; }
-
-            /// <summary>
-            /// Gets or sets the attributes for the dependency.
-            /// </summary>
-            internal int? Attributes { get; set; }
-
-            /// <summary>
-            /// Gets or sets whether the dependency was imported from the package.
-            /// </summary>
-            internal bool Imported { get; set; }
-
-            /// <summary>
-            /// Gets whether certain properties are the same.
-            /// </summary>
-            /// <param name="other">Another <see cref="ProvidesDependency"/> to compare.</param>
-            /// <remarks>This is not the same as object equality, but only checks a subset of properties
-            /// to determine if the objects are similar and could be merged into a collection.</remarks>
-            /// <returns>True if certain properties are the same.</returns>
-            internal bool Equals(ProvidesDependency other)
-            {
-                if (null != other)
-                {
-                    return this.Key == other.Key &&
-                           this.Version == other.Version &&
-                           this.DisplayName == other.DisplayName;
-                }
-
-                return false;
-            }
-
-            /// <summary>
-            /// Writes the dependency to the bundle XML manifest.
-            /// </summary>
-            /// <param name="writer">The <see cref="XmlTextWriter"/> for the bundle XML manifest.</param>
-            internal void WriteXml(XmlTextWriter writer)
-            {
-                writer.WriteStartElement("Provides");
-                writer.WriteAttributeString("Key", this.Key);
-
-                if (!String.IsNullOrEmpty(this.Version))
-                {
-                    writer.WriteAttributeString("Version", this.Version);
-                }
-
-                if (!String.IsNullOrEmpty(this.DisplayName))
-                {
-                    writer.WriteAttributeString("DisplayName", this.DisplayName);
-                }
-
-                if (this.Imported)
-                {
-                    // The package dependency was explicitly authored into the manifest.
-                    writer.WriteAttributeString("Imported", "yes");
-                }
-
-                writer.WriteEndElement();
-            }
-        }
-
-        /// <summary>
-        /// A case-insensitive collection of unique <see cref="ProvidesDependency"/> objects.
-        /// </summary>
-        private sealed class ProvidesDependencyCollection : KeyedCollection<string, ProvidesDependency>
-        {
-            /// <summary>
-            /// Creates a case-insensitive collection of unique <see cref="ProvidesDependency"/> objects.
-            /// </summary>
-            internal ProvidesDependencyCollection()
-                : base(StringComparer.InvariantCultureIgnoreCase)
-            {
-            }
-
-            /// <summary>
-            /// Adds the <see cref="ProvidesDependency"/> to the collection if it doesn't already exist.
-            /// </summary>
-            /// <param name="dependency">The <see cref="ProvidesDependency"/> to add to the collection.</param>
-            /// <returns>True if the <see cref="ProvidesDependency"/> was added to the collection; otherwise, false.</returns>
-            /// <exception cref="ArgumentNullException">The <paramref name="dependency"/> parameter is null.</exception>
-            internal bool Merge(ProvidesDependency dependency)
-            {
-                if (null == dependency)
-                {
-                    throw new ArgumentNullException("dependency");
-                }
-
-                // If the dependency key is already in the collection, verify equality for a subset of properties.
-                if (this.Contains(dependency.Key))
-                {
-                    ProvidesDependency current = this[dependency.Key];
-                    if (!current.Equals(dependency))
-                    {
-                        return false;
-                    }
-                }
-
-                base.Add(dependency);
-                return true;
-            }
-
-            /// <summary>
-            /// Gets the <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.
-            /// </summary>
-            /// <param name="dependency">The dependency to index.</param>
-            /// <exception cref="ArgumentNullException">The <paramref name="dependency"/> parameter is null.</exception>
-            /// <returns>The <see cref="ProvidesDependency.Key"/> for the <paramref name="dependency"/>.</returns>
-            protected override string GetKeyForItem(ProvidesDependency dependency)
-            {
-                if (null == dependency)
-                {
-                    throw new ArgumentNullException("dependency");
-                }
-
-                return dependency.Key;
-            }
         }
         #endregion
     }

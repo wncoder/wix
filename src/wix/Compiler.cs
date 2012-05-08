@@ -5186,7 +5186,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string display = "collapse";
             YesNoType followParent = YesNoType.NotSet;
             string installDefault = null;
-            int level = CompilerCore.IntegerNotSet;
+            int level = 1;
             string title = null;
             string typicalDefault = null;
 
@@ -5324,11 +5324,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             if (null != configurableDirectory && configurableDirectory.ToUpper(CultureInfo.InvariantCulture) != configurableDirectory)
             {
                 this.core.OnMessage(WixErrors.FeatureConfigurableDirectoryNotUppercase(sourceLineNumbers, node.Name, "ConfigurableDirectory", configurableDirectory));
-            }
-
-            if (CompilerCore.IntegerNotSet == level)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Level"));
             }
 
             if ("advertise" == typicalDefault && "no" == allowAdvertise)

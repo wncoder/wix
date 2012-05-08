@@ -54,6 +54,14 @@ static HRESULT AppendRollbackCacheAction(
     __in BURN_PLAN* pPlan,
     __out BURN_CACHE_ACTION** ppCacheAction
     );
+static HRESULT AppendLayoutContainerAction(
+    __in BURN_PLAN* pPlan,
+    __in_opt BURN_PACKAGE* pPackage,
+    __in DWORD iPackageStartAction,
+    __in BURN_CONTAINER* pContainer,
+    __in BOOL fContainerCached,
+    __in_z LPCWSTR wzLayoutDirectory
+    );
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
     __in_opt BURN_PACKAGE* pPackage,
@@ -78,6 +86,12 @@ static HRESULT CreateContainerAcquireAndExtractAction(
     __in BOOL fPayloadCached,
     __out BURN_CACHE_ACTION** ppContainerExtractAction,
     __out DWORD* piContainerTryAgainAction
+    );
+static HRESULT AddAcquireContainer(
+    __in BURN_PLAN* pPlan,
+    __in BURN_CONTAINER* pContainer,
+    __out_opt BURN_CACHE_ACTION** ppCacheAction,
+    __out_opt DWORD* piCacheAction
     );
 static HRESULT AddExtractPayload(
     __in BURN_CACHE_ACTION* pCacheAction,
@@ -353,7 +367,7 @@ LExit:
 extern "C" HRESULT PlanLayoutPackage(
     __in BURN_PLAN* pPlan,
     __in BURN_PACKAGE* pPackage,
-    __in_z LPCWSTR wzLayoutDirectory
+    __in_z_opt LPCWSTR wzLayoutDirectory
     )
 {
     HRESULT hr = S_OK;
@@ -375,10 +389,19 @@ extern "C" HRESULT PlanLayoutPackage(
     {
         BURN_PACKAGE_PAYLOAD* pPackagePayload = &pPackage->rgPayloads[i];
 
-        // TODO: determine if a payload already exists in the layout and pass appropriate value fPayloadCached 
-        // (instead of always FALSE).
-        hr = AppendCacheOrLayoutPayloadAction(pPlan, pPackage, iPackageStartAction, pPackagePayload->pPayload, FALSE, wzLayoutDirectory);
-        ExitOnFailure(hr, "Failed to append cache action.");
+        // If doing layout and the package is in a container.
+        if (wzLayoutDirectory && pPackagePayload->pPayload->pContainer)
+        {
+            // TODO: determine if a container already exists in the layout and pass appropriate value fPayloadCached (instead of always FALSE).
+            hr = AppendLayoutContainerAction(pPlan, pPackage, iPackageStartAction, pPackagePayload->pPayload->pContainer, FALSE, wzLayoutDirectory);
+            ExitOnFailure(hr, "Failed to append layout container action.");
+        }
+        else
+        {
+            // TODO: determine if a payload already exists in the layout and pass appropriate value fPayloadCached (instead of always FALSE).
+            hr = AppendCacheOrLayoutPayloadAction(pPlan, pPackage, iPackageStartAction, pPackagePayload->pPayload, FALSE, wzLayoutDirectory);
+            ExitOnFailure(hr, "Failed to append cache/layout payload action.");
+        }
 
         Assert(BURN_CACHE_ACTION_TYPE_PACKAGE_START == pPlan->rgCacheActions[iPackageStartAction].type);
         ++pPlan->rgCacheActions[iPackageStartAction].packageStart.cCachePayloads;
@@ -1385,6 +1408,64 @@ LExit:
     return hr;
 }
 
+static HRESULT AppendLayoutContainerAction(
+    __in BURN_PLAN* pPlan,
+    __in_opt BURN_PACKAGE* pPackage,
+    __in DWORD iPackageStartAction,
+    __in BURN_CONTAINER* pContainer,
+    __in BOOL fContainerCached,
+    __in_z LPCWSTR wzLayoutDirectory
+    )
+{
+    HRESULT hr = S_OK;
+    BURN_CACHE_ACTION* pAcquireAction = NULL;
+    DWORD iAcquireAction = BURN_PLAN_INVALID_ACTION_INDEX;
+    LPWSTR sczContainerWorkingPath = NULL;
+    BURN_CACHE_ACTION* pCacheAction = NULL;
+
+    // No need to do anything if the container is already cached or is attached to the bundle (since the
+    // bundle itself will already have a layout action).
+    if (fContainerCached || pContainer->fAttached)
+    {
+        ExitFunction();
+    }
+
+    // Ensure the container is being acquired.  If it is, then some earlier package already planned the layout of this container so 
+    // don't do it again. Otherwise, plan away!
+    if (!FindContainerCacheAction(BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER, pPlan, pContainer, 0, iPackageStartAction, NULL, NULL))
+    {
+        hr = AddAcquireContainer(pPlan, pContainer, &pAcquireAction, &iAcquireAction);
+        ExitOnFailure(hr, "Failed to append acquire container action for layout to plan.");
+
+        Assert(BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER == pAcquireAction->type);
+
+        // Create the layout container action.
+        hr = StrAllocString(&sczContainerWorkingPath, pAcquireAction->resolveContainer.sczUnverifiedPath, 0);
+        ExitOnFailure(hr, "Failed to copy container working path for layout.");
+
+        hr = AppendCacheAction(pPlan, &pCacheAction);
+        ExitOnFailure(hr, "Failed to append cache action to cache payload.");
+
+        hr = StrAllocString(&pCacheAction->layoutContainer.sczLayoutDirectory, wzLayoutDirectory, 0);
+        ExitOnFailure(hr, "Failed to copy layout directory into plan.");
+
+        pCacheAction->type = BURN_CACHE_ACTION_TYPE_LAYOUT_CONTAINER;
+        pCacheAction->layoutContainer.pPackage = pPackage;
+        pCacheAction->layoutContainer.pContainer = pContainer;
+        pCacheAction->layoutContainer.fMove = TRUE;
+        pCacheAction->layoutContainer.iTryAgainAction = iAcquireAction;
+        pCacheAction->layoutContainer.sczUnverifiedPath = sczContainerWorkingPath;
+        sczContainerWorkingPath = NULL;
+
+        pPlan->qwCacheSizeTotal += pContainer->qwFileSize;
+    }
+
+LExit:
+    ReleaseNullStr(sczContainerWorkingPath);
+
+    return hr;
+}
+
 static HRESULT AppendCacheOrLayoutPayloadAction(
     __in BURN_PLAN* pPlan,
     __in_opt BURN_PACKAGE* pPackage,
@@ -1586,19 +1667,10 @@ static HRESULT CreateContainerAcquireAndExtractAction(
         // can't extract stuff out of a container until we acquire the container.
         if (!FindContainerCacheAction(BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER, pPlan, pContainer, iPackageStartAction, BURN_PLAN_INVALID_ACTION_INDEX, &pAcquireContainerAction, &iAcquireAction))
         {
-            hr = CacheCaclulateContainerWorkingPath(pPlan->wzBundleId, pContainer, &sczContainerWorkingPath);
-            ExitOnFailure(hr, "Failed to calculate unverified path for container.");
-
-            hr = AppendCacheAction(pPlan, &pAcquireContainerAction);
+            hr = AddAcquireContainer(pPlan, pContainer, &pAcquireContainerAction, &iAcquireAction);
             ExitOnFailure(hr, "Failed to append acquire container action to plan.");
 
-            iAcquireAction = pPlan->cCacheActions - 1;
-
-            pAcquireContainerAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER;
             pAcquireContainerAction->fSkipUntilRetried = TRUE; // we'll start by assuming the acquire is not necessary and the fPayloadCached below will set us straight if wrong.
-            pAcquireContainerAction->resolveContainer.pContainer = pContainer;
-            pAcquireContainerAction->resolveContainer.sczUnverifiedPath = sczContainerWorkingPath;
-            sczContainerWorkingPath = NULL;
         }
 
         Assert(BURN_PLAN_INVALID_ACTION_INDEX != iAcquireAction);
@@ -1665,6 +1737,44 @@ static HRESULT CreateContainerAcquireAndExtractAction(
 
     *ppContainerExtractAction = pContainerExtractAction;
     *piContainerTryAgainAction = iTryAgainAction;
+
+LExit:
+    ReleaseStr(sczContainerWorkingPath);
+
+    return hr;
+}
+
+static HRESULT AddAcquireContainer(
+    __in BURN_PLAN* pPlan,
+    __in BURN_CONTAINER* pContainer,
+    __out_opt BURN_CACHE_ACTION** ppCacheAction,
+    __out_opt DWORD* piCacheAction
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczContainerWorkingPath = NULL;
+    BURN_CACHE_ACTION* pAcquireContainerAction = NULL;
+
+    hr = CacheCaclulateContainerWorkingPath(pPlan->wzBundleId, pContainer, &sczContainerWorkingPath);
+    ExitOnFailure(hr, "Failed to calculate unverified path for container.");
+
+    hr = AppendCacheAction(pPlan, &pAcquireContainerAction);
+    ExitOnFailure(hr, "Failed to append acquire container action to plan.");
+
+    pAcquireContainerAction->type = BURN_CACHE_ACTION_TYPE_ACQUIRE_CONTAINER;
+    pAcquireContainerAction->resolveContainer.pContainer = pContainer;
+    pAcquireContainerAction->resolveContainer.sczUnverifiedPath = sczContainerWorkingPath;
+    sczContainerWorkingPath = NULL;
+
+    if (ppCacheAction)
+    {
+        *ppCacheAction = pAcquireContainerAction;
+    }
+
+    if (piCacheAction)
+    {
+        *piCacheAction = pPlan->cCacheActions - 1;
+    }
 
 LExit:
     ReleaseStr(sczContainerWorkingPath);
@@ -1862,6 +1972,10 @@ static void CacheActionLog(
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: LAYOUT_BUNDLE working path: %ls, layout directory: %ls, exe name: %ls, skip until retried: %hs", wzBase, iAction, pAction->bundleLayout.sczUnverifiedPath, pAction->bundleLayout.sczLayoutDirectory, pAction->bundleLayout.sczExecutableName, LoggingBoolToString(pAction->fSkipUntilRetried));
         break;
 
+    case BURN_CACHE_ACTION_TYPE_LAYOUT_CONTAINER:
+        LogStringLine(REPORT_STANDARD, "%ls action[%u]: LAYOUT_CONTAINER package id: %ls, container id: %ls, working path: %ls, layout directory: %ls, operation: %ls, skip until retried: %hs, retry action: %u", wzBase, iAction, pAction->layoutContainer.pPackage ? pAction->layoutContainer.pPackage->sczId : L"", pAction->layoutContainer.pContainer->sczId, pAction->layoutContainer.sczUnverifiedPath, pAction->layoutContainer.sczLayoutDirectory, pAction->layoutContainer.fMove ? L"move" : L"copy", LoggingBoolToString(pAction->fSkipUntilRetried), pAction->layoutContainer.iTryAgainAction);
+        break;
+
     case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: LAYOUT_PAYLOAD package id: %ls, payload id: %ls, working path: %ls, layout directory: %ls, operation: %ls, skip until retried: %hs, retry action: %u", wzBase, iAction, pAction->layoutPayload.pPackage ? pAction->layoutPayload.pPackage->sczId : L"", pAction->layoutPayload.pPayload->sczKey, pAction->layoutPayload.sczUnverifiedPath, pAction->layoutPayload.sczLayoutDirectory, pAction->layoutPayload.fMove ? L"move" : L"copy", LoggingBoolToString(pAction->fSkipUntilRetried), pAction->layoutPayload.iTryAgainAction);
         break;
@@ -1925,7 +2039,7 @@ static void ExecuteActionLog(
         LogStringLine(REPORT_STANDARD, "%ls action[%u]: MSP_TARGET package id: %ls, action: %hs, target product code: %ls, target per-machine: %ls, ui level: %u, log path: %ls", wzBase, iAction, pAction->mspTarget.pPackage->sczId, LoggingActionStateToString(pAction->mspTarget.action), pAction->mspTarget.sczTargetProductCode, pAction->mspTarget.fPerMachineTarget ? L"yes" : L"no", pAction->mspTarget.uiLevel, pAction->mspTarget.sczLogPath);
         for (DWORD j = 0; j < pAction->mspTarget.cOrderedPatches; ++j)
         {
-            LogStringLine(REPORT_STANDARD, "      Patch[%u]: order: %u, msp package id: %ls", j, pAction->mspTarget.rgOrderedPatches->dwOrder, pAction->mspTarget.rgOrderedPatches[j].dwOrder, pAction->mspTarget.rgOrderedPatches[j].pPackage->sczId);
+            LogStringLine(REPORT_STANDARD, "      Patch[%u]: order: %u, msp package id: %ls", j, pAction->mspTarget.rgOrderedPatches[j].dwOrder, pAction->mspTarget.rgOrderedPatches[j].pPackage->sczId);
         }
         break;
 

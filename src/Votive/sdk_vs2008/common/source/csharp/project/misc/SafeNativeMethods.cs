@@ -77,7 +77,7 @@ namespace Microsoft.VisualStudio {
         [DllImport(ExternDll.Gdi32, SetLastError=true, ExactSpelling=true, CharSet=CharSet.Auto)]
         internal static extern int SetBkMode(IntPtr hdc, int nBkMode);
 
-		[DllImport(ExternDll.Oleaut32, PreserveSig = false)]
+		[DllImport(ExternDll.Oleaut32)]
 		internal static extern void VariantInit(IntPtr pObject);
 
 		[DllImport(ExternDll.Oleaut32, PreserveSig = false)]

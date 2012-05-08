@@ -130,7 +130,8 @@ DAPI_(int) BalRetryEndPackage(
         if (BALRETRY_TYPE_CACHE == type)
         {
             // Retry on all errors except the following.
-            if (BG_E_NETWORK_DISCONNECTED != hrError &&
+            if (HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) != hrError &&
+                BG_E_NETWORK_DISCONNECTED != hrError &&
                 HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) != hrError &&
                 HRESULT_FROM_WIN32(ERROR_INTERNET_NAME_NOT_RESOLVED) != hrError)
             {

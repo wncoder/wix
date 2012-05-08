@@ -36,6 +36,9 @@ static HRESULT InitializeResume(
     __out DWORD64* pdw64ResumeOffset
     );
 static HRESULT GetResourceMetadata(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -44,6 +47,9 @@ static HRESULT GetResourceMetadata(
     __out FILETIME* pftResourceCreated
     );
 static HRESULT DownloadResource(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -76,6 +82,9 @@ static HRESULT UpdateResumeOffset(
     __in DWORD cbData
     );
 static HRESULT MakeRequest(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczSourceUrl,
     __in_z_opt LPCWSTR wzMethod,
@@ -96,17 +105,32 @@ static HRESULT OpenRequest(
     __out HINTERNET* phUrl
     );
 static HRESULT SendRequest(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
+    );
+static HRESULT AuthenticationRequired(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
+    __in HINTERNET hUrl,
+    __in long lHttpCode,
+    __out BOOL* pfRetrySend,
+    __out BOOL* pfRetry
     );
 
 
 // function definitions
 
 extern "C" HRESULT WininetDownloadUrl(
+    __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_CACHE_CALLBACK* pCallback,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
     __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath
@@ -139,14 +163,14 @@ extern "C" HRESULT WininetDownloadUrl(
     }
 
     // Get the resource size and creation time from the internet.
-    hr = GetResourceMetadata(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, &dw64Size, &ftCreated);
+    hr = GetResourceMetadata(pUX, wzPackageOrContainerId, wzPayloadId, hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, &dw64Size, &ftCreated);
     ExitOnFailure1(hr, "Failed to get size and time for URL: %ls", sczUrl);
 
     // Ignore failure to initialize resume because we will fall back to full download then
     // download.
     InitializeResume(wzDestinationPath, &sczResumePath, &hResumeFile, &dw64ResumeOffset);
 
-    hr = DownloadResource(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64AuthoredDownloadSize, dw64Size, dw64ResumeOffset, hResumeFile, pCallback);
+    hr = DownloadResource(pUX, wzPackageOrContainerId, wzPayloadId, hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64AuthoredDownloadSize, dw64Size, dw64ResumeOffset, hResumeFile, pCallback);
     ExitOnFailure1(hr, "Failed to download URL: %ls", sczUrl);
 
     // Cleanup the resume file because we successfully downloaded the whole file.
@@ -214,6 +238,9 @@ LExit:
 }
 
 static HRESULT GetResourceMetadata(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -228,7 +255,7 @@ static HRESULT GetResourceMetadata(
     HINTERNET hUrl = NULL;
     LONGLONG llLength = 0;
 
-    hr = MakeRequest(hSession, psczUrl, L"HEAD", NULL, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
+    hr = MakeRequest(pUX, wzPackageOrContainerId, wzPayloadId, hSession, psczUrl, L"HEAD", NULL, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
     ExitOnFailure1(hr, "Failed to connect to URL: %ls", *psczUrl);
 
     hr = InternetGetSizeByHandle(hUrl, &llLength);
@@ -256,6 +283,9 @@ LExit:
 }
 
 static HRESULT DownloadResource(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -300,7 +330,7 @@ static HRESULT DownloadResource(
         ReleaseNullInternet(hConnect);
         ReleaseNullInternet(hUrl);
 
-        hr = MakeRequest(hSession, psczUrl, L"GET", sczRangeRequestHeader, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
+        hr = MakeRequest(pUX, wzPackageOrContainerId, wzPayloadId, hSession, psczUrl, L"GET", sczRangeRequestHeader, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to request URL for download: %ls", *psczUrl);
 
         // If we didn't get the size of the resource from the initial "HEAD" request
@@ -470,6 +500,9 @@ LExit:
 }
 
 static HRESULT MakeRequest(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczSourceUrl,
     __in_z_opt LPCWSTR wzMethod,
@@ -515,7 +548,7 @@ static HRESULT MakeRequest(
         hr = OpenRequest(hConnect, wzMethod, uri.scheme, uri.sczPath, uri.sczQueryString, wzHeaders, &hUrl);
         ExitOnFailure1(hr, "Failed to open internet URL: %ls", *psczSourceUrl);
 
-        hr = SendRequest(hUrl, psczSourceUrl, &fRetry, pfRangeRequestsAccepted);
+        hr = SendRequest(pUX, wzPackageOrContainerId, wzPayloadId, hUrl, psczSourceUrl, &fRetry, pfRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to send request to URL: %ls", *psczSourceUrl);
     } while (fRetry);
 
@@ -585,6 +618,9 @@ LExit:
 }
 
 static HRESULT SendRequest(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
     __out BOOL* pfRetry,
@@ -592,86 +628,153 @@ static HRESULT SendRequest(
     )
 {
     HRESULT hr = S_OK;
+    BOOL fRetrySend = FALSE;
     LONG lCode = 0;
 
-    if (!::HttpSendRequestW(hUrl, NULL, 0, NULL, 0))
+    do
     {
-        ExitWithLastError1(hr, "Failed to send request to URL: %ls", *psczUrl);
-    }
+        fRetrySend = FALSE;
 
-    // Check the http status code.
-    hr = InternetQueryInfoNumber(hUrl, HTTP_QUERY_STATUS_CODE, &lCode);
-    ExitOnFailure1(hr, "Failed to get HTTP status code for URL: %ls", *psczUrl);
-
-    switch (lCode)
-    {
-    case 200: // OK but range requests don't work.
-        *pfRangesAccepted = FALSE;
-        hr = S_OK;
-        break;
-
-    case 206: // Partial content means that range requests work!
-        *pfRangesAccepted = TRUE;
-        hr = S_OK;
-        break;
-
-    // redirection cases
-    case 301: __fallthrough; // file moved
-    case 302: __fallthrough; // temporary
-    case 303: // redirect method
-        hr = InternetQueryInfoString(hUrl, HTTP_QUERY_CONTENT_LOCATION, psczUrl);
-        ExitOnFailure1(hr, "Failed to get redirect url: %ls", *psczUrl);
-
-        *pfRetry = TRUE;
-        break;
-
-    // error cases
-    case 400: // bad request
-        hr = HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME);
-        break;
-
-    case 401: __fallthrough; // unauthorized
-    case 407: __fallthrough; // proxy unauthorized
-    case 403: // access denied
-        hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
-        break;
-
-    case 404: // file not found
-    case 410: // gone
-        hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-        break;
-
-    case 405: // method not allowed
-        hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
-        break;
-
-    case 408: __fallthrough; // request timedout
-    case 504: // gateway timeout
-        hr = HRESULT_FROM_WIN32(WAIT_TIMEOUT);
-        break;
-
-    case 414: // request URI too long
-        hr = CO_E_PATHTOOLONG;
-        break;
-
-    case 502: __fallthrough; // server (through a gateway) was not found
-    case 503: // server unavailable
-        hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
-        break;
-
-    case 418: // I'm a teapot.
-    default:
+        if (!::HttpSendRequestW(hUrl, NULL, 0, NULL, 0))
         {
-            hr = E_UNEXPECTED;
-#ifdef DEBUG
-            CHAR sz[INTERNET_MAX_URL_LENGTH];
-            StringCchPrintfA(sz, countof(sz), "unhandled HTTP status %d, unknown status code for URL: %ls", lCode, *psczUrl);
-            AssertSz(FALSE, sz);
-#endif
+            ExitWithLastError1(hr, "Failed to send request to URL: %ls", *psczUrl);
         }
-        break;
+
+        // Check the http status code.
+        hr = InternetQueryInfoNumber(hUrl, HTTP_QUERY_STATUS_CODE, &lCode);
+        ExitOnFailure1(hr, "Failed to get HTTP status code for URL: %ls", *psczUrl);
+
+        switch (lCode)
+        {
+        case 200: // OK but range requests don't work.
+            *pfRangesAccepted = FALSE;
+            hr = S_OK;
+            break;
+
+        case 206: // Partial content means that range requests work!
+            *pfRangesAccepted = TRUE;
+            hr = S_OK;
+            break;
+
+        // redirection cases
+        case 301: __fallthrough; // file moved
+        case 302: __fallthrough; // temporary
+        case 303: // redirect method
+            hr = InternetQueryInfoString(hUrl, HTTP_QUERY_CONTENT_LOCATION, psczUrl);
+            ExitOnFailure1(hr, "Failed to get redirect url: %ls", *psczUrl);
+
+            *pfRetry = TRUE;
+            break;
+
+        // error cases
+        case 400: // bad request
+            hr = HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME);
+            break;
+
+        case 401: __fallthrough; // unauthorized
+        case 407: __fallthrough; // proxy unauthorized
+            hr = AuthenticationRequired(pUX, wzPackageOrContainerId, wzPayloadId, hUrl, lCode, &fRetrySend, pfRetry);
+            break;
+
+        case 403: // forbidden
+            hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
+            break;
+
+        case 404: // file not found
+        case 410: // gone
+            hr = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+            break;
+
+        case 405: // method not allowed
+            hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+            break;
+
+        case 408: __fallthrough; // request timedout
+        case 504: // gateway timeout
+            hr = HRESULT_FROM_WIN32(WAIT_TIMEOUT);
+            break;
+
+        case 414: // request URI too long
+            hr = CO_E_PATHTOOLONG;
+            break;
+
+        case 502: __fallthrough; // server (through a gateway) was not found
+        case 503: // server unavailable
+            hr = HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
+            break;
+
+        case 418: // I'm a teapot.
+        default:
+            {
+                hr = E_UNEXPECTED;
+    #ifdef DEBUG
+                CHAR sz[INTERNET_MAX_URL_LENGTH];
+                StringCchPrintfA(sz, countof(sz), "unhandled HTTP status %d, unknown status code for URL: %ls", lCode, *psczUrl);
+                AssertSz(FALSE, sz);
+    #endif
+            }
+            break;
+        }
+    } while (fRetrySend);
+
+LExit:
+    return hr;
+}
+
+static HRESULT AuthenticationRequired(
+    __in BURN_USER_EXPERIENCE* pUX,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR /*wzPayloadId*/,
+    __in HINTERNET hUrl,
+    __in long lHttpCode,
+    __out BOOL* pfRetrySend,
+    __out BOOL* pfRetry
+    )
+{
+    Assert(401 == lHttpCode || 407 == lHttpCode);
+
+    HRESULT hr = S_OK;
+    DWORD er = ERROR_SUCCESS;
+    BOOTSTRAPPER_ERROR_TYPE errorType = (401 == lHttpCode) ? BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_SERVER : BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_PROXY;
+    LPWSTR sczError = NULL;
+
+    *pfRetrySend = FALSE;
+    *pfRetry = FALSE;
+
+    hr = StrAllocFromError(&sczError, HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), NULL);
+    ExitOnFailure(hr, "Failed to allocation error string.");
+
+    int nResult = pUX->pUserExperience->OnError(errorType, wzPackageOrContainerId, ERROR_ACCESS_DENIED, sczError, MB_RETRYTRYAGAIN, 0, NULL, IDNOACTION);
+    nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYTRYAGAIN, nResult);
+    if (IDTRYAGAIN == nResult && pUX->hwndApply)
+    {
+        er = ::InternetErrorDlg(pUX->hwndApply, hUrl, ERROR_INTERNET_INCORRECT_PASSWORD, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA, NULL);
+        if (ERROR_SUCCESS == er || ERROR_CANCELLED == er)
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
+        }
+        else if (ERROR_INTERNET_FORCE_RETRY == er)
+        {
+            *pfRetrySend = TRUE;
+            hr = S_OK;
+        }
+        else
+        {
+            hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
+        }
+    }
+    else if (IDRETRY == nResult)
+    {
+        *pfRetry = TRUE;
+        hr = S_OK;
+    }
+    else
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
     }
 
 LExit:
+    ReleaseStr(sczError);
+
     return hr;
 }

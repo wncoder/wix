@@ -677,6 +677,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Hashtable appIdSectionIdIndex = ConnectTableToSectionAndIndex(output.Tables["Class"], componentSectionIdIndex, 2, 5);
             Hashtable odbcDataSourceSectionIdIndex = ConnectTableToSectionAndIndex(output.Tables["ODBCDataSource"], componentSectionIdIndex, 1, 0);
             Hashtable odbcDriverSectionIdIndex = ConnectTableToSectionAndIndex(output.Tables["ODBCDriver"], componentSectionIdIndex, 1, 0);
+            Hashtable registrySectionIdIndex = ConnectTableToSectionAndIndex(output.Tables["Registry"], componentSectionIdIndex, 5, 0);
+            Hashtable serviceInstallSectionIdIndex = ConnectTableToSectionAndIndex(output.Tables["ServiceInstall"], componentSectionIdIndex, 11, 0);
 
             // Now handle all the tables which only rely on previous indexes and order does not matter.
             foreach (Table table in output.Tables)
@@ -712,16 +714,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     case "RemoveRegistry":
                         ConnectTableToSection(table, componentSectionIdIndex, 4);
                         break;
-                    case "Registry":
                     case "ServiceControl":
                         ConnectTableToSection(table, componentSectionIdIndex, 5);
                         break;
                     case "IniFile":
                     case "RemoveIniFile":
                         ConnectTableToSection(table, componentSectionIdIndex, 7);
-                        break;
-                    case "ServiceInstall":
-                        ConnectTableToSection(table, componentSectionIdIndex, 11);
                         break;
                     case "AppId":
                         ConnectTableToSection(table, appIdSectionIdIndex, 0);
@@ -743,7 +741,26 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     case "InstallUISequence":
                         ConnectTableToSection(table, customActionSectionIdIndex, 0);
                         break;
-
+                    case "LockPermissions":
+                    case "MsiLockPermissions":
+                        foreach (Row row in table.Rows)
+                        {
+                            string lockObject = (string)row[0];
+                            string tableName = (string)row[1];
+                            switch (tableName)
+                            {
+                                case "File":
+                                    row.SectionId = (string)fileSectionIdIndex[lockObject];
+                                    break;
+                                case "Registry":
+                                    row.SectionId = (string)registrySectionIdIndex[lockObject];
+                                    break;
+                                case "ServiceInstall":
+                                    row.SectionId = (string)serviceInstallSectionIdIndex[lockObject];
+                                    break;
+                            }
+                        }
+                        break;
                 }
             }
 

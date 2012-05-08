@@ -16,8 +16,9 @@
         <li>AdminToolsFolder - gets the well-known folder for CSIDL_ADMINTOOLS.</li>
         <li>AppDataFolder - gets the well-known folder for CSIDL_APPDATA.</li>
         <li>CommonAppDataFolder - gets the well-known folder for CSIDL_COMMON_APPDATA.</li>
-        <li>CommonFiles64Folder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMON.</li>
         <li>CommonFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMONX86.</li>
+        <li>CommonFiles64Folder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMON.</li>
+        <li>CommonFiles6432Folder - gets the well-known folder for CSIDL_PROGRAM_FILES_COMMON on 64-bit Windows and CSIDL_PROGRAM_FILES_COMMONX86 on 32-bit Windows.</li>
         <li>CompatibilityMode - non-zero if the operating system launched the bootstrapper in compatibility mode.</li>
         <li>Date - gets the current date using the short date format of the current user locale.</li>
         <li>DesktopFolder - gets the well-known folder for CSIDL_DESKTOP.</li>
@@ -37,9 +38,10 @@
         <li>NTSuiteSmallBusinessRestricted - non-zero if OS version suite is Restricted Small Business.</li>
         <li>NTSuiteWebServer - non-zero if OS version suite is Web Server.</li>
         <li>PersonalFolder - gets the well-known folder for CSIDL_PERSONAL.</li>
-        <li>Privileged - non-zero if the process is running elevated (on Vista+) or as an Administrator (on Windows XP).</li>
+        <li>Privileged - non-zero if the process could run elevated (on Vista+) or is running as an Administrator (on WinXP).</li>
+        <li>ProgramFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILESX86.</li>
         <li>ProgramFiles64Folder - gets the well-known folder for CSIDL_PROGRAM_FILES.</li>
-        <li>ProgramFilesFolder - gets the well-known folder for CSIDL_PROGRAM_FILESX86</li>
+        <li>ProgramFiles6432Folder - gets the well-known folder for CSIDL_PROGRAM_FILES on 64-bit Windows and CSIDL_PROGRAM_FILESX86 on 32-bit Windows.</li>
         <li>ProgramMenuFolder - gets the well-known folder for CSIDL_PROGRAMS.</li>
         <li>RebootPending - non-zero if the system requires a reboot. Note that this value will reflect the reboot status of the system when the variable is first requested.</li>
         <li>SendToFolder - gets the well-known folder for CSIDL_SENDTO.</li>
@@ -53,8 +55,8 @@
         <li>TerminalServer - non-zero if the system is running in application server mode of Remote Desktop Services.</li>
         <li>UserLanguageID - gets the language ID for the current user locale.</li>
         <li>VersionMsi - version value representing the Windows Installer engine version.</li>
-        <li>VersionNT - version value representing the OS version.</li>
-        <li>VersionNT64 - version value representing the OS version if 64-bit. Undefined if running a 32-bit operating system.</li>
+        <li>VersionNT - version value representing the OS version. The result is a version variable (v#.#.#.#) which differs from the MSI Property 'VersionNT' which is an integer. For example, to use this variable in a Bundle condition try: "VersionNT &gt; v6.1"</li>
+        <li>VersionNT64 - version value representing the OS version if 64-bit. Undefined if running a 32-bit operating system. The result is a version variable (v#.#.#.#) which differs from the MSI Property 'VersionNT64' which is an integer. For example, to use this variable in a Bundle condition try: "VersionNT &gt; v6.1"</li>
         <li>WindowsFolder - gets the well-known folder for CSIDL_WINDOWS.</li>
         <li>WindowsVolume - gets the well-known folder for the windows volume.</li>
         <li>WixBundleAction - set to the numeric value of BOOTSTRAPPER_ACTION from the command-line and updated during the call to IBootstrapperEngine::Plan().</li>

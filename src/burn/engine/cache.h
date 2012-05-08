@@ -128,6 +128,12 @@ HRESULT CacheCompleteBundle(
     , __in_z LPCWSTR wzExecutablePath
 #endif
     );
+HRESULT CacheLayoutContainer(
+    __in BURN_CONTAINER* pContainer,
+    __in_z_opt LPCWSTR wzLayoutDirectory,
+    __in_z LPCWSTR wzUnverifiedContainerPath,
+    __in BOOL fMove
+    );
 HRESULT CacheLayoutPayload(
     __in BURN_PAYLOAD* pPayload,
     __in_z_opt LPCWSTR wzLayoutDirectory,

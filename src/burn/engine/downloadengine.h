@@ -29,7 +29,10 @@ extern "C" {
 // functions
 
 HRESULT WininetDownloadUrl(
+    __in BURN_USER_EXPERIENCE* pUX,
     __in BURN_CACHE_CALLBACK* pCallback,
+    __in_z LPCWSTR wzPackageOrContainerId,
+    __in_z LPCWSTR wzPayloadId,
     __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
     __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath

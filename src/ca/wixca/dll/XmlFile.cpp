@@ -176,7 +176,7 @@ static HRESULT ReadXmlFileTable(
         hr = WcaGetRecordFormattedString(hRec, xfqFile, &pwzData);
         ExitOnFailure1(hr, "failed to get xml file for XmlFile: %ls", (*ppxfcTail)->wzId);
         hr = StringCchCopyW((*ppxfcTail)->wzFile, countof((*ppxfcTail)->wzFile), pwzData);
-        ExitOnFailure1(hr, "failed to copy xml file: %ls", (*ppxfcTail)->wzFile);
+        ExitOnFailure(hr, "failed to copy xml file path");
 
         // Get the XmlFile table flags
         hr = WcaGetRecordInteger(hRec, xfqXmlFlags, &(*ppxfcTail)->iXmlFlags);
@@ -190,13 +190,13 @@ static HRESULT ReadXmlFileTable(
         hr = WcaGetRecordFormattedString(hRec, xfqName, &pwzData);
         ExitOnFailure1(hr, "failed to get Name for XmlFile: %ls", (*ppxfcTail)->wzId);
         hr = StringCchCopyW((*ppxfcTail)->wzName, countof((*ppxfcTail)->wzName), pwzData);
-        ExitOnFailure1(hr, "failed to copy name: %ls", (*ppxfcTail)->wzName);
+        ExitOnFailure(hr, "failed to copy name of element");
 
         // Get the value
         hr = WcaGetRecordFormattedString(hRec, xfqValue, &pwzData);
         ExitOnFailure1(hr, "failed to get Value for XmlFile: %ls", (*ppxfcTail)->wzId);
         hr = StrAllocString(&(*ppxfcTail)->pwzValue, pwzData, 0);
-        ExitOnFailure1(hr, "failed to allocate buffer for value: %ls", (*ppxfcTail)->pwzValue);
+        ExitOnFailure(hr, "failed to allocate buffer for value");
 
         // Get the component attributes
         hr = WcaGetRecordInteger(hRec, xfqCompAttributes, &(*ppxfcTail)->iCompAttributes);
@@ -404,7 +404,7 @@ extern "C" UINT __stdcall SchedXmlFile(
 
             // Remember the file we're currently working on
             hr = StrAllocString(&pwzCurrentFile, pxfc->wzFile, 0);
-            ExitOnFailure1(hr, "failed to copy file name: %ls", pxfc->wzFile);
+            ExitOnFailure(hr, "failed to copy file name");
             fCurrentUseXPath = (XMLFILE_USE_XPATH & pxfc->iXmlFlags);
 
             // We haven't changed the current file yet

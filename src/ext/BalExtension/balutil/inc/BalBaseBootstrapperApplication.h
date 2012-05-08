@@ -383,7 +383,7 @@ public: // IBurnUserExperience
     }
 
     virtual STDMETHODIMP_(int) OnError(
-        __in BOOTSTRAPPER_ERROR_TYPE /*errorType*/,
+        __in BOOTSTRAPPER_ERROR_TYPE errorType,
         __in_z LPCWSTR wzPackageId,
         __in DWORD dwCode,
         __in_z LPCWSTR /*wzError*/,
@@ -394,6 +394,15 @@ public: // IBurnUserExperience
         )
     {
         BalRetryErrorOccurred(wzPackageId, dwCode);
+
+        if (BOOTSTRAPPER_DISPLAY_FULL == m_display)
+        {
+            if (BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_SERVER == errorType ||BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_PROXY == errorType)
+            {
+                nRecommendation = IDTRYAGAIN;
+            }
+        }
+
         return CheckCanceled() ? IDCANCEL : nRecommendation;
     }
 
@@ -523,13 +532,14 @@ protected:
 
     CBalBaseBootstrapperApplication(
         __in IBootstrapperEngine* /*pEngine*/,
-        __in BOOTSTRAPPER_RESTART restart,
+        __in const BOOTSTRAPPER_COMMAND* pCommand,
         __in DWORD dwRetryCount = 0,
         __in DWORD dwRetryTimeout = 1000
         )
     {
         m_cReferences = 1;
-        m_restart = restart;
+        m_display = pCommand->display;
+        m_restart = pCommand->restart;
 
         ::InitializeCriticalSection(&m_csCanceled);
         m_fCanceled = FALSE;
@@ -547,6 +557,7 @@ protected:
 
 private:
     long m_cReferences;
+    BOOTSTRAPPER_DISPLAY m_display;
     BOOTSTRAPPER_RESTART m_restart;
 
     CRITICAL_SECTION m_csCanceled;

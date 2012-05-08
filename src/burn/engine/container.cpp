@@ -119,7 +119,12 @@ extern "C" HRESULT ContainersParseFromXml(
 
         // @Hash
         hr = XmlGetAttributeEx(pixnNode, L"Hash", &pContainer->sczHash);
-        if (E_NOTFOUND != hr)
+        if (SUCCEEDED(hr))
+        {
+            hr = StrAllocHexDecode(pContainer->sczHash, &pContainer->pbHash, &pContainer->cbHash);
+            ExitOnFailure(hr, "Failed to hex decode the Container/@Hash.");
+        }
+        else if (E_NOTFOUND != hr)
         {
             ExitOnFailure(hr, "Failed to get @Hash.");
         }

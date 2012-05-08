@@ -95,7 +95,6 @@ HRESULT ApplyCache(
     );
 HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in_opt HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
     __out BOOL* pfKeepRegistration,

@@ -80,11 +80,12 @@ static HRESULT AcquireContainerOrPayload(
     __in DWORD64 qwSuccessfulCacheProgress,
     __in DWORD64 qwTotalCacheSize
     );
-static HRESULT LayoutOrCachePayload(
+static HRESULT LayoutOrCacheContainerOrPayload(
     __in BURN_USER_EXPERIENCE* pUX,
     __in HANDLE hPipe,
+    __in_opt BURN_CONTAINER* pContainer,
     __in_opt BURN_PACKAGE* pPackage,
-    __in BURN_PAYLOAD* pPayload,
+    __in_opt BURN_PAYLOAD* pPayload,
     __in DWORD64 qwSuccessfullyCacheProgress,
     __in DWORD64 qwTotalCacheSize,
     __in_z_opt LPCWSTR wzLayoutDirectory,
@@ -130,7 +131,6 @@ static void DoRollbackCache(
     );
 static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in_opt HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
@@ -142,7 +142,6 @@ static HRESULT DoExecuteAction(
     );
 static HRESULT DoRollbackActions(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
     __out BOOL* pfKeepRegistration,
@@ -159,7 +158,6 @@ static HRESULT ExecuteExePackage(
     );
 static HRESULT ExecuteMsiPackage(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -169,7 +167,6 @@ static HRESULT ExecuteMsiPackage(
     );
 static HRESULT ExecuteMspPackage(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -411,15 +408,15 @@ extern "C" HRESULT ApplyCache(
         hr = S_OK;
         fRetry = FALSE;
 
-        // Allow us to retry just a payload.
-        BURN_PAYLOAD* pRetryPayload = NULL;
-        DWORD iRetryPayloadAction = BURN_PLAN_INVALID_ACTION_INDEX;
+        // Allow us to retry just a container or payload.
+        LPCWSTR wzRetryId = NULL;
+        DWORD iRetryContainerOrPayloadAction = BURN_PLAN_INVALID_ACTION_INDEX;
 
         // cache actions
         for (DWORD i = (BURN_PLAN_INVALID_ACTION_INDEX == iRetryAction) ? 0 : iRetryAction; SUCCEEDED(hr) && i < pPlan->cCacheActions; ++i)
         {
             BURN_CACHE_ACTION* pCacheAction = pPlan->rgCacheActions + i;
-            BOOL fRetryPayload = FALSE;
+            BOOL fRetryContainerOrPayload = FALSE;
 
             if (pCacheAction->fSkipUntilRetried)
             {
@@ -503,6 +500,22 @@ extern "C" HRESULT ApplyCache(
                 }
                 break;
 
+            case BURN_CACHE_ACTION_TYPE_LAYOUT_CONTAINER:
+                hr = LayoutOrCacheContainerOrPayload(pUX, hPipe, pCacheAction->layoutContainer.pContainer, pCacheAction->layoutContainer.pPackage, NULL, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal, pCacheAction->layoutContainer.sczLayoutDirectory, pCacheAction->layoutContainer.sczUnverifiedPath, pCacheAction->layoutContainer.fMove, pCacheAction->layoutContainer.cTryAgainAttempts, &fRetryContainerOrPayload);
+                if (FAILED(hr))
+                {
+                    LogErrorId(hr, MSG_FAILED_LAYOUT_CONTAINER, pCacheAction->layoutContainer.pContainer->sczId, pCacheAction->layoutContainer.sczLayoutDirectory, pCacheAction->layoutContainer.sczUnverifiedPath);
+
+                    if (fRetryContainerOrPayload)
+                    {
+                        wzRetryId = pCacheAction->layoutContainer.pContainer->sczId;
+                        iRetryContainerOrPayloadAction = pCacheAction->layoutContainer.iTryAgainAction;
+
+                        ++pCacheAction->layoutContainer.cTryAgainAttempts;
+                    }
+                }
+                break;
+
             case BURN_CACHE_ACTION_TYPE_ACQUIRE_PAYLOAD:
                 hr = AcquireContainerOrPayload(pUX, pVariables, NULL, pCacheAction->resolvePayload.pPackage, pCacheAction->resolvePayload.pPayload, pCacheAction->resolvePayload.sczUnverifiedPath, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal);
                 if (SUCCEEDED(hr))
@@ -516,15 +529,15 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_CACHE_PAYLOAD:
-                hr = LayoutOrCachePayload(pUX, pCacheAction->cachePayload.pPackage->fPerMachine ? hPipe : INVALID_HANDLE_VALUE, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove, pCacheAction->cachePayload.cTryAgainAttempts, &fRetryPayload);
+                hr = LayoutOrCacheContainerOrPayload(pUX, pCacheAction->cachePayload.pPackage->fPerMachine ? hPipe : INVALID_HANDLE_VALUE, NULL, pCacheAction->cachePayload.pPackage, pCacheAction->cachePayload.pPayload, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal, NULL, pCacheAction->cachePayload.sczUnverifiedPath, pCacheAction->cachePayload.fMove, pCacheAction->cachePayload.cTryAgainAttempts, &fRetryContainerOrPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_CACHE_PAYLOAD, pCacheAction->cachePayload.pPayload->sczKey, pCacheAction->cachePayload.sczUnverifiedPath, NULL);
 
-                    if (fRetryPayload)
+                    if (fRetryContainerOrPayload)
                     {
-                        pRetryPayload = pCacheAction->cachePayload.pPayload;
-                        iRetryPayloadAction = pCacheAction->cachePayload.iTryAgainAction;
+                        wzRetryId = pCacheAction->cachePayload.pPayload->sczKey;
+                        iRetryContainerOrPayloadAction = pCacheAction->cachePayload.iTryAgainAction;
 
                         ++pCacheAction->cachePayload.cTryAgainAttempts;
                     }
@@ -532,15 +545,15 @@ extern "C" HRESULT ApplyCache(
                 break;
 
             case BURN_CACHE_ACTION_TYPE_LAYOUT_PAYLOAD:
-                hr = LayoutOrCachePayload(pUX, hPipe, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove, pCacheAction->layoutPayload.cTryAgainAttempts, &fRetryPayload);
+                hr = LayoutOrCacheContainerOrPayload(pUX, hPipe, NULL, pCacheAction->layoutPayload.pPackage, pCacheAction->layoutPayload.pPayload, qwSuccessfulCachedProgress, pPlan->qwCacheSizeTotal, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath, pCacheAction->layoutPayload.fMove, pCacheAction->layoutPayload.cTryAgainAttempts, &fRetryContainerOrPayload);
                 if (FAILED(hr))
                 {
                     LogErrorId(hr, MSG_FAILED_LAYOUT_PAYLOAD, pCacheAction->layoutPayload.pPayload->sczKey, pCacheAction->layoutPayload.sczLayoutDirectory, pCacheAction->layoutPayload.sczUnverifiedPath);
 
-                    if (fRetryPayload)
+                    if (fRetryContainerOrPayload)
                     {
-                        pRetryPayload = pCacheAction->layoutPayload.pPayload;
-                        iRetryPayloadAction = pCacheAction->layoutPayload.iTryAgainAction;
+                        wzRetryId = pCacheAction->layoutPayload.pPayload->sczKey;
+                        iRetryContainerOrPayloadAction = pCacheAction->layoutPayload.iTryAgainAction;
 
                         ++pCacheAction->layoutPayload.cTryAgainAttempts;
                     }
@@ -582,19 +595,19 @@ extern "C" HRESULT ApplyCache(
             }
         }
 
-        if (BURN_PLAN_INVALID_ACTION_INDEX != iRetryPayloadAction)
+        if (BURN_PLAN_INVALID_ACTION_INDEX != iRetryContainerOrPayloadAction)
         {
-            Assert(pRetryPayload);
+            Assert(wzRetryId);
 
-            LogErrorId(hr, MSG_APPLY_RETRYING_PAYLOAD, pRetryPayload->sczKey, NULL, NULL);
+            LogErrorId(hr, MSG_APPLY_RETRYING_PAYLOAD, wzRetryId, NULL, NULL);
 
             // Reduce the successful progress since we're retrying the payload.
-            BURN_CACHE_ACTION* pRetryCacheAction = pPlan->rgCacheActions + iRetryPayloadAction;
+            BURN_CACHE_ACTION* pRetryCacheAction = pPlan->rgCacheActions + iRetryContainerOrPayloadAction;
             DWORD64 qwRetryCacheActionSuccessProgress = GetCacheActionSuccessProgress(pRetryCacheAction);
             Assert(qwSuccessfulCachedProgress >= qwRetryCacheActionSuccessProgress);
             qwSuccessfulCachedProgress -= qwRetryCacheActionSuccessProgress;
 
-            iRetryAction = iRetryPayloadAction;
+            iRetryAction = iRetryContainerOrPayloadAction;
             fRetry = TRUE;
         }
         else if (pStartedPackage)
@@ -662,7 +675,6 @@ LExit:
 
 extern "C" HRESULT ApplyExecute(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in_opt HANDLE hCacheThread,
     __inout DWORD* pcOverallProgressTicks,
     __out BOOL* pfKeepRegistration,
@@ -710,7 +722,7 @@ extern "C" HRESULT ApplyExecute(
         }
 
         // Execute the action.
-        hr = DoExecuteAction(pEngineState, hwndParent, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfKeepRegistration, pfSuspend, pRestart);
+        hr = DoExecuteAction(pEngineState, pExecuteAction, hCacheThread, &context, &pRollbackBoundary, &dwCheckpoint, pfKeepRegistration, pfSuspend, pRestart);
 
         if (*pfSuspend || BOOTSTRAPPER_APPLY_RESTART_INITIATED == *pRestart)
         {
@@ -727,7 +739,7 @@ extern "C" HRESULT ApplyExecute(
             }
             else // the action failed, roll back to previous rollback boundary.
             {
-                HRESULT hrRollback = DoRollbackActions(pEngineState, hwndParent, &context, dwCheckpoint, pfKeepRegistration, pRestart);
+                HRESULT hrRollback = DoRollbackActions(pEngineState, &context, dwCheckpoint, pfKeepRegistration, pRestart);
                 UNREFERENCED_PARAMETER(hrRollback);
 
                 // If the rollback boundary is vital, end execution here.
@@ -1069,11 +1081,12 @@ LExit:
     return hr;
 }
 
-static HRESULT LayoutOrCachePayload(
+static HRESULT LayoutOrCacheContainerOrPayload(
     __in BURN_USER_EXPERIENCE* pUX,
     __in HANDLE hPipe,
+    __in_opt BURN_CONTAINER* pContainer,
     __in_opt BURN_PACKAGE* pPackage,
-    __in BURN_PAYLOAD* pPayload,
+    __in_opt BURN_PAYLOAD* pPayload,
     __in DWORD64 qwSuccessfulCachedProgress,
     __in DWORD64 qwTotalCacheSize,
     __in_z_opt LPCWSTR wzLayoutDirectory,
@@ -1084,37 +1097,49 @@ static HRESULT LayoutOrCachePayload(
     )
 {
     HRESULT hr = S_OK;
-    LARGE_INTEGER liPayloadSize = { };
+    LPCWSTR wzPackageOrContainerId = pContainer ? pContainer->sczId : pPackage ? pPackage->sczId : L"";
+    LPCWSTR wzPayloadId = pPayload ? pPayload->sczKey : L"";
+    LARGE_INTEGER liContainerOrPayloadSize = { };
     LARGE_INTEGER liZero = { };
     BURN_CACHE_ACQUIRE_PROGRESS_CONTEXT progress = { };
 
-    Assert(qwSuccessfulCachedProgress >= pPayload->qwFileSize);
+    liContainerOrPayloadSize.QuadPart = pContainer ? pContainer->qwFileSize : pPayload->qwFileSize;
 
-    liPayloadSize.QuadPart = pPayload->qwFileSize;
+    Assert(qwSuccessfulCachedProgress >= static_cast<DWORD64>(liContainerOrPayloadSize.QuadPart));
+
+    progress.pContainer = pContainer;
     progress.pPackage = pPackage;
     progress.pPayload = pPayload;
     progress.pUX = pUX;
-    progress.qwCacheProgress = qwSuccessfulCachedProgress - pPayload->qwFileSize; // remove the payload size, since it was marked successful thus included in the successful size already.
+    progress.qwCacheProgress = qwSuccessfulCachedProgress - liContainerOrPayloadSize.QuadPart; // remove the payload size, since it was marked successful thus included in the successful size already.
     progress.qwTotalCacheSize = qwTotalCacheSize;
 
     *pfRetry = FALSE;
 
     do
     {
-        int nResult = pUX->pUserExperience->OnCacheVerifyBegin(pPackage ? pPackage->sczId : NULL, pPayload->sczKey);
+        int nResult = pUX->pUserExperience->OnCacheVerifyBegin(wzPackageOrContainerId, wzPayloadId);
         hr = UserExperienceInterpretExecuteResult(pUX, FALSE, MB_OKCANCEL, nResult);
         ExitOnRootFailure(hr, "UX aborted cache verify begin.");
 
         if (INVALID_HANDLE_VALUE != hPipe) // pass the decision off to the elevated process.
         {
-            hr = ElevationCacheOrLayoutPayload(hPipe, pPackage, pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
+            hr = ElevationCacheOrLayoutContainerOrPayload(hPipe, pContainer, pPackage, pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
         }
-        else if (wzLayoutDirectory) // layout the payload.
+        else if (wzLayoutDirectory) // layout the container or payload.
         {
-            hr = CacheLayoutPayload(pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
+            if (pContainer)
+            {
+                hr = CacheLayoutContainer(pContainer, wzLayoutDirectory, wzUnverifiedPath, fMove);
+            }
+            else
+            {
+                hr = CacheLayoutPayload(pPayload, wzLayoutDirectory, wzUnverifiedPath, fMove);
+            }
         }
         else // complete the payload.
         {
+            Assert(!pContainer);
             Assert(pPackage);
 
             hr = CacheCompletePayload(pPackage->fPerMachine, pPayload, pPackage->sczCacheId, wzUnverifiedPath, fMove);
@@ -1124,7 +1149,7 @@ static HRESULT LayoutOrCachePayload(
         // will get.
         if (SUCCEEDED(hr))
         {
-            CacheProgressRoutine(liPayloadSize, liPayloadSize, liZero, liZero, 0, 0, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, &progress);
+            CacheProgressRoutine(liContainerOrPayloadSize, liContainerOrPayloadSize, liZero, liZero, 0, 0, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, &progress);
             if (progress.fCancel)
             {
                 hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
@@ -1133,10 +1158,10 @@ static HRESULT LayoutOrCachePayload(
             {
                 hr = HRESULT_FROM_WIN32(ERROR_INSTALL_FAILURE);
             }
-            ExitOnRootFailure1(hr, "BA aborted verify of payload: %ls", pPayload->sczKey);
+            ExitOnRootFailure2(hr, "BA aborted verify of %hs: %ls", pContainer ? "container" : "payload", pContainer ? wzPackageOrContainerId : wzPayloadId);
         }
 
-        nResult = pUX->pUserExperience->OnCacheVerifyComplete(pPackage ? pPackage->sczId : NULL, pPayload->sczKey, hr, FAILED(hr) && cTryAgainAttempts < BURN_CACHE_MAX_RECOMMENDED_VERIFY_TRYAGAIN_ATTEMPTS ? IDTRYAGAIN : IDNOACTION);
+        nResult = pUX->pUserExperience->OnCacheVerifyComplete(wzPackageOrContainerId, wzPayloadId, hr, FAILED(hr) && cTryAgainAttempts < BURN_CACHE_MAX_RECOMMENDED_VERIFY_TRYAGAIN_ATTEMPTS ? IDTRYAGAIN : IDNOACTION);
         nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYTRYAGAIN, nResult);
         if (FAILED(hr))
         {
@@ -1294,7 +1319,7 @@ static HRESULT DownloadPayload(
     }
     else // wininet handles everything else.
     {
-        hr = WininetDownloadUrl(&callback, pDownloadSource, qwDownloadSize, wzDestinationPath);
+        hr = WininetDownloadUrl(pProgress->pUX, &callback, wzPackageOrContainerId, wzPayloadId, pDownloadSource, qwDownloadSize, wzDestinationPath);
     }
     ExitOnFailure2(hr, "Failed attempt to download URL: '%ls' to: '%ls'", pDownloadSource->sczUrl, wzDestinationPath);
 
@@ -1401,7 +1426,6 @@ static void DoRollbackCache(
 
 static HRESULT DoExecuteAction(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in_opt HANDLE hCacheThread,
     __in BURN_EXECUTE_CONTEXT* pContext,
@@ -1462,12 +1486,12 @@ static HRESULT DoExecuteAction(
             break;
 
         case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-            hr = ExecuteMsiPackage(pEngineState, hwndParent, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            hr = ExecuteMsiPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
             ExitOnFailure(hr, "Failed to execute MSI package.");
             break;
 
         case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-            hr = ExecuteMspPackage(pEngineState, hwndParent, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            hr = ExecuteMspPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
             ExitOnFailure(hr, "Failed to execute MSP package.");
             break;
 
@@ -1508,7 +1532,6 @@ LExit:
 
 static HRESULT DoRollbackActions(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in DWORD dwCheckpoint,
     __out BOOL* pfKeepRegistration,
@@ -1566,13 +1589,13 @@ static HRESULT DoRollbackActions(
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE:
-                hr = ExecuteMsiPackage(pEngineState, hwndParent, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
+                hr = ExecuteMsiPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSI package.");
                 hr = S_OK;
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSP_TARGET:
-                hr = ExecuteMspPackage(pEngineState, hwndParent, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
+                hr = ExecuteMspPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSP package.");
                 hr = S_OK;
                 break;
@@ -1686,7 +1709,6 @@ LExit:
 
 static HRESULT ExecuteMsiPackage(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -1716,12 +1738,12 @@ static HRESULT ExecuteMsiPackage(
     // execute package
     if (pExecuteAction->msiPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsiPackage(pEngineState->companionConnection.hPipe, hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMsiPackage(pEngineState->companionConnection.hPipe, pEngineState->userExperience.hwndApply, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSI package.");
     }
     else
     {
-        hrExecute = MsiEngineExecutePackage(hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = MsiEngineExecutePackage(pEngineState->userExperience.hwndApply, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user MSI package.");
     }
 
@@ -1738,7 +1760,6 @@ LExit:
 
 static HRESULT ExecuteMspPackage(
     __in BURN_ENGINE_STATE* pEngineState,
-    __in_opt HWND hwndParent,
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
@@ -1778,12 +1799,12 @@ static HRESULT ExecuteMspPackage(
     // execute package
     if (pExecuteAction->mspTarget.fPerMachineTarget)
     {
-        hrExecute = ElevationExecuteMspPackage(pEngineState->companionConnection.hPipe, hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMspPackage(pEngineState->companionConnection.hPipe, pEngineState->userExperience.hwndApply, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSP package.");
     }
     else
     {
-        hrExecute = MspEngineExecutePackage(hwndParent, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
+        hrExecute = MspEngineExecutePackage(pEngineState->userExperience.hwndApply, pExecuteAction, &pEngineState->variables, fRollback, MsiExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-user MSP package.");
     }
 

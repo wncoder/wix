@@ -258,7 +258,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             this.CleanTestArtifacts = true;
         }
 
-        [Ignore]
         [TestMethod]
         [Priority(2)]
         [Description("Installs bundle using automatic slipstreaming then removes it.")]
