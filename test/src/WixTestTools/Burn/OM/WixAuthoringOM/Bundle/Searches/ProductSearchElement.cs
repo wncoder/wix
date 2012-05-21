@@ -13,9 +13,9 @@
 // <summary>ProductSearch element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Searches
+namespace WixTest.Burn.OM.WixAuthoringOM.Bundle.Searches
 {
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     [BurnXmlElement("ProductSearch", BundleElement.wixUtilExtNamespace)]
     public class ProductSearchElement : Searches

@@ -13,7 +13,7 @@
 // <summary>Adds verification to a Tool</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;

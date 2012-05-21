@@ -13,7 +13,7 @@
 // <summary>Contains an enumeration of the Wix Tools</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
 

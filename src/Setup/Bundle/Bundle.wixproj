@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <Compile Include="Bundle.wxs" />
-    <Compile Include="Netfx.wxs" />
     <Compile Include="ProjectAggregator.wxs" />
     <Content Include="License.htm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -60,6 +59,14 @@
     <WixExtension Include="WixBalExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixBalExtension.dll</HintPath>
+    </WixExtension>
+    <WixExtension Include="WixTagExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixTagExtension.dll</HintPath>
+    </WixExtension>
+    <WixExtension Include="WixNetFxExtension">
+      <Private>False</Private>
+      <HintPath>$(OutputPath_x86)WixNetFxExtension.dll</HintPath>
     </WixExtension>
     <WixExtension Include="WixUtilExtension">
       <Private>False</Private>

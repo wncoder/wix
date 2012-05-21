@@ -16,7 +16,7 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Verifiers
+namespace WixTest.Verifiers
 {
     using System;
     using System.IO;

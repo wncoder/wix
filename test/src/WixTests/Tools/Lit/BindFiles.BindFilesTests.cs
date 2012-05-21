@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Lit.BindFiles
+namespace WixTest.Tests.Tools.Lit.BindFiles
 {
     using System;
     using System.Collections.Generic;
@@ -23,7 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Lit.BindFiles
     using System.Text;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Tests for how Lit handles -bf switch

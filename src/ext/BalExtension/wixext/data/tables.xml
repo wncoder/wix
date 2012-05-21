@@ -26,4 +26,9 @@
         <columnDefinition name="SuppressDowngradeFailure" type="number" length="2" nullable="yes"
                 maxValue="1" description="If 1, attempts to downgrade are treated as a successful no-op."/>
     </tableDefinition>
+
+    <tableDefinition name="WixStdbaOverridableVariable" bootstrapperApplicationData="yes">
+        <columnDefinition name="Name" type="string" length="255" primaryKey="yes" 
+                category="identifier" description="Variable name user can override."/>
+    </tableDefinition>
 </tableDefinitions>

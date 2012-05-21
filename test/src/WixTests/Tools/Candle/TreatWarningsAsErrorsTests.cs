@@ -13,12 +13,12 @@
 // <summary>Tests how Candle handles the wx switch.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.TreatWarningsAsErrors
+namespace WixTest.Tests.Tools.Candle.TreatWarningsAsErrors
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles the wx switch.

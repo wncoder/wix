@@ -15,13 +15,13 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Lit.Localization
+namespace WixTest.Tests.Tools.Lit.Localization
 {
     using System;
     using System.IO;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
      /// <summary>
     /// Test the different ways for giving input files to Candle.

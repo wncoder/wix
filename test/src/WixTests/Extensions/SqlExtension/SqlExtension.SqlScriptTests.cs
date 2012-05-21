@@ -13,16 +13,16 @@
 // <summary>Sql Extension SqlScript tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.SqlExtension
+namespace WixTest.Tests.Extensions.SqlExtension
 {
     using System;
     using System.IO;
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions;
+    using WixTest;
+    using WixTest.Verifiers;
+    using WixTest.Verifiers.Extensions;
 
     /// <summary>
     /// Sql extension SqlScript element tests

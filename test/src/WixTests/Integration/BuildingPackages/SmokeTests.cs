@@ -13,7 +13,7 @@
 // <summary>Smoke tests for Candle/Light Integration</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages
+namespace WixTest.Tests.Integration.BuildingPackages
 {
     using System;
     using System.IO;
@@ -21,7 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPac
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Smoke tests for Candle/Light Integration

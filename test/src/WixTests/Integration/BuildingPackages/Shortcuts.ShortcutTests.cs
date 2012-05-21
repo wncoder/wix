@@ -15,13 +15,13 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.Shortcuts
+namespace WixTest.Tests.Integration.BuildingPackages.Shortcuts
 {
     using System;
     using System.IO;
     using System.Text;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>

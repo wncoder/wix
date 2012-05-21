@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.InstanceTransforms
+namespace WixTest.Tests.Integration.BuildingPackages.InstanceTransforms
 {
     using System;
     using System.Collections;
@@ -24,7 +24,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPac
     using System.Text;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     using Microsoft.Deployment.WindowsInstaller;
     using Microsoft.Deployment.WindowsInstaller.Package;
 

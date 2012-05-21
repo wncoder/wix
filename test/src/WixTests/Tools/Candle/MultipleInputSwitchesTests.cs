@@ -13,11 +13,11 @@
 // <summary>Tests how Candle handles multiple input switches.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.MultipleInputSwitches
+namespace WixTest.Tests.Tools.Candle.MultipleInputSwitches
 {
     using System;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Tests how Candle handles multiple input switches.

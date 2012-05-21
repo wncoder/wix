@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.Collections.Generic;

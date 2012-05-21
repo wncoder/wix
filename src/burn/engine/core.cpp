@@ -810,10 +810,20 @@ static HRESULT ParseCommandLine(
     int argc = 0;
     LPWSTR* argv = NULL;
     BOOL fUnknownArg = FALSE;
+    LPWSTR sczCommandLine = NULL;
 
     if (wzCommandLine && *wzCommandLine)
     {
-        argv = ::CommandLineToArgvW(wzCommandLine, &argc);
+        // CommandLineToArgvW tries to treat the first argument as the path to the process,
+        // which fails pretty miserably if your first argument is something like
+        // FOO="C:\Program Files\My Company". So give it something harmless to play with.
+        hr = StrAllocConcat(&sczCommandLine, L"ignored ", 0);
+        ExitOnFailure(hr, "Failed to initialize command line.");
+
+        hr = StrAllocConcat(&sczCommandLine, wzCommandLine, 0);
+        ExitOnFailure(hr, "Failed to copy command line.");
+
+        argv = ::CommandLineToArgvW(sczCommandLine, &argc);
         ExitOnNullWithLastError(argv, hr, "Failed to get command line.");
     }
 
@@ -1095,6 +1105,8 @@ LExit:
     {
         ::LocalFree(argv);
     }
+
+    ReleaseStr(sczCommandLine);
 
     return hr;
 }

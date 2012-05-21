@@ -13,14 +13,14 @@
 // <summary>To create burn test layout</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager
+namespace WixTest.Burn.LayoutManager
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Text;
     using System.Xml;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM;
+    using WixTest.Burn.OM.WixAuthoringOM;
 
     public partial class LayoutManager
     {
@@ -208,7 +208,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager
         private void CopyEngineAndUxFiles()
         {
             // copy all of the Burn engine files
-            string srcBinDir = Microsoft.Tools.WindowsInstallerXml.Test.Settings.WixToolDirectory;
+            string srcBinDir = WixTest.Settings.WixToolDirectory;
             string srcBurnEngineFile = Path.Combine(srcBinDir, this.BurnstubExeFilename);
             string destBurnEngineFile = Path.Combine(this.LayoutFolder, this.BurnstubExeFilename);
             CopyFile(srcBurnEngineFile, destBurnEngineFile);
@@ -247,7 +247,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager
         /// <param name="wixExtensions">list of additional wixExtensions to use to build the bundle</param>
         public void BuildBundle(bool removeAllOtherFiles, List<string>wixExtensions, string additionalCandleArgs, string additionalLightArgs)
         {
-            string xmlManifestContent = Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.Generator.XMLGenerator.GetXmlString(Wix);
+            string xmlManifestContent = WixTest.Burn.OM.Generator.XMLGenerator.GetXmlString(Wix);
 
             string bundleManifestFile = Path.Combine(this.LayoutFolder, Path.GetFileNameWithoutExtension(this.SetupBundleFilename) + ".xml");
             if (!Directory.Exists(this.LayoutFolder))
@@ -569,9 +569,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager
         /// <param name="newFileName">new filename, null if you don't want it renamed</param>
         /// <param name="url">Url for the file if it is to be downloaded at install time</param>
         /// <param name="includeInLayout">true of the file should be included in an attached container or as external file, false if it should not exist.</param>
-        public void AddSubFile(Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.Package packageToAddTo, string file, string newFileName, string url, bool includeInLayout)
+        public void AddSubFile(WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.Package packageToAddTo, string file, string newFileName, string url, bool includeInLayout)
         {
-            Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.PayloadElement payload = new OM.WixAuthoringOM.Bundle.PayloadElement();
+            WixTest.Burn.OM.WixAuthoringOM.Bundle.PayloadElement payload = new OM.WixAuthoringOM.Bundle.PayloadElement();
 
             payload.SourceFile = file;
             payload.SourceFilePathT = file;

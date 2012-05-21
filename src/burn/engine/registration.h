@@ -74,6 +74,19 @@ typedef struct _BURN_RELATED_BUNDLES
     DWORD cRelatedBundles;
 } BURN_RELATED_BUNDLES;
 
+typedef struct _BURN_SOFTWARE_TAG
+{
+    LPWSTR sczFilename;
+    LPWSTR sczRegid;
+    LPSTR sczTag;
+} BURN_SOFTWARE_TAG;
+
+typedef struct _BURN_SOFTWARE_TAGS
+{
+    BURN_SOFTWARE_TAG* rgSoftwareTags;
+    DWORD cSoftwareTags;
+} BURN_SOFTWARE_TAGS;
+
 typedef struct _BURN_REGISTRATION
 {
     BOOL fPerMachine;
@@ -121,6 +134,8 @@ typedef struct _BURN_REGISTRATION
     BURN_REGISTRATION_MODIFY_TYPE modify;
     BOOL fNoRemoveDefined;
     BOOL fNoRemove;
+
+    BURN_SOFTWARE_TAGS softwareTags;
 
     // Update registration
     BURN_UPDATE_REGISTRATION update;

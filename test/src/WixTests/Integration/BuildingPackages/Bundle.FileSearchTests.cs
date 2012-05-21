@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.Bundle
+namespace WixTest.Tests.Integration.BuildingPackages.Bundle
 {
     using System;
     using System.Collections.Generic;

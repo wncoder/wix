@@ -82,6 +82,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
             string toolFile = Path.Combine(toolsDirectory, "light.exe");
             StringBuilder commandLine = new StringBuilder(arguments);
             commandLine.Append(" -b \"%WIX%\\examples\\data\"");
+            commandLine.Append(" -sbuildinfo");
 
             // handle wixunit arguments
             if (args.NoTidy)

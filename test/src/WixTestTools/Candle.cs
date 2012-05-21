@@ -13,13 +13,13 @@
 // <summary>A class that wraps Candle</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// A class that wraps Candle.

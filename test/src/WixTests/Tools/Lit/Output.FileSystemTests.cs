@@ -15,14 +15,14 @@
 // </summary>
 //------------------------------------------------------------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Lit.Output
+namespace WixTest.Tests.Tools.Lit.Output
 {
     using System;
     using System.IO;
     using System.Text;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Tests for Lit interaction with the file system to producing output.

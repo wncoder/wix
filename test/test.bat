@@ -42,15 +42,15 @@ if /i [%1]==[/all] set TESTS=%TESTS% /test:*& shift& goto :Parse_Args
 if /i [%1]==[all] set TESTS=%TESTS% /test:*& shift& goto :Parse_Args
 if /i [%1]==[-resultsfile] set RESULTSFILE=/resultsfile:"%2" & shift& shift& goto :Parse_Args
 if /i [%1]==[/resultsfile] set RESULTSFILE=/resultsfile:"%2" & shift& shift& goto :Parse_Args
-if /i [%1]==[-smoke] set TESTS=/test:Microsoft.Tools.WindowsInstallerXml.Test.Tests.QTests& shift& goto :Parse_Args
-if /i [%1]==[/smoke] set TESTS=/test:Microsoft.Tools.WindowsInstallerXml.Test.Tests.QTests& shift& goto :Parse_Args
-if /i [%1]==[smoke] set TESTS=/test:Microsoft.Tools.WindowsInstallerXml.Test.Tests.QTests& shift& goto :Parse_Args
+if /i [%1]==[-smoke] set TESTS=/test:WixTest.Tests.QTests& shift& goto :Parse_Args
+if /i [%1]==[/smoke] set TESTS=/test:WixTest.Tests.QTests& shift& goto :Parse_Args
+if /i [%1]==[smoke] set TESTS=/test:WixTest.Tests.QTests& shift& goto :Parse_Args
 if /i [%1]==[-testlist] set TESTLIST=%2& shift& shift& goto :Parse_Args
 if /i [%1]==[/testlist] set TESTLIST=%2& shift& shift& goto :Parse_Args
 if /i [%1]==[-test] set TESTS=%TESTS% /test:%2 & shift& shift& goto :Parse_Args
 if /i [%1]==[/test] set TESTS=%TESTS% /test:%2 & shift& shift& goto :Parse_Args
-if /i [%1]==[-area] set TESTS=%TESTS% /test:Microsoft.Tools.WindowsInstallerXml.Test.Tests.%2 & shift& shift& goto :Parse_Args
-if /i [%1]==[/area] set TESTS=%TESTS% /test:Microsoft.Tools.WindowsInstallerXml.Test.Tests.%2 & shift& shift& goto :Parse_Args
+if /i [%1]==[-area] set TESTS=%TESTS% /test:WixTest.Tests.%2 & shift& shift& goto :Parse_Args
+if /i [%1]==[/area] set TESTS=%TESTS% /test:WixTest.Tests.%2 & shift& shift& goto :Parse_Args
 if /i [%1]==[-areas] goto :Areas
 if /i [%1]==[/areas] goto :Areas
 if /i [%1]==[-v] set VERBOSE=true & shift& goto :Parse_Args

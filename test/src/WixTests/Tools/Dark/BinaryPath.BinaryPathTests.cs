@@ -13,12 +13,12 @@
 // <summary>Test how Dark handles the -x switch</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Dark.BinaryPath
+namespace WixTest.Tests.Tools.Dark.BinaryPath
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Dark handles the -x switch.

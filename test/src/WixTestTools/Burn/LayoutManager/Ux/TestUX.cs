@@ -13,12 +13,12 @@
 // <summary>SampleUx to drive end-to-end tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.UX
+namespace WixTest.Burn.LayoutManager.UX
 {
     using System.IO;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.UX;
+    using WixTest.Burn.OM.WixAuthoringOM;
+    using WixTest.Burn.OM.WixAuthoringOM.Bundle;
+    using WixTest.Burn.OM.WixAuthoringOM.Bundle.UX;
 
     public class TestUX : UxBase
     {
@@ -31,7 +31,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.UX
 
         public override void CopyAndConfigureUx(string LayoutLocation, WixElement Wix)
         {
-            string srcBinDir = Microsoft.Tools.WindowsInstallerXml.Test.Settings.WixToolDirectory;
+            string srcBinDir = WixTest.Settings.WixToolDirectory;
 
             // Copy the TestUX binaries
             LayoutManager.CopyFile(Path.Combine(srcBinDir, base.UxBinaryFilename), Path.Combine(LayoutLocation, base.UxBinaryFilename));

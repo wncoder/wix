@@ -1,6 +1,14 @@
 ﻿//-------------------------------------------------------------------------------------------------
 // <copyright file="PayloadInfoRow.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
 // </copyright>
 // 
 // <summary>
@@ -24,10 +32,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
         External,
     }
 
+    public interface IPayloadInfo
+    {
+        string SourceFile { get; set; }
+        int FileSize { get; set; }
+        string Version { get; set; }
+        string ProductName { get; set; }
+        string Description { get; set; }
+        string Hash { get; set; }
+        string PublicKey { get; set; }
+        string Thumbprint { get; set; }
+        bool SuppressSignatureValidation { get; set; }
+    }
+
     /// <summary>
     /// Specialization of a row for the PayloadInfo table.
     /// </summary>
-    public class PayloadInfoRow : Row
+    public class PayloadInfoRow : Row, IPayloadInfo
     {
         private static readonly Version EmptyVersion = new Version(0, 0, 0, 0);
 
@@ -51,21 +72,23 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
         }
 
-
-        public PayloadInfoRow(SourceLineNumberCollection sourceLineNumbers, Output output, string id, string name, string sourceFile,
-            bool contentFile, bool suppressSignatureValidation, string downloadUrl, string container, PackagingType packaging) :
-            base(sourceLineNumbers, output.Tables["PayloadInfo"])
+        public static PayloadInfoRow Create(SourceLineNumberCollection sourceLineNumbers, Output output, string id, string name, string sourceFile,
+            bool contentFile, bool suppressSignatureValidation, string downloadUrl, string container, PackagingType packaging)
         {
-            this.Id = id;
-            this.Name = name;
-            this.SourceFile = sourceFile;
-            this.ContentFile = contentFile;
-            this.SuppressSignatureValidation = suppressSignatureValidation;
-            this.DownloadUrl = downloadUrl;
-            this.Container = container;
-            this.Packaging = packaging;
+            Table table = output.Tables["PayloadInfo"];
+            PayloadInfoRow row = (PayloadInfoRow)table.CreateRow(sourceLineNumbers);
 
-            this.Resolve();
+            row.Id = id;
+            row.Name = name;
+            row.SourceFile = sourceFile;
+            row.ContentFile = contentFile;
+            row.SuppressSignatureValidation = suppressSignatureValidation;
+            row.DownloadUrl = downloadUrl;
+            row.Container = container;
+            row.Packaging = packaging;
+
+            PayloadInfoRow.ResolvePayloadInfo(row);
+            return row;
         }
 
         public string Id
@@ -248,30 +271,30 @@ namespace Microsoft.Tools.WindowsInstallerXml
             ObjectField field = (ObjectField)payloadRow.Fields[2];
             this.ContentFile = String.IsNullOrEmpty(field.CabinetFileId);
 
-            this.Resolve();
+            ResolvePayloadInfo(this);
 
             return;
         }
 
-        private void Resolve()
+        public static void ResolvePayloadInfo(IPayloadInfo payloadInfo)
         {
-            if (String.IsNullOrEmpty(this.SourceFile))
+            if (String.IsNullOrEmpty(payloadInfo.SourceFile))
             {
                 return;
             }
 
-            FileInfo fileInfo = new FileInfo(this.SourceFile);
+            FileInfo fileInfo = new FileInfo(payloadInfo.SourceFile);
 
             if (null != fileInfo)
             {
-                this.FileSize = (int)fileInfo.Length;
-                this.Hash = Common.GetFileHash(fileInfo);
+                payloadInfo.FileSize = (int)fileInfo.Length;
+                payloadInfo.Hash = Common.GetFileHash(fileInfo);
 
-                // Try to get the certificate if this is a signed file and we're not suppressing signature validation for this payload.
+                // Try to get the certificate if payloadInfo is a signed file and we're not suppressing signature validation for payloadInfo payload.
                 X509Certificate2 certificate = null;
                 try
                 {
-                    if (!this.SuppressSignatureValidation)
+                    if (!payloadInfo.SuppressSignatureValidation)
                     {
                         certificate = new X509Certificate2(fileInfo.FullName);
                     }
@@ -293,12 +316,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         sb.AppendFormat("{0:X2}", publicKeyIdentifierHash[i]);
                     }
 
-                    this.PublicKey = sb.ToString();
-                    this.Thumbprint = certificate.Thumbprint;
+                    payloadInfo.PublicKey = sb.ToString();
+                    payloadInfo.Thumbprint = certificate.Thumbprint;
                 }
             }
 
-            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(this.SourceFile);
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(payloadInfo.SourceFile);
 
             if (null != versionInfo)
             {
@@ -307,11 +330,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 if (EmptyVersion != version)
                 {
-                    this.Version = version.ToString();
+                    payloadInfo.Version = version.ToString();
                 }
 
-                this.ProductName = versionInfo.ProductName;
-                this.Description = versionInfo.FileDescription;
+                payloadInfo.ProductName = versionInfo.ProductName;
+                payloadInfo.Description = versionInfo.FileDescription;
             }
         }
     }

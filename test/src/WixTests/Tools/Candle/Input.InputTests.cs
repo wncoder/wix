@@ -13,12 +13,12 @@
 // <summary>Test the different ways for giving input files to Candle</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.Input
+namespace WixTest.Tests.Tools.Candle.Input
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
      /// <summary>
     /// Test the different ways for giving input files to Candle.

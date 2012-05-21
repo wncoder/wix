@@ -19,9 +19,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Microsoft.Tools.WindowsInstallerXml.Test;
+using WixTest;
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.Detours
+namespace WixTest.Burn.Detours
 {
     /// <summary>
     /// Will add/remove a detour to burnstub.exe

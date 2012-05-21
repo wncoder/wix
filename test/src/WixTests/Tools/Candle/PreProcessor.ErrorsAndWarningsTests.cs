@@ -13,11 +13,11 @@
 // <summary>Test how Candle handles preprocessing for errors and warnings.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.PreProcessor
+namespace WixTest.Tests.Tools.Candle.PreProcessor
 {
     using System;
     using System.IO;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>

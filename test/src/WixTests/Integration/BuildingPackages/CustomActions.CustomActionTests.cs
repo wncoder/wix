@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.CustomActions
+namespace WixTest.Tests.Integration.BuildingPackages.CustomActions
 {
     using System;
     using System.Collections.Generic;
@@ -23,7 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPac
     using System.Text;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Tests for custom actions

@@ -13,14 +13,14 @@
 // <summary>UI Extension InstallDir tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.UIExtension
+namespace WixTest.Tests.Extensions.UIExtension
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
+    using WixTest;
+    using WixTest.Verifiers;
 
     /// <summary>
     /// NetFX extension InstallDir element tests

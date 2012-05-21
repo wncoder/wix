@@ -19,9 +19,9 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Reflection;
-using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+using WixTest.Burn.OM.ElementAttribute;
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.Generator
+namespace WixTest.Burn.OM.Generator
 {
     /// <summary>
     /// This class generates object from xml. It deserializes the xml into object

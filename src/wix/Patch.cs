@@ -832,7 +832,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                 }
 
                                 List<Row> msiLockPermissionsExRowList;
-                                if (directoryLockPermissionsIndex.TryGetValue(directoryId, out msiLockPermissionsExRowList))
+                                if (directoryMsiLockPermissionsExIndex.TryGetValue(directoryId, out msiLockPermissionsExRowList))
                                 {
                                     foreach (Row msiLockPermissionsExRow in msiLockPermissionsExRowList)
                                     {

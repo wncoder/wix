@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.Components
+namespace WixTest.Tests.Integration.BuildingPackages.Components
 {
     using System;
     using System.IO;
@@ -23,7 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPac
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Tests for defining Environment Variables for a component

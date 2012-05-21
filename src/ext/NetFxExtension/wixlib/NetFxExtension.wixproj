@@ -27,13 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\UtilExtension\wixext\WixUtilExtension.csproj">
-      <Project>{3E74F4F0-7DC9-4837-9443-D5BE061C892C}</Project>
-      <Name>WixUtilExtension</Name>
-    </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <WixExtension Include="WixUtilExtension">
       <Private>False</Private>
       <HintPath>$(OutputPath_x86)WixUtilExtension.dll</HintPath>

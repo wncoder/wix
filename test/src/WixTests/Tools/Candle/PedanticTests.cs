@@ -13,11 +13,11 @@
 // <summary>Tests how Candle handles the Pedantic switch</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.Pedantic
+namespace WixTest.Tests.Tools.Candle.Pedantic
 {
     using System;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles the Pedantic switch.

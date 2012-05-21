@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
+namespace WixTest.Tests.Burn
 {
     using System;
     using System.IO;

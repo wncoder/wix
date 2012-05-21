@@ -15,12 +15,12 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.IO;
     using System.Linq;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>

@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
      xmlns:bal='http://schemas.microsoft.com/wix/BalExtension'
+     xmlns:swid="http://schemas.microsoft.com/wix/TagExtension"
      xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'>
 
     <!--
@@ -24,12 +25,13 @@
             AboutUrl='http://wixtoolset.org' UpdateUrl='http://wixtoolset.org/releases/feed/v3.6'
             Compressed='no'>
 
+        <swid:Tag Regid="regid.1991-06.com.microsoft" />
+
         <BootstrapperApplicationRef Id='ManagedBootstrapperApplicationHost'>
           <Payload Name='BootstrapperCore.config' SourceFile='WixBA.BootstrapperCore.config' />
 
           <Payload SourceFile='WixBA.dll' />
           <Payload SourceFile='License.htm' />
-          <Payload SourceFile='NetfxLicense.rtf' />
         </BootstrapperApplicationRef>
 
         <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\8.0' Value='InstallDir' Variable='VS2005InstallFolder' />
@@ -38,7 +40,7 @@
         <util:RegistrySearch Root='HKLM' Key='SOFTWARE\Microsoft\VisualStudio\11.0' Value='InstallDir' Variable='VS11InstallFolder' />
 
         <Chain>
-            <PackageGroupRef Id='Netfx4Full' />
+            <PackageGroupRef Id='NetFx40Web' />
             <PackageGroupRef Id='ProjectAggregator' />
 
             <!-- DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}' -->

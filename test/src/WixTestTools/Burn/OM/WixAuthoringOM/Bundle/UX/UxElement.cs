@@ -13,10 +13,10 @@
 // <summary>Ux element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.UX
+namespace WixTest.Burn.OM.WixAuthoringOM.Bundle.UX
 {
     using System.Collections.Generic;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     [BurnXmlElement("UX")]
     public class UXElement

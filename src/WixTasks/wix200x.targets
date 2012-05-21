@@ -246,6 +246,14 @@ Copyright (c) Microsoft Corporation. All rights reserved.
   </PropertyGroup>
 
   <!--
+  Set the SignTargetPath item directly when output is a Bundle. The AssignCultures target
+  sets SignTargetPath item for other output types based on the cultures provided.
+  -->
+  <ItemGroup>
+    <SignTargetPath Include="$(TargetPath)" Condition=" '$(OutputType)' == 'Bundle' AND '$(SignOutput)' == 'true' AND '$(SuppressLayout)' != 'true' " />
+  </ItemGroup>
+
+  <!--
   IDE Macros available only from integrated builds. The following properties are 'macros' that are
   available via IDE for pre and post build steps. However, they are not defined when directly
   building a project from the command line, only when building a solution.
@@ -2517,6 +2525,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       SuppressAclReset="$(SuppressAclReset)"
       SuppressAllWarnings="$(LinkerSuppressAllWarnings)"
       SuppressAssemblies="$(SuppressAssemblies)"
+      SuppressBuildInfo="$(SuppressBuildInfo)"
       SuppressDefaultAdminSequenceActions="$(SuppressDefaultAdminSequenceActions)"
       SuppressDefaultAdvSequenceActions="$(SuppressDefaultAdvSequenceActions)"
       SuppressDefaultUISequenceActions="$(SuppressDefaultUISequenceActions)"
@@ -2536,6 +2545,7 @@ Copyright (c) Microsoft Corporation. All rights reserved.
       TreatWarningsAsErrors="$(LinkerTreatWarningsAsErrors)"
       UnreferencedSymbolsFile="$(UnreferencedSymbolsFile)"
       VerboseOutput="$(LinkerVerboseOutput)"
+      WixProjectFile="$(ProjectPath)"
       WixVariables="$(WixVariables)" />
   </Target>
 

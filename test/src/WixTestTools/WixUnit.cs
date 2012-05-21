@@ -13,7 +13,7 @@
 // <summary>A class that wraps WixUnit</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;

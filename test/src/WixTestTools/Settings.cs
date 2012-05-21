@@ -13,7 +13,7 @@
 // <summary>Contains settings such as default directories</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
 

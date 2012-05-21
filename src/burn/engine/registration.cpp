@@ -57,6 +57,11 @@ const LPCWSTR REGISTRY_BUNDLE_UNINSTALL_STRING = L"UninstallString";
 
 // internal function declarations
 
+static HRESULT ParseSoftwareTagsFromXml(
+    __in IXMLDOMNode* pixnRegistrationNode,
+    __out BURN_SOFTWARE_TAG** prgSoftwareTags,
+    __out DWORD* pcSoftwareTags
+    );
 static HRESULT SetPaths(
     __in BURN_REGISTRATION* pRegistration
     );
@@ -110,6 +115,14 @@ static HRESULT LoadRelatedBundle(
 static HRESULT FormatUpdateRegistrationKey(
     __in BURN_REGISTRATION* pRegistration,
     __out_z LPWSTR* psczKey
+    );
+static HRESULT WriteSoftwareTags(
+    __in BOOL fPerMachine,
+    __in BURN_SOFTWARE_TAGS* pSoftwareTags
+    );
+static HRESULT RemoveSoftwareTags(
+    __in BOOL fPerMachine,
+    __in BURN_SOFTWARE_TAGS* pSoftwareTags
     );
 static HRESULT WriteUpdateRegistration(
     __in BURN_REGISTRATION* pRegistration,
@@ -299,6 +312,9 @@ extern "C" HRESULT RegistrationParseFromXml(
         }
     }
 
+    hr = ParseSoftwareTagsFromXml(pixnRegistrationNode, &pRegistration->softwareTags.rgSoftwareTags, &pRegistration->softwareTags.cSoftwareTags);
+    ExitOnFailure(hr, "Failed to parse software tag.");
+
     // select Update node
     hr = XmlSelectSingleNode(pixnRegistrationNode, L"Update", &pixnUpdateNode);
     if (S_FALSE != hr)
@@ -405,6 +421,18 @@ extern "C" void RegistrationUninitialize(
     ReleaseStr(pRegistration->update.sczProductFamily);
     ReleaseStr(pRegistration->update.sczName);
     ReleaseStr(pRegistration->update.sczClassification);
+
+    if (pRegistration->softwareTags.rgSoftwareTags)
+    {
+        for (DWORD i = 0; i < pRegistration->softwareTags.cSoftwareTags; ++i)
+        {
+            ReleaseStr(pRegistration->softwareTags.rgSoftwareTags[i].sczFilename);
+            ReleaseStr(pRegistration->softwareTags.rgSoftwareTags[i].sczRegid);
+            ReleaseStr(pRegistration->softwareTags.rgSoftwareTags[i].sczTag);
+        }
+
+        MemFree(pRegistration->softwareTags.rgSoftwareTags);
+    }
 
     if (pRegistration->relatedBundles.rgRelatedBundles)
     {
@@ -633,7 +661,7 @@ extern "C" HRESULT RegistrationSessionBegin(
         hr = RegCreate(pRegistration->hkRoot, pRegistration->sczRegistrationKey, KEY_WRITE, &hkRegistration);
         ExitOnFailure(hr, "Failed to create registration key.");
 
-        // on initial install, or repair, write any ARP values
+        // on initial install, or repair, write any ARP values and software tags.
         if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)
         {
             // Upgrade information
@@ -810,6 +838,12 @@ extern "C" HRESULT RegistrationSessionBegin(
             hr = RegWriteStringFormatted(hkRegistration, REGISTRY_BUNDLE_UNINSTALL_STRING, L"\"%ls\" %ls", pRegistration->sczCacheExecutablePath, wzUninstallParameters);
             ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_UNINSTALL_STRING);
 
+            if (pRegistration->softwareTags.cSoftwareTags)
+            {
+                hr = WriteSoftwareTags(pRegistration->fPerMachine, &pRegistration->softwareTags);
+                ExitOnFailure(hr, "Failed to write software tags.");
+            }
+
             // Update registration.
             if (pRegistration->update.fRegisterUpdate)
             {
@@ -950,15 +984,12 @@ extern "C" HRESULT RegistrationSessionEnd(
             // Delete update registration key.
             if (pRegistration->update.fRegisterUpdate)
             {
-                hr = RemoveUpdateRegistration(pRegistration);
-                if (E_FILENOTFOUND != hr)
-                {
-                    ExitOnFailure(hr, "Failed to delete update registration.");
-                }
+                RemoveUpdateRegistration(pRegistration);
             }
 
-            hr = CacheRemoveBundle(pRegistration->fPerMachine, pRegistration->sczId);
-            ExitOnFailure(hr, "Failed to remove bundle from cache.");
+            RemoveSoftwareTags(pRegistration->fPerMachine, &pRegistration->softwareTags);
+
+            CacheRemoveBundle(pRegistration->fPerMachine, pRegistration->sczId);
         }
         else // the mode needs to be updated so open the registration key.
         {
@@ -1028,6 +1059,73 @@ extern "C" HRESULT RegistrationLoadState(
 
 
 // internal helper functions
+
+static HRESULT ParseSoftwareTagsFromXml(
+    __in IXMLDOMNode* pixnRegistrationNode,
+    __out BURN_SOFTWARE_TAG** prgSoftwareTags,
+    __out DWORD* pcSoftwareTags
+    )
+{
+    HRESULT hr = S_OK;
+    IXMLDOMNodeList* pixnNodes = NULL;
+    IXMLDOMNode* pixnNode = NULL;
+    DWORD cNodes = 0;
+
+    BURN_SOFTWARE_TAG* pSoftwareTags = NULL;
+    BSTR bstrTagXml = NULL;
+
+    // select tag nodes
+    hr = XmlSelectNodes(pixnRegistrationNode, L"SoftwareTag", &pixnNodes);
+    ExitOnFailure(hr, "Failed to select software tag nodes.");
+
+    // get tag node count
+    hr = pixnNodes->get_length((long*)&cNodes);
+    ExitOnFailure(hr, "Failed to get software tag count.");
+
+    if (cNodes)
+    {
+        pSoftwareTags = (BURN_SOFTWARE_TAG*)MemAlloc(sizeof(BURN_SOFTWARE_TAG) * cNodes, TRUE);
+        ExitOnNull(pSoftwareTags, hr, E_OUTOFMEMORY, "Failed to allocate memory for software tag structs.");
+
+        for (DWORD i = 0; i < cNodes; ++i)
+        {
+            BURN_SOFTWARE_TAG* pSoftwareTag = &pSoftwareTags[i];
+
+            hr = XmlNextElement(pixnNodes, &pixnNode, NULL);
+            ExitOnFailure(hr, "Failed to get next node.");
+
+            hr = XmlGetAttributeEx(pixnNode, L"Filename", &pSoftwareTag->sczFilename);
+            ExitOnFailure(hr, "Failed to get @Filename.");
+
+            hr = XmlGetAttributeEx(pixnNode, L"Regid", &pSoftwareTag->sczRegid);
+            ExitOnFailure(hr, "Failed to get @Regid.");
+
+            hr = XmlGetText(pixnNode, &bstrTagXml);
+            ExitOnFailure(hr, "Failed to get SoftwareTag text.");
+
+            hr = StrAnsiAllocString(&pSoftwareTag->sczTag, bstrTagXml, 0, CP_UTF8);
+            ExitOnFailure(hr, "Failed to convert SoftwareTag text to UTF-8");
+
+            // prepare next iteration
+            ReleaseNullBSTR(bstrTagXml);
+            ReleaseNullObject(pixnNode);
+        }
+    }
+
+    *pcSoftwareTags = cNodes;
+    *prgSoftwareTags = pSoftwareTags;
+    pSoftwareTags = NULL;
+
+    hr = S_OK;
+
+LExit:
+    ReleaseBSTR(bstrTagXml);
+    ReleaseObject(pixnNode);
+    ReleaseObject(pixnNodes);
+    ReleaseMem(pSoftwareTags);
+
+    return hr;
+}
 
 static HRESULT SetPaths(
     __in BURN_REGISTRATION* pRegistration
@@ -1867,6 +1965,81 @@ static HRESULT FormatUpdateRegistrationKey(
 
 LExit:
     ReleaseStr(sczKey);
+
+    return hr;
+}
+
+static HRESULT WriteSoftwareTags(
+    __in BOOL fPerMachine,
+    __in BURN_SOFTWARE_TAGS* pSoftwareTags
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczRootFolder = NULL;
+    LPWSTR sczRegidFolder = NULL;
+    LPWSTR sczPath = NULL;
+
+    hr = PathGetKnownFolder(fPerMachine ? CSIDL_COMMON_APPDATA : CSIDL_LOCAL_APPDATA, &sczRootFolder);
+    ExitOnFailure1(hr, "Failed to find local %hs appdata directory.", fPerMachine ? "per-machine" : "per-user");
+
+    for (DWORD iTag = 0; iTag < pSoftwareTags->cSoftwareTags; ++iTag)
+    {
+        BURN_SOFTWARE_TAG* pSoftwareTag = pSoftwareTags->rgSoftwareTags + iTag;
+
+        hr = PathConcat(sczRootFolder, pSoftwareTag->sczRegid, &sczRegidFolder);
+        ExitOnFailure(hr, "Failed to allocate regid folder path.");
+
+        hr = PathConcat(sczRegidFolder, pSoftwareTag->sczFilename, &sczPath);
+        ExitOnFailure(hr, "Failed to allocate regid folder path.");
+
+        hr = DirEnsureExists(sczRegidFolder, NULL);
+        ExitOnFailure1(hr, "Failed to create regid folder: %ls", sczRegidFolder);
+
+        hr = FileWrite(sczPath, FILE_ATTRIBUTE_NORMAL, reinterpret_cast<LPBYTE>(pSoftwareTag->sczTag), lstrlenA(pSoftwareTag->sczTag), NULL);
+        ExitOnFailure1(hr, "Failed to write tag xml to file: %ls", sczPath);
+    }
+
+LExit:
+    ReleaseStr(sczPath);
+    ReleaseStr(sczRegidFolder);
+    ReleaseStr(sczRootFolder);
+
+    return hr;
+}
+
+static HRESULT RemoveSoftwareTags(
+    __in BOOL fPerMachine,
+    __in BURN_SOFTWARE_TAGS* pSoftwareTags
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczRootFolder = NULL;
+    LPWSTR sczRegidFolder = NULL;
+    LPWSTR sczPath = NULL;
+
+    hr = PathGetKnownFolder(fPerMachine ? CSIDL_COMMON_APPDATA : CSIDL_LOCAL_APPDATA, &sczRootFolder);
+    ExitOnFailure1(hr, "Failed to find local %hs appdata directory.", fPerMachine ? "per-machine" : "per-user");
+
+    for (DWORD iTag = 0; iTag < pSoftwareTags->cSoftwareTags; ++iTag)
+    {
+        BURN_SOFTWARE_TAG* pSoftwareTag = pSoftwareTags->rgSoftwareTags + iTag;
+
+        hr = PathConcat(sczRootFolder, pSoftwareTag->sczRegid, &sczRegidFolder);
+        ExitOnFailure(hr, "Failed to allocate regid folder path.");
+
+        hr = PathConcat(sczRegidFolder, pSoftwareTag->sczFilename, &sczPath);
+        ExitOnFailure(hr, "Failed to allocate regid folder path.");
+
+        // Best effort to delete the software tag file and the regid folder.
+        FileEnsureDelete(sczPath);
+
+        ::RemoveDirectoryW(sczRegidFolder);
+    }
+
+LExit:
+    ReleaseStr(sczPath);
+    ReleaseStr(sczRegidFolder);
+    ReleaseStr(sczRootFolder);
 
     return hr;
 }

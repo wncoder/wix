@@ -44,6 +44,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 {
                     new HeatCommandLineOption("dir", "harvest a directory"),
                     new HeatCommandLineOption("file", "harvest a file"),
+                    new HeatCommandLineOption("payload", "harvest a bundle payload as RemotePayload"),
                     new HeatCommandLineOption("perf", "harvest performance counters"),
                     new HeatCommandLineOption("reg", "harvest a .reg file"),
                     new HeatCommandLineOption("-ag", "autogenerate component guids at compile time"),
@@ -90,6 +91,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     break;
                 case "file":
                     harvesterExtension = new FileHarvester();
+                    active = true;
+                    break;
+                case "payload":
+                    harvesterExtension = new PayloadHarvester();
                     active = true;
                     break;
                 case "perf":

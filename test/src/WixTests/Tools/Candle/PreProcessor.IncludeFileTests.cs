@@ -13,14 +13,14 @@
 // <summary>Test how Candle handles preprocessing include files.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.PreProcessor
+namespace WixTest.Tests.Tools.Candle.PreProcessor
 {
     using System;
     using System.IO;
     using System.Text;
     using System.Xml;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles preprocessing include files.

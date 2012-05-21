@@ -13,7 +13,7 @@
 // <summary>Exception that occurs during a TestTool run</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
 

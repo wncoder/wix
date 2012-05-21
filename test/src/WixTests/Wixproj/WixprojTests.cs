@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Wixproj
+namespace WixTest.Tests.Wixproj
 {
     using System;
     using System.Collections.Generic;
@@ -24,7 +24,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Wixproj
     using System.Text.RegularExpressions;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Tests for Wix projects

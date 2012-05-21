@@ -13,12 +13,12 @@
 // <summary>Test how Dark handles different values for output file</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Dark.Output
+namespace WixTest.Tests.Tools.Dark.Output
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Dark handles different values for output file.

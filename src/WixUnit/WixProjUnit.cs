@@ -89,6 +89,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Unit
                 commandLine.Append(" /property:SuppressValidation=true");
             }
 
+            commandLine.Append(" /property:SuppressBuildInfo=true");
+
             // add DefineSolutionProperties
             commandLine.AppendFormat(" /property:DefineSolutionProperties={0}", defineSolutionProperties);
 

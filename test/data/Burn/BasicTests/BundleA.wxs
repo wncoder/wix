@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright (c) Microsoft Corporation. All rights reserved.
+    
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+    the terms of this license.
+    
+    You must not remove this notice, or any other, from this software.
 -->
 
 <?ifndef Version?>
@@ -8,7 +16,7 @@
 <?endif?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Bundle Name="~$(var.TestName) - Bundle A" Version="$(var.Version)" UpgradeCode="5802E2D0-AC39-4486-86FF-D4B7AD012EB5">
+  <Bundle Name="~$(var.TestName) - Bundle A" Manufacturer="!(bind.packageManufacturer.PackageA)" Version="$(var.Version)" UpgradeCode="5802E2D0-AC39-4486-86FF-D4B7AD012EB5">
     <Log Prefix="~$(var.TestName)_BundleA"/>
 
     <Variable Name="TestName" Value="$(var.TestName)" />

@@ -13,9 +13,9 @@
 // <summary>Variable element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Variable
+namespace WixTest.Burn.OM.WixAuthoringOM.Bundle.Variable
 {
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     [BurnXmlElement("Variable")]
     public class VariableElement

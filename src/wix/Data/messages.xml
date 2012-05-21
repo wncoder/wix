@@ -3615,7 +3615,7 @@
         </Message>
         <Message Id="DeprecatedRegistryKeyActionAttribute" Number="1138">
             <Instance>
-                The RegistryKey/@Action attribute has been deprecated.  In most cases, you can simply omit @Action.  If you need to force Windows Installer to create an empty key or recursively the key, use the ForceCreateOnInstall or ForceDeleteOnUninstall attributes instead.
+                The RegistryKey/@Action attribute has been deprecated.  In most cases, you can simply omit @Action.  If you need to force Windows Installer to create an empty key or recursively delete the key, use the ForceCreateOnInstall or ForceDeleteOnUninstall attributes instead.
             </Instance>
         </Message>
         <Message Id="NotABinaryWixlib" Number="1139" SourceLineNumbers="no">
@@ -3627,6 +3627,12 @@
         <Message Id="NoPerMachineDependencies" Number="1140" SourceLineNumbers="no">
             <Instance>
                 Bundle dependencies will not be registered on per-machine packages for a per-user bundle. Either make sure that all packages are installed per-machine, or author any per-machine dependencies as permanent packages.
+            </Instance>
+        </Message>
+        <Message Id="DownloadUrlNotSupportedForAttachedContainers" Number="1141">
+            <Instance>
+                The Container '{0}' is attached but included a @DownloadUrl attribute. Attached Containers cannot be downloaded so the download URL is being ignored.
+                <Parameter Type="System.String" Name="containerId" />
             </Instance>
         </Message>
     </Class>

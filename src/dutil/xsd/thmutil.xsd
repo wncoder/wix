@@ -556,6 +556,11 @@
                             <xs:documentation>Specifies the text should be centered horizontally in the width of the control. Default is "no".</xs:documentation>
                         </xs:annotation>
                     </xs:attribute>
+                    <xs:attribute name="DisablePrefix" type="YesNoType" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>By default ampersands (&amp;) in the text will underline the next character and treat it as an accelerator key. Set this attribute to "yes" to disable that behavior. Default is "no".</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
                     <xs:attribute name="FontId" type="xs:nonNegativeInteger" use="required">
                         <xs:annotation>
                             <xs:documentation>Numeric identifier to the Font element that serves as the font for the control.</xs:documentation>

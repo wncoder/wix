@@ -13,7 +13,7 @@
 // <summary>Dependency extension functional tests.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyExtension
+namespace WixTest.Tests.Extensions.DependencyExtension
 {
     using System;
     using System.Collections.Generic;
@@ -21,9 +21,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.DependencyEx
     using System.IO;
     using System.Text;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
+    using WixTest;
+    using WixTest.Utilities;
+    using WixTest.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
 

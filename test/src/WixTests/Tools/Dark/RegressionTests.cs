@@ -13,12 +13,12 @@
 // <summary>Regresssion tests for Dark</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Dark
+namespace WixTest.Tests.Tools.Dark
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Regresssion tests for Dark

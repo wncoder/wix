@@ -1487,6 +1487,16 @@
     <tableDefinition name="WixBindUpdatedFiles" unreal="yes">
         <columnDefinition name="File_" type="string" length="0" primaryKey="yes" modularize="column" keyTable="File" keyColumn="1" category="identifier" />
     </tableDefinition>
+    <tableDefinition name="WixBuildInfo" unreal="yes">
+        <columnDefinition name="WixVersion" type="string" length="20" 
+                category="text" description="Version number of WiX."/>
+        <columnDefinition name="WixOutputFile" type="string" length="0" nullable="yes" escapeIdtCharacters="yes"
+                category="text" description="Path to output file, if supplied."/>
+        <columnDefinition name="WixProjectFile" type="string" length="0" nullable="yes" escapeIdtCharacters="yes"
+                category="text" description="Path to .wixproj file, if supplied."/>
+        <columnDefinition name="WixPdbFile" type="string" length="0" nullable="yes" escapeIdtCharacters="yes"
+                category="text" description="Path to .wixpdb file, if supplied."/>
+    </tableDefinition>
     <tableDefinition name="WixFragment" createSymbols="yes" unreal="yes">
         <columnDefinition name="WixFragment" type="string" length="0" primaryKey="yes"/>
     </tableDefinition>
@@ -1589,6 +1599,7 @@
         <columnDefinition name="Container" type="string" length="0" category="identifier" primaryKey="yes"/>
         <columnDefinition name="Name" type="string" length="0"/>
         <columnDefinition name="Type" type="string" length="0" set="attached;detached" />
+        <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes" />
     </tableDefinition>
     <tableDefinition name="PayloadGroup" createSymbols="yes" unreal="yes">
         <columnDefinition name="PayloadGroup" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1601,6 +1612,12 @@
         <columnDefinition name="Compressed" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="UnresolvedSourceFile" type="string" length="0"/>
         <columnDefinition name="SuppressSignatureValidation" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+    </tableDefinition>
+    <tableDefinition name="PayloadDisplayInformation" createSymbols="yes" unreal="yes">
+        <columnDefinition name="Payload" type="string" length="0" category="identifier"  primaryKey="yes"
+                          keyTable="Payload" keyColumn="1" description="Reference to a Payload entry in the Payload table."/>
+        <columnDefinition name="DisplayName" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Description" type="string" length="0" nullable="yes"/>
     </tableDefinition>
     <tableDefinition name="PayloadInfo" createSymbols="yes" unreal="yes">
         <columnDefinition name="Payload" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1656,6 +1673,9 @@
         <columnDefinition name="Platform" type="string" length="4" />
         <columnDefinition name="ParentName" type="string" length="0" nullable="yes" />
         <columnDefinition name="UpgradeCode" type="string" length="38" category="guid" />
+        <columnDefinition name="BundleId" type="string" length="38" category="guid" description="Only valid after binding." />
+        <columnDefinition name="ProviderKey" type="string" length="38" category="guid" nullable="yes" description="Only valid after binding." />
+        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1" description="Only valid after binding." />
     </tableDefinition>
     <tableDefinition name="WixBootstrapperApplication" createSymbols="yes" unreal="yes">
         <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
@@ -1703,6 +1723,41 @@
         <columnDefinition name="ForcePerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="DisplayInternalUI" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
     </tableDefinition>
+    <tableDefinition name="ChainPackageInfo" createSymbols="yes" unreal="yes">
+        <columnDefinition name="Id" type="string" length="0" category="identifier" primaryKey="yes"/>
+        <columnDefinition name="PackageType" type="string" length="0" />
+        <columnDefinition name="Payload_" type="string" length="0" category="identifier"
+                keyTable="Payload" keyColumn="1" description="Reference to a Payload entry in the Payload table."/>
+        <columnDefinition name="InstallCondition" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="InstallCommand" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="RepairCommand" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="UninstallCommand" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Cache" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="CacheId" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Attributes" type="number" length="4" nullable="no" minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied to this package."/>
+        <columnDefinition name="Vital" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="DetectCondition" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="MsuKB" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Repairable" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="RollbackLogPathVariable" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="ExeProtocol" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="InstallSize" type="number" length="4"/>
+        <columnDefinition name="SuppressLooseFilePayloadGeneration" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="EnableFeatureSelection" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="ForcePerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="DisplayInternalUI" type="number" length="2" nullable="yes" minValue="0" maxValue="1" />
+        <columnDefinition name="ProductCode" type="string" length="38" category="guid" nullable="yes" />
+        <columnDefinition name="UpgradeCode" type="string" length="38" category="guid" nullable="yes" />
+        <columnDefinition name="Version" type="string" length="24" category="version" nullable="yes" />
+        <columnDefinition name="Language" type="string" length="0" nullable="yes" />
+        <columnDefinition name="DisplayName" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Description" type="string" length="0" nullable="yes" />
+        <columnDefinition name="PatchCode" type="string" length="38" category="guid" nullable="yes" />
+        <columnDefinition name="PatchXml" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Manufacturer" type="string" length="0" nullable="yes" />
+    </tableDefinition>
     <tableDefinition name="ChainMsiPackage" createSymbols="yes" unreal="yes">
         <columnDefinition name="ChainPackage_" type="string" length="0" category="identifier" primaryKey="yes"
                 keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
@@ -1724,7 +1779,7 @@
         <columnDefinition name="ChainPackage_Msp" type="string" length="0" category="identifier" primaryKey="yes"
                 keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table for the referenced Msp." />
     </tableDefinition>
-    <tableDefinition name="RelatedBundle" createSymbols="yes" unreal="yes">
+    <tableDefinition name="RelatedBundle" unreal="yes">
         <columnDefinition name="Id" type="string" length="38" category="guid" primaryKey="yes" />
         <columnDefinition name="Action" type="number" length="4" />
     </tableDefinition>

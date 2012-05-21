@@ -2152,3 +2152,58 @@ RobMen: Allow Binder extensions to process output after variable resolution.
         Populate SoftwareTagId table for later harvesting.
 
 WixBuild: Version 3.6.2907.0
+
+RobMen: Fix Burn container documentation and support DownloadUrl.
+
+RobMen: Authoring support for Bundle software tags.
+        Burn creates software id tags.
+
+RobMen: SFBUG:3525072 - fix typos in DIFX documentation.
+
+BobArnson: Add WixBuildInfo unreal table and WixPdbPath private property. 
+           Useful for post-build tools that want to get additional information
+           about packages. You can suppress the WixPdbPath property from being
+           written using the -sbuildinfo switch to Light.exe or by setting the
+           SuppressBuildInfo .wixproj property to true.
+
+RobMen: SFBUG:3525003;3525008 - disable underline prefix in wixstdba correctly.
+
+HeathS: SFBUG:3497029 - Write more information to wixpdbs for bundles.
+
+PMarcu: Fixing simple copy paste bug in LockPermissions patching.
+
+PMarcu: Updating the update url for the WiX bundle.
+
+WixBuild: Version 3.6.2914.0
+
+RobMen: Add support for all types of software tags and "complex_of" tags in
+        Bundles.
+
+BobArnson: Fix SFBUG:3526942 by not writing WixPdbPath if PDBs are suppressed.
+
+EricStJ: Add heat support for harvesting RemotePayload
+
+EricStJ: SFBUG:3527542 .NET 4.0 Client uses wrong key for detection
+         SFBUG:3444369 Update howto for installing .Net
+         WIX setup now uses NetFx extension payloadgroup
+         Fix bug in wix extension build
+
+HeathS: SFBUG:3517726 - Added binder variables for certain package properties.
+
+BobArnson: Fix SFBUG:3527359 by switching to another, legal control code.
+
+RobMen: SFBUG:3528482 - fix signing of Bundles.
+
+RobMen: Burn packages DisplayName and Description can be specified directly.
+
+BobArnson: Fix SFBUG:3513402 by not counting execute while doing a layout.
+
+BobArnson: Fix SFBUG:3489809: Variable=Value command-line arguments are 
+           processed by WixStdBA and turned into string variables in the Burn
+           engine. You can pass them to MSI and MSP packages using the 
+           MsiProperty element under MsiPackage or MspPackage elements.
+           Variables must opt-in to being set by the user by setting the
+           WixBalExtension attribute Overridable to "yes".
+
+WixBuild: Version 3.6.2921.0
+

@@ -15,14 +15,14 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Common.Logo
+namespace WixTest.Tests.Tools.Common.Logo
 {
     using System;
     using System.IO;
     using System.Collections.Generic;
     using System.Text.RegularExpressions;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Test how different Wix tools handle the NoLogo switch.

@@ -50,6 +50,7 @@
     <Compile Include="InspectorExtension.cs" />
     <Compile Include="Patch.cs" />
     <Compile Include="PatchAPI\PatchInterop.cs" />
+    <Compile Include="WixBundlePatchTargetCodeRow.cs" />
     <Compile Include="PatchTransform.cs" />
     <Compile Include="PayloadInfoRow.cs" />
     <Compile Include="ResolvedVariableEventHandler.cs" />
@@ -62,6 +63,7 @@
     <Compile Include="WixActionRow.cs" />
     <Compile Include="WixActionRowCollection.cs" />
     <Compile Include="WixBinder.cs" />
+    <Compile Include="WixBundleRow.cs" />
     <Compile Include="WixDistributionSpecificStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -154,7 +156,6 @@
     <Compile Include="VerifyInterop.cs" />
     <Compile Include="WarningEventArgs.cs" />
     <Compile Include="AppCommon.cs" />
-    <Compile Include="WixBundlePatchTargetCodeRow.cs" />
     <Compile Include="WixExtension.cs" />
     <Compile Include="WixFileRow.cs" />
     <Compile Include="WixGenericMessageEventArgs.cs" />
@@ -169,9 +170,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>WixStrings.resx</DependentUpon>
     </Compile>
+    <Compile Include="WixUpdateRegistrationRow.cs" />
     <Compile Include="WixVariableResolver.cs" />
     <Compile Include="WixVariableRow.cs" />
-    <Compile Include="BundleInfo.cs" />
     <Compile Include="CatalogInfo.cs" />
     <Compile Include="ChainInfo.cs" />
     <Compile Include="ChainPackageInfo.cs" />
@@ -186,7 +187,6 @@
     <Compile Include="RelatedPackage.cs" />
     <Compile Include="ResolvedDirectory.cs" />
     <Compile Include="RollbackBoundaryInfo.cs" />
-    <Compile Include="UpdateRegistrationInfo.cs" />
     <Compile Include="VariableInfo.cs" />
     <Compile Include="WixComponentSearchInfo.cs" />
     <Compile Include="WixFileSearchInfo.cs" />

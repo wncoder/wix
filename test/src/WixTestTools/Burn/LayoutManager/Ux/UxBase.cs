@@ -13,9 +13,9 @@
 // <summary>base for different Burn UX</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.UX
+namespace WixTest.Burn.LayoutManager.UX
 {
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM;
+    using WixTest.Burn.OM.WixAuthoringOM;
 
     public abstract class UxBase
     {
@@ -34,6 +34,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.UX
 
         public abstract void CopyAndConfigureUx(string LayoutLocation, WixElement Wix);
 
-        public abstract Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.UX.UXElement GetWixBundleUXElement();
+        public abstract WixTest.Burn.OM.WixAuthoringOM.Bundle.UX.UXElement GetWixBundleUXElement();
     }
 }

@@ -20,8 +20,8 @@ using Microsoft.Deployment.WindowsInstaller;
 using System.Xml;
 using System.Diagnostics;
 
-//namespace Microsoft.Tools.WindowsInstallerXml.Test.Utilities
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Utilities
+//namespace WixTest.Utilities
+namespace WixTest.Utilities
 {
     public class MsiUtils
     {
@@ -162,7 +162,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Utilities
                         // BUGBUG: this needs to be passed in and not hard coded...  It is also in StartBurnstub.cs
                         string UserName = "NonAdminTestAcct";
                         string Password = "Password!123";
-                        string currentUserSid = Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions.UserVerifier.GetSIDFromUserName(
+                        string currentUserSid = WixTest.Verifiers.Extensions.UserVerifier.GetSIDFromUserName(
                             System.Environment.ExpandEnvironmentVariables("%USERDOMAIN%"),
                             System.Environment.ExpandEnvironmentVariables("%USERNAME%"));
                         if (product.UserSid == null || 

@@ -55,5 +55,8 @@
       <Project>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</Project>
       <Name>Wix</Name>
     </ProjectReference>
+    <Reference Include="Microsoft.Deployment.WindowsInstaller">
+      <HintPath>$(TargetDir)Microsoft.Deployment.WindowsInstaller.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

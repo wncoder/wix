@@ -13,10 +13,10 @@
 // <summary>Package element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain
+namespace WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain
 {
     using System.Collections.Generic;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     public abstract class Package
     {

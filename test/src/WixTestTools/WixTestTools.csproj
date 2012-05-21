@@ -8,7 +8,7 @@
     <ProjectGuid>{55CB1042-647B-4347-9876-3EA607AF8DCE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Tools.WindowsInstallerXml.Test</RootNamespace>
+    <RootNamespace>WixTest</RootNamespace>
     <AssemblyName>WixTestTools</AssemblyName>
     <FxCopEnabled>false</FxCopEnabled>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>

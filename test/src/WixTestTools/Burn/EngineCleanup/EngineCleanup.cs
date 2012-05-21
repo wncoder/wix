@@ -13,13 +13,13 @@
 // <summary>to perform clean-up after test is complete. It removes any payloads installed as a part of test</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
+namespace WixTest.Burn
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
     using Microsoft.Win32;
     
     /// <summary>
@@ -49,7 +49,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
             try
             {
                 //// BUGBUG This needs to be replace by the new WiX authoring that supports this.  It doesn't exist yet. 
-                //foreach (Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.BurnManifestOM.Registration.RegistrationElement.UpdateElement updateElement in m_Layout.BurnManifest.Registration.UpdateElements)
+                //foreach (WixTest.Burn.OM.BurnManifestOM.Registration.RegistrationElement.UpdateElement updateElement in m_Layout.BurnManifest.Registration.UpdateElements)
                 //{
                 //    UpdateIds.Add(updateElement.BundleId);
                 //}
@@ -210,13 +210,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
 
             // delete the cache for current user (local admin)
             cacheFolder = m_Layout.GetDownloadCachePath();
-            Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
+            WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
 
             // delete the cache for all other users if it exists
             foreach (string directory in UserUtilities.GetAllUserTempPaths())
             {
                 cacheFolder = Path.Combine(directory, m_Layout.GetDownloadCacheFolderName());
-                Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
+                WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
             }
         }
 
@@ -234,7 +234,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                 foreach (string directory in UserUtilities.GetAllUserTempPaths())
                 {
                     cacheFolder = Path.Combine(directory, this.RegistrationId);
-                    Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
+                    WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
                 }
             }
         }
@@ -249,7 +249,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                 // Delete the per-machine cached engine folder if it exists
                 // per-machine installs need to be deleted from %ProgramData%\\Package Cache\\RegistrationId
                 string cacheFolder = System.Environment.ExpandEnvironmentVariables("%ProgramData%\\Package Cache\\" + RegistrationId);
-                Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
+                WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
 
                 // Delete the per-user cached engine folder(s) if they exist (for all users)
                 // per-user installs need to be deleted from %LOCALAPPDATA%\\Package Cache\\RegistrationId
@@ -257,7 +257,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                 {
                     // delete the cache for all the other users non-admin user (normal user)
                     cacheFolder = Path.Combine(directory, "Package Cache\\" + RegistrationId);
-                    Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
+                    WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(cacheFolder);
                 }
             }
         }
@@ -295,7 +295,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                     foreach (string cacheRootFolder in cacheRootFolders)
                     {
                         string fullPackageCachePath = Path.Combine(cacheRootFolder, packageCacheFoldername);
-                        Microsoft.Tools.WindowsInstallerXml.Test.Burn.LayoutManager.LayoutManager.RemoveDirectory(fullPackageCachePath);
+                        WixTest.Burn.LayoutManager.LayoutManager.RemoveDirectory(fullPackageCachePath);
                     }
                 }
                 else
@@ -311,12 +311,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
         public void UninstallAllPayloads()
         {
             // loop thru all the items in a layout and uninstall them.
-            foreach (Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.Package package in m_Layout.Wix.Bundle.Chain.Packages)
+            foreach (WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.Package package in m_Layout.Wix.Bundle.Chain.Packages)
             {
                 Type t = package.GetType();
                 switch (t.FullName)
                 {
-                    case "Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement":
+                    case "WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement":
                         // run the exe with the UninstallCommandLine
                         // hopefully the Exe does the right thing
                         // per-user installs that were performed by another user will probably not be removed properly.
@@ -327,25 +327,25 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                         }
                         else if (m_Layout != null &&
                             (!String.IsNullOrEmpty(m_Layout.LayoutFolder)) &&
-                            (!String.IsNullOrEmpty(((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name)))
+                            (!String.IsNullOrEmpty(((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name)))
                         {
-                            exeFile = Path.Combine(m_Layout.LayoutFolder, ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name);
+                            exeFile = Path.Combine(m_Layout.LayoutFolder, ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name);
                         }
 
                         if (!String.IsNullOrEmpty(exeFile))
                         {
                             Process proc = new Process();
-                            proc.StartInfo.Arguments = ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).UninstallCommand;
+                            proc.StartInfo.Arguments = ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).UninstallCommand;
                             proc.StartInfo.FileName = exeFile;
                             proc.Start();
                             proc.WaitForExit();
                         }
                         else
                         {
-                            System.Diagnostics.Trace.TraceError("Unable to find Exe to uninstall: {0}", ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name);
+                            System.Diagnostics.Trace.TraceError("Unable to find Exe to uninstall: {0}", ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.ExePackageElement)package).Name);
                         }
                         break;
-                    case "Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement":
+                    case "WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement":
                         // unintall the Msi from the SourceFile if it is set
                         // otherwise, use the Msi in the layout if it can be found
                         string msiFile = null;
@@ -355,9 +355,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                         }
                         else if (m_Layout != null &&
                             (!String.IsNullOrEmpty(m_Layout.LayoutFolder)) &&
-                            (!String.IsNullOrEmpty(((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name)))
+                            (!String.IsNullOrEmpty(((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name)))
                         {
-                            msiFile = Path.Combine(m_Layout.LayoutFolder, ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name);
+                            msiFile = Path.Combine(m_Layout.LayoutFolder, ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name);
                         }
 
                         if (!String.IsNullOrEmpty(msiFile))
@@ -366,10 +366,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                         }
                         else
                         {
-                            System.Diagnostics.Trace.TraceError("Unable to find Msi to uninstall: {0}", ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name);
+                            System.Diagnostics.Trace.TraceError("Unable to find Msi to uninstall: {0}", ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MsiPackageElement)package).Name);
                         }
                         break;
-                    case "Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement":
+                    case "WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement":
                         string mspFile = null;
                         if (!String.IsNullOrEmpty(package.SourceFilePathT))
                         {
@@ -377,9 +377,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                         }
                         else if (m_Layout != null &&
                             (!String.IsNullOrEmpty(m_Layout.LayoutFolder)) &&
-                            (!String.IsNullOrEmpty(((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name)))
+                            (!String.IsNullOrEmpty(((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name)))
                         {
-                            mspFile = Path.Combine(m_Layout.LayoutFolder, ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name);
+                            mspFile = Path.Combine(m_Layout.LayoutFolder, ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name);
                         }
 
                         if (!String.IsNullOrEmpty(mspFile))
@@ -388,7 +388,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn
                         }
                         else
                         {
-                            System.Diagnostics.Trace.TraceError("Unable to find Msp file to uninstall: {0}", ((Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name);
+                            System.Diagnostics.Trace.TraceError("Unable to find Msp file to uninstall: {0}", ((WixTest.Burn.OM.WixAuthoringOM.Bundle.Chain.MspPackageElement)package).Name);
                         }
                         break;
                     // BUGBUG TODO: handle Item Groups (i.e. Patches) once support for testing those is enabled in the LayoutManager

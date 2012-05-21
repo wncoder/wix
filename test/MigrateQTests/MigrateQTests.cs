@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.MigrateQTests
+namespace WixTest.MigrateQTests
 {
     using System;
     using System.Collections.Generic;
@@ -118,10 +118,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.MigrateQTests
             qtestCode.AppendLine("// </summary>");
             qtestCode.AppendLine("//-----------------------------------------------------------------------");
             qtestCode.AppendLine();
-            qtestCode.AppendLine("namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests");
+            qtestCode.AppendLine("namespace WixTest.Tests");
             qtestCode.AppendLine("{");
             qtestCode.AppendLine("    using Microsoft.VisualStudio.TestTools.UnitTesting;");
-            qtestCode.AppendLine("    using Microsoft.Tools.WindowsInstallerXml.Test;");
             qtestCode.AppendLine();
             qtestCode.AppendLine("    /// <summary>");
             qtestCode.AppendLine("    /// Contains test methods for the QTests");

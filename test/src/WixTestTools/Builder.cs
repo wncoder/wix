@@ -15,12 +15,12 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// Provides methods for building MSI, MSM, MSP, MST, Wixout

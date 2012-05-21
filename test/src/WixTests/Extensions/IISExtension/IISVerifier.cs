@@ -16,7 +16,7 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions
+namespace WixTest.Verifiers.Extensions
 {
     using System;
     using System.Collections.Generic;

@@ -4409,7 +4409,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 this.core.OnMessage(WixErrors.ExpectedAttribute(dataSourceLineNumbers, data.Name, "Column"));
                                             }
 
-                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : "\x0", columnName, ":", data.InnerText);
+                                            dataValue = String.Concat(dataValue, null == dataValue ? String.Empty : Common.CustomRowFieldSeparator.ToString(), columnName, ":", data.InnerText);
                                             break;
                                     }
                                 }
@@ -6891,7 +6891,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             case "PropertyRef":
                                 this.ParseSimpleRefElement(child, "Property");
                                 break;
-                            case "SetDirectory":
+                            case "RelatedBundle":
+                               this.ParseRelatedBundleElement(child);
+                               break;
+                           case "SetDirectory":
                                 this.ParseSetDirectoryElement(child);
                                 break;
                             case "SetProperty":
@@ -20121,6 +20124,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string id = null;
+            string downloadUrl = null;
             string name = null;
             string type = null;
 
@@ -20132,6 +20136,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         case "Id":
                             id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "DownloadUrl":
+                            downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "Name":
                             name = this.core.GetAttributeValue(sourceLineNumbers, attrib, false);
@@ -20182,6 +20189,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.IllegalAttributeValueWithLegalList(sourceLineNumbers, node.Name, "Type", type, "attached, detached"));
             }
 
+            if (!String.IsNullOrEmpty(downloadUrl) && !type.Equals("detached", StringComparison.Ordinal))
+            {
+                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "DownloadUrl", "Type", "attached"));
+            }
+
             foreach (XmlNode child in node.ChildNodes)
             {
                 if (XmlNodeType.Element == child.NodeType)
@@ -20211,6 +20223,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[0] = id;
                 row[1] = name;
                 row[2] = type;
+                row[3] = downloadUrl;
             }
         }
 
@@ -20621,7 +20634,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 remotePayload.Id = id;
             }
 
-            CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed, suppressSignatureVerification);
+            this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed, suppressSignatureVerification, null, null);
 
             return id;
         }
@@ -20700,7 +20713,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="parentType">ComplexReferenceParentType of parent element</param>
         /// <param name="parentId">Identifier of parent element.</param>
         private void CreatePayloadRow(SourceLineNumberCollection sourceLineNumbers, string id, string name, string sourceFile, string downloadUrl, ComplexReferenceParentType parentType,
-            string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification)
+            string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification, string displayName, string description)
         {
             if (!this.core.EncounteredError)
             {
@@ -20715,6 +20728,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 row[5] = sourceFile; // duplicate of sourceFile but in a string column so it won't get resolved to a full path during binding.
                 row[6] = (YesNoType.Yes == suppressSignatureVerification) ? 1 : 0;
+
+                if (!String.IsNullOrEmpty(description) || !String.IsNullOrEmpty(displayName))
+                {
+                    Row rowDisplay = this.core.CreateRow(sourceLineNumbers, "PayloadDisplayInformation");
+                    rowDisplay[0] = id;
+                    rowDisplay[1] = displayName;
+                    rowDisplay[2] = description;
+                }
 
                 this.CreateGroupAndOrderingRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Payload, id, previousType, previousId);
             }
@@ -21242,6 +21263,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string installCondition = null;
             YesNoType cache = YesNoType.NotSet;
             string cacheId = null;
+            string description = null;
+            string displayName = null;
             string logPathVariable = (packageType == ChainPackageType.Msu) ? String.Empty : null;
             string rollbackPathVariable = (packageType == ChainPackageType.Msu) ? String.Empty : null;
             YesNoType permanent = YesNoType.NotSet;
@@ -21307,6 +21330,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             break;
                         case "CacheId":
                             cacheId = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Description":
+                            description = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "DisplayName":
+                            displayName = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
                         case "DisplayInternalUI":
                             displayInternalUI = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -21594,8 +21623,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
 
                 // We create the package contents as a payload with this package as the parent
-                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, ComplexReferenceParentType.Package, id, 
-                    ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification);
+                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, ComplexReferenceParentType.Package, id,
+                    ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification, displayName, description);
 
                 Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
                 row[0] = id;
@@ -22138,7 +22167,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                    this.core.ParseExtensionAttribute(sourceLineNumbers, (XmlElement)node, attrib, null);
                 }
             }
 

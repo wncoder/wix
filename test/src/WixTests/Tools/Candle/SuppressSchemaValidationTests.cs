@@ -13,11 +13,11 @@
 // <summary>Test how Candle handles the SS switch.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.SuppressSchemaValidation
+namespace WixTest.Tests.Tools.Candle.SuppressSchemaValidation
 {
     using System;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles the SS switch.

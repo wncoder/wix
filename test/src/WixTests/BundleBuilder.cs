@@ -15,13 +15,13 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.IO;
     using System.Linq;
     using System.Text;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// Provides methods for building a Bundle.

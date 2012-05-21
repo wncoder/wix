@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute
+namespace WixTest.Burn.OM.ElementAttribute
 {
     [System.AttributeUsage(System.AttributeTargets.Property)]
     public class BurnXmlChildElement : System.Attribute

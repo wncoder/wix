@@ -1,8 +1,16 @@
 //-------------------------------------------------------------------------------------------------
 // <copyright file="ChainPackageInfo.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
 // </copyright>
-// 
+//
 // <summary>
 // Chain package info for binding Bundles.
 // </summary>
@@ -23,14 +31,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// <summary>
     /// Chain package info for binding Bundles.
     /// </summary>
-    internal class ChainPackageInfo
+    internal class ChainPackageInfo : Row
     {
         private const string PropertySqlFormat = "SELECT `Value` FROM `Property` WHERE `Property` = '{0}'";
         private const string PatchMetadataFormat = "SELECT `Value` FROM `MsiPatchMetadata` WHERE `Property` = '{0}'";
 
-        public ChainPackageInfo(Row chainPackageRow, Table wixGroupTable,
-            Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers,
-            BinderFileManager fileManager, BinderCore core, Output bundle)
+        private PayloadInfoRow packagePayload;
+
+        public ChainPackageInfo(Row chainPackageRow, Table wixGroupTable, Dictionary<string, PayloadInfoRow> allPayloads, Dictionary<string, ContainerInfo> containers, BinderFileManager fileManager, BinderCore core, Output bundle) : base(chainPackageRow.SourceLineNumbers, bundle.Tables["ChainPackageInfo"])
         {
             string id = (string)chainPackageRow[0];
             string packageType = (string)chainPackageRow[1];
@@ -142,6 +150,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.Provides = new ProvidesDependencyCollection();
             this.TargetCodes = new RowDictionary<WixBundlePatchTargetCodeRow>();
 
+            // Default the display name and description to the package payload.
+            this.DisplayName = this.PackagePayload.ProductName;
+            this.Description = this.PackagePayload.Description;
+
             // Start the package size with the package's payload size.
             this.Size = this.PackagePayload.FileSize;
 
@@ -186,48 +198,268 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 this.InstallSize = installSize;
             }
-
-            this.SourceLineNumbers = chainPackageRow.SourceLineNumbers;
         }
 
-        public SourceLineNumberCollection SourceLineNumbers { get; private set; }
-        public string Id { get; private set; }
-        public Compiler.ChainPackageType ChainPackageType { get; private set; }
-        public PayloadInfoRow PackagePayload { get; private set; }
-        public string InstallCondition { get; private set; }
-        public string InstallCommand { get; private set; }
-        public string RepairCommand { get; private set; }
-        public string UninstallCommand { get; private set; }
+        public string Id
+        {
+            get { return (string)this.Fields[0].Data; }
+            private set { this.Fields[0].Data = value; }
+        }
 
-        public bool PerMachine { get; private set; }
-        public string ProductCode { get; private set; }
-        public string UpgradeCode { get; private set; }
-        public string Language { get; private set; }
-        public string PatchCode { get; private set; }
-        public string PatchXml { get; private set; }
-        public bool Cache { get; private set; }
-        public string CacheId { get; private set; }
-        public bool Permanent { get; private set; }
-        public string Version { get; private set; }
-        public bool Visible { get; private set; }
-        public bool Slipstream { get; private set; }
-        public bool Vital { get; private set; }
-        public bool Repairable { get; private set; }
-        public string DetectCondition { get; private set; }
+        public Compiler.ChainPackageType ChainPackageType
+        {
+            get { return (Compiler.ChainPackageType)Enum.Parse(typeof(Compiler.ChainPackageType), (string)this.Fields[1].Data, true); }
+            private set { this.Fields[1].Data = value.ToString(); }
+        }
 
-        public long Size { get; private set; }
-        public long InstallSize { get; private set; }
+        public PayloadInfoRow PackagePayload
+        {
+            get { return this.packagePayload; }
+            private set
+            {
+                this.packagePayload = value;
+                this.Payload = this.packagePayload.Id;
+            }
+        }
 
-        public string LogPathVariable { get; private set; }
-        public string RollbackLogPathVariable { get; private set; }
+        public string Payload
+        {
+            get { return (string)this.Fields[2].Data; }
+            private set { this.Fields[2].Data = value; }
+        }
 
-        public bool DisplayInternalUI { get; private set; }
+        public string InstallCondition
+        {
+            get { return (string)this.Fields[3].Data; }
+            private set { this.Fields[3].Data = value;  }
+        }
 
-        public string MsuKB { get; private set; }
-        public string Protocol { get; private set; }
-        public string DisplayName { get; private set; }
-        public string Description { get; private set; }
+        public string InstallCommand
+        {
+            get { return (string)this.Fields[4].Data; }
+            private set { this.Fields[4].Data = value; }
+        }
 
+        public string RepairCommand
+        {
+            get { return (string)this.Fields[5].Data; }
+            private set { this.Fields[5].Data = value; }
+        }
+
+        public string UninstallCommand
+        {
+            get { return (string)this.Fields[6].Data; }
+            private set { this.Fields[6].Data = value; }
+        }
+
+        public bool Cache
+        {
+            get { return (null != this.Fields[7].Data) && (1 == (int)this.Fields[7].Data); }
+            private set { this.Fields[7].Data = value ? 1 : 0; }
+        }
+
+        public string CacheId
+        {
+            get { return (string)this.Fields[8].Data; }
+            private set { this.Fields[8].Data = value; }
+        }
+
+        public BundlePackageAttributes Attributes
+        {
+            get
+            {
+                object data = this.Fields[9].Data;
+                if (null != data)
+                {
+                    return (BundlePackageAttributes)(int)data;
+                }
+
+                return BundlePackageAttributes.None;
+            }
+            private set { this.Fields[9].Data = (int)value; }
+        }
+
+        public bool Permanent
+        {
+            get { return (BundlePackageAttributes.Permanent == (this.Attributes & BundlePackageAttributes.Permanent)); }
+            private set
+            {
+                if (value)
+                {
+                    this.Attributes |= BundlePackageAttributes.Permanent;
+                }
+                else
+                {
+                    this.Attributes &= ~BundlePackageAttributes.Permanent;
+                }
+            }
+        }
+
+        public bool Visible
+        {
+            get { return (BundlePackageAttributes.Visible == (this.Attributes & BundlePackageAttributes.Visible)); }
+            private set
+            {
+                if (value)
+                {
+                    this.Attributes |= BundlePackageAttributes.Visible;
+                }
+                else
+                {
+                    this.Attributes &= ~BundlePackageAttributes.Visible;
+                }
+            }
+        }
+
+        public bool Slipstream
+        {
+            get { return (BundlePackageAttributes.Slipstream == (this.Attributes & BundlePackageAttributes.Slipstream)); }
+            private set
+            {
+                if (value)
+                {
+                    this.Attributes |= BundlePackageAttributes.Slipstream;
+                }
+                else
+                {
+                    this.Attributes &= ~BundlePackageAttributes.Slipstream;
+                }
+            }
+        }
+
+        public bool Vital
+        {
+            get { return (null != this.Fields[10].Data) && (1 == (int)this.Fields[10].Data); }
+            private set { this.Fields[10].Data = value ? 1 : 0; }
+        }
+
+        public bool PerMachine
+        {
+            get { return (null != this.Fields[11].Data) && (1 == (int)this.Fields[11].Data); }
+            private set { this.Fields[11].Data = value ? 1 : 0; }
+        }
+
+        public string DetectCondition
+        {
+            get { return (string)this.Fields[12].Data; }
+            private set { this.Fields[12].Data = value; }
+        }
+
+        public string MsuKB
+        {
+            get { return (string)this.Fields[13].Data; }
+            private set { this.Fields[13].Data = value; }
+        }
+
+        public bool Repairable
+        {
+            get { return (null != this.Fields[14].Data) && (1 == (int)this.Fields[14].Data); }
+            private set { this.Fields[14].Data = value ? 1 : 0; }
+        }
+
+        public string LogPathVariable
+        {
+            get { return (string)this.Fields[15].Data; }
+            private set { this.Fields[15].Data = value; }
+        }
+
+        public string RollbackLogPathVariable
+        {
+            get { return (string)this.Fields[16].Data; }
+            private set { this.Fields[16].Data = value; }
+        }
+
+        public string Protocol
+        {
+            get { return (string)this.Fields[17].Data; }
+            private set { this.Fields[17].Data = value; }
+        }
+
+        public int InstallSize
+        {
+            get { return null != this.Fields[18].Data ? (int)this.Fields[18].Data : 0; }
+            private set { this.Fields[18].Data = value; }
+        }
+
+        public bool SuppressLooseFilePayloadGeneration
+        {
+            get { return (null != this.Fields[19].Data) && (1 == (int)this.Fields[19].Data); }
+            private set { this.Fields[19].Data = value ? 1 : 0; }
+        }
+
+        public bool EnableFeatureSelection
+        {
+            get { return (null != this.Fields[20].Data) && (1 == (int)this.Fields[20].Data); }
+            private set { this.Fields[20].Data = value ? 1 : 0; }
+        }
+
+        public bool ForcePerMachine
+        {
+            get { return (null != this.Fields[21].Data) && (1 == (int)this.Fields[21].Data); }
+            private set { this.Fields[21].Data = value ? 1 : 0; }
+        }
+
+        public bool DisplayInternalUI
+        {
+            get { return (null != this.Fields[22].Data) && (1 == (int)this.Fields[22].Data); }
+            private set { this.Fields[22].Data = value ? 1 : 0; }
+        }
+
+        public string ProductCode
+        {
+            get { return (string)this.Fields[23].Data; }
+            private set { this.Fields[23].Data = value; }
+        }
+
+        public string UpgradeCode
+        {
+            get { return (string)this.Fields[24].Data; }
+            private set { this.Fields[24].Data = value; }
+        }
+
+        public string Version
+        {
+            get { return (string)this.Fields[25].Data; }
+            private set { this.Fields[25].Data = value; }
+        }
+
+        public string Language
+        {
+            get { return (string)this.Fields[26].Data; }
+            private set { this.Fields[26].Data = value; }
+        }
+
+        public string DisplayName
+        {
+            get { return (string)this.Fields[27].Data; }
+            private set { this.Fields[27].Data = value; }
+        }
+
+        public string Description
+        {
+            get { return (string)this.Fields[28].Data; }
+            private set { this.Fields[28].Data = value; }
+        }
+
+        public string PatchCode
+        {
+            get { return (string)this.Fields[29].Data; }
+            private set { this.Fields[29].Data = value; }
+        }
+
+        public string PatchXml
+        {
+            get { return (string)this.Fields[30].Data; }
+            private set { this.Fields[30].Data = value; }
+        }
+
+        public string Manufacturer
+        {
+            get { return (string)this.Fields[31].Data; }
+            private set { this.Fields[31].Data = value; }
+        }
+
+        public int Size { get; private set; }
         public List<PayloadInfoRow> Payloads { get; private set; }
         public List<RelatedPackage> RelatedPackages { get; private set; }
         public List<MsiFeature> MsiFeatures { get; private set; }
@@ -237,7 +469,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         public ProvidesDependencyCollection Provides { get; private set; }
         public RowDictionary<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
         public bool TargetUnspecified { get; private set; }
-
         public RollbackBoundaryInfo RollbackBoundary { get; set; }
         public string RollbackBoundaryBackwardId { get; set; }
 
@@ -281,7 +512,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.CacheId = String.Format("{0}v{1}", this.ProductCode, this.Version);
                     }
 
-                    this.DisplayName = ChainPackageInfo.GetProperty(db, "ProductName");
+                    if (String.IsNullOrEmpty(this.DisplayName))
+                    {
+                        this.DisplayName = ChainPackageInfo.GetProperty(db, "ProductName");
+                    }
+
+                    this.Manufacturer = ChainPackageInfo.GetProperty(db, "Manufacturer");
 
                     this.VerifyMsiProperties(core);
 
@@ -320,7 +556,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.PerMachine = false;
                     }
 
-                    if (ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
+                    if (String.IsNullOrEmpty(this.Description) && ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
                     {
                         this.Description = ChainPackageInfo.GetProperty(db, "ARPCOMMENTS");
                     }
@@ -479,7 +715,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     string generatedId = Common.GenerateIdentifier("cab", true, this.PackagePayload.Id, cabinet);
                                     string payloadSourceFile = fileManager.ResolveRelatedFile(this.PackagePayload.UnresolvedSourceFile, cabinet, "Cabinet", this.PackagePayload.SourceLineNumbers, BindStage.Normal);
 
-                                    PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
+                                    PayloadInfoRow payloadNew = PayloadInfoRow.Create(this.SourceLineNumbers, bundle, generatedId, cabinetName, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
                                     payloadNew.ParentPackagePayload = this.PackagePayload.Id;
                                     if (!String.IsNullOrEmpty(payloadNew.Container))
                                     {
@@ -550,7 +786,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                                             if (!this.IsExistingPayload(name))
                                             {
-                                                PayloadInfoRow payloadNew = new PayloadInfoRow(this.SourceLineNumbers, bundle, generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
+                                                PayloadInfoRow payloadNew = PayloadInfoRow.Create(this.SourceLineNumbers, bundle, generatedId, name, payloadSourceFile, true, this.PackagePayload.SuppressSignatureValidation, null, this.PackagePayload.Container, this.PackagePayload.Packaging);
                                                 payloadNew.ParentPackagePayload = this.PackagePayload.Id;
                                                 if (!String.IsNullOrEmpty(payloadNew.Container))
                                                 {
@@ -670,7 +906,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                 using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
                 {
-                    this.DisplayName = ChainPackageInfo.GetPatchMetadataProperty(db, "DisplayName");
+                    if (String.IsNullOrEmpty(this.DisplayName))
+                    {
+                        this.DisplayName = ChainPackageInfo.GetPatchMetadataProperty(db, "DisplayName");
+                    }
+
+                    if (String.IsNullOrEmpty(this.Description))
+                    {
+                        this.Description = ChainPackageInfo.GetPatchMetadataProperty(db, "Description");
+                    }
+
+                    this.Manufacturer = ChainPackageInfo.GetPatchMetadataProperty(db, "Manufacturer");
                 }
 
                 this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);
@@ -754,8 +1000,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             this.Version = this.PackagePayload.Version;
-            this.DisplayName = this.PackagePayload.ProductName;
-            this.Description = this.PackagePayload.Description;
+
+            // TODO: Future version could add Manufacturer to table definition.
         }
 
         /// <summary>

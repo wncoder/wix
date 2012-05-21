@@ -13,12 +13,12 @@
 // <summary>A class that wraps Lit</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.IO;
     using System.Collections.Generic;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// A class that wraps Lit

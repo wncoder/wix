@@ -13,7 +13,7 @@
 // <summary>Wraps the WiX Smoke tool</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     /// <summary>
     /// Wraps the WiX Smoke tool

@@ -13,7 +13,7 @@
 // <summary>Example tests for WiX</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Examples
+namespace WixTest.Tests.Examples
 {
     using System;
     using System.Collections;

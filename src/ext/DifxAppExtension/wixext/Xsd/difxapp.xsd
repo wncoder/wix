@@ -50,9 +50,9 @@
                         store when a driver package was installed. If this attribute is set to "no" or not present, DIFxApp does not
                         remove these files from a system. Note that configuring DIFxApp to delete these files is controlled by the
                         Flags entry value of the component that represents the driver package in the MsiDriverPackages custom table.
-                        Setting DriverDeleteFiles to "yes" sets the corresponding bit in the Flags entry value. Setting DriverLegacy
-                        to "no" clears the corresponding bit in the Flags entry value. If this attribute is not present, DIFxApp uses
-                        a default value of "no".
+                        Setting DeleteFiles to "yes" sets the corresponding bit in the Flags entry value. Setting DeleteFiles to "no"
+                        clears the corresponding bit in the Flags entry value. If this attribute is not present, DIFxApp uses a
+                        default value of "no".
                     </xs:documentation>
                 </xs:annotation>
             </xs:attribute>
@@ -75,8 +75,8 @@
                         files. For more information, see "Installing Unsigned Driver Packages in Legacy Mode" earlier in this paper.
                         If this attribute is set to "no" or not present, DIFxApp will install only signed driver packages. Note
                         that configuring DIFxApp to install unsigned drivers is controlled by the Flags entry value of the component
-                        that represents the driver package in the MsiDriverPackages custom table. Setting DriverLegacy to "yes" sets
-                        the corresponding bit in the Flags entry value. Setting DriverLegacy to "no" clears the bit in the Flags
+                        that represents the driver package in the MsiDriverPackages custom table. Setting Legacy to "yes" sets
+                        the corresponding bit in the Flags entry value. Setting Legacy to "no" clears the bit in the Flags
                         entry value that configures DIFxApp to install unsigned driver packages. If this attribute is not present,
                         DIFxApp uses a default value of "no".
                     </xs:documentation>

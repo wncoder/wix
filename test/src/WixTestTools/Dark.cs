@@ -12,14 +12,14 @@
 // </copyright>
 // <summary>A class that wraps Dark</summary>
 //-----------------------------------------------------------------------
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;
     using System.Text;
     using System.IO;
     using System.Xml;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// Dark tool class.

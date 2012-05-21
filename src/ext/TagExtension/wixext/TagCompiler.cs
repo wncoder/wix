@@ -1,6 +1,14 @@
 //-------------------------------------------------------------------------------------------------
 // <copyright file="TagCompiler.cs" company="Microsoft">
 //    Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
 // </copyright>
 // 
 // <summary>
@@ -51,11 +59,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         {
             switch (parentElement.LocalName)
             {
+                case "Bundle":
+                    switch (element.LocalName)
+                    {
+                        case "Tag":
+                            this.ParseBundleTagElement(element);
+                            break;
+                        default:
+                            this.Core.UnexpectedElement(parentElement, element);
+                            break;
+                    }
+                    break;
                 case "Product":
                     switch (element.LocalName)
                     {
                         case "Tag":
-                            this.ParseTagElement(element);
+                            this.ParseProductTagElement(element);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -69,16 +88,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         }
 
         /// <summary>
-        /// Parses a Tag element for Software Id Tag registration.
+        /// Parses a Tag element for Software Id Tag registration under a Bundle element.
         /// </summary>
         /// <param name="node">The element to parse.</param>
-        private void ParseTagElement(XmlNode node)
+        private void ParseBundleTagElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             string name = null;
             string regid = null;
-            string feature = "WixSwidTag";
             YesNoType licensed = YesNoType.NotSet;
+            string type = null;
 
             foreach (XmlAttribute attrib in node.Attributes)
             {
@@ -92,11 +111,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         case "Regid":
                             regid = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
                             break;
-                        case "Feature":
-                            feature = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            break;
                         case "Licensed":
                             licensed = this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Type":
+                            type = this.ParseTagTypeAttribute(sourceLineNumbers, node, attrib);
                             break;
                         default:
                             this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
@@ -124,7 +143,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null == name)
+            if (String.IsNullOrEmpty(name))
             {
                 XmlAttribute productNameAttribute = node.ParentNode.Attributes["Name"];
                 if (null != productNameAttribute)
@@ -137,12 +156,113 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 }
             }
 
-            if (null != name && !CompilerCore.IsValidLongFilename(name, false))
+            if (!String.IsNullOrEmpty(name) && !CompilerCore.IsValidLongFilename(name, false))
             {
                 this.Core.OnMessage(TagErrors.IllegalName(sourceLineNumbers, node.ParentNode.LocalName, name));
             }
 
-            if (null == regid)
+            if (String.IsNullOrEmpty(regid))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Regid"));
+            }
+
+            if (!this.Core.EncounteredError)
+            {
+                string fileName = String.Concat(regid, " ", name, ".swidtag");
+
+                Row tagRow = this.Core.CreateRow(sourceLineNumbers, "WixBundleTag");
+                tagRow[0] = fileName;
+                tagRow[1] = regid;
+                tagRow[2] = name;
+                if (YesNoType.Yes == licensed)
+                {
+                    tagRow[3] = 1;
+                }
+                // field 4 is the TagXml set by the binder.
+                tagRow[5] = type;
+            }
+        }
+
+
+        /// <summary>
+        /// Parses a Tag element for Software Id Tag registration under a Product element.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        private void ParseProductTagElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string name = null;
+            string regid = null;
+            string feature = "WixSwidTag";
+            YesNoType licensed = YesNoType.NotSet;
+            string type = null; ;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Name":
+                            name = this.Core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
+                            break;
+                        case "Regid":
+                            regid = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Feature":
+                            feature = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Licensed":
+                            licensed = this.Core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            break;
+                        case "Type":
+                            type = this.ParseTagTypeAttribute(sourceLineNumbers, node, attrib);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.Schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (String.IsNullOrEmpty(name))
+            {
+                XmlAttribute productNameAttribute = node.ParentNode.Attributes["Name"];
+                if (null != productNameAttribute)
+                {
+                    name = productNameAttribute.Value;
+                }
+                else
+                {
+                    this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Name"));
+                }
+            }
+
+            if (!String.IsNullOrEmpty(name) && !CompilerCore.IsValidLongFilename(name, false))
+            {
+                this.Core.OnMessage(TagErrors.IllegalName(sourceLineNumbers, node.ParentNode.LocalName, name));
+            }
+
+            if (String.IsNullOrEmpty(regid))
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Regid"));
             }
@@ -180,7 +300,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 wixFileRow.Source = String.Concat("%TEMP%\\", fileName);
 
                 this.Core.EnsureTable(sourceLineNumbers, "SoftwareIdentificationTag");
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixTag");
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixProductTag");
                 row[0] = fileId;
                 row[1] = regid;
                 row[2] = name;
@@ -188,9 +308,38 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 {
                     row[3] = 1;
                 }
+                row[4] = type;
 
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "File", fileId);
             }
+        }
+
+        private string ParseTagTypeAttribute(SourceLineNumberCollection sourceLineNumbers, XmlNode node, XmlAttribute attrib)
+        {
+            string typeValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+            switch (typeValue)
+            {
+                case "application":
+                    typeValue = "Application";
+                    break;
+                case "component":
+                    typeValue = "Component";
+                    break;
+                case "feature":
+                    typeValue = "Feature";
+                    break;
+                case "group":
+                    typeValue = "Group";
+                    break;
+                case "patch":
+                    typeValue = "Patch";
+                    break;
+                default:
+                    this.Core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name, attrib.LocalName, typeValue, "application", "component", "feature", "group", "patch"));
+                    break;
+            }
+
+            return typeValue;
         }
     }
 }

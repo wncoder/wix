@@ -24,6 +24,7 @@
   <?define NetFx40RedistLink =  http://go.microsoft.com/fwlink/?LinkId=247729 ?>
   <?define NetFx40ClientWebLink = http://go.microsoft.com/fwlink/?linkid=182804 ?>
   <?define NetFx40ClientRedistLink =  http://go.microsoft.com/fwlink/?LinkId=247730 ?>
+  <?define NetFx40EulaLink =  http://go.microsoft.com/fwlink/?LinkID=188993 ?>
 
   <Fragment>
     <util:RegistrySearch
@@ -37,6 +38,9 @@
 
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK40"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx40Web" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx40EulaLink)" />
 
     <PackageGroup Id="NetFx40Web">
       <ExePackage
@@ -67,6 +71,9 @@
 
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK40"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx40Redist" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx40EulaLink)" />
 
     <PackageGroup Id="NetFx40Redist">
       <ExePackage
@@ -101,13 +108,16 @@
         Variable="NETFRAMEWORK40CLIENT"
         Root="HKLM"
         Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Client"
-        Value="Installed"
+        Value="Install"
         Result="value" />
   </Fragment>
 
 
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK40CLIENT"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx40ClientWeb" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx40EulaLink)" />
 
     <PackageGroup Id="NetFx40ClientWeb">
       <ExePackage
@@ -138,6 +148,9 @@
 
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK40CLIENT"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx40ClientRedist" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx40EulaLink)" />
 
     <PackageGroup Id="NetFx40ClientRedist">
       <ExePackage

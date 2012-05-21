@@ -13,12 +13,12 @@
 // <summary>Tests how Candle handles the suppress warning switch.</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.SuppressWarnings
+namespace WixTest.Tests.Tools.Candle.SuppressWarnings
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles the suppress warning switch.

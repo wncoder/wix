@@ -231,7 +231,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             bool succeeded = false;
             try
             {
-                HttpWebRequest request = WixBA.Model.CreateWebRequest("http://wix.sourceforge.net/releases/wix3.6.feed");
+                HttpWebRequest request = WixBA.Model.CreateWebRequest("http://wixtoolset.org/releases/feed/v3.6");
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
 
                 if (response.StatusCode == HttpStatusCode.OK)

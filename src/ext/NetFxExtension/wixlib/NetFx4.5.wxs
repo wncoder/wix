@@ -18,12 +18,12 @@
         Official documentation can be found at the following location:
 
            .NET Framework 4.5 - (preliminary) http://msdn.microsoft.com/en-us/library/5a4x27ek.aspx, http://msdn.microsoft.com/en-us/library/ee942965(v=VS.110).aspx
-           
     -->
 
   <?define NetFx45MinRelease = 377811?>
   <?define NetFx45WebLink = http://go.microsoft.com/fwlink/?linkid=223706 ?>
   <?define NetFx45RedistLink = http://go.microsoft.com/fwlink/?LinkId=223704 ?>
+  <?define NetFx45EulaLink =  http://go.microsoft.com/fwlink/?LinkId=TODO ?>
 
   <Fragment>
     <util:RegistrySearch
@@ -34,9 +34,12 @@
         Value="Release"
         Result="value" />
   </Fragment>
-
+  
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK45"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx45Web" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx45EulaLink)" />
 
     <PackageGroup Id="NetFx45Web">
       <ExePackage
@@ -67,6 +70,9 @@
 
   <Fragment>
     <util:RegistrySearchRef Id="NETFRAMEWORK45"/>
+
+    <WixVariable Id="WixMbaPrereqPackageId" Value="NetFx45Redist" />
+    <WixVariable Id="WixMbaPrereqLicenseUrl" Value="$(var.NetFx45EulaLink)" />
 
     <PackageGroup Id="NetFx45Redist">
       <ExePackage

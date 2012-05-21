@@ -13,7 +13,7 @@
 // <summary>VS Extension VSSetup tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.VSExtension
+namespace WixTest.Tests.Extensions.VSExtension
 {
     using System;
     using System.IO;
@@ -23,9 +23,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.VSExtension
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions;
+    using WixTest;
+    using WixTest.Verifiers;
+    using WixTest.Verifiers.Extensions;
 
     /// <summary>
     /// NetFX extension VSSetup element tests

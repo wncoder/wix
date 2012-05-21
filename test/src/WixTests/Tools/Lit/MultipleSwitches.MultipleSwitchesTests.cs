@@ -15,12 +15,12 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Lit.MultipleInputSwitches
+namespace WixTest.Tests.Tools.Lit.MultipleInputSwitches
 {
     using System;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Tests how Lit handles multiple input switches.

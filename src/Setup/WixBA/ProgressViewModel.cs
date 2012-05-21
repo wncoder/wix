@@ -123,7 +123,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             lock (this)
             {
                 this.cacheProgress = e.OverallPercentage;
-                this.Progress = (this.cacheProgress + this.executeProgress) / 2;
+                this.Progress = (this.cacheProgress + this.executeProgress) / (LaunchAction.Layout == WixBA.Model.Command.Action ? 1 : 2);
                 e.Result = this.root.Canceled ? Result.Cancel : Result.Ok;
             }
         }
@@ -133,7 +133,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             lock (this)
             {
                 this.cacheProgress = 100;
-                this.Progress = (this.cacheProgress + this.executeProgress) / 2;
+                this.Progress = (this.cacheProgress + this.executeProgress) / (LaunchAction.Layout == WixBA.Model.Command.Action ? 1 : 2);
             }
         }
 

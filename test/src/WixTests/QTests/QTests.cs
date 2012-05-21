@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.IO;
@@ -23,7 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     using System.Text;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Contains test methods for the QTests

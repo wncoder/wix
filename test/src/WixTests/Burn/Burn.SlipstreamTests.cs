@@ -1,13 +1,21 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="SlipstreamTests.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
 //     Contains methods test Burn slipstreaming.
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
+namespace WixTest.Tests.Burn
 {
     using System;
     using System.Collections.Generic;
@@ -15,6 +23,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
     using System.Text;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
     using Microsoft.Win32;
     using System.IO;
 
@@ -142,7 +151,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             }
 
             // Remove only the slipstream patch and ensure the version is back to default.
-            this.SetPackageRequestedState("patchA", Bootstrapper.RequestState.Absent);
+            this.SetPackageRequestedState("patchA", RequestState.Absent);
             install.Modify();
 
             Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package A payload *still* installed at: ", packageSourceCodeInstalled));
@@ -193,8 +202,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package B payload installed at: ", packageSourceCodeInstalled));
 
             // Remove package A and it's patch should go with it.
-            this.SetPackageRequestedState("packageA", Bootstrapper.RequestState.Absent);
-            this.SetPackageRequestedState("patchA", Bootstrapper.RequestState.Absent);
+            this.SetPackageRequestedState("packageA", RequestState.Absent);
+            this.SetPackageRequestedState("patchA", RequestState.Absent);
             install.Modify();
 
             this.ResetPackageStates("packageA");

@@ -13,11 +13,11 @@
 // <summary>Test how Candle handles the ? switch</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle.Help
+namespace WixTest.Tests.Tools.Candle.Help
 {
     using System;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Candle handles the ? switch.

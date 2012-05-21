@@ -904,7 +904,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     customRow.SectionId = row.SectionId;
 
-                    string[] data = row[1].ToString().Split('\x0');
+                    string[] data = row[1].ToString().Split(Common.CustomRowFieldSeparator);
 
                     for (int i = 0; i < data.Length; ++i)
                     {

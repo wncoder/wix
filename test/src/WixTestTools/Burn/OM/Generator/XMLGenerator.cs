@@ -18,10 +18,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+using WixTest.Burn.OM.ElementAttribute;
 using System.Xml;
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.Generator
+namespace WixTest.Burn.OM.Generator
 {
     public class XMLGenerator
     {

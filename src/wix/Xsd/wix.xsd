@@ -734,7 +734,7 @@
       </xs:attribute>
       <xs:attribute name="InstallCommand" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The command-line arguments to specify to indicate an install.</xs:documentation>
+          <xs:documentation>The command-line arguments provided to the ExePackage during install. If this attribute is absent the executable will be launched with no command-line arguments.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="RepairCommand" type="xs:string">
@@ -747,7 +747,7 @@
       </xs:attribute>
       <xs:attribute name="UninstallCommand" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The command-line arguments to specify to indicate an uninstall.</xs:documentation>
+          <xs:documentation>The command-line arguments provided to the ExePackage during uninstall. If this attribute is absent the executable will be launched with no command-line arguments. To prevent an ExePackage from being uninstalled set the Permanent attribute to "yes".</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="PerMachine" type="YesNoTypeUnion">
@@ -872,6 +872,26 @@
     <xs:attribute name="CacheId" type="xs:string">
       <xs:annotation>
         <xs:documentation>The identifier to use when caching the package.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="DisplayName" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the display name to place in the bootstrapper application data manifest for the package. By default, ExePackages
+          use the ProductName field from the version information, MsiPackages use the ProductName property, and MspPackages use
+          the DisplayName patch metadata property. Other package types must use this attribute to define a display name in the
+          bootstrapper application data manifest.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="Description" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the description to place in the bootstrapper application data manifest for the package. By default, ExePackages
+          use the FileName field from the version information, MsiPackages use the ARPCOMMENTS property, and MspPackages use
+          the Description patch metadata property. Other package types must use this attribute to define a desciption in the
+          bootstrapper application data manifest.
+        </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="LogPathVariable" type="xs:string">
@@ -1060,6 +1080,14 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+      <xs:anyAttribute namespace="##other" processContents="lax">
+        <xs:annotation>
+          <xs:documentation>
+                    Extensibility point in the WiX XML Schema.  Schema extensions can register additional
+                    attributes at this point in the schema.
+                </xs:documentation>
+        </xs:annotation>
+      </xs:anyAttribute>
     </xs:complexType>
   </xs:element>
   <xs:element name="Container">
@@ -1073,19 +1101,35 @@
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="PackageGroupRef" />
       </xs:choice>
-      <xs:attribute name="Id" type="xs:string" use="optional">
+      <xs:attribute name="DownloadUrl" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The destination path and file name for this container.</xs:documentation>
+          <xs:documentation>
+            <html:p>The URL to use to download the container. This attribute is only valid when the container is detached. The
+            following substitutions are supported:</html:p>
+            <html:ul>
+              <html:li>{0} is always null.</html:li>
+              <html:li>{1} is replaced by the container Id.</html:li>
+              <html:li>{2} is replaced by the container file name.</html:li>
+            </html:ul>
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="Name" type="xs:string" use="optional">
+      <xs:attribute name="Id" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The destination path and file name for this container.</xs:documentation>
+          <xs:documentation>The unique identifier for the container. If this attribute is not specified the Name attribute will be used.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="Type" type="BurnContainerType" use="optional">
+      <xs:attribute name="Name" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The destination path and file name for this container.</xs:documentation>
+          <xs:documentation>The file name for this container. A relative path may be provided to place the container in a sub-folder of the bundle.</xs:documentation>
+        </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="Type" type="BurnContainerType">
+        <xs:annotation>
+          <xs:documentation>
+            Indicates whether the container is "attached" to the bundle executable or placed external to the bundle extecutable as "detached". If
+            this attribute is not specified, the default is to create a detached container.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
     </xs:complexType>
@@ -1290,6 +1334,7 @@
       <xs:documentation>Create a RelatedBundle element.</xs:documentation>
       <xs:appinfo>
         <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Bundle" />
+        <xse:parent namespace="http://schemas.microsoft.com/wix/2006/wi" ref="Fragment" />
       </xs:appinfo>
     </xs:annotation>
     <xs:complexType>
@@ -1732,6 +1777,7 @@
         <xs:element ref="PayloadGroup" />
         <xs:element ref="Property" />
         <xs:element ref="PropertyRef" />
+        <xs:element ref="RelatedBundle" />
         <xs:element ref="SetDirectory" />
         <xs:element ref="SetProperty" />
         <xs:element ref="SFPCatalog" />

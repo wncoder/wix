@@ -751,6 +751,12 @@ private: // privates
         LPWSTR sczModulePath = NULL;
         IXMLDOMDocument *pixdManifest = NULL;
 
+        hr = BalManifestLoad(m_hModule, &pixdManifest);
+        BalExitOnFailure(hr, "Failed to load bootstrapper application manifest.");
+
+        hr = ParseOverridableVariablesFromXml(pixdManifest);
+        BalExitOnFailure(hr, "Failed to read overridable variables.");
+
         hr = ProcessCommandLine(&m_sczLanguage);
         ExitOnFailure(hr, "Unknown commandline parameters.");
 
@@ -762,9 +768,6 @@ private: // privates
 
         hr = LoadTheme(sczModulePath, m_sczLanguage);
         ExitOnFailure(hr, "Failed to load theme.");
-
-        hr = BalManifestLoad(m_hModule, &pixdManifest);
-        BalExitOnFailure(hr, "Failed to load bootstrapper application manifest.");
 
         hr = BalInfoParseFromXml(&m_Bundle, pixdManifest);
         BalExitOnFailure(hr, "Failed to load bundle information.");
@@ -801,6 +804,8 @@ private: // privates
         HRESULT hr = S_OK;
         int argc = 0;
         LPWSTR* argv = NULL;
+        LPWSTR sczVariableName = NULL;
+        LPWSTR sczVariableValue = NULL;
 
         if (m_command.wzCommandLine && *m_command.wzCommandLine)
         {
@@ -825,6 +830,30 @@ private: // privates
                         BalExitOnFailure(hr, "Failed to copy language.");
                     }
                 }
+                else if (m_sdOverridableVariables)
+                {
+                    wchar_t* pwc = wcschr(argv[i], L'=');
+                    if (pwc)
+                    {
+                        hr = StrAllocString(&sczVariableName, argv[i], pwc - argv[i]);
+                        BalExitOnFailure(hr, "Failed to copy variable name.");
+
+                        hr = DictKeyExists(m_sdOverridableVariables, sczVariableName);
+                        if (E_NOTFOUND == hr)
+                        {
+                            BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "Ignoring attempt to set non-overridable variable: '%ls'.", sczVariableName);
+                            hr = S_OK;
+                            continue;
+                        }
+                        ExitOnFailure(hr, "Failed to check the dictionary of overridable variables.");
+
+                        hr = StrAllocString(&sczVariableValue, ++pwc, 0);
+                        BalExitOnFailure(hr, "Failed to copy variable value.");
+
+                        hr = m_pEngine->SetVariableString(sczVariableName, sczVariableValue);
+                        BalExitOnFailure(hr, "Failed to set variable.");
+                    }
+                }
             }
         }
 
@@ -833,6 +862,9 @@ private: // privates
         {
             ::LocalFree(argv);
         }
+
+        ReleaseStr(sczVariableName);
+        ReleaseStr(sczVariableValue);
 
         return hr;
     }
@@ -900,6 +932,57 @@ private: // privates
         ReleaseStr(sczCaption);
         ReleaseStr(sczThemePath);
 
+        return hr;
+    }
+
+
+    HRESULT ParseOverridableVariablesFromXml(
+        __in IXMLDOMDocument* pixdManifest
+        )
+    {
+        HRESULT hr = S_OK;
+        IXMLDOMNode* pNode = NULL;
+        IXMLDOMNodeList* pNodes = NULL;
+        DWORD cNodes = 0;
+        LPWSTR scz = NULL;
+
+        // get the list of variables users can override on the command line
+        hr = XmlSelectNodes(pixdManifest, L"/BootstrapperApplicationData/WixStdbaOverridableVariable", &pNodes);
+        if (S_FALSE == hr)
+        {
+            ExitFunction1(hr = S_OK);
+        }
+        ExitOnFailure(hr, "Failed to select overridable variable nodes.");
+
+        hr = pNodes->get_length((long*)&cNodes);
+        ExitOnFailure(hr, "Failed to get overridable variable node count.");
+
+        if (cNodes)
+        {
+            hr = DictCreateStringList(&m_sdOverridableVariables, 32, DICT_FLAG_NONE);
+            ExitOnFailure(hr, "Failed to create the string dictionary.");
+
+            for (DWORD i = 0; i < cNodes; ++i)
+            {
+                hr = XmlNextElement(pNodes, &pNode, NULL);
+                ExitOnFailure(hr, "Failed to get next node.");
+
+                // @Name
+                hr = XmlGetAttributeEx(pNode, L"Name", &scz);
+                ExitOnFailure(hr, "Failed to get @Name.");
+
+                hr = DictAddKey(m_sdOverridableVariables, scz);
+                ExitOnFailure1(hr, "Failed to add \"%ls\" to the string dictionary.", scz);
+
+                // prepare next iteration
+                ReleaseNullObject(pNode);
+            }
+        }
+
+    LExit:
+        ReleaseObject(pNode);
+        ReleaseObject(pNodes);
+        ReleaseStr(scz);
         return hr;
     }
 
@@ -2100,6 +2183,8 @@ public:
         m_fSuppressOptionsUI = FALSE;
         m_fSuppressDowngradeFailure = FALSE;
 
+        m_sdOverridableVariables = NULL;
+
         m_fPrereq = fPrereq;
         m_sczPrereqPackage = NULL;
         m_fPrereqInstalled = FALSE;
@@ -2118,6 +2203,7 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
+        ReleaseDict(m_sdOverridableVariables);
         ReleaseStr(m_sczFailedMessage);
         ReleaseStr(m_sczConfirmCloseMessage);
         BalConditionsUninitialize(&m_Conditions);
@@ -2167,6 +2253,8 @@ private:
     LPWSTR m_sczLicenseUrl;
     BOOL m_fSuppressOptionsUI;
     BOOL m_fSuppressDowngradeFailure;
+
+    STRINGDICT_HANDLE m_sdOverridableVariables;
 
     BOOL m_fPrereq;
     LPWSTR m_sczPrereqPackage;

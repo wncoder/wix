@@ -7,6 +7,14 @@
     <xs:annotation>
         <xs:documentation>
             Copyright (c) Microsoft Corporation.  All rights reserved.
+            
+            The use and distribution terms for this software are covered by the
+            Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+            which can be found in the file CPL.TXT at the root of this distribution.
+            By using this software in any fashion, you are agreeing to be bound by
+            the terms of this license.
+            
+            You must not remove this notice, or any other, from this software.
 
             The source code schema for the Windows Installer XML Toolset Software Id Tag Extension.
         </xs:documentation>
@@ -52,14 +60,52 @@
                     It is recommended to <html:strong>not</html:strong> set this attribute.</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="Licensed" type="YesNoType">
+            <xs:attribute name="Licensed" type="YesNoTypeUnion">
               <xs:annotation>
                 <xs:documentation>Indicates whether the software requires a license. The default is
                 "no". </xs:documentation>
               </xs:annotation>
             </xs:attribute>
-          </xs:complexType>
+          <xs:attribute name="Type" type="TagTypeTypeUnion">
+            <xs:annotation>
+              <xs:documentation>
+                Defines the type of software tag being defined. One of the following values may be used: "group",
+                "application", "patch", or "component". The default is "application" when the Tag element is a child of
+                the Product element. The default is "group" or "application" when the Tag element is under a Bundle element
+                based on the contents of the bundle's chain. The Bundle/Tag@Type will be "application" unless there are one
+                or more packages that define a software Tag@Type of "application" or "group".
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
     </xs:element>
+
+  <xs:simpleType name="TagTypeTypeUnion">
+    <xs:annotation>
+      <xs:documentation>Values of this type will be "application", "component", "feature", "group", or "patch".</xs:documentation>
+    </xs:annotation>
+    <xs:union memberTypes="TagType PreprocessorVariables"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="TagType">
+    <xs:annotation>
+      <xs:documentation>Values of this type will be "application", "component", "feature", "group", or "patch".</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:NMTOKEN">
+      <xs:enumeration value="application" />
+      <xs:enumeration value="component" />
+      <xs:enumeration value="feature" />
+      <xs:enumeration value="group" />
+      <xs:enumeration value="patch" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="YesNoTypeUnion">
+    <xs:annotation>
+      <xs:documentation>Values of this type will either be "yes" or "no".</xs:documentation>
+    </xs:annotation>
+    <xs:union memberTypes="YesNoType PreprocessorVariables"/>
+  </xs:simpleType>
 
   <xs:simpleType name="YesNoType">
     <xs:annotation>
@@ -68,6 +114,15 @@
     <xs:restriction base="xs:NMTOKEN">
       <xs:enumeration value="no" />
       <xs:enumeration value="yes" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PreprocessorVariables">
+    <xs:annotation>
+      <xs:documentation>A type that represents that 1 or more preprocessor variables (as they appear in sources on disk, before preprocessor has run).</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(\$\(\w+\.(\w|[.])+\))+" />
     </xs:restriction>
   </xs:simpleType>
 </xs:schema>

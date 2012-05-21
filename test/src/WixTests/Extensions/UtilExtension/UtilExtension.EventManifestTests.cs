@@ -13,16 +13,16 @@
 // <summary>Util Extension EventManifest tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.UtilExtension
+namespace WixTest.Tests.Extensions.UtilExtension
 {
     using System;
     using System.IO;
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions;
+    using WixTest;
+    using WixTest.Verifiers;
+    using WixTest.Verifiers.Extensions;
     
     using Microsoft.Win32;
    

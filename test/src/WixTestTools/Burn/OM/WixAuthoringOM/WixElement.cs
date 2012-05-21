@@ -13,9 +13,9 @@
 // <summary>Wix element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM
+namespace WixTest.Burn.OM.WixAuthoringOM
 {
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     [BurnXmlElement("Wix")]
     public class WixElement

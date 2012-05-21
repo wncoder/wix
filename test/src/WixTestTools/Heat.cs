@@ -13,7 +13,7 @@
 // <summary>A class that wraps Heat</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.IO;

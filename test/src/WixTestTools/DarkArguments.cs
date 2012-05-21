@@ -14,7 +14,7 @@
 //     Fields, properties and methods for working with Dark arguments
 // </summary>
 //-----------------------------------------------------------------------
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;

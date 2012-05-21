@@ -13,7 +13,7 @@
 // <summary>Regresssion tests for Candle</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle
+namespace WixTest.Tests.Tools.Candle
 {
     using System;
     using System.IO;
@@ -21,7 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Candle
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Regresssion tests for Candle

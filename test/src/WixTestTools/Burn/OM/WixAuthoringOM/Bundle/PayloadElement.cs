@@ -13,9 +13,9 @@
 // <summary>Resource element OM</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.WixAuthoringOM.Bundle
+namespace WixTest.Burn.OM.WixAuthoringOM.Bundle
 {
-    using Microsoft.Tools.WindowsInstallerXml.Test.Burn.OM.ElementAttribute;
+    using WixTest.Burn.OM.ElementAttribute;
 
     [BurnXmlElement("Payload")]
     public class PayloadElement

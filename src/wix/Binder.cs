@@ -114,6 +114,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private bool reuseCabinets;
         private bool suppressAssemblies;
         private bool suppressAclReset;
+        private bool suppressBuildInfo;
         private bool suppressFileHashAndInfo;
         private StringCollection suppressICEs;
         private bool suppressLayout;
@@ -128,6 +129,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         private string contentsFile;
         private string outputsFile;
         private string builtOutputsFile;
+        private string wixprojectFile;
 
         /// <summary>
         /// Creates an MSI binder.
@@ -229,6 +231,16 @@ namespace Microsoft.Tools.WindowsInstallerXml
         {
             get { return this.suppressAssemblies; }
             set { this.suppressAssemblies = value; }
+        }
+
+        /// <summary>
+        /// Gets and sets the option to suppress writing build information in the output.
+        /// </summary>
+        /// <value>The option to suppress writing build information in the output.</value>
+        public bool SuppressBuildInfo
+        {
+            get { return this.suppressBuildInfo; }
+            set { this.suppressBuildInfo = value; }
         }
 
         /// <summary>
@@ -405,6 +417,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             return this.invalidArgs;
                         }
                     }
+                    else if (parameter.Equals("wixprojectfile", StringComparison.Ordinal))
+                    {
+                        this.wixprojectFile = CommandLine.GetFile(parameter, consoleMessageHandler, args, ++i);
+
+                        if (String.IsNullOrEmpty(this.wixprojectFile))
+                        {
+                            return this.invalidArgs;
+                        }
+                    }
                     else if (parameter.Equals("O1", StringComparison.Ordinal))
                     {
                         consoleMessageHandler.Display(this, WixWarnings.DeprecatedCommandLineSwitch("O1"));
@@ -433,6 +454,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     else if (parameter.Equals("sacl", StringComparison.Ordinal))
                     {
                         this.suppressAclReset = true;
+                    }
+                    else if (parameter.Equals("sbuildinfo", StringComparison.Ordinal))
+                    {
+                        this.suppressBuildInfo = true;
                     }
                     else if (parameter.Equals("sf", StringComparison.Ordinal))
                     {
@@ -1547,6 +1572,33 @@ namespace Microsoft.Tools.WindowsInstallerXml
             MediaRowCollection mediaRows = new MediaRowCollection();
             Hashtable suppressModularizationIdentifiers = null;
             StringCollection suppressedTableNames = new StringCollection();
+            Table propertyTable = output.Tables["Property"];
+
+            // write the build info to the database
+            if (!this.suppressBuildInfo && OutputType.Product == output.Type && null != propertyTable && null != this.pdbFile)
+            {
+                Row propertyRow = propertyTable.CreateRow(null);
+                propertyRow[0] = "WixPdbPath";
+                propertyRow[1] = this.pdbFile;
+            }
+            
+            Table buildInfoTable = output.EnsureTable(this.core.TableDefinitions["WixBuildInfo"]);
+            Row buildInfoRow = buildInfoTable.CreateRow(null);
+
+            Assembly executingAssembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(executingAssembly.Location);
+            buildInfoRow[0] = fileVersion.FileVersion;
+            buildInfoRow[1] = this.OutputFile ?? databaseFile;
+
+            if (!String.IsNullOrEmpty(this.wixprojectFile))
+            {
+                buildInfoRow[2] = this.wixprojectFile;
+            }
+
+            if (!String.IsNullOrEmpty(this.pdbFile))
+            {
+                buildInfoRow[3] = this.pdbFile;
+            }
 
             // gather all the wix variables
             Table wixVariableTable = output.Tables["WixVariable"];
@@ -1577,7 +1629,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // if there are any fields to resolve later, create the cache to populate during bind
             IDictionary<string, string> variableCache = null;
-            if (delayedFields.Count != 0)
+            if (0 < delayedFields.Count)
             {
                 variableCache = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             }
@@ -1693,7 +1745,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // add binder variables for all properties
-            Table propertyTable = output.Tables["Property"];
+            propertyTable = output.Tables["Property"];
             if (null != propertyTable)
             {
                 foreach (Row propertyRow in propertyTable.Rows)
@@ -1773,7 +1825,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             this.UpdateControlText(output);
 
-            if (delayedFields.Count != 0)
+            if (0 < delayedFields.Count)
             {
                 this.ResolveDelayedFields(output, delayedFields, variableCache, modularizationGuid);
             }
@@ -2944,6 +2996,22 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Populates the variable cache with specific package properties.
+        /// </summary>
+        /// <param name="package">The package with properties to cache.</param>
+        /// <param name="variableCache">The property cache.</param>
+        private static void PopulatePackageVariableCache(ChainPackageInfo package, IDictionary<string, string> variableCache)
+        {
+            string id = package.Id;
+
+            variableCache.Add(String.Concat("packageDescription.", id), package.Description);
+            variableCache.Add(String.Concat("packageLanguage.", id), package.Language);
+            variableCache.Add(String.Concat("packageManufacturer.", id), package.Manufacturer);
+            variableCache.Add(String.Concat("packageName.", id), package.DisplayName);
+            variableCache.Add(String.Concat("packageVersion.", id), package.Version);
+        }
+
+        /// <summary>
         /// Binds a bundle.
         /// </summary>
         /// <param name="bundle">The bundle to bind.</param>
@@ -3014,6 +3082,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // localize fields, resolve wix variables, and resolve file paths
             this.ResolveFields(bundle.Tables, cabinets, delayedFields);
 
+            // if there are any fields to resolve later, create the cache to populate during bind
+            IDictionary<string, string> variableCache = null;
+            if (0 < delayedFields.Count)
+            {
+                variableCache = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            }
+
             if (this.core.EncounteredError)
             {
                 return false;
@@ -3023,10 +3098,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             List<RelatedBundleInfo> allRelatedBundles = new List<RelatedBundleInfo>();
             if (null != relatedBundleTable && 0 < relatedBundleTable.Rows.Count)
             {
-                allRelatedBundles.Capacity = relatedBundleTable.Rows.Count;
+                Dictionary<string, bool> deduplicatedRelatedBundles = new Dictionary<string, bool>();
                 foreach (Row row in relatedBundleTable.Rows)
                 {
-                    allRelatedBundles.Add(new RelatedBundleInfo(row));
+                    string id = (string)row[0];
+                    if (!deduplicatedRelatedBundles.ContainsKey(id))
+                    {
+                        deduplicatedRelatedBundles[id] = true;
+                        allRelatedBundles.Add(new RelatedBundleInfo(row));
+                    }
                 }
             }
 
@@ -3117,13 +3197,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // extract files that come from cabinet files (this does not extract files from merge modules)
             this.ExtractCabinets(cabinets);
 
-            BundleInfo bundleInfo = new BundleInfo(bundleFile, bundleTable.Rows[0]);
+            WixBundleRow bundleInfo = (WixBundleRow)bundleTable.Rows[0];
+            bundleInfo.PerMachine = true; // default to per-machine but the first-per user package would flip it.
 
             // Get update registration if specified.
             Table updateRegistrationTable = bundle.Tables["WixUpdateRegistration"];
+            WixUpdateRegistrationRow updateRegistrationInfo = null;
             if (null != updateRegistrationTable)
             {
-                bundleInfo.UpdateRegistrationInfo = new UpdateRegistrationInfo(updateRegistrationTable.Rows[0]);
+                updateRegistrationInfo = (WixUpdateRegistrationRow)updateRegistrationTable.Rows[0];
             }
 
             // Get the explicit payloads.
@@ -3131,12 +3213,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Dictionary<string, PayloadInfoRow> allPayloads = new Dictionary<string, PayloadInfoRow>(payloadTable.Rows.Count);
 
             Table payloadInfoTable = bundle.EnsureTable(core.TableDefinitions["PayloadInfo"]);
-
             foreach (PayloadInfoRow row in payloadInfoTable.Rows)
             {
                 allPayloads.Add(row.Id, row);
             }
 
+            RowDictionary<Row> payloadDisplayInformationRows = new RowDictionary<Row>(bundle.Tables["PayloadDisplayInformation"]);
             foreach (Row row in payloadTable.Rows)
             {
                 string id = (string)row[0];
@@ -3149,10 +3231,25 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else
                 {
-                    allPayloads.Add(id, payloadInfo = new PayloadInfoRow(row.SourceLineNumbers, payloadInfoTable));
+                    allPayloads.Add(id, payloadInfo = (PayloadInfoRow)payloadInfoTable.CreateRow(row.SourceLineNumbers));
                 }
 
                 payloadInfo.FillFromPayloadRow(bundle, row);
+
+                // Check if there is an override row for the display name or description.
+                Row payloadDisplayInformationRow;
+                if (payloadDisplayInformationRows.TryGet(id, out payloadDisplayInformationRow))
+                {
+                    if (!String.IsNullOrEmpty(payloadDisplayInformationRow[1] as string))
+                    {
+                        payloadInfo.ProductName = (string)payloadDisplayInformationRow[1];
+                    }
+
+                    if (!String.IsNullOrEmpty(payloadDisplayInformationRow[2] as string))
+                    {
+                        payloadInfo.Description = (string)payloadDisplayInformationRow[2];
+                    }
+                }
 
                 if (payloadInfo.Packaging == PackagingType.Unknown)
                 {
@@ -3176,7 +3273,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // Create the default attached container for payloads that need to be attached but don't have an explicit container.
-            containers.Add("WixAttachedContainer", new ContainerInfo("WixAttachedContainer", "bundle-attached.cab", "attached", this.FileManager));
+            containers.Add("WixAttachedContainer", new ContainerInfo("WixAttachedContainer", "bundle-attached.cab", "attached", null, this.FileManager));
             containers["WixAttachedContainer"].Payloads = payloadsInDefaultAttachedContainer;
 
             // Create lists of which payloads go in each container or are layout only.
@@ -3227,7 +3324,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // Each catalog is also a payload
                     string payloadId = Common.GenerateIdentifier("pay", true, (string)row[1]);
                     string catalogFile = this.FileManager.ResolveFile((string)row[1], "Catalog", row.SourceLineNumbers, BindStage.Normal);
-                    PayloadInfoRow payloadInfo = new PayloadInfoRow(row.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
+                    PayloadInfoRow payloadInfo = PayloadInfoRow.Create(row.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
 
                     // Add the payload to the UX container
                     allPayloads.Add(payloadInfo.Id, payloadInfo);
@@ -3253,8 +3350,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
                 else // package
                 {
+                    Table chainPackageInfoTable = bundle.EnsureTable(this.core.TableDefinitions["ChainPackageInfo"]);
+
                     ChainPackageInfo packageInfo = new ChainPackageInfo(row, wixGroupTable, allPayloads, containers, this.FileManager, this.core, bundle);
                     allPackages.Add(packageInfo.Id, packageInfo);
+
+                    chainPackageInfoTable.Rows.Add(packageInfo);
+
+                    // Add package properties to resolve fields later.
+                    if (null != variableCache)
+                    {
+                        Binder.PopulatePackageVariableCache(packageInfo, variableCache);
+                    }
                 }
             }
 
@@ -3514,6 +3621,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // Resolve any delayed fields before generating the manifest.
+            if (0 < delayedFields.Count)
+            {
+                this.ResolveDelayedFields(bundle, delayedFields, variableCache, null);
+            }
+
             // Set the overridable bundle provider key.
             this.SetBundleProviderKey(bundle, bundleInfo);
 
@@ -3546,14 +3659,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
             string wixExeDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), stubPlatform);
             string stubFile = Path.Combine(wixExeDirectory, "burn.exe");
-            string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleInfo.Path));
+            string bundleTempPath = Path.Combine(this.TempFilesLocation, Path.GetFileName(bundleFile));
 
             this.core.OnMessage(WixVerboses.GeneratingBundle(bundleTempPath, stubFile));
             File.Copy(stubFile, bundleTempPath, true);
             File.SetAttributes(bundleTempPath, FileAttributes.Normal);
 
             FileTransfer bundleTransfer;
-            if (FileTransfer.TryCreate(bundleTempPath, bundleInfo.Path, true, "Bundle", bundleInfo.SourceLineNumbers, out bundleTransfer))
+            if (FileTransfer.TryCreate(bundleTempPath, bundleFile, true, "Bundle", bundleInfo.SourceLineNumbers, out bundleTransfer))
             {
                 bundleTransfer.Built = true;
                 fileTransfers.Add(bundleTransfer);
@@ -3564,7 +3677,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.CreateBootstrapperApplicationManifest(bundle, baManifestPath, uxPayloads);
 
             // Add the bootstrapper application manifest to the set of UX payloads.
-            PayloadInfoRow baManifestPayload = new PayloadInfoRow(null /*TODO*/, bundle, Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), 
+            PayloadInfoRow baManifestPayload = PayloadInfoRow.Create(null /*TODO*/, bundle, Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"), 
                 "BootstrapperApplicationData.xml", baManifestPath, false, true, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
             baManifestPayload.EmbeddedId = string.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloads.Count);
             uxPayloads.Add(baManifestPayload);
@@ -3579,15 +3692,15 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             string manifestPath = Path.Combine(this.TempFilesLocation, "bundle-manifest.xml");
-            this.CreateBurnManifest(bundleInfo, manifestPath, allRelatedBundles, allVariables, orderedSearches, allPayloads, chain, containers, catalogs);
+            this.CreateBurnManifest(bundleFile, bundleInfo, updateRegistrationInfo, manifestPath, allRelatedBundles, allVariables, orderedSearches, allPayloads, chain, containers, catalogs, bundle.Tables["WixBundleTag"]);
 
-            this.UpdateBurnResources(bundleTempPath, bundleInfo);
+            this.UpdateBurnResources(bundleTempPath, bundleFile, bundleInfo);
 
             // update the .wixburn section to point to at the UX and attached container(s) then attach the container(s) if they should be attached.
             using (BurnWriter writer = BurnWriter.Open(bundleTempPath, this.core))
             {
                 FileInfo burnStubFile = new FileInfo(bundleTempPath);
-                writer.InitializeBundleSectionData(burnStubFile.Length, bundleInfo.Id);
+                writer.InitializeBundleSectionData(burnStubFile.Length, bundleInfo.BundleId);
 
                 // Always create UX container and attach it first
                 ContainerInfo uxContainer = containers[Compiler.BurnUXContainerId];
@@ -3774,7 +3887,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void PopulateBundleInfoFromChain(BundleInfo bundleInfo, List<ChainPackageInfo> chainPackages)
+        private void PopulateBundleInfoFromChain(WixBundleRow bundleInfo, List<ChainPackageInfo> chainPackages)
         {
             bool hasPerMachineNonPermanentPackages = false;
 
@@ -3825,11 +3938,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void GenerateBAManifestBundleTables(Output bundle, BundleInfo bundleInfo)
+        private void GenerateBAManifestBundleTables(Output bundle, WixBundleRow bundleInfo)
         {
             Table wixBundlePropertiesTable = bundle.EnsureTable(this.core.TableDefinitions["WixBundleProperties"]);
             Row row = wixBundlePropertiesTable.CreateRow(null);
-            row[0] = bundleInfo.RegistrationInfo.Name;
+            row[0] = bundleInfo.Name;
             row[1] = bundleInfo.LogPathVariable;
             row[2] = (YesNoDefaultType.Yes == bundleInfo.Compressed) ? "yes" : "no";
         }
@@ -3906,9 +4019,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void CreateBurnManifest(BundleInfo bundleInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfoRow> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers, Dictionary<string, CatalogInfo> catalogs)
+        private void CreateBurnManifest(string outputPath, WixBundleRow bundleInfo, WixUpdateRegistrationRow updateRegistrationInfo, string path, List<RelatedBundleInfo> allRelatedBundles, List<VariableInfo> allVariables, List<WixSearchInfo> orderedSearches, Dictionary<string, PayloadInfoRow> allPayloads, ChainInfo chain, Dictionary<string, ContainerInfo> containers, Dictionary<string, CatalogInfo> catalogs, Table wixBundleTagTable)
         {
-            string executableName = Path.GetFileName(bundleInfo.Path);
+            string executableName = Path.GetFileName(outputPath);
 
             using (XmlTextWriter writer = new XmlTextWriter(path, Encoding.UTF8))
             {
@@ -3989,7 +4102,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     if (Compiler.BurnUXContainerId != container.Id && 0 < container.Payloads.Count)
                     {
                         writer.WriteStartElement("Container");
-                        WriteBurnManifestContainerAttributes(writer, executableName, container, attachedContainerIndex);
+                        WriteBurnManifestContainerAttributes(writer, executableName, container, attachedContainerIndex, this.FileManager);
                         writer.WriteEndElement();
                         if ("attached" == container.Type)
                         {
@@ -4025,7 +4138,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 // Write the registration information...
                 writer.WriteStartElement("Registration");
 
-                writer.WriteAttributeString("Id", bundleInfo.Id.ToString("B"));
+                writer.WriteAttributeString("Id", bundleInfo.BundleId.ToString("B"));
                 writer.WriteAttributeString("ExecutableName", executableName);
                 writer.WriteAttributeString("PerMachine", bundleInfo.PerMachine ? "yes" : "no");
                 writer.WriteAttributeString("Tag", bundleInfo.Tag);
@@ -4033,73 +4146,85 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.WriteAttributeString("ProviderKey", bundleInfo.ProviderKey);
 
                 writer.WriteStartElement("Arp");
-                writer.WriteAttributeString("Register", (0 < bundleInfo.RegistrationInfo.DisableModify && bundleInfo.RegistrationInfo.DisableRemove) ? "no" : "yes"); // do not register if disabled modify and remove.
-                writer.WriteAttributeString("DisplayName", bundleInfo.RegistrationInfo.Name);
+                writer.WriteAttributeString("Register", (0 < bundleInfo.DisableModify && bundleInfo.DisableRemove) ? "no" : "yes"); // do not register if disabled modify and remove.
+                writer.WriteAttributeString("DisplayName", bundleInfo.Name);
                 writer.WriteAttributeString("DisplayVersion", bundleInfo.Version);
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
+                if (!String.IsNullOrEmpty(bundleInfo.Publisher))
                 {
-                    writer.WriteAttributeString("Publisher", bundleInfo.RegistrationInfo.Publisher);
+                    writer.WriteAttributeString("Publisher", bundleInfo.Publisher);
                 }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpLink))
+                if (!String.IsNullOrEmpty(bundleInfo.HelpLink))
                 {
-                    writer.WriteAttributeString("HelpLink", bundleInfo.RegistrationInfo.HelpLink);
+                    writer.WriteAttributeString("HelpLink", bundleInfo.HelpLink);
                 }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.HelpTelephone))
+                if (!String.IsNullOrEmpty(bundleInfo.HelpTelephone))
                 {
-                    writer.WriteAttributeString("HelpTelephone", bundleInfo.RegistrationInfo.HelpTelephone);
+                    writer.WriteAttributeString("HelpTelephone", bundleInfo.HelpTelephone);
                 }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.AboutUrl))
+                if (!String.IsNullOrEmpty(bundleInfo.AboutUrl))
                 {
-                    writer.WriteAttributeString("AboutUrl", bundleInfo.RegistrationInfo.AboutUrl);
+                    writer.WriteAttributeString("AboutUrl", bundleInfo.AboutUrl);
                 }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.UpdateUrl))
+                if (!String.IsNullOrEmpty(bundleInfo.UpdateUrl))
                 {
-                    writer.WriteAttributeString("UpdateUrl", bundleInfo.RegistrationInfo.UpdateUrl);
+                    writer.WriteAttributeString("UpdateUrl", bundleInfo.UpdateUrl);
                 }
 
-                if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.ParentName))
+                if (!String.IsNullOrEmpty(bundleInfo.ParentName))
                 {
-                    writer.WriteAttributeString("ParentDisplayName", bundleInfo.RegistrationInfo.ParentName);
+                    writer.WriteAttributeString("ParentDisplayName", bundleInfo.ParentName);
                 }
 
-                if (1 == bundleInfo.RegistrationInfo.DisableModify)
+                if (1 == bundleInfo.DisableModify)
                 {
                     writer.WriteAttributeString("DisableModify", "yes");
                 }
-                else if (2 == bundleInfo.RegistrationInfo.DisableModify)
+                else if (2 == bundleInfo.DisableModify)
                 {
                     writer.WriteAttributeString("DisableModify", "button");
                 }
 
-                if (bundleInfo.RegistrationInfo.DisableRemove)
+                if (bundleInfo.DisableRemove)
                 {
                     writer.WriteAttributeString("DisableRemove", "yes");
                 }
                 writer.WriteEndElement(); // </Arp>
 
-                if (null != bundleInfo.UpdateRegistrationInfo)
+                if (null != updateRegistrationInfo)
                 {
                     writer.WriteStartElement("Update"); // <Update>
-                    writer.WriteAttributeString("Manufacturer", bundleInfo.UpdateRegistrationInfo.Manufacturer);
+                    writer.WriteAttributeString("Manufacturer", updateRegistrationInfo.Manufacturer);
 
-                    if (!String.IsNullOrEmpty(bundleInfo.UpdateRegistrationInfo.Department))
+                    if (!String.IsNullOrEmpty(updateRegistrationInfo.Department))
                     {
-                        writer.WriteAttributeString("Department", bundleInfo.UpdateRegistrationInfo.Department);
+                        writer.WriteAttributeString("Department", updateRegistrationInfo.Department);
                     }
 
-                    if (!String.IsNullOrEmpty(bundleInfo.UpdateRegistrationInfo.ProductFamily))
+                    if (!String.IsNullOrEmpty(updateRegistrationInfo.ProductFamily))
                     {
-                        writer.WriteAttributeString("ProductFamily", bundleInfo.UpdateRegistrationInfo.ProductFamily);
+                        writer.WriteAttributeString("ProductFamily", updateRegistrationInfo.ProductFamily);
                     }
 
-                    writer.WriteAttributeString("Name", bundleInfo.UpdateRegistrationInfo.Name);
-                    writer.WriteAttributeString("Classification", bundleInfo.UpdateRegistrationInfo.Classification);
+                    writer.WriteAttributeString("Name", updateRegistrationInfo.Name);
+                    writer.WriteAttributeString("Classification", updateRegistrationInfo.Classification);
                     writer.WriteEndElement(); // </Update>
+                }
+
+                if (null != wixBundleTagTable)
+                {
+                    foreach (Row row in wixBundleTagTable.Rows)
+                    {
+                        writer.WriteStartElement("SoftwareTag");
+                        writer.WriteAttributeString("Filename", (string)row[0]);
+                        writer.WriteAttributeString("Regid", (string)row[1]);
+                        writer.WriteCData((string)row[4]);
+                        writer.WriteEndElement();
+                    }
                 }
 
                 writer.WriteEndElement(); // </Register>
@@ -4306,7 +4431,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
         }
 
-        private void UpdateBurnResources(string bundleTempPath, BundleInfo bundleInfo)
+        private void UpdateBurnResources(string bundleTempPath, string outputPath, WixBundleRow bundleInfo)
         {
             Microsoft.Deployment.Resources.ResourceCollection resources = new Microsoft.Deployment.Resources.ResourceCollection();
             Microsoft.Deployment.Resources.VersionResource version = new Microsoft.Deployment.Resources.VersionResource("#1", 1033);
@@ -4327,19 +4452,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             Microsoft.Deployment.Resources.VersionStringTable strings = version[1033];
             strings["LegalCopyright"] = bundleInfo.Copyright;
-            strings["OriginalFilename"] = Path.GetFileName(bundleInfo.Path);
+            strings["OriginalFilename"] = Path.GetFileName(outputPath);
             strings["FileVersion"] = bundleInfo.Version;    // string versions do not have to be four parts.
             strings["ProductVersion"] = bundleInfo.Version; // string versions do not have to be four parts.
 
-            if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Name))
+            if (!String.IsNullOrEmpty(bundleInfo.Name))
             {
-                strings["ProductName"] = bundleInfo.RegistrationInfo.Name;
-                strings["FileDescription"] = bundleInfo.RegistrationInfo.Name;
+                strings["ProductName"] = bundleInfo.Name;
+                strings["FileDescription"] = bundleInfo.Name;
             }
 
-            if (!String.IsNullOrEmpty(bundleInfo.RegistrationInfo.Publisher))
+            if (!String.IsNullOrEmpty(bundleInfo.Publisher))
             {
-                strings["CompanyName"] = bundleInfo.RegistrationInfo.Publisher;
+                strings["CompanyName"] = bundleInfo.Publisher;
             }
             else
             {
@@ -4368,24 +4493,36 @@ namespace Microsoft.Tools.WindowsInstallerXml
             resources.Save(bundleTempPath);
         }
 
-        private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, string executableName, ContainerInfo container, int containerIndex)
+        private void WriteBurnManifestContainerAttributes(XmlTextWriter writer, string executableName, ContainerInfo container, int containerIndex, BinderFileManager fileManager)
         {
             writer.WriteAttributeString("Id", container.Id);
+            writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
+            writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
             if (container.Type == "detached")
             {
+                string resolvedUrl = fileManager.ResolveUrl(container.DownloadUrl, null, null, container.Id, container.Name);
+                if (!String.IsNullOrEmpty(resolvedUrl))
+                {
+                    writer.WriteAttributeString("DownloadUrl", resolvedUrl);
+                }
+                else if (!String.IsNullOrEmpty(container.DownloadUrl))
+                {
+                    writer.WriteAttributeString("DownloadUrl", container.DownloadUrl);
+                }
+
                 writer.WriteAttributeString("FilePath", container.Name);
-                writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
-                writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
-                writer.WriteAttributeString("Packaging", "detached");
             }
             else if (container.Type == "attached")
             {
+                if (!String.IsNullOrEmpty(container.DownloadUrl))
+                {
+                    this.core.OnMessage(WixWarnings.DownloadUrlNotSupportedForAttachedContainers(container.SourceLineNumbers, container.Id));
+                }
+
                 writer.WriteAttributeString("FilePath", executableName); // attached containers use the name of the bundle since they are attached to the executable.
                 writer.WriteAttributeString("AttachedIndex", containerIndex.ToString(CultureInfo.InvariantCulture));
                 writer.WriteAttributeString("Attached", "yes");
                 writer.WriteAttributeString("Primary", "yes");
-                writer.WriteAttributeString("FileSize", container.FileInfo.Length.ToString(CultureInfo.InvariantCulture));
-                writer.WriteAttributeString("Hash", Common.GetFileHash(container.FileInfo));
             }
         }
 
@@ -7122,7 +7259,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         /// <param name="bundle">The <see cref="Output"/> object for the bundle.</param>
         /// <param name="bundleInfo">The <see cref="BundleInfo"/> containing the provider key and other information for the bundle.</param>
-        private void SetBundleProviderKey(Output bundle, BundleInfo bundleInfo)
+        private void SetBundleProviderKey(Output bundle, WixBundleRow bundleInfo)
         {
             // From DependencyCommon.cs in the WixDependencyExtension.
             const int ProvidesAttributesBundle = 0x10000;

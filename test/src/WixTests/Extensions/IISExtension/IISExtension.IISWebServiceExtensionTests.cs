@@ -13,7 +13,7 @@
 // <summary>IIS Extension IISWebServiceExtension tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.IISExtension
+namespace WixTest.Tests.Extensions.IISExtension
 {
     using System;
     using System.IO;
@@ -21,8 +21,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.IISExtension
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions;
+    using WixTest;
+    using WixTest.Verifiers.Extensions;
 
     /// <summary>
     /// IIS extension IISWebServiceExtension element tests

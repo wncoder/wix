@@ -13,7 +13,7 @@
 // <summary>Sql extension tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.IO;
@@ -21,7 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     /// <summary>
     /// Sql extension tests

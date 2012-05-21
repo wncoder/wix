@@ -98,6 +98,48 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         }
 
         /// <summary>
+        /// Processes an attribute for the Compiler.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line number for the parent element.</param>
+        /// <param name="parentElement">Parent element of element to process.</param>
+        /// <param name="attribute">Attribute to process.</param>
+        /// <param name="contextValues">Extra information about the context in which this element is being parsed.</param>
+        public override void ParseAttribute(SourceLineNumberCollection sourceLineNumbers, XmlElement parentElement, XmlAttribute attribute, Dictionary<string, string> contextValues)
+        {
+            switch (parentElement.LocalName)
+            {
+                case "Variable":
+                    // at the time the extension attribute is parsed, the compiler might not yet have
+                    // parsed the Name attribute, so we need to get it directly from the parent element.
+                    string variableName = parentElement.GetAttribute("Name");
+                    if (String.IsNullOrEmpty(variableName))
+                    {
+                        this.Core.OnMessage(WixErrors.ExpectedParentWithAttribute(sourceLineNumbers, "Variable", "Overridable", "Name"));
+                    }
+                    else
+                    {
+                        switch (attribute.LocalName)
+                        {
+                            case "Overridable":
+                                if (YesNoType.Yes == this.Core.GetAttributeYesNoValue(sourceLineNumbers, attribute))
+                                {
+                                    Row row = this.Core.CreateRow(sourceLineNumbers, "WixStdbaOverridableVariable");
+                                    row[0] = variableName;
+                                }
+                                break;
+                            default:
+                                this.Core.UnexpectedAttribute(sourceLineNumbers, attribute);
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    this.Core.UnexpectedElement(parentElement, parentElement);
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Parses a Condition element for Bundles.
         /// </summary>
         /// <param name="node">The element to parse.</param>

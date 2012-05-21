@@ -59,11 +59,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         private ITaskItem outputsFile;
         private ITaskItem outputFile;
         private ITaskItem pdbOutputFile;
+        private ITaskItem wixProjectFile;
         private bool pedantic;
         private bool reuseCabinetCache;
         private bool setMsiAssemblyNameFileVersion;
         private bool suppressAclReset;
         private bool suppressAssemblies;
+        private bool suppressBuildInfo;
         private bool suppressDefaultAdminSequenceActions;
         private bool suppressDefaultAdvSequenceActions;
         private bool suppressDefaultUISequenceActions;
@@ -284,6 +286,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             set { this.suppressAssemblies = value; }
         }
 
+        public bool SuppressBuildInfo
+        {
+            get { return this.suppressBuildInfo; }
+            set { this.suppressBuildInfo = value; }
+        }
+
         public bool SuppressDefaultAdminSequenceActions
         {
             get { return this.suppressDefaultAdminSequenceActions; }
@@ -374,6 +382,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
         {
             get { return this.unreferencedSymbolsFile; }
             set { this.unreferencedSymbolsFile = value; }
+        }
+
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")]
+        public ITaskItem WixProjectFile
+        {
+            get { return this.wixProjectFile; }
+            set { this.wixProjectFile = value; }
         }
 
         [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly")]
@@ -478,6 +493,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendIfTrue("-sacl", this.SuppressAclReset);
             commandLineBuilder.AppendIfTrue("-sadmin", this.SuppressDefaultAdminSequenceActions);
             commandLineBuilder.AppendIfTrue("-sadv", this.SuppressDefaultAdvSequenceActions);
+            commandLineBuilder.AppendIfTrue("-sbuildinfo", this.SuppressBuildInfo);
             commandLineBuilder.AppendArrayIfNotNull("-sice:", this.SuppressIces);
             commandLineBuilder.AppendIfTrue("-sma", this.SuppressMsiAssemblyTableProcessing);
             commandLineBuilder.AppendIfTrue("-sf", this.SuppressFiles);
@@ -495,6 +511,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             commandLineBuilder.AppendSwitchIfNotNull("-contentsfile ", this.BindContentsFile);
             commandLineBuilder.AppendSwitchIfNotNull("-outputsfile ", this.BindOutputsFile);
             commandLineBuilder.AppendSwitchIfNotNull("-builtoutputsfile ", this.BindBuiltOutputsFile);
+            commandLineBuilder.AppendSwitchIfNotNull("-wixprojectfile ", this.WixProjectFile);
             commandLineBuilder.AppendTextIfNotNull(this.AdditionalOptions);
 
             List<string> objectFilePaths = AdjustFilePaths(this.objectFiles, this.ReferencePaths);

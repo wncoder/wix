@@ -16,7 +16,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
+namespace WixTest.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -24,8 +24,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
     using System.IO;
     using System.Runtime.InteropServices;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
+    using WixTest;
+    using WixTest.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
 
@@ -165,9 +165,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests
             get
             {
                 string directory = Environment.ExpandEnvironmentVariables(@"%WIX_ROOT%\test\data\");
-                if (this.TestContext.FullyQualifiedTestClassName.StartsWith("Microsoft.Tools.WindowsInstallerXml.Test.Tests."))
+                if (this.TestContext.FullyQualifiedTestClassName.StartsWith("WixTest.Tests."))
                 {
-                    directory = Path.Combine(directory, this.TestContext.FullyQualifiedTestClassName.Substring("Microsoft.Tools.WindowsInstallerXml.Test.Tests.".Length).Replace('.', '\\'));
+                    directory = Path.Combine(directory, this.TestContext.FullyQualifiedTestClassName.Substring("WixTest.Tests.".Length).Replace('.', '\\'));
                 }
 
                 return directory;

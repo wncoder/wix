@@ -13,7 +13,7 @@
 // <summary>NetFX Extension NativeImage tests</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.NetFXExtension
+namespace WixTest.Tests.Extensions.NetFXExtension
 {
     using System;
     using System.IO;
@@ -23,9 +23,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Extensions.NetFXExtensi
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Microsoft.Win32;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers.Extensions;
+    using WixTest;
+    using WixTest.Verifiers;
+    using WixTest.Verifiers.Extensions;
 
     /// <summary>
     /// NetFX extension NativeImage element tests

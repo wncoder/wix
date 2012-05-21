@@ -16,14 +16,14 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Wixproj
+namespace WixTest.Tests.Wixproj
 {
     using System;
     using System.IO;
     using System.Collections.Generic;
     using System.Text;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
 
     [TestClass]
     public class WixTaskTests : WixTests

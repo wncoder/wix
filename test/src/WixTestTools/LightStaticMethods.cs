@@ -13,7 +13,7 @@
 // <summary>A class that wraps Light</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Specialized;

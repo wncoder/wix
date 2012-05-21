@@ -1,18 +1,28 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="DependencyTests.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
+//    
+//    The use and distribution terms for this software are covered by the
+//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
+//    which can be found in the file CPL.TXT at the root of this distribution.
+//    By using this software in any fashion, you are agreeing to be bound by
+//    the terms of this license.
+//    
+//    You must not remove this notice, or any other, from this software.
 // </copyright>
 // <summary>
 //     Contains methods test Burn.
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
+namespace WixTest.Tests.Burn
 {
     using System.Collections.Generic;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
+    using WixTest.Utilities;
+    using WixTest.Verifiers;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Tools.WindowsInstallerXml;
+    using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
     using Microsoft.Win32;
 
     [TestClass]
@@ -470,10 +480,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Burn
             }
 
             // SFBUG:3469206 - install a bundle without installing the shared package, which should not be ref-counted.
-            this.SetPackageRequestedState("PackageA", Bootstrapper.RequestState.None);
+            this.SetPackageRequestedState("PackageA", RequestState.None);
 
             // Also don't install packageB since it has an authored dependency on packageA and would fail this test case.
-            this.SetPackageRequestedState("PackageB", Bootstrapper.RequestState.None);
+            this.SetPackageRequestedState("PackageB", RequestState.None);
 
             BundleInstaller installerB = new BundleInstaller(this, bundleB).Install();
             Assert.IsTrue(MsiVerifier.IsPackageInstalled(packageA));

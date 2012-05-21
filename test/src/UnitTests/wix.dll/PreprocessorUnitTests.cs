@@ -13,13 +13,12 @@
 // <summary>Unit tests for Preprocessor</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.UnitTests
+namespace WixTest.Tests.UnitTests
 {
     using System;
     using System.Collections;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
     using Microsoft.Tools.WindowsInstallerXml;
     using System.Security.Cryptography;
     using System.Text;

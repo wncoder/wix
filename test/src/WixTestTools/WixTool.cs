@@ -13,7 +13,7 @@
 // <summary>Wraps a WiX executable</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     using System;
     using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
     using System.IO;
     using System.Reflection;
     using System.Text.RegularExpressions;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Utilities;
+    using WixTest.Utilities;
 
     /// <summary>
     /// A base class for a Wix tool, eg. candle.exe
@@ -60,7 +60,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test
             {
                 throw new ArgumentException(
                     "{0} must be initialized to the WiX tools directory. Use '.' to specify the current directory.",
-                    "Microsoft.Tools.WindowsInstallerXml.Test.Settings.WixToolDirectory");
+                    "WixTest.Settings.WixToolDirectory");
             }
         }
 

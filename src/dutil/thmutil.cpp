@@ -18,6 +18,10 @@
 
 #include "precomp.h"
 
+#ifndef LWS_NOPREFIX
+#define LWS_NOPREFIX        0x0004
+#endif
+
 const DWORD THEME_INVALID_ID = 0xFFFFFFFF;
 const COLORREF THEME_INVISIBLE_COLORREF = 0xFFFFFFFF;
 const DWORD GROW_WINDOW_TEXT = 250;
@@ -415,7 +419,7 @@ DAPI_(HRESULT) ThemeLoadControls(
             break;
 
         case THEME_CONTROL_TYPE_CHECKBOX:
-            dwWindowBits |= BS_AUTOCHECKBOX; // checkbox is basically a button with an extra bit tossed in.
+            dwWindowBits |= BS_AUTOCHECKBOX | BS_MULTILINE; // checkbox is basically a button with an extra bit tossed in.
             __fallthrough;
         case THEME_CONTROL_TYPE_BUTTON:
             wzWindowClass = WC_BUTTONW;
@@ -449,11 +453,12 @@ DAPI_(HRESULT) ThemeLoadControls(
 
         case THEME_CONTROL_TYPE_HYPERLINK: // hyperlinks are basically just owner drawn buttons.
             wzWindowClass = THEME_WC_HYPERLINK;
-            dwWindowBits |= BS_OWNERDRAW;
+            dwWindowBits |= BS_OWNERDRAW | BTNS_NOPREFIX;
             break;
 
         case THEME_CONTROL_TYPE_HYPERTEXT:
             wzWindowClass = WC_LINK;
+            dwWindowBits |= LWS_NOPREFIX;
             break;
 
         case THEME_CONTROL_TYPE_IMAGE: // images are basically just owner drawn static controls (so we can draw .jpgs and .pngs instead of just bitmaps).
@@ -2578,6 +2583,17 @@ static HRESULT ParseControl(
             pControl->dwStyle |= SS_CENTER;
         }
         ExitOnFailure(hr, "Failed to tell if the text control should be centered.");
+
+        hr = XmlGetYesNoAttribute(pixn, L"DisablePrefix", &fValue);
+        if (E_NOTFOUND == hr)
+        {
+            hr = S_OK;
+        }
+        else if (fValue)
+        {
+            pControl->dwStyle |= SS_NOPREFIX;
+        }
+        ExitOnFailure(hr, "Failed to tell if the text control should disable prefix.");
     }
     else if (THEME_CONTROL_TYPE_LISTVIEW == type)
     {

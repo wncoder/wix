@@ -13,7 +13,7 @@
 // <summary>A class that wraps Torch</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test
+namespace WixTest
 {
     /// <summary>
     /// A class that wraps Torch

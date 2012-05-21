@@ -13,12 +13,12 @@
 // <summary>Test how Dark handles the -ext switch</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Dark.Extensions
+namespace WixTest.Tests.Tools.Dark.Extensions
 {
     using System;
     using System.IO;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test;
+    using WixTest;
     
     /// <summary>
     /// Test how Dark handles the -ext switch.

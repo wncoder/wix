@@ -15,7 +15,7 @@
 // </summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPackages.Bundle
+namespace WixTest.Tests.Integration.BuildingPackages.Bundle
 {
     using System;
     using System.Collections.Generic;
@@ -25,7 +25,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Integration.BuildingPac
     using Microsoft.Deployment.Compression.Cab;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Verifiers;
+    using WixTest.Verifiers;
 
     /// <summary>
     /// Tests for Bundle *Package elements

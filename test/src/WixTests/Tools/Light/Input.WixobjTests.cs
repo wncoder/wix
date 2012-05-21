@@ -13,7 +13,7 @@
 // <summary>Test for giving wixobj files as input to Light</summary>
 //-----------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Light.Input
+namespace WixTest.Tests.Tools.Light.Input
 {
     using System;
     using System.IO;
@@ -21,8 +21,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.Test.Tests.Tools.Light.Input
     using System.Collections.Generic;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using Microsoft.Tools.WindowsInstallerXml.Test;
-    using Microsoft.Tools.WindowsInstallerXml.Test.Tests;
+    using WixTest;
+    using WixTest.Tests;
 
     /// <summary>
     /// Test for giving wixobj files as input to Light

@@ -12,6 +12,7 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="FeedBuilder.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="PayloadHarvester.cs" />
     <Compile Include="PerformanceCategoryHarvester.cs" />
     <Compile Include="RegFileHarvester.cs" />
     <Compile Include="SetupExeBuilder.cs" />
