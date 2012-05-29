@@ -322,6 +322,20 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
                 }
                 break;
 
+            case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT:
+                // If the patch targets a package in the chain and the target package is already being
+                // uninstalled, don't do anything to the patch (because the target package will do the
+                // operation for us).
+                if (pTargetProduct->pChainedTargetPackage && BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pTargetProduct->pChainedTargetPackage->execute)
+                {
+                    execute = BOOTSTRAPPER_ACTION_STATE_NONE;
+                }
+                else
+                {
+                    execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+                }
+                break;
+
             default:
                 execute = BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;
@@ -351,6 +365,7 @@ extern "C" HRESULT MspEnginePlanCalculatePackage(
             case BOOTSTRAPPER_PACKAGE_STATE_PRESENT:
                 switch (requested)
                 {
+                case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT: __fallthrough;
                 case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
                     rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
                     break;
@@ -876,7 +891,7 @@ static HRESULT PlanTargetProduct(
         pAction->mspTarget.action = actionState;
         pAction->mspTarget.pPackage = pPackage;
         pAction->mspTarget.fPerMachineTarget = (MSIINSTALLCONTEXT_MACHINE == pTargetProduct->context);
-        pAction->mspTarget.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msp.fDisplayInternalUI, display);
+        pAction->mspTarget.uiLevel = MsiEngineCalculateInstallUiLevel(pPackage->Msp.fDisplayInternalUI, display, pAction->mspTarget.action);
         pAction->mspTarget.pChainedTargetPackage = pTargetProduct->pChainedTargetPackage;
         pAction->mspTarget.fSlipstream = pTargetProduct->fSlipstream;
         hr = StrAllocString(&pAction->mspTarget.sczTargetProductCode, pTargetProduct->wzTargetProductCode, 0);

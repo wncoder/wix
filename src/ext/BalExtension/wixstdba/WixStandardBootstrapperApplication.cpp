@@ -408,7 +408,33 @@ public: // IBootstrapperApplication
         m_dwCalculatedCacheProgress = dwOverallPercentage * WIXSTDBA_ACQUIRE_PERCENTAGE / 100;
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
 
+        SetTaskbarButtonProgress(m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
+
         return __super::OnCacheAcquireProgress(wzPackageOrContainerId, wzPayloadId, dw64Progress, dw64Total, dwOverallPercentage);
+    }
+
+
+    virtual STDMETHODIMP_(int) OnCacheAcquireComplete(
+        __in_z LPCWSTR wzPackageOrContainerId,
+        __in_z_opt LPCWSTR wzPayloadId,
+        __in HRESULT hrStatus,
+        __in int nRecommendation
+        )
+    {
+        SetProgressState(hrStatus);
+        return __super::OnCacheAcquireComplete(wzPackageOrContainerId, wzPayloadId, hrStatus, nRecommendation);
+    }
+
+
+    virtual STDMETHODIMP_(int) OnCacheVerifyComplete(
+        __in_z LPCWSTR wzPackageId,
+        __in_z LPCWSTR wzPayloadId,
+        __in HRESULT hrStatus,
+        __in int nRecommendation
+        )
+    {
+        SetProgressState(hrStatus);
+        return __super::OnCacheVerifyComplete(wzPackageId, wzPayloadId, hrStatus, nRecommendation);
     }
 
 
@@ -501,6 +527,7 @@ public: // IBootstrapperApplication
             ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_PROGRESS_TEXT, wzProgress);
 
             ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_PROGRESS_BAR, dwOverallProgressPercentage);
+            SetTaskbarButtonProgress(dwOverallProgressPercentage);
         }
 
     LExit:
@@ -527,7 +554,7 @@ public: // IBootstrapperApplication
     }
 
 
-    virtual int __stdcall  OnExecuteProgress(
+    virtual int __stdcall OnExecuteProgress(
         __in_z LPCWSTR wzPackageId,
         __in DWORD dwProgressPercentage,
         __in DWORD dwOverallProgressPercentage
@@ -547,6 +574,8 @@ public: // IBootstrapperApplication
         m_dwCalculatedExecuteProgress = dwOverallProgressPercentage * (100 - WIXSTDBA_ACQUIRE_PERCENTAGE) / 100;
         ThemeSetProgressControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_CALCULATED_PROGRESS_BAR, m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
 
+        SetTaskbarButtonProgress(m_dwCalculatedCacheProgress + m_dwCalculatedExecuteProgress);
+
         return __super::OnExecuteProgress(wzPackageId, dwProgressPercentage, dwOverallProgressPercentage);
     }
 
@@ -558,6 +587,8 @@ public: // IBootstrapperApplication
         __in int nRecommendation
         )
     {
+        SetProgressState(hrExitCode);
+
         int nResult = __super::OnExecutePackageComplete(wzPackageId, hrExitCode, restart, nRecommendation);
 
         if (m_sczPrereqPackage && CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, m_sczPrereqPackage, -1))
@@ -658,6 +689,7 @@ public: // IBootstrapperApplication
         }
 
         SetState(WIXSTDBA_STATE_APPLIED, hrStatus);
+        SetTaskbarButtonProgress(100); // show full progress bar, green or red
 
         return IDNOACTION;
     }
@@ -689,6 +721,7 @@ private: // privates
         BalExitOnFailure(hr, "Failed to initialize data in bootstrapper application.");
 
         // Create main window.
+        pThis->InitializeTaskbarButton();
         hr = pThis->CreateMainWindow();
         BalExitOnFailure(hr, "Failed to create main window.");
 
@@ -832,7 +865,7 @@ private: // privates
                 }
                 else if (m_sdOverridableVariables)
                 {
-                    wchar_t* pwc = wcschr(argv[i], L'=');
+                    const wchar_t* pwc = wcschr(argv[i], L'=');
                     if (pwc)
                     {
                         hr = StrAllocString(&sczVariableName, argv[i], pwc - argv[i]);
@@ -1164,6 +1197,27 @@ private: // privates
 
 
     //
+    // InitializeTaskbarButton - initializes taskbar button for progress.
+    //
+    void InitializeTaskbarButton()
+    {
+        HRESULT hr = S_OK;
+
+        hr = ::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, __uuidof(ITaskbarList3), reinterpret_cast<LPVOID*>(&m_pTaskbarList));
+        if (REGDB_E_CLASSNOTREG == hr) // not supported before Windows 7
+        {
+            ExitFunction1(hr = S_OK);
+        }
+        BalExitOnFailure(hr, "Failed to create ITaskbarList3. Continuing.");
+
+        m_uTaskbarButtonCreatedMessage = ::RegisterWindowMessageW(L"TaskbarButtonCreated");
+        BalExitOnNullWithLastError(m_uTaskbarButtonCreatedMessage, hr, "Failed to get TaskbarButtonCreated message. Continuing.");
+
+    LExit:
+        return;
+    }
+
+    //
     // DestroyMainWindow - clean up all the window registration.
     //
     void DestroyMainWindow()
@@ -1172,6 +1226,7 @@ private: // privates
         {
             ::DestroyWindow(m_hWnd);
             m_hWnd = NULL;
+            m_fTaskbarButtonOK = FALSE;
         }
 
         if (m_fRegistered)
@@ -1333,6 +1388,12 @@ private: // privates
             break;
         }
 
+        if (pBA && pBA->m_pTaskbarList && uMsg == pBA->m_uTaskbarButtonCreatedMessage)
+        {
+            pBA->m_fTaskbarButtonOK = TRUE;
+            return 0;
+        }
+
         return ThemeDefWindowProc(pBA ? pBA->m_pTheme : NULL, hWnd, uMsg, wParam, lParam);
     }
 
@@ -1371,14 +1432,6 @@ private: // privates
                     ThemeSetTextControl(m_pTheme, pControl->wId, sczText);
                 }
             }
-        }
-
-        // Ensure the EULA link points at something if the control exists.
-        if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK))
-        {
-            BOOL fEulaLink = (m_sczLicenseUrl && *m_sczLicenseUrl);
-            ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK, fEulaLink);
-            ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX, fEulaLink);
         }
 
         // Load the RTF EULA control with text if the control exists.
@@ -1520,6 +1573,8 @@ private: // privates
         HRESULT hr = S_OK;
 
         SetState(WIXSTDBA_STATE_APPLYING, hr);
+        SetProgressState(hr);
+        SetTaskbarButtonProgress(0);
 
         hr = m_pEngine->Apply(m_hWnd);
         BalExitOnFailure(hr, "Failed to start applying packages.");
@@ -1579,6 +1634,14 @@ private: // privates
                 // Enable disable controls per-page.
                 if (m_rgdwPageIds[WIXSTDBA_PAGE_INSTALL] == dwNewPageId) // on the "Install" page, ensure the install button is enabled/disabled correctly.
                 {
+                    // If the EULA control exists, show it only if a license URL is provided as well.
+                    if (ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK))
+                    {
+                        BOOL fEulaLink = (m_sczLicenseUrl && *m_sczLicenseUrl);
+                        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_LINK, fEulaLink);
+                        ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX, fEulaLink);
+                    }
+
                     BOOL fAcceptedLicense = !ThemeControlExists(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || !ThemeControlEnabled(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX) || ThemeIsControlChecked(m_pTheme, WIXSTDBA_CONTROL_EULA_ACCEPT_CHECKBOX);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_INSTALL_BUTTON, fAcceptedLicense);
 
@@ -2111,6 +2174,48 @@ private: // privates
     }
 
 
+    void SetTaskbarButtonProgress(
+        __in DWORD dwOverallPercentage
+        )
+    {
+        HRESULT hr = S_OK;
+
+        if (m_fTaskbarButtonOK)
+        {
+            hr = m_pTaskbarList->SetProgressValue(m_hWnd, dwOverallPercentage, 100UL);
+            BalExitOnFailure1(hr, "Failed to set taskbar button progress to: %d%%.", dwOverallPercentage);
+        }
+
+    LExit:
+        return;
+    }
+
+
+    void SetTaskbarButtonState(
+        __in TBPFLAG tbpFlags
+        )
+    {
+        HRESULT hr = S_OK;
+
+        if (m_fTaskbarButtonOK)
+        {
+            hr = m_pTaskbarList->SetProgressState(m_hWnd, tbpFlags);
+            BalExitOnFailure1(hr, "Failed to set taskbar button state.", tbpFlags);
+        }
+
+    LExit:
+        return;
+    }
+
+
+    void SetProgressState(
+        __in HRESULT hrStatus
+        )
+    {
+        SetTaskbarButtonState((IsRollingBack() || FAILED(hrStatus)) ? TBPF_ERROR : TBPF_NORMAL);
+    }
+
+
 public:
     //
     // Constructor - intitialize member variables.
@@ -2184,6 +2289,9 @@ public:
         m_fSuppressDowngradeFailure = FALSE;
 
         m_sdOverridableVariables = NULL;
+        m_pTaskbarList = NULL;
+        m_uTaskbarButtonCreatedMessage = UINT_MAX;
+        m_fTaskbarButtonOK = FALSE;
 
         m_fPrereq = fPrereq;
         m_sczPrereqPackage = NULL;
@@ -2203,6 +2311,7 @@ public:
         AssertSz(!::IsWindow(m_hWnd), "Window should have been destroyed before destructor.");
         AssertSz(!m_pTheme, "Theme should have been released before destuctor.");
 
+        ReleaseObject(m_pTaskbarList);
         ReleaseDict(m_sdOverridableVariables);
         ReleaseStr(m_sczFailedMessage);
         ReleaseStr(m_sczConfirmCloseMessage);
@@ -2260,6 +2369,10 @@ private:
     LPWSTR m_sczPrereqPackage;
     BOOL m_fPrereqInstalled;
     BOOL m_fPrereqAlreadyInstalled;
+
+    ITaskbarList3* m_pTaskbarList;
+    UINT m_uTaskbarButtonCreatedMessage;
+    BOOL m_fTaskbarButtonOK;
 };
 
 

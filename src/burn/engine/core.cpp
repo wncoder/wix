@@ -750,7 +750,7 @@ extern "C" HRESULT CoreQuit(
             LogErrorId(hr, MSG_STATE_NOT_SAVED, NULL, NULL, NULL);
             hr = S_OK;
         }
-   }
+    }
 
     LogId(REPORT_STANDARD, MSG_QUIT, nExitCode);
 

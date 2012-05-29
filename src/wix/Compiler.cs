@@ -21274,7 +21274,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string repairCommand = null;
             YesNoType repairable = YesNoType.NotSet;
             string uninstallCommand = null;
-            YesNoType perMachine = YesNoType.NotSet;
+            YesNoDefaultType perMachine = YesNoDefaultType.NotSet;
             string detectCondition = null;
             string protocol = null;
             int installSize = CompilerCore.IntegerNotSet;
@@ -21379,7 +21379,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             allowed = (packageType == ChainPackageType.Exe);
                             break;
                         case "PerMachine":
-                            perMachine = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
+                            perMachine = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
                             allowed = (packageType == ChainPackageType.Exe || packageType == ChainPackageType.Msp);
                             break;
                         case "DetectCondition":
@@ -21541,6 +21541,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
+            // Only set default scope for EXEs and MSPs if not already set.
+            if ((ChainPackageType.Exe == packageType || ChainPackageType.Msp == packageType) && YesNoDefaultType.NotSet == perMachine)
+            {
+                perMachine = YesNoDefaultType.Default;
+            }
+
             // Now that the package ID is known, we can parse the extension attributes...
             Dictionary<string, string> contextValues = new Dictionary<string,string>();
             contextValues["PackageId"] = id;
@@ -21649,9 +21655,17 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     row[10] = (YesNoType.Yes == vital) ? 1 : 0;
                 }
 
-                if (YesNoType.NotSet != perMachine)
+                switch (perMachine)
                 {
-                    row[11] = (YesNoType.Yes == perMachine) ? 1 : 0;
+                    case YesNoDefaultType.No:
+                        row[11] = 0;
+                        break;
+                    case YesNoDefaultType.Yes:
+                        row[11] = 1;
+                        break;
+                    case YesNoDefaultType.Default:
+                        row[11] = 2;
+                        break;
                 }
 
                 row[12] = detectCondition;

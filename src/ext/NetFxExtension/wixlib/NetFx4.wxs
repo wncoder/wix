@@ -44,9 +44,9 @@
 
     <PackageGroup Id="NetFx40Web">
       <ExePackage
-          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullWebLog].html"
-          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullWebLog].html"
-          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullWebLog].html"
+          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
+          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot;"
+          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
           PerMachine="yes"
           DetectCondition="NETFRAMEWORK40"
           Id="NetFx40Web"
@@ -54,7 +54,6 @@
           Permanent="yes"
           Protocol="netfx4"
           DownloadUrl="$(var.NetFx40WebLink)"
-          LogPathVariable="NetFx40FullWebLog"
           Compressed="no"
           Name="redist\dotNetFx40_Full_setup.exe">
         <RemotePayload
@@ -77,9 +76,9 @@
 
     <PackageGroup Id="NetFx40Redist">
       <ExePackage
-          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullLog].html"
-          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullLog].html"
-          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40FullLog].html"
+          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
+          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot;"
+          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
           PerMachine="yes"
           DetectCondition="NETFRAMEWORK40"
           Id="NetFx40Redist"
@@ -87,7 +86,6 @@
           Permanent="yes"
           Protocol="netfx4"
           DownloadUrl="$(var.NetFx40RedistLink)"
-          LogPathVariable="NetFx40FullLog"
           Compressed="no"
           Name="redist\dotNetFx40_Full_x86_x64.exe">
         <RemotePayload
@@ -121,9 +119,9 @@
 
     <PackageGroup Id="NetFx40ClientWeb">
       <ExePackage
-          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientWebLog].html"
-          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientWebLog].html"
-          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientWebLog].html"
+          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
+          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot;"
+          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
           PerMachine="yes"
           DetectCondition="NETFRAMEWORK40CLIENT"
           Id="NetFx40ClientWeb"
@@ -131,7 +129,6 @@
           Permanent="yes"
           Protocol="netfx4"
           DownloadUrl="$(var.NetFx40ClientWebLink)"
-          LogPathVariable="NetFx40ClientWebLog"
           Compressed="no"
           Name="redist\dotNetFx40_Client_setup.exe">
         <RemotePayload
@@ -154,9 +151,9 @@
 
     <PackageGroup Id="NetFx40ClientRedist">
       <ExePackage
-          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientLog].html"
-          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientLog].html"
-          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot; /log [NetFx40ClientLog].html"
+          InstallCommand="/q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
+          RepairCommand="/q /norestart /repair /ChainingPackage &quot;[WixBundleName]&quot;"
+          UninstallCommand="/uninstall /q /norestart /ChainingPackage &quot;[WixBundleName]&quot;"
           PerMachine="yes"
           DetectCondition="NETFRAMEWORK40CLIENT"
           Id="NetFx40ClientRedist"
@@ -164,7 +161,6 @@
           Permanent="yes"
           Protocol="netfx4"
           DownloadUrl="$(var.NetFx40ClientRedistLink)"
-          LogPathVariable="NetFx40ClientLog"
           Compressed="no"
           Name="redist\dotNetFx40_Client_x86_x64.exe">
         <RemotePayload

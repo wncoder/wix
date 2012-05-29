@@ -29,6 +29,7 @@
     <Compile Include="Burn\Burn.FailureTests.cs" />
     <Compile Include="Burn\Burn.SlipstreamTests.cs" />
     <Compile Include="Burn\Burn.PatchTests.cs" />
+    <Compile Include="Burn\Burn.PermanentTests.cs" />
     <Compile Include="PackageBuilder.cs" />
     <Compile Include="PatchBuilder.cs" />
     <Compile Include="WixTests.cs" />
@@ -258,6 +259,15 @@
     </None>
     <None Include="..\..\data\Burn\PatchTests\PatchBundleA.wxs">
       <Link>Burn\PatchTests\PatchBundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PermanentTests\A.wxs">
+      <Link>Burn\PermanentTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PermanentTests\B.wxs">
+      <Link>Burn\PermanentTests\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\PermanentTests\BundleA.wxs">
+      <Link>Burn\PermanentTests\BundleA.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\A.wxs">
       <Link>Burn\SlipstreamTests\A.wxs</Link>

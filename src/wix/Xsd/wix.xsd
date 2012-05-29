@@ -643,7 +643,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="PerMachine" type="YesNoTypeUnion">
+      <xs:attribute name="PerMachine" type="YesNoDefaultTypeUnion">
         <xs:annotation>
           <xs:documentation>Indicates the package must be executed elevated. The default is "no".</xs:documentation>
         </xs:annotation>
@@ -750,7 +750,7 @@
           <xs:documentation>The command-line arguments provided to the ExePackage during uninstall. If this attribute is absent the executable will be launched with no command-line arguments. To prevent an ExePackage from being uninstalled set the Permanent attribute to "yes".</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="PerMachine" type="YesNoTypeUnion">
+      <xs:attribute name="PerMachine" type="YesNoDefaultTypeUnion">
         <xs:annotation>
           <xs:documentation>Indicates the package must be executed elevated. The default is "no".</xs:documentation>
         </xs:annotation>

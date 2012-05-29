@@ -1,6 +1,7 @@
 WixTest.Tests.Burn.BasicTests
 WixTest.Tests.Burn.DependencyTests
 WixTest.Tests.Burn.FailureTests
+WixTest.Tests.Burn.PermanentTests
 WixTest.Tests.Burn.RegistrationTests
 WixTest.Tests.Burn.RelatedBundleTests
 WixTest.Tests.Burn.SlipstreamTests

@@ -1073,7 +1073,7 @@ DAPI_(void) ThemeControlEnable(
     )
 {
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
-    if (hWnd)
+    if (hWnd && fEnable != ::IsWindowEnabled(hWnd))
     {
         ::EnableWindow(hWnd, fEnable);
 

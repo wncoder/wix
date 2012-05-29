@@ -530,6 +530,11 @@ protected:
         return m_fRollingBack ? FALSE : m_fCanceled;
     }
 
+    BOOL IsRollingBack()
+    {
+        return m_fRollingBack;
+    }
+
     CBalBaseBootstrapperApplication(
         __in IBootstrapperEngine* /*pEngine*/,
         __in const BOOTSTRAPPER_COMMAND* pCommand,

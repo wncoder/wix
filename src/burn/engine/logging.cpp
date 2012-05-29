@@ -498,6 +498,8 @@ extern "C" LPCSTR LoggingRequestStateToString(
     {
     case BOOTSTRAPPER_REQUEST_STATE_NONE:
         return "None";
+    case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT:
+        return "ForceAbsent";
     case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
         return "Absent";
     case BOOTSTRAPPER_REQUEST_STATE_CACHE:

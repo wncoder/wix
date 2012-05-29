@@ -34,6 +34,10 @@ extern "C" {
 #define BalExitOnRootFailure2(x, f, s, t) if (FAILED(x)) { BalLogError(x, f, s, t); Dutil_RootFailure(__FILE__, __LINE__, x); ExitTrace2(x, f, s, t); goto LExit; }
 #define BalExitOnRootFailure3(x, f, s, t, u) if (FAILED(x)) { BalLogError(x, f, s, t, u); Dutil_RootFailure(__FILE__, __LINE__, x); ExitTrace3(x, f, s, t, u); goto LExit; }
 
+#define BalExitOnNullWithLastError(p, x, f) if (NULL == p) { DWORD Dutil_er = ::GetLastError(); x = HRESULT_FROM_WIN32(Dutil_er); if (!FAILED(x)) { x = E_FAIL; } BalLogError(x, f); ExitTrace(x, f); goto LExit; }
+#define BalExitOnNullWithLastError1(p, x, f, s) if (NULL == p) { DWORD Dutil_er = ::GetLastError(); x = HRESULT_FROM_WIN32(Dutil_er); if (!FAILED(x)) { x = E_FAIL; } BalLogError(x, f, s); ExitTrace1(x, f, s); goto LExit; }
+
+
 /*******************************************************************
  BalInitialize - remembers the engine interface to enable logging and
                  other functions.

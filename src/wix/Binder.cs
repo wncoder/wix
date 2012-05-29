@@ -3643,7 +3643,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Start creating the bundle.
             this.PopulateBundleInfoFromChain(bundleInfo, chain.Packages);
-            this.PopulateChainInfoTables(bundle, chain.Packages);
+            this.PopulateChainInfoTables(bundle, bundleInfo, chain.Packages);
             this.GenerateBAManifestBundleTables(bundle, bundleInfo);
 
             // Copy the burn.exe to a writable location then mark it to be moved to its
@@ -3798,6 +3798,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     packageFeatureInfoRow[0] = package.Id;
                     packageFeatureInfoRow[1] = feature.Name;
                     packageFeatureInfoRow[2] = Convert.ToString(feature.Size, CultureInfo.InvariantCulture);
+                    packageFeatureInfoRow[3] = feature.Parent;
+                    packageFeatureInfoRow[4] = feature.Title;
+                    packageFeatureInfoRow[5] = feature.Description;
+                    packageFeatureInfoRow[6] = Convert.ToString(feature.Display, CultureInfo.InvariantCulture);
+                    packageFeatureInfoRow[7] = Convert.ToString(feature.Level, CultureInfo.InvariantCulture);
+                    packageFeatureInfoRow[8] = feature.Directory;
+                    packageFeatureInfoRow[9] = Convert.ToString(feature.Attributes, CultureInfo.InvariantCulture);
                 }
             }
         }
@@ -3889,34 +3896,34 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
         private void PopulateBundleInfoFromChain(WixBundleRow bundleInfo, List<ChainPackageInfo> chainPackages)
         {
-            bool hasPerMachineNonPermanentPackages = false;
-
             foreach (ChainPackageInfo package in chainPackages)
             {
-                if (bundleInfo.PerMachine && !package.PerMachine)
+                if (bundleInfo.PerMachine && YesNoDefaultType.No == package.PerMachine)
                 {
                     this.core.OnMessage(WixVerboses.SwitchingToPerUserPackage(package.PackagePayload.FullFileName));
                     bundleInfo.PerMachine = false;
                 }
-                else if (package.PerMachine && 0 < package.Provides.Count && !package.Permanent)
-                {
-                    hasPerMachineNonPermanentPackages = true;
-                }
-            }
-
-            // We will only register packages in the same scope as the bundle.
-            // Warn if any packages with providers are in a different scope
-            // and not permanent (permanents typically don't need a ref-count).
-            if (!bundleInfo.PerMachine && hasPerMachineNonPermanentPackages)
-            {
-                this.core.OnMessage(WixWarnings.NoPerMachineDependencies());
             }
         }
 
-        private void PopulateChainInfoTables(Output bundle, List<ChainPackageInfo> chainPackages)
+        private void PopulateChainInfoTables(Output bundle, WixBundleRow bundleInfo, List<ChainPackageInfo> chainPackages)
         {
+            bool hasPerMachineNonPermanentPackages = false;
+
             foreach (ChainPackageInfo package in chainPackages)
             {
+                // Update package scope from bundle scope if default.
+                if (YesNoDefaultType.Default == package.PerMachine)
+                {
+                    package.PerMachine = bundleInfo.PerMachine ? YesNoDefaultType.Yes : YesNoDefaultType.No;
+                }
+
+                // Keep track if any per-machine non-permanent packages exist.
+                if (YesNoDefaultType.Yes == package.PerMachine && 0 < package.Provides.Count && !package.Permanent)
+                {
+                    hasPerMachineNonPermanentPackages = true;
+                }
+
                 switch (package.ChainPackageType)
                 {
                     case Compiler.ChainPackageType.Msi:
@@ -3935,6 +3942,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     default:
                         break;
                 }
+            }
+
+            // We will only register packages in the same scope as the bundle.
+            // Warn if any packages with providers are in a different scope
+            // and not permanent (permanents typically don't need a ref-count).
+            if (!bundleInfo.PerMachine && hasPerMachineNonPermanentPackages)
+            {
+                this.core.OnMessage(WixWarnings.NoPerMachineDependencies());
             }
         }
 
@@ -4258,7 +4273,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     writer.WriteAttributeString("CacheId", package.CacheId);
                     writer.WriteAttributeString("InstallSize", Convert.ToString(package.InstallSize));
                     writer.WriteAttributeString("Size", Convert.ToString(package.Size));
-                    writer.WriteAttributeString("PerMachine", package.PerMachine ? "yes" : "no");
+                    writer.WriteAttributeString("PerMachine", YesNoDefaultType.Yes == package.PerMachine ? "yes" : "no");
                     writer.WriteAttributeString("Permanent", package.Permanent ? "yes" : "no");
                     writer.WriteAttributeString("Vital", package.Vital ? "yes" : "no");
 

@@ -10,14 +10,18 @@
         HarvestProjects Target</h1>
     <p>
         The <b>HarvestProjects</b> target passes <b>HarvestProject</b> items to the <a href="msbuild_task_reference_heatproject.htm">
-            HeatProject task</a> to generate authoring from a project file. This target
-        is processed before compilation. Generated authoring is automatically added to the
+            HeatProject task</a> to generate authoring from a project file.</p>
+    <p>Harvesting projects is disabled by default because it may not always work correctly, but you can enable it by adding the following to the top of your <a href="authoring_first_msbuild_project.htm">WiX project file</a>:</p>
+    <pre><span style="color: blue">&lt;</span><span style="color: #a31515">PropertyGroup</span><span style="color: blue">&gt;
+  &lt;</span><span style="color: #a31515">EnableProjectHarvesting</span><span style="color: blue">&gt;</span>True<span style="color: blue">&lt;/</span><span style="color: #a31515">EnableProjectHarvesting</span><span style="color: blue">&gt;</span>
+&lt;/</span><span style="color: #a31515">PropertyGroup</span><span style="color: blue">&gt;</span></pre>
+    <p>If enabled, this target is processed before compilation. Generated authoring is automatically added to the
         <b>Compile</b> item group to be compiled by the <a href="msbuild_task_reference_candle.htm">
             Candle task</a>.</p>
     </a>
     <pre><span style="color: blue">&lt;</span><span style="color: #a31515">ItemGroup</span><span style="color: blue">&gt;
   &lt;</span><span style="color: #a31515">HeatProject </span><span style="color: red">Include</span><span style="color: blue">="..\TestProject\TestProject.csproj" &gt;
-    &lt;</span><span style="color: #a31515">ProjectOutputGroups</span><span style="color: blue">&gt;Binaries;Sources&lt;/</span><span style="color: #a31515">ProjectOutputGroups</span><span style="color: blue">&gt;
+    &lt;</span><span style="color: #a31515">ProjectOutputGroups</span><span style="color: blue">&gt;</span>Binaries;Sources<span style="color: blue">&lt;/</span><span style="color: #a31515">ProjectOutputGroups</span><span style="color: blue">&gt;
   &lt;/</span><span style="color: #a31515">HeatProject</span><span style="color: blue">&gt;
 &lt;/</span><span style="color: #a31515">ItemGroup</span><span style="color: blue">&gt;</span></pre>
     <p>

@@ -2207,3 +2207,25 @@ BobArnson: Fix SFBUG:3489809: Variable=Value command-line arguments are
 
 WixBuild: Version 3.6.2921.0
 
+jhennessey: SFFEATURE:3400177: Include all feature information in BA manifest.
+
+BobArnson: For packages with @DisplayInternalUI="yes", suppress internal UI 
+           during uninstall to mimic ARP and "msiexec /x" behavior.
+
+EricStJ: SFBUG:3529473 NetFx 4 fails when commandline exceeds 260 characters.
+
+RobMen: SFBUG:3528688 - correctly handle HideWhenDisabled in wixstdba to show
+                        appropriate UI.
+
+RobMen: Allow BA to "force" all permanent packages to be removed.
+
+HeathS: SFBUG:3527782 - Do not require PerMachine attribute for some packages.
+
+HeathS: SFBUG:3520546 - Document that project harvesting is disabled by default.
+
+BobArnson: Add taskbar button progress bar to WixStdBA.
+
+RobMen: SFBUG:3529406 - Burn also sets download send/receive timeouts.
+
+WixBuild: Version 3.6.2928.0
+

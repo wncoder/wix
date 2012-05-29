@@ -27,5 +27,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
     {
         public string Name { get; set; }
         public int Size { get; set; }
+        public string Parent { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public int Display { get; set; }
+        public int Level { get; set; }
+        public string Directory { get; set; }
+        public int Attributes { get; set; }
     }
 }

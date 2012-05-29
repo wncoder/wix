@@ -74,10 +74,21 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             YesNoType vital = (null == vitalData || 1 == (int)vitalData) ? YesNoType.Yes : YesNoType.No;
 
-            YesNoType perMachine = YesNoType.NotSet;
+            YesNoDefaultType perMachine = YesNoDefaultType.NotSet;
             if (null != perMachineData)
             {
-                perMachine = (1 == (int)perMachineData) ? YesNoType.Yes : YesNoType.No;
+                switch ((int)perMachineData)
+                {
+                    case 0:
+                        perMachine = YesNoDefaultType.No;
+                        break;
+                    case 1:
+                        perMachine = YesNoDefaultType.Yes;
+                        break;
+                    case 2:
+                        perMachine = YesNoDefaultType.Default;
+                        break;
+                }
             }
 
             YesNoType repairable = YesNoType.NotSet;
@@ -124,7 +135,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             this.RepairCommand = repairCommand;
             this.UninstallCommand = uninstallCommand;
 
-            this.PerMachine = (YesNoType.Yes == perMachine); // initiallly true only when specifically requested.
+            this.PerMachine = perMachine;
             this.ProductCode = null;
             this.Cache = (YesNoType.No != cache); // true unless it's specifically prohibited.
             this.CacheId = cacheId;
@@ -333,10 +344,46 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private set { this.Fields[10].Data = value ? 1 : 0; }
         }
 
-        public bool PerMachine
+        public YesNoDefaultType PerMachine
         {
-            get { return (null != this.Fields[11].Data) && (1 == (int)this.Fields[11].Data); }
-            private set { this.Fields[11].Data = value ? 1 : 0; }
+            get
+            {
+                object perMachineData = this.Fields[11].Data;
+
+                if (null != perMachineData)
+                {
+                    switch ((int)perMachineData)
+                    {
+                        case 0:
+                            return YesNoDefaultType.No;
+                        case 1:
+                            return YesNoDefaultType.Yes;
+                        case 2:
+                            return YesNoDefaultType.Default;
+                    }
+                }
+
+                return YesNoDefaultType.NotSet;
+            }
+
+            set
+            {
+                switch (value)
+                {
+                    case YesNoDefaultType.No:
+                        this.Fields[11].Data = 0;
+                        break;
+                    case YesNoDefaultType.Yes:
+                        this.Fields[11].Data = 1;
+                        break;
+                    case YesNoDefaultType.Default:
+                        this.Fields[11].Data = 2;
+                        break;
+                    default:
+                        this.Fields[11].Data = null;
+                        break;
+                }
+            }
         }
 
         public string DetectCondition
@@ -498,7 +545,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     // 8 is the Word Count summary information stream bit that means
                     // "Elevated privileges are not required to install this package."
                     // in MSI 4.5 and below, if this bit is 0, elevation is required.
-                    this.PerMachine = 0 == (sumInfo.WordCount & 8);
+                    this.PerMachine = (0 == (sumInfo.WordCount & 8)) ? YesNoDefaultType.Yes : YesNoDefaultType.No;
                 }
 
                 using (Microsoft.Deployment.WindowsInstaller.Database db = new Microsoft.Deployment.WindowsInstaller.Database(sourcePath))
@@ -523,10 +570,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
                     if (YesNoType.Yes == forcePerMachine)
                     {
-                        if (!this.PerMachine)
+                        if (YesNoDefaultType.No == this.PerMachine)
                         {
                             core.OnMessage(WixWarnings.PerUserButForcingPerMachine(this.PackagePayload.SourceLineNumbers, sourcePath));
-                            this.PerMachine = true; // ensure that we think the MSI is per-machine.
+                            this.PerMachine = YesNoDefaultType.Yes; // ensure that we think the MSI is per-machine.
                         }
 
                         this.MsiProperties.Add(new MsiPropertyInfo(this.Id, "ALLUSERS", "1")); // force ALLUSERS=1 via the MSI command-line.
@@ -536,24 +583,24 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         string allusers = ChainPackageInfo.GetProperty(db, "ALLUSERS");
                         if (allusers.Equals("1", StringComparison.Ordinal))
                         {
-                            if (!this.PerMachine)
+                            if (YesNoDefaultType.No == this.PerMachine)
                             {
                                 core.OnMessage(WixErrors.PerUserButAllUsersEquals1(this.PackagePayload.SourceLineNumbers, sourcePath));
                             }
                         }
                         else if (allusers.Equals("2", StringComparison.Ordinal))
                         {
-                            core.OnMessage(WixWarnings.DiscouragedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, this.PerMachine ? "machine" : "user"));
+                            core.OnMessage(WixWarnings.DiscouragedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, (YesNoDefaultType.Yes == this.PerMachine) ? "machine" : "user"));
                         }
                         else
                         {
                             core.OnMessage(WixErrors.UnsupportedAllUsersValue(this.PackagePayload.SourceLineNumbers, sourcePath, allusers));
                         }
                     }
-                    else if (this.PerMachine) // not forced per-machine and no ALLUSERS property, flip back to per-user
+                    else if (YesNoDefaultType.Yes == this.PerMachine) // not forced per-machine and no ALLUSERS property, flip back to per-user
                     {
                         core.OnMessage(WixWarnings.ImplicitlyPerUser(this.PackagePayload.SourceLineNumbers, sourcePath));
-                        this.PerMachine = false;
+                        this.PerMachine = YesNoDefaultType.No;
                     }
 
                     if (String.IsNullOrEmpty(this.Description) && ChainPackageInfo.HasProperty(db, "ARPCOMMENTS"))
@@ -652,46 +699,67 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             using (Microsoft.Deployment.WindowsInstaller.Record featureRecord = new Microsoft.Deployment.WindowsInstaller.Record(1),
                                           componentRecord = new Microsoft.Deployment.WindowsInstaller.Record(1))
                             {
-                                foreach (string featureName in db.ExecuteStringQuery("SELECT `Feature` FROM `Feature`"))
+                                using (Microsoft.Deployment.WindowsInstaller.View allFeaturesView = db.OpenView("SELECT * FROM `Feature`"))
                                 {
-                                    MsiFeature feature = new MsiFeature();
-                                    feature.Name = featureName;
-                                    feature.Size = 0;
-                                    this.MsiFeatures.Add(feature);
+                                    allFeaturesView.Execute();
 
-                                    // Determine Feature Size
-                                    featureRecord.SetString(1, featureName);
-                                    featureView.Execute(featureRecord);
-
-                                    // Loop over all the components
                                     while (true)
                                     {
-                                        using (Microsoft.Deployment.WindowsInstaller.Record componentResultRecord = featureView.Fetch())
+                                        using (Microsoft.Deployment.WindowsInstaller.Record allFeaturesResultRecord = allFeaturesView.Fetch())
                                         {
-                                            if (null == componentResultRecord)
+                                            if (null == allFeaturesResultRecord)
                                             {
                                                 break;
                                             }
-                                            string component = componentResultRecord.GetString(1);
-                                            componentRecord.SetString(1, component);
-                                            componentView.Execute(componentRecord);
 
-                                            // Loop over all the files
+                                            MsiFeature feature = new MsiFeature();
+                                            string featureName = allFeaturesResultRecord.GetString(1);
+                                            feature.Name = featureName;
+                                            feature.Size = 0;
+                                            feature.Parent = allFeaturesResultRecord.GetString(2);
+                                            feature.Title = allFeaturesResultRecord.GetString(3);
+                                            feature.Description = allFeaturesResultRecord.GetString(4);
+                                            feature.Display = allFeaturesResultRecord.GetInteger(5);
+                                            feature.Level = allFeaturesResultRecord.GetInteger(6);
+                                            feature.Directory = allFeaturesResultRecord.GetString(7);
+                                            feature.Attributes = allFeaturesResultRecord.GetInteger(8);
+                                            this.MsiFeatures.Add(feature);
 
+                                            // Determine Feature Size
+                                            featureRecord.SetString(1, featureName);
+                                            featureView.Execute(featureRecord);
+
+                                            // Loop over all the components
                                             while (true)
                                             {
-                                                using (Microsoft.Deployment.WindowsInstaller.Record fileResultRecord = componentView.Fetch())
+                                                using (Microsoft.Deployment.WindowsInstaller.Record componentResultRecord = featureView.Fetch())
                                                 {
-                                                    if (null == fileResultRecord)
+                                                    if (null == componentResultRecord)
                                                     {
                                                         break;
                                                     }
+                                                    string component = componentResultRecord.GetString(1);
+                                                    componentRecord.SetString(1, component);
+                                                    componentView.Execute(componentRecord);
 
-                                                    string fileSize = fileResultRecord.GetString(1);
-                                                    feature.Size += Convert.ToInt32(fileSize, CultureInfo.InvariantCulture.NumberFormat);
+                                                    // Loop over all the files
+
+                                                    while (true)
+                                                    {
+                                                        using (Microsoft.Deployment.WindowsInstaller.Record fileResultRecord = componentView.Fetch())
+                                                        {
+                                                            if (null == fileResultRecord)
+                                                            {
+                                                                break;
+                                                            }
+
+                                                            string fileSize = fileResultRecord.GetString(1);
+                                                            feature.Size += Convert.ToInt32(fileSize, CultureInfo.InvariantCulture.NumberFormat);
+                                                        }
+                                                    }
+
                                                 }
                                             }
-
                                         }
                                     }
                                 }
@@ -980,7 +1048,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// <param name="core">BinderCore for messages.</param>
         private void ResolveMsuPackage(BinderCore core)
         {
-            this.PerMachine = true; // MSUs are always per-machine.
+            this.PerMachine = YesNoDefaultType.Yes; // MSUs are always per-machine.
 
             if (String.IsNullOrEmpty(this.CacheId))
             {

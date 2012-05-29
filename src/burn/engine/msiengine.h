@@ -74,9 +74,10 @@ HRESULT MsiEngineConcatProperties(
     __deref_out_z LPWSTR* psczProperties,
     __in BOOL fObfuscateHiddenVariables
     );
-INSTALLUILEVEL MsiEngineCalculateInstallLevel(
+INSTALLUILEVEL MsiEngineCalculateInstallUiLevel(
     __in BOOL fDisplayInternalUI,
-    __in BOOTSTRAPPER_DISPLAY display
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BOOTSTRAPPER_ACTION_STATE actionState
     );
 
 #if defined(__cplusplus)

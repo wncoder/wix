@@ -34,8 +34,8 @@
         <SlipstreamMsp Id="PatchA" />
       </MsiPackage>
       <MsiPackage Id="PackageB" Name="~$(var.TestName)_PackageB.msi" Compressed="yes" SourceFile="!(bindpath.packageB)" Vital="yes"/>
-      <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes" SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes" />
-      <MspPackage Id="PatchB" Name="~$(var.TestName)_PatchB.msp" Compressed="yes" SourceFile="!(bindpath.patchB)" Vital="yes" PerMachine="yes" Slipstream="yes" />
+      <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes" SourceFile="!(bindpath.patchA)" Vital="yes" />
+      <MspPackage Id="PatchB" Name="~$(var.TestName)_PatchB.msp" Compressed="yes" SourceFile="!(bindpath.patchB)" Vital="yes" PerMachine="default" Slipstream="yes" />
     </Chain>
   </Bundle>
 </Wix>

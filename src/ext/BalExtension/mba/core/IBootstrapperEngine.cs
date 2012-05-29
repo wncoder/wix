@@ -223,6 +223,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
     public enum RequestState
     {
         None,
+        ForceAbsent,
         Absent,
         Cache,
         Present,

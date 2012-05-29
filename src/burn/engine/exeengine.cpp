@@ -246,6 +246,9 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             execute = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
+        case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT:
+            execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+            break;
         default:
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
         }
@@ -258,6 +261,7 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
         case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
             execute = BOOTSTRAPPER_ACTION_STATE_INSTALL;
             break;
+        case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT: __fallthrough;
         case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
             break;
@@ -283,6 +287,7 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
             case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
                 rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;
+            case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT: __fallthrough;
             case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
                 rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
                 break;
@@ -299,6 +304,7 @@ extern "C" HRESULT ExeEnginePlanCalculatePackage(
             case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
                 rollback = pPackage->fUninstallable ? BOOTSTRAPPER_ACTION_STATE_UNINSTALL : BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;
+            case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT: __fallthrough;
             case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
                 rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;

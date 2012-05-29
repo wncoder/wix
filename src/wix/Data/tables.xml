@@ -1710,7 +1710,7 @@
         <columnDefinition name="CacheId" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Attributes" type="number" length="4" nullable="no" minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied to this package."/>
         <columnDefinition name="Vital" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
-        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="2"/>
         <columnDefinition name="DetectCondition" type="string" length="0" nullable="yes"/>
         <columnDefinition name="MsuKB" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Repairable" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
@@ -1736,7 +1736,7 @@
         <columnDefinition name="CacheId" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Attributes" type="number" length="4" nullable="no" minValue="0" maxValue="2147483647" description="A 32-bit word that specifies the attribute flags to be applied to this package."/>
         <columnDefinition name="Vital" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
-        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
+        <columnDefinition name="PerMachine" type="number" length="2" nullable="yes" minValue="0" maxValue="2"/>
         <columnDefinition name="DetectCondition" type="string" length="0" nullable="yes"/>
         <columnDefinition name="MsuKB" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Repairable" type="number" length="2" nullable="yes" minValue="0" maxValue="1"/>
@@ -1797,8 +1797,15 @@
     </tableDefinition>
     <tableDefinition name="WixPackageFeatureInfo" unreal="yes" bootstrapperApplicationData="yes">
         <columnDefinition name="Package" type="string" length="0" />
-        <columnDefinition name="Feature"  type="string" length="0" />
+        <columnDefinition name="Feature" type="string" length="0" />
         <columnDefinition name="Size" type="string" length="0" />
+        <columnDefinition name="Parent" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Title" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Description" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Display" type="string" length="0" nullable="yes" />
+        <columnDefinition name="Level" type="string" length="0" />
+        <columnDefinition name="Directory" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Attributes" type="string" length="0" />
     </tableDefinition>
     <tableDefinition name="WixPackageProperties" unreal="yes" bootstrapperApplicationData="yes">
         <columnDefinition name="Package"  type="string" length="0" category="identifier" primaryKey="yes"

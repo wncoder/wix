@@ -719,6 +719,10 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
         {
             execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
         }
+        else if (BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT == pPackage->requested)
+        {
+            execute = BOOTSTRAPPER_ACTION_STATE_UNINSTALL;
+        }
         else
         {
             execute = BOOTSTRAPPER_ACTION_STATE_NONE;
@@ -758,6 +762,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
             case BOOTSTRAPPER_REQUEST_STATE_REPAIR:
                 rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
                 break;
+            case BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT: __fallthrough;
             case BOOTSTRAPPER_REQUEST_STATE_ABSENT:
                 rollback = BOOTSTRAPPER_ACTION_STATE_INSTALL;
                 break;
@@ -850,8 +855,8 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
-        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
         pAction->msiPackage.action = pPackage->rollback;
+        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallUiLevel(pPackage->Msi.fDisplayInternalUI, display, pAction->msiPackage.action);
         pAction->msiPackage.rgFeatures = rgRollbackFeatureActions;
         rgRollbackFeatureActions = NULL;
 
@@ -881,8 +886,8 @@ extern "C" HRESULT MsiEnginePlanAddPackage(
 
         pAction->type = BURN_EXECUTE_ACTION_TYPE_MSI_PACKAGE;
         pAction->msiPackage.pPackage = pPackage;
-        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallLevel(pPackage->Msi.fDisplayInternalUI, display);
         pAction->msiPackage.action = pPackage->execute;
+        pAction->msiPackage.uiLevel = MsiEngineCalculateInstallUiLevel(pPackage->Msi.fDisplayInternalUI, display, pAction->msiPackage.action);
         pAction->msiPackage.rgFeatures = rgFeatureActions;
         rgFeatureActions = NULL;
 
@@ -1167,15 +1172,17 @@ LExit:
     return hr;
 }
 
-extern "C" INSTALLUILEVEL MsiEngineCalculateInstallLevel(
+extern "C" INSTALLUILEVEL MsiEngineCalculateInstallUiLevel(
     __in BOOL fDisplayInternalUI,
-    __in BOOTSTRAPPER_DISPLAY display
+    __in BOOTSTRAPPER_DISPLAY display,
+    __in BOOTSTRAPPER_ACTION_STATE actionState
     )
 {
     // Assume there will be no internal UI displayed.
     INSTALLUILEVEL uiLevel = static_cast<INSTALLUILEVEL>(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY);
 
-    if (fDisplayInternalUI)
+    // suppress internal UI during uninstall to mimic ARP and "msiexec /x" behavior
+    if (fDisplayInternalUI && BOOTSTRAPPER_ACTION_STATE_UNINSTALL != actionState)
     {
         switch (display)
         {

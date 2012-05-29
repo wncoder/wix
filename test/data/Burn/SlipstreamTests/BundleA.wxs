@@ -34,7 +34,7 @@
         <SlipstreamMsp Id="PatchA" />
       </MsiPackage>
 
-      <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes" SourceFile="!(bindpath.patchA)" Vital="yes" PerMachine="yes" />
+      <MspPackage Id="PatchA" Name="~$(var.TestName)_PatchA.msp" Compressed="yes" SourceFile="!(bindpath.patchA)" Vital="yes" />
     </Chain>
   </Bundle>
 </Wix>

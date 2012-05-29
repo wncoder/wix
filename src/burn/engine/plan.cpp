@@ -749,23 +749,25 @@ extern "C" HRESULT PlanCleanPackage(
         {
             fPlanCleanPackage = TRUE;
         }
-        else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed and
-                 BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute)      // actually being removed.
+        else if ((BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT == pPackage->requested ||
+                  BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested) &&      // requested to be removed and
+                 BOOTSTRAPPER_ACTION_STATE_UNINSTALL == pPackage->execute)          // actually being removed.
         {
             fPlanCleanPackage = TRUE;
         }
-        else if (BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested &&    // requested to be removed but
-                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is do nothing and
-                 !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
-                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
+        else if ((BOOTSTRAPPER_REQUEST_STATE_FORCE_ABSENT == pPackage->requested ||
+                  BOOTSTRAPPER_REQUEST_STATE_ABSENT == pPackage->requested) &&      // requested to be removed but
+                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&             // execute is do nothing and
+                 !pPackage->fDependencyManagerWasHere &&                            // dependency manager didn't change execute and
+                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)       // currently not installed.
         {
             fPlanCleanPackage = TRUE;
         }
-        else if (BOOTSTRAPPER_ACTION_UNINSTALL == action &&                     // uninstalling and
-                 BOOTSTRAPPER_REQUEST_STATE_NONE == pPackage->requested &&      // requested do nothing (aka: default) and
-                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&         // execute is still do nothing and
-                 !pPackage->fDependencyManagerWasHere &&                        // dependency manager didn't change execute and
-                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)   // currently not installed.
+        else if (BOOTSTRAPPER_ACTION_UNINSTALL == action &&                         // uninstalling and
+                 BOOTSTRAPPER_REQUEST_STATE_NONE == pPackage->requested &&          // requested do nothing (aka: default) and
+                 BOOTSTRAPPER_ACTION_STATE_NONE == pPackage->execute &&             // execute is still do nothing and
+                 !pPackage->fDependencyManagerWasHere &&                            // dependency manager didn't change execute and
+                 BOOTSTRAPPER_PACKAGE_STATE_PRESENT > pPackage->currentState)       // currently not installed.
         {
             fPlanCleanPackage = TRUE;
         }
