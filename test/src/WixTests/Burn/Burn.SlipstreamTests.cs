@@ -19,13 +19,12 @@ namespace WixTest.Tests.Burn
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
-    using Microsoft.Win32;
     using System.IO;
+
+    using Microsoft.Tools.WindowsInstallerXml.Bootstrapper;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Win32;
+    using WixTest.Verifiers;
 
     [TestClass]
     public class SlipstreamTests : BurnTests
@@ -201,7 +200,7 @@ namespace WixTest.Tests.Burn
             packageSourceCodeInstalled = this.GetTestInstallFolder(@"B\B.wxs");
             Assert.IsTrue(File.Exists(packageSourceCodeInstalled), String.Concat("Should have found Package B payload installed at: ", packageSourceCodeInstalled));
 
-            // Remove package A and it's patch should go with it.
+            // Remove package A and its patch should go with it.
             this.SetPackageRequestedState("packageA", RequestState.Absent);
             this.SetPackageRequestedState("patchA", RequestState.Absent);
             install.Modify();
@@ -308,6 +307,59 @@ namespace WixTest.Tests.Burn
                 Assert.AreEqual(originalVersion, actualVersion);
 
                 actualVersion = root.GetValue("B2") as string;
+                Assert.AreEqual(patchedVersion, actualVersion);
+            }
+
+            install.Uninstall();
+
+            Assert.IsNull(this.GetTestRegistryRoot(), "Test registry key should have been removed during uninstall.");
+
+            this.CleanTestArtifacts = true;
+        }
+
+        [TestMethod]
+        [Priority(2)]
+        [Description("Installs bundle with package that is doing a major upgrade and has a patch slipstreamed to it.")]
+        [TestProperty("IsRuntimeTest", "true")]
+        public void Burn_MajorUpgradeWithSlipstream()
+        {
+            const string originalVersion = "1.0.0.0";
+            const string upgradeVersion = "2.0.0.0";
+            const string patchedVersion = "2.0.1.0";
+
+            // Build the packages.
+            string originalPackageA = new PackageBuilder(this, "A").Build().Output;
+            string upgradePackageA = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", upgradeVersion } }, }.Build().Output;
+            string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
+            string patchA = new PatchBuilder(this, "PatchA") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, TargetPaths = new string[] { upgradePackageA }, UpgradePaths = new string[] { packageAUpdate } }.Build().Output;
+
+            // Create the named bind paths to the packages in the bundle.
+            Dictionary<string, string> bindPaths = new Dictionary<string, string>();
+            bindPaths.Add("packageA", upgradePackageA);
+            bindPaths.Add("patchA", patchA);
+
+            string bundleA = new BundleBuilder(this, "BundleA") { BindPaths = bindPaths, Extensions = Extensions }.Build().Output;
+
+            // Install the original MSI.
+            MSIExec.InstallProduct(originalPackageA, MSIExec.MSIExecReturnCode.SUCCESS);
+
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(originalPackageA));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                // Original Product A should be present.
+                string actualVersion = root.GetValue("A") as string;
+                Assert.AreEqual(originalVersion, actualVersion);
+            }
+
+            // Now install the bundle that should upgrade the MSI and apply the patch.
+            BundleInstaller install = new BundleInstaller(this, bundleA).Install();
+
+            Assert.IsFalse(MsiVerifier.IsPackageInstalled(originalPackageA));
+            Assert.IsTrue(MsiVerifier.IsPackageInstalled(upgradePackageA));
+            using (RegistryKey root = this.GetTestRegistryRoot())
+            {
+                // Product A should've slipstreamed with its patch.
+                string actualVersion = root.GetValue("A") as string;
                 Assert.AreEqual(patchedVersion, actualVersion);
             }
 
