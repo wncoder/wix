@@ -1,8 +1,15 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  <copyright file="pcaext.build" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
+-->
 <project name="pcaext" default="pcaext.inc" xmlns="http://nant.sf.net/release/0.85-rc3/nant.xsd">
   <description>
     pcaext.build - Builds pcaext.dll
-    2005.12.09 fregro Created
   </description>
 
   <!--

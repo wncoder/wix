@@ -1,14 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
-    Copyright (c) Microsoft Corporation.  All rights reserved.
-    
-    The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-    which can be found in the file CPL.TXT at the root of this distribution.
-    By using this software in any fashion, you are agreeing to be bound by
-    the terms of this license.
-    
-    You must not remove this notice, or any other, from this software.
+  <copyright file="Package1.wxs" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="834BD917-0DAE-419B-A8FC-2065EB47481A" Name="TestBurn1" Language="1033" Version="1.1.2.3" Manufacturer="Microsoft Corporation" UpgradeCode="{A4D70718-3619-493F-8BFF-407C0E7AA4CD}">

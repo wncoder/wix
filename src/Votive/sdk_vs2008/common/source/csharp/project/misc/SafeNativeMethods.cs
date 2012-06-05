@@ -1,18 +1,16 @@
-/***************************************************************************
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-
-***************************************************************************/
+//-------------------------------------------------------------------------------------------------
+// <copyright file="SafeNativeMethods.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
 namespace Microsoft.VisualStudio {
     using System.Runtime.InteropServices;
     using System;
-	using System.Drawing;
+    using System.Drawing;
     using System.Security.Permissions;
     using System.Collections;
     using System.IO;
@@ -21,7 +19,7 @@ namespace Microsoft.VisualStudio {
 //   We sacrifice performance for security as this is a serious fxcop bug.   
 //	 [System.Security.SuppressUnmanagedCodeSecurityAttribute()]
     internal static class SafeNativeMethods 
-	{
+    {
 #if VS2005_UNUSED
         [DllImport(ExternDll.User32, ExactSpelling=true, CharSet=CharSet.Auto)]
         internal static extern bool InvalidateRect(IntPtr hWnd, ref NativeMethods.RECT rect, bool erase);
@@ -38,25 +36,25 @@ namespace Microsoft.VisualStudio {
         internal static extern int GetCurrentThreadId();
 
         [DllImport(ExternDll.User32, ExactSpelling=true, CharSet=CharSet.Auto)]
-		internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In, Out] ref NativeMethods.RECT rect, int cPoints);
+        internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In, Out] ref NativeMethods.RECT rect, int cPoints);
 
         [DllImport(ExternDll.User32, ExactSpelling=true, CharSet=CharSet.Auto)]
-		internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In, Out] NativeMethods.POINT pt, int cPoints);
+        internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In, Out] NativeMethods.POINT pt, int cPoints);
 
         [DllImport(ExternDll.User32, CharSet=System.Runtime.InteropServices.CharSet.Auto, BestFitMapping=false, ThrowOnUnmappableChar=true)]
         internal static extern int RegisterWindowMessage(string msg);
 
         [DllImport(ExternDll.User32, ExactSpelling=true, CharSet=CharSet.Auto)]
-		internal static extern bool GetWindowRect(IntPtr hWnd, [In, Out] ref NativeMethods.RECT rect);
+        internal static extern bool GetWindowRect(IntPtr hWnd, [In, Out] ref NativeMethods.RECT rect);
 
         [DllImport(ExternDll.User32, CharSet=System.Runtime.InteropServices.CharSet.Auto, BestFitMapping=false, ThrowOnUnmappableChar=true)]
-		internal static extern int DrawText(IntPtr hDC, string lpszString, int nCount, ref NativeMethods.RECT lpRect, int nFormat);
+        internal static extern int DrawText(IntPtr hDC, string lpszString, int nCount, ref NativeMethods.RECT lpRect, int nFormat);
 
         [DllImport(ExternDll.User32, CharSet=System.Runtime.InteropServices.CharSet.Auto)]
-		internal static extern bool OffsetRect([In, Out] ref NativeMethods.RECT lpRect, int dx, int dy);
+        internal static extern bool OffsetRect([In, Out] ref NativeMethods.RECT lpRect, int dx, int dy);
 
         [DllImport(ExternDll.Gdi32, SetLastError=true, CharSet=System.Runtime.InteropServices.CharSet.Auto, BestFitMapping=false, ThrowOnUnmappableChar=true)]
-		internal static extern int GetTextExtentPoint32(IntPtr hDC, string str, int len, [In, Out] NativeMethods.POINT ptSize);
+        internal static extern int GetTextExtentPoint32(IntPtr hDC, string str, int len, [In, Out] NativeMethods.POINT ptSize);
 #endif
 
         [DllImport(ExternDll.Gdi32, SetLastError=true, ExactSpelling=true, CharSet=CharSet.Auto)]
@@ -77,10 +75,10 @@ namespace Microsoft.VisualStudio {
         [DllImport(ExternDll.Gdi32, SetLastError=true, ExactSpelling=true, CharSet=CharSet.Auto)]
         internal static extern int SetBkMode(IntPtr hdc, int nBkMode);
 
-		[DllImport(ExternDll.Oleaut32)]
-		internal static extern void VariantInit(IntPtr pObject);
+        [DllImport(ExternDll.Oleaut32)]
+        internal static extern void VariantInit(IntPtr pObject);
 
-		[DllImport(ExternDll.Oleaut32, PreserveSig = false)]
-		internal static extern void VariantClear(IntPtr pObject);
-	}
+        [DllImport(ExternDll.Oleaut32, PreserveSig = false)]
+        internal static extern void VariantClear(IntPtr pObject);
+    }
 }

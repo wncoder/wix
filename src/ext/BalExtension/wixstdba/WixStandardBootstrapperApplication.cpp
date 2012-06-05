@@ -1,14 +1,9 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="WixStandardBootstrapperApplication.cpp" company="Microsoft">
-//    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
-//    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-//    which can be found in the file CPL.TXT at the root of this distribution.
-//    By using this software in any fashion, you are agreeing to be bound by
-//    the terms of this license.
-//    
-//    You must not remove this notice, or any other, from this software.
+// <copyright file="WixStandardBootstrapperApplication.cpp" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 //-------------------------------------------------------------------------------------------------
 
@@ -492,6 +487,8 @@ public: // IBootstrapperApplication
 
                 nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
             }
+
+            SetProgressState(HRESULT_FROM_WIN32(dwCode));
         }
         else // just take note of the error code and let things continue.
         {
@@ -608,7 +605,7 @@ public: // IBootstrapperApplication
 
 
     virtual STDMETHODIMP_(void) OnExecuteComplete(
-        __in HRESULT /*hrStatus*/
+        __in HRESULT hrStatus
         )
     {
         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_PACKAGE_TEXT, L"");
@@ -616,6 +613,7 @@ public: // IBootstrapperApplication
         ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_PROGRESS_CANCEL_BUTTON, FALSE); // no more cancel.
 
         SetState(WIXSTDBA_STATE_EXECUTED, S_OK); // we always return success here and let OnApplyComplete() deal with the error.
+        SetProgressState(hrStatus);
     }
 
 
@@ -689,7 +687,7 @@ public: // IBootstrapperApplication
         }
 
         SetState(WIXSTDBA_STATE_APPLIED, hrStatus);
-        SetTaskbarButtonProgress(100); // show full progress bar, green or red
+        SetTaskbarButtonProgress(100); // show full progress bar, green, yellow, or red
 
         return IDNOACTION;
     }
@@ -1887,7 +1885,6 @@ private: // privates
     void OnClickOptionsCancelButton()
     {
         SetState(m_stateBeforeOptions, S_OK);
-        return;
     }
 
 
@@ -2212,7 +2209,18 @@ private: // privates
         __in HRESULT hrStatus
         )
     {
-        SetTaskbarButtonState((IsRollingBack() || FAILED(hrStatus)) ? TBPF_ERROR : TBPF_NORMAL);
+        TBPFLAG flag = TBPF_NORMAL;
+
+        if (IsCanceled() || HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT) == hrStatus)
+        {
+            flag = TBPF_PAUSED;
+        }
+        else if (IsRollingBack() || FAILED(hrStatus))
+        {
+            flag = TBPF_ERROR;
+        }
+
+        SetTaskbarButtonState(flag);
     }
 
 

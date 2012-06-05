@@ -1,13 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Xml;
-using Microsoft.Build.Framework;
-using Microsoft.Build.Utilities;
+﻿//-------------------------------------------------------------------------------------------------
+// <copyright file="WixAssignCulture.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
 namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Xml;
+    using Microsoft.Build.Framework;
+    using Microsoft.Build.Utilities;
+
     /// <summary>
     /// This task assigns Culture metadata to files based on the value of the Culture attribute on the
     /// WixLocalization element inside the file.

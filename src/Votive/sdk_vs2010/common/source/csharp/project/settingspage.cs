@@ -1,13 +1,11 @@
-/***************************************************************************
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-
-***************************************************************************/
+//-------------------------------------------------------------------------------------------------
+// <copyright file="settingspage.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -185,13 +183,13 @@ namespace Microsoft.VisualStudio.Package
         }
 
         /// <summary>
-		/// Sets the value of a configuration dependent property.
+        /// Sets the value of a configuration dependent property.
         /// If the attribute does not exist it is created.  
-		/// If value is null it will be set to an empty string.
+        /// If value is null it will be set to an empty string.
         /// </summary>
         /// <param name="name">property name.</param>
         /// <param name="value">value of property</param>
-		public void SetConfigProperty(string name, string value)
+        public void SetConfigProperty(string name, string value)
         {
             CCITracing.TraceCall();
             if (value == null)

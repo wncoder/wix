@@ -1,6 +1,14 @@
 #pragma once
+//-------------------------------------------------------------------------------------------------
+// <copyright file="custommsierrors.h" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
+
 //---------------------------------------------------------------------------
-// CustomMsiErrors.h
 // Indexes for custom errors in the MSI
 // 
 // Note: Custom Errors must be in the range 25000-30000, all other error

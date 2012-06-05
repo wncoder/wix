@@ -2229,3 +2229,19 @@ RobMen: SFBUG:3529406 - Burn also sets download send/receive timeouts.
 
 WixBuild: Version 3.6.2928.0
 
+BobArnson: Support packages and features with more than 2GB of content in Burn.
+
+RobMen: SFBUG:3528618 - create swid:TagRef to be used in PatchFamilies.
+
+BobArnson: Set taskbar button progress bar yellow for canceled installs.
+
+RobMen: SFBUG:3530938 - fix Error resource strings in DTF Cab assembly.
+        SFBUG:3530946 - fix race condition from tools output to MSBuild.
+        SFBUG:3531252 - expand accept checkbox in wixstdba to fit on WinXP.
+
+HeathS: SFBUG:3531255 - Update the XML schema to match the theme APIs.
+
+RobMen: SFBUG:3531467 - update templates to use "3.6" for ProductVersion.
+
+WixBuild: Version 3.6.3005.0
+

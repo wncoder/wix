@@ -1,4 +1,13 @@
-﻿<Window x:Class="Microsoft.Tools.WindowsInstallerXml.UX.RootView"
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  <copyright file="RootView.xaml" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
+-->
+<Window x:Class="Microsoft.Tools.WindowsInstallerXml.UX.RootView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ux="clr-namespace:Microsoft.Tools.WindowsInstallerXml.UX"

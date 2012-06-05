@@ -1,13 +1,11 @@
-/***************************************************************************
-
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-
-***************************************************************************/
+//-------------------------------------------------------------------------------------------------
+// <copyright file="oasolutionfolder.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
 using System;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -24,26 +22,26 @@ using System.Globalization;
 
 namespace Microsoft.VisualStudio.Package.Automation
 {
-	[ComVisible(true), CLSCompliant(false)]
+    [ComVisible(true), CLSCompliant(false)]
     public class OASolutionFolder<T> : EnvDTE80.SolutionFolder
-		where T : HierarchyNode
+        where T : HierarchyNode
     {
         bool hidden = false;
-		T node;
+        T node;
 
-		public OASolutionFolder(T associatedNode)
+        public OASolutionFolder(T associatedNode)
         {
-			if (associatedNode == null)
-			{
-				throw new ArgumentNullException("associatedNode");
-			}
+            if (associatedNode == null)
+            {
+                throw new ArgumentNullException("associatedNode");
+            }
 
-			Debug.Assert(associatedNode.ProjectMgr is ProjectContainerNode, "Expecting obejct of type" + typeof(ProjectContainerNode).Name);
+            Debug.Assert(associatedNode.ProjectMgr is ProjectContainerNode, "Expecting obejct of type" + typeof(ProjectContainerNode).Name);
 
-			if (!(associatedNode.ProjectMgr is ProjectContainerNode))
-				throw new ArgumentException(SR.GetString(SR.InvalidParameter, CultureInfo.CurrentUICulture), "associatedNode");
+            if (!(associatedNode.ProjectMgr is ProjectContainerNode))
+                throw new ArgumentException(SR.GetString(SR.InvalidParameter, CultureInfo.CurrentUICulture), "associatedNode");
 
-			this.node = associatedNode;
+            this.node = associatedNode;
         }
 
 
@@ -52,7 +50,7 @@ namespace Microsoft.VisualStudio.Package.Automation
         public virtual EnvDTE.Project AddFromFile(string fileName)
         {
             ProjectContainerNode projectContainer = (ProjectContainerNode)this.node.ProjectMgr;
-			ProjectElement newElement = new ProjectElement(projectContainer, fileName, ProjectFileConstants.SubProject);
+            ProjectElement newElement = new ProjectElement(projectContainer, fileName, ProjectFileConstants.SubProject);
             NestedProjectNode newNode = projectContainer.AddExistingNestedProject(newElement, __VSCREATEPROJFLAGS.CPF_NOTINSLNEXPLR | __VSCREATEPROJFLAGS.CPF_SILENT | __VSCREATEPROJFLAGS.CPF_OPENFILE);
             if (newNode == null)
                 return null;
@@ -107,8 +105,8 @@ namespace Microsoft.VisualStudio.Package.Automation
         {
             get
             {
-				throw new NotImplementedException();
-			}
+                throw new NotImplementedException();
+            }
         }
 
         public virtual bool Hidden
@@ -123,13 +121,13 @@ namespace Microsoft.VisualStudio.Package.Automation
             }
         }
 
-		public virtual EnvDTE.DTE DTE 
-		{
-			get
-			{
-				return (EnvDTE.DTE)this.node.ProjectMgr.Site.GetService(typeof(EnvDTE.DTE));
-			}
-		}
+        public virtual EnvDTE.DTE DTE 
+        {
+            get
+            {
+                return (EnvDTE.DTE)this.node.ProjectMgr.Site.GetService(typeof(EnvDTE.DTE));
+            }
+        }
 
         #endregion
     }

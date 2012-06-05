@@ -1,14 +1,9 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="ChainPackageInfo.cs" company="Microsoft">
-//    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
-//    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-//    which can be found in the file CPL.TXT at the root of this distribution.
-//    By using this software in any fashion, you are agreeing to be bound by
-//    the terms of this license.
-//    
-//    You must not remove this notice, or any other, from this software.
+// <copyright file="ChainPackageInfo.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 //
 // <summary>
@@ -58,7 +53,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             string logPathVariable = (string)chainPackageRow[15];
             string rollbackPathVariable = (string)chainPackageRow[16];
             string protocol = (string)chainPackageRow[17];
-            int installSize = (int)chainPackageRow[18];
+            long installSize = (int)chainPackageRow[18];
             object suppressLooseFilePayloadGenerationData = chainPackageRow[19];
             object enableFeatureSelectionData = chainPackageRow[20];
             object forcePerMachineData = chainPackageRow[21];
@@ -422,10 +417,18 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private set { this.Fields[17].Data = value; }
         }
 
-        public int InstallSize
+        public long InstallSize
         {
-            get { return null != this.Fields[18].Data ? (int)this.Fields[18].Data : 0; }
-            private set { this.Fields[18].Data = value; }
+            get
+            {
+                string value = (string)this.Fields[18].Data;
+                return String.IsNullOrEmpty(value) ? 0L : Convert.ToInt64(value, CultureInfo.InvariantCulture);
+            }
+
+            private set
+            {
+                this.Fields[18].Data = Convert.ToString(value, CultureInfo.InvariantCulture);
+            }
         }
 
         public bool SuppressLooseFilePayloadGeneration
@@ -506,7 +509,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
             private set { this.Fields[31].Data = value; }
         }
 
-        public int Size { get; private set; }
+        public long Size { get; private set; }
         public List<PayloadInfoRow> Payloads { get; private set; }
         public List<RelatedPackage> RelatedPackages { get; private set; }
         public List<MsiFeature> MsiFeatures { get; private set; }

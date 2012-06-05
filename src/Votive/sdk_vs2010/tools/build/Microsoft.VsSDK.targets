@@ -1,16 +1,13 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
-  <!--
-*************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-*************************************************************************
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  <copyright file="Microsoft.VsSDK.targets" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
 -->
-
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <UsingTask TaskName="FindVsSDKInstallation" AssemblyFile="Microsoft.VsSDK.Build.Tasks.dll" />
   <UsingTask TaskName="CtoResourceMerger" AssemblyFile="Microsoft.VsSDK.Build.Tasks.dll" />
   <UsingTask TaskName="MPLex" AssemblyFile="Microsoft.VsSDK.Build.Tasks.dll" />

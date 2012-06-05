@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  <copyright file="product.wxs" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
+-->
 <!-- ProdBv100 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="398B8855-E3B8-4559-9C2B-3ED457C5A889" Name="Burn Test Package B" Language="1033" Version="1.0.1.0" Manufacturer="My Company" UpgradeCode="77AE8779-8689-4DC9-BB1B-64B500078104">

@@ -1,12 +1,19 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="Uuid.cs" company="various">
+// <copyright file="Uuid.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+// 
+// <remarks>
 //     The code in this file is derived from a sample implementation
 //     found in RFC 4122 which has the following copyright notice:
 //
 //     Copyright (c) 1990- 1993, 1996 Open Software Foundation, Inc.
 //     Copyright (c) 1989 by Hewlett-Packard Company, Palo Alto, Ca. &amp;
 //     Digital Equipment Corporation, Maynard, Mass.
-//     Copyright (c) 1998 Microsoft.
+// 
 //     To anyone who acknowledges that this file is provided "AS IS"
 //     without any express or implied warranty: permission to use, copy,
 //     modify, and distribute this file for any purpose is hereby
@@ -19,8 +26,8 @@
 //     Foundation, Inc., Hewlett-Packard Company, Microsoft, nor Digital
 //     Equipment Corporation makes any representations about the
 //     suitability of this software for any purpose.
-// </copyright>
-// 
+// </remarks>
+//
 // <summary>
 // Implementation of RFC 4122 - A Universally Unique Identifier (UUID) URN Namespace.
 // </summary>

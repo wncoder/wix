@@ -1,13 +1,12 @@
-/***************************************************************************
+//-------------------------------------------------------------------------------------------------
+// <copyright file="oareferencebase.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-
-***************************************************************************/
 using System;
 using System.Runtime.InteropServices;
 
@@ -23,12 +22,12 @@ namespace Microsoft.VisualStudio.Package.Automation
     /// <typeparam name="RefType"></typeparam>
     [SuppressMessage("Microsoft.Naming", "CA1715:IdentifiersShouldHaveCorrectPrefix", MessageId = "T")]
     [ComVisible(true)]
-	public class OAReferenceBase<RefType> : Reference
-		where RefType : ReferenceNode
-	{
-		#region fields
+    public class OAReferenceBase<RefType> : Reference
+        where RefType : ReferenceNode
+    {
+        #region fields
         private RefType referenceNode;
-	    #endregion
+        #endregion
 
         #region ctors
         public OAReferenceBase(RefType referenceNode)
@@ -44,138 +43,138 @@ namespace Microsoft.VisualStudio.Package.Automation
         }
         #endregion
 
-		#region Reference Members
-		public virtual int BuildNumber
-		{
-			get { return 0; }
-		}
+        #region Reference Members
+        public virtual int BuildNumber
+        {
+            get { return 0; }
+        }
 
-		public virtual References Collection
-		{
-			get
-			{
-				return BaseReferenceNode.Parent.Object as References;
-			}
-		}
+        public virtual References Collection
+        {
+            get
+            {
+                return BaseReferenceNode.Parent.Object as References;
+            }
+        }
 
-		public virtual EnvDTE.Project ContainingProject
-		{
-			get
-			{
-				return BaseReferenceNode.ProjectMgr.GetAutomationObject() as EnvDTE.Project;
-			}
-		}
+        public virtual EnvDTE.Project ContainingProject
+        {
+            get
+            {
+                return BaseReferenceNode.ProjectMgr.GetAutomationObject() as EnvDTE.Project;
+            }
+        }
 
-		public virtual bool CopyLocal
-		{
-			get
-			{
-				throw new Exception("The method or operation is not implemented.");
-			}
-			set
-			{
-				throw new Exception("The method or operation is not implemented.");
-			}
-		}
+        public virtual bool CopyLocal
+        {
+            get
+            {
+                throw new Exception("The method or operation is not implemented.");
+            }
+            set
+            {
+                throw new Exception("The method or operation is not implemented.");
+            }
+        }
 
-		public virtual string Culture
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual string Culture
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual EnvDTE.DTE DTE
-		{
-			get
-			{
-				return BaseReferenceNode.ProjectMgr.Site.GetService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
-			}
-		}
+        public virtual EnvDTE.DTE DTE
+        {
+            get
+            {
+                return BaseReferenceNode.ProjectMgr.Site.GetService(typeof(EnvDTE.DTE)) as EnvDTE.DTE;
+            }
+        }
 
-		public virtual string Description
-		{
-			get
-			{
-				return this.Name;
-			}
-		}
+        public virtual string Description
+        {
+            get
+            {
+                return this.Name;
+            }
+        }
 
-		public virtual string ExtenderCATID
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual string ExtenderCATID
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual object ExtenderNames
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual object ExtenderNames
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual string Identity
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual string Identity
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual int MajorVersion
-		{
-			get { return 0; }
-		}
+        public virtual int MajorVersion
+        {
+            get { return 0; }
+        }
 
-		public virtual int MinorVersion
-		{
-			get { return 0; }
-		}
+        public virtual int MinorVersion
+        {
+            get { return 0; }
+        }
 
-		public virtual string Name
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual string Name
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual string Path
-		{
-			get
-			{
-				return BaseReferenceNode.Url;
-			}
-		}
+        public virtual string Path
+        {
+            get
+            {
+                return BaseReferenceNode.Url;
+            }
+        }
 
-		public virtual string PublicKeyToken
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual string PublicKeyToken
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual void Remove()
-		{
-			BaseReferenceNode.Remove(false);
-		}
+        public virtual void Remove()
+        {
+            BaseReferenceNode.Remove(false);
+        }
 
-		public virtual int RevisionNumber
-		{
-			get { return 0; }
-		}
+        public virtual int RevisionNumber
+        {
+            get { return 0; }
+        }
 
-		public virtual EnvDTE.Project SourceProject
-		{
-			get { return null; }
-		}
+        public virtual EnvDTE.Project SourceProject
+        {
+            get { return null; }
+        }
 
-		public virtual bool StrongName
-		{
-			get { return false; }
-		}
+        public virtual bool StrongName
+        {
+            get { return false; }
+        }
 
-		public virtual prjReferenceType Type
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public virtual prjReferenceType Type
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public virtual string Version
-		{
-			get { return new Version().ToString(); }
-		}
+        public virtual string Version
+        {
+            get { return new Version().ToString(); }
+        }
 
-		public virtual object get_Extender(string ExtenderName)
-		{
-			throw new Exception("The method or operation is not implemented.");
-		}
-		#endregion
-	}
+        public virtual object get_Extender(string ExtenderName)
+        {
+            throw new Exception("The method or operation is not implemented.");
+        }
+        #endregion
+    }
 }

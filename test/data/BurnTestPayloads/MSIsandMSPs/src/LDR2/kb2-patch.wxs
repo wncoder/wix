@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  <copyright file="kb2-patch.wxs" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
+-->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Patch Id="8FE377A5-C5A1-45D9-A642-FB4FAE6EE4F6" AllowRemoval="yes" Classification="Update" ClientPatchId="KB2" Codepage="1252" Description="Update (KB2)" DisplayName="Update (KB2)" Manufacturer="My Company" MoreInfoURL="http://support.MyCompany.com/kb/2">
 

@@ -1,14 +1,9 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="TagCompiler.cs" company="Microsoft">
-//    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
-//    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-//    which can be found in the file CPL.TXT at the root of this distribution.
-//    By using this software in any fashion, you are agreeing to be bound by
-//    the terms of this license.
-//    
-//    You must not remove this notice, or any other, from this software.
+// <copyright file="TagCompiler.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 // 
 // <summary>
@@ -75,6 +70,17 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     {
                         case "Tag":
                             this.ParseProductTagElement(element);
+                            break;
+                        default:
+                            this.Core.UnexpectedElement(parentElement, element);
+                            break;
+                    }
+                    break;
+                case "PatchFamily":
+                    switch (element.LocalName)
+                    {
+                        case "TagRef":
+                            this.ParseTagRefElement(element);
                             break;
                         default:
                             this.Core.UnexpectedElement(parentElement, element);
@@ -182,7 +188,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 tagRow[5] = type;
             }
         }
-
 
         /// <summary>
         /// Parses a Tag element for Software Id Tag registration under a Product element.
@@ -311,6 +316,62 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[4] = type;
 
                 this.Core.CreateWixSimpleReferenceRow(sourceLineNumbers, "File", fileId);
+            }
+        }
+
+        /// <summary>
+        /// Parses a TagRef element for Software Id Tag registration under a PatchFamily element.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        private void ParseTagRefElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            string regid = null;
+
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    switch (attrib.LocalName)
+                    {
+                        case "Regid":
+                            regid = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            break;
+                        default:
+                            this.Core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                            break;
+                    }
+                }
+                else
+                {
+                    this.Core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.Schema.TargetNamespace)
+                    {
+                        this.Core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.Core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            if (String.IsNullOrEmpty(regid))
+            {
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Regid"));
+            }
+
+            if (!this.Core.EncounteredError)
+            {
+                string[] id = new string[] { this.Core.GenerateIdentifier("tag", regid, ".product.tag") };
+                this.Core.AddPatchFamilyChildReference(sourceLineNumbers, "Component", id);
             }
         }
 

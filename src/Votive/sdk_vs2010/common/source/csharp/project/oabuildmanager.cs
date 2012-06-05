@@ -1,13 +1,12 @@
-/***************************************************************************
+//-------------------------------------------------------------------------------------------------
+// <copyright file="oabuildmanager.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
+// </copyright>
+//-------------------------------------------------------------------------------------------------
 
-Copyright (c) Microsoft Corporation. All rights reserved.
-This code is licensed under the Visual Studio SDK license terms.
-THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-
-***************************************************************************/
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -23,82 +22,82 @@ namespace Microsoft.VisualStudio.Package.Automation
                                     IEventSource<_dispBuildManagerEvents>,
                                     BuildManager, 
                                     BuildManagerEvents
-	{
-		private ProjectNode projectManager;
+    {
+        private ProjectNode projectManager;
 
-		public OABuildManager(ProjectNode project)
-		{
-			projectManager = project;
-			AddEventSource<_dispBuildManagerEvents>(this as IEventSource<_dispBuildManagerEvents>);
-		}
+        public OABuildManager(ProjectNode project)
+        {
+            projectManager = project;
+            AddEventSource<_dispBuildManagerEvents>(this as IEventSource<_dispBuildManagerEvents>);
+        }
 
 
-		#region BuildManager Members
+        #region BuildManager Members
 
-		public string BuildDesignTimeOutput(string bstrOutputMoniker)
-		{
-			throw new Exception("The method or operation is not implemented.");
-		}
+        public string BuildDesignTimeOutput(string bstrOutputMoniker)
+        {
+            throw new Exception("The method or operation is not implemented.");
+        }
 
-		public EnvDTE.Project ContainingProject
-		{
-			get { return projectManager.GetAutomationObject() as EnvDTE.Project; }
-		}
+        public EnvDTE.Project ContainingProject
+        {
+            get { return projectManager.GetAutomationObject() as EnvDTE.Project; }
+        }
 
-		public EnvDTE.DTE DTE
-		{
-			get { return projectManager.Site.GetService(typeof(EnvDTE.DTE)) as EnvDTE.DTE; }
-		}
+        public EnvDTE.DTE DTE
+        {
+            get { return projectManager.Site.GetService(typeof(EnvDTE.DTE)) as EnvDTE.DTE; }
+        }
 
-		public object DesignTimeOutputMonikers
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public object DesignTimeOutputMonikers
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		public object Parent
-		{
-			get { throw new Exception("The method or operation is not implemented."); }
-		}
+        public object Parent
+        {
+            get { throw new Exception("The method or operation is not implemented."); }
+        }
 
-		#endregion
+        #endregion
 
-		#region _dispBuildManagerEvents_Event Members
+        #region _dispBuildManagerEvents_Event Members
 
-		public event _dispBuildManagerEvents_DesignTimeOutputDeletedEventHandler DesignTimeOutputDeleted;
+        public event _dispBuildManagerEvents_DesignTimeOutputDeletedEventHandler DesignTimeOutputDeleted;
 
-		public event _dispBuildManagerEvents_DesignTimeOutputDirtyEventHandler DesignTimeOutputDirty;
+        public event _dispBuildManagerEvents_DesignTimeOutputDirtyEventHandler DesignTimeOutputDirty;
 
-		#endregion
+        #endregion
 
-		private void OnDesignTimeOutputDeleted(object sender, EventArgs args)
-		{
-			if (DesignTimeOutputDeleted == null)
-				return;
+        private void OnDesignTimeOutputDeleted(object sender, EventArgs args)
+        {
+            if (DesignTimeOutputDeleted == null)
+                return;
 
-			string moniker = OABuildManager.GetOutputMoniker(sender);
-			if (!String.IsNullOrEmpty(moniker))
-				DesignTimeOutputDeleted(moniker);
-		}
+            string moniker = OABuildManager.GetOutputMoniker(sender);
+            if (!String.IsNullOrEmpty(moniker))
+                DesignTimeOutputDeleted(moniker);
+        }
 
-		private void OnDesignTimeOutputDirty(object sender, EventArgs args)
-		{
-			if (DesignTimeOutputDirty == null)
-				return;
+        private void OnDesignTimeOutputDirty(object sender, EventArgs args)
+        {
+            if (DesignTimeOutputDirty == null)
+                return;
 
-			string moniker = OABuildManager.GetOutputMoniker(sender);
-			if (!String.IsNullOrEmpty(moniker))
-				DesignTimeOutputDirty(moniker);
-		}
+            string moniker = OABuildManager.GetOutputMoniker(sender);
+            if (!String.IsNullOrEmpty(moniker))
+                DesignTimeOutputDirty(moniker);
+        }
 
-		private static string GetOutputMoniker(object sender)
-		{
-			IVsOutput2 output = sender as IVsOutput2;
-			if (output == null)
-				return null;
-			string moniker;
-			output.get_CanonicalName(out moniker);
-			return moniker;
-		}
+        private static string GetOutputMoniker(object sender)
+        {
+            IVsOutput2 output = sender as IVsOutput2;
+            if (output == null)
+                return null;
+            string moniker;
+            output.get_CanonicalName(out moniker);
+            return moniker;
+        }
 
         #region IEventSource<_dispBuildManagerEvents> Members
 

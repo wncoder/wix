@@ -1,6 +1,9 @@
 //---------------------------------------------------------------------
-// <copyright file="EmbeddedUI.cpp" company="Microsoft">
-// Copyright © 2008 Microsoft Corporation. All rights reserved.
+// <copyright file="EmbeddedUI.cpp" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 // <summary>
 // Main code file for self-extracting managed MSI embedded UI

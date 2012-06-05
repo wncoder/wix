@@ -1,14 +1,9 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="WixToolTask.cs" company="Microsoft">
-//    Copyright (c) Microsoft Corporation.  All rights reserved.
-//    
-//    The use and distribution terms for this software are covered by the
-//    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-//    which can be found in the file CPL.TXT at the root of this distribution.
-//    By using this software in any fashion, you are agreeing to be bound by
-//    the terms of this license.
-//    
-//    You must not remove this notice, or any other, from this software.
+// <copyright file="WixToolTask.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 // 
 // <summary>
@@ -398,24 +393,24 @@ namespace Microsoft.Tools.WindowsInstallerXml.Build.Tasks
             /// <remarks>All other Write() variants eventually call into this one.</remarks>
             public override void Write(char value)
             {
-                if (value == '\n')
+                lock (this.messageQueue)
                 {
-                    if (this.buffer.Length > 0 && this.buffer[this.buffer.Length - 1] == '\r')
+                    if (value == '\n')
                     {
-                        this.buffer.Length = this.buffer.Length - 1;
-                    }
+                        if (this.buffer.Length > 0 && this.buffer[this.buffer.Length - 1] == '\r')
+                        {
+                            this.buffer.Length = this.buffer.Length - 1;
+                        }
 
-                    lock (this.messageQueue)
-                    {
                         this.messageQueue.Enqueue(this.buffer.ToString());
                         this.messagesAvailable.Set();
-                    }
 
-                    this.buffer.Length = 0;
-                }
-                else
-                {
-                    this.buffer.Append(value);
+                        this.buffer.Length = 0;
+                    }
+                    else
+                    {
+                        this.buffer.Append(value);
+                    }
                 }
             }
         }

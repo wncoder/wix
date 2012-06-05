@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright (c) Microsoft Corporation.  All rights reserved.
-    
-    The use and distribution terms for this software are covered by the
-    Common Public License 1.0 (http://opensource.org/licenses/cpl1.0.php)
-    which can be found in the file CPL.TXT at the root of this distribution.
-    By using this software in any fashion, you are agreeing to be bound by
-    the terms of this license.
-    
-    You must not remove this notice, or any other, from this software.
-
+  <copyright file="PropertyPages.wxi" company="Microsoft Corporation">
+    Copyright (c) 2004, Microsoft Corporation.
+    This software is released under Common Public License Version 1.0 (CPL).
+    The license and further copyright text can be found in the file LICENSE.TXT
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
 -->
 
 <?define WixVsPackageGuid       = "{E0EE8E7D-F498-459E-9E90-2B3D73124AD5}" ?>
@@ -17,7 +13,6 @@
 <?define XmlEditorGuid          = "{FA3CD31E-987B-443A-9B81-186104E8DAC1}" ?>
 
 <Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
-
     <CreateFolder/>
     <RegistryKey Root="HKLM" Key="$(var.VsRegPath)">
         <!-- HKLM\SOFTWARE\Microsoft\VisualStudio\<ver>\Editors\{XML Editor Guid}\Extensions -->
@@ -129,5 +124,4 @@
         <RegistryValue Name="wix2010.targets.3.x" Value="[MSBuildMSWix3xFolder]wix2010.targets" Type="string" />
         <RegistryValue Name="wix.ca.targets.3.x" Value="[MSBuildMSWix3xFolder]wix.ca.targets" Type="string" />
     </RegistryKey>
-
 </Include>
