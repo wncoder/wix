@@ -152,6 +152,12 @@
                 <Parameter Type="System.String" Name="value" />
             </Instance>
             <Instance>
+                The {0}/@{1} attribute's value is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.Int32" Name="disambiguator" />
+            </Instance>
+            <Instance>
                 The {0} element's value, '{1}', is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="value" />

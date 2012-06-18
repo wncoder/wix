@@ -684,7 +684,13 @@
       <xs:attributeGroup ref="ChainPackageCommonAttributes" />
       <xs:attribute name="DetectCondition" type="xs:string">
         <xs:annotation>
-          <xs:documentation>A condition that determines if the package is present on the target system.</xs:documentation>
+          <xs:documentation>
+            A condition that determines if the package is present on the target system. This condition can use built-in 
+            variables and variables returned by searches. This condition is necessary because Windows doesn't provide a 
+            method to detect the presence of an MsuPackage. Burn uses this condition to determine how to treat this 
+            package during a bundle action; for example, if this condition is false or omitted and the bundle is being 
+            installed, Burn will install this package.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="KB" type="xs:string">
@@ -727,7 +733,13 @@
       <xs:attributeGroup ref="ChainPackageCommonAttributes" />
       <xs:attribute name="DetectCondition" type="xs:string">
         <xs:annotation>
-          <xs:documentation>A condition that determines if the package is present on the target system.</xs:documentation>
+          <xs:documentation>
+            A condition that determines if the package is present on the target system. This condition can use built-in 
+            variables and variables returned by searches. This condition is necessary because Windows doesn't provide a 
+            method to detect the presence of an ExePackage. Burn uses this condition to determine how to treat this 
+            package during a bundle action; for example, if this condition is false or omitted and the bundle is being 
+            installed, Burn will install this package.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="InstallCommand" type="xs:string">
@@ -859,7 +871,7 @@
     </xs:attribute>
     <xs:attribute name="InstallCondition" type="xs:string">
       <xs:annotation>
-        <xs:documentation>A condition to evaluate before installing the package. The package will only be installed if the condition evaluates to true.</xs:documentation>
+        <xs:documentation>A condition to evaluate before installing the package. The package will only be installed if the condition evaluates to true. If the condition evaluates to false and the bundle is being installed, repaired, or modified, the package will be uninstalled.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="Cache" type="YesNoTypeUnion">

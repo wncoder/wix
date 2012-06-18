@@ -987,7 +987,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         this.Description = ChainPackageInfo.GetPatchMetadataProperty(db, "Description");
                     }
 
-                    this.Manufacturer = ChainPackageInfo.GetPatchMetadataProperty(db, "Manufacturer");
+                    this.Manufacturer = ChainPackageInfo.GetPatchMetadataProperty(db, "ManufacturerName");
                 }
 
                 this.PatchXml = Microsoft.Deployment.WindowsInstaller.Installer.ExtractPatchXmlData(sourcePath);

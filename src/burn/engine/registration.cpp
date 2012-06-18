@@ -702,25 +702,6 @@ extern "C" HRESULT RegistrationSessionBegin(
             hr = RegWriteString(hkRegistration, REGISTRY_BUNDLE_DISPLAY_NAME, SUCCEEDED(hr) ? sczDisplayName : pRegistration->sczDisplayName);
             ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_DISPLAY_NAME);
 
-            // EstimatedSize
-            qwEstimatedSize /= 1024; // Convert bytes to KB
-            if (0 < qwEstimatedSize)
-            {
-                // Convert bytes to KB as ARP expects
-                if (DWORD_MAX < qwEstimatedSize)
-                {
-                    // ARP doesn't support QWORDs here
-                    dwSize = DWORD_MAX;
-                }
-                else
-                {
-                    dwSize = static_cast<DWORD>(qwEstimatedSize);
-                }
-
-                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_ESTIMATED_SIZE, dwSize);
-                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_ESTIMATED_SIZE);
-            }
-
             // DisplayVersion: provided by UI
             if (pRegistration->sczDisplayVersion)
             {
@@ -847,10 +828,26 @@ extern "C" HRESULT RegistrationSessionBegin(
             }
         }
 
-        // TODO: if we are not uninstalling, update estimated size
-        //if (BOOTSTRAPPER_ACTION_UNINSTALL != action)
-        //{
-        //}
+        // if we are not uninstalling, update estimated size
+        if (BOOTSTRAPPER_ACTION_UNINSTALL != action)
+        {
+            qwEstimatedSize /= 1024; // Convert bytes to KB
+            if (0 < qwEstimatedSize)
+            {
+                if (DWORD_MAX < qwEstimatedSize)
+                {
+                    // ARP doesn't support QWORDs here
+                    dwSize = DWORD_MAX;
+                }
+                else
+                {
+                    dwSize = static_cast<DWORD>(qwEstimatedSize);
+                }
+
+                hr = RegWriteNumber(hkRegistration, REGISTRY_BUNDLE_ESTIMATED_SIZE, dwSize);
+                ExitOnFailure1(hr, "Failed to write %ls value.", REGISTRY_BUNDLE_ESTIMATED_SIZE);
+            }
+        }
 
         // Register the bundle dependency key.
         if (BOOTSTRAPPER_ACTION_INSTALL == action || BOOTSTRAPPER_ACTION_REPAIR == action)

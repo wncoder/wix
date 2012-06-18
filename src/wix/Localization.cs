@@ -440,6 +440,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 throw new WixException(WixErrors.ExpectedAttribute(sourceLineNumbers, "String", "Id"));
             }
+            else if (0 == id.Length)
+            {
+                throw new WixException(WixErrors.IllegalIdentifier(sourceLineNumbers, "String", "Id", 0));
+            }
 
             WixVariableRow wixVariableRow = new WixVariableRow(sourceLineNumbers, this.tableDefinitions["WixVariable"]);
             wixVariableRow.Id = id;

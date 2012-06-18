@@ -471,7 +471,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
 
             // get product version
             hr = WiuGetProductInfoEx(wzProductCode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, INSTALLPROPERTY_VERSIONSTRING, &sczInstalledVersion);
-            if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr)
+            if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr && HRESULT_FROM_WIN32(ERROR_UNKNOWN_PROPERTY) != hr)
             {
                 ExitOnFailure1(hr, "Failed to get version for product in user unmanaged context: %ls", wzProductCode);
                 fPerMachine = FALSE;
@@ -479,7 +479,7 @@ extern "C" HRESULT MsiEngineDetectPackage(
             else
             {
                 hr = WiuGetProductInfoEx(wzProductCode, NULL, MSIINSTALLCONTEXT_MACHINE, INSTALLPROPERTY_VERSIONSTRING, &sczInstalledVersion);
-                if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr)
+                if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr && HRESULT_FROM_WIN32(ERROR_UNKNOWN_PROPERTY) != hr)
                 {
                     ExitOnFailure1(hr, "Failed to get version for product in machine context: %ls", wzProductCode);
                     fPerMachine = TRUE;

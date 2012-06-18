@@ -2245,3 +2245,28 @@ RobMen: SFBUG:3531467 - update templates to use "3.6" for ProductVersion.
 
 WixBuild: Version 3.6.3005.0
 
+BobArnson: SFBUG:3534433 -- Fix templates for renamed/moved SDK files.
+
+BobArnson: SFBUG:3534441 - Rewrite EstimatedSize ARP value so package
+           addition/removal is reflected in the total.
+
+BobArnson: SFBUG:3533005 -- catch when an invalid String/@Id identifier is
+           used.
+
+BobArnson: Add missing loc string for HelpCloseButton in MbaPreq theme.
+
+BobArnson: Don't fail Detect when a related package is advertised.
+
+BobArnson: SFBUG:3531422 -- Enhance DetectCondition and InstallCondition schema 
+           doc.
+
+BobArnson: Use the standard ManufacturerName MsiPatchMetadata property instead 
+           of Manufacturer for patch metadata.
+
+BobArnson: Fix WixManagedBootstrapperApplicationHost/@NetFxPackageId.
+
+BobArnson: Write WixBuildInfo table for bundles too.
+
+
+WixBuild: Version 3.6.3014.0
+

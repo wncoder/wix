@@ -417,7 +417,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
                 if (!String.IsNullOrEmpty(netFxPackageId))
                 {
-                    this.Core.CreateWixVariableRow(sourceLineNumbers, "WixMbaPrereqPackageId", localizationFile, false);
+                    this.Core.CreateWixVariableRow(sourceLineNumbers, "WixMbaPrereqPackageId", netFxPackageId, false);
                 }
             }
         }

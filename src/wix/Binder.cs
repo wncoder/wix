@@ -1546,6 +1546,32 @@ namespace Microsoft.Tools.WindowsInstallerXml
         }
 
         /// <summary>
+        /// Populates the WixBuildInfo table in an output.
+        /// </summary>
+        /// <param name="output">The output.</param>
+        /// <param name="databaseFile">The output file if OutputFile not set.</param>
+        private void WriteBuildInfoTable(Output output, string outputFile)
+        {
+            Table buildInfoTable = output.EnsureTable(this.core.TableDefinitions["WixBuildInfo"]);
+            Row buildInfoRow = buildInfoTable.CreateRow(null);
+
+            Assembly executingAssembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(executingAssembly.Location);
+            buildInfoRow[0] = fileVersion.FileVersion;
+            buildInfoRow[1] = this.OutputFile ?? outputFile;
+
+            if (!String.IsNullOrEmpty(this.wixprojectFile))
+            {
+                buildInfoRow[2] = this.wixprojectFile;
+            }
+
+            if (!String.IsNullOrEmpty(this.pdbFile))
+            {
+                buildInfoRow[3] = this.pdbFile;
+            }
+        }
+
+        /// <summary>
         /// Binds a databse.
         /// </summary>
         /// <param name="output">The output to bind.</param>
@@ -1576,24 +1602,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 propertyRow[0] = "WixPdbPath";
                 propertyRow[1] = this.pdbFile;
             }
-            
-            Table buildInfoTable = output.EnsureTable(this.core.TableDefinitions["WixBuildInfo"]);
-            Row buildInfoRow = buildInfoTable.CreateRow(null);
 
-            Assembly executingAssembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersion = FileVersionInfo.GetVersionInfo(executingAssembly.Location);
-            buildInfoRow[0] = fileVersion.FileVersion;
-            buildInfoRow[1] = this.OutputFile ?? databaseFile;
-
-            if (!String.IsNullOrEmpty(this.wixprojectFile))
-            {
-                buildInfoRow[2] = this.wixprojectFile;
-            }
-
-            if (!String.IsNullOrEmpty(this.pdbFile))
-            {
-                buildInfoRow[3] = this.pdbFile;
-            }
+            this.WriteBuildInfoTable(output, databaseFile);
 
             // gather all the wix variables
             Table wixVariableTable = output.Tables["WixVariable"];
@@ -3060,6 +3070,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             {
                 return false;
             }
+
+            this.WriteBuildInfoTable(bundle, bundleFile);
 
             // gather all the wix variables
             Table wixVariableTable = bundle.Tables["WixVariable"];
