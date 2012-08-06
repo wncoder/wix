@@ -73,7 +73,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             Win64 = 0x20,
         }
 
-        [Flags]
         internal enum WixComponentSearchAttributes
         {
             KeyPath = 0x1,
@@ -527,13 +526,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 switch (result)
                 {
                     case Util.ComponentSearch.ResultType.directory:
-                        attributes |= WixComponentSearchAttributes.WantDirectory;
+                        attributes = WixComponentSearchAttributes.WantDirectory;
                         break;
                     case Util.ComponentSearch.ResultType.keyPath:
-                        attributes |= WixComponentSearchAttributes.KeyPath;
+                        attributes = WixComponentSearchAttributes.KeyPath;
                         break;
                     case Util.ComponentSearch.ResultType.state:
-                        attributes |= WixComponentSearchAttributes.State;
+                        attributes = WixComponentSearchAttributes.State;
                         break;
                 }
 

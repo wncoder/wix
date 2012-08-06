@@ -1346,7 +1346,7 @@
       </xs:attribute>
       <xs:attribute name="ElementId" type="xs:string">
         <xs:annotation>
-          <xs:documentation>The Id of another XmlConfig to add attributes to.  In this case, the 'Action' 'Node' and 'On' attributes must be left unspecified.</xs:documentation>
+          <xs:documentation>The Id of another XmlConfig to add attributes to.  In this case, the 'ElementPath', 'Action', 'Node', and 'On' attributes must be omitted.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="ElementPath" type="xs:string">

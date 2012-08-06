@@ -13,7 +13,7 @@
             <ComponentGroupRef Id="ProjectTemplates2005Components" />
             <ComponentGroupRef Id="ProjectTemplates2008Components" />
             <ComponentGroupRef Id="ProjectTemplates2010Components" />
-            <ComponentGroupRef Id="ProjectTemplatesVS11Components" />
+            <ComponentGroupRef Id="ProjectTemplatesVS2012Components" />
         </ComponentGroup>
     </Fragment>
 
@@ -78,19 +78,19 @@
 
     <Fragment>
         <!--
-            VS11
+            VS2012
         -->
-        <PropertyRef Id="VS11_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" />
-        <PropertyRef Id="VS11_IDE_VB_PROJECTSYSTEM_INSTALLED" />
+        <PropertyRef Id="VS2012_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED" />
+        <PropertyRef Id="VS2012_IDE_VB_PROJECTSYSTEM_INSTALLED" />
 
-        <ComponentGroup Id="ProjectTemplatesVS11Components" Directory="VsProjectTemplatesWix11Folder">
+        <ComponentGroup Id="ProjectTemplatesVS2012Components" Directory="VsProjectTemplatesWix2012Folder">
             <Component Transitive="yes">
-                <Condition>VS11_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionCS_VS11.zip" Name="CustomActionCS.zip" Source="CustomActionCS_2010.zip" />
+                <Condition>VS2012_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionCS_VS2012.zip" Name="CustomActionCS.zip" Source="CustomActionCS_2010.zip" />
             </Component>
             <Component Transitive="yes">
-                <Condition>VS11_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionVB_VS11.zip" Name="CustomActionVB.zip" Source="CustomActionVB_2010.zip" />
+                <Condition>VS2012_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
+                <File Id="CustomActionVB_VS2012.zip" Name="CustomActionVB.zip" Source="CustomActionVB_2010.zip" />
             </Component>
         </ComponentGroup>
     </Fragment>

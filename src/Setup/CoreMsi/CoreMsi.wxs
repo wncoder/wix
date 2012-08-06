@@ -24,8 +24,14 @@
         <Icon Id="WixSetupIcons.ico" SourceFile="wixsetupicons.dll" />
 
         <Feature Id="Feature_WiX" Title="WiX Toolset" Level="1">
-            <Component Id="Licensing" Directory="InstallFolder">
+            <Component Id="Licensing" Directory="INSTALLFOLDER">
                 <File Source="CPL.TXT" />
+            </Component>
+
+            <Component Id="ProductRegistration" Directory="INSTALLFOLDER">
+                <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Windows Installer XML\$(var.WixMajorMinor)">
+                    <RegistryValue Name="InstallFolder" Value="[INSTALLFOLDER]" Type="string" />
+                </RegistryKey>
             </Component>
 
             <Component Id="ProductInformation" Directory="BinFolder">

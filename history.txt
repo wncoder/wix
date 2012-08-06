@@ -2267,6 +2267,101 @@ BobArnson: Fix WixManagedBootstrapperApplicationHost/@NetFxPackageId.
 
 BobArnson: Write WixBuildInfo table for bundles too.
 
-
 WixBuild: Version 3.6.3014.0
+
+BobArnson: SFBUG:3536108 - Add ElementPath to the list of must-be-omitted 
+           attributes for ElementId.
+
+BobArnson: SFBUG:3536663 - Remove mention never-implemented feature.
+
+BobArnson: SFBUG:3535318 - Fall back to WiuGetProductInfoEx for 
+           INSTALLPROPERTY_PRODUCTSTATE.
+
+WixBuild: Version 3.6.3025.0
+
+BobArnson: Return WUSA exit codes that Burn doesn't process internally so BA 
+           can handle.
+
+BobArnson: SFBUG:3535589 - Make Static hidden by default like everything else.
+           Note that this a breaking change; if you use Static controls in your
+           theme, you must add Visible="yes" to make them visible now.
+
+BobArnson: SFBUG:3536956 - Updated docstring.
+
+BobArnson: SFBUG:3537877 - Parse significant whitespace in field values.
+
+BobArnson: SFBUG:3537167 - Since it's legal (though a warning) to omit upgrade 
+           codes, guard against it.
+
+BobArnson: SFBUG:3537844 - Disable/hide Launch button except for 
+           install/modify/repair.
+
+BobArnson: SFBUG:3538681 - add a "reserved for future use" warning since 
+           MediaTemplate/@DiskPrompt and @VolumeLabel do nothing today but 
+           could in the future also support templates.
+
+WixBuild: Version 3.6.3102.0
+
+BobArnson: SFBUG:3539206 - Fix comment headers (x3)
+
+BobArnson: SFBUG:3539354 - Add HelpCloseButton loc string.
+
+BobArnson: SFBUG:3538817 - Like uninstall, mimic ARP for repair when 
+           DisplayInternalUI="yes" by not showing full UI
+
+BobArnson: SFBUG:3538857 - Remove leading "ignored" argument passed to BA
+           command line.
+
+BobArnson: SFBUG:3538142 - Replace "&" with "and" to avoid shortcut-key 
+           prefixing differences between XP and later ComCtl32s.
+
+BobArnson: SFBUG:3539660 - Since any machine with the CLR can build managed 
+           code, always install the managed SDK package.
+
+BobArnson: SFBUG:3540305 - Add UI localizations to resize ru-RU controls. Add 
+           error message for duplicated UI localization.
+
+WixBuild: Version 3.6.3109.0
+
+BobArnson: SFBUG:3542020 - Add balinfo.h to installer and binaries.zip
+
+BobArnson: Update ro-RO localization to use "s" and "t" "with cedilla" instead
+           of "with comma-below," which aren't supported in codepage 1250.
+
+HeathS: SFBUG:3538033 - Correct documentation for DirectorySearch.
+        SFBUG:3542470 - Correct documentation for HeatDirectory task.
+
+BobArnson: Clean up WixLocalization/UI doc. Add checks for illegal use.
+
+BobArnson: SFBUG:3539341: Disable controls by default so their hotkeys don't 
+           trigger when they're hidden; track programmatic disabling via an 
+           internal style.
+
+HeathS: SFBUG:3545019 - Return the requested result for a ComponentSearch.
+
+RobMen: Add VS2012 searches to deprecate VS11 searches.
+        Updated WiX setup to use new vS2012 searches.
+
+BobArnson: SFBUG:3544893 - When @DisplayInternalUI="yes" don't try to show 
+           error messages as the package will.
+
+RobMen: SFBUG:3537194 - try selfreg harvest on assemblies to get mixed-mode
+                        DLLs.
+
+RobMen: SFBUG:3538260 - allow Burn to finish registration after a force restart
+                        package and ignore force restart on uninstall.
+
+RobMen: SFBUG:3538563 - add payload info to BootstrapperApplicationData.xml.
+
+HeathS: SFBUG:3537749 - Allow WiX to be installed to a custom location.
+
+WixBuild: Version 3.6.3130.0
+
+RobMen: SFBUG:3537427 - add .libs compiled for VS2012.
+
+RobMen: SFBUG:3538732 - Burn support for repairing features.
+
+RobMen: SFBUG:3543398 - fix crash in IIS7 Http Error configuration.
+
+WixBuild: Version 3.6.3206.0
 

@@ -19,7 +19,25 @@
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <SuppressValidation>true</SuppressValidation>
+    <SignOutput>true</SignOutput>
   </PropertyGroup>
 
   <Import Project="$(WixTargetsPath)" />
+
+
+  <Target Name="SignCabs">
+    <Message Importance="high" Text="Actually SignCabs: @(SignCabs)" />
+    <Exec Command="Signtool.exe sign /a &quot;%(SignCabs.FullPath)&quot;" />
+  </Target>
+
+  <Target Name="SignMsi">
+    <Exec Command="signtool.exe sign /a &quot;%(SignMsi.FullPath)&quot;" />
+  </Target>
+
+  <Target Name="SignBundleEngine">
+    <Exec Command="Signtool.exe sign /a &quot;@(SignBundleEngine)&quot;" />
+  </Target>
+  <Target Name="SignBundle">
+    <Exec Command="Signtool.exe sign /a &quot;@(SignBundle)&quot;" />
+  </Target>
 </Project>

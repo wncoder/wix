@@ -1130,7 +1130,7 @@ HRESULT IIS7WebError(
         //add the element
         hr = pCollection->AddElement(pElement);
         ExitOnFailure(hr, "Failed add httpErrors element");
-        ReleaseObject(pElement);
+        ReleaseNullObject(pElement);
     }
 
 LExit:
@@ -1234,8 +1234,8 @@ static HRESULT PopulateHttpErrors(IAppHostElement *pSection, SCA_WEB_ERROR **pps
         pswe->iResponseMode = vPropValue.intVal;
         ReleaseVariant(vPropValue);
 
-        ReleaseObject(pElement);
-        ReleaseObject(pProperty);
+        ReleaseNullObject(pElement);
+        ReleaseNullObject(pProperty);
     }
 
     //remove the elements from connection so we can add back later

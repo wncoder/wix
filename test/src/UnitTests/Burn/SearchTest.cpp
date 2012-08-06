@@ -631,6 +631,13 @@ static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoW(
     __inout_opt LPDWORD pcchValue
     )
 {
+    if (String::Equals(gcnew String(szProductCode), gcnew String(L"{600D0000-0000-0000-0000-000000000000}")) &&
+        String::Equals(gcnew String(szProperty), gcnew String(INSTALLPROPERTY_PRODUCTSTATE)))
+    {
+        // force call to WiuGetProductInfoEx
+        return ERROR_UNKNOWN_PROPERTY;
+    }
+
     UINT er = MsiProductSearchTest_MsiGetProductInfoExW(szProductCode, NULL, MSIINSTALLCONTEXT_MACHINE, szProperty, szValue, pcchValue);
     return er;
 }
@@ -656,7 +663,13 @@ static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoExW(
         er = ERROR_UNKNOWN_PRODUCT;
         break;
     case MSIINSTALLCONTEXT_USERUNMANAGED:
-        er = ERROR_UNKNOWN_PRODUCT;
+        if (String::Equals(productCode, gcnew String(L"{600D0000-0000-0000-0000-000000000000}")))
+        {
+            if (String::Equals(_property, gcnew String(INSTALLPROPERTY_PRODUCTSTATE)))
+            {
+                wzValue = L"5";
+            }
+        }
         break;
     case MSIINSTALLCONTEXT_MACHINE:
         if (String::Equals(productCode, gcnew String(L"{BAD00000-0000-0000-0000-000000000000}")))
@@ -673,13 +686,14 @@ static UINT WINAPI MsiProductSearchTest_MsiGetProductInfoExW(
             {
                 wzValue = L"1033";
             }
-            else if (String::Equals(_property, gcnew String(INSTALLPROPERTY_PRODUCTSTATE)))
-            {
-                wzValue = L"5";
-            }
             else if (String::Equals(_property, gcnew String(INSTALLPROPERTY_ASSIGNMENTTYPE)))
             {
                 wzValue = L"1";
+            }
+            else if (String::Equals(_property, gcnew String(INSTALLPROPERTY_PRODUCTSTATE)))
+            {
+                // try again in per-user context
+                er = ERROR_UNKNOWN_PRODUCT;
             }
         }
         else if (String::Equals(productCode, gcnew String(L"{600D0000-1000-0000-0000-000000000000}")))

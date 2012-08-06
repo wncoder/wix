@@ -66,7 +66,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
         Win64 = 0x20,
     }
 
-    [Flags]
     internal enum WixComponentSearchAttributes
     {
         KeyPath = 0x1,
@@ -3643,6 +3642,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             // Generate the core-defined BA manifest tables...
             this.GenerateBAManifestPackageTables(bundle, chain.Packages);
 
+            this.GenerateBAManifestPayloadTables(bundle, chain.Packages, allPayloads);
+
             foreach (BinderExtension extension in this.extensions)
             {
                 extension.BundleFinalize(bundle);
@@ -3783,7 +3784,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             foreach (ChainPackageInfo package in chainPackages)
             {
-                Row row = wixPackagePropertiesTable.CreateRow(null);
+                Row row = wixPackagePropertiesTable.CreateRow(package.SourceLineNumbers);
                 row[0] = package.Id;
                 row[1] = package.Vital ? "yes" : "no";
                 row[2] = package.DisplayName;
@@ -3796,12 +3797,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[9] = package.LogPathVariable;
                 row[10] = package.RollbackLogPathVariable;
                 row[11] = (PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
+                row[12] = package.DisplayInternalUI ? "yes" : "no";
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
                 foreach (MsiFeature feature in package.MsiFeatures)
                 {
-                    Row packageFeatureInfoRow = wixPackageFeatureInfoTable.CreateRow(null);
+                    Row packageFeatureInfoRow = wixPackageFeatureInfoTable.CreateRow(package.SourceLineNumbers);
                     packageFeatureInfoRow[0] = package.Id;
                     packageFeatureInfoRow[1] = feature.Name;
                     packageFeatureInfoRow[2] = Convert.ToString(feature.Size, CultureInfo.InvariantCulture);
@@ -3812,6 +3814,52 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     packageFeatureInfoRow[7] = Convert.ToString(feature.Level, CultureInfo.InvariantCulture);
                     packageFeatureInfoRow[8] = feature.Directory;
                     packageFeatureInfoRow[9] = Convert.ToString(feature.Attributes, CultureInfo.InvariantCulture);
+                }
+            }
+        }
+
+        private void GenerateBAManifestPayloadTables(Output bundle, List<ChainPackageInfo> chainPackages, Dictionary<string, PayloadInfoRow> payloads)
+        {
+            Table wixPayloadPropertiesTable = bundle.EnsureTable(this.core.TableDefinitions["WixPayloadProperties"]);
+
+            foreach (ChainPackageInfo package in chainPackages)
+            {
+                PayloadInfoRow packagePayload = payloads[package.Payload];
+
+                Row payloadRow = wixPayloadPropertiesTable.CreateRow(packagePayload.SourceLineNumbers);
+                payloadRow[0] = packagePayload.Id;
+                payloadRow[1] = package.Id;
+                payloadRow[2] = packagePayload.Container;
+                payloadRow[3] = packagePayload.Name;
+                payloadRow[4] = packagePayload.FileSize.ToString();
+                payloadRow[5] = packagePayload.DownloadUrl;
+                payloadRow[6] = packagePayload.LayoutOnly ? "yes" : "no";
+
+                foreach (PayloadInfoRow childPayload in package.Payloads)
+                {
+                    payloadRow = wixPayloadPropertiesTable.CreateRow(childPayload.SourceLineNumbers);
+                    payloadRow[0] = childPayload.Id;
+                    payloadRow[1] = package.Id;
+                    payloadRow[2] = childPayload.Container;
+                    payloadRow[3] = childPayload.Name;
+                    payloadRow[4] = childPayload.FileSize.ToString();
+                    payloadRow[5] = childPayload.DownloadUrl;
+                    payloadRow[6] = childPayload.LayoutOnly ? "yes" : "no";
+                }
+            }
+
+            foreach (PayloadInfoRow payload in payloads.Values)
+            {
+                if (payload.LayoutOnly)
+                {
+                    Row row = wixPayloadPropertiesTable.CreateRow(payload.SourceLineNumbers);
+                    row[0] = payload.Id;
+                    row[1] = null;
+                    row[2] = payload.Container;
+                    row[3] = payload.Name;
+                    row[4] = payload.FileSize.ToString();
+                    row[5] = payload.DownloadUrl;
+                    row[6] = payload.LayoutOnly ? "yes" : "no";
                 }
             }
         }
@@ -3882,7 +3930,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     rows = null;
                 }
 
-                if (targetsUpgradeCode.TryGetValue(msi.UpgradeCode, out rows))
+                if (!String.IsNullOrEmpty(msi.UpgradeCode) && targetsUpgradeCode.TryGetValue(msi.UpgradeCode, out rows))
                 {
                     foreach (WixBundlePatchTargetCodeRow row in rows)
                     {

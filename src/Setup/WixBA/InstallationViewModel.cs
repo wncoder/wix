@@ -424,6 +424,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
 
         private void DetectComplete(object sender, DetectCompleteEventArgs e)
         {
+            // Parse the command line string before any planning.
+            this.ParseCommandLine();
+
             if (LaunchAction.Uninstall == WixBA.Model.Command.Action)
             {
                 WixBA.Model.Engine.Log(LogLevel.Verbose, "Invoking automatic plan for uninstall");
@@ -662,6 +665,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
             if (this.root.State != this.root.PreApplyState)
             {
                 this.root.State = Hresult.Succeeded(e.Status) ? InstallationState.Applied : InstallationState.Failed;
+            }
+        }
+
+        private void ParseCommandLine()
+        {
+            // Get array of arguments based on the system parsing algorithm.
+            string[] args = WixBA.Model.Command.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; ++i)
+            {
+                if (args[i].StartsWith("InstallFolder=", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // Allow relative directory paths. Also validates.
+                    string[] param = args[i].Split(new char[] {'='}, 2);
+                    this.root.InstallDirectory = IO.Path.Combine(Environment.CurrentDirectory, param[1]);
+                }
             }
         }
 

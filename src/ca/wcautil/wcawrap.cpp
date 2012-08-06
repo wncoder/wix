@@ -1047,7 +1047,7 @@ extern "C" HRESULT WIXAPI WcaFreeStream(
 
 
 /********************************************************************
-WcaReadRecordStream() - gets a byte stream field from record
+WcaGetRecordStream() - gets a byte stream field from record
 
 ********************************************************************/
 extern "C" HRESULT WIXAPI WcaGetRecordStream(
@@ -1339,7 +1339,7 @@ LExit:
 
 
 /********************************************************************
-WcaWriteStringToCaData() - adds an integer to the CustomActionData to 
+WcaWriteIntegerToCaData() - adds an integer to the CustomActionData to 
 feed a deferred CustomAction
 
 ********************************************************************/
@@ -1356,7 +1356,7 @@ extern "C" HRESULT WIXAPI WcaWriteIntegerToCaData(
 
 
 /********************************************************************
-WcaWriteStringToCaData() - adds a byte stream to the CustomActionData to 
+WcaWriteStreamToCaData() - adds a byte stream to the CustomActionData to 
 feed a deferred CustomAction
 
 ********************************************************************/

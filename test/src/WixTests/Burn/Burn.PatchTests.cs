@@ -35,9 +35,9 @@ namespace WixTest.Tests.Burn
             string patchedVersion = "1.0.1.0";
 
             // Build the packages.
-            string packageA = new PackageBuilder(this, "A").Build().Output;
-            string packageAUpdate = new PackageBuilder(this, "A") { PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
-            string patchA = new PatchBuilder(this, "PatchA") { TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
+            string packageA = new PackageBuilder(this, "A") { Extensions = WixTests.Extensions }.Build().Output;
+            string packageAUpdate = new PackageBuilder(this, "A") { Extensions = WixTests.Extensions, PreprocessorVariables = new Dictionary<string, string>() { { "Version", patchedVersion } }, NeverGetsInstalled = true }.Build().Output;
+            string patchA = new PatchBuilder(this, "PatchA") { Extensions = WixTests.Extensions, TargetPath = packageA, UpgradePath = packageAUpdate }.Build().Output;
 
             // Create the named bind paths to the packages.
             Dictionary<string, string> bindPaths = new Dictionary<string, string>();

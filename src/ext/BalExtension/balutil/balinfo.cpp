@@ -160,6 +160,9 @@ static HRESULT ParsePackagesFromXml(
         hr = XmlGetYesNoAttribute(pNode, L"Vital", &prgPackages[iPackage].fVital);
         ExitOnFailure(hr, "Failed to get vital setting for package.");
 
+        hr = XmlGetYesNoAttribute(pNode, L"DisplayInternalUI", &prgPackages[iPackage].fDisplayInternalUI);
+        ExitOnFailure(hr, "Failed to get DisplayInternalUI setting for package.");
+
         ++iPackage;
         ReleaseNullObject(pNode);
     }

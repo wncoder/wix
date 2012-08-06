@@ -532,12 +532,41 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             text = node.InnerText;
 
+            if (String.IsNullOrEmpty(control) && 0 < attribs)
+            {
+                if (MsiInterop.MsidbControlAttributesRTLRO == (attribs & MsiInterop.MsidbControlAttributesRTLRO))
+                {
+                    throw new WixException(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name, "RightToLeft", "Control"));
+                }
+                else if (MsiInterop.MsidbControlAttributesRightAligned == (attribs & MsiInterop.MsidbControlAttributesRightAligned))
+                {
+                    throw new WixException(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name, "RightAligned", "Control"));
+                }
+                else if (MsiInterop.MsidbControlAttributesLeftScroll == (attribs & MsiInterop.MsidbControlAttributesLeftScroll))
+                {
+                    throw new WixException(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name, "LeftScroll", "Control"));
+                }
+            }
+
             if (String.IsNullOrEmpty(control) && String.IsNullOrEmpty(dialog))
             {
                 throw new WixException(WixErrors.ExpectedAttributesWithOtherAttribute(sourceLineNumbers, node.Name, "Dialog", "Control"));
             }
 
-            this.localizedControls.Add(LocalizedControl.GetKey(dialog, control), new LocalizedControl(x, y, width, height, attribs, text));
+            string key = LocalizedControl.GetKey(dialog, control);
+            if (this.localizedControls.ContainsKey(key))
+            {
+                if (String.IsNullOrEmpty(control))
+                {
+                    throw new WixException(WixErrors.DuplicatedUiLocalization(sourceLineNumbers, dialog));
+                }
+                else
+                {
+                    throw new WixException(WixErrors.DuplicatedUiLocalization(sourceLineNumbers, dialog, control));
+                }
+            }
+
+            this.localizedControls.Add(key, new LocalizedControl(x, y, width, height, attribs, text));
         }
 
         /// <summary>

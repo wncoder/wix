@@ -35,9 +35,11 @@
     <Compile Include="BundleInstaller.cs" />
     <Compile Include="Burn\BurnTests.cs" />
     <Compile Include="Burn\Burn.FailureTests.cs" />
+    <Compile Include="Burn\Burn.SearchTests.cs" />
     <Compile Include="Burn\Burn.SlipstreamTests.cs" />
     <Compile Include="Burn\Burn.PatchTests.cs" />
     <Compile Include="Burn\Burn.PermanentTests.cs" />
+    <Compile Include="Burn\Burn.FeatureTests.cs" />
     <Compile Include="PackageBuilder.cs" />
     <Compile Include="PatchBuilder.cs" />
     <Compile Include="WixTests.cs" />
@@ -249,6 +251,12 @@
     <None Include="..\..\data\Burn\FailureTests\BundleC.wxs">
       <Link>Burn\FailureTests\BundleC.wxs</Link>
     </None>
+    <None Include="..\..\data\Burn\FeatureTests\A.wxs">
+      <Link>Burn\FeatureTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\FeatureTests\BundleA.wxs">
+      <Link>Burn\FeatureTests\BundleA.wxs</Link>
+    </None>
     <None Include="..\..\data\Burn\PatchTests\A.wxs">
       <Link>Burn\PatchTests\A.wxs</Link>
     </None>
@@ -276,6 +284,18 @@
     </None>
     <None Include="..\..\data\Burn\PermanentTests\BundleA.wxs">
       <Link>Burn\PermanentTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SearchTests\A.wxs">
+      <Link>Burn\SearchTests\A.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SearchTests\B.wxs">
+      <Link>Burn\SearchTests\B.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SearchTests\BundleA.wxs">
+      <Link>Burn\SearchTests\BundleA.wxs</Link>
+    </None>
+    <None Include="..\..\data\Burn\SearchTests\BundleB.wxs">
+      <Link>Burn\SearchTests\BundleB.wxs</Link>
     </None>
     <None Include="..\..\data\Burn\SlipstreamTests\A.wxs">
       <Link>Burn\SlipstreamTests\A.wxs</Link>
@@ -393,5 +413,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="$(windir)\system32\inetsrv\Microsoft.Web.Administration.dll" Condition=" Exists('$(windir)\system32\inetsrv\Microsoft.Web.Administration.dll') " />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="..\..\..\WixBuild.Common.targets" />
 </Project>

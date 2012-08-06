@@ -68,7 +68,7 @@
     <property name="compileCpp.file.rc" value="${dir.src.dtf.sfxca}\sfxca.rc" />
     <property name="compileCpp.dir.build" value="${dir.build.dtf.sfxca.x86}" dynamic="true" />
     <property name="makeNativeDll.file.target" value="${sfxca.file.target.x86}" dynamic="true" />
-    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil.x86}&quot; &quot;${dir.platformsdk.lib.x86}\msi.lib&quot; &quot;${dir.platformsdk.lib.x86}\fdi.lib&quot; &quot;${dir.platformsdk.lib.x86}\shlwapi.lib&quot;" dynamic="true" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil.x86}&quot; &quot;${dir.platformsdk.lib.x86}\msi.lib&quot; &quot;${dir.platformsdk.lib.x86}\cabinet.lib&quot; &quot;${dir.platformsdk.lib.x86}\shlwapi.lib&quot;" dynamic="true" />
     <property name="makeNativeDll.platform" value="x86" />
     <call target="makeNativeDll" />
 
@@ -79,7 +79,7 @@
     <property name="compileCpp.file.rc" value="${dir.src.dtf.sfxca}\sfxca.rc" />
     <property name="compileCpp.dir.build" value="${dir.build.dtf.sfxca.x64}" dynamic="true" />
     <property name="makeNativeDll.file.target" value="${sfxca.file.target.x64}" dynamic="true" />
-    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil.x64}&quot; &quot;${dir.platformsdk.lib.x64}\msi.lib&quot; &quot;${dir.platformsdk.lib.x64}\fdi.lib&quot; &quot;${dir.platformsdk.lib.x64}\shlwapi.lib&quot;" dynamic="true" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil.x64}&quot; &quot;${dir.platformsdk.lib.x64}\msi.lib&quot; &quot;${dir.platformsdk.lib.x64}\cabinet.lib&quot; &quot;${dir.platformsdk.lib.x64}\shlwapi.lib&quot;" dynamic="true" />
     <property name="makeNativeDll.platform" value="x64" />
     <call target="makeNativeDll" />
   </target>

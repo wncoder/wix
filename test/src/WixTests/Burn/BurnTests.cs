@@ -76,6 +76,16 @@ namespace WixTest.Tests.Burn
         }
 
         /// <summary>
+        /// Sets the requested state for a package that the TestBA will return to the engine during plan.
+        /// </summary>
+        /// <param name="packageId">Package identity.</param>
+        /// <param name="state">State to request.</param>
+        protected void SetPackageFeatureState(string packageId, string featureId, FeatureState state)
+        {
+            this.SetPackageState(packageId, String.Concat(featureId, "Requested"), state.ToString());
+        }
+
+        /// <summary>
         /// Sets the number of times to re-run the Detect phase.
         /// </summary>
         /// <param name="state">Number of times to run Detect (after the first, normal, Detect).</param>

@@ -822,7 +822,7 @@ static HRESULT ParseCommandLine(
         ExitOnNullWithLastError(argv, hr, "Failed to get command line.");
     }
 
-    for (int i = 0; i < argc; ++i)
+    for (int i = 1; i < argc; ++i) // skip "ignored" argument/hack
     {
         fUnknownArg = FALSE;
 

@@ -34,6 +34,7 @@ typedef struct _BAL_INFO_PACKAGE
     BAL_INFO_PACKAGE_TYPE type;
     BOOL fPermanent;
     BOOL fVital;
+    BOOL fDisplayInternalUI;
 } BAL_INFO_PACKAGE;
 
 

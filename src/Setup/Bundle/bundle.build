@@ -57,6 +57,7 @@
       <arg value="/property:Build2005=${BuildVC8}" />
       <arg value="/property:Build2008=${BuildVC9}" />
       <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:Build2012=${BuildVC11}" />
       <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Clean" />
       <arg file="${dir.src.setup.bundle}\Bundle.wixproj" />
@@ -73,6 +74,7 @@
       <arg value="/property:Build2005=${BuildVC8}" />
       <arg value="/property:Build2008=${BuildVC9}" />
       <arg value="/property:Build2010=${BuildVC10}" />
+      <arg value="/property:Build2012=${BuildVC11}" />
       <arg value="/property:BuildVotive2010=true" if="${vsip2010.installed}" />
       <arg value="/target:Build" />
       <arg file="${dir.src.setup.bundle}\Bundle.wixproj" />

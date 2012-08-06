@@ -87,7 +87,7 @@
 
             <Component>
                 <File Source="wix.dll" />
-                <Environment Id="WIXenv" Name="WIX" Action="set" System="yes" Value="[InstallFolder]" />
+                <Environment Id="WIXenv" Name="WIX" Action="set" System="yes" Value="[INSTALLFOLDER]" />
             </Component>
 
             <Component>

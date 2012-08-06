@@ -292,6 +292,7 @@
         <include name="${dir.inc.burn}\IBootstrapperApplication.h" />
         <include name="${dir.inc.balutil}\BalBaseBootstrapperApplication.h" />
         <include name="${dir.inc.balutil}\balcondition.h" />
+        <include name="${dir.inc.balutil}\balinfo.h" />
         <include name="${dir.inc.balutil}\balretry.h" />
         <include name="${dir.inc.balutil}\balutil.h" />
         <include name="${dir.inc.deputil}\deputil.h" />
@@ -344,9 +345,11 @@
         <include name="dutil_2005.lib" if="${BuildVC8}" />
         <include name="dutil_2008.lib" if="${BuildVC9}" />
         <include name="dutil_2010.lib" if="${BuildVC10}" />
+        <include name="dutil_2012.lib" if="${BuildVC11}" />
         <include name="${dir.target.wix.x64}\dutil_2005_x64.lib" if="${BuildVC8}"/>
         <include name="${dir.target.wix.x64}\dutil_2008_x64.lib" if="${BuildVC9}"/>
         <include name="${dir.target.wix.x64}\dutil_2010_x64.lib" if="${BuildVC10}"/>
+        <include name="${dir.target.wix.x64}\dutil_2012_x64.lib" if="${BuildVC11}"/>
 
         <include name="${dir.target.wix.ia64}\dutil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
         <include name="${dir.target.wix.ia64}\dutil_2008_ia64.lib" if="${BuildVC9 and ia64}" />
@@ -355,21 +358,21 @@
         <include name="balutil_2005.lib" if="${BuildVC8}" />
         <include name="balutil_2008.lib" if="${BuildVC9}" />
         <include name="balutil_2010.lib" if="${BuildVC10}" />
-
-        <include name="${dir.target.wix.x64}\balutil_2005_x64.lib" if="${BuildVC8}" />
-        <include name="${dir.target.wix.x64}\balutil_2008_x64.lib" if="${BuildVC9}" />
-        <include name="${dir.target.wix.x64}\balutil_2010_x64.lib" if="${BuildVC10}" />
+        <include name="balutil_2012.lib" if="${BuildVC11}" />
 
         <include name="deputil_2005.lib" if="${BuildVC8}" />
         <include name="deputil_2008.lib" if="${BuildVC9}" />
         <include name="deputil_2010.lib" if="${BuildVC10}" />
+        <include name="deputil_2012.lib" if="${BuildVC11}" />
 
         <include name="wcautil_2005.lib" if="${BuildVC8}" />
         <include name="wcautil_2008.lib" if="${BuildVC9}" />
         <include name="wcautil_2010.lib" if="${BuildVC10}" />
+        <include name="wcautil_2012.lib" if="${BuildVC11}" />
         <include name="${dir.target.wix.x64}\wcautil_2005_x64.lib" if="${BuildVC8}" />
         <include name="${dir.target.wix.x64}\wcautil_2008_x64.lib" if="${BuildVC9}" />
         <include name="${dir.target.wix.x64}\wcautil_2010_x64.lib" if="${BuildVC10}" />
+        <include name="${dir.target.wix.x64}\wcautil_2012_x64.lib" if="${BuildVC11}" />
 
         <include name="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" if="${BuildVC8 and ia64}" />
         <include name="${dir.target.wix.ia64}\wcautil_2008_ia64.lib" if="${BuildVC9 and ia64}" />

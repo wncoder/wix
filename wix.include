@@ -89,6 +89,8 @@
   <property name="dir.build.burn.balutil.vs2008.x64" value="${dir.build.burn.balutil.x64}\2008" readonly="true" />
   <property name="dir.build.burn.balutil.vs2010.x86" value="${dir.build.burn.balutil.x86}\2010" readonly="true" />
   <property name="dir.build.burn.balutil.vs2010.x64" value="${dir.build.burn.balutil.x64}\2010" readonly="true" />
+  <property name="dir.build.burn.balutil.vs2012.x86" value="${dir.build.burn.balutil.x86}\2012" readonly="true" />
+  <property name="dir.build.burn.balutil.vs2012.x64" value="${dir.build.burn.balutil.x64}\2012" readonly="true" />
   <property name="dir.build.burn.mba" value="${dir.build.burn.x86}\mba" readonly="true" />
   <property name="dir.build.burn.mba.core" value="${dir.build.wix.x86}\core" readonly="true" />
   <property name="dir.build.burn.mba.host" value="${dir.build.burn.mba}\host" readonly="true" />
@@ -102,6 +104,7 @@
   <property name="dir.build.deputil.vs2005.x86" value="${dir.build.deputil.x86}\2005" readonly="true" />
   <property name="dir.build.deputil.vs2008.x86" value="${dir.build.deputil.x86}\2008" readonly="true" />
   <property name="dir.build.deputil.vs2010.x86" value="${dir.build.deputil.x86}\2010" readonly="true" />
+  <property name="dir.build.deputil.vs2012.x86" value="${dir.build.deputil.x86}\2012" readonly="true" />
   <property name="dir.build.ext" value="${dir.build.wix}\ext" readonly="true" />
   <property name="dir.build.ext.x86" value="${dir.build.wix.x86}\ext" readonly="true" />
   <property name="dir.build.ext.balextension" value="${dir.build.ext}\balextension" readonly="true" />
@@ -150,6 +153,8 @@
   <property name="dir.build.dutil.vs2010.x86" value="${dir.build.dutil.x86}\2010" readonly="true" />
   <property name="dir.build.dutil.vs2010.x64" value="${dir.build.dutil.x64}\2010" readonly="true" />
   <property name="dir.build.dutil.vs2010.ia64" value="${dir.build.dutil.ia64}\2010" readonly="true" />
+  <property name="dir.build.dutil.vs2012.x86" value="${dir.build.dutil.x86}\2012" readonly="true" />
+  <property name="dir.build.dutil.vs2012.x64" value="${dir.build.dutil.x64}\2012" readonly="true" />
   <property name="dir.build.dutil.vs2008.x86" value="${dir.build.dutil.x86}\2008" readonly="true" />
   <property name="dir.build.dutil.vs2008.x64" value="${dir.build.dutil.x64}\2008" readonly="true" />
   <property name="dir.build.dutil.vs2008.ia64" value="${dir.build.dutil.ia64}\2008" readonly="true" />
@@ -159,6 +164,8 @@
   <property name="dir.build.wcautil.vs2010.x86" value="${dir.build.wix.x86}\ca\wcautil_2010" dynamic="true" readonly="true" />
   <property name="dir.build.wcautil.vs2010.x64" value="${dir.build.wix.x64}\ca\wcautil_2010" dynamic="true" readonly="true" />
   <property name="dir.build.wcautil.vs2010.ia64" value="${dir.build.wix.ia64}\ca\wcautil_2010" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2012.x86" value="${dir.build.wix.x86}\ca\wcautil_2012" dynamic="true" readonly="true" />
+  <property name="dir.build.wcautil.vs2012.x64" value="${dir.build.wix.x64}\ca\wcautil_2012" dynamic="true" readonly="true" />
   <property name="dir.build.wcautil.vs2008.x86" value="${dir.build.wix.x86}\ca\wcautil_2008" dynamic="true" readonly="true" />
   <property name="dir.build.wcautil.vs2008.x64" value="${dir.build.wix.x64}\ca\wcautil_2008" dynamic="true" readonly="true" />
   <property name="dir.build.wcautil.vs2008.ia64" value="${dir.build.wix.ia64}\ca\wcautil_2008" dynamic="true" readonly="true" />
@@ -235,6 +242,10 @@
   <property name="file.target.wixdll" value="${dir.target.wix}\wix.dll" readonly="true" />
 
   <!-- Non-dynamic files which specify a particular platform -->
+  <property name="file.target.wcautil.vs2012.x86" value="${dir.target.wix.x86}\wcautil_2012.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2012.x64" value="${dir.target.wix.x64}\wcautil_2012_x64.lib" readonly="true" />
+  <property name="file.target.wcautil.vs2012" value="${file.target.wcautil.vs2012.x86}" readonly="true" />
+
   <property name="file.target.wcautil.vs2010.x86" value="${dir.target.wix.x86}\wcautil_2010.lib" readonly="true" />
   <property name="file.target.wcautil.vs2010.x64" value="${dir.target.wix.x64}\wcautil_2010_x64.lib" readonly="true" />
   <property name="file.target.wcautil.vs2010.ia64" value="${dir.target.wix.ia64}\wcautil_2010_ia64.lib" readonly="true" />
@@ -249,6 +260,10 @@
   <property name="file.target.wcautil.vs2005.x64" value="${dir.target.wix.x64}\wcautil_2005_x64.lib" readonly="true" />
   <property name="file.target.wcautil.vs2005.ia64" value="${dir.target.wix.ia64}\wcautil_2005_ia64.lib" readonly="true" />
   <property name="file.target.wcautil.vs2005" value="${file.target.wcautil.vs2005.x86}" readonly="true" />
+
+  <property name="file.target.dutil.vs2012.x86" value="${dir.target.wix.x86}\dutil_2012.lib" readonly="true" />
+  <property name="file.target.dutil.vs2012.x64" value="${dir.target.wix.x64}\dutil_2012_x64.lib" readonly="true" />
+  <property name="file.target.dutil.vs2012" value="${file.target.dutil.vs2012.x86}" readonly="true" />
 
   <property name="file.target.dutil.vs2010.x86" value="${dir.target.wix.x86}\dutil_2010.lib" readonly="true" />
   <property name="file.target.dutil.vs2010.x64" value="${dir.target.wix.x64}\dutil_2010_x64.lib" readonly="true" />
@@ -265,6 +280,10 @@
   <property name="file.target.dutil.vs2005.ia64" value="${dir.target.wix.ia64}\dutil_2005_ia64.lib" readonly="true" />
   <property name="file.target.dutil.vs2005" value="${file.target.dutil.vs2005.x86}" readonly="true" />
 
+  <property name="file.target.balutil.vs2012.x86" value="${dir.target.wix.x86}\balutil_2012.lib" readonly="true" />
+  <property name="file.target.balutil.vs2012.x64" value="${dir.target.wix.x64}\balutil_2012_x64.lib" readonly="true" />
+  <property name="file.target.balutil.vs2012" value="${file.target.balutil.vs2012.x86}" readonly="true" />
+
   <property name="file.target.balutil.vs2010.x86" value="${dir.target.wix.x86}\balutil_2010.lib" readonly="true" />
   <property name="file.target.balutil.vs2010.x64" value="${dir.target.wix.x64}\balutil_2010_x64.lib" readonly="true" />
   <property name="file.target.balutil.vs2010" value="${file.target.balutil.vs2010.x86}" readonly="true" />
@@ -276,6 +295,9 @@
   <property name="file.target.balutil.vs2005.x86" value="${dir.target.wix.x86}\balutil_2005.lib" readonly="true" />
   <property name="file.target.balutil.vs2005.x64" value="${dir.target.wix.x64}\balutil_2005_x64.lib" readonly="true" />
   <property name="file.target.balutil.vs2005" value="${file.target.balutil.vs2005.x86}" readonly="true" />
+
+  <property name="file.target.deputil.vs2012.x86" value="${dir.target.wix.x86}\deputil_2012.lib" readonly="true" />
+  <property name="file.target.deputil.vs2012" value="${file.target.deputil.vs2012.x86}" readonly="true" />
 
   <property name="file.target.deputil.vs2010.x86" value="${dir.target.wix.x86}\deputil_2010.lib" readonly="true" />
   <property name="file.target.deputil.vs2010" value="${file.target.deputil.vs2010.x86}" readonly="true" />

@@ -18,7 +18,7 @@
     <Fragment>
         <DirectoryRef Id="TARGETDIR">
             <Directory Id="ProgramFilesFolder" >
-                <Directory Id="InstallFolder" Name="WiX Toolset v$(var.WixMajorMinor)" />
+                <Directory Id="INSTALLFOLDER" Name="WiX Toolset v$(var.WixMajorMinor)" />
             </Directory>
         </DirectoryRef>
     </Fragment>
@@ -32,7 +32,7 @@
     </Fragment>
 
     <Fragment>
-        <DirectoryRef Id="InstallFolder">
+        <DirectoryRef Id="INSTALLFOLDER">
             <Directory Id="BinFolder" Name="bin">
                 <Directory Id="BurnX86Folder" Name="x86" />
             </Directory>
@@ -40,7 +40,7 @@
     </Fragment>
 
     <Fragment>
-        <DirectoryRef Id="InstallFolder">
+        <DirectoryRef Id="INSTALLFOLDER">
             <Directory Id="DocFolder" Name="doc" />
         </DirectoryRef>
     </Fragment>
@@ -64,7 +64,7 @@
         SDK
     -->
     <Fragment>
-        <DirectoryRef Id="InstallFolder">
+        <DirectoryRef Id="INSTALLFOLDER">
             <Directory Id="SdkFolder" Name="SDK" />
         </DirectoryRef>
     </Fragment>
@@ -198,28 +198,28 @@
     </Fragment>
 
     <!--
-        VS11
+        VS2012
     -->
     <Fragment>
         <DirectoryRef Id="ProgramFilesFolder">
-            <Directory Id="VisualStudio11Folder" Name="Microsoft Visual Studio 11.0">
-                <Directory Id="Common7Vs11" Name="Common7">
-                    <Directory Id="IDEVs11" Name="IDE"/>
+            <Directory Id="VisualStudio2012Folder" Name="Microsoft Visual Studio 11.0">
+                <Directory Id="Common7Vs2012" Name="Common7">
+                    <Directory Id="IDEVs2012" Name="IDE"/>
                 </Directory>
-                <Directory Id="XmlVs11" Name="Xml"/>
+                <Directory Id="XmlVs2012" Name="Xml"/>
             </Directory>
         </DirectoryRef>
     </Fragment>
 
     <Fragment>
-        <PropertyRef Id="VS11_EXTENSIONS_DIR" />
+        <PropertyRef Id="VS2012_EXTENSIONS_DIR" />
 
-        <DirectoryRef Id="IDEVs11">
-            <Directory Id="VS11_EXTENSIONS_DIR" Name="Extensions">
-                <Directory Id="VsExtensions11Microsoft" Name="Microsoft">
-                    <Directory Id="VsExtensions11MicrosoftWix" Name="WiX">
-                        <Directory Id="VsItemTemplatesWix11Folder" Name="ItemTemplates" />
-                        <Directory Id="VsProjectTemplatesWix11Folder" Name="ProjectTemplates" />
+        <DirectoryRef Id="IDEVs2012">
+            <Directory Id="VS2012_EXTENSIONS_DIR" Name="Extensions">
+                <Directory Id="VsExtensions2012Microsoft" Name="Microsoft">
+                    <Directory Id="VsExtensions2012MicrosoftWix" Name="WiX">
+                        <Directory Id="VsItemTemplatesWix2012Folder" Name="ItemTemplates" />
+                        <Directory Id="VsProjectTemplatesWix2012Folder" Name="ProjectTemplates" />
                     </Directory>
                 </Directory>
             </Directory>
@@ -227,10 +227,10 @@
     </Fragment>
 
     <Fragment>
-        <PropertyRef Id="VS11_SCHEMAS_DIR" />
+        <PropertyRef Id="VS2012_SCHEMAS_DIR" />
 
-        <DirectoryRef Id="XmlVs11">
-            <Directory Id="VS11_SCHEMAS_DIR" Name="Schemas" />
+        <DirectoryRef Id="XmlVs2012">
+            <Directory Id="VS2012_SCHEMAS_DIR" Name="Schemas" />
         </DirectoryRef>
     </Fragment>
 </Wix>

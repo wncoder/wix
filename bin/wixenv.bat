@@ -181,6 +181,7 @@ set _VCVARS=
 
 call :INITVC9VARS 2> nul
 call :INITVC10VARS 2> nul
+call :INITVC11VARS 2> nul
 call :CLEANPATH
 
 rem VC was not initialized. Currently we require VS to build Burn, which has a dependency on ATL that does not ship in the standalone SDK.
@@ -199,6 +200,12 @@ goto :EOF
 :INITVC10VARS
 for /f "tokens=2*" %%A IN ('REG QUERY "%REGKEY%\Microsoft\VisualStudio\10.0\Setup\VC" /v ProductDir') do set _VCDIR=%%~sB
 if exist "%_VCDIR%bin\vcvars32.bat" ((call "%_VCDIR%bin\vcvars32.bat") & (set _VCVARS=10.0))
+goto :EOF
+
+
+:INITVC11VARS
+for /f "tokens=2*" %%A IN ('REG QUERY "%REGKEY%\Microsoft\VisualStudio\11.0\Setup\VC" /v ProductDir') do set _VCDIR=%%~sB
+if exist "%_VCDIR%bin\vcvars32.bat" ((call "%_VCDIR%bin\vcvars32.bat") & (set _VCVARS=11.0))
 goto :EOF
 
 :LEndLocal

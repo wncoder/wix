@@ -2856,6 +2856,17 @@
           <Parameter Type="System.String" Name="childElementName" />
         </Instance>
       </Message>
+      <Message Id="DuplicatedUiLocalization" Number="374">
+        <Instance>
+          The localization for control {0} in dialog {1} is duplicated. Only one localization per control is allowed.
+          <Parameter Type="System.String" Name="controlName" />
+          <Parameter Type="System.String" Name="dialogName" />
+        </Instance>
+        <Instance>
+          The localization for dialog {0} is duplicated. Only one localization per dialog is allowed.
+          <Parameter Type="System.String" Name="dialogName" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
@@ -3638,6 +3649,13 @@
             <Instance>
                 The Container '{0}' is attached but included a @DownloadUrl attribute. Attached Containers cannot be downloaded so the download URL is being ignored.
                 <Parameter Type="System.String" Name="containerId" />
+            </Instance>
+        </Message>
+        <Message Id="ReservedAttribute" Number="1142">
+            <Instance>
+                The {0}/@{1} attribute is reserved for future use and has no effect in this version of the WiX toolset.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
             </Instance>
         </Message>
     </Class>

@@ -14,6 +14,7 @@
 namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 {
     using System;
+    using System.Runtime.InteropServices;
 
     /// <summary>
     /// Contains native constants, functions, and structures for this assembly.
@@ -28,6 +29,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         internal const int E_ALREADYINITIALIZED = unchecked((int)0x800704df);
         internal const int E_NOTFOUND = unchecked((int)0x80070490);
         internal const int E_UNEXPECTED = unchecked((int)0x8000ffff);
+        #endregion
+
+        #region Functions
+        [DllImport("shell32.dll", ExactSpelling = true, SetLastError = true)]
+        internal static extern IntPtr CommandLineToArgvW(
+            [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine,
+            out int pNumArgs
+            );
+
+        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+        internal static extern IntPtr LocalFree(
+            IntPtr hMem
+            );
         #endregion
     }
 }

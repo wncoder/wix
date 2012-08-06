@@ -1040,6 +1040,8 @@ static HRESULT MsiProductSearch(
     case BURN_MSI_PRODUCT_SEARCH_TYPE_ASSIGNMENT:
         wzProperty = INSTALLPROPERTY_ASSIGNMENTTYPE;
         break;
+    default:
+        ExitOnFailure1(hr = E_NOTIMPL, "Unsupported product search type: %u", pSearch->MsiProductSearch.Type);
     }
 
     // format product code string
@@ -1048,7 +1050,22 @@ static HRESULT MsiProductSearch(
 
     // get product info
     value.Type = BURN_VARIANT_TYPE_STRING;
+
     hr = WiuGetProductInfo(sczProductCode, wzProperty, &value.sczValue);
+    if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PROPERTY) == hr)
+    {
+        // product state is available only through MsiGetProductInfoEx
+        LogStringLine(REPORT_VERBOSE, "Trying per-machine extended info for property '%ls' for product: %ls", wzProperty, sczProductCode);
+        hr = WiuGetProductInfoEx(sczProductCode, NULL, MSIINSTALLCONTEXT_MACHINE, wzProperty, &value.sczValue);
+
+        // if not in per-machine context, try per-user (unmanaged)
+        if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
+        {
+            LogStringLine(REPORT_STANDARD, "Trying per-user extended info for property '%ls' for product: %ls", wzProperty, sczProductCode);
+            hr = WiuGetProductInfoEx(sczProductCode, NULL, MSIINSTALLCONTEXT_USERUNMANAGED, wzProperty, &value.sczValue);
+        }
+    }
+
     if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) == hr)
     {
         LogStringLine(REPORT_STANDARD, "Product not found: %ls", sczProductCode);

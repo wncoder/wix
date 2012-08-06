@@ -19,7 +19,7 @@
     <Pedantic>True</Pedantic>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Cultures>en-us</Cultures>
-    <DefineConstants>$(DefineConstants);BuildIA64=$(BuildIA64);Build2005=$(Build2005);Build2008=$(Build2008);Build2010=$(Build2010)</DefineConstants>
+    <DefineConstants>$(DefineConstants);BuildIA64=$(BuildIA64);Build2005=$(Build2005);Build2008=$(Build2008);Build2010=$(Build2010);Build2012=$(Build2012)</DefineConstants>
     <IncludeSearchPaths>$(ROOT)inc</IncludeSearchPaths>
   </PropertyGroup>
 
@@ -53,6 +53,9 @@
     </ProjectReference>
     <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi.wixproj" Condition=" '$(Build2010)' == 'true' ">
         <Properties>VisualStudioTargetVersion=2010</Properties>
+    </ProjectReference>
+    <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi2012.wixproj" Condition=" '$(Build2012)' == 'true' ">
+        <Properties>VisualStudioTargetVersion=2012</Properties>
     </ProjectReference>
     <ProjectReference Include="..\VotiveMsi\VotiveMsi.wixproj" />
     <ProjectReference Include="..\WixBA\WixBA.csproj" />

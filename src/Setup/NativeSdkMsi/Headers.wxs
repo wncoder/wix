@@ -27,6 +27,10 @@
             </Component>
 
             <Component>
+                <File Source="ext\BalExtension\balutil\inc\balinfo.h" />
+            </Component>
+
+            <Component>
                 <File Source="ext\BalExtension\balutil\inc\balretry.h" />
             </Component>
 

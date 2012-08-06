@@ -1808,7 +1808,7 @@
     </tableDefinition>
     <tableDefinition name="WixPackageProperties" unreal="yes" bootstrapperApplicationData="yes">
         <columnDefinition name="Package"  type="string" length="0" category="identifier" primaryKey="yes"
-                keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
+                          keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
         <columnDefinition name="Vital" type="string" length="0" nullable="yes" minValue="0" maxValue="1" />
         <columnDefinition name="DisplayName" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Description" type="string" length="0" nullable="yes"/>
@@ -1820,6 +1820,17 @@
         <columnDefinition name="LogPathVariable" type="string" length="0" nullable="yes"/>
         <columnDefinition name="RollbackLogPathVariable" type="string" length="0" nullable="yes"/>
         <columnDefinition name="Compressed" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="DisplayInternalUI" type="string" length="0" nullable="yes"/>
+    </tableDefinition>
+    <tableDefinition name="WixPayloadProperties" unreal="yes" bootstrapperApplicationData="yes">
+        <columnDefinition name="Payload"  type="string" length="0" category="identifier" primaryKey="yes" />
+        <columnDefinition name="Package"  type="string" length="0" category="identifier" primaryKey="yes" nullable="yes"
+                          keyTable="ChainPackage" keyColumn="1" description="Reference to a ChainPackage entry in the ChainPackage table."/>
+        <columnDefinition name="Container" type="string" length="0" nullable="yes"/>
+        <columnDefinition name="Name" type="string" length="0"  />
+        <columnDefinition name="Size" type="string" length="0" />
+        <columnDefinition name="DownloadUrl" type="string" length="0" nullable="yes" />
+        <columnDefinition name="LayoutOnly" type="string" length="3" nullable="no" />
     </tableDefinition>
     <tableDefinition name="_Streams" unreal="yes">
         <columnDefinition name="Name" type="string" length="62" primaryKey="yes"/>

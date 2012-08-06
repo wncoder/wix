@@ -34,6 +34,7 @@ enum INTERNAL_CONTROL_STYLE
 {
     INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED = 0x0001,
     INTERNAL_CONTROL_STYLE_FILESYSTEM_AUTOCOMPLETE = 0x0002,
+    INTERNAL_CONTROL_STYLE_DISABLED = 0x0004,
 };
 
 struct MEMBUFFER_FOR_RICHEDIT
@@ -492,7 +493,7 @@ DAPI_(HRESULT) ThemeLoadControls(
 
         case THEME_CONTROL_TYPE_STATIC:
             wzWindowClass = WC_STATICW;
-            dwWindowBits |= WS_VISIBLE | SS_ETCHEDHORZ;
+            dwWindowBits |= SS_ETCHEDHORZ;
             break;
 
         case THEME_CONTROL_TYPE_TEXT:
@@ -523,6 +524,8 @@ DAPI_(HRESULT) ThemeLoadControls(
             int x = pControl->nX < 0 ? rcParent.right + pControl->nX - w : pControl->nX;
             int y = pControl->nY < 0 ? rcParent.bottom + pControl->nY - h : pControl->nY;
 
+            // disable paged controls so their shortcut keys don't trigger when their page isn't being shown
+            dwWindowBits |= 0 < pControl->wPageId ? WS_DISABLED : 0;
             pControl->hWnd = ::CreateWindowExW(dwWindowExBits, wzWindowClass, pControl->sczText, pControl->dwStyle | dwWindowBits, x, y, w, h, pTheme->hwndParent, reinterpret_cast<HMENU>(wControlId), NULL, NULL);
             ExitOnNullWithLastError(pControl->hWnd, hr, "Failed to create window.");
 
@@ -1009,23 +1012,25 @@ DAPI_(void) ThemeShowPage(
             const THEME_CONTROL* pControl = pTheme->rgControls + pPage->rgdwControlIndices[i];
             HWND hWnd = pControl->hWnd;
 
-            if ((pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED) && !::IsWindowEnabled(hWnd))
+            if ((pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED) && (pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_DISABLED))
             {
                 ::ShowWindow(hWnd, SW_HIDE);
             }
             else
             {
-                ::ShowWindow(hWnd, nCmdShow);
+                ::EnableWindow(hWnd, SW_HIDE != nCmdShow && !(pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_DISABLED));
 
                 if (!hwndFocus && SW_HIDE != nCmdShow && pControl->dwStyle & WS_TABSTOP)
                 {
                     hwndFocus = hWnd;
                 }
+
+                ::ShowWindow(hWnd, nCmdShow);
             }
 
             if (THEME_CONTROL_TYPE_BILLBOARD == pControl->type)
             {
-                if (SW_HIDE == nCmdShow || !::IsWindowEnabled(hWnd))
+                if (SW_HIDE == nCmdShow || (pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_DISABLED))
                 {
                     ThemeStopBillboard(pTheme, pControl->wId);
                 }
@@ -1068,11 +1073,12 @@ DAPI_(void) ThemeControlEnable(
     )
 {
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
-    if (hWnd && fEnable != ::IsWindowEnabled(hWnd))
+    THEME_CONTROL* pControl = const_cast<THEME_CONTROL*>(FindControlFromHWnd(pTheme, hWnd));
+    if (pControl)
     {
+        pControl->dwInternalStyle = fEnable ? (pControl->dwInternalStyle & ~INTERNAL_CONTROL_STYLE_DISABLED) : (pControl->dwInternalStyle | INTERNAL_CONTROL_STYLE_DISABLED);
         ::EnableWindow(hWnd, fEnable);
 
-        const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
         if (pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_HIDE_WHEN_DISABLED)
         {
             ::ShowWindow(hWnd, fEnable ? SW_SHOW : SW_HIDE);
@@ -1087,7 +1093,8 @@ DAPI_(BOOL) ThemeControlEnabled(
     )
 {
     HWND hWnd = ::GetDlgItem(pTheme->hwndParent, dwControl);
-    return ::IsWindowEnabled(hWnd);
+    const THEME_CONTROL* pControl = FindControlFromHWnd(pTheme, hWnd);
+    return pControl && !(pControl->dwInternalStyle & INTERNAL_CONTROL_STYLE_DISABLED);
 }
 
 

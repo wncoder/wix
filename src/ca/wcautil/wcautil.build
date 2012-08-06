@@ -44,6 +44,9 @@
     <delete dir="${dir.build.wcautil.vs2010.x64}" failonerror="false" if="${directory::exists(dir.build.wcautil.vs2010.x64)}" />
     <delete dir="${dir.build.wcautil.vs2010.ia64}" failonerror="false" if="${directory::exists(dir.build.wcautil.vs2010.ia64)}" />
 
+    <delete dir="${dir.build.wcautil.vs2012.x86}" failonerror="false" if="${directory::exists(dir.build.wcautil.vs2012.x86)}" />
+    <delete dir="${dir.build.wcautil.vs2012.x64}" failonerror="false" if="${directory::exists(dir.build.wcautil.vs2012.x64)}" />
+
     <delete file="${file.target.wcautil.vs2005.x86}" failonerror="false" if="${file::exists(file.target.wcautil.vs2005.x86)}" />
     <delete file="${file.target.wcautil.vs2005.x64}" failonerror="false" if="${file::exists(file.target.wcautil.vs2005.x64)}" />
     <delete file="${file.target.wcautil.vs2005.ia64}" failonerror="false" if="${file::exists(file.target.wcautil.vs2005.ia64)}" />
@@ -55,6 +58,9 @@
     <delete file="${file.target.wcautil.vs2010.x86}" failonerror="false" if="${file::exists(file.target.wcautil.vs2010.x86)}" />
     <delete file="${file.target.wcautil.vs2010.x64}" failonerror="false" if="${file::exists(file.target.wcautil.vs2010.x64)}" />
     <delete file="${file.target.wcautil.vs2010.ia64}" failonerror="false" if="${file::exists(file.target.wcautil.vs2010.ia64)}" />
+
+    <delete file="${file.target.wcautil.vs2012.x86}" failonerror="false" if="${file::exists(file.target.wcautil.vs2012.x86)}" />
+    <delete file="${file.target.wcautil.vs2012.x64}" failonerror="false" if="${file::exists(file.target.wcautil.vs2012.x64)}" />
 
     <delete file="${dir.target.wix}\wcautil.h" failonerror="false" />
     <delete file="${dir.target.wix}\wcawrapquery.h" failonerror="false" />
@@ -76,6 +82,22 @@
       <include name="wcawrap.cpp" />
       <include name="qtexec.cpp" />
     </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2012.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.ca.wcautil}\precomp.h" />
+    <property name="makeNativeLib.file.target" value="${file.target.wcautil.vs2012.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make VS2012 x86 wcautil.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2012.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.ca.wcautil}\precomp.h" />
+    <property name="makeNativeLib.file.target" value="${file.target.wcautil.vs2012.x64}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x64" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make VS2012 x64 wcautil.lib -->
+    <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2010.x86}" dynamic="true" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.ca.wcautil}\precomp.h" />
@@ -108,7 +130,7 @@
     <property name="makeNativeLib.file.target" value="${file.target.wcautil.vs2008.x86}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x86" />
     <property name="makeNativeLib.vctoolsversion" value="9" />
-    <!-- Make VS2005 x86 wcautil.lib -->
+    <!-- Make VS2008 x86 wcautil.lib -->
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2008.x64}" dynamic="true" />
@@ -117,7 +139,7 @@
     <property name="makeNativeLib.file.target" value="${file.target.wcautil.vs2008.x64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="x64" />
     <property name="makeNativeLib.vctoolsversion" value="9" />
-    <!-- Make VS2005 x64 wcautil.lib -->
+    <!-- Make VS2008 x64 wcautil.lib -->
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2008.ia64}" dynamic="true" />
@@ -126,7 +148,7 @@
     <property name="makeNativeLib.file.target" value="${file.target.wcautil.vs2008.ia64}" dynamic="true" />
     <property name="makeNativeLib.platform" value="ia64" />
     <property name="makeNativeLib.vctoolsversion" value="9" />
-    <!-- Make VS2005 ia64 wcautil.lib -->
+    <!-- Make VS2008 ia64 wcautil.lib -->
     <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.wcautil.vs2005.x86}" dynamic="true" />

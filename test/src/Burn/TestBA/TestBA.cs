@@ -88,6 +88,16 @@ namespace WixTest.BA
             }
         }
 
+        protected override void OnPlanMsiFeature(PlanMsiFeatureEventArgs args)
+        {
+            FeatureState state;
+            string action = ReadFeatureAction(args.PackageId, args.FeatureId, "Requested");
+            if (TryParseEnum<FeatureState>(action, out state))
+            {
+                args.State = state;
+            }
+        }
+
         protected override void OnPlanComplete(PlanCompleteEventArgs args)
         {
             this.result = args.Status;
@@ -271,6 +281,16 @@ namespace WixTest.BA
             using (RegistryKey testKey = Registry.LocalMachine.OpenSubKey(String.Format(@"Software\WiX\Tests\TestBAControl\{0}\{1}", testName, String.IsNullOrEmpty(packageId) ? String.Empty : packageId)))
             {
                 return testKey == null ? null : testKey.GetValue(state) as string;
+            }
+        }
+
+        private string ReadFeatureAction(string packageId, string featureId, string state)
+        {
+            string testName = this.Engine.StringVariables["TestName"];
+            using (RegistryKey testKey = Registry.LocalMachine.OpenSubKey(String.Format(@"Software\WiX\Tests\TestBAControl\{0}\{1}", testName, packageId)))
+            {
+                string registryName = String.Concat(featureId, state);
+                return testKey == null ? null : testKey.GetValue(registryName) as string;
             }
         }
 

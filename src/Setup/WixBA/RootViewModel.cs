@@ -151,6 +151,26 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
         public InstallationState PreApplyState { get; set; }
 
         /// <summary>
+        /// Gets and sets the path where the bundle is currently installed or will be installed.
+        /// </summary>
+        public string InstallDirectory
+        {
+            get
+            {
+                return WixBA.Model.InstallDirectory;
+            }
+
+            set
+            {
+                if (WixBA.Model.InstallDirectory != value)
+                {
+                    WixBA.Model.InstallDirectory = value;
+                    base.OnPropertyChanged("InstallDirectory");
+                }
+            }
+        }
+
+        /// <summary>
         /// Instructs the various child models to refresh. Called directly via
         /// the UX *once* to initialize all the models. After that, only called
         /// when the RefreshCommand is executed.

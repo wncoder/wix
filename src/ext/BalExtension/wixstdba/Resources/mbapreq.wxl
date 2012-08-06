@@ -18,8 +18,8 @@
 /norestart   - suppress any attempts to restart. By default UI will prompt before restart.
 /log log.txt - logs to a specific file. By default a log file is created in %TEMP%.</String>
   <String Id="HelpCloseButton">&amp;Close</String>
-  <String Id="InstallLicenseTerms">Click the "Accept &amp;&amp; Install" button to accept the Microsoft .NET Framework &lt;a href="#"&gt;license terms&lt;/a&gt;.</String>
-  <String Id="InstallAcceptAndInstallButton">&amp;Accept &amp;&amp; Install</String>
+  <String Id="InstallLicenseTerms">Click the "Accept and Install" button to accept the Microsoft .NET Framework &lt;a href="#"&gt;license terms&lt;/a&gt;.</String>
+  <String Id="InstallAcceptAndInstallButton">&amp;Accept and Install</String>
   <String Id="InstallDeclineButton">&amp;Decline</String>
   <String Id="ProgressHeader">Setup Progress</String>
   <String Id="ProgressLabel">Processing:</String>

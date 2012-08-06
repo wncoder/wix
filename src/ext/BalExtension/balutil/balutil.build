@@ -46,6 +46,9 @@
 
     <delete file="${file.target.balutil.vs2010.x86}" failonerror="false" if="${file::exists(file.target.balutil.vs2010.x86)}" />
     <delete file="${file.target.balutil.vs2010.x64}" failonerror="false" if="${file::exists(file.target.balutil.vs2010.x64)}" />
+
+    <delete file="${file.target.balutil.vs2012.x86}" failonerror="false" if="${file::exists(file.target.balutil.vs2012.x86)}" />
+    <delete file="${file.target.balutil.vs2012.x64}" failonerror="false" if="${file::exists(file.target.balutil.vs2012.x64)}" />
   </target>
 
   <!-- Inc -->
@@ -56,6 +59,15 @@
       <include name="balinfo.cpp" />
       <include name="balretry.cpp" />
     </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2012.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${balutil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.balutil.vs2012.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make x86 balutil.lib for VS2012 -->
+    <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.burn.balutil.vs2010.x86}" dynamic="true" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.balutil}\precomp.h" />

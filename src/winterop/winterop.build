@@ -51,7 +51,7 @@
     <property name="compileCpp.file.rc" value="${dir.src.winterop}\winterop.rc" />
     <property name="makeNativeDll.file.target" value="${winterop.file.target}" />
     <property name="makeNativeDll.file.def" value="${dir.src.winterop}\winterop.def" />
-    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\fci.lib&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot;" dynamic="true" />
+    <property name="makeNativeDll.additionalLibs" value="&quot;${file.target.dutil}&quot; &quot;${dir.platformsdk.lib}\crypt32.lib&quot; &quot;${dir.platformsdk.lib}\cabinet.lib&quot; &quot;${dir.platformsdk.lib}\msi.lib&quot; &quot;${dir.platformsdk.lib}\shell32.lib&quot;" dynamic="true" />
 
     <!-- Make scasched.dll -->
     <call target="makeNativeDll" />

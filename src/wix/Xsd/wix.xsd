@@ -3629,7 +3629,7 @@
         <xse:howtoRef href="parentdirectorysearch.htm">How To: Get the parent directory of a file search</xse:howtoRef>
         <xse:remarks>
           <html:p>Use the AssignToProperty attribute to search for a file but set the outer property to the directory containing the file. When this attribute is set to 'yes', you may only nest a FileSearch element with a unique Id or define no child element.</html:p>
-          <html:a>When the parent DirectorySearch/@Depth attribute is greater than 1, the FileSearch/@Id attribute must be absent or the same as the parent DirectorySearch/@Id attribute value, unless the parent DirectorySearch/@AssignToProperty attribute value is 'yes'.</html:a>
+          <html:a>When the parent DirectorySearch/@Depth attribute is greater than 0, the FileSearch/@Id attribute must be absent or the same as the parent DirectorySearch/@Id attribute value, unless the parent DirectorySearch/@AssignToProperty attribute value is 'yes'.</html:a>
         </xse:remarks>
       </xs:appinfo>
       <xs:documentation>Searches for directory and assigns to value of parent Property.</xs:documentation>
@@ -6558,7 +6558,7 @@
         <xs:annotation>
           <xs:documentation>
                         The value of this attribute should be one of the following:
-                        <html:ol><html:li>The name (not the display name) of a previously installed service.</html:li><html:li>A foreign key referring to another ServiceInstall/@Id.</html:li><html:li>A group of services (in which case the Group attribute should be set to 'yes').</html:li></html:ol></xs:documentation>
+                        <html:ol><html:li>The name (not the display name) of a previously installed service.</html:li><html:li>The name of a service group (in which case the Group attribute must be set to 'yes').</html:li></html:ol></xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="Group" type="YesNoTypeUnion">

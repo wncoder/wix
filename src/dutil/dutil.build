@@ -38,6 +38,9 @@
     <delete dir="${dir.build.dutil.x64}" failonerror="false" if="${directory::exists(dir.build.dutil.x64)}" />
     <delete dir="${dir.build.dutil.ia64}" failonerror="false" if="${directory::exists(dir.build.dutil.ia64)}" />
 
+    <delete file="${file.target.dutil.vs2012.x86}" failonerror="false" if="${file::exists(file.target.dutil.vs2012.x86)}" />
+    <delete file="${file.target.dutil.vs2012.x64}" failonerror="false" if="${file::exists(file.target.dutil.vs2012.x64)}" />
+
     <delete file="${file.target.dutil.vs2010.x86}" failonerror="false" if="${file::exists(file.target.dutil.vs2010.x86)}" />
     <delete file="${file.target.dutil.vs2010.x64}" failonerror="false" if="${file::exists(file.target.dutil.vs2010.x64)}" />
     <delete file="${file.target.dutil.vs2010.ia64}" failonerror="false" if="${file::exists(file.target.dutil.vs2010.ia64)}" />
@@ -104,6 +107,22 @@
       <include name="wuautil.cpp" />
       <include name="xmlutil.cpp" />
     </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.dutil.vs2012.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.dutil}\precomp.h" />
+    <property name="makeNativeLib.file.target" value="${file.target.dutil.vs2012.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make vs2012 x86 dutil.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.dutil.vs2012.x64}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.dutil}\precomp.h" />
+    <property name="makeNativeLib.file.target" value="${file.target.dutil.vs2012.x64}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x64" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make VS2012 x64 dutil.lib -->
+    <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.dutil.vs2010.x86}" dynamic="true" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.dutil}\precomp.h" />

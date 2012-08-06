@@ -8243,12 +8243,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
                         case "DiskPrompt":
                             diskPrompt = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             this.core.CreateWixSimpleReferenceRow(sourceLineNumbers, "Property", "DiskPrompt"); // ensure the output has a DiskPrompt Property defined
+                            this.core.OnMessage(WixWarnings.ReservedAttribute(sourceLineNumbers, node.Name, attrib.Name));
                             break;
                         case "EmbedCab":
                             embedCab = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "VolumeLabel":
                             volumeLabel = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            this.core.OnMessage(WixWarnings.ReservedAttribute(sourceLineNumbers, node.Name, attrib.Name));
                             break;
                         case "MaximumUncompressedMediaSize":
                             maximumUncompressedMediaSize = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 1, int.MaxValue);

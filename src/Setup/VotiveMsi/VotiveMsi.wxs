@@ -56,14 +56,14 @@
                 <ComponentGroupRef Id="FileAssociationComponents" />
             </Feature>
 
-            <Feature Id="Intellisense11" Title="IntelliSense 11" Description="Schema files for IntelliSense in the Visual Studio 11 editor" AllowAdvertise="no" Display="expand" InstallDefault="local" Level="0" TypicalDefault="install">
-                <Condition Level="1">VS11DEVENV OR VS11_ROOT_FOLDER OR REMOVE</Condition>
-                <ComponentGroupRef Id="Votive11SchemaComponents" />
+            <Feature Id="Intellisense2012" Title="IntelliSense 2012" Description="Schema files for IntelliSense in the Visual Studio 2012 editor" AllowAdvertise="no" Display="expand" InstallDefault="local" Level="0" TypicalDefault="install">
+                <Condition Level="1">VS2012DEVENV OR VS2012_ROOT_FOLDER OR REMOVE</Condition>
+                <ComponentGroupRef Id="Votive2012SchemaComponents" />
             </Feature>
 
-            <Feature Id="Votive11" Title="Project Templates 11" Description="Votive Package for Visual Studio 11" AllowAdvertise="no" Display="expand" InstallDefault="local" Level="0" TypicalDefault="install">
-                <Condition Level="1">VS11DEVENV OR REMOVE</Condition>
-                <ComponentGroupRef Id="Votive11Components" />
+            <Feature Id="Votive2012" Title="Project Templates 2012" Description="Votive Package for Visual Studio 2012" AllowAdvertise="no" Display="expand" InstallDefault="local" Level="0" TypicalDefault="install">
+                <Condition Level="1">VS2012DEVENV OR REMOVE</Condition>
+                <ComponentGroupRef Id="Votive2012Components" />
                 <ComponentGroupRef Id="FileAssociationComponents" />
             </Feature>
             <?endif?>
@@ -77,28 +77,28 @@
         <PropertyRef Id="VS2005DEVENV" />
         <PropertyRef Id="VS90DEVENV" />
         <PropertyRef Id="VS2010DEVENV" />
-        <PropertyRef Id="VS11DEVENV" />
+        <PropertyRef Id="VS2012DEVENV" />
 
         <CustomAction Id="CA_SetLatestDevenv_2005" Property="LATEST_DEVENV_EXE" Value="[VS2005DEVENV]"/>
         <CustomAction Id="CA_SetLatestDevenv_2008" Property="LATEST_DEVENV_EXE" Value="[VS90DEVENV]"/>
         <CustomAction Id="CA_SetLatestDevenv_2010" Property="LATEST_DEVENV_EXE" Value="[VS2010DEVENV]"/>
-        <CustomAction Id="CA_SetLatestDevenv_11" Property="LATEST_DEVENV_EXE" Value="[VS11DEVENV]" />
+        <CustomAction Id="CA_SetLatestDevenv_2012" Property="LATEST_DEVENV_EXE" Value="[VS2012DEVENV]" />
 
         <CustomAction Id="CA_SetLatestDevenvCommand_2005" Property="LATEST_DEVENV_EXE_COMMAND" Value="&amp;Open in Visual Studio 2005"/>
         <CustomAction Id="CA_SetLatestDevenvCommand_2008" Property="LATEST_DEVENV_EXE_COMMAND" Value="&amp;Open in Visual Studio 2008"/>
         <CustomAction Id="CA_SetLatestDevenvCommand_2010" Property="LATEST_DEVENV_EXE_COMMAND" Value="&amp;Open in Visual Studio 2010"/>
-        <CustomAction Id="CA_SetLatestDevenvCommand_11" Property="LATEST_DEVENV_EXE_COMMAND" Value="&amp;Open in Visual Studio 11"/>
+        <CustomAction Id="CA_SetLatestDevenvCommand_2012" Property="LATEST_DEVENV_EXE_COMMAND" Value="&amp;Open in Visual Studio 2012"/>
 
         <!-- Install Sequences -->
         <InstallExecuteSequence>
-            <Custom Action="CA_SetLatestDevenv_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenv_2008" After="CostFinalize"><![CDATA[VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenv_2010" After="CostFinalize"><![CDATA[VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenv_11" After="CostFinalize"><![CDATA[VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenvCommand_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenvCommand_2008" After="CostFinalize"><![CDATA[VS90DEVENV AND NOT VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenvCommand_2010" After="CostFinalize"><![CDATA[VS2010DEVENV AND NOT VS11DEVENV]]></Custom>
-            <Custom Action="CA_SetLatestDevenvCommand_11" After="CostFinalize"><![CDATA[VS11DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenv_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenv_2008" After="CostFinalize"><![CDATA[VS90DEVENV AND NOT VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenv_2010" After="CostFinalize"><![CDATA[VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenv_2012" After="CostFinalize"><![CDATA[VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenvCommand_2005" After="CostFinalize"><![CDATA[VS2005DEVENV AND NOT VS90DEVENV AND NOT VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenvCommand_2008" After="CostFinalize"><![CDATA[VS90DEVENV AND NOT VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenvCommand_2010" After="CostFinalize"><![CDATA[VS2010DEVENV AND NOT VS2012DEVENV]]></Custom>
+            <Custom Action="CA_SetLatestDevenvCommand_2012" After="CostFinalize"><![CDATA[VS2012DEVENV]]></Custom>
         </InstallExecuteSequence>
     </Fragment>
 </Wix>

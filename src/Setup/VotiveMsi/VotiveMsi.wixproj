@@ -29,7 +29,7 @@
     <Compile Include="2005.wxs" />
     <Compile Include="2008.wxs" />
     <Compile Include="2010.wxs" />
-    <Compile Include="11.wxs" />
+    <Compile Include="2012.wxs" />
     <Compile Include="FileAssociations.wxs" />
   </ItemGroup>
 

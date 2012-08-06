@@ -25,6 +25,7 @@
   <target name="deputil.clean" description="Cleans the build">
     <delete dir="${dir.build.deputil.x86}" failonerror="false" if="${directory::exists(dir.build.deputil.x86)}" />
 
+    <delete file="${file.target.deputil.vs2012.x86}" failonerror="false" if="${file::exists(file.target.deputil.vs2012.x86)}" />
     <delete file="${file.target.deputil.vs2010.x86}" failonerror="false" if="${file::exists(file.target.deputil.vs2010.x86)}" />
     <delete file="${file.target.deputil.vs2008.x86}" failonerror="false" if="${file::exists(file.target.deputil.vs2008.x86)}" />
     <delete file="${file.target.deputil.vs2005.x86}" failonerror="false" if="${file::exists(file.target.deputil.vs2005.x86)}" />
@@ -35,6 +36,24 @@
     <fileset id="compileCpp.fileset.sources" basedir="${dir.src.deputil}">
       <include name="deputil.cpp" />
     </fileset>
+
+    <property name="compileCpp.dir.build" value="${dir.build.deputil.vs2012.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.deputil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${deputil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.deputil.vs2012.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="11" />
+    <!-- Make deputil_2012.lib -->
+    <call target="makeNativeLib" />
+
+    <property name="compileCpp.dir.build" value="${dir.build.deputil.vs2008.x86}" dynamic="true" />
+    <property name="compileCpp.file.precomp.h" value="${dir.src.deputil}\precomp.h" />
+    <property name="compileCpp.additionalOptions" value="${deputil.additionalOptions}" />
+    <property name="makeNativeLib.file.target" value="${file.target.deputil.vs2008.x86}" dynamic="true" />
+    <property name="makeNativeLib.platform" value="x86" />
+    <property name="makeNativeLib.vctoolsversion" value="9" />
+    <!-- Make deputil_2008.lib -->
+    <call target="makeNativeLib" />
 
     <property name="compileCpp.dir.build" value="${dir.build.deputil.vs2010.x86}" dynamic="true" />
     <property name="compileCpp.file.precomp.h" value="${dir.src.deputil}\precomp.h" />

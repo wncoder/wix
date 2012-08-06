@@ -26,6 +26,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
     public class Model
     {
         private Version version;
+        private const string BurnBundleInstallDirectoryVariable = "InstallFolder";
         private const string BurnBundleLayoutDirectoryVariable = "WixBundleLayoutDirectory";
 
         /// <summary>
@@ -79,6 +80,27 @@ namespace Microsoft.Tools.WindowsInstallerXml.UX
                 }
 
                 return this.version;
+            }
+        }
+
+        /// <summary>
+        /// Get or set the path where the bundle is installed.
+        /// </summary>
+        public string InstallDirectory
+        {
+            get
+            {
+                if (!this.Engine.StringVariables.Contains(BurnBundleInstallDirectoryVariable))
+                {
+                    return null;
+                }
+
+                return this.Engine.StringVariables[BurnBundleInstallDirectoryVariable];
+            }
+
+            set
+            {
+                this.Engine.StringVariables[BurnBundleInstallDirectoryVariable] = value;
             }
         }
 

@@ -140,37 +140,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         {
                             parentElement.AddChild(registryValue);
                         }
+
+                        // also try self-reg since we could have a mixed-mode assembly
+                        this.HarvestSelfReg(parentElement, fileSource);
                     }
                     catch (BadImageFormatException) // not an assembly, try raw DLL.
                     {
-                        // try the self-reg harvester
-                        try
-                        {
-                            DllHarvester dllHarvester = new DllHarvester();
-
-                            this.Core.OnMessage(UtilVerboses.HarvestingSelfReg(fileSource));
-                            Wix.RegistryValue[] registryValues = dllHarvester.HarvestRegistryValues(fileSource);
-
-                            foreach (Wix.RegistryValue registryValue in registryValues)
-                            {
-                                parentElement.AddChild(registryValue);
-                            }
-                        }
-                        catch (TargetInvocationException tie)
-                        {
-                            if (tie.InnerException is EntryPointNotFoundException)
-                            {
-                                // No DllRegisterServer(), which is fine by me.
-                            }
-                            else
-                            {
-                                this.Core.OnMessage(UtilWarnings.SelfRegHarvestFailed(fileSource, tie.Message));
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            this.Core.OnMessage(UtilWarnings.SelfRegHarvestFailed(fileSource, ex.Message));
-                        }
+                        this.HarvestSelfReg(parentElement, fileSource);
                     }
                     catch (Exception ex)
                     {
@@ -209,6 +185,43 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Calls self-reg harvester.
+        /// </summary>
+        /// <param name="parentElement">The parent element.</param>
+        /// <param name="fileSource">The file source.</param>
+        private void HarvestSelfReg(Wix.IParentElement parentElement, string fileSource)
+        {
+           // try the self-reg harvester
+           try
+           {
+              DllHarvester dllHarvester = new DllHarvester();
+
+              this.Core.OnMessage(UtilVerboses.HarvestingSelfReg(fileSource));
+              Wix.RegistryValue[] registryValues = dllHarvester.HarvestRegistryValues(fileSource);
+
+              foreach (Wix.RegistryValue registryValue in registryValues)
+              {
+                 parentElement.AddChild(registryValue);
+              }
+           }
+           catch (TargetInvocationException tie)
+           {
+              if (tie.InnerException is EntryPointNotFoundException)
+              {
+                 // No DllRegisterServer(), which is fine by me.
+              }
+              else
+              {
+                 this.Core.OnMessage(UtilWarnings.SelfRegHarvestFailed(fileSource, tie.Message));
+              }
+           }
+           catch (Exception ex)
+           {
+              this.Core.OnMessage(UtilWarnings.SelfRegHarvestFailed(fileSource, ex.Message));
+           }
         }
     }
 }

@@ -181,6 +181,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                             throw new WixException(WixErrors.UnexpectedElement(SourceLineNumberCollection.FromUri(reader.BaseURI), "field", reader.Name));
                         case XmlNodeType.CDATA:
                         case XmlNodeType.Text:
+                        case XmlNodeType.SignificantWhitespace:
                             if (0 < reader.Value.Length)
                             {
                                 if (ColumnType.Number == this.columnDefinition.Type && !this.columnDefinition.IsLocalizable)

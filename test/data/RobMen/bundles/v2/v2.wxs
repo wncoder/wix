@@ -11,7 +11,8 @@
 <Bundle Name="~Bundle v2" 
         Manufacturer="Microsoft Corporation"
         Version="0.2.0.0"
-        DisableModify="yes">
+        DisableModify="yes"
+        UpgradeCode='3594A1ED-FD19-4039-8DEA-611FC50C53B9'>
    <BootstrapperApplicationRef Id='WixStandardBootstrapperApplication.RtfLicense' />
 
    <RelatedBundle Id="1BE14DA3-E26A-4C49-8D39-7B1017FFA071" Action="Upgrade"/>

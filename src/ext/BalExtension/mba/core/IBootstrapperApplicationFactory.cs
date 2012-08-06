@@ -15,6 +15,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
 {
     using System;
     using System.CodeDom.Compiler;
+    using System.ComponentModel;
     using System.Runtime.InteropServices;
 
     [ComVisible(true)]
@@ -45,8 +46,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         [MarshalAs(UnmanagedType.U4)] private readonly ResumeType resume;
         private readonly IntPtr hwndSplashScreen;
         [MarshalAs(UnmanagedType.I4)] private readonly RelationType relation;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        private readonly string wzLayoutDirectory;
+        [MarshalAs(UnmanagedType.LPWStr)] private readonly string wzLayoutDirectory;
 
         /// <summary>
         /// Gets the action for the user experience to perform.
@@ -73,8 +73,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         }
 
         /// <summary>
-        /// Gets command line arguments.
+        /// Gets command line arguments that weren't processed by the engine. Can be null.
         /// </summary>
+        [Obsolete("Use GetCommandLineArgs instead.")]
         public string CommandLine
         {
             get { return this.wzCommandLine; }
@@ -110,6 +111,51 @@ namespace Microsoft.Tools.WindowsInstallerXml.Bootstrapper
         public RelationType Relation
         {
             get { return this.relation; }
+        }
+
+        /// <summary>
+        /// Gets the command line arguments as a string array.
+        /// </summary>
+        /// <returns>
+        /// Array of command line arguments not handled by the engine.
+        /// </returns>
+        /// <exception type="Win32Exception">The command line could not be parsed into an array.</exception>
+        /// <remarks>
+        /// This method uses the same parsing as the operating system which handles quotes and spaces correctly.
+        /// </remarks>
+        public string[] GetCommandLineArgs()
+        {
+            if (null == this.wzCommandLine)
+            {
+                return new string[0];
+            }
+
+            // Parse the filtered command line arguments into a native array.
+            int argc = 0;
+            IntPtr argv = NativeMethods.CommandLineToArgvW(this.wzCommandLine, out argc);
+
+            if (IntPtr.Zero == argv)
+            {
+                // Throw an exception with the last error.
+                throw new Win32Exception();
+            }
+
+            // Marshal each native array pointer to a managed string.
+            try
+            {
+                string[] args = new string[argc];
+                for (int i = 0; i < argc; ++i)
+                {
+                    IntPtr argvi = Marshal.ReadIntPtr(argv, i * IntPtr.Size);
+                    args[i] = Marshal.PtrToStringUni(argvi);
+                }
+
+                return args;
+            }
+            finally
+            {
+                NativeMethods.LocalFree(argv);
+            }
         }
     }
 }

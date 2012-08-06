@@ -273,6 +273,8 @@ extern "C" HRESULT MsuEngineExecutePackage(
     DWORD dwExitCode = 0;
     BOOL fDoDependency = FALSE;
 
+    *pRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
+
     // get wusa.exe path
     hr = PathGetKnownFolder(CSIDL_SYSTEM, &sczSystemPath);
     ExitOnFailure(hr, "Failed to find System32 directory.");
@@ -284,12 +286,12 @@ extern "C" HRESULT MsuEngineExecutePackage(
     switch (pExecuteAction->msuPackage.action)
     {
     case BOOTSTRAPPER_ACTION_STATE_INSTALL:
-        // get cached executable path
+        // get cached MSU path
         hr = CacheGetCompletedPath(TRUE, pExecuteAction->msuPackage.pPackage->sczCacheId, &sczCachedDirectory);
         ExitOnFailure1(hr, "Failed to get cached path for package: %ls", pExecuteAction->msuPackage.pPackage->sczId);
 
         hr = PathConcat(sczCachedDirectory, pExecuteAction->msuPackage.pPackage->rgPayloads[0].pPayload->sczFilePath, &sczMsuPath);
-        ExitOnFailure(hr, "Failed to build executable path.");
+        ExitOnFailure(hr, "Failed to build MSU path.");
 
         // format command
         hr = StrAllocFormatted(&sczCommand, L"\"%ls\" \"%ls\" /quiet /norestart", sczWusaPath, sczMsuPath);
@@ -367,7 +369,6 @@ extern "C" HRESULT MsuEngineExecutePackage(
         __fallthrough;
     case S_FALSE: __fallthrough;
     case WU_E_NOT_APPLICABLE:
-        *pRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
         hr = S_OK;
         break;
 
@@ -379,7 +380,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
         break;
 
     default:
-        hr = E_UNEXPECTED;
+        hr = static_cast<HRESULT>(dwExitCode);
         break;
     }
 

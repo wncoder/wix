@@ -331,13 +331,23 @@ public: // IBootstrapperApplication
         }
         else if (m_sczAfterForcedRestartPackage) // after force restart skip packages until after the package that caused the restart.
         {
-            BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Skipping package: %ls, after restart because it was applied before the restart.", wzPackageId);
-
-            *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
-
+            // After restart we need to finish the dependency registration for our package so allow the package
+            // to go present.
             if (CSTR_EQUAL == ::CompareStringW(LOCALE_NEUTRAL, 0, wzPackageId, -1, m_sczAfterForcedRestartPackage, -1))
             {
-                ReleaseNullStr(m_sczAfterForcedRestartPackage);
+                // Do not allow a repair because that could put us in a perpetual restart loop.
+                if (BOOTSTRAPPER_REQUEST_STATE_REPAIR == *pRequestState)
+                {
+                    *pRequestState = BOOTSTRAPPER_REQUEST_STATE_PRESENT;
+                }
+
+                ReleaseNullStr(m_sczAfterForcedRestartPackage); // no more skipping now.
+            }
+            else // not the matching package, so skip it.
+            {
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Skipping package: %ls, after restart because it was applied before the restart.", wzPackageId);
+
+                *pRequestState = BOOTSTRAPPER_REQUEST_STATE_NONE;
             }
         }
 
@@ -475,17 +485,20 @@ public: // IBootstrapperApplication
             {
                 BalRetryErrorOccurred(wzPackageId, dwCode);
 
-                // If no error message was provided, use the error code to try and get an error message.
-                if (!wzError || !*wzError || BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER != errorType)
+                if (!m_fShowingInternalUiThisPackage)
                 {
-                    HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
-                    if (FAILED(hr) || !sczError || !*sczError)
+                    // If no error message was provided, use the error code to try and get an error message.
+                    if (!wzError || !*wzError || BOOTSTRAPPER_ERROR_TYPE_WINDOWS_INSTALLER != errorType)
                     {
-                        StrAllocFormatted(&sczError, L"0x%x", dwCode);
+                        HRESULT hr = StrAllocFromError(&sczError, dwCode, NULL);
+                        if (FAILED(hr) || !sczError || !*sczError)
+                        {
+                            StrAllocFormatted(&sczError, L"0x%x", dwCode);
+                        }
                     }
-                }
 
-                nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
+                    nResult = ::MessageBoxW(m_hWnd, sczError ? sczError : wzError, m_pTheme->sczCaption, dwUIHint);
+                }
             }
 
             SetProgressState(HRESULT_FROM_WIN32(dwCode));
@@ -542,9 +555,14 @@ public: // IBootstrapperApplication
             BAL_INFO_PACKAGE* pPackage = NULL;
             HRESULT hr = BalInfoFindPackageById(&m_Bundle.packages, wzPackageId, &pPackage);
             LPCWSTR wz = (SUCCEEDED(hr) && pPackage->sczDisplayName) ? pPackage->sczDisplayName : wzPackageId;
+            m_fShowingInternalUiThisPackage = pPackage->fDisplayInternalUI;
 
             ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_PACKAGE_TEXT, wz);
             ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_PROGRESS_PACKAGE_TEXT, wz);
+        }
+        else
+        {
+            m_fShowingInternalUiThisPackage = FALSE;
         }
 
         return __super::OnExecutePackageBegin(wzPackageId, fExecute);
@@ -883,6 +901,10 @@ private: // privates
 
                         hr = m_pEngine->SetVariableString(sczVariableName, sczVariableValue);
                         BalExitOnFailure(hr, "Failed to set variable.");
+                    }
+                    else
+                    {
+                        BalLog(BOOTSTRAPPER_LOG_LEVEL_STANDARD, "Ignoring unknown argument: %ls", argv[i]);
                     }
                 }
             }
@@ -1534,6 +1556,8 @@ private: // privates
     {
         HRESULT hr = S_OK;
 
+        m_plannedAction = action;
+
         // If we are going to apply a downgrade, bail.
         if (m_fDowngrading && BOOTSTRAPPER_ACTION_UNINSTALL < action)
         {
@@ -1672,7 +1696,7 @@ private: // privates
                         fLaunchTargetExists = BalStringVariableExists(WIXSTDBA_VARIABLE_LAUNCH_TARGET_PATH);
                     }
 
-                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists);
+                    ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_LAUNCH_BUTTON, fLaunchTargetExists && BOOTSTRAPPER_ACTION_UNINSTALL < m_plannedAction);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_SUCCESS_RESTART_TEXT, fShowRestartButton);
                     ThemeControlEnable(m_pTheme, WIXSTDBA_CONTROL_SUCCESS_RESTART_BUTTON, fShowRestartButton);
                 }
@@ -2257,13 +2281,15 @@ public:
             }
         }
 
-        // When resuming from restart, try to find the package that forced the restart. We'll use this information
-        // during planning.
+        m_plannedAction = BOOTSTRAPPER_ACTION_UNKNOWN;
+
+        // When resuming from restart doing some install-like operation, try to find the package that forced the
+        // restart. We'll use this information during planning.
         m_sczAfterForcedRestartPackage = NULL;
 
-        if (BOOTSTRAPPER_RESUME_TYPE_REBOOT == m_command.resumeType)
+        if (BOOTSTRAPPER_RESUME_TYPE_REBOOT == m_command.resumeType && BOOTSTRAPPER_ACTION_UNINSTALL < m_command.action)
         {
-            // Ensure the forced restart package variable is null even if it is an empty string.
+            // Ensure the forced restart package variable is null when it is an empty string.
             HRESULT hr = BalGetStringVariable(L"WixBundleForcedRestartPackage", &m_sczAfterForcedRestartPackage);
             if (FAILED(hr) || !m_sczAfterForcedRestartPackage || !*m_sczAfterForcedRestartPackage)
             {
@@ -2300,6 +2326,7 @@ public:
         m_pTaskbarList = NULL;
         m_uTaskbarButtonCreatedMessage = UINT_MAX;
         m_fTaskbarButtonOK = FALSE;
+        m_fShowingInternalUiThisPackage = FALSE;
 
         m_fPrereq = fPrereq;
         m_sczPrereqPackage = NULL;
@@ -2339,6 +2366,7 @@ private:
     HMODULE m_hModule;
     BOOTSTRAPPER_COMMAND m_command;
     IBootstrapperEngine* m_pEngine;
+    BOOTSTRAPPER_ACTION m_plannedAction;
 
     LPWSTR m_sczAfterForcedRestartPackage;
 
@@ -2381,6 +2409,7 @@ private:
     ITaskbarList3* m_pTaskbarList;
     UINT m_uTaskbarButtonCreatedMessage;
     BOOL m_fTaskbarButtonOK;
+    BOOL m_fShowingInternalUiThisPackage;
 };
 
 

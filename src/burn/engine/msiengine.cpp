@@ -650,6 +650,9 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
 
     if (pPackage->Msi.cFeatures)
     {
+        // If the package is present and we're repairing it.
+        BOOL fRepairingPackage = (BOOTSTRAPPER_PACKAGE_STATE_CACHED < pPackage->currentState && BOOTSTRAPPER_REQUEST_STATE_REPAIR == pPackage->requested);
+
         LogId(REPORT_STANDARD, MSG_PLAN_MSI_FEATURES, pPackage->Msi.cFeatures, pPackage->sczId);
 
         // plan features
@@ -676,7 +679,7 @@ extern "C" HRESULT MsiEnginePlanCalculatePackage(
             ExitOnRootFailure(hr, "UX aborted plan MSI feature.");
 
             // calculate feature actions
-            hr = CalculateFeatureAction(pFeature->currentState, featureRequestedState, pFeature->fRepair, &pFeature->execute, &fFeatureActionDelta);
+            hr = CalculateFeatureAction(pFeature->currentState, featureRequestedState, fRepairingPackage, &pFeature->execute, &fFeatureActionDelta);
             ExitOnFailure(hr, "Failed to calculate execute feature state.");
 
             hr = CalculateFeatureAction(featureRequestedState, BOOTSTRAPPER_FEATURE_ACTION_NONE == pFeature->execute ? featureExpectedState : pFeature->currentState, FALSE, &pFeature->rollback, &fRollbackFeatureActionDelta);
@@ -1177,7 +1180,7 @@ extern "C" INSTALLUILEVEL MsiEngineCalculateInstallUiLevel(
     INSTALLUILEVEL uiLevel = static_cast<INSTALLUILEVEL>(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY);
 
     // suppress internal UI during uninstall to mimic ARP and "msiexec /x" behavior
-    if (fDisplayInternalUI && BOOTSTRAPPER_ACTION_STATE_UNINSTALL != actionState)
+    if (fDisplayInternalUI && BOOTSTRAPPER_ACTION_STATE_UNINSTALL != actionState && BOOTSTRAPPER_ACTION_STATE_REPAIR != actionState)
     {
         switch (display)
         {

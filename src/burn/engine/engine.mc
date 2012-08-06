@@ -250,7 +250,7 @@ MessageId=203
 Severity=Success
 SymbolicName=MSG_PLANNED_MSI_FEATURE
 Language=English
-Planned feature: %1!ls!, state: %2!hs!, default requested %3!hs!, ba requested: %4!hs!, execute action: %5!hs!, rollback action: %6!hs!
+Planned feature: %1!ls!, state: %2!hs!, default requested: %3!hs!, ba requested: %4!hs!, execute action: %5!hs!, rollback action: %6!hs!
 .
 
 MessageId=204
