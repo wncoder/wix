@@ -2365,3 +2365,7 @@ RobMen: SFBUG:3543398 - fix crash in IIS7 Http Error configuration.
 
 WixBuild: Version 3.6.3206.0
 
+BobArnson: SFBUG:3555380 - Guard against related-bundle upgrade package ids.
+
+WixBuild: Version 3.6.3213.0
+

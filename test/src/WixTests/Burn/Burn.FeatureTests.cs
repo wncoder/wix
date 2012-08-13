@@ -1,6 +1,9 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="Burn.SlipstreamTests.cs" company="Microsoft Corporation">
-//   Copyright (c) 1999, Microsoft Corporation.  All rights reserved.
+// <copyright file="Burn.FeatureTests.cs" company="Microsoft Corporation">
+//   Copyright (c) 2004, Microsoft Corporation.
+//   This software is released under Common Public License Version 1.0 (CPL).
+//   The license and further copyright text can be found in the file LICENSE.TXT
+//   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 // <summary>
 //     Contains methods test Burn slipstreaming.

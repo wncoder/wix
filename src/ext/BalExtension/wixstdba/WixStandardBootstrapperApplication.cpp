@@ -553,9 +553,9 @@ public: // IBootstrapperApplication
         if (wzPackageId && *wzPackageId)
         {
             BAL_INFO_PACKAGE* pPackage = NULL;
-            HRESULT hr = BalInfoFindPackageById(&m_Bundle.packages, wzPackageId, &pPackage);
-            LPCWSTR wz = (SUCCEEDED(hr) && pPackage->sczDisplayName) ? pPackage->sczDisplayName : wzPackageId;
-            m_fShowingInternalUiThisPackage = pPackage->fDisplayInternalUI;
+            BalInfoFindPackageById(&m_Bundle.packages, wzPackageId, &pPackage);
+            LPCWSTR wz = (pPackage && pPackage->sczDisplayName) ? pPackage->sczDisplayName : wzPackageId;
+            m_fShowingInternalUiThisPackage = pPackage && pPackage->fDisplayInternalUI;
 
             ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_EXECUTE_PROGRESS_PACKAGE_TEXT, wz);
             ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_OVERALL_PROGRESS_PACKAGE_TEXT, wz);
