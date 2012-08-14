@@ -1,7 +1,7 @@
 ﻿//---------------------------------------------------------------------
-// <copyright file="MakeSfxCA.cs" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="MakeSfxCA.cs" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -42,7 +42,7 @@ namespace Microsoft.Deployment.Tools.MakeSfxCA
         {
             w.WriteLine("Deployment Tools Foundation custom action packager version {0}",
                 Assembly.GetExecutingAssembly().GetName().Version);
-            w.WriteLine("Copyright (C) Microsoft Corporation. All rights reserved.");
+            w.WriteLine("Copyright (C) Outercurve Foundation. All rights reserved.");
             w.WriteLine();
             w.WriteLine("Usage: MakeSfxCA <outputca.dll> SfxCA.dll <inputca.dll> [support files ...]");
             w.WriteLine();

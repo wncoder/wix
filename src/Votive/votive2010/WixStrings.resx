@@ -179,7 +179,7 @@
   </data>
   <data name="ProductDetails" xml:space="preserve">
     <value>Windows Installer XML Toolset {0} {1}
-Copyright © Microsoft Corporation. All rights reserved.</value>
+Copyright © Outercurve Foundation. All rights reserved.</value>
     <comment>Shown in the Help/About dialog - code should reference "ProductId" string</comment>
   </data>
   <data name="ProductId" xml:space="preserve">

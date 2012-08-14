@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="setupbld.cpp" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="setupbld.cpp" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -285,8 +285,8 @@ static void ShowHelp()
     dwVerMajor = vInfo->dwFileVersionMS;
     dwVerMinor = vInfo->dwFileVersionLS;
 
-    ConsoleWriteLine(CONSOLE_COLOR_NORMAL, "Microsoft (R) Windows Installer Xml Self-Extracting Compiler version %d.%d.%d.%d", dwVerMajor>>16, dwVerMajor&0xFFFF, dwVerMinor>>16, dwVerMinor&0xFFFF);
-    ConsoleWriteLine(CONSOLE_COLOR_NORMAL, "Copyright (C) Microsoft Corporation 2006. All rights reserved.");
+    ConsoleWriteLine(CONSOLE_COLOR_NORMAL, "Windows Installer Xml Self-Extracting Compiler version %d.%d.%d.%d", dwVerMajor>>16, dwVerMajor&0xFFFF, dwVerMinor>>16, dwVerMinor&0xFFFF);
+    ConsoleWriteLine(CONSOLE_COLOR_NORMAL, "Copyright (C) Outercurve Foundation. All rights reserved.");
     ConsoleWriteLine(CONSOLE_COLOR_NORMAL, " ");
     ConsoleWriteLine(CONSOLE_COLOR_NORMAL, " usage:  setupbld.exe [-?] -out outputFile -m[clipsu] msiFile [msiFile ...] -setup setupStubFile");
     ConsoleWriteLine(CONSOLE_COLOR_NORMAL, " ");

@@ -175,7 +175,7 @@
   </data>
   <data name="ProductDetails" xml:space="preserve">
     <value>Windows Installer XML Toolset {0}
-Copyright (c) Microsoft Corporation. All rights reserved.</value>
+Copyright (c) Outercurve Foundation. All rights reserved.</value>
     <comment>Shown in the Help/About dialog</comment>
   </data>
   <data name="ProductId" xml:space="preserve">

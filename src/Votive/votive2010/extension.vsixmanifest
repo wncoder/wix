@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Vsix xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
-    <Identifier Id="WiX.MicrosoftCorporation">
+    <Identifier Id="WiX.OutercurveFoundation">
         <Name>WiX Toolset</Name>
-        <Author>Microsoft Corporation</Author>
+        <Author>OutercurveFoundation</Author>
         <Version>3.6</Version>
         <Description xml:space="preserve">Windows Installer XML toolset</Description>
         <Locale>1033</Locale>

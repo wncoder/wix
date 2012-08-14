@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="WixPackage.cs" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="WixPackage.cs" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -27,7 +27,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
     /// <summary>
     /// Implements and/or provides all of the required interfaces and services to allow the
-    /// Microsoft Windows Installer XML (WiX) project to be integrated into the Visual Studio
+    /// Windows Installer XML (WiX) project to be integrated into the Visual Studio
     /// environment.
     /// </summary>
     [DefaultRegistryRoot(@"Software\\Microsoft\\VisualStudio\\8.0Exp")]

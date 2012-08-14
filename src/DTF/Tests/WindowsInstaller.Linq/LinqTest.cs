@@ -1,7 +1,7 @@
 ﻿//-------------------------------------------------------------------------------------------------
-// <copyright file="LinqTest.cs" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="LinqTest.cs" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -465,7 +465,7 @@ namespace Microsoft.Deployment.Test
         public void EnumProducts()
         {
             var products = from p in ProductInstallation.AllProducts
-                           where p.Publisher == "Microsoft Corporation"
+                           where p.Publisher == "Outercurve Foundation"
                            select new { Name = p.ProductName,
                                         Ver = p.ProductVersion,
                                         Company = p.Publisher,
@@ -475,7 +475,7 @@ namespace Microsoft.Deployment.Test
             foreach (var p in products)
             {
                 Console.WriteLine(p);
-                Assert.IsTrue(p.Company == "Microsoft Corporation");
+                Assert.IsTrue(p.Company == "Outercurve Foundation");
             }
         }
 
@@ -498,7 +498,7 @@ namespace Microsoft.Deployment.Test
         {
             var comps = from c in ComponentInstallation.AllComponents
                         where c.State == InstallState.Local &&
-                              c.Product.Publisher == "Microsoft Corporation"
+                              c.Product.Publisher == "Outercurve Foundation"
                         select c.Path;
 
             int count = 0;

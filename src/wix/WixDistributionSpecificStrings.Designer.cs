@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="WixDistributionSpecificStrings.Designer.cs" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="WixDistributionSpecificStrings.Designer.cs" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -79,8 +79,8 @@ namespace Microsoft.Tools.WindowsInstallerXml {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Microsoft (R) Windows Installer Xml {0} version {1}
-        ///Copyright (C) Microsoft Corporation. All rights reserved.
+        ///   Looks up a localized string similar to Windows Installer Xml {0} version {1}
+        ///Copyright (C) Outercurve Foundation. All rights reserved.
         ///.
         /// </summary>
         internal static string ToolsetHelpHeader {

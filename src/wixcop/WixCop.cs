@@ -1,7 +1,7 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="WixCop.cs" company="Microsoft Corporation">
-//   Copyright (c) 2004, Microsoft Corporation.
-//   This software is released under Common Public License Version 1.0 (CPL).
+// <copyright file="WixCop.cs" company="Outercurve Foundation">
+//   Copyright (c) 2004, Outercurve Foundation.
+//   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file LICENSE.TXT
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
@@ -154,8 +154,8 @@ namespace Microsoft.Tools.WindowsInstaller.Tools
                     Assembly wixcopAssembly = this.GetType().Assembly;
                     FileVersionInfo fv = FileVersionInfo.GetVersionInfo(wixcopAssembly.Location);
 
-                    Console.WriteLine("Microsoft (R) Windows Installer Xml Cop version {0}", fv.FileVersion);
-                    Console.WriteLine("Copyright (C) Microsoft Corporation 2004. All rights reserved.");
+                    Console.WriteLine("Windows Installer Xml Cop version {0}", fv.FileVersion);
+                    Console.WriteLine("Copyright (C) Outercurve Foundation. All rights reserved.");
                     Console.WriteLine();
                 }
 

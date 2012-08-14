@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  <copyright file="ClickThrough.wxs" company="Microsoft Corporation">
-    Copyright (c) 2004, Microsoft Corporation.
-    This software is released under Common Public License Version 1.0 (CPL).
+  <copyright file="ClickThrough.wxs" company="Outercurve Foundation">
+    Copyright (c) 2004, Outercurve Foundation.
+    This software is released under Microsoft Reciprocal License (MS-RL).
     The license and further copyright text can be found in the file LICENSE.TXT
     LICENSE.TXT at the root directory of the distribution.
   </copyright>
@@ -21,8 +21,8 @@
   <?define SpaceParenDebug = "" ?>
 <?endif ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="$(var.ProductCode)" Name="!(wix.ProductName)" Language="1033" Manufacturer="Microsoft Corporation" Version="!(wix.ProductVersion)" UpgradeCode="$(var.UpgradeCode)">
-        <Package Manufacturer="Microsoft Corporation" Description="Windows Installer XML Toolset ClickThrough$(var.SpaceParenDebug)" Comments="Windows Installer XML Toolset ClickThrough$(var.SpaceParenDebug)" Compressed="yes" InstallerVersion="200" Languages="1033" Keywords="Database, Installer" ShortNames="no" SummaryCodepage="1252" />
+    <Product Id="$(var.ProductCode)" Name="!(wix.ProductName)" Language="1033" Manufacturer="Outercurve Foundation" Version="!(wix.ProductVersion)" UpgradeCode="$(var.UpgradeCode)">
+        <Package Manufacturer="Outercurve Foundation" Description="Windows Installer XML Toolset ClickThrough$(var.SpaceParenDebug)" Comments="Windows Installer XML Toolset ClickThrough$(var.SpaceParenDebug)" Compressed="yes" InstallerVersion="200" Languages="1033" Keywords="Database, Installer" ShortNames="no" SummaryCodepage="1252" />
 
         <WixVariable Id="ProductName" Value="Windows Installer XML Toolset ClickThrough$(var.SpaceParenDebug)"/>
         <WixVariable Id="ProductVersion" Value="$(var.WixVersion)"/>
