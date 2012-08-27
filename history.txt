@@ -2369,3 +2369,19 @@ BobArnson: SFBUG:3555380 - Guard against related-bundle upgrade package ids.
 
 WixBuild: Version 3.6.3213.0
 
+RobMen: Update copyright headers to assign WiX toolset to Outercurve Foundation.
+
+WixBuild: Version 3.6.3220.0
+
+BobArnson: SFBUG:3556737 - Don't try to decompile a firewall exception
+           Description if it doesn't exist (i.e., in an MSI built with
+           v3.0/v3.5).
+
+RobMen: SFBUG:3557290 - remove references from documentation to disabled
+                        auto-harvesting feature.
+
+BobArnson: SFBUG:3561219 - Add VS2012 properties and custom actions.
+
+
+WixBuild: Version 3.6.3227.0
+

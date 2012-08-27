@@ -2,7 +2,7 @@
 // <copyright file="registration.cpp" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
-//   The license and further copyright text can be found in the file LICENSE.TXT
+//   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 //
@@ -1365,7 +1365,7 @@ static HRESULT InitializeRelatedBundleFromKey(
     case BOOTSTRAPPER_RELATION_NONE: __fallthrough;
     default:
         hr = HRESULT_FROM_WIN32(ERROR_BAD_FORMAT);
-        ExitOnFailure2(hr, "Internal error: bad relation type %d while reading related bundle Id %ls", pRelatedBundle->relationType, wzBundleId);
+        ExitOnRootFailure2(hr, "Internal error: bad relation type %d while reading related bundle Id %ls", pRelatedBundle->relationType, wzBundleId);
         break;
     }
 

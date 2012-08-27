@@ -3,7 +3,7 @@
   <copyright file="zip.build" company="Outercurve Foundation">
     Copyright (c) 2004, Outercurve Foundation.
     This software is released under Microsoft Reciprocal License (MS-RL).
-    The license and further copyright text can be found in the file LICENSE.TXT
+    The license and further copyright text can be found in the file
     LICENSE.TXT at the root directory of the distribution.
   </copyright>
 -->
@@ -64,12 +64,14 @@
     <mkdir dir="${dir.target.zips}" />
     <copy file="${dir.wixroot}\history.txt" todir="${dir.target.zips}" />
     <copy file="${dir.target.wix}\Wix${version.wixmajor}.exe" todir="${dir.target.zips}" />
+<!-- disable data folder copy now that bundle uses attached container
     <copy todir="${dir.target.zips}\data">
       <fileset basedir="${dir.target.wix}\data">
         <include name="**/*.*" />
         <exclude name="**/*.wixpdb" />
       </fileset>
     </copy>
+-->
 
     <zip zipfile="${file.target.binaries.zip}">
       <fileset basedir="${dir.target.wix}">

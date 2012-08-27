@@ -2,7 +2,7 @@
 // <copyright file="variable.cpp" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
-//   The license and further copyright text can be found in the file LICENSE.TXT
+//   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
 //
@@ -1565,9 +1565,7 @@ static HRESULT InitializeVariableSystemFolder(
             {
                 er = ERROR_SUCCESS;
             }
-
-            hr = HRESULT_FROM_WIN32(er);
-            ExitOnRootFailure(hr, "Failed to get 32-bit system folder.");
+            ExitOnWin32Error(er, hr, "Failed to get 32-bit system folder.");
         }
     }
     else
