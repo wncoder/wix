@@ -2382,6 +2382,9 @@ RobMen: SFBUG:3557290 - remove references from documentation to disabled
 
 BobArnson: SFBUG:3561219 - Add VS2012 properties and custom actions.
 
-
 WixBuild: Version 3.6.3227.0
+
+RobMen: Minor clean-up of bundle documentation.
+
+WixBuild: Version 3.6.3303.0
 
