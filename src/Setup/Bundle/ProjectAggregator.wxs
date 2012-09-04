@@ -14,7 +14,7 @@
 
     <Fragment>
         <PackageGroup Id='ProjectAggregator'>
-            <MsiPackage Id='ProjectAggregator2' Compressed='no' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
+            <MsiPackage Id='ProjectAggregator2' Vital='yes' ForcePerMachine='yes' InstallCondition='VS2005InstallFolder'
                         SourceFile='x86\ProjectAggregator2.msi' />
         </PackageGroup>
     </Fragment>

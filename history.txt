@@ -2388,3 +2388,7 @@ RobMen: Minor clean-up of bundle documentation.
 
 WixBuild: Version 3.6.3303.0
 
+RobMen: Compress ProjectAggregator with all the other files to create a
+        completely self-contained WiX v3.6 bundle.
+
+WixBuild: Version 3.6.3303.1

@@ -4,8 +4,8 @@
     <WixMajorVersion>3</WixMajorVersion>
     <WixMinorVersion>6</WixMinorVersion>
     <WixBuildVersion>3303</WixBuildVersion>
-    <WixRevisionVersion>0</WixRevisionVersion>
+    <WixRevisionVersion>1</WixRevisionVersion>
     <WixMajorMinorVersion>3.6</WixMajorMinorVersion>
-    <WixFullVersion>3.6.3303.0</WixFullVersion>
+    <WixFullVersion>3.6.3303.1</WixFullVersion>
   </PropertyGroup>
 </Project>

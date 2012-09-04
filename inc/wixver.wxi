@@ -12,5 +12,5 @@
   <?ifdef WixVersion?>
     <?error WixVersion variable is already defined?>
   <?endif?>
-  <?define WixVersion = "$(var.WixMajorMinor).$(var.WixBuildNum).0" ?>
+  <?define WixVersion = "$(var.WixMajorMinor).$(var.WixBuildNum).1" ?>
 </Include>
