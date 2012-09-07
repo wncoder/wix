@@ -2392,3 +2392,7 @@ RobMen: Compress ProjectAggregator with all the other files to create a
         completely self-contained WiX v3.6 bundle.
 
 WixBuild: Version 3.6.3303.1
+
+RobMen: Fix IA-64 binary build on machine with VS2012 installed.
+
+WixBuild: Version 3.6.3303.2

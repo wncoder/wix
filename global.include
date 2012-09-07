@@ -743,6 +743,16 @@
       <readregistry key="SOFTWARE\Microsoft\Microsoft SQL Server Compact Edition\v3.5\NativeDir" hive="LocalMachine" property="SQLCEDir" failonerror="false" />
     </if>
 
+
+    <!-- Remember the 7.0A SDK because it is the last SDK with IA-64 support. -->
+    <readregistry key="SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A\InstallationFolder" hive="LocalMachine" property="Platform70ASDKDir" failonerror="false" />
+
+    <!-- If we failed, check again in the Wow6432Node just in case -->
+    <if test="${not property::exists('Platform70ASDKDir') or Platform70ASDKDir == '' or not directory::exists(Platform70ASDKDir) or not directory::exists(path::combine(Platform70ASDKDir, 'lib'))}">
+      <readregistry key="SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v7.0A\InstallationFolder" hive="LocalMachine" property="Platform70ASDKDir" failonerror="false" />
+    </if>
+
+
     <if test="${not property::exists('SQLCEDir') or SQLCEDir == '' or not directory::exists(SQLCEDir)}">
       <fail message="Couldn't find SQL CE directory - please ensure SQL CE is installed" />
     </if>
@@ -829,9 +839,11 @@
     <property name="dir.platformsdk.lib.x64" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib\win8\um\x64'))}" />
     <property name="dir.platformsdk.lib.x64" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib\x64'))}" unless="${directory::exists(dir.platformsdk.lib.x64)}" />
     <property name="dir.platformsdk.lib.ia64" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib\IA64'))}" />
+    <property name="dir.platformsdk.lib.ia64" value="${string::to-lower(path::combine(Platform70ASDKDir, 'lib\IA64'))}" unless="${directory::exists(dir.platformsdk.lib.ia64)}" />
     <property name="dir.netfxsdk2.lib.x86" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib'))}" />
     <property name="dir.netfxsdk2.lib.x64" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib\x64'))}" />
     <property name="dir.netfxsdk2.lib.ia64" value="${string::to-lower(path::combine(PlatformSDKDir, 'lib\IA64'))}" />
+    <property name="dir.netfxsdk2.lib.ia64" value="${string::to-lower(path::combine(Platform70ASDKDir, 'lib\IA64'))}" unless="${directory::exists(dir.netfxsdk2.lib.ia64)}" />
 
     <if test="${BuildVC8 and (not directory::exists(dir.vs2005.bin.x64) or not directory::exists(dir.vs2005.lib.x64)
               or not file::exists(path::combine(dir.vs2005.bin.x64, 'cl.exe')))}">
@@ -847,6 +859,7 @@
               or not file::exists(path::combine(dir.platformsdk.lib.ia64, 'advapi32.lib'))
               or not file::exists(path::combine(dir.vc.bin.ia64, 'cl.exe'))}">
       <echo message="Some IA-64 components necessary for compilation were not found. IA-64 portions of the build will be skipped. Ensure you have installed the IA-64 components in the Windows Server 2008 and .NET Framework 3.5 SDK or Visual Studio 2008." />
+      <fail message="IA-64 components must be available in official build." if="${environment::variable-exists('OFFICIAL_WIX_BUILD')}" />
       <property name="ia64" value="false" />
     </if>
 
@@ -867,7 +880,8 @@
 
     <!-- set INC properties -->
     <property name="dir.vc.inc" value="${string::to-lower(path::combine(VCDir, 'include'))}" />
-    <property name="dir.platformsdk.inc" value="${string::to-lower(path::combine(PlatformSDKDir, 'include'))}" />
+    <property name="dir.platformsdk.inc" value="${string::to-lower(path::combine(PlatformSDKDir, 'include'))}" unless="${ia64}" />
+    <property name="dir.platformsdk.inc" value="${string::to-lower(path::combine(Platform70ASDKDir, 'include'))}" if="${ia64}" />
     <property name="dir.platformsdk.inc.um" value="${path::combine(dir.platformsdk.inc, 'um')}" />
     <property name="dir.platformsdk.inc.um" value="" unless="${directory::exists(dir.platformsdk.inc.um)}" />
     <property name="dir.platformsdk.inc.shared" value="${path::combine(dir.platformsdk.inc, 'shared')}" />
