@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  <copyright file="DevBundle.wxs" company="Outercurve Foundation">
+    Copyright (c) 2004, Outercurve Foundation.
+    This software is released under Microsoft Reciprocal License (MS-RL).
+    The license and further copyright text can be found in the file
+    LICENSE.TXT at the root directory of the distribution.
+  </copyright>
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
+  <Bundle Name="WiX Toolset Developer Bundle" Version="1.0.0.0" Manufacturer="Outercurve Foundation"
+          Compressed="no"
+          UpgradeCode="C35821FA-6053-4F2B-BDC0-9B4939AAB992">
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
+
+    <!---
+      TODO: Add detection for VS2010 SP1 and VS2012
+    -->
+    <bal:Condition Message="Visual Studio 2010 SP1 and/or Visual Studio 2012 must be installed first.">VS2010SP1 OR VS2012</bal:Condition>
+
+    <Chain>
+      <PackageGroupRef Id="HtmlHelp" />
+      <PackageGroupRef Id="TorotoiseHg" />
+      <PackageGroupRef Id="Sandcastle" />
+      <PackageGroupRef Id="VS2010SDK" />
+      <PackageGroupRef Id="VS2012SDK" />
+    </Chain>
+  </Bundle>
+</Wix>
