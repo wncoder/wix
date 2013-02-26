@@ -16,7 +16,9 @@
     <!-- Ensure Visual Studio 2010 installed. -->
     <util:RegistrySearchRef Id="VS2010SPSearch" />
     <util:RegistrySearchRef Id="VS2012Search" />
-    <bal:Condition Message="Visual Studio 2010 SP1 and/or Visual Studio 2012 must be installed first.">VS2010SPInstalled&gt;0 OR VS2012Installed&gt;0</bal:Condition>
+    <bal:Condition Message="Visual Studio 2010 SP1 and/or Visual Studio 2012 must be installed first.">
+      VS2010SPInstalled&gt;0 OR VS2012Installed
+    </bal:Condition>
 
     <Chain>
       <PackageGroupRef Id="HtmlHelp" />

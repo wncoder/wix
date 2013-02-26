@@ -9,7 +9,7 @@
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Fragment>
-    <util:RegistrySearch Id="VS2012Search" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\11.0\Professional" Value="Install" Variable="VS2012Installed" Result="value" />
+    <util:RegistrySearch Id="VS2012Search" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\11.0\Professional" Value="Install" Variable="VS2012Installed" Result="exists" />
   </Fragment>
 
   <Fragment>
