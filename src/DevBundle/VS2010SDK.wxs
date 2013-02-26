@@ -7,10 +7,20 @@
     LICENSE.TXT at the root directory of the distribution.
   </copyright>
 -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Fragment>
+    <util:RegistrySearch Id="VS2010SPSearch" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\10.0" Value="SP" Variable="VS2010SPInstalled" Result="value" />
+    <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\10.0\PROCore" Value="Install" Variable="VS2010ProInstalled" Result="exists" />
+    <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\10.0\VSTDCore" Value="Install" Variable="VS2010PreInstalled" Result="exists" />
+    <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\10.0\VSTSCore" Value="Install" Variable="VS2010UltInstalled" Result="exists" />
+  </Fragment>
+
+  <Fragment>
+    <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\VisualStudio\VSIP\10.0" Value="InstallDir" Variable="VS2010SdkInstalled" Result="exists" />
+    <util:RegistrySearchRef Id="VS2010SPSearch" />
+
     <PackageGroup Id="VS2010SDK">
-      <!-- TODO: implement this  -->
+      <ExePackage Name="packages\Vs2010SDKSP1.exe" SourceFile="VS2010SDKSP1\" DetectCondition="VS2010SdkInstalled" InstallCondition="VS2010SPInstalled&gt;0" InstallCommand="/q" PerMachine="yes" Permanent="yes" />
     </PackageGroup>
   </Fragment>
 </Wix>

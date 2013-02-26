@@ -7,10 +7,17 @@
     LICENSE.TXT at the root directory of the distribution.
   </copyright>
 -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Fragment>
+    <util:RegistrySearch Id="VS2012Search" Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\VS\Servicing\11.0" Value="Professional" Variable="VS2012Installed" Result="value" />
+  </Fragment>
+
+  <Fragment>
+    <util:RegistrySearch Root="HKLM" Key="SOFTWARE\Microsoft\DevDiv\SDK\Servicing\11.0" Value="SP" Variable="VS2012SdkInstalled" Result="value" />
+    <util:RegistrySearchRef Id="VS2012Search" />
+
     <PackageGroup Id="VS2012SDK">
-      <!-- TODO: implement this  -->
+      <ExePackage Name="packages\en_visual_studio_2012_sdk_x86_920808.exe" SourceFile="VS2012SDK\" DetectCondition="VS2012SdkInstalled" InstallCondition="VS2012Installed" InstallCommand="/q" PerMachine="yes" Permanent="yes" />
     </PackageGroup>
   </Fragment>
 </Wix>

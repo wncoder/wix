@@ -7,16 +7,16 @@
     LICENSE.TXT at the root directory of the distribution.
   </copyright>
 -->
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:bal="http://schemas.microsoft.com/wix/BalExtension">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:bal="http://schemas.microsoft.com/wix/BalExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Bundle Name="WiX Toolset Developer Bundle" Version="1.0.0.0" Manufacturer="Outercurve Foundation"
-          Compressed="no"
+          Compressed="yes"
           UpgradeCode="C35821FA-6053-4F2B-BDC0-9B4939AAB992">
     <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.RtfLicense" />
 
-    <!---
-      TODO: Add detection for VS2010 SP1 and VS2012
-    -->
-    <bal:Condition Message="Visual Studio 2010 SP1 and/or Visual Studio 2012 must be installed first.">VS2010SP1 OR VS2012</bal:Condition>
+    <!-- Ensure Visual Studio 2010 installed. -->
+    <util:RegistrySearchRef Id="VS2010SPSearch" />
+    <util:RegistrySearchRef Id="VS2012Search" />
+    <bal:Condition Message="Visual Studio 2010 SP1 and/or Visual Studio 2012 must be installed first.">VS2010SPInstalled&gt;0 OR VS2012Installed</bal:Condition>
 
     <Chain>
       <PackageGroupRef Id="HtmlHelp" />
