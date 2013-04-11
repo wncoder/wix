@@ -32,7 +32,6 @@
     <Compile Include="DevBundle.wxs" />
     <Compile Include="HtmlHelp.wxs" />
     <Compile Include="Sandcastle.wxs" />
-    <Compile Include="TortoiseHg.wxs" />
     <Compile Include="VS2010SDK.wxs" />
     <Compile Include="VS2012SDK.wxs" />
   </ItemGroup>

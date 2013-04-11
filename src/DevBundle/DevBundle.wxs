@@ -22,7 +22,6 @@
 
     <Chain>
       <PackageGroupRef Id="HtmlHelp" />
-      <PackageGroupRef Id="TorotoiseHg" />
       <PackageGroupRef Id="Sandcastle" />
       <PackageGroupRef Id="VS2010SDK" />
       <PackageGroupRef Id="VS2012SDK" />
