@@ -169,7 +169,7 @@
 
   <Target Name="DownloadStagedFiles"
           DependsOnTargets="CheckPassword">
-    <Exec Command="&quot;$(WgetExe)&quot; ftp://ftp.wixtoolset.org/wixtoolset.org/wwwroot/App_Data/staged/* --ftp-user=$(Username) --ftp-password=$(Password) -nH -nd -N -P $(DownloadFolder) -q"
+    <Exec Command="&quot;$(WgetExe)&quot; ftp://ftp.wixtoolset.org/App_Data/staged/* --ftp-user=$(Username) --ftp-password=$(Password) -nH -nd -N -P $(DownloadFolder) -q"
           WorkingDirectory="$(ProjectFolder)" />
   </Target>
 
@@ -219,7 +219,7 @@
           DependsOnTargets="CheckPassword;GetPublishFiles">
     <Error Text="There are no files to publish. Consider doing a build first or just do -t:Push." Condition=" '@(PublishFiles)'=='' " />
 
-    <Exec Command="&quot;$(CurlExe)&quot; --ftp-create-dirs --silent --show-error --upload-file @(PublishFiles) --user $(username):$(password) ftp://ftp.wixtoolset.org/wixtoolset.org/wwwroot/%(PublishFiles.Uri)"
+    <Exec Command="&quot;$(CurlExe)&quot; --ftp-create-dirs --silent --show-error --upload-file @(PublishFiles) --user $(username):$(password) ftp://ftp.wixtoolset.org/%(PublishFiles.Uri)"
           WorkingDirectory="$(PublishFolder)" />
   </Target>
 
