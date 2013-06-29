@@ -1,0 +1,288 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project InitialTargets="PackageRestore" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <ProjectFolder>$(MSBuildThisFileDirectory)</ProjectFolder>
+    <CurlExe>curl.exe</CurlExe>
+    <NugetExe>nuget.exe</NugetExe>
+    <WgetExe>wget.exe</WgetExe>
+    <ZipExe>$(ProjectFolder)packages\7-Zip.CommandLine.9.20.0\tools\7za.exe</ZipExe>
+
+    <NpmPackageFolder>$(ProjectFolder)node_modules\</NpmPackageFolder>
+    <NugetPackageFolder>$(ProjectFolder)packages\</NugetPackageFolder>
+
+    <CommonFolder>$(ProjectFolder)common\</CommonFolder>
+
+    <WebRootFolder>$(ProjectFolder)root\</WebRootFolder>
+    <WebRootSourceFolder>$(WebRootFolder)src\</WebRootSourceFolder>
+    <WebRootOutputFolder>$(WebRootFolder)out\</WebRootOutputFolder>
+
+    <WebReleaseFolder>$(ProjectFolder)release\</WebReleaseFolder>
+    <WebReleaseSourceFolder>$(WebReleaseFolder)src\</WebReleaseSourceFolder>
+    <WebReleaseOutputFolder>$(WebReleaseFolder)out\</WebReleaseOutputFolder>
+
+    <WebV3ManualFolder>$(ProjectFolder)v3manual\</WebV3ManualFolder>
+    <WebV3ManualSourceFolder>$(WebV3ManualFolder)src\</WebV3ManualSourceFolder>
+    <WebV3ManualOutputFolder>$(WebV3ManualFolder)out\</WebV3ManualOutputFolder>
+
+    <DownloadFolder>$(ProjectRoot)build\dl\</DownloadFolder>
+    <PublishFolder>$(ProjectFolder)build\publish\</PublishFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CommonFiles Include="$(CommonFolder)**" />
+  </ItemGroup>
+
+  <Target Name="GetRootInputsOutputs">
+    <ItemGroup>
+      <RootInput Include="@(CommonFiles)" />
+      <RootInput Include="$(WebRootFolder)docpad.coffee" />
+      <RootInput Include="$(WebRootSourceFolder)**" />
+      <RootOutput Include="$(WebRootOutputFolder)**" />
+      <RootOutput Include="$(WebRootOutputFolder)" Condition=" '@(RootOutput)'=='' " />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildRoot"
+          Inputs="@(RootInput)"
+          Outputs="@(RootOutput)"
+          DependsOnTargets="GetRootInputsOutputs">
+    <Copy SourceFiles="@(CommonFiles)"
+          DestinationFiles="@(CommonFiles->'$(WebRootSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+
+    <Exec Command="node $(ProjectFolder)node_modules\docpad\bin\docpad generate --env static"
+          WorkingDirectory="$(WebRootFolder)" />
+
+    <ItemGroup>
+      <!-- We're using cleanurls on this project so only grab the index.html files but skip the individual news items -->
+      <PublishSource Include="$(WebRootOutputFolder)**\index.html" Exclude="$(WebRootOutputFolder)news\*\index.html" />
+      <PublishSource Include="$(WebRootOutputFolder)**" Exclude="$(WebRootOutputFolder)**\*.html" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GetV3ManualInputsOutputs">
+    <ItemGroup>
+      <V3ManualInput Include="@(CommonFiles)" />
+      <V3ManualInput Include="$(WebV3ManualFolder)docpad.coffee" />
+      <V3ManualInput Include="$(WebV3ManualSourceFolder)**" />
+      <V3ManualOutput Include="$(WebV3ManualOutputFolder)**" />
+      <V3ManualOutput Include="$(WebV3ManualOutputFolder)" Condition=" '@(V3ManualOutput)'=='' " />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildV3Manual"
+          Inputs="@(V3ManualInput)"
+          Outputs="@(V3ManualOutput)"
+          DependsOnTargets="GetV3ManualInputsOutputs">
+    <Copy SourceFiles="@(CommonFiles)"
+          DestinationFiles="@(CommonFiles->'$(WebV3ManualSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+
+    <Exec Command="node $(ProjectFolder)node_modules\docpad\bin\docpad generate --env static"
+          WorkingDirectory="$(WebV3ManualFolder)" />
+
+    <ItemGroup>
+      <!-- The manual is not designed to use cleanurls so grab everything -->
+      <PublishSource Include="$(WebV3ManualOutputFolder)**" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GetReleaseInputsOutputs">
+    <ItemGroup>
+      <ReleaseInput Include="@(CommonFiles)" />
+      <ReleaseInput Include="$(WebReleaseFolder)\docpad.coffee" />
+      <ReleaseInput Include="$(WebReleaseSourceFolder)\**" />
+      <ReleaseOutput Include="$(WebReleaseOutputFolder)" />
+      <ReleaseOutput Include="$(WebReleaseOutputFolder)**" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildRelease"
+          Inputs="@(ReleaseInput)"
+          Outputs="@(ReleaseOutput)"
+          DependsOnTargets="GetReleaseInputsOutputs">
+    <Copy SourceFiles="@(CommonFiles)"
+          DestinationFiles="@(CommonFiles->'$(WebReleaseSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
+
+    <Exec Command="node $(ProjectFolder)node_modules\docpad\bin\docpad generate --env static"
+          WorkingDirectory="$(WebReleaseFolder)" />
+
+    <ItemGroup>
+      <!-- We're using cleanurls on this project so only grab the index.html files. -->
+      <PublishSource Include="$(WebReleaseOutputFolder)**\index.html" />
+      <PublishSource Include="$(WebReleaseOutputFolder)**\*.json" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildApi">
+    <MSBuild Projects="api\api.csproj" Properties="Configuration=Release" />
+
+    <ItemGroup>
+      <PublishSource Include="api\bin\Release\*.dll">
+        <RelativeOutputFolder>bin\</RelativeOutputFolder>
+      </PublishSource>
+      <PublishSource Include="api\bin\Release\*.pdb">
+        <RelativeOutputFolder>bin\</RelativeOutputFolder>
+      </PublishSource>
+      <PublishSource Include="api\bin\Release\web.config" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CopyToPublishFolder"
+          Condition=" '@(PublishSource)'!='' ">
+    <Copy SourceFiles='@(PublishSource)'
+          DestinationFiles="@(PublishSource->'$(PublishFolder)%(RecursiveDir)%(Filename)%(Extension)' )"
+          SkipUnchangedFiles='true' UseHardlinksIfPossible='false'
+          Condition=" '%(PublishSource.RelativeOutputFolder)'=='' " />
+
+    <Copy SourceFiles='@(PublishSource)'
+        DestinationFiles="@(PublishSource->'$(PublishFolder)%(RelativeOutputFolder)%(RecursiveDir)%(Filename)%(Extension)' )"
+        SkipUnchangedFiles='true' UseHardlinksIfPossible='false'
+        Condition=" '%(PublishSource.RelativeOutputFolder)'!='' " />
+  </Target>
+
+  <Target Name="Build"
+          DependsOnTargets="BuildRoot;BuildV3Manual;BuildRelease;BuildApi;CopyToPublishFolder">
+  </Target>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(PublishFolder);$(WebRootOutputFolder);$(WebReleaseOutputFolder);$(WebV3ManualOutputFolder)" />
+    <Delete Files="@(CommonFiles->'$(WebReleaseSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Delete Files="@(CommonFiles->'$(WebRootSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Delete Files="@(CommonFiles->'$(WebV3ManualSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+
+  <Target Name="Rebuild"
+          DependsOnTargets="Clean;Build">
+  </Target>
+
+  <!--
+  ================================================================================================
+  Pull
+
+    Downloads stage content from website.
+  ================================================================================================
+  -->
+  <Target Name="Pull"
+          DependsOnTargets="CheckPassword;DownloadStagedFiles;GatherDownloadedStagedFiles;UnzipManuals;CopyReleaseMetadata" />
+
+  <Target Name="DownloadStagedFiles"
+          DependsOnTargets="CheckPassword">
+    <Exec Command="&quot;$(WgetExe)&quot; ftp://ftp.wixtoolset.org/wixtoolset.org/wwwroot/App_Data/staged/* --ftp-user=$(Username) --ftp-password=$(Password) -nH -nd -N -P $(DownloadFolder) -q"
+          WorkingDirectory="$(ProjectFolder)" />
+  </Target>
+
+  <Target Name="GatherDownloadedStagedFiles">
+    <ItemGroup>
+      <ManualZip Include="$(DownloadFolder)**\v3manual.zip">
+        <OutputFolder>$(WebV3ManualSourceFolder)\documents\documentation\manual\v3</OutputFolder>
+      </ManualZip>
+      <ManualZip Include="$(DownloadFolder)**\v4manual.zip">
+        <OutputFolder>$(WebV4ManualSourceFolder)\documents\documentation\manual\v4</OutputFolder>
+      </ManualZip>
+
+      <ReleaseMetadataFile Include="$(DownloadFolder)**\*.json">
+        <OutputFolder>$(WebReleaseSourceFolder)\documents\App_Data\releases\info\</OutputFolder>
+      </ReleaseMetadataFile>
+      <ReleaseMetadataFile Include="$(DownloadFolder)**\*.md">
+        <OutputFolder>$(WebReleaseSourceFolder)\documents\releases\</OutputFolder>
+      </ReleaseMetadataFile>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="UnzipManuals">
+    <RemoveDir Directories="%(ManualZip.OutputFolder)" />
+    <Exec Command="&quot;$(ZipExe)&quot; x -y -bd -o&quot;%(OutputFolder)&quot; &quot;@(ManualZip)&quot;"
+          WorkingDirectory="$(ProjectFolder)" />
+  </Target>
+
+  <Target Name="CopyReleaseMetadata">
+    <Copy SourceFiles='@(ReleaseMetadataFile)'
+        DestinationFiles="@(ReleaseMetadataFile->'%(OutputFolder)%(RecursiveDir)%(Filename)%(Extension)' )"
+        SkipUnchangedFiles='true' />
+  </Target>
+
+
+  <!--
+  ================================================================================================
+  Push
+
+    Builds and uploads website.
+  ================================================================================================
+  -->
+  <Target Name="Push"
+          DependsOnTargets="CheckPassword;Build;Publish">
+  </Target>
+
+  <Target Name="Publish"
+          DependsOnTargets="CheckPassword;GetPublishFiles">
+    <Error Text="There are no files to publish. Consider doing a build first or just do -t:Push." Condition=" '@(PublishFiles)'=='' " />
+
+    <Exec Command="&quot;$(CurlExe)&quot; --ftp-create-dirs --silent --show-error --upload-file @(PublishFiles) --user $(username):$(password) ftp://ftp.wixtoolset.org/wixtoolset.org/wwwroot/%(PublishFiles.Uri)"
+          WorkingDirectory="$(PublishFolder)" />
+  </Target>
+
+  <Target Name="GetPublishFiles">
+    <ItemGroup>
+      <_ThrowAwayCollection Include="$(PublishFolder)**"/>
+      <PublishFiles Include="@(_ThrowAwayCollection)">
+        <Uri>$([System.String]::Copy('%(_ThrowAwayCollection.RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)</Uri>
+      </PublishFiles>
+    </ItemGroup>
+  </Target>
+
+
+  <Target Name="CheckPassword">
+    <Error Text="Must specify username property on the command-line using the -p:Username= property." Condition=" '$(username)'=='' " />
+    <Error Text="Must specify password property on the command-line using the -p:Password= property." Condition=" '$(password)'=='' " />
+  </Target>
+
+
+  <!--
+  ================================================================================================
+  PackageRestore
+
+    Restores the required packages to build using nuget.exe.
+  ================================================================================================
+  -->
+  <Target Name="PackageRestore"
+          DependsOnTargets="NpmPackageRestore;NugetPackageRestore" />
+
+  <!-- Nuget Package Restore -->
+  <ItemGroup>
+    <RestoreNugetPackage Include="7-Zip.CommandLine">
+      <Version>9.20.0</Version>
+    </RestoreNugetPackage>
+    <RestoreNugetPackage Include="Newtonsoft.Json">
+      <Version>5.0.6</Version>
+    </RestoreNugetPackage>
+    <RestoreNugetPackage Include="NLog">
+      <Version>2.0.1.2</Version>
+    </RestoreNugetPackage>
+  </ItemGroup>
+  <Target Name="NugetPackageRestore"
+          Condition=" '@(RestoreNugetPackage)'!='' "
+          Inputs="$(NugetPackageFolder)%(RestoreNugetPackage.Identity).%(Version)"
+          Outputs="$(NugetPackageFolder)%(Identity).%(Version)">
+    <Exec Command="&quot;$(NugetExe)&quot; install"
+          WorkingDirectory="$(ProjectFolder)" />
+  </Target>
+
+  <!-- Npm Package Restore -->
+  <ItemGroup>
+    <RestoreNpmPackage Include="docpad" />
+    <RestoreNpmPackage Include="docpad-plugin-cleanurls" />
+    <RestoreNpmPackage Include="docpad-plugin-jade" />
+    <RestoreNpmPackage Include="docpad-plugin-marked" />
+    <RestoreNpmPackage Include="docpad-plugin-sitemap" />
+    <RestoreNpmPackage Include="docpad-plugin-stylus" />
+  </ItemGroup>
+  <Target Name="NpmPackageRestore"
+          Condition=" @(RestoreNpmPackage)!='' "
+          Inputs="$(NpmPackageFolder)%(RestoreNpmPackage.Identity)"
+          Outputs="$(NpmPackageFolder)%(Identity)">
+    <Exec Command="npm install"
+          WorkingDirectory="$(ProjectFolder)" />
+  </Target>
+</Project>

@@ -1,0 +1,23 @@
+doctype
+html(lang='en')
+  head
+    include header.jade
+
+  body
+    include topbar.jade
+
+    .container
+      .content
+        include page-header-breadcrumb.jade
+
+        .row
+          if document.image
+            .span4.offset1
+              img(src=document.image, alt=document.imagealt)
+            contentClass = 'span8'
+          else
+            contentClass = 'span9 offset3'
+
+          div(class='#{contentClass}')!= content
+
+      include footer.jade

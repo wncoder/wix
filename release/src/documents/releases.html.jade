@@ -1,0 +1,14 @@
+---
+title: Releases
+subtitle: weekly
+keywords: wix toolset,wix,release
+layout: secondary
+---
+
+h2 Weekly Releases
+p The following weekly releases are available. They are purged irregularly. Please upgrade often (we recommend at least monthly).
+ul
+  each release in getCollection('releases').toJSON().slice(0,5)
+    li
+      a(href='/releases/#{release.basename}')= release.title
+      |  on #{prettyFormatDate(release.date)}

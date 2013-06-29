@@ -1,0 +1,23 @@
+---
+title: News
+subtitle: for the WiX toolset
+keywords: wix toolset,wix,news
+layout: blank
+---
+
+.span12
+  h2 Latest news
+  each item in getCollection('news').toJSON()
+    .news-item
+      h3= item.title
+      p= prettyFormatDate(item.date)
+      p!= item.content
+
+.span4
+    h3 Other sources of news
+    p The following blogs may have additional news about the progress of the WiX toolset:
+    ul
+      li: a(href='http://robmensching.com/blog/') Rob Mensching
+      li: a(href='http://www.joyofsetup.com/') Bob Arnson
+      li: a(href='http://blogs.msdn.com/heaths/') Heath Stewart
+      li: a(href='http://blogs.msdn.com/pmarcu/') Peter Marcu
