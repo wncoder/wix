@@ -1,11 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Project InitialTargets="PackageRestore" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+  <UsingTask AssemblyFile="$(ExtensionPackPath)MSBuild.ExtensionPack.dll" TaskName="Ftp" />
+  <UsingTask AssemblyFile="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.dll" TaskName="FtpUpload" />
+  <UsingTask AssemblyFile="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.dll" TaskName="Unzip" />
+
   <PropertyGroup>
     <ProjectFolder>$(MSBuildThisFileDirectory)</ProjectFolder>
-    <CurlExe>curl.exe</CurlExe>
-    <NugetExe>nuget.exe</NugetExe>
-    <WgetExe>wget.exe</WgetExe>
-    <ZipExe>$(ProjectFolder)packages\7-Zip.CommandLine.9.20.0\tools\7za.exe</ZipExe>
 
     <NpmPackageFolder>$(ProjectFolder)node_modules\</NpmPackageFolder>
     <NugetPackageFolder>$(ProjectFolder)packages\</NugetPackageFolder>
@@ -27,6 +28,12 @@
     <DownloadFolder>$(ProjectRoot)build\dl\</DownloadFolder>
     <PublishFolder>$(ProjectFolder)build\publish\</PublishFolder>
   </PropertyGroup>
+
+  <!-- TODO: remove this when the Ftp MSBuild Task starts working -->
+  <PropertyGroup>
+    <WgetExe>$(ProjectFolder)tools\wget\wget.exe</WgetExe>
+  </PropertyGroup>
+
 
   <ItemGroup>
     <CommonFiles Include="$(CommonFolder)**" />
@@ -169,6 +176,16 @@
 
   <Target Name="DownloadStagedFiles"
           DependsOnTargets="CheckPassword">
+
+    <!-- This MSBuild task does not work correctly
+    <Ftp TaskAction="DownloadFiles"
+         Host="ftp.wixtoolset.org"
+         Username="$(Username)"
+         UserPassword="$(Password)"
+         RemoteDirectoryName="App_Data\staged"
+         WorkingDirectory="$(DownloadFolder)" />
+    -->
+
     <Exec Command="&quot;$(WgetExe)&quot; ftp://ftp.wixtoolset.org/App_Data/staged/* --ftp-user=$(Username) --ftp-password=$(Password) -nH -nd -N -P $(DownloadFolder) -q"
           WorkingDirectory="$(ProjectFolder)" />
   </Target>
@@ -193,8 +210,10 @@
 
   <Target Name="UnzipManuals">
     <RemoveDir Directories="%(ManualZip.OutputFolder)" />
-    <Exec Command="&quot;$(ZipExe)&quot; x -y -bd -o&quot;%(OutputFolder)&quot; &quot;@(ManualZip)&quot;"
-          WorkingDirectory="$(ProjectFolder)" />
+
+    <Unzip ZipFileName="@(ManualZip)"
+           TargetDirectory="%(OutputFolder)"
+           Quiet="true" />
   </Target>
 
   <Target Name="CopyReleaseMetadata">
@@ -219,8 +238,11 @@
           DependsOnTargets="CheckPassword;GetPublishFiles">
     <Error Text="There are no files to publish. Consider doing a build first or just do -t:Push." Condition=" '@(PublishFiles)'=='' " />
 
-    <Exec Command="&quot;$(CurlExe)&quot; --ftp-create-dirs --silent --show-error --upload-file @(PublishFiles) --user $(username):$(password) ftp://ftp.wixtoolset.org/%(PublishFiles.Uri)"
-          WorkingDirectory="$(PublishFolder)" />
+    <FtpUpload RemoteUri="ftp://ftp.wixtoolset.org/"
+           Username="$(Username)"
+           Password="$(Password)"
+           LocalFiles="@(PublishFiles)"
+           RemoteFiles="@(PublishFiles->'%(Uri)')" />
   </Target>
 
   <Target Name="GetPublishFiles">
@@ -238,51 +260,5 @@
     <Error Text="Must specify password property on the command-line using the -p:Password= property." Condition=" '$(password)'=='' " />
   </Target>
 
-
-  <!--
-  ================================================================================================
-  PackageRestore
-
-    Restores the required packages to build using nuget.exe.
-  ================================================================================================
-  -->
-  <Target Name="PackageRestore"
-          DependsOnTargets="NpmPackageRestore;NugetPackageRestore" />
-
-  <!-- Nuget Package Restore -->
-  <ItemGroup>
-    <RestoreNugetPackage Include="7-Zip.CommandLine">
-      <Version>9.20.0</Version>
-    </RestoreNugetPackage>
-    <RestoreNugetPackage Include="Newtonsoft.Json">
-      <Version>5.0.6</Version>
-    </RestoreNugetPackage>
-    <RestoreNugetPackage Include="NLog">
-      <Version>2.0.1.2</Version>
-    </RestoreNugetPackage>
-  </ItemGroup>
-  <Target Name="NugetPackageRestore"
-          Condition=" '@(RestoreNugetPackage)'!='' "
-          Inputs="$(NugetPackageFolder)%(RestoreNugetPackage.Identity).%(Version)"
-          Outputs="$(NugetPackageFolder)%(Identity).%(Version)">
-    <Exec Command="&quot;$(NugetExe)&quot; install"
-          WorkingDirectory="$(ProjectFolder)" />
-  </Target>
-
-  <!-- Npm Package Restore -->
-  <ItemGroup>
-    <RestoreNpmPackage Include="docpad" />
-    <RestoreNpmPackage Include="docpad-plugin-cleanurls" />
-    <RestoreNpmPackage Include="docpad-plugin-jade" />
-    <RestoreNpmPackage Include="docpad-plugin-marked" />
-    <RestoreNpmPackage Include="docpad-plugin-sitemap" />
-    <RestoreNpmPackage Include="docpad-plugin-stylus" />
-  </ItemGroup>
-  <Target Name="NpmPackageRestore"
-          Condition=" @(RestoreNpmPackage)!='' "
-          Inputs="$(NpmPackageFolder)%(RestoreNpmPackage.Identity)"
-          Outputs="$(NpmPackageFolder)%(Identity)">
-    <Exec Command="npm install"
-          WorkingDirectory="$(ProjectFolder)" />
-  </Target>
+  <Import Project="tools\PackageRestore.targets" />
 </Project>
