@@ -208,7 +208,8 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="UnzipManuals">
+  <Target Name="UnzipManuals"
+          Condition=" '@(ManualZip)'!='' ">
     <RemoveDir Directories="%(ManualZip.OutputFolder)" />
 
     <Unzip ZipFileName="@(ManualZip)"
