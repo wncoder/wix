@@ -5,10 +5,12 @@ keywords: wix toolset,wix
 layout: secondary
 sidebarTitle: Additional information
 sidebarItems:
-  - uri: /about/governance
+  - uri: /about/governance/
     text: Governance Document
-  - uri: /about/assignment-agreement
+  - uri: /about/assignment-agreement/
     text: Assignment Agreement
+  - uri: /about/license/
+    text: WiX Toolset's License
 ---
 
 ## About the WiX toolset
