@@ -119,6 +119,7 @@
       <!-- We're using cleanurls on this project so only grab the index.html files. -->
       <PublishSource Include="$(WebReleaseOutputFolder)**\index.html" />
       <PublishSource Include="$(WebReleaseOutputFolder)**\*.json" />
+      <PublishSource Include="$(WebReleaseOutputFolder)**\*.feed" />
     </ItemGroup>
   </Target>
 
