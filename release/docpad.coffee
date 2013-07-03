@@ -22,8 +22,6 @@ docpadConfig = {
 
     getReleaseInfo: (doc) -> 
       doc ?= @document
-      # console.log('\r\nlooking up: ' + doc.name + ' for document: ' + @document.name)
-      # @getFile({name: doc.basename + '.json'})
       @getFile({ $and: [{basename: doc.basename}, {extension: 'json'}]})
 
     prettyFormatDate: (date) ->
