@@ -4,6 +4,12 @@ subtitle: for the WiX toolset
 keywords: wix toolset,wix,assignment agreement
 under: About
 layout: secondary
+sidebarTitle: Additional information
+sidebarItems:
+  - uri: http://www.outercurve.org/Resources/DevelopmentPractices#agreements
+    text: Outercurve on Assignment Agreements
+  - uri: http://www.outercurve.org/Portals/0/docs/Outercurve%20Foundation%20Assignment%20Agreement%20%28editable%29.pdf
+    text: Example Assignment Agreement
 ---
 
 ## WiX Toolset Assignment Agreement
@@ -19,3 +25,4 @@ The WiX toolset copyright is held by the [Outercurve Foundation](http://www.oute
 4. You (and, if necessary, a representative from your employer) electronically sign the document.
 
 While this process is underway you can participate in design discussions and actually write code. However, your code cannot be merged into the WiX toolset until the assignment agreement is in place.
+
