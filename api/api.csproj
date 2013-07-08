@@ -58,7 +58,12 @@
     <Compile Include="Models\Visit.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="..\tools\packages.config">
+      <Link>packages.config</Link>
+    </None>
+    <None Include="App_Data\redirects.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="web.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

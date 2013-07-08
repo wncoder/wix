@@ -134,6 +134,7 @@
         <RelativeOutputFolder>bin\</RelativeOutputFolder>
       </PublishSource>
       <PublishSource Include="api\bin\Release\web.config" />
+      <PublishSource Include="api\bin\Release\App_Data\redirects.json" />
     </ItemGroup>
   </Target>
 
