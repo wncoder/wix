@@ -21,15 +21,6 @@ mixin navli(title, uri, activeUri)
             li.divider
             li: a(href='/documentation/tutorial',target='_blank') WiX v3.x Tutorial &rarr;
             li: a(href='/documentation/book',target='_blank') WiX Toolset Book &rarr;
-        li.menu(data-dropdown='dropdown')
-          a.menu(href='#') Releases
-          ul.menu-dropdown
-            li: a(href='/releases/') Weekly Builds
-            li: a(href='/downloads/v3.7/stable') WiX v3.7 (Stable)
-            li.divider
-            li: a(href='/downloads/v3.6/stable') WiX v3.6 (Stable)
-            li: a(href='/downloads/v3.5/stable') WiX v3.5 (Stable)
-            li: a(href='/downloads/v3.0/stable') WiX v3.0 (Stable)
-            li: a(href='/downloads/v2.0/stable') WiX v2.0 (Stable)
+        +navli('Releases')
       form#sform.pull-right(action='/search', method='get', type='search')
         input#q(name='q', placeholder='search this site', size='15', type='text', value='')
