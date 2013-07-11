@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SearchRedirectHandler.cs" />
     <Compile Include="DownloadsHandler.cs" />
     <Compile Include="Models\Configuration.cs" />
     <Compile Include="Models\Release.cs" />
