@@ -7,6 +7,7 @@
 
   <PropertyGroup>
     <ProjectFolder>$(MSBuildThisFileDirectory)</ProjectFolder>
+    <Configuration>Release</Configuration>
 
     <NpmPackageFolder>$(ProjectFolder)node_modules\</NpmPackageFolder>
     <NugetPackageFolder>$(ProjectFolder)packages\</NugetPackageFolder>
@@ -124,17 +125,17 @@
   </Target>
 
   <Target Name="BuildApi">
-    <MSBuild Projects="api\api.csproj" Properties="Configuration=Release" />
+    <MSBuild Projects="api\api.csproj" Properties="Configuration=$(Configuration)" />
 
     <ItemGroup>
-      <PublishSource Include="api\bin\Release\*.dll">
+      <PublishSource Include="api\bin\$(Configuration)\*.dll">
         <RelativeOutputFolder>bin\</RelativeOutputFolder>
       </PublishSource>
-      <PublishSource Include="api\bin\Release\*.pdb">
+      <PublishSource Include="api\bin\$(Configuration)\*.pdb">
         <RelativeOutputFolder>bin\</RelativeOutputFolder>
       </PublishSource>
-      <PublishSource Include="api\bin\Release\web.config" />
-      <PublishSource Include="api\bin\Release\App_Data\redirects.json">
+      <PublishSource Include="api\bin\$(Configuration)\web.config" />
+      <PublishSource Include="api\bin\$(Configuration)\App_Data\redirects.json">
         <RelativeOutputFolder>App_Data\</RelativeOutputFolder>
       </PublishSource>
     </ItemGroup>
