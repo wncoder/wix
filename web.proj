@@ -155,7 +155,7 @@
   </Target>
 
   <Target Name="Build"
-          DependsOnTargets="BuildRoot;BuildV3Manual;BuildRelease;BuildApi;CopyToPublishFolder">
+          DependsOnTargets="BuildRoot;BuildV3Manual;BuildRelease;BuildApi;CopyToPublishFolder;BuildSitemap">
   </Target>
 
   <Target Name="Clean">
@@ -267,4 +267,5 @@
   </Target>
 
   <Import Project="tools\PackageRestore.targets" />
+  <Import Project="tools\Sitemap.targets" />
 </Project>
