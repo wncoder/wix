@@ -14,13 +14,7 @@ mixin navli(title, uri, activeUri)
         +navli('About')
         +navli('News')
         +navli('Bugs')
-        li.menu(data-dropdown='dropdown')
-          a.menu(href='#') Documentation
-          ul.menu-dropdown
-            li: a(href='/documentation/manual') WiX v3.x Manual
-            li.divider
-            li: a(href='/documentation/tutorial',target='_blank') WiX v3.x Tutorial &rarr;
-            li: a(href='/documentation/book',target='_blank') WiX Toolset Book &rarr;
+        +navli('Documentation')
         +navli('Releases')
       form#sform.pull-right(action='/search', method='get', type='search')
         input#q(name='q', placeholder='search this site', size='15', type='text', value='')
