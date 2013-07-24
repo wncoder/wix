@@ -30,7 +30,7 @@
           Inputs="@(_GatheredHtmlFiles)"
           Outputs="$(SitemapXmlFile)">
     <ItemGroup>
-      <Line Include='&lt;xml version="1.0" encoding="UTF-8"?&gt;' />
+      <Line Include='&lt;?xml version="1.0" encoding="UTF-8"?&gt;' />
       <Line Include='&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;' />
       <Line Include="&lt;url&gt;&lt;loc&gt;$(RootUrl)&lt;/loc&gt;&lt;changefreq&gt;$(Frequency)&lt;/changefreq&gt;&lt;/url&gt;" />      
       <Line Include="&lt;url&gt;&lt;loc&gt;$(RootUrl)%(Url.Identity)&lt;/loc&gt;&lt;changefreq&gt;$(Frequency)&lt;/changefreq&gt;&lt;/url&gt;" />      
