@@ -13,7 +13,7 @@ mixin navli(title, uri, activeUri)
       ul.nav
         +navli('About')
         +navli('News')
-        +navli('Bugs')
+        +navli('Bugs', '/issues/')
         +navli('Documentation')
         +navli('Releases')
       form#sform.pull-right(action='/search', method='get', type='search')

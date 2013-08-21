@@ -1,5 +1,5 @@
 {
-  "/bugs" : "http://sourceforge.net/p/wix/bugs/",
+  "/bugs" : "/issues/",
   "/documentation/manual" : "http://wix.sourceforge.net/manual-wix3/main.htm",
   "/documentation/manual/v3" : "http://wix.sourceforge.net/manual-wix3/main.htm",
   "/documentation/tutorial" : "http://wix.tramontana.co.hu/",
