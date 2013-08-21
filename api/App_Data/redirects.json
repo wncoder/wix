@@ -1322,5 +1322,6 @@
   "manual-wix3/wix_xsd_writeenvironmentstrings.htm" : "/documentation/manual/v3/xsd/wix/writeenvironmentstrings.html",
   "manual-wix3/wix_xsd_writeinivalues.htm" : "/documentation/manual/v3/xsd/wix/writeinivalues.html",
   "manual-wix3/wix_xsd_writeregistryvalues.htm" : "/documentation/manual/v3/xsd/wix/writeregistryvalues.html",
-  "manual-wix3/write_a_registry_entry.htm" : "/documentation/manual/v3/howtos/files_and_registry/write_a_registry_entry.html"
+  "manual-wix3/write_a_registry_entry.htm" : "/documentation/manual/v3/howtos/files_and_registry/write_a_registry_entry.html",
+  "/redirect" : "/"
 }
