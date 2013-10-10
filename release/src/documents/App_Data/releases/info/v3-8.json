@@ -5,7 +5,7 @@
   "files": [
     {
       "name": "ProjectAggregator2.msi",
-      "redirect": "http://wix.sourceforge.net/releases/data/ProjectAggregator2.msi",
+      "redirect": "http://wixtoolset.org/content/data/ProjectAggregator2.msi",
       "promoted": false,
       "protected": false
     }
