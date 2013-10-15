@@ -4,6 +4,7 @@
   "/documentation/book" : "http://www.packtpub.com/windows-installer-xml-3-6-developers-guide/book",
   "/documentation/stackoverflow" : "http://stackoverflow.com/questions/tagged/wix?sort=newest",
   "mailinglist.html" : "/documentation/mailinglist/",
+  "mailinglists.html" : "/documentation/mailinglist/",
   "clickthrough.html" : "/documentation/clickthrough/",
   "coretoolset.html" : "/documentation/coretoolset/",
   "ctvision.html" : "/documentation/ctvision/",
