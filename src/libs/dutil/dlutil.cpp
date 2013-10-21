@@ -1,5 +1,5 @@
 //-------------------------------------------------------------------------------------------------
-// <copyright file="downloadengine.cpp" company="Outercurve Foundation">
+// <copyright file="dlutil.cpp" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file
@@ -7,20 +7,18 @@
 // </copyright>
 //
 // <summary>
-//    Module: Core
-//
-//    Setup chainer/bootstrapper download engine for WiX toolset.
+//    Download engine for WiX toolset.
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
 #include "precomp.h"
-#include <wininet.h>
+
 #include <inetutil.h>
 #include <uriutil.h>
 
-static const DWORD64 BURN_DOWNLOAD_ENGINE_TWO_GIGABYTES = DWORD64(2) * 1024 * 1024 * 1024;
-static LPCWSTR BURN_DOWNLOAD_ENGINE_ACCEPT_TYPES[] = { L"*/*", NULL };
-
+static const DWORD64 DOWNLOAD_ENGINE_TWO_GIGABYTES = DWORD64(2) * 1024 * 1024 * 1024;
+static LPCWSTR DOWNLOAD_ENGINE_ACCEPT_TYPES[] = { L"*/*", NULL };
+const LPCWSTR DOWNLOAD_POLICY_REGISTRY_PATH = L"WiX\\Burn";
 
 // internal function declarations
 
@@ -31,20 +29,15 @@ static HRESULT InitializeResume(
     __out DWORD64* pdw64ResumeOffset
     );
 static HRESULT GetResourceMetadata(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out DWORD64* pdw64ResourceSize,
     __out FILETIME* pftResourceCreated
     );
 static HRESULT DownloadResource(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -54,7 +47,8 @@ static HRESULT DownloadResource(
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
-    __in BURN_CACHE_CALLBACK* pCallback
+    __in_opt BURN_CACHE_CALLBACK* pCache,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
     );
 static HRESULT AllocateRangeRequestHeader(
     __in DWORD64 dw64ResumeOffset,
@@ -69,7 +63,7 @@ static HRESULT WriteToFile(
     __in DWORD64 dw64ResourceLength,
     __in LPBYTE pbData,
     __in DWORD cbData,
-    __in BURN_CACHE_CALLBACK* pCallback
+    __in_opt BURN_CACHE_CALLBACK* pCallback
     );
 static HRESULT UpdateResumeOffset(
     __inout DWORD64* pdw64ResumeOffset,
@@ -77,15 +71,13 @@ static HRESULT UpdateResumeOffset(
     __in DWORD cbData
     );
 static HRESULT MakeRequest(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczSourceUrl,
     __in_z_opt LPCWSTR wzMethod,
     __in_z_opt LPCWSTR wzHeaders,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out HINTERNET* phConnect,
     __out HINTERNET* phUrl,
     __out BOOL* pfRangeRequestsAccepted
@@ -100,35 +92,37 @@ static HRESULT OpenRequest(
     __out HINTERNET* phUrl
     );
 static HRESULT SendRequest(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
     );
 static HRESULT AuthenticationRequired(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hUrl,
     __in long lHttpCode,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetrySend,
     __out BOOL* pfRetry
     );
-
-
+static HRESULT DownloadGetResumePath(
+    __in_z LPCWSTR wzPayloadWorkingPath,
+    __deref_out_z LPWSTR* psczResumePath
+    );
+static HRESULT DownloadSendProgressCallback(
+    __in BURN_CACHE_CALLBACK* pCallback,
+    __in DWORD64 dw64Progress,
+    __in DWORD64 dw64Total,
+    __in HANDLE hDestinationFile
+    );
 // function definitions
 
-extern "C" HRESULT WininetDownloadUrl(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in BURN_CACHE_CALLBACK* pCallback,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
+extern "C" HRESULT DAPI WininetDownloadUrl(
     __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
     __in DWORD64 dw64AuthoredDownloadSize,
-    __in LPCWSTR wzDestinationPath
+    __in LPCWSTR wzDestinationPath,
+    __in_opt BURN_CACHE_CALLBACK* pCache,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
     )
 {
     HRESULT hr = S_OK;
@@ -150,7 +144,7 @@ extern "C" HRESULT WininetDownloadUrl(
     ExitOnNullWithLastError(hSession, hr, "Failed to open internet session");
 
     // Make a best effort to set the download timeouts to 2 minutes or whatever policy says.
-    PolcReadNumber(BURN_POLICY_REGISTRY_PATH, L"DownloadTimeout", 2 * 60, &dwTimeout);
+    PolcReadNumber(DOWNLOAD_POLICY_REGISTRY_PATH, L"DownloadTimeout", 2 * 60, &dwTimeout);
     if (0 < dwTimeout)
     {
         dwTimeout *= 1000; // convert to milliseconds.
@@ -160,14 +154,14 @@ extern "C" HRESULT WininetDownloadUrl(
     }
 
     // Get the resource size and creation time from the internet.
-    hr = GetResourceMetadata(pUX, wzPackageOrContainerId, wzPayloadId, hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, &dw64Size, &ftCreated);
+    hr = GetResourceMetadata(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, pAuthenticate, &dw64Size, &ftCreated);
     ExitOnFailure1(hr, "Failed to get size and time for URL: %ls", sczUrl);
 
     // Ignore failure to initialize resume because we will fall back to full download then
     // download.
     InitializeResume(wzDestinationPath, &sczResumePath, &hResumeFile, &dw64ResumeOffset);
 
-    hr = DownloadResource(pUX, wzPackageOrContainerId, wzPayloadId, hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64AuthoredDownloadSize, dw64Size, dw64ResumeOffset, hResumeFile, pCallback);
+    hr = DownloadResource(hSession, &sczUrl, pDownloadSource->sczUser, pDownloadSource->sczPassword, wzDestinationPath, dw64AuthoredDownloadSize, dw64Size, dw64ResumeOffset, hResumeFile, pCache, pAuthenticate);
     ExitOnFailure1(hr, "Failed to download URL: %ls", sczUrl);
 
     // Cleanup the resume file because we successfully downloaded the whole file.
@@ -202,7 +196,7 @@ static HRESULT InitializeResume(
 
     *pdw64ResumeOffset = 0;
 
-    hr = CacheGetResumePath(wzDestinationPath, psczResumePath);
+    hr = DownloadGetResumePath(wzDestinationPath, psczResumePath);
     ExitOnFailure1(hr, "Failed to calculate resume path from working path: %ls", wzDestinationPath);
 
     hResumeFile = ::CreateFileW(*psczResumePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -235,13 +229,11 @@ LExit:
 }
 
 static HRESULT GetResourceMetadata(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out DWORD64* pdw64ResourceSize,
     __out FILETIME* pftResourceCreated
     )
@@ -252,7 +244,7 @@ static HRESULT GetResourceMetadata(
     HINTERNET hUrl = NULL;
     LONGLONG llLength = 0;
 
-    hr = MakeRequest(pUX, wzPackageOrContainerId, wzPayloadId, hSession, psczUrl, L"HEAD", NULL, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
+    hr = MakeRequest(hSession, psczUrl, L"HEAD", NULL, wzUser, wzPassword, pAuthenticate, &hConnect, &hUrl, &fRangeRequestsAccepted);
     ExitOnFailure1(hr, "Failed to connect to URL: %ls", *psczUrl);
 
     hr = InternetGetSizeByHandle(hUrl, &llLength);
@@ -280,9 +272,6 @@ LExit:
 }
 
 static HRESULT DownloadResource(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
@@ -292,7 +281,8 @@ static HRESULT DownloadResource(
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
-    __in_opt BURN_CACHE_CALLBACK* pCallback
+    __in_opt BURN_CACHE_CALLBACK* pCache,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
     )
 {
     HRESULT hr = S_OK;
@@ -327,7 +317,7 @@ static HRESULT DownloadResource(
         ReleaseNullInternet(hConnect);
         ReleaseNullInternet(hUrl);
 
-        hr = MakeRequest(pUX, wzPackageOrContainerId, wzPayloadId, hSession, psczUrl, L"GET", sczRangeRequestHeader, wzUser, wzPassword, &hConnect, &hUrl, &fRangeRequestsAccepted);
+        hr = MakeRequest(hSession, psczUrl, L"GET", sczRangeRequestHeader, wzUser, wzPassword, pAuthenticate, &hConnect, &hUrl, &fRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to request URL for download: %ls", *psczUrl);
 
         // If we didn't get the size of the resource from the initial "HEAD" request
@@ -356,7 +346,7 @@ static HRESULT DownloadResource(
             dw64ResumeOffset = 0;
         }
 
-        hr = WriteToFile(hUrl, hPayloadFile, &dw64ResumeOffset, hResumeFile, dw64ResourceLength, pbData, cbMaxData, pCallback);
+        hr = WriteToFile(hUrl, hPayloadFile, &dw64ResumeOffset, hResumeFile, dw64ResourceLength, pbData, cbMaxData, pCache);
         ExitOnFailure1(hr, "Failed while reading from internet and writing to: %ls", wzDestinationPath);
     }
 
@@ -383,7 +373,7 @@ static HRESULT AllocateRangeRequestHeader(
 
     // If the remaining length is less that 2GB we'll be able to ask for everything.
     DWORD64 dw64RemainingLength = dw64ResourceLength - dw64ResumeOffset;
-    if (BURN_DOWNLOAD_ENGINE_TWO_GIGABYTES > dw64RemainingLength)
+    if (DOWNLOAD_ENGINE_TWO_GIGABYTES > dw64RemainingLength)
     {
         // If we have a resume offset, let's download everything from there. Otherwise, we'll
         // just get everything with no headers in the way.
@@ -452,7 +442,7 @@ static HRESULT WriteToFile(
 
             if (pCallback && pCallback->pfnProgress)
             {
-                hr = CacheSendProgressCallback(pCallback, *pdw64ResumeOffset, dw64ResourceLength, hPayloadFile);
+                hr = DownloadSendProgressCallback(pCallback, *pdw64ResumeOffset, dw64ResourceLength, hPayloadFile);
                 ExitOnFailure(hr, "UX aborted on cache progress.");
             }
         }
@@ -497,15 +487,13 @@ LExit:
 }
 
 static HRESULT MakeRequest(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hSession,
     __inout_z LPWSTR* psczSourceUrl,
     __in_z_opt LPCWSTR wzMethod,
     __in_z_opt LPCWSTR wzHeaders,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out HINTERNET* phConnect,
     __out HINTERNET* phUrl,
     __out BOOL* pfRangeRequestsAccepted
@@ -545,7 +533,7 @@ static HRESULT MakeRequest(
         hr = OpenRequest(hConnect, wzMethod, uri.scheme, uri.sczPath, uri.sczQueryString, wzHeaders, &hUrl);
         ExitOnFailure1(hr, "Failed to open internet URL: %ls", *psczSourceUrl);
 
-        hr = SendRequest(pUX, wzPackageOrContainerId, wzPayloadId, hUrl, psczSourceUrl, &fRetry, pfRangeRequestsAccepted);
+        hr = SendRequest(hUrl, psczSourceUrl, pAuthenticate, &fRetry, pfRangeRequestsAccepted);
         ExitOnFailure1(hr, "Failed to send request to URL: %ls", *psczSourceUrl);
     } while (fRetry);
 
@@ -594,7 +582,7 @@ static HRESULT OpenRequest(
     }
 
     // Open the request and add the header if provided.
-    hUrl = ::HttpOpenRequestW(hConnect, wzMethod, sczResource, NULL, NULL, BURN_DOWNLOAD_ENGINE_ACCEPT_TYPES, dwRequestFlags, NULL);
+    hUrl = ::HttpOpenRequestW(hConnect, wzMethod, sczResource, NULL, NULL, DOWNLOAD_ENGINE_ACCEPT_TYPES, dwRequestFlags, NULL);
     ExitOnNullWithLastError(hUrl, hr, "Failed to open internet request.");
 
     if (wzHeader && *wzHeader)
@@ -615,11 +603,9 @@ LExit:
 }
 
 static HRESULT SendRequest(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR wzPayloadId,
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
     )
@@ -676,8 +662,8 @@ static HRESULT SendRequest(
             break;
 
         case 401: __fallthrough; // unauthorized
-        case 407: __fallthrough; // proxy unauthorized
-            hr = AuthenticationRequired(pUX, wzPackageOrContainerId, wzPayloadId, hUrl, lCode, &fRetrySend, pfRetry);
+        case 407: __fallthrough; // proxy unauthorized			
+            hr = AuthenticationRequired(hUrl, lCode, pAuthenticate, &fRetrySend, pfRetry);
             break;
 
         case 403: // forbidden
@@ -726,59 +712,84 @@ LExit:
 }
 
 static HRESULT AuthenticationRequired(
-    __in BURN_USER_EXPERIENCE* pUX,
-    __in_z LPCWSTR wzPackageOrContainerId,
-    __in_z LPCWSTR /*wzPayloadId*/,
     __in HINTERNET hUrl,
     __in long lHttpCode,
+    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetrySend,
     __out BOOL* pfRetry
     )
 {
     Assert(401 == lHttpCode || 407 == lHttpCode);
 
-    HRESULT hr = S_OK;
-    DWORD er = ERROR_SUCCESS;
-    BOOTSTRAPPER_ERROR_TYPE errorType = (401 == lHttpCode) ? BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_SERVER : BOOTSTRAPPER_ERROR_TYPE_HTTP_AUTH_PROXY;
-    LPWSTR sczError = NULL;
-
+    HRESULT hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
     *pfRetrySend = FALSE;
     *pfRetry = FALSE;
 
-    hr = StrAllocFromError(&sczError, HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), NULL);
-    ExitOnFailure(hr, "Failed to allocation error string.");
+    if (pAuthenticate && pAuthenticate->pfnAuthenticate)
+    {
+        hr = (*pAuthenticate->pfnAuthenticate)(pAuthenticate->pv, hUrl, lHttpCode, pfRetrySend, pfRetry);
+    }
 
-    int nResult = pUX->pUserExperience->OnError(errorType, wzPackageOrContainerId, ERROR_ACCESS_DENIED, sczError, MB_RETRYTRYAGAIN, 0, NULL, IDNOACTION);
-    nResult = UserExperienceCheckExecuteResult(pUX, FALSE, MB_RETRYTRYAGAIN, nResult);
-    if (IDTRYAGAIN == nResult && pUX->hwndApply)
+    return hr;
+}
+
+
+static HRESULT DownloadGetResumePath(
+    __in_z LPCWSTR wzPayloadWorkingPath,
+    __deref_out_z LPWSTR* psczResumePath
+    )
+{
+    HRESULT hr = S_OK;
+
+    hr = StrAllocFormatted(psczResumePath, L"%ls.R", wzPayloadWorkingPath);
+    ExitOnFailure(hr, "Failed to create resume path.");
+
+LExit:
+    return hr;
+}
+
+static HRESULT DownloadSendProgressCallback(
+    __in BURN_CACHE_CALLBACK* pCallback,
+    __in DWORD64 dw64Progress,
+    __in DWORD64 dw64Total,
+    __in HANDLE hDestinationFile
+    )
+{
+    static LARGE_INTEGER LARGE_INTEGER_ZERO = { };
+
+    HRESULT hr = S_OK;
+    DWORD dwResult = PROGRESS_CONTINUE;
+    LARGE_INTEGER liTotalSize = { };
+    LARGE_INTEGER liTotalTransferred = { };
+
+    if (pCallback->pfnProgress)
     {
-        er = ::InternetErrorDlg(pUX->hwndApply, hUrl, ERROR_INTERNET_INCORRECT_PASSWORD, FLAGS_ERROR_UI_FILTER_FOR_ERRORS | FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS | FLAGS_ERROR_UI_FLAGS_GENERATE_DATA, NULL);
-        if (ERROR_SUCCESS == er || ERROR_CANCELLED == er)
+        liTotalSize.QuadPart = dw64Total;
+        liTotalTransferred.QuadPart = dw64Progress;
+
+        dwResult = (*pCallback->pfnProgress)(liTotalSize, liTotalTransferred, LARGE_INTEGER_ZERO, LARGE_INTEGER_ZERO, 1, CALLBACK_CHUNK_FINISHED, INVALID_HANDLE_VALUE, hDestinationFile, pCallback->pv);
+        switch (dwResult)
         {
-            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
-        }
-        else if (ERROR_INTERNET_FORCE_RETRY == er)
-        {
-            *pfRetrySend = TRUE;
+        case PROGRESS_CONTINUE:
             hr = S_OK;
+            break;
+
+        case PROGRESS_CANCEL: __fallthrough; // TODO: should cancel and stop be treated differently?
+        case PROGRESS_STOP:
+            hr = HRESULT_FROM_WIN32(ERROR_INSTALL_USEREXIT);
+            ExitOnRootFailure(hr, "UX aborted on download progress.");
+
+        case PROGRESS_QUIET: // Not actually an error, just an indication to the caller to stop requesting progress.
+            pCallback->pfnProgress = NULL;
+            hr = S_OK;
+            break;
+
+        default:
+            hr = E_UNEXPECTED;
+            ExitOnRootFailure(hr, "Invalid return code from progress routine.");
         }
-        else
-        {
-            hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
-        }
-    }
-    else if (IDRETRY == nResult)
-    {
-        *pfRetry = TRUE;
-        hr = S_OK;
-    }
-    else
-    {
-        hr = HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED);
     }
 
 LExit:
-    ReleaseStr(sczError);
-
     return hr;
 }

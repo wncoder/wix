@@ -58,6 +58,7 @@
 #include "cryputil.h"
 #include "eseutil.h"
 #include "dirutil.h"
+#include "dlutil.h"
 #include "fileutil.h"
 #include "gdiputil.h"
 #include "dictutil.h"

@@ -18,22 +18,7 @@
 extern "C" {
 #endif
 
-typedef int (WINAPI *LPCANCEL_ROUTINE)(
-    __in HRESULT hrError,
-    __in_z_opt LPCWSTR wzError,
-    __in BOOL fAllowRetry,
-    __in_opt LPVOID pvContext
-    );
-
 // structs
-
-typedef struct _BURN_CACHE_CALLBACK
-{
-    LPPROGRESS_ROUTINE pfnProgress;
-    LPCANCEL_ROUTINE pfnCancel;
-    LPVOID pv;
-} BURN_CACHE_CALLBACK;
-
 
 // functions
 

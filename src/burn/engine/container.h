@@ -13,7 +13,6 @@
 
 #pragma once
 
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -66,13 +65,6 @@ enum BURN_CAB_OPERATION
 
 
 // structs
-
-typedef struct _BURN_DOWNLOAD_SOURCE
-{
-    LPWSTR sczUrl;
-    LPWSTR sczUser;
-    LPWSTR sczPassword;
-} BURN_DOWNLOAD_SOURCE;
 
 typedef struct _BURN_CONTAINER
 {
