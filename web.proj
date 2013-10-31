@@ -26,6 +26,10 @@
     <WebV3ManualSourceFolder>$(WebV3ManualFolder)src\</WebV3ManualSourceFolder>
     <WebV3ManualOutputFolder>$(WebV3ManualFolder)out\</WebV3ManualOutputFolder>
 
+    <WebV4ManualFolder>$(ProjectFolder)v4manual\</WebV4ManualFolder>
+    <WebV4ManualSourceFolder>$(WebV4ManualFolder)src\</WebV4ManualSourceFolder>
+    <WebV4ManualOutputFolder>$(WebV4ManualFolder)out\</WebV4ManualOutputFolder>
+
     <DownloadFolder>$(ProjectRoot)build\dl\</DownloadFolder>
     <PublishFolder>$(ProjectFolder)build\publish\</PublishFolder>
   </PropertyGroup>
