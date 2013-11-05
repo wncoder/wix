@@ -319,6 +319,12 @@ HRESULT DAPI WiuEnumRelatedProducts(
     __in DWORD iProductIndex,
     __out_ecount(MAX_GUID_CHARS + 1) LPWSTR wzProductCode
     );
+HRESULT DAPI WiuEnumRelatedProductCodes(
+    __in_z LPCWSTR wzUpgradeCode,
+    __deref_out_ecount_opt(pcRelatedProducts) LPWSTR** prgsczProductCodes,
+    __out DWORD* pcRelatedProducts,
+    __in BOOL fReturnHighestVersionOnly
+    );
 HRESULT DAPI WiuEnableLog(
     __in DWORD dwLogMode,
     __in_z LPCWSTR wzLogFile,

@@ -83,6 +83,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
         Assignment = 0x8,
     }
 
+    internal enum WixProductSearchGuidType
+    {
+        ProductCode = 1,
+        UpgradeCode,
+    }
+
 
     /// <summary>
     /// Binder core of the Windows Installer Xml toolset.

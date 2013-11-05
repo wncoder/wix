@@ -89,6 +89,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
             Assignment = 0x8,
         }
 
+        internal enum WixProductSearchGuidType
+        {
+            ProductCode = 1,
+            UpgradeCode,
+        }
+
         internal enum WixRestartResourceAttributes
         {
             Filename = 1,
@@ -2757,11 +2763,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         private void ParseProductSearchElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            WixProductSearchGuidType guidType = WixProductSearchGuidType.ProductCode;
             string id = null;
             string variable = null;
             string condition = null;
             string after = null;
             string guid = null;
+
             Util.ProductSearch.ResultType result = Util.ProductSearch.ResultType.NotSet;
 
             foreach (XmlAttribute attrib in node.Attributes)
@@ -2777,7 +2785,15 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "Guid":
+                            this.Core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name, "ProductCode", "UpgradeCode"));
+                            goto case "ProductCode";
+                        case "ProductCode":
                             guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
+                            guidType = WixProductSearchGuidType.ProductCode;
+                            break;
+                        case "UpgradeCode":
+                            guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
+                            guidType = WixProductSearchGuidType.UpgradeCode;
                             break;
                         case "Result":
                             string resultValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2809,7 +2825,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
 
             if (null == guid)
             {
-                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Guid"));
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "ProductCode", "UpgradeCode", true));
             }
 
             if (null == id)
@@ -2863,6 +2879,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 row[0] = id;
                 row[1] = guid;
                 row[2] = (int)attributes;
+                row[3] = (int)guidType;
             }
         }
 
