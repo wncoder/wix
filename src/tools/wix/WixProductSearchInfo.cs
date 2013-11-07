@@ -22,21 +22,19 @@ namespace Microsoft.Tools.WindowsInstallerXml
     internal class WixProductSearchInfo : WixSearchInfo
     {
         public WixProductSearchInfo(Row row)
-            : this((string)row[0], (string)row[1], (int)row[2], (int)row[3])
+            : this((string)row[0], (string)row[1], (int)row[2])
         {
         }
 
-        public WixProductSearchInfo(string id, string guid, int attributes, int guidType)
+        public WixProductSearchInfo(string id, string guid, int attributes)
             : base(id)
         {
             this.Guid = guid;
             this.Attributes = (WixProductSearchAttributes)attributes;
-            this.GuidType = (WixProductSearchGuidType)guidType;
         }
 
         public string Guid { get; private set; }
         public WixProductSearchAttributes Attributes { get; private set; }
-        public WixProductSearchGuidType GuidType { get; private set; }
 
         /// <summary>
         /// Generates Burn manifest and ParameterInfo-style markup for a product search.
@@ -47,7 +45,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
             writer.WriteStartElement("MsiProductSearch");
             this.WriteWixSearchAttributes(writer);
 
-            writer.WriteAttributeString("Guid", this.Guid);
+            if (0 != (this.Attributes & WixProductSearchAttributes.UpgradeCode))
+            {
+                writer.WriteAttributeString("UpgradeCode", this.Guid);
+            }
+            else
+            {
+                writer.WriteAttributeString("ProductCode", this.Guid);
+            }
 
             if (0 != (this.Attributes & WixProductSearchAttributes.Version))
             {
@@ -64,15 +69,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
             else if (0 != (this.Attributes & WixProductSearchAttributes.Assignment))
             {
                 writer.WriteAttributeString("Type", "assignment");
-            }
-
-            if (this.GuidType == WixProductSearchGuidType.ProductCode)
-            {
-                writer.WriteAttributeString("GuidType", "productcode");
-            }
-            else
-            {
-                writer.WriteAttributeString("GuidType", "upgradecode");
             }
 
             writer.WriteEndElement();

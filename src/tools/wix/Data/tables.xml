@@ -1924,6 +1924,5 @@
                 keyTable="WixSearch" keyColumn="1" description="Reference to a WixSearch entry in the WixSearch table."/>
         <columnDefinition name="Guid" type="string" length="38" category="guid" />
         <columnDefinition name="Attributes" type="number" length="4" category="doubleInteger" />
-        <columnDefinition name="GuidType" type="number" length="2" category="integer" set="0;1" />
     </tableDefinition>
 </tableDefinitions>

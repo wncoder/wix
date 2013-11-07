@@ -305,10 +305,32 @@ extern "C" HRESULT SearchesParseFromXml(
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsiProductSearch", -1))
         {
             pSearch->Type = BURN_SEARCH_TYPE_MSI_PRODUCT;
+            pSearch->MsiProductSearch.GuidType = BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_NONE;
 
-            // @Guid
-            hr = XmlGetAttributeEx(pixnNode, L"Guid", &pSearch->MsiProductSearch.sczGuid);
-            ExitOnFailure(hr, "Failed to get @Guid.");
+            // @ProductCode (if we don't find a product code then look for an upgrade code)
+            hr = XmlGetAttributeEx(pixnNode, L"ProductCode", &pSearch->MsiProductSearch.sczGuid);
+            if (E_NOTFOUND != hr)
+            {
+                ExitOnFailure(hr, "Failed to get @ProductCode.");
+                pSearch->MsiProductSearch.GuidType = BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_PRODUCTCODE;
+            }
+            else
+            {
+                // @UpgradeCode
+                hr = XmlGetAttributeEx(pixnNode, L"UpgradeCode", &pSearch->MsiProductSearch.sczGuid);
+                if (E_NOTFOUND != hr)
+                {
+                    ExitOnFailure(hr, "Failed to get @UpgradeCode.");
+                    pSearch->MsiProductSearch.GuidType = BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_UPGRADECODE;
+                }
+            }
+
+            // make sure we found either a product or upgrade code
+            if (BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_NONE == pSearch->MsiProductSearch.GuidType)
+            {
+                hr = E_NOTFOUND;
+                ExitOnFailure(hr, "Failed to get @ProductCode or @UpgradeCode.");
+            }
 
             // @Type
             hr = XmlGetAttributeEx(pixnNode, L"Type", &scz);
@@ -334,24 +356,6 @@ extern "C" HRESULT SearchesParseFromXml(
             {
                 hr = E_INVALIDARG;
                 ExitOnFailure1(hr, "Invalid value for @Type: %ls", scz);
-            }
-
-            // @GuidType
-            hr = XmlGetAttributeEx(pixnNode, L"GuidType", &scz);
-            ExitOnFailure(hr, "Failed to get @GuidType.");
-
-            if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"productcode", -1))
-            {
-                pSearch->MsiProductSearch.GuidType = BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_PRODUCTCODE;
-            }
-            else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, scz, -1, L"upgradecode", -1))
-            {
-                pSearch->MsiProductSearch.GuidType = BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_UPGRADECODE;
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-                ExitOnFailure1(hr, "Invalid value for @GuidType: %ls", scz);
             }
         }
         else if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, 0, bstrNodeName, -1, L"MsiFeatureSearch", -1))
@@ -1072,13 +1076,13 @@ static HRESULT MsiProductSearch(
     value.Type = BURN_VARIANT_TYPE_STRING;
 
     // if this is an upgrade code then get the product code of the highest versioned related product
-    if(BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_UPGRADECODE == pSearch->MsiProductSearch.GuidType)
+    if (BURN_MSI_PRODUCT_SEARCH_GUID_TYPE_UPGRADECODE == pSearch->MsiProductSearch.GuidType)
     {
         hr = WiuEnumRelatedProductCodes(sczGuid, &rgsczRelatedProductCodes, &dwRelatedProducts, TRUE);
         ExitOnFailure(hr, "Failed to enumerate related products for upgrade code.");
 
         // if we actually found a related product then use its upgrade code for the rest of the search
-        if(1 == dwRelatedProducts)
+        if (1 == dwRelatedProducts)
         {
             hr = StrAllocString(&sczGuid, rgsczRelatedProductCodes[0], 0);
             ExitOnFailure(hr, "Failed to copy upgrade code.");
@@ -1091,7 +1095,7 @@ static HRESULT MsiProductSearch(
         }
     }
 
-    if(ERROR_UNKNOWN_PRODUCT != hr)
+    if (ERROR_UNKNOWN_PRODUCT != hr)
     {
         hr = WiuGetProductInfo(sczGuid, wzProperty, &value.sczValue);
         if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PROPERTY) == hr)

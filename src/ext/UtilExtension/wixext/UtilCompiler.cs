@@ -83,16 +83,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         [Flags]
         internal enum WixProductSearchAttributes
         {
-            Version = 0x1,
-            Language = 0x2,
-            State = 0x4,
-            Assignment = 0x8,
-        }
-
-        internal enum WixProductSearchGuidType
-        {
-            ProductCode = 1,
-            UpgradeCode,
+            Version = 0x01,
+            Language = 0x02,
+            State = 0x04,
+            Assignment = 0x08,
+            UpgradeCode = 0x10,
         }
 
         internal enum WixRestartResourceAttributes
@@ -2763,12 +2758,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
         private void ParseProductSearchElement(XmlNode node)
         {
             SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            WixProductSearchGuidType guidType = WixProductSearchGuidType.ProductCode;
             string id = null;
             string variable = null;
             string condition = null;
             string after = null;
-            string guid = null;
+            string productCode = null;
+            string upgradeCode = null;
 
             Util.ProductSearch.ResultType result = Util.ProductSearch.ResultType.NotSet;
 
@@ -2788,12 +2783,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                             this.Core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name, attrib.Name, "ProductCode", "UpgradeCode"));
                             goto case "ProductCode";
                         case "ProductCode":
-                            guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
-                            guidType = WixProductSearchGuidType.ProductCode;
+                            if (null != productCode)
+                            {
+                                this.Core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name, "Guid", attrib.Name));
+                            }
+                            productCode = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
                             break;
                         case "UpgradeCode":
-                            guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
-                            guidType = WixProductSearchGuidType.UpgradeCode;
+                            upgradeCode = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
                             break;
                         case "Result":
                             string resultValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2823,14 +2820,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "Variable"));
             }
 
-            if (null == guid)
+            if (null == upgradeCode && null == productCode)
             {
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name, "ProductCode", "UpgradeCode", true));
             }
 
+            if (null != upgradeCode && null != productCode)
+            {
+                this.Core.OnMessage(WixErrors.IllegalAttributeWithOtherAttributes(sourceLineNumbers, node.Name, "UpgradeCode", "ProductCode", "Guid"));
+            }
+
             if (null == id)
             {
-                id = this.Core.GenerateIdentifier("wps", variable, condition, after, guid, result.ToString());
+                id = this.Core.GenerateIdentifier("wps", variable, condition, after, (productCode == null ? upgradeCode : productCode), result.ToString());
             }
 
             foreach (XmlNode child in node.ChildNodes)
@@ -2875,11 +2877,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.Extensions
                         break;
                 }
 
+                // set an additional flag if this is an upgrade code
+                if (null != upgradeCode)
+                {
+                    attributes |= WixProductSearchAttributes.UpgradeCode;
+                }
+
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixProductSearch");
                 row[0] = id;
-                row[1] = guid;
+                row[1] = (productCode == null ? upgradeCode : productCode);
                 row[2] = (int)attributes;
-                row[3] = (int)guidType;
             }
         }
 

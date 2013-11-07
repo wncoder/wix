@@ -626,18 +626,18 @@ extern "C" HRESULT DAPI WiuEnumRelatedProductCodes(
     // make sure we start at zero
     *pcRelatedProducts = 0;
 
-    for(DWORD i = 0; ; ++i)
+    for (DWORD i = 0; ; ++i)
     {
         hr = WiuEnumRelatedProducts(wzUpgradeCode, i, wzCurrentProductCode);
 
-        if(E_NOMOREITEMS == hr)
+        if (E_NOMOREITEMS == hr)
         {
             hr = S_OK;
             break;
         }
         ExitOnFailure1(hr, "Failed to enumerate related products for upgrade code: %ls", wzUpgradeCode);
 
-        if(fReturnHighestVersionOnly)
+        if (fReturnHighestVersionOnly)
         {
             // get the version
             hr = WiuGetProductInfo(wzCurrentProductCode, L"VersionString", &sczInstalledVersion);
@@ -647,7 +647,7 @@ extern "C" HRESULT DAPI WiuEnumRelatedProductCodes(
             ExitOnFailure2(hr, "Failed to convert version: %ls to DWORD64 for product code: %ls", sczInstalledVersion, wzCurrentProductCode);
 
             // if this is the first product found then it is the highest version (for now)
-            if(0 == *pcRelatedProducts)
+            if (0 == *pcRelatedProducts)
             {
                 qwHighestVersion = qwCurrentVersion;
             }
@@ -655,7 +655,7 @@ extern "C" HRESULT DAPI WiuEnumRelatedProductCodes(
             {
                 // if this is the highest version encountered so far then overwrite
                 // the first item in the array (there will never be more than one item)
-                if(qwCurrentVersion > qwHighestVersion)
+                if (qwCurrentVersion > qwHighestVersion)
                 {
                     qwHighestVersion = qwCurrentVersion;
 

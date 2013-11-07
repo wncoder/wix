@@ -77,16 +77,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
     [Flags]
     internal enum WixProductSearchAttributes
     {
-        Version = 0x1,
-        Language = 0x2,
-        State = 0x4,
-        Assignment = 0x8,
-    }
-
-    internal enum WixProductSearchGuidType
-    {
-        ProductCode = 1,
-        UpgradeCode,
+        Version = 0x01,
+        Language = 0x02,
+        State = 0x04,
+        Assignment = 0x08,
+        UpgradeCode = 0x10,
     }
 
 
