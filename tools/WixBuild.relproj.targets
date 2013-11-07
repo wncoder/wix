@@ -15,6 +15,7 @@
 
   <PropertyGroup>
     <IntermediateDocumentsFolder>$(BaseIntermediateOutputPath)chm\documents\</IntermediateDocumentsFolder>
+    <IntermediateDocumentOutputFolder>$(BaseIntermediateOutputPath)chm\out\</IntermediateDocumentOutputFolder>
     <HistoryFile>$(WixRoot)History.md</HistoryFile>
     <BaseReleaseFolder>$(BaseOutputPath)upload\</BaseReleaseFolder>
     <ReleaseFolder>$(BaseReleaseFolder)releases\$(FullBuildVersionString)\</ReleaseFolder>
@@ -107,6 +108,11 @@
     <Zip TaskAction="Create"
          CompressPath="$(IntermediateDocumentsFolder)"
          RemoveRoot="$(IntermediateDocumentsFolder)"
+         ZipFileName="$(ReleaseDocumentationZipFile)" />
+
+    <Zip TaskAction="AddFiles"
+         CompressPath="$(IntermediateDocumentOutputFolder)content\"
+         RemoveRoot="$(IntermediateDocumentOutputFolder)"
          ZipFileName="$(ReleaseDocumentationZipFile)" />
 
   </Target>
