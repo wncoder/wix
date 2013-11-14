@@ -21,12 +21,12 @@ extern "C" {
 
 #define ReleaseRegKey(h) if (h) { ::RegCloseKey(h); h = NULL; }
 
-enum REG_KEY_BITNESS
+typedef enum REG_KEY_BITNESS
 {
     REG_KEY_DEFAULT = 0,
     REG_KEY_32BIT = 1,
     REG_KEY_64BIT = 2
-};
+} REG_KEY_BITNESS;
 
 typedef LSTATUS (APIENTRY *PFN_REGCREATEKEYEXW)(
     __in HKEY hKey,
