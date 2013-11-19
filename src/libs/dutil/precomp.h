@@ -52,6 +52,7 @@
 #include "aclutil.h"
 #include "atomutil.h"
 #include "buffutil.h"
+#include "butil.h"
 #include "cabcutil.h"
 #include "cabutil.h"
 #include "conutil.h"
