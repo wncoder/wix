@@ -33,7 +33,7 @@ static HRESULT GetResourceMetadata(
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out DWORD64* pdw64ResourceSize,
     __out FILETIME* pftResourceCreated
     );
@@ -47,8 +47,8 @@ static HRESULT DownloadResource(
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
-    __in_opt BURN_CACHE_CALLBACK* pCache,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCache,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate
     );
 static HRESULT AllocateRangeRequestHeader(
     __in DWORD64 dw64ResumeOffset,
@@ -63,7 +63,7 @@ static HRESULT WriteToFile(
     __in DWORD64 dw64ResourceLength,
     __in LPBYTE pbData,
     __in DWORD cbData,
-    __in_opt BURN_CACHE_CALLBACK* pCallback
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCallback
     );
 static HRESULT UpdateResumeOffset(
     __inout DWORD64* pdw64ResumeOffset,
@@ -77,7 +77,7 @@ static HRESULT MakeRequest(
     __in_z_opt LPCWSTR wzHeaders,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out HINTERNET* phConnect,
     __out HINTERNET* phUrl,
     __out BOOL* pfRangeRequestsAccepted
@@ -94,14 +94,14 @@ static HRESULT OpenRequest(
 static HRESULT SendRequest(
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
     );
 static HRESULT AuthenticationRequired(
     __in HINTERNET hUrl,
     __in long lHttpCode,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetrySend,
     __out BOOL* pfRetry
     );
@@ -110,19 +110,19 @@ static HRESULT DownloadGetResumePath(
     __deref_out_z LPWSTR* psczResumePath
     );
 static HRESULT DownloadSendProgressCallback(
-    __in BURN_CACHE_CALLBACK* pCallback,
+    __in DOWNLOAD_CACHE_CALLBACK* pCallback,
     __in DWORD64 dw64Progress,
     __in DWORD64 dw64Total,
     __in HANDLE hDestinationFile
     );
 // function definitions
 
-extern "C" HRESULT DAPI WininetDownloadUrl(
-    __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
+extern "C" HRESULT DAPI DownloadUrl(
+    __in DOWNLOAD_SOURCE* pDownloadSource,
     __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath,
-    __in_opt BURN_CACHE_CALLBACK* pCache,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCache,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate
     )
 {
     HRESULT hr = S_OK;
@@ -233,7 +233,7 @@ static HRESULT GetResourceMetadata(
     __inout_z LPWSTR* psczUrl,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out DWORD64* pdw64ResourceSize,
     __out FILETIME* pftResourceCreated
     )
@@ -281,8 +281,8 @@ static HRESULT DownloadResource(
     __in DWORD64 dw64ResourceLength,
     __in DWORD64 dw64ResumeOffset,
     __in HANDLE hResumeFile,
-    __in_opt BURN_CACHE_CALLBACK* pCache,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCache,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate
     )
 {
     HRESULT hr = S_OK;
@@ -405,7 +405,7 @@ static HRESULT WriteToFile(
     __in DWORD64 dw64ResourceLength,
     __in LPBYTE pbData,
     __in DWORD cbData,
-    __in_opt BURN_CACHE_CALLBACK* pCallback
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCallback
     )
 {
     HRESULT hr = S_OK;
@@ -493,7 +493,7 @@ static HRESULT MakeRequest(
     __in_z_opt LPCWSTR wzHeaders,
     __in_z_opt LPCWSTR wzUser,
     __in_z_opt LPCWSTR wzPassword,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out HINTERNET* phConnect,
     __out HINTERNET* phUrl,
     __out BOOL* pfRangeRequestsAccepted
@@ -605,7 +605,7 @@ LExit:
 static HRESULT SendRequest(
     __in HINTERNET hUrl,
     __inout_z LPWSTR* psczUrl,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetry,
     __out BOOL* pfRangesAccepted
     )
@@ -714,7 +714,7 @@ LExit:
 static HRESULT AuthenticationRequired(
     __in HINTERNET hUrl,
     __in long lHttpCode,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate,
     __out BOOL* pfRetrySend,
     __out BOOL* pfRetry
     )
@@ -749,7 +749,7 @@ LExit:
 }
 
 static HRESULT DownloadSendProgressCallback(
-    __in BURN_CACHE_CALLBACK* pCallback,
+    __in DOWNLOAD_CACHE_CALLBACK* pCallback,
     __in DWORD64 dw64Progress,
     __in DWORD64 dw64Total,
     __in HANDLE hDestinationFile

@@ -1379,10 +1379,10 @@ static HRESULT DownloadPayload(
     DWORD dwFileAttributes = 0;
     LPCWSTR wzPackageOrContainerId = pProgress->pContainer ? pProgress->pContainer->sczId : pProgress->pPackage ? pProgress->pPackage->sczId : L"";
     LPCWSTR wzPayloadId = pProgress->pPayload ? pProgress->pPayload->sczKey : L"";
-    BURN_DOWNLOAD_SOURCE* pDownloadSource = pProgress->pContainer ? &pProgress->pContainer->downloadSource : &pProgress->pPayload->downloadSource;
+    DOWNLOAD_SOURCE* pDownloadSource = pProgress->pContainer ? &pProgress->pContainer->downloadSource : &pProgress->pPayload->downloadSource;
     DWORD64 qwDownloadSize = pProgress->pContainer ? pProgress->pContainer->qwFileSize : pProgress->pPayload->qwFileSize;
-    BURN_CACHE_CALLBACK cacheCallback = { };
-    BURN_AUTHENTICATION_CALLBACK authenticationCallback = {};
+    DOWNLOAD_CACHE_CALLBACK cacheCallback = { };
+    DOWNLOAD_AUTHENTICATION_CALLBACK authenticationCallback = {};
     APPLY_AUTHENTICATION_REQUIRED_DATA authenticationData = {};
 
     DWORD dwLogId = pProgress->pContainer ? (pProgress->pPayload ? MSG_ACQUIRE_CONTAINER_PAYLOAD : MSG_ACQUIRE_CONTAINER) : pProgress->pPackage ? MSG_ACQUIRE_PACKAGE_PAYLOAD : MSG_ACQUIRE_BUNDLE_PAYLOAD;
@@ -1423,7 +1423,7 @@ static HRESULT DownloadPayload(
         authenticationCallback.pv =  static_cast<LPVOID>(&authenticationData);
         authenticationCallback.pfnAuthenticate = &AuthenticationRequired;
         
-        hr = WininetDownloadUrl(pDownloadSource, qwDownloadSize, wzDestinationPath, &cacheCallback, &authenticationCallback);
+        hr = DownloadUrl(pDownloadSource, qwDownloadSize, wzDestinationPath, &cacheCallback, &authenticationCallback);
     }
     ExitOnFailure2(hr, "Failed attempt to download URL: '%ls' to: '%ls'", pDownloadSource->sczUrl, wzDestinationPath);
 

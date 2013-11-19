@@ -77,7 +77,7 @@ typedef struct _BURN_CONTAINER
     LPWSTR sczHash;
     LPWSTR sczFilePath;         // relative path to container.
     LPWSTR sczSourcePath;
-    BURN_DOWNLOAD_SOURCE downloadSource;
+    DOWNLOAD_SOURCE downloadSource;
 
     BYTE* pbHash;
     DWORD cbHash;

@@ -34,35 +34,35 @@ typedef int (WINAPI *LPCANCEL_ROUTINE)(
     );
 
 // structs
-typedef struct _BURN_DOWNLOAD_SOURCE
+typedef struct _DOWNLOAD_SOURCE
 {
     LPWSTR sczUrl;
     LPWSTR sczUser;
     LPWSTR sczPassword;
-} BURN_DOWNLOAD_SOURCE;
+} DOWNLOAD_SOURCE;
 
-typedef struct _BURN_CACHE_CALLBACK
+typedef struct _DOWNLOAD_CACHE_CALLBACK
 {
     LPPROGRESS_ROUTINE pfnProgress;
     LPCANCEL_ROUTINE pfnCancel;
     LPVOID pv;
-} BURN_CACHE_CALLBACK;
+} DOWNLOAD_CACHE_CALLBACK;
 
-typedef struct _BURN_AUTHENTICATION_CALLBACK
+typedef struct _DOWNLOAD_AUTHENTICATION_CALLBACK
 {
     LPAUTHENTICATION_ROUTINE pfnAuthenticate;
     LPVOID pv;
-} BURN_AUTHENTICATION_CALLBACK;
+} DOWNLOAD_AUTHENTICATION_CALLBACK;
 
 
 // functions
 
-HRESULT DAPI WininetDownloadUrl(
-    __in BURN_DOWNLOAD_SOURCE* pDownloadSource,
+HRESULT DAPI DownloadUrl(
+    __in DOWNLOAD_SOURCE* pDownloadSource,
     __in DWORD64 dw64AuthoredDownloadSize,
     __in LPCWSTR wzDestinationPath,
-    __in_opt BURN_CACHE_CALLBACK* pCache,
-    __in_opt BURN_AUTHENTICATION_CALLBACK* pAuthenticate
+    __in_opt DOWNLOAD_CACHE_CALLBACK* pCache,
+    __in_opt DOWNLOAD_AUTHENTICATION_CALLBACK* pAuthenticate
     );
 
 
