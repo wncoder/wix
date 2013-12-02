@@ -831,6 +831,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     using (Record record = new Record(table.Definition.Columns.Count))
                                     {
                                         StringBuilder streamName = new StringBuilder();
+                                        bool needStream = false;
 
                                         // the _Streams table doesn't prepend the table name (or a period)
                                         if ("_Streams" != table.Name)
@@ -864,6 +865,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                                 case ColumnType.Object:
                                                     if (null != row[i])
                                                     {
+                                                        needStream = true;
                                                         try
                                                         {
                                                             record.SetStream(i + 1, (string)row[i]);
@@ -887,7 +889,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                         // stream names are created by concatenating the name of the table with the values
                                         // of the primary key (delimited by periods)
                                         // check for a stream name that is more than 62 characters long (the maximum allowed length)
-                                        if (MsiInterop.MsiMaxStreamNameLength < streamName.Length)
+                                        if (needStream && MsiInterop.MsiMaxStreamNameLength < streamName.Length)
                                         {
                                             this.core.OnMessage(WixErrors.StreamNameTooLong(row.SourceLineNumbers, table.Name, streamName.ToString(), streamName.Length));
                                         }
