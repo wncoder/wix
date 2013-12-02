@@ -24,11 +24,9 @@
     <SchemaDocument Include="..\ext\DifxAppExtension\wixext\Xsd\difxapp.xsd" />
     <SchemaDocument Include="..\ext\FirewallExtension\wixext\Xsd\firewall.xsd" />
     <SchemaDocument Include="..\ext\GamingExtension\wixext\Xsd\gaming.xsd" />
-    <SchemaDocument Include="..\ext\IsolatedAppExtension\wixext\Xsd\IsolatedApp.xsd" />
     <SchemaDocument Include="..\ext\IIsExtension\wixext\xsd\iis.xsd" />
     <SchemaDocument Include="..\ext\MsmqExtension\wixext\xsd\msmq.xsd" />
     <SchemaDocument Include="..\ext\NetFxExtension\wixext\Xsd\netfx.xsd" />
-    <SchemaDocument Include="..\ext\OfficeExtension\wixext\Xsd\OfficeAddin.xsd" />
     <SchemaDocument Include="..\ext\PSExtension\wixext\xsd\ps.xsd" />
     <SchemaDocument Include="..\ext\SqlExtension\wixext\Xsd\sql.xsd" />
     <SchemaDocument Include="..\ext\TagExtension\wixext\Xsd\tag.xsd" />

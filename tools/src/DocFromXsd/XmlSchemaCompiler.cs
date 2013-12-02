@@ -1670,8 +1670,12 @@ namespace WixBuild.Tools.DocFromXsd
                             {
                                 string reference = element.GetAttribute("ref");
                                 string ns = element.GetAttribute("namespace");
-                                if (string.IsNullOrEmpty(ns))
+
+                                if (String.IsNullOrEmpty(ns))
+                                {
                                     ns = schema.TargetNamespace;
+                                }
+
                                 writer.WriteString(", ");
                                 this.WriteElementLink(new XmlQualifiedName(reference, ns), writer);
                             }
