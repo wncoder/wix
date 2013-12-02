@@ -4,7 +4,7 @@ layout: documentation
 ---
 # Working with WiX Standard Bootstrapper Application
 
-As described in the introduction to [building installation package bundles](~/bundle/index.html), every bundle requires a bootstrapper application DLL to drive the Burn engine. Custom bootstrapper applications can be created but require the developer to write native or managed code. Therefore the WiX toolset provides a standard bootstrapper application that developers can use and customize in particular ways.
+As described in the introduction to [building installation package bundles](../../bundle/index.html), every bundle requires a bootstrapper application DLL to drive the Burn engine. Custom bootstrapper applications can be created but require the developer to write native or managed code. Therefore the WiX toolset provides a standard bootstrapper application that developers can use and customize in particular ways.
 
 There are several variants of the WiX Standard Bootstrapper Application.
 
@@ -15,7 +15,7 @@ There are several variants of the WiX Standard Bootstrapper Application.
 1. WixStandardBootstrapperApplication.HyperlinkLargeLicense - this variant is similar to HyperlinkLicense but is a larger dialog and supports the option of displaying the version number.
 1. WixStandardBootstrapperApplication.Foundation - the final variant is blank and requires the developer to provide a theme file that can completely customize the look and feel.
 
-To include use the WiX Standard Bootstrapper Application, a [&lt;BootstrapperApplicationRef&gt;](~/xsd/wix/bootstrapperapplicationref.html) element should reference one of the above identifiers. The following example uses the bootstrapper application that displays the license:
+To include use the WiX Standard Bootstrapper Application, a [&lt;BootstrapperApplicationRef&gt;](../../xsd/wix/bootstrapperapplicationref.html) element should reference one of the above identifiers. The following example uses the bootstrapper application that displays the license:
 
 <pre>    &lt;?xml version=&quot;1.0&quot;?&gt;
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;

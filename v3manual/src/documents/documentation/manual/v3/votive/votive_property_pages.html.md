@@ -25,7 +25,7 @@ The Installer tab contains the following configurable options:
 
 The Build tab contains the following configurable options:
 
-* The <b>General</b> section allows you to define configuration-specific constants and specify the culture to build.   For more information see [Specifying cultures to build](~/howtos/ui_and_localization/specifying_cultures_to_build.html).
+* The <b>General</b> section allows you to define configuration-specific constants and specify the culture to build.   For more information see [Specifying cultures to build](../howtos/ui_and_localization/specifying_cultures_to_build.html).
 * The <b>Messages</b> section allows you to specify warning levels, toggle treating warnings as errors and verbose output.
 * The <b>Output</b> section allows you to specify the output path, toggle delete temproary files, suppress output of the wixpdb file, and toggle whether or not to bind files into the library file (if it is a WiX Library project).
 

@@ -5,7 +5,7 @@ after: using_standard_customactions
 ---
 # WixNetfxExtension
 
-The [WixNetfxExtension](~/xsd/netfx/index.html) includes a set of custom actions to compile native images using Ngen.exe. For an example, see [How To: NGen managed assemblies during installation](~/howtos/files_and_registry/ngen_managed_assemblies.html).
+The [WixNetfxExtension](../xsd/netfx/index.html) includes a set of custom actions to compile native images using Ngen.exe. For an example, see [How To: NGen managed assemblies during installation](../howtos/files_and_registry/ngen_managed_assemblies.html).
 
 ## PackageGroups
 
@@ -105,7 +105,7 @@ The WixNetfxExtension includes package groups that make it easier to include .NE
 
 ## Properties
 
-The WixNetfxExtension also includes a set of properties that can be used to detect the presence of various versions of the .NET Framework, the .NET Framework SDK and the Windows SDK. For information on how to use these properties to verify the user&apos;s .NET Framework version at install time see [How To: Check for .NET Framework Versions](~/howtos/redistributables_and_install_checks/check_for_dotnet.html).
+The WixNetfxExtension also includes a set of properties that can be used to detect the presence of various versions of the .NET Framework, the .NET Framework SDK and the Windows SDK. For information on how to use these properties to verify the user&apos;s .NET Framework version at install time see [How To: Check for .NET Framework Versions](../howtos/redistributables_and_install_checks/check_for_dotnet.html).
 
 The following property is applicable to all versions of the .NET Framework:
 

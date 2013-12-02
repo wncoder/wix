@@ -14,7 +14,7 @@ The root directory for the tests is %WIX_ROOT%\test. There are three main subdir
 * src: contains source code for the tests
 * WixTestTools: contains source code for the WixTestTools library
 
-![Test Directory Tree](~/content/tests_writingtests_directorytree1.jpg)
+![Test Directory Tree](../../content/tests_writingtests_directorytree1.jpg)
 
 The *data* and *src* directories are further organized by feature area:
 
@@ -26,7 +26,7 @@ The *data* and *src* directories are further organized by feature area:
 * Tools: Tests for a particular tool&apos;s command line options
 * Wixproj: Tests for building .wixproj&apos;s with MSBuild
 
-![Test Directory Tree](~/content/tests_writingtests_directorytree2.jpg)
+![Test Directory Tree](../../content/tests_writingtests_directorytree2.jpg)
 
 ## WixTests Solution
 

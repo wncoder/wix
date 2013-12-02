@@ -13,7 +13,7 @@ This section contains schema reference information for WiX and extensions.
 * [Firewall schema for WixFirewallExtension](firewall/index.html)
 * [Gaming schema for WixGamingExtension](gaming/index.html)
 * [Iis schema for WixIIsExtension](iis/index.html)
-* [IsolatedApp schema for WixIsolatedAppExtension](isolated/index.html)
+* [IsolatedApp schema for WixIsolatedAppExtension](isolatedapp/index.html)
 * [Lux schema for WixLuxExtension](lux/index.html)
 * [Netfx schema for WixNetFxExtension](netfx/index.html)
 * [OfficeAddin schema for WixOfficeExtension](officeaddin/index.html)

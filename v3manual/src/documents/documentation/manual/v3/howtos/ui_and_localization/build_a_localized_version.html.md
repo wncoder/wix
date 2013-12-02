@@ -15,7 +15,7 @@ After the intermediate output file is generated you can then use light.exe to ge
     light.exe myinstaller.wixobj -cultures:en-us -loc en-us.wxl -out myinstaller-en-us.msi
     light.exe myinstaller.wixobj -cultures:fr-fr -loc fr-fr.wxl -out myinstaller-fr-fr.msi
 
-The -loc flag is used to specify the language file to use. It is important to include the -cultures flag on the command line to ensure the correct localized strings are included for extensions such as [WiXUIExtension](~/wixui/WixUI_dialog_library.html).
+The -loc flag is used to specify the language file to use. It is important to include the -cultures flag on the command line to ensure the correct localized strings are included for extensions such as [WiXUIExtension](../../wixui/WixUI_dialog_library.html).
 
 ## Option 2: Building localized installers using Visual Studio
 Visual Studio will automatically build localized versions of your installer. If your WiX project includes multiple .wxl files, one localized installer will be built for each culture, unless **Cultures to build** is specified.

@@ -12,7 +12,7 @@ WiX Visual Studio package provides the following item templates for WiX projects
 * <b>WiX Localization File</b> - a blank .wxl file
 * <b>Text File</b> - a blank .txt file
 
-For more information about WiX file types, please visit the [File List](~/overview/files.html) section.
+For more information about WiX file types, please visit the [File List](../overview/files.html) section.
 
 To add a new item:
 

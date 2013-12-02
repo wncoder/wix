@@ -26,4 +26,4 @@ using Visual Studio and WiX.
 * [Using project references and variables](votive_project_references.html)
 
 Alternatively, you may also use WiX on the command line by calling the tools 
-directly or [using MSBuild](~/msbuild/index.html).
+directly or [using MSBuild](../msbuild/index.html).

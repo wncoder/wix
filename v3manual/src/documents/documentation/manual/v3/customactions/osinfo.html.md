@@ -7,7 +7,7 @@ after: using_standard_customactions
 
 The WixQueryOsInfo, WixQueryOsDirs, and WixQueryOsDriverInfo custom actions in wixca (part of WixUtilExtension) set properties over and above the MSI set for OS product/suite detection and standard directories. The WixQueryOsWellKnownSID custom action sets properties for the localized names of some built in Windows users and groups.
 
-To use these custom actions you simply need to add a [&lt;PropertyRef&gt;](~/xsd/wix/propertyref.html) to the property you want to use and then include WixUtilExtensions when linking. For example:
+To use these custom actions you simply need to add a [&lt;PropertyRef&gt;](../xsd/wix/propertyref.html) to the property you want to use and then include WixUtilExtensions when linking. For example:
 
     <PropertyRef Id="WIX_SUITE_SINGLEUSERTS" />
     <PropertyRef Id="WIX_DIR_COMMON_DOCUMENTS" />
@@ -15,8 +15,8 @@ To use these custom actions you simply need to add a [&lt;PropertyRef&gt;](~/xsd
 
 WixUtilExtension will automatically schedule the custom actions as needed after the AppSearch standard action. For additional information about standard directory tokens in Windows and which ones are supported directly by Windows Installer, see the following topics in the MSDN documentation:
 
-* <a href="http://msdn2.microsoft.com/library/bb762494.aspx" target="_blank">Constant special item ID list (CSIDL) values</a>
-* <a href="http://msdn2.microsoft.com/library/aa372057.aspx" target="_blank">Windows Installer system folder values</a>
+* <a href="http://msdn.microsoft.com/library/bb762494.aspx" target="_blank">Constant special item ID list (CSIDL) values</a>
+* <a href="http://msdn.microsoft.com/library/aa372057.aspx" target="_blank">Windows Installer system folder values</a>
 
 ## WixQueryOsInfo Properties
 

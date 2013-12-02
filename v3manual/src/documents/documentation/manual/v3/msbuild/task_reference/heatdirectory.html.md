@@ -5,7 +5,7 @@ layout: documentation
 
 # HeatDirectory Task
 
-The <b>HeatDirectory</b> task wraps [heat.exe](~/overview/heat.html), the WiX harvester,
+The <b>HeatDirectory</b> task wraps [heat.exe](../../overview/heat.html), the WiX harvester,
 using the <b>dir</b> harvesting type. Authoring is generated for type libraries and
 self-registration from DllRegisterServer for any files found in directories. It
 supports a variety of settings that are described in more detail below. To control

@@ -4,7 +4,7 @@ layout: documentation
 ---
 # Lit Task
 
-The Lit task wraps [lit.exe](~/overview/lit.html), the WiX library creation tool. It supports a variety of settings that are described in more detail below. To control these settings in your .wixproj file, you can create a PropertyGroup and specify the settings that you want to use for your build process. The following is a sample PropertyGroup that contains settings that will be used by the Lit task:
+The Lit task wraps [lit.exe](../../overview/lit.html), the WiX library creation tool. It supports a variety of settings that are described in more detail below. To control these settings in your .wixproj file, you can create a PropertyGroup and specify the settings that you want to use for your build process. The following is a sample PropertyGroup that contains settings that will be used by the Lit task:
 
 <pre><font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">PropertyGroup</font><font size="2" color="#0000FF">&gt;
     &lt;</font><font size="2" color="#A31515">LibTreatWarningsAsErrors</font><font size="2" color="#0000FF">&gt;</font><font size="2">False</font><font size="2" color="#0000FF">&lt;/</font><font size="2" color="#A31515">LibTreatWarningsAsErrors</font><font size="2" color="#0000FF">&gt;

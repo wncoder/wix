@@ -5,7 +5,7 @@ layout: documentation
 
 # HeatFile Task
 
-The <b>HeatFile</b> task wraps [heat.exe](~/overview/heat.html), the WiX harvester,
+The <b>HeatFile</b> task wraps [heat.exe](../../overview/heat.html), the WiX harvester,
 using the <b>file</b> harvesting type. Authoring is generated for type libraries and
 self-registration from DllRegisterServer. It supports a variety of settings that
 are described in more detail below. To control these settings in your .wixproj file,

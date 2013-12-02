@@ -5,11 +5,11 @@ layout: documentation
 # HarvestDirectory Target
 
 The <b>HarvestDirectory</b> target passes <b>HarvestDirectory</b> items to the
-[HeatDirectory task](~/msbuild/task_reference/heatdirectory.html) to generate
+[HeatDirectory task](../../msbuild/task_reference/heatdirectory.html) to generate
 authoring from a file. Authoring is generated for type libraries and self-registration
 from `DllRegisterServer` for any files found in directories. This target
 is processed before compilation. Generated authoring is automatically added to the
-<b>Compile</b> item group to be compiled by the [Candle task](~/msbuild/task_reference/candle.html)</a>.
+<b>Compile</b> item group to be compiled by the [Candle task](../../msbuild/task_reference/candle.html)</a>.
 
 <pre><span style="color: blue">&lt;</span><span style="color: #a31515">ItemGroup</span><span style="color: blue">&gt;
   &lt;</span><span style="color: #a31515">HarvestDirectory </span><span style="color: red">Include</span><span style="color: blue">=</span>&quot;<span style="color: blue">..\TestProject\Data</span>&quot;<span style="color: blue">&gt;

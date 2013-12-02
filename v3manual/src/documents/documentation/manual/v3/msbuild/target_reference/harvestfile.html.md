@@ -6,10 +6,10 @@ layout: documentation
 # HarvestFile Target
 
 The <b>HarvestFile</b> target passes <b>HarvestFile</b> items to the
-[HeatFile task](~/msbuild/task_reference/heatfile.html) to generate authoring from a file. Authoring is generated
+[HeatFile task](../../msbuild/task_reference/heatfile.html) to generate authoring from a file. Authoring is generated
 for type libraries and self-registration from `DllRegisterServer`. This
 target is processed before compilation. Generated authoring is automatically added
-to the <b>Compile</b> item group to be compiled by the [Candle task](~/msbuild/task_reference/candle.html)
+to the <b>Compile</b> item group to be compiled by the [Candle task](../../msbuild/task_reference/candle.html)
 
 <pre><span style="color: blue">&lt;</span><span style="color: #a31515">ItemGroup</span><span style="color: blue">&gt;
   &lt;</span><span style="color: #a31515">HarvestFile </span><span style="color: red">Include</span><span style="color: blue">=</span>&quot;<span style="color: blue">comserver.dll</span>&quot;<span style="color: blue">&gt;

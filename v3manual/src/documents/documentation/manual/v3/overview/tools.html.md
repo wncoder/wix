@@ -9,4 +9,4 @@ Below is a diagram showing the relationship of all of the WiX tools and the outp
 
 &nbsp;
 
-![WiX Toolset Diagram](~/content/WiX_Toolset_Diagram.png)
+![WiX Toolset Diagram](../content/WiX_Toolset_Diagram.png)

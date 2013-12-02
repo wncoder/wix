@@ -5,9 +5,9 @@ after: bundle_define_searches
 ---
 # Chain Packages into a Bundle
 
-To add a chained package, you can do so either by putting the package definition directly under the [&lt;Chain&gt;](~/xsd/wix/chain.html) element or by doing a [&lt;PackageGroupRef&gt;](~/xsd/wix/packagegroupref.html) inside [&lt;Chain&gt;](~/xsd/wix/chain.html) to reference a shared package definition.
+To add a chained package, you can do so either by putting the package definition directly under the [&lt;Chain&gt;](../xsd/wix/chain.html) element or by doing a [&lt;PackageGroupRef&gt;](../xsd/wix/packagegroupref.html) inside [&lt;Chain&gt;](../xsd/wix/chain.html) to reference a shared package definition.
 
-Here&apos;s an example of having the definition directly under [&lt;Chain&gt;](~/xsd/wix/chain.html):
+Here&apos;s an example of having the definition directly under [&lt;Chain&gt;](../xsd/wix/chain.html):
 
 <pre>    &lt;?xml version=&quot;1.0&quot;?&gt;
     &lt;Wix xmlns=&quot;http://schemas.microsoft.com/wix/2006/wi&quot;&gt;

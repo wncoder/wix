@@ -18,7 +18,7 @@ If you are using WiX in Visual Studio you can add the extensions using the Add R
 1. Close the Add Reference dialog
 
 ## Step 2: Add the WiX .NET extensions namespace to your project
-Once the library is added to your project you need to add the .NET extensions namespace to your project so you can access the appropriate WiX elements. To do this modify the top-level [&lt;Wix&gt;](~/xsd/wix/wix.html) element in your project by adding the following attribute:
+Once the library is added to your project you need to add the .NET extensions namespace to your project so you can access the appropriate WiX elements. To do this modify the top-level [&lt;Wix&gt;](../../xsd/wix/wix.html) element in your project by adding the following attribute:
 
 <pre>
 <font size="2" color="#FF0000">xmlns:netfx</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">http://schemas.microsoft.com/wix/NetFxExtension</font><font size="2">"</font>
@@ -32,7 +32,7 @@ A complete Wix element with the standard namespace and the .NET extensions names
 </pre>
 
 ## Step 3: Reference the required properties in your project
-The .NET Framework extensions for WiX define [properties for all current versions of the .NET Framework](~/customactions/wixnetfxextension.html), including service pack levels. To make these properties available to your installer you need to reference them using the [&lt;PropertyRef&gt;](~/xsd/wix/propertyref.html) element. For each property you want to use, add the corresponding PropertyRef to your project. For example, if you are interested in detecting .NET Framework 2.0 add the following:
+The .NET Framework extensions for WiX define [properties for all current versions of the .NET Framework](../../customactions/wixnetfxextension.html), including service pack levels. To make these properties available to your installer you need to reference them using the [&lt;PropertyRef&gt;](../../xsd/wix/propertyref.html) element. For each property you want to use, add the corresponding PropertyRef to your project. For example, if you are interested in detecting .NET Framework 2.0 add the following:
 
 <pre>
 <font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">PropertyRef</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">NETFRAMEWORK20</font><font size="2">"</font><font size="2" color="#0000FF">/&gt;</font>

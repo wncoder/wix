@@ -98,7 +98,7 @@ The WixUI dialog library includes default bitmaps for the background of the welc
 
 The ExitDlg is the [dialog in the built-in WixUI dialog sets](dialog_reference/WixUI_dialogs.html) that is displayed at the end of a successful setup. The ExitDlg supports showing both optional, customizable text and an optional checkbox.
 
-See [How To: Run the Installed Application After Setup](~/howtos/ui_and_localization/run_program_after_install.html) for an example of how to show a checkbox on the ExitDlg.
+See [How To: Run the Installed Application After Setup](../howtos/ui_and_localization/run_program_after_install.html) for an example of how to show a checkbox on the ExitDlg.
 
 To show optional text on the ExitDlg, set the WIXUI_EXITDIALOGOPTIONALTEXT property to the string you want to show. For example:
 

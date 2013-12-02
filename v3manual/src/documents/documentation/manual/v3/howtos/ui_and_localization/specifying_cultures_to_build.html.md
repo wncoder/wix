@@ -76,4 +76,4 @@ files: setupStrings\_en-US.wxl, setupStrings\_en-GB.wxl, and setupStrings\_en.wx
 The sample uses two culture groups to share the neutral English translations between
 both of the fully localized installers.
 
-![](~/content/build_a_localized_version_votive_culture_fallback.jpg)
+![](../../content/build_a_localized_version_votive_culture_fallback.jpg)

@@ -6,7 +6,7 @@ layout: documentation
 Installers often need to look up the version number of a file on disk during the installation process. The check is often used in advance of a conditional statement later in install, such as to block the user from installing if a file is missing, or to display custom installation UI depending on whether the file version is high enough. This how to demonstrates verifying the version of a file on disk, then using the resulting property to block the application&apos;s installation if the file version is lower than expected.
 
 ## Step 1: Determine the version of the file
-File versions are determined using the [&lt;Property&gt;](~/xsd/wix/property.html), [&lt;DirectorySearch&gt;](~/xsd/wix/directorysearch.html) and [&lt;FileSearch&gt;](~/xsd/wix/filesearch.html) elements. The following snippet looks for the user32.dll file in the machine&apos;s System32 directory and checks to see if it is at least version 6.0.6001.1751.
+File versions are determined using the [&lt;Property&gt;](../../xsd/wix/property.html), [&lt;DirectorySearch&gt;](../../xsd/wix/directorysearch.html) and [&lt;FileSearch&gt;](../../xsd/wix/filesearch.html) elements. The following snippet looks for the user32.dll file in the machine&apos;s System32 directory and checks to see if it is at least version 6.0.6001.1751.
 
 <pre>
 &lt;<font size="2" color="#A31515">Property</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"USER32VERSION"</font><font size="2" color="#0000FF">&gt;

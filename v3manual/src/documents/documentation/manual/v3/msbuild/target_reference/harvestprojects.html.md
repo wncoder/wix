@@ -5,16 +5,16 @@ layout: documentation
 # HarvestProjects Target
 
 The <b>HarvestProjects</b> target passes <b>HarvestProject</b> items to the
-[HeatProject task](~/msbuild/task_reference/heatproject.html) to generate authoring from a project file.
+[HeatProject task](../../msbuild/task_reference/heatproject.html) to generate authoring from a project file.
 
-Harvesting projects is disabled by default because it may not always work correctly, but you can enable it by adding the following to the top of your [WiX project file](~/msbuild/authoring_first_msbuild_project.html):
+Harvesting projects is disabled by default because it may not always work correctly, but you can enable it by adding the following to the top of your [WiX project file](../../msbuild/authoring_first_msbuild_project.html):
 
 <pre><span style="color: blue">&lt;</span><span style="color: #a31515">PropertyGroup</span><span style="color: blue">&gt;
   &lt;</span><span style="color: #a31515">EnableProjectHarvesting</span><span style="color: blue">&gt;</span>True<span style="color: blue">&lt;/</span><span style="color: #a31515">EnableProjectHarvesting</span><span style="color: blue">&gt;</span>
 &lt;/</span><span style="color: #a31515">PropertyGroup</span><span style="color: blue">&gt;</span></pre>
 
 If enabled, this target is processed before compilation. Generated authoring is automatically added to the
-<b>Compile</b> item group to be compiled by the [Candle task](~/msbuild/task_reference/candle.html).
+<b>Compile</b> item group to be compiled by the [Candle task](../../msbuild/task_reference/candle.html).
 
 <pre><span style="color: blue">&lt;</span><span style="color: #a31515">ItemGroup</span><span style="color: blue">&gt;
   &lt;</span><span style="color: #a31515">HeatProject </span><span style="color: red">Include</span><span style="color: blue">="..\TestProject\TestProject.csproj" &gt;

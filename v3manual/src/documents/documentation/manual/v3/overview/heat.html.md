@@ -1,4 +1,4 @@
-﻿---
+---
 title: Harvest Tool (Heat)
 layout: documentation
 after: lit

@@ -6,7 +6,7 @@ layout: documentation
 Installers often need to look up the value of a registry entry during the installation process. The resulting registry value is often used in a conditional statement later in install, such as to install a specific component if a registry entry is not found. This how to demonstrates reading an integer value from the registry and verifying that it exists in a <a href="http://msdn.microsoft.com/library/aa369752.aspx" target="_blank">launch condition</a>.
 
 ## Step 1: Read the registry entry into a property
-Registry entries are read using the [&lt;RegistrySearch&gt;](~/xsd/wix/registrysearch.html) element. The following snippet looks for the the presence of the key that identifies the installation of .NET Framework 2.0 on the target machine*.
+Registry entries are read using the [&lt;RegistrySearch&gt;](../../xsd/wix/registrysearch.html) element. The following snippet looks for the the presence of the key that identifies the installation of .NET Framework 2.0 on the target machine*.
 
 <pre>
 <font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">Property</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">NETFRAMEWORK20</font><font size="2">"</font><font size="2" color="#0000FF">&gt;
@@ -33,4 +33,4 @@ After the property is set you can use it in a condition anywhere in your WiX pro
 
 <a href="http://msdn.microsoft.com/library/aa369297.aspx" target="_blank">Installed</a> is a Windows Installer property that ensures the check is only done when the user is installing the application, rather than on a repair or remove. The NETFRAMEWORK20 part of the condition will pass if the property was set. If it is not set the installer will display the error message then abort the installation process.
 
-\* This registry entry is used for sample purposes only. If you want to detect the installed version of .NET Framework you can use the built-in WiX support. For more information see [How To: Check for .NET Framework Versions](~/howtos/redistributables_and_install_checks/check_for_dotnet.html).
+\* This registry entry is used for sample purposes only. If you want to detect the installed version of .NET Framework you can use the built-in WiX support. For more information see [How To: Check for .NET Framework Versions](../../howtos/redistributables_and_install_checks/check_for_dotnet.html).

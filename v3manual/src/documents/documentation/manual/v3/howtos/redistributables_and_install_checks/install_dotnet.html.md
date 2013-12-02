@@ -7,12 +7,12 @@ layout: documentation
 Applications written using the .NET Framework often need to bundle the .NET framework and install it with their application.  Wix 3.6 and later makes this easy with Burn.
 
 ## Step 1: Create a bundle for your application
-Follow the instructions in [Building Installation Package Bundles](~/bundle/index.html)
+Follow the instructions in [Building Installation Package Bundles](../../bundle/index.html)
 
 ## Step 2: Add a reference to one of the .Net PackageGroups
 <ol>
 <li>Add a reference to WixNetFxExtension to your bundle project</li>
-<li>Add a PayloadGroupRef element to your bundle&apos;s chain that references the .Net package required by your application.  For a full list see <a href="~/customactions/wixnetfxextension.html">WixNetfxExtension</a>. Ensure that the PayloadGroupRef is placed before any other packages that require .Net.</li>
+<li>Add a PayloadGroupRef element to your bundle&apos;s chain that references the .Net package required by your application.  For a full list see [WixNetfxExtension](../../customactions/wixnetfxextension.html). Ensure that the PayloadGroupRef is placed before any other packages that require .Net.</li>
 <pre>
 <font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">Chain</font><font size="2" color="#0000FF">&gt;
     &lt;</font><font size="2" color="#A31515">PackageGroupRef</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">NetFx45Web</font><font size="2">"</font><font size="2" color="#0000FF">/&gt;
@@ -22,7 +22,7 @@ Follow the instructions in [Building Installation Package Bundles](~/bundle/inde
 </ol>
 
 ## Customizing your bootstrapper application
-Any native bootstrapper application including the [WiX Standard Bootstrapper Application](~/bundle/wixstdba/index.html) will work well with bundles that include .Net.
+Any native bootstrapper application including the [WiX Standard Bootstrapper Application](../../bundle/wixstdba/index.html) will work well with bundles that include .Net.
 
 Managed bootstrapper applications must take care when including .Net to ensure that they do not unnecessarily depend on the .Net framework version being installed.
 

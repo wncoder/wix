@@ -7,7 +7,7 @@ after: specifying_cultures_to_build
 WiX supports building localized installers through the use of language files that include localized strings. It is a good practice to put all your strings in a language file as you create your setup, even if you do not currently plan on shipping localized versions of your installer. This how to describes how to create a language file and use its strings in your WiX project.
 
 ## Step 1: Create the language file
-Language files end in the .wxl extension and specify their culture using the [&lt;WixLocalization&gt;](~/xsd/wixloc/wixlocalization.html) element. To create a language file on the command line create a new file with the appropriate name and add the following:
+Language files end in the .wxl extension and specify their culture using the [&lt;WixLocalization&gt;](../../xsd/wixloc/wixlocalization.html) element. To create a language file on the command line create a new file with the appropriate name and add the following:
 
 <pre>
 <font size="2" color="#0000FF">&lt;?</font><font size="2" color="#A31515">xml</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">version</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">1.0</font><font size="2">"</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">encoding</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">utf-8</font><font size="2">"</font><font size="2" color="#0000FF">?&gt;
@@ -23,7 +23,7 @@ If you are using Visual Studio you can add a new language file to your project b
 By default Visual Studio creates language files in the en-us culture. To create a language file for a different culture change the Culture attribute to the appropriate culture string.
 
 ## Step 2: Add the localized strings
-Localized strings are defined using the [&lt;String&gt;](~/xsd/wixloc/string.html) element. Each element consists of a unique id for later reference in your WiX project and the string value. For example:
+Localized strings are defined using the [&lt;String&gt;](../../xsd/wixloc/string.html) element. Each element consists of a unique id for later reference in your WiX project and the string value. For example:
 
 <pre>
 <font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">String</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"ApplicationName"</font><font size="2" color="#0000FF">&gt;My Application Name&lt;/</font><font size="2" color="#A31515">String</font><font size="2" color="#0000FF">&gt;
@@ -37,7 +37,7 @@ Once you have defined the strings you can use them in your project wherever you 
 
 <pre>
 <font size="2" color="#0000FF">&lt;</font><font size="2" color="#A31515">Product</font><font size="2" color="#0000FF"> </font><font size="2" color="#FF0000">Id</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">*"
-         </font><font size="2" color="#FF0000">UpgradeCode</font><font size="2" color="#0000FF">=</font><font size="2">"<a href="~/howtos/general/generate_guids.html">PUT-GUID-HERE</a>"</font>
+         </font><font size="2" color="#FF0000">UpgradeCode</font><font size="2" color="#0000FF">=</font><font size="2">"<a href="../../howtos/general/generate_guids.html">PUT-GUID-HERE</a>"</font>
 <font size="2" color="#FF0000">  Version</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">1.0.0.0</font><font size="2">"</font>
 <font size="2" color="#FF0000">  Language</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">1033</font><font size="2">"</font>
 <font size="2" color="#FF0000">  Name</font><font size="2" color="#0000FF">=</font><font size="2">"</font><font size="2" color="#0000FF">!(loc.ApplicationName)</font><font size="2">"

@@ -5,14 +5,14 @@ after: authoring_bundle_application
 ---
 # Author a Bundle Package Manifest
 
-In order for any package to be consumable by another Bundle, a package definition needs to be authored that describes the package. This authoring can either go directly under the [&lt;Chain&gt;](~/xsd/wix/chain.html) element in the Bundle authoring or in a [&lt;Fragment&gt;](~/xsd/wix/fragment.html) and can then be consumed by a Bundle by doing a [&lt;PackageGroupRef&gt;](~/xsd/wix/packagegroupref.html) inside [&lt;Chain&gt;](~/xsd/wix/chain.html). The latter method enables sharing of the same package definition across different Bundle packages.
+In order for any package to be consumable by another Bundle, a package definition needs to be authored that describes the package. This authoring can either go directly under the [&lt;Chain&gt;](../xsd/wix/chain.html) element in the Bundle authoring or in a [&lt;Fragment&gt;](../xsd/wix/fragment.html) and can then be consumed by a Bundle by doing a [&lt;PackageGroupRef&gt;](../xsd/wix/packagegroupref.html) inside [&lt;Chain&gt;](../xsd/wix/chain.html). The latter method enables sharing of the same package definition across different Bundle packages.
 
 The WiX schema supports the following chained package types:
 
-* [&lt;MsiPackage&gt;](~/xsd/wix/msipackage.html)
-* [&lt;ExePackage&gt;](~/xsd/wix/exepackage.html)
-* [&lt;MspPackage&gt;](~/xsd/wix/msppackage.html)
-* [&lt;MsuPackage&gt;](~/xsd/wix/msupackage.html)
+* [&lt;MsiPackage&gt;](../xsd/wix/msipackage.html)
+* [&lt;ExePackage&gt;](../xsd/wix/exepackage.html)
+* [&lt;MspPackage&gt;](../xsd/wix/msppackage.html)
+* [&lt;MsuPackage&gt;](../xsd/wix/msupackage.html)
 
 Here is an example of a package definition for an EXE package in a sharable fragment:
 

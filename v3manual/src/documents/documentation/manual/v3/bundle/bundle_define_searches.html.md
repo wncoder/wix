@@ -7,11 +7,11 @@ after: bundle_built_in_variables
 
 Searches are used to detect if the target machine meets certain conditions. The result of a search is stored into a variable. Variables are then used to construct install conditions through the use of operands. The search schemas are in the WixUtilExtension. Here is the list of supported searches:
 
-* [&lt;FileSearch&gt;](~/xsd/util/filesearch.html)
-* [&lt;RegistrySearch&gt;](~/xsd/util/registrysearch.html)
-* [&lt;DirectorySearch&gt;](~/xsd/util/directorysearch.html)
-* [&lt;ComponentSearch&gt;](~/xsd/util/componentsearch.html)
-* [&lt;ProductSearch&gt;](~/xsd/util/productsearch.html)
+* [&lt;FileSearch&gt;](../xsd/util/filesearch.html)
+* [&lt;RegistrySearch&gt;](../xsd/util/registrysearch.html)
+* [&lt;DirectorySearch&gt;](../xsd/util/directorysearch.html)
+* [&lt;ComponentSearch&gt;](../xsd/util/componentsearch.html)
+* [&lt;ProductSearch&gt;](../xsd/util/productsearch.html)
 
 A search can be dependent on the result of another search. Keep in mind that all searches are in the WiXUtilExtension. So remember to add the WiXUtilExtension namespace in the authoring. Here is an example:
 

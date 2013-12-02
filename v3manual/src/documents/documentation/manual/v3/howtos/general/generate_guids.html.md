@@ -8,7 +8,7 @@ GUIDs are used extensively with the Windows Installer to uniquely identify produ
 
 All examples in the How To documentation use the text **PUT-GUID-HERE** for GUIDs. Every **PUT-GUID-HERE** must be replaced with a newly-generated GUID.
 
-The [&lt;Component&gt;](~/xsd/wix/component.html), [&lt;Package&gt;](~/xsd/wix/package.html), [&lt;Patch&gt;](~/xsd/wix/patch.html),&nbsp; [&lt;Product&gt;](~/xsd/wix/product.html) elements support auto-generation of GUIDs every time you build your project by specifying a **\*** in place of the GUID. For example:
+The [&lt;Component&gt;](../../xsd/wix/component.html), [&lt;Package&gt;](../../xsd/wix/package.html), [&lt;Patch&gt;](../../xsd/wix/patch.html),&nbsp; [&lt;Product&gt;](../../xsd/wix/product.html) elements support auto-generation of GUIDs every time you build your project by specifying a **\*** in place of the GUID. For example:
 
 <pre>
 <font size="2" color="#0000FF">&lt;<font size="2" color="#A31515">Product</font> <font size="2" color="#FF0000">Id</font>=<font size="2">"*"
