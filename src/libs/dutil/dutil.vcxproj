@@ -94,7 +94,7 @@
     <ClCompile Include="rexutil.cpp" />
     <ClCompile Include="rmutil.cpp" />
     <ClCompile Include="rssutil.cpp" />
-    <ClCompile Include="sceutil.cpp" />
+    <ClCompile Include="sceutil.cpp" Condition=" Exists('$(SqlCESdkIncludePath)') " />
     <ClCompile Include="shelutil.cpp" />
     <ClCompile Include="sqlutil.cpp" />
     <ClCompile Include="srputil.cpp" />
