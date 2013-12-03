@@ -1,3 +1,5 @@
+## WixBuild: Version 4.0.1203.0
+
 * RobMen: Merge recent changes through WiX v3.9.2.0
 
 * MikeGC: Fix Settings Engine to behave better when remote database is not always available due to either USB drive unplugged or a network disconnection.
@@ -11,6 +13,8 @@
 * MikeGC: Settings Engine now more reliably connects to remote databases on windows startup, even if it runs before the network has fully initialized.
 
 * RobMen: Merge recent changes through WiX v3.8.1021.0
+
+## WixBuild: Version 4.0.1015.0
 
 * RobMen: Merge recent changes through WiX v3.8.1014.0
 
