@@ -734,6 +734,10 @@ namespace WixToolset.Extensions
                 Uri baseDirUri = new Uri(baseDir);
                 Uri sourceRelativeUri = baseDirUri.MakeRelativeUri(sourcePathUri);
                 string relativePath = sourceRelativeUri.ToString().Replace('/', Path.DirectorySeparatorChar);
+                if (!sourceRelativeUri.UserEscaped)
+                {
+                    relativePath = Uri.UnescapeDataString(relativePath);
+                }
 
                 ret = String.Concat(String.Format(CultureInfo.InvariantCulture, varFormat, projectName, pogFileSource), "\\", relativePath);
             }

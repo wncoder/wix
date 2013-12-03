@@ -77,11 +77,6 @@
       Text="Error the &quot;Microsoft Windows SDK for Windows 7 and .NET Framework 4&quot; or &quot;Visual Studio 2010&quot; must be installed." />
 
     <Error
-      Code="WIXBUILD003"
-      Condition=" '$(SqlCESdkIncludePath)' == '' or !Exists('$(SqlCESdkIncludePath)')"
-      Text="Error the &quot;Microsoft SQL Server Compact Edition SDK v3.5 or v4.0&quot; must be installed. This is usually installed with Visual Studio 2010 or Visual Studio 2012" />
-
-    <Error
       Code="WIXBUILD004"
       Condition="!Exists('$(HelpCompiler)')" 
       Text="$(HelpCompiler) does not exist. Please install the HTML Help Workshop that is part of the HTML Help SDK." />

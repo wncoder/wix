@@ -1,3 +1,5 @@
+* RobMen: Merge recent changes through WiX v3.9.2.0
+
 * MikeGC: Fix Settings Engine to behave better when remote database is not always available due to either USB drive unplugged or a network disconnection.
 
 * RobMen: Merge recent changes through WiX v3.8 RTM.
@@ -8,9 +10,9 @@
 
 * MikeGC: Settings Engine now more reliably connects to remote databases on windows startup, even if it runs before the network has fully initialized.
 
-* RobMen: Merge recent changes through Wix v3.8.1021.0
+* RobMen: Merge recent changes through WiX v3.8.1021.0
 
-* RobMen: Merge recent changes through Wix v3.8.1014.0
+* RobMen: Merge recent changes through WiX v3.8.1014.0
 
 * MikeGC: Implement automatic synchronization of settings within Settings Engine / Settings Browser (using MonUtil).
 
@@ -20,7 +22,7 @@
 
 ## WixBuild: Version 4.0.1007.0
 
-* RobMen: Merge recent changes through Wix v3.8.1007.0
+* RobMen: Merge recent changes through WiX v3.8.1007.0
 
 * RobMen: Merge source code reorganization.
 

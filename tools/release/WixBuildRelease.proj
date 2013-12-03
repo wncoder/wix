@@ -39,13 +39,11 @@
       <ProjectFolder>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\..\))</ProjectFolder>
 
       <ProjectHistoryFile>$(ProjectFolder)History.md</ProjectHistoryFile>
-      <ProjectFeedFile>$(MSBuildThisFileDirectory)wix$(MajorMinorVersionDottedString).feed</ProjectFeedFile>
     </PropertyGroup>
 
     <Error Text="Cannot locate project's private/public keypair at: $(OfficialBuildPrivateKeyPair). Ensure that the OfficialBuildPrivateKeyPair arguments are correct." Condition=" !Exists('$(OfficialBuildPrivateKeyPair)') " />
 
     <Error Text="Cannot locate project's History.md file at: $(ProjectHistoryFile). Ensure that the Major and Minor arguments are correct." Condition=" !Exists('$(ProjectHistoryFile)') " />
-    <Error Text="Cannot locate project's feed file at: $(ProjectFeedFile). Ensure that the Major and Minor arguments are correct." Condition=" !Exists('$(ProjectFeedFile)') " />
   </Target>
 
   <!--
@@ -77,36 +75,6 @@
     </MSBuild>
 
     <Exec Command="cscript $(MSBuildThisFileDirectory)histver.js $(ProjectHistoryFile) $(Version) //nologo"
-          WorkingDirectory="$(ProjectFolder)" />
-  </Target>
-
-  <!--
-  ================================================================================================
-  UpdateFeed
-
-    Updates a project's .feed file with the build version and changes from History.md.
-
-  ================================================================================================
-  -->
-  <Target Name="UpdateFeed"
-          Condition=" $(SkipUpdateFeed)=='' "
-          DependsOnTargets="GetReleasedFiles">
-    <ItemGroup>
-      <CoreMsi Include="@(ReleasedFiles)" Condition=" '%(Filename)%(Extension)'=='core.msi' " />
-      <CoreExe Include="@(ReleasedFiles)" Condition=" '%(Extension)'=='.exe' " />
-    </ItemGroup>
-
-    <RemoveDuplicates Inputs="@(CoreMsi)">
-      <Output TaskParameter="Filtered"
-              ItemName="CoreMsiFiltered"/>
-    </RemoveDuplicates>
-
-    <RemoveDuplicates Inputs="@(CoreExe)">
-      <Output TaskParameter="Filtered"
-              ItemName="CoreExeFiltered"/>
-    </RemoveDuplicates>
-
-    <Exec Command="cscript $(MSBuildThisFileDirectory)atomUpdate.js $(ProjectHistoryFile) $(ProjectFeedFile) @(CoreMsiFiltered) @(CoreExeFiltered) //nologo"
           WorkingDirectory="$(ProjectFolder)" />
   </Target>
 
@@ -162,21 +130,6 @@
 
     <!--<Exec Command="$(CurlExe) -ftp-create-dirs -silent -show-error -C - -T %(ReleasedFiles.Identity) -u $(ReleaseUsername):$(ReleasePassword) $(ReleaseFtpUrl)%(RelativeUploadFolder)"
            WorkingDirectory="$(ProjectFolder)" />-->
-  </Target>
-
-  <!--
-  ================================================================================================
-  UploadFeed
-
-    Uploads the feed a project's build.
-
-  ================================================================================================
-  -->
-  <Target Name="UploadFeed"
-          Condition=" $(SkipUploadFeed)=='' "
-          DependsOnTargets="GetReleasedFiles">
-    <Exec Command="$(CurlExe) --ftp-create-dirs --silent --show-error -T $(ProjectFeedFile) -u $(ReleaseUsername):$(ReleasePassword) $(ReleaseFtpUrl)"
-          WorkingDirectory="$(ProjectFolder)" />
   </Target>
 
   <!--

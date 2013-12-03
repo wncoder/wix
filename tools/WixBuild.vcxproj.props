@@ -10,7 +10,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
 
   <PropertyGroup>
-    <!-- If VS2012 available and we're not explicitly setting the toolset, use VS2012. -->
+    <!-- If available and we're not explicitly setting the toolset, use VS2013; otherwise fall back to VS2012 then VS2010. -->
+    <PlatformToolset Condition=" '$(PlatformToolset)'=='' and $(VS2013Available) ">v120_xp</PlatformToolset>
     <PlatformToolset Condition=" '$(PlatformToolset)'=='' and $(VS2012Available) ">v110_xp</PlatformToolset>
     <ProjectSubSystem Condition=" '$(ProjectSubSystem)'=='' ">Windows</ProjectSubSystem>
   </PropertyGroup>
