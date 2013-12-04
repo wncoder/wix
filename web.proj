@@ -30,8 +30,12 @@
     <WebV4ManualSourceFolder>$(WebV4ManualFolder)src\</WebV4ManualSourceFolder>
     <WebV4ManualOutputFolder>$(WebV4ManualFolder)out\</WebV4ManualOutputFolder>
 
-    <DownloadFolder>$(ProjectRoot)build\dl\</DownloadFolder>
-    <PublishFolder>$(ProjectFolder)build\publish\</PublishFolder>
+    <BuildFolder>$(OutputFolder)</BuildFolder>
+    <BuildFolder Condition="'$(BuildFolder)' == '' ">$(ProjectRoot)build\</BuildFolder>
+    <BuildFolder Condition="'$(BuildFolder)' != '' and !HasTrailingSlash('$(BuildFolder)')">$(BuildFolder)\</BuildFolder>
+
+    <DownloadFolder>$(BuildFolder)dl\</DownloadFolder>
+    <PublishFolder>$(BuildFolder)publish\</PublishFolder>
   </PropertyGroup>
 
   <!-- TODO: remove this when the Ftp MSBuild Task starts working -->
@@ -163,7 +167,7 @@
   </Target>
 
   <Target Name="Clean">
-    <RemoveDir Directories="$(PublishFolder);$(WebRootOutputFolder);$(WebReleaseOutputFolder);$(WebV3ManualOutputFolder)" />
+    <RemoveDir Directories="$(BuildFolder);$(WebRootOutputFolder);$(WebReleaseOutputFolder);$(WebV3ManualOutputFolder)" />
     <Delete Files="@(CommonFiles->'$(WebReleaseSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
     <Delete Files="@(CommonFiles->'$(WebRootSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
     <Delete Files="@(CommonFiles->'$(WebV3ManualSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
