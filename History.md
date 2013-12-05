@@ -1,3 +1,5 @@
+* BMurri: WIXBUG:4225 - DTF: InstallPathMap didn't accept identifiers differing only by case.
+
 ## WixBuild: Version 3.9.02.0
 
 * BMurri: WIXBUG:4174 - Prevent unneeded build errors when generating delta patches with long file ids.
