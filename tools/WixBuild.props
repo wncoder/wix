@@ -103,24 +103,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VS2008Path Condition=" '$(VS2008Path)'=='' ">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0', 'InstallDir', null, RegistryView.Registry64, RegistryView.Registry32))</VS2008Path>
-    <VS2008SdkPath Condition=" '$(VS2008SdkPath)'=='' ">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\VSIP\9.0', 'InstallDir', null, RegistryView.Registry64, RegistryView.Registry32))</VS2008SdkPath>
-    <VS2008SdkTargetsPath Condition=" '$(VS2008SdkTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v9.0\VSSDK\Microsoft.VsSDK.targets</VS2008SdkTargetsPath>
-    <VS2008SdkTargetsPath Condition=" '$(VS2008SdkTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v9.0\VSSDK\Microsoft.VsSDK.targets</VS2008SdkTargetsPath>
-
-    <VS2008Available Condition=" '$(VS2008Path)'!='' and Exists('$(VS2008Path)')">true</VS2008Available>
-    <VS2008Available Condition=" '$(VS2008Available)'=='' ">false</VS2008Available>
-    <VS2008SdkAvailable Condition=" $(VS2008Available) and '$(VS2008SdkPath)'!='' and Exists('$(VS2008SdkTargetsPath)')">true</VS2008SdkAvailable>
-    <VS2008SdkAvailable Condition=" '$(VS2008SdkAvailable)'=='' ">false</VS2008SdkAvailable>
-
-    <VS2008Path Condition=" $(VS2008Available) and !HasTrailingSlash('$(VS2008Path)')">$(VS2008Path)\</VS2008Path>
-    <VS2008SdkPath Condition=" $(VS2008SdkAvailable) and !HasTrailingSlash('$(VS2008SdkPath)')">$(VS2008SdkPath)\</VS2008SdkPath>
-
-    <VS2008PublicAssembliesPath>$(VS2008Path)PublicAssemblies\</VS2008PublicAssembliesPath>
-    <VS2008SdkVisualStudioIntegrationAssembliesPath>$(VS2008SdkPath)VisualStudioIntegration\Common\Assemblies\</VS2008SdkVisualStudioIntegrationAssembliesPath>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <VS2010Path Condition=" '$(VS2010Path)'=='' ">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\10.0', 'InstallDir', null, RegistryView.Registry64, RegistryView.Registry32))</VS2010Path>
     <VS2010SdkPath Condition=" '$(VS2010SdkPath)'=='' ">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\VSIP\10.0', 'InstallDir', null, RegistryView.Registry64, RegistryView.Registry32))</VS2010SdkPath>
     <VS2010SdkTargetsPath Condition=" '$(VS2010SdkTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\VSSDK\Microsoft.VsSDK.targets</VS2010SdkTargetsPath>

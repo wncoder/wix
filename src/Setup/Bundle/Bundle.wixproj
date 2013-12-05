@@ -35,9 +35,6 @@
     <ProjectReference Include="..\CoreMsi\CoreMsi.wixproj" />
     <ProjectReference Include="..\X64Msi\X64Msi.wixproj" />
     <ProjectReference Include="..\ManagedSdkMsi\ManagedSdkMsi.wixproj" />
-    <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi2008.wixproj" Condition="$(VS2008Available)">
-      <Properties>VisualStudioTargetVersion=2008</Properties>
-    </ProjectReference>
     <ProjectReference Include="..\NativeSdkMsi\NativeSdkMsi2010.wixproj" Condition="$(VS2010Available)">
       <Properties>VisualStudioTargetVersion=2010</Properties>
     </ProjectReference>

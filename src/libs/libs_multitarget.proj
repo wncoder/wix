@@ -12,21 +12,6 @@
     <BuildInParallel>false</BuildInParallel>
   </PropertyGroup>
 
-  <ItemGroup Condition=" $(VS2008Available) ">
-    <ProjectReference Include="dutil\dutil.vcxproj">
-      <Properties>PlatformToolset=v90</Properties>
-    </ProjectReference>
-    <ProjectReference Include="wcautil\wcautil.vcxproj">
-      <Properties>PlatformToolset=v90</Properties>
-    </ProjectReference>
-    <ProjectReference Include="balutil\balutil.vcxproj" Condition=" '$(Platform)'!='x64' ">
-      <Properties>PlatformToolset=v90</Properties>
-    </ProjectReference>
-    <ProjectReference Include="deputil\deputil.vcxproj">
-      <Properties>PlatformToolset=v90</Properties>
-    </ProjectReference>
-  </ItemGroup>
-
   <ItemGroup Condition=" $(VS2010Available) ">
     <ProjectReference Include="dutil\dutil.vcxproj">
       <Properties>PlatformToolset=v100</Properties>
