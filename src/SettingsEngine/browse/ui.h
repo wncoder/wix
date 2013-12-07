@@ -96,6 +96,17 @@ HRESULT UIListViewSetItemText(
     __in DWORD dwColumnIndex,
     __in LPCWSTR sczText
     );
+HRESULT UIListViewSetItem(
+    __in const HWND hwnd,
+    __in DWORD dwIndex,
+    __in LPCWSTR sczText,
+    __in DWORD dwParam,
+    __in DWORD dwImage
+    );
+void UIListViewTrimSize(
+    __in const HWND hwnd,
+    __in DWORD dwNewRowCount
+    );
 HRESULT UIExportFile(
     __in const HWND hwnd,
     __out_z LPWSTR *psczPath

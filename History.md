@@ -1,3 +1,7 @@
+* MikeGC: Preserve scroll position on Settings Browser ListView refresh
+* MikeGC: Make value history listview in Settings Browser automatically refresh when syncs occur
+* MikeGC: Allow exporting historical versions of files from Settings Browser
+
 * MikeGC: Fix Settings Engine to behave better when remote database is not always available due to either USB drive unplugged or a network disconnection.
 
 * RobMen: Merge recent changes through WiX v3.8 RTM.

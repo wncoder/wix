@@ -321,7 +321,6 @@ BOOL ProcessMessage(
     BYTE *pbData = NULL;
     DWORD cbData = 0;
     LPWSTR sczTemp = NULL;
-    LPCWSTR wzTemp = NULL;
     DWORD_STRING *pdsDwordString = NULL;
     QWORD_STRING *pqsQwordString = NULL;
     STRING_PAIR *pspStringPair = NULL;
@@ -471,31 +470,20 @@ BOOL ProcessMessage(
 
     case WM_BROWSE_ENUMERATE_VALUE_HISTORY:
         dwIndex = static_cast<DWORD>(msg->wParam);
-        dwTemp = static_cast<DWORD>(msg->lParam);
+        sczTemp = reinterpret_cast<LPWSTR>(msg->lParam);
 
-        hrSend = CfgEnumReadString(bdlDatabaseList.rgDatabases[dwIndex].cehValueList, dwTemp, ENUM_DATA_VALUENAME, &wzTemp);
-        if (FAILED(hr))
+        hrSend = CfgEnumPastValues(bdlDatabaseList.rgDatabases[dwIndex].cdb, sczTemp, &cehHandle, &dwEnumCount);
+        ::EnterCriticalSection(&bdlDatabaseList.rgDatabases[dwIndex].cs);
+        fCsEntered = TRUE;
+
+        CfgReleaseEnumeration(bdlDatabaseList.rgDatabases[dwIndex].cehValueHistory);
+        bdlDatabaseList.rgDatabases[dwIndex].cehValueHistory = cehHandle;
+        cehHandle = NULL;
+        bdlDatabaseList.rgDatabases[dwIndex].dwValueHistoryCount = dwEnumCount;
+
+        if (!::PostMessageW(hwnd, WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED, static_cast<WPARAM>(hrSend), static_cast<LPARAM>(dwIndex)))
         {
-            if (!::PostMessageW(hwnd, WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED, static_cast<WPARAM>(hrSend), static_cast<LPARAM>(dwIndex)))
-            {
-                ExitWithLastError(hr, "Failed to send WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED message after failing to read enum");
-            }
-        }
-        else
-        {
-            hrSend = CfgEnumPastValues(bdlDatabaseList.rgDatabases[dwIndex].cdb, wzTemp, &cehHandle, &dwEnumCount);
-            ::EnterCriticalSection(&bdlDatabaseList.rgDatabases[dwIndex].cs);
-            fCsEntered = TRUE;
-
-            CfgReleaseEnumeration(bdlDatabaseList.rgDatabases[dwIndex].cehValueHistory);
-            bdlDatabaseList.rgDatabases[dwIndex].cehValueHistory = cehHandle;
-            cehHandle = NULL;
-            bdlDatabaseList.rgDatabases[dwIndex].dwValueHistoryCount = dwEnumCount;
-
-            if (!::PostMessageW(hwnd, WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED, static_cast<WPARAM>(hrSend), static_cast<LPARAM>(dwIndex)))
-            {
-                ExitWithLastError(hr, "Failed to send WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED message");
-            }
+            ExitWithLastError(hr, "Failed to send WM_BROWSE_ENUMERATE_VALUE_HISTORY_FINISHED message");
         }
         break;
     
@@ -776,7 +764,6 @@ BOOL ProcessMessage(
                 {
                     ExitWithLastError(hr, "Failed to send WM_BROWSE_AUTOSYNC_REMOTE_FAILURE message");
                 }
-                break;
             }
         }
         else if (BACKGROUND_STATUS_REMOTE_GOOD == pBackgroundStatusCallback->type)
@@ -789,7 +776,6 @@ BOOL ProcessMessage(
                 {
                     ExitWithLastError(hr, "Failed to send WM_BROWSE_AUTOSYNC_REMOTE_GOOD message");
                 }
-                break;
             }
         }
         break;
