@@ -1,3 +1,5 @@
+* MikeGC: Make Settings Browser automatically start on install, restart on repair, and close on uninstall
+
 * MikeGC: Fix Settings Engine to behave better when remote database is not always available due to either USB drive unplugged or a network disconnection.
 
 * RobMen: Merge recent changes through WiX v3.8 RTM.
