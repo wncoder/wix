@@ -33,6 +33,9 @@ extern "C" HRESULT CFGAPI CfgCreateRemoteDatabase(
 {
     HRESULT hr = S_OK;
 
+    ExitOnNull(wzPath, hr, E_INVALIDARG, "Remote path must not be NULL");
+    ExitOnNull(pcdHandle, hr, E_INVALIDARG, "Handle output pointer must not be NULL");
+
     if (FileExistsEx(wzPath, NULL))
     {
         hr = HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS);
@@ -52,6 +55,9 @@ extern "C" HRESULT CFGAPI CfgOpenRemoteDatabase(
     )
 {
     HRESULT hr = S_OK;
+
+    ExitOnNull(wzPath, hr, E_INVALIDARG, "Remote path must not be NULL");
+    ExitOnNull(pcdHandle, hr, E_INVALIDARG, "Handle output pointer must not be NULL");
 
     if (!FileExistsEx(wzPath, NULL))
     {
@@ -190,6 +196,7 @@ extern "C" HRESULT CFGAPI CfgForgetDatabase(
     CFGDB_STRUCT *pcdbRemote = static_cast<CFGDB_STRUCT *>(cdRemoteHandle);
 
     ExitOnNull(pcdbLocal, hr, E_INVALIDARG, "Local database handle input pointer must not be NULL");
+    ExitOnNull(cdRemoteHandle, hr, E_INVALIDARG, "Remote database handle input pointer must not be NULL");
     ExitOnNull(wzFriendlyName, hr, E_INVALIDARG, "Friendly name must not be NULL");
 
     hr = HandleLock(pcdbLocal);
@@ -225,6 +232,8 @@ extern "C" HRESULT CFGAPI CfgRemoteDisconnect(
     CFGDB_STRUCT *pcdb = static_cast<CFGDB_STRUCT *>(cdHandle);
     CFGDB_STRUCT *pcdbLocal = pcdb->pcdbLocal;
     BOOL fLocked = FALSE;
+
+    ExitOnNull(pcdb, hr, E_INVALIDARG, "Remote database handle input pointer must not be NULL");
 
     LogStringLine(REPORT_STANDARD, "Disconnecting from remote database at path: %ls", pcdb->sczDbPath);
 
