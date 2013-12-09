@@ -13,7 +13,7 @@
 
 #include "precomp.h"
 
-// This does various corrections to the name seen in arp like removing "(remove only)" from the end, trimming whitespace, etc.
+// This does various corrections to the name seen in arp like trimming whitespace, etc.
 static HRESULT CorrectArpName(
     __in LPWSTR sczOriginalName,
     __out LPWSTR *psczCorrectedName
@@ -572,7 +572,6 @@ static HRESULT CorrectArpName(
     )
 {
     HRESULT hr = S_OK;
-    LPWSTR wzFindResult = NULL;
 
     // trim leading whitespace
     while (*sczOriginalName == L' ' || *sczOriginalName == L'\t')
@@ -589,22 +588,7 @@ static HRESULT CorrectArpName(
         --dwLastIndex;
     }
 
-    wzFindResult = wcsstr(sczOriginalName, L" (remove only)");
-    if (lstrlenW(wzFindResult) == lstrlenW(L" (remove only)"))
-    {
-        *wzFindResult = L'\0';
-    }
-
-    // trim trailing whitespace again
-    dwLastIndex = lstrlenW(sczOriginalName) - 1;
-
-    while(dwLastIndex > 0 && (sczOriginalName[dwLastIndex] == L' ' || sczOriginalName[dwLastIndex] == L'\t'))
-    {
-        sczOriginalName[dwLastIndex] = L'\0';
-        --dwLastIndex;
-    }
-    
-    // TODO: remove trailing versions, and other things that won't match the product display name
+    // TODO: allow some way (specified in manifest) of removing versions
 
     hr = StrAllocString(psczCorrectedName, sczOriginalName, 0);
     ExitOnFailure1(hr, "Failed to allocate copy of string while correcting arp product name: %ls", sczOriginalName);

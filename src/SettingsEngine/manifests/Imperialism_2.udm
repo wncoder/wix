@@ -7,8 +7,15 @@
 
         <Data>
             <Directory Namespace="Save" Location="InstallDir:\Save"/>
+            <RegistryKey Namespace="Reg" Root="HKCU" Key="Software\SSI\Imperialism II\"/>
         </Data>
 
         <DisplayName LCID="1033">Imperialism II - Age of Exploration</DisplayName>
+
+        <Filter>
+            <!-- Pref2 is sound effects volume (0-100), Pref3 is music volume (0-255) -->
+            <Ignore Name="Reg:\Settings\Pref2"/>
+            <Ignore Name="Reg:\Settings\Pref3"/>
+        </Filter>
     </Product>
 </LegacySettings>
