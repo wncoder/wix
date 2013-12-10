@@ -731,9 +731,9 @@ static HRESULT BeginMonitoring(
 
     for (DWORD i = 0; i < pcdb->cOpenDatabases; ++i)
     {
-        if (pcdb->fSyncByDefault)
+        if (pcdb->rgpcdbOpenDatabases[i]->fSyncByDefault)
         {
-            hr = AddRemoteToMonitorList(pcdb, pcdb->rgpcdbOpenDatabases[i]->sczDbPath, pContext);
+            hr = AddRemoteToMonitorList(pcdb, pcdb->rgpcdbOpenDatabases[i]->sczOriginalDbPath, pContext);
             ExitOnFailure(hr, "Failed to add remote to monitor list");
         }
     }
