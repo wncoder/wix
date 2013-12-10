@@ -21,7 +21,7 @@
   <Page Name="ProductList">
     <Text Name="ProductListDatabaseName" X="10" Y="25" Width="200" Height="15" FontId="0" />
     <Text X="10" Y="40" Width="200" Height="15" FontId="0">#(loc.ProductListHeader)</Text>
-    <ListView Name="ProductListView" TabStop="yes" X="10" Y="55" Width="-210" Height="-10" FontId="0" ImageListSmall="InstallState" HexStyle="0000001D" HexExtendedStyle="00000021">
+    <ListView Name="ProductListView" TabStop="yes" X="10" Y="55" Width="-210" Height="-10" FontId="0" ImageListSmall="InstallState" HexStyle="0000000D" HexExtendedStyle="00000021">
       <Column Width="354" Expands="yes">#(loc.ProductName)</Column>
       <Column Width="80">#(loc.ProductVersion)</Column>
       <Column Width="115">#(loc.ProductPublicKey)</Column>
@@ -39,7 +39,7 @@
     <Text X="10" Y="55" Width="185" Height="15" FontId="0">#(loc.SingleProductValuesHeader)</Text>
 
     <!-- Value display / buttons -->
-    <ListView Name="ValueListView" TabStop="yes" X="10" Y="70" Width="-210" Height="-10" FontId="0" HexStyle="00000019" HexExtendedStyle="00000021">
+    <ListView Name="ValueListView" TabStop="yes" X="10" Y="70" Width="-210" Height="-10" FontId="0" HexStyle="00000009" HexExtendedStyle="00000021">
       <Column Width="280" Expands="yes">#(loc.ValueNameColumn)</Column>
       <Column Width="60">#(loc.ValueTypeColumn)</Column>
       <Column Width="120" Expands="yes">#(loc.ValueColumn)</Column>
@@ -89,6 +89,7 @@
       <Column Width="130">#(loc.WhenColumn)</Column>
     </ListView>
     <Button Name="SingleValueHistoryBackButton" X="-20" Y="50" Width="150" Height="20" FontId="0" TabStop="yes">#(loc.BackButton)</Button>
+    <Button Name="SingleFileHistoryExportFileButton" X="-20" Y="75" Width="150" Height="20" FontId="0" TabStop="yes">#(loc.ExportFileButton)</Button>
   </Page>
 
   <!-- Other databases main screen (database list) -->

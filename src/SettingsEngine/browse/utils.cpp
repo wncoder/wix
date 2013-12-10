@@ -23,6 +23,7 @@ void UtilFreeDatabase(
     ReleaseStr(pDatabase->sczName);
     ReleaseStr(pDatabase->sczStatusMessage);
     ReleaseStr(pDatabase->sczCurrentProductDisplayName);
+    ReleaseStr(pDatabase->sczValueName);
     CfgReleaseEnumeration(pDatabase->cehDatabaseList);
     CfgReleaseEnumeration(pDatabase->cehProductList);
     CfgReleaseEnumeration(pDatabase->cehValueList);

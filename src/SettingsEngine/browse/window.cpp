@@ -163,6 +163,38 @@ LExit:
     return hr;
 }
 
+HRESULT BrowseWindow::EnumerateValueHistory(
+    DWORD dwIndex
+    )
+{
+    HRESULT hr = S_OK;
+    LPWSTR sczValueName = NULL;
+
+    m_pbdlDatabaseList->rgDatabases[dwIndex].vhmValueHistoryMode = HISTORY_NORMAL;
+    m_pbdlDatabaseList->rgDatabases[dwIndex].fValueHistoryLoading = TRUE;
+    m_pbdlDatabaseList->rgDatabases[dwIndex].hrValueHistoryResult = S_OK;
+
+    hr = RefreshValueHistoryList(dwIndex);
+    ExitOnFailure(hr, "Failed to update value history list");
+
+    if (NULL != CURRENTDATABASE.sczValueName)
+    {
+        hr = StrAllocString(&sczValueName, CURRENTDATABASE.sczValueName, 0);
+        ExitOnFailure(hr, "Failed to copy value name for WM_BROWSE_ENUMERATE_VALUE_HISTORY message");
+
+        if (!::PostThreadMessageW(m_dwWorkThreadId, WM_BROWSE_ENUMERATE_VALUE_HISTORY, static_cast<WPARAM>(dwIndex), reinterpret_cast<LPARAM>(sczValueName)))
+        {
+            ExitWithLastError(hr, "Failed to send message to worker thread to enumerate value history");
+        }
+        sczValueName = NULL;
+    }
+
+LExit:
+    ReleaseStr(sczValueName);
+
+    return hr;
+}
+
 DWORD BrowseWindow::GetSelectedValueIndex()
 {
     DWORD dwRetVal = DWORD_MAX;
@@ -178,7 +210,7 @@ DWORD BrowseWindow::GetSelectedValueHistoryIndex()
     DWORD dwRetVal = DWORD_MAX;
 
     // Ignore errors
-    UIGetSingleSelectedItemFromListView(::GetDlgItem(m_hWnd, BROWSE_CONTROL_VALUE_LIST_VIEW), NULL, &dwRetVal);
+    UIGetSingleSelectedItemFromListView(::GetDlgItem(m_hWnd, BROWSE_CONTROL_SINGLE_VALUE_HISTORY_LIST_VIEW), NULL, &dwRetVal);
 
     return dwRetVal;
 }
@@ -479,7 +511,7 @@ LExit:
     return hr;
 }
 
-HRESULT BrowseWindow::RefreshValueHistory(DWORD dwDatabaseIndex)
+HRESULT BrowseWindow::RefreshValueHistoryList(DWORD dwDatabaseIndex)
 {
     HRESULT hr = S_OK;
     BOOL fCsEntered = FALSE;
@@ -491,7 +523,7 @@ HRESULT BrowseWindow::RefreshValueHistory(DWORD dwDatabaseIndex)
         ExitFunction1(hr = S_OK);
     }
     C_CFG_ENUMERATION_HANDLE pcehEnumSwitcher = NULL;
-    HWND hwnd = ::GetDlgItem(m_hWnd, BROWSE_CONTROL_SINGLE_VALUE_HISTORY_VIEW);
+    HWND hwnd = ::GetDlgItem(m_hWnd, BROWSE_CONTROL_SINGLE_VALUE_HISTORY_LIST_VIEW);
 
     ::EnterCriticalSection(&DATABASE(dwDatabaseIndex).cs);
     fCsEntered = TRUE;
@@ -537,6 +569,8 @@ HRESULT BrowseWindow::RefreshValueHistory(DWORD dwDatabaseIndex)
     }
     else
     {
+        ThemeControlEnable(m_pTheme, BROWSE_CONTROL_SINGLE_VALUE_HISTORY_EXPORT_FILE_BUTTON, FALSE);
+
         hr = UISetListViewToValueHistoryEnum(hwnd, pcehEnumSwitcher);
         ExitOnFailure(hr, "Failed to set listview to value enum history for value history screen");
     }
@@ -1037,6 +1071,7 @@ LRESULT CALLBACK BrowseWindow::WndProc(
     LPWSTR sczTemp1 = NULL;
     LPWSTR sczTemp2 = NULL;
     LPCWSTR wzText = NULL;
+    CONFIG_VALUETYPE cvType = VALUE_INVALID;
     LVITEMW lvItem = { };
     NMITEMACTIVATE *lpnmitem = NULL;
     OPENFILENAMEW ofn = { };
@@ -1390,7 +1425,7 @@ LRESULT CALLBACK BrowseWindow::WndProc(
         UXDATABASE(dwIndex).fValueHistoryLoading = FALSE;
         UXDATABASE(dwIndex).vhmValueHistoryMode = HISTORY_NORMAL;
 
-        hr = pUX->RefreshValueHistory(dwIndex);
+        hr = pUX->RefreshValueHistoryList(dwIndex);
         ExitOnFailure(hr, "Failed to refresh value history listview");
 
         ExitFunction();
@@ -1483,6 +1518,9 @@ LRESULT CALLBACK BrowseWindow::WndProc(
 
         hr = pUX->EnumerateValues(pUX->m_dwLocalDatabaseIndex);
         ExitOnFailure(hr, "Failed to enumerate values in local database");
+
+        hr = pUX->EnumerateValueHistory(pUX->m_dwLocalDatabaseIndex);
+        ExitOnFailure(hr, "Failed to enumerate value history in local database");
 
         // And for the database we synced with
         hr = pUX->EnumerateProducts(dwIndex);
@@ -1687,6 +1725,27 @@ LRESULT CALLBACK BrowseWindow::WndProc(
                 break;
             }
             break;
+        case BROWSE_CONTROL_SINGLE_VALUE_HISTORY_LIST_VIEW:
+            lpnmitem = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
+            switch (lpnmitem->hdr.code)
+            {
+            case NM_CLICK:
+                dwTemp1 = pUX->GetSelectedValueHistoryIndex();
+
+                if (DWORD_MAX != dwTemp1)
+                {
+                    hr = CfgEnumReadDataType(CURRENTUXDATABASE.cehValueHistory, pUX->GetSelectedValueHistoryIndex(), ENUM_DATA_VALUETYPE, &cvType);
+                    ExitOnFailure(hr, "Failed to get data type from value history enumeration");
+                }
+                else
+                {
+                    cvType = VALUE_DELETED;
+                }
+
+                ThemeControlEnable(pUX->m_pTheme, BROWSE_CONTROL_SINGLE_VALUE_HISTORY_EXPORT_FILE_BUTTON, VALUE_BLOB == cvType);
+                break;
+            }
+            break;
         case BROWSE_CONTROL_SINGLE_DB_CONFLICTS_VIEW:
             lpnmitem = reinterpret_cast<LPNMITEMACTIVATE>(lParam);
             switch (lpnmitem->hdr.code)
@@ -1850,10 +1909,14 @@ LRESULT CALLBACK BrowseWindow::WndProc(
                     ExitOnFailure(hr, "Failed while switching other databases state to single value history screen");
                 }
 
-                if (!::PostThreadMessageW(pUX->m_dwWorkThreadId, WM_BROWSE_ENUMERATE_VALUE_HISTORY, static_cast<WPARAM>(pUX->m_dwDatabaseIndex), static_cast<LPARAM>(pUX->GetSelectedValueIndex())))
-                {
-                    ExitWithLastError(hr, "Failed to send message to worker thread to enumerate value history");
-                }
+                hr = CfgEnumReadString(CURRENTUXDATABASE.cehValueList, pUX->GetSelectedValueIndex(), ENUM_DATA_VALUENAME, &wzText);
+                ExitOnFailure(hr, "Failed to read value name to enumerate value history");
+
+                hr = StrAllocString(&CURRENTUXDATABASE.sczValueName, wzText, 0);
+                ExitOnFailure(hr, "Failed to copy value name");
+
+                hr = pUX->EnumerateValueHistory(pUX->m_dwDatabaseIndex);
+                ExitOnFailure(hr, "Failed to enumerate value history");
             }
             break;
         case BROWSE_CONTROL_VIEW_MY_VALUE_HISTORY_BUTTON:
@@ -2161,6 +2224,29 @@ LRESULT CALLBACK BrowseWindow::WndProc(
             else
             {
                 // Do nothing
+            }
+            break;
+        case BROWSE_CONTROL_SINGLE_VALUE_HISTORY_EXPORT_FILE_BUTTON:
+            if (BN_CLICKED != HIWORD(wParam) || !(CURRENTUXDATABASE.fInitialized))
+            {
+                ExitFunction1(hr = S_OK);
+            }
+
+            dwTemp1 = pUX->GetSelectedValueHistoryIndex();
+
+            if (DWORD_MAX == dwTemp1)
+            {
+                ExitFunction1(hr = S_OK);
+            }
+
+            ReleaseNullStr(sczTemp1);
+            hr = UIExportFile(hWnd, &sczTemp1);
+            ExitOnFailure(hr, "Failed to request export path from user");
+
+            if (NULL != sczTemp1)
+            {
+                hr = SendDwordString(pUX->m_dwWorkThreadId, WM_BROWSE_EXPORT_FILE_FROM_HISTORY, pUX->m_dwDatabaseIndex, dwTemp1, sczTemp1);
+                ExitOnFailure(hr, "Failed to send WM_BROWSE_EXPORT_FILE_FROM_HISTORY message to worker thread");
             }
             break;
         case BROWSE_CONTROL_EXPORT_FILE_BUTTON:
@@ -2542,7 +2628,7 @@ HRESULT BrowseWindow::SetMainState(
     {
         CURRENTDATABASE.vhmValueHistoryMode = HISTORY_NORMAL;
 
-        hr = RefreshValueHistory(m_dwDatabaseIndex);
+        hr = RefreshValueHistoryList(m_dwDatabaseIndex);
         ExitOnFailure(hr, "Failed to refresh value history listview");
     }
 
@@ -2644,14 +2730,14 @@ HRESULT BrowseWindow::SetOtherDatabasesState(
     {
         CURRENTDATABASE.vhmValueHistoryMode = HISTORY_LOCAL_CONFLICTS;
 
-        hr = RefreshValueHistory(m_dwDatabaseIndex);
+        hr = RefreshValueHistoryList(m_dwDatabaseIndex);
         ExitOnFailure(hr, "Failed to refresh value history list");
     }
     else if (BROWSE_OTHERDATABASES_VIEW_OTHER_VALUE_CONFLICTS == state)
     {
         CURRENTDATABASE.vhmValueHistoryMode = HISTORY_REMOTE_CONFLICTS;
 
-        hr = RefreshValueHistory(m_dwDatabaseIndex);
+        hr = RefreshValueHistoryList(m_dwDatabaseIndex);
         ExitOnFailure(hr, "Failed to refresh value history list");
     }
     else if (BROWSE_OTHERDATABASES_SINGLE_DATABASE_SINGLEPRODUCT == state)

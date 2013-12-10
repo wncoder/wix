@@ -1,3 +1,9 @@
+* MikeGC: Preserve scroll position on Settings Browser ListView refresh.
+
+* MikeGC: Make value history listview in Settings Browser automatically refresh when syncs occur.
+
+* MikeGC: Allow exporting historical versions of files from Settings Browser.
+
 * MikeGC: Make Settings Browser automatically start on install, restart on repair, and close on uninstall.
 
 * MikeGC: Fix bug in settings engine autosync that would cause it to inadvertently stop monitoring remote databases for changes after detecting a new product had been installed.

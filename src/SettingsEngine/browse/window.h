@@ -121,8 +121,9 @@ enum BROWSE_CONTROL
     BROWSE_CONTROL_SINGLE_VALUE_HISTORY_DATABASE_NAME_TEXT,
     BROWSE_CONTROL_SINGLE_VALUE_HISTORY_PRODUCTNAME,
     BROWSE_CONTROL_SINGLE_VALUE_HISTORY_VALUENAME,
-    BROWSE_CONTROL_SINGLE_VALUE_HISTORY_VIEW,
+    BROWSE_CONTROL_SINGLE_VALUE_HISTORY_LIST_VIEW,
     BROWSE_CONTROL_SINGLE_VALUE_HISTORY_BACK_BUTTON,
+    BROWSE_CONTROL_SINGLE_VALUE_HISTORY_EXPORT_FILE_BUTTON,
 
     // Other databases main screen (database list)
     BROWSE_CONTROL_OTHERDATABASES_VIEW,
@@ -206,8 +207,9 @@ __declspec(selectany) THEME_ASSIGN_CONTROL_ID vrgInitControls[] = {
     { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_DATABASE_NAME_TEXT, L"SingleValueHistoryDatabaseName" },
     { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_PRODUCTNAME, L"SingleValueHistoryProductName" },
     { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_VALUENAME, L"SingleValueHistoryValueName" },
-    { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_VIEW, L"SingleValueHistoryView" },
+    { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_LIST_VIEW, L"SingleValueHistoryView" },
     { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_BACK_BUTTON, L"SingleValueHistoryBackButton" },
+    { BROWSE_CONTROL_SINGLE_VALUE_HISTORY_EXPORT_FILE_BUTTON, L"SingleFileHistoryExportFileButton" },
 
     // Other databases main screen (database list)
     { BROWSE_CONTROL_OTHERDATABASES_VIEW, L"OtherDatabasesMainScreenView" },
@@ -267,6 +269,7 @@ public:
     HRESULT EnumerateProducts(DWORD dwIndex);
     HRESULT EnumerateDatabases(DWORD dwIndex);
     HRESULT EnumerateValues(DWORD dwIndex);
+    HRESULT EnumerateValueHistory(DWORD dwIndex);
 
     DWORD GetSelectedValueIndex();
     DWORD GetSelectedValueHistoryIndex();
@@ -281,7 +284,7 @@ public:
     // Listview refresh functions
     HRESULT RefreshProductList(DWORD dwDatabaseIndex);
     HRESULT RefreshValueList(DWORD dwDatabaseIndex);
-    HRESULT RefreshValueHistory(DWORD dwDatabaseIndex);
+    HRESULT RefreshValueHistoryList(DWORD dwDatabaseIndex);
 
     HRESULT RefreshSingleDatabaseConflictList(DWORD dwDatabaseIndex);
     HRESULT RefreshSingleProductValuesConflictList(DWORD dwDatabaseIndex);

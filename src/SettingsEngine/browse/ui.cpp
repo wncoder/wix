@@ -18,6 +18,14 @@ static const LPCWSTR RESOLVE_MIXED_TEXT = L"(Mixed)";
 static const LPCWSTR RESOLVE_MINE_TEXT = L"Mine";
 static const LPCWSTR RESOLVE_NONE_TEXT = L"(Unresolved)";
 
+static HRESULT ListViewSort(
+    __in HWND hwnd
+    );
+static int CALLBACK ListViewItemCompare(
+    __in LPARAM lParam1,
+    __in LPARAM lParam2,
+    __in LPARAM lParamSort
+    );
 
 LPCWSTR UIGetResolutionText(
     __in RESOLUTION_CHOICE rcChoice,
@@ -132,17 +140,49 @@ HRESULT UISetListViewText(
     )
 {
     HRESULT hr = S_OK;
-    DWORD dwInsertIndex = 0;
+    DWORD dwTopIndex = 0;
+    DWORD dwNumRows = ListView_GetItemCount(hwnd);
 
     ::EnableWindow(hwnd, FALSE);
 
-    if (!::SendMessageW(hwnd, LVM_DELETEALLITEMS, 0, 0))
+    // Figure out number of columns in listview
+    HWND hwndHeader = reinterpret_cast<HWND>(SendMessageW(hwnd, LVM_GETHEADER, static_cast<WPARAM>(NULL), static_cast<LPARAM>(NULL)));
+    DWORD64 uNumColumns = SendMessageW(hwndHeader, HDM_GETITEMCOUNT, static_cast<WPARAM>(NULL), static_cast<LPARAM>(NULL));
+
+    if (0 == ListView_GetItemCount(hwnd))
     {
-        ExitWithLastError(hr, "Failed to delete all items from list view");
+        hr = UIListViewInsertItem(hwnd, &dwTopIndex, sczText, 0, 0);
+        ExitOnFailure(hr, "Failed to insert text into listview control");
+    }
+    else
+    {
+        dwTopIndex = ::SendMessageW(hwnd, LVM_GETTOPINDEX, 0, 0);
     }
 
-    hr = UIListViewInsertItem(hwnd, &dwInsertIndex, sczText, 0, DWORD_MAX);
-    ExitOnFailure(hr, "Failed to insert text into listview");
+    hr = UIListViewSetItem(hwnd, dwTopIndex, sczText, 0, DWORD_MAX);
+    ExitOnFailure(hr, "Failed to set list view first visible item as text");
+
+    // Clearing text in all remaining columns
+    for (DWORD i = 1; i < uNumColumns; ++i)
+    {
+        hr = UIListViewSetItemText(hwnd, dwTopIndex, i, L"");
+        ExitOnFailure1(hr, "Failed to clear text on sub item %u", i);
+    }
+
+    // Now do so for all remaining rows of the listview that are visible
+    for (DWORD i = dwTopIndex + 1; i < dwNumRows; ++i)
+    {
+        hr = UIListViewSetItem(hwnd, i, L"", 0, DWORD_MAX);
+        ExitOnFailure1(hr, "Failed to set row %u first column", i);
+
+        for (DWORD j = 1; j < uNumColumns; ++j)
+        {
+            hr = UIListViewSetItemText(hwnd, i, j, L"");
+            ExitOnFailure1(hr, "Failed to clear text on sub item %u", j);
+        }
+    }
+
+    hr = S_OK;
 
 LExit:
     return hr;
@@ -157,8 +197,11 @@ HRESULT UISetListViewToProductEnum(
     HRESULT hr = S_OK;
     DWORD dwInsertIndex = 0;
     DWORD dwCount = 0;
+    DWORD dwListViewRowCount;
     DWORD dwInsertImage = 0;
     LPCWSTR wzText = NULL;
+
+    dwListViewRowCount = ListView_GetItemCount(hwnd);
 
     if (NULL != cehProducts)
     {
@@ -168,20 +211,13 @@ HRESULT UISetListViewToProductEnum(
 
     if (0 == dwCount)
     {
-        EnableWindow(hwnd, FALSE);
-
         hr = UISetListViewText(hwnd, L"No products to display.");
         ExitOnFailure(hr, "Failed to set 'no products to display' string in product list view");
 
         ExitFunction1(hr = S_OK);
     }
 
-    if (!::SendMessageW(hwnd, LVM_DELETEALLITEMS, 0, 0))
-    {
-        ExitWithLastError(hr, "Failed to delete all items from list view");
-    }
-    EnableWindow(hwnd, TRUE);
-
+    UIListViewTrimSize(hwnd, dwCount);
     for (DWORD i = 0; i < dwCount; ++i)
     {
         dwInsertIndex = i;
@@ -200,8 +236,17 @@ HRESULT UISetListViewToProductEnum(
         {
             dwInsertImage = 0;
         }
-        hr = UIListViewInsertItem(hwnd, &dwInsertIndex, wzText, i, dwInsertImage);
-        ExitOnFailure(hr, "Failed to insert product into listview control");
+
+        if (dwInsertIndex >= dwListViewRowCount)
+        {
+            hr = UIListViewInsertItem(hwnd, &dwInsertIndex, wzText, i, dwInsertImage);
+            ExitOnFailure(hr, "Failed to insert product into listview control");
+        }
+        else
+        {
+            hr = UIListViewSetItem(hwnd, dwInsertIndex, wzText, i, dwInsertImage);
+            ExitOnFailure(hr, "Failed to set product in listview control");
+        }
 
         hr = CfgEnumReadString(cehProducts, i, ENUM_DATA_VERSION, &wzText);
         ExitOnFailure(hr, "Failed to read product version from enum");
@@ -215,6 +260,11 @@ HRESULT UISetListViewToProductEnum(
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 2, wzText);
         ExitOnFailure(hr, "Failed to set public key as listview subitem");
     }
+
+    hr = ListViewSort(hwnd);
+    ExitOnFailure(hr, "Failed to sort listview");
+
+    EnableWindow(hwnd, TRUE);
 
 LExit:
     return hr;
@@ -280,12 +330,15 @@ HRESULT UISetListViewToValueEnum(
     SYSTEMTIME st = { };
     DWORD dwCount = 0;
     DWORD dwValue = 0;
+    DWORD dwListViewRowCount = 0;
     DWORD64 qwValue = 0;
     BOOL fValue = FALSE;
     DWORD dwInsertIndex;
     LPCWSTR wzText = NULL;
     LPWSTR sczText = NULL;
     CONFIG_VALUETYPE cvType = VALUE_INVALID;
+
+    dwListViewRowCount = ListView_GetItemCount(hwnd);
 
     if (NULL != cehValues)
     {
@@ -295,20 +348,13 @@ HRESULT UISetListViewToValueEnum(
 
     if (0 == dwCount)
     {
-        EnableWindow(hwnd, FALSE);
-
         hr = UISetListViewText(hwnd, L"No values to display");
         ExitOnFailure(hr, "Failed to set 'no values' text in value listview");
 
         ExitFunction1(hr = S_OK);
     }
 
-    if (!::SendMessageW(hwnd, LVM_DELETEALLITEMS, 0, 0))
-    {
-        ExitWithLastError(hr, "Failed to delete all items from list view");
-    }
-    EnableWindow(hwnd, TRUE);
-
+    UIListViewTrimSize(hwnd, dwCount);
     for (i = 0; i < dwCount; ++i)
     {
         dwInsertIndex = i;
@@ -316,8 +362,16 @@ HRESULT UISetListViewToValueEnum(
         hr = CfgEnumReadString(cehValues, i, ENUM_DATA_VALUENAME, &wzText);
         ExitOnFailure(hr, "Failed to read value enumeration");
 
-        hr = UIListViewInsertItem(hwnd, &dwInsertIndex, wzText, i, 0);
-        ExitOnFailure(hr, "Failed to insert value name into listview control");
+        if (dwInsertIndex >= dwListViewRowCount)
+        {
+            hr = UIListViewInsertItem(hwnd, &dwInsertIndex, wzText, i, 0);
+            ExitOnFailure(hr, "Failed to insert product into listview control");
+        }
+        else
+        {
+            hr = UIListViewSetItem(hwnd, dwInsertIndex, wzText, i, 0);
+            ExitOnFailure(hr, "Failed to set product in listview control");
+        }
 
         hr = CfgEnumReadDataType(cehValues, i, ENUM_DATA_VALUETYPE, &cvType);
         ExitOnFailure(hr, "Failed to read type of value from value enumeration");
@@ -379,6 +433,11 @@ HRESULT UISetListViewToValueEnum(
         ExitOnFailure(hr, "Failed to set when string as listview subitem");
     }
 
+    hr = ListViewSort(hwnd);
+    ExitOnFailure(hr, "Failed to sort listview");
+
+    EnableWindow(hwnd, TRUE);
+
 LExit:
     ReleaseStr(sczText);
 
@@ -392,6 +451,7 @@ HRESULT UISetListViewToValueHistoryEnum(
 {
     HRESULT hr = S_OK;
 
+    DWORD dwListViewRowCount = 0;
     DWORD dwCount = 0;
     DWORD dwValue = 0;
     DWORD64 qwValue = 0;
@@ -402,6 +462,8 @@ HRESULT UISetListViewToValueHistoryEnum(
     SYSTEMTIME st = { };
     CONFIG_VALUETYPE cvType = VALUE_INVALID;
 
+    dwListViewRowCount = ListView_GetItemCount(hwnd);
+
     if (NULL != cehValueHistory)
     {
         hr = CfgEnumReadDword(cehValueHistory, 0, ENUM_DATA_COUNT, &dwCount);
@@ -410,20 +472,13 @@ HRESULT UISetListViewToValueHistoryEnum(
 
     if (0 == dwCount)
     {
-        EnableWindow(hwnd, FALSE);
-
         hr = UISetListViewText(hwnd, L"No value history to display");
         ExitOnFailure(hr, "Failed to set 'no value history' text in value history listview");
 
         ExitFunction1(hr = S_OK);
     }
 
-    if (!::SendMessageW(hwnd, LVM_DELETEALLITEMS, 0, 0))
-    {
-        ExitWithLastError(hr, "Failed to delete all items from list view");
-    }
-    EnableWindow(hwnd, TRUE);
-
+    UIListViewTrimSize(hwnd, dwCount);
     for (DWORD i = 0; i < dwCount; ++i)
     {
         dwInsertIndex = i;
@@ -475,8 +530,16 @@ HRESULT UISetListViewToValueHistoryEnum(
             break;
         }
 
-        hr = UIListViewInsertItem(hwnd, &dwInsertIndex, UIGetTypeDisplayName(cvType), i, 0);
-        ExitOnFailure(hr, "Failed to set value as listview subitem");
+        if (dwInsertIndex >= dwListViewRowCount)
+        {
+            hr = UIListViewInsertItem(hwnd, &dwInsertIndex, UIGetTypeDisplayName(cvType), i, 0);
+            ExitOnFailure(hr, "Failed to insert product into listview control");
+        }
+        else
+        {
+            hr = UIListViewSetItem(hwnd, dwInsertIndex, UIGetTypeDisplayName(cvType), i, 0);
+            ExitOnFailure(hr, "Failed to set product in listview control");
+        }
 
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 1, wzText);
         ExitOnFailure(hr, "Failed to insert value name into listview control");
@@ -496,6 +559,8 @@ HRESULT UISetListViewToValueHistoryEnum(
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 3, sczText);
         ExitOnFailure(hr, "Failed to set value as listview subitem");
     }
+
+    EnableWindow(hwnd, TRUE);
 
 LExit:
     ReleaseStr(sczText);
@@ -837,6 +902,47 @@ LExit:
     return hr;
 }
 
+HRESULT UIListViewSetItem(
+    __in const HWND hwnd,
+    __in DWORD dwIndex,
+    __in LPCWSTR sczText,
+    __in DWORD dwParam,
+    __in DWORD dwImage
+    )
+{
+    HRESULT hr = S_OK;
+    LV_ITEMW lvi = { };
+
+    lvi.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE;
+    lvi.iItem = dwIndex;
+    lvi.iSubItem = 0;
+    lvi.iImage = dwImage;
+    lvi.lParam = dwParam;
+    lvi.pszText = const_cast<LPWSTR>(sczText);
+
+    if (-1 == ::SendMessageW(hwnd, LVM_SETITEMW, static_cast<LPARAM>(dwIndex), reinterpret_cast<LPARAM>(&lvi)))
+    {
+        ExitWithLastError1(hr, "Failed to set first column item in listview - row %u", dwIndex);
+    }
+
+LExit:
+    return hr;
+}
+
+void UIListViewTrimSize(
+    __in const HWND hwnd,
+    __in DWORD dwNewRowCount
+    )
+{
+    DWORD dwListViewRowCount = ::SendMessageW(hwnd, LVM_GETITEMCOUNT, 0, 0);
+
+    for (DWORD i = dwNewRowCount; i < dwListViewRowCount; ++i)
+    {
+        // Yes, we keep deleting the same index until we've deleted enough items
+        ListView_DeleteItem(hwnd, dwNewRowCount);
+    }
+}
+
 HRESULT UIExportFile(
     __in const HWND hwnd,
     __out_z LPWSTR *psczPath
@@ -889,4 +995,48 @@ HRESULT UIMessageBoxDisplayError(
     ReleaseStr(sczDisplayMessage);
 
     return hr;
+}
+
+static HRESULT ListViewSort(
+    __in HWND hwnd
+    )
+{
+    HRESULT hr = S_OK;
+    DWORD dwSelectedIndex = DWORD_MAX;
+
+    hr = UIGetSingleSelectedItemFromListView(hwnd, &dwSelectedIndex, NULL);
+    ExitOnFailure(hr, "Failed to get selected item from listview");
+
+    ListView_SortItemsEx(hwnd, ListViewItemCompare, reinterpret_cast<LPARAM>(hwnd));
+
+    // Restore the user's selection from before the sort, purely based on index
+    ListView_SetItemState(hwnd, dwSelectedIndex, LVIS_SELECTED, LVIS_SELECTED);
+
+LExit:
+    return hr;
+}
+
+static int CALLBACK ListViewItemCompare(
+    __in LPARAM lParam1,
+    __in LPARAM lParam2,
+    __in LPARAM lParamSort
+    )
+{
+    HWND hwnd = reinterpret_cast<HWND>(lParamSort);
+    LVITEMW item1 = { };
+    LVITEMW item2 = { };
+    WCHAR wzString1[256];
+    WCHAR wzString2[256];
+
+    item1.iSubItem = 0;
+    item1.pszText = wzString1;
+    item1.cchTextMax = sizeof(wzString1)/sizeof(WCHAR);
+    item2.iSubItem = 0;
+    item2.pszText = wzString2;
+    item2.cchTextMax = sizeof(wzString2)/sizeof(WCHAR);
+
+    ::SendMessage(hwnd, LVM_GETITEMTEXTW, lParam1, reinterpret_cast<LPARAM>(&item1));
+    ::SendMessage(hwnd, LVM_GETITEMTEXTW, lParam2, reinterpret_cast<LPARAM>(&item2));
+
+    return wcscmp(wzString1, wzString2);
 }

@@ -127,6 +127,7 @@ struct BROWSE_DATABASE
 
     // Value history information
     HISTORY_MODE vhmValueHistoryMode;
+    LPWSTR sczValueName;
     BOOL fValueHistoryLoading;
     HRESULT hrValueHistoryResult;
     CFG_ENUMERATION_HANDLE cehValueHistory;
