@@ -1,3 +1,5 @@
+* MikeGC: Make Settings Browser automatically start on install, restart on repair, and close on uninstall.
+
 * MikeGC: Fix bug in settings engine autosync that would cause it to inadvertently stop monitoring remote databases for changes after detecting a new product had been installed.
 
 * RobMen: Merge recent changes through WiX v3.9.10.0
