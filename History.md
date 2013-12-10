@@ -1,3 +1,5 @@
+## WixBuild: Version 4.0.1210.0
+
 * MikeGC: Preserve scroll position on Settings Browser ListView refresh.
 
 * MikeGC: Make value history listview in Settings Browser automatically refresh when syncs occur.
