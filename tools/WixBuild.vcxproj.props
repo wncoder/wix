@@ -20,7 +20,6 @@
 
   <!-- Multi-target static libraries get a suffix to prevent collisions. -->
   <PropertyGroup>
-    <MultiTargetDirSuffix Condition=" '$(PlatformToolset)'=='v90' ">2008</MultiTargetDirSuffix>
     <MultiTargetDirSuffix Condition=" '$(PlatformToolset)'=='v100' ">2010</MultiTargetDirSuffix>
     <MultiTargetDirSuffix Condition=" '$(PlatformToolset)'=='v110_xp' ">2012</MultiTargetDirSuffix>
     <MultiTargetDirSuffix Condition=" '$(PlatformToolset)'=='v120_xp' ">2013</MultiTargetDirSuffix>
