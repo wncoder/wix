@@ -10,5 +10,11 @@
         </Data>
 
         <DisplayName LCID="1033">Minecraft</DisplayName>
+
+        <Filter>
+            <!-- Minecraft throws a ton of things including all the game assets that were downloaded, so just pickup Options.txt and saves\ directory -->
+            <Ignore Prefix="Data:\"/>
+            <Normal Prefix="Data:\saves\"/>
+        </Filter>
     </Product>
 </LegacySettings>

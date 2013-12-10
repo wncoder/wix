@@ -2,7 +2,8 @@
 <LegacySettings xmlns="http://wixtoolset.org/schemas/v4/userdatamanifest">
     <Product Id="Dominions_3">
         <Detect>
-            <Arp DisplayName="Dominions 3" UninstallStringDir="InstallDir"/>
+            <Arp DisplayName="Dominions 3 (remove only)" UninstallStringDir="InstallDir"/>
+            <Arp DisplayName="Dominions 3" InstallLocation="InstallDir"/>
         </Detect>
 
         <Data>

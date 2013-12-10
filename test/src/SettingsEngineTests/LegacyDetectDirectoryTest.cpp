@@ -302,7 +302,7 @@ namespace CfgTests
             ExpectIniValue(iniHandle, L"Section2\\SectionedValue2", L"Modified2");
 
             // Empty is the directory it points to now
-            SetARP(L"IncorrectKeyName", L"   Cfg Test Displayname    (remove only)   ", sczPathEmpty, NULL);
+            SetARP(L"IncorrectKeyName", L"   Cfg Test Displayname    ", sczPathEmpty, NULL);
             SetARP(L"RandomKeyName", L"Cfg Test Displayname A", sczPathA, NULL);
             SetARP(L"OtherIncorrectKeyName", L"Cfg Test Displayname B", sczPathB, NULL);
 
