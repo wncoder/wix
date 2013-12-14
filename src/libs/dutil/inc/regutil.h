@@ -163,6 +163,11 @@ HRESULT DAPI RegValueEnum(
     __deref_out_z LPWSTR* psczName,
     __out_opt DWORD *pdwType
     );
+HRESULT DAPI RegGetType(
+    __in HKEY hk,
+    __in_z_opt LPCWSTR wzName,
+    __out DWORD *pdwType
+     );
 HRESULT DAPI RegReadBinary(
     __in HKEY hk,
     __in_z_opt LPCWSTR wzName,
