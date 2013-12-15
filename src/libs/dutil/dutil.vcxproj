@@ -73,8 +73,7 @@
     <ClCompile Include="eseutil.cpp" />
     <ClCompile Include="fileutil.cpp" />
     <ClCompile Include="gdiputil.cpp" />
-    <!-- IIS7 not supported by VS2008 -->
-    <ClCompile Include="iis7util.cpp" Condition=" '$(PlatformToolset)'!='v90' " />
+    <ClCompile Include="iis7util.cpp" />
     <ClCompile Include="inetutil.cpp" />
     <ClCompile Include="iniutil.cpp" />
     <ClCompile Include="jsonutil.cpp" />
