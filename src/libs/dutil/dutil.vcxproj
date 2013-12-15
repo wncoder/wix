@@ -60,7 +60,7 @@
     <ClCompile Include="aclutil.cpp" />
     <ClCompile Include="apuputil.cpp" />
     <ClCompile Include="atomutil.cpp" />
-	<ClCompile Include="butil.cpp" />
+    <ClCompile Include="butil.cpp" />
     <ClCompile Include="buffutil.cpp" />
     <ClCompile Include="cabcutil.cpp" />
     <ClCompile Include="cabutil.cpp" />
@@ -115,7 +115,7 @@
     <ClInclude Include="inc\apuputil.h" />
     <ClInclude Include="inc\atomutil.h" />
     <ClInclude Include="inc\buffutil.h" />
-	<ClInclude Include="inc\butil.h" />
+    <ClInclude Include="inc\butil.h" />
     <ClInclude Include="inc\cabcutil.h" />
     <ClInclude Include="inc\cabutil.h" />
     <ClInclude Include="inc\certutil.h" />
