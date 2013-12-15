@@ -1,3 +1,5 @@
+* jchoover: FEAT#4194 - Move DownloadUrl functionality from engine to dutil.
+
 * jhennessey: WIXFEATURE:3169 - Add support for upgrade code-based product search.
 
 * jchoover: FEAT#4193 - Added searching for bundles via upgrade code and querying bundle properties via provider code.
