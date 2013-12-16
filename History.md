@@ -1,3 +1,5 @@
+## WixBuild: Version 3.9.16.0
+
 * rjvdboon: WIXBUG:4089 - Remove SimpleTypes from help table of contents.
 
 * jchoover: FEAT#4194 - Move DownloadUrl functionality from engine to dutil.
