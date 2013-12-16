@@ -1002,15 +1002,24 @@ static HRESULT ListViewSort(
     )
 {
     HRESULT hr = S_OK;
+    BOOL fRestoreSelection = TRUE;
     DWORD dwSelectedIndex = DWORD_MAX;
 
     hr = UIGetSingleSelectedItemFromListView(hwnd, &dwSelectedIndex, NULL);
+    if (E_NOTFOUND == hr)
+    {
+        hr = S_OK;
+        fRestoreSelection = FALSE;
+    }
     ExitOnFailure(hr, "Failed to get selected item from listview");
 
     ListView_SortItemsEx(hwnd, ListViewItemCompare, reinterpret_cast<LPARAM>(hwnd));
 
     // Restore the user's selection from before the sort, purely based on index
-    ListView_SetItemState(hwnd, dwSelectedIndex, LVIS_SELECTED, LVIS_SELECTED);
+    if (fRestoreSelection)
+    {
+        ListView_SetItemState(hwnd, dwSelectedIndex, LVIS_SELECTED, LVIS_SELECTED);
+    }
 
 LExit:
     return hr;

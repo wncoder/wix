@@ -1,3 +1,7 @@
+* MikeGC: Fix a race condition where, in network disconnect/reconnect situations, MonUtil could incorrectly send invalid handles to WaitForMultipleObjects (and shut down because of it)
+
+* MikeGC: Fix a few bugs in Settings Browser (UI issue, and tolerate more remote database errors such as remote databases on USB drives being unplugged)
+
 ## WixBuild: Version 4.0.1210.0
 
 * MikeGC: Preserve scroll position on Settings Browser ListView refresh.
