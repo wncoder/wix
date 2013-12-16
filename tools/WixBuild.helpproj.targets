@@ -65,7 +65,7 @@
     <Exec Command="&quot;$(OutputPath_x86)tildetorelative.exe&quot; &quot;$(IntermediateDocumentsFolder)\&quot; &quot;$(IntermediateDocumentsPreprocessedFolder)\&quot;" />
 
     <!-- Convert the Markdown and Html files and generate the HtmlHelpProject. -->
-    <Exec Command="&quot;$(OutputPath_x86)doccompiler.exe&quot; &quot;$(IntermediateDocumentsPreprocessedFolder)\&quot; &quot;$(IntermediateBuildFolder)\&quot; &quot;$(LayoutsFolder)&quot; -appendmdtoc &quot;$(IntermediateDocumentsPreprocessedFolder)\index.html.md&quot; -htmlhelp &quot;$(IntermediateOutputPath)$(TargetName).hhp&quot;" />
+    <Exec Command="&quot;$(OutputPath_x86)doccompiler.exe&quot; &quot;$(IntermediateDocumentsPreprocessedFolder)\&quot; &quot;$(IntermediateBuildFolder)\&quot; &quot;$(LayoutsFolder)&quot; -appendmdtoc &quot;$(IntermediateDocumentsPreprocessedFolder)\index.html.md&quot; -ignorexsdsimpletypeintoc -htmlhelp &quot;$(IntermediateOutputPath)$(TargetName).hhp&quot;" />
   </Target>
 
   <Target Name="_ProcessFileContent"
