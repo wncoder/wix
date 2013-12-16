@@ -52,9 +52,10 @@ namespace CfgTests
             hr = CfgSetBlob(cdhLocal, L"SameAsFile1", rgbFile, sizeof(rgbFile));
             ExitOnFailure(hr, "Failed to add file File1");
 
-			BYTE *pBuffer = NULL;
+            BYTE *pBuffer = NULL;
             ExpectFile(cdhLocal, L"File1", rgbFile, sizeof(rgbFile));
 
+            ::Sleep(5);
             hr = CfgDeleteValue(cdhLocal, L"File1");
             ExitOnFailure(hr, "Failed to delete file File1");
 

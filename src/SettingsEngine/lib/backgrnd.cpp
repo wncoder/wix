@@ -1654,13 +1654,14 @@ static HRESULT SyncRemotes(
         if (DWORD_MAX != dwFirstSyncedIndex)
         {
             hr = SyncRemote(pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex], fCheckDbTimestamp, &fChanges);
-            if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
+            if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
             {
                 LogErrorString(hr, "Failed to sync remote DB at %ls, it may be busy. Will retry.", pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex]->sczDbDir);
                 fRetry = TRUE;
                 hr = S_OK;
             }
-            else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr) // This may mean network connection with server was lost temporarily. MonUtil will tell us when to retry.
+            // This may mean network connection with server or removable drive was lost temporarily. MonUtil will tell us when to retry.
+            else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_INVALID_DRIVE) == hr)
             {
                 LogErrorString(hr, "Failed to sync remote DB at %ls with error 0x%X, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex]->sczDbDir, hr);
                 hr = S_OK;
@@ -1676,14 +1677,15 @@ static HRESULT SyncRemotes(
             if (pcdb->rgpcdbOpenDatabases[i]->fSyncByDefault && i != dwFirstSyncedIndex)
             {
                 hr = SyncRemote(pcdb->rgpcdbOpenDatabases[i], FALSE, NULL);
-                if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
+                if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
                 {
                     LogErrorString(hr, "Failed to sync remote DB at %ls, it may be busy. Will retry.", pcdb->rgpcdbOpenDatabases[i]->sczDbDir);
                     fRetry = TRUE;
                     hr = S_OK;
                     break;
                 }
-                else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr) // This may mean network connection with server was lost temporarily. MonUtil will tell us when to retry.
+                // This may mean network connection with server or removable drive was lost temporarily. MonUtil will tell us when to retry.
+                else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_INVALID_DRIVE) == hr)
                 {
                     LogErrorString(hr, "Failed to sync remote DB at %ls with error 0x%X, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[i]->sczDbDir, hr);
                     hr = S_OK;

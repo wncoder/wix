@@ -236,7 +236,8 @@ static HRESULT WaitForNetworkChanges(
 static HRESULT UpdateWaitStatus(
     __in HRESULT hrNewStatus,
     __inout MON_WAITER_CONTEXT *pWaiterContext,
-    __inout MON_REQUEST *pRequest
+    __in DWORD dwRequestIndex,
+    __out DWORD *pdwNewRequestIndex
     );
 
 extern "C" HRESULT DAPI MonCreate(
@@ -934,7 +935,7 @@ static HRESULT InitiateWait(
         fRedo = FALSE;
         fHandleFound = FALSE;
 
-        for (DWORD i = 0; i < pRequest->cPathHierarchy && !fHandleFound && !fRedo; ++i)
+        for (DWORD i = 0; i < pRequest->cPathHierarchy && !fHandleFound; ++i)
         {
             dwIndex = pRequest->cPathHierarchy - i - 1;
             switch (pRequest->type)
@@ -969,6 +970,7 @@ static HRESULT InitiateWait(
                 {
                     continue;
                 }
+                ExitOnFailure1(hr, "Failed to open regkey %ls", pRequest->rgsczPathHierarchy[dwIndex]);
 
                 er = ::RegNotifyChangeKeyValue(pRequest->regkey.hkSubKey, GetRecursiveFlag(pRequest, dwIndex), REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET | REG_NOTIFY_CHANGE_SECURITY, *pHandle, TRUE);
                 ReleaseRegKey(hk);
@@ -990,32 +992,29 @@ static HRESULT InitiateWait(
             }
         }
 
-        if (!fRedo)
-        {
-            pRequest->dwPathHierarchyIndex = dwIndex;
+        pRequest->dwPathHierarchyIndex = dwIndex;
 
-            // If we're monitoring a parent instead of the real path because the real path didn't exist, double-check the child hasn't been created since.
-            // If it has, restart the whole loop
-            if (dwIndex < pRequest->cPathHierarchy - 1)
+        // If we're monitoring a parent instead of the real path because the real path didn't exist, double-check the child hasn't been created since.
+        // If it has, restart the whole loop
+        if (dwIndex < pRequest->cPathHierarchy - 1)
+        {
+            switch (pRequest->type)
             {
-                switch (pRequest->type)
+            case MON_DIRECTORY:
+                hTemp = ::FindFirstChangeNotificationW(pRequest->rgsczPathHierarchy[dwIndex + 1], GetRecursiveFlag(pRequest, dwIndex + 1), FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SECURITY);
+                if (INVALID_HANDLE_VALUE != hTemp)
                 {
-                case MON_DIRECTORY:
-                    hTemp = ::FindFirstChangeNotificationW(pRequest->rgsczPathHierarchy[dwIndex + 1], GetRecursiveFlag(pRequest, dwIndex + 1), FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SECURITY);
-                    if (INVALID_HANDLE_VALUE != hTemp)
-                    {
-                        ::FindCloseChangeNotification(hTemp);
-                        fRedo = TRUE;
-                    }
-                    break;
-                case MON_REGKEY:
-                    hrTemp = RegOpen(pRequest->regkey.hkRoot, pRequest->rgsczPathHierarchy[dwIndex + 1], KEY_NOTIFY | GetRegKeyBitness(pRequest), &hk);
-                    ReleaseRegKey(hk);
-                    fRedo = SUCCEEDED(hrTemp);
-                    break;
-                default:
-                    Assert(false);
+                    ::FindCloseChangeNotification(hTemp);
+                    fRedo = TRUE;
                 }
+                break;
+            case MON_REGKEY:
+                hrTemp = RegOpen(pRequest->regkey.hkRoot, pRequest->rgsczPathHierarchy[dwIndex + 1], KEY_NOTIFY | GetRegKeyBitness(pRequest), &hk);
+                ReleaseRegKey(hk);
+                fRedo = SUCCEEDED(hrTemp);
+                break;
+            default:
+                Assert(false);
             }
         }
     } while (fRedo);
@@ -1052,6 +1051,7 @@ static DWORD WINAPI WaiterThread(
     DWORD uDeltaInMs = 0;
     DWORD cRequestsPendingBeforeLoop = 0;
     LPWSTR sczDirectory = NULL;
+    bool rgfProcessedIndex[MON_MAX_MONITORS_PER_THREAD + 1] = { };
 
     // Ensure the thread has a message queue
     ::PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
@@ -1129,16 +1129,30 @@ static DWORD WINAPI WaiterThread(
                                 continue;
                             }
 
+                            ZeroMemory(rgfProcessedIndex, sizeof(rgfProcessedIndex));
                             for (DWORD i = 0; i < pWaiterContext->cRequests; ++i)
                             { 
+                                if (rgfProcessedIndex[i])
+                                {
+                                    // if we already processed this item due to UpdateWaitStatus swapping array indices, then skip it
+                                    continue;
+                                }
+
                                 if (MON_DIRECTORY == pWaiterContext->rgRequests[i].type && pWaiterContext->rgRequests[i].fNetwork && FAILED(pWaiterContext->rgRequests[i].hrStatus))
                                 {
                                     // This is not a failure, just record this in the request's status
                                     hrTemp = InitiateWait(pWaiterContext->rgRequests + i, pWaiterContext->rgHandles + i + 1);
 
-                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, pWaiterContext->rgRequests + i);
+                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, i, &dwNewRequestIndex);
                                     ExitOnFailure(hr, "Failed to update wait status");
                                     hrTemp = S_OK;
+
+                                    if (dwNewRequestIndex != i)
+                                    {
+                                        // If this request was moved to the end of the list, reprocess this index and mark the new index for skipping
+                                        rgfProcessedIndex[dwNewRequestIndex] = true;
+                                        --i;
+                                    }
                                 }
                             }
                         break;
@@ -1150,38 +1164,79 @@ static DWORD WINAPI WaiterThread(
                                 continue;
                             }
 
+                            ZeroMemory(rgfProcessedIndex, sizeof(rgfProcessedIndex));
                             for (DWORD i = 0; i < pWaiterContext->cRequests; ++i)
                             { 
-                                if (MON_DIRECTORY == pWaiterContext->rgRequests[i].type && pWaiterContext->rgRequests[i].fNetwork)
+                                if (rgfProcessedIndex[i])
+                                {
+                                    // if we already processed this item due to UpdateWaitStatus swapping array indices, then skip it
+                                    continue;
+                                }
+
+                                if (MON_DIRECTORY == pWaiterContext->rgRequests[i].type && pWaiterContext->rgRequests[i].fNetwork && SUCCEEDED(pWaiterContext->rgRequests[i].hrStatus))
                                 {
                                     // This is not a failure, just record this in the request's status
                                     hrTemp = InitiateWait(pWaiterContext->rgRequests + i, pWaiterContext->rgHandles + i + 1);
 
-                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, pWaiterContext->rgRequests + i);
+                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, i, &dwNewRequestIndex);
                                     ExitOnFailure(hr, "Failed to update wait status");
                                     hrTemp = S_OK;
+
+                                    if (dwNewRequestIndex != i)
+                                    {
+                                        // If this request was moved to the end of the list, reprocess this index and mark the new index for skipping
+                                        rgfProcessedIndex[dwNewRequestIndex] = true;
+                                        --i;
+                                    }
                                 }
                             }
                             break;
 
                         case MON_MESSAGE_NETWORK_STATUS_UPDATE:
+                            if (::PeekMessage(&msg, NULL, MON_MESSAGE_NETWORK_STATUS_UPDATE, MON_MESSAGE_NETWORK_STATUS_UPDATE, PM_NOREMOVE))
+                            {
+                                // If there is another a pending network status update message, skip this one
+                                continue;
+                            }
+
+                            ZeroMemory(rgfProcessedIndex, sizeof(rgfProcessedIndex));
                             for (DWORD i = 0; i < pWaiterContext->cRequests; ++i)
                             { 
+                                if (rgfProcessedIndex[i])
+                                {
+                                    // if we already processed this item due to UpdateWaitStatus swapping array indices, then skip it
+                                    continue;
+                                }
+
                                 if (MON_DIRECTORY == pWaiterContext->rgRequests[i].type && pWaiterContext->rgRequests[i].fNetwork)
                                 {
                                     // Failures here get recorded in the request's status
                                     hrTemp = InitiateWait(pWaiterContext->rgRequests + i, pWaiterContext->rgHandles + i + 1);
 
-                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, pWaiterContext->rgRequests + i);
+                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, i, &dwNewRequestIndex);
                                     ExitOnFailure(hr, "Failed to update wait status");
                                     hrTemp = S_OK;
+
+                                    if (dwNewRequestIndex != i)
+                                    {
+                                        // If this request was moved to the end of the list, reprocess this index and mark the new index for skipping
+                                        rgfProcessedIndex[dwNewRequestIndex] = true;
+                                        --i;
+                                    }
                                 }
                             }
                             break;
 
                         case MON_MESSAGE_DRIVE_STATUS_UPDATE:
+                            ZeroMemory(rgfProcessedIndex, sizeof(rgfProcessedIndex));
                             for (DWORD i = 0; i < pWaiterContext->cRequests; ++i)
                             { 
+                                if (rgfProcessedIndex[i])
+                                {
+                                    // if we already processed this item due to UpdateWaitStatus swapping array indices, then skip it
+                                    continue;
+                                }
+
                                 if (MON_DIRECTORY == pWaiterContext->rgRequests[i].type && pWaiterContext->rgRequests[i].sczOriginalPathRequest[0] == static_cast<WCHAR>(msg.wParam))
                                 {
                                     // Failures here get recorded in the request's status
@@ -1195,9 +1250,16 @@ static DWORD WINAPI WaiterThread(
                                         hrTemp = E_PATHNOTFOUND;
                                     }
 
-                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, pWaiterContext->rgRequests + i);
+                                    hr = UpdateWaitStatus(hrTemp, pWaiterContext, i, &dwNewRequestIndex);
                                     ExitOnFailure(hr, "Failed to update wait status");
                                     hrTemp = S_OK;
+
+                                    if (dwNewRequestIndex != i)
+                                    {
+                                        // If this request was moved to the end of the list, reprocess this index and mark the new index for skipping
+                                        rgfProcessedIndex[dwNewRequestIndex] = true;
+                                        --i;
+                                    }
                                 }
                             }
                             break;
@@ -1223,25 +1285,13 @@ static DWORD WINAPI WaiterThread(
             fNotify = (pWaiterContext->rgRequests[dwRequestIndex].dwPathHierarchyIndex == pWaiterContext->rgRequests[dwRequestIndex].cPathHierarchy - 1);
 
             // Initiate re-waits before we notify callback, to ensure we don't miss a single update
-            hr = InitiateWait(pWaiterContext->rgRequests + dwRequestIndex, pWaiterContext->rgHandles + dwRequestIndex + 1);
-            if (FAILED(hr))
-            {
-                pWaiterContext->rgRequests[dwRequestIndex].hrStatus = hr;
-                hr = S_OK;
+            hrTemp = InitiateWait(pWaiterContext->rgRequests + dwRequestIndex, pWaiterContext->rgHandles + dwRequestIndex + 1);
+            hr = UpdateWaitStatus(hrTemp, pWaiterContext, dwRequestIndex, &dwRequestIndex);
+            ExitOnFailure(hr, "Failed to update wait status");
+            hrTemp = S_OK;
 
-                // Move to the end of the handle array, and move requests array correspondingly, so we don't screw up WaitForMultipleObjects with a bad handle
-                dwNewRequestIndex = pWaiterContext->cRequests - 1 - pWaiterContext->cRequestsFailing;
-                MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgHandles), dwRequestIndex + 1, dwNewRequestIndex + 1, sizeof(*pWaiterContext->rgHandles));
-                MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgRequests), dwRequestIndex, dwNewRequestIndex, sizeof(*pWaiterContext->rgRequests));
-
-                dwRequestIndex = dwNewRequestIndex;
-                ++pWaiterContext->cRequestsFailing;
-
-                // If there's an error re-waiting, we immediately notify of the error, because something went wrong
-                Notify(pWaiterContext->rgRequests[dwRequestIndex].hrStatus, pWaiterContext, pWaiterContext->rgRequests + dwRequestIndex);
-            }
             // If there were no errors and we were already waiting on the right target, or if we weren't yet but are able to now, it's a successful notify
-            else if (fNotify || (pWaiterContext->rgRequests[dwRequestIndex].dwPathHierarchyIndex == pWaiterContext->rgRequests[dwRequestIndex].cPathHierarchy - 1))
+            if (SUCCEEDED(pWaiterContext->rgRequests[dwRequestIndex].hrStatus) && (fNotify || (pWaiterContext->rgRequests[dwRequestIndex].dwPathHierarchyIndex == pWaiterContext->rgRequests[dwRequestIndex].cPathHierarchy - 1)))
             {
                 Trace1(REPORT_DEBUG, "Changes detected, waiting for silence period index %u", dwRequestIndex);
 
@@ -1488,6 +1538,11 @@ static HRESULT RemoveRequest(
         --pWaiterContext->cRequestsPending;
     }
 
+    if (FAILED(pWaiterContext->rgRequests[dwRequestIndex].hrStatus))
+    {
+        --pWaiterContext->cRequestsFailing;
+    }
+
     MonRequestDestroy(pWaiterContext->rgRequests + dwRequestIndex);
 
     MemRemoveFromArray(reinterpret_cast<void *>(pWaiterContext->rgHandles), dwRequestIndex + 1, 1, pWaiterContext->cHandles, sizeof(HANDLE), TRUE);
@@ -1684,10 +1739,18 @@ LExit:
 static HRESULT UpdateWaitStatus(
     __in HRESULT hrNewStatus,
     __inout MON_WAITER_CONTEXT *pWaiterContext,
-    __inout MON_REQUEST *pRequest
+    __in DWORD dwRequestIndex,
+    __out_opt DWORD *pdwNewRequestIndex
     )
 {
     HRESULT hr = S_OK;
+    DWORD dwNewRequestIndex;
+    MON_REQUEST *pRequest = pWaiterContext->rgRequests + dwRequestIndex;
+
+    if (NULL != pdwNewRequestIndex)
+    {
+        *pdwNewRequestIndex = dwRequestIndex;
+    }
 
     if (SUCCEEDED(pRequest->hrStatus) || SUCCEEDED(hrNewStatus))
     {
@@ -1700,24 +1763,46 @@ static HRESULT UpdateWaitStatus(
 
         if (SUCCEEDED(pRequest->hrStatus) && FAILED(hrNewStatus))
         {
-            ++pWaiterContext->cRequestsFailing;
             // If it's a network wait, notify coordinator thread that a network wait is failing
             if (pRequest->fNetwork && !::PostThreadMessageW(pWaiterContext->dwCoordinatorThreadId, MON_MESSAGE_NETWORK_WAIT_FAILED, 0, 0))
             {
                 ExitWithLastError(hr, "Failed to send message to coordinator thread to notify a network wait started to fail");
             }
+
+            // Move the failing wait to the end of the list of waits and increment cRequestsFailing so WaitForMultipleObjects isn't passed an invalid handle
+            ++pWaiterContext->cRequestsFailing;
+            dwNewRequestIndex = pWaiterContext->cRequests - 1;
+            MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgHandles), dwRequestIndex + 1, dwNewRequestIndex + 1, sizeof(*pWaiterContext->rgHandles));
+            MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgRequests), dwRequestIndex, dwNewRequestIndex, sizeof(*pWaiterContext->rgRequests));
+            // Reset pRequest to the newly swapped item
+            pRequest = pWaiterContext->rgRequests + dwNewRequestIndex;
+            if (NULL != pdwNewRequestIndex)
+            {
+                *pdwNewRequestIndex = dwNewRequestIndex;
+            }
         }
         else if (FAILED(pRequest->hrStatus) && SUCCEEDED(hrNewStatus))
         {
             Assert(pWaiterContext->cRequestsFailing > 0);
-            --pWaiterContext->cRequestsFailing;
             // If it's a network wait, notify coordinator thread that a network wait is succeeding again
             if (pRequest->fNetwork && !::PostThreadMessageW(pWaiterContext->dwCoordinatorThreadId, MON_MESSAGE_NETWORK_WAIT_SUCCEEDED, 0, 0))
             {
                 ExitWithLastError(hr, "Failed to send message to coordinator thread to notify a network wait is succeeding again");
             }
+
+            --pWaiterContext->cRequestsFailing;
+            dwNewRequestIndex = 0;
+            MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgHandles), dwRequestIndex + 1, dwNewRequestIndex + 1, sizeof(*pWaiterContext->rgHandles));
+            MemArraySwapItems(reinterpret_cast<void *>(pWaiterContext->rgRequests), dwRequestIndex, dwNewRequestIndex, sizeof(*pWaiterContext->rgRequests));
+            // Reset pRequest to the newly swapped item
+            pRequest = pWaiterContext->rgRequests + dwNewRequestIndex;
+            if (NULL != pdwNewRequestIndex)
+            {
+                *pdwNewRequestIndex = dwNewRequestIndex;
+            }
         }
     }
+
     pRequest->hrStatus = hrNewStatus;
 
 LExit:
