@@ -83,6 +83,7 @@ namespace WixToolset
         Language = 0x2,
         State = 0x4,
         Assignment = 0x8,
+        UpgradeCode = 0x10,
     }
 
     /// <summary>

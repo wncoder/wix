@@ -83,10 +83,11 @@ namespace WixToolset.Extensions
         [Flags]
         internal enum WixProductSearchAttributes
         {
-            Version = 0x1,
-            Language = 0x2,
-            State = 0x4,
-            Assignment = 0x8,
+            Version = 0x01,
+            Language = 0x02,
+            State = 0x04,
+            Assignment = 0x08,
+            UpgradeCode = 0x10,
         }
 
         internal enum WixRestartResourceAttributes
@@ -2515,7 +2516,9 @@ namespace WixToolset.Extensions
             string variable = null;
             string condition = null;
             string after = null;
-            string guid = null;
+            string productCode = null;
+            string upgradeCode = null;
+
             Util.ProductSearch.ResultType result = Util.ProductSearch.ResultType.NotSet;
 
             foreach (XAttribute attrib in node.Attributes())
@@ -2530,8 +2533,11 @@ namespace WixToolset.Extensions
                         case "After":
                             ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
-                        case "Guid":
-                            guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
+                        case "ProductCode":
+                            productCode = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
+                            break;
+                        case "UpgradeCode":
+                            upgradeCode = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
                             break;
                         case "Result":
                             string resultValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2561,14 +2567,19 @@ namespace WixToolset.Extensions
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Variable"));
             }
 
-            if (null == guid)
+            if (null == upgradeCode && null == productCode)
             {
-                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Guid"));
+                this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "ProductCode", "UpgradeCode", true));
+            }
+
+            if (null != upgradeCode && null != productCode)
+            {
+                this.Core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "UpgradeCode", "ProductCode"));
             }
 
             if (null == id)
             {
-                id = this.Core.CreateIdentifier("wps", variable, condition, after, guid, result.ToString());
+                id = this.Core.CreateIdentifier("wps", variable, condition, after, (productCode == null ? upgradeCode : productCode), result.ToString());
             }
 
             this.Core.ParseForExtensionElements(node);
@@ -2600,9 +2611,15 @@ namespace WixToolset.Extensions
                         break;
                 }
 
+                // set an additional flag if this is an upgrade code
+                if (null != upgradeCode)
+                {
+                    attributes |= WixProductSearchAttributes.UpgradeCode;
+                }
+
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixProductSearch");
                 row[0] = id;
-                row[1] = guid;
+                row[1] = (productCode == null ? upgradeCode : productCode);
                 row[2] = (int)attributes;
             }
         }

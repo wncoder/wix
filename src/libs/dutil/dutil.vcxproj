@@ -48,18 +48,17 @@
       <Platform>ARM</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1244E671-F108-4334-BA52-8A7517F26ECD}</ProjectGuid>
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <TargetName>dutil</TargetName>
     <MultiTargetLibrary>true</MultiTargetLibrary>
   </PropertyGroup>
-
   <ItemGroup>
     <ClCompile Include="aclutil.cpp" />
     <ClCompile Include="apuputil.cpp" />
     <ClCompile Include="atomutil.cpp" />
+    <ClCompile Include="butil.cpp" />
     <ClCompile Include="buffutil.cpp" />
     <ClCompile Include="cabcutil.cpp" />
     <ClCompile Include="cabutil.cpp" />
@@ -68,6 +67,7 @@
     <ClCompile Include="cryputil.cpp" />
     <ClCompile Include="dictutil.cpp" />
     <ClCompile Include="dirutil.cpp" />
+    <ClCompile Include="dlutil.cpp" />
     <ClCompile Include="dutil.cpp" />
     <ClCompile Include="eseutil.cpp" />
     <ClCompile Include="fileutil.cpp" />
@@ -109,12 +109,12 @@
     <ClCompile Include="wuautil.cpp" />
     <ClCompile Include="xmlutil.cpp" />
   </ItemGroup>
-
   <ItemGroup>
     <ClInclude Include="inc\aclutil.h" />
     <ClInclude Include="inc\apuputil.h" />
     <ClInclude Include="inc\atomutil.h" />
     <ClInclude Include="inc\buffutil.h" />
+    <ClInclude Include="inc\butil.h" />
     <ClInclude Include="inc\cabcutil.h" />
     <ClInclude Include="inc\cabutil.h" />
     <ClInclude Include="inc\certutil.h" />
@@ -122,6 +122,7 @@
     <ClInclude Include="inc\cryputil.h" />
     <ClInclude Include="inc\dictutil.h" />
     <ClInclude Include="inc\dirutil.h" />
+    <ClInclude Include="inc\dlutil.h" />
     <ClInclude Include="inc\dutil.h" />
     <ClInclude Include="inc\eseutil.h" />
     <ClInclude Include="inc\fileutil.h" />
@@ -159,10 +160,8 @@
     <ClInclude Include="inc\xmlutil.h" />
     <ClInclude Include="precomp.h" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="xsd\thmutil.xsd" />
   </ItemGroup>
-
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>
