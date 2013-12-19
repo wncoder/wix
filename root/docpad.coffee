@@ -15,9 +15,17 @@ docpadConfig = {
     news: ->
       @getCollection('documents').findAllLive({relativeDirPath: 'news'}, [{date:-1}])
 
+    releases: ->
+      @getCollection('documents').findAllLive({relativeDirPath: 'releases'}, [{date:-1}]).on "add", (model) ->
+        model.setMetaDefaults({layout:'release', subtitle:'WiX Toolset Release', under:'Releases'})
+
   templateData:
     site:
       url: "http://wixtoolset.org"
+
+    getReleaseInfo: (doc) ->
+      doc ?= @document
+      @getFile({ $and: [{basename: doc.basename}, {extension: 'json'}]})
 
     prettyFormatDate: (date) ->
       months = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]

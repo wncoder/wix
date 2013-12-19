@@ -18,10 +18,6 @@
     <WebRootSourceFolder>$(WebRootFolder)src\</WebRootSourceFolder>
     <WebRootOutputFolder>$(WebRootFolder)out\</WebRootOutputFolder>
 
-    <WebReleaseFolder>$(ProjectFolder)release\</WebReleaseFolder>
-    <WebReleaseSourceFolder>$(WebReleaseFolder)src\</WebReleaseSourceFolder>
-    <WebReleaseOutputFolder>$(WebReleaseFolder)out\</WebReleaseOutputFolder>
-
     <WebV3ManualFolder>$(ProjectFolder)v3manual\</WebV3ManualFolder>
     <WebV3ManualSourceFolder>$(WebV3ManualFolder)src\</WebV3ManualSourceFolder>
     <WebV3ManualOutputFolder>$(WebV3ManualFolder)out\</WebV3ManualOutputFolder>
@@ -103,35 +99,6 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="GetReleaseInputsOutputs">
-    <ItemGroup>
-      <ReleaseInput Include="@(CommonFiles)" />
-      <ReleaseInput Include="$(WebReleaseFolder)\docpad.coffee" />
-      <ReleaseInput Include="$(WebReleaseSourceFolder)\**" />
-      <ReleaseOutput Include="$(WebReleaseOutputFolder)" />
-      <ReleaseOutput Include="$(WebReleaseOutputFolder)**" />
-    </ItemGroup>
-  </Target>
-
-  <Target Name="BuildRelease"
-          Inputs="@(ReleaseInput)"
-          Outputs="@(ReleaseOutput)"
-          DependsOnTargets="GetReleaseInputsOutputs">
-    <Copy SourceFiles="@(CommonFiles)"
-          DestinationFiles="@(CommonFiles->'$(WebReleaseSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" UseHardlinksIfPossible="true" />
-
-    <Exec Command="node $(ProjectFolder)node_modules\docpad\bin\docpad generate --env static"
-          WorkingDirectory="$(WebReleaseFolder)" />
-
-    <ItemGroup>
-      <!-- We're using cleanurls on this project so only grab the index.html files. -->
-      <PublishSource Include="$(WebReleaseOutputFolder)**\index.html" />
-      <PublishSource Include="$(WebReleaseOutputFolder)**\*.json" />
-      <PublishSource Include="$(WebReleaseOutputFolder)**\*.feed" />
-    </ItemGroup>
-  </Target>
-
   <Target Name="BuildApi">
     <MSBuild Projects="api\api.csproj" Properties="Configuration=$(Configuration)" />
 
@@ -163,12 +130,11 @@
   </Target>
 
   <Target Name="Build"
-          DependsOnTargets="BuildRoot;BuildV3Manual;BuildRelease;BuildApi;CopyToPublishFolder;BuildSitemap">
+          DependsOnTargets="BuildRoot;BuildV3Manual;BuildApi;CopyToPublishFolder;BuildSitemap">
   </Target>
 
   <Target Name="Clean">
     <RemoveDir Directories="$(BuildFolder);$(WebRootOutputFolder);$(WebReleaseOutputFolder);$(WebV3ManualOutputFolder)" />
-    <Delete Files="@(CommonFiles->'$(WebReleaseSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
     <Delete Files="@(CommonFiles->'$(WebRootSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
     <Delete Files="@(CommonFiles->'$(WebV3ManualSourceFolder)%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
@@ -213,10 +179,10 @@
       </ManualZip>
 
       <ReleaseMetadataFile Include="$(DownloadFolder)**\*.json">
-        <OutputFolder>$(WebReleaseSourceFolder)\documents\App_Data\releases\info\</OutputFolder>
+        <OutputFolder>$(WebRootSourceFolder)\documents\App_Data\releases\info\</OutputFolder>
       </ReleaseMetadataFile>
       <ReleaseMetadataFile Include="$(DownloadFolder)**\*.md">
-        <OutputFolder>$(WebReleaseSourceFolder)\documents\releases\</OutputFolder>
+        <OutputFolder>$(WebRootSourceFolder)\documents\releases\</OutputFolder>
       </ReleaseMetadataFile>
     </ItemGroup>
   </Target>
