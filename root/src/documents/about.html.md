@@ -7,8 +7,6 @@ sidebarTitle: Additional information
 sidebarItems:
   - uri: /about/governance/
     text: Governance Document
-  - uri: /about/assignment-agreement/
-    text: Assignment Agreement
   - uri: /about/license/
     text: WiX Toolset's License
 ---

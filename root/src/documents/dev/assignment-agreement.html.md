@@ -2,7 +2,7 @@
 title: Assignment Agreement
 subtitle: for the WiX toolset
 keywords: wix toolset,wix,assignment agreement
-under: About
+under: Dev
 layout: secondary
 sidebarTitle: Additional information
 sidebarItems:
