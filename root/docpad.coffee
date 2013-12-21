@@ -15,6 +15,10 @@ docpadConfig = {
     news: ->
       @getCollection('documents').findAllLive({relativeDirPath: 'news'}, [{date:-1}])
 
+    wips: ->
+      @getCollection('documents').findAllLive({relativeDirPath: 'dev\\wip'}).on "add", (model) ->
+        model.setMetaDefaults({layout:'wip', under:'Dev'})
+
     releases: ->
       @getCollection('documents').findAllLive({relativeDirPath: 'releases'}, [{date:-1}]).on "add", (model) ->
         model.setMetaDefaults({layout:'release', subtitle:'WiX Toolset Release', under:'Releases'})
@@ -33,7 +37,7 @@ docpadConfig = {
       days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + ('0' + date.getDate()).slice(-2) + ', ' + date.getFullYear()
 
   enabledPlugins:
-    sitemap: false # currently broken     
+    sitemap: false # currently broken
 }
 
 # Export the DocPad Configuration
