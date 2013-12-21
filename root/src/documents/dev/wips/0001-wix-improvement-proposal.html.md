@@ -5,14 +5,9 @@ author: Rob Mensching (rob at firegiant.com)
 title: WiX Improvement Proposal
 ---
 
-    [Bob] Should this have a feature request associated with it (instead of being 0001)?
-
 ## User stories
 
 * As a WiX developer I can document changes I plan to make to the WiX toolset features or processes such that other developers can discuss the proposal.
-
-    [Bob] So pull requests will let anyone participate (which is good). But iterating on them is a pain,
-    at least on Codeplex. I'm guessing we'll end up mostly talking on 
 
 * As a WiX developer I can summarize all of the discussion about an improvement such that future developers and users can find the results in one document.
 
@@ -24,22 +19,15 @@ fixes, for example, are often sufficiently defined in the [issue tracker]. For
 everything else the WIP process is intended to be lightweight process that provides value
 for developers today and tomorrow.
 
-    [Bob] I'm thinking we need a checklist/task list here instead of the following paragraph. 
-    For example, a thread on wix-devs should be high on the list. Also, we need to 
-    discuss the workflow for approval. Something like 
-    http://www.python.org/dev/peps/pep-0001/#submitting-a-pep and
-    http://www.python.org/dev/peps/pep-0001/#pep-review-resolution except a lot more terse
-    (though who doesn't love a state diagram?!). What do you think?
+Usually, it is a good idea to discuss a new feature on the wix-devs mailing list to gauge interest.
+If there is interest in the idea, then it is captured in a feature request on the WiX toolset 
+[issue tracker]. The standard triage processes will schedule the feature in an appropriate release.
 
-    Usually, it is a good idea to discuss a new feature on the wix-devs mailing list to gauge interest.
-    If there is interest in the idea, then it is captured in a feature request on the WiX toolset 
-    [issue tracker]. The standard triage processes will schedule the feature in an appropriate release.
-
-## Creating a WiX Improvement Proposal
+### WIP Identifier
 
 The feature request number from the [issue tracker] also serves as the unique WIP identifier. Using
-the same identifier lets us use the issue tracker to schedule (and possibly re-schedule) the feature request with
-all the other bugs going into a release. It is up to you to ensure that
+the same identifier allows us to schedule (and possibly re-schedule )the feature request with
+all the other bugs going into a release via the issue tracker. It is up to you to ensure that
 you've entered the correct number as the WIP identifier.
 
 With WIP identifier in hand you can now get started on the WIP. First, enlist in the `wixweb` branch
@@ -95,7 +83,7 @@ to mind. Rare is it that a proposal doesn't have some negatives to consider.
 
 Like the code of the WiX toolset, WIPs are designed to be living documents. So do not be afraid
 to "check in early and often". Commit your changes to the WIP and send a pull request any time
-you feel the update provides enough value. The WIP update pull requests will be accepted like
+you feel the update provides enough value. The WIP update poull requests will be accepted like
 any code submission, with a very low review bar (essentially, as long as the update is coherent
 we'll integrate it for discussion).
 
