@@ -1,5 +1,5 @@
 ---
-wip: 0001
+wip: 0000
 type: Process
 author: Rob Mensching (rob at firegiant.com)
 title: WiX Improvement Proposal
