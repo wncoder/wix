@@ -10,6 +10,11 @@ draft: true
 
 * As a ____ I can ____ such that ___.
 
+
 ## Proposal
 
+
 ## Considerations
+
+
+## See Also
