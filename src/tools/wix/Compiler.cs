@@ -10677,6 +10677,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     {
                         switch (child.LocalName)
                         {
+                            case "All":
+                                this.ParseAllElement(child);
+                                break;
                             case "BinaryRef":
                                 this.ParsePatchChildRefElement(child, "Binary");
                                 break;
@@ -10730,6 +10733,54 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
         }
+
+        /// <summary>
+        /// Parses the All element under a PatchFamily.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        private void ParseAllElement(XmlNode node)
+        {
+            SourceLineNumberCollection sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+
+            // find unexpected attributes
+            foreach (XmlAttribute attrib in node.Attributes)
+            {
+                if (0 == attrib.NamespaceURI.Length || attrib.NamespaceURI == this.schema.TargetNamespace)
+                {
+                    this.core.UnexpectedAttribute(sourceLineNumbers, attrib);
+                }
+                else
+                {
+                    this.core.UnsupportedExtensionAttribute(sourceLineNumbers, attrib);
+                }
+            }
+
+            // find unexpected child elements
+            foreach (XmlNode child in node.ChildNodes)
+            {
+                if (XmlNodeType.Element == child.NodeType)
+                {
+                    if (child.NamespaceURI == this.schema.TargetNamespace)
+                    {
+                        this.core.UnexpectedElement(node, child);
+                    }
+                    else
+                    {
+                        this.core.UnsupportedExtensionElement(node, child);
+                    }
+                }
+            }
+
+            // Always warn when using the All element.
+            this.core.OnMessage(WixWarnings.AllChangesIncludedInPatch(sourceLineNumbers));
+
+            if (!this.core.EncounteredError)
+            {
+                string[] primaryKey = new string[] {"*"};
+                this.core.AddPatchFamilyChildReference(sourceLineNumbers, "*", primaryKey);
+            }
+        }
+
 
         /// <summary>
         /// Parses all reference elements under a PatchFamily.

@@ -2204,7 +2204,10 @@ namespace Microsoft.Tools.WindowsInstallerXml
                                     if (OutputType.Patch != this.FileManager.Output.Type) // Normal binding for non-Patch scenario such as link (light.exe)
                                     {
                                         // keep a copy of the un-resolved data for future replay. This will be saved into wixpdb file
-                                        objectField.UnresolvedData = (string)objectField.Data;
+                                        if (null == objectField.UnresolvedData)
+                                        {
+                                            objectField.UnresolvedData = (string)objectField.Data;
+                                        }
 
                                         // resolve the path to the file
                                         objectField.Data = this.FileManager.ResolveFile((string)objectField.Data, table.Name, row.SourceLineNumbers, BindStage.Normal);

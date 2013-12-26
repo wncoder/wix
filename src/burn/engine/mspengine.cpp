@@ -411,13 +411,11 @@ extern "C" HRESULT MspEnginePlanAddPackage(
     {
         BURN_MSPTARGETPRODUCT* pTargetProduct = pPackage->Msp.rgTargetProducts + i;
 
-        // If the execute state for patching this target product is higher than the overall package execute state then
-        // skip patching this target product. This happens when the patch uninstall was disabled because there are other
-        // dependents on the machine.
-        if (pPackage->execute < pTargetProduct->execute)
+        // If the dependency manager changed the action state for the patch, change the target product actions.
+        if (pPackage->fDependencyManagerWasHere)
         {
-            pTargetProduct->execute = BOOTSTRAPPER_ACTION_STATE_NONE;
-            pTargetProduct->rollback = BOOTSTRAPPER_ACTION_STATE_NONE;
+            pTargetProduct->execute = pPackage->execute;
+            pTargetProduct->rollback = pPackage->rollback;
         }
 
         if (BOOTSTRAPPER_ACTION_STATE_NONE != pTargetProduct->execute)
