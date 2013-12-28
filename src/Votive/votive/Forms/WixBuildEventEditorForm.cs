@@ -41,7 +41,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.Forms
         /// <summary>
         /// Initializes a new instance of the <see cref="WixBuildEventEditorForm"/> class.
         /// </summary>
-        /// <param name="serviceProvider">The service provider object provided by the IDE hosting the project.</param>
         public WixBuildEventEditorForm(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
@@ -50,6 +49,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.Forms
             this.HelpRequested += new HelpEventHandler(this.WixBuildEventEditorForm_HelpRequested);
 
             this.Font = WixHelperMethods.GetDialogFont();
+
+            this.BackColor = WixHelperMethods.GetVsColor(WixHelperMethods.Vs2010Color.VSCOLOR_BUTTONFACE);
+            WixHelperMethods.SetControlTreeColors(this);
         }
 
         // =========================================================================================
@@ -150,7 +152,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.Forms
 
         private void WixBuildEventEditorForm_HelpRequested(object sender, HelpEventArgs hlpevent)
         {
-            Microsoft.VisualStudio.VSHelp.Help help = this.serviceProvider.GetService(typeof(Microsoft.VisualStudio.VSHelp.Help)) as Microsoft.VisualStudio.VSHelp.Help;
+            Microsoft.VisualStudio.VSHelp.Help help = this.serviceProvider == null ? null : this.serviceProvider.GetService(typeof(Microsoft.VisualStudio.VSHelp.Help)) as Microsoft.VisualStudio.VSHelp.Help;
 
             if (help != null)
             {

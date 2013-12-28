@@ -24,7 +24,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
     /// <summary>
     /// Property page contents for the Wix Project Build Settings page.
     /// </summary>
-    internal partial class WixPropertyPagePanel : UserControl
+    internal partial class WixPropertyPagePanel : WixColorUserControl
     {
         // =========================================================================================
         // Member Variables
@@ -54,6 +54,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.InitializeComponent();
 
             this.Font = WixHelperMethods.GetDialogFont();
+            this.BackColor = WixHelperMethods.GetVsColor(WixHelperMethods.Vs2010Color.VSCOLOR_BUTTONFACE);
+            this.ForeColor = WixHelperMethods.GetVsColor(WixHelperMethods.Vs2010Color.VSCOLOR_BUTTONTEXT);
         }
 
         // =========================================================================================

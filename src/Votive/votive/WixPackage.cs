@@ -31,15 +31,16 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// environment.
     /// </summary>
     [DefaultRegistryRoot(@"Software\\Microsoft\\VisualStudio\\8.0Exp")]
-    [InstalledProductRegistration(true, "WiX", null, null)]
+    [InstalledProductRegistration("WiX", null, null)]
     [Guid("E0EE8E7D-F498-459e-9E90-2B3D73124AD5")]
     [PackageRegistration(RegisterUsing = RegistrationMethod.CodeBase, UseManagedResourcesOnly = true)]
-    [ProvideLoadKey("Standard", "3.5", "Votive", "Microsoft", WixPackage.PackageLoadKeyResourceId)]
+    [ProvideLoadKey("Standard", "3.0", "Votive", "Microsoft", WixPackage.PackageLoadKeyResourceId)]
     [ProvideObject(typeof(WixInstallerPropertyPage), RegisterUsing = RegistrationMethod.CodeBase)]
     [ProvideObject(typeof(WixBuildEventsPropertyPage), RegisterUsing = RegistrationMethod.CodeBase)]
     [ProvideObject(typeof(WixBuildPropertyPage), RegisterUsing = RegistrationMethod.CodeBase)]
     [ProvideObject(typeof(WixPathsPropertyPage), RegisterUsing = RegistrationMethod.CodeBase)]
     [ProvideProjectFactory(typeof(WixProjectFactory), WixProjectNode.ProjectTypeName, "#100", "wixproj", "wixproj", "", LanguageVsTemplate = "WiX")]
+    [CLSCompliant(false)]
     public sealed class WixPackage : ProjectPackage, IVsInstalledProduct
     {
         // =========================================================================================
@@ -51,8 +52,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         private const uint AboutBoxIconResourceId = 400;
 
         private static WixPackage instance;
-        private string productDetails;
         private string officialName;
+        private string productId;
+        private string productDetails;
 
         private WixPackageSettings settings;
 
@@ -129,7 +131,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <returns>If the method succeeds, it returns S_OK. If it fails, it returns an error code.</returns>
         int IVsInstalledProduct.ProductID(out string pbstrPID)
         {
-            pbstrPID = WixStrings.ProductId;
+            if (String.IsNullOrEmpty(this.productId))
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                this.productId = WixDistribution.ReplacePlaceholders(WixStrings.ProductId, assembly);
+            }
+
+            pbstrPID = this.productId;
             return VSConstants.S_OK;
         }
 

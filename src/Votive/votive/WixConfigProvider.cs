@@ -21,6 +21,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using System.Runtime.InteropServices;
     using System.Text;
     using Microsoft.Build.BuildEngine;
+	using MSBuild = Microsoft.Build.Evaluation;
+	using MSBuildConstruction = Microsoft.Build.Construction;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Package;
     using Microsoft.VisualStudio.Shell;
@@ -34,6 +36,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         internal const string IntermediateBaseRelativePath = "obj";
         internal const string ConfigPath = "$(Platform)\\$(Configuration)\\";
 
+		private WixProjectNode wixProjectNode;
+
         /// <summary>
         /// Creates a new config provider for WiX projects.
         /// </summary>
@@ -41,6 +45,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         public WixConfigProvider(WixProjectNode project)
             : base(project)
         {
+        	this.wixProjectNode = project;
         }
 
         /// <summary>
@@ -57,7 +62,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 throw Marshal.GetExceptionForHR(VSConstants.OLE_E_PROMPTSAVECANCELLED);
             }
 
-            string[] platforms = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Platform);
+            string[] platforms = this.GetPropertiesConditionedOn(ProjectFileConstants.Platform);
             foreach (string platform in platforms)
             {
                 string cloneCondition = String.IsNullOrEmpty(cloneName) ? null
@@ -82,7 +87,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 throw Marshal.GetExceptionForHR(VSConstants.OLE_E_PROMPTSAVECANCELLED);
             }
 
-            string[] configs = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Configuration);
+            string[] configs = this.GetPropertiesConditionedOn(ProjectFileConstants.Configuration);
             foreach (string config in configs)
             {
                 string cloneCondition = String.IsNullOrEmpty(clonePlatformName) ? null
@@ -108,19 +113,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     throw Marshal.GetExceptionForHR(VSConstants.OLE_E_PROMPTSAVECANCELLED);
                 }
 
-                string[] configs = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Configuration);
+                string[] configs = this.GetPropertiesConditionedOn(ProjectFileConstants.Configuration);
                 foreach (string config in configs)
                 {
                     if (String.Compare(config, name, StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         string condition = String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigConditionString, config);
-                        this.ProjectMgr.BuildProject.RemovePropertyGroupsWithMatchingCondition(condition);
+                        this.RemovePropertyGroupsWithMatchingCondition(condition);
 
-                        string[] platforms = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Configuration);
+                        string[] platforms = this.GetPropertiesConditionedOn(ProjectFileConstants.Configuration);
                         foreach (string platform in platforms)
                         {
                             condition = String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigAndPlatformConditionString, config, platform);
-                            this.ProjectMgr.BuildProject.RemovePropertyGroupsWithMatchingCondition(condition);
+                            this.RemovePropertyGroupsWithMatchingCondition(condition);
                         }
 
                         this.NotifyOnCfgNameDeleted(name);
@@ -145,19 +150,19 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     throw Marshal.GetExceptionForHR(VSConstants.OLE_E_PROMPTSAVECANCELLED);
                 }
 
-                string[] platforms = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Platform);
+                string[] platforms = this.GetPropertiesConditionedOn(ProjectFileConstants.Platform);
                 foreach (string platform in platforms)
                 {
                     if (String.Compare(platform, platName, StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         string condition = String.Format(CultureInfo.InvariantCulture, WixProjectConfig.PlatformConditionString, platform);
-                        this.ProjectMgr.BuildProject.RemovePropertyGroupsWithMatchingCondition(condition);
+                        this.RemovePropertyGroupsWithMatchingCondition(condition);
 
-                        string[] configs = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Configuration);
+                        string[] configs = this.GetPropertiesConditionedOn(ProjectFileConstants.Configuration);
                         foreach (string config in configs)
                         {
                             condition = String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigAndPlatformConditionString, config, platform);
-                            this.ProjectMgr.BuildProject.RemovePropertyGroupsWithMatchingCondition(condition);
+                            this.RemovePropertyGroupsWithMatchingCondition(condition);
                         }
 
                         this.NotifyOnPlatformNameDeleted(platform);
@@ -167,6 +172,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             return VSConstants.S_OK;
         }
+
+		private void RemovePropertyGroupsWithMatchingCondition(string condition)
+		{
+		}
 
         /// <summary>
         /// Returns the configuration associated with a specified configuration or platform name. 
@@ -310,15 +319,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 throw new ArgumentNullException("projectCfgCanonicalName");
             }
 
-            string configName;
-            string platformName;
-            if (!ProjectConfig.TrySplitConfigurationCanonicalName(projectCfgCanonicalName, out configName, out platformName))
-            {
-                projectCfg = null;
-                return VSConstants.E_INVALIDARG;
-            }
-
-            projectCfg = this.GetProjectConfiguration(configName, platformName);
+            ConfigCanonicalName config = new ConfigCanonicalName(projectCfgCanonicalName);
+            projectCfg = this.GetProjectConfiguration(config);
             return VSConstants.S_OK;
         }
 
@@ -330,17 +332,23 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <param name="cloneCondition">Condition of property group to clone, if it exists.</param>
         private void AddNewConfigPropertyGroup(string config, string platform, string cloneCondition)
         {
-            BuildPropertyGroup newPropertyGroup = null;
+            MSBuildConstruction.ProjectPropertyGroupElement newPropertyGroup = null;
 
             if (!String.IsNullOrEmpty(cloneCondition))
             {
-                foreach (BuildPropertyGroup propertyGroup in this.ProjectMgr.BuildProject.PropertyGroups)
+                foreach (MSBuildConstruction.ProjectPropertyGroupElement propertyGroup in this.ProjectMgr.BuildProject.Xml.PropertyGroups)
                 {
                     if (String.Equals(propertyGroup.Condition.Trim(), cloneCondition.Trim(), StringComparison.OrdinalIgnoreCase))
                     {
                         newPropertyGroup = this.ProjectMgr.ClonePropertyGroup(propertyGroup);
-                        newPropertyGroup.RemoveProperty(WixProjectFileConstants.OutputPath);
-                        newPropertyGroup.RemoveProperty(WixProjectFileConstants.IntermediateOutputPath);
+						foreach (MSBuildConstruction.ProjectPropertyElement property in newPropertyGroup.Properties)
+						{
+							if (property.Name.Equals(WixProjectFileConstants.OutputPath) ||
+								property.Name.Equals(WixProjectFileConstants.IntermediateOutputPath))
+							{
+								property.Parent.RemoveChild(property);
+							}
+						}
                         break;
                     }
                 }
@@ -348,13 +356,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             if (newPropertyGroup == null)
             {
-                newPropertyGroup = this.ProjectMgr.BuildProject.AddNewPropertyGroup(false);
+                newPropertyGroup = this.ProjectMgr.BuildProject.Xml.AddPropertyGroup();
                 IList<KeyValuePair<KeyValuePair<string, string>, string>> propVals = this.NewConfigProperties;
                 foreach (KeyValuePair<KeyValuePair<string, string>, string> data in propVals)
                 {
                     KeyValuePair<string, string> propData = data.Key;
                     string value = data.Value;
-                    BuildProperty newProperty = newPropertyGroup.AddNewProperty(propData.Key, value);
+                    MSBuildConstruction.ProjectPropertyElement newProperty = newPropertyGroup.AddProperty(propData.Key, value);
                     if (!String.IsNullOrEmpty(propData.Value))
                     {
                         newProperty.Condition = propData.Value;
@@ -364,11 +372,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             string outputBasePath = this.ProjectMgr.OutputBaseRelativePath;
             string outputPath = Path.Combine(outputBasePath, WixConfigProvider.ConfigPath);
-            newPropertyGroup.AddNewProperty(WixProjectFileConstants.OutputPath, outputPath);
+            newPropertyGroup.AddProperty(WixProjectFileConstants.OutputPath, outputPath);
 
             string intermediateBasePath = WixConfigProvider.IntermediateBaseRelativePath;
             string intermediatePath = Path.Combine(intermediateBasePath, WixConfigProvider.ConfigPath);
-            newPropertyGroup.AddNewProperty(WixProjectFileConstants.IntermediateOutputPath, intermediatePath);
+            newPropertyGroup.AddProperty(WixProjectFileConstants.IntermediateOutputPath, intermediatePath);
 
             string newCondition = String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigAndPlatformConditionString, config, platform);
             newPropertyGroup.Condition = newCondition;
@@ -376,7 +384,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
         private string[] GetConfigurations()
         {
-            string[] configs = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Configuration);
+            string[] configs = this.GetPropertiesConditionedOn(ProjectFileConstants.Configuration);
             if (configs.Length == 0 ||
                 (configs.Length == 1 && (configs[0] == WixProjectConfig.DebugConfiguration || configs[0] == WixProjectConfig.ReleaseConfiguration)))
             {
@@ -392,7 +400,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
         private string[] GetPlatforms()
         {
-            string[] platforms = this.ProjectMgr.BuildProject.GetConditionedPropertyValues(ProjectFileConstants.Platform);
+            string[] platforms = this.GetPropertiesConditionedOn(ProjectFileConstants.Platform);
             List<string> platformsList = new List<string>(platforms);
 
             // MSBuild always adds AnyCPU to the platforms list. Remove it because it is not supported by WiX projects.
@@ -410,14 +418,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
         private ProjectConfig GetProjectConfiguration(string config, string platform)
         {
-            string fullConfig = config + "|" + platform;
-            if (this.configurationsList.ContainsKey(fullConfig))
+            ConfigCanonicalName configCanonicalName = new ConfigCanonicalName(config, platform);
+            if (this.configurationsList.ContainsKey(configCanonicalName))
             {
-                return this.configurationsList[fullConfig];
+                return this.configurationsList[configCanonicalName];
             }
 
             ProjectConfig requestedConfiguration = new WixProjectConfig((WixProjectNode) this.ProjectMgr, config, platform);
-            this.configurationsList.Add(fullConfig, requestedConfiguration);
+            this.configurationsList.Add(configCanonicalName, requestedConfiguration);
 
             return requestedConfiguration;
         }

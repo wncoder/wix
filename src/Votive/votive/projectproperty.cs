@@ -17,7 +17,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
-    using Microsoft.Build.BuildEngine;
+    using MSBuild = Microsoft.Build.Evaluation;
+    using Microsoft.Build.Execution;
+    using Microsoft.Build.Construction;
     using Microsoft.VisualStudio.Package;
     
     /// <summary>
@@ -57,7 +59,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             WixProjectFileConstants.IntermediateOutputPath,
             WixProjectFileConstants.LibAdditionalOptions,
             WixProjectFileConstants.LinkerAdditionalOptions,
-            WixProjectFileConstants.OutputName,
             WixProjectFileConstants.OutputPath,
             WixProjectFileConstants.PostBuildEvent,
             WixProjectFileConstants.PreBuildEvent,
@@ -194,7 +195,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// inconsistent across configurations.</returns>
         public string GetValue(bool finalValue, IList<ProjectConfig> configs)
         {
-            Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
+            MSBuild.Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
             if (buildProject == null)
             {
                 return null;
@@ -212,7 +213,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// inconsistent across configurations, or false if the property is unset.</returns>
         public bool? GetBooleanValue(IList<ProjectConfig> configs)
         {
-            Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
+            MSBuild.Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
             if (buildProject == null)
             {
                 return null;
@@ -267,10 +268,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             value = value.Trim();
 
-            PropertyPosition position = this.EndOfProjectFile ?
-                PropertyPosition.UseExistingOrCreateAfterLastImport : PropertyPosition.UseExistingOrCreateAfterLastPropertyGroup;
-
-            Project buildProject = this.project.BuildProject;
+            MSBuild.Project buildProject = this.project.BuildProject;
             if (this.PerUser)
             {
                 if (this.project.UserBuildProject == null)
@@ -292,12 +290,80 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
                 foreach (ProjectConfig config in configs)
                 {
-                    buildProject.SetProperty(this.propertyName, value, config.Condition, position);
+                    bool set = false;
+
+                    // First see if there's an existing property group that matches our condition
+                    foreach (ProjectPropertyGroupElement propGroup in buildProject.Xml.PropertyGroups)
+                    {
+                        // if there is, set it within that group
+                        if (String.Equals(propGroup.Condition, config.Condition, StringComparison.Ordinal))
+                        {
+                            propGroup.SetProperty(this.propertyName, value);
+                            set = true;
+                            break;
+                        }
+                    }
+
+                    // If not, add a new property group for the condition and set the property within it
+                    if (!set)
+                    {
+                        ProjectPropertyGroupElement newPropGroup = buildProject.Xml.AddPropertyGroup();
+                        newPropGroup.Condition = config.Condition;
+                        newPropGroup.SetProperty(this.propertyName, value);
+                        set = true;
+                    }
+
+                    buildProject.ReevaluateIfNecessary();
                 }
             }
             else
             {
-                buildProject.SetProperty(this.propertyName, value, null, position);
+                if (this.EndOfProjectFile)
+                {
+                    List<ProjectPropertyGroupElement> propertyGroupsToDelete = new List<ProjectPropertyGroupElement>();
+
+                    // First see if there's an existing property group with our property
+                    foreach (ProjectPropertyGroupElement propGroup in buildProject.Xml.PropertyGroups)
+                    {
+                        List<ProjectPropertyElement> propertiesToDelete = new List<ProjectPropertyElement>();
+                        if(!String.IsNullOrEmpty(propGroup.Condition))
+                        {
+                            continue;
+                        }
+
+                        foreach(ProjectPropertyElement property in propGroup.Properties)
+                        {
+                            // if there is, remove it so the new value is at the end of the file
+                            if (String.IsNullOrEmpty(property.Condition) && String.Equals(property.Name, this.propertyName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                propertiesToDelete.Add(property);
+                            }
+                        }
+
+                        foreach (ProjectPropertyElement property in propertiesToDelete)
+                        {
+                            propGroup.RemoveChild(property);
+                        }
+
+                        if (propGroup.Count == 0)
+                        {
+                            propertyGroupsToDelete.Add(propGroup);
+                        }
+                    }
+
+                    foreach (ProjectPropertyGroupElement propGroup in propertyGroupsToDelete)
+                    {
+                        buildProject.Xml.RemoveChild(propGroup);
+                    }
+
+                    ProjectPropertyGroupElement newPropGroup = buildProject.Xml.CreatePropertyGroupElement();
+                    buildProject.Xml.AppendChild(newPropGroup);
+                    newPropGroup.SetProperty(this.propertyName, value);
+                }
+                else
+                {
+                    buildProject.SetProperty(this.propertyName, value);
+                }
             }
 
             this.project.InvalidatePropertyCache();
@@ -306,7 +372,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
         private string GetValue(bool finalValue, IList<ProjectConfig> configs, bool booleanValue)
         {
-            Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
+            MSBuild.Project buildProject = this.PerUser ? this.project.UserBuildProject : this.project.BuildProject;
             if (buildProject == null)
             {
                 return null;
@@ -324,7 +390,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             }
             else
             {
-                BuildProperty buildProperty = buildProject.EvaluatedProperties[this.propertyName];
+                MSBuild.ProjectProperty buildProperty = buildProject.GetProperty(this.propertyName);
                 value = this.GetBuildPropertyValue(buildProperty, finalValue);
                 if (booleanValue && String.IsNullOrEmpty(value))
                 {
@@ -335,7 +401,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             return value;
         }
 
-        private string GetPerConfigValue(Project buildProject, bool finalValue, IList<ProjectConfig> configs, bool nullIsFalse)
+        private string GetPerConfigValue(MSBuild.Project buildProject, bool finalValue, IList<ProjectConfig> configs, bool nullIsFalse)
         {
             string unifiedValue = null;
 
@@ -344,7 +410,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 ProjectConfig config = configs[i];
                 bool resetCache = (i == 0);
 
-                BuildProperty buildProperty = config.GetMsBuildProperty(this.propertyName, resetCache, buildProject);
+                // we should be using the buildProject parameter here, but this isn't implemented in MPF
+                MSBuild.ProjectProperty buildProperty = config.GetMsBuildProperty(this.propertyName, resetCache);
                 string value = this.GetBuildPropertyValue(buildProperty, finalValue);
 
                 if (value != null)
@@ -371,7 +438,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             return unifiedValue;
         }
 
-        private string GetBuildPropertyValue(BuildProperty buildProperty, bool finalValue)
+        private string GetBuildPropertyValue(MSBuild.ProjectProperty buildProperty, bool finalValue)
         {
             if (buildProperty == null)
             {
@@ -379,7 +446,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             }
             else if (finalValue)
             {
-                return buildProperty.FinalValue;
+                return buildProperty.EvaluatedValue;
             }
             else
             {
@@ -387,13 +454,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 // Ideally, we would like to expand only the value for the property but MSBuild does not allow that
                 // That solves the case where OutputPath is define as $(OutputPath)\ if it's not ending with a backslash
                 string propertyNameEscaped = "$(" + this.propertyName + ")";
-                if (buildProperty.Value.Contains(propertyNameEscaped))
+                if (buildProperty.EvaluatedValue.Contains(propertyNameEscaped))
                 {
-                    return buildProperty.FinalValue;
+                    return buildProperty.UnevaluatedValue;
                 }
                 else
                 {
-                    return this.Unescape(buildProperty.Value);
+                    return this.Unescape(buildProperty.UnevaluatedValue);
                 }
             }
         }

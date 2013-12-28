@@ -54,7 +54,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// will treat this item at build time.</value>
         [Browsable(false)]
         [AutomationBrowsable(false)]
-        public override BuildAction BuildAction
+        public override BuildActionEnum BuildAction
         {
             get
             {

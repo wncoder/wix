@@ -14,6 +14,7 @@
     </ProjectReference>
 
     <ProjectReference Include="sconce\sconce2010.csproj" Condition=" '$(VS2010SdkAvailable)'=='true' " />
+    <ProjectReference Include="votive\Templates\templates.proj" Condition=" '$(VS2010SdkAvailable)'=='true' " />
     <ProjectReference Include="votive2010\votive2010.csproj" Condition=" '$(VS2010SdkAvailable)'=='true' " />
     <ProjectReference Include="votive2012\votive2012.proj" Condition=" '$(VS2010SdkAvailable)'=='true' " />
     <ProjectReference Include="votive2013\votive2013.proj" Condition=" '$(VS2010SdkAvailable)'=='true' " />

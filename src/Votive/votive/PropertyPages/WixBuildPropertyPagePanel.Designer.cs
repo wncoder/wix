@@ -37,12 +37,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.Label defineConstantsExampleLabel;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WixBuildPropertyPagePanel));
-            System.Windows.Forms.Label defineConstantsLabel;
             Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox generalGroupBox;
-            System.Windows.Forms.Label outputPathLabel;
-            Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox outputGroupBox;
             this.generalTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
             this.label3 = new System.Windows.Forms.Label();
             this.defineDebugCheckBox = new System.Windows.Forms.CheckBox();
@@ -66,14 +62,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.warningLevelCombo = new System.Windows.Forms.ComboBox();
             this.suppressedWarningsText = new System.Windows.Forms.TextBox();
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            defineConstantsExampleLabel = new System.Windows.Forms.Label();
-            defineConstantsLabel = new System.Windows.Forms.Label();
+            this.defineConstantsExampleLabel = new System.Windows.Forms.Label();
+            this.defineConstantsLabel = new System.Windows.Forms.Label();
             generalGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
-            outputPathLabel = new System.Windows.Forms.Label();
-            outputGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
+            this.outputPathLabel = new System.Windows.Forms.Label();
+            this.outputGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
             generalGroupBox.SuspendLayout();
             this.generalTableLayoutPanel.SuspendLayout();
-            outputGroupBox.SuspendLayout();
+            this.outputGroupBox.SuspendLayout();
             this.outputTableLayoutPanel.SuspendLayout();
             this.messagesGroupBox.SuspendLayout();
             this.messageTableLayoutPanel.SuspendLayout();
@@ -82,14 +78,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // 
             // defineConstantsExampleLabel
             // 
-            resources.ApplyResources(defineConstantsExampleLabel, "defineConstantsExampleLabel");
-            defineConstantsExampleLabel.Name = "defineConstantsExampleLabel";
+            resources.ApplyResources(this.defineConstantsExampleLabel, "defineConstantsExampleLabel");
+            this.defineConstantsExampleLabel.Name = "defineConstantsExampleLabel";
             // 
             // defineConstantsLabel
             // 
-            resources.ApplyResources(defineConstantsLabel, "defineConstantsLabel");
-            defineConstantsLabel.MinimumSize = new System.Drawing.Size(170, 13);
-            defineConstantsLabel.Name = "defineConstantsLabel";
+            resources.ApplyResources(this.defineConstantsLabel, "defineConstantsLabel");
+            this.defineConstantsLabel.MinimumSize = new System.Drawing.Size(170, 13);
+            this.defineConstantsLabel.Name = "defineConstantsLabel";
             // 
             // generalGroupBox
             // 
@@ -100,12 +96,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // generalTableLayoutPanel
             // 
             resources.ApplyResources(this.generalTableLayoutPanel, "generalTableLayoutPanel");
-            this.generalTableLayoutPanel.Controls.Add(defineConstantsLabel, 1, 2);
+            this.generalTableLayoutPanel.Controls.Add(this.defineConstantsLabel, 1, 2);
             this.generalTableLayoutPanel.Controls.Add(this.label3, 1, 6);
             this.generalTableLayoutPanel.Controls.Add(this.defineDebugCheckBox, 1, 0);
             this.generalTableLayoutPanel.Controls.Add(this.label1, 1, 4);
             this.generalTableLayoutPanel.Controls.Add(this.defineConstantsTextBox, 2, 2);
-            this.generalTableLayoutPanel.Controls.Add(defineConstantsExampleLabel, 2, 3);
+            this.generalTableLayoutPanel.Controls.Add(this.defineConstantsExampleLabel, 2, 3);
             this.generalTableLayoutPanel.Controls.Add(this.defineVariablesTextBox, 2, 4);
             this.generalTableLayoutPanel.Controls.Add(this.label2, 2, 5);
             this.generalTableLayoutPanel.Controls.Add(this.culturesTextBox, 2, 6);
@@ -158,21 +154,21 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // 
             // outputPathLabel
             // 
-            resources.ApplyResources(outputPathLabel, "outputPathLabel");
-            outputPathLabel.MinimumSize = new System.Drawing.Size(170, 23);
-            outputPathLabel.Name = "outputPathLabel";
+            resources.ApplyResources(this.outputPathLabel, "outputPathLabel");
+            this.outputPathLabel.MinimumSize = new System.Drawing.Size(170, 23);
+            this.outputPathLabel.Name = "outputPathLabel";
             // 
             // outputGroupBox
             // 
-            resources.ApplyResources(outputGroupBox, "outputGroupBox");
-            outputGroupBox.Controls.Add(this.outputTableLayoutPanel);
-            outputGroupBox.Name = "outputGroupBox";
+            resources.ApplyResources(this.outputGroupBox, "outputGroupBox");
+            this.outputGroupBox.Controls.Add(this.outputTableLayoutPanel);
+            this.outputGroupBox.Name = "outputGroupBox";
             // 
             // outputTableLayoutPanel
             // 
             resources.ApplyResources(this.outputTableLayoutPanel, "outputTableLayoutPanel");
             this.outputTableLayoutPanel.Controls.Add(this.outputPathFolderBrowser, 2, 0);
-            this.outputTableLayoutPanel.Controls.Add(outputPathLabel, 1, 0);
+            this.outputTableLayoutPanel.Controls.Add(this.outputPathLabel, 1, 0);
             this.outputTableLayoutPanel.Controls.Add(this.bindFilesCheckBox, 1, 3);
             this.outputTableLayoutPanel.Controls.Add(this.leaveTempFilesCheckBox, 1, 1);
             this.outputTableLayoutPanel.Controls.Add(this.suppressWixPdbCheckBox, 1, 2);
@@ -268,7 +264,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // 
             resources.ApplyResources(this.mainTableLayoutPanel, "mainTableLayoutPanel");
             this.mainTableLayoutPanel.Controls.Add(generalGroupBox, 0, 0);
-            this.mainTableLayoutPanel.Controls.Add(outputGroupBox, 0, 2);
+            this.mainTableLayoutPanel.Controls.Add(this.outputGroupBox, 0, 2);
             this.mainTableLayoutPanel.Controls.Add(this.messagesGroupBox, 0, 1);
             this.mainTableLayoutPanel.Name = "mainTableLayoutPanel";
             // 
@@ -281,7 +277,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             generalGroupBox.ResumeLayout(false);
             this.generalTableLayoutPanel.ResumeLayout(false);
             this.generalTableLayoutPanel.PerformLayout();
-            outputGroupBox.ResumeLayout(false);
+            this.outputGroupBox.ResumeLayout(false);
             this.outputTableLayoutPanel.ResumeLayout(false);
             this.outputTableLayoutPanel.PerformLayout();
             this.messagesGroupBox.ResumeLayout(false);
@@ -319,5 +315,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         private System.Windows.Forms.TableLayoutPanel generalTableLayoutPanel;
         private System.Windows.Forms.TableLayoutPanel messageTableLayoutPanel;
         private System.Windows.Forms.TableLayoutPanel outputTableLayoutPanel;
+        private System.Windows.Forms.Label defineConstantsExampleLabel;
+        private System.Windows.Forms.Label defineConstantsLabel;
+        private System.Windows.Forms.Label outputPathLabel;
+        private Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox outputGroupBox;
     }
 }

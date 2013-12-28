@@ -17,7 +17,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
-    using Microsoft.Build.BuildEngine;
+    using Microsoft.Build.Evaluation;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Package;
     using Microsoft.VisualStudio.Package.Automation;
@@ -154,9 +154,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <param name="folderList">List containing relative folder paths.</param>
         private static void ExcludeProjectBuildItems(WixProjectNode project, IList<string> fileList, IList<string> folderList)
         {
-            BuildItemGroup projectItems = project.BuildProject.EvaluatedItems;
-
-            if (projectItems == null)
+            if (project.BuildProject.Items == null)
             {
                 return; // do nothig, just ignore it.
             }
@@ -190,13 +188,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 }
             }
 
-            foreach (BuildItem buildItem in projectItems)
+            foreach (ProjectItem buildItem in project.BuildProject.Items)
             {
                 if (folderMap != null &&
                     folderMap.Count > 0 &&
-                    String.Equals(buildItem.Name, ProjectFileConstants.Folder, StringComparison.OrdinalIgnoreCase))
+                    String.Equals(buildItem.ItemType, ProjectFileConstants.Folder, StringComparison.OrdinalIgnoreCase))
                 {
-                    string relativePath = buildItem.FinalItemSpec;
+                    string relativePath = buildItem.EvaluatedInclude;
                     if (Path.IsPathRooted(relativePath)) // if not the relative path, make it relative
                     {
                         relativePath = WixHelperMethods.GetRelativePath(project.ProjectFolder, relativePath);
@@ -212,7 +210,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     fileMap.Count > 0 &&
                     WixProjectMembers.IsWixFileItem(buildItem))
                 {
-                    string relativePath = buildItem.FinalItemSpec;
+                    string relativePath = buildItem.EvaluatedInclude;
                     if (Path.IsPathRooted(relativePath)) // if not the relative path, make it relative
                     {
                         relativePath = WixHelperMethods.GetRelativePath(project.ProjectFolder, relativePath);
@@ -349,27 +347,27 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         /// <param name="buildItem">BuildItem to be checked.</param>
         /// <returns>Returns true if the buildItem is a file item, false otherwise.</returns>
-        private static bool IsWixFileItem(BuildItem buildItem)
+        private static bool IsWixFileItem(ProjectItem buildItem)
         {
             if (buildItem == null)
             {
-                throw new ArgumentNullException("buildItem");
+                throw new ArgumentNullException("projectItem");
             }
 
             bool isWixFileItem = false;
-            if (String.Equals(buildItem.Name, ProjectFileConstants.Compile, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(buildItem.ItemType, ProjectFileConstants.Compile, StringComparison.OrdinalIgnoreCase))
             {
                 isWixFileItem = true;
             }
-            else if (String.Equals(buildItem.Name, ProjectFileConstants.EmbeddedResource, StringComparison.OrdinalIgnoreCase))
+            else if (String.Equals(buildItem.ItemType, ProjectFileConstants.EmbeddedResource, StringComparison.OrdinalIgnoreCase))
             {
                 isWixFileItem = true;
             }
-            else if (String.Equals(buildItem.Name, ProjectFileConstants.Content, StringComparison.OrdinalIgnoreCase))
+            else if (String.Equals(buildItem.ItemType, ProjectFileConstants.Content, StringComparison.OrdinalIgnoreCase))
             {
                 isWixFileItem = true;
             }
-            else if (String.Equals(buildItem.Name, "None", StringComparison.OrdinalIgnoreCase))
+            else if (String.Equals(buildItem.ItemType, "None", StringComparison.OrdinalIgnoreCase))
             {
                 isWixFileItem = true;
             }

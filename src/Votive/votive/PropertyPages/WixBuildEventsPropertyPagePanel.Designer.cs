@@ -37,25 +37,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         /// </summary>
         private void InitializeComponent()
         {
-            Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox preBuildGroupBox;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WixBuildEventsPropertyPagePanel));
-            Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox postBuildGroupBox;
-            System.Windows.Forms.Label runLabel;
             this.preBuildEditor = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixBuildEventEditor();
             this.postBuildEditor = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixBuildEventEditor();
             this.runPostBuildComboBox = new System.Windows.Forms.ComboBox();
-            preBuildGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
-            postBuildGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
-            runLabel = new System.Windows.Forms.Label();
-            preBuildGroupBox.SuspendLayout();
-            postBuildGroupBox.SuspendLayout();
+            this.preBuildGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
+            this.postBuildGroupBox = new Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox();
+            this.runLabel = new System.Windows.Forms.Label();
+            this.preBuildGroupBox.SuspendLayout();
+            this.postBuildGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // preBuildGroupBox
             // 
-            preBuildGroupBox.Controls.Add(this.preBuildEditor);
+            this.preBuildGroupBox.Controls.Add(this.preBuildEditor);
             resources.ApplyResources(preBuildGroupBox, "preBuildGroupBox");
-            preBuildGroupBox.Name = "preBuildGroupBox";
+            this.preBuildGroupBox.Name = "preBuildGroupBox";
             // 
             // preBuildEditor
             // 
@@ -64,11 +61,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // 
             // postBuildGroupBox
             // 
-            postBuildGroupBox.Controls.Add(this.postBuildEditor);
-            postBuildGroupBox.Controls.Add(this.runPostBuildComboBox);
-            postBuildGroupBox.Controls.Add(runLabel);
-            resources.ApplyResources(postBuildGroupBox, "postBuildGroupBox");
-            postBuildGroupBox.Name = "postBuildGroupBox";
+            this.postBuildGroupBox.Controls.Add(this.postBuildEditor);
+            this.postBuildGroupBox.Controls.Add(this.runPostBuildComboBox);
+            this.postBuildGroupBox.Controls.Add(this.runLabel);
+            resources.ApplyResources(this.postBuildGroupBox, "postBuildGroupBox");
+            this.postBuildGroupBox.Name = "postBuildGroupBox";
             // 
             // postBuildEditor
             // 
@@ -88,20 +85,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // 
             // runLabel
             // 
-            resources.ApplyResources(runLabel, "runLabel");
-            runLabel.AutoEllipsis = true;
-            runLabel.Name = "runLabel";
+            resources.ApplyResources(this.runLabel, "runLabel");
+            this.runLabel.AutoEllipsis = true;
+            this.runLabel.Name = "runLabel";
             // 
             // WixBuildEventsPropertyPagePanel
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(postBuildGroupBox);
-            this.Controls.Add(preBuildGroupBox);
+            this.Controls.Add(this.postBuildGroupBox);
+            this.Controls.Add(this.preBuildGroupBox);
             this.Name = "WixBuildEventsPropertyPagePanel";
-            preBuildGroupBox.ResumeLayout(false);
-            postBuildGroupBox.ResumeLayout(false);
-            postBuildGroupBox.PerformLayout();
+            this.preBuildGroupBox.ResumeLayout(false);
+            this.postBuildGroupBox.ResumeLayout(false);
+            this.postBuildGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -111,7 +108,9 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         private Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixBuildEventEditor preBuildEditor;
         private Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixBuildEventEditor postBuildEditor;
         private System.Windows.Forms.ComboBox runPostBuildComboBox;
-
+        private Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox preBuildGroupBox;
+        private Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox postBuildGroupBox;
+        private System.Windows.Forms.Label runLabel;
 
     }
 }

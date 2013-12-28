@@ -51,7 +51,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         /// <value>The version of the WiX extension file.</value>
         [Browsable(true)]
-        [SRCategoryAttribute(SR.Misc)]
         [WixLocalizedDescription("WixExtensionReferenceVersionDescription")]
         [WixLocalizedDisplayName("WixExtensionReferenceVersionDisplayName")]
         public Version Version

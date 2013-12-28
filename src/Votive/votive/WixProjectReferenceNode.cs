@@ -30,6 +30,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// <summary>
     /// Represents a Wix project reference node.
     /// </summary>
+    [CLSCompliant(false)]
     public class WixProjectReferenceNode : ProjectReferenceNode
     {
         private string setDoNotHarvest;
@@ -400,6 +401,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 else if (String.Compare(projectExtension, ".vbproj", StringComparison.OrdinalIgnoreCase) == 0)
                 {
                     browseGuid = new Guid(BrowseLibraryGuids80.VB);
+                }
+                else if (String.Compare(projectExtension, ".vcproj", StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    browseGuid = new Guid(BrowseLibraryGuids80.VC);
                 }
             }
 

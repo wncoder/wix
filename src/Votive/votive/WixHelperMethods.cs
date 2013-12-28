@@ -29,6 +29,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using System.Xml;
     using System.Xml.Schema;
     using Microsoft.Build.BuildEngine;
+    using Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Package;
     using Microsoft.VisualStudio.Shell;
@@ -51,6 +52,28 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <param name="criteria">Filter criteria.</param>
         /// <returns>Returns if the node should be filtered or not.</returns>
         public delegate bool WixNodeFilter(HierarchyNode node, object criteria);
+
+        /// <summary>
+        /// VS colors for Visual Studio 2010
+        /// We have to redefine them here until we start using the VS 2010 PIAs
+        /// </summary>
+        public enum Vs2010Color
+        {
+            /// <summary>
+            /// VSCOLOR_BUTTONFACE
+            /// </summary>
+            VSCOLOR_BUTTONFACE = -196,
+
+            /// <summary>
+            /// VSCOLOR_BUTTONTEXT
+            /// </summary>
+            VSCOLOR_BUTTONTEXT = -199,
+
+            /// <summary>
+            /// VSCOLOR_WINDOW
+            /// </summary>
+            VSCOLOR_WINDOW = -217,
+        }
 
         /// <summary>
         /// Adds the <see cref="Path.DirectorySeparatorChar"/> character to the end of the path if it doesn't already exist at the end.
@@ -105,21 +128,41 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         }
 
         /// <summary>
+        /// Gets a strongly-typed service from the environment, throwing an exception if the service cannot be retrieved.
+        /// This function returns null instead of throwing an exception when the service cannot be found and should be used
+        /// only in methods invoked by property pages and forms to allow them to be editable in the VS desgners.
+        /// </summary>
+        /// <typeparam name="TInterface">The interface type to get (i.e. IVsShell).</typeparam>
+        /// <typeparam name="TService">The service type to get (i.e. SvsShell).</typeparam>
+        /// <param name="serviceProvider">A <see cref="IServiceProvider"/> to use for retrieving the service.</param>
+        /// <returns>An object that implements the interface from the environment.</returns>
+        public static TInterface GetServiceNoThrow<TInterface, TService>(IServiceProvider serviceProvider)
+            where TInterface: class
+            where TService: class
+        {
+            if (serviceProvider == null)
+            {
+                return null;
+            }
+
+            TInterface service = serviceProvider.GetService(typeof(TService)) as TInterface;
+
+            return service;
+        }
+
+        /// <summary>
         /// Gets the font provided by the VS environment for dialog UI.
         /// </summary>
         /// <returns>Dialog font, or null if it is not available.</returns>
         public static Font GetDialogFont()
         {
-            if (WixPackage.Instance != null)
+            IUIHostLocale uiHostLocale = WixHelperMethods.GetServiceNoThrow<IUIHostLocale, IUIHostLocale>(WixPackage.Instance);
+            if (uiHostLocale != null)
             {
-                IUIHostLocale uiHostLocale = WixHelperMethods.GetService<IUIHostLocale, IUIHostLocale>(WixPackage.Instance);
-                if (uiHostLocale != null)
+                UIDLGLOGFONT[] pLOGFONT = new UIDLGLOGFONT[1];
+                if (uiHostLocale.GetDialogFont(pLOGFONT) == 0)
                 {
-                    UIDLGLOGFONT[] pLOGFONT = new UIDLGLOGFONT[1];
-                    if (uiHostLocale.GetDialogFont(pLOGFONT) == 0)
-                    {
-                        return Font.FromLogFont(pLOGFONT[0]);
-                    }
+                    return Font.FromLogFont(pLOGFONT[0]);
                 }
             }
 
@@ -263,7 +306,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             }
 
             // show the message box
-            VsShellUtilities.ShowMessageBox(serviceProvider, message, Application.ProductName, icon, buttons, defaultButton);
+            VsShellUtilities.ShowMessageBox(serviceProvider, message, String.Empty, icon, buttons, defaultButton);
         }
 
         /// <summary>
@@ -509,6 +552,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         /// <param name="parent">The parent control.</param>
         /// <param name="topic">The topic to show.</param>
+        /// <returns></returns>
         public static void ShowWixHelp(Control parent, string topic)
         {
             string wixHelpFile = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), @"..\doc\WiX.chm"));
@@ -619,6 +663,70 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             {
                 WixFolderNode folderNode = stack.Pop();
                 ((IProjectSourceNode)folderNode).IncludeInProject(false);
+            }
+        }
+
+        /// <summary>
+        /// Sets the colors of the passed control and all of its child controls by using the VS Colors services
+        /// </summary>
+        /// <param name="parent">Parent form/control</param>
+        internal static void SetControlTreeColors(Control parent)
+        {
+            SetSingleControlColors(parent);
+
+            if (parent.Controls != null)
+            {
+                foreach (Control child in parent.Controls)
+                {
+                    SetControlTreeColors(child);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the colors of the control passed as a parameter
+        /// </summary>
+        /// <param name="control">Control on which the colors are being set</param>
+        internal static void SetSingleControlColors(Control control)
+        {
+            control.ForeColor = GetVsColor(Vs2010Color.VSCOLOR_BUTTONTEXT);
+            if (control is TextBox || control is ListBox || control is ListView || control is ComboBox ||
+                control is WixBuildEventTextBox)
+            {
+                control.BackColor = GetVsColor(Vs2010Color.VSCOLOR_WINDOW);
+            }
+        }
+
+        /// <summary>
+        /// Returns a standard VS color or a system color, if the VS colors service is not available
+        /// </summary>
+        /// <param name="visualStudioColor">Color enum</param>
+        /// <returns>The color itself</returns>
+        internal static Color GetVsColor(Vs2010Color visualStudioColor)
+        {
+            uint win32Color = 0;
+            IVsUIShell2 vsuiShell2 = WixPackage.GetGlobalService(typeof(SVsUIShell)) as IVsUIShell2;
+            if (vsuiShell2 != null && vsuiShell2.GetVSSysColorEx((Int32)visualStudioColor, out win32Color) == VSConstants.S_OK)
+            {
+                Color color = ColorTranslator.FromWin32((int)win32Color);
+                return color;
+            }
+
+            // We need to fall back to some reasonable colors when we're not running in VS
+            // to keep the forms/property pages editable in the designers
+            switch (visualStudioColor)
+            {
+                case Vs2010Color.VSCOLOR_BUTTONFACE:
+                    return SystemColors.ButtonFace;
+
+                case Vs2010Color.VSCOLOR_BUTTONTEXT:
+                    return SystemColors.ControlText;
+
+                case Vs2010Color.VSCOLOR_WINDOW:
+                    return SystemColors.Window;
+
+                default:
+                    return Color.Red;
             }
         }
 

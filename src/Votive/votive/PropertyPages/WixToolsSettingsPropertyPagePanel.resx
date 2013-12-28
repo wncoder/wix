@@ -126,7 +126,7 @@
     <value>23, 23</value>
   </data>
   <data name="suppressIceCheckbox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>139, 17</value>
+    <value>138, 17</value>
   </data>
   <data name="suppressIceCheckbox.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -157,7 +157,7 @@
     <value>True</value>
   </data>
   <data name="suppressSpecificIceLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 7</value>
+    <value>0, 6</value>
   </data>
   <data name="suppressSpecificIceLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 3, 0</value>
@@ -190,7 +190,7 @@
     <value>176, 3</value>
   </data>
   <data name="specificIceTextBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>345, 21</value>
+    <value>345, 20</value>
   </data>
   <data name="specificIceTextBox.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -214,7 +214,7 @@
     <value>True</value>
   </data>
   <data name="specificIceExampleLabel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>173, 27</value>
+    <value>173, 26</value>
   </data>
   <data name="specificIceExampleLabel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 3, 0</value>
@@ -289,7 +289,7 @@
     <value>iceValidationGroupBox</value>
   </data>
   <data name="&gt;&gt;iceValidationGroupBox.Type" xml:space="preserve">
-    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox, votive2008, Version=3.0.3907.0, Culture=neutral, PublicKeyToken=9f4be179981a58d1</value>
+    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox, votive2008, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="&gt;&gt;iceValidationGroupBox.Parent" xml:space="preserve">
     <value>$this</value>
@@ -339,6 +339,9 @@
   <data name="linkerTextBox.Multiline" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
+  <data name="linkerTextBox.ScrollBars" type="System.Windows.Forms.ScrollBars, System.Windows.Forms">
+    <value>Vertical</value>
+  </data>
   <data name="linkerTextBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>518, 111</value>
   </data>
@@ -366,6 +369,9 @@
   <data name="librarianTextBox.Multiline" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
+  <data name="librarianTextBox.ScrollBars" type="System.Windows.Forms.ScrollBars, System.Windows.Forms">
+    <value>Vertical</value>
+  </data>
   <data name="librarianTextBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>518, 111</value>
   </data>
@@ -382,7 +388,7 @@
     <value>additionalParamsGroupBox</value>
   </data>
   <data name="&gt;&gt;librarianTextBox.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="linkerLibrarianLabel.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Left, Right</value>
@@ -412,7 +418,7 @@
     <value>additionalParamsGroupBox</value>
   </data>
   <data name="&gt;&gt;linkerLibrarianLabel.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="compilerTextBox.Location" type="System.Drawing.Point, System.Drawing">
     <value>23, 36</value>
@@ -422,6 +428,9 @@
   </data>
   <data name="compilerTextBox.Multiline" type="System.Boolean, mscorlib">
     <value>True</value>
+  </data>
+  <data name="compilerTextBox.ScrollBars" type="System.Windows.Forms.ScrollBars, System.Windows.Forms">
+    <value>Vertical</value>
   </data>
   <data name="compilerTextBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>518, 111</value>
@@ -439,7 +448,7 @@
     <value>additionalParamsGroupBox</value>
   </data>
   <data name="&gt;&gt;compilerTextBox.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="additionalParamsGroupBox.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 98</value>
@@ -460,7 +469,7 @@
     <value>additionalParamsGroupBox</value>
   </data>
   <data name="&gt;&gt;additionalParamsGroupBox.Type" xml:space="preserve">
-    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox, votive2008, Version=3.0.3907.0, Culture=neutral, PublicKeyToken=9f4be179981a58d1</value>
+    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.Controls.WixGroupBox, votive2008, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="&gt;&gt;additionalParamsGroupBox.Parent" xml:space="preserve">
     <value>$this</value>
@@ -481,6 +490,6 @@
     <value>WixToolsSettingsPropertyPagePanel</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
-    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages.WixPropertyPagePanel, votive2008, Version=3.0.3907.0, Culture=neutral, PublicKeyToken=9f4be179981a58d1</value>
+    <value>Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages.WixPropertyPagePanel, votive2008, Version=3.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

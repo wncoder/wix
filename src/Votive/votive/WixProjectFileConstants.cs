@@ -65,6 +65,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         public const string PdbOutputFile = "PdbOutputFile";
         public const string Pedantic = "Pedantic";
         public const string PostBuildEvent = "PostBuildEvent";
+        public const string Project = "Project";
         public const string ProjectFiles = "ProjectFiles";
         public const string ProjectView = "ProjectView";
         public const string PropertyGroup = "PropertyGroup";
@@ -100,6 +101,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         public const string SuppressSpecificWarnings = "SuppressSpecificWarnings";
         public const string SuppressTagSectionIdAttributeOnTuples = "SuppressTagSectionIdAttributeOnTuples";
         public const string SuppressValidation = "SuppressValidation";
+        public const string ToolsVersion = "ToolsVersion";
         public const string TreatWarningsAsErrors = "TreatWarningsAsErrors";
         public const string VerboseOutput = "VerboseOutput";
         public const string WarningLevel = "WarningLevel";

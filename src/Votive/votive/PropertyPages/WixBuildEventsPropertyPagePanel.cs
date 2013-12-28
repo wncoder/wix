@@ -28,7 +28,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         // Member Variables
         // =========================================================================================
 
-        private WixBuildEventEditorForm editorForm;
+        private WixBuildEventEditorForm editorForm = new WixBuildEventEditorForm(null);
 
         // =========================================================================================
         // Constructors
@@ -42,8 +42,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             : base(parentPropertyPage)
         {
             this.InitializeComponent();
-
-            this.editorForm = new WixBuildEventEditorForm(parentPropertyPage.Site);
 
             // hook up the form to both editors
             this.preBuildEditor.Initialize(parentPropertyPage.ProjectMgr, this.editorForm);

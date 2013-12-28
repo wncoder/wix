@@ -37,21 +37,20 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.Label outputNameLabel;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WixInstallerPropertyPagePanel));
             this.outputNameTextBox = new System.Windows.Forms.TextBox();
             this.comboOutputType = new System.Windows.Forms.ComboBox();
             this.outputTypeLabel = new System.Windows.Forms.Label();
             this.mainTableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            outputNameLabel = new System.Windows.Forms.Label();
+            this.outputNameLabel = new System.Windows.Forms.Label();
             this.mainTableLayoutPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // outputNameLabel
             // 
-            resources.ApplyResources(outputNameLabel, "outputNameLabel");
-            outputNameLabel.MinimumSize = new System.Drawing.Size(260, 18);
-            outputNameLabel.Name = "outputNameLabel";
+            resources.ApplyResources(this.outputNameLabel, "outputNameLabel");
+            this.outputNameLabel.MinimumSize = new System.Drawing.Size(260, 18);
+            this.outputNameLabel.Name = "outputNameLabel";
             // 
             // outputNameTextBox
             // 
@@ -80,7 +79,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             // mainTableLayoutPanel
             // 
             resources.ApplyResources(this.mainTableLayoutPanel, "mainTableLayoutPanel");
-            this.mainTableLayoutPanel.Controls.Add(outputNameLabel, 0, 0);
+            this.mainTableLayoutPanel.Controls.Add(this.outputNameLabel, 0, 0);
             this.mainTableLayoutPanel.Controls.Add(this.comboOutputType, 0, 3);
             this.mainTableLayoutPanel.Controls.Add(this.outputTypeLabel, 0, 2);
             this.mainTableLayoutPanel.Controls.Add(this.outputNameTextBox, 0, 1);
@@ -106,5 +105,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
         private System.Windows.Forms.ComboBox comboOutputType;
         private System.Windows.Forms.Label outputTypeLabel;
         private System.Windows.Forms.TableLayoutPanel mainTableLayoutPanel;
+        private System.Windows.Forms.Label outputNameLabel;
     }
 }

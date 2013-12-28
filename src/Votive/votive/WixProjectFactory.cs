@@ -31,6 +31,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// the creation of our custom WiX projects.
     /// </summary>
     [Guid("930C7802-8A8C-48f9-8165-68863BCCD9DD")]
+    [CLSCompliant(false)]
     public class WixProjectFactory : ProjectFactory, IVsProjectUpgradeViaFactory
     {
         // =========================================================================================
@@ -69,7 +70,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "5#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "6#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Usage", "CA1806:DoNotIgnoreMethodResults", Scope = "member")]
-        public int UpgradeProject(string fileName, uint upgradeFlag, string copyLocation, out string upgradedFullyQualifiedFileName, IVsUpgradeLogger logger, out int upgradeRequired, out Guid newProjectFactory)
+        public override int UpgradeProject(string fileName, uint upgradeFlag, string copyLocation, out string upgradedFullyQualifiedFileName, IVsUpgradeLogger logger, out int upgradeRequired, out Guid newProjectFactory)
         {
             uint ignore;
             string projectName = Path.GetFileNameWithoutExtension(fileName);
@@ -83,7 +84,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             }
 
             IVsQueryEditQuerySave2 queryEditQuerySave = WixHelperMethods.GetService<IVsQueryEditQuerySave2, SVsQueryEditQuerySave>(this.Site);
-
+            
             int qef = (int)tagVSQueryEditFlags.QEF_ReportOnly | (int)__VSQueryEditFlags2.QEF_AllowUnopenedProjects;
             uint verdict;
             uint moreInfo;
@@ -109,7 +110,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                         continueUpgrade = true;
                     }
                 }
-
+                
                 if (continueUpgrade)
                 {
                     logger.LogMessage((uint)__VSUL_ERRORLEVEL.VSUL_INFORMATIONAL, projectName, fileName, WixStrings.CheckoutSuccess);
@@ -140,6 +141,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(fileName);
+                xmlDoc.DocumentElement.SetAttribute(WixProjectFileConstants.ToolsVersion, "4.0");
 
                 bool targetsPathUpdated = false;
                 foreach (XmlNode node in xmlDoc.DocumentElement.ChildNodes)
@@ -159,6 +161,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                                 {
                                     targetsPathUpdated = true;
                                     propertyNode.InnerText = propertyNode.InnerText.Replace("\\Microsoft\\WiX\\v3.5\\", "\\Microsoft\\WiX\\v3.x\\");
+                                }
+
+                                if (propertyNode.InnerText.Contains("\\Wix2010.targets"))
+                                {
+                                    targetsPathUpdated = true;
+                                    propertyNode.InnerText = propertyNode.InnerText.Replace("\\Wix2010.targets", "\\Wix.targets");
                                 }
                             }
                         }
@@ -191,7 +199,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "2#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "3#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "4#", Justification = "Suppressing to avoid conflict with style cop.")]
-        public int UpgradeProject_CheckOnly(string fileName, IVsUpgradeLogger logger, out int upgradeRequired, out Guid newProjectFactory, out uint upgradeProjectCapabilityFlags)
+        public override int UpgradeProject_CheckOnly(string fileName, IVsUpgradeLogger logger, out int upgradeRequired, out Guid newProjectFactory, out uint upgradeProjectCapabilityFlags)
         {
             upgradeRequired = 0;
             newProjectFactory = this.GetType().GUID;
@@ -201,8 +209,41 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(fileName);
+            XmlNode toolVersionNode = xmlDoc.DocumentElement.Attributes.GetNamedItem(WixProjectFileConstants.ToolsVersion);
+            if (toolVersionNode != null)
+            {
+                toolsVersion = toolVersionNode.Value;
+            }
 
-            foreach (XmlNode node in xmlDoc.DocumentElement.ChildNodes)
+            try
+            {
+                if (!String.IsNullOrEmpty(toolsVersion))
+                {
+                    string[] version = toolsVersion.Split('.');
+                    if (version.GetLength(0) >= 1)
+                    {
+                        int high = Convert.ToInt32(version[0], CultureInfo.InvariantCulture);
+                        if (high < 4)
+                        {
+                            upgradeRequired = 1;
+                        }
+                    }
+                }
+                else
+                {
+                    upgradeRequired = 1;
+                }
+            }
+            catch (FormatException)
+            {
+                // Unknown version, we don't want to touch it
+            }
+            catch (OverflowException)
+            {
+                // Unknown version, we don't want to touch it
+            }
+
+            foreach(XmlNode node in xmlDoc.DocumentElement.ChildNodes)
             {
                 if (WixProjectFileConstants.PropertyGroup == node.Name)
                 {
@@ -211,6 +252,11 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                         if (WixProjectFileConstants.WixTargetsPath == propertyNode.Name)
                         {
                             if (propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.0\\") || propertyNode.InnerText.Contains("\\Microsoft\\WiX\\v3.5\\"))
+                            {
+                                upgradeRequired = 1;
+                            }
+
+                            if (propertyNode.InnerText.Contains("\\Wix2010.targets"))
                             {
                                 upgradeRequired = 1;
                             }
@@ -236,7 +282,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "2#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "3#", Justification = "Suppressing to avoid conflict with style cop.")]
         [SuppressMessage("Microsoft.Naming", "CA1725:ParameterNamesShouldMatchBaseDeclaration", MessageId = "4#", Justification = "Suppressing to avoid conflict with style cop.")]
-        public int GetSccInfo(string projectFileName, out string sccProjectName, out string sccAuxPath, out string sccLocalPath, out string sccProvider)
+        public override int GetSccInfo(string projectFileName, out string sccProjectName, out string sccAuxPath, out string sccLocalPath, out string sccProvider)
         {
             sccProjectName = String.Empty;
             sccAuxPath = String.Empty;
@@ -295,7 +341,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         {
             bool match = false;
             propertyValue = String.Empty;
-
+            
             if (xmlReader.NodeType == XmlNodeType.Element)
             {
                 if (String.Compare(xmlReader.Name, propertyName, StringComparison.OrdinalIgnoreCase) == 0)

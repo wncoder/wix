@@ -11,6 +11,8 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
+[assembly: System.CLSCompliant(true)]
+
 namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 {
     using System;
@@ -24,7 +26,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
-    using Microsoft.Build.BuildEngine;
+    using MSBuild = Microsoft.Build.Evaluation;
+    using Microsoft.Build.Execution;
     using Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Package;
@@ -42,6 +45,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// Represents the root node of a WiX project within a Solution Explorer hierarchy.
     /// </summary>
     [Guid("D79D1001-AD43-4a1d-AFD6-B6CBBE6B816B")]
+    [CLSCompliant(false)]
     public class WixProjectNode : ProjectNode
     {
         // =========================================================================================
@@ -55,7 +59,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         private WixPackage package;
         private bool showAllFilesEnabled;
 
-        private Project userBuildProject;
+        private MSBuild.Project userBuildProject;
 
         // =========================================================================================
         // Constructors
@@ -159,7 +163,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// Returns the MSBuild project associated with the .user file
         /// </summary>
         /// <value>The MSBuild project associated with the .user file.</value>
-        public Project UserBuildProject
+        public MSBuild.Project UserBuildProject
         {
             get 
             {
@@ -347,10 +351,22 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         public void CreateUserBuildProject()
         {
-            this.userBuildProject = new Project();
             if (File.Exists(this.UserFileName))
             {
-                this.userBuildProject.Load(this.UserFileName);
+                // Create the project from an XmlReader so that this file is
+                // not checked for being dirty when closing the project.
+                // If loaded directly from the file, Visual Studio will display
+                // a save changes dialog if any changes are made to the user
+                // project since it will have been added to the global project
+                // collection. Loading from an XmlReader will prevent the 
+                // project from being added to the global project collection
+                // and thus prevent the save changes dialog on close.
+                System.Xml.XmlReader xmlReader = System.Xml.XmlReader.Create(this.UserFileName);
+                this.userBuildProject = new MSBuild.Project(xmlReader);
+            }
+            else
+            {
+                this.userBuildProject = new MSBuild.Project();
             }
         }
 
@@ -389,6 +405,18 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         }
 
         /// <summary>
+        /// Filter items that should not be processed as file items. Example: Folders and References.
+        /// </summary>
+        /// <param name="itemType">The type of the item being added.</param>
+        /// <returns></returns>
+        protected override bool FilterItemTypeToBeAddedToHierarchy(string itemType)
+        {
+            return (String.Compare(itemType, WixProjectFileConstants.WixExtension, StringComparison.OrdinalIgnoreCase) == 0) ||
+                (String.Compare(itemType, WixProjectFileConstants.WixLibrary, StringComparison.OrdinalIgnoreCase) == 0) ||
+                base.FilterItemTypeToBeAddedToHierarchy(itemType);
+        }
+
+        /// <summary>
         /// Called to save the project file
         /// </summary>
         /// <param name="fileToBeSaved">Name for the project file.</param>
@@ -409,26 +437,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             return result;
         }
 
-        /// <summary>
+		/// <summary>
         /// Sets the value of an MSBuild project property.
         /// </summary>
         /// <param name="propertyName">The name of the property to change.</param>
         /// <param name="propertyValue">The value to assign the property.</param>
         /// <param name="condition">The condition to use on the property. Corresponds to the Condition attribute of the Property element.</param>
         public void SetProjectProperty(string propertyName, string propertyValue, string condition)
-        {
-            this.SetProjectProperty(propertyName, propertyValue, condition, PropertyPosition.UseExistingOrCreateAfterLastPropertyGroup, false);
-        }
-
-        /// <summary>
-        /// Sets the value of an MSBuild project property.
-        /// </summary>
-        /// <param name="propertyName">The name of the property to change.</param>
-        /// <param name="propertyValue">The value to assign the property.</param>
-        /// <param name="condition">The condition to use on the property. Corresponds to the Condition attribute of the Property element.</param>
-        /// <param name="position">A <see cref="PropertyPosition"/> value indicating the location to insert the property.</param>
-        /// <param name="treatPropertyValueAsLiteral">true to treat the <paramref name="propertyValue"/> parameter as a literal value; otherwise, false.</param>
-        public void SetProjectProperty(string propertyName, string propertyValue, string condition, PropertyPosition position, bool treatPropertyValueAsLiteral)
         {
             WixHelperMethods.VerifyStringArgument(propertyName, "propertyName");
 
@@ -449,7 +464,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     throw Marshal.GetExceptionForHR(VSConstants.OLE_E_PROMPTSAVECANCELLED);
                 }
 
-                this.BuildProject.SetProperty(propertyName, propertyValue, condition, position, treatPropertyValueAsLiteral);
+				// Use condition! 
+                this.BuildProject.SetProperty(propertyName, propertyValue); //, condition);
 
                 // refresh the cached values
                 this.SetCurrentConfiguration();
@@ -558,15 +574,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <summary>
         /// Sets the configuration for the .user build file
         /// </summary>
-        /// <param name="configName">Configuration name</param>
-        /// <param name="platformName">Platform name</param>
-        protected internal override void SetConfiguration(string configName, string platformName)
+        /// <param name="configCanonicalName">Configuration</param>
+        protected internal override void SetConfiguration(ConfigCanonicalName configCanonicalName)
         {
-            base.SetConfiguration(configName, platformName);
+            base.SetConfiguration(configCanonicalName);
             if (this.userBuildProject != null)
             {
-                this.userBuildProject.GlobalProperties.SetProperty(ProjectFileConstants.Configuration, configName);
-                this.userBuildProject.GlobalProperties.SetProperty(ProjectFileConstants.Platform, platformName);
+                this.userBuildProject.SetGlobalProperty(ProjectFileConstants.Configuration, configCanonicalName.ConfigName);
+                this.userBuildProject.SetGlobalProperty(ProjectFileConstants.Platform, configCanonicalName.MSBuildPlatform);
             }
         }
 
@@ -610,7 +625,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             this.UserBuildProject.SetProperty(
                 WixProjectFileConstants.ProjectView,
                 (this.showAllFilesEnabled ? WixProjectFileConstants.ShowAllFiles : WixProjectFileConstants.ProjectFiles));
-            this.UserBuildProject.MarkProjectAsDirty();
 
             return result;
         }
@@ -663,7 +677,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             if (this.UserBuildProject != null)
             {
                 // Read show all files flag
-                string propertyValue = this.UserBuildProject.GetEvaluatedProperty(WixProjectFileConstants.ProjectView);
+                string propertyValue = this.UserBuildProject.GetPropertyValue(WixProjectFileConstants.ProjectView);
                 if (String.Equals(propertyValue, WixProjectFileConstants.ShowAllFiles, StringComparison.OrdinalIgnoreCase))
                 {
                     this.ToggleShowAllFiles();
@@ -805,7 +819,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         /// <param name="target">Name of the MSBuild target to execute.</param>
         /// <returns>Result from executing the target (success/failure).</returns>
-        protected override MSBuildResult InvokeMsBuild(string target)
+        protected override Microsoft.VisualStudio.Package.BuildResult InvokeMsBuild(string target)
         {
             WixBuildMacroCollection.DefineSolutionProperties(this);
             WixBuildMacroCollection.DefineProjectReferenceConfigurations(this);

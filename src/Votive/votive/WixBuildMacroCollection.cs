@@ -22,8 +22,10 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
     using EnvDTE;
     using Microsoft.Build.BuildEngine;
+    using Microsoft.Build.Execution;
     using Microsoft.VisualStudio;
     using Microsoft.VisualStudio.Package;
+    using Utilities = Microsoft.VisualStudio.Package.Utilities;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
 
@@ -84,28 +86,39 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             WixBuildMacroCollection.DefineSolutionProperties(project);
             foreach (string globalMacroName in globalMacroNames)
             {
-                BuildProperty property = project.BuildEngine.GlobalProperties[globalMacroName];
-                if (property == null)
+                string property = null;
+                project.BuildProject.GlobalProperties.TryGetValue(globalMacroName, out property);
+                if (null == property)
                 {
                     this.list.Add(globalMacroName, "*Undefined*");
                 }
                 else
                 {
-                    string value = property.FinalValue;
-                    this.list.Add(globalMacroName, value);
+                    this.list.Add(globalMacroName, property);
                 }
             }
 
             // we need to call GetTargetPath first so that TargetDir and TargetPath are resolved correctly
-            EnvDTE.Project automationObject = project.GetAutomationObject() as EnvDTE.Project;
-            string configName = Microsoft.VisualStudio.Package.Utilities.GetActiveConfigurationName(automationObject);
-            string platformName = Microsoft.VisualStudio.Package.Utilities.GetActivePlatformName(automationObject);
-            project.Build(configName, platformName, WixProjectFileConstants.MsBuildTarget.GetTargetPath);
+            ConfigCanonicalName configCanonicalName;
+            if (!Utilities.TryGetActiveConfigurationAndPlatform(project.Site, project, out configCanonicalName))
+            {
+                throw new InvalidOperationException();
+            }
+            Microsoft.VisualStudio.Package.BuildResult res = project.Build(configCanonicalName, WixProjectFileConstants.MsBuildTarget.GetTargetPath);
 
             // get the ProjectX and TargetX variables
             foreach (string macroName in macroNames)
             {
-                string value = project.GetProjectProperty(macroName);
+                string value;
+                if (res.ProjectInstance != null)
+                {
+                    value = res.ProjectInstance.GetPropertyValue(macroName);
+                }
+                else
+                {
+                    value = project.GetProjectProperty(macroName);
+                }
+
                 this.list.Add(macroName, value);
             }
         }
@@ -206,7 +219,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                 string propertyName = property[0];
                 string propertyValue = property[1];
 
-                project.BuildEngine.GlobalProperties.SetProperty(propertyName, propertyValue);
+                project.BuildProject.SetGlobalProperty(propertyName, propertyValue);
             }
         }
 
@@ -263,7 +276,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
             if (configList.Length > 0)
             {
-                project.BuildProject.GlobalProperties.SetProperty("VSProjectConfigurations", configList.ToString());
+                project.BuildProject.SetGlobalProperty("VSProjectConfigurations", configList.ToString());
             }
         }
 

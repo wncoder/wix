@@ -29,6 +29,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     /// <summary>
     /// Abstract base class for a Wix reference node.
     /// </summary>
+    [CLSCompliant(false)]
     public abstract class WixReferenceNode : ReferenceNode
     {
         // =========================================================================================
@@ -40,7 +41,6 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// </summary>
         /// <param name="root">The root <see cref="WixProjectNode"/> that contains this node.</param>
         /// <param name="element">The element that contains MSBuild properties.</param>
-        [SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
         protected WixReferenceNode(WixProjectNode root, ProjectElement element)
             : base(root, element)
         {
@@ -143,7 +143,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
 
                 if (!File.Exists(fullPath))
                 {
-                    string userReferencePath = (string)this.ProjectMgr.GetMsBuildProperty(ProjectFileConstants.ReferencePath, false);
+                    string userReferencePath = (string)this.ProjectMgr.GetProjectProperty(ProjectFileConstants.ReferencePath, false);
                     if (!String.IsNullOrEmpty(userReferencePath))
                     {
                         fullPath = FileSearchHelperMethods.SearchFilePaths(userReferencePath.Split(';'), fullPath);
@@ -198,6 +198,8 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <returns>Path with build properties evaluated and substituted.</returns>
         protected virtual string ReplacePropertiesInPath(string path)
         {
+            this.ProjectMgr.SetCurrentConfiguration();
+
             int startIndex, endIndex;
             while ((startIndex = path.IndexOf("$(", StringComparison.Ordinal)) >= 0 && (endIndex = path.IndexOf(Convert.ToString(')', CultureInfo.InvariantCulture), startIndex + 2, StringComparison.Ordinal)) >= 0)
             {

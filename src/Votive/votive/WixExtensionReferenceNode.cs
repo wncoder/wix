@@ -23,12 +23,14 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
     using Microsoft.Tools.WindowsInstallerXml;
     using Microsoft.Tools.WindowsInstallerXml.Build.Tasks;
     using Microsoft.VisualStudio.Package;
+    using Utilities = Microsoft.VisualStudio.Package.Utilities;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
 
     /// <summary>
     /// Represents a Wix extension reference node.
     /// </summary>
+    [CLSCompliant(false)]
     public class WixExtensionReferenceNode : WixReferenceNode
     {
         // =========================================================================================
@@ -88,6 +90,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             }
 
             this.ItemNode.SetMetadata(ProjectFileConstants.HintPath, referencePath);
+
             this.InitializeFileChangeEvents();
         }
 
@@ -155,29 +158,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
             {
                 if (extensionDirectory == null)
                 {
-                    string configName = null;
-                    string platformName = null;
-                    try
-                    {
-                        EnvDTE.Project automationObject = this.ProjectMgr.GetAutomationObject() as EnvDTE.Project;
-                        configName = Utilities.GetActiveConfigurationName(automationObject);
-                        platformName = Utilities.GetActivePlatformName(automationObject);
-                    }
-                    catch (COMException)
-                    {
-                        // If there's no active configuration, just return an empty string for now but try again later.
-                        return String.Empty;
-                    }
-                    catch (ArgumentException)
-                    {
-                        // TryGetActiveConfigurationAndPlatform calls ThrowOnFailure which may throw ArgumentException.
-                        // Just return empty string for same reason as above.
-                        return String.Empty;
-                    }
-
-                    this.ProjectMgr.Build(configName, platformName, WixProjectFileConstants.MsBuildTarget.GetTargetPath);
-
-                    extensionDirectory = (string)this.ProjectMgr.GetMsBuildProperty(WixProjectFileConstants.WixExtDir, true);
+                    extensionDirectory = (string)this.ProjectMgr.GetProjectProperty(WixProjectFileConstants.WixExtDir);
                     if (extensionDirectory == null)
                     {
                         extensionDirectory = String.Empty;
@@ -218,12 +199,12 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// Checks if a reference is already added. The method parses all references and compares the filename.
         /// </summary>
         /// <returns>true if the extension reference has already been added.</returns>
-        protected override bool IsAlreadyAdded()
+        protected override bool IsAlreadyAdded(out ReferenceNode existingNode)
         {
             ReferenceContainerNode referencesFolder = this.ProjectMgr.FindChild(ReferenceContainerNode.ReferencesNodeVirtualName) as ReferenceContainerNode;
             Debug.Assert(referencesFolder != null, "Could not find the References node");
 
-            string thisName = Path.GetFileNameWithoutExtension(this.ItemNode.Item.Include);
+            string thisName = Path.GetFileNameWithoutExtension(this.ItemNode.Item.Xml.Include);
             for (HierarchyNode n = referencesFolder.FirstChild; n != null; n = n.NextSibling)
             {
                 WixExtensionReferenceNode otherReference = n as WixExtensionReferenceNode;
@@ -232,11 +213,13 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
                     string otherName = Path.GetFileNameWithoutExtension(otherReference.Url);
                     if (String.Equals(thisName, otherName, StringComparison.OrdinalIgnoreCase))
                     {
+                        existingNode = otherReference;
                         return true;
                     }
                 }
             }
 
+            existingNode = null;
             return false;
         }
 

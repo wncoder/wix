@@ -65,7 +65,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.includePathsGroupBox.BackColor = System.Drawing.SystemColors.Control;
             this.includePathsGroupBox.Controls.Add(this.includePathsFolderSelector);
             this.includePathsGroupBox.Name = "includePathsGroupBox";
-            this.includePathsGroupBox.Resize += new System.EventHandler(this.IncludePathsGroupBox_Resize);
+            // todo: this.includePathsGroupBox.Resize += new System.EventHandler(this.IncludePathsGroupBox_Resize);
             // 
             // includePathsFolderSelector
             // 
@@ -89,7 +89,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.Controls.Add(this.mainTableLayoutPanel);
             this.MinimumSize = new System.Drawing.Size(344, 447);
             this.Name = "WixPathsPropertyPagePanel";
-            this.Resize += new System.EventHandler(this.WixPathsPropertyPagePanel_Resize);
+            // todo: this.Resize += new System.EventHandler(this.WixPathsPropertyPagePanel_Resize);
             this.referencePathsGroupBox.ResumeLayout(false);
             this.includePathsGroupBox.ResumeLayout(false);
             this.mainTableLayoutPanel.ResumeLayout(false);

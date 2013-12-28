@@ -54,7 +54,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         /// <param name="configName">Configuration name such as "Debug".</param>
         /// <param name="platformName">Platform name such as "x86".</param>
         public WixProjectConfig(WixProjectNode project, string configName, string platformName)
-            : base(project, configName, platformName)
+            : base(project, new ConfigCanonicalName(configName, platformName))
         {
         }
 
@@ -65,7 +65,7 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio
         {
             get
             {
-                return String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigAndPlatformConditionString, this.ConfigName, this.PlatformName);
+                return String.Format(CultureInfo.InvariantCulture, WixProjectConfig.ConfigAndPlatformConditionString, this.ConfigCanonicalName.ConfigName, this.ConfigCanonicalName.MSBuildPlatform);
             }
         }
     }

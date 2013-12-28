@@ -43,21 +43,5 @@ namespace Microsoft.Tools.WindowsInstallerXml.VisualStudio.PropertyPages
             this.referencePathsFoldersSelector.Tag = WixProjectFileConstants.ReferencePaths;
             this.includePathsFolderSelector.Tag = WixProjectFileConstants.IncludeSearchPaths;
         }
-
-        private void WixPathsPropertyPagePanel_Resize(object sender, EventArgs e)
-        {
-            this.mainTableLayoutPanel.Size = new Size(this.Size.Width, this.Size.Height);
-        }
-
-        private void IncludePathsGroupBox_Resize(object sender, EventArgs e)
-        {
-            this.includePathsFolderSelector.Size = new Size(
-                this.includePathsGroupBox.Size.Width - this.includePathsFolderSelector.Location.X,
-                this.includePathsGroupBox.Size.Height - this.includePathsFolderSelector.Location.Y);
-
-            this.referencePathsFoldersSelector.Size = new Size(
-                this.referencePathsGroupBox.Size.Width - this.referencePathsFoldersSelector.Location.X,
-                this.includePathsGroupBox.Size.Height - this.includePathsFolderSelector.Location.Y);
-        }
     }
 }
