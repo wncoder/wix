@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <BindInputPaths Include="$(MSBuildProjectDirectory)" />
-    <BindInputPaths Include="$(WixRoot)src\Votive\votive\Icons" />
+    <BindInputPaths Include="$(WixRoot)src\Votive\votive2010\src\Icons" />
   </ItemGroup>
 
   <ItemGroup>

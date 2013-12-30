@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\votive\extension.vsixmanifest">
+    <Content Include="extension.vsixmanifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="votive2010.pkgdef">
@@ -101,7 +101,6 @@
       <SpecificVersion>True</SpecificVersion>
     </Reference>
     <ProjectReference Include="..\..\tools\wix\wix.csproj"/>
-    <ProjectReference Include="..\sconce\sconce2010.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -33,10 +33,6 @@
     <Fragment>
         <ComponentGroup Id="Votive$(var.VsVersion)BinaryComponents" Directory="BinFolder">
             <Component>
-                <File Source="sconce2010.dll" />
-            </Component>
-
-            <Component>
                 <File Source="votive2010.dll" />
                 <util:RestartResource Path="[VS2010DEVENV]" />
             </Component>
