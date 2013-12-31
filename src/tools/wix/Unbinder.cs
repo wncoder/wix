@@ -21,8 +21,9 @@ namespace WixToolset
     using System.Globalization;
     using System.IO;
     using System.Text.RegularExpressions;
-
     using WixToolset.Cab;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
@@ -47,7 +48,7 @@ namespace WixToolset
         /// </summary>
         public Unbinder()
         {
-            this.tableDefinitions = Installer.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
             this.unbinderExtensions = new ArrayList();
         }
 

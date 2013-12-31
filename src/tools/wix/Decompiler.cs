@@ -23,6 +23,8 @@ namespace WixToolset
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
@@ -61,7 +63,7 @@ namespace WixToolset
         /// </summary>
         public Decompiler()
         {
-            this.standardActions = Installer.GetStandardActions();
+            this.standardActions = WindowsInstallerStandard.GetStandardActions();
 
             this.extensions = new List<IDecompilerExtension>();
             this.extensionsByTableName = new Dictionary<string,IDecompilerExtension>();
@@ -190,7 +192,7 @@ namespace WixToolset
             }
 
             // add any missing standard and wix-specific table definitions
-            foreach (TableDefinition tableDefinition in Installer.GetTableDefinitions())
+            foreach (TableDefinition tableDefinition in WindowsInstallerStandard.GetTableDefinitions())
             {
                 if (!this.tableDefinitions.Contains(tableDefinition.Name))
                 {

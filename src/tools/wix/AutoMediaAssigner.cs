@@ -15,11 +15,11 @@ namespace WixToolset
 {
     using System;
     using System.Collections;
-    using System.Reflection;
-    using System.IO;
-    using System.Globalization;
     using System.Collections.Generic;
-    using System.Runtime.InteropServices;
+    using System.Globalization;
+    using System.IO;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
 
     /// <summary>

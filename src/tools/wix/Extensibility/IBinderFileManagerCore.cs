@@ -11,6 +11,7 @@ namespace WixToolset.Extensibility
 {
     using System;
     using System.Collections.Generic;
+    using WixToolset.Data;
 
     public interface IBinderFileManagerCore : IMessageHandler
     {

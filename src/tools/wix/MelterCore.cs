@@ -13,7 +13,7 @@
 
 namespace WixToolset
 {
-    using WixToolset.Extensibility;
+    using WixToolset.Data;
 
     /// <summary>
     /// Melts a Module Wix document into a ComponentGroup representation.

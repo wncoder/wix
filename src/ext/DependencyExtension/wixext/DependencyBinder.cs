@@ -16,7 +16,7 @@ namespace WixToolset.Extensions
     using System;
     using System.Collections.ObjectModel;
     using System.Globalization;
-    using WixToolset;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

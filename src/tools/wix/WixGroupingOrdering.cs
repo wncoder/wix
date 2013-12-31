@@ -21,6 +21,7 @@ namespace WixToolset
     using System.Globalization;
     using System.Text;
     using WixToolset.Extensibility;
+    using WixToolset.Data;
 
     /// <summary>
     /// Grouping and Ordering class of the WiX toolset.

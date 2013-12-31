@@ -11,6 +11,7 @@ namespace WixToolset.Extensions
 {
     using System;
     using System.Reflection;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     public sealed class GamingExtensionData : ExtensionData

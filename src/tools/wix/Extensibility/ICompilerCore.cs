@@ -13,6 +13,7 @@ namespace WixToolset.Extensibility
     using System.Collections;
     using System.Collections.Generic;
     using System.Xml.Linq;
+    using WixToolset.Data;
 
     /// <summary>
     /// Core interface provided by the compiler.

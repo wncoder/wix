@@ -22,18 +22,6 @@
     <Compile Include="Binder.cs" />
     <Compile Include="BinderCore.cs" />
     <Compile Include="BinderFileManagerCore.cs" />
-    <Compile Include="Data\ILibraryBinaryFileResolver.cs" />
-    <Compile Include="Data\Rows\VariableRow.cs" />
-    <Compile Include="DisplayEventArgs.cs" />
-    <Compile Include="Extensibility\BindPath.cs" />
-    <Compile Include="Extensibility\BindStage.cs" />
-    <Compile Include="Extensibility\CabinetBuildOption.cs" />
-    <Compile Include="Extensibility\DecompilerConstants.cs" />
-    <Compile Include="Extensibility\CompilerConstants.cs" />
-    <Compile Include="Data\ComplexReferenceChildType.cs" />
-    <Compile Include="Data\ComplexReferenceParentType.cs" />
-    <Compile Include="Extensibility\ComponentKeyPath.cs" />
-    <Compile Include="Extensibility\BinderExtension.cs" />
     <Compile Include="BinderFileManager.cs" />
     <Compile Include="BundleChainAttributes.cs" />
     <Compile Include="BundlePackageAttributes.cs" />
@@ -47,98 +35,58 @@
     <Compile Include="Cab\WixCreateCab.cs" />
     <Compile Include="Cab\WixEnumerateCab.cs" />
     <Compile Include="Cab\WixExtractCab.cs" />
-    <Compile Include="ChainMsiPackageRow.cs" />
     <Compile Include="CLR\Interop\CLRInterop.cs" />
     <Compile Include="CommandLine.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="CompilerCore.cs" />
-    <Compile Include="Extensibility\CompilerExtension.cs" />
     <Compile Include="ConsoleMessageHandler.cs" />
-    <Compile Include="Data\ColumnDefinition.cs" />
-    <Compile Include="Data\ColumnDefinitionCollection.cs" />
-    <Compile Include="Data\Field.cs" />
-    <Compile Include="Data\Intermediate.cs" />
-    <Compile Include="Data\Library.cs" />
-    <Compile Include="Data\Localization.cs" />
-    <Compile Include="Data\ObjectField.cs" />
-    <Compile Include="Data\Output.cs" />
-    <Compile Include="Data\Patch.cs" />
-    <Compile Include="Data\Pdb.cs" />
-    <Compile Include="Data\Row.cs" />
-    <Compile Include="Data\RowCollection.cs" />
-    <Compile Include="Data\RowDictionary.cs" />
-    <Compile Include="Data\Rows\BBControlRow.cs" />
-    <Compile Include="Data\Rows\ComponentRow.cs" />
-    <Compile Include="Data\Rows\ControlRow.cs" />
-    <Compile Include="Data\Rows\FileRow.cs" />
-    <Compile Include="Data\Rows\FileRowCollection.cs" />
-    <Compile Include="Data\Rows\MediaRow.cs" />
-    <Compile Include="Data\Rows\MediaRowCollection.cs" />
-    <Compile Include="Data\Rows\SummaryInfoRowCollection.cs" />
-    <Compile Include="Data\Rows\UpgradeRow.cs" />
-    <Compile Include="Data\Rows\WixActionRow.cs" />
-    <Compile Include="Data\Rows\WixActionRowCollection.cs" />
-    <Compile Include="Data\Rows\WixBundlePatchTargetCodeRow.cs" />
-    <Compile Include="Data\Rows\WixBundleRow.cs" />
-    <Compile Include="Data\Rows\WixBundleUpdateRow.cs" />
-    <Compile Include="Data\Rows\WixComplexReferenceRow.cs" />
-    <Compile Include="Data\Rows\WixFileRow.cs" />
-    <Compile Include="Data\Rows\WixMediaRow.cs" />
-    <Compile Include="Data\Rows\WixMediaTemplateRow.cs" />
-    <Compile Include="Data\Rows\WixMergeRow.cs" />
-    <Compile Include="Data\Rows\WixPropertyRow.cs" />
-    <Compile Include="Data\Rows\WixSimpleReferenceRow.cs" />
-    <Compile Include="Data\Rows\WixUpdateRegistrationRow.cs" />
-    <Compile Include="Data\Rows\WixVariableRow.cs" />
-    <Compile Include="Data\Section.cs" />
-    <Compile Include="Data\SectionCollection.cs" />
-    <Compile Include="Data\SourceLineNumber.cs" />
-    <Compile Include="Data\SubStorage.cs" />
-    <Compile Include="Data\Symbol.cs" />
-    <Compile Include="Data\SymbolCollection.cs" />
-    <Compile Include="Data\Table.cs" />
-    <Compile Include="Data\TableCollection.cs" />
-    <Compile Include="Data\TableDefinition.cs" />
-    <Compile Include="Data\TableDefinitionCollection.cs" />
-    <Compile Include="Data\YesNoDefaultType.cs" />
-    <Compile Include="Data\YesNoType.cs" />
     <Compile Include="Extensibility\AssemblyDefaultFabricatorExtensionAttribute.cs" />
     <Compile Include="Extensibility\AssemblyDefaultHeatExtensionAttribute.cs" />
+    <Compile Include="Extensibility\BinderExtension.cs" />
+    <Compile Include="Extensibility\BindPath.cs" />
+    <Compile Include="Extensibility\BindStage.cs" />
+    <Compile Include="Extensibility\CabinetBuildOption.cs" />
+    <Compile Include="Extensibility\CompilerConstants.cs" />
+    <Compile Include="Extensibility\CompilerExtension.cs" />
+    <Compile Include="Extensibility\ComponentKeyPath.cs" />
+    <Compile Include="Extensibility\DecompilerConstants.cs" />
+    <Compile Include="Extensibility\DecompilerExtension.cs" />
     <Compile Include="Extensibility\ExtensionData.cs" />
-    <Compile Include="Extensibility\IBinderFileManagerCore.cs" />
-    <Compile Include="Extensibility\IExtensionData.cs" />
-    <Compile Include="Extensibility\IDecompilerCore.cs" />
-    <Compile Include="Extensibility\IDecompilerExtension.cs" />
-    <Compile Include="Extensibility\IHarvesterCore.cs" />
-    <Compile Include="Extensibility\IHeatCore.cs" />
+    <Compile Include="Extensibility\ExtensionHelper.cs" />
+    <Compile Include="Extensibility\HarvesterExtension.cs" />
     <Compile Include="Extensibility\HeatExtension.cs" />
+    <Compile Include="Extensibility\IBinderCore.cs" />
     <Compile Include="Extensibility\IBinderExtension.cs" />
     <Compile Include="Extensibility\IBinderFileManager.cs" />
+    <Compile Include="Extensibility\IBinderFileManagerCore.cs" />
     <Compile Include="Extensibility\ICompilerCore.cs" />
-    <Compile Include="Extensibility\IExtensionCommandLine.cs" />
     <Compile Include="Extensibility\ICompilerExtension.cs" />
+    <Compile Include="Extensibility\IDecompilerCore.cs" />
+    <Compile Include="Extensibility\IDecompilerExtension.cs" />
+    <Compile Include="Extensibility\IExtensionCommandLine.cs" />
+    <Compile Include="Extensibility\IExtensionData.cs" />
+    <Compile Include="Extensibility\IHarvesterCore.cs" />
+    <Compile Include="Extensibility\IHeatCore.cs" />
     <Compile Include="Extensibility\IInspectorCore.cs" />
     <Compile Include="Extensibility\IInspectorExtension.cs" />
-    <Compile Include="Extensibility\IMessageHandler.cs" />
+    <Compile Include="Extensibility\InspectorExtension.cs" />
+    <Compile Include="Extensibility\IPreprocessorCore.cs" />
     <Compile Include="Extensibility\IPreprocessorExtension.cs" />
+    <Compile Include="Extensibility\IUnbinderExtension.cs" />
+    <Compile Include="Extensibility\MutatorExtension.cs" />
     <Compile Include="Extensibility\PreprocessorExtension.cs" />
-    <Compile Include="Extensibility\IBinderCore.cs" />
-    <Compile Include="Extensibility\ExtensionHelper.cs" />
     <Compile Include="Extensibility\ResolvedCabinet.cs" />
+    <Compile Include="Extensibility\ValidatorExtension.cs" />
     <Compile Include="ExtensionManager.cs" />
     <Compile Include="FileTransfer.cs" />
     <Compile Include="IfDefEventHandler.cs" />
     <Compile Include="Inscriber.cs" />
     <Compile Include="InspectorCore.cs" />
-    <Compile Include="Extensibility\InspectorExtension.cs" />
-    <Compile Include="Extensibility\IPreprocessorCore.cs" />
     <Compile Include="Localizer.cs" />
-    <Compile Include="Messaging.cs" />
+    <Compile Include="Patch.cs" />
     <Compile Include="PatchAPI\PatchInterop.cs" />
     <Compile Include="PatchTransform.cs" />
-    <Compile Include="PayloadInfoRow.cs" />
-    <Compile Include="Data\Platform.cs" />
     <Compile Include="ResolvedVariableEventHandler.cs" />
     <Compile Include="Uuid.cs" />
     <Compile Include="Differ.cs" />
@@ -156,19 +104,10 @@
     <Compile Include="ConnectToModuleCollection.cs" />
     <Compile Include="Decompiler.cs" />
     <Compile Include="DecompilerCore.cs" />
-    <Compile Include="Extensibility\DecompilerExtension.cs" />
-    <Compile Include="Exceptions\DuplicateSymbolsException.cs" />
-    <Compile Include="Exceptions\WixException.cs" />
     <Compile Include="Exceptions\WixFileNotFoundException.cs" />
-    <Compile Include="Exceptions\WixInvalidIdtException.cs" />
-    <Compile Include="Exceptions\WixMissingTableDefinitionException.cs" />
-    <Compile Include="Exceptions\WixNotIntermediateException.cs" />
-    <Compile Include="Exceptions\WixNotLibraryException.cs" />
-    <Compile Include="Exceptions\WixNotOutputException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Harvester.cs" />
     <Compile Include="HarvesterCore.cs" />
-    <Compile Include="Extensibility\HarvesterExtension.cs" />
     <Compile Include="HeatCore.cs" />
     <Compile Include="IfContext.cs" />
     <Compile Include="IncludedFileEventHandler.cs" />
@@ -177,8 +116,6 @@
     <Compile Include="Melter.cs" />
     <Compile Include="MelterCore.cs" />
     <Compile Include="MergeMod\NativeMethods.cs" />
-    <Compile Include="MessageEventArgs.cs" />
-    <Compile Include="MessageHandler.cs" />
     <Compile Include="Msi\Database.cs" />
     <Compile Include="Msi\Installer.cs" />
     <Compile Include="Msi\Interop\MsiInterop.cs" />
@@ -189,7 +126,6 @@
     <Compile Include="Msi\SummaryInformation.cs" />
     <Compile Include="Msi\View.cs" />
     <Compile Include="Mutator.cs" />
-    <Compile Include="Extensibility\MutatorExtension.cs" />
     <Compile Include="Preprocessor.cs" />
     <Compile Include="PreprocessorCore.cs" />
     <Compile Include="ProcessedStreamEventHandler.cs" />
@@ -197,13 +133,10 @@
     <Compile Include="Serialize\CodeDomReader.cs" />
     <Compile Include="Serialize\ElementCollection.cs" />
     <Compile Include="Unbinder.cs" />
-    <Compile Include="Extensibility\IUnbinderExtension.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Validator.cs" />
-    <Compile Include="Extensibility\ValidatorExtension.cs" />
     <Compile Include="VerboseEventArgs.cs" />
     <Compile Include="VerifyInterop.cs" />
-    <Compile Include="WarningEventArgs.cs" />
     <Compile Include="AppCommon.cs" />
     <Compile Include="WixGenericMessageEventArgs.cs" />
     <Compile Include="WixGroupingOrdering.cs" />
@@ -235,12 +168,6 @@
     <Compile Include="WixSearchInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedFlattenedResource Include="Data\actions.xml">
-      <LogicalName>$(RootNamespace).Data.actions.xml</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Data\tables.xml">
-      <LogicalName>$(RootNamespace).Data.tables.xml</LogicalName>
-    </EmbeddedFlattenedResource>
     <EmbeddedFlattenedResource Include="Xsd\actions.xsd">
       <LogicalName>$(RootNamespace).Xsd.actions.xsd</LogicalName>
     </EmbeddedFlattenedResource>
@@ -270,6 +197,7 @@
     <EmbeddedNativeResource Include="wixdll.rc" />
     <MsgGenSource Include="Data\messages.xml">
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
+      <SubType>Designer</SubType>
     </MsgGenSource>
     <XsdGenSource Include="Xsd\wix.xsd">
       <SubType>Designer</SubType>
@@ -308,11 +236,20 @@
       <Project>{24121677-0ED0-41B5-833F-1B9A18E87BF4}</Project>
       <Name>WindowsInstaller</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\libs\WixToolset.Data\WixToolset.Data.csproj">
+      <Project>{6a98499e-40ec-4335-9c31-96a2511d47c6}</Project>
+      <Name>WixToolset.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj">
+      <Project>{eee88c2a-45a0-4e48-a40a-431a4ba458d8}</Project>
+      <Name>WixToolset.Extensibility</Name>
+    </ProjectReference>
     <ProjectReference Include="..\winterop\winterop.vcxproj">
       <Private>False</Private>
       <Project>{26D45E58-E703-431D-B67E-493C72C9DA0B}</Project>
       <Name>winterop</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>

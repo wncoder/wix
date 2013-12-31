@@ -21,6 +21,8 @@ namespace WixToolset
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
@@ -49,8 +51,8 @@ namespace WixToolset
         {
             this.sectionIdOnRows = true; // TODO: what is the correct value for this?
 
-            this.standardActions = Installer.GetStandardActions();
-            this.tableDefinitions = Installer.GetTableDefinitions();
+            this.standardActions = WindowsInstallerStandard.GetStandardActions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
 
             this.extensionData = new List<IExtensionData>();
             this.inspectorExtensions = new List<InspectorExtension>();
@@ -373,7 +375,7 @@ namespace WixToolset
                                     if (OutputType.Module == this.activeOutput.Type)
                                     {
                                         string directory = row[0].ToString();
-                                        if (Util.IsStandardDirectory(directory))
+                                        if (WindowsInstallerStandard.IsStandardDirectory(directory))
                                         {
                                             // if the directory table contains references to standard windows folders
                                             // mergemod.dll will add customactions to set the MSM directory to 
@@ -391,7 +393,7 @@ namespace WixToolset
                                         }
                                         else
                                         {
-                                            foreach (string standardDirectory in Util.StandardDirectories.Keys)
+                                            foreach (string standardDirectory in WindowsInstallerStandard.GetStandardDirectories())
                                             {
                                                 if (directory.StartsWith(standardDirectory, StringComparison.Ordinal))
                                                 {
@@ -2266,14 +2268,14 @@ namespace WixToolset
                 if (0 == actionRow.Sequence)
                 {
                     // check for standard actions that don't have a sequence number in a merge module
-                    if (OutputType.Module == this.activeOutput.Type && Util.IsStandardAction(actionRow.Action))
+                    if (OutputType.Module == this.activeOutput.Type && WindowsInstallerStandard.IsStandardAction(actionRow.Action))
                     {
                         this.OnMessage(WixErrors.StandardActionRelativelyScheduledInModule(actionRow.SourceLineNumbers, actionRow.SequenceTable.ToString(), actionRow.Action));
                     }
 
                     this.SequenceActionRow(actionRow, requiredActionRows);
                 }
-                else if (OutputType.Module == this.activeOutput.Type && 0 < actionRow.Sequence && !Util.IsStandardAction(actionRow.Action)) // check for custom actions and dialogs that have a sequence number
+                else if (OutputType.Module == this.activeOutput.Type && 0 < actionRow.Sequence && !WindowsInstallerStandard.IsStandardAction(actionRow.Action)) // check for custom actions and dialogs that have a sequence number
                 {
                     this.OnMessage(WixErrors.CustomActionSequencedInModule(actionRow.SourceLineNumbers, actionRow.SequenceTable.ToString(), actionRow.Action));
                 }

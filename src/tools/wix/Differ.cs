@@ -17,6 +17,8 @@ namespace WixToolset
     using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
 

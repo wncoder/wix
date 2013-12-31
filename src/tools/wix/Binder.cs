@@ -34,11 +34,12 @@ namespace WixToolset
     using System.Xml.XPath;
     using WixToolset.Cab;
     using WixToolset.CLR.Interop;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.MergeMod;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
-
     using Wix = WixToolset.Serialize;
 
     // TODO: (4.0) Refactor so that these don't need to be copied.
@@ -120,7 +121,7 @@ namespace WixToolset
         /// </summary>
         public Binder()
         {
-            this.DefaultCompressionLevel = Cab.CompressionLevel.Mszip;
+            this.DefaultCompressionLevel = CompressionLevel.Mszip;
 
             this.BindPaths = new List<BindPath>();
             this.TargetBindPaths = new List<BindPath>();
@@ -181,7 +182,7 @@ namespace WixToolset
         /// Gets or sets the default compression level to use for cabinets
         /// that don't have their compression level explicitly set.
         /// </summary>
-        public Cab.CompressionLevel DefaultCompressionLevel { get; set; }
+        public CompressionLevel DefaultCompressionLevel { get; set; }
 
         /// <summary>
         /// Gets or sets the exact assembly versions flag (see docs).
@@ -871,7 +872,7 @@ namespace WixToolset
                 {
                     resolvedDirectory.Path = (string)componentIdGenSeeds[directory];
                 }
-                else if (canonicalize && Util.IsStandardDirectory(directory))
+                else if (canonicalize && WindowsInstallerStandard.IsStandardDirectory(directory))
                 {
                     // when canonicalization is on, standard directories are treated equally
                     resolvedDirectory.Path = directory;
@@ -1836,7 +1837,7 @@ namespace WixToolset
             pdb.Output = output;
             if (!String.IsNullOrEmpty(this.PdbFile))
             {
-                pdb.Save(this.PdbFile, null, this.WixVariableResolver, this.TempFilesLocation);
+                pdb.Save(this.PdbFile, null);
             }
 
             // merge modules
@@ -2533,7 +2534,7 @@ namespace WixToolset
                     iesTable.Operation = TableOperation.Add;
                 }
                 Row patchAction = iesTable.CreateRow(null);
-                WixActionRow wixPatchAction = Installer.GetStandardActions()[table, "PatchFiles"];
+                WixActionRow wixPatchAction = WindowsInstallerStandard.GetStandardActions()[table, "PatchFiles"];
                 int sequence = wixPatchAction.Sequence;
                 // Test for default sequence value's appropriateness
                 if (seqInstallFiles >= sequence || (0 != seqDuplicateFiles && seqDuplicateFiles <= sequence))
@@ -3735,7 +3736,7 @@ namespace WixToolset
             {
                 Pdb pdb = new Pdb(null);
                 pdb.Output = bundle;
-                pdb.Save(this.PdbFile, null, this.WixVariableResolver, this.TempFilesLocation);
+                pdb.Save(this.PdbFile, null);
             }
 
             // Add detached containers to the list of file transfers.
@@ -6879,7 +6880,7 @@ namespace WixToolset
             if (CabinetBuildOption.BuildAndCopy == resolvedCabinet.BuildOption || CabinetBuildOption.BuildAndMove == resolvedCabinet.BuildOption)
             {
                 int maxThreshold = 0; // default to the threshold for best smartcabbing (makes smallest cabinet).
-                Cab.CompressionLevel compressionLevel = this.DefaultCompressionLevel;
+                CompressionLevel compressionLevel = this.DefaultCompressionLevel;
 
                 if (mediaRow.HasExplicitCompressionLevel)
                 {

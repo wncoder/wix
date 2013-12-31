@@ -28,29 +28,10 @@ namespace WixToolset
     using System.Xml;
     using System.Xml.Linq;
     using System.Xml.Schema;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using Wix = WixToolset.Serialize;
-
-    /// <summary>
-    /// A set of rules describing the whitespace rules for an attribute.
-    /// </summary>
-    public enum EmptyRule
-    {
-        /// <summary>
-        /// The trimmed value cannot be empty.
-        /// </summary>
-        MustHaveNonWhitespaceCharacters,
-
-        /// <summary>
-        /// The trimmed value can be empty, but the value itself cannot be empty.
-        /// </summary>
-        CanBeWhitespaceOnly,
-
-        /// <summary>
-        /// The value can be empty.
-        /// </summary>
-        CanBeEmpty
-    }
 
     public enum ValueListKind
     {
@@ -161,7 +142,6 @@ namespace WixToolset
         private bool showPedanticMessages;
 
         private Section activeSection;
-        private bool encounteredError;
 
         private Platform currentPlatform;
 
@@ -171,19 +151,12 @@ namespace WixToolset
         /// <param name="intermediate">The Intermediate object representing compiled source document.</param>
         /// <param name="tableDefinitions">The loaded table definition collection.</param>
         /// <param name="extensions">The WiX extensions collection.</param>
-        /// <param name="messageHandler">The message handler.</param>
-        internal CompilerCore(Intermediate intermediate, TableDefinitionCollection tableDefinitions, Dictionary<XNamespace, ICompilerExtension> extensions, MessageEventHandler messageHandler)
+        internal CompilerCore(Intermediate intermediate, TableDefinitionCollection tableDefinitions, Dictionary<XNamespace, ICompilerExtension> extensions)
         {
             this.tableDefinitions = tableDefinitions;
             this.extensions = extensions;
             this.intermediate = intermediate;
-            this.MessageHandler = messageHandler;
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        private event MessageEventHandler MessageHandler;
 
         /// <summary>
         /// Gets the section the compiler is currently emitting symbols into.
@@ -210,7 +183,7 @@ namespace WixToolset
         /// <value>Flag if core encountered an error during processing.</value>
         public bool EncounteredError
         {
-            get { return this.encounteredError; }
+            get { return Messaging.Instance.EncounteredError; }
         }
 
         /// <summary>
@@ -1594,25 +1567,7 @@ namespace WixToolset
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs e)
         {
-            WixErrorEventArgs errorEventArgs = e as WixErrorEventArgs;
-
-            if (null != errorEventArgs)
-            {
-                this.encounteredError = true;
-            }
-
-            if (null != this.MessageHandler)
-            {
-                this.MessageHandler(this, e);
-                if (MessageLevel.Error == e.Level)
-                {
-                    this.encounteredError = true;
-                }
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(e);
         }
 
         /// <summary>

@@ -20,6 +20,7 @@ namespace WixToolset.Lux
     using System.ComponentModel;
     using System.IO;
     using System.Xml;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Dtf.WindowsInstaller;
 
@@ -33,11 +34,6 @@ namespace WixToolset.Lux
         private int passes;
         private int failures;
         private Session session;
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Gets or sets the list of test packages to run.
@@ -166,16 +162,7 @@ namespace WixToolset.Lux
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs mea)
         {
-            WixErrorEventArgs errorEventArgs = mea as WixErrorEventArgs;
-
-            if (null != this.Message)
-            {
-                this.Message(this, mea);
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(mea);
         }
     }
 }

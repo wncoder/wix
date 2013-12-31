@@ -14,6 +14,8 @@
 namespace WixToolset
 {
     using System;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// A cabinet builder work item.
@@ -21,7 +23,7 @@ namespace WixToolset
     internal sealed class CabinetWorkItem
     {
         private string cabinetFile;
-        private Cab.CompressionLevel compressionLevel;
+        private CompressionLevel compressionLevel;
         private FileRowCollection fileRows;
         //private BinderFileManager binderFileManager;
         private int maxThreshold;
@@ -34,7 +36,7 @@ namespace WixToolset
         /// <param name="maxThreshold">Maximum threshold for each cabinet.</param>
         /// <param name="compressionLevel">The compression level of the cabinet.</param>
         /// <param name="binderFileManager">The binder file manager.</param>
-        public CabinetWorkItem(FileRowCollection fileRows, string cabinetFile, int maxThreshold, Cab.CompressionLevel compressionLevel /*, BinderFileManager binderFileManager*/)
+        public CabinetWorkItem(FileRowCollection fileRows, string cabinetFile, int maxThreshold, CompressionLevel compressionLevel /*, BinderFileManager binderFileManager*/)
         {
             this.cabinetFile = cabinetFile;
             this.compressionLevel = compressionLevel;
@@ -56,7 +58,7 @@ namespace WixToolset
         /// Gets the compression level of the cabinet.
         /// </summary>
         /// <value>The compression level of the cabinet.</value>
-        public Cab.CompressionLevel CompressionLevel
+        public CompressionLevel CompressionLevel
         {
             get { return this.compressionLevel; }
         }

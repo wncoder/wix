@@ -22,6 +22,7 @@ namespace WixToolset
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     /// <summary>
@@ -303,7 +304,7 @@ namespace WixToolset
         private static bool StartsWithStandardDirectoryId(string directoryId, out string standardDirectoryId)
         {
             standardDirectoryId = null;
-            foreach (string id in Util.StandardDirectories.Keys)
+            foreach (string id in WindowsInstallerStandard.GetStandardDirectories())
             {
                 if (directoryId.StartsWith(id, StringComparison.Ordinal))
                 {

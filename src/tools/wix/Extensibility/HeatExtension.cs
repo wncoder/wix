@@ -14,6 +14,7 @@ namespace WixToolset.Extensibility
     using System.IO;
     using System.Reflection;
     using WixToolset;
+    using WixToolset.Data;
     using WixToolset.Extensibilty;
     using WixToolset.Tools;
     using Wix = WixToolset.Serialize;
@@ -58,12 +59,6 @@ namespace WixToolset.Extensibility
         {
             get { return null; }
         }
-
-        /// <summary>
-        /// Gets or sets the message handler for the extension.
-        /// </summary>
-        /// <value>The message handler for the extension.</value>
-        public ConsoleMessageHandler MessageHandler { get; set; }
 
         /// <summary>
         /// Loads a HeatExtension from a type description string.

@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Text;
+    using WixToolset.Data;
 
     public delegate void IfDefEventHandler(object sender, IfDefEventArgs e);
 

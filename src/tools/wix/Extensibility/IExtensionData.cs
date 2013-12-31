@@ -9,6 +9,8 @@
 
 namespace WixToolset.Extensibility
 {
+    using WixToolset.Data;
+
     /// <summary>
     /// Interface extensions implement to provide data.
     /// </summary>

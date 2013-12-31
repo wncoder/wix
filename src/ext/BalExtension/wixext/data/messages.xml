@@ -11,6 +11,6 @@
   The messages for the WiX Toolset Bal Extension.
 -->
 <Messages Namespace="WixToolset.Extensions" Resources="Data.Messages" xmlns="http://schemas.microsoft.com/genmsgs/2004/07/messages">
-    <Class Name="BalErrors" ContainerName="BalErrorEventArgs" BaseContainerName="WixErrorEventArgs">
+    <Class Name="BalErrors" ContainerName="BalErrorEventArgs" BaseContainerName="MessageEventArgs">
     </Class>
 </Messages>

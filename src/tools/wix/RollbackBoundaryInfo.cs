@@ -14,6 +14,7 @@
 namespace WixToolset
 {
     using System;
+    using WixToolset.Data;
 
     /// <summary>
     /// Rollback boundary info for binding Bundles.

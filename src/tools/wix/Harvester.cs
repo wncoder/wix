@@ -16,7 +16,7 @@ namespace WixToolset
     using System;
     using System.Collections;
     using System.Diagnostics.CodeAnalysis;
-
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     /// <summary>

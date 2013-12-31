@@ -20,5 +20,4 @@ using System.Security.Permissions;
 [assembly: AssemblyTitle("WiX Console Interface")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

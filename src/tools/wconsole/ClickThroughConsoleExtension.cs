@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Reflection;
+    using WixToolset.Data;
 
     /// <summary>
     /// Console ClickThrough Extension.

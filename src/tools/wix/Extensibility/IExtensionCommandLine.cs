@@ -10,6 +10,7 @@
 namespace WixToolset.Extensibility
 {
     using System.Collections.Generic;
+    using WixToolset.Data;
 
     /// <summary>
     /// A command line option.

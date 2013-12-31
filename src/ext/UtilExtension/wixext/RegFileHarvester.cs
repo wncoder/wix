@@ -19,6 +19,7 @@ namespace WixToolset.Extensions
     using System.Globalization;
     using System.IO;
     using Microsoft.Win32;
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     /// <summary>

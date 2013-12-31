@@ -416,6 +416,7 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="$(OutputPath)WixToolset.Data.dll" />
     <Reference Include="$(OutputPath)WixToolset.Dtf.WindowsInstaller.dll" />
     <Reference Include="$(OutputPath)WixToolset.Dtf.WindowsInstaller.Package.dll" />
     <Reference Include="$(OutputPath)wix.dll" />

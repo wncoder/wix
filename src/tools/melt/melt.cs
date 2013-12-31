@@ -23,11 +23,13 @@ namespace WixToolset.Tools
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Xml;
+    using WixToolset.Data;
     using WixToolset.Dtf.WindowsInstaller;
     using WixToolset.Dtf.WindowsInstaller.Package;
 
     using Wix = WixToolset.Serialize;
     using WixToolset.Extensibility;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// Entry point for the melter
@@ -282,7 +284,7 @@ namespace WixToolset.Tools
                 paths = package.Files.SourcePaths;
             }
 
-            Pdb inputPdb = Pdb.Load(this.inputPdbFile, true, true);
+            Pdb inputPdb = Pdb.Load(this.inputPdbFile, true);
             if (null != inputPdb)
             {
                 Table wixFileTable = inputPdb.Output.Tables["WixFile"];
@@ -302,7 +304,7 @@ namespace WixToolset.Tools
                     }
                 }
 
-                inputPdb.Save(this.outputFile, null, null, outputDirectory);
+                inputPdb.Save(this.outputFile, null);
             }
         }
 

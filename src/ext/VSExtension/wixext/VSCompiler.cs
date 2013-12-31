@@ -16,6 +16,7 @@ namespace WixToolset.Extensions
     using System;
     using System.Collections.Generic;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>
@@ -820,7 +821,7 @@ namespace WixToolset.Extensions
 
             if (null != beforeAction)
             {
-                if (Util.IsStandardAction(beforeAction))
+                if (WindowsInstallerStandard.IsStandardAction(beforeAction))
                 {
                     this.Core.CreateSimpleReference(sourceLineNumbers, "WixAction", sequence, beforeAction);
                 }
@@ -832,7 +833,7 @@ namespace WixToolset.Extensions
 
             if (null != afterAction)
             {
-                if (Util.IsStandardAction(afterAction))
+                if (WindowsInstallerStandard.IsStandardAction(afterAction))
                 {
                     this.Core.CreateSimpleReference(sourceLineNumbers, "WixAction", sequence, afterAction);
                 }

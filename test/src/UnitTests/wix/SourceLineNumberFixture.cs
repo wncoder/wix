@@ -14,6 +14,7 @@ namespace WixTest.WixUnitTest
     using System.Linq;
     using System.Text;
     using WixToolset;
+    using WixToolset.Data;
     using Xunit;
 
     public class SourceLineNumberFixture

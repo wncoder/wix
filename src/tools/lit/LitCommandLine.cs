@@ -13,6 +13,7 @@ namespace WixToolset.Tools
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     public class LitCommandLine

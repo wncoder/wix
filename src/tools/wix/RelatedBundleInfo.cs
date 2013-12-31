@@ -15,7 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Xml;
-
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     /// <summary>

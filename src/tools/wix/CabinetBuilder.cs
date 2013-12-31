@@ -20,6 +20,8 @@ namespace WixToolset
     using System.Collections;
     using System.Globalization;
     using WixToolset.Cab;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// This implements a thread pool that generates cabinets with multiple threads.

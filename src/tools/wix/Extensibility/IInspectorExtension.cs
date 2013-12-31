@@ -11,6 +11,7 @@ namespace WixToolset.Extensibility
 {
     using System;
     using System.IO;
+    using WixToolset.Data;
 
     /// <summary>
     /// Interface for inspector extensions.

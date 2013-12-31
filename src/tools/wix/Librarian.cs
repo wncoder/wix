@@ -15,6 +15,7 @@ namespace WixToolset
     using System;
     using System.Collections;
     using System.Collections.Specialized;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
 
@@ -24,20 +25,14 @@ namespace WixToolset
     public sealed class Librarian : IMessageHandler
     {
         private TableDefinitionCollection tableDefinitions;
-        private bool encounteredError;
 
         /// <summary>
         /// Instantiate a new Librarian class.
         /// </summary>
         public Librarian()
         {
-            this.tableDefinitions = Installer.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Gets table definitions used by this librarian.
@@ -84,7 +79,7 @@ namespace WixToolset
             // check for multiple entry sections and duplicate symbols
             this.Validate(library);
 
-            return (this.encounteredError ? null : library);
+            return (Messaging.Instance.EncounteredError ? null : library);
         }
 
         /// <summary>
@@ -93,25 +88,7 @@ namespace WixToolset
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs e)
         {
-            WixErrorEventArgs errorEventArgs = e as WixErrorEventArgs;
-
-            if (null != errorEventArgs)
-            {
-                this.encounteredError = true;
-            }
-
-            if (null != this.Message)
-            {
-                this.Message(this, e);
-                if (MessageLevel.Error == e.Level)
-                {
-                    this.encounteredError = true;
-                }
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(e);
         }
 
         /// <summary>

@@ -24,6 +24,7 @@ namespace WixToolset
     using System.Text.RegularExpressions;
     using System.Xml;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using Wix = WixToolset.Serialize;
 

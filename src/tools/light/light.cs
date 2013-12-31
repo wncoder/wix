@@ -29,6 +29,7 @@ namespace WixToolset.Tools
     using System.Xml;
     using System.Xml.XPath;
     using WixToolset.Extensibility;
+    using WixToolset.Data;
 
     /// <summary>
     /// The main entry point for light.
@@ -245,7 +246,7 @@ namespace WixToolset.Tools
                 // try loading as an object file
                 try
                 {
-                    Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck, true);
+                    Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
                     sections.AddRange(intermediate.Sections);
                     continue; // next file
                 }
@@ -257,8 +258,8 @@ namespace WixToolset.Tools
                 // try loading as a library file
                 try
                 {
-                    Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck, true);
-                    library.GetLocalizations(this.commandLine.Cultures, localizer);
+                    Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
+                    AddLibraryLocalizationsToLocalizer(library, this.commandLine.Cultures, localizer);
                     sections.AddRange(library.Sections);
                     continue; // next file
                 }
@@ -268,7 +269,7 @@ namespace WixToolset.Tools
                 }
 
                 // try loading as an output file
-                output = Output.Load(inputFileFullPath, this.commandLine.SuppressVersionCheck, true);
+                output = Output.Load(inputFileFullPath, this.commandLine.SuppressVersionCheck);
             }
 
             // Stop processing if any errors were found loading object files.
@@ -314,7 +315,7 @@ namespace WixToolset.Tools
                         outputFile = Path.ChangeExtension(outputFile, outputExtension);
                     }
 
-                    output.Save(outputFile, null, wixVariableResolver, binder.TempFilesLocation);
+                    output.Save(outputFile, null);
                 }
                 else // finish creating the MSI/MSM
                 {
@@ -419,12 +420,20 @@ namespace WixToolset.Tools
                             extensionCultures = new string[] { data.DefaultCulture };
                         }
 
-                        library.GetLocalizations(extensionCultures, localizer);
+                        AddLibraryLocalizationsToLocalizer(library, extensionCultures, localizer);
                     }
                 }
             }
 
             return localizer;
+        }
+
+        private void AddLibraryLocalizationsToLocalizer(Library library, string[] cultures, Localizer localizer)
+        {
+            foreach (Localization localization in library.GetLocalizations(cultures))
+            {
+                localizer.AddLocalization(localization);
+            }
         }
 
         /// <summary>

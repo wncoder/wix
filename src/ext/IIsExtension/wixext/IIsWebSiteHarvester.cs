@@ -18,8 +18,7 @@ namespace WixToolset.Extensions
     using System.DirectoryServices;
     using System.Globalization;
     using System.Runtime.InteropServices;
-    using WixToolset;
-
+    using WixToolset.Data;
     using IIs = WixToolset.Extensions.Serialize.IIs;
     using Wix = WixToolset.Serialize;
 

@@ -3723,7 +3723,7 @@
         </Message>
     </Class>
 
-    <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
+    <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Verbose">
         <Message Id="ImportBinaryStream" Number="9000" SourceLineNumbers="no">
             <Instance>
                 Importing binary stream from '{0}'.

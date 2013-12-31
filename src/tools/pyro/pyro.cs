@@ -21,6 +21,7 @@ namespace WixToolset.Tools
     using System.IO;
     using System.Linq;
     using System.Runtime.InteropServices;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

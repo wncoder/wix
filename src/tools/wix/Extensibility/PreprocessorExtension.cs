@@ -10,6 +10,7 @@
 namespace WixToolset.Extensibility
 {
     using System.Xml.Linq;
+    using WixToolset.Data;
 
     /// <summary>
     /// Base class for creating a preprocessor extension.

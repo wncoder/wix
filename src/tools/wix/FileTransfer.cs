@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.IO;
+    using WixToolset.Data;
 
     /// <summary>
     /// Structure used for all file transfer information.

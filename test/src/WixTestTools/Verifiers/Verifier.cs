@@ -27,6 +27,7 @@ namespace WixTest
     using WixToolset;
     using WixToolset.Msi;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using WixToolset.Data;
 
     /// <summary>
     /// Contains methods for test verification
@@ -420,8 +421,8 @@ namespace WixTest
             }
             else
             {
-                targetOutput = Output.Load(expectedResult, false, false);
-                updatedOutput = Output.Load(actualResult, false, false);
+                targetOutput = Output.Load(expectedResult, false);
+                updatedOutput = Output.Load(actualResult, false);
             }
             
             differences.AddRange(CompareOutput(targetOutput, updatedOutput, tables));

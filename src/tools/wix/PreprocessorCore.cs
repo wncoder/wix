@@ -20,6 +20,7 @@ namespace WixToolset
     using System.Text;
     using System.Xml;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>
@@ -31,7 +32,6 @@ namespace WixToolset
         private static readonly char[] argumentSplitter = new char[] { ',' };
 
         private Platform currentPlatform;
-        private bool encounteredError;
         private Dictionary<string, IPreprocessorExtension> extensionsByPrefix;
         private string sourceFile;
         private IDictionary<string, string> variables;
@@ -43,10 +43,9 @@ namespace WixToolset
         /// <param name="messageHandler">The message handler.</param>
         /// <param name="sourceFile">The source file being preprocessed.</param>
         /// <param name="variables">The variables defined prior to preprocessing.</param>
-        internal PreprocessorCore(Dictionary<string, IPreprocessorExtension> extensionsByPrefix, MessageEventHandler messageHandler, string sourceFile, IDictionary<string, string> variables)
+        internal PreprocessorCore(Dictionary<string, IPreprocessorExtension> extensionsByPrefix, string sourceFile, IDictionary<string, string> variables)
         {
             this.extensionsByPrefix = extensionsByPrefix;
-            this.MessageHandler = messageHandler;
             this.sourceFile = String.IsNullOrEmpty(sourceFile) ? null : Path.GetFullPath(sourceFile);
 
             this.variables = new Dictionary<string, string>();
@@ -55,11 +54,6 @@ namespace WixToolset
                 this.AddVariable(null, entry.Key, entry.Value);
             }
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        private event MessageEventHandler MessageHandler;
 
         /// <summary>
         /// Event for resolved variables.
@@ -90,7 +84,7 @@ namespace WixToolset
         /// <value>Flag if core encountered an error during processing.</value>
         public bool EncounteredError
         {
-            get { return this.encounteredError; }
+            get { return Messaging.Instance.EncounteredError; }
         }
 
         /// <summary>
@@ -498,25 +492,7 @@ namespace WixToolset
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs e)
         {
-            WixErrorEventArgs errorEventArgs = e as WixErrorEventArgs;
-
-            if (null != errorEventArgs)
-            {
-                this.encounteredError = true;
-            }
-
-            if (null != this.MessageHandler)
-            {
-                this.MessageHandler(this, e);
-                if (MessageLevel.Error == e.Level)
-                {
-                    this.encounteredError = true;
-                }
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(e);
         }
 
         /// <summary>

@@ -14,6 +14,7 @@
 namespace WixToolset
 {
     using System;
+    using WixToolset.Data;
 
     /// <summary>
     /// WixException thrown when a file cannot be found.

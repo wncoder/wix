@@ -13,6 +13,8 @@ namespace WixToolset.Extensibility
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     public interface IBinderFileManager
     {

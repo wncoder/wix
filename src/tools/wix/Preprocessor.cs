@@ -23,6 +23,7 @@ namespace WixToolset
     using System.Text.RegularExpressions;
     using System.Xml;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>
@@ -88,11 +89,6 @@ namespace WixToolset
         /// Event for included files.
         /// </summary>
         public event IncludedFileEventHandler IncludedFile;
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Event for preprocessed stream.
@@ -172,7 +168,7 @@ namespace WixToolset
         /// </returns>
         public static SourceLineNumber GetSourceLineNumbers(XObject node)
         {
-            return node.Annotation<SourceLineNumber>();
+            return SourceLineNumber.GetFromXAnnotation(node);
         }
 
         /// <summary>
@@ -254,7 +250,7 @@ namespace WixToolset
                 sourceFile = uri.AbsolutePath;
             }
 
-            this.core = new PreprocessorCore(this.extensionsByPrefix, this.Message, sourceFile, variables);
+            this.core = new PreprocessorCore(this.extensionsByPrefix, sourceFile, variables);
             this.core.ResolvedVariableHandler = this.ResolvedVariable;
             this.core.CurrentPlatform = this.currentPlatform;
             this.currentLineNumber = new SourceLineNumber(sourceFile);

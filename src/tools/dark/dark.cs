@@ -22,8 +22,9 @@ namespace WixToolset.Tools
     using System.Runtime.InteropServices;
     using System.Xml;
 
-    using Wix = WixToolset.Serialize;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
+    using Wix = WixToolset.Serialize;
 
     /// <summary>
     /// Entry point for decompiler
@@ -189,7 +190,7 @@ namespace WixToolset.Tools
                 {
                     if (OutputType.Patch == this.outputType || OutputType.Transform == this.outputType || this.outputXml)
                     {
-                        output.Save(this.outputFile, null, new WixVariableResolver(), null);
+                        output.Save(this.outputFile, null);
                     }
                     else // decompile
                     {

@@ -12,6 +12,7 @@ namespace WixToolset.Extensibility
     using System;
     using System.Collections;
     using System.ComponentModel;
+    using WixToolset.Data;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
 
@@ -32,11 +33,6 @@ namespace WixToolset.Extensibility
         public ValidatorExtension()
         {
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Gets or sets the path to the database to validate.
@@ -307,16 +303,7 @@ namespace WixToolset.Extensibility
         /// </remarks>
         public virtual void OnMessage(MessageEventArgs e)
         {
-            WixErrorEventArgs errorEventArgs = e as WixErrorEventArgs;
-
-            if (null != this.Message)
-            {
-                this.Message(this, e);
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(e);
         }
    }
 }

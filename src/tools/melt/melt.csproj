@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   <copyright file="melt.csproj" company="Outercurve Foundation">
     Copyright (c) 2004, Outercurve Foundation.
@@ -16,7 +16,6 @@
     <PlatformTarget>x86</PlatformTarget>
     <FxCopEnabled>false</FxCopEnabled>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="melt.cs" />
@@ -33,19 +32,20 @@
     <EmbeddedNativeResource Include="melt.rc" />
     <None Include="app.config" />
   </ItemGroup>
-
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
+    <ProjectReference Include="..\..\libs\WixToolset.Data\WixToolset.Data.csproj">
+      <Project>{6a98499e-40ec-4335-9c31-96a2511d47c6}</Project>
+      <Name>WixToolset.Data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\wconsole\wconsole.csproj" />
     <ProjectReference Include="..\Wix\Wix.csproj" />
     <ProjectReference Include="..\..\DTF\Libraries\WindowsInstaller\WindowsInstaller.csproj" />
     <ProjectReference Include="..\..\DTF\Libraries\WindowsInstaller.Package\WindowsInstaller.Package.csproj" />
   </ItemGroup>
-
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>

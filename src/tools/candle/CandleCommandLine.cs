@@ -13,6 +13,7 @@ namespace WixToolset.Tools
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using WixToolset.Data;
 
     /// <summary>
     /// Parse command line for candle.
@@ -21,7 +22,7 @@ namespace WixToolset.Tools
     {
         public CandleCommandLine()
         {
-            this.Platform = WixToolset.Platform.X86;
+            this.Platform = Platform.X86;
 
             this.ShowLogo = true;
             this.Extensions = new List<string>();

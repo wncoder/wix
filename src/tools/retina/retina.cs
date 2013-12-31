@@ -192,7 +192,7 @@ namespace WixToolset.Tools
             }
 
             Librarian librarian = new Librarian();
-            Library library = Library.Load(this.outputFile, librarian.TableDefinitions, false, false);
+            Library library = Library.Load(this.outputFile, librarian.TableDefinitions, false);
             LibraryBinaryFileResolver resolver = new LibraryBinaryFileResolver() { FileManager = new BlastBinderFileManager(this.outputFile) };
             library.Save(this.outputFile, resolver);
         }
@@ -207,7 +207,7 @@ namespace WixToolset.Tools
             Dictionary<string, string> mapCabinetFileIdToFileName = new Dictionary<string, string>();
             BlastBinderFileManager binderFileManager = new BlastBinderFileManager(path);
             Librarian librarian = new Librarian();
-            Library library = Library.Load(path, librarian.TableDefinitions, false, false);
+            Library library = Library.Load(path, librarian.TableDefinitions, false);
 
             foreach (Section section in library.Sections)
             {
