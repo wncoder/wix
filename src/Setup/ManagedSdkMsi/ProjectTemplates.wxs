@@ -10,11 +10,11 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
     <Fragment>
         <ComponentGroup Id="ProjectTemplates">
-<?ifdef VS2010SdkAvailable ?>
+          <?ifdef VS2010SdkAvailable ?>
           <ComponentGroupRef Id="ProjectTemplates2010Components" />
           <ComponentGroupRef Id="ProjectTemplates2012Components" />
           <ComponentGroupRef Id="ProjectTemplates2013Components" />
-<?endif?>
+          <?endif?>
         </ComponentGroup>
     </Fragment>
 
@@ -28,11 +28,11 @@
         <ComponentGroup Id="ProjectTemplates2010Components" Directory="VsProjectTemplatesWix2010Folder">
             <Component Transitive="yes">
                 <Condition>VS2010_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionCS_2010.zip" Name="CustomActionCS.zip" Source="votive2010\CustomActionCS.zip" />
+                <File Id="CustomActionCS_2010.zip" Name="CustomActionCS.zip" Source="templates\CustomActionCS.zip" />
             </Component>
             <Component Transitive="yes">
                 <Condition>VS2010_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionVB_2010.zip" Name="CustomActionVB.zip" Source="votive2010\CustomActionVB.zip" />
+                <File Id="CustomActionVB_2010.zip" Name="CustomActionVB.zip" Source="templates\CustomActionVB.zip" />
             </Component>
         </ComponentGroup>
     </Fragment>
@@ -47,11 +47,11 @@
         <ComponentGroup Id="ProjectTemplates2012Components" Directory="VsProjectTemplatesWix2012Folder">
             <Component Transitive="yes">
                 <Condition>VS2012_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionCS_2012.zip" Name="CustomActionCS.zip" Source="votive2010\CustomActionCS.zip" />
+                <File Id="CustomActionCS_2012.zip" Name="CustomActionCS.zip" Source="templates\CustomActionCS.zip" />
             </Component>
             <Component Transitive="yes">
                 <Condition>VS2012_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionVB_2012.zip" Name="CustomActionVB.zip" Source="votive2010\CustomActionVB.zip" />
+                <File Id="CustomActionVB_2012.zip" Name="CustomActionVB.zip" Source="templates\CustomActionVB.zip" />
             </Component>
         </ComponentGroup>
     </Fragment>
@@ -66,11 +66,11 @@
         <ComponentGroup Id="ProjectTemplates2013Components" Directory="VsProjectTemplatesWix2013Folder">
             <Component Transitive="yes">
                 <Condition>VS2013_IDE_VCSHARP_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionCS_2013.zip" Name="CustomActionCS.zip" Source="votive2010\CustomActionCS.zip" />
+                <File Id="CustomActionCS_2013.zip" Name="CustomActionCS.zip" Source="templates\CustomActionCS.zip" />
             </Component>
             <Component Transitive="yes">
                 <Condition>VS2013_IDE_VB_PROJECTSYSTEM_INSTALLED</Condition>
-                <File Id="CustomActionVB_2013.zip" Name="CustomActionVB.zip" Source="votive2010\CustomActionVB.zip" />
+                <File Id="CustomActionVB_2013.zip" Name="CustomActionVB.zip" Source="templates\CustomActionVB.zip" />
             </Component>
         </ComponentGroup>
     </Fragment>
