@@ -2409,6 +2409,7 @@ private: // privates
     {
         HRESULT hr = S_OK;
         BOOL fResult = FALSE;
+        LPSTR pszLogMessage = NULL;
 
         for (DWORD i = 0; i < m_Conditions.cConditions; ++i)
         {
@@ -2419,7 +2420,13 @@ private: // privates
 
             if (!fResult)
             {
+                if (SUCCEEDED(StrAnsiAllocString(&pszLogMessage, m_sczFailedMessage, 0, CP_ACP)))
+                {
+                    BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, pszLogMessage);
+                }
+
                 hr = E_WIXSTDBA_CONDITION_FAILED;
+                // todo: remove in WiX v4, in case people are relying on v3.x logging behavior
                 BalExitOnFailure1(hr, "Bundle condition evaluated to false: %ls", pCondition->sczCondition);
             }
         }
@@ -2427,6 +2434,8 @@ private: // privates
         ReleaseNullStr(m_sczFailedMessage);
 
     LExit:
+        ReleaseStr(pszLogMessage);
+
         return hr;
     }
 

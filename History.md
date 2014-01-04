@@ -1,3 +1,5 @@
+* BobArnson: WIXBUG:4077 - Add log entry for the bal:Condition message itself.
+
 ## WixBuild: Version 3.9.16.0
 
 * rjvdboon: WIXBUG:4089 - Remove SimpleTypes from help table of contents.
