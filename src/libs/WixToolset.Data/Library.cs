@@ -5,22 +5,15 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-//
-// <summary>
-// Object that represents a library file.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Collections.Specialized;
     using System.Diagnostics;
-    using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Xml;
 
     /// <summary>
@@ -29,9 +22,9 @@ namespace WixToolset.Data
     public sealed class Library
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixlib";
-        private static readonly Version currentVersion = new Version("3.0.2002.0");
+        private static readonly Version currentVersion = new Version("4.0.0.0");
 
-        private Hashtable localizations;
+        private Dictionary<string, Localization> localizations;
         private SectionCollection sections;
 
         /// <summary>
@@ -39,7 +32,7 @@ namespace WixToolset.Data
         /// </summary>
         public Library()
         {
-            this.localizations = new Hashtable();
+            this.localizations = new Dictionary<string, Localization>();
             this.sections = new SectionCollection();
         }
 
@@ -53,13 +46,46 @@ namespace WixToolset.Data
         }
 
         /// <summary>
+        /// Add a localization file to this library.
+        /// </summary>
+        /// <param name="localization">The localization file to add.</param>
+        public void AddLocalization(Localization localization)
+        {
+            Localization existingCulture;
+            if (this.localizations.TryGetValue(localization.Culture, out existingCulture))
+            {
+                existingCulture.Merge(localization);
+            }
+            else
+            {
+                this.localizations.Add(localization.Culture, localization);
+            }
+        }
+
+        /// <summary>
+        /// Gets localization files from this library that match the cultures passed in, in the order of the array of cultures.
+        /// </summary>
+        /// <param name="cultures">The list of cultures to get localizations for.</param>
+        /// <returns>All localizations contained in this library that match the set of cultures provided, in the same order.</returns>
+        public IEnumerable<Localization> GetLocalizations(string[] cultures)
+        {
+            foreach (string culture in cultures ?? new string[0])
+            {
+                Localization localization;
+                if (this.localizations.TryGetValue(culture, out localization))
+                {
+                    yield return localization;
+                }
+            }
+        }
+
+        /// <summary>
         /// Loads a library from a path on disk.
         /// </summary>
         /// <param name="path">Path to library file saved on disk.</param>
         /// <param name="tableDefinitions">Collection containing TableDefinitions to use when reconstituting the intermediates.</param>
         /// <param name="suppressVersionCheck">Suppresses wix.dll version mismatch check.</param>
         /// <returns>Returns the loaded library.</returns>
-        /// <remarks>This method will set the Path and SourcePath properties to the appropriate values on successful load.</remarks>
         public static Library Load(string path, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
             using (FileStream stream = File.OpenRead(path))
@@ -69,42 +95,28 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Add a localization file to this library.
+        /// Loads a library from a stream.
         /// </summary>
-        /// <param name="localization">The localization file to add.</param>
-        public void AddLocalization(Localization localization)
+        /// <param name="stream">Stream containing the library file.</param>
+        /// <param name="uri">Uri for finding this stream.</param>
+        /// <param name="tableDefinitions">Collection containing TableDefinitions to use when reconstituting the intermediates.</param>
+        /// <param name="suppressVersionCheck">Suppresses wix.dll version mismatch check.</param>
+        /// <returns>Returns the loaded library.</returns>
+        public static Library Load(Stream stream, Uri uri, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            if (!this.localizations.Contains(localization.Culture))
+            using (FileStructure fs = FileStructure.Read(stream))
+            using (XmlReader reader = XmlReader.Create(fs.GetDataStream(), null, uri.AbsoluteUri))
             {
-                this.localizations.Add(localization.Culture, localization);
-            }
-            else
-            {
-                Localization existingCulture = (Localization)this.localizations[localization.Culture];
-                existingCulture.Merge(localization);
-            }
-        }
-
-        /// <summary>
-        /// Gets localization files from this library that match the cultures passed in, in the order of the array of cultures.
-        /// </summary>
-        /// <param name="cultures">The list of cultures to get localizations for.</param>
-        /// <returns>All localizations contained in this library that match the set of cultures provided, in the same order.</returns>
-        public ReadOnlyCollection<Localization> GetLocalizations(string[] cultures)
-        {
-            List<Localization> resultLocs = new List<Localization>();
-
-            foreach (string culture in cultures)
-            {
-                if (this.localizations.Contains(culture))
+                try
                 {
-                    resultLocs.Add((Localization)this.localizations[culture]);
+                    reader.MoveToContent();
+                    return Library.Read(reader, tableDefinitions, suppressVersionCheck);
+                }
+                catch (XmlException xe)
+                {
+                    throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", xe.Message));
                 }
             }
-
-            ReadOnlyCollection<Localization> returnLocs = new ReadOnlyCollection<Localization>(resultLocs);
-
-            return (ReadOnlyCollection<Localization>)returnLocs;
         }
 
         /// <summary>
@@ -114,10 +126,7 @@ namespace WixToolset.Data
         /// <param name="resolver">The WiX path resolver.</param>
         public void Save(string path, ILibraryBinaryFileResolver resolver)
         {
-            FileMode fileMode = FileMode.Create;
-            StringCollection fileIds = new StringCollection();
-            StringCollection files = new StringCollection();
-            int index = 0;
+            List<string> embedFilePaths = new List<string>();
 
             // resolve paths to files and create the library cabinet file
             foreach (Section section in this.sections)
@@ -137,11 +146,9 @@ namespace WixToolset.Data
                                     string file = resolver.Resolve(row.SourceLineNumbers, table.Name, (string)objectField.Data);
                                     if (!String.IsNullOrEmpty(file))
                                     {
-                                        // File was successfully resolved so track this cabient file id.
-                                        string cabinetFileId = (index++).ToString(CultureInfo.InvariantCulture);
-                                        objectField.CabinetFileId = cabinetFileId;
-                                        fileIds.Add(cabinetFileId);
-                                        files.Add(file);
+                                        // File was successfully resolved so track the embedded index as the cabinet file id.
+                                        objectField.EmbeddedFileIndex = embedFilePaths.Count;
+                                        embedFilePaths.Add(file);
                                     }
                                     else
                                     {
@@ -150,7 +157,7 @@ namespace WixToolset.Data
                                 }
                                 else // clear out a previous cabinet file id value
                                 {
-                                    objectField.CabinetFileId = null;
+                                    objectField.EmbeddedFileIndex = null;
                                 }
                             }
                         }
@@ -164,106 +171,18 @@ namespace WixToolset.Data
                 return;
             }
 
-            // create the cabinet file
-            if (0 < fileIds.Count)
-            {
-                throw new NotImplementedException("This was not implemented in the move to WixToolset.Data.dll. Move this code back to wix.dll");
-                //using (WixCreateCab cab = new WixCreateCab(Path.GetFileName(path), Path.GetDirectoryName(path), fileIds.Count, 0, 0, CompressionLevel.Mszip))
-                //{
-                //    for (int i = 0; i < fileIds.Count; i++)
-                //    {
-                //        cab.AddFile(files[i], fileIds[i]);
-                //    }
-                //    cab.Complete();
-                //}
-
-                //// append the library xml to the end of the newly created cabinet file
-                //fileMode = FileMode.Append;
-            }
-
-            // Assure the location to output the lib exists
+            // Ensure the location to output the lib exists
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
 
-            // save the xml
-            using (FileStream fs = new FileStream(path, fileMode))
+            using (FileStream stream = File.Create(path))
+            using (FileStructure fs = FileStructure.Create(stream, FileFormat.Wixlib, embedFilePaths))
+            using (XmlWriter writer = XmlWriter.Create(fs.GetDataStream()))
             {
-                XmlWriter writer = null;
+                writer.WriteStartDocument();
 
-                try
-                {
-                    writer = new XmlTextWriter(fs, System.Text.Encoding.UTF8);
+                this.Write(writer);
 
-                    writer.WriteStartDocument();
-                    this.Persist(writer);
-                    writer.WriteEndDocument();
-                }
-                finally
-                {
-                    if (null != writer)
-                    {
-                        writer.Close();
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Loads a library from a path on disk.
-        /// </summary>
-        /// <param name="stream">Stream containing the library file.</param>
-        /// <param name="uri">Uri for finding this stream.</param>
-        /// <param name="tableDefinitions">Collection containing TableDefinitions to use when reconstituting the intermediates.</param>
-        /// <param name="suppressVersionCheck">Suppresses wix.dll version mismatch check.</param>
-        /// <returns>Returns the loaded library.</returns>
-        /// <remarks>This method will set the Path and SourcePath properties to the appropriate values on successful load.</remarks>
-        public static Library Load(Stream stream, Uri uri, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
-        {
-            XmlReader reader = null;
-
-            // look for the Microsoft cabinet file header and skip past the cabinet data if found
-            if ('M' == stream.ReadByte() && 'S' == stream.ReadByte() && 'C' == stream.ReadByte() && 'F' == stream.ReadByte())
-            {
-                long offset = 0;
-                byte[] offsetBuffer = new byte[4];
-
-                // skip the header checksum
-                stream.Seek(4, SeekOrigin.Current);
-
-                // read the cabinet file size
-                stream.Read(offsetBuffer, 0, 4);
-                offset = BitConverter.ToInt32(offsetBuffer, 0);
-
-                // seek past the cabinet file to the xml
-                stream.Seek(offset, SeekOrigin.Begin);
-            }
-            else // plain xml file - start reading xml at the beginning of the stream
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-            }
-
-            // read the xml
-            try
-            {
-                reader = new XmlTextReader(uri.AbsoluteUri, stream);
-                reader.MoveToContent();
-
-                if ("wixLibrary" != reader.LocalName)
-                {
-                    throw new WixNotLibraryException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "library", "wixLibrary"));
-                }
-
-                return Parse(reader, tableDefinitions, suppressVersionCheck);
-            }
-            catch (XmlException xe)
-            {
-                throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", xe.Message));
-            }
-            finally
-            {
-                if (null != reader)
-                {
-                    reader.Close();
-                }
+                writer.WriteEndDocument();
             }
         }
 
@@ -274,9 +193,12 @@ namespace WixToolset.Data
         /// <param name="tableDefinitions">Collection containing TableDefinitions to use when reconstituting the intermediates.</param>
         /// <param name="suppressVersionCheck">Suppresses check for wix.dll version mismatch.</param>
         /// <returns>The parsed Library.</returns>
-        private static Library Parse(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
+        private static Library Read(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            Debug.Assert("wixLibrary" == reader.LocalName);
+            if ("wixLibrary" != reader.LocalName)
+            {
+                throw new WixNotLibraryException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "library", "wixLibrary"));
+            }
 
             bool empty = reader.IsEmptyElement;
             Library library = new Library();
@@ -289,21 +211,12 @@ namespace WixToolset.Data
                     case "version":
                         version = new Version(reader.Value);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixLibrary", reader.Name));
-                        }
-                        break;
                 }
             }
 
-            if (null != version && !suppressVersionCheck)
+            if (!suppressVersionCheck && null != version && !currentVersion.Equals(version))
             {
-                if (0 != currentVersion.CompareTo(version))
-                {
-                    throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "library", version.ToString(), currentVersion.ToString()));
-                }
+                throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "library", version.ToString(), currentVersion.ToString()));
             }
 
             if (!empty)
@@ -318,14 +231,12 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "section":
-                                    library.sections.Add(Section.Parse(reader, tableDefinitions));
+                                    library.sections.Add(Section.Read(reader, tableDefinitions));
                                     break;
                                 case "WixLocalization":
                                     Localization localization = Localization.Parse(reader, tableDefinitions, true);
                                     library.localizations.Add(localization.Culture, localization);
                                     break;
-                                default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixLibrary", reader.Name));
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -334,10 +245,7 @@ namespace WixToolset.Data
                     }
                 }
 
-                if (!done)
-                {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixLibrary"));
-                }
+                Debug.Assert(done, "Expected end element at the end of the library.");
             }
 
             return library;
@@ -347,7 +255,7 @@ namespace WixToolset.Data
         /// Persists a library in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the library should persist itself as XML.</param>
-        private void Persist(XmlWriter writer)
+        private void Write(XmlWriter writer)
         {
             writer.WriteStartElement("wixLibrary", XmlNamespaceUri);
 
@@ -355,12 +263,12 @@ namespace WixToolset.Data
 
             foreach (Localization localization in this.localizations.Values)
             {
-                localization.Persist(writer);
+                localization.Write(writer);
             }
 
             foreach (Section section in this.sections)
             {
-                section.Persist(writer);
+                section.Write(writer);
             }
 
             writer.WriteEndElement();

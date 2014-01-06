@@ -255,9 +255,9 @@ namespace WixToolset.Data
             this[5] = payloadRow[5] ?? String.Empty;
             this[6] = payloadRow[6];
 
-            // payload files sourced from a cabinet (think WixExtension with embedded binary wixlib) are considered "non-content files".
+            // payload files sourced from an embedded file (think WixExtension with embedded binary wixlib) are considered "non-content files".
             ObjectField field = (ObjectField)payloadRow.Fields[2];
-            this.ContentFile = String.IsNullOrEmpty(field.CabinetFileId);
+            this.ContentFile = !field.EmbeddedFileIndex.HasValue;
 
             ResolvePayloadInfo(this);
 

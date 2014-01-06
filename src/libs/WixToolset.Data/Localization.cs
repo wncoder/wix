@@ -104,10 +104,59 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Persists a localization file into an XML format.
+        /// Merge the information from another localization object into this one.
+        /// </summary>
+        /// <param name="localization">The localization object to be merged into this one.</param>
+        public void Merge(Localization localization)
+        {
+            foreach (WixVariableRow wixVariableRow in localization.Variables)
+            {
+                WixVariableRow existingWixVariableRow = (WixVariableRow)variables[wixVariableRow.Id];
+
+                if (null == existingWixVariableRow || (existingWixVariableRow.Overridable && !wixVariableRow.Overridable))
+                {
+                    variables[wixVariableRow.Id] = wixVariableRow;
+                }
+                else if (!wixVariableRow.Overridable)
+                {
+                    throw new WixException(WixDataErrors.DuplicateLocalizationIdentifier(wixVariableRow.SourceLineNumbers, wixVariableRow.Id));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loads a localization file from a stream.
+        /// </summary>
+        /// <param name="stream">Stream containing the localization file.</param>
+        /// <param name="uri">Uri for finding this stream.</param>
+        /// <param name="tableDefinitions">Collection containing TableDefinitions to use when loading the localization file.</param>
+        /// <param name="suppressSchema">Suppress xml schema validation while loading.</param>
+        /// <returns>Returns the loaded localization file.</returns>
+        internal static Localization Load(Stream stream, Uri uri, TableDefinitionCollection tableDefinitions, bool suppressSchema)
+        {
+            try
+            {
+                using (XmlReader reader = XmlReader.Create(stream, null, uri.AbsoluteUri))
+                {
+                    return Localization.Parse(reader, tableDefinitions, false);
+                }
+            }
+            catch (XmlException xe)
+            {
+                throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(uri.AbsoluteUri), "localization", xe.Message));
+            }
+            catch (XmlSchemaException xse)
+            {
+                throw new WixException(WixDataErrors.SchemaValidationFailed(SourceLineNumber.CreateFromUri(uri.AbsoluteUri), xse.Message, xse.LineNumber, xse.LinePosition));
+            }
+        }
+
+
+        /// <summary>
+        /// Writes a localization file into an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the localization file should persist itself as XML.</param>
-        public void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement(Localization.XmlElementName, WxlNamespace.NamespaceName);
 
@@ -201,54 +250,6 @@ namespace WixToolset.Data
             }
 
             writer.WriteEndElement();
-        }
-
-        /// <summary>
-        /// Merge the information from another localization object into this one.
-        /// </summary>
-        /// <param name="localization">The localization object to be merged into this one.</param>
-        public void Merge(Localization localization)
-        {
-            foreach (WixVariableRow wixVariableRow in localization.Variables)
-            {
-                WixVariableRow existingWixVariableRow = (WixVariableRow)variables[wixVariableRow.Id];
-
-                if (null == existingWixVariableRow || (existingWixVariableRow.Overridable && !wixVariableRow.Overridable))
-                {
-                    variables[wixVariableRow.Id] = wixVariableRow;
-                }
-                else if (!wixVariableRow.Overridable)
-                {
-                    throw new WixException(WixDataErrors.DuplicateLocalizationIdentifier(wixVariableRow.SourceLineNumbers, wixVariableRow.Id));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Loads a localization file from a stream.
-        /// </summary>
-        /// <param name="stream">Stream containing the localization file.</param>
-        /// <param name="uri">Uri for finding this stream.</param>
-        /// <param name="tableDefinitions">Collection containing TableDefinitions to use when loading the localization file.</param>
-        /// <param name="suppressSchema">Suppress xml schema validation while loading.</param>
-        /// <returns>Returns the loaded localization file.</returns>
-        internal static Localization Load(Stream stream, Uri uri, TableDefinitionCollection tableDefinitions, bool suppressSchema)
-        {
-            try
-            {
-                using (XmlReader reader = XmlReader.Create(stream, null, uri.AbsoluteUri))
-                {
-                    return Localization.Parse(reader, tableDefinitions, false);
-                }
-            }
-            catch (XmlException xe)
-            {
-                throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(uri.AbsoluteUri), "localization", xe.Message));
-            }
-            catch (XmlSchemaException xse)
-            {
-                throw new WixException(WixDataErrors.SchemaValidationFailed(SourceLineNumber.CreateFromUri(uri.AbsoluteUri), xse.Message, xse.LineNumber, xse.LinePosition));
-            }
         }
 
         /// <summary>

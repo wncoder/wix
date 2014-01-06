@@ -22,10 +22,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class ObjectField : Field
     {
-        private string baseUri;
-        private string cabinetFileId;
-        private string previousCabinetFileId;
-        private string previousBaseUri;
         private string unresolvedData;
         private string unresolvedPreviousData;
 
@@ -39,43 +35,28 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Gets or sets the identifier of the file in the cabinet.
+        /// Gets or sets the index of the embedded file in a library.
         /// </summary>
-        /// <value>The identifier of the file in the cabinet.</value>
-        public string CabinetFileId
-        {
-            get { return this.cabinetFileId; }
-            set { this.cabinetFileId = value; }
-        }
+        /// <value>The index of the embedded file.</value>
+        public int? EmbeddedFileIndex { get; set; }
 
         /// <summary>
-        /// Gets or sets the previous identifier of the file in the cabinet.
+        /// Gets or sets the previous index of the embedded file in the library.
         /// </summary>
-        /// <value>The identifier of the file in the cabinet.</value>
-        public string PreviousCabinetFileId
-        {
-            get { return this.previousCabinetFileId; }
-            set { this.previousCabinetFileId = value; }
-        }
+        /// <value>The previous index of the embedded file.</value>
+        public int? PreviousEmbeddedFileIndex { get; set; }
 
         /// <summary>
         /// Gets or sets the path to the embedded cabinet of the previous file.
         /// </summary>
         /// <value>The path of the cabinet containing the previous file.</value>
-        public string PreviousBaseUri
-        {
-            get { return this.previousBaseUri; }
-            set { this.previousBaseUri = value; }
-        }
+        public Uri PreviousBaseUri { get; set; }
 
         /// <summary>
         /// Gets the base URI of the object field.
         /// </summary>
         /// <value>The base URI of the object field.</value>
-        public string BaseUri
-        {
-            get { return this.baseUri; }
-        }
+        public Uri BaseUri { get; private set; }
 
         /// <summary>
         /// Gets or sets the unresolved data for this field.
@@ -107,14 +88,14 @@ namespace WixToolset.Data
 
             bool empty = reader.IsEmptyElement;
 
-            this.baseUri = reader.BaseURI;
+            this.BaseUri = new Uri(reader.BaseURI);
 
             while (reader.MoveToNextAttribute())
             {
                 switch (reader.LocalName)
                 {
                     case "cabinetFileId":
-                        this.cabinetFileId = reader.Value;
+                        this.EmbeddedFileIndex = Convert.ToInt32(reader.Value);
                         break;
                     case "modified":
                         this.Modified = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "field", reader.Name, reader.Value);
@@ -129,7 +110,7 @@ namespace WixToolset.Data
                         this.unresolvedData = reader.Value;
                         break;
                     case "previousCabinetFileId":
-                        this.previousCabinetFileId = reader.Value;
+                        this.PreviousEmbeddedFileIndex = Convert.ToInt32(reader.Value);
                         break;
                     default:
                         if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
@@ -190,9 +171,11 @@ namespace WixToolset.Data
 
             writer.WriteStartElement("field", Intermediate.XmlNamespaceUri);
 
-            if (null != this.cabinetFileId)
+            if (this.EmbeddedFileIndex.HasValue)
             {
-                writer.WriteAttributeString("cabinetFileId", this.cabinetFileId);
+                writer.WriteStartAttribute("cabinetFileId");
+                writer.WriteValue(this.EmbeddedFileIndex);
+                writer.WriteEndAttribute();
             }
 
             if (this.Modified)
@@ -215,9 +198,11 @@ namespace WixToolset.Data
                 writer.WriteAttributeString("unresolvedData", this.unresolvedData);
             }
 
-            if (null != this.previousCabinetFileId)
+            if (this.PreviousEmbeddedFileIndex.HasValue)
             {
-                writer.WriteAttributeString("previousCabinetFileId", this.previousCabinetFileId);
+                writer.WriteStartAttribute("previousCabinetFileId");
+                writer.WriteValue(this.PreviousEmbeddedFileIndex);
+                writer.WriteEndAttribute();
             }
 
             if (this.Column.UseCData)

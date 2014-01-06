@@ -79,6 +79,7 @@
     <Compile Include="Extensibility\ResolvedCabinet.cs" />
     <Compile Include="Extensibility\ValidatorExtension.cs" />
     <Compile Include="ExtensionManager.cs" />
+    <Compile Include="ExtractEmbeddedFiles.cs" />
     <Compile Include="FileTransfer.cs" />
     <Compile Include="IfDefEventHandler.cs" />
     <Compile Include="Inscriber.cs" />

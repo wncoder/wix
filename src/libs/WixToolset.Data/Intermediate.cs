@@ -14,9 +14,7 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.Diagnostics;
     using System.IO;
-    using System.Reflection;
     using System.Xml;
     using System.Xml.Schema;
 
@@ -26,7 +24,7 @@ namespace WixToolset.Data
     public sealed class Intermediate
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixobj";
-        private static readonly Version currentVersion = new Version("3.0.2002.0");
+        private static readonly Version currentVersion = new Version("4.0.0.0");
 
         private SectionCollection sections;
 
@@ -56,35 +54,21 @@ namespace WixToolset.Data
         /// <returns>Returns the loaded intermediate.</returns>
         public static Intermediate Load(string path, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            XmlReader reader = null;
-
             try
             {
-                reader = new XmlTextReader(path);
-
-                reader.MoveToContent();
-
-                if ("wixObject" != reader.LocalName)
+                using (XmlReader reader = XmlReader.Create(path))
                 {
-                    throw new WixNotIntermediateException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "object", "wixObject"));
+                    reader.MoveToContent();
+                    return Intermediate.Read(reader, tableDefinitions, suppressVersionCheck);
                 }
-
-                return Parse(reader, tableDefinitions, suppressVersionCheck);
             }
             catch (XmlException xe)
             {
-                throw new WixNotIntermediateException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", xe.Message));
+                throw new WixNotIntermediateException(WixDataErrors.InvalidXml(new SourceLineNumber(path), "object", xe.Message));
             }
             catch (XmlSchemaException xse)
             {
-                throw new WixNotIntermediateException(WixDataErrors.SchemaValidationFailed(SourceLineNumber.CreateFromUri(reader.BaseURI), xse.Message, xse.LineNumber, xse.LinePosition));
-            }
-            finally
-            {
-                if (null != reader)
-                {
-                    reader.Close();
-                }
+                throw new WixNotIntermediateException(WixDataErrors.SchemaValidationFailed(new SourceLineNumber(path), xse.Message, xse.LineNumber, xse.LinePosition));
             }
         }
 
@@ -94,31 +78,21 @@ namespace WixToolset.Data
         /// <param name="path">Path to save intermediate file to disk.</param>
         public void Save(string path)
         {
-            XmlWriter writer = null;
             try
             {
-                // Assure the location to output the xml exists
+                // Ensure the location to output the xml exists.
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
 
-                try
+                using (XmlWriter writer = XmlWriter.Create(path))
                 {
-                    writer = new XmlTextWriter(path, System.Text.Encoding.UTF8);
+                    writer.WriteStartDocument();
+                    this.Write(writer);
+                    writer.WriteEndDocument();
                 }
-                catch (UnauthorizedAccessException)
-                {
-                    throw new WixException(WixDataErrors.UnauthorizedAccess(path));
-                }
-
-                writer.WriteStartDocument();
-                this.Persist(writer);
-                writer.WriteEndDocument();
             }
-            finally
+            catch (UnauthorizedAccessException)
             {
-                if (null != writer)
-                {
-                    writer.Close();
-                }
+                throw new WixException(WixDataErrors.UnauthorizedAccess(path));
             }
         }
 
@@ -129,9 +103,12 @@ namespace WixToolset.Data
         /// <param name="tableDefinitions">TableDefinitions to use in the intermediate.</param>
         /// <param name="suppressVersionCheck">Suppress checking for wix.dll version mismatch.</param>
         /// <returns>The parsed Intermediate.</returns>
-        internal static Intermediate Parse(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
+        internal static Intermediate Read(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            Debug.Assert("wixObject" == reader.LocalName);
+            if ("wixObject" != reader.LocalName)
+            {
+                throw new WixNotIntermediateException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "object", "wixObject"));
+            }
 
             bool empty = reader.IsEmptyElement;
             Version objVersion = null;
@@ -175,7 +152,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "section":
-                                    intermediate.sections.Add(Section.Parse(reader, tableDefinitions));
+                                    intermediate.sections.Add(Section.Read(reader, tableDefinitions));
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixObject", reader.Name));
@@ -200,7 +177,7 @@ namespace WixToolset.Data
         /// Persists an intermediate in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the Intermediate should persist itself as XML.</param>
-        private void Persist(XmlWriter writer)
+        private void Write(XmlWriter writer)
         {
             writer.WriteStartElement("wixObject", XmlNamespaceUri);
 
@@ -208,7 +185,7 @@ namespace WixToolset.Data
 
             foreach (Section section in this.sections)
             {
-                section.Persist(writer);
+                section.Write(writer);
             }
 
             writer.WriteEndElement();

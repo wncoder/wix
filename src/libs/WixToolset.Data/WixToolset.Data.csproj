@@ -21,10 +21,13 @@
     <Compile Include="ComplexReferenceChildType.cs" />
     <Compile Include="ComplexReferenceParentType.cs" />
     <Compile Include="CompressionLevel.cs" />
+    <Compile Include="NonClosingStreamWrapper.cs" />
     <Compile Include="DisplayEventArgs.cs" />
     <Compile Include="DuplicateSymbolsException.cs" />
     <Compile Include="EmptyRule.cs" />
     <Compile Include="Field.cs" />
+    <Compile Include="FileFormat.cs" />
+    <Compile Include="FileStructure.cs" />
     <Compile Include="ILibraryBinaryFileResolver.cs" />
     <Compile Include="IMessageHandler.cs" />
     <Compile Include="Intermediate.cs" />

@@ -129,7 +129,7 @@ namespace WixToolset.Data
         /// <param name="reader">XmlReader where the intermediate is persisted.</param>
         /// <param name="tableDefinitions">TableDefinitions to use in the intermediate.</param>
         /// <returns>The parsed Section.</returns>
-        internal static Section Parse(XmlReader reader, TableDefinitionCollection tableDefinitions)
+        internal static Section Read(XmlReader reader, TableDefinitionCollection tableDefinitions)
         {
             Debug.Assert("section" == reader.LocalName);
 
@@ -233,7 +233,7 @@ namespace WixToolset.Data
         /// Persist the Section to an XmlWriter.
         /// </summary>
         /// <param name="writer">XmlWriter which reference will be persisted to.</param>
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("section", Intermediate.XmlNamespaceUri);
 

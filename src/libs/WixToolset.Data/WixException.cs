@@ -34,7 +34,7 @@ namespace WixToolset.Data
         /// <param name="error">The localized error information.</param>
         /// <param name="exception">Original exception.</param>
         public WixException(MessageEventArgs error, Exception exception) :
-            base(String.Empty, exception)
+            base(error.GenerateMessageString(), exception)
         {
             this.error = error;
         }

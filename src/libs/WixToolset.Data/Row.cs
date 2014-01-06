@@ -390,7 +390,7 @@ namespace WixToolset.Data
                         sectionId = reader.Value;
                         break;
                     case "sourceLineNumber":
-                        sourceLineNumbers = new SourceLineNumber(reader.Value);
+                        sourceLineNumbers = SourceLineNumber.CreateFromEncoded(reader.Value);
                         break;
                     default:
                         if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
