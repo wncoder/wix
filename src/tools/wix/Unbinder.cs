@@ -48,7 +48,7 @@ namespace WixToolset
         /// </summary>
         public Unbinder()
         {
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
             this.unbinderExtensions = new ArrayList();
         }
 

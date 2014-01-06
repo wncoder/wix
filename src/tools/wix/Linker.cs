@@ -52,7 +52,7 @@ namespace WixToolset
             this.sectionIdOnRows = true; // TODO: what is the correct value for this?
 
             this.standardActions = WindowsInstallerStandard.GetStandardActions();
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
 
             this.extensionData = new List<IExtensionData>();
             this.inspectorExtensions = new List<InspectorExtension>();

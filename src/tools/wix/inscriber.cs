@@ -36,7 +36,7 @@ namespace WixToolset
 
         public Inscriber()
         {
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
         }
 
         /// <summary>
