@@ -15,6 +15,8 @@ namespace WixToolset.Data
 
     public class DisplayEventArgs : EventArgs
     {
+        public MessageLevel Level { get; set; }
+
         public string Message { get; set; }
     }
 }

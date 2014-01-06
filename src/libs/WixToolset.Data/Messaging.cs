@@ -75,12 +75,24 @@ namespace WixToolset.Data
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs mea)
         {
+            MessageLevel messageLevel = this.CalculateMessageLevel(mea);
+
+            if (MessageLevel.Nothing == messageLevel)
+            {
+                return;
+            }
+            else if (MessageLevel.Error == messageLevel)
+            {
+                this.EncounteredError = true;
+                this.LastErrorNumber = mea.Id;
+            }
+
             if (null != this.Display)
             {
-                string message = this.GetMessageString(mea);
+                string message = mea.GenerateMessageString(this.shortAppName, this.longAppName, messageLevel);
                 if (!String.IsNullOrEmpty(message))
                 {
-                    this.Display(this, new DisplayEventArgs() { Message = message });
+                    this.Display(this, new DisplayEventArgs() { Level = messageLevel, Message = message });
                 }
             }
             else if (MessageLevel.Error == mea.Level)
@@ -134,30 +146,6 @@ namespace WixToolset.Data
         public void SuppressWarningMessage(int warningNumber)
         {
             this.suppressedWarnings.Add(warningNumber);
-        }
-
-        /// <summary>
-        /// Get a message string.
-        /// </summary>
-        /// <param name="sender">Sender of the message.</param>
-        /// <param name="mea">Arguments for the message event.</param>
-        /// <returns>The message string.</returns>
-        public string GetMessageString(MessageEventArgs mea)
-        {
-            MessageLevel messageLevel = this.CalculateMessageLevel(mea);
-
-            if (MessageLevel.Nothing == messageLevel)
-            {
-                return null;
-            }
-
-            if (MessageLevel.Error == messageLevel)
-            {
-                this.EncounteredError = true;
-                this.LastErrorNumber = mea.Id;
-            }
-
-            return mea.GenerateMessageString(this.shortAppName, this.longAppName, messageLevel);
         }
 
         /// <summary>
