@@ -56,9 +56,8 @@ namespace WixToolset.Extensibility
         {
             using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
             {
-                UriBuilder uriBuilder = new UriBuilder();
+                UriBuilder uriBuilder = new UriBuilder(assembly.CodeBase);
                 uriBuilder.Scheme = "embeddedresource";
-                uriBuilder.Path = assembly.Location;
                 uriBuilder.Fragment = resourceName;
 
                 return Library.Load(resourceStream, uriBuilder.Uri, tableDefinitions, false);
