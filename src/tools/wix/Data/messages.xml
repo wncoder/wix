@@ -1224,7 +1224,7 @@
         </Message>
         <Message Id="DuplicateExtensionTable" Number="126" SourceLineNumbers="no">
             <Instance>
-                The extension '{0}' contains a defintion for table '{1}' that collides with a previously loaded table definition.  Please remove one of the conflicting extensions or rename one of the tables to avoid the collision.
+                The extension '{0}' contains a definition for table '{1}' that collides with a previously loaded table definition.  Please remove one of the conflicting extensions or rename one of the tables to avoid the collision.
                 <Parameter Type="System.String" Name="extension" />
                 <Parameter Type="System.String" Name="tableName" />
             </Instance>
