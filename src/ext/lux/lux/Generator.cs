@@ -18,7 +18,7 @@ namespace WixToolset.Lux
     using System.Collections.Specialized;
     using System.IO;
     using System.Xml;
-    using WixToolset;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using Wix = WixToolset.Serialize;
     using WixLux = WixToolset.Extensions.Serialize.Lux;
@@ -32,11 +32,6 @@ namespace WixToolset.Lux
         private List<string> inputFiles = new List<string>();
         private List<string> inputFragments;
         private string outputFile;
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Sets the list of WiX extensions used by the input files.
@@ -93,16 +88,14 @@ namespace WixToolset.Lux
         /// <param name="extensions">The WiX extensions used by the input files.</param>
         /// <param name="inputFiles">The WiX object and library files to scan for unit tests.</param>
         /// <param name="outputFile">The optional generated test package source file.</param>
-        /// <param name="message">Message handler.</param>
         /// <param name="inputFragments">The subset of InputFiles that are fragments (i.e., are not entry sections like Product) and should be included in a test package.</param>
         /// <returns>True if successful or False if there were no unit tests in the input files or a test package couldn't be created.</returns>
-        public static bool Generate(StringCollection extensions, List<string> inputFiles, string outputFile, MessageEventHandler message, out List<string> inputFragments)
+        public static bool Generate(StringCollection extensions, List<string> inputFiles, string outputFile, out List<string> inputFragments)
         {
             Generator generator = new Generator();
             generator.Extensions = extensions;
             generator.InputFiles = inputFiles;
             generator.OutputFile = outputFile;
-            generator.Message += message;
 
             bool success = generator.Generate();
             inputFragments = generator.InputFragments;
@@ -138,16 +131,7 @@ namespace WixToolset.Lux
         /// <param name="mea">Message event arguments.</param>
         public void OnMessage(MessageEventArgs mea)
         {
-            WixErrorEventArgs errorEventArgs = mea as WixErrorEventArgs;
-
-            if (null != this.Message)
-            {
-                this.Message(this, mea);
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(mea);
         }
 
         /// <summary>
@@ -269,7 +253,7 @@ namespace WixToolset.Lux
                         // try loading as an object file
                         try
                         {
-                            Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, false, false);
+                            Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, false);
                             foreach (Section section in intermediate.Sections)
                             {
                                 sectionFiles[section] = inputFile;
@@ -284,7 +268,7 @@ namespace WixToolset.Lux
                         // try loading as a library file
                         try
                         {
-                            Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, false, false);
+                            Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, false);
                             foreach (Section section in library.Sections)
                             {
                                 sectionFiles[section] = inputFile;

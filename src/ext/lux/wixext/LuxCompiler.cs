@@ -16,8 +16,9 @@ namespace WixToolset.Extensions
     using System;
     using System.Collections.Generic;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
-    
+
     /// <summary>
     /// Lux operators.
     /// </summary>

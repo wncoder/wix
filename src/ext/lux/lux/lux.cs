@@ -18,6 +18,7 @@ namespace WixToolset.Lux
     using System.Collections.Specialized;
     using System.IO;
     using System.Runtime.InteropServices;
+    using WixToolset.Data;
 
     /// <summary>
     /// The main entry point for Lux
@@ -30,7 +31,6 @@ namespace WixToolset.Lux
         private string outputFile;
         private bool showLogo = true;
         private bool showHelp;
-        private ConsoleMessageHandler messageHandler = new ConsoleMessageHandler("LUX", "lux.exe");
 
         /// <summary>
         /// Prevents a default instance of the Lux class from being created.
@@ -48,8 +48,20 @@ namespace WixToolset.Lux
         public static int Main(string[] args)
         {
             AppCommon.PrepareConsoleForLocalization();
+            Messaging.Instance.InitializeAppName("LUX", "lux.exe").Display += Lux.DisplayMessage;
+
             Lux lux = new Lux();
             return lux.Run(args);
+        }
+
+        /// <summary>
+        /// Handler for display message events.
+        /// </summary>
+        /// <param name="sender">Sender of message.</param>
+        /// <param name="e">Event arguments containing message to display.</param>
+        private static void DisplayMessage(object sender, DisplayEventArgs e)
+        {
+            Console.WriteLine(e.Message);
         }
 
         /// <summary>
@@ -65,9 +77,9 @@ namespace WixToolset.Lux
                 this.ParseCommandLine(args);
 
                 // exit if there was an error parsing the command line (otherwise the logo appears after error messages)
-                if (this.messageHandler.EncounteredError)
+                if (Messaging.Instance.EncounteredError)
                 {
-                    return this.messageHandler.LastErrorNumber;
+                    return Messaging.Instance.LastErrorNumber;
                 }
 
                 if (this.showLogo)
@@ -79,12 +91,12 @@ namespace WixToolset.Lux
                 {
                     Console.WriteLine(LuxStrings.HelpMessage);
                     AppCommon.DisplayToolFooter();
-                    return this.messageHandler.LastErrorNumber;
+                    return Messaging.Instance.LastErrorNumber;
                 }
 
                 foreach (string parameter in this.invalidArgs)
                 {
-                    this.messageHandler.Display(this, WixWarnings.UnsupportedCommandLineArgument(parameter));
+                    Messaging.Instance.OnMessage(WixWarnings.UnsupportedCommandLineArgument(parameter));
                 }
 
                 this.invalidArgs = null;
@@ -93,8 +105,8 @@ namespace WixToolset.Lux
                 if (0 == this.inputFiles.Count || String.IsNullOrEmpty(this.outputFile))
                 {
                     Console.WriteLine(LuxStrings.HelpMessage);
-                    this.messageHandler.Display(this, LuxBuildErrors.MalfunctionNeedInput());
-                    return this.messageHandler.LastErrorNumber;
+                    Messaging.Instance.OnMessage(LuxBuildErrors.MalfunctionNeedInput());
+                    return Messaging.Instance.LastErrorNumber;
                 }
 
                 if (String.IsNullOrEmpty(Path.GetExtension(this.outputFile)))
@@ -106,22 +118,22 @@ namespace WixToolset.Lux
                 AppCommon.ReadConfiguration(this.extensionList);
 
                 List<string> inputFragments = new List<string>();
-                Generator.Generate(this.extensionList, this.inputFiles, this.outputFile, this.messageHandler.Display, out inputFragments);
+                Generator.Generate(this.extensionList, this.inputFiles, this.outputFile, out inputFragments);
             }
             catch (WixException we)
             {
-                this.messageHandler.Display(this, we.Error);
+                Messaging.Instance.OnMessage(we.Error);
             }
             catch (Exception e)
             {
-                this.messageHandler.Display(this, WixErrors.UnexpectedException(e.Message, e.GetType().ToString(), e.StackTrace));
+                Messaging.Instance.OnMessage(WixErrors.UnexpectedException(e.Message, e.GetType().ToString(), e.StackTrace));
                 if (e is NullReferenceException || e is SEHException)
                 {
                     throw;
                 }
             }
 
-            return this.messageHandler.LastErrorNumber;
+            return Messaging.Instance.LastErrorNumber;
         }
 
         /// <summary>
@@ -153,7 +165,7 @@ namespace WixToolset.Lux
                     {
                         if (!CommandLine.IsValidArg(args, ++i))
                         {
-                            this.messageHandler.Display(this, WixErrors.TypeSpecificationForExtensionRequired("-ext"));
+                            Messaging.Instance.OnMessage(WixErrors.TypeSpecificationForExtensionRequired("-ext"));
                             return;
                         }
 
@@ -178,7 +190,7 @@ namespace WixToolset.Lux
                     }
                     else if ("v" == parameter)
                     {
-                        this.messageHandler.ShowVerboseMessages = true;
+                        Messaging.Instance.ShowVerboseMessages = true;
                     }
                     else if ("?" == parameter || "help" == parameter)
                     {

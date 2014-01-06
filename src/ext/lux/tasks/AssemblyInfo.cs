@@ -19,5 +19,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Lux Tasks for MSBuild")]
 [assembly: AssemblyDescription("Lux Tasks")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
