@@ -2419,7 +2419,10 @@ private: // privates
 
             if (!fResult)
             {
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "%ls", m_sczFailedMessage);
+
                 hr = E_WIXSTDBA_CONDITION_FAILED;
+                // todo: remove in WiX v4, in case people are relying on v3.x logging behavior
                 BalExitOnFailure1(hr, "Bundle condition evaluated to false: %ls", pCondition->sczCondition);
             }
         }
