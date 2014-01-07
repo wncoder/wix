@@ -117,6 +117,6 @@ Or if WIP:4260 is implemented, the following:
 
 * [WIXFEAT:4259](http://wixtoolset.org/issues/4259/)
 
-* WIP:4258
+* [WIP:4258](4260-inline-directory-syntax/)
 
-* WIP:4260
+* [WIP:4260](4258-identifier-access-modifiers/)
