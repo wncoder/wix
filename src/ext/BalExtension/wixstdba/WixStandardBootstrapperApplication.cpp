@@ -2409,7 +2409,6 @@ private: // privates
     {
         HRESULT hr = S_OK;
         BOOL fResult = FALSE;
-        LPSTR pszLogMessage = NULL;
 
         for (DWORD i = 0; i < m_Conditions.cConditions; ++i)
         {
@@ -2420,10 +2419,7 @@ private: // privates
 
             if (!fResult)
             {
-                if (SUCCEEDED(StrAnsiAllocString(&pszLogMessage, m_sczFailedMessage, 0, CP_ACP)))
-                {
-                    BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, pszLogMessage);
-                }
+                BalLog(BOOTSTRAPPER_LOG_LEVEL_ERROR, "%ls", m_sczFailedMessage);
 
                 hr = E_WIXSTDBA_CONDITION_FAILED;
                 // todo: remove in WiX v4, in case people are relying on v3.x logging behavior
@@ -2434,8 +2430,6 @@ private: // privates
         ReleaseNullStr(m_sczFailedMessage);
 
     LExit:
-        ReleaseStr(pszLogMessage);
-
         return hr;
     }
 
