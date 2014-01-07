@@ -16,8 +16,8 @@ docpadConfig = {
       @getCollection('documents').findAllLive({relativeDirPath: 'news'}, [{date:-1}])
 
     wips: ->
-      @getCollection('documents').findAllLive({relativeDirPath: 'dev\\wip'}).on "add", (model) ->
-        model.setMetaDefaults({layout:'wip', under:'Dev'})
+      @getCollection('documents').findAllLive({relativeDirPath: 'development\\wips'}, [{wip: 1}]).on "add", (model) ->
+        model.setMetaDefaults({layout:'wip', under:'Development'})
 
     releases: ->
       @getCollection('documents').findAllLive({relativeDirPath: 'releases'}, [{date:-1}]).on "add", (model) ->

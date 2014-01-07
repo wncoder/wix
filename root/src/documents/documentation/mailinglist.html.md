@@ -1,4 +1,5 @@
 ---
+under: Documentation
 title: Mailing lists
 subtitle: for the WiX toolset
 keywords: wix toolset,wix,mailing list

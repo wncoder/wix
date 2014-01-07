@@ -7,8 +7,10 @@ sidebarTitle: Additional information
 sidebarItems:
   - uri: /about/governance/
     text: Governance Document
-  - uri: /dev/assignment-agreement/
+  - uri: /development/assignment-agreement/
     text: Assignment Agreement
+  - uri: /development/wips/
+    text: WiX Improvement Proposals
 ---
 
 ## WiX Toolset Development
@@ -17,7 +19,7 @@ To get started as a developer we recommend walking through the following steps. 
 
 1. Join the [wix-devs mailing list](/documentation/mailinglist).
 
-2. Sign the [WiX toolset Assignment Agreement](/dev/assignment-agreement/).
+2. Sign the [WiX toolset Assignment Agreement](/development/assignment-agreement/).
 
 3. Enlist in the [Git repository on CodePlex](http://wix.codeplex.com/SourceControl/latest).
 

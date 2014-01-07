@@ -1,4 +1,5 @@
 ---
+under: Documentation
 title: Manuals
 subtitle: for the WiX toolset
 keywords: wix toolset,wix
