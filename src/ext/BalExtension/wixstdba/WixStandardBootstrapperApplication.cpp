@@ -1884,7 +1884,15 @@ private: // privates
                             }
                         }
 
-                        StrAllocFormatted(&sczText, L"0x%08x - %ls", m_hrFinal, sczUnformattedText);
+                        if (E_WIXSTDBA_CONDITION_FAILED == m_hrFinal)
+                        {
+                            StrAllocString(&sczText, sczUnformattedText, 0);
+                        }
+                        else
+                        {
+                            StrAllocFormatted(&sczText, L"0x%08x - %ls", m_hrFinal, sczUnformattedText);
+                        }
+
                         ThemeSetTextControl(m_pTheme, WIXSTDBA_CONTROL_FAILURE_MESSAGE_TEXT, sczText);
                         fShowErrorMessage = TRUE;
                     }
