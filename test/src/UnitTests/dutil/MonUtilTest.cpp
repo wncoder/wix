@@ -10,12 +10,13 @@
 #include "precomp.h"
 
 using namespace System;
-using namespace System::Text;
 using namespace System::Collections::Generic;
+using namespace System::Reflection;
 using namespace System::Runtime::InteropServices;
+using namespace System::Text;
 using namespace Xunit;
 
-namespace CfgTests
+namespace DutilTests
 {
     const int PREWAIT = 20;
     const int POSTWAIT = 480;
@@ -44,7 +45,15 @@ namespace CfgTests
         DWORD cDirectories;
     };
 
-    void MonGeneral(
+    public delegate void MonGeneralDelegate(HRESULT, LPVOID);
+
+    public delegate void MonDriveStatusDelegate(WCHAR, BOOL, LPVOID);
+
+    public delegate void MonDirectoryDelegate(HRESULT, LPCWSTR, BOOL, LPVOID, LPVOID);
+
+    public delegate void MonRegKeyDelegate(HRESULT, HKEY, LPCWSTR, REG_KEY_BITNESS, BOOL, LPVOID, LPVOID);
+
+    static void MonGeneral(
         __in HRESULT /*hrResult*/,
         __in_opt LPVOID /*pvContext*/
         )
@@ -52,7 +61,7 @@ namespace CfgTests
         Assert::True(false);
     }
 
-    void MonDriveStatus(
+    static void MonDriveStatus(
         __in WCHAR /*chDrive*/,
         __in BOOL /*fArriving*/,
         __in_opt LPVOID /*pvContext*/
@@ -60,7 +69,7 @@ namespace CfgTests
     {
     }
 
-    void MonDirectory(
+    static void MonDirectory(
         __in HRESULT hrResult,
         __in_z LPCWSTR wzPath,
         __in_z BOOL fRecursive,
@@ -83,7 +92,7 @@ namespace CfgTests
         pResults->rgDirectories[pResults->cDirectories - 1].fRecursive = fRecursive;
     }
 
-    void MonRegKey(
+    static void MonRegKey(
         __in HRESULT hrResult,
         __in HKEY hkRoot,
         __in_z LPCWSTR wzSubKey,
@@ -414,8 +423,25 @@ namespace CfgTests
             Results *pResults = (Results *)MemAlloc(sizeof(Results), TRUE);
             Assert::True(NULL != pResults);
 
+            // These ensure the function pointers we send point to this thread's appdomain, which helps with assembly binding when running tests within msbuild
+            MonGeneralDelegate^ fpMonGeneral = gcnew MonGeneralDelegate(MonGeneral);
+            GCHandle gchMonGeneral = GCHandle::Alloc(fpMonGeneral);
+            IntPtr ipMonGeneral = Marshal::GetFunctionPointerForDelegate(fpMonGeneral);
+
+            MonDriveStatusDelegate^ fpMonDriveStatus = gcnew MonDriveStatusDelegate(MonDriveStatus);
+            GCHandle gchMonDriveStatus = GCHandle::Alloc(fpMonDriveStatus);
+            IntPtr ipMonDriveStatus = Marshal::GetFunctionPointerForDelegate(fpMonDriveStatus);
+
+            MonDirectoryDelegate^ fpMonDirectory = gcnew MonDirectoryDelegate(MonDirectory);
+            GCHandle gchMonDirectory = GCHandle::Alloc(fpMonDirectory);
+            IntPtr ipMonDirectory = Marshal::GetFunctionPointerForDelegate(fpMonDirectory);
+
+            MonRegKeyDelegate^ fpMonRegKey = gcnew MonRegKeyDelegate(MonRegKey);
+            GCHandle gchMonRegKey = GCHandle::Alloc(fpMonRegKey);
+            IntPtr ipMonRegKey = Marshal::GetFunctionPointerForDelegate(fpMonRegKey);
+
             // "Silence period" is 100 ms
-            hr = MonCreate(&handle, MonGeneral, MonDriveStatus, MonDirectory, MonRegKey, pResults);
+            hr = MonCreate(&handle, static_cast<PFN_MONGENERAL>(ipMonGeneral.ToPointer()), static_cast<PFN_MONDRIVESTATUS>(ipMonDriveStatus.ToPointer()), static_cast<PFN_MONDIRECTORY>(ipMonDirectory.ToPointer()), static_cast<PFN_MONREGKEY>(ipMonRegKey.ToPointer()), pResults);
             Assert::Equal<HRESULT>(S_OK, hr);
 
             hr = RegInitialize();
@@ -429,6 +455,12 @@ namespace CfgTests
             ClearResults(pResults);
 
             ReleaseMon(handle);
+
+            gchMonGeneral.Free();
+            gchMonDriveStatus.Free();
+            gchMonDirectory.Free();
+            gchMonRegKey.Free();
+
             ReleaseMem(pResults->rgDirectories);
             ReleaseMem(pResults->rgRegKeys);
             ReleaseMem(pResults);

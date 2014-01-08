@@ -1,3 +1,5 @@
+* MikeGC: Fix issue running MonUtil test via msbuild from Unit.testproj
+
 ## WixBuild: Version 4.0.1216.0
 
 * MikeGC: Fix a race condition where, in network disconnect/reconnect situations, MonUtil could incorrectly send invalid handles to WaitForMultipleObjects (and shut down because of it)
