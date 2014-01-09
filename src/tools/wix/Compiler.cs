@@ -21525,6 +21525,12 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 this.core.OnMessage(WixErrors.ExpectedAttributeWithElement(sourceLineNumbers, node.Name, "DownloadUrl", "RemotePayload"));
             }
 
+            if (YesNoDefaultType.No != compressed && null != remotePayload)
+            {
+                compressed = YesNoDefaultType.No;
+                this.core.OnMessage(WixWarnings.RemotePayloadsMustNotAlsoBeCompressed(sourceLineNumbers, node.Name));
+            }
+            
             if (String.IsNullOrEmpty(id))
             {
                 if (!String.IsNullOrEmpty(name))

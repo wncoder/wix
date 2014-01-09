@@ -1,3 +1,5 @@
+* BobArnson: WIXBUG:4271 - Warn when using a RemotePayload package that isn't explicitly set @Compressed="no".
+
 * BobArnson: WIXBUG:4263 - Add WixMsmqExtension.dll back to binaries .zip.
 
 * BobArnson: WIXBUG:4272 - Omit custom (and therefore un-Google-able) HRESULT for failed launch conditions on the failed page of WixStdBA.
