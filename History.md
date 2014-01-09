@@ -1,3 +1,5 @@
+* BobArnson: WIXBUG:4263 - Add WixMsmqExtension.dll back to binaries .zip.
+
 * BobArnson: WIXBUG:4272 - Omit custom (and therefore un-Google-able) HRESULT for failed launch conditions on the failed page of WixStdBA.
 
 * BobArnson: WIXBUG:4077 - Add log entry for the bal:Condition message itself.
