@@ -15,6 +15,7 @@ namespace WixToolset.Data
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
@@ -23,48 +24,13 @@ namespace WixToolset.Data
     using System.Xml;
 
     /// <summary>
-    /// The row transform operations.
-    /// </summary>
-    public enum RowOperation
-    {
-        /// <summary>
-        /// No operation.
-        /// </summary>
-        None,
-
-        /// <summary>
-        /// Added row.
-        /// </summary>
-        Add,
-
-        /// <summary>
-        /// Deleted row.
-        /// </summary>
-        Delete,
-
-        /// <summary>
-        /// Modified row.
-        /// </summary>
-        Modify
-    }
-
-    /// <summary>
     /// Row containing data for a table.
     /// </summary>
     public class Row
     {
         private static long rowCount;
 
-        private Table table;
-        private TableDefinition tableDefinition;
-
-        private long rowNumber;
-        private RowOperation operation;
-        private string sectionId;
-        private SourceLineNumber sourceLineNumbers;
-
         private Field[] fields;
-
         private Symbol symbol;
 
         /// <summary>
@@ -74,14 +40,9 @@ namespace WixToolset.Data
         /// <param name="table">Table this row belongs to and should get its column definitions from.</param>
         /// <remarks>The compiler should use this constructor exclusively.</remarks>
         public Row(SourceLineNumber sourceLineNumbers, Table table)
-            : this(sourceLineNumbers, (null != table ? table.Definition : null))
+            : this(sourceLineNumbers, table.Definition)
         {
-            if (null == table)
-            {
-                throw new ArgumentNullException("table");
-            }
-
-            this.table = table;
+            this.Table = table;
         }
 
         /// <summary>
@@ -92,19 +53,14 @@ namespace WixToolset.Data
         /// <remarks>This constructor is used in cases where there isn't a clear owner of the row.  The linker uses this constructor for the rows it generates.</remarks>
         public Row(SourceLineNumber sourceLineNumbers, TableDefinition tableDefinition)
         {
-            if (null == tableDefinition)
-            {
-                throw new ArgumentNullException("tableDefinition");
-            }
-
-            this.rowNumber = rowCount++;
-            this.sourceLineNumbers = sourceLineNumbers;
+            this.Number = rowCount++;
+            this.SourceLineNumbers = sourceLineNumbers;
             this.fields = new Field[tableDefinition.Columns.Count];
-            this.tableDefinition = tableDefinition;
+            this.TableDefinition = tableDefinition;
 
             for (int i = 0; i < this.fields.Length; ++i)
             {
-                this.fields[i] = Field.NewField(this.tableDefinition.Columns[i]);
+                this.fields[i] = Field.Create(this.TableDefinition.Columns[i]);
             }
         }
 
@@ -114,12 +70,12 @@ namespace WixToolset.Data
         /// <param name="source">The row the data is copied from.</param>
         protected Row(Row source)
         {
-            this.table = source.table;
-            this.tableDefinition = source.tableDefinition;
-            this.rowNumber = source.rowNumber;
-            this.operation = source.operation;
-            this.sectionId = source.sectionId;
-            this.sourceLineNumbers = source.sourceLineNumbers;
+            this.Table = source.Table;
+            this.TableDefinition = source.TableDefinition;
+            this.Number = source.Number;
+            this.Operation = source.Operation;
+            this.SectionId = source.SectionId;
+            this.SourceLineNumbers = source.SourceLineNumbers;
             this.fields = source.fields;
             this.symbol = source.symbol;
         }
@@ -128,49 +84,32 @@ namespace WixToolset.Data
         /// Gets or sets the row transform operation.
         /// </summary>
         /// <value>The row transform operation.</value>
-        public RowOperation Operation
-        {
-            get { return this.operation; }
-            set { this.operation = value; }
-        }
+        public RowOperation Operation { get; set; }
 
         /// <summary>
         /// Gets or sets the SectionId property on the row.
         /// </summary>
         /// <value>The SectionId property on the row.</value>
-        public string SectionId
-        {
-            get { return this.sectionId; }
-            set { this.sectionId = value; }
-        }
+        public string SectionId { get; set; }
 
         /// <summary>
         /// Gets the source file and line number for the row.
         /// </summary>
         /// <value>Source file and line number.</value>
-        public SourceLineNumber SourceLineNumbers
-        {
-            get { return this.sourceLineNumbers; }
-        }
+        public SourceLineNumber SourceLineNumbers { get; private set; }
 
         /// <summary>
         /// Gets the table this row belongs to.
         /// </summary>
         /// <value>null if Row does not belong to a Table, or owner Table otherwise.</value>
-        public Table Table
-        {
-            get { return this.table; }
-        }
+        public Table Table { get; private set; }
 
         /// <summary>
         /// Gets the table definition for this row.
         /// </summary>
         /// <remarks>A Row always has a TableDefinition, even if the Row does not belong to a Table.</remarks>
         /// <value>TableDefinition for Row.</value>
-        public TableDefinition TableDefinition
-        {
-            get { return this.tableDefinition; }
-        }
+        public TableDefinition TableDefinition { get; private set; }
 
         /// <summary>
         /// Gets the fields contained by this row.
@@ -190,7 +129,7 @@ namespace WixToolset.Data
         {
             get
             {
-                if (this.tableDefinition.CreateSymbols && null == this.symbol)
+                if (this.TableDefinition.CreateSymbols && null == this.symbol)
                 {
                     this.symbol = new Symbol(this);
                 }
@@ -203,10 +142,7 @@ namespace WixToolset.Data
         /// Gets the unique number for the row.
         /// </summary>
         /// <value>Number for row.</value>
-        public long Number
-        {
-            get { return this.rowNumber; }
-        }
+        public long Number { get; private set; }
 
         /// <summary>
         /// Gets or sets the value of a particular field in the row.
@@ -231,13 +167,22 @@ namespace WixToolset.Data
         }
 
         /// <summary>
+        /// Get the value used to represent the row in a keyed row collection.
+        /// </summary>
+        /// <returns>Primary key or row number if no primary key is available.</returns>
+        public string GetKey()
+        {
+            return this.GetPrimaryKey() ?? Convert.ToString(this.Number, CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
         /// Get the primary key of this row.
         /// </summary>
         /// <param name="delimiter">Delimiter character for multiple column primary keys.</param>
         /// <returns>The primary key or null if the row's table has no primary key columns.</returns>
-        public string GetPrimaryKey(char delimiter)
+        public string GetPrimaryKey(char delimiter = '/')
         {
-            return GetPrimaryKey(delimiter, String.Empty);
+            return this.GetPrimaryKey(delimiter, String.Empty);
         }
 
         /// <summary>
@@ -260,16 +205,13 @@ namespace WixToolset.Data
                         primaryKey.Append(delimiter);
                     }
 
-                    if (null == field.Data)
-                    {
-                        primaryKey.Append(nullReplacement);
-                    }
-                    else
-                    {
-                        primaryKey.Append(Convert.ToString(field.Data, CultureInfo.InvariantCulture));
-                    }
+                    primaryKey.Append((null == field.Data) ? nullReplacement : Convert.ToString(field.Data, CultureInfo.InvariantCulture));
 
                     foundPrimaryKey = true;
+                }
+                else // primary keys must be the first columns of a row so the first non-primary key means we can stop looking.
+                {
+                    break;
                 }
             }
 
@@ -290,7 +232,7 @@ namespace WixToolset.Data
         /// <returns>true if the specified field is null or an empty string, false otherwise.</returns>
         public bool IsColumnEmpty(int field)
         {
-            if (this.fields[field].Data == null)
+            if (null == this.fields[field].Data)
             {
                 return true;
             }
@@ -330,25 +272,25 @@ namespace WixToolset.Data
         /// <returns>A string representation of the Row.</returns>
         public override string ToString()
         {
-            StringBuilder data = new StringBuilder();
-            bool first = true;
+            //StringBuilder data = new StringBuilder();
+            //bool first = true;
 
-            foreach (Field field in this.fields)
-            {
-                if (!first)
-                {
-                    data.Append('/');
-                }
+            //foreach (Field field in this.fields)
+            //{
+            //    if (!first)
+            //    {
+            //        data.Append('/');
+            //    }
 
-                if (null != field.Data)
-                {
-                    data.Append(field.Data.ToString());
-                }
+            //    if (null != field.Data)
+            //    {
+            //        data.Append(field.Data.ToString());
+            //    }
 
-                first = false;
-            }
+            //    first = false;
+            //}
 
-            return data.ToString();
+            return String.Join("/", (object[])this.fields);
         }
 
         /// <summary>
@@ -357,7 +299,7 @@ namespace WixToolset.Data
         /// <param name="reader">Reader to get data from.</param>
         /// <param name="table">Table for this row.</param>
         /// <returns>New row object.</returns>
-        internal static Row Parse(XmlReader reader, Table table)
+        internal static Row Read(XmlReader reader, Table table)
         {
             Debug.Assert("row" == reader.LocalName);
 
@@ -429,7 +371,7 @@ namespace WixToolset.Data
                                     }
                                     else
                                     {
-                                        row.fields[field].Parse(reader);
+                                        row.fields[field].Read(reader);
                                     }
                                     ++field;
                                     break;
@@ -495,7 +437,7 @@ namespace WixToolset.Data
         /// <param name="suppressModularizationIdentifiers">Optional collection of identifiers that should not be modularized.</param>
         /// <remarks>moduleGuid is expected to be null when not being used to compile a Merge Module.</remarks>
         /// <returns>The modularized version of the field data.</returns>
-        internal string GetModularizedValue(Field field, string modularizationGuid, Hashtable suppressModularizationIdentifiers)
+        internal string GetModularizedValue(Field field, string modularizationGuid, HashSet<string> suppressModularizationIdentifiers)
         {
             Debug.Assert(null != field.Data && 0 < ((string)field.Data).Length);
             string fieldData = Convert.ToString(field.Data, CultureInfo.InvariantCulture);
@@ -663,28 +605,28 @@ namespace WixToolset.Data
         [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "Changing the way this string normalizes would result " +
                          "in a change to the way intermediate files are generated, potentially causing extra churn in patches on an MSI built from an older version of WiX. " +
                          "Furthermore, there is no security hole here, as the strings won't need to make a round trip")]
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("row", Intermediate.XmlNamespaceUri);
 
-            if (RowOperation.None != this.operation)
+            if (RowOperation.None != this.Operation)
             {
-                writer.WriteAttributeString("op", this.operation.ToString().ToLowerInvariant());
+                writer.WriteAttributeString("op", this.Operation.ToString().ToLowerInvariant());
             }
 
-            if (null != this.sectionId)
+            if (null != this.SectionId)
             {
-                writer.WriteAttributeString("sectionId", this.sectionId);
+                writer.WriteAttributeString("sectionId", this.SectionId);
             }
 
-            if (null != this.sourceLineNumbers)
+            if (null != this.SourceLineNumbers)
             {
-                writer.WriteAttributeString("sourceLineNumber", this.sourceLineNumbers.GetEncoded());
+                writer.WriteAttributeString("sourceLineNumber", this.SourceLineNumbers.GetEncoded());
             }
 
             for (int i = 0; i < this.fields.Length; ++i)
             {
-                this.fields[i].Persist(writer);
+                this.fields[i].Write(writer);
             }
 
             writer.WriteEndElement();

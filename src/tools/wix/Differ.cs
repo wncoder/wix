@@ -128,7 +128,7 @@ namespace WixToolset
                 Table updatedTable = updatedOutput.Tables[targetTable.Name];
                 TableOperation operation = TableOperation.None;
 
-                RowCollection rows = this.CompareTables(targetOutput, targetTable, updatedTable, out operation);
+                List<Row> rows = this.CompareTables(targetOutput, targetTable, updatedTable, out operation);
 
                 if (TableOperation.Drop == operation)
                 {
@@ -364,9 +364,9 @@ namespace WixToolset
             return comparedRow;
         }
 
-        private RowCollection CompareTables(Output targetOutput, Table targetTable, Table updatedTable, out TableOperation operation)
+        private List<Row> CompareTables(Output targetOutput, Table targetTable, Table updatedTable, out TableOperation operation)
         {
-            RowCollection rows = new RowCollection();
+            List<Row> rows = new List<Row>();
             operation = TableOperation.None;
 
             // dropped tables

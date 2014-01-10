@@ -5,19 +5,13 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-//    Field containing data for a column in a row.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
     using System.Diagnostics;
     using System.Globalization;
-    using System.Text;
     using System.Xml;
 
     /// <summary>
@@ -25,10 +19,7 @@ namespace WixToolset.Data
     /// </summary>
     public class Field
     {
-        private ColumnDefinition columnDefinition;
         private object data;
-        private bool modified;
-        private string previousData;
 
         /// <summary>
         /// Instantiates a new Field.
@@ -36,18 +27,14 @@ namespace WixToolset.Data
         /// <param name="columnDefinition">Column definition for this field.</param>
         protected Field(ColumnDefinition columnDefinition)
         {
-            this.columnDefinition = columnDefinition;
+            this.Column = columnDefinition;
         }
 
         /// <summary>
         /// Gets or sets the column definition for this field.
         /// </summary>
         /// <value>Column definition.</value>
-        public ColumnDefinition Column
-        {
-            get { return this.columnDefinition; }
-            set { this.columnDefinition = value; }
-        }
+        public ColumnDefinition Column { get; private set; }
 
         /// <summary>
         /// Gets or sets the data for this field.
@@ -63,8 +50,7 @@ namespace WixToolset.Data
             set
             {
                 // validate the value before setting it
-                this.columnDefinition.ValidateValue(value);
-
+                this.Column.ValidateValue(value);
                 this.data = value;
             }
         }
@@ -73,20 +59,22 @@ namespace WixToolset.Data
         /// Gets or sets whether this field is modified.
         /// </summary>
         /// <value>Whether this field is modified.</value>
-        public bool Modified
-        {
-            get { return this.modified; }
-            set { this.modified = value; }
-        }
+        public bool Modified { get; set; }
 
         /// <summary>
         /// Gets or sets the previous data.
         /// </summary>
         /// <value>The previous data.</value>
-        public string PreviousData
+        public string PreviousData { get; set; }
+
+        /// <summary>
+        /// Instantiate a new Field object of the correct type.
+        /// </summary>
+        /// <param name="columnDefinition">The column definition for the field.</param>
+        /// <returns>The new Field object.</returns>
+        public static Field Create(ColumnDefinition columnDefinition)
         {
-            get { return this.previousData; }
-            set { this.previousData = value; }
+            return (ColumnType.Object == columnDefinition.Type) ? new ObjectField(columnDefinition) : new Field(columnDefinition);
         }
 
         /// <summary>
@@ -101,7 +89,7 @@ namespace WixToolset.Data
 
             try
             {
-                this.columnDefinition.ValidateValue(value);
+                this.Column.ValidateValue(value);
             }
             catch (InvalidOperationException)
             {
@@ -113,38 +101,30 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Instantiate a new Field object of the correct type.
-        /// </summary>
-        /// <param name="columnDefinition">The column definition for the field.</param>
-        /// <returns>The new Field object.</returns>
-        public static Field NewField(ColumnDefinition columnDefinition)
-        {
-            if (ColumnType.Object == columnDefinition.Type)
-            {
-                return new ObjectField(columnDefinition);
-            }
-            else
-            {
-                return new Field(columnDefinition);
-            }
-        }
-
-        /// <summary>
         /// Determine if this field is identical to another field.
         /// </summary>
         /// <param name="field">The other field to compare to.</param>
         /// <returns>true if they are equal; false otherwise.</returns>
         public bool IsIdentical(Field field)
         {
-            return (this.columnDefinition.Name == field.columnDefinition.Name &&
+            return (this.Column.Name == field.Column.Name &&
                 ((null != this.data && this.data.Equals(field.data)) || (null == this.data && null == field.data)));
+        }
+
+        /// <summary>
+        /// Overrides the built in object implementation to return the field's data as a string.
+        /// </summary>
+        /// <returns>Field's data as a string.</returns>
+        public override string ToString()
+        {
+            return (null == this.data) ? null : Convert.ToString(this.data, CultureInfo.InvariantCulture);
         }
 
         /// <summary>
         /// Parse a field from the xml.
         /// </summary>
         /// <param name="reader">XmlReader where the intermediate is persisted.</param>
-        internal virtual void Parse(XmlReader reader)
+        internal virtual void Read(XmlReader reader)
         {
             Debug.Assert("field" == reader.LocalName);
 
@@ -155,10 +135,10 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "modified":
-                        this.modified = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "field", reader.Name, reader.Value);
+                        this.Modified = "yes".Equals(reader.Name, StringComparison.Ordinal);
                         break;
                     case "previousData":
-                        this.previousData = reader.Value;
+                        this.PreviousData = reader.Value;
                         break;
                     default:
                         if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
@@ -184,7 +164,7 @@ namespace WixToolset.Data
                         case XmlNodeType.SignificantWhitespace:
                             if (0 < reader.Value.Length)
                             {
-                                if (ColumnType.Number == this.columnDefinition.Type && !this.columnDefinition.IsLocalizable)
+                                if (ColumnType.Number == this.Column.Type && !this.Column.IsLocalizable)
                                 {
                                     // older wix files could persist data as a long value (which would overflow an int)
                                     // since the Convert class always throws exceptions for overflows, read in integral
@@ -215,33 +195,23 @@ namespace WixToolset.Data
         /// Persists a field in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the Field should persist itself as XML.</param>
-        internal virtual void Persist(XmlWriter writer)
+        internal virtual void Write(XmlWriter writer)
         {
-            string text;
-
-            // convert the data to a string that will persist nicely
-            if (null == this.data)
-            {
-                text = String.Empty;
-            }
-            else
-            {
-                text = Convert.ToString(this.data, CultureInfo.InvariantCulture);
-            }
-
             writer.WriteStartElement("field", Intermediate.XmlNamespaceUri);
 
-            if (this.modified)
+            if (this.Modified)
             {
                 writer.WriteAttributeString("modified", "yes");
             }
 
-            if (null != this.previousData)
+            if (null != this.PreviousData)
             {
-                writer.WriteAttributeString("previousData", this.previousData);
+                writer.WriteAttributeString("previousData", this.PreviousData);
             }
 
-            if (this.columnDefinition.UseCData)
+            // Convert the data to a string that will persist nicely (nulls as String.Empty).
+            string text = Convert.ToString(this.data, CultureInfo.InvariantCulture);
+            if (this.Column.UseCData)
             {
                 writer.WriteCData(text);
             }
@@ -268,7 +238,7 @@ namespace WixToolset.Data
                 string fieldData = Convert.ToString(this.data, CultureInfo.InvariantCulture);
 
                 // special idt-specific escaping
-                if (this.columnDefinition.EscapeIdtCharacters)
+                if (this.Column.EscapeIdtCharacters)
                 {
                     fieldData = fieldData.Replace('\t', '\x10');
                     fieldData = fieldData.Replace('\r', '\x11');

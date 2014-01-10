@@ -103,7 +103,7 @@ namespace WixToolset.Data
         /// <param name="tableDefinitions">TableDefinitions to use in the intermediate.</param>
         /// <param name="suppressVersionCheck">Suppress checking for wix.dll version mismatch.</param>
         /// <returns>The parsed Intermediate.</returns>
-        internal static Intermediate Read(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
+        private static Intermediate Read(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
             if ("wixObject" != reader.LocalName)
             {

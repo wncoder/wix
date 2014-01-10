@@ -10,6 +10,7 @@
 namespace WixToolset.Data.Rows
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
     using System.Xml;
@@ -346,7 +347,7 @@ namespace WixToolset.Data.Rows
         /// </summary>
         /// <param name="sequenceTable">The sequence table.</param>
         /// <param name="allPreviousActionRows">A RowCollection which will contain all the previous actions.</param>
-        public void GetAllPreviousActionRows(SequenceTable sequenceTable, RowCollection allPreviousActionRows)
+        public void GetAllPreviousActionRows(SequenceTable sequenceTable, RowIndexedList<WixActionRow> allPreviousActionRows)
         {
             if (null != this.previousActionRows)
             {
@@ -367,7 +368,7 @@ namespace WixToolset.Data.Rows
         /// </summary>
         /// <param name="sequenceTable">The sequence table.</param>
         /// <param name="allNextActionRows">A RowCollection which will contain all the next actions.</param>
-        public void GetAllNextActionRows(SequenceTable sequenceTable, RowCollection allNextActionRows)
+        public void GetAllNextActionRows(SequenceTable sequenceTable, RowIndexedList<WixActionRow> allNextActionRows)
         {
             if (null != this.nextActionRows)
             {

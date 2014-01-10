@@ -159,15 +159,11 @@ namespace WixToolset
 
                 this.activeOutput = null;
 
-                SortedList adminProperties = new SortedList();
-                SortedList secureProperties = new SortedList();
-                SortedList hiddenProperties = new SortedList();
-
-                RowCollection actionRows = new RowCollection();
-                RowCollection suppressActionRows = new RowCollection();
+                List<Row> actionRows = new List<Row>();
+                List<Row> suppressActionRows = new List<Row>();
 
                 TableDefinitionCollection customTableDefinitions = new TableDefinitionCollection();
-                RowCollection customRows = new RowCollection();
+                List<Row> customRows = new List<Row>();
 
                 StringCollection generatedShortFileNameIdentifiers = new StringCollection();
                 Hashtable generatedShortFileNames = new Hashtable();
@@ -308,7 +304,7 @@ namespace WixToolset
                 this.ResolveFeatureToFeatureConnects(featuresToFeatures, allSymbols);
 
                 // start generating OutputTables and OutputRows for all the sections in the output
-                RowCollection ensureTableRows = new RowCollection();
+                List<Row> ensureTableRows = new List<Row>();
                 int sectionCount = 0;
                 foreach (Section section in output.Sections)
                 {
@@ -351,17 +347,6 @@ namespace WixToolset
                                     this.activeOutput.EnsureTable(this.tableDefinitions["AdvtExecuteSequence"]);
                                     this.activeOutput.EnsureTable(this.tableDefinitions["InstallExecuteSequence"]);
                                     this.activeOutput.EnsureTable(this.tableDefinitions["InstallUISequence"]);
-                                }
-
-                                foreach (Row row in table.Rows)
-                                {
-                                    // For script CAs that specify HideTarget we should also hide the CA data property for the action.
-                                    int bits = Convert.ToInt32(row[1]);
-                                    if (MsiInterop.MsidbCustomActionTypeHideTarget == (bits & MsiInterop.MsidbCustomActionTypeHideTarget) &&
-                                        MsiInterop.MsidbCustomActionTypeInScript == (bits & MsiInterop.MsidbCustomActionTypeInScript))
-                                    {
-                                        hiddenProperties[Convert.ToString(row[0])] = null;
-                                    }
                                 }
                                 break;
 
@@ -433,6 +418,8 @@ namespace WixToolset
                                 break;
 
                             case "Property":
+                                // Remove property rows with no value. These are properties associated with
+                                // AppSearch but without a default value.
                                 for (int i = 0; i < table.Rows.Count; i++)
                                 {
                                     if (null == table.Rows[i][1])
@@ -461,13 +448,6 @@ namespace WixToolset
                                 if (OutputType.Product == output.Type)
                                 {
                                     this.ResolveFeatures(table.Rows, 2, 6, componentsToFeatures, multipleFeatureComponents);
-                                }
-                                break;
-
-                            case "Upgrade":
-                                foreach (UpgradeRow row in table.Rows)
-                                {
-                                    secureProperties[row.ActionProperty] = null;
                                 }
                                 break;
 
@@ -554,26 +534,6 @@ namespace WixToolset
 
                             case "WixOrdering":
                                 copyRows = true;
-                                break;
-
-                            case "WixProperty":
-                                foreach (WixPropertyRow wixPropertyRow in table.Rows)
-                                {
-                                    if (wixPropertyRow.Admin)
-                                    {
-                                        adminProperties[wixPropertyRow.Id] = null;
-                                    }
-
-                                    if (wixPropertyRow.Hidden)
-                                    {
-                                        hiddenProperties[wixPropertyRow.Id] = null;
-                                    }
-
-                                    if (wixPropertyRow.Secure)
-                                    {
-                                        secureProperties[wixPropertyRow.Id] = null;
-                                    }
-                                }
                                 break;
 
                             case "WixSuppressAction":
@@ -830,34 +790,6 @@ namespace WixToolset
                     }
                 }
 
-                // update the special properties
-                if (0 < adminProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "AdminProperties";
-                    row[1] = GetPropertyListString(adminProperties);
-                }
-
-                if (0 < secureProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "SecureCustomProperties";
-                    row[1] = GetPropertyListString(secureProperties);
-                }
-
-                if (0 < hiddenProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "MsiHiddenProperties";
-                    row[1] = GetPropertyListString(hiddenProperties);
-                }
-
                 // add the ModuleSubstitution table to the ModuleIgnoreTable
                 if (containsModuleSubstitution)
                 {
@@ -877,12 +809,8 @@ namespace WixToolset
                 }
 
                 // index all the file rows
-                FileRowCollection indexedFileRows = new FileRowCollection();
                 Table fileTable = this.activeOutput.Tables["File"];
-                if (null != fileTable)
-                {
-                    indexedFileRows.AddRange(fileTable.Rows);
-                }
+                RowDictionary<FileRow> indexedFileRows = (null == fileTable) ? new RowDictionary<FileRow>() : new RowDictionary<FileRow>(fileTable);
 
                 // flag all the generated short file name collisions
                 foreach (string fileId in generatedShortFileNameIdentifiers)
@@ -1957,7 +1885,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="actionRows">Collection of actions to schedule.</param>
         /// <param name="suppressActionRows">Collection of actions to suppress.</param>
-        private void SequenceActions(RowCollection actionRows, RowCollection suppressActionRows)
+        private void SequenceActions(List<Row> actionRows, List<Row> suppressActionRows)
         {
             WixActionRowCollection overridableActionRows = new WixActionRowCollection();
             WixActionRowCollection requiredActionRows = new WixActionRowCollection();
@@ -2341,11 +2269,11 @@ namespace WixToolset
                         int unusedSequence;
 
                         // get all the relatively scheduled action rows occuring before this absolutely scheduled action row
-                        RowCollection allPreviousActionRows = new RowCollection();
+                        RowIndexedList<WixActionRow> allPreviousActionRows = new RowIndexedList<WixActionRow>();
                         absoluteActionRow.GetAllPreviousActionRows(sequenceTable, allPreviousActionRows);
 
                         // get all the relatively scheduled action rows occuring after this absolutely scheduled action row
-                        RowCollection allNextActionRows = new RowCollection();
+                        RowIndexedList<WixActionRow> allNextActionRows = new RowIndexedList<WixActionRow>();
                         absoluteActionRow.GetAllNextActionRows(sequenceTable, allNextActionRows);
 
                         // check for relatively scheduled actions occuring before/after a special action (these have a negative sequence number)
@@ -2591,7 +2519,7 @@ namespace WixToolset
         /// <param name="featureColumn">Number of the column containing the feature.</param>
         /// <param name="connectToFeatures">Connect to feature complex references.</param>
         /// <param name="multipleFeatureComponents">Hashtable of known components under multiple features.</param>
-        private void ResolveFeatures(RowCollection rows, int connectionColumn, int featureColumn, ConnectToFeatureCollection connectToFeatures, Hashtable multipleFeatureComponents)
+        private void ResolveFeatures(IEnumerable<Row> rows, int connectionColumn, int featureColumn, ConnectToFeatureCollection connectToFeatures, Hashtable multipleFeatureComponents)
         {
             foreach (Row row in rows)
             {

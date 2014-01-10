@@ -1563,13 +1563,11 @@ namespace WixToolset
             Table msiAssemblyTable = tables["MsiAssembly"];
             Table typeLibTable = tables["TypeLib"];
 
-            MediaRowCollection mediaRows;
-
             // index the media table by media id
+            RowDictionary<MediaRow> mediaRows;
             if (null != mediaTable)
             {
-                mediaRows = new MediaRowCollection();
-                mediaRows.AddRange(mediaTable.Rows);
+                mediaRows = new RowDictionary<MediaRow>(mediaTable);
             }
 
             // set the disk identifiers and sources for files
@@ -3069,7 +3067,7 @@ namespace WixToolset
             }
 
             // index the rows from the extension libraries
-            Hashtable indexedExtensionTables = new Hashtable();
+            Dictionary<string, HashSet<string>> indexedExtensionTables = new Dictionary<string, HashSet<string>>();
             foreach (IDecompilerExtension extension in this.extensions)
             {
                 // Get the optional library from the extension with the rows to be removed.
@@ -3107,13 +3105,14 @@ namespace WixToolset
 
                                 if (null != primaryKey)
                                 {
-                                    if (!indexedExtensionTables.Contains(tableName))
+                                    HashSet<string> indexedExtensionRows;
+                                    if (!indexedExtensionTables.TryGetValue(tableName, out indexedExtensionRows))
                                     {
-                                        indexedExtensionTables.Add(tableName, new Hashtable());
+                                        indexedExtensionRows = new HashSet<string>();
+                                        indexedExtensionTables.Add(tableName, indexedExtensionRows);
                                     }
-                                    Hashtable indexedExtensionRows = (Hashtable)indexedExtensionTables[tableName];
 
-                                    indexedExtensionRows[primaryKey] = null;
+                                    indexedExtensionRows.Add(primaryKey);
                                 }
                             }
                         }
@@ -3122,19 +3121,20 @@ namespace WixToolset
             }
 
             // remove the rows from the extension libraries (to allow full round-tripping)
-            foreach (string tableName in indexedExtensionTables.Keys)
+            foreach (var kvp in indexedExtensionTables)
             {
-                Table table = tables[tableName];
-                Hashtable indexedExtensionRows = (Hashtable)indexedExtensionTables[tableName];
+                string tableName = kvp.Key;
+                HashSet<string> indexedExtensionRows = kvp.Value;
 
+                Table table = tables[tableName];
                 if (null != table)
                 {
-                    RowCollection originalRows = table.Rows.Clone();
+                    RowDictionary<Row> originalRows = new RowDictionary<Row>(table);
 
                     // remove the original rows so that they can be added back if they should remain
                     table.Rows.Clear();
 
-                    foreach (Row row in originalRows)
+                    foreach (Row row in originalRows.Values)
                     {
                         if (!indexedExtensionRows.Contains(row.GetPrimaryKey(DecompilerConstants.PrimaryKeyDelimiter)))
                         {

@@ -123,7 +123,7 @@ namespace WixToolset.Data
         /// <param name="index">Index to start copying from.</param>
         void ICollection.CopyTo(System.Array array, int index)
         {
-            ((ICollection) this.collection).CopyTo(array, index);
+            ((ICollection)this.collection).CopyTo(array, index);
         }
 
         /// <summary>

@@ -15,6 +15,7 @@
     <RootNamespace>WixToolset.Data</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColumnDefinition.cs" />
     <Compile Include="ColumnDefinitionCollection.cs" />
     <Compile Include="Common.cs" />
@@ -44,18 +45,18 @@
     <Compile Include="Pdb.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Row.cs" />
-    <Compile Include="RowCollection.cs" />
+    <Compile Include="RowIndexedList.cs" />
     <Compile Include="RowDictionary.cs" />
+    <Compile Include="RowOperation.cs" />
     <Compile Include="Rows\BBControlRow.cs" />
     <Compile Include="Rows\ChainMsiPackageRow.cs" />
     <Compile Include="Rows\ComponentRow.cs" />
     <Compile Include="Rows\ControlRow.cs" />
     <Compile Include="Rows\FileRow.cs" />
-    <Compile Include="Rows\FileRowCollection.cs" />
     <Compile Include="Rows\MediaRow.cs" />
-    <Compile Include="Rows\MediaRowCollection.cs" />
     <Compile Include="Rows\PayloadInfoRow.cs" />
     <Compile Include="Rows\SummaryInfoRowCollection.cs" />
+    <Compile Include="Rows\PropertyRow.cs" />
     <Compile Include="Rows\UpgradeRow.cs" />
     <Compile Include="Rows\VariableRow.cs" />
     <Compile Include="Rows\WixActionRow.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="TableCollection.cs" />
     <Compile Include="TableDefinition.cs" />
     <Compile Include="TableDefinitionCollection.cs" />
+    <Compile Include="TableOperation.cs" />
     <Compile Include="WindowsInstallerStandard.cs" />
     <Compile Include="WixDataStrings.Designer.cs">
       <DependentUpon>WixDataStrings.resx</DependentUpon>

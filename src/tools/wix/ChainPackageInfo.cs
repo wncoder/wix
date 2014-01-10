@@ -157,7 +157,7 @@ namespace WixToolset
             this.SlipstreamMsps = new List<string>();
             this.ExitCodes = new List<ExitCodeInfo>();
             this.Provides = new ProvidesDependencyCollection();
-            this.TargetCodes = new RowDictionary<WixBundlePatchTargetCodeRow>();
+            this.TargetCodes = new RowIndexedList<WixBundlePatchTargetCodeRow>();
 
             // Default the display name and description to the package payload.
             this.DisplayName = this.PackagePayload.ProductName;
@@ -520,7 +520,7 @@ namespace WixToolset
         public List<string> SlipstreamMsps { get; private set; }
         public List<ExitCodeInfo> ExitCodes { get; private set; }
         public ProvidesDependencyCollection Provides { get; private set; }
-        public RowDictionary<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
+        public RowIndexedList<WixBundlePatchTargetCodeRow> TargetCodes { get; private set; }
         public bool TargetUnspecified { get; private set; }
         public RollbackBoundaryInfo RollbackBoundary { get; set; }
         public string RollbackBoundaryBackwardId { get; set; }

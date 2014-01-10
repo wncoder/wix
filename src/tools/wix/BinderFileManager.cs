@@ -20,6 +20,7 @@ namespace WixToolset
     using System.Collections.Specialized;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Linq;
     using System.IO;
     using System.Runtime.InteropServices;
     using WixToolset.Data;
@@ -185,9 +186,9 @@ namespace WixToolset
         /// <param name="fileRows">Collection of files in this cabinet.</param>
         /// <returns>The CabinetBuildOption and path to build the .  By default the cabinet is built and moved to its target location.</returns>
         [SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference")]
-        public virtual ResolvedCabinet ResolveCabinet(string cabinetPath, FileRowCollection fileRows)
+        public virtual ResolvedCabinet ResolveCabinet(string cabinetPath, IEnumerable<FileRow> fileRows)
         {
-            if (fileRows == null)
+            if (null == fileRows)
             {
                 throw new ArgumentNullException("fileRows");
             }
@@ -228,7 +229,7 @@ namespace WixToolset
                     {
                         ArrayList fileList = wixEnumerateCab.Enumerate(resolved.Path);
 
-                        if (fileRows.Count != fileList.Count)
+                        if (fileRows.Count() != fileList.Count)
                         {
                             cabinetValid = false;
                         }

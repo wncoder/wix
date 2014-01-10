@@ -959,7 +959,7 @@ namespace WixToolset
         private void SetMsiAssemblyName(Output output, Table assemblyNameTable, FileRow fileRow, string name, string value, IDictionary<string, string> infoCache, string modularizationGuid)
         {
             // check for null value (this can occur when grabbing the file version from an assembly without one)
-            if (null == value || 0 == value.Length)
+            if (String.IsNullOrEmpty(value))
             {
                 this.core.OnMessage(WixWarnings.NullMsiAssemblyNameValue(fileRow.SourceLineNumbers, fileRow.Component, name));
             }
@@ -995,7 +995,7 @@ namespace WixToolset
 
                     if (null == fileRow.AssemblyNameRows)
                     {
-                        fileRow.AssemblyNameRows = new RowCollection();
+                        fileRow.AssemblyNameRows = new List<Row>();
                     }
                     fileRow.AssemblyNameRows.Add(assemblyNameRow);
                 }
@@ -1006,7 +1006,7 @@ namespace WixToolset
 
                 if (infoCache != null)
                 {
-                    string key = String.Format(CultureInfo.InvariantCulture, "assembly{0}.{1}", name, Demodularize(output, modularizationGuid, fileRow.File)).ToLower(CultureInfo.InvariantCulture);
+                    string key = String.Format(CultureInfo.InvariantCulture, "assembly{0}.{1}", name, Demodularize(output, modularizationGuid, fileRow.File)).ToLowerInvariant();
                     infoCache[key] = (string)assemblyNameRow[2];
                 }
             }
@@ -1049,52 +1049,87 @@ namespace WixToolset
         /// <param name="tables">Collection of all tables.</param>
         private void MergeUnrealTables(TableCollection tables)
         {
-            // merge data from the WixBBControl rows into the BBControl rows
+            // Merge data from the WixBBControl rows into the BBControl rows.
             Table wixBBControlTable = tables["WixBBControl"];
-            Table bbControlTable = tables["BBControl"];
-            if (null != wixBBControlTable && null != bbControlTable)
+            if (null != wixBBControlTable)
             {
-                // index all the BBControl rows by their identifier
-                Hashtable indexedBBControlRows = new Hashtable(bbControlTable.Rows.Count);
-                foreach (BBControlRow bbControlRow in bbControlTable.Rows)
-                {
-                    indexedBBControlRows.Add(bbControlRow.GetPrimaryKey('/'), bbControlRow);
-                }
-
+                RowDictionary<BBControlRow> indexedBBControlRows = new RowDictionary<BBControlRow>(tables["BBControl"]);
                 foreach (Row row in wixBBControlTable.Rows)
                 {
-                    BBControlRow bbControlRow = (BBControlRow)indexedBBControlRows[row.GetPrimaryKey('/')];
-
+                    BBControlRow bbControlRow = indexedBBControlRows.Get(row.GetPrimaryKey());
                     bbControlRow.SourceFile = (string)row[2];
                 }
             }
 
-            // merge data from the WixControl rows into the Control rows
+            // Merge data from the WixControl rows into the Control rows.
             Table wixControlTable = tables["WixControl"];
-            Table controlTable = tables["Control"];
-            if (null != wixControlTable && null != controlTable)
+            if (null != wixControlTable)
             {
-                // index all the Control rows by their identifier
-                Hashtable indexedControlRows = new Hashtable(controlTable.Rows.Count);
-                foreach (ControlRow controlRow in controlTable.Rows)
-                {
-                    indexedControlRows.Add(controlRow.GetPrimaryKey('/'), controlRow);
-                }
-
+                RowDictionary<ControlRow> indexedControlRows = new RowDictionary<ControlRow>(tables["Control"]);
                 foreach (Row row in wixControlTable.Rows)
                 {
-                    ControlRow controlRow = (ControlRow)indexedControlRows[row.GetPrimaryKey('/')];
-
+                    ControlRow controlRow = indexedControlRows.Get(row.GetPrimaryKey());
                     controlRow.SourceFile = (string)row[2];
                 }
             }
 
-            // merge data from the WixFile rows into the File rows
+            // Create the special properties.
+            Table wixPropertyTable = output.Tables["WixProperty"];
+            if (null != wixPropertyTable)
+            {
+                // Create lists of the properties that contribute to the special lists of properties.
+                SortedSet<string> adminProperties = new SortedSet<string>();
+                SortedSet<string> secureProperties = new SortedSet<string>();
+                SortedSet<string> hiddenProperties = new SortedSet<string>();
+
+                foreach (WixPropertyRow wixPropertyRow in wixPropertyTable.Rows)
+                {
+                    if (wixPropertyRow.Admin)
+                    {
+                        adminProperties.Add(wixPropertyRow.Id);
+                    }
+
+                    if (wixPropertyRow.Hidden)
+                    {
+                        hiddenProperties.Add(wixPropertyRow.Id);
+                    }
+
+                    if (wixPropertyRow.Secure)
+                    {
+                        secureProperties.Add(wixPropertyRow.Id);
+                    }
+                }
+
+                Table propertyTable = output.Tables["Property"];
+                if (0 < adminProperties.Count)
+                {
+
+                    PropertyRow row = (PropertyRow)propertyTable.CreateRow(null);
+                    row.Property = "AdminProperties";
+                    row.Value = String.Join(";", adminProperties);
+                }
+
+                if (0 < secureProperties.Count)
+                {
+                    PropertyRow row = (PropertyRow)propertyTable.CreateRow(null);
+                    row.Property = "SecureCustomProperties";
+                    row.Value = String.Join(";", secureProperties);
+                }
+
+                if (0 < hiddenProperties.Count)
+                {
+                    PropertyRow row = (PropertyRow)propertyTable.CreateRow(null);
+                    row.Property = "MsiHiddenProperties";
+                    row.Value = String.Join(";", hiddenProperties);
+                }
+            }
+
+            // Merge data from the WixFile rows into the File rows.
             Table wixFileTable = tables["WixFile"];
-            Table fileTable = tables["File"];
-            if (null != wixFileTable && null != fileTable)
+            if (null != wixFileTable)
             {
                 // index all the File rows by their identifier
+                Table fileTable = tables["File"];
                 Hashtable indexedFileRows = new Hashtable(fileTable.Rows.Count, StringComparer.OrdinalIgnoreCase);
 
                 foreach (FileRow fileRow in fileTable.Rows)
@@ -1148,13 +1183,15 @@ namespace WixToolset
 
             // merge data from the WixPatchSymbolPaths rows into the File rows
             Table wixPatchSymbolPathsTable = tables["WixPatchSymbolPaths"];
-            Table mediaTable = tables["Media"];
-            Table directoryTable = tables["Directory"];
-            Table componentTable = tables["Component"];
             if (null != wixPatchSymbolPathsTable)
             {
+                Table fileTable = tables["File"];
+                Table mediaTable = tables["Media"];
+                Table directoryTable = tables["Directory"];
+                Table componentTable = tables["Component"];
+
                 int fileRowNum = (null != fileTable) ? fileTable.Rows.Count : 0;
-                int componentRowNum = (null != fileTable) ? componentTable.Rows.Count : 0;
+                int componentRowNum = (null != componentTable) ? componentTable.Rows.Count : 0;
                 int directoryRowNum = (null != directoryTable) ? directoryTable.Rows.Count : 0;
                 int mediaRowNum = (null != mediaTable) ? mediaTable.Rows.Count : 0;
 
@@ -1256,8 +1293,10 @@ namespace WixToolset
 
             // copy data from the WixMedia rows into the Media rows
             Table wixMediaTable = tables["WixMedia"];
-            if (null != wixMediaTable && null != mediaTable)
+            if (null != wixMediaTable)
             {
+                Table mediaTable = tables["Media"];
+
                 // index all the Media rows by their identifier
                 Hashtable indexedMediaRows = new Hashtable(mediaTable.Rows.Count);
                 foreach (MediaRow mediaRow in mediaTable.Rows)
@@ -1299,7 +1338,7 @@ namespace WixToolset
                 return;
             }
 
-            Dictionary<string, string> componentKeyPath = new Dictionary<string, string>(componentTable.Rows.Count);
+            Dictionary<string, string> componentKeyPath = new Dictionary<string, string>();
 
             // Index the Component table for non-directory & non-registry key paths.
             foreach (Row row in componentTable.Rows)
@@ -1495,11 +1534,9 @@ namespace WixToolset
             }
 
             bool compressed = false;
-            FileRowCollection fileRows = new FileRowCollection(OutputType.Patch == output.Type);
+            //FileRowCollection fileRows = new FileRowCollection(OutputType.Patch == output.Type);
             bool longNames = false;
-            MediaRowCollection mediaRows = new MediaRowCollection();
-            Hashtable suppressModularizationIdentifiers = null;
-            StringCollection suppressedTableNames = new StringCollection();
+            HashSet<string> suppressedTableNames = new HashSet<string>();
             Table propertyTable = output.Tables["Property"];
 
             this.WriteBuildInfoTable(output, databaseFile);
@@ -1514,21 +1551,9 @@ namespace WixToolset
                 }
             }
 
-            // gather all the suppress modularization identifiers
-            Table wixSuppressModularizationTable = output.Tables["WixSuppressModularization"];
-            if (null != wixSuppressModularizationTable)
-            {
-                suppressModularizationIdentifiers = new Hashtable(wixSuppressModularizationTable.Rows.Count);
-
-                foreach (Row row in wixSuppressModularizationTable.Rows)
-                {
-                    suppressModularizationIdentifiers[row[0]] = null;
-                }
-            }
-
             // localize fields, resolve wix variables, and resolve file paths
             ExtractEmbeddedFiles filesWithEmbeddedFiles = new ExtractEmbeddedFiles();
-            ArrayList delayedFields = new ArrayList();
+            List<DelayedField> delayedFields = new List<DelayedField>();
             this.ResolveFields(output.Tables, filesWithEmbeddedFiles, delayedFields);
 
             // if there are any fields to resolve later, create the cache to populate during bind
@@ -1552,65 +1577,22 @@ namespace WixToolset
             // modularize identifiers and add tables with real streams to the import tables
             if (OutputType.Module == output.Type)
             {
+                // Gather all the suppress modularization identifiers
+                HashSet<string> suppressModularizationIdentifiers = null;
+                Table wixSuppressModularizationTable = output.Tables["WixSuppressModularization"];
+                if (null != wixSuppressModularizationTable)
+                {
+                    suppressModularizationIdentifiers = new HashSet<string>(wixSuppressModularizationTable.Rows.Select(row => (string)row[0]));
+                }
+
                 foreach (Table table in output.Tables)
                 {
                     table.Modularize(modularizationGuid, suppressModularizationIdentifiers);
                 }
-
-                // Reset the special property lists after modularization. The linker creates these properties before modularization
-                // so we have to reconstruct them for merge modules after modularization in the binder.
-                Table wixPropertyTable = output.Tables["WixProperty"];
-                if (null != wixPropertyTable)
-                {
-                    // Create lists of the properties that contribute to the special lists of properties.
-                    SortedList adminProperties = new SortedList();
-                    SortedList secureProperties = new SortedList();
-                    SortedList hiddenProperties = new SortedList();
-
-                    foreach (WixPropertyRow wixPropertyRow in wixPropertyTable.Rows)
-                    {
-                        if (wixPropertyRow.Admin)
-                        {
-                            adminProperties[wixPropertyRow.Id] = null;
-                        }
-
-                        if (wixPropertyRow.Hidden)
-                        {
-                            hiddenProperties[wixPropertyRow.Id] = null;
-                        }
-
-                        if (wixPropertyRow.Secure)
-                        {
-                            secureProperties[wixPropertyRow.Id] = null;
-                        }
-                    }
-
-                    if (0 < adminProperties.Count || 0 < hiddenProperties.Count || 0 < secureProperties.Count)
-                    {
-                        Table table = output.Tables["Property"];
-                        foreach (Row propertyRow in table.Rows)
-                        {
-                            if ("AdminProperties" == (string)propertyRow[0])
-                            {
-                                propertyRow[1] = GetPropertyListString(adminProperties);
-                            }
-
-                            if ("MsiHiddenProperties" == (string)propertyRow[0])
-                            {
-                                propertyRow[1] = GetPropertyListString(hiddenProperties);
-                            }
-
-                            if ("SecureCustomProperties" == (string)propertyRow[0])
-                            {
-                                propertyRow[1] = GetPropertyListString(secureProperties);
-                            }
-                        }
-                    }
-                }
             }
 
-            // merge unreal table data into the real tables
-            // this must occur after all variables and source paths have been resolved
+            // Merge unreal table data into the real tables
+            // This must occur after all variables and source paths have been resolved and after modularization.
             this.MergeUnrealTables(output.Tables);
 
             if (this.core.EncounteredError)
@@ -1634,37 +1616,21 @@ namespace WixToolset
                 return false;
             }
 
-            // index the File table for quicker access later
-            // this must occur after the unreal data has been merged in
-            Table fileTable = output.Tables["File"];
-            if (null != fileTable)
-            {
-                fileRows.AddRange(fileTable.Rows);
-            }
-
-            // stop processing if an error previously occurred
-            if (this.core.EncounteredError)
-            {
-                return false;
-            }
-
             // add binder variables for all properties
             propertyTable = output.Tables["Property"];
             if (null != propertyTable)
             {
-                foreach (Row propertyRow in propertyTable.Rows)
+                foreach (PropertyRow propertyRow in propertyTable.Rows)
                 {
-                    string property = propertyRow[0].ToString();
-
-                    // set the ProductCode if its generated
-                    if (OutputType.Product == output.Type && "ProductCode" == property && "*" == propertyRow[1].ToString())
+                    // Set the ProductCode if it is to be generated.
+                    if (OutputType.Product == output.Type && "ProductCode".Equals(propertyRow.Property, StringComparison.Ordinal) && "*".Equals(propertyRow.Value, StringComparison.Ordinal))
                     {
-                        propertyRow[1] = Common.GenerateGuid();
+                        propertyRow.Value = Common.GenerateGuid();
 
-                        // Update the target ProductCode in any instance transforms
+                        // Update the target ProductCode in any instance transforms.
                         foreach (SubStorage subStorage in output.SubStorages)
                         {
-                            Output subStorageOutput = (Output)subStorage.Data;
+                            Output subStorageOutput = subStorage.Data;
                             if (OutputType.Transform != subStorageOutput.Type)
                             {
                                 continue;
@@ -1675,18 +1641,18 @@ namespace WixToolset
                             {
                                 if ((int)SummaryInformation.Transform.ProductCodes == (int)row[0])
                                 {
-                                    row[1] = ((string)row[1]).Replace("*", (string)propertyRow[1]);
+                                    row[1] = ((string)row[1]).Replace("*", propertyRow.Value);
                                     break;
                                 }
                             }
                         }
                     }
 
-                    // add the property name and value to the variableCache
-                    if (0 != delayedFields.Count)
+                    // Add the property name and value to the variableCache.
+                    if (null != variableCache)
                     {
-                        string key = String.Concat("property.", Demodularize(output, modularizationGuid, property));
-                        variableCache[key] = (string)propertyRow[1];
+                        string key = String.Concat("property.", Demodularize(output, modularizationGuid, propertyRow.Property));
+                        variableCache[key] = propertyRow.Value;
                     }
                 }
             }
@@ -1694,14 +1660,21 @@ namespace WixToolset
             // extract files that come from cabinet files (this does not extract files from merge modules)
             this.ExtractEmbeddedFiles(filesWithEmbeddedFiles);
 
-            // retrieve files and their information from merge modules
+            // Start with a collection of all files from the File table. The list of all files that need
+            // to be processed may grow if we add things like Merge Modules or patches with multiple
+            // transforms.
+            // Collecting these files must occur AFTER the unreal data has been merged in.
+            Table fileTable = output.Tables["File"];
+            List<FileRow> fileRows = fileTable.Rows.Cast<FileRow>().ToList();
+
             if (OutputType.Product == output.Type)
             {
+                // Retrieve files and their information from merge modules.
                 this.ProcessMergeModules(output, fileRows);
             }
             else if (OutputType.Patch == output.Type)
             {
-                // merge transform data into the output object
+                // Merge transform data into the output object.
                 this.CopyTransformData(output, fileRows);
             }
 
@@ -1715,9 +1688,15 @@ namespace WixToolset
             AutoMediaAssigner autoMediaAssigner = new AutoMediaAssigner(output, this.core, compressed);
             autoMediaAssigner.AssignFiles(fileRows);
 
-            // update file version, hash, assembly, etc.. information
+            // Update file sequence.
             this.core.OnMessage(WixVerboses.UpdatingFileInformation());
-            Hashtable indexedFileRows = this.UpdateFileInformation(output, fileRows, autoMediaAssigner.MediaRows, variableCache, modularizationGuid);
+            this.UpdateMediaSequences(output, fileRows, autoMediaAssigner.MediaRows);
+
+            // Gather information about files that did not come from merge modules (i.e. rows with a reference to the File table).
+            foreach (FileRow row in fileRows.Where(r => null != r.Table))
+            {
+                this.UpdateFileRow(output, variableCache, modularizationGuid, fileRows, row, false);
+            }
 
             // set generated component guids
             this.SetComponentGuids(output);
@@ -1752,8 +1731,9 @@ namespace WixToolset
             {
                 foreach (Row updatedFile in updatedFiles.Rows)
                 {
-                    FileRow updatedFileRow = (FileRow)indexedFileRows[updatedFile[0]];
-                    this.UpdateFileRow(output, null, modularizationGuid, indexedFileRows, updatedFileRow, true);
+                    // TODO: Is this too slow? It's basically NxM. Okay'ish, if updatedFiles is small count.
+                    FileRow updatedFileRow = fileRows.Single(r => r.File.Equals((string)updatedFile[0], StringComparison.Ordinal));
+                    this.UpdateFileRow(output, null, modularizationGuid, fileRows, updatedFileRow, true);
                 }
             }
 
@@ -1765,11 +1745,11 @@ namespace WixToolset
 
             // create cabinet files and process uncompressed files
             string layoutDirectory = Path.GetDirectoryName(databaseFile);
-            FileRowCollection uncompressedFileRows = null;
+            RowDictionary<FileRow> uncompressedFileRows = null;
             if (!this.SuppressLayout || OutputType.Module == output.Type)
             {
                 this.core.OnMessage(WixVerboses.CreatingCabinetFiles());
-                uncompressedFileRows = this.CreateCabinetFiles(output, fileRows, this.fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, autoMediaAssigner);
+                uncompressedFileRows = this.CreateCabinetFiles(output, this.fileTransfers, layoutDirectory, compressed, autoMediaAssigner);
             }
 
             if (OutputType.Patch == output.Type)
@@ -1888,7 +1868,7 @@ namespace WixToolset
             // process uncompressed files
             if (!this.SuppressLayout)
             {
-                this.ProcessUncompressedFiles(tempDatabaseFile, uncompressedFileRows, this.fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, longNames);
+                this.ProcessUncompressedFiles(tempDatabaseFile, uncompressedFileRows.Values, this.fileTransfers, autoMediaAssigner.MediaRows, layoutDirectory, compressed, longNames);
             }
 
             // layout media
@@ -2036,7 +2016,7 @@ namespace WixToolset
         /// <param name="tables">The tables to resolve.</param>
         /// <param name="filesWithEmbeddedFiles">Cabinets containing files that need to be patched.</param>
         /// <param name="delayedFields">The collection of delayed fields. Null if resolution of delayed fields is not allowed</param>
-        private void ResolveFields(TableCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, ArrayList delayedFields)
+        private void ResolveFields(TableCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, List<DelayedField> delayedFields)
         {
             foreach (Table table in tables)
             {
@@ -2246,7 +2226,7 @@ namespace WixToolset
         /// <param name="delayedFields">The fields which had resolution delayed.</param>
         /// <param name="variableCache">The file information to use when resolving variables.</param>
         /// <param name="modularizationGuid">The modularization guid (used in case of a merge module).</param>
-        private void ResolveDelayedFields(Output output, ArrayList delayedFields, IDictionary<string, string> variableCache, string modularizationGuid)
+        private void ResolveDelayedFields(Output output, List<DelayedField> delayedFields, IDictionary<string, string> variableCache, string modularizationGuid)
         {
             List<DelayedField> deferredFields = new List<DelayedField>();
 
@@ -2383,7 +2363,7 @@ namespace WixToolset
             }
         }
 
-        private ResolvedCabinet ResolveCabinet(string cabinetPath, FileRowCollection fileRows)
+        private ResolvedCabinet ResolveCabinet(string cabinetPath, IEnumerable<FileRow> fileRows)
         {
             ResolvedCabinet resolved = null;
 
@@ -2550,17 +2530,18 @@ namespace WixToolset
         /// <param name="output">The output to bind.</param>
         /// <param name="allFileRows">True if copying from transform to patch, false the other way.</param>
         /// <returns>true if binding completed successfully; false otherwise</returns>
-        private bool CopyTransformData(Output output, FileRowCollection allFileRows)
+        private bool CopyTransformData(Output output, ICollection<FileRow> allFileRows)
         {
-            bool copyToPatch = (allFileRows != null);
-            bool copyFromPatch = !copyToPatch;
             if (OutputType.Patch != output.Type)
             {
                 return true;
             }
 
-            Hashtable patchMediaRows = new Hashtable();
-            Hashtable patchMediaFileRows = new Hashtable();
+            bool copyToPatch = (allFileRows != null);
+            bool copyFromPatch = !copyToPatch;
+
+            RowDictionary<MediaRow> patchMediaRows = new RowDictionary<MediaRow>();
+            Dictionary<int, RowDictionary<FileRow>> patchMediaFileRows = new Dictionary<int, RowDictionary<FileRow>>();
             Table patchFileTable = output.EnsureTable(this.core.TableDefinitions["File"]);
             if (copyFromPatch)
             {
@@ -2568,28 +2549,27 @@ namespace WixToolset
                 foreach (FileRow patchFileRow in patchFileTable.Rows)
                 {
                     int diskId = patchFileRow.DiskId;
-                    if (!patchMediaFileRows.Contains(diskId))
+                    RowDictionary<FileRow> mediaFileRows;
+                    if (!patchMediaFileRows.TryGetValue(diskId, out mediaFileRows))
                     {
-                        patchMediaFileRows[diskId] = new FileRowCollection();
+                        mediaFileRows = new RowDictionary<FileRow>();
+                        patchMediaFileRows.Add(diskId, mediaFileRows);
                     }
-                    FileRowCollection mediaFileRows = (FileRowCollection)patchMediaFileRows[diskId];
+
                     mediaFileRows.Add(patchFileRow);
                 }
 
                 Table patchMediaTable = output.EnsureTable(this.core.TableDefinitions["Media"]);
-                foreach (MediaRow patchMediaRow in patchMediaTable.Rows)
-                {
-                    patchMediaRows[patchMediaRow.DiskId] = patchMediaRow;
-                }
+                patchMediaRows = new RowDictionary<MediaRow>(patchMediaTable);
             }
 
             // index paired transforms
-            Hashtable pairedTransforms = new Hashtable();
+            Dictionary<string, Output> pairedTransforms = new Dictionary<string,Output>();
             foreach (SubStorage substorage in output.SubStorages)
             {
-                if ("#" == substorage.Name.Substring(0, 1))
+                if (substorage.Name.StartsWith("#"))
                 {
-                    pairedTransforms[substorage.Name.Substring(1)] = substorage.Data;
+                    pairedTransforms.Add(substorage.Name.Substring(1), substorage.Data);
                 }
             }
 
@@ -2598,7 +2578,7 @@ namespace WixToolset
                 // copy File bind data into substorages
                 foreach (SubStorage substorage in output.SubStorages)
                 {
-                    if ("#" == substorage.Name.Substring(0, 1))
+                    if (substorage.Name.StartsWith("#"))
                     {
                         // no changes necessary for paired transforms
                         continue;
@@ -2608,23 +2588,12 @@ namespace WixToolset
                     Table mainWixFileTable = mainTransform.Tables["WixFile"];
                     Table mainMsiFileHashTable = mainTransform.Tables["MsiFileHash"];
 
-                    int numWixFileRows = (null != mainWixFileTable) ? mainWixFileTable.Rows.Count : 0;
-                    int numMsiFileHashRows = (null != mainMsiFileHashTable) ? mainMsiFileHashTable.Rows.Count : 0;
-
                     this.fileManagerCore.ActiveSubStorage = substorage;
-                    Hashtable wixFiles = new Hashtable(numWixFileRows);
-                    Hashtable mainMsiFileHashIndex = new Hashtable(numMsiFileHashRows);
+                    RowDictionary<WixFileRow> wixFiles = new RowDictionary<WixFileRow>(mainWixFileTable);
+                    RowDictionary<Row> mainMsiFileHashIndex = new RowDictionary<Row>();
+
                     Table mainFileTable = mainTransform.Tables["File"];
                     Output pairedTransform = (Output)pairedTransforms[substorage.Name];
-
-                    if (null != mainWixFileTable)
-                    {
-                        // Index the WixFile table for later use.
-                        foreach (WixFileRow row in mainWixFileTable.Rows)
-                        {
-                            wixFiles.Add(row.Fields[0].Data.ToString(), row);
-                        }
-                    }
 
                     // copy Media.LastSequence and index the MsiFileHash table if it exists.
                     if (copyFromPatch)
@@ -2632,30 +2601,22 @@ namespace WixToolset
                         Table pairedMediaTable = pairedTransform.Tables["Media"];
                         foreach (MediaRow pairedMediaRow in pairedMediaTable.Rows)
                         {
-                            MediaRow patchMediaRow = (MediaRow)patchMediaRows[pairedMediaRow.DiskId];
+                            MediaRow patchMediaRow = patchMediaRows.Get(pairedMediaRow.DiskId);
                             pairedMediaRow.Fields[1] = patchMediaRow.Fields[1];
                         }
 
                         if (null != mainMsiFileHashTable)
                         {
-                            // Index the MsiFileHash table for later use.
-                            foreach (Row row in mainMsiFileHashTable.Rows)
-                            {
-                                mainMsiFileHashIndex.Add(row[0], row);
-                            }
+                            mainMsiFileHashIndex = new RowDictionary<Row>(mainMsiFileHashTable);
                         }
 
                         // Validate file row changes for keypath-related issues
                         this.ValidateFileRowChanges(mainTransform);
                     }
 
-                    // index File table of pairedTransform
-                    FileRowCollection pairedFileRows = new FileRowCollection();
+                    // Index File table of pairedTransform
                     Table pairedFileTable = pairedTransform.Tables["File"];
-                    if (null != pairedFileTable)
-                    {
-                        pairedFileRows.AddRange(pairedFileTable.Rows);
-                    }
+                    RowDictionary<FileRow> pairedFileRows = new RowDictionary<FileRow>(pairedFileTable);
 
                     if (null != mainFileTable)
                     {
@@ -2676,12 +2637,11 @@ namespace WixToolset
                             {
                                 continue;
                             }
-                            // When copying to the patch, we need compare the underlying files and include all file changes.
-                            else if (copyToPatch)
+                            else if (copyToPatch) // when copying to the patch, we need compare the underlying files and include all file changes.
                             {
-                                WixFileRow wixFileRow = (WixFileRow)wixFiles[mainFileRow.Fields[0].Data.ToString()];
+                                WixFileRow wixFileRow = wixFiles.Get((string)mainFileRow[0]);
                                 ObjectField objectField = (ObjectField)wixFileRow.Fields[6];
-                                FileRow pairedFileRow = pairedFileRows[mainFileRow.Fields[0].Data.ToString()];
+                                FileRow pairedFileRow = pairedFileRows.Get((string)mainFileRow[0]);
 
                                 // If the file is new, we always need to add it to the patch.
                                 if (mainFileRow.Operation != RowOperation.Add)
@@ -2742,14 +2702,15 @@ namespace WixToolset
 
                             // index patch files by diskId+fileId
                             int diskId = mainFileRow.DiskId;
-                            if (!patchMediaFileRows.Contains(diskId))
+                            RowDictionary<FileRow> mediaFileRows;
+                            if (!patchMediaFileRows.TryGetValue(diskId, out mediaFileRows))
                             {
-                                patchMediaFileRows[diskId] = new FileRowCollection();
+                                mediaFileRows = new RowDictionary<FileRow>();
+                                patchMediaFileRows.Add(diskId, mediaFileRows);
                             }
-                            FileRowCollection mediaFileRows = (FileRowCollection)patchMediaFileRows[diskId];
 
                             string fileId = mainFileRow.File;
-                            FileRow patchFileRow = mediaFileRows[fileId];
+                            FileRow patchFileRow = mediaFileRows.Get(fileId);
                             if (copyToPatch)
                             {
                                 if (null == patchFileRow)
@@ -2777,7 +2738,7 @@ namespace WixToolset
                                 // copy data from the patch back to the transform
                                 if (null != patchFileRow)
                                 {
-                                    FileRow pairedFileRow = (FileRow)pairedFileRows[fileId];
+                                    FileRow pairedFileRow = (FileRow)pairedFileRows.Get(fileId);
                                     for (int i = 0; i < patchFileRow.Fields.Length; i++)
                                     {
                                         string patchValue = patchFileRow[i] == null ? "" : patchFileRow[i].ToString();
@@ -2827,11 +2788,7 @@ namespace WixToolset
 
                                     // copy MsiFileHash row for this File
                                     Row patchHashRow;
-                                    if (mainMsiFileHashIndex.ContainsKey(patchFileRow.File))
-                                    {
-                                        patchHashRow = (Row)mainMsiFileHashIndex[patchFileRow.File];
-                                    }
-                                    else
+                                    if (!mainMsiFileHashIndex.TryGetValue(patchFileRow.File, out patchHashRow))
                                     {
                                         patchHashRow = patchFileRow.HashRow;
                                     }
@@ -2855,7 +2812,7 @@ namespace WixToolset
                                     }
 
                                     // copy MsiAssemblyName rows for this File
-                                    RowCollection patchAssemblyNameRows = patchFileRow.AssemblyNameRows;
+                                    List<Row> patchAssemblyNameRows = patchFileRow.AssemblyNameRows;
                                     if (null != patchAssemblyNameRows)
                                     {
                                         Table mainAssemblyNameTable = mainTransform.EnsureTable(this.core.TableDefinitions["MsiAssemblyName"]);
@@ -2900,12 +2857,15 @@ namespace WixToolset
                                         {
                                             patchTable.Operation = TableOperation.Add;
                                         }
+
                                         Row patchRow = patchTable.CreateRow(mainFileRow.SourceLineNumbers);
                                         patchRow[0] = patchFileRow.File;
                                         patchRow[1] = patchFileRow.Sequence;
+
                                         FileInfo patchFile = new FileInfo(patchFileRow.Source);
                                         patchRow[2] = (int)patchFile.Length;
                                         patchRow[3] = 0 == (PatchAttributeType.AllowIgnoreOnError & patchFileRow.PatchAttributes) ? 0 : 1;
+
                                         string streamName = patchTable.Name + "." + patchRow[0] + "." + patchRow[1];
                                         if (MsiInterop.MsiMaxStreamNameLength < streamName.Length)
                                         {
@@ -3056,7 +3016,7 @@ namespace WixToolset
             }
 
             ExtractEmbeddedFiles filesWithEmbeddedFiles = new ExtractEmbeddedFiles();
-            ArrayList delayedFields = new ArrayList();
+            List<DelayedField> delayedFields = new List<DelayedField>();
 
             // localize fields, resolve wix variables, and resolve file paths
             this.ResolveFields(bundle.Tables, filesWithEmbeddedFiles, delayedFields);
@@ -3225,7 +3185,7 @@ namespace WixToolset
 
                 // Check if there is an override row for the display name or description.
                 Row payloadDisplayInformationRow;
-                if (payloadDisplayInformationRows.TryGet(id, out payloadDisplayInformationRow))
+                if (payloadDisplayInformationRows.TryGetValue(id, out payloadDisplayInformationRow))
                 {
                     if (!String.IsNullOrEmpty(payloadDisplayInformationRow[1] as string))
                     {
@@ -3885,7 +3845,7 @@ namespace WixToolset
             }
 
             Table slipstreamMspTable = bundle.EnsureTable(this.core.TableDefinitions["SlipstreamMsp"]);
-            RowDictionary<Row> slipstreamMspRows = new RowDictionary<Row>(slipstreamMspTable);
+            RowIndexedList<Row> slipstreamMspRows = new RowIndexedList<Row>(slipstreamMspTable);
 
             // Loop through the MSI and slipstream patches targeting it.
             foreach (ChainPackageInfo msi in msiPackages)
@@ -5174,7 +5134,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="output">Internal representation of the msi database to operate upon.</param>
         /// <param name="fileRows">The indexed file rows.</param>
-        private void ProcessMergeModules(Output output, FileRowCollection fileRows)
+        private void ProcessMergeModules(Output output, ICollection<FileRow> fileRows)
         {
             Table wixMergeTable = output.Tables["WixMerge"];
             if (null != wixMergeTable)
@@ -5196,6 +5156,15 @@ namespace WixToolset
                     }
                 }
 
+                // Index all of the file rows to be able to detect collisions with files in the Merge Modules.
+                // It may seem a bit expensive to build up this index solely for the purpose of checking collisions
+                // and you may be thinking, "Surely, we must need the file rows indexed elsewhere.". It turns out
+                // there are other cases where we need all the file rows indexed, however they are not common cases.
+                // Now since Merge Modules are already slow and generally less desirable than .wixlibs we'll let
+                // this case be slightly more expensive because the cost of maintaining an indexed file row collection
+                // is a lot more costly for the common cases. Oh, and don't call me Shirley.
+                Dictionary<string, FileRow> indexedFileRows = fileRows.ToDictionary(r => r.File, StringComparer.Ordinal);
+
                 foreach (Row row in wixMergeTable.Rows)
                 {
                     bool containsFiles = false;
@@ -5208,7 +5177,7 @@ namespace WixToolset
                         {
                             if (db.TableExists("File") && db.TableExists("Component"))
                             {
-                                Hashtable uniqueModuleFileIdentifiers = System.Collections.Specialized.CollectionsUtil.CreateCaseInsensitiveHashtable();
+                                Dictionary<string, FileRow> uniqueModuleFileIdentifiers = new Dictionary<string, FileRow>(StringComparer.OrdinalIgnoreCase);
 
                                 using (View view = db.OpenExecuteView("SELECT `File`, `Directory_` FROM `File`, `Component` WHERE `Component_`=`Component`"))
                                 {
@@ -5224,7 +5193,7 @@ namespace WixToolset
 
                                             // NOTE: this is very tricky - the merge module file rows are not added to the
                                             // file table because they should not be created via idt import.  Instead, these
-                                            // rows are created by merging in the actual modules
+                                            // rows are created by merging in the actual modules.
                                             FileRow fileRow = new FileRow(null, this.core.TableDefinitions["File"]);
                                             fileRow.File = record[1];
                                             fileRow.Compressed = wixMergeRow.FileCompression;
@@ -5234,29 +5203,24 @@ namespace WixToolset
                                             fileRow.PatchGroup = -1;
                                             fileRow.Source = String.Concat(this.TempFilesLocation, Path.DirectorySeparatorChar, "MergeId.", wixMergeRow.Number.ToString(CultureInfo.InvariantCulture.NumberFormat), Path.DirectorySeparatorChar, record[1]);
 
-                                            FileRow collidingFileRow = fileRows[fileRow.File];
-                                            FileRow collidingModuleFileRow = (FileRow)uniqueModuleFileIdentifiers[fileRow.File];
+                                            FileRow collidingFileRow;
 
-                                            if (null == collidingFileRow && null == collidingModuleFileRow)
+                                            // If case-sensitive collision with another merge module or a user-authored file identifier.
+                                            if (indexedFileRows.TryGetValue(fileRow.File, out collidingFileRow))
+                                            {
+                                                this.core.OnMessage(WixErrors.DuplicateModuleFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, collidingFileRow.File));
+                                            }
+                                            else if (uniqueModuleFileIdentifiers.TryGetValue(fileRow.File, out collidingFileRow)) // case-insensitive collision with another file identifier in the same merge module
+                                            {
+                                                this.core.OnMessage(WixErrors.DuplicateModuleCaseInsensitiveFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, fileRow.File, collidingFileRow.File));
+                                            }
+                                            else // no collision
                                             {
                                                 fileRows.Add(fileRow);
 
-                                                // keep track of file identifiers in this merge module
+                                                // Keep updating the indexes as new rows are added.
+                                                indexedFileRows.Add(fileRow.File, fileRow);
                                                 uniqueModuleFileIdentifiers.Add(fileRow.File, fileRow);
-                                            }
-                                            else // collision(s) detected
-                                            {
-                                                // case-sensitive collision with another merge module or a user-authored file identifier
-                                                if (null != collidingFileRow)
-                                                {
-                                                    this.core.OnMessage(WixErrors.DuplicateModuleFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, collidingFileRow.File));
-                                                }
-
-                                                // case-insensitive collision with another file identifier in the same merge module
-                                                if (null != collidingModuleFileRow)
-                                                {
-                                                    this.core.OnMessage(WixErrors.DuplicateModuleCaseInsensitiveFileIdentifier(wixMergeRow.SourceLineNumbers, wixMergeRow.Id, fileRow.File, collidingModuleFileRow.File));
-                                                }
                                             }
 
                                             containsFiles = true;
@@ -5814,35 +5778,19 @@ namespace WixToolset
             }
         }
 
-        /// <summary>
-        /// Update several msi tables with data contained in files references in the File table.
-        /// </summary>
-        /// <remarks>
-        /// For versioned files, update the file version and language in the File table.  For
-        /// unversioned files, add a row to the MsiFileHash table for the file.  For assembly
-        /// files, add a row to the MsiAssembly table and add AssemblyName information by adding
-        /// MsiAssemblyName rows.
-        /// </remarks>
-        /// <param name="output">Internal representation of the msi database to operate upon.</param>
-        /// <param name="fileRows">The indexed file rows.</param>
-        /// <param name="mediaRows">The indexed media rows.</param>
-        /// <param name="infoCache">A hashtable to populate with the file information (optional).</param>
-        /// <param name="modularizationGuid">The modularization guid (used in case of a merge module).</param>
-        private Hashtable UpdateFileInformation(Output output, FileRowCollection fileRows, MediaRowCollection mediaRows, IDictionary<string, string> infoCache, string modularizationGuid)
+        private void UpdateMediaSequences(Output output, IEnumerable<FileRow> fileRows, RowDictionary<MediaRow> mediaRows)
         {
             // Index for all the fileId's
             // NOTE: When dealing with patches, there is a file table for each transform. In most cases, the data in these rows will be the same, however users of this index need to be aware of this.
-            Hashtable fileRowIndex = new Hashtable(fileRows.Count);
             Table mediaTable = output.Tables["Media"];
 
             // calculate sequence numbers and media disk id layout for all file media information objects
             if (OutputType.Module == output.Type)
             {
                 int lastSequence = 0;
-                foreach (FileRow fileRow in fileRows)
+                foreach (FileRow fileRow in fileRows) // TODO: Sort these rows directory path and component id and maybe file size or file extension and other creative ideas to get optimal install speed out of MSI.
                 {
                     fileRow.Sequence = ++lastSequence;
-                    fileRowIndex[fileRow.File] = fileRow;
                 }
             }
             else if (null != mediaTable)
@@ -5852,12 +5800,11 @@ namespace WixToolset
                 SortedList patchGroups = new SortedList();
 
                 // sequence the non-patch-added files
-                foreach (FileRow fileRow in fileRows)
+                foreach (FileRow fileRow in fileRows) // TODO: Sort these rows directory path and component id and maybe file size or file extension and other creative ideas to get optimal install speed out of MSI.
                 {
-                    fileRowIndex[fileRow.File] = fileRow;
                     if (null == mediaRow)
                     {
-                        mediaRow = mediaRows[fileRow.DiskId];
+                        mediaRow = mediaRows.Get(fileRow.DiskId);
                         if (OutputType.Patch == output.Type)
                         {
                             // patch Media cannot start at zero
@@ -5867,7 +5814,7 @@ namespace WixToolset
                     else if (mediaRow.DiskId != fileRow.DiskId)
                     {
                         mediaRow.LastSequence = lastSequence;
-                        mediaRow = mediaRows[fileRow.DiskId];
+                        mediaRow = mediaRows.Get(fileRow.DiskId);
                     }
 
                     if (0 < fileRow.PatchGroup)
@@ -5901,12 +5848,12 @@ namespace WixToolset
                     {
                         if (null == mediaRow)
                         {
-                            mediaRow = mediaRows[fileRow.DiskId];
+                            mediaRow = mediaRows.Get(fileRow.DiskId);
                         }
                         else if (mediaRow.DiskId != fileRow.DiskId)
                         {
                             mediaRow.LastSequence = lastSequence;
-                            mediaRow = mediaRows[fileRow.DiskId];
+                            mediaRow = mediaRows.Get(fileRow.DiskId);
                         }
 
                         fileRow.Sequence = ++lastSequence;
@@ -5918,33 +5865,24 @@ namespace WixToolset
                     mediaRow.LastSequence = lastSequence;
                 }
             }
-            else
-            {
-                foreach (FileRow fileRow in fileRows)
-                {
-                    fileRowIndex[fileRow.File] = fileRow;
-                }
-            }
-
-            // no more work to do here if there are no file rows in the file table
-            // note that this does not mean there are no files - the files from
-            // merge modules are never put in the output's file table
-            Table fileTable = output.Tables["File"];
-            if (null == fileTable)
-            {
-                return fileRowIndex;
-            }
-
-            // gather information about files that did not come from merge modules
-            foreach (FileRow row in fileTable.Rows)
-            {
-                this.UpdateFileRow(output, infoCache, modularizationGuid, fileRowIndex, row, false);
-            }
-
-            return fileRowIndex;
         }
 
-        private void UpdateFileRow(Output output, IDictionary<string, string> infoCache, string modularizationGuid, Hashtable fileRowIndex, FileRow fileRow, bool overwriteHash)
+        /// <summary>
+        /// Update several msi tables with data contained in files references in the File table.
+        /// </summary>
+        /// <remarks>
+        /// For versioned files, update the file version and language in the File table.  For
+        /// unversioned files, add a row to the MsiFileHash table for the file.  For assembly
+        /// files, add a row to the MsiAssembly table and add AssemblyName information by adding
+        /// MsiAssemblyName rows.
+        /// </remarks>
+        /// <param name="output">Internal representation of the msi database to operate upon.</param>
+        /// <param name="allfileRows">Collection of all the file rows processed to this point.</param>
+        /// <param name="fileRows">The indexed file rows.</param>
+        /// <param name="mediaRows">The indexed media rows.</param>
+        /// <param name="infoCache">A hashtable to populate with the file information (optional).</param>
+        /// <param name="modularizationGuid">The modularization guid (used in case of a merge module).</param>
+        private void UpdateFileRow(Output output, IDictionary<string, string> infoCache, string modularizationGuid, IEnumerable<FileRow> allfileRows, FileRow fileRow, bool overwriteHash)
         {
             FileInfo fileInfo = null;
             try
@@ -6002,7 +5940,7 @@ namespace WixToolset
             }
 
             // If there is no version, it is assumed there is no language because it won't matter in the versioning of the install.
-            if (0 == version.Length)   // unversioned files have their hashes added to the MsiFileHash table
+            if (String.IsNullOrEmpty(version)) // unversioned files have their hashes added to the MsiFileHash table
             {
                 if (!overwriteHash)
                 {
@@ -6010,8 +5948,14 @@ namespace WixToolset
                 }
                 else if (null != fileRow.Version)
                 {
-                    // Check if this is a companion file. If its not, it is a default version.
-                    if (!fileRowIndex.ContainsKey(fileRow.Version))
+                    // Search all of the file rows available to see if the specified version is actually a companion file. Yes, this looks
+                    // very expensive and you're probably thinking it would be better to create an index of some sort to do an O(1) look up.
+                    // That's a reasonable thought but companion file usage is usually pretty rare so we'd be doing something expensive (indexing
+                    // all the file rows) for a relatively uncommon situation. Let's not do that.
+                    //
+                    // Also, if we do not find a matching file identifier then the user provided a default version and is providing a version
+                    // for unversioned file. That's allowed but generally a dangerous thing to do so let's point that out to the user.
+                    if (!allfileRows.Any(r => fileRow.Version.Equals(r.File, StringComparison.Ordinal)))
                     {
                         this.core.OnMessage(WixWarnings.DefaultVersionUsedForUnversionedFile(fileRow.SourceLineNumbers, fileRow.Version, fileRow.File));
                     }
@@ -6054,19 +5998,33 @@ namespace WixToolset
                     fileRow.HashRow[5] = hash[3];
                 }
             }
-            else // update the file row with the version and language information
+            else // update the file row with the version and language information.
             {
-                // Check if the version field references a fileId because this would mean it has a companion file and the version should not be overwritten.
-                if (null == fileRow.Version || !fileRowIndex.ContainsKey(fileRow.Version))
+                // If no version was provided by the user, use the version from the file itself.
+                // This is the most common case.
+                if (String.IsNullOrEmpty(fileRow.Version))
                 {
                     fileRow.Version = version;
                 }
+                else if (!allfileRows.Any(r => fileRow.Version.Equals(r.File, StringComparison.Ordinal))) // this looks expensive, but see explanation below.
+                {
+                    // The user provided a default version for the file row so we looked for a companion file (a file row with Id matching
+                    // the version value). We didn't find it so, we will override the default version they provided with the actual
+                    // version from the file itself. Now, I know it looks expensive to search through all the file rows trying to match
+                    // on the Id. However, the alternative is to build a big index of all file rows to do look ups. Since this case
+                    // where the file version is already present is rare (companion files are pretty uncommon), we'll do the more
+                    // CPU intensive search to save on the memory intensive index that wouldn't be used much.
+                    //
+                    // Also note this case can occur when the file is being updated using the WixBindUpdatedFiles extension mechanism.
+                    // That's typically even more rare than companion files so again, no index, just search.
+                    fileRow.Version = version;
+                }
 
-                if (null != fileRow.Language && 0 == language.Length)
+                if (!String.IsNullOrEmpty(fileRow.Language) && String.IsNullOrEmpty(language))
                 {
                     this.core.OnMessage(WixWarnings.DefaultLanguageUsedForVersionedFile(fileRow.SourceLineNumbers, fileRow.Language, fileRow.File));
                 }
-                else
+                else // override the default provided by the user (usually nothing) with the actual language from the file itself.
                 {
                     fileRow.Language = language;
                 }
@@ -6230,9 +6188,9 @@ namespace WixToolset
             }
             else if (FileAssemblyType.Win32Assembly == fileRow.AssemblyType)
             {
-                // Able to use the index because only the Source field is used and it is used only for more complete error messages.
-                FileRow fileManifestRow = (FileRow)fileRowIndex[fileRow.AssemblyManifest];
-
+                // TODO: Consider passing in the allFileRows as an indexed collection instead of searching through all files like this. Even those this is a rare case
+                // it looks like we might be able to index the file earlier.
+                FileRow fileManifestRow = allfileRows.SingleOrDefault(r => r.File.Equals(fileRow.AssemblyManifest, StringComparison.Ordinal));
                 if (null == fileManifestRow)
                 {
                     this.core.OnMessage(WixErrors.MissingManifestForWin32Assembly(fileRow.SourceLineNumbers, fileRow.File, fileRow.AssemblyManifest));
@@ -6423,7 +6381,7 @@ namespace WixToolset
         /// <param name="fileRows">The indexed file rows.</param>
         /// <param name="suppressedTableNames">The names of tables that are suppressed.</param>
         /// <remarks>Expects that output's database has already been generated.</remarks>
-        private void MergeModules(string tempDatabaseFile, Output output, FileRowCollection fileRows, StringCollection suppressedTableNames)
+        private void MergeModules(string tempDatabaseFile, Output output, IEnumerable<FileRow> fileRows, HashSet<string> suppressedTableNames)
         {
             Debug.Assert(OutputType.Product == output.Type);
 
@@ -6737,13 +6695,11 @@ namespace WixToolset
         /// Creates cabinet files.
         /// </summary>
         /// <param name="output">Output to generate image for.</param>
-        /// <param name="fileRows">The indexed file rows.</param>
         /// <param name="fileTransfers">Array of files to be transfered.</param>
-        /// <param name="mediaRows">The indexed media rows.</param>
         /// <param name="layoutDirectory">The directory in which the image should be layed out.</param>
         /// <param name="compressed">Flag if source image should be compressed.</param>
         /// <returns>The uncompressed file rows.</returns>
-        private FileRowCollection CreateCabinetFiles(Output output, FileRowCollection fileRows, List<FileTransfer> fileTransfers, MediaRowCollection mediaRows, string layoutDirectory, bool compressed, AutoMediaAssigner autoMediaAssigner)
+        private RowDictionary<FileRow> CreateCabinetFiles(Output output, List<FileTransfer> fileTransfers, string layoutDirectory, bool compressed, AutoMediaAssigner autoMediaAssigner)
         {
             this.SetCabbingThreadCount();
 
@@ -6757,10 +6713,10 @@ namespace WixToolset
             cabinetBuilder.MaximumCabinetSizeForLargeFileSplitting = MaximumCabinetSizeForLargeFileSplitting;
             cabinetBuilder.MaximumUncompressedMediaSize = MaximumUncompressedMediaSize;
 
-            foreach (DictionaryEntry entry in autoMediaAssigner.Cabinets)
+            foreach (var entry in autoMediaAssigner.Cabinets)
             {
-                MediaRow mediaRow = (MediaRow)entry.Key;
-                FileRowCollection files = (FileRowCollection)entry.Value;
+                MediaRow mediaRow = entry.Key;
+                List<FileRow> files = entry.Value;
 
                 string cabinetDir = this.ResolveMedia(mediaRow, layoutDirectory);
 
@@ -6825,7 +6781,7 @@ namespace WixToolset
         /// <param name="fileRows">Collection of files in this cabinet.</param>
         /// <param name="fileTransfers">Array of files to be transfered.</param>
         /// <returns>created CabinetWorkItem object</returns>
-        private CabinetWorkItem CreateCabinetWorkItem(Output output, string cabinetDir, MediaRow mediaRow, FileRowCollection fileRows, List<FileTransfer> fileTransfers)
+        private CabinetWorkItem CreateCabinetWorkItem(Output output, string cabinetDir, MediaRow mediaRow, List<FileRow> fileRows, List<FileTransfer> fileTransfers)
         {
             CabinetWorkItem cabinetWorkItem = null;
             string tempCabinetFileX = Path.Combine(this.TempFilesLocation, mediaRow.Cabinet);
@@ -6919,9 +6875,9 @@ namespace WixToolset
         /// <param name="layoutDirectory">The directory in which the image should be layed out.</param>
         /// <param name="compressed">Flag if source image should be compressed.</param>
         /// <param name="longNamesInImage">Flag if long names should be used.</param>
-        private void ProcessUncompressedFiles(string tempDatabaseFile, FileRowCollection fileRows, List<FileTransfer> fileTransfers, MediaRowCollection mediaRows, string layoutDirectory, bool compressed, bool longNamesInImage)
+        private void ProcessUncompressedFiles(string tempDatabaseFile, IEnumerable<FileRow> fileRows, List<FileTransfer> fileTransfers, RowDictionary<MediaRow> mediaRows, string layoutDirectory, bool compressed, bool longNamesInImage)
         {
-            if (0 == fileRows.Count || this.core.EncounteredError)
+            if (this.core.EncounteredError || !fileRows.Any())
             {
                 return;
             }
@@ -6956,7 +6912,7 @@ namespace WixToolset
                         {
                             string relativeFileLayoutPath = null;
 
-                            string mediaLayoutDirectory = this.ResolveMedia(mediaRows[fileRow.DiskId], layoutDirectory);
+                            string mediaLayoutDirectory = this.ResolveMedia(mediaRows.Get(fileRow.DiskId), layoutDirectory);
 
                             // setup up the query record and find the appropriate file in the
                             // previously executed file view
@@ -7031,7 +6987,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="path">Path to write file.</param>
         /// <param name="fileRows">Collection of file rows whose source will be written to file.</param>
-        private void CreateContentsFile(string path, FileRowCollection fileRows)
+        private void CreateContentsFile(string path, IEnumerable<FileRow> fileRows)
         {
             string directory = Path.GetDirectoryName(path);
             if (!Directory.Exists(directory))
@@ -7340,7 +7296,7 @@ namespace WixToolset
         /// <summary>
         /// Sorts the WixPatchSymbolPaths table for processing.
         /// </summary>
-        internal sealed class WixPatchSymbolPathsComparer : IComparer
+        internal sealed class WixPatchSymbolPathsComparer : IComparer<Row>
         {
             /// <summary>
             /// Compares two rows from the WixPatchSymbolPaths table.
@@ -7349,14 +7305,21 @@ namespace WixToolset
             /// <param name="b">Second row to compare.</param>
             /// <remarks>Only the File, Product, Component, Directory, and Media tables links are allowed by this method.</remarks>
             /// <returns>Less than zero if a is less than b; Zero if they are equal, and Greater than zero if a is greater than b</returns>
-            public int Compare(Object a, Object b)
-            {
-                Row ra = (Row)a;
-                Row rb = (Row)b;
+            //public int Compare(Object a, Object b)
+            //{
+            //    Row ra = (Row)a;
+            //    Row rb = (Row)b;
 
-                SymbolPathType ia = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), ((Field)ra.Fields[0]).Data.ToString());
-                SymbolPathType ib = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), ((Field)rb.Fields[0]).Data.ToString());
-                return (int)ib - (int)ia;
+            //    SymbolPathType ia = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), ((Field)ra.Fields[0]).Data.ToString());
+            //    SymbolPathType ib = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), ((Field)rb.Fields[0]).Data.ToString());
+            //    return (int)ib - (int)ia;
+            //}
+
+            public int Compare(Row x, Row y)
+            {
+                SymbolPathType ix = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), x.Fields[0].ToString());
+                SymbolPathType iy = (SymbolPathType)Enum.Parse(typeof(SymbolPathType), y.Fields[0].ToString());
+                return (int)iy - (int)ix;
             }
         }
 

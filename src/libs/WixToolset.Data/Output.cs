@@ -494,7 +494,7 @@ namespace WixToolset.Data
                                     {
                                         throw new WixException(WixDataErrors.ExpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", "tableDefinitions"));
                                     }
-                                    output.Tables.Add(Table.Parse(reader, output.entrySection, tableDefinitions));
+                                    output.Tables.Add(Table.Read(reader, output.entrySection, tableDefinitions));
                                     break;
                                 case "tableDefinitions":
                                     tableDefinitions = TableDefinitionCollection.Parse(reader);
@@ -555,7 +555,7 @@ namespace WixToolset.Data
 
             foreach (Table table in this.tables)
             {
-                table.Persist(writer);
+                table.Write(writer);
             }
 
             foreach (SubStorage subStorage in this.subStorages)

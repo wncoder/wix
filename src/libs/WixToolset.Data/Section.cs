@@ -208,7 +208,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "table":
-                                    section.Tables.Add(Table.Parse(reader, section, tableDefinitions));
+                                    section.Tables.Add(Table.Read(reader, section, tableDefinitions));
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name));
@@ -274,7 +274,7 @@ namespace WixToolset.Data
             // save the rows in table order
             foreach (Table table in this.tables)
             {
-                table.Persist(writer);
+                table.Write(writer);
             }
 
             writer.WriteEndElement();

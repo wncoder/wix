@@ -13,13 +13,6 @@ namespace WixToolset.Data
 
     public class LocalizedControl
     {
-        public int X { get; private set; }
-        public int Y { get; private set; }
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-        public int Attributes { get; private set; }
-        public string Text { get; private set; }
-
         public LocalizedControl(int x, int y, int width, int height, int attribs, string text)
         {
             this.X = x;
@@ -29,6 +22,18 @@ namespace WixToolset.Data
             this.Attributes = attribs;
             this.Text = text;
         }
+
+        public int X { get; private set; }
+
+        public int Y { get; private set; }
+
+        public int Width { get; private set; }
+
+        public int Height { get; private set; }
+
+        public int Attributes { get; private set; }
+
+        public string Text { get; private set; }
 
         /// <summary>
         /// Get key for a localized control.

@@ -199,7 +199,7 @@ namespace WixToolset.Extensions
                             // Ensure the matching "SoftwareIdentificationTag" row exists and
                             // is populated correctly.
                             Row swidRow;
-                            if (!this.swidRows.TryGet(fileId, out swidRow))
+                            if (!this.swidRows.TryGetValue(fileId, out swidRow))
                             {
                                 Table swid = output.Tables["SoftwareIdentificationTag"];
                                 swidRow = swid.CreateRow(wixFileRow.SourceLineNumbers);

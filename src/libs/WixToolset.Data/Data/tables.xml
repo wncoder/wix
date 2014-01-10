@@ -1548,8 +1548,8 @@
         <columnDefinition name="SymbolPaths" type="preserved" length="255"
                 category="text"/>
     </tableDefinition>
-    <tableDefinition name="WixProperty" createSymbols="yes" unreal="yes">
-        <columnDefinition name="Property_" type="string" length="72" primaryKey="yes" modularize="column"/>
+    <tableDefinition name="WixProperty" unreal="yes">
+        <columnDefinition name="Property_" type="string" length="72" modularize="column"/>
         <columnDefinition name="Attributes" type="number" length="4"/>
     </tableDefinition>
     <tableDefinition name="WixSimpleReference" unreal="yes">

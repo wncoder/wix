@@ -348,11 +348,6 @@ namespace WixToolset
                 return;
             }
 
-            if (secure && property.ToUpper(CultureInfo.InvariantCulture) != property)
-            {
-                this.core.OnMessage(WixErrors.SecurePropertyNotUppercase(sourceLineNumbers, "Property", "Id", property));
-            }
-
             if (!String.IsNullOrEmpty(value))
             {
                 Regex regex = new Regex(@"\[(?<identifier>[a-zA-Z_][a-zA-Z0-9_\.]*)]", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.ExplicitCapture);
@@ -396,13 +391,32 @@ namespace WixToolset
 
                 if (admin || hidden || secure)
                 {
-                    WixPropertyRow wixPropertyRow = (WixPropertyRow)this.core.CreateRow(sourceLineNumbers, "WixProperty", section);
-                    wixPropertyRow.Id = property;
-                    wixPropertyRow.Admin = admin;
-                    wixPropertyRow.Hidden = hidden;
-                    wixPropertyRow.Secure = secure;
+                    AddWixPropertyRow(sourceLineNumbers, property, admin, secure, hidden, section);
                 }
             }
+        }
+
+        private WixPropertyRow AddWixPropertyRow(SourceLineNumber sourceLineNumbers, string property, bool admin, bool secure, bool hidden, Section section = null)
+        {
+            if (secure && !property.Equals(property.ToUpperInvariant(), StringComparison.Ordinal))
+            {
+                this.core.OnMessage(WixErrors.SecurePropertyNotUppercase(sourceLineNumbers, "Property", "Id", property));
+            }
+
+            if (null == section)
+            {
+                section = this.core.ActiveSection;
+
+                this.core.EnsureTable(sourceLineNumbers, "Property"); // Property table is always required when using WixProperty table.
+            }
+
+            WixPropertyRow row = (WixPropertyRow)this.core.CreateRow(sourceLineNumbers, "WixProperty", section);
+            row.Id = property;
+            row.Admin = admin;
+            row.Hidden = hidden;
+            row.Secure = secure;
+
+            return row;
         }
 
         /// <summary>
@@ -3576,6 +3590,13 @@ namespace WixToolset
                 {
                     Row wixSuppressModularizationRow = this.core.CreateRow(sourceLineNumbers, "WixSuppressModularization");
                     wixSuppressModularizationRow[0] = id;
+                }
+
+                // For deferred CAs that specify HideTarget we should also hide the CA data property for the action.
+                if (MsiInterop.MsidbCustomActionTypeHideTarget == (bits & MsiInterop.MsidbCustomActionTypeHideTarget) &&
+                    MsiInterop.MsidbCustomActionTypeInScript == (bits & MsiInterop.MsidbCustomActionTypeInScript))
+                {
+                    AddWixPropertyRow(sourceLineNumbers, id, false, false, true);
                 }
             }
         }
@@ -7432,6 +7453,9 @@ namespace WixToolset
                 row[5] = removeFeatures;
                 row[6] = Compiler.UpgradeDetectedProperty;
 
+                // Ensure the action property is secure.
+                this.AddWixPropertyRow(sourceLineNumbers, Compiler.UpgradeDetectedProperty, false, true, false);
+
                 // Add launch condition that blocks upgrades
                 if (blockUpgrades)
                 {
@@ -7451,6 +7475,9 @@ namespace WixToolset
                     row[4] = MsiInterop.MsidbUpgradeAttributesOnlyDetect;
                     // row[5] = removeFeatures;
                     row[6] = Compiler.DowngradeDetectedProperty;
+
+                    // Ensure the action property is secure.
+                    this.AddWixPropertyRow(sourceLineNumbers, Compiler.DowngradeDetectedProperty, false, true, false);
 
                     row = this.core.CreateRow(sourceLineNumbers, "LaunchCondition");
                     row[0] = Compiler.DowngradePreventedCondition;
@@ -18426,10 +18453,13 @@ namespace WixToolset
                 row[5] = removeFeatures;
                 row[6] = actionProperty;
 
+                // Ensure the action property is secure.
+                this.AddWixPropertyRow(sourceLineNumbers, actionProperty, false, true, false);
+
+                // Ensure that RemoveExistingProducts is authored in InstallExecuteSequence
+                // if at least one row in Upgrade table lacks the OnlyDetect attribute.
                 if (0 == (options & MsiInterop.MsidbUpgradeAttributesOnlyDetect))
                 {
-                    // Ensure that RemoveExistingProducts is authored in InstallExecuteSequence
-                    // if at least one row in Upgrade table lacks the OnlyDetect attribute
                     this.core.CreateSimpleReference(sourceLineNumbers, "WixAction", "InstallExecuteSequence", "RemoveExistingProducts");
                 }
             }

@@ -1122,8 +1122,7 @@ namespace WixToolset.Data
                     throw new WixException(WixErrors.AdminImageRequired(productCode));
                 }
 
-                FileRowCollection mainFileRows = new FileRowCollection();
-                mainFileRows.AddRange(mainFileTable.Rows);
+                RowDictionary<FileRow> mainFileRows = new RowDictionary<FileRow>(mainFileTable);
 
                 Table pairedFileTable = pairedTransform.EnsureTable(mainFileTable.Definition);
                 foreach (WixFileRow mainWixFileRow in mainWixFileTable.Rows)
