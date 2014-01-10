@@ -135,10 +135,10 @@ namespace WixToolset
                     Table droppedTable = transform.Tables.EnsureTable(null, targetTable.Definition);
                     droppedTable.Operation = TableOperation.Drop;
                 }
-                else if(TableOperation.None == operation)
+                else if (TableOperation.None == operation)
                 {
                     Table modified = transform.Tables.EnsureTable(null, updatedTable.Definition);
-                    modified.Rows.AddRange(rows);
+                    rows.ForEach(r => modified.Rows.Add(r));
                 }
             }
 

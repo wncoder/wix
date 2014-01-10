@@ -251,7 +251,7 @@ namespace WixToolset.Extensibility
                     foreach (Table table in this.output.Tables)
                     {
                         // skip unreal tables
-                        if (table.Definition.IsUnreal)
+                        if (table.Definition.Unreal)
                         {
                             continue;
                         }

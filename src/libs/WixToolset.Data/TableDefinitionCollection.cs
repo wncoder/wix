@@ -5,37 +5,38 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Hash table collection for table definitions.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
     using System.Collections;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Reflection;
+    using System.Collections.Generic;
     using System.Xml;
-    using System.Xml.Schema;
 
     /// <summary>
-    /// Hash table collection for table definitions.
+    /// Collection for table definitions indexed by table name.
     /// </summary>
-    public sealed class TableDefinitionCollection : ICollection
+    public sealed class TableDefinitionCollection : ICollection<TableDefinition>
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wi/tables";
 
-        private SortedList collection;
+        private Dictionary<string, TableDefinition> collection;
 
         /// <summary>
         /// Instantiate a new TableDefinitionCollection class.
         /// </summary>
         public TableDefinitionCollection()
         {
-            this.collection = new SortedList();
+            this.collection = new Dictionary<string,TableDefinition>();
+        }
+
+        /// <summary>
+        /// Creates a shallow copy of the provided table definition collection.
+        /// </summary>
+        public TableDefinitionCollection(TableDefinitionCollection tableDefinitions)
+        {
+            this.collection = new Dictionary<string, TableDefinition>(tableDefinitions.collection);
         }
 
         /// <summary>
@@ -48,21 +49,11 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Gets if the collection has been synchronized.
+        /// Table definition collections are never read-only.
         /// </summary>
-        /// <value>True if the collection has been synchronized.</value>
-        public bool IsSynchronized
+        public bool IsReadOnly
         {
-            get { return this.collection.IsSynchronized; }
-        }
-
-        /// <summary>
-        /// Gets the object used to synchronize the collection.
-        /// </summary>
-        /// <value>Oject used the synchronize the collection.</value>
-        public object SyncRoot
-        {
-            get { return this.collection.SyncRoot; }
+            get { return false; }
         }
 
         /// <summary>
@@ -73,12 +64,13 @@ namespace WixToolset.Data
         {
             get
             {
-                if (!this.collection.ContainsKey(tableName))
+                TableDefinition table;
+                if (!this.collection.TryGetValue(tableName, out table))
                 {
                     throw new WixMissingTableDefinitionException(WixDataErrors.MissingTableDefinition(tableName));
                 }
 
-                return (TableDefinition)this.collection[tableName];
+                return table;
             }
         }
 
@@ -90,11 +82,6 @@ namespace WixToolset.Data
         /// <returns>The TableDefinitionCollection represented by the xml.</returns>
         public static TableDefinitionCollection Load(XmlReader reader)
         {
-            if (null == reader)
-            {
-                throw new ArgumentNullException("reader");
-            }
-
             reader.MoveToContent();
 
             if ("tableDefinitions" != reader.LocalName)
@@ -112,11 +99,6 @@ namespace WixToolset.Data
         /// <value>Indexes by table definition name.</value>
         public void Add(TableDefinition tableDefinition)
         {
-            if (null == tableDefinition)
-            {
-                throw new ArgumentNullException("tableDefinition");
-            }
-
             this.collection.Add(tableDefinition.Name, tableDefinition);
         }
 
@@ -129,43 +111,59 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Creates a shallow copy of this table definition collection.
-        /// </summary>
-        /// <returns>A shallow copy of this table definition collection.</returns>
-        public TableDefinitionCollection Clone()
-        {
-            TableDefinitionCollection tableDefinitionCollection = new TableDefinitionCollection();
-
-            tableDefinitionCollection.collection = (SortedList)this.collection.Clone();
-
-            return tableDefinitionCollection;
-        }
-
-        /// <summary>
-        /// Checks if the collection contains a table.
+        /// Checks if the collection contains a table name.
         /// </summary>
         /// <param name="tableName">The table to check in the collection.</param>
         /// <returns>True if collection contains the table.</returns>
         public bool Contains(string tableName)
         {
-            return this.collection.Contains(tableName);
+            return this.collection.ContainsKey(tableName);
         }
 
         /// <summary>
-        /// Copies the collection into an array.
+        /// Checks if the collection contains a table.
         /// </summary>
-        /// <param name="array">Array to copy the collection into.</param>
-        /// <param name="index">Index to start copying from.</param>
-        public void CopyTo(System.Array array, int index)
+        /// <param name="table">The table to check in the collection.</param>
+        /// <returns>True if collection contains the table.</returns>
+        public bool Contains(TableDefinition table)
         {
-            this.collection.CopyTo(array, index);
+            return this.collection.ContainsKey(table.Name);
+        }
+
+        /// <summary>
+        /// Copies table definitions to an arry.
+        /// </summary>
+        /// <param name="array">Array to copy the table definitions to.</param>
+        /// <param name="index">Index in the array to start copying at.</param>
+        public void CopyTo(TableDefinition[] array, int index)
+        {
+            this.collection.Values.CopyTo(array, index);
+        }
+
+        /// <summary>
+        /// Removes a table definition from the collection.
+        /// </summary>
+        /// <param name="table">Table to remove from the collection.</param>
+        /// <returns>True if the table definition existed in the collection and was removed.</returns>
+        public bool Remove(TableDefinition table)
+        {
+            return this.collection.Remove(table.Name);
         }
 
         /// <summary>
         /// Gets enumerator for the collection.
         /// </summary>
         /// <returns>Enumerator for the collection.</returns>
-        public IEnumerator GetEnumerator()
+        public IEnumerator<TableDefinition> GetEnumerator()
+        {
+            return this.collection.Values.GetEnumerator();
+        }
+
+        /// <summary>
+        /// Gets the untyped enumerator for the collection.
+        /// </summary>
+        /// <returns>Untyped enumerator for the collection.</returns>
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return this.collection.Values.GetEnumerator();
         }
@@ -177,8 +175,6 @@ namespace WixToolset.Data
         /// <returns>The TableDefinitionCollection represented by the xml.</returns>
         internal static TableDefinitionCollection Parse(XmlReader reader)
         {
-            Debug.Assert("tableDefinitions" == reader.LocalName);
-
             bool empty = reader.IsEmptyElement;
             TableDefinitionCollection tableDefinitionCollection = new TableDefinitionCollection();
 

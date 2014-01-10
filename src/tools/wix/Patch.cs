@@ -70,7 +70,7 @@ namespace WixToolset.Data
         public Patch()
         {
             this.inspectorExtensions = new List<IInspectorExtension>();
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
         }
 
         /// <summary>

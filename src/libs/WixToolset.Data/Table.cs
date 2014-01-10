@@ -10,7 +10,6 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
@@ -25,8 +24,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class Table
     {
-        private List<Row> rows;
-
         /// <summary>
         /// Creates a table in a section.
         /// </summary>
@@ -36,7 +33,7 @@ namespace WixToolset.Data
         {
             this.Section = section;
             this.Definition = tableDefinition;
-            this.rows = new List<Row>();
+            this.Rows = new List<Row>();
         }
 
         /// <summary>
@@ -70,7 +67,7 @@ namespace WixToolset.Data
         /// Gets the rows contained in the table.
         /// </summary>
         /// <value>Rows contained in the table.</value>
-        public List<Row> Rows { get { return this.rows; } }
+        public IList<Row> Rows { get; private set; }
 
         /// <summary>
         /// Creates a new row in the table.
@@ -161,7 +158,7 @@ namespace WixToolset.Data
 
             if (add)
             {
-                this.rows.Add(row);
+                this.Rows.Add(row);
             }
 
             return row;
@@ -261,7 +258,7 @@ namespace WixToolset.Data
         /// <param name="suppressModularizationIdentifiers">Optional collection of identifiers that should not be modularized.</param>
         public void Modularize(string modularizationGuid, HashSet<string> suppressModularizationIdentifiers)
         {
-            ArrayList modularizedColumns = new ArrayList();
+            List<int> modularizedColumns = new List<int>();
 
             // find the modularized columns
             for (int i = 0; i < this.Definition.Columns.Count; i++)
@@ -326,7 +323,7 @@ namespace WixToolset.Data
         /// <returns>null if OutputTable is unreal, or string with tab delimited field values otherwise</returns>
         public void ToIdtDefinition(StreamWriter writer, IMessageHandler messageHandler, bool keepAddedColumns)
         {
-            if (this.Definition.IsUnreal)
+            if (this.Definition.Unreal)
             {
                 return;
             }

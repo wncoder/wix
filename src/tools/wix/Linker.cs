@@ -52,7 +52,7 @@ namespace WixToolset
             this.sectionIdOnRows = true; // TODO: what is the correct value for this?
 
             this.standardActions = WindowsInstallerStandard.GetStandardActions();
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
 
             this.extensionData = new List<IExtensionData>();
             this.inspectorExtensions = new List<InspectorExtension>();
@@ -642,7 +642,7 @@ namespace WixToolset
                 if (0 < suppressActionRows.Count)
                 {
                     Table suppressActionTable = this.activeOutput.EnsureTable(this.tableDefinitions["WixSuppressAction"]);
-                    suppressActionTable.Rows.AddRange(suppressActionRows);
+                    suppressActionRows.ForEach(r => suppressActionTable.Rows.Add(r));
                 }
 
                 // sequence all the actions
@@ -903,7 +903,6 @@ namespace WixToolset
             foreach (Row row in table.Rows)
             {
                 bool bootstrapperApplicationData = (null != row[13] && 1 == (int)row[13]);
-                TableDefinition customTable = new TableDefinition((string)row[0], false, bootstrapperApplicationData, bootstrapperApplicationData);
 
                 if (null == row[4])
                 {
@@ -924,6 +923,7 @@ namespace WixToolset
 
                 int currentPrimaryKey = 0;
 
+                List<ColumnDefinition> columns = new List<ColumnDefinition>(columnNames.Length);
                 for (int i = 0; i < columnNames.Length; ++i)
                 {
                     string name = columnNames[i];
@@ -1100,9 +1100,10 @@ namespace WixToolset
                     }
 
                     ColumnDefinition columnDefinition = new ColumnDefinition(name, type, length, primaryKey, nullable, modularization, ColumnType.Localized == type, minValSet, minValue, maxValSet, maxValue, keyTable, keyColumnSet, keyColumn, category, setValue, description, true, true);
-                    customTable.Columns.Add(columnDefinition);
+                    columns.Add(columnDefinition);
                 }
 
+                TableDefinition customTable = new TableDefinition((string)row[0], columns, false, bootstrapperApplicationData, bootstrapperApplicationData);
                 customTableDefinitions.Add(customTable);
             }
         }
@@ -1142,7 +1143,7 @@ namespace WixToolset
                         }
                         break;
                     case OutputType.PatchCreation:
-                        if (!table.Definition.IsUnreal &&
+                        if (!table.Definition.Unreal &&
                             "_SummaryInformation" != table.Name &&
                             "ExternalFiles" != table.Name &&
                             "FamilyFileRanges" != table.Name &&
@@ -1163,7 +1164,7 @@ namespace WixToolset
                         }
                         break;
                     case OutputType.Patch:
-                        if (!table.Definition.IsUnreal &&
+                        if (!table.Definition.Unreal &&
                             "_SummaryInformation" != table.Name &&
                             "Media" != table.Name &&
                             "MsiPatchMetadata" != table.Name &&

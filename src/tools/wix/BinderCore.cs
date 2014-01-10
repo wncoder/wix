@@ -23,7 +23,7 @@ namespace WixToolset
         /// </summary>
         internal BinderCore()
         {
-            this.TableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.TableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
         }
 
         public IBinderFileManagerCore FileManagerCore { get; set; }

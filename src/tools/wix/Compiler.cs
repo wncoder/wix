@@ -64,7 +64,7 @@ namespace WixToolset
         /// </summary>
         public Compiler()
         {
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
             this.extensions = new Dictionary<XNamespace, ICompilerExtension>();
             this.inspectorExtensions = new List<InspectorExtension>();
         }

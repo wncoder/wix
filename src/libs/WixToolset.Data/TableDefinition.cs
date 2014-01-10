@@ -14,9 +14,11 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.Diagnostics;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
     using System.Xml;
 
@@ -25,24 +27,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class TableDefinition : IComparable<TableDefinition>
     {
-        private bool createSymbols;
-        private string name;
-        private bool unreal;
-        private bool bootstrapperApplicationData;
-        private bool localizable;
-        private ColumnDefinitionCollection columns;
-
-        /// <summary>
-        /// Creates a table definition.
-        /// </summary>
-        /// <param name="name">Name of table to create.</param>
-        /// <param name="createSymbols">Flag if rows in this table create symbols.</param>
-        /// <param name="unreal">Flag if table is unreal.</param>
-        public TableDefinition(string name, bool createSymbols, bool unreal)
-            : this(name, createSymbols, unreal, false)
-        {
-        }
-
         /// <summary>
         /// Creates a table definition.
         /// </summary>
@@ -50,68 +34,45 @@ namespace WixToolset.Data
         /// <param name="createSymbols">Flag if rows in this table create symbols.</param>
         /// <param name="unreal">Flag if table is unreal.</param>
         /// <param name="bootstrapperApplicationData">Flag if table is part of UX Manifest.</param>
-        public TableDefinition(string name, bool createSymbols, bool unreal, bool bootstrapperApplicationData)
+        public TableDefinition(string name, IList<ColumnDefinition> columns, bool createSymbols, bool unreal, bool bootstrapperApplicationData = false)
         {
-            this.name = name;
-            this.createSymbols = createSymbols;
-            this.unreal = unreal;
-            this.bootstrapperApplicationData = bootstrapperApplicationData;
-            this.columns = new ColumnDefinitionCollection();
+            this.Name = name;
+            this.CreateSymbols = createSymbols;
+            this.Unreal = unreal;
+            this.BootstrapperApplicationData = bootstrapperApplicationData;
+
+            this.Columns = new ReadOnlyCollection<ColumnDefinition>(columns);
         }
 
         /// <summary>
         /// Gets if rows in this table create symbols.
         /// </summary>
         /// <value>Flag if rows in this table create symbols.</value>
-        public bool CreateSymbols
-        {
-            get { return this.createSymbols; }
-        }
+        public bool CreateSymbols { get; private set; }
 
         /// <summary>
         /// Gets the name of the table.
         /// </summary>
         /// <value>Name of the table.</value>
-        public string Name
-        {
-            get { return this.name; }
-        }
+        public string Name { get; private set; }
 
         /// <summary>
         /// Gets if the table is unreal.
         /// </summary>
         /// <value>Flag if table is unreal.</value>
-        public bool IsUnreal
-        {
-            get { return this.unreal; }
-        }
+        public bool Unreal { get; private set; }
 
         /// <summary>
         /// Gets if the table is a part of the bootstrapper application data manifest.
         /// </summary>
         /// <value>Flag if table is a part of the bootstrapper application data manifest.</value>
-        public bool IsBootstrapperApplicationData
-        {
-            get { return this.bootstrapperApplicationData; }
-        }
-
-        /// <summary>
-        /// Gets if the table is localizable (i.e. has any columns that might have localized data in them).
-        /// </summary>
-        /// <value>Flag if table is localizable.</value>
-        public bool IsLocalizable
-        {
-            get { return this.localizable; }
-        }
+        public bool BootstrapperApplicationData { get; private set; }
 
         /// <summary>
         /// Gets the collection of column definitions for this table.
         /// </summary>
         /// <value>Collection of column definitions for this table.</value>
-        public ColumnDefinitionCollection Columns
-        {
-            get { return this.columns; }
-        }
+        public IList<ColumnDefinition> Columns { get; private set; }
 
         /// <summary>
         /// Gets the column definition in the table by index.
@@ -120,7 +81,7 @@ namespace WixToolset.Data
         /// <value>Column definition in the table by index.</value>
         public ColumnDefinition this[int columnIndex]
         {
-            get { return (ColumnDefinition)this.columns[columnIndex]; }
+            get { return this.Columns[columnIndex]; }
         }
 
         /// <summary>
@@ -135,8 +96,8 @@ namespace WixToolset.Data
             StringBuilder dataString = new StringBuilder();
             StringBuilder tableString = new StringBuilder();
 
-            tableString.Append(this.name);
-            foreach (ColumnDefinition column in this.columns)
+            tableString.Append(this.Name);
+            foreach (ColumnDefinition column in this.Columns)
             {
                 // conditionally keep columns added in a transform; otherwise,
                 // break because columns can only be added at the end
@@ -177,11 +138,8 @@ namespace WixToolset.Data
         /// <returns>The TableDefintion represented by the Xml.</returns>
         internal static TableDefinition Parse(XmlReader reader)
         {
-            Debug.Assert("tableDefinition" == reader.LocalName);
-
             bool empty = reader.IsEmptyElement;
             bool createSymbols = false;
-            bool hasPrimaryKeyColumn = false;
             string name = null;
             bool unreal = false;
             bool bootstrapperApplicationData = false;
@@ -216,7 +174,8 @@ namespace WixToolset.Data
                 throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", "name"));
             }
 
-            TableDefinition tableDefinition = new TableDefinition(name, createSymbols, unreal, bootstrapperApplicationData);
+            List<ColumnDefinition> columns = new List<ColumnDefinition>();
+            bool hasPrimaryKeyColumn = false;
 
             // parse the child elements
             if (!empty)
@@ -232,12 +191,7 @@ namespace WixToolset.Data
                         {
                             case "columnDefinition":
                                 ColumnDefinition columnDefinition = ColumnDefinition.Parse(reader);
-                                tableDefinition.columns.Add(columnDefinition);
-
-                                if (columnDefinition.IsLocalizable)
-                                {
-                                    tableDefinition.localizable = true;
-                                }
+                                columns.Add(columnDefinition);
 
                                 if (columnDefinition.IsPrimaryKey)
                                 {
@@ -265,6 +219,7 @@ namespace WixToolset.Data
                 }
             }
 
+            TableDefinition tableDefinition = new TableDefinition(name, columns, createSymbols, unreal, bootstrapperApplicationData);
             return tableDefinition;
         }
 
@@ -276,24 +231,24 @@ namespace WixToolset.Data
         {
             writer.WriteStartElement("tableDefinition", TableDefinitionCollection.XmlNamespaceUri);
 
-            writer.WriteAttributeString("name", this.name);
+            writer.WriteAttributeString("name", this.Name);
 
-            if (this.createSymbols)
+            if (this.CreateSymbols)
             {
                 writer.WriteAttributeString("createSymbols", "yes");
             }
 
-            if (this.unreal)
+            if (this.Unreal)
             {
                 writer.WriteAttributeString("unreal", "yes");
             }
 
-            if (this.bootstrapperApplicationData)
+            if (this.BootstrapperApplicationData)
             {
                 writer.WriteAttributeString("bootstrapperApplicationData", "yes");
             }
 
-            foreach (ColumnDefinition columnDefinition in this.columns)
+            foreach (ColumnDefinition columnDefinition in this.Columns)
             {
                 columnDefinition.Persist(writer);
             }
@@ -307,11 +262,11 @@ namespace WixToolset.Data
         /// <param name="validationTable">The _Validation table.</param>
         public void AddValidationRows(Table validationTable)
         {
-            foreach (ColumnDefinition columnDef in this.columns)
+            foreach (ColumnDefinition columnDef in this.Columns)
             {
                 Row row = validationTable.CreateRow(null);
 
-                row[0] = this.name;
+                row[0] = this.Name;
 
                 row[1] = columnDef.Name;
 

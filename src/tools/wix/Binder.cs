@@ -463,7 +463,7 @@ namespace WixToolset
 
                 foreach (Table table in output.Tables)
                 {
-                    if (!table.Definition.IsUnreal)
+                    if (!table.Definition.Unreal)
                     {
                         // add the validation rows for this table
                         table.Definition.AddValidationRows(validationTable);
@@ -515,7 +515,7 @@ namespace WixToolset
                         bool hasBinaryColumn = false;
 
                         // skip all unreal tables other than _Streams
-                        if (table.Definition.IsUnreal && "_Streams" != table.Name)
+                        if (table.Definition.Unreal && "_Streams" != table.Name)
                         {
                             continue;
                         }
@@ -1233,9 +1233,7 @@ namespace WixToolset
                     }
                 }
 
-                wixPatchSymbolPathsTable.Rows.Sort(new WixPatchSymbolPathsComparer());
-
-                foreach (Row row in wixPatchSymbolPathsTable.Rows)
+                foreach (Row row in wixPatchSymbolPathsTable.Rows.OrderBy(r => r, new WixPatchSymbolPathsComparer()))
                 {
                     switch ((string)row[0])
                     {
@@ -3995,7 +3993,7 @@ namespace WixToolset
 
                 foreach (Table table in bundle.Tables)
                 {
-                    if (table.Definition.IsBootstrapperApplicationData && null != table.Rows && 0 < table.Rows.Count)
+                    if (table.Definition.BootstrapperApplicationData && null != table.Rows && 0 < table.Rows.Count)
                     {
                         // We simply assert that the table (and field) name is valid, because
                         // this is up to the extension developer to get right. An author will
@@ -4912,7 +4910,7 @@ namespace WixToolset
                 // Ignore unreal tables when building transforms except the _Stream table.
                 // These tables are ignored when generating the database so there is no reason
                 // to process them here.
-                if (table.Definition.IsUnreal && "_Streams" != table.Name)
+                if (table.Definition.Unreal && "_Streams" != table.Name)
                 {
                     continue;
                 }

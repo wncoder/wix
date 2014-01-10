@@ -17,7 +17,6 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColumnDefinition.cs" />
-    <Compile Include="ColumnDefinitionCollection.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="ComplexReferenceChildType.cs" />
     <Compile Include="ComplexReferenceParentType.cs" />

@@ -31,7 +31,7 @@ namespace WixToolset
         /// </summary>
         public Librarian()
         {
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
         }
 
         /// <summary>
