@@ -13,6 +13,7 @@ namespace WixToolset.Data
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
+    using System.Linq;
 
     /// <summary>
     /// Class that understands the standard file structures in the WiX toolset.
@@ -32,12 +33,28 @@ namespace WixToolset.Data
             { "wixout", FileFormat.Wixout },
         };
 
+        /// <summary>
+        /// Use Create or Read to create a FileStructure.
+        /// </summary>
         private FileStructure() { }
 
+        /// <summary>
+        /// Count of embedded files in the file structure.
+        /// </summary>
         public int EmbeddedFileCount { get { return this.embeddedFileSizes.Length; } }
 
+        /// <summary>
+        /// File format of the file structure.
+        /// </summary>
         public FileFormat FileFormat { get; private set; }
 
+        /// <summary>
+        /// Creates a new file structure.
+        /// </summary>
+        /// <param name="stream">Stream to write the file structure to.</param>
+        /// <param name="fileFormat">File format for the file structure.</param>
+        /// <param name="embedFilePaths">Paths to files to embedd in the file structure.</param>
+        /// <returns>Newly created file structure.</returns>
         public static FileStructure Create(Stream stream, FileFormat fileFormat, List<string> embedFilePaths)
         {
             FileStructure fs = new FileStructure();
@@ -57,6 +74,11 @@ namespace WixToolset.Data
             return fs;
         }
 
+        /// <summary>
+        /// Reads a file structure from an open stream.
+        /// </summary>
+        /// <param name="stream">Stream to read from.</param>
+        /// <returns>File structure populated from the stream.</returns>
         public static FileStructure Read(Stream stream)
         {
             FileStructure fs = new FileStructure();
@@ -80,6 +102,11 @@ namespace WixToolset.Data
             return fs;
         }
 
+        /// <summary>
+        /// Probes a stream to determine the file format.
+        /// </summary>
+        /// <param name="stream">Stream to test.</param>
+        /// <returns>The file format.</returns>
         public static FileFormat TestFileFormat(Stream stream)
         {
             FileFormat format = FileFormat.Unknown;
@@ -102,6 +129,11 @@ namespace WixToolset.Data
             return format;
         }
 
+        /// <summary>
+        /// Extracts an embedded file.
+        /// </summary>
+        /// <param name="embeddedIndex">Index to the file to extract.</param>
+        /// <param name="outputPath">Path to write the extracted file to.</param>
         public void ExtractEmbeddedFile(int embeddedIndex, string outputPath)
         {
             if (this.EmbeddedFileCount <= embeddedIndex)
@@ -109,16 +141,11 @@ namespace WixToolset.Data
                 throw new ArgumentOutOfRangeException("embeddedIndex");
             }
 
-            long position = 6 + 4; // skip the header + the count of embedded files.
-            long size;
-            for (int i = 0; i < embeddedIndex; ++i)
-            {
-                size = this.embeddedFileSizes[i];
-                position += size;
-            }
+            long header = 6 + 4 + (this.embeddedFileSizes.Length * 8); // skip the type + the count of embedded files + all the sizes of embedded files.
+            long position = this.embeddedFileSizes.Take(embeddedIndex).Sum(); // skip to the embedded file we want.
+            long size = this.embeddedFileSizes[embeddedIndex];
 
-            size = this.embeddedFileSizes[embeddedIndex];
-            this.stream.Seek(position, SeekOrigin.Begin);
+            this.stream.Seek(header + position, SeekOrigin.Begin);
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
@@ -135,10 +162,46 @@ namespace WixToolset.Data
             }
         }
 
+        /// <summary>
+        /// Gets a non-closing stream to the data of the file.
+        /// </summary>
+        /// <returns>Stream to the data of the file.</returns>
         public Stream GetDataStream()
         {
             this.stream.Seek(this.dataStreamOffset, SeekOrigin.Begin);
             return new NonClosingStreamWrapper(this.stream);
+        }
+
+        /// <summary>
+        /// Disposes of the internsl state of the file structure.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes of the internsl state of the file structure.
+        /// </summary>
+        /// <param name="disposing">True if disposing.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this.disposed)
+            {
+                if (disposing)
+                {
+                    if (null != this.stream)
+                    {
+                        // We do not own the stream, so we don't close it. We're just resetting our internal state.
+                        this.embeddedFileSizes = null;
+                        this.dataStreamOffset = 0;
+                        this.stream = null;
+                    }
+                }
+            }
+
+            this.disposed = true;
         }
 
         private static FileFormat ReadFileFormat(BinaryReader reader)
@@ -217,31 +280,6 @@ namespace WixToolset.Data
             }
 
             return writer;
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposed)
-            {
-                if (disposing)
-                {
-                    if (null != this.stream)
-                    {
-                        // We do not own the stream, so we don't close it. We're just resetting our internal state.
-                        this.embeddedFileSizes = null;
-                        this.dataStreamOffset = 0;
-                        this.stream = null;
-                    }
-                }
-            }
-
-            this.disposed = true;
         }
     }
 }
