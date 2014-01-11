@@ -15,14 +15,13 @@ namespace WixToolset
 {
     using System;
     using System.Resources;
+    using WixToolset.Data;
 
     /// <summary>
     /// Generic event args for message events.
     /// </summary>
     public class WixGenericMessageEventArgs : MessageEventArgs
     {
-        private GenericResourceManager resourceManager;
-
         /// <summary>
         /// Creates a new generc message event arg.
         /// </summary>
@@ -34,18 +33,8 @@ namespace WixToolset
         public WixGenericMessageEventArgs(SourceLineNumber sourceLineNumbers, int id, MessageLevel level, string format, params object[] messageArgs)
             : base(sourceLineNumbers, id, format, messageArgs)
         {
-            this.resourceManager = new GenericResourceManager();
-
-            this.Level = level;
-        }
-
-        /// <summary>
-        /// Gets the resource manager for this event args.
-        /// </summary>
-        /// <value>The resource manager for this event args.</value>
-        public override ResourceManager ResourceManager
-        {
-            get { return this.resourceManager; }
+            base.Level = level;
+            base.ResourceManager = new GenericResourceManager();
         }
 
         /// <summary>

@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset Firewall Extension")]
 [assembly: AssemblyDescription("WiX Toolset Firewall Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

@@ -19,6 +19,8 @@ namespace WixToolset
     using System.Text.RegularExpressions;
     using System.Xml.Linq;
 
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
@@ -62,15 +64,10 @@ namespace WixToolset
         /// </summary>
         public Compiler()
         {
-            this.tableDefinitions = Installer.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
             this.extensions = new Dictionary<XNamespace, ICompilerExtension>();
             this.inspectorExtensions = new List<InspectorExtension>();
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Type of RadioButton element in a group.
@@ -200,7 +197,7 @@ namespace WixToolset
             // try to compile it
             try
             {
-                this.core = new CompilerCore(target, this.tableDefinitions, this.extensions, this.Message);
+                this.core = new CompilerCore(target, this.tableDefinitions, this.extensions);
                 this.core.ShowPedanticMessages = this.showPedanticMessages;
                 this.core.CurrentPlatform = this.currentPlatform;
 
@@ -7839,20 +7836,20 @@ namespace WixToolset
                 switch (compressionLevelType)
                 {
                     case Wix.CompressionLevelType.high:
-                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.High.ToString();
+                        mediaTemplateRow.CompressionLevel = CompressionLevel.High.ToString();
                         break;
                     case Wix.CompressionLevelType.low:
-                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Low.ToString();
+                        mediaTemplateRow.CompressionLevel = CompressionLevel.Low.ToString();
                         break;
                     case Wix.CompressionLevelType.medium:
-                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Medium.ToString();
+                        mediaTemplateRow.CompressionLevel = CompressionLevel.Medium.ToString();
                         break;
                     case Wix.CompressionLevelType.none:
-                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.None.ToString();
+                        mediaTemplateRow.CompressionLevel = CompressionLevel.None.ToString();
                         break;
                     case Wix.CompressionLevelType.mszip:
                     case Wix.CompressionLevelType.NotSet:
-                        mediaTemplateRow.CompressionLevel = Cab.CompressionLevel.Mszip.ToString();
+                        mediaTemplateRow.CompressionLevel = CompressionLevel.Mszip.ToString();
                         break;
                 }
             }
@@ -14182,7 +14179,7 @@ namespace WixToolset
                 }
 
                 // normal standard actions cannot be set overridable by the user (since they are overridable by default)
-                if (overridable && Util.IsStandardAction(actionName) && !specialAction)
+                if (overridable && WindowsInstallerStandard.IsStandardAction(actionName) && !specialAction)
                 {
                     this.core.OnMessage(WixErrors.UnexpectedAttribute(childSourceLineNumbers, child.Name.LocalName, "Overridable"));
                 }
@@ -15403,7 +15400,7 @@ namespace WixToolset
 
                     if (null != beforeAction)
                     {
-                        if (Util.IsStandardAction(beforeAction))
+                        if (WindowsInstallerStandard.IsStandardAction(beforeAction))
                         {
                             this.core.CreateSimpleReference(sourceLineNumbers, "WixAction", sequence, beforeAction);
                         }
@@ -15415,7 +15412,7 @@ namespace WixToolset
 
                     if (null != afterAction)
                     {
-                        if (Util.IsStandardAction(afterAction))
+                        if (WindowsInstallerStandard.IsStandardAction(afterAction))
                         {
                             this.core.CreateSimpleReference(sourceLineNumbers, "WixAction", sequence, afterAction);
                         }
@@ -18193,7 +18190,7 @@ namespace WixToolset
             {
                 // if we're not looking at a standard action or a formatted string then create a reference 
                 // to the custom action.
-                if (!Util.IsStandardAction(argument) && !Common.ContainsProperty(argument))
+                if (!WindowsInstallerStandard.IsStandardAction(argument) && !Common.ContainsProperty(argument))
                 {
                     this.core.CreateSimpleReference(sourceLineNumbers, "CustomAction", argument);
                 }

@@ -21,6 +21,7 @@ namespace WixToolset.Extensions
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using Util = WixToolset.Extensions.Serialize.Util;
 

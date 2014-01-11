@@ -9,6 +9,8 @@
 
 namespace WixToolset.Extensibility
 {
+    using WixToolset.Data;
+
     /// <summary>
     /// Interface all binder extensions implement.
     /// </summary>

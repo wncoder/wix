@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.IO;
+    using WixToolset.Data;
 
     /// <summary>
     /// Catalog information for binding Bundles.

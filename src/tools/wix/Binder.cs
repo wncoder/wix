@@ -34,11 +34,12 @@ namespace WixToolset
     using System.Xml.XPath;
     using WixToolset.Cab;
     using WixToolset.CLR.Interop;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.MergeMod;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
-
     using Wix = WixToolset.Serialize;
 
     // TODO: (4.0) Refactor so that these don't need to be copied.
@@ -120,7 +121,7 @@ namespace WixToolset
         /// </summary>
         public Binder()
         {
-            this.DefaultCompressionLevel = Cab.CompressionLevel.Mszip;
+            this.DefaultCompressionLevel = CompressionLevel.Mszip;
 
             this.BindPaths = new List<BindPath>();
             this.TargetBindPaths = new List<BindPath>();
@@ -181,7 +182,7 @@ namespace WixToolset
         /// Gets or sets the default compression level to use for cabinets
         /// that don't have their compression level explicitly set.
         /// </summary>
-        public Cab.CompressionLevel DefaultCompressionLevel { get; set; }
+        public CompressionLevel DefaultCompressionLevel { get; set; }
 
         /// <summary>
         /// Gets or sets the exact assembly versions flag (see docs).
@@ -871,7 +872,7 @@ namespace WixToolset
                 {
                     resolvedDirectory.Path = (string)componentIdGenSeeds[directory];
                 }
-                else if (canonicalize && Util.IsStandardDirectory(directory))
+                else if (canonicalize && WindowsInstallerStandard.IsStandardDirectory(directory))
                 {
                     // when canonicalization is on, standard directories are treated equally
                     resolvedDirectory.Path = directory;
@@ -1526,9 +1527,9 @@ namespace WixToolset
             }
 
             // localize fields, resolve wix variables, and resolve file paths
-            Hashtable cabinets = new Hashtable();
+            ExtractEmbeddedFiles filesWithEmbeddedFiles = new ExtractEmbeddedFiles();
             ArrayList delayedFields = new ArrayList();
-            this.ResolveFields(output.Tables, cabinets, delayedFields);
+            this.ResolveFields(output.Tables, filesWithEmbeddedFiles, delayedFields);
 
             // if there are any fields to resolve later, create the cache to populate during bind
             IDictionary<string, string> variableCache = null;
@@ -1622,7 +1623,7 @@ namespace WixToolset
                 foreach (SubStorage substorage in output.SubStorages)
                 {
                     Output transform = (Output)substorage.Data;
-                    this.ResolveFields(transform.Tables, cabinets, null);
+                    this.ResolveFields(transform.Tables, filesWithEmbeddedFiles, null);
                     this.MergeUnrealTables(transform.Tables);
                 }
             }
@@ -1691,7 +1692,7 @@ namespace WixToolset
             }
 
             // extract files that come from cabinet files (this does not extract files from merge modules)
-            this.ExtractCabinets(cabinets);
+            this.ExtractEmbeddedFiles(filesWithEmbeddedFiles);
 
             // retrieve files and their information from merge modules
             if (OutputType.Product == output.Type)
@@ -1836,7 +1837,7 @@ namespace WixToolset
             pdb.Output = output;
             if (!String.IsNullOrEmpty(this.PdbFile))
             {
-                pdb.Save(this.PdbFile, null, this.WixVariableResolver, this.TempFilesLocation);
+                pdb.Save(this.PdbFile, null);
             }
 
             // merge modules
@@ -2033,9 +2034,9 @@ namespace WixToolset
         /// Resolve source fields in the tables included in the output
         /// </summary>
         /// <param name="tables">The tables to resolve.</param>
-        /// <param name="cabinets">Cabinets containing files that need to be patched.</param>
+        /// <param name="filesWithEmbeddedFiles">Cabinets containing files that need to be patched.</param>
         /// <param name="delayedFields">The collection of delayed fields. Null if resolution of delayed fields is not allowed</param>
-        private void ResolveFields(TableCollection tables, Hashtable cabinets, ArrayList delayedFields)
+        private void ResolveFields(TableCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, ArrayList delayedFields)
         {
             foreach (Table table in tables)
             {
@@ -2077,22 +2078,13 @@ namespace WixToolset
                                 continue;
                             }
 
-                            // file is compressed in a cabinet (and not modified above)
-                            if (null != objectField.CabinetFileId && isDefault)
+                            // File is embedded and path to it was not modified above.
+                            if (objectField.EmbeddedFileIndex.HasValue && isDefault)
                             {
-                                // index cabinets that have not been previously encountered
-                                if (!cabinets.ContainsKey(objectField.BaseUri))
-                                {
-                                    Uri baseUri = new Uri(objectField.BaseUri);
-                                    string localFileNameWithoutExtension = Path.GetFileNameWithoutExtension(baseUri.LocalPath);
-                                    string extractedDirectoryName = String.Format(CultureInfo.InvariantCulture, "cab_{0}_{1}", cabinets.Count, localFileNameWithoutExtension);
+                                string extractPath = filesWithEmbeddedFiles.AddEmbeddedFileIndex(objectField.BaseUri, objectField.EmbeddedFileIndex.Value, this.TempFilesLocation);
 
-                                    // index the cabinet file's base URI (source location) and extracted directory
-                                    cabinets.Add(objectField.BaseUri, Path.Combine(this.TempFilesLocation, extractedDirectoryName));
-                                }
-
-                                // set the path to the file once its extracted from the cabinet
-                                objectField.Data = Path.Combine((string)cabinets[objectField.BaseUri], objectField.CabinetFileId);
+                                // Set the path to the embedded file once where it will be extracted.
+                                objectField.Data = extractPath;
                             }
                             else if (null != objectField.Data) // non-compressed file (or localized value)
                             {
@@ -2146,7 +2138,7 @@ namespace WixToolset
                                 if (!Messaging.Instance.EncounteredError) // TODO: make this error handling more specific to just the failure to resolve variables in this field.
                                 {
                                     // file is compressed in a cabinet (and not modified above)
-                                    if (null != objectField.PreviousCabinetFileId && isDefault)
+                                    if (objectField.PreviousEmbeddedFileIndex.HasValue && isDefault)
                                     {
                                         // when loading transforms from disk, PreviousBaseUri may not have been set
                                         if (null == objectField.PreviousBaseUri)
@@ -2154,19 +2146,10 @@ namespace WixToolset
                                             objectField.PreviousBaseUri = objectField.BaseUri;
                                         }
 
-                                        // index cabinets that have not been previously encountered
-                                        if (!cabinets.ContainsKey(objectField.PreviousBaseUri))
-                                        {
-                                            Uri baseUri = new Uri(objectField.PreviousBaseUri);
-                                            string localFileNameWithoutExtension = Path.GetFileNameWithoutExtension(baseUri.LocalPath);
-                                            string extractedDirectoryName = String.Format(CultureInfo.InvariantCulture, "cab_{0}_{1}", cabinets.Count, localFileNameWithoutExtension);
-
-                                            // index the cabinet file's base URI (source location) and extracted directory
-                                            cabinets.Add(objectField.PreviousBaseUri, Path.Combine(this.TempFilesLocation, extractedDirectoryName));
-                                        }
+                                        string extractPath = filesWithEmbeddedFiles.AddEmbeddedFileIndex(objectField.PreviousBaseUri, objectField.PreviousEmbeddedFileIndex.Value, this.TempFilesLocation);
 
                                         // set the path to the file once its extracted from the cabinet
-                                        objectField.PreviousData = Path.Combine((string)cabinets[objectField.PreviousBaseUri], objectField.PreviousCabinetFileId);
+                                        objectField.PreviousData = extractPath;
                                     }
                                     else if (null != objectField.PreviousData) // non-compressed file (or localized value)
                                     {
@@ -2212,49 +2195,45 @@ namespace WixToolset
         }
 
         /// <summary>
-        /// Extracts embedded cabinets for resolved data.
+        /// Extract embedded files for resolved data.
         /// </summary>
-        /// <param name="cabinets">Collection of cabinets containing resolved data.</param>
-        private void ExtractCabinets(Hashtable cabinets)
+        /// <param name="filesWithEmbeddedFiles">Collection of files containing embedded files to be extracted.</param>
+        private void ExtractEmbeddedFiles(ExtractEmbeddedFiles filesWithEmbeddedFiles)
         {
-            foreach (DictionaryEntry cabinet in cabinets)
+            foreach (var baseUri in filesWithEmbeddedFiles.Uris)
             {
-                Uri baseUri = new Uri((string)cabinet.Key);
-                string localPath;
-
-                if ("embeddedresource" == baseUri.Scheme)
+                Stream stream = null;
+                try
                 {
-                    int bytesRead;
-                    byte[] buffer = new byte[512];
-
-                    string originalLocalPath = Path.GetFullPath(baseUri.LocalPath.Substring(1));
-                    string resourceName = baseUri.Fragment.Substring(1);
-                    Assembly assembly = Assembly.LoadFile(originalLocalPath);
-
-                    localPath = String.Concat(cabinet.Value, ".cab");
-
-                    using (FileStream fs = File.OpenWrite(localPath))
+                    // If the embedded files are stored in an assembly resource stream (usually
+                    // a .wixlib embedded in a WixExtension).
+                    if ("embeddedresource" == baseUri.Scheme)
                     {
-                        using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
+                        string assemblyPath = Path.GetFullPath(baseUri.LocalPath);
+                        string resourceName = baseUri.Fragment.TrimStart('#');
+
+                        Assembly assembly = Assembly.LoadFile(assemblyPath);
+                        stream = assembly.GetManifestResourceStream(resourceName);
+                    }
+                    else // normal file (usually a binary .wixlib on disk).
+                    {
+                        stream = File.OpenRead(baseUri.LocalPath);
+                    }
+
+                    using (FileStructure fs = FileStructure.Read(stream))
+                    {
+                        foreach (var embeddedFile in filesWithEmbeddedFiles.GetExtractFilesForUri(baseUri))
                         {
-                            while (0 < (bytesRead = resourceStream.Read(buffer, 0, buffer.Length)))
-                            {
-                                fs.Write(buffer, 0, bytesRead);
-                            }
+                            fs.ExtractEmbeddedFile(embeddedFile.EmbeddedFileIndex, embeddedFile.OutputPath);
                         }
                     }
                 }
-                else // normal file
+                finally
                 {
-                    localPath = baseUri.LocalPath;
-                }
-
-                // extract the cabinet's files into a temporary directory
-                Directory.CreateDirectory((string)cabinet.Value);
-
-                using (WixExtractCab extractCab = new WixExtractCab())
-                {
-                    extractCab.Extract(localPath, (string)cabinet.Value);
+                    if (null != stream)
+                    {
+                        stream.Close();
+                    }
                 }
             }
         }
@@ -2533,7 +2512,7 @@ namespace WixToolset
                     iesTable.Operation = TableOperation.Add;
                 }
                 Row patchAction = iesTable.CreateRow(null);
-                WixActionRow wixPatchAction = Installer.GetStandardActions()[table, "PatchFiles"];
+                WixActionRow wixPatchAction = WindowsInstallerStandard.GetStandardActions()[table, "PatchFiles"];
                 int sequence = wixPatchAction.Sequence;
                 // Test for default sequence value's appropriateness
                 if (seqInstallFiles >= sequence || (0 != seqDuplicateFiles && seqDuplicateFiles <= sequence))
@@ -3076,11 +3055,11 @@ namespace WixToolset
                 }
             }
 
-            Hashtable cabinets = new Hashtable();
+            ExtractEmbeddedFiles filesWithEmbeddedFiles = new ExtractEmbeddedFiles();
             ArrayList delayedFields = new ArrayList();
 
             // localize fields, resolve wix variables, and resolve file paths
-            this.ResolveFields(bundle.Tables, cabinets, delayedFields);
+            this.ResolveFields(bundle.Tables, filesWithEmbeddedFiles, delayedFields);
 
             // if there are any fields to resolve later, create the cache to populate during bind
             IDictionary<string, string> variableCache = null;
@@ -3195,7 +3174,7 @@ namespace WixToolset
             }
 
             // extract files that come from cabinet files (this does not extract files from merge modules)
-            this.ExtractCabinets(cabinets);
+            this.ExtractEmbeddedFiles(filesWithEmbeddedFiles);
 
             WixBundleRow bundleInfo = (WixBundleRow)bundleTable.Rows[0];
             bundleInfo.PerMachine = true; // default to per-machine but the first-per user package would flip it.
@@ -3735,7 +3714,7 @@ namespace WixToolset
             {
                 Pdb pdb = new Pdb(null);
                 pdb.Output = bundle;
-                pdb.Save(this.PdbFile, null, this.WixVariableResolver, this.TempFilesLocation);
+                pdb.Save(this.PdbFile, null);
             }
 
             // Add detached containers to the list of file transfers.
@@ -6879,7 +6858,7 @@ namespace WixToolset
             if (CabinetBuildOption.BuildAndCopy == resolvedCabinet.BuildOption || CabinetBuildOption.BuildAndMove == resolvedCabinet.BuildOption)
             {
                 int maxThreshold = 0; // default to the threshold for best smartcabbing (makes smallest cabinet).
-                Cab.CompressionLevel compressionLevel = this.DefaultCompressionLevel;
+                CompressionLevel compressionLevel = this.DefaultCompressionLevel;
 
                 if (mediaRow.HasExplicitCompressionLevel)
                 {

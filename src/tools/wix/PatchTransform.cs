@@ -14,6 +14,7 @@ namespace WixToolset
     using System.Globalization;
     using System.Text;
     using System.Text.RegularExpressions;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     public class PatchTransform : IMessageHandler
@@ -33,7 +34,7 @@ namespace WixToolset
             {
                 if (null == this.transform)
                 {
-                    this.transform = Output.Load(this.transformPath, false, false); ;
+                    this.transform = Output.Load(this.transformPath, false); ;
                 }
 
                 return this.transform;

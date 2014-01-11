@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset Lux Extension")]
 [assembly: AssemblyDescription("WiX Toolset Lux Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

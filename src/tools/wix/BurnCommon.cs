@@ -16,7 +16,7 @@ namespace WixToolset
     using System;
     using System.Diagnostics;
     using System.IO;
-    using WixToolset.Extensibility;
+    using WixToolset.Data;
 
     /// <summary>
     /// Common functionality for Burn PE Writer & Reader for the WiX toolset.

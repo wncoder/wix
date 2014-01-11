@@ -18,6 +18,7 @@ namespace WixToolset.Extensions
     using System.Globalization;
     using System.Reflection;
     using System.Xml.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

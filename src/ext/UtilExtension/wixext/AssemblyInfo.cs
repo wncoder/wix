@@ -17,6 +17,5 @@ using WixToolset.Tools;
 [assembly: AssemblyTitle("WiX Toolset Utility Extension")]
 [assembly: AssemblyDescription("WiX Toolset Utility Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
 [assembly: AssemblyDefaultHeatExtension(typeof(UtilHeatExtension))]

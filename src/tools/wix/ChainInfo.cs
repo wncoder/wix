@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Collections.Generic;
+    using WixToolset.Data;
 
     /// <summary>
     /// Chain info for binding Bundles.

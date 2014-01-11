@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Reflection;
+    using WixToolset.Data;
 
     /// <summary>
     /// An extension for the WiX Toolset fabricator extension.
@@ -22,20 +23,6 @@ namespace WixToolset
     public abstract class Fabricator
     {
         private FabricatorCore core;
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
-
-        /// <summary>
-        /// Message handler for fabricator.
-        /// </summary>
-        /// <value>Message handler.</value>
-        public MessageEventHandler MessageHandler
-        {
-            get { return this.Message; }
-        }
 
         /// <summary>
         /// Gets the string name of this extension.

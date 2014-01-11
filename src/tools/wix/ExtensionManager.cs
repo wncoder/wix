@@ -18,6 +18,7 @@ namespace WixToolset
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using WixToolset.Data;
 
     public class ExtensionManager
     {

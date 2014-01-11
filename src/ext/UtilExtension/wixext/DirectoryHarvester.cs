@@ -15,7 +15,7 @@ namespace WixToolset.Extensions
 {
     using System;
     using System.IO;
-
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     /// <summary>

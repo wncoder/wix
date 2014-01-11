@@ -9,6 +9,8 @@
 
 namespace WixToolset.Extensibility
 {
+    using WixToolset.Data;
+
     /// <summary>
     /// Core facilities for inspector extensions.
     /// </summary>

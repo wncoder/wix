@@ -16,6 +16,8 @@ namespace WixToolset.Extensions
     using System;
     using System.Collections.Generic;
     using System.Xml.Linq;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
 
     /// <summary>

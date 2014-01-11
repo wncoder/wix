@@ -19,6 +19,7 @@ namespace WixToolset
     using System.Collections.Specialized;
     using System.Globalization;
     using System.Xml;
+    using WixToolset.Data;
 
     /// <summary>
     /// Object that connects things (components/modules) to features.

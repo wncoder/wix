@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset COM+ Extension")]
 [assembly: AssemblyDescription("WiX Toolset COM+ Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

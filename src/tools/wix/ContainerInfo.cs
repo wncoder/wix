@@ -16,6 +16,7 @@ namespace WixToolset
     using System;
     using System.IO;
     using System.Collections.Generic;
+    using WixToolset.Data;
 
     /// <summary>
     /// Container info for binding Bundles.

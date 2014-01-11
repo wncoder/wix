@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset MSMQ Extension")]
 [assembly: AssemblyDescription("WiX Toolset MSMQ Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

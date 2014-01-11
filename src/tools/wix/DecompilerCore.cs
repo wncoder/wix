@@ -16,8 +16,9 @@ namespace WixToolset
 {
     using System;
     using System.Collections;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
-    using WixToolset.Serialize;
+    using Wix = WixToolset.Serialize;
 
     /// <summary>
     /// The base of the decompiler. Holds some variables used by the decompiler and extensions,
@@ -26,16 +27,16 @@ namespace WixToolset
     internal class DecompilerCore : IDecompilerCore
     {
         private Hashtable elements;
-        private IParentElement rootElement;
+        private Wix.IParentElement rootElement;
         private bool showPedanticMessages;
-        private UI uiElement;
+        private Wix.UI uiElement;
 
         /// <summary>
         /// Instantiate a new decompiler core.
         /// </summary>
         /// <param name="rootElement">The root element of the decompiled database.</param>
         /// <param name="messageHandler">The message handler.</param>
-        internal DecompilerCore(IParentElement rootElement)
+        internal DecompilerCore(Wix.IParentElement rootElement)
         {
             this.elements = new Hashtable();
             this.rootElement = rootElement;
@@ -54,7 +55,7 @@ namespace WixToolset
         /// Gets the root element of the decompiled output.
         /// </summary>
         /// <value>The root element of the decompiled output.</value>
-        public IParentElement RootElement
+        public Wix.IParentElement RootElement
         {
             get { return this.rootElement; }
         }
@@ -73,13 +74,13 @@ namespace WixToolset
         /// Gets the UI element.
         /// </summary>
         /// <value>The UI element.</value>
-        public UI UIElement
+        public Wix.UI UIElement
         {
             get
             {
                 if (null == this.uiElement)
                 {
-                    this.uiElement = new UI();
+                    this.uiElement = new Wix.UI();
                     this.rootElement.AddChild(this.uiElement);
                 }
 
@@ -116,7 +117,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="row">The row corresponding to the element.</param>
         /// <returns>The indexed element.</returns>
-        public ISchemaElement GetIndexedElement(Row row)
+        public Wix.ISchemaElement GetIndexedElement(Row row)
         {
             return this.GetIndexedElement(row.TableDefinition.Name, row.GetPrimaryKey(DecompilerConstants.PrimaryKeyDelimiter));
         }
@@ -127,9 +128,9 @@ namespace WixToolset
         /// <param name="table">The table corresponding to the element.</param>
         /// <param name="primaryKey">The primary key corresponding to the element.</param>
         /// <returns>The indexed element.</returns>
-        public ISchemaElement GetIndexedElement(string table, params string[] primaryKey)
+        public Wix.ISchemaElement GetIndexedElement(string table, params string[] primaryKey)
         {
-            return (ISchemaElement)this.elements[String.Concat(table, ':', String.Join(DecompilerConstants.PrimaryKeyDelimiterString, primaryKey))];
+            return (Wix.ISchemaElement)this.elements[String.Concat(table, ':', String.Join(DecompilerConstants.PrimaryKeyDelimiterString, primaryKey))];
         }
 
         /// <summary>
@@ -137,7 +138,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="row">The row corresponding to the element.</param>
         /// <param name="element">The element to index.</param>
-        public void IndexElement(Row row, ISchemaElement element)
+        public void IndexElement(Row row, Wix.ISchemaElement element)
         {
             this.elements.Add(String.Concat(row.TableDefinition.Name, ':', row.GetPrimaryKey(DecompilerConstants.PrimaryKeyDelimiter)), element);
         }

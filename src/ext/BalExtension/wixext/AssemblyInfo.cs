@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset Bootstrapper Application Layer Extension")]
 [assembly: AssemblyDescription("WiX Toolset Bootstrapper Application Layer Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

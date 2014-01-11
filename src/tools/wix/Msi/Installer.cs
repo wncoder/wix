@@ -282,9 +282,6 @@ namespace WixToolset.Msi
     /// </summary>
     internal sealed class Installer
     {
-        private static TableDefinitionCollection tableDefinitions;
-        private static WixActionRowCollection standardActions;
-
         /// <summary>
         /// Protect the constructor.
         /// </summary>
@@ -354,71 +351,6 @@ namespace WixToolset.Msi
 
             version = versionBuffer.ToString();
             language = languageBuffer.ToString();
-        }
-
-        /// <summary>
-        /// Gets the table definitions stored in this assembly.
-        /// </summary>
-        /// <returns>Table definition collection for tables stored in this assembly.</returns>
-        internal static TableDefinitionCollection GetTableDefinitions()
-        {
-            if (null == tableDefinitions)
-            {
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                XmlReader tableDefinitionsReader = null;
-
-                try
-                {
-                    tableDefinitionsReader = new XmlTextReader(assembly.GetManifestResourceStream("WixToolset.Data.tables.xml"));
-
-#if DEBUG
-                    tableDefinitions = TableDefinitionCollection.Load(tableDefinitionsReader, false);
-#else
-                    tableDefinitions = TableDefinitionCollection.Load(tableDefinitionsReader, true);
-#endif
-                }
-                finally
-                {
-                    if (null != tableDefinitionsReader)
-                    {
-                        tableDefinitionsReader.Close();
-                    }
-                }
-            }
-
-            return tableDefinitions.Clone();
-        }
-
-        /// <summary>
-        /// Gets the standard actions stored in this assembly.
-        /// </summary>
-        /// <returns>Collection of standard actions in this assembly.</returns>
-        internal static WixActionRowCollection GetStandardActions()
-        {
-            if (null == standardActions)
-            {
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                XmlReader actionDefinitionsReader = null;
-
-                try
-                {
-                    actionDefinitionsReader = new XmlTextReader(assembly.GetManifestResourceStream("WixToolset.Data.actions.xml"));
-#if DEBUG
-                    standardActions = WixActionRowCollection.Load(actionDefinitionsReader, false);
-#else
-                    standardActions = WixActionRowCollection.Load(actionDefinitionsReader, true);
-#endif
-                }
-                finally
-                {
-                    if (null != actionDefinitionsReader)
-                    {
-                        actionDefinitionsReader.Close();
-                    }
-                }
-            }
-
-            return standardActions;
         }
 
         /// <summary>

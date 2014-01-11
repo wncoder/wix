@@ -13,6 +13,7 @@ namespace WixToolset.Extensions
     using System.Collections;
     using System.Diagnostics;
     using System.Globalization;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using Cfg = WixToolset.Extensions.Serialize.Cfg;
     using Wix = WixToolset.Serialize;

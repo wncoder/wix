@@ -21,6 +21,8 @@ namespace WixToolset
     using System.IO;
     using System.Xml;
     using System.Xml.XPath;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// Parses localization files and localizes database values.
@@ -40,11 +42,6 @@ namespace WixToolset
             this.variables = new Hashtable();
             this.localizedControls = new Dictionary<string, LocalizedControl>();
         }
-
-        /// <summary>
-        /// Event for messages.
-        /// </summary>
-        public event MessageEventHandler Message;
 
         /// <summary>
         /// Gets the codepage.
@@ -127,16 +124,7 @@ namespace WixToolset
         /// <param name="mea">Message event arguments.</param>
         private void OnMessage(MessageEventArgs mea)
         {
-            WixErrorEventArgs errorEventArgs = mea as WixErrorEventArgs;
-
-            if (null != this.Message)
-            {
-                this.Message(this, mea);
-            }
-            else if (null != errorEventArgs)
-            {
-                throw new WixException(errorEventArgs);
-            }
+            Messaging.Instance.OnMessage(mea);
         }
     }
 }

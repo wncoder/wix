@@ -13,6 +13,7 @@ namespace WixToolset.Tools
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

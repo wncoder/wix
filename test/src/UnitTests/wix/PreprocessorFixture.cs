@@ -18,6 +18,7 @@ namespace WixTest.WixUnitTest
     using System.Linq;
     using System.Xml.Linq;
     using WixToolset;
+    using WixToolset.Data;
     using Xunit;
 
     public class PreprocessorFixture

@@ -13,6 +13,7 @@ namespace WixToolset.Extensibility
     using System.IO;
     using System.Reflection;
     using System.Xml;
+    using WixToolset.Data;
 
     public abstract class ExtensionData : IExtensionData
     {
@@ -55,12 +56,11 @@ namespace WixToolset.Extensibility
         {
             using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
             {
-                UriBuilder uriBuilder = new UriBuilder();
+                UriBuilder uriBuilder = new UriBuilder(assembly.CodeBase);
                 uriBuilder.Scheme = "embeddedresource";
-                uriBuilder.Path = assembly.Location;
                 uriBuilder.Fragment = resourceName;
 
-                return Library.Load(resourceStream, uriBuilder.Uri, tableDefinitions, false, true);
+                return Library.Load(resourceStream, uriBuilder.Uri, tableDefinitions, false);
             }
         }
 
@@ -75,7 +75,7 @@ namespace WixToolset.Extensibility
             using (Stream resourceStream = assembly.GetManifestResourceStream(resourceName))
             using (XmlReader reader = XmlReader.Create(resourceStream))
             {
-                return TableDefinitionCollection.Load(reader, false);
+                return TableDefinitionCollection.Load(reader);
             }
         }
     }

@@ -17,6 +17,7 @@ namespace WixToolset.Extensions
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using WixToolset;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Extensions.Serialize.Dependency;
     using Dependency = WixToolset.Extensions.Serialize.Dependency;

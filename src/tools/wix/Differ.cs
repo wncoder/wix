@@ -17,6 +17,8 @@ namespace WixToolset
     using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
 
@@ -319,7 +321,7 @@ namespace WixToolset
                                 ObjectField targetObjectField = (ObjectField)targetRow.Fields[i];
                                 ObjectField updatedObjectField = (ObjectField)updatedRow.Fields[i];
 
-                                updatedObjectField.PreviousCabinetFileId = targetObjectField.CabinetFileId;
+                                updatedObjectField.PreviousEmbeddedFileIndex = targetObjectField.EmbeddedFileIndex;
                                 updatedObjectField.PreviousBaseUri = targetObjectField.BaseUri;
 
                                 // always keep a copy of the previous data even if they are identical

@@ -22,6 +22,7 @@ namespace WixToolset.Tools
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Xml;
+    using WixToolset.Data;
     using WixToolset.Msi;
     using WixToolset.Extensibility;
 
@@ -269,7 +270,7 @@ namespace WixToolset.Tools
                 Output transform;
                 if (1 == this.inputFiles.Count)
                 {
-                    transform = Output.Load(this.inputFiles[0], false, false);
+                    transform = Output.Load(this.inputFiles[0], false);
                     if (OutputType.Transform != transform.Type)
                     {
                         Messaging.Instance.OnMessage(WixErrors.InvalidWixTransform(this.inputFiles[0]));
@@ -286,23 +287,23 @@ namespace WixToolset.Tools
                         // load the target database
                         if (String.Equals(Path.GetExtension(inputFiles[0]), wixPdbExtension, StringComparison.OrdinalIgnoreCase))
                         {
-                            Pdb targetPdb = Pdb.Load(this.inputFiles[0], false, false);
+                            Pdb targetPdb = Pdb.Load(this.inputFiles[0], false);
                             targetOutput = targetPdb.Output;
                         }
                         else
                         {
-                            targetOutput = Output.Load(this.inputFiles[0], false, false);
+                            targetOutput = Output.Load(this.inputFiles[0], false);
                         }
 
                         // load the updated database
                         if (String.Equals(Path.GetExtension(inputFiles[1]), wixPdbExtension, StringComparison.OrdinalIgnoreCase))
                         {
-                            Pdb updatedPdb = Pdb.Load(this.inputFiles[1], false, false);
+                            Pdb updatedPdb = Pdb.Load(this.inputFiles[1], false);
                             updatedOutput = updatedPdb.Output;
                         }
                         else
                         {
-                            updatedOutput = Output.Load(this.inputFiles[1], false, false);
+                            updatedOutput = Output.Load(this.inputFiles[1], false);
                         }
 
                         this.xmlOutput = true;
@@ -332,7 +333,7 @@ namespace WixToolset.Tools
                     // With xml inputs, many funtions of the binder have not been performed on the inputs (ie. file sequencing). This results in bad IDT files which cannot be put in a transform.
                     if (this.xmlOutput)
                     {
-                        transform.Save(this.outputFile, null, null, tempFileCollection.BasePath);
+                        transform.Save(this.outputFile, null);
                     }
                     else
                     {

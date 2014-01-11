@@ -21,6 +21,7 @@ namespace WixToolset.Extensions
     using System.Xml;
     using System.Xml.Linq;
     using System.Xml.Schema;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

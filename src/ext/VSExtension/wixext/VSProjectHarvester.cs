@@ -33,6 +33,7 @@ namespace WixToolset.Extensions
     ////using Microsoft.Build.BuildEngine;
 
     using Wix = WixToolset.Serialize;
+    using WixToolset.Data;
 
     /// <summary>
     /// Harvest WiX authoring for the outputs of a VS project.

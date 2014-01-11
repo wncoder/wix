@@ -166,7 +166,7 @@ namespace WixToolset.Tools
                 // try loading as an object file
                 try
                 {
-                    Intermediate intermediate = Intermediate.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck, true);
+                    Intermediate intermediate = Intermediate.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
                     sections.AddRange(intermediate.Sections);
                     continue; // next file
                 }
@@ -176,7 +176,7 @@ namespace WixToolset.Tools
                 }
 
                 // try loading as a library file
-                Library loadedLibrary = Library.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck, true);
+                Library loadedLibrary = Library.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
                 sections.AddRange(loadedLibrary.Sections);
             }
 

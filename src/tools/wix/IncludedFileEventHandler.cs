@@ -14,7 +14,7 @@
 namespace WixToolset
 {
     using System;
-    using System.Text;
+    using WixToolset.Data;
 
     /// <summary>
     /// Included file event handler delegate.

@@ -14,6 +14,7 @@
 namespace WixToolset
 {
     using System;
+    using WixToolset.Data;
 
     /// <summary>
     /// Utility class for Burn MsiProperty information.

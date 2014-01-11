@@ -20,6 +20,8 @@ namespace WixToolset
     using System.Globalization;
     using System.Text;
     using System.Text.RegularExpressions;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// WiX variable resolver.

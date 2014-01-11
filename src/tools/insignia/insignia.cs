@@ -23,6 +23,7 @@ namespace WixToolset.Tools
     using System.IO;
     using System.Reflection;
     using System.Runtime.InteropServices;
+    using WixToolset.Data;
 
     /// <summary>
     /// The main entry point for Insignia.

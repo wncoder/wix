@@ -14,5 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("WiX Toolset DIFxApp Extension")]
 [assembly: AssemblyDescription("WiX Toolset Toolset Driver Install Frameworks for Applications Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]

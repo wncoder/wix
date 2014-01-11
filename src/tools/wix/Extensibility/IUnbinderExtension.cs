@@ -10,6 +10,7 @@
 namespace WixToolset.Extensibility
 {
     using System;
+    using WixToolset.Data;
 
     /// <summary>
     /// Base class for creating an unbinder extension.

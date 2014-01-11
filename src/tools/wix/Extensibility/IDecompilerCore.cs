@@ -10,6 +10,7 @@
 namespace WixToolset.Extensibility
 {
     using System;
+    using WixToolset.Data;
     using Wix = WixToolset.Serialize;
 
     public interface IDecompilerCore : IMessageHandler

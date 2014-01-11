@@ -20,6 +20,8 @@ namespace WixToolset
     using System.Globalization;
     using System.IO;
     using System.Xml;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;

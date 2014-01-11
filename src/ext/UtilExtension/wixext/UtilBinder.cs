@@ -14,10 +14,9 @@
 namespace WixToolset.Extensions
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Text;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
 
     /// <summary>

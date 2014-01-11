@@ -15,6 +15,7 @@ namespace WixToolset
 {
     using System;
     using System.Xml;
+    using WixToolset.Data;
 
     /// <summary>
     /// Utility class for all WixFileSearches (file and directory searches).

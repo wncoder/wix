@@ -9,6 +9,8 @@
 
 namespace WixToolset.Extensibility
 {
+    using WixToolset.Data;
+
     /// <summary>
     /// Base class for creating a decompiler extension.
     /// </summary>

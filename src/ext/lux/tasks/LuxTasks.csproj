@@ -37,6 +37,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Microsoft.Build.Utilities" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\..\..\tools\WixTasks\WixTasks.csproj" />
     <ProjectReference Include="..\wixext\WixLuxExtension.csproj" />

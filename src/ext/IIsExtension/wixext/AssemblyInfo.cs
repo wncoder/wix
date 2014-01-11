@@ -16,6 +16,5 @@ using WixToolset.Tools;
 [assembly: AssemblyTitle("WiX Toolset IIS Extension")]
 [assembly: AssemblyDescription("WiX Toolset Internet Information Services Extension")]
 [assembly: AssemblyCulture("")]
-[assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
 [assembly: AssemblyDefaultHeatExtension(typeof(IIsHeatExtension))]

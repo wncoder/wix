@@ -9,6 +9,7 @@
 
 namespace WixToolset
 {
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
 
@@ -22,7 +23,7 @@ namespace WixToolset
         /// </summary>
         internal BinderCore()
         {
-            this.TableDefinitions = Installer.GetTableDefinitions();
+            this.TableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
         }
 
         public IBinderFileManagerCore FileManagerCore { get; set; }

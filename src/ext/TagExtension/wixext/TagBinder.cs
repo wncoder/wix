@@ -18,6 +18,8 @@ namespace WixToolset.Extensions
     using System.IO;
     using System.Text;
     using System.Xml;
+    using WixToolset.Data;
+    using WixToolset.Data.Rows;
     using WixToolset.Dtf.WindowsInstaller;
     using WixToolset.Extensibility;
 

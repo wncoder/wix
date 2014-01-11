@@ -141,7 +141,7 @@ namespace WixToolset.Tools
         /// </summary>
         public void ExtractBinaryWixlibFiles()
         {
-            Dictionary<string, string> mapCabinetFileIdToFileName = Retina.GetCabinetFileIdToFileNameMap(this.inputFile);
+            Dictionary<int, string> mapCabinetFileIdToFileName = Retina.GetCabinetFileIdToFileNameMap(this.inputFile);
             if (0 == mapCabinetFileIdToFileName.Count)
             {
                 Messaging.Instance.OnMessage(WixWarnings.NotABinaryWixlib(this.inputFile));
@@ -158,9 +158,9 @@ namespace WixToolset.Tools
             Dictionary<string, bool> uniqueFiles = new Dictionary<string, bool>();
 
             // rename those files to what was authored
-            foreach (KeyValuePair<string, string> kvp in mapCabinetFileIdToFileName)
+            foreach (KeyValuePair<int, string> kvp in mapCabinetFileIdToFileName)
             {
-                string cabinetFileId = Path.Combine(Path.GetDirectoryName(this.inputFile), kvp.Key);
+                string cabinetFileId = Path.Combine(Path.GetDirectoryName(this.inputFile), kvp.Key.ToString());
                 string fileName = Path.Combine(Path.GetDirectoryName(this.inputFile), kvp.Value);
 
                 uniqueFiles[fileName] = true;
@@ -192,7 +192,7 @@ namespace WixToolset.Tools
             }
 
             Librarian librarian = new Librarian();
-            Library library = Library.Load(this.outputFile, librarian.TableDefinitions, false, false);
+            Library library = Library.Load(this.outputFile, librarian.TableDefinitions, false);
             LibraryBinaryFileResolver resolver = new LibraryBinaryFileResolver() { FileManager = new BlastBinderFileManager(this.outputFile) };
             library.Save(this.outputFile, resolver);
         }
@@ -202,12 +202,12 @@ namespace WixToolset.Tools
         /// </summary>
         /// <param name="path">Path to Wixlib.</param>
         /// <returns>Returns the map.</returns>
-        private static Dictionary<string, string> GetCabinetFileIdToFileNameMap(string path)
+        private static Dictionary<int, string> GetCabinetFileIdToFileNameMap(string path)
         {
-            Dictionary<string, string> mapCabinetFileIdToFileName = new Dictionary<string, string>();
+            Dictionary<int, string> mapCabinetFileIdToFileName = new Dictionary<int, string>();
             BlastBinderFileManager binderFileManager = new BlastBinderFileManager(path);
             Librarian librarian = new Librarian();
-            Library library = Library.Load(path, librarian.TableDefinitions, false, false);
+            Library library = Library.Load(path, librarian.TableDefinitions, false);
 
             foreach (Section section in library.Sections)
             {
@@ -222,7 +222,7 @@ namespace WixToolset.Tools
                             if (null != objectField && null != objectField.Data)
                             {
                                 string filePath = binderFileManager.ResolveFile(objectField.Data as string, "source", row.SourceLineNumbers, BindStage.Normal);
-                                mapCabinetFileIdToFileName[objectField.CabinetFileId] = filePath;
+                                mapCabinetFileIdToFileName[objectField.EmbeddedFileIndex.Value] = filePath;
                             }
                         }
                     }

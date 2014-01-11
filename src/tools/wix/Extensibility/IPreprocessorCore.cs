@@ -9,6 +9,8 @@
 
 namespace WixToolset.Extensibility
 {
+    using WixToolset.Data;
+
     public interface IPreprocessorCore : IMessageHandler
     {
         /// <summary>

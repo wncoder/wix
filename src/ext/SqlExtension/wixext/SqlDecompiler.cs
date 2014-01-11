@@ -10,6 +10,7 @@
 namespace WixToolset.Extensions
 {
     using System.Collections;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using Sql = WixToolset.Extensions.Serialize.Sql;
     using Wix = WixToolset.Serialize;

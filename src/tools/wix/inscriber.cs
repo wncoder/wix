@@ -22,6 +22,7 @@ namespace WixToolset
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Text;
+    using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Msi;
 
@@ -35,7 +36,7 @@ namespace WixToolset
 
         public Inscriber()
         {
-            this.tableDefinitions = Installer.GetTableDefinitions();
+            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
         }
 
         /// <summary>

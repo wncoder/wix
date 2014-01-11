@@ -26,6 +26,7 @@
     </EmbeddedFlattenedResource>
     <MsgGenSource Include="Data\messages.xml">
       <ResourcesLogicalName>$(RootNamespace).Data.Messages.resources</ResourcesLogicalName>
+      <SubType>Designer</SubType>
     </MsgGenSource>
     <EmbeddedFlattenedResource Include="Xsd\vs.xsd">
       <LogicalName>$(RootNamespace).Xsd.vs.xsd</LogicalName>
@@ -44,14 +45,12 @@
     <Reference Include="Microsoft.Build.Utilities" />
     <Reference Include="System" />
     <Reference Include="System.Xml" />
-    <ProjectReference Include="..\..\..\tools\wix\Wix.csproj">
-      <Project>{9E03A94C-C70E-45C6-A269-E737BBD8B319}</Project>
-      <Name>Wix</Name>
-    </ProjectReference>
+    <Reference Include="System.Xml.Linq" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\VSExtension.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>
