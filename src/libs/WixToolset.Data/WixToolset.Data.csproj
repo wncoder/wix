@@ -40,6 +40,7 @@
     <Compile Include="Msi\MsiInterop.cs" />
     <Compile Include="ObjectField.cs" />
     <Compile Include="Output.cs" />
+    <Compile Include="OutputType.cs" />
     <Compile Include="PackagingType.cs" />
     <Compile Include="Pdb.cs" />
     <Compile Include="Platform.cs" />
@@ -73,11 +74,10 @@
     <Compile Include="Rows\WixUpdateRegistrationRow.cs" />
     <Compile Include="Rows\WixVariableRow.cs" />
     <Compile Include="Section.cs" />
-    <Compile Include="SectionCollection.cs" />
+    <Compile Include="SectionType.cs" />
     <Compile Include="SourceLineNumber.cs" />
     <Compile Include="SubStorage.cs" />
     <Compile Include="Symbol.cs" />
-    <Compile Include="SymbolCollection.cs" />
     <Compile Include="Table.cs" />
     <Compile Include="TableCollection.cs" />
     <Compile Include="TableDefinition.cs" />

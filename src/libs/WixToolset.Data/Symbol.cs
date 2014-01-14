@@ -10,12 +10,15 @@
 namespace WixToolset.Data
 {
     using System;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Symbol representing a single row in a database.
     /// </summary>
     public sealed class Symbol
     {
+        private HashSet<Symbol> duplicates;
+
         /// <summary>
         /// Creates a symbol for a row.
         /// </summary>
@@ -23,8 +26,7 @@ namespace WixToolset.Data
         public Symbol(Row row)
         {
             this.Row = row;
-            this.Name = String.Concat(this.Row.TableDefinition.Name, ":", this.Row.GetPrimaryKey('/'));
-            this.Section = (null == this.Row.Table) ? null : this.Row.Table.Section;
+            this.Name = String.Concat(this.Row.TableDefinition.Name, ":", this.Row.GetPrimaryKey());
         }
 
         /// <summary>
@@ -34,15 +36,34 @@ namespace WixToolset.Data
         public string Name { get; private set; }
 
         /// <summary>
-        /// Gets the section for the symbol.
-        /// </summary>
-        /// <value>Section for the symbol.</value>
-        public Section Section { get; private set; }
-
-        /// <summary>
         /// Gets the row for this symbol.
         /// </summary>
         /// <value>Row for this symbol.</value>
         public Row Row { get; private set; }
+
+        /// <summary>
+        /// Gets the section for the symbol.
+        /// </summary>
+        /// <value>Section for the symbol.</value>
+        public Section Section { get { return (null == this.Row.Table) ? null : this.Row.Table.Section; } }
+
+        /// <summary>
+        /// Gets any duplicates of this symbol when loaded or null if there are no duplicates.
+        /// </summary>
+        public IEnumerable<Symbol> Duplicates { get { return this.duplicates; } }
+
+        /// <summary>
+        /// Adds a duplicate symbol.
+        /// </summary>
+        /// <param name="symbol">Symbol that is duplicative of this symbol.</param>
+        public void AddDuplicate(Symbol symbol)
+        {
+            if (null == this.duplicates)
+            {
+                this.duplicates = new HashSet<Symbol>();
+            }
+
+            this.duplicates.Add(symbol);
+        }
     }
 }

@@ -14,9 +14,9 @@
 namespace WixToolset.Data
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Xml;
-    using System.Xml.Schema;
 
     /// <summary>
     /// Container class for an intermediate object.
@@ -26,24 +26,19 @@ namespace WixToolset.Data
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixobj";
         private static readonly Version currentVersion = new Version("4.0.0.0");
 
-        private SectionCollection sections;
-
         /// <summary>
         /// Instantiate a new Intermediate.
         /// </summary>
         public Intermediate()
         {
-            this.sections = new SectionCollection();
+            this.Sections = new List<Section>();
         }
 
         /// <summary>
         /// Get the sections contained in this intermediate.
         /// </summary>
         /// <value>Sections contained in this intermediate.</value>
-        public SectionCollection Sections
-        {
-            get { return this.sections; }
-        }
+        public IList<Section> Sections { get; private set; }
 
         /// <summary>
         /// Loads an intermediate from a path on disk.
@@ -65,10 +60,6 @@ namespace WixToolset.Data
             catch (XmlException xe)
             {
                 throw new WixNotIntermediateException(WixDataErrors.InvalidXml(new SourceLineNumber(path), "object", xe.Message));
-            }
-            catch (XmlSchemaException xse)
-            {
-                throw new WixNotIntermediateException(WixDataErrors.SchemaValidationFailed(new SourceLineNumber(path), xse.Message, xse.LineNumber, xse.LinePosition));
             }
         }
 
@@ -152,7 +143,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "section":
-                                    intermediate.sections.Add(Section.Read(reader, tableDefinitions));
+                                    intermediate.Sections.Add(Section.Read(reader, tableDefinitions));
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixObject", reader.Name));
@@ -183,7 +174,7 @@ namespace WixToolset.Data
 
             writer.WriteAttributeString("version", currentVersion.ToString());
 
-            foreach (Section section in this.sections)
+            foreach (Section section in this.Sections)
             {
                 section.Write(writer);
             }

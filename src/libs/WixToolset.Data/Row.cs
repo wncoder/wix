@@ -14,7 +14,6 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
@@ -31,7 +30,6 @@ namespace WixToolset.Data
         private static long rowCount;
 
         private Field[] fields;
-        private Symbol symbol;
 
         /// <summary>
         /// Creates a row that belongs to a table.
@@ -77,7 +75,6 @@ namespace WixToolset.Data
             this.SectionId = source.SectionId;
             this.SourceLineNumbers = source.SourceLineNumbers;
             this.fields = source.fields;
-            this.symbol = source.symbol;
         }
 
         /// <summary>
@@ -119,23 +116,6 @@ namespace WixToolset.Data
         public Field[] Fields
         {
             get { return this.fields; }
-        }
-
-        /// <summary>
-        /// Gets the symbol that represents this row.
-        /// </summary>
-        /// <value>null if Row has no symbol colums, or the Symbol that represents this Row otherwise.</value>
-        public Symbol Symbol
-        {
-            get
-            {
-                if (this.TableDefinition.CreateSymbols && null == this.symbol)
-                {
-                    this.symbol = new Symbol(this);
-                }
-
-                return this.symbol;
-            }
         }
 
         /// <summary>
@@ -272,24 +252,6 @@ namespace WixToolset.Data
         /// <returns>A string representation of the Row.</returns>
         public override string ToString()
         {
-            //StringBuilder data = new StringBuilder();
-            //bool first = true;
-
-            //foreach (Field field in this.fields)
-            //{
-            //    if (!first)
-            //    {
-            //        data.Append('/');
-            //    }
-
-            //    if (null != field.Data)
-            //    {
-            //        data.Append(field.Data.ToString());
-            //    }
-
-            //    first = false;
-            //}
-
             return String.Join("/", (object[])this.fields);
         }
 

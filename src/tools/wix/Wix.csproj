@@ -81,14 +81,17 @@
     <Compile Include="ExtensionManager.cs" />
     <Compile Include="ExtractEmbeddedFiles.cs" />
     <Compile Include="FileTransfer.cs" />
+    <Compile Include="Link\FindEntrySectionAndLoadSymbolsCommand.cs" />
     <Compile Include="IfDefEventHandler.cs" />
     <Compile Include="Inscriber.cs" />
     <Compile Include="InspectorCore.cs" />
+    <Compile Include="Link\ReportDuplicateResolvedSymbolErrorsCommand.cs" />
     <Compile Include="Localizer.cs" />
     <Compile Include="Patch.cs" />
     <Compile Include="PatchAPI\PatchInterop.cs" />
     <Compile Include="PatchTransform.cs" />
     <Compile Include="ResolvedVariableEventHandler.cs" />
+    <Compile Include="Link\ResolveReferencesCommand.cs" />
     <Compile Include="Uuid.cs" />
     <Compile Include="Differ.cs" />
     <Compile Include="FabricatorCore.cs" />

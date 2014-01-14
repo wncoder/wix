@@ -158,7 +158,7 @@ namespace WixToolset.Tools
             }
 
             // Add the sections to the librarian
-            SectionCollection sections = new SectionCollection();
+            List<Section> sections = new List<Section>();
             foreach (string file in this.commandLine.Files)
             {
                 string inputFile = Path.GetFullPath(file);

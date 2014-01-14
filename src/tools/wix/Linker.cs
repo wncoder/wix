@@ -5,10 +5,6 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Linker core of the WiX toolset.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset
@@ -20,10 +16,12 @@ namespace WixToolset
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
     using WixToolset.Data;
     using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
+    using WixToolset.Link;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
 
@@ -124,38 +122,18 @@ namespace WixToolset
         /// <summary>
         /// Links a collection of sections into an output.
         /// </summary>
-        /// <param name="sections">The collection of sections to link together.</param>
-        /// <returns>Output object from the linking.</returns>
-        public Output Link(SectionCollection sections)
-        {
-            return this.Link(sections, null, OutputType.Unknown);
-        }
-
-        /// <summary>
-        /// Links a collection of sections into an output.
-        /// </summary>
-        /// <param name="sections">The collection of sections to link together.</param>
-        /// <param name="transforms">The collection of transforms to link as substorages.</param>
+        /// <param name="inputs">The collection of sections to link together.</param>
         /// <param name="expectedOutputType">Expected output type, based on output file extension provided to the linker.</param>
         /// <returns>Output object from the linking.</returns>
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "transforms")]
-        public Output Link(SectionCollection sections, ArrayList transforms, OutputType expectedOutputType)
+        public Output Link(IEnumerable<Section> inputs, OutputType expectedOutputType)
         {
             Output output = null;
+            List<Section> sections = new List<Section>(inputs);
 
             try
             {
-                SymbolCollection allSymbols;
-                Section entrySection;
                 bool containsModuleSubstitution = false;
                 bool containsModuleConfiguration = false;
-
-                StringCollection referencedSymbols = new StringCollection();
-                ArrayList unresolvedReferences = new ArrayList();
-
-                ConnectToFeatureCollection componentsToFeatures = new ConnectToFeatureCollection();
-                ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
-                ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
 
                 this.activeOutput = null;
 
@@ -211,31 +189,45 @@ namespace WixToolset
                     }
                 }
 
-                // first find the entry section and create the symbols hash for all the sections
-                sections.FindEntrySectionAndLoadSymbols(false, this, expectedOutputType, out entrySection, out allSymbols);
+                // First find the entry section and while processing all sections load all the symbols from all of the sections.
+                // sections.FindEntrySectionAndLoadSymbols(false, this, expectedOutputType, out entrySection, out allSymbols);
+                FindEntrySectionAndLoadSymbolsCommand find = new FindEntrySectionAndLoadSymbolsCommand(sections);
+                find.ExpectedOutputType = expectedOutputType;
 
-                // should have found an entry section by now
-                if (null == entrySection)
+                find.Execute();
+
+                // Must have found the entry section by now.
+                if (null == find.EntrySection)
                 {
                     throw new WixException(WixErrors.MissingEntrySection(expectedOutputType.ToString()));
                 }
 
-                // add the missing standard action symbols
+                IDictionary<string, Symbol> allSymbols = find.Symbols;
+
+                // Add the missing standard action symbols.
                 this.LoadStandardActionSymbols(allSymbols);
 
                 // now that we know where we're starting from, create the output object
                 output = new Output(null);
-                output.EntrySection = entrySection; // Note: this entry section will get added to the Output.Sections collection later
+                output.EntrySection = find.EntrySection; // Note: this entry section will get added to the Output.Sections collection later
                 if (null != this.localizer && -1 != this.localizer.Codepage)
                 {
                     output.Codepage = this.localizer.Codepage;
                 }
                 this.activeOutput = output;
 
-                // Resolve the symbol references to find the set of sections we
-                // care about for linking.  Of course, we start with the entry 
-                // section (that's how it got its name after all).
-                output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
+                // Resolve the symbol references to find the set of sections we care about for linking.
+                // Of course, we start with the entry section (that's how it got its name after all).
+                //output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
+                ResolveReferencesCommand resolve = new ResolveReferencesCommand(output.EntrySection, allSymbols);
+                resolve.BuildingMergeModule = (OutputType.Module == output.Type);
+
+                resolve.Execute();
+
+                foreach (Section section in resolve.ResolvedSections)
+                {
+                    output.Sections.Add(section);
+                }
 
                 // Flattening the complex references that participate in groups.
                 this.FlattenSectionsComplexReferences(output.Sections);
@@ -246,11 +238,15 @@ namespace WixToolset
                 }
 
                 // The hard part in linking is processing the complex references.
-                this.ProcessComplexReferences(output, output.Sections, referencedSymbols, componentsToFeatures, featuresToFeatures, modulesToFeatures);
-                for (int i = 0; i < unresolvedReferences.Count; ++i)
+                HashSet<string> referencedComponents = new HashSet<string>();
+                ConnectToFeatureCollection componentsToFeatures = new ConnectToFeatureCollection();
+                ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
+                ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
+                this.ProcessComplexReferences(output, output.Sections, referencedComponents, componentsToFeatures, featuresToFeatures, modulesToFeatures);
+
+                foreach (var unresolvedReference in resolve.UnresolvedReferences)
                 {
-                    Section.SimpleReferenceSection referenceSection = (Section.SimpleReferenceSection)unresolvedReferences[i];
-                    this.OnMessage(WixErrors.UnresolvedReference(referenceSection.WixSimpleReferenceRow.SourceLineNumbers, referenceSection.Section.Type.ToString(), referenceSection.Section.Id, referenceSection.WixSimpleReferenceRow.SymbolicName));
+                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.WixSimpleReferenceRow.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.WixSimpleReferenceRow.SymbolicName));
                 }
 
                 if (Messaging.Instance.EncounteredError)
@@ -258,47 +254,27 @@ namespace WixToolset
                     return null;
                 }
 
-                SymbolCollection unreferencedSymbols = output.Sections.GetOrphanedSymbols(referencedSymbols, this);
-
-                // Display a warning message for Components that were never referenced by a Feature.
-                foreach (Symbol symbol in unreferencedSymbols)
+                // Display an error message for Components that were not referenced by a Feature.
+                foreach (Symbol symbol in resolve.ReferencedSymbols.Where(s => "Component".Equals(s.Row.TableDefinition.Name, StringComparison.Ordinal)))
                 {
-                    if ("Component" == symbol.Row.Table.Name)
+                    if (!referencedComponents.Contains(symbol.Name))
                     {
                         this.OnMessage(WixErrors.OrphanedComponent(symbol.Row.SourceLineNumbers, (string)symbol.Row[0]));
                     }
                 }
 
-                Dictionary<string, List<Symbol>> duplicatedSymbols = output.Sections.GetDuplicateSymbols(this);
-
-                // Display a warning message for Components that were never referenced by a Feature.
-                foreach (List<Symbol> duplicatedSymbolList in duplicatedSymbols.Values)
-                {
-                    Symbol symbol = duplicatedSymbolList[0];
-
-                    // Certain tables allow duplicates because they allow overrides.
-                    if (symbol.Row.Table.Name != "WixAction" &&
-                        symbol.Row.Table.Name != "WixVariable")
-                    {
-                        this.OnMessage(WixErrors.DuplicateSymbol(symbol.Row.SourceLineNumbers, symbol.Name));
-
-                        for (int i = 1; i < duplicatedSymbolList.Count; i++)
-                        {
-                            Symbol duplicateSymbol = duplicatedSymbolList[i];
-                            this.OnMessage(WixErrors.DuplicateSymbol2(duplicateSymbol.Row.SourceLineNumbers));
-                        }
-                    }
-                }
+                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.SymbolsWithDuplicates, resolve.ResolvedSections);
+                reportDupes.Execute();
 
                 if (Messaging.Instance.EncounteredError)
                 {
                     return null;
                 }
 
-                if (null != this.UnreferencedSymbolsFile)
-                {
-                    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
-                }
+                //if (null != this.UnreferencedSymbolsFile)
+                //{
+                //    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
+                //}
 
                 // resolve the feature to feature connects
                 this.ResolveFeatureToFeatureConnects(featuresToFeatures, allSymbols);
@@ -1297,14 +1273,16 @@ namespace WixToolset
         /// Load the standard action symbols.
         /// </summary>
         /// <param name="allSymbols">Collection of symbols.</param>
-        private void LoadStandardActionSymbols(SymbolCollection allSymbols)
+        private void LoadStandardActionSymbols(IDictionary<string, Symbol> allSymbols)
         {
             foreach (WixActionRow actionRow in this.standardActions)
             {
-                // if the action's symbol has not already been defined (i.e. overriden by the user), add it now
-                if (!allSymbols.Contains(actionRow.Symbol.Name))
+                Symbol actionSymbol = new Symbol(actionRow);
+
+                // If the action's symbol has not already been defined (i.e. overriden by the user), add it now.
+                if (!allSymbols.ContainsKey(actionSymbol.Name))
                 {
-                    allSymbols.Add(actionRow.Symbol);
+                    allSymbols.Add(actionSymbol.Name, actionSymbol);
                 }
             }
         }
@@ -1314,17 +1292,11 @@ namespace WixToolset
         /// </summary>
         /// <param name="output">Active output to add sections to.</param>
         /// <param name="sections">Sections that are referenced during the link process.</param>
-        /// <param name="referencedSymbols">Collection of all symbols referenced during linking.</param>
+        /// <param name="referencedComponents">Collection of all components referenced by complex reference.</param>
         /// <param name="componentsToFeatures">Component to feature complex references.</param>
         /// <param name="featuresToFeatures">Feature to feature complex references.</param>
         /// <param name="modulesToFeatures">Module to feature complex references.</param>
-        private void ProcessComplexReferences(
-            Output output,
-            SectionCollection sections,
-            StringCollection referencedSymbols,
-            ConnectToFeatureCollection componentsToFeatures,
-            ConnectToFeatureCollection featuresToFeatures,
-            ConnectToFeatureCollection modulesToFeatures)
+        private void ProcessComplexReferences(Output output, IEnumerable<Section> sections, ISet<string> referencedComponents, ConnectToFeatureCollection componentsToFeatures, ConnectToFeatureCollection featuresToFeatures, ConnectToFeatureCollection modulesToFeatures)
         {
             Hashtable componentsToModules = new Hashtable();
 
@@ -1379,10 +1351,7 @@ namespace WixToolset
 
                                         // index the component for finding orphaned records
                                         string symbolName = String.Concat("Component:", wixComplexReferenceRow.ChildId);
-                                        if (!referencedSymbols.Contains(symbolName))
-                                        {
-                                            referencedSymbols.Add(symbolName);
-                                        }
+                                        referencedComponents.Add(symbolName);
 
                                         break;
 
@@ -1455,10 +1424,7 @@ namespace WixToolset
 
                                         // index the component for finding orphaned records
                                         string componentSymbolName = String.Concat("Component:", wixComplexReferenceRow.ChildId);
-                                        if (!referencedSymbols.Contains(componentSymbolName))
-                                        {
-                                            referencedSymbols.Add(componentSymbolName);
-                                        }
+                                        referencedComponents.Add(componentSymbolName);
 
                                         break;
 
@@ -1511,7 +1477,7 @@ namespace WixToolset
         /// Flattens all complex references in all sections in the collection.
         /// </summary>
         /// <param name="sections">Sections that are referenced during the link process.</param>
-        private void FlattenSectionsComplexReferences(SectionCollection sections)
+        private void FlattenSectionsComplexReferences(IEnumerable<Section> sections)
         {
             Hashtable parentGroups = new Hashtable();
             Hashtable parentGroupsSections = new Hashtable();
@@ -1637,12 +1603,12 @@ namespace WixToolset
 
         private string CombineTypeAndId(ComplexReferenceParentType type, string id)
         {
-            return String.Format("{0}:{1}", type.ToString(), id);
+            return String.Concat(type.ToString(), ":", id);
         }
 
         private string CombineTypeAndId(ComplexReferenceChildType type, string id)
         {
-            return String.Format("{0}:{1}", type.ToString(), id);
+            return String.Concat(type.ToString(), ":", id);
         }
 
         /// <summary>
@@ -1819,17 +1785,16 @@ namespace WixToolset
         /// </summary>
         /// <param name="featuresToFeatures">Feature to feature complex references.</param>
         /// <param name="allSymbols">All symbols loaded from the sections.</param>
-        private void ResolveFeatureToFeatureConnects(
-            ConnectToFeatureCollection featuresToFeatures,
-            SymbolCollection allSymbols)
+        private void ResolveFeatureToFeatureConnects(ConnectToFeatureCollection featuresToFeatures, IDictionary<string, Symbol> allSymbols)
         {
             foreach (ConnectToFeature connection in featuresToFeatures)
             {
                 WixSimpleReferenceRow wixSimpleReferenceRow = new WixSimpleReferenceRow(null, this.tableDefinitions["WixSimpleReference"]);
                 wixSimpleReferenceRow.TableName = "Feature";
                 wixSimpleReferenceRow.PrimaryKeys = connection.ChildId;
-                Symbol symbol = allSymbols.GetSymbolForSimpleReference(wixSimpleReferenceRow, this);
-                if (null == symbol)
+
+                Symbol symbol;
+                if (!allSymbols.TryGetValue(wixSimpleReferenceRow.SymbolicName, out symbol))
                 {
                     continue;
                 }

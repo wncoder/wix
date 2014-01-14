@@ -515,41 +515,10 @@ namespace WixToolset
         /// <returns>New row.</returns>
         internal Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Section section)
         {
-            if (null == section)
-            {
-                throw new ArgumentNullException("section");
-            }
-
             TableDefinition tableDefinition = this.tableDefinitions[tableName];
             Table table = section.Tables.EnsureTable(section, tableDefinition);
 
             return table.CreateRow(sourceLineNumbers);
-        }
-
-        /// <summary>
-        /// Creates a WixVariable row in the active section.
-        /// </summary>
-        /// <param name="sourceLineNumbers">Source and line number of current row.</param>
-        public void XCreateWixVariableRow(SourceLineNumber sourceLineNumbers, string id, string value, bool overridable)
-        {
-            WixVariableRow wixVariableRow = (WixVariableRow)this.CreateRow(sourceLineNumbers, "WixVariable");
-            wixVariableRow.Id = id;
-            wixVariableRow.Value = value;
-            wixVariableRow.Overridable = overridable;
-        }
-
-        /// <summary>
-        /// Creates a (bundle) Variable row in the active section.
-        /// </summary>
-        /// <param name="sourceLineNumbers">Source and line number of current row.</param>
-        public void XCreateVariableRow(SourceLineNumber sourceLineNumbers, string name, string value, string type, bool hidden, bool persisted)
-        {
-            VariableRow row = (VariableRow)this.CreateRow(sourceLineNumbers, "Variable");
-            row.Id = name;
-            row.Value = value;
-            row.Type = type;
-            row.Hidden = hidden;
-            row.Persisted = persisted;
         }
 
         /// <summary>
@@ -1485,49 +1454,11 @@ namespace WixToolset
         /// </summary>
         /// <param name="parentElement">The parent element.</param>
         /// <param name="childElement">The unexpected child element.</param>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        public void UnexpectedElement(XmlNode parentElement, XmlNode childElement)
-        {
-            SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(childElement);
-
-            this.OnMessage(WixErrors.UnexpectedElement(sourceLineNumbers, parentElement.Name, childElement.Name));
-        }
-
         public void UnexpectedElement(XElement parentElement, XElement childElement)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(childElement);
 
             this.OnMessage(WixErrors.UnexpectedElement(sourceLineNumbers, parentElement.Name.LocalName, childElement.Name.LocalName));
-        }
-
-        /// <summary>
-        /// Display an unsupported extension attribute error.
-        /// </summary>
-        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
-        /// <param name="extensionAttribute">The extension attribute.</param>
-        public void UnsupportedExtensionAttribute(SourceLineNumber sourceLineNumbers, XAttribute extensionAttribute)
-        {
-            Common.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute, this.OnMessage);
-        }
-
-        /// <summary>
-        /// Display an unsupported extension element error.
-        /// </summary>
-        /// <param name="parentElement">The parent element.</param>
-        /// <param name="extensionElement">The extension element.</param>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        public void UnsupportedExtensionElement(XmlNode parentElement, XmlNode extensionElement)
-        {
-            SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(extensionElement);
-
-            this.OnMessage(WixErrors.UnsupportedExtensionElement(sourceLineNumbers, parentElement.Name, extensionElement.Name));
-        }
-
-        public void UnsupportedExtensionElement(XElement parentElement, XElement extensionElement)
-        {
-            SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(extensionElement);
-
-            this.OnMessage(WixErrors.UnsupportedExtensionElement(sourceLineNumbers, parentElement.Name.LocalName, extensionElement.Name.LocalName));
         }
 
         /// <summary>
