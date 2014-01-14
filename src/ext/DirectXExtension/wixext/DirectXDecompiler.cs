@@ -17,7 +17,7 @@ namespace WixToolset.Extensions
     using System.Text;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The WiX Toolset DirectX Extension.

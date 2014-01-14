@@ -29,7 +29,7 @@
       <LogicalName>$(RootNamespace).Xsd.complus.xsd</LogicalName>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\complus.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.ComPlus</Namespace>
     </XsdGenSource>
     <None Include="Xsd\complus.xsd">

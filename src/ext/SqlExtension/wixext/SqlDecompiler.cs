@@ -13,7 +13,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using Sql = WixToolset.Extensions.Serialize.Sql;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset SQL Server Extension.

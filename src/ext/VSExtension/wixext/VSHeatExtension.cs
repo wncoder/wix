@@ -19,7 +19,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using WixToolset.Tools;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Defines generated element types.

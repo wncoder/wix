@@ -51,7 +51,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\util.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Util</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\util.wixlib">

@@ -17,7 +17,7 @@ namespace WixToolset.Extensibility
     using WixToolset.Data;
     using WixToolset.Extensibilty;
     using WixToolset.Tools;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// A command line option.

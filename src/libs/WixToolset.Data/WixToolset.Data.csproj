@@ -75,6 +75,9 @@
     <Compile Include="Rows\WixVariableRow.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="SectionType.cs" />
+    <Compile Include="Serialize\CodeDomInterfaces.cs" />
+    <Compile Include="Serialize\CodeDomReader.cs" />
+    <Compile Include="Serialize\ElementCollection.cs" />
     <Compile Include="SourceLineNumber.cs" />
     <Compile Include="SubStorage.cs" />
     <Compile Include="Symbol.cs" />
@@ -118,6 +121,20 @@
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
       <SubType>Designer</SubType>
     </MsgGenSource>
+  </ItemGroup>
+  <ItemGroup>
+    <XsdGenSource Include="Xsd\wix.xsd">
+      <Namespace>WixToolset.Data.Serialize</Namespace>
+    </XsdGenSource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Xsd\actions.xsd" />
+    <None Include="Data\Xsd\libraries.xsd" />
+    <None Include="Data\Xsd\objects.xsd" />
+    <None Include="Data\Xsd\outputs.xsd" />
+    <None Include="Data\Xsd\pdbs.xsd" />
+    <None Include="Data\Xsd\tables.xsd" />
+    <None Include="Xsd\wixloc.xsd" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

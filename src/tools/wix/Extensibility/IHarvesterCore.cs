@@ -17,7 +17,7 @@ namespace WixToolset
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The WiX Toolset harvester core.

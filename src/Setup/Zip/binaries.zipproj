@@ -126,11 +126,11 @@
       <StageSubDirectory>doc</StageSubDirectory>
       <Hardlink>false</Hardlink>
     </Stage>
-    <Stage Include="$(WixRoot)src\tools\wix\xsd\wix.xsd">
+    <Stage Include="$(WixRoot)src\libs\WixToolset.Data\xsd\wix.xsd">
       <StageSubDirectory>doc</StageSubDirectory>
       <Hardlink>false</Hardlink>
     </Stage>
-    <Stage Include="$(WixRoot)src\tools\wix\xsd\wixloc.xsd">
+    <Stage Include="$(WixRoot)src\libs\WixToolset.Data\xsd\wixloc.xsd">
       <StageSubDirectory>doc</StageSubDirectory>
       <Hardlink>false</Hardlink>
     </Stage>

@@ -27,7 +27,7 @@ namespace WixToolset.Tools
     using WixToolset.Dtf.WindowsInstaller;
     using WixToolset.Dtf.WindowsInstaller.Package;
 
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
     using WixToolset.Extensibility;
     using WixToolset.Data.Rows;
 

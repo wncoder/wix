@@ -20,7 +20,7 @@ namespace WixToolset.Lux
     using System.Xml;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
     using WixLux = WixToolset.Extensions.Serialize.Lux;
 
     /// <summary>

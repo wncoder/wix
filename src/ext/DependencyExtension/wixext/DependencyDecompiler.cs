@@ -21,7 +21,7 @@ namespace WixToolset.Extensions
     using WixToolset.Extensibility;
     using WixToolset.Extensions.Serialize.Dependency;
     using Dependency = WixToolset.Extensions.Serialize.Dependency;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX toolset dependency extension.

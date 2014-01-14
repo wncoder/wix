@@ -16,7 +16,7 @@ namespace WixToolset.Extensions
     using System;
     using System.IO;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Harvest WiX authoring for a payload from the file system.

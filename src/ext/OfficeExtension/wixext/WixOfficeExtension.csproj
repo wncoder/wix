@@ -103,7 +103,7 @@
     <XsdGenSource Include="Xsd\OfficeAddin.xsd">
       <SubType>Designer</SubType>
       <Namespace>WixToolset.Extensions.Serialize.OfficeAddin</Namespace>
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\OfficeAddin.wixlib">
       <Link>Data\OfficeAddin.wixlib</Link>

@@ -27,7 +27,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\netfx.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.NetFx</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\netfx.wixlib">

@@ -31,7 +31,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\firewall.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Firewall</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\firewall.wixlib">

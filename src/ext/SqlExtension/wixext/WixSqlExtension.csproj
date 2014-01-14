@@ -30,7 +30,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\sql.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Sql</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\sql.wixlib">

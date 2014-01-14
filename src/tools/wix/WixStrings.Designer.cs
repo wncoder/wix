@@ -133,15 +133,6 @@ namespace WixToolset {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Collection has {0} elements. Must have at least one..
-        /// </summary>
-        internal static string EXP_CollectionMustHaveAtLeastOneElement {
-            get {
-                return ResourceManager.GetString("EXP_CollectionMustHaveAtLeastOneElement", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Could not determine ProductCode from transform summary information.
         /// </summary>
         internal static string EXP_CouldnotDetermineProductCodeFromTransformSummaryInfo {
@@ -165,33 +156,6 @@ namespace WixToolset {
         internal static string EXP_DidnotFindDuplicateSymbol {
             get {
                 return ResourceManager.GetString("EXP_DidnotFindDuplicateSymbol", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Element must be a subclass of {0}, but was of type {1}..
-        /// </summary>
-        internal static string EXP_ElementIsSubclassOfDifferentType {
-            get {
-                return ResourceManager.GetString("EXP_ElementIsSubclassOfDifferentType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Element of type {0} found in enumerator. Must be ChoiceItem or SequenceItem..
-        /// </summary>
-        internal static string EXP_ElementMustBeChoiceItemOrSequenceItem {
-            get {
-                return ResourceManager.GetString("EXP_ElementMustBeChoiceItemOrSequenceItem", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Element of type {0} is not valid for this collection..
-        /// </summary>
-        internal static string EXP_ElementOfTypeIsNotValidForThisCollection {
-            get {
-                return ResourceManager.GetString("EXP_ElementOfTypeIsNotValidForThisCollection", resourceCulture);
             }
         }
         
@@ -241,24 +205,6 @@ namespace WixToolset {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to ISchemaElement with name {0} does not implement ICreateChildren..
-        /// </summary>
-        internal static string EXP_ISchemaElementDoesnotImplementICreateChildren {
-            get {
-                return ResourceManager.GetString("EXP_ISchemaElementDoesnotImplementICreateChildren", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ISchemaElement with name {0} does not implement ISetAttributes..
-        /// </summary>
-        internal static string EXP_ISchemaElementDoesnotImplementISetAttribute {
-            get {
-                return ResourceManager.GetString("EXP_ISchemaElementDoesnotImplementISetAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to A Merge table FileCompression column contains an invalid value &apos;{0}&apos;..
         /// </summary>
         internal static string EXP_MergeTableFileCompressionColumnContainsInvalidValue {
@@ -277,15 +223,6 @@ namespace WixToolset {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Multiple root elements found in file..
-        /// </summary>
-        internal static string EXP_MultipleRootElementsFoundInFile {
-            get {
-                return ResourceManager.GetString("EXP_MultipleRootElementsFoundInFile", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The other object is not a FileRow..
         /// </summary>
         internal static string EXP_OtherObjectIsNotFileRow {
@@ -300,15 +237,6 @@ namespace WixToolset {
         internal static string EXP_TransformAuthoredIntoMultipleMedia {
             get {
                 return ResourceManager.GetString("EXP_TransformAuthoredIntoMultipleMedia", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Type {0} is not valid for this collection..
-        /// </summary>
-        internal static string EXP_TypeIsNotValidForThisCollection {
-            get {
-                return ResourceManager.GetString("EXP_TypeIsNotValidForThisCollection", resourceCulture);
             }
         }
         
@@ -444,15 +372,6 @@ namespace WixToolset {
         internal static string EXP_UnsupportedTable {
             get {
                 return ResourceManager.GetString("EXP_UnsupportedTable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XmlElement with name {0} does not have a corresponding ISchemaElement..
-        /// </summary>
-        internal static string EXP_XmlElementDoesnotHaveISchemaElement {
-            get {
-                return ResourceManager.GetString("EXP_XmlElementDoesnotHaveISchemaElement", resourceCulture);
             }
         }
         

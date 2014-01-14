@@ -26,7 +26,7 @@
       <LogicalName>$(RootNamespace).Xsd.msmq.xsd</LogicalName>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\msmq.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Msmq</Namespace>
     </XsdGenSource>
     <None Include="Xsd\msmq.xsd">

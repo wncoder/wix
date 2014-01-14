@@ -133,9 +133,6 @@
     <Compile Include="Preprocessor.cs" />
     <Compile Include="PreprocessorCore.cs" />
     <Compile Include="ProcessedStreamEventHandler.cs" />
-    <Compile Include="Serialize\CodeDomInterfaces.cs" />
-    <Compile Include="Serialize\CodeDomReader.cs" />
-    <Compile Include="Serialize\ElementCollection.cs" />
     <Compile Include="Unbinder.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Validator.cs" />
@@ -172,41 +169,11 @@
     <Compile Include="WixSearchInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedFlattenedResource Include="Xsd\actions.xsd">
-      <LogicalName>$(RootNamespace).Xsd.actions.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\libraries.xsd">
-      <LogicalName>$(RootNamespace).Xsd.libraries.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\objects.xsd">
-      <LogicalName>$(RootNamespace).Xsd.objects.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\outputs.xsd">
-      <LogicalName>$(RootNamespace).Xsd.outputs.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\pdbs.xsd">
-      <LogicalName>$(RootNamespace).Xsd.pdbs.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\tables.xsd">
-      <LogicalName>$(RootNamespace).Xsd.tables.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\wix.xsd">
-      <LogicalName>$(RootNamespace).Xsd.wix.xsd</LogicalName>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\wixloc.xsd">
-      <LogicalName>$(RootNamespace).Xsd.wixloc.xsd</LogicalName>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedFlattenedResource>
     <EmbeddedNativeResource Include="wixdll.rc" />
     <MsgGenSource Include="Data\messages.xml">
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
       <SubType>Designer</SubType>
     </MsgGenSource>
-    <XsdGenSource Include="Xsd\wix.xsd">
-      <SubType>Designer</SubType>
-      <Namespace>WixToolset.Serialize</Namespace>
-    </XsdGenSource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="WixDistributionSpecificStrings.resx">

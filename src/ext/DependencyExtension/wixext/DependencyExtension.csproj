@@ -33,7 +33,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\Dependency.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Dependency</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)Dependency.wixlib">

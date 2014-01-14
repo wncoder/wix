@@ -15,7 +15,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using DifxApp = WixToolset.Extensions.Serialize.DifxApp;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset Driver Install Frameworks for Applications Extension.

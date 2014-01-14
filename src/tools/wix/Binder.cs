@@ -40,7 +40,7 @@ namespace WixToolset
     using WixToolset.MergeMod;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     // TODO: (4.0) Refactor so that these don't need to be copied.
     // Copied verbatim from ext\UtilExtension\wixext\UtilCompiler.cs

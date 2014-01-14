@@ -20,7 +20,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using Firewall = WixToolset.Extensions.Serialize.Firewall;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset Firewall Extension.

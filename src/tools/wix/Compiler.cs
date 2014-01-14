@@ -25,7 +25,7 @@ namespace WixToolset
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
 
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Compiler of the WiX toolset.

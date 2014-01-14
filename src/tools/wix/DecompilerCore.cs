@@ -18,7 +18,7 @@ namespace WixToolset
     using System.Collections;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The base of the decompiler. Holds some variables used by the decompiler and extensions,

@@ -23,7 +23,7 @@ namespace WixToolset.Extensions
     using System.Runtime.InteropServices;
     using System.Text;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The finalize harvester mutator for the WiX Toolset Utility Extension.

@@ -16,7 +16,7 @@ namespace WixToolset
     using System;
     using System.Xml;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Utility class for Burn RelatedBundle information.

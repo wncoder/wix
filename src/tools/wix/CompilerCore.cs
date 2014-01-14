@@ -31,7 +31,7 @@ namespace WixToolset
     using WixToolset.Data;
     using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     public enum ValueListKind
     {

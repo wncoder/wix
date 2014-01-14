@@ -32,7 +32,7 @@ namespace WixToolset.Extensions
 
     ////using Microsoft.Build.BuildEngine;
 
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
     using WixToolset.Data;
 
     /// <summary>

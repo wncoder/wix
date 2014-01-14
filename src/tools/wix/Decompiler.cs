@@ -28,7 +28,7 @@ namespace WixToolset
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Decompiles an msi database into WiX source.
@@ -3649,13 +3649,13 @@ namespace WixToolset
                                     switch (template[0])
                                     {
                                         case "Intel":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.x86;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.x86;
                                             break;
                                         case "Intel64":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.ia64;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.ia64;
                                             break;
                                         case "x64":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.x64;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.x64;
                                             break;
                                     }
                                 }

@@ -20,7 +20,7 @@ namespace WixToolset.Extensions
     using System.IO;
     using Microsoft.Win32;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Harvest WiX authoring for a reg file.

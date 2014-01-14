@@ -24,7 +24,7 @@ namespace WixToolset.Tools
     using System.Xml;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The WiX Toolset Harvester application.

@@ -16,7 +16,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using Cfg = WixToolset.Extensions.Serialize.Cfg;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the Windows Installer XML Toolset Cfg Extension.
