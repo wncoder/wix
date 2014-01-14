@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\..\UtilExtension\wixext\WixUtilExtension.csproj">
       <Project>{3E74F4F0-7DC9-4837-9443-D5BE061C892C}</Project>

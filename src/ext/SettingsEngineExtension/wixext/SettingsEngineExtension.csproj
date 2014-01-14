@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(WixSrcFolder)libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="$(WixSrcFolder)libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="$(WixSrcFolder)tools\Wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\SettingsEngineWixLib.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

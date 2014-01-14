@@ -45,6 +45,7 @@
     <Reference Include="System.Xml.Linq" />
     <ProjectReference Include="..\..\..\DTF\Libraries\WindowsInstaller\WindowsInstaller.csproj" />
     <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\TagExtension.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
