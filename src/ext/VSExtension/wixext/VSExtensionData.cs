@@ -19,9 +19,6 @@ namespace WixToolset.Extensions
     /// </summary>
     public sealed class VSExtensionData : ExtensionData
     {
-        private static Library library;
-        private static TableDefinitionCollection tableDefinitions;
-
         /// <summary>
         /// Gets the optional table definitions for this extension.
         /// </summary>
@@ -50,12 +47,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's table definitions.</returns>
         internal static TableDefinitionCollection GetExtensionTableDefinitions()
         {
-            if (null == VSExtensionData.tableDefinitions)
-            {
-                VSExtensionData.tableDefinitions = ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
-            }
-
-            return VSExtensionData.tableDefinitions;
+            return ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
         }
 
         /// <summary>
@@ -64,12 +56,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's library.</returns>
         internal static Library GetExtensionLibrary(TableDefinitionCollection tableDefinitions)
         {
-            if (null == VSExtensionData.library)
-            {
-                VSExtensionData.library = ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.vs.wixlib", tableDefinitions);
-            }
-
-            return VSExtensionData.library;
+            return ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.vs.wixlib", tableDefinitions);
         }
     }
 }

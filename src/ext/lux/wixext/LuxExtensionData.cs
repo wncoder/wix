@@ -19,9 +19,6 @@ namespace WixToolset.Extensions
     /// </summary>
     public sealed class LuxExtensionData : ExtensionData
     {
-        private static Library library;
-        private static TableDefinitionCollection tableDefinitions;
-
         /// <summary>
         /// Gets the optional table definitions for this extension.
         /// </summary>
@@ -50,12 +47,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's table definitions.</returns>
         internal static TableDefinitionCollection GetExtensionTableDefinitions()
         {
-            if (null == LuxExtensionData.tableDefinitions)
-            {
-                LuxExtensionData.tableDefinitions = ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
-            }
-
-            return LuxExtensionData.tableDefinitions;
+            return ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
         }
 
         /// <summary>
@@ -64,12 +56,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's library.</returns>
         internal static Library GetExtensionLibrary(TableDefinitionCollection tableDefinitions)
         {
-            if (null == LuxExtensionData.library)
-            {
-                LuxExtensionData.library = ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.LuxLib.wixlib", tableDefinitions);
-            }
-
-            return LuxExtensionData.library;
+            return ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.LuxLib.wixlib", tableDefinitions);
         }
     }
 }

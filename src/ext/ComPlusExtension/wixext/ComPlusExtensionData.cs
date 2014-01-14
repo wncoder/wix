@@ -19,9 +19,6 @@ namespace WixToolset.Extensions
     /// </summary>
     public sealed class ComPlusExtensionData : ExtensionData
     {
-        private static Library library;
-        private static TableDefinitionCollection tableDefinitions;
-
         /// <summary>
         /// Gets the default culture.
         /// </summary>
@@ -59,12 +56,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's table definitions.</returns>
         internal static TableDefinitionCollection GetExtensionTableDefinitions()
         {
-            if (null == ComPlusExtensionData.tableDefinitions)
-            {
-                ComPlusExtensionData.tableDefinitions = ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
-            }
-
-            return ComPlusExtensionData.tableDefinitions;
+            return ExtensionData.LoadTableDefinitionHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.tables.xml");
         }
 
         /// <summary>
@@ -73,12 +65,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's library.</returns>
         internal static Library GetExtensionLibrary(TableDefinitionCollection tableDefinitions)
         {
-            if (null == ComPlusExtensionData.library)
-            {
-                ComPlusExtensionData.library = ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.complus.wixlib", tableDefinitions);
-            }
-
-            return ComPlusExtensionData.library;
+            return ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.complus.wixlib", tableDefinitions);
         }
     }
 }

@@ -19,8 +19,6 @@ namespace WixToolset.Extensions
     /// </summary>
     public sealed class UIExtensionData : ExtensionData
     {
-        private static Library library;
-
         /// <summary>
         /// Gets the default culture.
         /// </summary>
@@ -46,12 +44,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's library.</returns>
         internal static Library GetExtensionLibrary(TableDefinitionCollection tableDefinitions)
         {
-            if (null == UIExtensionData.library)
-            {
-                UIExtensionData.library = ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.ui.wixlib", tableDefinitions);
-            }
-
-            return UIExtensionData.library;
+            return ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.ui.wixlib", tableDefinitions);
         }
     }
 }
