@@ -132,12 +132,12 @@ namespace WixToolset
 
                 if (TableOperation.Drop == operation)
                 {
-                    Table droppedTable = transform.Tables.EnsureTable(null, targetTable.Definition);
+                    Table droppedTable = transform.EnsureTable(targetTable.Definition);
                     droppedTable.Operation = TableOperation.Drop;
                 }
                 else if (TableOperation.None == operation)
                 {
-                    Table modified = transform.Tables.EnsureTable(null, updatedTable.Definition);
+                    Table modified = transform.EnsureTable(updatedTable.Definition);
                     rows.ForEach(r => modified.Rows.Add(r));
                 }
             }
@@ -147,7 +147,7 @@ namespace WixToolset
             {
                 if (null == targetOutput.Tables[updatedTable.Name])
                 {
-                    Table addedTable = transform.Tables.EnsureTable(null, updatedTable.Definition);
+                    Table addedTable = transform.EnsureTable(updatedTable.Definition);
                     addedTable.Operation = TableOperation.Add;
 
                     foreach (Row updatedRow in updatedTable.Rows)

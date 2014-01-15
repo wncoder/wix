@@ -42,7 +42,7 @@ namespace WixToolset.Extensibility
         /// Called at the beginning of the decompilation of a database.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public virtual void Initialize(TableCollection tables)
+        public virtual void Initialize(TableIndexedCollection tables)
         {
         }
 
@@ -59,7 +59,7 @@ namespace WixToolset.Extensibility
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public virtual void Finish(TableCollection tables)
+        public virtual void Finish(TableIndexedCollection tables)
         {
         }
     }

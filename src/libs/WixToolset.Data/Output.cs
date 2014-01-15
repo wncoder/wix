@@ -16,6 +16,7 @@ namespace WixToolset.Data
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Xml;
 
     /// <summary>
@@ -34,8 +35,6 @@ namespace WixToolset.Data
 
         private ArrayList subStorages;
 
-        private TableCollection tables;
-
         private TempFileCollection tempFileCollection;
         private string cabPath;
 
@@ -48,7 +47,7 @@ namespace WixToolset.Data
             this.Sections = new List<Section>();
             this.sourceLineNumbers = sourceLineNumbers;
             this.subStorages = new ArrayList();
-            this.tables = new TableCollection();
+            this.Tables = new TableIndexedCollection();
         }
 
         /// <summary>
@@ -130,10 +129,7 @@ namespace WixToolset.Data
         /// Gets the tables contained in this output.
         /// </summary>
         /// <value>Collection of tables.</value>
-        public TableCollection Tables
-        {
-            get { return this.tables; }
-        }
+        public TableIndexedCollection Tables { get; private set; }
 
         /// <summary>
         /// Gets the cabPath for that cab that was contained in this output.
@@ -425,9 +421,9 @@ namespace WixToolset.Data
             // create a section for all the rows to belong to
             output.entrySection = new Section(null, sectionType, output.Codepage);
 
-            TableDefinitionCollection tableDefinitions = null;
-
             // loop through the rest of the xml building up the Output object
+            TableDefinitionCollection tableDefinitions = null;
+            List<Table> tables = new List<Table>();
             if (!empty)
             {
                 bool done = false;
@@ -448,7 +444,7 @@ namespace WixToolset.Data
                                     {
                                         throw new WixException(WixDataErrors.ExpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", "tableDefinitions"));
                                     }
-                                    output.Tables.Add(Table.Read(reader, output.entrySection, tableDefinitions));
+                                    tables.Add(Table.Read(reader, output.entrySection, tableDefinitions));
                                     break;
                                 case "tableDefinitions":
                                     tableDefinitions = TableDefinitionCollection.Parse(reader);
@@ -469,6 +465,7 @@ namespace WixToolset.Data
                 }
             }
 
+            output.Tables = new TableIndexedCollection(tables);
             return output;
         }
 
@@ -476,10 +473,18 @@ namespace WixToolset.Data
         /// Ensure this output contains a particular table.
         /// </summary>
         /// <param name="tableDefinition">Definition of the table that should exist.</param>
+        /// <param name="section">Optional section to use for the table. If one is not provided, the entry section will be used.</param>
         /// <returns>The table in this output.</returns>
-        public Table EnsureTable(TableDefinition tableDefinition)
+        public Table EnsureTable(TableDefinition tableDefinition, Section section = null)
         {
-            return this.tables.EnsureTable(this.entrySection, tableDefinition);
+            Table table;
+            if (!this.Tables.TryGetTable(tableDefinition.Name, out table))
+            {
+                table = new Table(section ?? this.entrySection, tableDefinition);
+                this.Tables.Add(table);
+            }
+
+            return table;
         }
 
         /// <summary>
@@ -501,13 +506,13 @@ namespace WixToolset.Data
 
             // collect all the table defintitions and write them
             TableDefinitionCollection tableDefinitions = new TableDefinitionCollection();
-            foreach (Table table in this.tables)
+            foreach (Table table in this.Tables.OrderBy(t => t.Name))
             {
                 tableDefinitions.Add(table.Definition);
             }
             tableDefinitions.Persist(writer);
 
-            foreach (Table table in this.tables)
+            foreach (Table table in this.Tables.OrderBy(t => t.Name))
             {
                 table.Write(writer);
             }

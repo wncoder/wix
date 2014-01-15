@@ -221,7 +221,7 @@ namespace WixToolset.Extensions
             // a WixVariable to map to the regid.
             if (null != sourceLineNumbers)
             {
-                Table wixVariableTable = output.Tables.EnsureTable(output.EntrySection, this.Core.TableDefinitions["WixVariable"]);
+                Table wixVariableTable = output.EnsureTable(this.Core.TableDefinitions["WixVariable"]);
                 WixVariableRow wixVariableRow = (WixVariableRow)wixVariableTable.CreateRow(sourceLineNumbers);
                 wixVariableRow.Id = "WixTagRegid";
                 wixVariableRow.Value = this.overallRegid;

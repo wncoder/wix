@@ -69,8 +69,8 @@ namespace WixToolset.Link
             // symbols provided.  Then recursively call this method to process the
             // located symbol's section.  All in all this is a very simple depth-first
             // search of the references per-section.
-            Table wixSimpleReferenceTable = section.Tables["WixSimpleReference"];
-            if (null != wixSimpleReferenceTable)
+            Table wixSimpleReferenceTable;
+            if (section.Tables.TryGetTable("WixSimpleReference", out wixSimpleReferenceTable))
             {
                 foreach (WixSimpleReferenceRow wixSimpleReferenceRow in wixSimpleReferenceTable.Rows)
                 {

@@ -516,7 +516,7 @@ namespace WixToolset
         internal Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Section section)
         {
             TableDefinition tableDefinition = this.tableDefinitions[tableName];
-            Table table = section.Tables.EnsureTable(section, tableDefinition);
+            Table table = section.EnsureTable(tableDefinition);
 
             return table.CreateRow(sourceLineNumbers);
         }

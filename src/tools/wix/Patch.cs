@@ -343,7 +343,7 @@ namespace WixToolset.Data
                         }
                     }
                 }
-                
+
                 // Use the Media/@DiskId if greater for backward compatibility.
                 if (mediaRow.LastSequence < mediaRow.DiskId)
                 {

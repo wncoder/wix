@@ -1047,7 +1047,7 @@ namespace WixToolset
         /// Merge data from the unreal tables into the real tables.
         /// </summary>
         /// <param name="tables">Collection of all tables.</param>
-        private void MergeUnrealTables(TableCollection tables)
+        private void MergeUnrealTables(TableIndexedCollection tables)
         {
             // Merge data from the WixBBControl rows into the BBControl rows.
             Table wixBBControlTable = tables["WixBBControl"];
@@ -1926,7 +1926,7 @@ namespace WixToolset
         /// Localize dialogs and controls.
         /// </summary>
         /// <param name="tables">The tables to localize.</param>
-        private void LocalizeUI(TableCollection tables)
+        private void LocalizeUI(TableIndexedCollection tables)
         {
             Table dialogTable = tables["Dialog"];
             if (null != dialogTable)
@@ -2014,7 +2014,7 @@ namespace WixToolset
         /// <param name="tables">The tables to resolve.</param>
         /// <param name="filesWithEmbeddedFiles">Cabinets containing files that need to be patched.</param>
         /// <param name="delayedFields">The collection of delayed fields. Null if resolution of delayed fields is not allowed</param>
-        private void ResolveFields(TableCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, List<DelayedField> delayedFields)
+        private void ResolveFields(TableIndexedCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, List<DelayedField> delayedFields)
         {
             foreach (Table table in tables)
             {

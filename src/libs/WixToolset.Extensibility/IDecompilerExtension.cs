@@ -39,7 +39,7 @@ namespace WixToolset.Extensibility
         /// Called at the beginning of the decompilation of a database.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        void Initialize(TableCollection tables);
+        void Initialize(TableIndexedCollection tables);
 
         /// <summary>
         /// Decompiles an extension table.
@@ -51,6 +51,6 @@ namespace WixToolset.Extensibility
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        void Finish(TableCollection tables);
+        void Finish(TableIndexedCollection tables);
     }
 }

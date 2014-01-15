@@ -11,6 +11,7 @@ namespace WixToolset.Data
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Diagnostics;
     using System.Globalization;
@@ -24,14 +25,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class Section
     {
-        private string id;
-        private SectionType type;
-        private int codepage;
-
-        private TableCollection tables;
-
-        private SourceLineNumber sourceLineNumbers;
-
         /// <summary>
         /// Creates a new section as part of an intermediate.
         /// </summary>
@@ -40,56 +33,58 @@ namespace WixToolset.Data
         /// <param name="codepage">Codepage for resulting database.</param>
         public Section(string id, SectionType type, int codepage)
         {
-            this.id = id;
-            this.type = type;
-            this.codepage = codepage;
+            this.Id = id;
+            this.Type = type;
+            this.Codepage = codepage;
 
-            this.tables = new TableCollection();
+            this.Tables = new TableIndexedCollection();
         }
 
         /// <summary>
         /// Gets the identifier for the section.
         /// </summary>
         /// <value>Section identifier.</value>
-        public string Id
-        {
-            get { return this.id; }
-        }
+        public string Id { get; private set; }
 
         /// <summary>
         /// Gets the type of the section.
         /// </summary>
         /// <value>Type of section.</value>
-        public SectionType Type
-        {
-            get { return this.type; }
-        }
+        public SectionType Type { get; private set; }
 
         /// <summary>
         /// Gets the codepage for the section.
         /// </summary>
         /// <value>Codepage for the section.</value>
-        public int Codepage
-        {
-            get { return this.codepage; }
-        }
+        public int Codepage { get; private set; }
 
         /// <summary>
         /// Gets the tables in the section.
         /// </summary>
         /// <value>Tables in section.</value>
-        public TableCollection Tables
-        {
-            get { return this.tables; }
-        }
+        public TableIndexedCollection Tables { get; private set; }
 
         /// <summary>
         /// Gets the source line information of the file containing this section.
         /// </summary>
         /// <value>The source line information of the file containing this section.</value>
-        public SourceLineNumber SourceLineNumbers
+        public SourceLineNumber SourceLineNumbers { get; private set; }
+
+        /// <summary>
+        /// Ensures a table is added to the section's table collection.
+        /// </summary>
+        /// <param name="tableDefinition">Table definition for the table.</param>
+        /// <returns>Table in the section.</returns>
+        public Table EnsureTable(TableDefinition tableDefinition)
         {
-            get { return this.sourceLineNumbers; }
+            Table table;
+            if (!this.Tables.TryGetTable(tableDefinition.Name, out table))
+            {
+                table = new Table(this, tableDefinition);
+                this.Tables.Add(table);
+            }
+
+            return table;
         }
 
         /// <summary>
@@ -105,7 +100,6 @@ namespace WixToolset.Data
             int codepage = 0;
             bool empty = reader.IsEmptyElement;
             string id = null;
-            Section section = null;
             SectionType type = SectionType.Unknown;
 
             while (reader.MoveToNextAttribute())
@@ -162,9 +156,10 @@ namespace WixToolset.Data
                 throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", "type"));
             }
 
-            section = new Section(id, type, codepage);
-            section.sourceLineNumbers = SourceLineNumber.CreateFromUri(reader.BaseURI);
+            Section section = new Section(id, type, codepage);
+            section.SourceLineNumbers = SourceLineNumber.CreateFromUri(reader.BaseURI);
 
+            List<Table> tables = new List<Table>();
             if (!empty)
             {
                 bool done = false;
@@ -177,7 +172,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "table":
-                                    section.Tables.Add(Table.Read(reader, section, tableDefinitions));
+                                    tables.Add(Table.Read(reader, section, tableDefinitions));
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name));
@@ -195,6 +190,8 @@ namespace WixToolset.Data
                 }
             }
 
+            section.Tables = new TableIndexedCollection(tables);
+
             return section;
         }
 
@@ -206,12 +203,12 @@ namespace WixToolset.Data
         {
             writer.WriteStartElement("section", Intermediate.XmlNamespaceUri);
 
-            if (null != this.id)
+            if (null != this.Id)
             {
-                writer.WriteAttributeString("id", this.id);
+                writer.WriteAttributeString("id", this.Id);
             }
 
-            switch (this.type)
+            switch (this.Type)
             {
                 case SectionType.Bundle:
                     writer.WriteAttributeString("type", "bundle");
@@ -233,13 +230,13 @@ namespace WixToolset.Data
                     break;
             }
 
-            if (0 != this.codepage)
+            if (0 != this.Codepage)
             {
-                writer.WriteAttributeString("codepage", this.codepage.ToString(CultureInfo.InvariantCulture));
+                writer.WriteAttributeString("codepage", this.Codepage.ToString());
             }
 
             // save the rows in table order
-            foreach (Table table in this.tables)
+            foreach (Table table in this.Tables.OrderBy(t => t.Name))
             {
                 table.Write(writer);
             }

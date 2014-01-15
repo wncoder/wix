@@ -886,7 +886,7 @@ namespace WixToolset
             }
 
             Table fileTable = output.Tables["File"];
-            Table wixFileTable = output.Tables.EnsureTable(null, this.tableDefinitions["WixFile"]);
+            Table wixFileTable = output.EnsureTable(this.tableDefinitions["WixFile"]);
             foreach (Row row in fileTable.Rows)
             {
                 WixFileRow wixFileRow = new WixFileRow(null, this.tableDefinitions["WixFile"]);
@@ -1103,7 +1103,7 @@ namespace WixToolset
             // get the summary information table
             using (SummaryInformation summaryInformation = new SummaryInformation(transformFile))
             {
-                Table table = transform.Tables.EnsureTable(null, this.tableDefinitions["_SummaryInformation"]);
+                Table table = transform.EnsureTable(this.tableDefinitions["_SummaryInformation"]);
 
                 for (int i = 1; 19 >= i; i++)
                 {
@@ -1234,7 +1234,7 @@ namespace WixToolset
                     string columnName = (string)row[1];
                     string primaryKeys = (string)row[2];
 
-                    Table table = transform.Tables.EnsureTable(null, this.tableDefinitions[tableName]);
+                    Table table = transform.EnsureTable(this.tableDefinitions[tableName]);
 
                     if ("CREATE" == columnName) // added table
                     {

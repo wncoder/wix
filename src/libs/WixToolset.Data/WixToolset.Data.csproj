@@ -82,7 +82,7 @@
     <Compile Include="SubStorage.cs" />
     <Compile Include="Symbol.cs" />
     <Compile Include="Table.cs" />
-    <Compile Include="TableCollection.cs" />
+    <Compile Include="TableIndexedCollection.cs" />
     <Compile Include="TableDefinition.cs" />
     <Compile Include="TableDefinitionCollection.cs" />
     <Compile Include="TableOperation.cs" />

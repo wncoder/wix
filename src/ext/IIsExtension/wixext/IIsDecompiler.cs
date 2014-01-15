@@ -111,7 +111,7 @@ namespace WixToolset.Extensions
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public override void Finish(TableCollection tables)
+        public override void Finish(TableIndexedCollection tables)
         {
             this.FinalizeIIsMimeMapTable(tables);
             this.FinalizeIIsHttpHeaderTable(tables);
@@ -1199,7 +1199,7 @@ namespace WixToolset.Extensions
         /// The IIsHttpHeader table supports multiple parent types so no foreign key
         /// is declared and thus nesting must be done late.
         /// </remarks>
-        private void FinalizeIIsHttpHeaderTable(TableCollection tables)
+        private void FinalizeIIsHttpHeaderTable(TableIndexedCollection tables)
         {
             Table iisHttpHeaderTable = tables["IIsHttpHeader"];
 
@@ -1245,7 +1245,7 @@ namespace WixToolset.Extensions
         /// The IIsMimeMap table supports multiple parent types so no foreign key
         /// is declared and thus nesting must be done late.
         /// </remarks>
-        private void FinalizeIIsMimeMapTable(TableCollection tables)
+        private void FinalizeIIsMimeMapTable(TableIndexedCollection tables)
         {
             Table iisMimeMapTable = tables["IIsMimeMap"];
 
@@ -1286,7 +1286,7 @@ namespace WixToolset.Extensions
         /// Since WebApplication elements may nest under a specific WebSite or
         /// WebVirtualDir (or just the root element), the nesting must be done late.
         /// </remarks>
-        private void FinalizeIIsWebApplicationTable(TableCollection tables)
+        private void FinalizeIIsWebApplicationTable(TableIndexedCollection tables)
         {
             Table iisWebApplicationTable = tables["IIsWebApplication"];
             Table iisWebSiteTable = tables["IIsWebSite"];
@@ -1360,7 +1360,7 @@ namespace WixToolset.Extensions
         /// Since there is no foreign key relationship declared for this table
         /// (because it takes various parent types), it must be nested late.
         /// </remarks>
-        private void FinalizeIIsWebErrorTable(TableCollection tables)
+        private void FinalizeIIsWebErrorTable(TableIndexedCollection tables)
         {
             Table iisWebErrorTable = tables["IIsWebError"];
 
@@ -1413,7 +1413,7 @@ namespace WixToolset.Extensions
         /// depending upon whether the component in the IIsWebVirtualDir row
         /// is the same as the one in the parent IIsWebSite row.
         /// </remarks>
-        private void FinalizeIIsWebVirtualDirTable(TableCollection tables)
+        private void FinalizeIIsWebVirtualDirTable(TableIndexedCollection tables)
         {
             Table iisWebSiteTable = tables["IIsWebSite"];
             Table iisWebVirtualDirTable = tables["IIsWebVirtualDir"];
@@ -1475,7 +1475,7 @@ namespace WixToolset.Extensions
         /// This table creates CertificateRef elements which nest under WebSite
         /// elements.
         /// </remarks>
-        private void FinalizeIIsWebSiteCertificatesTable(TableCollection tables)
+        private void FinalizeIIsWebSiteCertificatesTable(TableIndexedCollection tables)
         {
             Table IIsWebSiteCertificatesTable = tables["IIsWebSiteCertificates"];
 
@@ -1506,7 +1506,7 @@ namespace WixToolset.Extensions
         /// There is a circular dependency between the WebAddress and WebSite
         /// tables, so nesting must be handled here.
         /// </remarks>
-        private void FinalizeWebAddressTable(TableCollection tables)
+        private void FinalizeWebAddressTable(TableIndexedCollection tables)
         {
             Table iisWebAddressTable = tables["IIsWebAddress"];
             Table iisWebSiteTable = tables["IIsWebSite"];
