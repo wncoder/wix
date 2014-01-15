@@ -60,7 +60,7 @@ namespace WixToolset.Link
                     if (SectionType.Unknown != expectedEntrySectionType && section.Type != expectedEntrySectionType)
                     {
                         string outputExtension = Output.GetExtension(this.ExpectedOutputType);
-                        Messaging.Instance.OnMessage(WixDataWarnings.UnexpectedEntrySection(section.SourceLineNumbers, section.Type.ToString(), expectedEntrySectionType.ToString(), outputExtension));
+                        Messaging.Instance.OnMessage(WixWarnings.UnexpectedEntrySection(section.SourceLineNumbers, section.Type.ToString(), expectedEntrySectionType.ToString(), outputExtension));
                     }
 
                     if (null == this.EntrySection)
@@ -69,8 +69,8 @@ namespace WixToolset.Link
                     }
                     else
                     {
-                        Messaging.Instance.OnMessage(WixDataErrors.MultipleEntrySections(this.EntrySection.SourceLineNumbers, this.EntrySection.Id, section.Id));
-                        Messaging.Instance.OnMessage(WixDataErrors.MultipleEntrySections2(section.SourceLineNumbers));
+                        Messaging.Instance.OnMessage(WixErrors.MultipleEntrySections(this.EntrySection.SourceLineNumbers, this.EntrySection.Id, section.Id));
+                        Messaging.Instance.OnMessage(WixErrors.MultipleEntrySections2(section.SourceLineNumbers));
                     }
                 }
 
@@ -88,19 +88,11 @@ namespace WixToolset.Link
                         }
                         else if (this.AllowIdenticalRows && existingSymbol.Row.IsIdentical(symbol.Row))
                         {
-                            Messaging.Instance.OnMessage(WixDataWarnings.IdenticalRowWarning(symbol.Row.SourceLineNumbers, existingSymbol.Name));
-                            Messaging.Instance.OnMessage(WixDataWarnings.IdenticalRowWarning2(existingSymbol.Row.SourceLineNumbers));
+                            Messaging.Instance.OnMessage(WixWarnings.IdenticalRowWarning(symbol.Row.SourceLineNumbers, existingSymbol.Name));
+                            Messaging.Instance.OnMessage(WixWarnings.IdenticalRowWarning2(existingSymbol.Row.SourceLineNumbers));
                         }
                         else // uh-oh, duplicate symbols.
                         {
-                            // TODO: can this be here? Supposedly tables like WixAction and WixVariable allow duplicate symbols so this would fail
-                            //       them. Seems like this check must be later in the linker/librarian.
-                            //Messaging.Instance.OnMessage(WixDataErrors.DuplicateSymbol(existingSymbol.Row.SourceLineNumbers, existingSymbol.Name));
-                            //if (null != symbol.Row.SourceLineNumbers)
-                            //{
-                            //    Messaging.Instance.OnMessage(WixDataErrors.DuplicateSymbol2(symbol.Row.SourceLineNumbers));
-                            //}
-
                             existingSymbol.AddDuplicate(symbol);
                             withDuplicates.Add(existingSymbol);
                         }
