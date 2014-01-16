@@ -364,8 +364,11 @@ namespace WixToolset.Tools
                 // Load each localization file.
                 foreach (string localizationFile in this.commandLine.LocalizationFiles)
                 {
-                    Localization localization = Localization.Load(localizationFile, tableDefinitions, true);
-                    localizations.Add(localization);
+                    Localization localization = Localizer.ParseLocalizationFile(localizationFile, tableDefinitions);
+                    if (null != localization)
+                    {
+                        localizations.Add(localization);
+                    }
                 }
 
                 localizer = new Localizer();

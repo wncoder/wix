@@ -328,7 +328,7 @@ namespace WixToolset.Data
                     throw new WixNotOutputException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "output", "wixOutput"));
                 }
 
-                Output output = Parse(reader, suppressVersionCheck);
+                Output output = Read(reader, suppressVersionCheck);
                 output.tempFileCollection = tempFileCollection;
                 output.cabPath = cabPath;
 
@@ -353,7 +353,7 @@ namespace WixToolset.Data
         /// <param name="reader">Reader to get data from.</param>
         /// <param name="suppressVersionCheck">Suppresses wix.dll version mismatch check.</param>
         /// <returns>The Output represented by the Xml.</returns>
-        internal static Output Parse(XmlReader reader, bool suppressVersionCheck)
+        internal static Output Read(XmlReader reader, bool suppressVersionCheck)
         {
             Debug.Assert("wixOutput" == reader.LocalName);
 
@@ -437,7 +437,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "subStorage":
-                                    output.SubStorages.Add(SubStorage.Parse(reader));
+                                    output.SubStorages.Add(SubStorage.Read(reader));
                                     break;
                                 case "table":
                                     if (null == tableDefinitions)
@@ -519,7 +519,7 @@ namespace WixToolset.Data
 
             foreach (SubStorage subStorage in this.subStorages)
             {
-                subStorage.Persist(writer);
+                subStorage.Write(writer);
             }
 
             writer.WriteEndElement();

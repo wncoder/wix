@@ -22,9 +22,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class SubStorage
     {
-        private string name;
-        private Output data;
-
         /// <summary>
         /// Instantiate a new substorage.
         /// </summary>
@@ -32,44 +29,28 @@ namespace WixToolset.Data
         /// <param name="data">The substorage data.</param>
         public SubStorage(string name, Output data)
         {
-            if (null == name)
-            {
-                throw new ArgumentNullException("name");
-            }
-
-            if (null == data)
-            {
-                throw new ArgumentNullException("data");
-            }
-
-            this.name = name;
-            this.data = data;
+            this.Name = name;
+            this.Data = data;
         }
 
         /// <summary>
         /// Gets the substorage name.
         /// </summary>
         /// <value>The substorage name.</value>
-        public string Name
-        {
-            get { return this.name; }
-        }
+        public string Name { get; private set; }
 
         /// <summary>
         /// Gets the substorage data.
         /// </summary>
         /// <value>The substorage data.</value>
-        public Output Data
-        {
-            get { return this.data; }
-        }
+        public Output Data { get; private set; }
 
         /// <summary>
         /// Creates a SubStorage from the XmlReader.
         /// </summary>
         /// <param name="reader">Reader to get data from.</param>
         /// <returns>New SubStorage object.</returns>
-        internal static SubStorage Parse(XmlReader reader)
+        internal static SubStorage Read(XmlReader reader)
         {
             Debug.Assert("subStorage" == reader.LocalName);
 
@@ -107,7 +88,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "wixOutput":
-                                    data = Output.Parse(reader, true);
+                                    data = Output.Read(reader, true);
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name));
@@ -132,13 +113,13 @@ namespace WixToolset.Data
         /// Persists a SubStorage in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the SubStorage should persist itself as XML.</param>
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("subStorage", Output.XmlNamespaceUri);
 
-            writer.WriteAttributeString("name", this.name);
+            writer.WriteAttributeString("name", this.Name);
 
-            this.data.Persist(writer);
+            this.Data.Persist(writer);
 
             writer.WriteEndElement();
         }

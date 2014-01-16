@@ -236,12 +236,12 @@ namespace WixToolset.Data
                         case XmlNodeType.Element:
                             switch (reader.LocalName)
                             {
+                                case "localization":
+                                    Localization localization = Localization.Read(reader, tableDefinitions);
+                                    library.localizations.Add(localization.Culture, localization);
+                                    break;
                                 case "section":
                                     library.sections.Add(Section.Read(reader, tableDefinitions));
-                                    break;
-                                case "WixLocalization":
-                                    Localization localization = Localization.Parse(reader, tableDefinitions, true);
-                                    library.localizations.Add(localization.Culture, localization);
                                     break;
                             }
                             break;

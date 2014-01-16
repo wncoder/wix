@@ -149,16 +149,16 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "createSymbols":
-                        createSymbols = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "createSymbols", reader.Name, reader.Value);
+                        createSymbols = "yes".Equals(reader.Value);
                         break;
                     case "name":
                         name = reader.Value;
                         break;
                     case "unreal":
-                        unreal = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", reader.Name, reader.Value);
+                        unreal = "yes".Equals(reader.Value);
                         break;
                     case "bootstrapperApplicationData":
-                        bootstrapperApplicationData = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", reader.Name, reader.Value);
+                        bootstrapperApplicationData = "yes".Equals(reader.Value);
                         break;
                     default:
                         if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))

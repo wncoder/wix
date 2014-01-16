@@ -417,14 +417,6 @@
         <Parameter Type="System.String" Name="detail" />
       </Instance>
     </Message>
-    <Message Id="SchemaValidationFailed" Number="107">
-      <Instance>
-        Schema validation failed with the following error at line {1}, column {2}: {0}
-        <Parameter Type="System.String" Name="validationError" />
-        <Parameter Type="System.Int32" Name="lineNumber" />
-        <Parameter Type="System.Int32" Name="linePosition" />
-      </Instance>
-    </Message>
     <Message Id="IntegralValueOutOfRange" Number="123">
       <Instance>
         The {0}/@{1} attribute's value, '{2}', is not in the range of legal values.  Legal values for this attribute are from {3} to {4}.
@@ -497,33 +489,6 @@
         <Parameter Type="System.String" Name="tableName" />
       </Instance>
     </Message>
-    <Message Id="InvalidWixXmlNamespace" Number="199">
-      <Instance>
-        The {0} element has no namespace.  Please make the {0} element look like the following: &lt;{0} xmlns="{1}"&gt;.
-        <Parameter Type="System.String" Name="wixElementName" />
-        <Parameter Type="System.String" Name="wixNamespace" />
-      </Instance>
-      <Instance>
-        The {0} element has an incorrect namespace of '{1}'.  Please make the {0} element look like the following: &lt;{0} xmlns="{2}"&gt;.
-        <Parameter Type="System.String" Name="wixElementName" />
-        <Parameter Type="System.String" Name="elementNamespace" />
-        <Parameter Type="System.String" Name="wixNamespace" />
-      </Instance>
-    </Message>
-    <Message Id="UnsupportedExtensionAttribute" Number="202">
-      <Instance>
-        The {0} element contains an unsupported extension attribute '{1}'.  The {0} element does not currently support extension attributes. Is the {1} attribute using the correct XML namespace?
-        <Parameter Type="System.String" Name="elementName" />
-        <Parameter Type="System.String" Name="extensionElementName" />
-      </Instance>
-    </Message>
-    <Message Id="UnsupportedExtensionElement" Number="203">
-      <Instance>
-        The {0} element contains an unsupported extension element '{1}'.  The {0} element does not currently support extension elements. Is the {1} element using the correct XML namespace?
-        <Parameter Type="System.String" Name="elementName" />
-        <Parameter Type="System.String" Name="extensionElementName" />
-      </Instance>
-    </Message>
     <Message Id="RealTableMissingPrimaryKeyColumn" Number="225">
       <Instance>
         The table '{0}' does not contain any primary key columns.  At least one column must be marked as the primary key to ensure this table can be patched.
@@ -544,46 +509,10 @@
         <Parameter Type="System.String" Name="file" />
       </Instance>
     </Message>
-    <Message Id="IllegalIdentifierLooksLikeFormatted" Number="275">
-      <Instance>
-        The {0}/@{1} attribute's value, '{2}', is not a legal identifier. The {0}/@{1} attribute does not support formatted string values, such as property names enclosed in brackets ([LIKETHIS]). The value must be the identifier of another element, such as the Directory/@Id attribute value.
-        <Parameter Type="System.String" Name="elementName" />
-        <Parameter Type="System.String" Name="attributeName" />
-        <Parameter Type="System.String" Name="value" />
-      </Instance>
-    </Message>
     <Message Id="InvalidStringForCodepage" Number="311">
       <Instance>
         A string was provided with characters that are not available in the specified database code page '{0}'. Either change these characters to ones that exist in the database's code page, or update the database's code page by modifying one of the following attributes: Product/@Codepage, Module/@Codepage, Patch/@Codepage, PatchCreation/@Codepage, or WixLocalization/@Codepage.
         <Parameter Type="System.String" Name="codepage" />
-      </Instance>
-    </Message>
-    <Message Id="InvalidSummaryInfoCodePage" Number="349">
-      <Instance>
-        The code page '{0}' is invalid for summary information. You must specify an ANSI code page.
-        <Parameter Type="System.Int32" Name="codePage" />
-      </Instance>
-    </Message>
-    <Message Id="DuplicatedUiLocalization" Number="374">
-      <Instance>
-        The localization for control {0} in dialog {1} is duplicated. Only one localization per control is allowed.
-        <Parameter Type="System.String" Name="controlName" />
-        <Parameter Type="System.String" Name="dialogName" />
-      </Instance>
-      <Instance>
-        The localization for dialog {0} is duplicated. Only one localization per dialog is allowed.
-        <Parameter Type="System.String" Name="dialogName" />
-      </Instance>
-    </Message>
-  </Class>
-
-  <Class Name="WixDataWarnings" ContainerName="WixDataWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
-    <Message Id="IdentifierTooLong" Number="1026">
-      <Instance>
-        The {0}/@{1} attribute's value, '{2}', is too long for an identifier.  Standard identifiers are 72 characters long or less.
-        <Parameter Type="System.String" Name="elementName" />
-        <Parameter Type="System.String" Name="attributeName" />
-        <Parameter Type="System.String" Name="value" />
       </Instance>
     </Message>
   </Class>

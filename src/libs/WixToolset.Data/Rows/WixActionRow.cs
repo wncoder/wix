@@ -232,21 +232,21 @@ namespace WixToolset.Data.Rows
                         id = reader.Value;
                         break;
                     case "AdminExecuteSequence":
-                        if (Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name, reader.Value))
+                        if ("yes".Equals(reader.Value))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdminExecuteSequence;
                             ++sequenceCount;
                         }
                         break;
                     case "AdminUISequence":
-                        if (Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name, reader.Value))
+                        if ("yes".Equals(reader.Value))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdminUISequence;
                             ++sequenceCount;
                         }
                         break;
                     case "AdvtExecuteSequence":
-                        if (Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name, reader.Value))
+                        if ("yes".Equals(reader.Value))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdvtExecuteSequence;
                             ++sequenceCount;
@@ -256,14 +256,14 @@ namespace WixToolset.Data.Rows
                         condition = reader.Value;
                         break;
                     case "InstallExecuteSequence":
-                        if (Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name, reader.Value))
+                        if ("yes".Equals(reader.Value))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.InstallExecuteSequence;
                             ++sequenceCount;
                         }
                         break;
                     case "InstallUISequence":
-                        if (Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name, reader.Value))
+                        if ("yes".Equals(reader.Value))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.InstallUISequence;
                             ++sequenceCount;
