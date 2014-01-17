@@ -102,12 +102,6 @@ namespace WixToolset.Data
                     case "previousCabinetFileId":
                         this.PreviousEmbeddedFileIndex = Convert.ToInt32(reader.Value);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "field", reader.Name));
-                        }
-                        break;
                 }
             }
 
@@ -120,7 +114,7 @@ namespace WixToolset.Data
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
-                            throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "field", reader.Name));
+                            throw new XmlException();
                         case XmlNodeType.CDATA:
                         case XmlNodeType.Text:
                             if (0 < reader.Value.Length)
@@ -136,7 +130,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "field"));
+                    throw new XmlException();
                 }
             }
         }

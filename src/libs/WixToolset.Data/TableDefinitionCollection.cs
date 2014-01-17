@@ -12,6 +12,7 @@ namespace WixToolset.Data
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Xml;
 
     /// <summary>
@@ -84,12 +85,7 @@ namespace WixToolset.Data
         {
             reader.MoveToContent();
 
-            if ("tableDefinitions" != reader.LocalName)
-            {
-                throw new WixException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "table definitions", "tableDefinitions"));
-            }
-
-            return Parse(reader);
+            return Read(reader);
         }
 
         /// <summary>
@@ -173,17 +169,18 @@ namespace WixToolset.Data
         /// </summary>
         /// <param name="reader">Reader to get data from.</param>
         /// <returns>The TableDefinitionCollection represented by the xml.</returns>
-        internal static TableDefinitionCollection Parse(XmlReader reader)
+        internal static TableDefinitionCollection Read(XmlReader reader)
         {
+            if ("tableDefinitions" != reader.LocalName)
+            {
+                throw new XmlException();
+            }
+
             bool empty = reader.IsEmptyElement;
             TableDefinitionCollection tableDefinitionCollection = new TableDefinitionCollection();
 
             while (reader.MoveToNextAttribute())
             {
-                if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                {
-                    throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinitions", reader.Name));
-                }
             }
 
             // parse the child elements
@@ -199,10 +196,10 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "tableDefinition":
-                                    tableDefinitionCollection.Add(TableDefinition.Parse(reader));
+                                    tableDefinitionCollection.Add(TableDefinition.Read(reader));
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinitions", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -213,7 +210,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinitions"));
+                    throw new XmlException();
                 }
             }
 
@@ -224,13 +221,13 @@ namespace WixToolset.Data
         /// Persists a TableDefinitionCollection in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the TableDefinitionCollection should persist itself as XML.</param>
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("tableDefinitions", XmlNamespaceUri);
 
-            foreach (TableDefinition tableDefinition in this.collection.Values)
+            foreach (TableDefinition tableDefinition in this.collection.Values.OrderBy(t => t.Name))
             {
-                tableDefinition.Persist(writer);
+                tableDefinition.Write(writer);
             }
 
             writer.WriteEndElement();

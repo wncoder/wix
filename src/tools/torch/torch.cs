@@ -333,7 +333,7 @@ namespace WixToolset.Tools
                     // With xml inputs, many funtions of the binder have not been performed on the inputs (ie. file sequencing). This results in bad IDT files which cannot be put in a transform.
                     if (this.xmlOutput)
                     {
-                        transform.Save(this.outputFile, null);
+                        transform.Save(this.outputFile);
                     }
                     else
                     {

@@ -5,10 +5,6 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Definition of a table in a database.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
@@ -16,9 +12,6 @@ namespace WixToolset.Data
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
-    using System.Linq;
     using System.Text;
     using System.Xml;
 
@@ -132,131 +125,6 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Parses table definition from xml reader.
-        /// </summary>
-        /// <param name="reader">Reader to get data from.</param>
-        /// <returns>The TableDefintion represented by the Xml.</returns>
-        internal static TableDefinition Parse(XmlReader reader)
-        {
-            bool empty = reader.IsEmptyElement;
-            bool createSymbols = false;
-            string name = null;
-            bool unreal = false;
-            bool bootstrapperApplicationData = false;
-
-            while (reader.MoveToNextAttribute())
-            {
-                switch (reader.LocalName)
-                {
-                    case "createSymbols":
-                        createSymbols = "yes".Equals(reader.Value);
-                        break;
-                    case "name":
-                        name = reader.Value;
-                        break;
-                    case "unreal":
-                        unreal = "yes".Equals(reader.Value);
-                        break;
-                    case "bootstrapperApplicationData":
-                        bootstrapperApplicationData = "yes".Equals(reader.Value);
-                        break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", reader.Name));
-                        }
-                        break;
-                }
-            }
-
-            if (null == name)
-            {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", "name"));
-            }
-
-            List<ColumnDefinition> columns = new List<ColumnDefinition>();
-            bool hasPrimaryKeyColumn = false;
-
-            // parse the child elements
-            if (!empty)
-            {
-                bool done = false;
-
-                while (!done && reader.Read())
-                {
-                    switch (reader.NodeType)
-                    {
-                        case XmlNodeType.Element:
-                        switch (reader.LocalName)
-                        {
-                            case "columnDefinition":
-                                ColumnDefinition columnDefinition = ColumnDefinition.Parse(reader);
-                                columns.Add(columnDefinition);
-
-                                if (columnDefinition.IsPrimaryKey)
-                                {
-                                    hasPrimaryKeyColumn = true;
-                                }
-                                break;
-                            default:
-                                throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition", reader.Name));
-                        }
-                            break;
-                        case XmlNodeType.EndElement:
-                            done = true;
-                            break;
-                    }
-                }
-
-                if (!unreal && !bootstrapperApplicationData && !hasPrimaryKeyColumn)
-                {
-                    throw new WixException(WixDataErrors.RealTableMissingPrimaryKeyColumn(SourceLineNumber.CreateFromUri(reader.BaseURI), name));
-                }
-
-                if (!done)
-                {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "tableDefinition"));
-                }
-            }
-
-            TableDefinition tableDefinition = new TableDefinition(name, columns, createSymbols, unreal, bootstrapperApplicationData);
-            return tableDefinition;
-        }
-
-        /// <summary>
-        /// Persists an output in an XML format.
-        /// </summary>
-        /// <param name="writer">XmlWriter where the Output should persist itself as XML.</param>
-        internal void Persist(XmlWriter writer)
-        {
-            writer.WriteStartElement("tableDefinition", TableDefinitionCollection.XmlNamespaceUri);
-
-            writer.WriteAttributeString("name", this.Name);
-
-            if (this.CreateSymbols)
-            {
-                writer.WriteAttributeString("createSymbols", "yes");
-            }
-
-            if (this.Unreal)
-            {
-                writer.WriteAttributeString("unreal", "yes");
-            }
-
-            if (this.BootstrapperApplicationData)
-            {
-                writer.WriteAttributeString("bootstrapperApplicationData", "yes");
-            }
-
-            foreach (ColumnDefinition columnDefinition in this.Columns)
-            {
-                columnDefinition.Persist(writer);
-            }
-
-            writer.WriteEndElement();
-        }
-
-        /// <summary>
         /// Adds the validation rows to the _Validation table.
         /// </summary>
         /// <param name="validationTable">The _Validation table.</param>
@@ -315,7 +183,6 @@ namespace WixToolset.Data
         /// </remarks>
         /// <param name="updated">The updated <see cref="TableDefinition"/> to compare with this target definition.</param>
         /// <returns>0 if the tables' core properties are the same; otherwise, non-0.</returns>
-        [SuppressMessage("Microsoft.Globalization", "CA1309:UseOrdinalStringComparison")]
         public int CompareTo(TableDefinition updated)
         {
             // by definition, this object is greater than null
@@ -325,7 +192,7 @@ namespace WixToolset.Data
             }
 
             // compare the table names
-            int ret = String.Compare(this.Name, updated.Name, StringComparison.InvariantCulture);
+            int ret = String.Compare(this.Name, updated.Name, StringComparison.Ordinal);
 
             // compare the column count
             if (0 == ret)
@@ -344,6 +211,125 @@ namespace WixToolset.Data
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// Parses table definition from xml reader.
+        /// </summary>
+        /// <param name="reader">Reader to get data from.</param>
+        /// <returns>The TableDefintion represented by the Xml.</returns>
+        internal static TableDefinition Read(XmlReader reader)
+        {
+            bool empty = reader.IsEmptyElement;
+            bool createSymbols = false;
+            string name = null;
+            bool unreal = false;
+            bool bootstrapperApplicationData = false;
+
+            while (reader.MoveToNextAttribute())
+            {
+                switch (reader.LocalName)
+                {
+                    case "createSymbols":
+                        createSymbols = "yes".Equals(reader.Value);
+                        break;
+                    case "name":
+                        name = reader.Value;
+                        break;
+                    case "unreal":
+                        unreal = "yes".Equals(reader.Value);
+                        break;
+                    case "bootstrapperApplicationData":
+                        bootstrapperApplicationData = "yes".Equals(reader.Value);
+                        break;
+                }
+            }
+
+            if (null == name)
+            {
+                throw new XmlException();
+            }
+
+            List<ColumnDefinition> columns = new List<ColumnDefinition>();
+            bool hasPrimaryKeyColumn = false;
+
+            // parse the child elements
+            if (!empty)
+            {
+                bool done = false;
+
+                while (!done && reader.Read())
+                {
+                    switch (reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            switch (reader.LocalName)
+                            {
+                                case "columnDefinition":
+                                    ColumnDefinition columnDefinition = ColumnDefinition.Read(reader);
+                                    columns.Add(columnDefinition);
+
+                                    if (columnDefinition.IsPrimaryKey)
+                                    {
+                                        hasPrimaryKeyColumn = true;
+                                    }
+                                    break;
+                                default:
+                                    throw new XmlException();
+                            }
+                            break;
+                        case XmlNodeType.EndElement:
+                            done = true;
+                            break;
+                    }
+                }
+
+                if (!unreal && !bootstrapperApplicationData && !hasPrimaryKeyColumn)
+                {
+                    throw new WixException(WixDataErrors.RealTableMissingPrimaryKeyColumn(SourceLineNumber.CreateFromUri(reader.BaseURI), name));
+                }
+
+                if (!done)
+                {
+                    throw new XmlException();
+                }
+            }
+
+            TableDefinition tableDefinition = new TableDefinition(name, columns, createSymbols, unreal, bootstrapperApplicationData);
+            return tableDefinition;
+        }
+
+        /// <summary>
+        /// Persists an output in an XML format.
+        /// </summary>
+        /// <param name="writer">XmlWriter where the Output should persist itself as XML.</param>
+        internal void Write(XmlWriter writer)
+        {
+            writer.WriteStartElement("tableDefinition", TableDefinitionCollection.XmlNamespaceUri);
+
+            writer.WriteAttributeString("name", this.Name);
+
+            if (this.CreateSymbols)
+            {
+                writer.WriteAttributeString("createSymbols", "yes");
+            }
+
+            if (this.Unreal)
+            {
+                writer.WriteAttributeString("unreal", "yes");
+            }
+
+            if (this.BootstrapperApplicationData)
+            {
+                writer.WriteAttributeString("bootstrapperApplicationData", "yes");
+            }
+
+            foreach (ColumnDefinition columnDefinition in this.Columns)
+            {
+                columnDefinition.Write(writer);
+            }
+
+            writer.WriteEndElement();
         }
     }
 }

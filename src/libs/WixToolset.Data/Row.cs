@@ -287,7 +287,7 @@ namespace WixToolset.Data
                                 operation = RowOperation.Modify;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name, reader.Value, "Add", "Delete", "Modify"));
+                                throw new XmlException();
                         }
                         break;
                     case "sectionId":
@@ -295,12 +295,6 @@ namespace WixToolset.Data
                         break;
                     case "sourceLineNumber":
                         sourceLineNumbers = SourceLineNumber.CreateFromEncoded(reader.Value);
-                        break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name));
-                        }
                         break;
                 }
             }
@@ -328,7 +322,7 @@ namespace WixToolset.Data
                                     {
                                         if (!reader.IsEmptyElement)
                                         {
-                                            throw new WixException(WixDataErrors.UnexpectedColumnCount(SourceLineNumber.CreateFromUri(reader.BaseURI), table.Name));
+                                            throw new XmlException();
                                         }
                                     }
                                     else
@@ -338,7 +332,7 @@ namespace WixToolset.Data
                                     ++field;
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -349,7 +343,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "row"));
+                    throw new XmlException();
                 }
             }
 

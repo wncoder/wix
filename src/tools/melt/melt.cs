@@ -304,7 +304,7 @@ namespace WixToolset.Tools
                     }
                 }
 
-                inputPdb.Save(this.outputFile, null);
+                inputPdb.Save(this.outputFile);
             }
         }
 

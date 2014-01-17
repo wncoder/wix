@@ -10,10 +10,7 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.CodeDom.Compiler;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -25,18 +22,9 @@ namespace WixToolset.Data
     public sealed class Output
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixout";
-        private static readonly Version currentVersion = new Version("4.0.0.0");
-
-        private static readonly object lockObject = new object();
+        private static readonly Version CurrentVersion = new Version("4.0.0.0");
 
         private Section entrySection;
-
-        private SourceLineNumber sourceLineNumbers;
-
-        private ArrayList subStorages;
-
-        private TempFileCollection tempFileCollection;
-        private string cabPath;
 
         /// <summary>
         /// Creates a new empty output object.
@@ -45,8 +33,8 @@ namespace WixToolset.Data
         public Output(SourceLineNumber sourceLineNumbers)
         {
             this.Sections = new List<Section>();
-            this.sourceLineNumbers = sourceLineNumbers;
-            this.subStorages = new ArrayList();
+            this.SourceLineNumbers = sourceLineNumbers;
+            this.SubStorages = new List<SubStorage>();
             this.Tables = new TableIndexedCollection();
         }
 
@@ -90,15 +78,6 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Gets the substorages in this output.
-        /// </summary>
-        /// <value>The substorages in this output.</value>
-        public ArrayList SubStorages
-        {
-            get { return this.subStorages; }
-        }
-
-        /// <summary>
         /// Gets the type of the output.
         /// </summary>
         /// <value>Type of the output.</value>
@@ -120,10 +99,13 @@ namespace WixToolset.Data
         /// Gets the source line information for this output.
         /// </summary>
         /// <value>The source line information for this output.</value>
-        public SourceLineNumber SourceLineNumbers
-        {
-            get { return this.sourceLineNumbers; }
-        }
+        public SourceLineNumber SourceLineNumbers { get; private set; }
+
+        /// <summary>
+        /// Gets the substorages in this output.
+        /// </summary>
+        /// <value>The substorages in this output.</value>
+        public ICollection<SubStorage> SubStorages { get; private set; }
 
         /// <summary>
         /// Gets the tables contained in this output.
@@ -132,42 +114,33 @@ namespace WixToolset.Data
         public TableIndexedCollection Tables { get; private set; }
 
         /// <summary>
-        /// Gets the cabPath for that cab that was contained in this output.
-        /// </summary>
-        /// <value>Path to the extracted cabinet from this output.</value>
-        public string CabPath
-        {
-            get { return this.cabPath; }
-        }
-
-        /// <summary>
         /// Gets the output type corresponding to a given output filename extension.
         /// </summary>
         /// <param name="extension">Case-insensitive output filename extension.</param>
         /// <returns>Output type for the extension.</returns>
         public static OutputType GetOutputType(string extension)
         {
-            if (String.Equals(extension, ".exe", StringComparison.OrdinalIgnoreCase))
+            if (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.Bundle;
             }
-            if (String.Equals(extension, ".msi", StringComparison.OrdinalIgnoreCase))
+            if (extension.Equals(".msi", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.Product;
             }
-            else if (String.Equals(extension, ".msm", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".msm", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.Module;
             }
-            else if (String.Equals(extension, ".msp", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".msp", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.Patch;
             }
-            else if (String.Equals(extension, ".mst", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".mst", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.Transform;
             }
-            else if (String.Equals(extension, ".pcp", StringComparison.OrdinalIgnoreCase))
+            else if (extension.Equals(".pcp", StringComparison.OrdinalIgnoreCase))
             {
                 return OutputType.PatchCreation;
             }
@@ -211,16 +184,27 @@ namespace WixToolset.Data
         /// <returns>Output object.</returns>
         public static Output Load(string path, bool suppressVersionCheck)
         {
-            try
+            using (FileStream stream = File.OpenRead(path))
+            using (FileStructure fs = FileStructure.Read(stream))
             {
-                using (FileStream stream = File.OpenRead(path))
+                if (FileFormat.Wixout != fs.FileFormat)
                 {
-                    return Load(stream, new Uri(Path.GetFullPath(path)), suppressVersionCheck);
+                    throw new WixUnexpectedFileFormatException(path, FileFormat.Wixout, fs.FileFormat);
                 }
-            }
-            catch (FileNotFoundException)
-            {
-                throw new WixException(WixDataErrors.WixFileNotFound(path));
+
+                Uri uri = new Uri(Path.GetFullPath(path));
+                using (XmlReader reader = XmlReader.Create(fs.GetDataStream(), null, uri.AbsoluteUri))
+                {
+                    try
+                    {
+                        reader.MoveToContent();
+                        return Output.Read(reader, suppressVersionCheck);
+                    }
+                    catch (XmlException xe)
+                    {
+                        throw new WixCorruptFileException(path, fs.FileFormat, xe);
+                    }
+                }
             }
         }
 
@@ -228,122 +212,17 @@ namespace WixToolset.Data
         /// Saves an output to a path on disk.
         /// </summary>
         /// <param name="path">Path to save output file to on disk.</param>
-        /// <param name="tempFilesLocation">Location for temporary files.</param>
-        public void Save(string path, string tempFilesLocation)
+        public void Save(string path)
         {
-            FileMode fileMode = FileMode.Create;
-
-            // Assure the location to output the xml exists
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
 
-            // save the xml
-            using (FileStream fs = new FileStream(path, fileMode))
+            using (FileStream stream = File.Create(path))
+            using (FileStructure fs = FileStructure.Create(stream, FileFormat.Wixout, null))
+            using (XmlWriter writer = XmlWriter.Create(fs.GetDataStream()))
             {
-                XmlWriter writer = null;
-
-                try
-                {
-                    writer = new XmlTextWriter(fs, System.Text.Encoding.UTF8);
-
-                    writer.WriteStartDocument();
-                    this.Persist(writer);
-                    writer.WriteEndDocument();
-                }
-                finally
-                {
-                    if (null != writer)
-                    {
-                        writer.Close();
-                    }
-                }
-            }
-        }
-
-        internal TempFileCollection TempFiles
-        {
-            get
-            {
-                return this.tempFileCollection;
-            }
-            set
-            {
-                this.tempFileCollection = value;
-            }
-        }
-
-        /// <summary>
-        /// Loads an output from a path on disk.
-        /// </summary>
-        /// <param name="stream">Stream containing the output file.</param>
-        /// <param name="uri">Uri for finding this stream.</param>
-        /// <param name="suppressVersionCheck">Suppresses wix.dll version mismatch check.</param>
-        /// <returns>Returns the loaded output.</returns>
-        /// <remarks>This method will set the Path and SourcePath properties to the appropriate values on successful load.</remarks>
-        internal static Output Load(Stream stream, Uri uri, bool suppressVersionCheck)
-        {
-            XmlReader reader = null;
-            TempFileCollection tempFileCollection = null;
-            string cabPath = null;
-
-            // look for the Microsoft cabinet file header and save the cabinet data if found
-            if ('M' == stream.ReadByte() && 'S' == stream.ReadByte() && 'C' == stream.ReadByte() && 'F' == stream.ReadByte())
-            {
-                long cabFileSize = 0;
-                byte[] offsetBuffer = new byte[4];
-                tempFileCollection = new TempFileCollection();
-                cabPath = tempFileCollection.AddExtension("cab", false);
-
-                // skip the header checksum
-                stream.Seek(4, SeekOrigin.Current);
-
-                // get the cabinet file size
-                stream.Read(offsetBuffer, 0, 4);
-                cabFileSize = BitConverter.ToInt32(offsetBuffer, 0);
-
-                stream.Seek(0, SeekOrigin.Begin);
-
-                // Create the cab file from stream
-                using (FileStream fs = File.Create(cabPath))
-                {
-                    for (int i = 0; i < cabFileSize; i++)
-                    {
-                        fs.WriteByte((byte)stream.ReadByte());
-                    }
-                }
-            }
-            else // plain xml file - start reading xml at the beginning of the stream
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-            }
-
-            // read the xml
-            try
-            {
-                reader = new XmlTextReader(uri.AbsoluteUri, stream);
-
-                reader.MoveToContent();
-
-                if ("wixOutput" != reader.LocalName)
-                {
-                    throw new WixNotOutputException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "output", "wixOutput"));
-                }
-
-                Output output = Read(reader, suppressVersionCheck);
-                output.tempFileCollection = tempFileCollection;
-                output.cabPath = cabPath;
-
-                return output;
-            }
-            catch (XmlException xe)
-            {
-                throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(reader.BaseURI), "output", xe.Message));
-            }
-            finally
-            {
-                if (null != reader)
-                {
-                    reader.Close();
-                }
+                writer.WriteStartDocument();
+                this.Write(writer);
+                writer.WriteEndDocument();
             }
         }
 
@@ -355,7 +234,10 @@ namespace WixToolset.Data
         /// <returns>The Output represented by the Xml.</returns>
         internal static Output Read(XmlReader reader, bool suppressVersionCheck)
         {
-            Debug.Assert("wixOutput" == reader.LocalName);
+            if (!reader.LocalName.Equals("wixOutput"))
+            {
+                throw new XmlException();
+            }
 
             bool empty = reader.IsEmptyElement;
             Output output = new Output(SourceLineNumber.CreateFromUri(reader.BaseURI));
@@ -395,27 +277,18 @@ namespace WixToolset.Data
                                 output.Type = OutputType.Transform;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", reader.Name, reader.Value, "Module", "Patch", "PatchCreation", "Product", "Transform"));
+                                throw new XmlException();
                         }
                         break;
                     case "version":
                         version = new Version(reader.Value);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", reader.Name));
-                        }
-                        break;
                 }
             }
 
-            if (null != version && !suppressVersionCheck)
+            if (!suppressVersionCheck && null != version && !Output.CurrentVersion.Equals(version))
             {
-                if (0 != currentVersion.CompareTo(version))
-                {
-                    throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", version.ToString(), currentVersion.ToString()));
-                }
+                throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", version.ToString(), Output.CurrentVersion.ToString()));
             }
 
             // create a section for all the rows to belong to
@@ -442,15 +315,15 @@ namespace WixToolset.Data
                                 case "table":
                                     if (null == tableDefinitions)
                                     {
-                                        throw new WixException(WixDataErrors.ExpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", "tableDefinitions"));
+                                        throw new XmlException();
                                     }
                                     tables.Add(Table.Read(reader, output.entrySection, tableDefinitions));
                                     break;
                                 case "tableDefinitions":
-                                    tableDefinitions = TableDefinitionCollection.Parse(reader);
+                                    tableDefinitions = TableDefinitionCollection.Read(reader);
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -461,7 +334,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixOutput"));
+                    throw new XmlException();
                 }
             }
 
@@ -491,7 +364,7 @@ namespace WixToolset.Data
         /// Persists an output in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the Output should persist itself as XML.</param>
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("wixOutput", XmlNamespaceUri);
 
@@ -502,22 +375,22 @@ namespace WixToolset.Data
                 writer.WriteAttributeString("codepage", this.Codepage.ToString(CultureInfo.InvariantCulture));
             }
 
-            writer.WriteAttributeString("version", currentVersion.ToString());
+            writer.WriteAttributeString("version", Output.CurrentVersion.ToString());
 
-            // collect all the table defintitions and write them
+            // Collect all the table definitions and write them.
             TableDefinitionCollection tableDefinitions = new TableDefinitionCollection();
-            foreach (Table table in this.Tables.OrderBy(t => t.Name))
+            foreach (Table table in this.Tables)
             {
                 tableDefinitions.Add(table.Definition);
             }
-            tableDefinitions.Persist(writer);
+            tableDefinitions.Write(writer);
 
             foreach (Table table in this.Tables.OrderBy(t => t.Name))
             {
                 table.Write(writer);
             }
 
-            foreach (SubStorage subStorage in this.subStorages)
+            foreach (SubStorage subStorage in this.SubStorages)
             {
                 subStorage.Write(writer);
             }

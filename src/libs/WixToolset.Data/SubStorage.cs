@@ -5,16 +5,10 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Substorage inside an output.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
-    using System;
-    using System.Diagnostics;
     using System.Xml;
 
     /// <summary>
@@ -52,7 +46,10 @@ namespace WixToolset.Data
         /// <returns>New SubStorage object.</returns>
         internal static SubStorage Read(XmlReader reader)
         {
-            Debug.Assert("subStorage" == reader.LocalName);
+            if (!reader.LocalName.Equals("subStorage" == reader.LocalName))
+            {
+                throw new XmlException();
+            }
 
             Output data = null;
             bool empty = reader.IsEmptyElement;
@@ -65,21 +62,13 @@ namespace WixToolset.Data
                     case "name":
                         name = reader.Value;
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name));
-                        }
-                        break;
                 }
             }
 
-            // loop through all the fields in a row
             if (!empty)
             {
                 bool done = false;
 
-                // loop through all the fields in a row
                 while (!done && reader.Read())
                 {
                     switch (reader.NodeType)
@@ -91,7 +80,7 @@ namespace WixToolset.Data
                                     data = Output.Read(reader, true);
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "row", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -102,7 +91,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "row"));
+                    throw new XmlException();
                 }
             }
 
@@ -119,7 +108,7 @@ namespace WixToolset.Data
 
             writer.WriteAttributeString("name", this.Name);
 
-            this.Data.Persist(writer);
+            this.Data.Write(writer);
 
             writer.WriteEndElement();
         }

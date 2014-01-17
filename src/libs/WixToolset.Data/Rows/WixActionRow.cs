@@ -272,37 +272,31 @@ namespace WixToolset.Data.Rows
                     case "sequence":
                         sequence = Convert.ToInt32(reader.Value, CultureInfo.InvariantCulture);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.Name));
-                        }
-                        break;
                 }
             }
 
             if (null == id)
             {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", "name"));
+                throw new XmlException();
             }
 
             if (int.MinValue == sequence)
             {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", "sequence"));
+                throw new XmlException();
             }
             else if (1 > sequence)
             {
-                throw new WixException(WixDataErrors.IntegralValueOutOfRange(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", "sequence", sequence, 1, int.MaxValue));
+                throw new XmlException();
             }
 
             if (0 == sequenceCount)
             {
-                throw new WixException(WixDataErrors.ExpectedAttributes(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", "AdminExecuteSequence", "AdminUISequence", "AdvtExecuteSequence", "InstallExecuteSequence", "InstallUISequence"));
+                throw new XmlException();
             }
 
             if (!empty && reader.Read() && XmlNodeType.EndElement != reader.MoveToContent())
             {
-                throw new WixException(WixDataErrors.UnexpectedContentNode(SourceLineNumber.CreateFromUri(reader.BaseURI), "action", reader.NodeType.ToString()));
+                throw new XmlException();
             }
 
             // create the actions

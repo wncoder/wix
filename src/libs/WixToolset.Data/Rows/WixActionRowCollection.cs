@@ -145,17 +145,7 @@ namespace WixToolset.Data.Rows
         /// <returns>The ActionRowCollection represented by the xml.</returns>
         internal static WixActionRowCollection Load(XmlReader reader)
         {
-            if (null == reader)
-            {
-                throw new ArgumentNullException("reader");
-            }
-
             reader.MoveToContent();
-
-            if ("actions" != reader.LocalName)
-            {
-                throw new WixException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "actions", "actions"));
-            }
 
             return Parse(reader);
         }
@@ -167,18 +157,16 @@ namespace WixToolset.Data.Rows
         /// <returns>The parsed ActionTable.</returns>
         private static WixActionRowCollection Parse(XmlReader reader)
         {
-            Debug.Assert("actions" == reader.LocalName);
+            if (!reader.LocalName.Equals("actions"))
+            {
+                throw new XmlException();
+            }
 
             WixActionRowCollection actionRows = new WixActionRowCollection();
             bool empty = reader.IsEmptyElement;
 
-            // there are no legal attributes
             while (reader.MoveToNextAttribute())
             {
-                if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                {
-                    throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "actions", reader.Name));
-                }
             }
 
             if (!empty)
@@ -202,7 +190,7 @@ namespace WixToolset.Data.Rows
                                 }
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "actions", reader.Name));
+                                throw new XmlException();
                         }
                             break;
                         case XmlNodeType.EndElement:
@@ -213,7 +201,7 @@ namespace WixToolset.Data.Rows
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "actions"));
+                    throw new XmlException();
                 }
             }
 

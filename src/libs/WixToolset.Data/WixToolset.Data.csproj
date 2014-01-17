@@ -87,17 +87,16 @@
     <Compile Include="TableDefinitionCollection.cs" />
     <Compile Include="TableOperation.cs" />
     <Compile Include="WindowsInstallerStandard.cs" />
+    <Compile Include="WixCorruptFileException.cs" />
     <Compile Include="WixDataStrings.Designer.cs">
       <DependentUpon>WixDataStrings.resx</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="WixException.cs" />
+    <Compile Include="WixUnexpectedFileFormatException.cs" />
     <Compile Include="WixInvalidIdtException.cs" />
     <Compile Include="WixMissingTableDefinitionException.cs" />
-    <Compile Include="WixNotIntermediateException.cs" />
-    <Compile Include="WixNotLibraryException.cs" />
-    <Compile Include="WixNotOutputException.cs" />
     <Compile Include="YesNoDefaultType.cs" />
     <Compile Include="YesNoType.cs" />
   </ItemGroup>
