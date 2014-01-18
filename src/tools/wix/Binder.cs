@@ -1811,11 +1811,11 @@ namespace WixToolset
             }
 
             // Output the output to a file
-            Pdb pdb = new Pdb(null);
+            Pdb pdb = new Pdb();
             pdb.Output = output;
             if (!String.IsNullOrEmpty(this.PdbFile))
             {
-                pdb.Save(this.PdbFile, null);
+                pdb.Save(this.PdbFile);
             }
 
             // merge modules
@@ -3670,9 +3670,9 @@ namespace WixToolset
             // Output the bundle to a file
             if (null != this.PdbFile)
             {
-                Pdb pdb = new Pdb(null);
+                Pdb pdb = new Pdb();
                 pdb.Output = bundle;
-                pdb.Save(this.PdbFile, null);
+                pdb.Save(this.PdbFile);
             }
 
             // Add detached containers to the list of file transfers.

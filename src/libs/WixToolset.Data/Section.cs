@@ -134,13 +134,7 @@ namespace WixToolset.Data
                                 type = SectionType.Patch;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name, reader.Value, "fragment", "module", "patchCreation", "product", "patch"));
-                        }
-                        break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name));
+                                throw new XmlException();
                         }
                         break;
                 }
@@ -148,12 +142,12 @@ namespace WixToolset.Data
 
             if (null == id && (SectionType.Unknown != type && SectionType.Fragment != type))
             {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", "id", "type", type.ToString()));
+                throw new XmlException();
             }
 
             if (SectionType.Unknown == type)
             {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", "type"));
+                throw new XmlException();
             }
 
             Section section = new Section(id, type, codepage);
@@ -175,7 +169,7 @@ namespace WixToolset.Data
                                     tables.Add(Table.Read(reader, section, tableDefinitions));
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -186,7 +180,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section"));
+                    throw new XmlException();
                 }
             }
 

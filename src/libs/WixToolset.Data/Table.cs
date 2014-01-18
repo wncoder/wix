@@ -196,13 +196,7 @@ namespace WixToolset.Data
                                 operation = TableOperation.Drop;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "table", reader.Name, reader.Value, "Add", "Drop"));
-                        }
-                        break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "table", reader.Name));
+                                throw new XmlException();
                         }
                         break;
                 }
@@ -210,7 +204,7 @@ namespace WixToolset.Data
 
             if (null == name)
             {
-                throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "table", "name"));
+                throw new XmlException();
             }
 
             TableDefinition tableDefinition = tableDefinitions[name];
@@ -233,7 +227,7 @@ namespace WixToolset.Data
                                     Row.Read(reader, table);
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "table", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -244,7 +238,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "table"));
+                    throw new XmlException();
                 }
             }
 

@@ -162,22 +162,43 @@ namespace WixToolset.Tools
             foreach (string file in this.commandLine.Files)
             {
                 string inputFile = Path.GetFullPath(file);
-
-                // try loading as an object file
-                try
+                FileFormat format = FileStructure.GuessFileFormatFromExtension(Path.GetExtension(inputFile));
+                bool retry;
+                do
                 {
-                    Intermediate intermediate = Intermediate.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
-                    sections.AddRange(intermediate.Sections);
-                    continue; // next file
-                }
-                catch (WixNotIntermediateException)
-                {
-                    // try another format
-                }
+                    retry = false;
 
-                // try loading as a library file
-                Library loadedLibrary = Library.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
-                sections.AddRange(loadedLibrary.Sections);
+                    try
+                    {
+                        switch (format)
+                        {
+                            case FileFormat.Wixobj:
+                                Intermediate intermediate = Intermediate.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
+                                sections.AddRange(intermediate.Sections);
+                                break;
+
+                            default:
+                                Library loadedLibrary = Library.Load(inputFile, librarian.TableDefinitions, this.commandLine.SuppressVersionCheck);
+                                sections.AddRange(loadedLibrary.Sections);
+                                break;
+                        }
+                    }
+                    catch (WixUnexpectedFileFormatException e)
+                    {
+                        format = e.FileFormat;
+                        retry = (FileFormat.Wixobj == format || FileFormat.Wixlib == format); // .wixobj and .wixout are supported by lit.
+                        if (!retry)
+                        {
+                            Messaging.Instance.OnMessage(e.Error);
+                        }
+                    }
+                } while (retry);
+            }
+
+            // Stop processing if any errors were found loading object files.
+            if (Messaging.Instance.EncounteredError)
+            {
+                return;
             }
 
             // and now for the fun part
