@@ -158,7 +158,7 @@ namespace WixToolset.Tools
             }
 
             // Add the sections to the librarian
-            SectionCollection sections = new SectionCollection();
+            List<Section> sections = new List<Section>();
             foreach (string file in this.commandLine.Files)
             {
                 string inputFile = Path.GetFullPath(file);
@@ -183,13 +183,22 @@ namespace WixToolset.Tools
             // and now for the fun part
             Library library = librarian.Combine(sections);
 
-            // Save the library output if an error did not occur
+            // Add any localization files and save the library output if an error did not occur
             if (null != library)
             {
                 foreach (string localizationFile in this.commandLine.LocalizationFiles)
                 {
-                    Localization localization = Localization.Load(localizationFile, librarian.TableDefinitions, true);
-                    library.AddLocalization(localization);
+                    Localization localization = Localizer.ParseLocalizationFile(localizationFile, librarian.TableDefinitions);
+                    if (null != localization)
+                    {
+                        library.AddLocalization(localization);
+                    }
+                }
+
+                // If there was an error adding localization files, then bail.
+                if (Messaging.Instance.EncounteredError)
+                {
+                    return;
                 }
 
                 LibraryBinaryFileResolver resolver = null;

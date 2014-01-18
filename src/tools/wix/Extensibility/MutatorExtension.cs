@@ -14,7 +14,7 @@ namespace WixToolset.Extensibility
     using System.Diagnostics.CodeAnalysis;
     using System.Text;
 
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The base mutator extension.  Any of these methods can be overridden to change

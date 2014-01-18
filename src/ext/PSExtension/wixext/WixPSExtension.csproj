@@ -26,7 +26,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\ps.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.PS</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\ps.wixlib">
@@ -37,6 +37,7 @@
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\PSExtension.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

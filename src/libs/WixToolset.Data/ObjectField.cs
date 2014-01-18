@@ -15,6 +15,7 @@ namespace WixToolset.Data
 {
     using System;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Xml;
 
     /// <summary>
@@ -22,9 +23,6 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class ObjectField : Field
     {
-        private string unresolvedData;
-        private string unresolvedPreviousData;
-
         /// <summary>
         /// Instantiates a new Field.
         /// </summary>
@@ -62,27 +60,19 @@ namespace WixToolset.Data
         /// Gets or sets the unresolved data for this field.
         /// </summary>
         /// <value>Unresolved Data in the field.</value>
-        public string UnresolvedData
-        {
-            get { return this.unresolvedData; }
-            set { this.unresolvedData = value; }
-        }
+        public string UnresolvedData { get; set; }
 
         /// <summary>
         /// Gets or sets the unresolved previous data.
         /// </summary>
         /// <value>The unresolved previous data.</value>
-        public string UnresolvedPreviousData
-        {
-            get { return this.unresolvedPreviousData; }
-            set { this.unresolvedPreviousData = value; }
-        }
+        public string UnresolvedPreviousData { get; set; }
 
         /// <summary>
         /// Parse a field from the xml.
         /// </summary>
         /// <param name="reader">XmlReader where the intermediate is persisted.</param>
-        internal override void Parse(XmlReader reader)
+        internal override void Read(XmlReader reader)
         {
             Debug.Assert("field" == reader.LocalName);
 
@@ -98,16 +88,16 @@ namespace WixToolset.Data
                         this.EmbeddedFileIndex = Convert.ToInt32(reader.Value);
                         break;
                     case "modified":
-                        this.Modified = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "field", reader.Name, reader.Value);
+                        this.Modified = "yes".Equals(reader.Value);
                         break;
                     case "previousData":
                         this.PreviousData = reader.Value;
                         break;
                     case "unresolvedPreviousData":
-                        this.unresolvedPreviousData = reader.Value;
+                        this.UnresolvedPreviousData = reader.Value;
                         break;
                     case "unresolvedData":
-                        this.unresolvedData = reader.Value;
+                        this.UnresolvedData = reader.Value;
                         break;
                     case "previousCabinetFileId":
                         this.PreviousEmbeddedFileIndex = Convert.ToInt32(reader.Value);
@@ -155,20 +145,8 @@ namespace WixToolset.Data
         /// Persists a field in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the Field should persist itself as XML.</param>
-        internal override void Persist(XmlWriter writer)
+        internal override void Write(XmlWriter writer)
         {
-            string text;
-
-            // convert the data to a string that will persist nicely
-            if (null == this.Data)
-            {
-                text = String.Empty;
-            }
-            else
-            {
-                text = (string)this.Data;
-            }
-
             writer.WriteStartElement("field", Intermediate.XmlNamespaceUri);
 
             if (this.EmbeddedFileIndex.HasValue)
@@ -183,9 +161,9 @@ namespace WixToolset.Data
                 writer.WriteAttributeString("modified", "yes");
             }
 
-            if (null != this.unresolvedPreviousData)
+            if (null != this.UnresolvedPreviousData)
             {
-                writer.WriteAttributeString("unresolvedPreviousData", this.unresolvedPreviousData);
+                writer.WriteAttributeString("unresolvedPreviousData", this.UnresolvedPreviousData);
             }
 
             if (null != this.PreviousData)
@@ -193,9 +171,9 @@ namespace WixToolset.Data
                 writer.WriteAttributeString("previousData", this.PreviousData);
             }
 
-            if (null != this.unresolvedData)
+            if (null != this.UnresolvedData)
             {
-                writer.WriteAttributeString("unresolvedData", this.unresolvedData);
+                writer.WriteAttributeString("unresolvedData", this.UnresolvedData);
             }
 
             if (this.PreviousEmbeddedFileIndex.HasValue)
@@ -205,6 +183,8 @@ namespace WixToolset.Data
                 writer.WriteEndAttribute();
             }
 
+            // Convert the data to a string that will persist nicely (nulls as String.Empty).
+            string text = Convert.ToString(this.Data, CultureInfo.InvariantCulture);
             if (this.Column.UseCData)
             {
                 writer.WriteCData(text);

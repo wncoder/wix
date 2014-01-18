@@ -15,8 +15,8 @@
     <RootNamespace>WixToolset.Data</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColumnDefinition.cs" />
-    <Compile Include="ColumnDefinitionCollection.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="ComplexReferenceChildType.cs" />
     <Compile Include="ComplexReferenceParentType.cs" />
@@ -40,22 +40,23 @@
     <Compile Include="Msi\MsiInterop.cs" />
     <Compile Include="ObjectField.cs" />
     <Compile Include="Output.cs" />
+    <Compile Include="OutputType.cs" />
     <Compile Include="PackagingType.cs" />
     <Compile Include="Pdb.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Row.cs" />
-    <Compile Include="RowCollection.cs" />
+    <Compile Include="RowIndexedList.cs" />
     <Compile Include="RowDictionary.cs" />
+    <Compile Include="RowOperation.cs" />
     <Compile Include="Rows\BBControlRow.cs" />
     <Compile Include="Rows\ChainMsiPackageRow.cs" />
     <Compile Include="Rows\ComponentRow.cs" />
     <Compile Include="Rows\ControlRow.cs" />
     <Compile Include="Rows\FileRow.cs" />
-    <Compile Include="Rows\FileRowCollection.cs" />
     <Compile Include="Rows\MediaRow.cs" />
-    <Compile Include="Rows\MediaRowCollection.cs" />
     <Compile Include="Rows\PayloadInfoRow.cs" />
     <Compile Include="Rows\SummaryInfoRowCollection.cs" />
+    <Compile Include="Rows\PropertyRow.cs" />
     <Compile Include="Rows\UpgradeRow.cs" />
     <Compile Include="Rows\VariableRow.cs" />
     <Compile Include="Rows\WixActionRow.cs" />
@@ -73,15 +74,18 @@
     <Compile Include="Rows\WixUpdateRegistrationRow.cs" />
     <Compile Include="Rows\WixVariableRow.cs" />
     <Compile Include="Section.cs" />
-    <Compile Include="SectionCollection.cs" />
+    <Compile Include="SectionType.cs" />
+    <Compile Include="Serialize\CodeDomInterfaces.cs" />
+    <Compile Include="Serialize\CodeDomReader.cs" />
+    <Compile Include="Serialize\ElementCollection.cs" />
     <Compile Include="SourceLineNumber.cs" />
     <Compile Include="SubStorage.cs" />
     <Compile Include="Symbol.cs" />
-    <Compile Include="SymbolCollection.cs" />
     <Compile Include="Table.cs" />
-    <Compile Include="TableCollection.cs" />
+    <Compile Include="TableIndexedCollection.cs" />
     <Compile Include="TableDefinition.cs" />
     <Compile Include="TableDefinitionCollection.cs" />
+    <Compile Include="TableOperation.cs" />
     <Compile Include="WindowsInstallerStandard.cs" />
     <Compile Include="WixDataStrings.Designer.cs">
       <DependentUpon>WixDataStrings.resx</DependentUpon>
@@ -117,6 +121,20 @@
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
       <SubType>Designer</SubType>
     </MsgGenSource>
+  </ItemGroup>
+  <ItemGroup>
+    <XsdGenSource Include="Xsd\wix.xsd">
+      <Namespace>WixToolset.Data.Serialize</Namespace>
+    </XsdGenSource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Xsd\actions.xsd" />
+    <None Include="Data\Xsd\libraries.xsd" />
+    <None Include="Data\Xsd\objects.xsd" />
+    <None Include="Data\Xsd\outputs.xsd" />
+    <None Include="Data\Xsd\pdbs.xsd" />
+    <None Include="Data\Xsd\tables.xsd" />
+    <None Include="Xsd\wixloc.xsd" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

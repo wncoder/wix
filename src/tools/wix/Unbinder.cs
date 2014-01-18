@@ -16,10 +16,12 @@ namespace WixToolset
     using System;
     using System.CodeDom.Compiler;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.ComponentModel;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Text.RegularExpressions;
     using WixToolset.Cab;
     using WixToolset.Data;
@@ -48,7 +50,7 @@ namespace WixToolset
         /// </summary>
         public Unbinder()
         {
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
             this.unbinderExtensions = new ArrayList();
         }
 
@@ -339,25 +341,24 @@ namespace WixToolset
 
                             using (View tableView = database.OpenExecuteView(String.Format(CultureInfo.InvariantCulture, "SELECT * FROM `{0}`", tableName)))
                             {
-                                TableDefinition tableDefinition = new TableDefinition(tableName, false, false);
-                                Hashtable tablePrimaryKeys = new Hashtable();
-
+                                List<ColumnDefinition> columns;
                                 using (Record columnNameRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFONAMES),
                                               columnTypeRecord = tableView.GetColumnInfo(MsiInterop.MSICOLINFOTYPES))
                                 {
-                                    int columnCount = columnNameRecord.GetFieldCount();
-
                                     // index the primary keys
+                                    HashSet<string> tablePrimaryKeys = new HashSet<string>();
                                     using (Record primaryKeysRecord = database.PrimaryKeys(tableName))
                                     {
                                         int primaryKeysFieldCount = primaryKeysRecord.GetFieldCount();
 
                                         for (int i = 1; i <= primaryKeysFieldCount; i++)
                                         {
-                                            tablePrimaryKeys[primaryKeysRecord.GetString(i)] = null;
+                                            tablePrimaryKeys.Add(primaryKeysRecord.GetString(i));
                                         }
                                     }
 
+                                    int columnCount = columnNameRecord.GetFieldCount();
+                                    columns = new List<ColumnDefinition>(columnCount);
                                     for (int i = 1; i <= columnCount; i++)
                                     {
                                         string columnName = columnNameRecord.GetString(i);
@@ -479,15 +480,19 @@ namespace WixToolset
                                             columnModularizeType = ColumnModularizeType.Column;
                                         }
 
-                                        tableDefinition.Columns.Add(new ColumnDefinition(columnName, columnType, length, primary, nullable, columnModularizeType, (ColumnType.Localized == columnType), minValueSet, minValue, maxValueSet, maxValue, keyTable, keyColumnSet, keyColumn, columnCategory, set, description, true, true));
+                                        columns.Add(new ColumnDefinition(columnName, columnType, length, primary, nullable, columnModularizeType, (ColumnType.Localized == columnType), minValueSet, minValue, maxValueSet, maxValue, keyTable, keyColumnSet, keyColumn, columnCategory, set, description, true, true));
                                     }
                                 }
+
+                                TableDefinition tableDefinition = new TableDefinition(tableName, columns, false, false);
+
                                 // use our table definitions if core properties are the same; this allows us to take advantage
                                 // of wix concepts like localizable columns which current code assumes
                                 if (this.tableDefinitions.Contains(tableName) && 0 == tableDefinition.CompareTo(this.tableDefinitions[tableName]))
                                 {
                                     tableDefinition = this.tableDefinitions[tableName];
                                 }
+
                                 Table table = new Table(null, tableDefinition);
 
                                 while (true)
@@ -881,7 +886,7 @@ namespace WixToolset
             }
 
             Table fileTable = output.Tables["File"];
-            Table wixFileTable = output.Tables.EnsureTable(null, this.tableDefinitions["WixFile"]);
+            Table wixFileTable = output.EnsureTable(this.tableDefinitions["WixFile"]);
             foreach (Row row in fileTable.Rows)
             {
                 WixFileRow wixFileRow = new WixFileRow(null, this.tableDefinitions["WixFile"]);
@@ -1098,7 +1103,7 @@ namespace WixToolset
             // get the summary information table
             using (SummaryInformation summaryInformation = new SummaryInformation(transformFile))
             {
-                Table table = transform.Tables.EnsureTable(null, this.tableDefinitions["_SummaryInformation"]);
+                Table table = transform.EnsureTable(this.tableDefinitions["_SummaryInformation"]);
 
                 for (int i = 1; 19 >= i; i++)
                 {
@@ -1119,7 +1124,7 @@ namespace WixToolset
             foreach (TableDefinition tableDefinition in this.tableDefinitions)
             {
                 // skip unreal tables and the Patch table
-                if (!tableDefinition.IsUnreal && "Patch" != tableDefinition.Name)
+                if (!tableDefinition.Unreal && "Patch" != tableDefinition.Name)
                 {
                     schemaOutput.EnsureTable(tableDefinition);
                 }
@@ -1229,7 +1234,7 @@ namespace WixToolset
                     string columnName = (string)row[1];
                     string primaryKeys = (string)row[2];
 
-                    Table table = transform.Tables.EnsureTable(null, this.tableDefinitions[tableName]);
+                    Table table = transform.EnsureTable(this.tableDefinitions[tableName]);
 
                     if ("CREATE" == columnName) // added table
                     {
@@ -1262,7 +1267,15 @@ namespace WixToolset
                             Row modifiedRow = (Row)rows[index];
 
                             // mark the field as modified
-                            int indexOfModifiedValue = modifiedRow.TableDefinition.Columns.IndexOf(columnName);
+                            int indexOfModifiedValue = -1;
+                            for (int i = 0; i < modifiedRow.TableDefinition.Columns.Count; ++i)
+                            {
+                                if (columnName.Equals(modifiedRow.TableDefinition.Columns[i].Name, StringComparison.Ordinal))
+                                {
+                                    indexOfModifiedValue = i;
+                                    break;
+                                }
+                            }
                             modifiedRow.Fields[indexOfModifiedValue].Modified = true;
 
                             // move the modified row into the transform the first time its encountered
@@ -1275,7 +1288,8 @@ namespace WixToolset
                     }
                     else // added column
                     {
-                        table.Definition.Columns[columnName].Added = true;
+                        ColumnDefinition column = table.Definition.Columns.Single(c => c.Name.Equals(columnName, StringComparison.Ordinal));
+                        column.Added = true;
                     }
                 }
             }

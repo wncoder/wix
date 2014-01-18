@@ -23,7 +23,7 @@ namespace WixToolset.Extensions
     using Util = WixToolset.Extensions.Serialize.Util;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset Utility Extension.
@@ -52,7 +52,7 @@ namespace WixToolset.Extensions
         /// Called at the beginning of the decompilation of a database.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public override void Initialize(TableCollection tables)
+        public override void Initialize(TableIndexedCollection tables)
         {
             this.CleanupSecureCustomProperties(tables);
             this.CleanupInternetShortcutRemoveFileTables(tables);
@@ -69,7 +69,7 @@ namespace WixToolset.Extensions
         /// new Property elements.
         /// </remarks>
         /// <param name="tables">The collection of all tables.</param>
-        private void CleanupSecureCustomProperties(TableCollection tables)
+        private void CleanupSecureCustomProperties(TableIndexedCollection tables)
         {
             Table propertyTable = tables["Property"];
 
@@ -111,7 +111,7 @@ namespace WixToolset.Extensions
         /// Remove RemoveFile rows that the InternetShortcut compiler extension adds for us.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void CleanupInternetShortcutRemoveFileTables(TableCollection tables)
+        private void CleanupInternetShortcutRemoveFileTables(TableIndexedCollection tables)
         {
             // index the WixInternetShortcut table
             Table wixInternetShortcutTable = tables["WixInternetShortcut"];
@@ -204,7 +204,7 @@ namespace WixToolset.Extensions
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public override void Finish(TableCollection tables)
+        public override void Finish(TableIndexedCollection tables)
         {
             this.FinalizePerfmonTable(tables);
             this.FinalizePerfmonManifestTable(tables);
@@ -1114,7 +1114,7 @@ namespace WixToolset.Extensions
         /// refers to a file row - but doesn't have to), the nesting must
         /// be inferred during finalization.
         /// </remarks>
-        private void FinalizePerfmonTable(TableCollection tables)
+        private void FinalizePerfmonTable(TableIndexedCollection tables)
         {
             Table perfmonTable = tables["Perfmon"];
 
@@ -1153,7 +1153,7 @@ namespace WixToolset.Extensions
         /// Finalize the PerfmonManifest table.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void FinalizePerfmonManifestTable(TableCollection tables)
+        private void FinalizePerfmonManifestTable(TableIndexedCollection tables)
         {
             Table perfmonManifestTable = tables["PerfmonManifest"];
 
@@ -1196,7 +1196,7 @@ namespace WixToolset.Extensions
         /// Nests the PermissionEx elements below their parent elements.  There are no declared foreign
         /// keys for the parents of the SecureObjects table.
         /// </remarks>
-        private void FinalizeSecureObjectsTable(TableCollection tables)
+        private void FinalizeSecureObjectsTable(TableIndexedCollection tables)
         {
             Table createFolderTable = tables["CreateFolder"];
             Table secureObjectsTable = tables["SecureObjects"];
@@ -1270,7 +1270,7 @@ namespace WixToolset.Extensions
         /// Since there is no foreign key from the ServiceName column to the
         /// ServiceInstall table, this relationship must be handled late.
         /// </remarks>
-        private void FinalizeServiceConfigTable(TableCollection tables)
+        private void FinalizeServiceConfigTable(TableIndexedCollection tables)
         {
             Table serviceConfigTable = tables["ServiceConfig"];
             Table serviceInstallTable = tables["ServiceInstall"];
@@ -1342,7 +1342,7 @@ namespace WixToolset.Extensions
         /// Finalize the XmlConfig table.
         /// </summary>
         /// <param name="tables">Collection of all tables.</param>
-        private void FinalizeXmlConfigTable(TableCollection tables)
+        private void FinalizeXmlConfigTable(TableIndexedCollection tables)
         {
             Table xmlConfigTable = tables["XmlConfig"];
 
@@ -1391,7 +1391,7 @@ namespace WixToolset.Extensions
         /// Some of the XmlFile table rows are compiler generated from util:EventManifest node
         /// These rows should not be appended to component.
         /// </remarks>
-        private void FinalizeXmlFileTable(TableCollection tables)
+        private void FinalizeXmlFileTable(TableIndexedCollection tables)
         {
             Table xmlFileTable = tables["XmlFile"];
             Table eventManifestTable = tables["EventManifest"];
@@ -1510,7 +1510,7 @@ namespace WixToolset.Extensions
         /// This function must be called after FinalizeXmlFileTable
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void FinalizeEventManifestTable(TableCollection tables)
+        private void FinalizeEventManifestTable(TableIndexedCollection tables)
         {
             Table eventManifestTable = tables["EventManifest"];
 

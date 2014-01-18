@@ -43,52 +43,26 @@
     <Compile Include="ConsoleMessageHandler.cs" />
     <Compile Include="Extensibility\AssemblyDefaultFabricatorExtensionAttribute.cs" />
     <Compile Include="Extensibility\AssemblyDefaultHeatExtensionAttribute.cs" />
-    <Compile Include="Extensibility\BinderExtension.cs" />
-    <Compile Include="Extensibility\BindPath.cs" />
-    <Compile Include="Extensibility\BindStage.cs" />
-    <Compile Include="Extensibility\CabinetBuildOption.cs" />
-    <Compile Include="Extensibility\CompilerConstants.cs" />
-    <Compile Include="Extensibility\CompilerExtension.cs" />
-    <Compile Include="Extensibility\ComponentKeyPath.cs" />
-    <Compile Include="Extensibility\DecompilerConstants.cs" />
-    <Compile Include="Extensibility\DecompilerExtension.cs" />
-    <Compile Include="Extensibility\ExtensionData.cs" />
-    <Compile Include="Extensibility\ExtensionHelper.cs" />
     <Compile Include="Extensibility\HarvesterExtension.cs" />
     <Compile Include="Extensibility\HeatExtension.cs" />
-    <Compile Include="Extensibility\IBinderCore.cs" />
-    <Compile Include="Extensibility\IBinderExtension.cs" />
-    <Compile Include="Extensibility\IBinderFileManager.cs" />
-    <Compile Include="Extensibility\IBinderFileManagerCore.cs" />
-    <Compile Include="Extensibility\ICompilerCore.cs" />
-    <Compile Include="Extensibility\ICompilerExtension.cs" />
-    <Compile Include="Extensibility\IDecompilerCore.cs" />
-    <Compile Include="Extensibility\IDecompilerExtension.cs" />
-    <Compile Include="Extensibility\IExtensionCommandLine.cs" />
-    <Compile Include="Extensibility\IExtensionData.cs" />
     <Compile Include="Extensibility\IHarvesterCore.cs" />
     <Compile Include="Extensibility\IHeatCore.cs" />
-    <Compile Include="Extensibility\IInspectorCore.cs" />
-    <Compile Include="Extensibility\IInspectorExtension.cs" />
-    <Compile Include="Extensibility\InspectorExtension.cs" />
-    <Compile Include="Extensibility\IPreprocessorCore.cs" />
-    <Compile Include="Extensibility\IPreprocessorExtension.cs" />
-    <Compile Include="Extensibility\IUnbinderExtension.cs" />
     <Compile Include="Extensibility\MutatorExtension.cs" />
-    <Compile Include="Extensibility\PreprocessorExtension.cs" />
-    <Compile Include="Extensibility\ResolvedCabinet.cs" />
     <Compile Include="Extensibility\ValidatorExtension.cs" />
     <Compile Include="ExtensionManager.cs" />
     <Compile Include="ExtractEmbeddedFiles.cs" />
     <Compile Include="FileTransfer.cs" />
+    <Compile Include="Link\FindEntrySectionAndLoadSymbolsCommand.cs" />
     <Compile Include="IfDefEventHandler.cs" />
     <Compile Include="Inscriber.cs" />
     <Compile Include="InspectorCore.cs" />
+    <Compile Include="Link\ReportDuplicateResolvedSymbolErrorsCommand.cs" />
     <Compile Include="Localizer.cs" />
     <Compile Include="Patch.cs" />
     <Compile Include="PatchAPI\PatchInterop.cs" />
     <Compile Include="PatchTransform.cs" />
     <Compile Include="ResolvedVariableEventHandler.cs" />
+    <Compile Include="Link\ResolveReferencesCommand.cs" />
     <Compile Include="Uuid.cs" />
     <Compile Include="Differ.cs" />
     <Compile Include="FabricatorCore.cs" />
@@ -130,9 +104,6 @@
     <Compile Include="Preprocessor.cs" />
     <Compile Include="PreprocessorCore.cs" />
     <Compile Include="ProcessedStreamEventHandler.cs" />
-    <Compile Include="Serialize\CodeDomInterfaces.cs" />
-    <Compile Include="Serialize\CodeDomReader.cs" />
-    <Compile Include="Serialize\ElementCollection.cs" />
     <Compile Include="Unbinder.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Validator.cs" />
@@ -169,41 +140,11 @@
     <Compile Include="WixSearchInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedFlattenedResource Include="Xsd\actions.xsd">
-      <LogicalName>$(RootNamespace).Xsd.actions.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\libraries.xsd">
-      <LogicalName>$(RootNamespace).Xsd.libraries.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\objects.xsd">
-      <LogicalName>$(RootNamespace).Xsd.objects.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\outputs.xsd">
-      <LogicalName>$(RootNamespace).Xsd.outputs.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\pdbs.xsd">
-      <LogicalName>$(RootNamespace).Xsd.pdbs.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\tables.xsd">
-      <LogicalName>$(RootNamespace).Xsd.tables.xsd</LogicalName>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\wix.xsd">
-      <LogicalName>$(RootNamespace).Xsd.wix.xsd</LogicalName>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedFlattenedResource>
-    <EmbeddedFlattenedResource Include="Xsd\wixloc.xsd">
-      <LogicalName>$(RootNamespace).Xsd.wixloc.xsd</LogicalName>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedFlattenedResource>
     <EmbeddedNativeResource Include="wixdll.rc" />
     <MsgGenSource Include="Data\messages.xml">
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
       <SubType>Designer</SubType>
     </MsgGenSource>
-    <XsdGenSource Include="Xsd\wix.xsd">
-      <SubType>Designer</SubType>
-      <Namespace>WixToolset.Serialize</Namespace>
-    </XsdGenSource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="WixDistributionSpecificStrings.resx">

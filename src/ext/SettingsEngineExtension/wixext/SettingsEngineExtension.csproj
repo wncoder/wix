@@ -31,7 +31,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\cfg.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.Cfg</Namespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\SettingsEngine.wixlib">
@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(WixSrcFolder)libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="$(WixSrcFolder)libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="$(WixSrcFolder)tools\Wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\SettingsEngineWixLib.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

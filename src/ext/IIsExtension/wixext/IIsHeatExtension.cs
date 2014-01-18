@@ -17,7 +17,7 @@ namespace WixToolset.Extensions
     using System.Collections.Specialized;
     using WixToolset.Extensibility;
     using WixToolset.Tools;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// An IIS harvesting extension for the WiX Toolset Harvester application.

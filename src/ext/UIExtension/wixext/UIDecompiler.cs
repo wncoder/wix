@@ -15,7 +15,7 @@ namespace WixToolset.Extensions
     using System.Globalization;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset UI Extension.
@@ -38,7 +38,7 @@ namespace WixToolset.Extensions
         /// Called at the beginning of the decompilation of a database.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public override void Initialize(TableCollection tables)
+        public override void Initialize(TableIndexedCollection tables)
         {
             Table propertyTable = tables["Property"];
 

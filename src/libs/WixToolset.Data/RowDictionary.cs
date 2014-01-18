@@ -5,27 +5,38 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// A collection of rows indexed by their primary key.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections.ObjectModel;
+    using System.Collections.Generic;
 
     /// <summary>
-    /// A collection of rows indexed by their primary key.
+    /// A dictionary of rows. Unlike the <see cref="RowIndexedCollection"/> this
+    /// will throw when multiple rows with the same key are added.
     /// </summary>
-    public sealed class RowDictionary<T> : KeyedCollection<string, T> where T : Row
+    public sealed class RowDictionary<T> : Dictionary<string, T> where T : Row
     {
         /// <summary>
         /// Creates an empty <see cref="RowDictionary"/>.
         /// </summary>
-        public RowDictionary() : base(StringComparer.InvariantCulture)
+        public RowDictionary()
+            : base(StringComparer.InvariantCulture)
         {
+        }
+
+        /// <summary>
+        /// Creates and populates a <see cref="RowDictionary"/> with the rows from the given enumerator.
+        /// </summary>
+        /// <param name="Rows">Rows to add.</param>
+        public RowDictionary(IEnumerable<T> rows)
+            : this()
+        {
+            foreach (T row in rows)
+            {
+                this.Add(row);
+            }
         }
 
         /// <summary>
@@ -35,72 +46,46 @@ namespace WixToolset.Data
         /// <remarks>
         /// Rows added to the index are not automatically added to the given <paramref name="table"/>.
         /// </remarks>
-        public RowDictionary(Table table) : this()
+        public RowDictionary(Table table)
+            : this()
         {
-            if (null != table && 0 < table.Rows.Count)
+            if (null != table)
             {
                 foreach (T row in table.Rows)
                 {
-                    this.TryAdd(row);
+                    this.Add(row);
                 }
             }
         }
 
         /// <summary>
-        /// Tries to add a row if the primary key doesn't already exist.
+        /// Adds a row to the dictionary using the row key.
         /// </summary>
-        /// <param name="row">The row to add.</param>
-        /// <returns>
-        /// True if the row was added; otherwise, false if the primary key already existed.
-        /// </returns>
-        public bool TryAdd(T row)
+        /// <param name="row">Row to add to the dictionary.</param>
+        public void Add(T row)
         {
-            string key = this.GetKeyForItem(row);
-
-            if (!base.Contains(key))
-            {
-                base.Add(row);
-                return true;
-            }
-
-            return false;
+            this.Add(row.GetKey(), row);
         }
 
         /// <summary>
-        /// Tries to get a row for the given <paramref name="key"/>.
+        /// Gets the row by integer key.
         /// </summary>
-        /// <param name="key">The key of the row to retrieve.</param>
-        /// <param name="row">The row that was retrieved.</param>
-        /// <returns>
-        /// True if the row was retrieved; otherwise, false if the row does not exist.
-        /// </returns>
-        public bool TryGet(string key, out T row)
+        /// <param name="key">Integer key to look up.</param>
+        /// <returns>Row or null if key is not found.</returns>
+        public T Get(int key)
         {
-            if (base.Contains(key))
-            {
-                row = base[key];
-                return true;
-            }
-
-            row = null;
-            return false;
+            return this.Get(key.ToString());
         }
 
         /// <summary>
-        /// Gets the key to index from the <paramref name="row"/>.
+        /// Gets the row by string key.
         /// </summary>
-        /// <param name="row">The row to be indexed.</param>
-        /// <returns>
-        /// The key to index.
-        /// </returns>
-        protected override string GetKeyForItem(T row)
+        /// <param name="key">String key to look up.</param>
+        /// <returns>Row or null if key is not found.</returns>
+        public T Get(string key)
         {
-            if (null == row)
-            {
-                throw new ArgumentNullException("row");
-            }
-
-            return row.GetPrimaryKey('/');
+            T result;
+            return this.TryGetValue(key, out result) ? result : null;
         }
     }
 }

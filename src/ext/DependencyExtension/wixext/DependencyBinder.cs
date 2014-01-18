@@ -138,7 +138,7 @@ namespace WixToolset.Extensions
 
             // Create the row from the main tables, which were populated during link anyway.
             // We still associate the table with the dependency row's section to maintain servicing.
-            Table table = this.output.Tables.EnsureTable(referenceRow.Table.Section, tableDefinition);
+            Table table = this.output.EnsureTable(tableDefinition, referenceRow.Table.Section);
             Row row = table.CreateRow(referenceRow.SourceLineNumbers);
             
             // Set the section ID for patching and return the new row.

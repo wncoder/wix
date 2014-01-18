@@ -28,7 +28,7 @@ namespace WixToolset
     using WixToolset.Extensibility;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Decompiles an msi database into WiX source.
@@ -894,7 +894,7 @@ namespace WixToolset
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void FinalizeDecompile(TableCollection tables)
+        private void FinalizeDecompile(TableIndexedCollection tables)
         {
             if (OutputType.PatchCreation == this.outputType)
             {
@@ -930,7 +930,7 @@ namespace WixToolset
         /// a value in the Property column.  This is then possibly matched up with a CheckBox row
         /// to retrieve a CheckBoxValue.  There is no foreign key from the Control to CheckBox table.
         /// </remarks>
-        private void FinalizeCheckBoxTable(TableCollection tables)
+        private void FinalizeCheckBoxTable(TableIndexedCollection tables)
         {
             // if the user has requested to suppress the UI elements, we have nothing to do
             if (this.suppressUI)
@@ -999,7 +999,7 @@ namespace WixToolset
         /// <remarks>
         /// Set the keypaths for each component.
         /// </remarks>
-        private void FinalizeComponentTable(TableCollection tables)
+        private void FinalizeComponentTable(TableIndexedCollection tables)
         {
             Table componentTable = tables["Component"];
             Table fileTable = tables["File"];
@@ -1136,7 +1136,7 @@ namespace WixToolset
         /// Sets the first, default, and cancel control for each dialog and adds all child control
         /// elements to the dialog.
         /// </remarks>
-        private void FinalizeDialogTable(TableCollection tables)
+        private void FinalizeDialogTable(TableIndexedCollection tables)
         {
             // if the user has requested to suppress the UI elements, we have nothing to do
             if (this.suppressUI)
@@ -1266,7 +1266,7 @@ namespace WixToolset
         /// Sets the source/destination property/directory for each DuplicateFile or
         /// MoveFile row.
         /// </remarks>
-        private void FinalizeDuplicateMoveFileTables(TableCollection tables)
+        private void FinalizeDuplicateMoveFileTables(TableIndexedCollection tables)
         {
             Table duplicateFileTable = tables["DuplicateFile"];
             Table moveFileTable = tables["MoveFile"];
@@ -1325,7 +1325,7 @@ namespace WixToolset
         /// Finalize the FamilyFileRanges table.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void FinalizeFamilyFileRangesTable(TableCollection tables)
+        private void FinalizeFamilyFileRangesTable(TableIndexedCollection tables)
         {
             Table externalFilesTable = tables["ExternalFiles"];
             Table familyFileRangesTable = tables["FamilyFileRanges"];
@@ -1486,7 +1486,7 @@ namespace WixToolset
         /// the Feature and Component table separately, but not the FeatureComponents table specifically,
         /// the FeatureComponents table and primary features must be decompiled during finalization.
         /// </remarks>
-        private void FinalizeFeatureComponentsTable(TableCollection tables)
+        private void FinalizeFeatureComponentsTable(TableIndexedCollection tables)
         {
             Table classTable = tables["Class"];
             Table extensionTable = tables["Extension"];
@@ -1556,20 +1556,18 @@ namespace WixToolset
         /// <remarks>
         /// Sets the source, diskId, and assembly information for each file.
         /// </remarks>
-        private void FinalizeFileTable(TableCollection tables)
+        private void FinalizeFileTable(TableIndexedCollection tables)
         {
             Table fileTable = tables["File"];
             Table mediaTable = tables["Media"];
             Table msiAssemblyTable = tables["MsiAssembly"];
             Table typeLibTable = tables["TypeLib"];
 
-            MediaRowCollection mediaRows;
-
             // index the media table by media id
+            RowDictionary<MediaRow> mediaRows;
             if (null != mediaTable)
             {
-                mediaRows = new MediaRowCollection();
-                mediaRows.AddRange(mediaTable.Rows);
+                mediaRows = new RowDictionary<MediaRow>(mediaTable);
             }
 
             // set the disk identifiers and sources for files
@@ -1701,7 +1699,7 @@ namespace WixToolset
         /// tables so either one would be valid to be decompiled first, so
         /// the only safe way to nest the MIME elements is to do it during finalize.
         /// </remarks>
-        private void FinalizeMIMETable(TableCollection tables)
+        private void FinalizeMIMETable(TableIndexedCollection tables)
         {
             Table extensionTable = tables["Extension"];
             Table mimeTable = tables["MIME"];
@@ -1771,7 +1769,7 @@ namespace WixToolset
         /// remaining ProgIds for each Class.  This happens during finalize because there is
         /// a circular dependency between the Class and ProgId tables.
         /// </remarks>
-        private void FinalizeProgIdTable(TableCollection tables)
+        private void FinalizeProgIdTable(TableIndexedCollection tables)
         {
             Table classTable = tables["Class"];
             Table progIdTable = tables["ProgId"];
@@ -1903,7 +1901,7 @@ namespace WixToolset
         /// <remarks>
         /// Removes properties that are generated from other entries.
         /// </remarks>
-        private void FinalizePropertyTable(TableCollection tables)
+        private void FinalizePropertyTable(TableIndexedCollection tables)
         {
             Table propertyTable = tables["Property"];
             Table customActionTable = tables["CustomAction"];
@@ -1935,7 +1933,7 @@ namespace WixToolset
         /// <remarks>
         /// Sets the directory/property for each RemoveFile row.
         /// </remarks>
-        private void FinalizeRemoveFileTable(TableCollection tables)
+        private void FinalizeRemoveFileTable(TableIndexedCollection tables)
         {
             Table removeFileTable = tables["RemoveFile"];
 
@@ -1991,7 +1989,7 @@ namespace WixToolset
         /// Nests the Permission elements below their parent elements.  There are no declared foreign
         /// keys for the parents of the LockPermissions table.
         /// </remarks>
-        private void FinalizeLockPermissionsTable(TableCollection tables)
+        private void FinalizeLockPermissionsTable(TableIndexedCollection tables)
         {
             Table createFolderTable = tables["CreateFolder"];
             Table lockPermissionsTable = tables["LockPermissions"];
@@ -2065,7 +2063,7 @@ namespace WixToolset
         /// Nests the PermissionEx elements below their parent elements.  There are no declared foreign
         /// keys for the parents of the MsiLockPermissionsEx table.
         /// </remarks>
-        private void FinalizeMsiLockPermissionsExTable(TableCollection tables)
+        private void FinalizeMsiLockPermissionsExTable(TableIndexedCollection tables)
         {
             Table createFolderTable = tables["CreateFolder"];
             Table msiLockPermissionsExTable = tables["MsiLockPermissionsEx"];
@@ -2136,7 +2134,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
         /// <remarks>Does all the complex linking required for the search tables.</remarks>
-        private void FinalizeSearchTables(TableCollection tables)
+        private void FinalizeSearchTables(TableIndexedCollection tables)
         {
             Table appSearchTable = tables["AppSearch"];
             Table ccpSearchTable = tables["CCPSearch"];
@@ -2576,7 +2574,7 @@ namespace WixToolset
         /// Creates the sequence elements.  Occurs during finalization because its
         /// not known if sequences refer to custom actions or dialogs during decompilation.
         /// </remarks>
-        private void FinalizeSequenceTables(TableCollection tables)
+        private void FinalizeSequenceTables(TableIndexedCollection tables)
         {
             // finalize the normal sequence tables
             if (OutputType.Product == this.outputType && !this.treatProductAsModule)
@@ -2784,7 +2782,7 @@ namespace WixToolset
         /// Decompile the rows from the Upgrade and LaunchCondition tables
         /// created by the MajorUpgrade element.
         /// </remarks>
-        private void FinalizeUpgradeTable(TableCollection tables)
+        private void FinalizeUpgradeTable(TableIndexedCollection tables)
         {
             Table launchConditionTable = tables["LaunchCondition"];
             Table upgradeTable = tables["Upgrade"];
@@ -2877,7 +2875,7 @@ namespace WixToolset
         /// foreign key is only part of the primary key of the Extension table,
         /// so it needs special logic to be nested properly.
         /// </remarks>
-        private void FinalizeVerbTable(TableCollection tables)
+        private void FinalizeVerbTable(TableIndexedCollection tables)
         {
             Table extensionTable = tables["Extension"];
             Table verbTable = tables["Verb"];
@@ -3043,7 +3041,7 @@ namespace WixToolset
         /// Initialize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private void InitializeDecompile(TableCollection tables)
+        private void InitializeDecompile(TableIndexedCollection tables)
         {
             // reset all the state information
             this.compressed = false;
@@ -3069,7 +3067,7 @@ namespace WixToolset
             }
 
             // index the rows from the extension libraries
-            Hashtable indexedExtensionTables = new Hashtable();
+            Dictionary<string, HashSet<string>> indexedExtensionTables = new Dictionary<string, HashSet<string>>();
             foreach (IDecompilerExtension extension in this.extensions)
             {
                 // Get the optional library from the extension with the rows to be removed.
@@ -3107,13 +3105,14 @@ namespace WixToolset
 
                                 if (null != primaryKey)
                                 {
-                                    if (!indexedExtensionTables.Contains(tableName))
+                                    HashSet<string> indexedExtensionRows;
+                                    if (!indexedExtensionTables.TryGetValue(tableName, out indexedExtensionRows))
                                     {
-                                        indexedExtensionTables.Add(tableName, new Hashtable());
+                                        indexedExtensionRows = new HashSet<string>();
+                                        indexedExtensionTables.Add(tableName, indexedExtensionRows);
                                     }
-                                    Hashtable indexedExtensionRows = (Hashtable)indexedExtensionTables[tableName];
 
-                                    indexedExtensionRows[primaryKey] = null;
+                                    indexedExtensionRows.Add(primaryKey);
                                 }
                             }
                         }
@@ -3122,19 +3121,20 @@ namespace WixToolset
             }
 
             // remove the rows from the extension libraries (to allow full round-tripping)
-            foreach (string tableName in indexedExtensionTables.Keys)
+            foreach (var kvp in indexedExtensionTables)
             {
-                Table table = tables[tableName];
-                Hashtable indexedExtensionRows = (Hashtable)indexedExtensionTables[tableName];
+                string tableName = kvp.Key;
+                HashSet<string> indexedExtensionRows = kvp.Value;
 
+                Table table = tables[tableName];
                 if (null != table)
                 {
-                    RowCollection originalRows = table.Rows.Clone();
+                    RowDictionary<Row> originalRows = new RowDictionary<Row>(table);
 
                     // remove the original rows so that they can be added back if they should remain
                     table.Rows.Clear();
 
-                    foreach (Row row in originalRows)
+                    foreach (Row row in originalRows.Values)
                     {
                         if (!indexedExtensionRows.Contains(row.GetPrimaryKey(DecompilerConstants.PrimaryKeyDelimiter)))
                         {
@@ -3649,13 +3649,13 @@ namespace WixToolset
                                     switch (template[0])
                                     {
                                         case "Intel":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.x86;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.x86;
                                             break;
                                         case "Intel64":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.ia64;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.ia64;
                                             break;
                                         case "x64":
-                                            package.Platform = WixToolset.Serialize.Package.PlatformType.x64;
+                                            package.Platform = WixToolset.Data.Serialize.Package.PlatformType.x64;
                                             break;
                                     }
                                 }
@@ -9291,7 +9291,7 @@ namespace WixToolset
         /// Checks the InstallExecuteSequence table to determine where RemoveExistingProducts is scheduled and removes it.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        private static Wix.MajorUpgrade.ScheduleType DetermineMajorUpgradeScheduling(TableCollection tables)
+        private static Wix.MajorUpgrade.ScheduleType DetermineMajorUpgradeScheduling(TableIndexedCollection tables)
         {
             int sequenceRemoveExistingProducts = 0;
             int sequenceInstallValidate = 0;

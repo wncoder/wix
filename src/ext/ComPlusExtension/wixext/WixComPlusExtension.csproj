@@ -29,7 +29,7 @@
       <LogicalName>$(RootNamespace).Xsd.complus.xsd</LogicalName>
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\complus.xsd">
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.ComPlus</Namespace>
     </XsdGenSource>
     <None Include="Xsd\complus.xsd">
@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\ComPlusExtension.wixproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

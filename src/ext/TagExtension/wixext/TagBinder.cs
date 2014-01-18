@@ -199,7 +199,7 @@ namespace WixToolset.Extensions
                             // Ensure the matching "SoftwareIdentificationTag" row exists and
                             // is populated correctly.
                             Row swidRow;
-                            if (!this.swidRows.TryGet(fileId, out swidRow))
+                            if (!this.swidRows.TryGetValue(fileId, out swidRow))
                             {
                                 Table swid = output.Tables["SoftwareIdentificationTag"];
                                 swidRow = swid.CreateRow(wixFileRow.SourceLineNumbers);
@@ -221,7 +221,7 @@ namespace WixToolset.Extensions
             // a WixVariable to map to the regid.
             if (null != sourceLineNumbers)
             {
-                Table wixVariableTable = output.Tables.EnsureTable(output.EntrySection, this.Core.TableDefinitions["WixVariable"]);
+                Table wixVariableTable = output.EnsureTable(this.Core.TableDefinitions["WixVariable"]);
                 WixVariableRow wixVariableRow = (WixVariableRow)wixVariableTable.CreateRow(sourceLineNumbers);
                 wixVariableRow.Id = "WixTagRegid";
                 wixVariableRow.Value = this.overallRegid;

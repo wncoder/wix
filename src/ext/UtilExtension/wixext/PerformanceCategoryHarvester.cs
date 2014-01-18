@@ -19,7 +19,7 @@ namespace WixToolset.Extensions
     using WixToolset;
     using WixToolset.Data;
     using Util = WixToolset.Extensions.Serialize.Util;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Harvest WiX authoring for a file from the file system.

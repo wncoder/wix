@@ -5,64 +5,26 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Section in an object file.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
     using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Diagnostics;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
     using System.Xml;
     using WixToolset.Data.Rows;
-
-    /// <summary>
-    /// Type of section.
-    /// </summary>
-    public enum SectionType
-    {
-        /// <summary>Unknown section type, default and invalid.</summary>
-        Unknown,
-
-        /// <summary>Bundle section type.</summary>
-        Bundle,
-
-        /// <summary>Fragment section type.</summary>
-        Fragment,
-
-        /// <summary>Module section type.</summary>
-        Module,
-
-        /// <summary>Product section type.</summary>
-        Product,
-
-        /// <summary>Patch creation section type.</summary>
-        PatchCreation,
-
-        /// <summary>Patch section type.</summary>
-        Patch
-    }
 
     /// <summary>
     /// Section in an object file.
     /// </summary>
     public sealed class Section
     {
-        private string id;
-        private SectionType type;
-        private int codepage;
-
-        private TableCollection tables;
-
-        private SourceLineNumber sourceLineNumbers;
-        private SymbolCollection symbols;
-
         /// <summary>
         /// Creates a new section as part of an intermediate.
         /// </summary>
@@ -71,56 +33,58 @@ namespace WixToolset.Data
         /// <param name="codepage">Codepage for resulting database.</param>
         public Section(string id, SectionType type, int codepage)
         {
-            this.id = id;
-            this.type = type;
-            this.codepage = codepage;
+            this.Id = id;
+            this.Type = type;
+            this.Codepage = codepage;
 
-            this.tables = new TableCollection();
+            this.Tables = new TableIndexedCollection();
         }
 
         /// <summary>
         /// Gets the identifier for the section.
         /// </summary>
         /// <value>Section identifier.</value>
-        public string Id
-        {
-            get { return this.id; }
-        }
+        public string Id { get; private set; }
 
         /// <summary>
         /// Gets the type of the section.
         /// </summary>
         /// <value>Type of section.</value>
-        public SectionType Type
-        {
-            get { return this.type; }
-        }
+        public SectionType Type { get; private set; }
 
         /// <summary>
         /// Gets the codepage for the section.
         /// </summary>
         /// <value>Codepage for the section.</value>
-        public int Codepage
-        {
-            get { return this.codepage; }
-        }
+        public int Codepage { get; private set; }
 
         /// <summary>
         /// Gets the tables in the section.
         /// </summary>
         /// <value>Tables in section.</value>
-        public TableCollection Tables
-        {
-            get { return this.tables; }
-        }
+        public TableIndexedCollection Tables { get; private set; }
 
         /// <summary>
         /// Gets the source line information of the file containing this section.
         /// </summary>
         /// <value>The source line information of the file containing this section.</value>
-        public SourceLineNumber SourceLineNumbers
+        public SourceLineNumber SourceLineNumbers { get; private set; }
+
+        /// <summary>
+        /// Ensures a table is added to the section's table collection.
+        /// </summary>
+        /// <param name="tableDefinition">Table definition for the table.</param>
+        /// <returns>Table in the section.</returns>
+        public Table EnsureTable(TableDefinition tableDefinition)
         {
-            get { return this.sourceLineNumbers; }
+            Table table;
+            if (!this.Tables.TryGetTable(tableDefinition.Name, out table))
+            {
+                table = new Table(this, tableDefinition);
+                this.Tables.Add(table);
+            }
+
+            return table;
         }
 
         /// <summary>
@@ -136,7 +100,6 @@ namespace WixToolset.Data
             int codepage = 0;
             bool empty = reader.IsEmptyElement;
             string id = null;
-            Section section = null;
             SectionType type = SectionType.Unknown;
 
             while (reader.MoveToNextAttribute())
@@ -193,9 +156,10 @@ namespace WixToolset.Data
                 throw new WixException(WixDataErrors.ExpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", "type"));
             }
 
-            section = new Section(id, type, codepage);
-            section.sourceLineNumbers = SourceLineNumber.CreateFromUri(reader.BaseURI);
+            Section section = new Section(id, type, codepage);
+            section.SourceLineNumbers = SourceLineNumber.CreateFromUri(reader.BaseURI);
 
+            List<Table> tables = new List<Table>();
             if (!empty)
             {
                 bool done = false;
@@ -208,7 +172,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "table":
-                                    section.Tables.Add(Table.Parse(reader, section, tableDefinitions));
+                                    tables.Add(Table.Read(reader, section, tableDefinitions));
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section", reader.Name));
@@ -226,6 +190,8 @@ namespace WixToolset.Data
                 }
             }
 
+            section.Tables = new TableIndexedCollection(tables);
+
             return section;
         }
 
@@ -237,12 +203,12 @@ namespace WixToolset.Data
         {
             writer.WriteStartElement("section", Intermediate.XmlNamespaceUri);
 
-            if (null != this.id)
+            if (null != this.Id)
             {
-                writer.WriteAttributeString("id", this.id);
+                writer.WriteAttributeString("id", this.Id);
             }
 
-            switch (this.type)
+            switch (this.Type)
             {
                 case SectionType.Bundle:
                     writer.WriteAttributeString("type", "bundle");
@@ -264,200 +230,18 @@ namespace WixToolset.Data
                     break;
             }
 
-            if (0 != this.codepage)
+            if (0 != this.Codepage)
             {
-                writer.WriteAttributeString("codepage", this.codepage.ToString(CultureInfo.InvariantCulture));
+                writer.WriteAttributeString("codepage", this.Codepage.ToString());
             }
 
-            // don't need to persist the symbols since they are recreated during load
-
             // save the rows in table order
-            foreach (Table table in this.tables)
+            foreach (Table table in this.Tables.OrderBy(t => t.Name))
             {
-                table.Persist(writer);
+                table.Write(writer);
             }
 
             writer.WriteEndElement();
-        }
-
-        /// <summary>
-        /// Gets the symbols for this section.
-        /// </summary>
-        /// <param name="messageHandler">The message handler.</param>
-        /// <returns>Collection of symbols for this section.</returns>
-        internal SymbolCollection GetSymbols(IMessageHandler messageHandler)
-        {
-            if (null == this.symbols)
-            {
-                this.symbols = new SymbolCollection();
-
-                foreach (Table table in this.tables)
-                {
-                    foreach (Row row in table.Rows)
-                    {
-                        Symbol symbol = row.Symbol;
-                        if (null != symbol)
-                        {
-                            try
-                            {
-                                this.symbols.Add(symbol);
-                            }
-                            catch (ArgumentException)
-                            {
-                                Symbol existingSymbol = this.symbols[symbol.Name];
-
-                                messageHandler.OnMessage(WixDataErrors.DuplicateSymbol(existingSymbol.Row.SourceLineNumbers, existingSymbol.Name));
-
-                                if (null != symbol.Row.SourceLineNumbers)
-                                {
-                                    messageHandler.OnMessage(WixDataErrors.DuplicateSymbol2(symbol.Row.SourceLineNumbers));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return this.symbols;
-        }
-
-        /// <summary>
-        /// Resolves all the simple references in a section.
-        /// </summary>
-        /// <param name="outputType">Parent output type that will get the resolved section collection.</param>
-        /// <param name="allSymbols">Collection of all symbols from loaded intermediates.</param>
-        /// <param name="referencedSymbols">Collection populated during resolution of all symbols referenced during linking.</param>
-        /// <param name="unresolvedReferences">Collection populated during resolution of all references that are left unresolved.</param>
-        /// <param name="messageHandler">Message handler to report any duplicate symbols that may be tripped across.</param>
-        /// <returns>The resolved sections.</returns>
-        public SectionCollection ResolveReferences(
-            OutputType outputType,
-            SymbolCollection allSymbols,
-            StringCollection referencedSymbols,
-            ArrayList unresolvedReferences,
-            IMessageHandler messageHandler)
-        {
-            SectionCollection sections = new SectionCollection();
-
-            RecursivelyResolveReferences(this, outputType, allSymbols, sections, referencedSymbols, unresolvedReferences, messageHandler);
-            return sections;
-        }
-
-        /// <summary>
-        /// Recursive helper function to resolve all references of passed in section.
-        /// </summary>
-        /// <param name="section">Section with references to resolve.</param>
-        /// <param name="outputType">Parent output type that will get the resolved section collection.</param>
-        /// <param name="allSymbols">All symbols that can be used to resolve section's references.</param>
-        /// <param name="sections">Collection to add sections to during processing.</param>
-        /// <param name="referencedSymbols">Collection populated during resolution of all symbols referenced during linking.</param>
-        /// <param name="unresolvedReferences">Collection populated during resolution of all references that are left unresolved.</param>
-        /// <param name="messageHandler">Message handler to report any duplicate symbols that may be tripped across.</param>
-        /// <remarks>Note: recursive function.</remarks>
-        private static void RecursivelyResolveReferences(
-            Section section,
-            OutputType outputType,
-            SymbolCollection allSymbols,
-            SectionCollection sections,
-            StringCollection referencedSymbols,
-            ArrayList unresolvedReferences,
-            IMessageHandler messageHandler)
-        {
-            // if we already have this section bail
-            if (sections.Contains(section))
-            {
-                return;
-            }
-
-            // add the passed in section to the collection of sections
-            sections.Add(section);
-
-            // process all of the references contained in this section using the collection of
-            // symbols provided.  Then recursively call this method to process the
-            // located symbol's section.  All in all this is a very simple depth-first
-            // search of the references per-section
-            Table wixSimpleReferenceTable = section.Tables["WixSimpleReference"];
-            if (null != wixSimpleReferenceTable)
-            {
-                foreach (WixSimpleReferenceRow wixSimpleReferenceRow in wixSimpleReferenceTable.Rows)
-                {
-                    // If we're building a Merge Module, ignore all references to the Media table
-                    // because Merge Modules don't have Media tables.
-                    if (OutputType.Module == outputType && "Media" == wixSimpleReferenceRow.TableName)
-                    {
-                        continue;
-                    }
-
-                    if ("WixAction" == wixSimpleReferenceRow.TableName)
-                    {
-                        Symbol[] symbols = allSymbols.GetSymbolsForSimpleReference(wixSimpleReferenceRow);
-                        if (0 == symbols.Length)
-                        {
-                            if (null != unresolvedReferences)
-                            {
-                                unresolvedReferences.Add(new SimpleReferenceSection(section, wixSimpleReferenceRow));
-                            }
-                        }
-                        else
-                        {
-                            foreach (Symbol symbol in symbols)
-                            {
-                                if (null != symbol.Section)
-                                {
-                                    // components are indexed in ResolveComplexReferences
-                                    if (null != referencedSymbols && null != symbol.Row.TableDefinition.Name && "Component" != symbol.Row.TableDefinition.Name && !referencedSymbols.Contains(symbol.Name))
-                                    {
-                                        referencedSymbols.Add(symbol.Name);
-                                    }
-
-                                    RecursivelyResolveReferences(symbol.Section, outputType, allSymbols, sections, referencedSymbols, unresolvedReferences, messageHandler);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Symbol symbol = allSymbols.GetSymbolForSimpleReference(wixSimpleReferenceRow, messageHandler);
-                        if (null == symbol)
-                        {
-                            if (null != unresolvedReferences)
-                            {
-                                unresolvedReferences.Add(new SimpleReferenceSection(section, wixSimpleReferenceRow));
-                            }
-                        }
-                        else
-                        {
-                            // components are indexed in ResolveComplexReferences
-                            if (null != referencedSymbols && null != symbol.Row.TableDefinition.Name && "Component" != symbol.Row.TableDefinition.Name && !referencedSymbols.Contains(symbol.Name))
-                            {
-                                referencedSymbols.Add(symbol.Name);
-                            }
-
-                            RecursivelyResolveReferences(symbol.Section, outputType, allSymbols, sections, referencedSymbols, unresolvedReferences, messageHandler);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Helper class to keep track of simple references in their section.
-        /// </summary>
-        public struct SimpleReferenceSection
-        {
-            public Section Section;
-            public WixSimpleReferenceRow WixSimpleReferenceRow;
-
-            /// <summary>
-            /// Creates an object that ties simple references to their section.
-            /// </summary>
-            /// <param name="section">Section that owns the simple reference.</param>
-            /// <param name="wixSimpleReferenceRow">The simple reference in the section.</param>
-            public SimpleReferenceSection(Section section, WixSimpleReferenceRow wixSimpleReferenceRow)
-            {
-                this.Section = section;
-                this.WixSimpleReferenceRow = wixSimpleReferenceRow;
-            }
         }
     }
 }

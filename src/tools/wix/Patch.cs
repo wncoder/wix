@@ -70,7 +70,7 @@ namespace WixToolset.Data
         public Patch()
         {
             this.inspectorExtensions = new List<IInspectorExtension>();
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
         }
 
         /// <summary>
@@ -343,7 +343,7 @@ namespace WixToolset.Data
                         }
                     }
                 }
-                
+
                 // Use the Media/@DiskId if greater for backward compatibility.
                 if (mediaRow.LastSequence < mediaRow.DiskId)
                 {
@@ -1122,8 +1122,7 @@ namespace WixToolset.Data
                     throw new WixException(WixErrors.AdminImageRequired(productCode));
                 }
 
-                FileRowCollection mainFileRows = new FileRowCollection();
-                mainFileRows.AddRange(mainFileTable.Rows);
+                RowDictionary<FileRow> mainFileRows = new RowDictionary<FileRow>(mainFileTable);
 
                 Table pairedFileTable = pairedTransform.EnsureTable(mainFileTable.Definition);
                 foreach (WixFileRow mainWixFileRow in mainWixFileTable.Rows)

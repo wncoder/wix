@@ -5,56 +5,25 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Object that represents a table in a database.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
-    using System.IO;
     using System.Globalization;
+    using System.IO;
     using System.Text;
     using System.Xml;
-    using System.Collections.Generic;
     using WixToolset.Data.Rows;
-
-    /// <summary>
-    /// The table transform operations.
-    /// </summary>
-    public enum TableOperation
-    {
-        /// <summary>
-        /// No operation.
-        /// </summary>
-        None,
-
-        /// <summary>
-        /// Added table.
-        /// </summary>
-        Add,
-
-        /// <summary>
-        /// Dropped table.
-        /// </summary>
-        Drop,
-    }
 
     /// <summary>
     /// Object that represents a table in a database.
     /// </summary>
     public sealed class Table
     {
-        private Section section;
-        private TableDefinition tableDefinition;
-        private TableOperation operation;
-        private RowCollection rows;
-
         /// <summary>
         /// Creates a table in a section.
         /// </summary>
@@ -62,28 +31,22 @@ namespace WixToolset.Data
         /// <param name="tableDefinition">Definition of the table.</param>
         public Table(Section section, TableDefinition tableDefinition)
         {
-            this.section = section;
-            this.tableDefinition = tableDefinition;
-            this.rows = new RowCollection();
+            this.Section = section;
+            this.Definition = tableDefinition;
+            this.Rows = new List<Row>();
         }
 
         /// <summary>
         /// Gets the section for the table.
         /// </summary>
         /// <value>Section for the table.</value>
-        public Section Section
-        {
-            get { return this.section; }
-        }
+        public Section Section { get; private set; }
 
         /// <summary>
         /// Gets the table definition.
         /// </summary>
         /// <value>Definition of the table.</value>
-        public TableDefinition Definition
-        {
-            get { return this.tableDefinition; }
-        }
+        public TableDefinition Definition { get; private set; }
 
         /// <summary>
         /// Gets the name of the table.
@@ -91,37 +54,20 @@ namespace WixToolset.Data
         /// <value>Name of the table.</value>
         public string Name
         {
-            get { return this.tableDefinition.Name; }
+            get { return this.Definition.Name; }
         }
 
         /// <summary>
         /// Gets or sets the table transform operation.
         /// </summary>
         /// <value>The table transform operation.</value>
-        public TableOperation Operation
-        {
-            get { return this.operation; }
-            set { this.operation = value; }
-        }
+        public TableOperation Operation { get; set; }
 
         /// <summary>
         /// Gets the rows contained in the table.
         /// </summary>
         /// <value>Rows contained in the table.</value>
-        public RowCollection Rows
-        {
-            get { return this.rows; }
-        }
-
-        /// <summary>
-        /// Creates a new row in the table.
-        /// </summary>
-        /// <param name="sourceLineNumbers">Original source lines for this row.</param>
-        /// <returns>Row created in table.</returns>
-        public Row CreateRow(SourceLineNumber sourceLineNumbers)
-        {
-            return this.CreateRow(sourceLineNumbers, true);
-        }
+        public IList<Row> Rows { get; private set; }
 
         /// <summary>
         /// Creates a new row in the table.
@@ -129,7 +75,7 @@ namespace WixToolset.Data
         /// <param name="sourceLineNumbers">Original source lines for this row.</param>
         /// <param name="add">Specifies whether to only create the row or add it to the table automatically.</param>
         /// <returns>Row created in table.</returns>
-        public Row CreateRow(SourceLineNumber sourceLineNumbers, bool add)
+        public Row CreateRow(SourceLineNumber sourceLineNumbers, bool add = true)
         {
             Row row;
 
@@ -155,6 +101,9 @@ namespace WixToolset.Data
                     break;
                 case "PayloadInfo":
                     row = new PayloadInfoRow(sourceLineNumbers, this);
+                    break;
+                case "Property":
+                    row = new PropertyRow(sourceLineNumbers, this);
                     break;
                 case "Upgrade":
                     row = new UpgradeRow(sourceLineNumbers, this);
@@ -209,7 +158,7 @@ namespace WixToolset.Data
 
             if (add)
             {
-                this.rows.Add(row);
+                this.Rows.Add(row);
             }
 
             return row;
@@ -222,7 +171,7 @@ namespace WixToolset.Data
         /// <param name="section">Section to populate with persisted data.</param>
         /// <param name="tableDefinitions">TableDefinitions to use in the intermediate.</param>
         /// <returns>The parsed table.</returns>
-        internal static Table Parse(XmlReader reader, Section section, TableDefinitionCollection tableDefinitions)
+        internal static Table Read(XmlReader reader, Section section, TableDefinitionCollection tableDefinitions)
         {
             Debug.Assert("table" == reader.LocalName);
 
@@ -281,7 +230,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "row":
-                                    Row.Parse(reader, table);
+                                    Row.Read(reader, table);
                                     break;
                                 default:
                                     throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "table", reader.Name));
@@ -307,9 +256,9 @@ namespace WixToolset.Data
         /// </summary>
         /// <param name="modularizationGuid">String containing the GUID of the Merge Module, if appropriate.</param>
         /// <param name="suppressModularizationIdentifiers">Optional collection of identifiers that should not be modularized.</param>
-        public void Modularize(string modularizationGuid, Hashtable suppressModularizationIdentifiers)
+        public void Modularize(string modularizationGuid, HashSet<string> suppressModularizationIdentifiers)
         {
-            ArrayList modularizedColumns = new ArrayList();
+            List<int> modularizedColumns = new List<int>();
 
             // find the modularized columns
             for (int i = 0; i < this.Definition.Columns.Count; i++)
@@ -322,7 +271,7 @@ namespace WixToolset.Data
 
             if (0 < modularizedColumns.Count)
             {
-                foreach (Row row in this.rows)
+                foreach (Row row in this.Rows)
                 {
                     foreach (int modularizedColumn in modularizedColumns)
                     {
@@ -344,7 +293,7 @@ namespace WixToolset.Data
         [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "Changing the way this string normalizes would result " +
                          "in a change to the way the intermediate files are generated, potentially causing extra churn in patches on an MSI built from an older version of WiX. " +
                          "Furthermore, there is no security hole here, as the strings won't need to make a round trip")]
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             if (null == writer)
             {
@@ -354,14 +303,14 @@ namespace WixToolset.Data
             writer.WriteStartElement("table", Intermediate.XmlNamespaceUri);
             writer.WriteAttributeString("name", this.Name);
 
-            if (TableOperation.None != this.operation)
+            if (TableOperation.None != this.Operation)
             {
-                writer.WriteAttributeString("op", this.operation.ToString().ToLowerInvariant());
+                writer.WriteAttributeString("op", this.Operation.ToString().ToLowerInvariant());
             }
 
-            foreach (Row row in this.rows)
+            foreach (Row row in this.Rows)
             {
-                row.Persist(writer);
+                row.Write(writer);
             }
 
             writer.WriteEndElement();
@@ -374,42 +323,43 @@ namespace WixToolset.Data
         /// <returns>null if OutputTable is unreal, or string with tab delimited field values otherwise</returns>
         public void ToIdtDefinition(StreamWriter writer, IMessageHandler messageHandler, bool keepAddedColumns)
         {
-            string rowString = String.Empty;
-            byte[] rowBytes = {};
-            // Create a new encoding that replaces characters with question marks, and doesn't throw, used in case of errors
-            Encoding convertEncoding = Encoding.GetEncoding(writer.Encoding.CodePage);
-
-            if (this.tableDefinition.IsUnreal)
+            if (this.Definition.Unreal)
             {
                 return;
             }
 
             // tack on the table header, and flush before we start writing bytes directly to the stream
-            writer.Write(this.tableDefinition.ToIdtDefinition(keepAddedColumns));
+            writer.Write(this.Definition.ToIdtDefinition(keepAddedColumns));
             writer.Flush();
 
-            BufferedStream buffStream = new BufferedStream(writer.BaseStream);
-
-            foreach (Row row in this.rows)
+            using (NonClosingStreamWrapper wrapper = new NonClosingStreamWrapper(writer.BaseStream))
+            using (BufferedStream buffStream = new BufferedStream(wrapper))
             {
-                rowString = row.ToIdtDefinition(keepAddedColumns);
+                // Create a new encoding that replaces characters with question marks, and doesn't throw, used in case of errors
+                Encoding convertEncoding = Encoding.GetEncoding(writer.Encoding.CodePage);
 
-                try
+                foreach (Row row in this.Rows)
                 {
-                    // GetBytes will throw an exception if any character doesn't match our current encoding
-                    rowBytes = writer.Encoding.GetBytes(rowString);
-                }
-                catch (EncoderFallbackException)
-                {
-                    rowBytes = convertEncoding.GetBytes(rowString);
+                    string rowString = row.ToIdtDefinition(keepAddedColumns);
+                    byte[] rowBytes;
 
-                    messageHandler.OnMessage(WixDataErrors.InvalidStringForCodepage(row.SourceLineNumbers, Convert.ToString(writer.Encoding.WindowsCodePage, CultureInfo.InvariantCulture)));
+                    try
+                    {
+                        // GetBytes will throw an exception if any character doesn't match our current encoding
+                        rowBytes = writer.Encoding.GetBytes(rowString);
+                    }
+                    catch (EncoderFallbackException)
+                    {
+                        rowBytes = convertEncoding.GetBytes(rowString);
+
+                        messageHandler.OnMessage(WixDataErrors.InvalidStringForCodepage(row.SourceLineNumbers, Convert.ToString(writer.Encoding.WindowsCodePage, CultureInfo.InvariantCulture)));
+                    }
+
+                    buffStream.Write(rowBytes, 0, rowBytes.Length);
                 }
 
-                buffStream.Write(rowBytes, 0, rowBytes.Length);
+                buffStream.Flush();
             }
-
-            buffStream.Flush();
         }
 
         /// <summary>
@@ -418,16 +368,16 @@ namespace WixToolset.Data
         /// </summary>
         public void ValidateRows()
         {
-            Dictionary<string, SourceLineNumber> primaryKeys = new Dictionary<string, SourceLineNumber>(this.Rows.Count);
+            Dictionary<string, SourceLineNumber> primaryKeys = new Dictionary<string, SourceLineNumber>();
 
             foreach (Row row in this.Rows)
             {
-                string primaryKey = row.GetPrimaryKey('/');
+                string primaryKey = row.GetPrimaryKey();
 
-                // check for collisions
-                if (primaryKeys.ContainsKey(primaryKey))
+                SourceLineNumber collisionSourceLineNumber;
+                if (primaryKeys.TryGetValue(primaryKey, out collisionSourceLineNumber))
                 {
-                    throw new WixException(WixDataErrors.DuplicatePrimaryKey((SourceLineNumber)primaryKeys[primaryKey], primaryKey, this.tableDefinition.Name));
+                    throw new WixException(WixDataErrors.DuplicatePrimaryKey(collisionSourceLineNumber, primaryKey, this.Definition.Name));
                 }
 
                 primaryKeys.Add(primaryKey, row.SourceLineNumbers);

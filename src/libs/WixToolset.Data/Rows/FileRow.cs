@@ -10,6 +10,7 @@
 namespace WixToolset.Data.Rows
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
@@ -46,7 +47,7 @@ namespace WixToolset.Data.Rows
         private string processorArchitecture;
         private string source;
         private Row hashRow;
-        private RowCollection assemblyNameRows;
+        private List<Row> assemblyNameRows;
         private string[] previousSource;
         private string symbols;
         private string[] previousSymbols;
@@ -429,7 +430,7 @@ namespace WixToolset.Data.Rows
         /// </summary>
         /// <value>RowCollection of MsiAssemblyName table.</value>
         [SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public RowCollection AssemblyNameRows
+        public List<Row> AssemblyNameRows
         {
             get { return this.assemblyNameRows; }
             set { this.assemblyNameRows = value; }

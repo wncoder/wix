@@ -101,6 +101,7 @@
       <SpecificVersion>True</SpecificVersion>
     </Reference>
     <ProjectReference Include="..\..\libs\WixToolset.Data\WixToolset.Data.csproj"/>
+    <ProjectReference Include="..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj"/>
     <ProjectReference Include="..\..\tools\wix\wix.csproj"/>
   </ItemGroup>
 

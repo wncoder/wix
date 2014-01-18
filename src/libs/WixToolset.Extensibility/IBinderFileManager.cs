@@ -20,7 +20,7 @@ namespace WixToolset.Extensibility
     {
         IBinderFileManagerCore Core { get; set; }
 
-        ResolvedCabinet ResolveCabinet(string cabinetPath, FileRowCollection fileRows);
+        ResolvedCabinet ResolveCabinet(string cabinetPath, IEnumerable<FileRow> fileRows);
 
         string ResolveFile(string source, string type, SourceLineNumber sourceLineNumbers, BindStage bindStage);
 

@@ -88,10 +88,10 @@
                 <File Id="ThmutilSchema$(var.VsVersion)" Source="dutil\Xsd\thmutil.xsd" />
             </Component>
             <Component>
-                <File Id="WixSchema$(var.VsVersion)" Source="wix\Xsd\wix.xsd" />
+                <File Id="WixSchema$(var.VsVersion)" Source="WixToolset.Data\Xsd\wix.xsd" />
             </Component>
             <Component>
-                <File Id="WixLocSchema$(var.VsVersion)" Source="wix\Xsd\wixloc.xsd" />
+                <File Id="WixLocSchema$(var.VsVersion)" Source="WixToolset.Data\Xsd\wixloc.xsd" />
             </Component>
             <Component>
                 <File Id="ExtensionXsdBalSchema$(var.VsVersion)" Source="ext\BalExtension\wixext\Xsd\bal.xsd" />

@@ -25,11 +25,11 @@
             </Component>
 
             <Component>
-                <File Source="wix\Xsd\wix.xsd" />
+                <File Source="WixToolset.Data\Xsd\wix.xsd" />
             </Component>
 
             <Component>
-                <File Source="wix\Xsd\wixloc.xsd" />
+                <File Source="WixToolset.Data\Xsd\wixloc.xsd" />
             </Component>
         </ComponentGroup>
     </Fragment>

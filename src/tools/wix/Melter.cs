@@ -23,7 +23,7 @@ namespace WixToolset
     using System.Text;
     using System.Text.RegularExpressions;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Converts a wixout representation of an MSM database into a ComponentGroup the form of WiX source.

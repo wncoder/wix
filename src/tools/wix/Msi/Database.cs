@@ -428,38 +428,27 @@ namespace WixToolset.Msi
         {
             // write out the table to an IDT file
             string idtPath = Path.Combine(baseDirectory, String.Concat(table.Name, ".idt"));
-            StreamWriter idtWriter = null;
+            Encoding encoding;
 
-            try
+            // If UTF8 encoding, use the UTF8-specific constructor to avoid writing
+            // the byte order mark at the beginning of the file
+            if (Encoding.UTF8.CodePage == codepage)
             {
-                Encoding encoding;
-
-                // If UTF8 encoding, use the UTF8-specific constructor to avoid writing
-                // the byte order mark at the beginning of the file
-                if (Encoding.UTF8.CodePage == codepage)
-                {
-                    encoding = new UTF8Encoding(false, true);
-                }
-                else
-                {
-                    if (0 == codepage)
-                    {
-                        codepage = Encoding.ASCII.CodePage;
-                    }
-
-                    encoding = Encoding.GetEncoding(codepage, new EncoderExceptionFallback(), new DecoderExceptionFallback());
-                }
-
-                idtWriter = new StreamWriter(idtPath, false, encoding);
-
-                table.ToIdtDefinition(idtWriter, messageHandler, keepAddedColumns);
+                encoding = new UTF8Encoding(false, true);
             }
-            finally
+            else
             {
-                if (null != idtWriter)
+                if (0 == codepage)
                 {
-                    idtWriter.Close();
+                    codepage = Encoding.ASCII.CodePage;
                 }
+
+                encoding = Encoding.GetEncoding(codepage, new EncoderExceptionFallback(), new DecoderExceptionFallback());
+            }
+
+            using (StreamWriter idtWriter = new StreamWriter(idtPath, false, encoding))
+            {
+                table.ToIdtDefinition(idtWriter, messageHandler, keepAddedColumns);
             }
 
             // try to import the table into the MSI
@@ -476,5 +465,5 @@ namespace WixToolset.Msi
                 throw new WixInvalidIdtException(idtPath, table.Name);
             }
         }
-     }
+    }
 }

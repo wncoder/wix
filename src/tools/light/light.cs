@@ -237,7 +237,7 @@ namespace WixToolset.Tools
             binder.Localizer = localizer;
 
             // Loop through all the believed object files.
-            SectionCollection sections = new SectionCollection();
+            List<Section> sections = new List<Section>();
             Output output = null;
             foreach (string inputFile in this.commandLine.Files)
             {
@@ -287,8 +287,7 @@ namespace WixToolset.Tools
                     expectedOutputType = Output.GetOutputType(Path.GetExtension(this.commandLine.OutputFile));
                 }
 
-                ArrayList transforms = new ArrayList();
-                output = linker.Link(sections, transforms, expectedOutputType);
+                output = linker.Link(sections, expectedOutputType);
 
                 // If an error occurred during linking, stop processing.
                 if (null == output)
@@ -365,8 +364,11 @@ namespace WixToolset.Tools
                 // Load each localization file.
                 foreach (string localizationFile in this.commandLine.LocalizationFiles)
                 {
-                    Localization localization = Localization.Load(localizationFile, tableDefinitions, true);
-                    localizations.Add(localization);
+                    Localization localization = Localizer.ParseLocalizationFile(localizationFile, tableDefinitions);
+                    if (null != localization)
+                    {
+                        localizations.Add(localization);
+                    }
                 }
 
                 localizer = new Localizer();

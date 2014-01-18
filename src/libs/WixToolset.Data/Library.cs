@@ -13,7 +13,6 @@ namespace WixToolset.Data
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
-    using System.Linq;
     using System.Xml;
 
     /// <summary>
@@ -25,25 +24,32 @@ namespace WixToolset.Data
         private static readonly Version currentVersion = new Version("4.0.0.0");
 
         private Dictionary<string, Localization> localizations;
-        private SectionCollection sections;
+        private List<Section> sections;
 
         /// <summary>
-        /// Instantiate a new Library.
+        /// Instantiates a new empty library which is only useful from static creating methods.
         /// </summary>
-        public Library()
+        private Library()
         {
             this.localizations = new Dictionary<string, Localization>();
-            this.sections = new SectionCollection();
+            this.sections = new List<Section>();
+        }
+
+        /// <summary>
+        /// Instantiate a new library populated with sections.
+        /// </summary>
+        /// <param name="sections">Sections to add to the library.</param>
+        public Library(IEnumerable<Section> sections)
+        {
+            this.localizations = new Dictionary<string, Localization>();
+            this.sections = new List<Section>(sections);
         }
 
         /// <summary>
         /// Get the sections contained in this library.
         /// </summary>
         /// <value>Sections contained in this library.</value>
-        public SectionCollection Sections
-        {
-            get { return this.sections; }
-        }
+        public IEnumerable<Section> Sections { get { return this.sections; } }
 
         /// <summary>
         /// Add a localization file to this library.
@@ -230,12 +236,12 @@ namespace WixToolset.Data
                         case XmlNodeType.Element:
                             switch (reader.LocalName)
                             {
+                                case "localization":
+                                    Localization localization = Localization.Read(reader, tableDefinitions);
+                                    library.localizations.Add(localization.Culture, localization);
+                                    break;
                                 case "section":
                                     library.sections.Add(Section.Read(reader, tableDefinitions));
-                                    break;
-                                case "WixLocalization":
-                                    Localization localization = Localization.Parse(reader, tableDefinitions, true);
-                                    library.localizations.Add(localization.Culture, localization);
                                     break;
                             }
                             break;

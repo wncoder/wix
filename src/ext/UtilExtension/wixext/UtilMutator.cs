@@ -19,7 +19,7 @@ namespace WixToolset.Extensions
     using System.Globalization;
     using System.IO;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The template type.

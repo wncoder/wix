@@ -20,7 +20,7 @@ namespace WixToolset.Extensions
     using System.Runtime.InteropServices;
     using WixToolset.Data;
     using IIs = WixToolset.Extensions.Serialize.IIs;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The web site harvester for the WiX Toolset Internet Information Services Extension.

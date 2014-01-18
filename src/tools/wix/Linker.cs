@@ -5,10 +5,6 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-// 
-// <summary>
-// Linker core of the WiX toolset.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset
@@ -20,10 +16,12 @@ namespace WixToolset
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Linq;
     using System.Text;
     using WixToolset.Data;
     using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
+    using WixToolset.Link;
     using WixToolset.Msi;
     using WixToolset.Msi.Interop;
 
@@ -52,7 +50,7 @@ namespace WixToolset
             this.sectionIdOnRows = true; // TODO: what is the correct value for this?
 
             this.standardActions = WindowsInstallerStandard.GetStandardActions();
-            this.tableDefinitions = WindowsInstallerStandard.GetTableDefinitions().Clone();
+            this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
 
             this.extensionData = new List<IExtensionData>();
             this.inspectorExtensions = new List<InspectorExtension>();
@@ -124,50 +122,26 @@ namespace WixToolset
         /// <summary>
         /// Links a collection of sections into an output.
         /// </summary>
-        /// <param name="sections">The collection of sections to link together.</param>
-        /// <returns>Output object from the linking.</returns>
-        public Output Link(SectionCollection sections)
-        {
-            return this.Link(sections, null, OutputType.Unknown);
-        }
-
-        /// <summary>
-        /// Links a collection of sections into an output.
-        /// </summary>
-        /// <param name="sections">The collection of sections to link together.</param>
-        /// <param name="transforms">The collection of transforms to link as substorages.</param>
+        /// <param name="inputs">The collection of sections to link together.</param>
         /// <param name="expectedOutputType">Expected output type, based on output file extension provided to the linker.</param>
         /// <returns>Output object from the linking.</returns>
-        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "transforms")]
-        public Output Link(SectionCollection sections, ArrayList transforms, OutputType expectedOutputType)
+        public Output Link(IEnumerable<Section> inputs, OutputType expectedOutputType)
         {
             Output output = null;
+            List<Section> sections = new List<Section>(inputs);
 
             try
             {
-                SymbolCollection allSymbols;
-                Section entrySection;
                 bool containsModuleSubstitution = false;
                 bool containsModuleConfiguration = false;
 
-                StringCollection referencedSymbols = new StringCollection();
-                ArrayList unresolvedReferences = new ArrayList();
-
-                ConnectToFeatureCollection componentsToFeatures = new ConnectToFeatureCollection();
-                ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
-                ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
-
                 this.activeOutput = null;
 
-                SortedList adminProperties = new SortedList();
-                SortedList secureProperties = new SortedList();
-                SortedList hiddenProperties = new SortedList();
-
-                RowCollection actionRows = new RowCollection();
-                RowCollection suppressActionRows = new RowCollection();
+                List<Row> actionRows = new List<Row>();
+                List<Row> suppressActionRows = new List<Row>();
 
                 TableDefinitionCollection customTableDefinitions = new TableDefinitionCollection();
-                RowCollection customRows = new RowCollection();
+                List<Row> customRows = new List<Row>();
 
                 StringCollection generatedShortFileNameIdentifiers = new StringCollection();
                 Hashtable generatedShortFileNames = new Hashtable();
@@ -215,31 +189,45 @@ namespace WixToolset
                     }
                 }
 
-                // first find the entry section and create the symbols hash for all the sections
-                sections.FindEntrySectionAndLoadSymbols(false, this, expectedOutputType, out entrySection, out allSymbols);
+                // First find the entry section and while processing all sections load all the symbols from all of the sections.
+                // sections.FindEntrySectionAndLoadSymbols(false, this, expectedOutputType, out entrySection, out allSymbols);
+                FindEntrySectionAndLoadSymbolsCommand find = new FindEntrySectionAndLoadSymbolsCommand(sections);
+                find.ExpectedOutputType = expectedOutputType;
 
-                // should have found an entry section by now
-                if (null == entrySection)
+                find.Execute();
+
+                // Must have found the entry section by now.
+                if (null == find.EntrySection)
                 {
                     throw new WixException(WixErrors.MissingEntrySection(expectedOutputType.ToString()));
                 }
 
-                // add the missing standard action symbols
+                IDictionary<string, Symbol> allSymbols = find.Symbols;
+
+                // Add the missing standard action symbols.
                 this.LoadStandardActionSymbols(allSymbols);
 
                 // now that we know where we're starting from, create the output object
                 output = new Output(null);
-                output.EntrySection = entrySection; // Note: this entry section will get added to the Output.Sections collection later
+                output.EntrySection = find.EntrySection; // Note: this entry section will get added to the Output.Sections collection later
                 if (null != this.localizer && -1 != this.localizer.Codepage)
                 {
                     output.Codepage = this.localizer.Codepage;
                 }
                 this.activeOutput = output;
 
-                // Resolve the symbol references to find the set of sections we
-                // care about for linking.  Of course, we start with the entry 
-                // section (that's how it got its name after all).
-                output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
+                // Resolve the symbol references to find the set of sections we care about for linking.
+                // Of course, we start with the entry section (that's how it got its name after all).
+                //output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
+                ResolveReferencesCommand resolve = new ResolveReferencesCommand(output.EntrySection, allSymbols);
+                resolve.BuildingMergeModule = (OutputType.Module == output.Type);
+
+                resolve.Execute();
+
+                foreach (Section section in resolve.ResolvedSections)
+                {
+                    output.Sections.Add(section);
+                }
 
                 // Flattening the complex references that participate in groups.
                 this.FlattenSectionsComplexReferences(output.Sections);
@@ -250,11 +238,15 @@ namespace WixToolset
                 }
 
                 // The hard part in linking is processing the complex references.
-                this.ProcessComplexReferences(output, output.Sections, referencedSymbols, componentsToFeatures, featuresToFeatures, modulesToFeatures);
-                for (int i = 0; i < unresolvedReferences.Count; ++i)
+                HashSet<string> referencedComponents = new HashSet<string>();
+                ConnectToFeatureCollection componentsToFeatures = new ConnectToFeatureCollection();
+                ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
+                ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
+                this.ProcessComplexReferences(output, output.Sections, referencedComponents, componentsToFeatures, featuresToFeatures, modulesToFeatures);
+
+                foreach (var unresolvedReference in resolve.UnresolvedReferences)
                 {
-                    Section.SimpleReferenceSection referenceSection = (Section.SimpleReferenceSection)unresolvedReferences[i];
-                    this.OnMessage(WixErrors.UnresolvedReference(referenceSection.WixSimpleReferenceRow.SourceLineNumbers, referenceSection.Section.Type.ToString(), referenceSection.Section.Id, referenceSection.WixSimpleReferenceRow.SymbolicName));
+                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.WixSimpleReferenceRow.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.WixSimpleReferenceRow.SymbolicName));
                 }
 
                 if (Messaging.Instance.EncounteredError)
@@ -262,53 +254,33 @@ namespace WixToolset
                     return null;
                 }
 
-                SymbolCollection unreferencedSymbols = output.Sections.GetOrphanedSymbols(referencedSymbols, this);
-
-                // Display a warning message for Components that were never referenced by a Feature.
-                foreach (Symbol symbol in unreferencedSymbols)
+                // Display an error message for Components that were not referenced by a Feature.
+                foreach (Symbol symbol in resolve.ReferencedSymbols.Where(s => "Component".Equals(s.Row.TableDefinition.Name, StringComparison.Ordinal)))
                 {
-                    if ("Component" == symbol.Row.Table.Name)
+                    if (!referencedComponents.Contains(symbol.Name))
                     {
                         this.OnMessage(WixErrors.OrphanedComponent(symbol.Row.SourceLineNumbers, (string)symbol.Row[0]));
                     }
                 }
 
-                Dictionary<string, List<Symbol>> duplicatedSymbols = output.Sections.GetDuplicateSymbols(this);
-
-                // Display a warning message for Components that were never referenced by a Feature.
-                foreach (List<Symbol> duplicatedSymbolList in duplicatedSymbols.Values)
-                {
-                    Symbol symbol = duplicatedSymbolList[0];
-
-                    // Certain tables allow duplicates because they allow overrides.
-                    if (symbol.Row.Table.Name != "WixAction" &&
-                        symbol.Row.Table.Name != "WixVariable")
-                    {
-                        this.OnMessage(WixErrors.DuplicateSymbol(symbol.Row.SourceLineNumbers, symbol.Name));
-
-                        for (int i = 1; i < duplicatedSymbolList.Count; i++)
-                        {
-                            Symbol duplicateSymbol = duplicatedSymbolList[i];
-                            this.OnMessage(WixErrors.DuplicateSymbol2(duplicateSymbol.Row.SourceLineNumbers));
-                        }
-                    }
-                }
+                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.SymbolsWithDuplicates, resolve.ResolvedSections);
+                reportDupes.Execute();
 
                 if (Messaging.Instance.EncounteredError)
                 {
                     return null;
                 }
 
-                if (null != this.UnreferencedSymbolsFile)
-                {
-                    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
-                }
+                //if (null != this.UnreferencedSymbolsFile)
+                //{
+                //    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
+                //}
 
                 // resolve the feature to feature connects
                 this.ResolveFeatureToFeatureConnects(featuresToFeatures, allSymbols);
 
                 // start generating OutputTables and OutputRows for all the sections in the output
-                RowCollection ensureTableRows = new RowCollection();
+                List<Row> ensureTableRows = new List<Row>();
                 int sectionCount = 0;
                 foreach (Section section in output.Sections)
                 {
@@ -351,17 +323,6 @@ namespace WixToolset
                                     this.activeOutput.EnsureTable(this.tableDefinitions["AdvtExecuteSequence"]);
                                     this.activeOutput.EnsureTable(this.tableDefinitions["InstallExecuteSequence"]);
                                     this.activeOutput.EnsureTable(this.tableDefinitions["InstallUISequence"]);
-                                }
-
-                                foreach (Row row in table.Rows)
-                                {
-                                    // For script CAs that specify HideTarget we should also hide the CA data property for the action.
-                                    int bits = Convert.ToInt32(row[1]);
-                                    if (MsiInterop.MsidbCustomActionTypeHideTarget == (bits & MsiInterop.MsidbCustomActionTypeHideTarget) &&
-                                        MsiInterop.MsidbCustomActionTypeInScript == (bits & MsiInterop.MsidbCustomActionTypeInScript))
-                                    {
-                                        hiddenProperties[Convert.ToString(row[0])] = null;
-                                    }
                                 }
                                 break;
 
@@ -433,6 +394,8 @@ namespace WixToolset
                                 break;
 
                             case "Property":
+                                // Remove property rows with no value. These are properties associated with
+                                // AppSearch but without a default value.
                                 for (int i = 0; i < table.Rows.Count; i++)
                                 {
                                     if (null == table.Rows[i][1])
@@ -461,13 +424,6 @@ namespace WixToolset
                                 if (OutputType.Product == output.Type)
                                 {
                                     this.ResolveFeatures(table.Rows, 2, 6, componentsToFeatures, multipleFeatureComponents);
-                                }
-                                break;
-
-                            case "Upgrade":
-                                foreach (UpgradeRow row in table.Rows)
-                                {
-                                    secureProperties[row.ActionProperty] = null;
                                 }
                                 break;
 
@@ -554,26 +510,6 @@ namespace WixToolset
 
                             case "WixOrdering":
                                 copyRows = true;
-                                break;
-
-                            case "WixProperty":
-                                foreach (WixPropertyRow wixPropertyRow in table.Rows)
-                                {
-                                    if (wixPropertyRow.Admin)
-                                    {
-                                        adminProperties[wixPropertyRow.Id] = null;
-                                    }
-
-                                    if (wixPropertyRow.Hidden)
-                                    {
-                                        hiddenProperties[wixPropertyRow.Id] = null;
-                                    }
-
-                                    if (wixPropertyRow.Secure)
-                                    {
-                                        secureProperties[wixPropertyRow.Id] = null;
-                                    }
-                                }
                                 break;
 
                             case "WixSuppressAction":
@@ -682,7 +618,7 @@ namespace WixToolset
                 if (0 < suppressActionRows.Count)
                 {
                     Table suppressActionTable = this.activeOutput.EnsureTable(this.tableDefinitions["WixSuppressAction"]);
-                    suppressActionTable.Rows.AddRange(suppressActionRows);
+                    suppressActionRows.ForEach(r => suppressActionTable.Rows.Add(r));
                 }
 
                 // sequence all the actions
@@ -830,34 +766,6 @@ namespace WixToolset
                     }
                 }
 
-                // update the special properties
-                if (0 < adminProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "AdminProperties";
-                    row[1] = GetPropertyListString(adminProperties);
-                }
-
-                if (0 < secureProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "SecureCustomProperties";
-                    row[1] = GetPropertyListString(secureProperties);
-                }
-
-                if (0 < hiddenProperties.Count)
-                {
-                    Table propertyTable = this.activeOutput.EnsureTable(this.tableDefinitions["Property"]);
-
-                    Row row = propertyTable.CreateRow(null);
-                    row[0] = "MsiHiddenProperties";
-                    row[1] = GetPropertyListString(hiddenProperties);
-                }
-
                 // add the ModuleSubstitution table to the ModuleIgnoreTable
                 if (containsModuleSubstitution)
                 {
@@ -877,12 +785,8 @@ namespace WixToolset
                 }
 
                 // index all the file rows
-                FileRowCollection indexedFileRows = new FileRowCollection();
                 Table fileTable = this.activeOutput.Tables["File"];
-                if (null != fileTable)
-                {
-                    indexedFileRows.AddRange(fileTable.Rows);
-                }
+                RowDictionary<FileRow> indexedFileRows = (null == fileTable) ? new RowDictionary<FileRow>() : new RowDictionary<FileRow>(fileTable);
 
                 // flag all the generated short file name collisions
                 foreach (string fileId in generatedShortFileNameIdentifiers)
@@ -975,7 +879,6 @@ namespace WixToolset
             foreach (Row row in table.Rows)
             {
                 bool bootstrapperApplicationData = (null != row[13] && 1 == (int)row[13]);
-                TableDefinition customTable = new TableDefinition((string)row[0], false, bootstrapperApplicationData, bootstrapperApplicationData);
 
                 if (null == row[4])
                 {
@@ -996,6 +899,7 @@ namespace WixToolset
 
                 int currentPrimaryKey = 0;
 
+                List<ColumnDefinition> columns = new List<ColumnDefinition>(columnNames.Length);
                 for (int i = 0; i < columnNames.Length; ++i)
                 {
                     string name = columnNames[i];
@@ -1172,9 +1076,10 @@ namespace WixToolset
                     }
 
                     ColumnDefinition columnDefinition = new ColumnDefinition(name, type, length, primaryKey, nullable, modularization, ColumnType.Localized == type, minValSet, minValue, maxValSet, maxValue, keyTable, keyColumnSet, keyColumn, category, setValue, description, true, true);
-                    customTable.Columns.Add(columnDefinition);
+                    columns.Add(columnDefinition);
                 }
 
+                TableDefinition customTable = new TableDefinition((string)row[0], columns, false, bootstrapperApplicationData, bootstrapperApplicationData);
                 customTableDefinitions.Add(customTable);
             }
         }
@@ -1214,7 +1119,7 @@ namespace WixToolset
                         }
                         break;
                     case OutputType.PatchCreation:
-                        if (!table.Definition.IsUnreal &&
+                        if (!table.Definition.Unreal &&
                             "_SummaryInformation" != table.Name &&
                             "ExternalFiles" != table.Name &&
                             "FamilyFileRanges" != table.Name &&
@@ -1235,7 +1140,7 @@ namespace WixToolset
                         }
                         break;
                     case OutputType.Patch:
-                        if (!table.Definition.IsUnreal &&
+                        if (!table.Definition.Unreal &&
                             "_SummaryInformation" != table.Name &&
                             "Media" != table.Name &&
                             "MsiPatchMetadata" != table.Name &&
@@ -1368,14 +1273,16 @@ namespace WixToolset
         /// Load the standard action symbols.
         /// </summary>
         /// <param name="allSymbols">Collection of symbols.</param>
-        private void LoadStandardActionSymbols(SymbolCollection allSymbols)
+        private void LoadStandardActionSymbols(IDictionary<string, Symbol> allSymbols)
         {
             foreach (WixActionRow actionRow in this.standardActions)
             {
-                // if the action's symbol has not already been defined (i.e. overriden by the user), add it now
-                if (!allSymbols.Contains(actionRow.Symbol.Name))
+                Symbol actionSymbol = new Symbol(actionRow);
+
+                // If the action's symbol has not already been defined (i.e. overriden by the user), add it now.
+                if (!allSymbols.ContainsKey(actionSymbol.Name))
                 {
-                    allSymbols.Add(actionRow.Symbol);
+                    allSymbols.Add(actionSymbol.Name, actionSymbol);
                 }
             }
         }
@@ -1385,17 +1292,11 @@ namespace WixToolset
         /// </summary>
         /// <param name="output">Active output to add sections to.</param>
         /// <param name="sections">Sections that are referenced during the link process.</param>
-        /// <param name="referencedSymbols">Collection of all symbols referenced during linking.</param>
+        /// <param name="referencedComponents">Collection of all components referenced by complex reference.</param>
         /// <param name="componentsToFeatures">Component to feature complex references.</param>
         /// <param name="featuresToFeatures">Feature to feature complex references.</param>
         /// <param name="modulesToFeatures">Module to feature complex references.</param>
-        private void ProcessComplexReferences(
-            Output output,
-            SectionCollection sections,
-            StringCollection referencedSymbols,
-            ConnectToFeatureCollection componentsToFeatures,
-            ConnectToFeatureCollection featuresToFeatures,
-            ConnectToFeatureCollection modulesToFeatures)
+        private void ProcessComplexReferences(Output output, IEnumerable<Section> sections, ISet<string> referencedComponents, ConnectToFeatureCollection componentsToFeatures, ConnectToFeatureCollection featuresToFeatures, ConnectToFeatureCollection modulesToFeatures)
         {
             Hashtable componentsToModules = new Hashtable();
 
@@ -1450,10 +1351,7 @@ namespace WixToolset
 
                                         // index the component for finding orphaned records
                                         string symbolName = String.Concat("Component:", wixComplexReferenceRow.ChildId);
-                                        if (!referencedSymbols.Contains(symbolName))
-                                        {
-                                            referencedSymbols.Add(symbolName);
-                                        }
+                                        referencedComponents.Add(symbolName);
 
                                         break;
 
@@ -1526,10 +1424,7 @@ namespace WixToolset
 
                                         // index the component for finding orphaned records
                                         string componentSymbolName = String.Concat("Component:", wixComplexReferenceRow.ChildId);
-                                        if (!referencedSymbols.Contains(componentSymbolName))
-                                        {
-                                            referencedSymbols.Add(componentSymbolName);
-                                        }
+                                        referencedComponents.Add(componentSymbolName);
 
                                         break;
 
@@ -1582,7 +1477,7 @@ namespace WixToolset
         /// Flattens all complex references in all sections in the collection.
         /// </summary>
         /// <param name="sections">Sections that are referenced during the link process.</param>
-        private void FlattenSectionsComplexReferences(SectionCollection sections)
+        private void FlattenSectionsComplexReferences(IEnumerable<Section> sections)
         {
             Hashtable parentGroups = new Hashtable();
             Hashtable parentGroupsSections = new Hashtable();
@@ -1708,12 +1603,12 @@ namespace WixToolset
 
         private string CombineTypeAndId(ComplexReferenceParentType type, string id)
         {
-            return String.Format("{0}:{1}", type.ToString(), id);
+            return String.Concat(type.ToString(), ":", id);
         }
 
         private string CombineTypeAndId(ComplexReferenceChildType type, string id)
         {
-            return String.Format("{0}:{1}", type.ToString(), id);
+            return String.Concat(type.ToString(), ":", id);
         }
 
         /// <summary>
@@ -1890,17 +1785,16 @@ namespace WixToolset
         /// </summary>
         /// <param name="featuresToFeatures">Feature to feature complex references.</param>
         /// <param name="allSymbols">All symbols loaded from the sections.</param>
-        private void ResolveFeatureToFeatureConnects(
-            ConnectToFeatureCollection featuresToFeatures,
-            SymbolCollection allSymbols)
+        private void ResolveFeatureToFeatureConnects(ConnectToFeatureCollection featuresToFeatures, IDictionary<string, Symbol> allSymbols)
         {
             foreach (ConnectToFeature connection in featuresToFeatures)
             {
                 WixSimpleReferenceRow wixSimpleReferenceRow = new WixSimpleReferenceRow(null, this.tableDefinitions["WixSimpleReference"]);
                 wixSimpleReferenceRow.TableName = "Feature";
                 wixSimpleReferenceRow.PrimaryKeys = connection.ChildId;
-                Symbol symbol = allSymbols.GetSymbolForSimpleReference(wixSimpleReferenceRow, this);
-                if (null == symbol)
+
+                Symbol symbol;
+                if (!allSymbols.TryGetValue(wixSimpleReferenceRow.SymbolicName, out symbol))
                 {
                     continue;
                 }
@@ -1957,7 +1851,7 @@ namespace WixToolset
         /// </summary>
         /// <param name="actionRows">Collection of actions to schedule.</param>
         /// <param name="suppressActionRows">Collection of actions to suppress.</param>
-        private void SequenceActions(RowCollection actionRows, RowCollection suppressActionRows)
+        private void SequenceActions(List<Row> actionRows, List<Row> suppressActionRows)
         {
             WixActionRowCollection overridableActionRows = new WixActionRowCollection();
             WixActionRowCollection requiredActionRows = new WixActionRowCollection();
@@ -2341,11 +2235,11 @@ namespace WixToolset
                         int unusedSequence;
 
                         // get all the relatively scheduled action rows occuring before this absolutely scheduled action row
-                        RowCollection allPreviousActionRows = new RowCollection();
+                        RowIndexedList<WixActionRow> allPreviousActionRows = new RowIndexedList<WixActionRow>();
                         absoluteActionRow.GetAllPreviousActionRows(sequenceTable, allPreviousActionRows);
 
                         // get all the relatively scheduled action rows occuring after this absolutely scheduled action row
-                        RowCollection allNextActionRows = new RowCollection();
+                        RowIndexedList<WixActionRow> allNextActionRows = new RowIndexedList<WixActionRow>();
                         absoluteActionRow.GetAllNextActionRows(sequenceTable, allNextActionRows);
 
                         // check for relatively scheduled actions occuring before/after a special action (these have a negative sequence number)
@@ -2591,7 +2485,7 @@ namespace WixToolset
         /// <param name="featureColumn">Number of the column containing the feature.</param>
         /// <param name="connectToFeatures">Connect to feature complex references.</param>
         /// <param name="multipleFeatureComponents">Hashtable of known components under multiple features.</param>
-        private void ResolveFeatures(RowCollection rows, int connectionColumn, int featureColumn, ConnectToFeatureCollection connectToFeatures, Hashtable multipleFeatureComponents)
+        private void ResolveFeatures(IEnumerable<Row> rows, int connectionColumn, int featureColumn, ConnectToFeatureCollection connectToFeatures, Hashtable multipleFeatureComponents)
         {
             foreach (Row row in rows)
             {

@@ -13,7 +13,7 @@ namespace WixToolset.Extensions
     using WixToolset.Data;
     using WixToolset.Extensibility;
     using Sql = WixToolset.Extensions.Serialize.Sql;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The decompiler for the WiX Toolset SQL Server Extension.
@@ -68,7 +68,7 @@ namespace WixToolset.Extensions
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        public override void Finish(TableCollection tables)
+        public override void Finish(TableIndexedCollection tables)
         {
             this.FinalizeSqlFileSpecTable(tables);
             this.FinalizeSqlScriptAndSqlStringTables(tables);
@@ -315,7 +315,7 @@ namespace WixToolset.Extensions
         /// which they are used in the SqlDatabase table, decompilation of this
         /// table must occur after the SqlDatbase parents are decompiled.
         /// </remarks>
-        private void FinalizeSqlFileSpecTable(TableCollection tables)
+        private void FinalizeSqlFileSpecTable(TableIndexedCollection tables)
         {
             Table sqlDatabaseTable = tables["SqlDatabase"];
             Table sqlFileSpecTable = tables["SqlFileSpec"];
@@ -428,7 +428,7 @@ namespace WixToolset.Extensions
         /// element, the SqlScript and SqlString elements are nested under either the
         /// SqlDatabase or the Component element.
         /// </remarks>
-        private void FinalizeSqlScriptAndSqlStringTables(TableCollection tables)
+        private void FinalizeSqlScriptAndSqlStringTables(TableIndexedCollection tables)
         {
             Table sqlDatabaseTable = tables["SqlDatabase"];
             Table sqlScriptTable = tables["SqlScript"];

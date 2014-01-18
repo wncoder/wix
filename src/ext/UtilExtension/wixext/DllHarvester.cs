@@ -18,7 +18,7 @@ namespace WixToolset.Extensions
     using System.Reflection.Emit;
     using System.Runtime.InteropServices;
 
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Harvest WiX authoring from a native DLL file.

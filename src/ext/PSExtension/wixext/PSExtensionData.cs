@@ -19,8 +19,6 @@ namespace WixToolset.Extensions
     /// </summary>
     public sealed class PSExtensionData : ExtensionData
     {
-        private static Library library;
-
         /// <summary>
         /// Gets the library associated with this extension.
         /// </summary>
@@ -37,12 +35,7 @@ namespace WixToolset.Extensions
         /// <returns>Extension's library.</returns>
         internal static Library GetExtensionLibrary(TableDefinitionCollection tableDefinitions)
         {
-            if (null == PSExtensionData.library)
-            {
-                PSExtensionData.library = ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.ps.wixlib", tableDefinitions);
-            }
-
-            return PSExtensionData.library;
+            return ExtensionData.LoadLibraryHelper(Assembly.GetExecutingAssembly(), "WixToolset.Extensions.Data.ps.wixlib", tableDefinitions);
         }
     }
 }

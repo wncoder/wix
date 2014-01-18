@@ -22,7 +22,7 @@ namespace WixToolset.Extensions
     using System.Text;
     using Microsoft.Win32;
     using WixToolset.Data;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Harvest WiX authoring from the registry.

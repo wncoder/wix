@@ -20,7 +20,7 @@ namespace WixToolset.Extensions
     using System.Text;
     using WixToolset.Extensibility;
     using WixToolset.Tools;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// A utility heat extension for the WiX Toolset Harvester application.

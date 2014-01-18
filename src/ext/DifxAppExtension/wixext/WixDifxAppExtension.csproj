@@ -28,7 +28,7 @@
     </EmbeddedFlattenedResource>
     <XsdGenSource Include="Xsd\difxapp.xsd">
       <SubType>Designer</SubType>
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
       <Namespace>WixToolset.Extensions.Serialize.DifxApp</Namespace>
     </XsdGenSource>
   </ItemGroup>
@@ -37,6 +37,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <ProjectReference Include="..\..\..\libs\WixToolset.Data\WixToolset.Data.csproj" />
+    <ProjectReference Include="..\..\..\libs\WixToolset.Extensibility\WixToolset.Extensibility.csproj" />
     <ProjectReference Include="..\..\..\tools\wix\Wix.csproj" />
     <ProjectReference Include="..\wixlib\DIFxAppExtension.wixproj">
       <Properties>Platform=x86</Properties>

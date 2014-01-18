@@ -128,17 +128,17 @@ namespace WixToolset
                 Table updatedTable = updatedOutput.Tables[targetTable.Name];
                 TableOperation operation = TableOperation.None;
 
-                RowCollection rows = this.CompareTables(targetOutput, targetTable, updatedTable, out operation);
+                List<Row> rows = this.CompareTables(targetOutput, targetTable, updatedTable, out operation);
 
                 if (TableOperation.Drop == operation)
                 {
-                    Table droppedTable = transform.Tables.EnsureTable(null, targetTable.Definition);
+                    Table droppedTable = transform.EnsureTable(targetTable.Definition);
                     droppedTable.Operation = TableOperation.Drop;
                 }
-                else if(TableOperation.None == operation)
+                else if (TableOperation.None == operation)
                 {
-                    Table modified = transform.Tables.EnsureTable(null, updatedTable.Definition);
-                    modified.Rows.AddRange(rows);
+                    Table modified = transform.EnsureTable(updatedTable.Definition);
+                    rows.ForEach(r => modified.Rows.Add(r));
                 }
             }
 
@@ -147,7 +147,7 @@ namespace WixToolset
             {
                 if (null == targetOutput.Tables[updatedTable.Name])
                 {
-                    Table addedTable = transform.Tables.EnsureTable(null, updatedTable.Definition);
+                    Table addedTable = transform.EnsureTable(updatedTable.Definition);
                     addedTable.Operation = TableOperation.Add;
 
                     foreach (Row updatedRow in updatedTable.Rows)
@@ -364,9 +364,9 @@ namespace WixToolset
             return comparedRow;
         }
 
-        private RowCollection CompareTables(Output targetOutput, Table targetTable, Table updatedTable, out TableOperation operation)
+        private List<Row> CompareTables(Output targetOutput, Table targetTable, Table updatedTable, out TableOperation operation)
         {
-            RowCollection rows = new RowCollection();
+            List<Row> rows = new List<Row>();
             operation = TableOperation.None;
 
             // dropped tables

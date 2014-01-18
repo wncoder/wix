@@ -1,5 +1,5 @@
-﻿//-------------------------------------------------------------------------------------------------
-// <copyright file="IDecompilerExtension.cs" company="Outercurve Foundation">
+//-------------------------------------------------------------------------------------------------
+// <copyright file="DecompilerExtension.cs" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file
@@ -14,43 +14,53 @@ namespace WixToolset.Extensibility
     /// <summary>
     /// Base class for creating a decompiler extension.
     /// </summary>
-    public interface IDecompilerExtension
+    public abstract class DecompilerExtension : IDecompilerExtension
     {
         /// <summary>
         /// Gets or sets the decompiler core for the extension.
         /// </summary>
         /// <value>The decompiler core for the extension.</value>
-        IDecompilerCore Core { get; set; }
+        public IDecompilerCore Core { get; set; }
 
         /// <summary>
         /// Gets the table definitions this extension decompiles.
         /// </summary>
         /// <value>Table definitions this extension decompiles.</value>
-        TableDefinitionCollection TableDefinitions { get; }
+        public virtual TableDefinitionCollection TableDefinitions { get; protected set; }
 
         /// <summary>
         /// Gets the library that this decompiler wants removed from the decomipiled output.
         /// </summary>
         /// <param name="tableDefinitions">The table definitions to use while loading the library.</param>
         /// <returns>The library for this extension or null if there is no library to be removed.</returns>
-        Library GetLibraryToRemove(TableDefinitionCollection tableDefinitions);
+        public virtual Library GetLibraryToRemove(TableDefinitionCollection tableDefinitions)
+        {
+            return null;
+        }
 
         /// <summary>
         /// Called at the beginning of the decompilation of a database.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        void Initialize(TableCollection tables);
+        public virtual void Initialize(TableIndexedCollection tables)
+        {
+        }
 
         /// <summary>
         /// Decompiles an extension table.
         /// </summary>
         /// <param name="table">The table to decompile.</param>
-        void DecompileTable(Table table);
+        public virtual void DecompileTable(Table table)
+        {
+            this.Core.UnexpectedTable(table);
+        }
 
         /// <summary>
         /// Finalize decompilation.
         /// </summary>
         /// <param name="tables">The collection of all tables.</param>
-        void Finish(TableCollection tables);
+        public virtual void Finish(TableIndexedCollection tables)
+        {
+        }
     }
 }

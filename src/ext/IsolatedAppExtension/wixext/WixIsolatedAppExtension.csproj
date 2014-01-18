@@ -30,7 +30,7 @@
     <XsdGenSource Include="Xsd\IsolatedApp.xsd">
       <SubType>Designer</SubType>
       <Namespace>WixToolset.Extensions.Serialize.IsolatedApp</Namespace>
-      <CommonNamespace>WixToolset.Serialize</CommonNamespace>
+      <CommonNamespace>WixToolset.Data.Serialize</CommonNamespace>
     </XsdGenSource>
     <EmbeddedResource Include="$(OutputPath)\IsolatedApp.wixlib">
       <Link>Data\IsolatedApp.wixlib</Link>

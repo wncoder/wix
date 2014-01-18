@@ -486,7 +486,7 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "added":
-                        added = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        added = "yes".Equals(reader.Value);
                         break;
                     case "category":
                         switch (reader.Value)
@@ -570,14 +570,14 @@ namespace WixToolset.Data
                                 category = ColumnCategory.WildCardFilename;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value, "anyPath", "binary", "cabinet", "condition", "customSource", "defaultDir", "doubleInteger", "filename", "formatted", "formattedSddl", "guid", "identifier", "integer", "language", "lowerCase", "path", "paths", "property", "regPath", "shortcut", "template", "text", "timeDate", "upperCase", "version", "wildCardFilename"));
+                                throw new InvalidOperationException();
                         }
                         break;
                     case "description":
                         description = reader.Value;
                         break;
                     case "escapeIdtCharacters":
-                        escapeIdtCharacters = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        escapeIdtCharacters = "yes".Equals(reader.Value);
                         break;
                     case "keyColumn":
                         keyColumnSet = true;
@@ -590,7 +590,7 @@ namespace WixToolset.Data
                         length = Convert.ToInt32(reader.Value, 10);
                         break;
                     case "localizable":
-                        localizable = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        localizable = "yes".Equals(reader.Value);
                         break;
                     case "maxValue":
                         maxValueSet = true;
@@ -631,7 +631,7 @@ namespace WixToolset.Data
                                 modularize = ColumnModularizeType.SemicolonDelimited;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value, "column", "companionFile", "condition", "controlEventArgument", "controlText", "icon", "property", "semicolonDelimited"));
+                                throw new InvalidOperationException();
                         }
                         break;
                     case "name":
@@ -648,10 +648,10 @@ namespace WixToolset.Data
                         }
                         break;
                     case "nullable":
-                        nullable = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        nullable = "yes".Equals(reader.Value);
                         break;
                     case "primaryKey":
-                        primaryKey = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        primaryKey = "yes".Equals(reader.Value);
                         break;
                     case "set":
                         possibilities = reader.Value;
@@ -679,7 +679,7 @@ namespace WixToolset.Data
                         }
                         break;
                     case "useCData":
-                        useCData = Common.IsYes(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value);
+                        useCData = "yes".Equals(reader.Value);
                         break;
                     default:
                         if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
@@ -984,7 +984,6 @@ namespace WixToolset.Data
         /// </remarks>
         /// <param name="other">The <see cref="ColumnDefinition"/> to compare with this one.</param>
         /// <returns>0 if the columns' core propeties are the same; otherwise, non-0.</returns>
-        [SuppressMessage("Microsoft.Globalization", "CA1309:UseOrdinalStringComparison")]
         public int CompareTo(ColumnDefinition other)
         {
             // by definition, this object is greater than null
@@ -994,7 +993,7 @@ namespace WixToolset.Data
             }
 
             // compare column names
-            int ret = string.Compare(this.Name, other.Name, StringComparison.InvariantCulture);
+            int ret = String.Compare(this.Name, other.Name, StringComparison.Ordinal);
 
             // compare column types
             if (0 == ret)

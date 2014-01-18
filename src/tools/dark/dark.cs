@@ -24,7 +24,7 @@ namespace WixToolset.Tools
 
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Entry point for decompiler

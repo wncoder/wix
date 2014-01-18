@@ -19,7 +19,7 @@ namespace WixToolset.Extensions
     using System.Reflection;
     using System.Runtime.InteropServices;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// The WiX Toolset harvester mutator.

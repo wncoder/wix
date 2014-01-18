@@ -26,7 +26,7 @@ namespace WixToolset
     using System.Xml.Linq;
     using WixToolset.Data;
     using WixToolset.Extensibility;
-    using Wix = WixToolset.Serialize;
+    using Wix = WixToolset.Data.Serialize;
 
     /// <summary>
     /// Common Wix utility methods and types.
