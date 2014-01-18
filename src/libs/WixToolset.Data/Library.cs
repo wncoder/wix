@@ -11,8 +11,8 @@ namespace WixToolset.Data
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
+    using System.Linq;
     using System.Xml;
 
     /// <summary>
@@ -21,7 +21,7 @@ namespace WixToolset.Data
     public sealed class Library
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixlib";
-        private static readonly Version currentVersion = new Version("4.0.0.0");
+        private static readonly Version CurrentVersion = new Version("4.0.0.0");
 
         private Dictionary<string, Localization> localizations;
         private List<Section> sections;
@@ -111,16 +111,23 @@ namespace WixToolset.Data
         public static Library Load(Stream stream, Uri uri, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
             using (FileStructure fs = FileStructure.Read(stream))
-            using (XmlReader reader = XmlReader.Create(fs.GetDataStream(), null, uri.AbsoluteUri))
             {
-                try
+                if (FileFormat.Wixlib != fs.FileFormat)
                 {
-                    reader.MoveToContent();
-                    return Library.Read(reader, tableDefinitions, suppressVersionCheck);
+                    throw new WixUnexpectedFileFormatException(uri.LocalPath, FileFormat.Wixlib, fs.FileFormat);
                 }
-                catch (XmlException xe)
+
+                using (XmlReader reader = XmlReader.Create(fs.GetDataStream(), null, uri.AbsoluteUri))
                 {
-                    throw new WixException(WixDataErrors.InvalidXml(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", xe.Message));
+                    try
+                    {
+                        reader.MoveToContent();
+                        return Library.Read(reader, tableDefinitions, suppressVersionCheck);
+                    }
+                    catch (XmlException xe)
+                    {
+                        throw new WixCorruptFileException(uri.LocalPath, fs.FileFormat, xe);
+                    }
                 }
             }
         }
@@ -134,50 +141,45 @@ namespace WixToolset.Data
         {
             List<string> embedFilePaths = new List<string>();
 
-            // resolve paths to files and create the library cabinet file
-            foreach (Section section in this.sections)
+            // Resolve paths to files that are to be embedded in the library.
+            if (null != resolver)
             {
-                foreach (Table table in section.Tables)
+                foreach (Table table in this.sections.SelectMany(s => s.Tables))
                 {
                     foreach (Row row in table.Rows)
                     {
-                        foreach (Field field in row.Fields)
+                        foreach (ObjectField objectField in row.Fields.Where(f => f is ObjectField))
                         {
-                            ObjectField objectField = field as ObjectField;
-
-                            if (null != objectField)
+                            if (null != objectField.Data)
                             {
-                                if (null != resolver && null != objectField.Data)
+                                string file = resolver.Resolve(row.SourceLineNumbers, table.Name, (string)objectField.Data);
+                                if (!String.IsNullOrEmpty(file))
                                 {
-                                    string file = resolver.Resolve(row.SourceLineNumbers, table.Name, (string)objectField.Data);
-                                    if (!String.IsNullOrEmpty(file))
-                                    {
-                                        // File was successfully resolved so track the embedded index as the cabinet file id.
-                                        objectField.EmbeddedFileIndex = embedFilePaths.Count;
-                                        embedFilePaths.Add(file);
-                                    }
-                                    else
-                                    {
-                                        Messaging.Instance.OnMessage(WixDataErrors.FileNotFound(row.SourceLineNumbers, (string)objectField.Data, table.Name));
-                                    }
+                                    // File was successfully resolved so track the embedded index as the embedded file index.
+                                    objectField.EmbeddedFileIndex = embedFilePaths.Count;
+                                    embedFilePaths.Add(file);
                                 }
-                                else // clear out a previous cabinet file id value
+                                else
                                 {
-                                    objectField.EmbeddedFileIndex = null;
+                                    Messaging.Instance.OnMessage(WixDataErrors.FileNotFound(row.SourceLineNumbers, (string)objectField.Data, table.Name));
                                 }
+                            }
+                            else // clear out embedded file id in case there was one there before.
+                            {
+                                objectField.EmbeddedFileIndex = null;
                             }
                         }
                     }
                 }
             }
 
-            // do not save the library if errors were found while resolving object paths
+            // Do not save the library if errors were found while resolving object paths.
             if (Messaging.Instance.EncounteredError)
             {
                 return;
             }
 
-            // Ensure the location to output the lib exists
+            // Ensure the location to output the library exists and write it out.
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
 
             using (FileStream stream = File.Create(path))
@@ -201,9 +203,9 @@ namespace WixToolset.Data
         /// <returns>The parsed Library.</returns>
         private static Library Read(XmlReader reader, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            if ("wixLibrary" != reader.LocalName)
+            if (!reader.LocalName.Equals("wixLibrary"))
             {
-                throw new WixNotLibraryException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "library", "wixLibrary"));
+                throw new XmlException();
             }
 
             bool empty = reader.IsEmptyElement;
@@ -220,9 +222,9 @@ namespace WixToolset.Data
                 }
             }
 
-            if (!suppressVersionCheck && null != version && !currentVersion.Equals(version))
+            if (!suppressVersionCheck && null != version && !Library.CurrentVersion.Equals(version))
             {
-                throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "library", version.ToString(), currentVersion.ToString()));
+                throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "library", version.ToString(), Library.CurrentVersion.ToString()));
             }
 
             if (!empty)
@@ -243,6 +245,8 @@ namespace WixToolset.Data
                                 case "section":
                                     library.sections.Add(Section.Read(reader, tableDefinitions));
                                     break;
+                                default:
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -251,7 +255,10 @@ namespace WixToolset.Data
                     }
                 }
 
-                Debug.Assert(done, "Expected end element at the end of the library.");
+                if (!done)
+                {
+                    throw new XmlException();
+                }
             }
 
             return library;
@@ -265,7 +272,7 @@ namespace WixToolset.Data
         {
             writer.WriteStartElement("wixLibrary", XmlNamespaceUri);
 
-            writer.WriteAttributeString("version", currentVersion.ToString());
+            writer.WriteAttributeString("version", CurrentVersion.ToString());
 
             foreach (Localization localization in this.localizations.Values)
             {

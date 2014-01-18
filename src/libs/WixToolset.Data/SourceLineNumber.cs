@@ -127,7 +127,7 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Creates a source line number from a URI.
+        /// Creates a source line number from an XObject.
         /// </summary>
         /// <param name="node">XML node to create source line number from.</param>
         /// <param name="offset">Optional line number offset into XML file not already included in the line information.</param>

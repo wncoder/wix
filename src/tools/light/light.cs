@@ -242,34 +242,42 @@ namespace WixToolset.Tools
             foreach (string inputFile in this.commandLine.Files)
             {
                 string inputFileFullPath = Path.GetFullPath(inputFile);
+                FileFormat format = FileStructure.GuessFileFormatFromExtension(Path.GetExtension(inputFileFullPath));
+                bool retry;
+                do
+                {
+                    retry = false;
 
-                // try loading as an object file
-                try
-                {
-                    Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
-                    sections.AddRange(intermediate.Sections);
-                    continue; // next file
-                }
-                catch (WixNotIntermediateException)
-                {
-                    // try another format
-                }
+                    try
+                    {
+                        switch (format)
+                        {
+                            case FileFormat.Wixobj:
+                                Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
+                                sections.AddRange(intermediate.Sections);
+                                break;
 
-                // try loading as a library file
-                try
-                {
-                    Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
-                    AddLibraryLocalizationsToLocalizer(library, this.commandLine.Cultures, localizer);
-                    sections.AddRange(library.Sections);
-                    continue; // next file
-                }
-                catch (WixNotLibraryException)
-                {
-                    // try another format
-                }
+                            case FileFormat.Wixlib:
+                                Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, this.commandLine.SuppressVersionCheck);
+                                AddLibraryLocalizationsToLocalizer(library, this.commandLine.Cultures, localizer);
+                                sections.AddRange(library.Sections);
+                                break;
 
-                // try loading as an output file
-                output = Output.Load(inputFileFullPath, this.commandLine.SuppressVersionCheck);
+                            default:
+                                output = Output.Load(inputFileFullPath, this.commandLine.SuppressVersionCheck);
+                                break;
+                        }
+                    }
+                    catch (WixUnexpectedFileFormatException e)
+                    {
+                        format = e.FileFormat;
+                        retry = (FileFormat.Wixobj == format || FileFormat.Wixlib == format || FileFormat.Wixout == format); // .wixobj, .wixout and .wixout are supported by light.
+                        if (!retry)
+                        {
+                            Messaging.Instance.OnMessage(e.Error);
+                        }
+                    }
+                } while (retry);
             }
 
             // Stop processing if any errors were found loading object files.
@@ -314,7 +322,7 @@ namespace WixToolset.Tools
                         outputFile = Path.ChangeExtension(outputFile, outputExtension);
                     }
 
-                    output.Save(outputFile, null);
+                    output.Save(outputFile);
                 }
                 else // finish creating the MSI/MSM
                 {

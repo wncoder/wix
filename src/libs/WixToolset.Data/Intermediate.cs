@@ -24,7 +24,7 @@ namespace WixToolset.Data
     public sealed class Intermediate
     {
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixobj";
-        private static readonly Version currentVersion = new Version("4.0.0.0");
+        private static readonly Version CurrentVersion = new Version("4.0.0.0");
 
         /// <summary>
         /// Instantiate a new Intermediate.
@@ -49,17 +49,27 @@ namespace WixToolset.Data
         /// <returns>Returns the loaded intermediate.</returns>
         public static Intermediate Load(string path, TableDefinitionCollection tableDefinitions, bool suppressVersionCheck)
         {
-            try
+            using (FileStream stream = File.OpenRead(path))
+            using (FileStructure fs = FileStructure.Read(stream))
             {
-                using (XmlReader reader = XmlReader.Create(path))
+                if (FileFormat.Wixobj != fs.FileFormat)
                 {
-                    reader.MoveToContent();
-                    return Intermediate.Read(reader, tableDefinitions, suppressVersionCheck);
+                    throw new WixUnexpectedFileFormatException(path, FileFormat.Wixobj, fs.FileFormat);
                 }
-            }
-            catch (XmlException xe)
-            {
-                throw new WixNotIntermediateException(WixDataErrors.InvalidXml(new SourceLineNumber(path), "object", xe.Message));
+
+                Uri uri = new Uri(Path.GetFullPath(path));
+                using (XmlReader reader = XmlReader.Create(fs.GetDataStream(), null, uri.AbsoluteUri))
+                {
+                    try
+                    {
+                        reader.MoveToContent();
+                        return Intermediate.Read(reader, tableDefinitions, suppressVersionCheck);
+                    }
+                    catch (XmlException xe)
+                    {
+                        throw new WixCorruptFileException(path, fs.FileFormat, xe);
+                    }
+                }
             }
         }
 
@@ -69,21 +79,15 @@ namespace WixToolset.Data
         /// <param name="path">Path to save intermediate file to disk.</param>
         public void Save(string path)
         {
-            try
-            {
-                // Ensure the location to output the xml exists.
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path)));
 
-                using (XmlWriter writer = XmlWriter.Create(path))
-                {
-                    writer.WriteStartDocument();
-                    this.Write(writer);
-                    writer.WriteEndDocument();
-                }
-            }
-            catch (UnauthorizedAccessException)
+            using (FileStream stream = File.Create(path))
+            using (FileStructure fs = FileStructure.Create(stream, FileFormat.Wixobj, null))
+            using (XmlWriter writer = XmlWriter.Create(fs.GetDataStream()))
             {
-                throw new WixException(WixDataErrors.UnauthorizedAccess(path));
+                writer.WriteStartDocument();
+                this.Write(writer);
+                writer.WriteEndDocument();
             }
         }
 
@@ -98,7 +102,7 @@ namespace WixToolset.Data
         {
             if ("wixObject" != reader.LocalName)
             {
-                throw new WixNotIntermediateException(WixDataErrors.InvalidDocumentElement(SourceLineNumber.CreateFromUri(reader.BaseURI), reader.Name, "object", "wixObject"));
+                throw new XmlException();
             }
 
             bool empty = reader.IsEmptyElement;
@@ -111,26 +115,16 @@ namespace WixToolset.Data
                     case "version":
                         objVersion = new Version(reader.Value);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixObject", reader.Name));
-                        }
-                        break;
                 }
             }
 
-            if (null != objVersion && !suppressVersionCheck)
+            if (!suppressVersionCheck && null != objVersion && !Intermediate.CurrentVersion.Equals(objVersion))
             {
-                if (0 != currentVersion.CompareTo(objVersion))
-                {
-                    throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", objVersion.ToString(), currentVersion.ToString()));
-                }
+                throw new WixException(WixDataErrors.VersionMismatch(SourceLineNumber.CreateFromUri(reader.BaseURI), "object", objVersion.ToString(), Intermediate.CurrentVersion.ToString()));
             }
 
             Intermediate intermediate = new Intermediate();
 
-            // loop through the rest of the xml building up the SectionCollection
             if (!empty)
             {
                 bool done = false;
@@ -146,7 +140,7 @@ namespace WixToolset.Data
                                     intermediate.Sections.Add(Section.Read(reader, tableDefinitions));
                                     break;
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixObject", reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -157,7 +151,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "wixObject"));
+                    throw new XmlException();
                 }
             }
 
@@ -172,7 +166,7 @@ namespace WixToolset.Data
         {
             writer.WriteStartElement("wixObject", XmlNamespaceUri);
 
-            writer.WriteAttributeString("version", currentVersion.ToString());
+            writer.WriteAttributeString("version", Intermediate.CurrentVersion.ToString());
 
             foreach (Section section in this.Sections)
             {

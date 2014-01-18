@@ -190,7 +190,7 @@ namespace WixToolset.Tools
                 {
                     if (OutputType.Patch == this.outputType || OutputType.Transform == this.outputType || this.outputXml)
                     {
-                        output.Save(this.outputFile, null);
+                        output.Save(this.outputFile);
                     }
                     else // decompile
                     {

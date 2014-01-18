@@ -249,36 +249,43 @@ namespace WixToolset.Lux
                     string inputFileFullPath = Path.GetFullPath(inputFile);
                     if (File.Exists(inputFileFullPath))
                     {
+                        FileFormat format = FileStructure.GuessFileFormatFromExtension(Path.GetExtension(inputFileFullPath));
+                        bool retry;
+                        do
+                        {
+                            retry = false;
 
-                        // try loading as an object file
-                        try
-                        {
-                            Intermediate intermediate = Intermediate.Load(inputFileFullPath, linker.TableDefinitions, false);
-                            foreach (Section section in intermediate.Sections)
+                            try
                             {
-                                sectionFiles[section] = inputFile;
-                            }
-                            continue; // next file
-                        }
-                        catch (WixNotIntermediateException)
-                        {
-                            // try another format
-                        }
+                                switch (format)
+                                {
+                                    case FileFormat.Wixobj:
+                                        Intermediate intermediate = Intermediate.Load(inputFile, linker.TableDefinitions, false);
+                                        foreach (Section section in intermediate.Sections)
+                                        {
+                                            sectionFiles[section] = inputFile;
+                                        }
+                                        break;
 
-                        // try loading as a library file
-                        try
-                        {
-                            Library library = Library.Load(inputFileFullPath, linker.TableDefinitions, false);
-                            foreach (Section section in library.Sections)
-                            {
-                                sectionFiles[section] = inputFile;
+                                    default:
+                                        Library library = Library.Load(inputFile, linker.TableDefinitions, false);
+                                        foreach (Section section in library.Sections)
+                                        {
+                                            sectionFiles[section] = inputFile;
+                                        }
+                                        break;
+                                }
                             }
-                            continue; // next file
-                        }
-                        catch (WixNotLibraryException)
-                        {
-                            this.OnMessage(LuxBuildErrors.CouldntLoadInput(inputFile));
-                        }
+                            catch (WixUnexpectedFileFormatException e)
+                            {
+                                format = e.FileFormat;
+                                retry = (FileFormat.Wixobj != format && FileFormat.Wixlib != format); // .wixobj and .wixout are supported by lux.
+                                if (!retry)
+                                {
+                                    this.OnMessage(LuxBuildErrors.CouldntLoadInput(inputFile));
+                                }
+                            }
+                        } while (retry);
                     }
                 }
             }

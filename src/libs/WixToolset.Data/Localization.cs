@@ -119,12 +119,6 @@ namespace WixToolset.Data
                     case "culture":
                         culture = reader.Value;
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), Localization.XmlElementName, reader.Name));
-                        }
-                        break;
                 }
             }
 
@@ -154,7 +148,7 @@ namespace WixToolset.Data
                                     break;
 
                                 default:
-                                    throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), Localization.XmlElementName, reader.Name));
+                                    throw new XmlException();
                             }
                             break;
                         case XmlNodeType.EndElement:
@@ -165,7 +159,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "section"));
+                    throw new XmlException();
                 }
             }
 
@@ -297,12 +291,6 @@ namespace WixToolset.Data
                     case "overridable":
                         overridable = "yes".Equals(reader.Value);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), Localization.XmlElementName, reader.Name));
-                        }
-                        break;
                 }
             }
 
@@ -317,7 +305,7 @@ namespace WixToolset.Data
 
                 if (XmlNodeType.EndElement != reader.NodeType)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "string"));
+                    throw new XmlException();
                 }
             }
 
@@ -368,12 +356,6 @@ namespace WixToolset.Data
                     case "attributes":
                         attributes = Convert.ToInt32(reader.Value, CultureInfo.InvariantCulture);
                         break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), Localization.XmlElementName, reader.Name));
-                        }
-                        break;
                 }
             }
 
@@ -387,7 +369,7 @@ namespace WixToolset.Data
 
                 if (XmlNodeType.EndElement != reader.NodeType)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "ui"));
+                    throw new XmlException();
                 }
             }
 

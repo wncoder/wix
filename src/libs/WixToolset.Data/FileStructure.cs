@@ -27,10 +27,12 @@ namespace WixToolset.Data
 
         private static readonly Dictionary<string, FileFormat> SupportedFileFormats = new Dictionary<string, FileFormat>()
         {
+            { "wixobj", FileFormat.Wixobj },
             { "wixlib", FileFormat.Wixlib },
-            { "wixmsp", FileFormat.Wixmsp },
-            { "wixmst", FileFormat.Wixmst },
             { "wixout", FileFormat.Wixout },
+            { "wixpdb", FileFormat.Wixpdb },
+            { "wixmst", FileFormat.Wixout },
+            { "wixmsp", FileFormat.Wixout },
         };
 
         /// <summary>
@@ -63,7 +65,7 @@ namespace WixToolset.Data
             {
                 fs.WriteType(writer, fileFormat);
 
-                fs.WriteEmbeddedFiles(writer, embedFilePaths);
+                fs.WriteEmbeddedFiles(writer, embedFilePaths ?? new List<string>());
 
                 // Remember the data stream offset, which is right after the embedded files have been written.
                 fs.dataStreamOffset = stream.Position;
@@ -100,6 +102,17 @@ namespace WixToolset.Data
             fs.stream = stream;
 
             return fs;
+        }
+
+        /// <summary>
+        /// Guess at the file format based on the file extension.
+        /// </summary>
+        /// <param name="extension">File extension to guess the file format for.</param>
+        /// <returns>Best guess at file format.</returns>
+        public static FileFormat GuessFileFormatFromExtension(string extension)
+        {
+            FileFormat format;
+            return FileStructure.SupportedFileFormats.TryGetValue(extension.TrimStart('.').ToLowerInvariant(), out format) ? format : FileFormat.Unknown;
         }
 
         /// <summary>

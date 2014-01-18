@@ -454,9 +454,12 @@ namespace WixToolset.Data
         /// </summary>
         /// <param name="reader">Reader to get data from.</param>
         /// <returns>The ColumnDefintion represented by the Xml.</returns>
-        internal static ColumnDefinition Parse(XmlReader reader)
+        internal static ColumnDefinition Read(XmlReader reader)
         {
-            Debug.Assert("columnDefinition" == reader.LocalName);
+            if (!reader.LocalName.Equals("columnDefinition"))
+            {
+                throw new XmlException();
+            }
 
             bool added = false;
             ColumnCategory category = ColumnCategory.Unknown;
@@ -631,7 +634,7 @@ namespace WixToolset.Data
                                 modularize = ColumnModularizeType.SemicolonDelimited;
                                 break;
                             default:
-                                throw new InvalidOperationException();
+                                throw new XmlException();
                         }
                         break;
                     case "name":
@@ -641,7 +644,7 @@ namespace WixToolset.Data
                             case "DELETE":
                             case "DROP":
                             case "INSERT":
-                                throw new WixException(WixDataErrors.IllegalColumnName(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value));
+                                throw new XmlException();
                             default:
                                 name = reader.Value;
                                 break;
@@ -675,17 +678,11 @@ namespace WixToolset.Data
                                 type = ColumnType.Preserved;
                                 break;
                             default:
-                                throw new WixException(WixDataErrors.IllegalAttributeValue(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name, reader.Value, "localized", "number", "object", "string"));
+                                throw new XmlException();
                         }
                         break;
                     case "useCData":
                         useCData = "yes".Equals(reader.Value);
-                        break;
-                    default:
-                        if (!reader.NamespaceURI.StartsWith("http://www.w3.org/", StringComparison.Ordinal))
-                        {
-                            throw new WixException(WixDataErrors.UnexpectedAttribute(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name));
-                        }
                         break;
                 }
             }
@@ -700,7 +697,7 @@ namespace WixToolset.Data
                     switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
-                            throw new WixException(WixDataErrors.UnexpectedElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition", reader.Name));
+                            throw new XmlException();
                         case XmlNodeType.EndElement:
                             done = true;
                             break;
@@ -709,7 +706,7 @@ namespace WixToolset.Data
 
                 if (!done)
                 {
-                    throw new WixException(WixDataErrors.ExpectedEndElement(SourceLineNumber.CreateFromUri(reader.BaseURI), "columnDefinition"));
+                    throw new XmlException();
                 }
             }
 
@@ -723,7 +720,7 @@ namespace WixToolset.Data
         /// Persists a ColumnDefinition in an XML format.
         /// </summary>
         /// <param name="writer">XmlWriter where the Output should persist itself as XML.</param>
-        internal void Persist(XmlWriter writer)
+        internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("columnDefinition", TableDefinitionCollection.XmlNamespaceUri);
 
