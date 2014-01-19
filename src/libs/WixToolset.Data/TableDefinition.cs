@@ -108,7 +108,7 @@ namespace WixToolset.Data
                 columnString.Append(column.Name);
                 dataString.Append(column.IdtType);
 
-                if (column.IsPrimaryKey)
+                if (column.PrimaryKey)
                 {
                     tableString.AppendFormat("\t{0}", column.Name);
                 }
@@ -138,7 +138,7 @@ namespace WixToolset.Data
 
                 row[1] = columnDef.Name;
 
-                if (columnDef.IsNullable)
+                if (columnDef.Nullable)
                 {
                     row[2] = "Y";
                 }
@@ -231,16 +231,16 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "createSymbols":
-                        createSymbols = "yes".Equals(reader.Value);
+                        createSymbols = reader.Value.Equals("yes");
                         break;
                     case "name":
                         name = reader.Value;
                         break;
                     case "unreal":
-                        unreal = "yes".Equals(reader.Value);
+                        unreal = reader.Value.Equals("yes");
                         break;
                     case "bootstrapperApplicationData":
-                        bootstrapperApplicationData = "yes".Equals(reader.Value);
+                        bootstrapperApplicationData = reader.Value.Equals("yes");
                         break;
                 }
             }
@@ -269,7 +269,7 @@ namespace WixToolset.Data
                                     ColumnDefinition columnDefinition = ColumnDefinition.Read(reader);
                                     columns.Add(columnDefinition);
 
-                                    if (columnDefinition.IsPrimaryKey)
+                                    if (columnDefinition.PrimaryKey)
                                     {
                                         hasPrimaryKeyColumn = true;
                                     }

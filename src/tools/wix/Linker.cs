@@ -731,7 +731,7 @@ namespace WixToolset
 
                     for (int i = 0; i < customTableDefinition.Columns.Count; ++i)
                     {
-                        if (!customTableDefinition.Columns[i].IsNullable && (null == customRow.Fields[i].Data || 0 == customRow.Fields[i].Data.ToString().Length))
+                        if (!customTableDefinition.Columns[i].Nullable && (null == customRow.Fields[i].Data || 0 == customRow.Fields[i].Data.ToString().Length))
                         {
                             this.OnMessage(WixErrors.NoDataForColumn(row.SourceLineNumbers, customTableDefinition.Columns[i].Name, customTableDefinition.Name));
                         }

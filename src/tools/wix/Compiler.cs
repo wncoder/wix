@@ -391,7 +391,7 @@ namespace WixToolset
 
                 if (admin || hidden || secure)
                 {
-                    AddWixPropertyRow(sourceLineNumbers, property, admin, secure, hidden, section);
+                    this.AddWixPropertyRow(sourceLineNumbers, property, admin, secure, hidden, section);
                 }
             }
         }
@@ -3596,7 +3596,7 @@ namespace WixToolset
                 if (MsiInterop.MsidbCustomActionTypeHideTarget == (bits & MsiInterop.MsidbCustomActionTypeHideTarget) &&
                     MsiInterop.MsidbCustomActionTypeInScript == (bits & MsiInterop.MsidbCustomActionTypeInScript))
                 {
-                    AddWixPropertyRow(sourceLineNumbers, id, false, false, true);
+                    this.AddWixPropertyRow(sourceLineNumbers, id, false, false, true);
                 }
             }
         }

@@ -764,11 +764,11 @@ namespace WixToolset
             string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
             YesNoType yesNo = YesNoType.IllegalValue;
 
-            if ("yes".Equals(value, StringComparison.Ordinal) || "true".Equals(value, StringComparison.Ordinal))
+            if ("yes".Equals(value) || "true".Equals(value))
             {
                 yesNo = YesNoType.Yes;
             }
-            else if ("no".Equals(value, StringComparison.Ordinal) || "false".Equals(value, StringComparison.Ordinal))
+            else if ("no".Equals(value) || "false".Equals(value))
             {
                 yesNo = YesNoType.No;
             }

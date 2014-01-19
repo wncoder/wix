@@ -289,7 +289,7 @@ namespace WixToolset.Data
                         id = reader.Value;
                         break;
                     case "overridable":
-                        overridable = "yes".Equals(reader.Value);
+                        overridable = reader.Value.Equals("yes");
                         break;
                 }
             }

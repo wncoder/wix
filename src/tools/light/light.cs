@@ -220,9 +220,9 @@ namespace WixToolset.Tools
                 binder.AddExtension(extension);
             }
 
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                binder.AddExtension(fm);
+                binder.AddExtension(fileManager);
             }
 
             // Initialize the localizer.

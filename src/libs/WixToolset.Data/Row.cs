@@ -178,7 +178,7 @@ namespace WixToolset.Data
 
             foreach (Field field in this.fields)
             {
-                if (field.Column.IsPrimaryKey)
+                if (field.Column.PrimaryKey)
                 {
                     if (foundPrimaryKey)
                     {
@@ -393,7 +393,7 @@ namespace WixToolset.Data
         /// <param name="suppressModularizationIdentifiers">Optional collection of identifiers that should not be modularized.</param>
         /// <remarks>moduleGuid is expected to be null when not being used to compile a Merge Module.</remarks>
         /// <returns>The modularized version of the field data.</returns>
-        internal string GetModularizedValue(Field field, string modularizationGuid, HashSet<string> suppressModularizationIdentifiers)
+        internal string GetModularizedValue(Field field, string modularizationGuid, ISet<string> suppressModularizationIdentifiers)
         {
             Debug.Assert(null != field.Data && 0 < ((string)field.Data).Length);
             string fieldData = Convert.ToString(field.Data, CultureInfo.InvariantCulture);

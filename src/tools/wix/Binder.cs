@@ -599,7 +599,7 @@ namespace WixToolset
                                                 case ColumnType.Localized:
                                                 case ColumnType.Preserved:
                                                 case ColumnType.String:
-                                                    if (columnDefinition.IsPrimaryKey)
+                                                    if (columnDefinition.PrimaryKey)
                                                     {
                                                         if (0 < streamName.Length)
                                                         {
@@ -1336,7 +1336,7 @@ namespace WixToolset
                 return;
             }
 
-            Dictionary<string, string> componentKeyPath = new Dictionary<string, string>();
+            Dictionary<string, string> componentKeyPath = new Dictionary<string, string>(componentTable.Rows.Count);
 
             // Index the Component table for non-directory & non-registry key paths.
             foreach (Row row in componentTable.Rows)
@@ -2014,7 +2014,7 @@ namespace WixToolset
         /// <param name="tables">The tables to resolve.</param>
         /// <param name="filesWithEmbeddedFiles">Cabinets containing files that need to be patched.</param>
         /// <param name="delayedFields">The collection of delayed fields. Null if resolution of delayed fields is not allowed</param>
-        private void ResolveFields(TableIndexedCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, List<DelayedField> delayedFields)
+        private void ResolveFields(TableIndexedCollection tables, ExtractEmbeddedFiles filesWithEmbeddedFiles, IList<DelayedField> delayedFields)
         {
             foreach (Table table in tables)
             {
@@ -2318,9 +2318,9 @@ namespace WixToolset
         private bool CompareFiles(string targetFile, string updatedFile)
         {
             bool? compared = null;
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                compared = fm.CompareFiles(targetFile, updatedFile);
+                compared = fileManager.CompareFiles(targetFile, updatedFile);
                 if (compared.HasValue)
                 {
                     break;
@@ -2338,15 +2338,15 @@ namespace WixToolset
         private void TransferFile(bool move, string source, string destination)
         {
             bool complete = false;
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
                 if (move)
                 {
-                    complete = fm.MoveFile(source, destination, true);
+                    complete = fileManager.MoveFile(source, destination, true);
                 }
                 else
                 {
-                    complete = fm.CopyFile(source, destination, true);
+                    complete = fileManager.CopyFile(source, destination, true);
                 }
 
                 if (complete)
@@ -2365,9 +2365,9 @@ namespace WixToolset
         {
             ResolvedCabinet resolved = null;
 
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                resolved = fm.ResolveCabinet(cabinetPath, fileRows);
+                resolved = fileManager.ResolveCabinet(cabinetPath, fileRows);
                 if (null != resolved)
                 {
                     break;
@@ -2380,9 +2380,9 @@ namespace WixToolset
         private string ResolveFile(string source, string type, SourceLineNumber sourceLineNumbers, BindStage bindStage = BindStage.Normal)
         {
             string path = null;
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                path = fm.ResolveFile(source, type, sourceLineNumbers, bindStage);
+                path = fileManager.ResolveFile(source, type, sourceLineNumbers, bindStage);
                 if (null != path)
                 {
                     break;
@@ -2400,9 +2400,9 @@ namespace WixToolset
         private string ResolveMedia(MediaRow mediaRow, string layoutDirectory)
         {
             string layout = null;
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                layout = fm.ResolveMedia(mediaRow, layoutDirectory);
+                layout = fileManager.ResolveMedia(mediaRow, layoutDirectory);
                 if (!String.IsNullOrEmpty(layout))
                 {
                     break;
@@ -2415,9 +2415,9 @@ namespace WixToolset
         private string ResolveUrl(string url, string fallbackUrl, string packageId, string payloadId, string fileName)
         {
             string resolved = null;
-            foreach (IBinderFileManager fm in this.fileManagers)
+            foreach (IBinderFileManager fileManager in this.fileManagers)
             {
-                resolved = fm.ResolveUrl(url, fallbackUrl, packageId, payloadId, fileName);
+                resolved = fileManager.ResolveUrl(url, fallbackUrl, packageId, payloadId, fileName);
                 if (!String.IsNullOrEmpty(resolved))
                 {
                     break;
@@ -4946,7 +4946,7 @@ namespace WixToolset
                             // fill-in non-primary key values
                             foreach (Field field in row.Fields)
                             {
-                                if (!field.Column.IsPrimaryKey)
+                                if (!field.Column.PrimaryKey)
                                 {
                                     if (ColumnType.Number == field.Column.Type && !field.Column.IsLocalizable)
                                     {
@@ -5156,11 +5156,11 @@ namespace WixToolset
 
                 // Index all of the file rows to be able to detect collisions with files in the Merge Modules.
                 // It may seem a bit expensive to build up this index solely for the purpose of checking collisions
-                // and you may be thinking, "Surely, we must need the file rows indexed elsewhere.". It turns out
+                // and you may be thinking, "Surely, we must need the file rows indexed elsewhere." It turns out
                 // there are other cases where we need all the file rows indexed, however they are not common cases.
                 // Now since Merge Modules are already slow and generally less desirable than .wixlibs we'll let
                 // this case be slightly more expensive because the cost of maintaining an indexed file row collection
-                // is a lot more costly for the common cases. Oh, and don't call me Shirley.
+                // is a lot more costly for the common cases.
                 Dictionary<string, FileRow> indexedFileRows = fileRows.ToDictionary(r => r.File, StringComparer.Ordinal);
 
                 foreach (Row row in wixMergeTable.Rows)

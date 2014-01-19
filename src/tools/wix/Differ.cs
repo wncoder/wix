@@ -289,7 +289,7 @@ namespace WixToolset
                     {
                         ColumnDefinition columnDefinition = updatedRow.Fields[i].Column;
 
-                        if (!columnDefinition.IsPrimaryKey)
+                        if (!columnDefinition.PrimaryKey)
                         {
                             bool modified = false;
 
