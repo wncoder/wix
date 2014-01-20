@@ -6,8 +6,8 @@ layout: documentation
 
 # WiX Toolset Manual Table of Contents
 
-* [WiX Toolset License](license.html)
 * [Windows Installer XML (WiX)](main/index.html)
+   * [WiX Toolset License](main/license.html)
    * [Getting Started Learning WiX](main/wix_learning.html)
    * [Getting Help](main/help.html)
 * [Tools and Concepts](overview/index.html)
