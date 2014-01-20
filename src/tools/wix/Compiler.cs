@@ -57,8 +57,6 @@ namespace WixToolset
         private string activeName;
         private string activeLanguage;
 
-        private Platform currentPlatform = Platform.X86;
-
         /// <summary>
         /// Creates a new compiler object with a default set of table definitions.
         /// </summary>
@@ -67,6 +65,8 @@ namespace WixToolset
             this.tableDefinitions = new TableDefinitionCollection(WindowsInstallerStandard.GetTableDefinitions());
             this.extensions = new Dictionary<XNamespace, ICompilerExtension>();
             this.inspectorExtensions = new List<InspectorExtension>();
+
+            this.CurrentPlatform = Platform.X86;
         }
 
         /// <summary>
@@ -103,21 +103,7 @@ namespace WixToolset
         /// Gets or sets the platform which the compiler will use when defaulting 64-bit attributes and elements.
         /// </summary>
         /// <value>The platform which the compiler will use when defaulting 64-bit attributes and elements.</value>
-        public Platform CurrentPlatform
-        {
-            get { return this.currentPlatform; }
-            set { this.currentPlatform = value; }
-        }
-
-        /// <summary>
-        /// Gets and sets if the compiler uses short names when processing MSI file names.
-        /// </summary>
-        /// <value>true if using short names for files in MSI format.</value>
-        public bool ShortNames
-        {
-            get { return this.useShortFileNames; }
-            set { this.useShortFileNames = value; }
-        }
+        public Platform CurrentPlatform { get; set; }
 
         /// <summary>
         /// Gets or sets the option to show pedantic messages.
@@ -199,7 +185,7 @@ namespace WixToolset
             {
                 this.core = new CompilerCore(target, this.tableDefinitions, this.extensions);
                 this.core.ShowPedanticMessages = this.showPedanticMessages;
-                this.core.CurrentPlatform = this.currentPlatform;
+                this.core.CurrentPlatform = this.CurrentPlatform;
 
                 foreach (CompilerExtension extension in this.extensions.Values)
                 {
@@ -2260,7 +2246,7 @@ namespace WixToolset
                 }
             }
 
-            if (!explicitWin64 && (Platform.IA64 == CurrentPlatform || Platform.X64 == CurrentPlatform))
+            if (!explicitWin64 && (Platform.IA64 == this.CurrentPlatform || Platform.X64 == this.CurrentPlatform))
             {
                 bits |= MsiInterop.MsidbComponentAttributes64bit;
                 win64 = true;
@@ -3489,7 +3475,7 @@ namespace WixToolset
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
             }
 
-            if (!explicitWin64 && (MsiInterop.MsidbCustomActionTypeVBScript == targetBits || MsiInterop.MsidbCustomActionTypeJScript == targetBits) && (Platform.IA64 == CurrentPlatform || Platform.X64 == CurrentPlatform))
+            if (!explicitWin64 && (MsiInterop.MsidbCustomActionTypeVBScript == targetBits || MsiInterop.MsidbCustomActionTypeJScript == targetBits) && (Platform.IA64 == this.CurrentPlatform || Platform.X64 == this.CurrentPlatform))
             {
                 bits |= MsiInterop.MsidbCustomActionType64BitScript;
             }
@@ -11064,7 +11050,7 @@ namespace WixToolset
             int sourceBits = (this.compilingModule ? 2 : 0);
             Row row;
 
-            switch (this.currentPlatform)
+            switch (this.CurrentPlatform)
             {
                 case Platform.X86:
                     platform = "Intel";
@@ -11082,7 +11068,7 @@ namespace WixToolset
                     msiVersion = 500;
                     break;
                 default:
-                    throw new ArgumentException(WixStrings.EXP_UnknownPlatformEnum, this.currentPlatform.ToString());
+                    throw new ArgumentException(WixStrings.EXP_UnknownPlatformEnum, this.CurrentPlatform.ToString());
             }
 
             foreach (XAttribute attrib in node.Attributes())
@@ -18901,7 +18887,7 @@ namespace WixToolset
                 row[14] = splashScreenSourceFile;
                 row[15] = condition;
                 row[16] = tag;
-                row[17] = this.currentPlatform.ToString();
+                row[17] = this.CurrentPlatform.ToString();
                 row[18] = parentName;
                 row[19] = upgradeCode;
             }
