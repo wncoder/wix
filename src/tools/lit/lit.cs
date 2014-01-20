@@ -232,9 +232,9 @@ namespace WixToolset.Tools
                     BinderFileManagerCore core = new BinderFileManagerCore();
                     core.AddBindPaths(this.commandLine.BindPaths, BindStage.Normal);
 
-                    foreach (IBinderFileManager fm in resolver.FileManagers)
+                    foreach (IBinderFileManager fileManager in resolver.FileManagers)
                     {
-                        fm.Core = core;
+                        fileManager.Core = core;
                     }
                 }
 
@@ -254,9 +254,9 @@ namespace WixToolset.Tools
             public string Resolve(SourceLineNumber sourceLineNumber, string table, string path)
             {
                 string resolvedPath = this.VariableResolver.ResolveVariables(sourceLineNumber, path, false);
-                foreach (IBinderFileManager fm in this.FileManagers)
+                foreach (IBinderFileManager fileManager in this.FileManagers)
                 {
-                    string finalPath = fm.ResolveFile(resolvedPath, table, sourceLineNumber, BindStage.Normal);
+                    string finalPath = fileManager.ResolveFile(resolvedPath, table, sourceLineNumber, BindStage.Normal);
                     if (!String.IsNullOrEmpty(finalPath))
                     {
                         return finalPath;

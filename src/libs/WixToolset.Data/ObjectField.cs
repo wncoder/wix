@@ -88,7 +88,7 @@ namespace WixToolset.Data
                         this.EmbeddedFileIndex = Convert.ToInt32(reader.Value);
                         break;
                     case "modified":
-                        this.Modified = "yes".Equals(reader.Value);
+                        this.Modified = reader.Value.Equals("yes");
                         break;
                     case "previousData":
                         this.PreviousData = reader.Value;

@@ -276,7 +276,7 @@ namespace WixToolset.Data
         /// Gets if the column is a primary key.
         /// </summary>
         /// <value>true if column is primary key.</value>
-        public bool IsPrimaryKey
+        public bool PrimaryKey
         {
             get { return this.primaryKey; }
         }
@@ -285,7 +285,7 @@ namespace WixToolset.Data
         /// Gets if the column is nullable.
         /// </summary>
         /// <value>true if column is nullable.</value>
-        public bool IsNullable
+        public bool Nullable
         {
             get { return this.nullable; }
         }
@@ -489,7 +489,7 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "added":
-                        added = "yes".Equals(reader.Value);
+                        added = reader.Value.Equals("yes");
                         break;
                     case "category":
                         switch (reader.Value)
@@ -580,7 +580,7 @@ namespace WixToolset.Data
                         description = reader.Value;
                         break;
                     case "escapeIdtCharacters":
-                        escapeIdtCharacters = "yes".Equals(reader.Value);
+                        escapeIdtCharacters = reader.Value.Equals("yes");
                         break;
                     case "keyColumn":
                         keyColumnSet = true;
@@ -593,7 +593,7 @@ namespace WixToolset.Data
                         length = Convert.ToInt32(reader.Value, 10);
                         break;
                     case "localizable":
-                        localizable = "yes".Equals(reader.Value);
+                        localizable = reader.Value.Equals("yes");
                         break;
                     case "maxValue":
                         maxValueSet = true;
@@ -651,10 +651,10 @@ namespace WixToolset.Data
                         }
                         break;
                     case "nullable":
-                        nullable = "yes".Equals(reader.Value);
+                        nullable = reader.Value.Equals("yes");
                         break;
                     case "primaryKey":
-                        primaryKey = "yes".Equals(reader.Value);
+                        primaryKey = reader.Value.Equals("yes");
                         break;
                     case "set":
                         possibilities = reader.Value;
@@ -682,7 +682,7 @@ namespace WixToolset.Data
                         }
                         break;
                     case "useCData":
-                        useCData = "yes".Equals(reader.Value);
+                        useCData = reader.Value.Equals("yes");
                         break;
                 }
             }
@@ -1005,12 +1005,12 @@ namespace WixToolset.Data
                     // compare whether both are primary keys
                     if (0 == ret)
                     {
-                        ret = this.IsPrimaryKey == other.IsPrimaryKey ? 0 : -1;
+                        ret = this.PrimaryKey == other.PrimaryKey ? 0 : -1;
 
                         // compare nullability
                         if (0 == ret)
                         {
-                            ret = this.IsNullable == other.IsNullable ? 0 : -1;
+                            ret = this.Nullable == other.Nullable ? 0 : -1;
                         }
                     }
                 }

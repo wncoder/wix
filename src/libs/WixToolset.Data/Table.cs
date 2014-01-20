@@ -250,7 +250,7 @@ namespace WixToolset.Data
         /// </summary>
         /// <param name="modularizationGuid">String containing the GUID of the Merge Module, if appropriate.</param>
         /// <param name="suppressModularizationIdentifiers">Optional collection of identifiers that should not be modularized.</param>
-        public void Modularize(string modularizationGuid, HashSet<string> suppressModularizationIdentifiers)
+        public void Modularize(string modularizationGuid, ISet<string> suppressModularizationIdentifiers)
         {
             List<int> modularizedColumns = new List<int>();
 

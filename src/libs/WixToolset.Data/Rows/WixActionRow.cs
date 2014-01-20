@@ -232,21 +232,21 @@ namespace WixToolset.Data.Rows
                         id = reader.Value;
                         break;
                     case "AdminExecuteSequence":
-                        if ("yes".Equals(reader.Value))
+                        if (reader.Value.Equals("yes"))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdminExecuteSequence;
                             ++sequenceCount;
                         }
                         break;
                     case "AdminUISequence":
-                        if ("yes".Equals(reader.Value))
+                        if (reader.Value.Equals("yes"))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdminUISequence;
                             ++sequenceCount;
                         }
                         break;
                     case "AdvtExecuteSequence":
-                        if ("yes".Equals(reader.Value))
+                        if (reader.Value.Equals("yes"))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.AdvtExecuteSequence;
                             ++sequenceCount;
@@ -256,14 +256,14 @@ namespace WixToolset.Data.Rows
                         condition = reader.Value;
                         break;
                     case "InstallExecuteSequence":
-                        if ("yes".Equals(reader.Value))
+                        if (reader.Value.Equals("yes"))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.InstallExecuteSequence;
                             ++sequenceCount;
                         }
                         break;
                     case "InstallUISequence":
-                        if ("yes".Equals(reader.Value))
+                        if (reader.Value.Equals("yes"))
                         {
                             sequenceTables[sequenceCount] = SequenceTable.InstallUISequence;
                             ++sequenceCount;
@@ -341,7 +341,7 @@ namespace WixToolset.Data.Rows
         /// </summary>
         /// <param name="sequenceTable">The sequence table.</param>
         /// <param name="allPreviousActionRows">A RowCollection which will contain all the previous actions.</param>
-        public void GetAllPreviousActionRows(SequenceTable sequenceTable, RowIndexedList<WixActionRow> allPreviousActionRows)
+        public void GetAllPreviousActionRows(SequenceTable sequenceTable, IList<WixActionRow> allPreviousActionRows)
         {
             if (null != this.previousActionRows)
             {
@@ -362,7 +362,7 @@ namespace WixToolset.Data.Rows
         /// </summary>
         /// <param name="sequenceTable">The sequence table.</param>
         /// <param name="allNextActionRows">A RowCollection which will contain all the next actions.</param>
-        public void GetAllNextActionRows(SequenceTable sequenceTable, RowIndexedList<WixActionRow> allNextActionRows)
+        public void GetAllNextActionRows(SequenceTable sequenceTable, IList<WixActionRow> allNextActionRows)
         {
             if (null != this.nextActionRows)
             {

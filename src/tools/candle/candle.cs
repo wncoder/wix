@@ -150,7 +150,6 @@ namespace WixToolset.Tools
         {
             // Create the preprocessor and compiler
             Preprocessor preprocessor = new Preprocessor();
-            //preprocessor.Message += new MessageEventHandler(this.messageHandler.Display);
             preprocessor.CurrentPlatform = this.commandLine.Platform;
 
             foreach (string includePath in this.commandLine.IncludeSearchPaths)
@@ -164,7 +163,6 @@ namespace WixToolset.Tools
             }
 
             Compiler compiler = new Compiler();
-            //compiler.Message += new MessageEventHandler(this.messageHandler.Display);
             compiler.ShowPedanticMessages = this.commandLine.ShowPedanticMessages;
             compiler.CurrentPlatform = this.commandLine.Platform;
 

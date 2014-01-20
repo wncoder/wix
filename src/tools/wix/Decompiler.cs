@@ -4674,12 +4674,12 @@ namespace WixToolset
                         }
                     }
 
-                    if (columnDefinition.IsNullable)
+                    if (columnDefinition.Nullable)
                     {
                         column.Nullable = Wix.YesNoType.yes;
                     }
 
-                    if (columnDefinition.IsPrimaryKey)
+                    if (columnDefinition.PrimaryKey)
                     {
                         column.PrimaryKey = Wix.YesNoType.yes;
                     }

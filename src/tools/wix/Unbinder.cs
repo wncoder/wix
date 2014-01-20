@@ -511,7 +511,7 @@ namespace WixToolset
                                         {
                                             if (rowRecord.IsNull(i + 1))
                                             {
-                                                if (!row.Fields[i].Column.IsNullable)
+                                                if (!row.Fields[i].Column.Nullable)
                                                 {
                                                     // TODO: display an error for a null value in a non-nullable field OR
                                                     // display a warning and put an empty string in the value to let the compiler handle it
@@ -1335,7 +1335,7 @@ namespace WixToolset
             {
                 ColumnDefinition columnDefinition = table.Definition.Columns[i];
 
-                if (columnDefinition.IsPrimaryKey)
+                if (columnDefinition.PrimaryKey)
                 {
                     if (ColumnType.Number == columnDefinition.Type && !columnDefinition.IsLocalizable)
                     {

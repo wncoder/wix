@@ -135,7 +135,7 @@ namespace WixToolset.Data
                 switch (reader.LocalName)
                 {
                     case "modified":
-                        this.Modified = "yes".Equals(reader.Name, StringComparison.Ordinal);
+                        this.Modified = reader.Value.Equals("yes");
                         break;
                     case "previousData":
                         this.PreviousData = reader.Value;
