@@ -20311,7 +20311,7 @@ namespace WixToolset
             if (YesNoDefaultType.No != compressed && null != remotePayload)
             {
                 compressed = YesNoDefaultType.No;
-                this.core.OnMessage(WixWarnings.RemotePayloadsMustNotAlsoBeCompressed(sourceLineNumbers, node.Name));
+                this.core.OnMessage(WixWarnings.RemotePayloadsMustNotAlsoBeCompressed(sourceLineNumbers, node.Name.LocalName));
             }
             
             if (String.IsNullOrEmpty(id))
