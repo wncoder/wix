@@ -1,3 +1,5 @@
+* RobMen: Merge recent changes through WiX v3.9.120.0
+
 * MikeGC: Fix issue running MonUtil test via msbuild from Unit.testproj
 
 ## WixBuild: Version 4.0.1216.0

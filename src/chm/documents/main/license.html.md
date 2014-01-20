@@ -1,6 +1,5 @@
 ---
 title: WiX Toolset License
-chm: default
 layout: documentation
 ---
 
