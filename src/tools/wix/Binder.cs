@@ -3807,6 +3807,11 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[11] = (PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
                 row[12] = package.DisplayInternalUI ? "yes" : "no";
 
+                if (Compiler.ChainPackageType.Msi == package.ChainPackageType)
+                {
+                    row[13] = package.ProductCode;
+                }
+
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
                 foreach (MsiFeature feature in package.MsiFeatures)
