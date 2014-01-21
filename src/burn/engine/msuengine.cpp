@@ -256,6 +256,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
     int nResult = IDNOACTION;
     LPWSTR sczCachedDirectory = NULL;
     LPWSTR sczMsuPath = NULL;
+    LPWSTR sczWindowsPath = NULL;
     LPWSTR sczSystemPath = NULL;
     LPWSTR sczWusaPath = NULL;
     LPWSTR sczCommand = NULL;
@@ -265,12 +266,29 @@ extern "C" HRESULT MsuEngineExecutePackage(
     PROCESS_INFORMATION pi = { };
     GENERIC_EXECUTE_MESSAGE message = { };
     DWORD dwExitCode = 0;
+    BOOL fUseSysNativePath = FALSE;
+
+#if !defined(_WIN64)
+    hr = ProcWow64(::GetCurrentProcess(), &fUseSysNativePath);
+    ExitOnFailure(hr, "Failed to determine WOW64 status.");
+#endif
 
     *pRestart = BOOTSTRAPPER_APPLY_RESTART_NONE;
 
     // get wusa.exe path
-    hr = PathGetKnownFolder(CSIDL_SYSTEM, &sczSystemPath);
-    ExitOnFailure(hr, "Failed to find System32 directory.");
+    if (fUseSysNativePath)
+    {
+        hr = PathGetKnownFolder(CSIDL_WINDOWS, &sczWindowsPath);
+        ExitOnFailure(hr, "Failed to find Windows directory.");
+
+        hr = PathConcat(sczWindowsPath, L"SysNative\\", &sczSystemPath);
+        ExitOnFailure(hr, "Failed to append SysNative directory.");
+    }
+    else
+    {
+        hr = PathGetKnownFolder(CSIDL_SYSTEM, &sczSystemPath);
+        ExitOnFailure(hr, "Failed to find System32 directory.");
+    }
 
     hr = PathConcat(sczSystemPath, L"wusa.exe", &sczWusaPath);
     ExitOnFailure(hr, "Failed to allocate WUSA.exe path.");
@@ -378,6 +396,7 @@ LExit:
     ReleaseStr(sczCachedDirectory);
     ReleaseStr(sczMsuPath);
     ReleaseStr(sczSystemPath);
+    ReleaseStr(sczWindowsPath);
     ReleaseStr(sczWusaPath);
     ReleaseStr(sczCommand);
 
