@@ -18,7 +18,6 @@
 
 #define WU_S_REBOOT_REQUIRED        0x00240005L
 #define WU_S_ALREADY_INSTALLED      0x00240006L
-#define WU_E_NOT_APPLICABLE         0x80240017L
 
 
 // function definitions
@@ -375,9 +374,8 @@ extern "C" HRESULT MsuEngineExecutePackage(
     switch (dwExitCode)
     {
     case S_OK: __fallthrough;
-    case WU_S_ALREADY_INSTALLED: __fallthrough;
     case S_FALSE: __fallthrough;
-    case WU_E_NOT_APPLICABLE:
+    case WU_S_ALREADY_INSTALLED:
         hr = S_OK;
         break;
 
