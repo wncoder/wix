@@ -22,12 +22,16 @@
 
 // function definitions
 static HRESULT EnsureWUServiceEnabled(
+    __in BOOL fStopWusaService,
     __out SC_HANDLE* pschWu,
     __out BOOL* pfPreviouslyDisabled
     );
 static HRESULT SetServiceStartType(
     __in SC_HANDLE sch,
     __in DWORD stratType
+    );
+static HRESULT StopWUService(
+    __in SC_HANDLE schWu
     );
 
 
@@ -246,6 +250,7 @@ LExit:
 extern "C" HRESULT MsuEngineExecutePackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BOOL fRollback,
+    __in BOOL fStopWusaService,
     __in PFN_GENERICMESSAGEHANDLER pfnGenericMessageHandler,
     __in LPVOID pvContext,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -330,7 +335,7 @@ extern "C" HRESULT MsuEngineExecutePackage(
 
     LogId(REPORT_STANDARD, MSG_APPLYING_PACKAGE, LoggingRollbackOrExecute(fRollback), pExecuteAction->msuPackage.pPackage->sczId, LoggingActionStateToString(pExecuteAction->msuPackage.action), sczMsuPath ? sczMsuPath : pExecuteAction->msuPackage.pPackage->Msu.sczKB, sczCommand);
 
-    hr = EnsureWUServiceEnabled(&schWu, &fWuWasDisabled);
+    hr = EnsureWUServiceEnabled(fStopWusaService, &schWu, &fWuWasDisabled);
     ExitOnFailure(hr, "Failed to ensure WU service was enabled to install MSU package.");
 
     // create process
@@ -410,6 +415,7 @@ LExit:
 }
 
 static HRESULT EnsureWUServiceEnabled(
+    __in BOOL fStopWusaService,
     __out SC_HANDLE* pschWu,
     __out BOOL* pfPreviouslyDisabled
     )
@@ -423,12 +429,18 @@ static HRESULT EnsureWUServiceEnabled(
     schSCM = ::OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     ExitOnNullWithLastError(schSCM, hr, "Failed to open service control manager.");
 
-    schWu = ::OpenServiceW(schSCM, L"wuauserv", SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_STATUS );
+    schWu = ::OpenServiceW(schSCM, L"wuauserv", SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG | SERVICE_QUERY_STATUS | SERVICE_STOP );
     ExitOnNullWithLastError(schWu, hr, "Failed to open WU service.");
 
     if (!::QueryServiceStatus(schWu, &serviceStatus) )
     {
         ExitWithLastError(hr, "Failed to query status of WU service.");
+    }
+
+    // Stop service if requested to.
+    if (SERVICE_STOPPED != serviceStatus.dwCurrentState && fStopWusaService)
+    {
+        hr = StopWUService(schWu);
     }
 
     // If the service is not running then it might be disabled so let's check.
@@ -468,6 +480,22 @@ static HRESULT SetServiceStartType(
     if (!::ChangeServiceConfigW(sch, SERVICE_NO_CHANGE, startType, SERVICE_NO_CHANGE, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
     {
         ExitWithLastError(hr, "Failed to set service start type.");
+    }
+
+LExit:
+    return hr;
+}
+
+static HRESULT StopWUService(
+    __in SC_HANDLE schWu
+    )
+{
+    HRESULT hr = S_OK;
+    SERVICE_STATUS serviceStatus = { };
+
+    if(!::ControlService(schWu, SERVICE_CONTROL_STOP, &serviceStatus))
+    {
+        ExitWithLastError(hr, "Failed to stop wusa service.");
     }
 
 LExit:
