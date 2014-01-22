@@ -2345,7 +2345,7 @@ namespace WixToolset.Extensions
         private void ParseHttpHeaderElement(XElement node, HttpHeaderParentType parentType, string parent)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string headerName = null;
             string headerValue = null;
 
@@ -2356,7 +2356,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Name":
                             headerName = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2389,8 +2389,7 @@ namespace WixToolset.Extensions
             // Reference ConfigureIIs since nothing will happen without it
             this.Core.CreateSimpleReference(sourceLineNumbers, "CustomAction", "ConfigureIIs");
 
-            Row row = this.Core.CreateRow(sourceLineNumbers, "IIsHttpHeader");
-            row[0] = id;
+            Row row = this.Core.CreateRow(sourceLineNumbers, "IIsHttpHeader", id);
             row[1] = (int)parentType;
             row[2] = parent;
             row[3] = headerName;

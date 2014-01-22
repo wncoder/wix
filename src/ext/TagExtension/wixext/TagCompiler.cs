@@ -239,38 +239,36 @@ namespace WixToolset.Extensions
             if (!this.Core.EncounteredError)
             {
                 string directoryId = "WixTagRegidFolder";
-                string fileId = this.Core.CreateIdentifier("tag", regid, ".product.tag");
+                Identifier fileId = this.Core.CreateIdentifier("tag", regid, ".product.tag");
                 string fileName = String.Concat(regid, " ", name, ".swidtag");
                 string shortName = this.Core.CreateShortName(fileName, false, false);
 
                 this.Core.CreateSimpleReference(sourceLineNumbers, "Directory", directoryId);
 
-                ComponentRow componentRow = (ComponentRow)this.Core.CreateRow(sourceLineNumbers, "Component");
-                componentRow.Component = fileId;
+                ComponentRow componentRow = (ComponentRow)this.Core.CreateRow(sourceLineNumbers, "Component", fileId);
                 componentRow.Guid = "*";
                 componentRow[3] = 0;
                 componentRow.Directory = directoryId;
                 componentRow.IsLocalOnly = true;
-                componentRow.KeyPath = fileId;
+                componentRow.KeyPath = fileId.Id;
 
                 this.Core.CreateSimpleReference(sourceLineNumbers, "Feature", feature);
-                this.Core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Feature, feature, null, ComplexReferenceChildType.Component, fileId, true);
+                this.Core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Feature, feature, null, ComplexReferenceChildType.Component, fileId.Id, true);
 
-                FileRow fileRow = (FileRow)this.Core.CreateRow(sourceLineNumbers, "File");
-                fileRow.File = fileId;
-                fileRow.Component = fileId;
+                FileRow fileRow = (FileRow)this.Core.CreateRow(sourceLineNumbers, "File", fileId);
+                fileRow.Component = fileId.Id;
                 fileRow.FileName = String.Concat(shortName, "|", fileName);
 
                 WixFileRow wixFileRow = (WixFileRow)this.Core.CreateRow(sourceLineNumbers, "WixFile");
                 wixFileRow.Directory = directoryId;
-                wixFileRow.File = fileId;
+                wixFileRow.File = fileId.Id;
                 wixFileRow.DiskId = 1;
                 wixFileRow.Attributes = 1;
                 wixFileRow.Source = String.Concat("%TEMP%\\", fileName);
 
                 this.Core.EnsureTable(sourceLineNumbers, "SoftwareIdentificationTag");
                 Row row = this.Core.CreateRow(sourceLineNumbers, "WixProductTag");
-                row[0] = fileId;
+                row[0] = fileId.Id;
                 row[1] = regid;
                 row[2] = name;
                 if (YesNoType.Yes == licensed)
@@ -279,7 +277,7 @@ namespace WixToolset.Extensions
                 }
                 row[4] = type;
 
-                this.Core.CreateSimpleReference(sourceLineNumbers, "File", fileId);
+                this.Core.CreateSimpleReference(sourceLineNumbers, "File", fileId.Id);
             }
         }
 
@@ -321,8 +319,8 @@ namespace WixToolset.Extensions
 
             if (!this.Core.EncounteredError)
             {
-                string id = this.Core.CreateIdentifier("tag", regid, ".product.tag");
-                this.Core.CreatePatchFamilyChildReference(sourceLineNumbers, "Component", id);
+                Identifier id = this.Core.CreateIdentifier("tag", regid, ".product.tag");
+                this.Core.CreatePatchFamilyChildReference(sourceLineNumbers, "Component", id.Id);
             }
         }
 

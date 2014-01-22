@@ -30,6 +30,12 @@ namespace WixToolset.Data
         }
 
         /// <summary>
+        /// Gets the accessibility of the symbol which is a direct reflection of the accessibility of the row's accessibility.
+        /// </summary>
+        /// <value>Accessbility of the symbol.</value>
+        public AccessModifier Access { get { return this.Row.Access; } }
+
+        /// <summary>
         /// Gets the name of the symbol.
         /// </summary>
         /// <value>Name of the symbol.</value>

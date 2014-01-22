@@ -299,12 +299,11 @@ namespace WixToolset
         /// <param name="sourceLineNumbers">Current source/line number of processing.</param>
         /// <param name="property">Property to add to search.</param>
         /// <param name="signature">Signature for search.</param>
-        [SuppressMessage("Microsoft.Performance", "CA1807:AvoidUnnecessaryStringCreation", MessageId = "property")]
         private void AddAppSearch(SourceLineNumber sourceLineNumbers, string property, string signature)
         {
             if (!this.core.EncounteredError)
             {
-                if (property.ToUpper(CultureInfo.InvariantCulture) != property)
+                if (!property.Equals(property.ToUpperInvariant()))
                 {
                     this.core.OnMessage(WixErrors.SearchPropertyNotUppercase(sourceLineNumbers, "Property", "Id", property));
                 }
@@ -325,7 +324,6 @@ namespace WixToolset
         /// <param name="secure">Flag if property is a secure property.</param>
         /// <param name="hidden">Flag if property is to be hidden.</param>
         /// <param name="fragment">Adds the property to a new section.</param>
-        [SuppressMessage("Microsoft.Performance", "CA1807:AvoidUnnecessaryStringCreation", MessageId = "property")]
         private void AddProperty(SourceLineNumber sourceLineNumbers, string property, string value, bool admin, bool secure, bool hidden, bool fragment)
         {
             // properties without a valid identifier should not be processed any further
@@ -357,9 +355,8 @@ namespace WixToolset
                 if (fragment)
                 {
                     string id = String.Concat(this.core.ActiveSection.Id, ".", property);
-                    int codepage = this.core.ActiveSection.Codepage;
 
-                    section = this.core.CreateSection(id, SectionType.Fragment, codepage);
+                    section = this.core.CreateSection(id, SectionType.Fragment, this.core.ActiveSection.Codepage);
 
                     // Reference the property in the active section.
                     this.core.CreateSimpleReference(sourceLineNumbers, "Property", property);
@@ -368,8 +365,8 @@ namespace WixToolset
                 Row row = this.core.CreateRow(sourceLineNumbers, "Property", section);
                 row[0] = property;
 
-                // allow row to exist with no value so that PropertyRefs can be made for *Search elements
-                // the linker will remove these rows before the final output is created
+                // Allow row to exist with no value so that PropertyRefs can be made for *Search elements
+                // the linker will remove these rows before the final output is created.
                 if (null != value)
                 {
                     row[1] = value;
@@ -384,7 +381,7 @@ namespace WixToolset
 
         private WixPropertyRow AddWixPropertyRow(SourceLineNumber sourceLineNumbers, string property, bool admin, bool secure, bool hidden, Section section = null)
         {
-            if (secure && !property.Equals(property.ToUpperInvariant(), StringComparison.Ordinal))
+            if (secure && !property.Equals(property.ToUpperInvariant()))
             {
                 this.core.OnMessage(WixErrors.SecurePropertyNotUppercase(sourceLineNumbers, "Property", "Id", property));
             }
@@ -2101,7 +2098,7 @@ namespace WixToolset
         /// <param name="directoryId">Optional identifier for component's directory.</param>
         /// <param name="srcPath">Optional source path for files up to this point.</param>
         [SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
-        private string ParseComponentElement(XElement node, ComplexReferenceParentType parentType, string parentId, string parentLanguage, int diskId, string directoryId, string srcPath)
+        private void ParseComponentElement(XElement node, ComplexReferenceParentType parentType, string parentId, string parentLanguage, int diskId, string directoryId, string srcPath)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
 
@@ -2113,7 +2110,7 @@ namespace WixToolset
             int files = 0;
             string guid = "*";
             string autoId = Compiler.DefaultComponentIdPlaceholder; // placeholder id for defaulting Component/@Id to keypath id.
-            string id = Compiler.DefaultComponentIdPlaceholderWixVariable;
+            Identifier id = new Identifier(Compiler.DefaultComponentIdPlaceholderWixVariable, AccessModifier.Private);
             int keyBits = 0;
             bool keyFound = false;
             string keyPath = null;
@@ -2130,7 +2127,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "ComPlusFlags":
                             comPlusBits = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
@@ -2281,7 +2278,7 @@ namespace WixToolset
                     }
                     else
                     {
-                        this.core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Feature, feature, null, ComplexReferenceChildType.Component, id, true);
+                        this.core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Feature, feature, null, ComplexReferenceChildType.Component, id.Id, true);
                     }
                 }
             }
@@ -2297,13 +2294,13 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "AppId":
-                            this.ParseAppIdElement(child, id, YesNoType.NotSet, null, null, null);
+                            this.ParseAppIdElement(child, id.Id, YesNoType.NotSet, null, null, null);
                             break;
                         case "Category":
-                            this.ParseCategoryElement(child, id);
+                            this.ParseCategoryElement(child, id.Id);
                             break;
                         case "Class":
-                            this.ParseClassElement(child, id, YesNoType.NotSet, null, null, null, null);
+                            this.ParseClassElement(child, id.Id, YesNoType.NotSet, null, null, null, null);
                             break;
                         case "Condition":
                             if (null != condition)
@@ -2314,23 +2311,23 @@ namespace WixToolset
                             condition = this.ParseConditionElement(child, node.Name.LocalName, null, null);
                             break;
                         case "CopyFile":
-                            this.ParseCopyFileElement(child, id, null);
+                            this.ParseCopyFileElement(child, id.Id, null);
                             break;
                         case "CreateFolder":
-                            string createdFolder = this.ParseCreateFolderElement(child, id, directoryId, win64);
+                            string createdFolder = this.ParseCreateFolderElement(child, id.Id, directoryId, win64);
                             if (directoryId == createdFolder)
                             {
                                 shouldAddCreateFolder = false;
                             }
                             break;
                         case "Environment":
-                            this.ParseEnvironmentElement(child, id);
+                            this.ParseEnvironmentElement(child, id.Id);
                             break;
                         case "Extension":
-                            this.ParseExtensionElement(child, id, YesNoType.NotSet, null);
+                            this.ParseExtensionElement(child, id.Id, YesNoType.NotSet, null);
                             break;
                         case "File":
-                            keyPathSet = this.ParseFileElement(child, id, directoryId, diskId, srcPath, out keyPossible, win64, guid);
+                            keyPathSet = this.ParseFileElement(child, id.Id, directoryId, diskId, srcPath, out keyPossible, win64, guid);
                             if (null != keyPossible)
                             {
                                 keyBit = 0;
@@ -2338,76 +2335,72 @@ namespace WixToolset
                             files++;
                             break;
                         case "IniFile":
-                            this.ParseIniFileElement(child, id);
+                            this.ParseIniFileElement(child, id.Id);
                             break;
                         case "Interface":
-                            this.ParseInterfaceElement(child, id, null, null, null, null);
+                            this.ParseInterfaceElement(child, id.Id, null, null, null, null);
                             break;
                         case "IsolateComponent":
-                            this.ParseIsolateComponentElement(child, id);
+                            this.ParseIsolateComponentElement(child, id.Id);
                             break;
                         case "ODBCDataSource":
-                            keyPathSet = this.ParseODBCDataSource(child, id, null, out keyPossible);
+                            keyPathSet = this.ParseODBCDataSource(child, id.Id, null, out keyPossible);
                             keyBit = MsiInterop.MsidbComponentAttributesODBCDataSource;
                             encounteredODBCDataSource = true;
                             break;
                         case "ODBCDriver":
-                            this.ParseODBCDriverOrTranslator(child, id, null, this.tableDefinitions["ODBCDriver"]);
+                            this.ParseODBCDriverOrTranslator(child, id.Id, null, this.tableDefinitions["ODBCDriver"]);
                             break;
                         case "ODBCTranslator":
-                            this.ParseODBCDriverOrTranslator(child, id, null, this.tableDefinitions["ODBCTranslator"]);
+                            this.ParseODBCDriverOrTranslator(child, id.Id, null, this.tableDefinitions["ODBCTranslator"]);
                             break;
                         case "ProgId":
                             bool foundExtension = false;
-                            this.ParseProgIdElement(child, id, YesNoType.NotSet, null, null, null, ref foundExtension, YesNoType.NotSet);
-                            break;
-                        case "Registry":
-                            keyPathSet = this.ParseRegistryElement(child, id, CompilerConstants.IntegerNotSet, null, win64, out keyPossible);
-                            keyBit = MsiInterop.MsidbComponentAttributesRegistryKeyPath;
+                            this.ParseProgIdElement(child, id.Id, YesNoType.NotSet, null, null, null, ref foundExtension, YesNoType.NotSet);
                             break;
                         case "RegistryKey":
-                            keyPathSet = this.ParseRegistryKeyElement(child, id, CompilerConstants.IntegerNotSet, null, win64, out keyPossible);
+                            keyPathSet = this.ParseRegistryKeyElement(child, id.Id, CompilerConstants.IntegerNotSet, null, win64, out keyPossible);
                             keyBit = MsiInterop.MsidbComponentAttributesRegistryKeyPath;
                             break;
                         case "RegistryValue":
-                            keyPathSet = this.ParseRegistryValueElement(child, id, CompilerConstants.IntegerNotSet, null, win64, out keyPossible);
+                            keyPathSet = this.ParseRegistryValueElement(child, id.Id, CompilerConstants.IntegerNotSet, null, win64, out keyPossible);
                             keyBit = MsiInterop.MsidbComponentAttributesRegistryKeyPath;
                             break;
                         case "RemoveFile":
-                            this.ParseRemoveFileElement(child, id, directoryId);
+                            this.ParseRemoveFileElement(child, id.Id, directoryId);
                             break;
                         case "RemoveFolder":
-                            this.ParseRemoveFolderElement(child, id, directoryId);
+                            this.ParseRemoveFolderElement(child, id.Id, directoryId);
                             break;
                         case "RemoveRegistryKey":
-                            this.ParseRemoveRegistryKeyElement(child, id);
+                            this.ParseRemoveRegistryKeyElement(child, id.Id);
                             break;
                         case "RemoveRegistryValue":
-                            this.ParseRemoveRegistryValueElement(child, id);
+                            this.ParseRemoveRegistryValueElement(child, id.Id);
                             break;
                         case "ReserveCost":
-                            this.ParseReserveCostElement(child, id, directoryId);
+                            this.ParseReserveCostElement(child, id.Id, directoryId);
                             break;
                         case "ServiceConfig":
-                            this.ParseServiceConfigElement(child, id, null);
+                            this.ParseServiceConfigElement(child, id.Id, null);
                             break;
                         case "ServiceConfigFailureActions":
-                            this.ParseServiceConfigFailureActionsElement(child, id, null);
+                            this.ParseServiceConfigFailureActionsElement(child, id.Id, null);
                             break;
                         case "ServiceControl":
-                            this.ParseServiceControlElement(child, id);
+                            this.ParseServiceControlElement(child, id.Id);
                             break;
                         case "ServiceInstall":
-                            this.ParseServiceInstallElement(child, id, win64);
+                            this.ParseServiceInstallElement(child, id.Id, win64);
                             break;
                         case "Shortcut":
-                            this.ParseShortcutElement(child, id, node.Name.LocalName, directoryId, YesNoType.No);
+                            this.ParseShortcutElement(child, id.Id, node.Name.LocalName, directoryId, YesNoType.No);
                             break;
                         case "SymbolPath":
                             symbols.Add(this.ParseSymbolPathElement(child));
                             break;
                         case "TypeLib":
-                            this.ParseTypeLibElement(child, id, null, win64);
+                            this.ParseTypeLibElement(child, id.Id, null, win64);
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -2416,7 +2409,7 @@ namespace WixToolset
                 }
                 else
                 {
-                    Dictionary<string, string> context = new Dictionary<string, string>() { { "ComponentId", id }, { "DirectoryId", directoryId }, { "Win64", win64.ToString() }, };
+                    Dictionary<string, string> context = new Dictionary<string, string>() { { "ComponentId", id.Id }, { "DirectoryId", directoryId }, { "Win64", win64.ToString() }, };
                     ComponentKeyPath possibleKeyPath = this.core.ParsePossibleKeyPathExtensionElement(node, child, context);
                     if (null != possibleKeyPath)
                     {
@@ -2466,7 +2459,7 @@ namespace WixToolset
             {
                 Row row = this.core.CreateRow(sourceLineNumbers, "CreateFolder");
                 row[0] = directoryId;
-                row[1] = id;
+                row[1] = id.Id;
             }
 
             // check for conditions that exclude this component from using generated guids
@@ -2489,17 +2482,18 @@ namespace WixToolset
             // check for implicit KeyPath which can easily be accidentally changed
             if (this.showPedanticMessages && !keyFound && !isGeneratableGuidOk)
             {
-                this.core.OnMessage(WixErrors.ImplicitComponentKeyPath(sourceLineNumbers, id));
+                this.core.OnMessage(WixErrors.ImplicitComponentKeyPath(sourceLineNumbers, id.Id));
             }
 
             // if there isn't an @Id attribute value, replace the placeholder with the id of the keypath.
             // either an explicit KeyPath="yes" attribute must be specified or requirements for 
             // generatable guid must be met.
-            if (Compiler.DefaultComponentIdPlaceholderWixVariable == id)
+            if (Compiler.DefaultComponentIdPlaceholderWixVariable == id.Id)
             {
                 if (isGeneratableGuidOk || keyFound && !String.IsNullOrEmpty(keyPath))
                 {
-                    id = keyPath;
+                    id = new Identifier(keyPath, AccessModifier.Private);
+
                     WixVariableResolver resolver = new WixVariableResolver();
                     resolver.AddVariable(autoId, keyPath);
                     foreach (Table table in this.core.ActiveSection.Tables)
@@ -2533,8 +2527,7 @@ namespace WixToolset
             // finally add the Component table row
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Component");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Component", id);
                 row[1] = guid;
                 row[2] = directoryId;
                 row[3] = bits | keyBits;
@@ -2566,16 +2559,14 @@ namespace WixToolset
                 // if this is a module, automatically add this component to the references to ensure it gets in the ModuleComponents table
                 if (this.compilingModule)
                 {
-                    this.core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Module, this.activeName, this.activeLanguage, ComplexReferenceChildType.Component, id, false);
+                    this.core.CreateComplexReference(sourceLineNumbers, ComplexReferenceParentType.Module, this.activeName, this.activeLanguage, ComplexReferenceChildType.Component, id.Id, false);
                 }
                 else if (ComplexReferenceParentType.Unknown != parentType && null != parentId) // if parent was provided, add a complex reference to that.
                 {
                     // If the Component is defined directly under a feature, then mark the complex reference primary.
-                    this.core.CreateComplexReference(sourceLineNumbers, parentType, parentId, parentLanguage, ComplexReferenceChildType.Component, id, ComplexReferenceParentType.Feature == parentType);
+                    this.core.CreateComplexReference(sourceLineNumbers, parentType, parentId, parentLanguage, ComplexReferenceChildType.Component, id.Id, ComplexReferenceParentType.Feature == parentType);
                 }
             }
-
-            return id;
         }
 
         /// <summary>
@@ -2586,7 +2577,7 @@ namespace WixToolset
         private void ParseComponentGroupElement(XElement node, ComplexReferenceParentType parentType, string parentId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string directoryId = null;
             string source = null;
 
@@ -2597,12 +2588,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (!Common.IsIdentifier(id))
-                            {
-                                this.core.OnMessage(WixWarnings.DeprecatedComponentGroupId(sourceLineNumbers, node.Name.LocalName));
-                            }
-
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Directory":
                             directoryId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
@@ -2625,6 +2611,7 @@ namespace WixToolset
             if (null == id)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                id = Identifier.Invalid;
             }
 
             if (!String.IsNullOrEmpty(source) && !source.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
@@ -2639,13 +2626,13 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "ComponentGroupRef":
-                            this.ParseComponentGroupRefElement(child, ComplexReferenceParentType.ComponentGroup, id, null);
+                            this.ParseComponentGroupRefElement(child, ComplexReferenceParentType.ComponentGroup, id.Id, null);
                             break;
                         case "ComponentRef":
-                            this.ParseComponentRefElement(child, ComplexReferenceParentType.ComponentGroup, id, null);
+                            this.ParseComponentRefElement(child, ComplexReferenceParentType.ComponentGroup, id.Id, null);
                             break;
                         case "Component":
-                            this.ParseComponentElement(child, ComplexReferenceParentType.ComponentGroup, id, null, CompilerConstants.IntegerNotSet, directoryId, source);
+                            this.ParseComponentElement(child, ComplexReferenceParentType.ComponentGroup, id.Id, null, CompilerConstants.IntegerNotSet, directoryId, source);
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -2660,11 +2647,10 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "WixComponentGroup");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "WixComponentGroup", id);
 
-                //Add this componentGroup and its parent in WixGroup.
-                this.core.CreateWixGroupRow(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.ComponentGroup, id);
+                // Add this componentGroup and its parent in WixGroup.
+                this.core.CreateWixGroupRow(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.ComponentGroup, id.Id);
             }
         }
 
@@ -4143,7 +4129,7 @@ namespace WixToolset
         private void ParseDirectoryElement(XElement node, string parentId, int diskId, string fileSource)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string componentGuidGenerationSeed = null;
             bool fileSourceAttribSet = false;
             string longName = null;
@@ -4162,7 +4148,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "ComponentGuidGenerationSeed":
                             componentGuidGenerationSeed = this.core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
@@ -4232,12 +4218,13 @@ namespace WixToolset
             if (null == id)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                id = Identifier.Invalid;
             }
-            else if (0 < id.Length)
+            else
             {
-                if (null == parentId && "TARGETDIR" != id)
+                if (null == parentId &&  !id.Id.Equals("TARGETDIR"))
                 {
-                    this.core.OnMessage(WixErrors.IllegalRootDirectory(sourceLineNumbers, id));
+                    this.core.OnMessage(WixErrors.IllegalRootDirectory(sourceLineNumbers, id.Id));
                 }
             }
 
@@ -4392,13 +4379,13 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "Component":
-                            this.ParseComponentElement(child, ComplexReferenceParentType.Unknown, null, null, diskId, id, fileSource);
+                            this.ParseComponentElement(child, ComplexReferenceParentType.Unknown, null, null, diskId, id.Id, fileSource);
                             break;
                         case "Directory":
-                            this.ParseDirectoryElement(child, id, diskId, fileSource);
+                            this.ParseDirectoryElement(child, id.Id, diskId, fileSource);
                             break;
                         case "Merge":
-                            this.ParseMergeElement(child, id, diskId);
+                            this.ParseMergeElement(child, id.Id, diskId);
                             break;
                         case "SymbolPath":
                             if (null != symbols)
@@ -4440,22 +4427,21 @@ namespace WixToolset
                 defaultDir = String.Concat(defaultDir, ":", GetMsiFilenameValue(shortSourceName, longSourceName));
             }
 
-            if ("TARGETDIR" == id && "SourceDir" != defaultDir)
+            if ("TARGETDIR".Equals(id.Id) && !"SourceDir".Equals(defaultDir))
             {
                 this.core.OnMessage(WixErrors.IllegalTargetDirDefaultDir(sourceLineNumbers, defaultDir));
             }
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Directory");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Directory", id);
                 row[1] = parentId;
                 row[2] = defaultDir;
 
                 if (null != componentGuidGenerationSeed)
                 {
                     Row wixRow = this.core.CreateRow(sourceLineNumbers, "WixDirectory");
-                    wixRow[0] = id;
+                    wixRow[0] = id.Id;
                     wixRow[1] = componentGuidGenerationSeed;
                 }
 
@@ -4463,7 +4449,7 @@ namespace WixToolset
                 {
                     Row symbolRow = this.core.CreateRow(sourceLineNumbers, "WixPatchSymbolPaths");
                     symbolRow[0] = "Directory";
-                    symbolRow[1] = id;
+                    symbolRow[1] = id.Id;
                     symbolRow[2] = symbols;
                 }
             }
@@ -5617,7 +5603,7 @@ namespace WixToolset
         private YesNoType ParseFileElement(XElement node, string componentId, string directoryId, int diskId, string sourcePath, out string possibleKeyPath, bool win64Component, string componentGuid)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             int assemblyAttributes = CompilerConstants.IntegerNotSet;
             string assemblyApplication = null;
             string assemblyManifest = null;
@@ -5654,7 +5640,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Assembly":
                             string assemblyValue = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -5867,29 +5853,23 @@ namespace WixToolset
                 if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                    id = Identifier.Invalid;
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
 
             if (null == name)
             {
-                if (null == longName)
-                {
-                    name = id;
-                }
-                else
-                {
-                    name = longName;
-                }
+                name = longName ?? id.Id;
             }
 
             // generate a short file name
             if (null == shortName && (null != name && !this.core.IsValidShortFilename(name, false)))
             {
-                shortName = this.core.CreateShortName(name, true, false, node.Name.LocalName, Compiler.DefaultComponentIdPlaceholderWixVariable != componentId ? componentId : id);
+                shortName = this.core.CreateShortName(name, true, false, node.Name.LocalName, Compiler.DefaultComponentIdPlaceholderWixVariable != componentId ? componentId : id.Id);
                 generatedShortFileName = true;
             }
 
@@ -5936,37 +5916,37 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "AppId":
-                            this.ParseAppIdElement(child, componentId, YesNoType.NotSet, id, null, null);
+                            this.ParseAppIdElement(child, componentId, YesNoType.NotSet, id.Id, null, null);
                             break;
                         case "AssemblyName":
                             this.ParseAssemblyName(child, componentId);
                             break;
                         case "Class":
-                            this.ParseClassElement(child, componentId, YesNoType.NotSet, id, null, null, null);
+                            this.ParseClassElement(child, componentId, YesNoType.NotSet, id.Id, null, null, null);
                             break;
                         case "CopyFile":
-                            this.ParseCopyFileElement(child, componentId, id);
+                            this.ParseCopyFileElement(child, componentId, id.Id);
                             break;
                         case "IgnoreRange":
                             this.ParseRangeElement(child, ref ignoreOffsets, ref ignoreLengths);
                             break;
                         case "ODBCDriver":
-                            this.ParseODBCDriverOrTranslator(child, componentId, id, this.tableDefinitions["ODBCDriver"]);
+                            this.ParseODBCDriverOrTranslator(child, componentId, id.Id, this.tableDefinitions["ODBCDriver"]);
                             break;
                         case "ODBCTranslator":
-                            this.ParseODBCDriverOrTranslator(child, componentId, id, this.tableDefinitions["ODBCTranslator"]);
+                            this.ParseODBCDriverOrTranslator(child, componentId, id.Id, this.tableDefinitions["ODBCTranslator"]);
                             break;
                         case "Permission":
-                            this.ParsePermissionElement(child, id, "File");
+                            this.ParsePermissionElement(child, id.Id, "File");
                             break;
                         case "PermissionEx":
-                            this.ParsePermissionExElement(child, id, "File");
+                            this.ParsePermissionExElement(child, id.Id, "File");
                             break;
                         case "ProtectRange":
                             this.ParseRangeElement(child, ref protectOffsets, ref protectLengths);
                             break;
                         case "Shortcut":
-                            this.ParseShortcutElement(child, componentId, node.Name.LocalName, id, keyPath);
+                            this.ParseShortcutElement(child, componentId, node.Name.LocalName, id.Id, keyPath);
                             break;
                         case "SymbolPath":
                             if (null != symbols)
@@ -5979,7 +5959,7 @@ namespace WixToolset
                             }
                             break;
                         case "TypeLib":
-                            this.ParseTypeLibElement(child, componentId, id, win64Component);
+                            this.ParseTypeLibElement(child, componentId, id.Id, win64Component);
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -5988,7 +5968,7 @@ namespace WixToolset
                 }
                 else
                 {
-                    Dictionary<string, string> context = new Dictionary<string, string>() { { "FileId", id }, { "ComponentId", componentId } };
+                    Dictionary<string, string> context = new Dictionary<string, string>() { { "FileId", id.Id }, { "ComponentId", componentId } };
                     this.core.ParseExtensionElement(node, child, context);
                 }
             }
@@ -6033,8 +6013,7 @@ namespace WixToolset
                     }
                 }
 
-                FileRow fileRow = (FileRow)this.core.CreateRow(sourceLineNumbers, "File");
-                fileRow[0] = id;
+                FileRow fileRow = (FileRow)this.core.CreateRow(sourceLineNumbers, "File", id);
                 fileRow[1] = componentId;
                 fileRow[2] = GetMsiFilenameValue(shortName, name);
                 fileRow[3] = defaultSize;
@@ -6051,8 +6030,7 @@ namespace WixToolset
 
                 // the Sequence row is set in the binder
 
-                WixFileRow wixFileRow = (WixFileRow)this.core.CreateRow(sourceLineNumbers, "WixFile");
-                wixFileRow.File = id;
+                WixFileRow wixFileRow = (WixFileRow)this.core.CreateRow(sourceLineNumbers, "WixFile", id);
                 if (CompilerConstants.IntegerNotSet != assemblyAttributes)
                 {
                     wixFileRow.AssemblyAttributes = assemblyAttributes;
@@ -6078,7 +6056,7 @@ namespace WixToolset
                 {
                     Row symbolRow = this.core.CreateRow(sourceLineNumbers, "WixPatchSymbolPaths");
                     symbolRow[0] = "File";
-                    symbolRow[1] = id;
+                    symbolRow[1] = id.Id;
                     symbolRow[2] = symbols;
                 }
 
@@ -6095,7 +6073,7 @@ namespace WixToolset
                 if (null != bindPath)
                 {
                     Row row = this.core.CreateRow(sourceLineNumbers, "BindImage");
-                    row[0] = id;
+                    row[0] = id.Id;
                     row[1] = bindPath;
 
                     // TODO: technically speaking each of the properties in the "bindPath" should be added as references, but how much do we really care about BindImage?
@@ -6104,14 +6082,14 @@ namespace WixToolset
                 if (CompilerConstants.IntegerNotSet != selfRegCost)
                 {
                     Row row = this.core.CreateRow(sourceLineNumbers, "SelfReg");
-                    row[0] = id;
+                    row[0] = id.Id;
                     row[1] = selfRegCost;
                 }
 
                 if (null != fontTitle)
                 {
                     Row row = this.core.CreateRow(sourceLineNumbers, "Font");
-                    row[0] = id;
+                    row[0] = id.Id;
                     row[1] = fontTitle;
                 }
             }
@@ -6122,7 +6100,7 @@ namespace WixToolset
             possibleKeyPath = null;
             if (null == companionFile)
             {
-                possibleKeyPath = id;
+                possibleKeyPath = id.Id;
             }
 
             return keyPath;
@@ -12689,7 +12667,7 @@ namespace WixToolset
         private YesNoType ParseRegistryKeyElement(XElement node, string componentId, int root, string parentKey, bool win64Component, out string possibleKeyPath)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string key = parentKey; // default to parent key path
             string action = null;
             bool forceCreateOnInstall = false;
@@ -12706,7 +12684,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Action":
                             this.core.OnMessage(WixWarnings.DeprecatedRegistryKeyActionAttribute(sourceLineNumbers));
@@ -12838,14 +12816,14 @@ namespace WixToolset
                             {
                                 this.core.OnMessage(WixErrors.UnexpectedElementWithAttributeValue(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "ForceCreateOnInstall", "yes"));
                             }
-                            this.ParsePermissionElement(child, id, "Registry");
+                            this.ParsePermissionElement(child, id.Id, "Registry");
                             break;
                         case "PermissionEx":
                             if (!forceCreateOnInstall)
                             {
                                 this.core.OnMessage(WixErrors.UnexpectedElementWithAttributeValue(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "ForceCreateOnInstall", "yes"));
                             }
-                            this.ParsePermissionExElement(child, id, "Registry");
+                            this.ParsePermissionExElement(child, id.Id, "Registry");
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -12861,8 +12839,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError && null != name)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Registry");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Registry", id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = name;
@@ -12889,7 +12866,7 @@ namespace WixToolset
         private YesNoType ParseRegistryValueElement(XElement node, string componentId, int root, string parentKey, bool win64Component, out string possibleKeyPath)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string key = parentKey; // default to parent key path
             string name = null;
             string value = null;
@@ -12909,7 +12886,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Action":
                             action = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -13021,10 +12998,10 @@ namespace WixToolset
                             }
                             break;
                         case "Permission":
-                            this.ParsePermissionElement(child, id, "Registry");
+                            this.ParsePermissionElement(child, id.Id, "Registry");
                             break;
                         case "PermissionEx":
-                            this.ParsePermissionExElement(child, id, "Registry");
+                            this.ParsePermissionExElement(child, id.Id, "Registry");
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -13088,8 +13065,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Registry");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Registry", id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = name;
@@ -13102,7 +13078,7 @@ namespace WixToolset
             // Registry/@Id a possible key path.
             if (couldBeKeyPath && null == possibleKeyPath)
             {
-                possibleKeyPath = id;
+                possibleKeyPath = id.Id;
             }
 
             return keyPath;
@@ -13119,7 +13095,7 @@ namespace WixToolset
         private void ParseRemoveRegistryKeyElement(XElement node, string componentId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string action = null;
             Wix.RemoveRegistryKey.ActionType actionType = Wix.RemoveRegistryKey.ActionType.NotSet;
             string key = null;
@@ -13133,7 +13109,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Action":
                             action = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -13187,8 +13163,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, (Wix.RemoveRegistryKey.ActionType.removeOnUninstall == actionType ? "Registry" : "RemoveRegistry"));
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, (Wix.RemoveRegistryKey.ActionType.removeOnUninstall == actionType ? "Registry" : "RemoveRegistry"), id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = name;
@@ -13215,7 +13190,7 @@ namespace WixToolset
         private void ParseRemoveRegistryValueElement(XElement node, string componentId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string key = null;
             string name = null;
             int root = CompilerConstants.IntegerNotSet;
@@ -13227,7 +13202,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Key":
                             key = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -13269,428 +13244,12 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "RemoveRegistry");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "RemoveRegistry", id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = name;
                 row[4] = componentId;
             }
-        }
-
-        /// <summary>
-        /// Parses a registry element.
-        /// </summary>
-        /// <param name="node">Element to parse.</param>
-        /// <param name="componentId">Identifier for parent component.</param>
-        /// <param name="root">Root specified when element is nested under another Registry element, otherwise CompilerConstants.IntegerNotSet.</param>
-        /// <param name="parentKey">Parent key for this Registry element when nested.</param>
-        /// <param name="win64Component">true if the component is 64-bit.</param>
-        /// <param name="possibleKeyPath">Identifier of this registry key since it could be the component's keypath.</param>
-        /// <returns>Yes if this element was marked as the parent component's key path, No if explicitly marked as not being a key path, or NotSet otherwise.</returns>
-        [SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "Changing the way this string normalizes would result " +
-                         "in a change to the way the Registry table is generated, potentially causing extra churn in patches on an MSI built from an older version of WiX. " +
-                         "Furthermore, there is no security hole here, as the strings won't need to make a round trip")]
-        private YesNoType ParseRegistryElement(XElement node, string componentId, int root, string parentKey, bool win64Component, out string possibleKeyPath)
-        {
-            SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
-            string key = parentKey; // default to parent key path
-            string name = null;
-            string value = null;
-            string type = null;
-            Wix.Registry.TypeType typeType = Wix.Registry.TypeType.NotSet;
-            string action = null;
-            Wix.Registry.ActionType actionType = Wix.Registry.ActionType.NotSet;
-            YesNoType keyPath = YesNoType.NotSet;
-            bool couldBeKeyPath = true; // assume that this is a regular registry key that could become the key path
-
-            possibleKeyPath = null;
-
-            this.core.OnMessage(WixWarnings.DeprecatedRegistryElement(sourceLineNumbers));
-
-            foreach (XAttribute attrib in node.Attributes())
-            {
-                if (String.IsNullOrEmpty(attrib.Name.NamespaceName) || CompilerCore.WixNamespace == attrib.Name.Namespace)
-                {
-                    switch (attrib.Name.LocalName)
-                    {
-                        case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            break;
-                        case "Action":
-                            action = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (0 < action.Length)
-                            {
-                                if (!Wix.Registry.TryParseActionType(action, out actionType))
-                                {
-                                    this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, action, "append", "createKey", "createKeyAndRemoveKeyOnUninstall", "prepend", "remove", "removeKeyOnInstall", "removeKeyOnUninstall", "write"));
-                                }
-                            }
-                            break;
-                        case "Key":
-                            key = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (null != parentKey)
-                            {
-                                if (parentKey.EndsWith("\\", StringComparison.Ordinal))
-                                {
-                                    key = String.Concat(parentKey, key);
-                                }
-                                else
-                                {
-                                    key = String.Concat(parentKey, "\\", key);
-                                }
-                            }
-                            break;
-                        case "KeyPath":
-                            keyPath = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
-                            break;
-                        case "Name":
-                            name = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        case "Root":
-                            if (CompilerConstants.IntegerNotSet != root)
-                            {
-                                this.core.OnMessage(WixErrors.RegistryRootInvalid(sourceLineNumbers));
-                            }
-
-                            root = this.core.GetAttributeMsidbRegistryRootValue(sourceLineNumbers, attrib, true);
-                            break;
-                        case "Type":
-                            type = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            if (0 < type.Length)
-                            {
-                                if (!Wix.Registry.TryParseTypeType(type, out typeType))
-                                {
-                                    this.core.OnMessage(WixErrors.IllegalAttributeValue(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, type, "binary", "expandable", "integer", "multiString", "string"));
-                                }
-                            }
-                            break;
-                        case "Value":
-                            value = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        default:
-                            this.core.UnexpectedAttribute(node, attrib);
-                            break;
-                    }
-                }
-                else
-                {
-                    this.core.ParseExtensionAttribute(node, attrib);
-                }
-            }
-
-            if (CompilerConstants.IntegerNotSet == root)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Root"));
-                root = CompilerConstants.IllegalInteger;
-            }
-
-            if (null == key)
-            {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Key"));
-                key = String.Empty; // set the key to something to prevent null reference exceptions
-            }
-
-            foreach (XElement child in node.Elements())
-            {
-                if (CompilerCore.WixNamespace == child.Name.Namespace)
-                {
-                    switch (child.Name.LocalName)
-                    {
-                        case "Permission":
-                            // We need to handle this below the generation of the id, because the id is an
-                            // input into the Permission element.
-                            break;
-                        case "Registry":
-                            if (Wix.Registry.ActionType.remove == actionType || Wix.Registry.ActionType.removeKeyOnInstall == actionType)
-                            {
-                                this.core.OnMessage(WixErrors.RegistrySubElementCannotBeRemoved(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "Action", "remove", "removeKeyOnInstall"));
-                            }
-
-                            string possibleChildKeyPath = null;
-                            YesNoType childIsKeyPath = this.ParseRegistryElement(child, componentId, root, key, win64Component, out possibleChildKeyPath);
-                            if (YesNoType.Yes == childIsKeyPath)
-                            {
-                                if (YesNoType.Yes == keyPath)
-                                {
-                                    this.core.OnMessage(WixErrors.ComponentMultipleKeyPaths(sourceLineNumbers, child.Name.LocalName, "KeyPath", "yes", "File", "RegistryValue", "ODBCDataSource"));
-                                }
-
-                                possibleKeyPath = possibleChildKeyPath; // the child is the key path
-                                keyPath = YesNoType.Yes;
-                            }
-
-                            break;
-                        case "RegistryValue":
-                            if (Wix.Registry.ActionType.remove == actionType || Wix.Registry.ActionType.removeKeyOnInstall == actionType)
-                            {
-                                this.core.OnMessage(WixErrors.RegistrySubElementCannotBeRemoved(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "Action", "remove", "removeKeyOnInstall"));
-                            }
-
-                            if (Wix.Registry.TypeType.multiString != typeType && null != value)
-                            {
-                                this.core.OnMessage(WixErrors.RegistryMultipleValuesWithoutMultiString(sourceLineNumbers, node.Name.LocalName, "Value", child.Name.LocalName, "Type"));
-                            }
-                            else if (null == value)
-                            {
-                                value = Common.GetInnerText(child);
-                            }
-                            else
-                            {
-                                value = String.Concat(value, "[~]", Common.GetInnerText(child));
-                            }
-                            break;
-
-                        // We need to other elements this below the generation of the id, because the id is an
-                        // input into extension elements.  This also means that we need to re-parse these elements below.
-                    }
-                }
-            }
-
-
-            if (Wix.Registry.ActionType.remove == actionType || Wix.Registry.ActionType.removeKeyOnInstall == actionType) // RemoveRegistry table
-            {
-                if (YesNoType.Yes == keyPath)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "KeyPath", "Action", action));
-                }
-
-                if (null != value)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Value", "Action", action));
-                }
-
-                if (null != type)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Type", "Action", action));
-                }
-
-                if (Wix.Registry.ActionType.removeKeyOnInstall == actionType)
-                {
-                    if (null != name)
-                    {
-                        this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Name", "Action", action));
-                    }
-
-                    name = "-";
-                }
-
-                // this cannot be a KeyPath
-                couldBeKeyPath = false;
-
-                // generate the identifier if it wasn't provided
-                if (null == id)
-                {
-                    id = this.core.CreateIdentifier("reg", componentId, root.ToString(CultureInfo.InvariantCulture.NumberFormat), key.ToLower(CultureInfo.InvariantCulture), (null != name ? name.ToLower(CultureInfo.InvariantCulture) : name));
-                }
-
-                if (!this.core.EncounteredError)
-                {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "RemoveRegistry");
-                    row[0] = id;
-                    row[1] = root;
-                    row[2] = key;
-                    row[3] = name;
-                    row[4] = componentId;
-                }
-
-                this.core.EnsureTable(sourceLineNumbers, "Registry"); // RemoveRegistry table requires the Registry table
-            }
-            else // Registry table
-            {
-                if ((Wix.Registry.ActionType.append == actionType || Wix.Registry.ActionType.prepend == actionType) && Wix.Registry.TypeType.multiString != typeType)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeValueWithoutOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Action", action, "Type", "multiString"));
-                }
-
-                if (Wix.Registry.ActionType.createKey == actionType || Wix.Registry.ActionType.createKeyAndRemoveKeyOnUninstall == actionType ||
-                    Wix.Registry.ActionType.removeKeyOnUninstall == actionType)
-                {
-                    if (YesNoType.Yes == keyPath)
-                    {
-                        this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "KeyPath", "Action", action));
-                    }
-
-                    if (null != name)
-                    {
-                        this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Name", "Action", action));
-                    }
-
-                    if (null != value)
-                    {
-                        this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Value", "Action", action));
-                    }
-
-                    // this cannot be a KeyPath
-                    couldBeKeyPath = false;
-                }
-
-                if (null != value)
-                {
-                    // TODO: Is "writeKeyAndRemoveKeyOnUninstall" a legal value? The XSD doesn't have it!
-                    if (Wix.Registry.ActionType.removeKeyOnUninstall == actionType || "writeKeyAndRemoveKeyOnUninstall" == action)
-                    {
-                        this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Value", "Action", action));
-                    }
-
-                    if (null == type)
-                    {
-                        this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Type", "Value"));
-                    }
-
-                    switch (typeType)
-                    {
-                        case Wix.Registry.TypeType.binary:
-                            value = String.Concat("#x", value);
-                            break;
-                        case Wix.Registry.TypeType.expandable:
-                            value = String.Concat("#%", value);
-                            break;
-                        case Wix.Registry.TypeType.integer:
-                            value = String.Concat("#", value);
-                            break;
-                        case Wix.Registry.TypeType.multiString:
-                            switch (actionType)
-                            {
-                                case Wix.Registry.ActionType.append:
-                                    value = String.Concat("[~]", value);
-                                    break;
-                                case Wix.Registry.ActionType.prepend:
-                                    value = String.Concat(value, "[~]");
-                                    break;
-                                case Wix.Registry.ActionType.write:
-                                default:
-                                    if (-1 == value.IndexOf("[~]", StringComparison.Ordinal))
-                                    {
-                                        value = String.Format(CultureInfo.InvariantCulture, "[~]{0}[~]", value);
-                                    }
-                                    break;
-                            }
-                            break;
-                        case Wix.Registry.TypeType.@string:
-                            // escape the leading '#' character for string registry keys
-                            if (value.StartsWith("#", StringComparison.Ordinal))
-                            {
-                                value = String.Concat("#", value);
-                            }
-                            break;
-                    }
-                }
-                else // no value
-                {
-                    if (null == name) // no name or value
-                    {
-                        if (null != type)
-                        {
-                            this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name.LocalName, "Type", "Name", "Value"));
-                        }
-
-                        switch (actionType)
-                        {
-                            case Wix.Registry.ActionType.createKey:
-                                name = "+";
-                                couldBeKeyPath = false;
-                                break;
-                            case Wix.Registry.ActionType.createKeyAndRemoveKeyOnUninstall:
-                                name = "*";
-                                couldBeKeyPath = false;
-                                break;
-                            case Wix.Registry.ActionType.removeKeyOnUninstall:
-                                name = "-";
-                                couldBeKeyPath = false;
-                                break;
-                        }
-
-                        if (YesNoType.Yes == keyPath && !couldBeKeyPath)
-                        {
-                            this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "KeyPath", "Action", action));
-                        }
-                    }
-                    else // name specified, no value
-                    {
-                        if ("+" == name || "-" == name || "*" == name)
-                        {
-                            this.core.OnMessage(WixErrors.RegistryNameValueIncorrect(sourceLineNumbers, node.Name.LocalName, "Name", name));
-
-                            if (YesNoType.Yes == keyPath)
-                            {
-                                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "KeyPath", "Name", name));
-                            }
-                        }
-                    }
-
-                    if (Wix.Registry.TypeType.multiString == typeType)
-                    {
-                        value = "[~][~]";
-                    }
-                }
-
-                // generate the identifier if it wasn't provided
-                if (null == id)
-                {
-                    id = this.core.CreateIdentifier("reg", componentId, root.ToString(CultureInfo.InvariantCulture.NumberFormat), key.ToLower(CultureInfo.InvariantCulture), (null != name ? name.ToLower(CultureInfo.InvariantCulture) : name));
-                }
-
-                if (!this.core.EncounteredError)
-                {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = id;
-                    row[1] = root;
-                    row[2] = key;
-                    row[3] = name;
-                    row[4] = value;
-                    row[5] = componentId;
-                }
-            }
-
-            // This looks different from all the others, because the id must be generated before
-            // we get here.
-            foreach (XElement child in node.Elements())
-            {
-                if (CompilerCore.WixNamespace == child.Name.Namespace)
-                {
-                    switch (child.Name.LocalName)
-                    {
-                        case "Permission":
-                            if (Wix.Registry.ActionType.remove == actionType || Wix.Registry.ActionType.removeKeyOnInstall == actionType)
-                            {
-                                this.core.OnMessage(WixErrors.RegistrySubElementCannotBeRemoved(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "Action", "remove", "removeKeyOnInstall"));
-                            }
-                            this.ParsePermissionElement(child, id, node.Name.LocalName);
-                            break;
-                        case "PermissionEx":
-                            if (Wix.Registry.ActionType.remove == actionType || Wix.Registry.ActionType.removeKeyOnInstall == actionType)
-                            {
-                                this.core.OnMessage(WixErrors.RegistrySubElementCannotBeRemoved(sourceLineNumbers, node.Name.LocalName, child.Name.LocalName, "Action", "remove", "removeKeyOnInstall"));
-                            }
-                            this.ParsePermissionExElement(child, id, node.Name.LocalName);
-                            break;
-                        case "Registry":
-                        case "RegistryValue":
-                            // these were parsed above; they are parsed again here to keep them from falling into the default case
-                            break;
-                        default:
-                            this.core.UnexpectedElement(node, child);
-                            break;
-                    }
-                }
-                else
-                {
-                    this.core.ParseExtensionElement(node, child);
-                }
-            }
-
-
-            // If this was just a regular registry key (that could be the key path)
-            // and no child registry key set the possible key path, let's make this
-            // Registry/@Id a possible key path.
-            if (couldBeKeyPath && null == possibleKeyPath)
-            {
-                possibleKeyPath = id;
-            }
-
-            return keyPath;
         }
 
         /// <summary>
@@ -14242,7 +13801,7 @@ namespace WixToolset
         private void ParseServiceConfigElement(XElement node, string componentId, string serviceName)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string delayedAutoStart = null;
             string failureActionsWhen = null;
             int events = 0;
@@ -14258,7 +13817,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "DelayedAutoStart":
                             delayedAutoStart = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -14506,7 +14065,7 @@ namespace WixToolset
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "ServiceName"));
             }
-            else if (String.IsNullOrEmpty(id))
+            else if (null == id)
             {
                 id = this.core.CreateIdentifierFromFilename(name);
             }
@@ -14525,8 +14084,7 @@ namespace WixToolset
             {
                 if (!String.IsNullOrEmpty(delayedAutoStart))
                 {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig");
-                    row[0] = String.Concat(id, ".DS");
+                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig", new Identifier(String.Concat(id.Id, ".DS"), id.Access));
                     row[1] = name;
                     row[2] = events;
                     row[3] = 3;
@@ -14536,8 +14094,7 @@ namespace WixToolset
 
                 if (!String.IsNullOrEmpty(failureActionsWhen))
                 {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig");
-                    row[0] = String.Concat(id, ".FA");
+                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig", new Identifier(String.Concat(id.Id, ".FA"), id.Access));
                     row[1] = name;
                     row[2] = events;
                     row[3] = 4;
@@ -14547,8 +14104,7 @@ namespace WixToolset
 
                 if (!String.IsNullOrEmpty(sid))
                 {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig");
-                    row[0] = String.Concat(id, ".SS");
+                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig", new Identifier(String.Concat(id.Id, ".SS"), id.Access));
                     row[1] = name;
                     row[2] = events;
                     row[3] = 5;
@@ -14558,8 +14114,7 @@ namespace WixToolset
 
                 if (!String.IsNullOrEmpty(requiredPrivileges))
                 {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig");
-                    row[0] = String.Concat(id, ".RP");
+                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig", new Identifier(String.Concat(id.Id, ".RP"), id.Access));
                     row[1] = name;
                     row[2] = events;
                     row[3] = 6;
@@ -14569,8 +14124,7 @@ namespace WixToolset
 
                 if (!String.IsNullOrEmpty(preShutdownDelay))
                 {
-                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig");
-                    row[0] = String.Concat(id, ".PD");
+                    Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfig", new Identifier(String.Concat(id.Id, ".PD"), id.Access));
                     row[1] = name;
                     row[2] = events;
                     row[3] = 7;
@@ -14589,7 +14143,7 @@ namespace WixToolset
         private void ParseServiceConfigFailureActionsElement(XElement node, string componentId, string serviceName)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             int events = 0;
             string name = serviceName;
             int resetPeriod = CompilerConstants.IntegerNotSet;
@@ -14605,7 +14159,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Command":
                             command = this.core.GetAttributeValue(sourceLineNumbers, attrib, EmptyRule.CanBeEmpty);
@@ -14742,7 +14296,7 @@ namespace WixToolset
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "ServiceName"));
             }
-            else if (String.IsNullOrEmpty(id))
+            else if (null == id)
             {
                 id = this.core.CreateIdentifierFromFilename(name);
             }
@@ -14754,8 +14308,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfigFailureActions");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "MsiServiceConfigFailureActions", id);
                 row[1] = name;
                 row[2] = events;
                 if (CompilerConstants.IntegerNotSet != resetPeriod)
@@ -14957,7 +14510,7 @@ namespace WixToolset
         private void ParseServiceInstallElement(XElement node, string componentId, bool win64Component)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string account = null;
             string arguments = null;
             string dependencies = null;
@@ -14978,7 +14531,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Account":
                             account = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -15102,7 +14655,7 @@ namespace WixToolset
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Name"));
             }
-            else if (String.IsNullOrEmpty(id))
+            else if (null == id)
             {
                 id = this.core.CreateIdentifierFromFilename(name);
             }
@@ -15125,7 +14678,7 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "PermissionEx":
-                            this.ParsePermissionExElement(child, id, "ServiceInstall");
+                            this.ParsePermissionExElement(child, id.Id, "ServiceInstall");
                             break;
                         case "ServiceConfig":
                             this.ParseServiceConfigElement(child, componentId, name);
@@ -15143,7 +14696,7 @@ namespace WixToolset
                 }
                 else
                 {
-                    Dictionary<string, string> context = new Dictionary<string,string>() { { "ServiceInstallId", id }, { "ServiceInstallName", name }, { "ServiceInstallComponentId", componentId }, { "Win64", win64Component.ToString() } };
+                    Dictionary<string, string> context = new Dictionary<string,string>() { { "ServiceInstallId", id.Id }, { "ServiceInstallName", name }, { "ServiceInstallComponentId", componentId }, { "Win64", win64Component.ToString() } };
                     this.core.ParseExtensionElement(node, child, context);
                 }
             }
@@ -15155,8 +14708,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "ServiceInstall");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "ServiceInstall", id);
                 row[1] = name;
                 row[2] = displayName;
                 row[3] = typebits;
@@ -15885,7 +15437,7 @@ namespace WixToolset
         private void ParseShortcutPropertyElement(XElement node, string shortcutId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string key = null;
             string value = null;
 
@@ -15896,7 +15448,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Key":
                             key = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -15919,7 +15471,7 @@ namespace WixToolset
             {
                 this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Key"));
             }
-            else if (String.IsNullOrEmpty(id))
+            else if (null == id)
             {
                 id = this.core.CreateIdentifier("scp", shortcutId, key.ToUpperInvariant());
             }
@@ -15946,8 +15498,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "MsiShortcutProperty");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "MsiShortcutProperty", id);
                 row[1] = shortcutId;
                 row[2] = key;
                 row[3] = value;
@@ -17302,7 +16853,7 @@ namespace WixToolset
         private void ParseEmbeddedUIElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string name = null;
             int attributes = MsiInterop.MsidbEmbeddedUI; // by default this is the primary DLL that does not support basic UI.
             int messageFilter = MsiInterop.INSTALLLOGMODE_FATALEXIT | MsiInterop.INSTALLLOGMODE_ERROR | MsiInterop.INSTALLLOGMODE_WARNING | MsiInterop.INSTALLLOGMODE_USER
@@ -17320,7 +16871,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Name":
                             name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
@@ -17466,26 +17017,25 @@ namespace WixToolset
                 }
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 if (!String.IsNullOrEmpty(name))
                 {
                     id = this.core.CreateIdentifierFromFilename(name);
                 }
 
-                if (String.IsNullOrEmpty(id))
+                if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
-
-            if (String.IsNullOrEmpty(name))
+            else if (String.IsNullOrEmpty(name))
             {
-                name = id;
+                name = id.Id;
             }
 
             if (!name.Contains("."))
@@ -17515,8 +17065,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "MsiEmbeddedUI");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "MsiEmbeddedUI", id);
                 row[1] = name;
                 row[2] = attributes;
                 row[3] = messageFilter;
@@ -17532,7 +17081,7 @@ namespace WixToolset
         private void ParseEmbeddedUIResourceElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string name = null;
             string sourceFile = null;
 
@@ -17543,7 +17092,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Name":
                             name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
@@ -17575,34 +17124,32 @@ namespace WixToolset
                 }
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 if (!String.IsNullOrEmpty(name))
                 {
                     id = this.core.CreateIdentifierFromFilename(name);
                 }
 
-                if (String.IsNullOrEmpty(id))
+                if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
-
-            if (String.IsNullOrEmpty(name))
+            else if (String.IsNullOrEmpty(name))
             {
-                name = id;
+                name = id.Id;
             }
 
             this.core.ParseForExtensionElements(node);
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "MsiEmbeddedUI");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "MsiEmbeddedUI", id);
                 row[1] = name;
                 row[2] = 0; // embedded UI resources always set this to 0
                 row[3] = null;
@@ -19002,7 +18549,7 @@ namespace WixToolset
         private void ParseContainerElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string downloadUrl = null;
             string name = null;
             string type = null;
@@ -19014,7 +18561,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "DownloadUrl":
                             downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -19046,16 +18593,16 @@ namespace WixToolset
                 if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                    id = Identifier.Invalid;
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
-
-            if (null == name)
+            else if (null == name)
             {
-                name = id;
+                name = id.Id;
             }
 
             if (null == type)
@@ -19080,7 +18627,7 @@ namespace WixToolset
                     switch (child.Name.LocalName)
                     {
                         case "PackageGroupRef":
-                            this.ParsePackageGroupRefElement(child, ComplexReferenceParentType.Container, id);
+                            this.ParsePackageGroupRefElement(child, ComplexReferenceParentType.Container, id.Id);
                             break;
                         default:
                             this.core.UnexpectedElement(node, child);
@@ -19096,8 +18643,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Container");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Container", id);
                 row[1] = name;
                 row[2] = type;
                 row[3] = downloadUrl;
@@ -19387,7 +18933,7 @@ namespace WixToolset
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             YesNoDefaultType compressed = YesNoDefaultType.Default;
             YesNoType suppressSignatureVerification = YesNoType.NotSet;
-            string id = null;
+            Identifier id = null;
             string name = null;
             string sourceFile = null;
             string downloadUrl = null;
@@ -19400,7 +18946,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Compressed":
                             compressed = this.core.GetAttributeYesNoDefaultValue(sourceLineNumbers, attrib);
@@ -19450,7 +18996,7 @@ namespace WixToolset
                     this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name.LocalName, child.Name.LocalName));
                 }
 
-                remotePayload = this.ParseRemotePayloadElement(child, id);
+                remotePayload = this.ParseRemotePayloadElement(child);
             }
 
             if (null != sourceFile && null != remotePayload)
@@ -19481,22 +19027,21 @@ namespace WixToolset
                 compressed = YesNoDefaultType.Yes;
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 id = this.core.CreateIdentifier("pay", (null != sourceFile) ? sourceFile.ToUpperInvariant() : String.Empty);
             }
-
-            if (null != remotePayload)
+            else if (null != remotePayload)
             {
-                remotePayload.Id = id;
+                remotePayload.Id = id.Id;
             }
 
             this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, parentType, parentId, previousType, previousId, compressed, suppressSignatureVerification, null, null);
 
-            return id;
+            return id.Id;
         }
 
-        private PayloadInfoRow ParseRemotePayloadElement(XElement node, string payload)
+        private PayloadInfoRow ParseRemotePayloadElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             PayloadInfoRow remotePayload = (PayloadInfoRow)this.core.CreateRow(sourceLineNumbers, "PayloadInfo");
@@ -19569,13 +19114,12 @@ namespace WixToolset
         /// <param name="node">Element to parse</param>
         /// <param name="parentType">ComplexReferenceParentType of parent element</param>
         /// <param name="parentId">Identifier of parent element.</param>
-        private void CreatePayloadRow(SourceLineNumber sourceLineNumbers, string id, string name, string sourceFile, string downloadUrl, ComplexReferenceParentType parentType,
+        private void CreatePayloadRow(SourceLineNumber sourceLineNumbers, Identifier id, string name, string sourceFile, string downloadUrl, ComplexReferenceParentType parentType,
             string parentId, ComplexReferenceChildType previousType, string previousId, YesNoDefaultType compressed, YesNoType suppressSignatureVerification, string displayName, string description)
         {
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "Payload");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "Payload", id);
                 row[1] = String.IsNullOrEmpty(name) ? Path.GetFileName(sourceFile) : name;
                 row[2] = sourceFile;
                 row[3] = downloadUrl;
@@ -19588,13 +19132,12 @@ namespace WixToolset
 
                 if (!String.IsNullOrEmpty(description) || !String.IsNullOrEmpty(displayName))
                 {
-                    Row rowDisplay = this.core.CreateRow(sourceLineNumbers, "PayloadDisplayInformation");
-                    rowDisplay[0] = id;
+                    Row rowDisplay = this.core.CreateRow(sourceLineNumbers, "PayloadDisplayInformation", id);
                     rowDisplay[1] = displayName;
                     rowDisplay[2] = description;
                 }
 
-                this.CreateGroupAndOrderingRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Payload, id, previousType, previousId);
+                this.CreateGroupAndOrderingRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Payload, id.Id, previousType, previousId);
             }
         }
 
@@ -19967,7 +19510,7 @@ namespace WixToolset
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PackageGroup == previousType || ComplexReferenceChildType.Package == previousType);
 
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             YesNoType vital = YesNoType.Yes;
 
             // This list lets us evaluate extension attributes *after* all core attributes
@@ -19982,7 +19525,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Vital":
                             vital = this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
@@ -20004,7 +19547,7 @@ namespace WixToolset
                 }
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 if (!String.IsNullOrEmpty(previousId))
                 {
@@ -20014,16 +19557,17 @@ namespace WixToolset
                 if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                    id = Identifier.Invalid;
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
 
             // Now that the package ID is known, we can parse the extension attributes...
             Dictionary<string, string> contextValues = new Dictionary<string, string>();
-            contextValues["RollbackBoundaryId"] = id;
+            contextValues["RollbackBoundaryId"] = id.Id;
             foreach (XAttribute attribute in extensionAttributes)
             {
                 this.core.ParseExtensionAttribute(node, attribute, contextValues);
@@ -20033,8 +19577,7 @@ namespace WixToolset
 
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage", id);
                 row[1] = ChainPackageType.RollbackBoundary.ToString();
 
                 if (YesNoType.NotSet != vital)
@@ -20042,10 +19585,10 @@ namespace WixToolset
                     row[10] = (YesNoType.Yes == vital) ? 1 : 0;
                 }
 
-                this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, null);
+                this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id.Id, previousType, previousId, null);
             }
 
-            return id;
+            return id.Id;
         }
 
         /// <summary>
@@ -20066,10 +19609,10 @@ namespace WixToolset
             Debug.Assert(ComplexReferenceChildType.Unknown == previousType || ComplexReferenceChildType.PackageGroup == previousType || ComplexReferenceChildType.Package == previousType);
 
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+            Identifier id = null;
             string name = null;
             string sourceFile = null;
             string downloadUrl = null;
-            string id = null;
             string after = null;
             string installCondition = null;
             YesNoType cache = YesNoType.NotSet;
@@ -20113,6 +19656,9 @@ namespace WixToolset
                     bool allowed = true;
                     switch (attrib.Name.LocalName)
                     {
+                        case "Id":
+                            id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
+                            break;
                         case "Name":
                             name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false, true);
                             if (!this.core.IsValidLongFilename(name, false, true))
@@ -20125,9 +19671,6 @@ namespace WixToolset
                             break;
                         case "DownloadUrl":
                             downloadUrl = this.core.GetAttributeValue(sourceLineNumbers, attrib);
-                            break;
-                        case "Id":
-                            id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "After":
                             after = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -20255,7 +19798,7 @@ namespace WixToolset
                     this.core.OnMessage(WixErrors.TooManyChildren(childSourceLineNumbers, node.Name.LocalName, child.Name.LocalName));
                 }
 
-                remotePayload = this.ParseRemotePayloadElement(child, id);
+                remotePayload = this.ParseRemotePayloadElement(child);
             }
 
             if (String.IsNullOrEmpty(sourceFile))
@@ -20294,7 +19837,7 @@ namespace WixToolset
                 this.core.OnMessage(WixErrors.ExpectedAttributeWithElement(sourceLineNumbers, node.Name.LocalName, "DownloadUrl", "RemotePayload"));
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 if (!String.IsNullOrEmpty(name))
                 {
@@ -20308,26 +19851,27 @@ namespace WixToolset
                 if (null == id)
                 {
                     this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
+                    id = Identifier.Invalid;
                 }
-                else if (!Common.IsIdentifier(id))
+                else if (!Common.IsIdentifier(id.Id))
                 {
-                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id));
+                    this.core.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, node.Name.LocalName, "Id", id.Id));
                 }
             }
 
             if (null != remotePayload)
             {
-                remotePayload.Id = id;
+                remotePayload.Id = id.Id;
             }
 
             if (null == logPathVariable)
             {
-                logPathVariable = String.Concat("WixBundleLog_", id);
+                logPathVariable = String.Concat("WixBundleLog_", id.Id);
             }
 
             if (null == rollbackPathVariable)
             {
-                rollbackPathVariable = String.Concat("WixBundleRollbackLog_", id);
+                rollbackPathVariable = String.Concat("WixBundleRollbackLog_", id.Id);
             }
 
             if (!String.IsNullOrEmpty(protocol) && !protocol.Equals("burn", StringComparison.Ordinal) && !protocol.Equals("netfx4", StringComparison.Ordinal) && !protocol.Equals("none", StringComparison.Ordinal))
@@ -20363,7 +19907,7 @@ namespace WixToolset
             }
 
             // Now that the package ID is known, we can parse the extension attributes...
-            Dictionary<string, string> contextValues = new Dictionary<string, string>() { { "PackageId", id } };
+            Dictionary<string, string> contextValues = new Dictionary<string, string>() { { "PackageId", id.Id } };
             foreach (XAttribute attribute in extensionAttributes)
             {
                 this.core.ParseExtensionAttribute(node, attribute, contextValues);
@@ -20380,27 +19924,27 @@ namespace WixToolset
                             allowed = (packageType == ChainPackageType.Msi);
                             if (allowed)
                             {
-                                this.ParseSlipstreamMspElement(child, id);
+                                this.ParseSlipstreamMspElement(child, id.Id);
                             }
                             break;
                         case "MsiProperty":
                             allowed = (packageType == ChainPackageType.Msi || packageType == ChainPackageType.Msp);
                             if (allowed)
                             {
-                                this.ParseMsiPropertyElement(child, id);
+                                this.ParseMsiPropertyElement(child, id.Id);
                             }
                             break;
                         case "Payload":
-                            this.ParsePayloadElement(child, ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null);
+                            this.ParsePayloadElement(child, ComplexReferenceParentType.Package, id.Id, ComplexReferenceChildType.Unknown, null);
                             break;
                         case "PayloadGroupRef":
-                            this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Package, id, ComplexReferenceChildType.Unknown, null);
+                            this.ParsePayloadGroupRefElement(child, ComplexReferenceParentType.Package, id.Id, ComplexReferenceChildType.Unknown, null);
                             break;
                         case "ExitCode":
                             allowed = (packageType == ChainPackageType.Exe);
                             if (allowed)
                             {
-                                this.ParseExitCodeElement(child, id);
+                                this.ParseExitCodeElement(child, id.Id);
                             }
                             break;
                         case "RemotePayload":
@@ -20418,7 +19962,7 @@ namespace WixToolset
                 }
                 else
                 {
-                    Dictionary<string, string> context = new Dictionary<string, string>() { { "Id", id } };
+                    Dictionary<string, string> context = new Dictionary<string, string>() { { "Id", id.Id } };
                     this.core.ParseExtensionElement(node, child, context);
                 }
             }
@@ -20441,13 +19985,12 @@ namespace WixToolset
                 }
 
                 // We create the package contents as a payload with this package as the parent
-                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, ComplexReferenceParentType.Package, id,
+                this.CreatePayloadRow(sourceLineNumbers, id, name, sourceFile, downloadUrl, ComplexReferenceParentType.Package, id.Id,
                     ComplexReferenceChildType.Unknown, null, compressed, suppressSignatureVerification, displayName, description);
 
-                Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage");
-                row[0] = id;
+                Row row = this.core.CreateRow(sourceLineNumbers, "ChainPackage", id);
                 row[1] = packageType.ToString();
-                row[2] = id;
+                row[2] = id.Id;
                 row[3] = installCondition;
                 row[4] = installCommand;
                 row[5] = repairCommand;
@@ -20512,9 +20055,10 @@ namespace WixToolset
                     row[22] = (YesNoType.Yes == displayInternalUI) ? 1 : 0;
                 }
 
-                this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id, previousType, previousId, after);
+                this.CreateChainPackageMetaRows(sourceLineNumbers, parentType, parentId, ComplexReferenceChildType.Package, id.Id, previousType, previousId, after);
             }
-            return id;
+
+            return id.Id;
         }
 
         /// <summary>

@@ -31,7 +31,7 @@ namespace WixToolset
     /// <summary>
     /// Common Wix utility methods and types.
     /// </summary>
-    internal sealed class Common
+    internal static class Common
     {
         //-------------------------------------------------------------------------------------------------
         // Layout of an Access Mask (from http://technet.microsoft.com/en-us/library/cc783530(WS.10).aspx)
@@ -118,14 +118,6 @@ namespace WixToolset
         private const string LegalWildcardShortFilenameCharacters = @"[^\\|><:/""\+,;=\[\]\. ]"; // illegal: \ | > < : / " + , ; = [ ] . (space)
         private static readonly Regex LegalWildcardShortFilename = new Regex(String.Concat("^", LegalWildcardShortFilenameCharacters, @"{1,16}(\.", LegalWildcardShortFilenameCharacters, "{0,6})?$"));
 
-
-        /// <summary>
-        /// Protect the constructor.
-        /// </summary>
-        private Common()
-        {
-        }
-
         /// <summary>
         /// Cleans up the temp files.
         /// </summary>
@@ -181,33 +173,6 @@ namespace WixToolset
         /// Gets a valid code page from the given web name or integer value.
         /// </summary>
         /// <param name="value">A code page web name or integer value as a string.</param>
-        /// <exception cref="ArgumentOutOfRangeException">The value is an integer less than 0 or greater than 65535.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
-        /// <exception cref="NotSupportedException">The value doesn't not represent a valid code page name or integer value.</exception>
-        internal static int GetValidCodePage(string value)
-        {
-            return GetValidCodePage(value, false);
-        }
-
-        /// <summary>
-        /// Gets a valid code page from the given web name or integer value.
-        /// </summary>
-        /// <param name="value">A code page web name or integer value as a string.</param>
-        /// <param name="allowNoChange">Whether to allow -1 which does not change the database code pages. This may be the case with wxl files.</param>
-        /// <returns>A valid code page number.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">The value is an integer less than 0 or greater than 65535.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
-        /// <exception cref="NotSupportedException">The value doesn't not represent a valid code page name or integer value.</exception>
-        /// <exception cref="WixException">The code page is invalid for summary information.</exception>
-        internal static int GetValidCodePage(string value, bool allowNoChange)
-        {
-            return GetValidCodePage(value, allowNoChange, false, null);
-        }
-
-        /// <summary>
-        /// Gets a valid code page from the given web name or integer value.
-        /// </summary>
-        /// <param name="value">A code page web name or integer value as a string.</param>
         /// <param name="allowNoChange">Whether to allow -1 which does not change the database code pages. This may be the case with wxl files.</param>
         /// <param name="onlyAnsi">Whether to allow Unicode (UCS) or UTF code pages.</param>
         /// <param name="sourceLineNumbers">Source line information for the current authoring.</param>
@@ -216,20 +181,15 @@ namespace WixToolset
         /// <exception cref="ArgumentNullException"><paramref name="value"/> is null.</exception>
         /// <exception cref="NotSupportedException">The value doesn't not represent a valid code page name or integer value.</exception>
         /// <exception cref="WixException">The code page is invalid for summary information.</exception>
-        internal static int GetValidCodePage(string value, bool allowNoChange, bool onlyAnsi, SourceLineNumber sourceLineNumbers)
+        internal static int GetValidCodePage(string value, bool allowNoChange = false, bool onlyAnsi = false, SourceLineNumber sourceLineNumbers = null)
         {
             int codePage;
-            Encoding enc;
-
-            if (null == value)
-            {
-                throw new ArgumentNullException("value");
-            }
+            Encoding encoding;
 
             try
             {
                 // check if a integer as a string was passed
-                if (int.TryParse(value, out codePage))
+                if (Int32.TryParse(value, out codePage))
                 {
                     if (0 == codePage)
                     {
@@ -242,25 +202,25 @@ namespace WixToolset
                         return -1;
                     }
 
-                    enc = Encoding.GetEncoding(codePage);
+                    encoding = Encoding.GetEncoding(codePage);
                 }
                 else
                 {
-                    enc = Encoding.GetEncoding(value);
+                    encoding = Encoding.GetEncoding(value);
                 }
 
                 // Windows Installer parses some code page references
                 // as unsigned shorts which fail to open the database.
                 if (onlyAnsi)
                 {
-                    codePage = enc.CodePage;
-                    if (0 > codePage || short.MaxValue < codePage)
+                    codePage = encoding.CodePage;
+                    if (0 > codePage || Int16.MaxValue < codePage)
                     {
                         throw new WixException(WixErrors.InvalidSummaryInfoCodePage(sourceLineNumbers, codePage));
                     }
                 }
 
-                return enc.CodePage;
+                return encoding.CodePage;
             }
             catch (ArgumentException ex)
             {
@@ -374,8 +334,10 @@ namespace WixToolset
             switch (value)
             {
                 case "no":
+                case "false":
                     return false;
                 case "yes":
+                case "true":
                     return true;
                 default:
                     throw new WixException(WixErrors.IllegalAttributeValue(sourceLineNumbers, elementName, attributeName, value, "no", "yes"));
@@ -397,11 +359,10 @@ namespace WixToolset
         /// <param name="prefix">Three letter or less prefix for generated row identifier.</param>
         /// <param name="args">Information to hash.</param>
         /// <returns>The generated identifier.</returns>
-        [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters", MessageId = "System.InvalidOperationException.#ctor(System.String)")]
         public static string GenerateIdentifier(string prefix, params string[] args)
         {
             string stringData = String.Join("|", args);
-            byte[] data = Encoding.Unicode.GetBytes(stringData);
+            byte[] data = Encoding.UTF8.GetBytes(stringData);
 
             // hash the data
             byte[] hash;
@@ -410,21 +371,17 @@ namespace WixToolset
                 hash = sha1.ComputeHash(data);
             }
 
-            // build up the identifier
+            // Build up the identifier.
             StringBuilder identifier = new StringBuilder(35, 35);
             identifier.Append(prefix);
-
-            // hard coded to 16 as that is the most bytes that can be used to meet the length requirements. SHA1 is 20 bytes.
-            for (int i = 0; i < 16; i++)
-            {
-                identifier.Append(hash[i].ToString("X2", CultureInfo.InvariantCulture.NumberFormat));
-            }
+            identifier.Append(Convert.ToBase64String(hash).TrimEnd('='));
+            identifier.Replace('+', '.').Replace('/', '_');
 
             return identifier.ToString();
         }
 
         /// <summary>
-        /// Return an identifier based on passed file/directory name
+        /// Return an identifier based on provided file or directory name
         /// </summary>
         /// <param name="name">File/directory name to generate identifer from</param>
         /// <returns>A version of the name that is a legal identifier.</returns>
@@ -509,40 +466,14 @@ namespace WixToolset
         /// <param name="emptyRule">A rule for the contents of the value. If the contents do not follow the rule, an error is thrown.</param>
         /// <param name="messageHandler">A delegate that receives error messages.</param>
         /// <returns>The attribute's value.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        internal static string GetAttributeValue(SourceLineNumber sourceLineNumbers, XmlAttribute attribute, EmptyRule emptyRule, Action<MessageEventArgs> messageHandler)
-        {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            if ((emptyRule == EmptyRule.MustHaveNonWhitespaceCharacters && String.IsNullOrEmpty(attribute.Value.Trim())) ||
-                (emptyRule == EmptyRule.CanBeWhitespaceOnly && String.IsNullOrEmpty(attribute.Value)))
-            {
-                if (null != messageHandler)
-                {
-                    messageHandler(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name));
-                }
-
-                return String.Empty;
-            }
-
-            return attribute.Value;
-        }
-
-        internal static string GetAttributeValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, EmptyRule emptyRule, Action<MessageEventArgs> messageHandler)
+        internal static string GetAttributeValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, EmptyRule emptyRule)
         {
             string value = attribute.Value;
 
             if ((emptyRule == EmptyRule.MustHaveNonWhitespaceCharacters && String.IsNullOrEmpty(value.Trim())) ||
                 (emptyRule == EmptyRule.CanBeWhitespaceOnly && String.IsNullOrEmpty(value)))
             {
-                if (null != messageHandler)
-                {
-                    messageHandler(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName));
-                }
-
+                Messaging.Instance.OnMessage(WixErrors.IllegalEmptyAttributeValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName));
                 return String.Empty;
             }
 
@@ -574,62 +505,28 @@ namespace WixToolset
         /// <param name="attribute">The attribute containing the value to get.</param>
         /// <param name="messageHandler">A delegate that receives error messages.</param>
         /// <returns>The attribute's identifier value or a special value if an error occurred.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        internal static string GetAttributeIdentifierValue(SourceLineNumber sourceLineNumbers, XmlAttribute attribute, Action<MessageEventArgs> messageHandler)
+        internal static string GetAttributeIdentifierValue(SourceLineNumber sourceLineNumbers, XAttribute attribute)
         {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly);
 
             if (Common.IsIdentifier(value))
             {
-                if (72 < value.Length && null != messageHandler)
+                if (72 < value.Length)
                 {
-                    messageHandler(WixWarnings.IdentifierTooLong(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                    Messaging.Instance.OnMessage(WixWarnings.IdentifierTooLong(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
                 }
 
                 return value;
             }
             else
             {
-                if (value.StartsWith("[", StringComparison.Ordinal) && value.EndsWith("]", StringComparison.Ordinal) && null != messageHandler)
+                if (value.StartsWith("[", StringComparison.Ordinal) && value.EndsWith("]", StringComparison.Ordinal))
                 {
-                    messageHandler(WixErrors.IllegalIdentifierLooksLikeFormatted(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
+                    Messaging.Instance.OnMessage(WixErrors.IllegalIdentifierLooksLikeFormatted(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
                 }
-                else if (null != messageHandler)
+                else
                 {
-                    messageHandler(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-
-                return String.Empty;
-            }
-        }
-
-        internal static string GetAttributeIdentifierValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, Action<MessageEventArgs> messageHandler)
-        {
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
-
-            if (Common.IsIdentifier(value))
-            {
-                if (72 < value.Length && null != messageHandler)
-                {
-                    messageHandler(WixWarnings.IdentifierTooLong(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
-                }
-
-                return value;
-            }
-            else
-            {
-                if (value.StartsWith("[", StringComparison.Ordinal) && value.EndsWith("]", StringComparison.Ordinal) && null != messageHandler)
-                {
-                    messageHandler(WixErrors.IllegalIdentifierLooksLikeFormatted(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
-                }
-                else if (null != messageHandler)
-                {
-                    messageHandler(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
+                    Messaging.Instance.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
                 }
 
                 return String.Empty;
@@ -645,79 +542,30 @@ namespace WixToolset
         /// <param name="maximum">The maximum legal value.</param>
         /// <param name="messageHandler">A delegate that receives error messages.</param>
         /// <returns>The attribute's integer value or a special value if an error occurred during conversion.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        public static int GetAttributeIntegerValue(SourceLineNumber sourceLineNumbers, XmlAttribute attribute, int minimum, int maximum, Action<MessageEventArgs> messageHandler)
-        {
-            if (null == attribute)
-            {
-                throw new ArgumentNullException("attribute");
-            }
-
-            Debug.Assert(minimum > CompilerConstants.IntegerNotSet && minimum > CompilerConstants.IllegalInteger, "The legal values for this attribute collide with at least one sentinel used during parsing.");
-
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
-
-            if (0 < value.Length)
-            {
-                try
-                {
-                    int integer = Convert.ToInt32(value, CultureInfo.InvariantCulture.NumberFormat);
-
-                    if (CompilerConstants.IntegerNotSet == integer || CompilerConstants.IllegalInteger == integer)
-                    {
-                        messageHandler(WixErrors.IntegralValueSentinelCollision(sourceLineNumbers, integer));
-                    }
-                    else if (minimum > integer || maximum < integer)
-                    {
-                        messageHandler(WixErrors.IntegralValueOutOfRange(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, integer, minimum, maximum));
-                        integer = CompilerConstants.IllegalInteger;
-                    }
-
-                    return integer;
-                }
-                catch (FormatException)
-                {
-                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-                catch (OverflowException)
-                {
-                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                }
-            }
-
-            return CompilerConstants.IllegalInteger;
-        }
-
-        public static int GetAttributeIntegerValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, int minimum, int maximum, Action<MessageEventArgs> messageHandler)
+        public static int GetAttributeIntegerValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, int minimum, int maximum)
         {
             Debug.Assert(minimum > CompilerConstants.IntegerNotSet && minimum > CompilerConstants.IllegalInteger, "The legal values for this attribute collide with at least one sentinel used during parsing.");
 
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly);
             int integer = CompilerConstants.IllegalInteger;
 
             if (0 < value.Length)
             {
-                try
+                if (Int32.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture.NumberFormat, out integer))
                 {
-                    integer = Convert.ToInt32(value, CultureInfo.InvariantCulture.NumberFormat);
-
                     if (CompilerConstants.IntegerNotSet == integer || CompilerConstants.IllegalInteger == integer)
                     {
-                        messageHandler(WixErrors.IntegralValueSentinelCollision(sourceLineNumbers, integer));
+                        Messaging.Instance.OnMessage(WixErrors.IntegralValueSentinelCollision(sourceLineNumbers, integer));
                     }
                     else if (minimum > integer || maximum < integer)
                     {
-                        messageHandler(WixErrors.IntegralValueOutOfRange(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, integer, minimum, maximum));
+                        Messaging.Instance.OnMessage(WixErrors.IntegralValueOutOfRange(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, integer, minimum, maximum));
                         integer = CompilerConstants.IllegalInteger;
                     }
                 }
-                catch (FormatException)
+                else
                 {
-                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
-                }
-                catch (OverflowException)
-                {
-                    messageHandler(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
+                    Messaging.Instance.OnMessage(WixErrors.IllegalIntegerValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
                 }
             }
 
@@ -731,37 +579,9 @@ namespace WixToolset
         /// <param name="attribute">The attribute containing the value to get.</param>
         /// <param name="messageHandler">A delegate that receives error messages.</param>
         /// <returns>The attribute's YesNoType value.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        internal static YesNoType GetAttributeYesNoValue(SourceLineNumber sourceLineNumbers, XmlAttribute attribute, Action<MessageEventArgs> messageHandler)
+        internal static YesNoType GetAttributeYesNoValue(SourceLineNumber sourceLineNumbers, XAttribute attribute)
         {
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
-
-            if (0 < value.Length)
-            {
-                switch (Wix.Enums.ParseYesNoType(value))
-                {
-                    case Wix.YesNoType.no:
-                        return YesNoType.No;
-                    case Wix.YesNoType.yes:
-                        return YesNoType.Yes;
-                    case Wix.YesNoType.NotSet:
-                        // Previous code never returned 'NotSet'!
-                        break;
-                    default:
-                        if (null != messageHandler)
-                        {
-                            messageHandler(WixErrors.IllegalYesNoValue(sourceLineNumbers, attribute.OwnerElement.Name, attribute.Name, value));
-                        }
-                        break;
-                }
-            }
-
-            return YesNoType.IllegalValue;
-        }
-
-        internal static YesNoType GetAttributeYesNoValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, Action<MessageEventArgs> messageHandler)
-        {
-            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly, messageHandler);
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeWhitespaceOnly);
             YesNoType yesNo = YesNoType.IllegalValue;
 
             if ("yes".Equals(value, StringComparison.Ordinal) || "true".Equals(value, StringComparison.Ordinal))
@@ -774,10 +594,7 @@ namespace WixToolset
             }
             else
             {
-                if (null != messageHandler)
-                {
-                    messageHandler(WixErrors.IllegalYesNoValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
-                }
+                Messaging.Instance.OnMessage(WixErrors.IllegalYesNoValue(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
             }
 
             return yesNo;
@@ -796,21 +613,18 @@ namespace WixToolset
             return (null == text) ? null : text.Value;
         }
 
-        public static void UnexpectedAttribute(SourceLineNumber sourceLineNumbers, XAttribute attribute, Action<MessageEventArgs> messageHandler)
+        /// <summary>
+        /// Display an unexpected attribute error.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute.</param>
+        public static void UnexpectedAttribute(SourceLineNumber sourceLineNumbers, XAttribute attribute)
         {
-            // ignore elements defined by the W3C because we'll assume they are always right
+            // Ignore elements defined by the W3C because we'll assume they are always right.
             if (!((String.IsNullOrEmpty(attribute.Name.NamespaceName) && attribute.Name.LocalName.Equals("xmlns", StringComparison.Ordinal)) ||
                  attribute.Name.NamespaceName.StartsWith(CompilerCore.W3SchemaPrefix.NamespaceName, StringComparison.Ordinal)))
             {
-                var mea = WixErrors.UnexpectedAttribute(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName);
-                if (null == messageHandler)
-                {
-                    throw new WixException(mea);
-                }
-                else
-                {
-                    messageHandler(mea);
-                }
+                Messaging.Instance.OnMessage(WixErrors.UnexpectedAttribute(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName));
             }
         }
 
@@ -819,30 +633,13 @@ namespace WixToolset
         /// </summary>
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
         /// <param name="extensionAttribute">The extension attribute.</param>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        internal static void UnsupportedExtensionAttribute(SourceLineNumber sourceLineNumbers, XmlAttribute extensionAttribute, Action<MessageEventArgs> messageHandler)
+        internal static void UnsupportedExtensionAttribute(SourceLineNumber sourceLineNumbers, XAttribute extensionAttribute)
         {
-            // ignore elements defined by the W3C because we'll assume they are always right
-            if (!extensionAttribute.NamespaceURI.StartsWith(CompilerCore.W3SchemaPrefix.NamespaceName, StringComparison.Ordinal) && null != messageHandler)
-            {
-                messageHandler(WixErrors.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute.OwnerElement.Name, extensionAttribute.Name));
-            }
-        }
-
-        /// <summary>
-        /// Display an unsupported extension attribute error.
-        /// </summary>
-        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
-        /// <param name="extensionAttribute">The extension attribute.</param>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
-        internal static void UnsupportedExtensionAttribute(SourceLineNumber sourceLineNumbers, XAttribute extensionAttribute, Action<MessageEventArgs> messageHandler)
-        {
-            // ignore elements defined by the W3C because we'll assume they are always right
-            if (null != messageHandler &&
-                !((String.IsNullOrEmpty(extensionAttribute.Name.NamespaceName) && extensionAttribute.Name.LocalName.Equals("xmlns", StringComparison.Ordinal)) ||
+            // Ignore elements defined by the W3C because we'll assume they are always right.
+            if (!((String.IsNullOrEmpty(extensionAttribute.Name.NamespaceName) && extensionAttribute.Name.LocalName.Equals("xmlns", StringComparison.Ordinal)) ||
                    extensionAttribute.Name.NamespaceName.StartsWith(CompilerCore.W3SchemaPrefix.NamespaceName, StringComparison.Ordinal)))
             {
-                messageHandler(WixErrors.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute.Parent.Name.LocalName, extensionAttribute.Name.LocalName));
+                Messaging.Instance.OnMessage(WixErrors.UnsupportedExtensionAttribute(sourceLineNumbers, extensionAttribute.Parent.Name.LocalName, extensionAttribute.Name.LocalName));
             }
         }
     }

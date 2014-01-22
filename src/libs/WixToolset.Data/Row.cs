@@ -71,11 +71,18 @@ namespace WixToolset.Data
             this.Table = source.Table;
             this.TableDefinition = source.TableDefinition;
             this.Number = source.Number;
+            this.Access = source.Access;
             this.Operation = source.Operation;
             this.SectionId = source.SectionId;
             this.SourceLineNumbers = source.SourceLineNumbers;
             this.fields = source.fields;
         }
+
+        /// <summary>
+        /// Gets or sets the access to the row's primary key.
+        /// </summary>
+        /// <value>The row access modifier.</value>
+        public AccessModifier Access { get; set; }
 
         /// <summary>
         /// Gets or sets the row transform operation.
@@ -266,6 +273,7 @@ namespace WixToolset.Data
             Debug.Assert("row" == reader.LocalName);
 
             bool empty = reader.IsEmptyElement;
+            AccessModifier access = AccessModifier.Public;
             RowOperation operation = RowOperation.None;
             string sectionId = null;
             SourceLineNumber sourceLineNumbers = null;
@@ -274,21 +282,11 @@ namespace WixToolset.Data
             {
                 switch (reader.LocalName)
                 {
+                    case "access":
+                        access = (AccessModifier)Enum.Parse(typeof(AccessModifier), reader.Value, true);
+                        break;
                     case "op":
-                        switch (reader.Value)
-                        {
-                            case "add":
-                                operation = RowOperation.Add;
-                                break;
-                            case "delete":
-                                operation = RowOperation.Delete;
-                                break;
-                            case "modify":
-                                operation = RowOperation.Modify;
-                                break;
-                            default:
-                                throw new XmlException();
-                        }
+                        operation = (RowOperation)Enum.Parse(typeof(RowOperation), reader.Value, true);
                         break;
                     case "sectionId":
                         sectionId = reader.Value;
@@ -300,6 +298,7 @@ namespace WixToolset.Data
             }
 
             Row row = table.CreateRow(sourceLineNumbers);
+            row.Access = access;
             row.Operation = operation;
             row.SectionId = sectionId;
 
@@ -564,6 +563,11 @@ namespace WixToolset.Data
         internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("row", Intermediate.XmlNamespaceUri);
+
+            if (AccessModifier.Public != this.Access)
+            {
+                writer.WriteAttributeString("access", this.Access.ToString().ToLowerInvariant());
+            }
 
             if (RowOperation.None != this.Operation)
             {

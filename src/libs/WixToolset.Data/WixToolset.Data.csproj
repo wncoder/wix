@@ -45,6 +45,7 @@
     <Compile Include="Pdb.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Row.cs" />
+    <Compile Include="AccessModifier.cs" />
     <Compile Include="RowIndexedList.cs" />
     <Compile Include="RowDictionary.cs" />
     <Compile Include="RowOperation.cs" />
