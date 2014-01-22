@@ -11,6 +11,7 @@ namespace WixToolset.Data
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Symbol representing a single row in a database.
@@ -51,12 +52,12 @@ namespace WixToolset.Data
         /// Gets the section for the symbol.
         /// </summary>
         /// <value>Section for the symbol.</value>
-        public Section Section { get { return (null == this.Row.Table) ? null : this.Row.Table.Section; } }
+        public Section Section { get { return this.Row.Section; } }
 
         /// <summary>
         /// Gets any duplicates of this symbol when loaded or null if there are no duplicates.
         /// </summary>
-        public IEnumerable<Symbol> Duplicates { get { return this.duplicates; } }
+        public IEnumerable<Symbol> Duplicates { get { return this.duplicates ?? Enumerable.Empty<Symbol>(); } }
 
         /// <summary>
         /// Adds a duplicate symbol.

@@ -36,7 +36,10 @@ namespace WixTest.WixUnitTest
         [Fact]
         public void ExplicitAccessModifiersValid()
         {
-            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Fragment><ComponentGroup Id='public PublicGroup' Directory='PrivateDirectory'><Component Id='internal InternalComponent'><File Id='protected ProtectedFile' Source='ignored'/></Component></ComponentGroup><DirectoryRef Id='TARGETDIR'><Directory Id='private PrivateDirectory'/></DirectoryRef></Fragment></Wix>");
+            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Fragment><ComponentGroup Id='public PublicGroup' Directory='PrivateDirectory'>" +
+                                          "<Component Id='internal InternalComponent'>" +
+                                          "<File Id='protected ProtectedFile' Source='ignored'/></Component></ComponentGroup>" +
+                                          "<DirectoryRef Id='TARGETDIR'><Directory Id='private PrivateDirectory'/></DirectoryRef></Fragment></Wix>");
             XDocument s = new Preprocessor().Process(d.CreateReader(), new Dictionary<string, string>());
             Compiler c = new Compiler();
 
@@ -60,17 +63,26 @@ namespace WixTest.WixUnitTest
         }
 
         [Fact]
-        public void ProtectedLinksAcrossFragments()
+        public void ProtectedLinksAcrossFragmentsButNotFiles()
         {
-            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='ProtectedLinksAcrossFragments' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='ProtectedDirectory'/></Product><Fragment><Directory Id='TARGETDIR'><Directory Id='protected ProtectedDirectory'/></Directory></Fragment></Wix>");
-            XDocument s = new Preprocessor().Process(d.CreateReader(), new Dictionary<string, string>());
+            XDocument d1 = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='ProtectedLinksAcrossFragments' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='ProtectedDirectory'/></Product>" +
+                                           "<Fragment><Directory Id='TARGETDIR' Name='SourceDir'><Directory Id='protected ProtectedDirectory' Name='protected'/></Directory></Fragment></Wix>");
+            XDocument d2 = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='protected ProtectedDirectory' Name='conflict'/></DirectoryRef></Fragment></Wix>");
+            XDocument s1 = new Preprocessor().Process(d1.CreateReader(), new Dictionary<string, string>());
+            XDocument s2 = new Preprocessor().Process(d2.CreateReader(), new Dictionary<string, string>());
             Compiler c = new Compiler();
             Linker l = new Linker();
+            List<Section> sections = new List<Section>();
 
-            Intermediate i = c.Compile(s);
-            Output o = l.Link(i.Sections, OutputType.Product);
+            Intermediate i = c.Compile(s1);
+            sections.AddRange(i.Sections);
 
-            var directoryRows = i.Sections.SelectMany(sec => sec.Tables).Where(t => t.Name.Equals("Directory")).SelectMany(t => t.Rows).OrderBy(r => r[0]).ToArray();
+            i = c.Compile(s2);
+            sections.AddRange(i.Sections);
+
+            Output o = l.Link(sections, OutputType.Product);
+
+            var directoryRows = o.Sections.SelectMany(sec => sec.Tables).Where(t => t.Name.Equals("Directory")).SelectMany(t => t.Rows).OrderBy(r => r[0]).ToArray();
 
             Assert.Equal(2, directoryRows.Length);
 
@@ -78,20 +90,53 @@ namespace WixTest.WixUnitTest
             Assert.Equal(AccessModifier.Protected, directoryRows[0].Access);
 
             Assert.Equal("TARGETDIR", directoryRows[1][0]);
-            Assert.Equal(AccessModifier.Protected, directoryRows[1].Access);
+            Assert.Equal(AccessModifier.Public, directoryRows[1].Access);
         }
 
         [Fact]
         public void PrivateCannotLinkAcrossFragments()
         {
-            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='PrivateCannotLinkAcrossFragments' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='PrivateDirectory'/></Product><Fragment><Directory Id='TARGETDIR'><Directory Id='private PrivateDirectory'/></Directory></Fragment></Wix>");
+            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='PrivateCannotLinkAcrossFragments' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='PrivateDirectory'/></Product>" +
+                                          "<Fragment><Directory Id='TARGETDIR' Name='SourceDir'><Directory Id='private PrivateDirectory' Name='private'/></Directory></Fragment></Wix>");
+            XDocument s = new Preprocessor().Process(d.CreateReader(), new Dictionary<string, string>());
+            Compiler c = new Compiler();
+            Linker l = new Linker();
+
+            Intermediate i = c.Compile(s);
+            WixException e = Assert.Throws<WixException>(() => l.Link(i.Sections, OutputType.Product));
+            Assert.Equal(94, e.Error.Id);
+        }
+
+        [Fact]
+        public void PrivateDuplicatesAvoidLinkError()
+        {
+            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='PrivateDuplicatesAvoidLinkError' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'></Product>" +
+                                          "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='private PrivateDirectory' Name='noconflict1'/></DirectoryRef></Fragment>" +
+                                          "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='private PrivateDirectory' Name='noconflict2'/></DirectoryRef></Fragment>" +
+                                          "<Fragment><Directory Id='TARGETDIR' Name='SourceDir' /></Fragment></Wix>");
             XDocument s = new Preprocessor().Process(d.CreateReader(), new Dictionary<string, string>());
             Compiler c = new Compiler();
             Linker l = new Linker();
 
             Intermediate i = c.Compile(s);
             Output o = l.Link(i.Sections, OutputType.Product);
-            Assert.Null(o);
+            Assert.Empty(o.Sections.SelectMany(sec => sec.Tables).Where(t => t.Name.Equals("Directory")));
+        }
+
+        [Fact]
+        public void ProtectedDuplicatesInSameFileCauseLinkError()
+        {
+            XDocument d = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='ProtectedDuplicatesInSameFileCauseLinkError' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='ProtectedDirectory'/></Product>" +
+                                          "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='protected ProtectedDirectory' Name='conflict1'/></DirectoryRef></Fragment>" +
+                                          "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='protected ProtectedDirectory' Name='conflict2'/></DirectoryRef></Fragment>" +
+                                          "<Fragment><Directory Id='TARGETDIR' Name='SourceDir' /></Fragment></Wix>");
+            XDocument s = new Preprocessor().Process(d.CreateReader(), new Dictionary<string, string>());
+            Compiler c = new Compiler();
+            Linker l = new Linker();
+
+            Intermediate i = c.Compile(s);
+            WixException e = Assert.Throws<WixException>(() => l.Link(i.Sections, OutputType.Product));
+            Assert.Equal(91, e.Error.Id);
         }
     }
 }

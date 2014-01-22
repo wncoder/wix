@@ -91,6 +91,12 @@ namespace WixToolset.Data
         public RowOperation Operation { get; set; }
 
         /// <summary>
+        /// Gets the section for the row.
+        /// </summary>
+        /// <value>Section for the row.</value>
+        public Section Section { get { return (null == this.Table) ? null : this.Table.Section; } }
+
+        /// <summary>
         /// Gets or sets the SectionId property on the row.
         /// </summary>
         /// <value>The SectionId property on the row.</value>
@@ -202,14 +208,7 @@ namespace WixToolset.Data
                 }
             }
 
-            if (!foundPrimaryKey)
-            {
-                return null;
-            }
-            else
-            {
-                return primaryKey.ToString();
-            }
+            return foundPrimaryKey ? primaryKey.ToString() : null;
         }
 
         /// <summary>
@@ -225,7 +224,7 @@ namespace WixToolset.Data
             }
 
             string dataString = this.fields[field].Data as string;
-            if (dataString != null && 0 == dataString.Length)
+            if (null != dataString && 0 == dataString.Length)
             {
                 return true;
             }
