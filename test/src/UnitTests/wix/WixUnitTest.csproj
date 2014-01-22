@@ -7,13 +7,17 @@
     <AssemblyName>WixTest.WixUnitTest</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="CompilerFixture.cs" />
     <Compile Include="ExtensionManagerFixture.cs" />
+    <Compile Include="IdentifierAccessModifiersFixture.cs" />
     <Compile Include="PreprocessorFixture.cs" />
     <Compile Include="SourceLineNumberFixture.cs" />
+    <Compile Include="WixUnitTestBaseFixture.cs" />
   </ItemGroup>
+
   <ItemGroup>
     <Content Include="testdata\simple.wxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -24,11 +28,12 @@
     <Content Include="testdata\double_fragment.wxs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="testdata\include.wxi">
+    <Content Include="testdata\include.wxi">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
+
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -41,6 +46,7 @@
       <HintPath>$(XunitPath)\xunit.dll</HintPath>
     </Reference>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\libs\WixToolset.Data\WixToolset.Data.csproj">
       <Project>{6a98499e-40ec-4335-9c31-96a2511d47c6}</Project>
@@ -52,8 +58,10 @@
       <Name>Wix</Name>
     </ProjectReference>
   </ItemGroup>
+
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
+
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>
