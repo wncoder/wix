@@ -13,11 +13,12 @@ namespace WixToolset.Link
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Text;
     using WixToolset.Data;
     using WixToolset.Data.Rows;
 
-
+    /// <summary>
+    /// Resolves all the simple references in a section.
+    /// </summary>
     internal class ResolveReferencesCommand
     {
         private Section entrySection;
@@ -25,7 +26,6 @@ namespace WixToolset.Link
         private HashSet<Symbol> referencedSymbols;
         private HashSet<Section> resolvedSections;
         private HashSet<WixSimpleReferenceRow> unresolvedReferences;
-
 
         public ResolveReferencesCommand(Section entrySection, IDictionary<string, Symbol> symbols)
         {
@@ -157,15 +157,16 @@ namespace WixToolset.Link
         {
             switch (symbol.Access)
             {
+                case AccessModifier.Public:
+                    return true;
                 case AccessModifier.Internal:
-                    throw new NotImplementedException();
+                    return null != symbol.Row.Section.LibraryId && symbol.Row.Section.LibraryId.Equals(referencingSection.LibraryId);
+                case AccessModifier.Protected:
+                    return symbol.Row.Section.IntermediateId.Equals(referencingSection.IntermediateId);
                 case AccessModifier.Private:
                     return referencingSection == symbol.Section;
-                case AccessModifier.Protected:
-                    throw new NotImplementedException();
-                case AccessModifier.Public:
                 default:
-                    return true;
+                    throw new InvalidOperationException();
             }
         }
     }

@@ -26,19 +26,33 @@ namespace WixToolset.Data
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixobj";
         private static readonly Version CurrentVersion = new Version("4.0.0.0");
 
+        private string id;
+        private List<Section> sections;
+
         /// <summary>
         /// Instantiate a new Intermediate.
         /// </summary>
         public Intermediate()
         {
-            this.Sections = new List<Section>();
+            this.id = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '.').Replace('/', '_');
+            this.sections = new List<Section>();
         }
 
         /// <summary>
         /// Get the sections contained in this intermediate.
         /// </summary>
         /// <value>Sections contained in this intermediate.</value>
-        public IList<Section> Sections { get; private set; }
+        public IEnumerable<Section> Sections { get { return this.sections; } }
+
+        /// <summary>
+        /// Adds a section to the intermediate.
+        /// </summary>
+        /// <param name="section">Section to add to the intermediate.</param>
+        public void AddSection(Section section)
+        {
+            section.IntermediateId = this.id;
+            this.sections.Add(section);
+        }
 
         /// <summary>
         /// Loads an intermediate from a path on disk.
@@ -107,6 +121,7 @@ namespace WixToolset.Data
 
             bool empty = reader.IsEmptyElement;
             Version objVersion = null;
+            string id = null;
 
             while (reader.MoveToNextAttribute())
             {
@@ -114,6 +129,9 @@ namespace WixToolset.Data
                 {
                     case "version":
                         objVersion = new Version(reader.Value);
+                        break;
+                    case "id":
+                        id = reader.Value;
                         break;
                 }
             }
@@ -124,6 +142,7 @@ namespace WixToolset.Data
             }
 
             Intermediate intermediate = new Intermediate();
+            intermediate.id = id;
 
             if (!empty)
             {
@@ -137,7 +156,7 @@ namespace WixToolset.Data
                             switch (reader.LocalName)
                             {
                                 case "section":
-                                    intermediate.Sections.Add(Section.Read(reader, tableDefinitions));
+                                    intermediate.AddSection(Section.Read(reader, tableDefinitions));
                                     break;
                                 default:
                                     throw new XmlException();
@@ -167,6 +186,8 @@ namespace WixToolset.Data
             writer.WriteStartElement("wixObject", XmlNamespaceUri);
 
             writer.WriteAttributeString("version", Intermediate.CurrentVersion.ToString());
+
+            writer.WriteAttributeString("id", this.id);
 
             foreach (Section section in this.Sections)
             {

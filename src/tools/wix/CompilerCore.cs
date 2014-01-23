@@ -1536,7 +1536,7 @@ namespace WixToolset
         internal Section CreateSection(string id, SectionType type, int codepage)
         {
             Section newSection = new Section(id, type, codepage);
-            this.intermediate.Sections.Add(newSection);
+            this.intermediate.AddSection(newSection);
 
             return newSection;
         }
