@@ -35,7 +35,9 @@ The code might also just not inherit and instead create the necessary ACL, but a
 
 ### Older versions of Burn
 
-To support older versions of Burn, the code to locate the payload cache should always check the current locations before KNOWNFOLDERIDs were defined. These locations are under AppData and ProgramData as retrieved by CSIDLs.
+Older versions of Burn will continue to check "%ProgramData%\Package Cache", so to support newer versions of Burn that support this particular feature and share cached payloads between old and new Burn versions we will default the KNOWNFOLDERID to a separate path, ex: "%ProgramData%\Package Files". Newer versions of Burn that support this feature would first query for and check the folder defined by the KNOWNFOLDERID, followed by the current "Package Cache" folder.
+
+While an older bundle may cache a package twice in this manner, it seems logical that newer bundles would install newer packages more often than older bundles. Newer versions of Burn would at least consider both locations to reduce duplication of payloads.
 
 ### Known folder location is moved
 
