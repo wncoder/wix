@@ -485,10 +485,6 @@ namespace WixToolset
                                 copyRows = true;
                                 break;
 
-                            case "WixFragment":
-                                copyRows = true;
-                                break;
-
                             case "WixGroup":
                                 copyRows = true;
                                 break;
@@ -550,30 +546,6 @@ namespace WixToolset
                         {
                             Table outputTable = this.activeOutput.EnsureTable(this.tableDefinitions[table.Name]);
                             this.CopyTableRowsToOutputTable(table, outputTable, sectionId);
-                        }
-                    }
-                }
-
-                // Verify that there were no duplicate fragment Id's.
-                Table wixFragmentTable = this.activeOutput.Tables["WixFragment"];
-                Dictionary<string, SourceLineNumber> fragmentIdIndex = new Dictionary<string, SourceLineNumber>();
-                if (null != wixFragmentTable)
-                {
-                    foreach (Row row in wixFragmentTable.Rows)
-                    {
-                        string fragmentId = row.Fields[0].Data.ToString();
-                        SourceLineNumber duplicateLine = null;
-                        if (!fragmentIdIndex.TryGetValue(fragmentId, out duplicateLine))
-                        {
-                            fragmentIdIndex.Add(fragmentId, row.SourceLineNumbers);
-                        }
-                        else
-                        {
-                            this.OnMessage(WixErrors.DuplicateSymbol(row.SourceLineNumbers, fragmentId));
-                            if (null != duplicateLine)
-                            {
-                                this.OnMessage(WixErrors.DuplicateSymbol2(duplicateLine));
-                            }
                         }
                     }
                 }
