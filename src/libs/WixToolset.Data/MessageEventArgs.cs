@@ -121,7 +121,11 @@ namespace WixToolset.Data
             string errorFileName = String.IsNullOrEmpty(longAppName) ? "WIX" : longAppName;
             for (SourceLineNumber sln = this.SourceLineNumbers; null != sln; sln = sln.Parent)
             {
-                if (sln.LineNumber.HasValue)
+                if (String.IsNullOrEmpty(sln.FileName))
+                {
+                    continue;
+                }
+                else if (sln.LineNumber.HasValue)
                 {
                     if (0 == fileNames.Count)
                     {
