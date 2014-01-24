@@ -89,7 +89,7 @@ namespace WixToolset.Link
                     {
                         this.unresolvedReferences.Add(wixSimpleReferenceRow);
                     }
-                    else // see if the symbol (and any of it's duplicates) are appropriately accessible.
+                    else // see if the symbol (and any of its duplicates) are appropriately accessible.
                     {
                         IList<Symbol> accessible = DetermineAccessibleSymbols(section, symbol);
                         if (!accessible.Any())
@@ -148,7 +148,7 @@ namespace WixToolset.Link
         }
 
         /// <summary>
-        /// Determine if a single symbol is accessbile by the referencing section.
+        /// Determine if a single symbol is accessible by the referencing section.
         /// </summary>
         /// <param name="referencingSection">Section referencing the symbol.</param>
         /// <param name="symbol">Symbol being referenced.</param>
