@@ -23,15 +23,13 @@ namespace WixToolset.Link
             this.sections = sections;
         }
 
-        public bool AllowIdenticalRows { get; set; }
-
         public OutputType ExpectedOutputType { get; set;}
 
         public Section EntrySection { get; private set; }
 
         public IDictionary<string, Symbol> Symbols { get; private set; }
 
-        public IEnumerable<Symbol> SymbolsWithDuplicates { get; private set; }
+        public IEnumerable<Symbol> PossiblyConflictingSymbols { get; private set; }
 
         /// <summary>
         /// Finds the entry section and loads the symbols from an array of intermediates.
@@ -44,7 +42,7 @@ namespace WixToolset.Link
         public void Execute()
         {
             Dictionary<string, Symbol> symbols = new Dictionary<string, Symbol>();
-            HashSet<Symbol> withDuplicates = new HashSet<Symbol>();
+            HashSet<Symbol> possibleConflicts = new HashSet<Symbol>();
 
             SectionType expectedEntrySectionType;
             if (!Enum.TryParse<SectionType>(this.ExpectedOutputType.ToString(), out expectedEntrySectionType))
@@ -74,7 +72,7 @@ namespace WixToolset.Link
                     }
                 }
 
-                // Load all the symbols from the section's tables that create tables.
+                // Load all the symbols from the section's tables that create symbols.
                 foreach (Table table in section.Tables.Where(t => t.Definition.CreateSymbols))
                 {
                     foreach (Row row in table.Rows)
@@ -86,22 +84,32 @@ namespace WixToolset.Link
                         {
                             symbols.Add(symbol.Name, symbol);
                         }
-                        else if (this.AllowIdenticalRows && existingSymbol.Row.IsIdentical(symbol.Row))
-                        {
-                            Messaging.Instance.OnMessage(WixWarnings.IdenticalRowWarning(symbol.Row.SourceLineNumbers, existingSymbol.Name));
-                            Messaging.Instance.OnMessage(WixWarnings.IdenticalRowWarning2(existingSymbol.Row.SourceLineNumbers));
-                        }
                         else // uh-oh, duplicate symbols.
                         {
-                            existingSymbol.AddDuplicate(symbol);
-                            withDuplicates.Add(existingSymbol);
+                            // If the duplicate symbols are both private directories, there is a chance that they
+                            // point to identical rows. Identical directory rows are redundant and will not cause
+                            // conflicts.
+                            if (AccessModifier.Private == existingSymbol.Access && AccessModifier.Private == symbol.Access &&
+                                "Directory" == existingSymbol.Row.Table.Name && existingSymbol.Row.IsIdentical(symbol.Row))
+                            {
+                                // Ensure identical symbol's row is marked redundant to ensure (should the row be
+                                // referenced into the final output) it will not add duplicate primary keys during
+                                // the .IDT importing.
+                                symbol.Row.Redundant = true;
+                                existingSymbol.AddRedundant(symbol);
+                            }
+                            else
+                            {
+                                existingSymbol.AddPossibleConflict(symbol);
+                                possibleConflicts.Add(existingSymbol);
+                            }
                         }
                     }
                 }
             }
 
             this.Symbols = symbols;
-            this.SymbolsWithDuplicates = withDuplicates;
+            this.PossiblyConflictingSymbols = possibleConflicts;
         }
     }
 }

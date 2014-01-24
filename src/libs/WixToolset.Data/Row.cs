@@ -73,6 +73,7 @@ namespace WixToolset.Data
             this.Number = source.Number;
             this.Access = source.Access;
             this.Operation = source.Operation;
+            this.Redundant = source.Redundant;
             this.SectionId = source.SectionId;
             this.SourceLineNumbers = source.SourceLineNumbers;
             this.fields = source.fields;
@@ -89,6 +90,11 @@ namespace WixToolset.Data
         /// </summary>
         /// <value>The row transform operation.</value>
         public RowOperation Operation { get; set; }
+
+        /// <summary>
+        /// Gets or sets wether the row is a duplicate of another row thus redundant.
+        /// </summary>
+        public bool Redundant { get; set; }
 
         /// <summary>
         /// Gets the section for the row.
@@ -274,6 +280,7 @@ namespace WixToolset.Data
             bool empty = reader.IsEmptyElement;
             AccessModifier access = AccessModifier.Public;
             RowOperation operation = RowOperation.None;
+            bool redundant = false;
             string sectionId = null;
             SourceLineNumber sourceLineNumbers = null;
 
@@ -287,6 +294,9 @@ namespace WixToolset.Data
                     case "op":
                         operation = (RowOperation)Enum.Parse(typeof(RowOperation), reader.Value, true);
                         break;
+                    case "redundant":
+                        redundant = reader.Value.Equals("yes");
+                        break;
                     case "sectionId":
                         sectionId = reader.Value;
                         break;
@@ -299,6 +309,7 @@ namespace WixToolset.Data
             Row row = table.CreateRow(sourceLineNumbers);
             row.Access = access;
             row.Operation = operation;
+            row.Redundant = redundant;
             row.SectionId = sectionId;
 
             // loop through all the fields in a row
@@ -352,7 +363,7 @@ namespace WixToolset.Data
         /// Returns the row in a format usable in IDT files.
         /// </summary>
         /// <param name="keepAddedColumns">Whether to keep columns added in a transform.</param>
-        /// <returns>null if OutputRow is unreal, or string with tab delimited field values otherwise.</returns>
+        /// <returns>String with tab delimited field values.</returns>
         internal string ToIdtDefinition(bool keepAddedColumns)
         {
             bool first = true;
@@ -360,8 +371,8 @@ namespace WixToolset.Data
 
             foreach (Field field in this.fields)
             {
-                // conditionally keep columns added in a transform; otherwise,
-                // break because columns can only be added at the end
+                // Conditionally keep columns added in a transform; otherwise,
+                // break because columns can only be added at the end.
                 if (field.Column.Added && !keepAddedColumns)
                 {
                     break;
@@ -571,6 +582,11 @@ namespace WixToolset.Data
             if (RowOperation.None != this.Operation)
             {
                 writer.WriteAttributeString("op", this.Operation.ToString().ToLowerInvariant());
+            }
+
+            if (this.Redundant)
+            {
+                writer.WriteAttributeString("redundant", "yes");
             }
 
             if (null != this.SectionId)

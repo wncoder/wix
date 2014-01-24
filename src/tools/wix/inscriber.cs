@@ -404,13 +404,13 @@ namespace WixToolset
 
                 if (digitalCertificateTable.Rows.Count > 0)
                 {
-                    database.ImportTable(codepage, (IMessageHandler)this, digitalCertificateTable, this.TempFilesLocation, true);
+                    database.ImportTable(codepage, digitalCertificateTable, this.TempFilesLocation, true);
                     shouldCommit = true;
                 }
 
                 if (digitalSignatureTable.Rows.Count > 0)
                 {
-                    database.ImportTable(codepage, (IMessageHandler)this, digitalSignatureTable, this.TempFilesLocation, true);
+                    database.ImportTable(codepage, digitalSignatureTable, this.TempFilesLocation, true);
                     shouldCommit = true;
                 }
 

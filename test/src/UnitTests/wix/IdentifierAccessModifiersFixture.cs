@@ -104,7 +104,7 @@ namespace WixTest.WixUnitTest
 
             Intermediate intermediate = compiler.Compile(src);
             WixException e = Assert.Throws<WixException>(() => linker.Link(intermediate.Sections, OutputType.Product));
-            Assert.Equal(WixErrors.UnresolvedReference(null, null, null, null).Id, e.Error.Id);
+            Assert.Equal(WixErrors.UnresolvedReference(null, null).Id, e.Error.Id);
         }
 
         [Fact]
@@ -161,7 +161,7 @@ namespace WixTest.WixUnitTest
             sections.AddRange(intermediate.Sections);
 
             WixException e = Assert.Throws<WixException>(() => linker.Link(sections, OutputType.Product));
-            Assert.Equal(WixErrors.UnresolvedReference(null, null, null, null).Id, e.Error.Id);
+            Assert.Equal(WixErrors.UnresolvedReference(null, null).Id, e.Error.Id);
         }
     }
 }
