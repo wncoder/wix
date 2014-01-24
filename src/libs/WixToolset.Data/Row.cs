@@ -71,6 +71,7 @@ namespace WixToolset.Data
             this.Table = source.Table;
             this.TableDefinition = source.TableDefinition;
             this.Number = source.Number;
+            this.Access = source.Access;
             this.Operation = source.Operation;
             this.SectionId = source.SectionId;
             this.SourceLineNumbers = source.SourceLineNumbers;
@@ -78,10 +79,22 @@ namespace WixToolset.Data
         }
 
         /// <summary>
+        /// Gets or sets the access to the row's primary key.
+        /// </summary>
+        /// <value>The row access modifier.</value>
+        public AccessModifier Access { get; set; }
+
+        /// <summary>
         /// Gets or sets the row transform operation.
         /// </summary>
         /// <value>The row transform operation.</value>
         public RowOperation Operation { get; set; }
+
+        /// <summary>
+        /// Gets the section for the row.
+        /// </summary>
+        /// <value>Section for the row.</value>
+        public Section Section { get { return (null == this.Table) ? null : this.Table.Section; } }
 
         /// <summary>
         /// Gets or sets the SectionId property on the row.
@@ -195,14 +208,7 @@ namespace WixToolset.Data
                 }
             }
 
-            if (!foundPrimaryKey)
-            {
-                return null;
-            }
-            else
-            {
-                return primaryKey.ToString();
-            }
+            return foundPrimaryKey ? primaryKey.ToString() : null;
         }
 
         /// <summary>
@@ -218,7 +224,7 @@ namespace WixToolset.Data
             }
 
             string dataString = this.fields[field].Data as string;
-            if (dataString != null && 0 == dataString.Length)
+            if (null != dataString && 0 == dataString.Length)
             {
                 return true;
             }
@@ -266,6 +272,7 @@ namespace WixToolset.Data
             Debug.Assert("row" == reader.LocalName);
 
             bool empty = reader.IsEmptyElement;
+            AccessModifier access = AccessModifier.Public;
             RowOperation operation = RowOperation.None;
             string sectionId = null;
             SourceLineNumber sourceLineNumbers = null;
@@ -274,21 +281,11 @@ namespace WixToolset.Data
             {
                 switch (reader.LocalName)
                 {
+                    case "access":
+                        access = (AccessModifier)Enum.Parse(typeof(AccessModifier), reader.Value, true);
+                        break;
                     case "op":
-                        switch (reader.Value)
-                        {
-                            case "add":
-                                operation = RowOperation.Add;
-                                break;
-                            case "delete":
-                                operation = RowOperation.Delete;
-                                break;
-                            case "modify":
-                                operation = RowOperation.Modify;
-                                break;
-                            default:
-                                throw new XmlException();
-                        }
+                        operation = (RowOperation)Enum.Parse(typeof(RowOperation), reader.Value, true);
                         break;
                     case "sectionId":
                         sectionId = reader.Value;
@@ -300,6 +297,7 @@ namespace WixToolset.Data
             }
 
             Row row = table.CreateRow(sourceLineNumbers);
+            row.Access = access;
             row.Operation = operation;
             row.SectionId = sectionId;
 
@@ -564,6 +562,11 @@ namespace WixToolset.Data
         internal void Write(XmlWriter writer)
         {
             writer.WriteStartElement("row", Intermediate.XmlNamespaceUri);
+
+            if (AccessModifier.Public != this.Access)
+            {
+                writer.WriteAttributeString("access", this.Access.ToString().ToLowerInvariant());
+            }
 
             if (RowOperation.None != this.Operation)
             {

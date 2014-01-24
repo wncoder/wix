@@ -18,7 +18,7 @@ namespace WixTest.WixUnitTest
     using WixToolset.Data;
     using Xunit;
 
-    public class CompilerFixture
+    public class CompilerFixture : WixUnitTestBaseFixture
     {
         [Fact]
         public void CanCompile()

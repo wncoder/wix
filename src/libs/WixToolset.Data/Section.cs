@@ -10,15 +10,11 @@
 namespace WixToolset.Data
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
     using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
-    using System.Text;
     using System.Xml;
-    using WixToolset.Data.Rows;
 
     /// <summary>
     /// Section in an object file.
@@ -69,6 +65,16 @@ namespace WixToolset.Data
         /// </summary>
         /// <value>The source line information of the file containing this section.</value>
         public SourceLineNumber SourceLineNumbers { get; private set; }
+
+        /// <summary>
+        /// Gets the identity of the intermediate the section is contained within.
+        /// </summary>
+        public string IntermediateId { get; internal set; }
+
+        /// <summary>
+        /// Gets the identity of the library when the section is contained within one.
+        /// </summary>
+        public string LibraryId { get; internal set; }
 
         /// <summary>
         /// Ensures a table is added to the section's table collection.

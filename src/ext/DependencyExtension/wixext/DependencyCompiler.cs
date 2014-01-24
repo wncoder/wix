@@ -183,7 +183,7 @@ namespace WixToolset.Extensions
         /// <param name="attribute">The XML attribute for the ProviderKey attribute.</param>
         private void ParseProviderKeyAttribute(SourceLineNumber sourceLineNumbers, XElement parentElement, XAttribute attribute)
         {
-            string id = null;
+            Identifier id = null;
             string providerKey = null;
             int illegalChar = -1;
 
@@ -221,9 +221,8 @@ namespace WixToolset.Extensions
             {
                 // Create the provider row for the bundle. The Component_ field is required
                 // in the table definition but unused for bundles, so just set it to the valid ID.
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider");
-                row[0] = id;
-                row[1] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider", id);
+                row[1] = id.Id;
                 row[2] = providerKey;
                 row[5] = DependencyCommon.ProvidesAttributesBundle;
             }
@@ -241,7 +240,7 @@ namespace WixToolset.Extensions
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             ComponentKeyPath keyPath = null;
-            string id = null;
+            Identifier id = null;
             string key = null;
             string version = null;
             string displayName = null;
@@ -255,7 +254,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Key":
                             key = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -326,7 +325,7 @@ namespace WixToolset.Extensions
             }
 
             // Need the element ID for child element processing, so generate now if not authored.
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 id = this.Core.CreateIdentifier("dep", node.Name.LocalName, parentId, key);
             }
@@ -338,10 +337,10 @@ namespace WixToolset.Extensions
                     switch (child.Name.LocalName)
                     {
                         case "Requires":
-                            this.ParseRequiresElement(child, id, PackageType.None == packageType);
+                            this.ParseRequiresElement(child, id.Id, PackageType.None == packageType);
                             break;
                         case "RequiresRef":
-                            this.ParseRequiresRefElement(child, id, PackageType.None == packageType);
+                            this.ParseRequiresRefElement(child, id.Id, PackageType.None == packageType);
                             break;
                         default:
                             this.Core.UnexpectedElement(node, child);
@@ -357,8 +356,7 @@ namespace WixToolset.Extensions
             if (!this.Core.EncounteredError)
             {
                 // Create the row in the provider table.
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyProvider", id);
                 row[1] = parentId;
                 row[2] = key;
 
@@ -394,8 +392,7 @@ namespace WixToolset.Extensions
                     // Generate registry rows for the provider using binder properties.
                     string keyProvides = String.Concat(DependencyCommon.RegistryRoot, key);
 
-                    row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = this.Core.CreateIdentifier("reg", id, "(Default)");
+                    row = this.Core.CreateRow(sourceLineNumbers, "Registry", this.Core.CreateIdentifier("reg", id.Id, "(Default)"));
                     row[1] = -1;
                     row[2] = keyProvides;
                     row[3] = null;
@@ -403,19 +400,17 @@ namespace WixToolset.Extensions
                     row[5] = parentId;
 
                     // Use the Version registry value and use that as a potential key path.
-                    string idVersion = this.Core.CreateIdentifier("reg", id, "Version");
-                    keyPath = new ComponentKeyPath() { Id = idVersion, Explicit = false, Type = ComponentKeyPathType.Registry };
+                    Identifier idVersion = this.Core.CreateIdentifier("reg", id.Id, "Version");
+                    keyPath = new ComponentKeyPath() { Id = idVersion.Id, Explicit = false, Type = ComponentKeyPathType.Registry };
 
-                    row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = idVersion;
+                    row = this.Core.CreateRow(sourceLineNumbers, "Registry", idVersion);
                     row[1] = -1;
                     row[2] = keyProvides;
                     row[3] = "Version";
                     row[4] = !String.IsNullOrEmpty(version) ? version : "[ProductVersion]";
                     row[5] = parentId;
 
-                    row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                    row[0] = this.Core.CreateIdentifier("reg", id, "DisplayName");
+                    row = this.Core.CreateRow(sourceLineNumbers, "Registry", this.Core.CreateIdentifier("reg", id.Id, "DisplayName"));
                     row[1] = -1;
                     row[2] = keyProvides;
                     row[3] = "DisplayName";
@@ -424,8 +419,7 @@ namespace WixToolset.Extensions
 
                     if (0 != attributes)
                     {
-                        row = this.Core.CreateRow(sourceLineNumbers, "Registry");
-                        row[0] = this.Core.CreateIdentifier("reg", id, "Attributes");
+                        row = this.Core.CreateRow(sourceLineNumbers, "Registry", this.Core.CreateIdentifier("reg", id.Id, "Attributes"));
                         row[1] = -1;
                         row[2] = keyProvides;
                         row[3] = "Attributes";
@@ -447,7 +441,7 @@ namespace WixToolset.Extensions
         private void ParseRequiresElement(XElement node, string providerId, bool requiresAction)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string providerKey = null;
             string minVersion = null;
             string maxVersion = null;
@@ -461,7 +455,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "ProviderKey":
                             providerKey = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -497,7 +491,7 @@ namespace WixToolset.Extensions
 
             this.Core.ParseForExtensionElements(node);
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 // Generate an ID only if this element is authored under a Provides element; otherwise, a RequiresRef
                 // element will be necessary and the Id attribute will be required.
@@ -508,6 +502,7 @@ namespace WixToolset.Extensions
                 else
                 {
                     this.Core.OnMessage(WixErrors.ExpectedAttributeWhenElementNotUnderElement(sourceLineNumbers, node.Name.LocalName, "Id", "Provides"));
+                    id = Identifier.Invalid;
                 }
             }
 
@@ -542,8 +537,7 @@ namespace WixToolset.Extensions
                     }
                 }
 
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependency");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixDependency", id);
                 row[1] = providerKey;
                 row[2] = minVersion;
                 row[3] = maxVersion;
@@ -559,7 +553,7 @@ namespace WixToolset.Extensions
                     // Create the relationship between the WixDependency row and the parent WixDependencyProvider row.
                     row = this.Core.CreateRow(sourceLineNumbers, "WixDependencyRef");
                     row[0] = providerId;
-                    row[1] = id;
+                    row[1] = id.Id;
                 }
             }
         }

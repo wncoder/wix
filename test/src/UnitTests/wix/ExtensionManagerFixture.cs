@@ -15,7 +15,7 @@ namespace WixTest.WixUnitTest
     using WixToolset.Extensibility;
     using Xunit;
 
-    public class ExtensionManagerFixture
+    public class ExtensionManagerFixture : WixUnitTestBaseFixture
     {
         [Fact]
         public void CanLoadCompilerExtension()

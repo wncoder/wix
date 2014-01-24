@@ -17,7 +17,7 @@ namespace WixTest.WixUnitTest
     using WixToolset.Data;
     using Xunit;
 
-    public class SourceLineNumberFixture
+    public class SourceLineNumberFixture : WixUnitTestBaseFixture
     {
         [Fact]
         public void CanEncodeSingleLineNumber()

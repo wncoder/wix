@@ -162,7 +162,7 @@ namespace WixToolset.Extensions
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
             bool multiValue = 0 < args.Length;
-            string id = null;
+            Identifier id = null;
             string action = multiValue ? args[0] : null;
             string property = multiValue ? args[1] : null;
             string op = null;
@@ -195,7 +195,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "CustomAction":
                             action = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
@@ -333,7 +333,7 @@ namespace WixToolset.Extensions
 
                 if (!this.Core.EncounteredError)
                 {
-                    if (String.IsNullOrEmpty(id))
+                    if (null == id)
                     {
                         id = this.Core.CreateIdentifier("lux", action, property, index, condition, mutation);
                     }
@@ -343,8 +343,7 @@ namespace WixToolset.Extensions
                         oper = Operator.Equal;
                     }
 
-                    Row row = this.Core.CreateRow(sourceLineNumbers, "WixUnitTest");
-                    row[0] = id;
+                    Row row = this.Core.CreateRow(sourceLineNumbers, "WixUnitTest", id);
                     row[1] = action;
                     row[2] = property;
                     row[3] = (int)oper;
