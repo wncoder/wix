@@ -218,7 +218,6 @@ namespace WixToolset
 
                 // Resolve the symbol references to find the set of sections we care about for linking.
                 // Of course, we start with the entry section (that's how it got its name after all).
-                //output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
                 ResolveReferencesCommand resolve = new ResolveReferencesCommand(output.EntrySection, allSymbols);
                 resolve.BuildingMergeModule = (OutputType.Module == output.Type);
 
@@ -264,7 +263,7 @@ namespace WixToolset
                 }
 
                 // Report duplicates that would ultimately end up being primary key collisions.
-                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.SymbolsWithDuplicates, resolve.ResolvedSections);
+                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.PossiblyConflictingSymbols, resolve.ResolvedSections);
                 reportDupes.Execute();
 
                 if (Messaging.Instance.EncounteredError)

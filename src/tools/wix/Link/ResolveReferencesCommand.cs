@@ -136,7 +136,15 @@ namespace WixToolset.Link
                 symbols.Add(symbol);
             }
 
-            foreach (Symbol dupe in symbol.Duplicates)
+            foreach (Symbol dupe in symbol.PossiblyConflictingSymbols)
+            {
+                if (AccessibleSymbol(referencingSection, dupe))
+                {
+                    symbols.Add(dupe);
+                }
+            }
+
+            foreach (Symbol dupe in symbol.RedundantSymbols)
             {
                 if (AccessibleSymbol(referencingSection, dupe))
                 {
