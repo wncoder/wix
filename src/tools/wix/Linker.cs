@@ -223,12 +223,18 @@ namespace WixToolset
 
                 resolve.Execute();
 
+                if (Messaging.Instance.EncounteredError)
+                {
+                    return null;
+                }
+
+                // Add the resolved sections to the output then flatten the complex
+                // references that particpate in groups.
                 foreach (Section section in resolve.ResolvedSections)
                 {
                     output.Sections.Add(section);
                 }
 
-                // Flattening the complex references that participate in groups.
                 this.FlattenSectionsComplexReferences(output.Sections);
 
                 if (Messaging.Instance.EncounteredError)
@@ -242,11 +248,6 @@ namespace WixToolset
                 ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
                 ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
                 this.ProcessComplexReferences(output, output.Sections, referencedComponents, componentsToFeatures, featuresToFeatures, modulesToFeatures);
-
-                foreach (var unresolvedReference in resolve.UnresolvedReferences)
-                {
-                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.SymbolicName));
-                }
 
                 if (Messaging.Instance.EncounteredError)
                 {
@@ -270,11 +271,6 @@ namespace WixToolset
                 {
                     return null;
                 }
-
-                //if (null != this.UnreferencedSymbolsFile)
-                //{
-                //    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
-                //}
 
                 // resolve the feature to feature connects
                 this.ResolveFeatureToFeatureConnects(featuresToFeatures, allSymbols);
