@@ -263,7 +263,7 @@ namespace WixToolset
                 }
 
                 // Report duplicates that would ultimately end up being primary key collisions.
-                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.PossiblyConflictingSymbols, resolve.ResolvedSections);
+                ReportConflictingSymbolsCommand reportDupes = new ReportConflictingSymbolsCommand(find.PossiblyConflictingSymbols, resolve.ResolvedSections);
                 reportDupes.Execute();
 
                 if (Messaging.Instance.EncounteredError)
