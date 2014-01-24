@@ -21,6 +21,7 @@
             <xs:sequence minOccurs="0" maxOccurs="unbounded">
                 <xs:element ref="section" />
             </xs:sequence>
+            <xs:attribute name="id" type="xs:string" use="required" />
             <xs:attribute name="version" type="xs:string" use="required">
                 <xs:annotation>
                     <xs:documentation>Version of WiX used to create this object file.</xs:documentation>
@@ -81,6 +82,16 @@
             <xs:sequence maxOccurs="32">
                 <xs:element ref="field" />
             </xs:sequence>
+            <xs:attribute name="access">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="public" />
+                        <xs:enumeration value="internal" />
+                        <xs:enumeration value="protected" />
+                        <xs:enumeration value="private" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
             <xs:attribute name="op">
                 <xs:simpleType>
                     <xs:restriction base="xs:string">

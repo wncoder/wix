@@ -174,13 +174,13 @@ namespace WixToolset
                             // do nothing; @Language is used for locutil which can't convert Culture to lcid
                             break;
                         default:
-                            Common.UnexpectedAttribute(sourceLineNumbers, attrib, Messaging.Instance.OnMessage);
+                            Common.UnexpectedAttribute(sourceLineNumbers, attrib);
                             break;
                     }
                 }
                 else
                 {
-                    Common.UnexpectedAttribute(sourceLineNumbers, attrib, Messaging.Instance.OnMessage);
+                    Common.UnexpectedAttribute(sourceLineNumbers, attrib);
                 }
             }
 
@@ -232,10 +232,10 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib, null);
+                            id = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "Overridable":
-                            overridable = YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib, null);
+                            overridable = YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "Localizable":
                             ; // do nothing
@@ -297,49 +297,49 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Dialog":
-                            dialog = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib, null);
+                            dialog = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "Control":
-                            control = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib, null);
+                            control = Common.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "X":
-                            x = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue, null);
+                            x = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
                             break;
                         case "Y":
-                            y = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue, null);
+                            y = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
                             break;
                         case "Width":
-                            width = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue, null);
+                            width = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
                             break;
                         case "Height":
-                            height = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue, null);
+                            height = Common.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
                             break;
                         case "RightToLeft":
-                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib, null))
+                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib))
                             {
                                 attribs |= MsiInterop.MsidbControlAttributesRTLRO;
                             }
                             break;
                         case "RightAligned":
-                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib, null))
+                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib))
                             {
                                 attribs |= MsiInterop.MsidbControlAttributesRightAligned;
                             }
                             break;
                         case "LeftScroll":
-                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib, null))
+                            if (YesNoType.Yes == Common.GetAttributeYesNoValue(sourceLineNumbers, attrib))
                             {
                                 attribs |= MsiInterop.MsidbControlAttributesLeftScroll;
                             }
                             break;
                         default:
-                            Common.UnexpectedAttribute(sourceLineNumbers, attrib, Messaging.Instance.OnMessage);
+                            Common.UnexpectedAttribute(sourceLineNumbers, attrib);
                             break;
                     }
                 }
                 else
                 {
-                    Common.UnexpectedAttribute(sourceLineNumbers, attrib, Messaging.Instance.OnMessage);
+                    Common.UnexpectedAttribute(sourceLineNumbers, attrib);
                 }
             }
 

@@ -5,11 +5,6 @@
 //   The license and further copyright text can be found in the file
 //   LICENSE.TXT at the root directory of the distribution.
 // </copyright>
-//
-// <summary>
-// The base compiler extension.  Any of these methods can be overridden to change
-// the behavior of the compiler.
-// </summary>
 //-------------------------------------------------------------------------------------------------
 
 namespace WixToolset
@@ -25,9 +20,7 @@ namespace WixToolset
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.Xml;
     using System.Xml.Linq;
-    using System.Xml.Schema;
     using WixToolset.Data;
     using WixToolset.Data.Rows;
     using WixToolset.Extensibility;
@@ -78,6 +71,8 @@ namespace WixToolset
         private static readonly Regex LegalWildcardLongFilename = new Regex(String.Concat("^", LegalWildcardLongFilenameCharacters, @"{1,259}$"));
 
         private static readonly Regex PutGuidHere = new Regex(@"PUT\-GUID\-(?:\d+\-)?HERE", RegexOptions.Singleline);
+
+        private static readonly Regex LegalIdentifierWithAccess = new Regex(@"^((?<access>public|internal|protected|private)\s+)?(?<id>[_A-Za-z][0-9A-Za-z_\.]*)$", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         // Built-in variables (from burn\engine\variable.cpp, "vrgBuiltInVariables", around line 113)
         private static readonly List<String> BuiltinBundleVariables = new List<string>(
@@ -141,10 +136,6 @@ namespace WixToolset
         private Intermediate intermediate;
         private bool showPedanticMessages;
 
-        private Section activeSection;
-
-        private Platform currentPlatform;
-
         /// <summary>
         /// Constructor for all compiler core.
         /// </summary>
@@ -162,20 +153,13 @@ namespace WixToolset
         /// Gets the section the compiler is currently emitting symbols into.
         /// </summary>
         /// <value>The section the compiler is currently emitting symbols into.</value>
-        public Section ActiveSection
-        {
-            get { return this.activeSection; }
-        }
+        public Section ActiveSection { get; private set; }
 
         /// <summary>
         /// Gets or sets the platform which the compiler will use when defaulting 64-bit attributes and elements.
         /// </summary>
         /// <value>The platform which the compiler will use when defaulting 64-bit attributes and elements.</value>
-        public Platform CurrentPlatform
-        {
-            get { return this.currentPlatform; }
-            set { this.currentPlatform = value; }
-        }
+        public Platform CurrentPlatform { get; set; }
 
         /// <summary>
         /// Gets whether the compiler core encountered an error while processing.
@@ -362,17 +346,17 @@ namespace WixToolset
             // canonicalize the long name if its not a localization identifier (they are case-sensitive)
             if (!this.IsValidLocIdentifier(longName))
             {
-                longName = longName.ToLower(CultureInfo.InvariantCulture);
+                longName = longName.ToLowerInvariant();
             }
 
             // collect all the data
-            ArrayList strings = new ArrayList();
+            List<string> strings = new List<string>(1 + args.Length);
             strings.Add(longName);
             strings.AddRange(args);
 
             // prepare for hashing
-            string stringData = String.Join("|", (string[])strings.ToArray(typeof(string)));
-            byte[] data = Encoding.Unicode.GetBytes(stringData);
+            string stringData = String.Join("|", strings);
+            byte[] data = Encoding.UTF8.GetBytes(stringData);
 
             // hash the data
             byte[] hash;
@@ -383,9 +367,7 @@ namespace WixToolset
 
             // generate the short file/directory name without an extension
             StringBuilder shortName = new StringBuilder(Convert.ToBase64String(hash));
-            shortName.Remove(8, shortName.Length - 8);
-            shortName.Replace('/', '_');
-            shortName.Replace('+', '-');
+            shortName.Remove(8, shortName.Length - 8).Replace('+', '-').Replace('/', '_');
 
             if (keepExtension)
             {
@@ -406,7 +388,7 @@ namespace WixToolset
                 }
             }
 
-            return shortName.ToString().ToLower(CultureInfo.InvariantCulture);
+            return shortName.ToString().ToLowerInvariant();
         }
 
         /// <summary>
@@ -492,7 +474,7 @@ namespace WixToolset
         /// <returns>The generated GUID for the given namespace and value.</returns>
         public string CreateGuid(Guid namespaceGuid, string value)
         {
-            return Uuid.NewUuid(namespaceGuid, value).ToString("B").ToUpper(CultureInfo.InvariantCulture);
+            return Uuid.NewUuid(namespaceGuid, value).ToString("B").ToUpperInvariant();
         }
 
         /// <summary>
@@ -501,9 +483,9 @@ namespace WixToolset
         /// <param name="sourceLineNumbers">Source and line number of current row.</param>
         /// <param name="tableName">Name of table to create row in.</param>
         /// <returns>New row.</returns>
-        public Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName)
+        public Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Identifier identifier = null)
         {
-            return this.CreateRow(sourceLineNumbers, tableName, this.activeSection);
+            return this.CreateRow(sourceLineNumbers, tableName, this.ActiveSection, identifier);
         }
 
         /// <summary>
@@ -513,12 +495,19 @@ namespace WixToolset
         /// <param name="tableName">Name of table to create row in.</param>
         /// <param name="section">The section to which the row is added. If null, the row is added to the active section.</param>
         /// <returns>New row.</returns>
-        internal Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Section section)
+        internal Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Section section, Identifier identifier = null)
         {
             TableDefinition tableDefinition = this.tableDefinitions[tableName];
             Table table = section.EnsureTable(tableDefinition);
+            Row row = table.CreateRow(sourceLineNumbers);
 
-            return table.CreateRow(sourceLineNumbers);
+            if (null != identifier)
+            {
+                row.Access = identifier.Access;
+                row[0] = identifier.Id;
+            }
+
+            return row;
         }
 
         /// <summary>
@@ -545,9 +534,9 @@ namespace WixToolset
         /// <param name="value">The registry entry value.</param>
         /// <param name="componentId">The component which will control installation/uninstallation of the registry entry.</param>
         /// <param name="escapeLeadingHash">If true, "escape" leading '#' characters so the value is written as a REG_SZ.</param>
-        public string CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId, bool escapeLeadingHash)
+        public Identifier CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId, bool escapeLeadingHash)
         {
-            string id = null;
+            Identifier id = null;
 
             if (!this.EncounteredError)
             {
@@ -572,9 +561,8 @@ namespace WixToolset
                     value = String.Concat("#", value);
                 }
 
-                id = this.CreateIdentifier("reg", componentId, root.ToString(CultureInfo.InvariantCulture.NumberFormat), key.ToLower(CultureInfo.InvariantCulture), (null != name ? name.ToLower(CultureInfo.InvariantCulture) : name));
-                Row row = this.CreateRow(sourceLineNumbers, "Registry");
-                row[0] = id;
+                id = this.CreateIdentifier("reg", componentId, root.ToString(CultureInfo.InvariantCulture.NumberFormat), key.ToLowerInvariant(), (null != name ? name.ToLowerInvariant() : name));
+                Row row = this.CreateRow(sourceLineNumbers, "Registry", id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = name;
@@ -594,7 +582,7 @@ namespace WixToolset
         /// <param name="name">The registry entry name.</param>
         /// <param name="value">The registry entry value.</param>
         /// <param name="componentId">The component which will control installation/uninstallation of the registry entry.</param>
-        public string CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId)
+        public Identifier CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId)
         {
             return this.CreateRegistryRow(sourceLineNumbers, root, key, name, value, componentId, true);
         }
@@ -678,7 +666,7 @@ namespace WixToolset
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public string GetAttributeValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, EmptyRule emptyRule = EmptyRule.CanBeWhitespaceOnly)
         {
-            return Common.GetAttributeValue(sourceLineNumbers, attribute, emptyRule, this.OnMessage);
+            return Common.GetAttributeValue(sourceLineNumbers, attribute, emptyRule);
         }
 
         /// <summary>
@@ -762,7 +750,7 @@ namespace WixToolset
         [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public int GetAttributeIntegerValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, int minimum, int maximum)
         {
-            return Common.GetAttributeIntegerValue(sourceLineNumbers, attribute, minimum, maximum, this.OnMessage);
+            return Common.GetAttributeIntegerValue(sourceLineNumbers, attribute, minimum, maximum);
         }
 
         /// <summary>
@@ -993,10 +981,33 @@ namespace WixToolset
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
         /// <param name="attribute">The attribute containing the value to get.</param>
         /// <returns>The attribute's identifier value or a special value if an error occurred.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
+        public Identifier GetAttributeIdentifier(SourceLineNumber sourceLineNumbers, XAttribute attribute)
+        {
+            string value = Common.GetAttributeValue(sourceLineNumbers, attribute, EmptyRule.CanBeEmpty);
+            AccessModifier access = AccessModifier.Public;
+
+            Match match = CompilerCore.LegalIdentifierWithAccess.Match(value);
+            if (!match.Success)
+            {
+                return null;
+            }
+            else if (match.Groups["access"].Success)
+            {
+                access = (AccessModifier)Enum.Parse(typeof(AccessModifier), match.Groups["access"].Value, true);
+            }
+
+            return new Identifier(match.Groups["id"].Value, access);
+        }
+
+        /// <summary>
+        /// Get an identifier attribute value and displays an error for an illegal identifier value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <returns>The attribute's identifier value or a special value if an error occurred.</returns>
         public string GetAttributeIdentifierValue(SourceLineNumber sourceLineNumbers, XAttribute attribute)
         {
-            return Common.GetAttributeIdentifierValue(sourceLineNumbers, attribute, this.OnMessage);
+            return Common.GetAttributeIdentifierValue(sourceLineNumbers, attribute);
         }
 
         /// <summary>
@@ -1005,17 +1016,16 @@ namespace WixToolset
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
         /// <param name="attribute">The attribute containing the value to get.</param>
         /// <returns>The attribute's YesNoType value.</returns>
-        [SuppressMessage("Microsoft.Design", "CA1059:MembersShouldNotExposeCertainConcreteTypes")]
         public YesNoType GetAttributeYesNoValue(SourceLineNumber sourceLineNumbers, XAttribute attribute)
         {
             string value = this.GetAttributeValue(sourceLineNumbers, attribute);
 
             YesNoType result = YesNoType.IllegalValue;
-            if (value.Equals("yes", StringComparison.Ordinal) || value.Equals("true", StringComparison.Ordinal))
+            if (value.Equals("yes") || value.Equals("true"))
             {
                 result = YesNoType.Yes;
             }
-            else if (value.Equals("no", StringComparison.Ordinal) || value.Equals("false", StringComparison.Ordinal))
+            else if (value.Equals("no") || value.Equals("false"))
             {
                 result = YesNoType.No;
             }
@@ -1332,9 +1342,10 @@ namespace WixToolset
         /// <param name="args">Information to hash.</param>
         /// <returns>The generated identifier.</returns>
         [SuppressMessage("Microsoft.Globalization", "CA1303:DoNotPassLiteralsAsLocalizedParameters", MessageId = "System.InvalidOperationException.#ctor(System.String)")]
-        public string CreateIdentifier(string prefix, params string[] args)
+        public Identifier CreateIdentifier(string prefix, params string[] args)
         {
-            return Common.GenerateIdentifier(prefix, args);
+            string id = Common.GenerateIdentifier(prefix, args);
+            return new Identifier(id, AccessModifier.Private);
         }
 
         /// <summary>
@@ -1342,9 +1353,10 @@ namespace WixToolset
         /// </summary>
         /// <param name="name">File name to generate identifer from</param>
         /// <returns></returns>
-        public string CreateIdentifierFromFilename(string filename)
+        public Identifier CreateIdentifierFromFilename(string filename)
         {
-            return Common.GetIdentifierFromName(filename);
+            string id = Common.GetIdentifierFromName(filename);
+            return new Identifier(id, AccessModifier.Private);
         }
 
         /// <summary>
@@ -1446,7 +1458,7 @@ namespace WixToolset
         public void UnexpectedAttribute(XElement element, XAttribute attribute)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(element);
-            Common.UnexpectedAttribute(sourceLineNumbers, attribute, this.OnMessage);
+            Common.UnexpectedAttribute(sourceLineNumbers, attribute);
         }
 
         /// <summary>
@@ -1510,10 +1522,8 @@ namespace WixToolset
         /// <returns>New section.</returns>
         internal Section CreateActiveSection(string id, SectionType type, int codepage)
         {
-            Section newSection = this.CreateSection(id, type, codepage);
-            this.activeSection = newSection;
-
-            return newSection;
+            this.ActiveSection = this.CreateSection(id, type, codepage);
+            return this.ActiveSection;
         }
 
         /// <summary>
@@ -1526,7 +1536,7 @@ namespace WixToolset
         internal Section CreateSection(string id, SectionType type, int codepage)
         {
             Section newSection = new Section(id, type, codepage);
-            this.intermediate.Sections.Add(newSection);
+            this.intermediate.AddSection(newSection);
 
             return newSection;
         }
@@ -1581,12 +1591,7 @@ namespace WixToolset
             return this.extensions.TryGetValue(ns, out extension);
         }
 
-        public static string CreateValueList(ValueListKind kind, params string[] values)
-        {
-            return CreateValueList(kind, (IEnumerable<string>)values);
-        }
-
-        public static string CreateValueList(ValueListKind kind, IEnumerable<string> values)
+        private static string CreateValueList(ValueListKind kind, IEnumerable<string> values)
         {
             // Ideally, we could denote the list kind (and the list itself) directly in the
             // message XML, and detect and expand in the MessageHandler.GenerateMessageString()

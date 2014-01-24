@@ -1,5 +1,5 @@
 ﻿//-------------------------------------------------------------------------------------------------
-// <copyright file="EmptyRule.cs" company="Outercurve Foundation">
+// <copyright file="AccessModifier.cs" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file
@@ -9,21 +9,26 @@
 
 namespace WixToolset.Data
 {
-    public enum EmptyRule
+    public enum AccessModifier
     {
         /// <summary>
-        /// The trimmed value cannot be empty.
+        /// Indicates the identifier is publicly visible to all other sections.
         /// </summary>
-        MustHaveNonWhitespaceCharacters,
+        Public,
 
         /// <summary>
-        /// The trimmed value can be empty, but the value itself cannot be empty.
+        /// Indicates the identifier is visible only to sections in the same library.
         /// </summary>
-        CanBeWhitespaceOnly,
+        Internal,
 
         /// <summary>
-        /// The value can be empty.
+        /// Indicates the identifier is visible only to sections in the same source file.
         /// </summary>
-        CanBeEmpty
+        Protected,
+
+        /// <summary>
+        /// Indicates the identifiers is visible only to the section where it is defined.
+        /// </summary>
+        Private,
     }
 }

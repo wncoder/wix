@@ -1,5 +1,5 @@
 ﻿//-------------------------------------------------------------------------------------------------
-// <copyright file="EmptyRule.cs" company="Outercurve Foundation">
+// <copyright file="WixUnitTestBaseFixture.cs" company="Outercurve Foundation">
 //   Copyright (c) 2004, Outercurve Foundation.
 //   This software is released under Microsoft Reciprocal License (MS-RL).
 //   The license and further copyright text can be found in the file
@@ -7,23 +7,21 @@
 // </copyright>
 //-------------------------------------------------------------------------------------------------
 
-namespace WixToolset.Data
+namespace WixTest.WixUnitTest
 {
-    public enum EmptyRule
+    using WixToolset.Data;
+
+    /// <summary>
+    /// Base class for all WixUnitTest fixtures.
+    /// </summary>
+    public abstract class WixUnitTestBaseFixture
     {
         /// <summary>
-        /// The trimmed value cannot be empty.
+        /// Base constructor that ensures the messaging infrastructure is always reset between tests.
         /// </summary>
-        MustHaveNonWhitespaceCharacters,
-
-        /// <summary>
-        /// The trimmed value can be empty, but the value itself cannot be empty.
-        /// </summary>
-        CanBeWhitespaceOnly,
-
-        /// <summary>
-        /// The value can be empty.
-        /// </summary>
-        CanBeEmpty
+        public WixUnitTestBaseFixture()
+        {
+            Messaging.Instance.InitializeAppName(null, null);
+        }
     }
 }

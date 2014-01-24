@@ -246,7 +246,7 @@ namespace WixToolset
 
                 foreach (var unresolvedReference in resolve.UnresolvedReferences)
                 {
-                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.WixSimpleReferenceRow.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.WixSimpleReferenceRow.SymbolicName));
+                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.SymbolicName));
                 }
 
                 if (Messaging.Instance.EncounteredError)
@@ -263,6 +263,7 @@ namespace WixToolset
                     }
                 }
 
+                // Report duplicates that would ultimately end up being primary key collisions.
                 ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.SymbolsWithDuplicates, resolve.ResolvedSections);
                 reportDupes.Execute();
 

@@ -23,6 +23,7 @@ namespace WixToolset.Data
         public const string XmlNamespaceUri = "http://wixtoolset.org/schemas/v4/wixlib";
         private static readonly Version CurrentVersion = new Version("4.0.0.0");
 
+        private string id;
         private Dictionary<string, Localization> localizations;
         private List<Section> sections;
 
@@ -43,6 +44,12 @@ namespace WixToolset.Data
         {
             this.localizations = new Dictionary<string, Localization>();
             this.sections = new List<Section>(sections);
+
+            this.id = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '.').Replace('/', '_');
+            foreach (Section section in this.sections)
+            {
+                section.LibraryId = this.id;
+            }
         }
 
         /// <summary>
@@ -219,6 +226,9 @@ namespace WixToolset.Data
                     case "version":
                         version = new Version(reader.Value);
                         break;
+                    case "id":
+                        library.id = reader.Value;
+                        break;
                 }
             }
 
@@ -243,7 +253,9 @@ namespace WixToolset.Data
                                     library.localizations.Add(localization.Culture, localization);
                                     break;
                                 case "section":
-                                    library.sections.Add(Section.Read(reader, tableDefinitions));
+                                    Section section = Section.Read(reader, tableDefinitions);
+                                    section.LibraryId = library.id;
+                                    library.sections.Add(section);
                                     break;
                                 default:
                                     throw new XmlException();
@@ -273,6 +285,8 @@ namespace WixToolset.Data
             writer.WriteStartElement("wixLibrary", XmlNamespaceUri);
 
             writer.WriteAttributeString("version", CurrentVersion.ToString());
+
+            writer.WriteAttributeString("id", this.id);
 
             foreach (Localization localization in this.localizations.Values)
             {

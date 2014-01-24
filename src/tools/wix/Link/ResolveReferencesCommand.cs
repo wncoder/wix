@@ -11,20 +11,21 @@ namespace WixToolset.Link
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
-    using System.Text;
     using WixToolset.Data;
     using WixToolset.Data.Rows;
 
-
+    /// <summary>
+    /// Resolves all the simple references in a section.
+    /// </summary>
     internal class ResolveReferencesCommand
     {
         private Section entrySection;
         private IDictionary<string, Symbol> symbols;
         private HashSet<Symbol> referencedSymbols;
         private HashSet<Section> resolvedSections;
-        private HashSet<SimpleReferenceSection> unresolvedReferences;
-
+        private HashSet<WixSimpleReferenceRow> unresolvedReferences;
 
         public ResolveReferencesCommand(Section entrySection, IDictionary<string, Symbol> symbols)
         {
@@ -38,7 +39,7 @@ namespace WixToolset.Link
 
         public IEnumerable<Section> ResolvedSections { get { return this.resolvedSections; } }
 
-        public IEnumerable<SimpleReferenceSection> UnresolvedReferences { get { return this.unresolvedReferences; } }
+        public IEnumerable<WixSimpleReferenceRow> UnresolvedReferences { get { return this.unresolvedReferences; } }
 
         /// <summary>
         /// Resolves all the simple references in a section.
@@ -47,7 +48,7 @@ namespace WixToolset.Link
         {
             this.resolvedSections = new HashSet<Section>();
             this.referencedSymbols = new HashSet<Symbol>();
-            this.unresolvedReferences = new HashSet<SimpleReferenceSection>();
+            this.unresolvedReferences = new HashSet<WixSimpleReferenceRow>();
 
             this.RecursivelyResolveReferences(this.entrySection);
         }
@@ -74,6 +75,8 @@ namespace WixToolset.Link
             {
                 foreach (WixSimpleReferenceRow wixSimpleReferenceRow in wixSimpleReferenceTable.Rows)
                 {
+                    Debug.Assert(wixSimpleReferenceRow.Section == section);
+
                     // If we're building a Merge Module, ignore all references to the Media table
                     // because Merge Modules don't have Media tables.
                     if (this.BuildingMergeModule && "Media" == wixSimpleReferenceRow.TableName)
@@ -84,15 +87,34 @@ namespace WixToolset.Link
                     Symbol symbol;
                     if (!this.symbols.TryGetValue(wixSimpleReferenceRow.SymbolicName, out symbol))
                     {
-                        this.unresolvedReferences.Add(new SimpleReferenceSection() { Section = section, WixSimpleReferenceRow = wixSimpleReferenceRow });
+                        this.unresolvedReferences.Add(wixSimpleReferenceRow);
                     }
-                    else
+                    else // see if the symbol (and any of it's duplicates) are appropriately accessible.
                     {
-                        this.referencedSymbols.Add(symbol);
-
-                        if (null != symbol.Section)
+                        IList<Symbol> accessible = DetermineAccessibleSymbols(section, symbol);
+                        if (!accessible.Any())
                         {
-                            RecursivelyResolveReferences(symbol.Section);
+                            this.unresolvedReferences.Add(wixSimpleReferenceRow);
+                        }
+                        else if (1 == accessible.Count)
+                        {
+                            Symbol accessibleSymbol = accessible[0];
+                            this.referencedSymbols.Add(accessibleSymbol);
+
+                            if (null != accessibleSymbol.Section)
+                            {
+                                RecursivelyResolveReferences(accessibleSymbol.Section);
+                            }
+                        }
+                        else // display errors for the duplicate symbols.
+                        {
+                            Symbol accessibleSymbol = accessible[0];
+                            Messaging.Instance.OnMessage(WixErrors.DuplicateSymbol(accessibleSymbol.Row.SourceLineNumbers, accessibleSymbol.Name));
+
+                            foreach (Symbol accessibleDuplicate in accessible.Skip(1))
+                            {
+                                Messaging.Instance.OnMessage(WixErrors.DuplicateSymbol2(accessibleDuplicate.Row.SourceLineNumbers));
+                            }
                         }
                     }
                 }
@@ -100,13 +122,52 @@ namespace WixToolset.Link
         }
 
         /// <summary>
-        /// Helper class to keep track of simple references in their section.
+        /// Determine if the symbol and any of its duplicates are accessbile by referencing section.
         /// </summary>
-        public class SimpleReferenceSection
+        /// <param name="referencingSection">Section referencing the symbol.</param>
+        /// <param name="symbol">Symbol being referenced.</param>
+        /// <returns>List of symbols accessible by referencing section.</returns>
+        private IList<Symbol> DetermineAccessibleSymbols(Section referencingSection, Symbol symbol)
         {
-            public Section Section { get; set; }
+            List<Symbol> symbols = new List<Symbol>();
 
-            public WixSimpleReferenceRow WixSimpleReferenceRow { get; set; }
+            if (AccessibleSymbol(referencingSection, symbol))
+            {
+                symbols.Add(symbol);
+            }
+
+            foreach (Symbol dupe in symbol.Duplicates)
+            {
+                if (AccessibleSymbol(referencingSection, dupe))
+                {
+                    symbols.Add(dupe);
+                }
+            }
+
+            return symbols;
+        }
+
+        /// <summary>
+        /// Determine if a single symbol is accessbile by the referencing section.
+        /// </summary>
+        /// <param name="referencingSection">Section referencing the symbol.</param>
+        /// <param name="symbol">Symbol being referenced.</param>
+        /// <returns>True if symbol is accessible.</returns>
+        private bool AccessibleSymbol(Section referencingSection, Symbol symbol)
+        {
+            switch (symbol.Access)
+            {
+                case AccessModifier.Public:
+                    return true;
+                case AccessModifier.Internal:
+                    return null != symbol.Row.Section.LibraryId && symbol.Row.Section.LibraryId.Equals(referencingSection.LibraryId);
+                case AccessModifier.Protected:
+                    return symbol.Row.Section.IntermediateId.Equals(referencingSection.IntermediateId);
+                case AccessModifier.Private:
+                    return referencingSection == symbol.Section;
+                default:
+                    throw new InvalidOperationException();
+            }
         }
     }
 }

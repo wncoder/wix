@@ -41,6 +41,8 @@ namespace WixToolset.Link
 
                     if (actuallyReferencedDuplicateSymbols.Any())
                     {
+                        // TODO: Consider using a different error message. This error message doesn't explain that collisions can happen between private symbols
+                        //       in different sections when the share the same primary key.
                         Messaging.Instance.OnMessage(WixErrors.DuplicateSymbol(referencedDuplicateSymbol.Row.SourceLineNumbers, referencedDuplicateSymbol.Name));
 
                         foreach (Symbol duplicate in actuallyReferencedDuplicateSymbols)

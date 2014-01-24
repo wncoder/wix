@@ -21,7 +21,7 @@ namespace WixTest.WixUnitTest
     using WixToolset.Data;
     using Xunit;
 
-    public class PreprocessorFixture
+    public class PreprocessorFixture : WixUnitTestBaseFixture
     {
         private XNamespace WixNamespace = "http://wixtoolset.org/schemas/v4/wxs";
 

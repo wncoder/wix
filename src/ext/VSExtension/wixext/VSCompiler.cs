@@ -757,8 +757,8 @@ namespace WixToolset.Extensions
                 }
                 else // the package is vital so ensure there is a rollback action scheduled.
                 {
-                    string rollbackNamePerUser = this.Core.CreateIdentifier("vru", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
-                    string rollbackNamePerMachine = this.Core.CreateIdentifier("vrm", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                    Identifier rollbackNamePerUser = this.Core.CreateIdentifier("vru", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                    Identifier rollbackNamePerMachine = this.Core.CreateIdentifier("vrm", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
                     string rollbackCmdLinePerUser = String.Concat(cmdlinePrefix, " /u:", packageId);
                     string rollbackCmdLinePerMachine = String.Concat(rollbackCmdLinePerUser, " /admin");
                     int rollbackExtraBitsPerUser = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeRollback | VSCompiler.MsidbCustomActionTypeInScript;
@@ -767,26 +767,26 @@ namespace WixToolset.Extensions
                     string rollbackConditionPerMachine = String.Format("ALLUSERS AND NOT Installed AND ${0}=2 AND ?{0}>2", componentId); // NOT Installed && Component being installed but not installed already.
 
                     this.SchedulePropertyExeAction(sourceLineNumbers, rollbackNamePerUser, propertyId, rollbackCmdLinePerUser, rollbackExtraBitsPerUser, rollbackConditionPerUser, null, installAfter);
-                    this.SchedulePropertyExeAction(sourceLineNumbers, rollbackNamePerMachine, propertyId, rollbackCmdLinePerMachine, rollbackExtraBitsPerMachine, rollbackConditionPerMachine, null, rollbackNamePerUser);
+                    this.SchedulePropertyExeAction(sourceLineNumbers, rollbackNamePerMachine, propertyId, rollbackCmdLinePerMachine, rollbackExtraBitsPerMachine, rollbackConditionPerMachine, null, rollbackNamePerUser.Id);
 
-                    installAfter = rollbackNamePerMachine;
+                    installAfter = rollbackNamePerMachine.Id;
                 }
 
-                string installNamePerUser = this.Core.CreateIdentifier("viu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
-                string installNamePerMachine = this.Core.CreateIdentifier("vim", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                Identifier installNamePerUser = this.Core.CreateIdentifier("viu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                Identifier installNamePerMachine = this.Core.CreateIdentifier("vim", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
                 string installCmdLinePerUser = String.Format("{0} \"[#{1}]\"", cmdlinePrefix, fileId);
                 string installCmdLinePerMachine = String.Concat(installCmdLinePerUser, " /admin");
                 string installConditionPerUser = String.Format("NOT ALLUSERS AND ${0}=3", componentId); // only execute if the Component being installed.
                 string installConditionPerMachine = String.Format("ALLUSERS AND ${0}=3", componentId); // only execute if the Component being installed.
 
                 this.SchedulePropertyExeAction(sourceLineNumbers, installNamePerUser, propertyId, installCmdLinePerUser, installExtraBits, installConditionPerUser, null, installAfter);
-                this.SchedulePropertyExeAction(sourceLineNumbers, installNamePerMachine, propertyId, installCmdLinePerMachine, installExtraBits | VSCompiler.MsidbCustomActionTypeNoImpersonate, installConditionPerMachine, null, installNamePerUser);
+                this.SchedulePropertyExeAction(sourceLineNumbers, installNamePerMachine, propertyId, installCmdLinePerMachine, installExtraBits | VSCompiler.MsidbCustomActionTypeNoImpersonate, installConditionPerMachine, null, installNamePerUser.Id);
 
                 // If not permanent, schedule the uninstall custom action.
                 if (permanent != YesNoType.Yes)
                 {
-                    string uninstallNamePerUser = this.Core.CreateIdentifier("vuu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
-                    string uninstallNamePerMachine = this.Core.CreateIdentifier("vum", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
+                    Identifier uninstallNamePerUser = this.Core.CreateIdentifier("vuu", componentId, fileId, "per-user", target ?? String.Empty, targetVersion ?? String.Empty);
+                    Identifier uninstallNamePerMachine = this.Core.CreateIdentifier("vum", componentId, fileId, "per-machine", target ?? String.Empty, targetVersion ?? String.Empty);
                     string uninstallCmdLinePerUser = String.Concat(cmdlinePrefix, " /u:", packageId);
                     string uninstallCmdLinePerMachine = String.Concat(uninstallCmdLinePerUser, " /admin");
                     int uninstallExtraBitsPerUser = VSCompiler.MsidbCustomActionTypeContinue | VSCompiler.MsidbCustomActionTypeInScript;
@@ -800,19 +800,18 @@ namespace WixToolset.Extensions
             }
         }
 
-        private void SchedulePropertyExeAction(SourceLineNumber sourceLineNumbers, string name, string source, string cmdline, int extraBits, string condition, string beforeAction, string afterAction)
+        private void SchedulePropertyExeAction(SourceLineNumber sourceLineNumbers, Identifier name, string source, string cmdline, int extraBits, string condition, string beforeAction, string afterAction)
         {
             const string sequence = "InstallExecuteSequence";
 
-            Row actionRow = this.Core.CreateRow(sourceLineNumbers, "CustomAction");
-            actionRow[0] = name;
+            Row actionRow = this.Core.CreateRow(sourceLineNumbers, "CustomAction", name);
             actionRow[1] = VSCompiler.MsidbCustomActionTypeProperty | VSCompiler.MsidbCustomActionTypeExe | extraBits;
             actionRow[2] = source;
             actionRow[3] = cmdline;
 
             Row sequenceRow = this.Core.CreateRow(sourceLineNumbers, "WixAction");
             sequenceRow[0] = sequence;
-            sequenceRow[1] = name;
+            sequenceRow[1] = name.Id;
             sequenceRow[2] = condition;
             // no explicit sequence
             sequenceRow[4] = beforeAction;

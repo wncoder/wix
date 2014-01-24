@@ -393,13 +393,12 @@ namespace WixToolset.Extensions
         /// <param name="variable">Value of the Variable attribute.</param>
         /// <param name="condition">Value of the Condition attribute.</param>
         /// <param name="after">Value of the After attribute.</param>
-        private void ParseCommonSearchAttributes(SourceLineNumber sourceLineNumbers, XAttribute attrib,
-            ref string id, ref string variable, ref string condition, ref string after)
+        private void ParseCommonSearchAttributes(SourceLineNumber sourceLineNumbers, XAttribute attrib, ref Identifier id, ref string variable, ref string condition, ref string after)
         {
             switch (attrib.Name.LocalName)
             {
                 case "Id":
-                    id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                    id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                     break;
                 case "Variable":
                     variable = this.Core.GetAttributeBundleVariableValue(sourceLineNumbers, attrib);
@@ -423,7 +422,7 @@ namespace WixToolset.Extensions
         private void ParseComponentSearchElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string variable = null;
             string condition = null;
             string after = null;
@@ -441,7 +440,7 @@ namespace WixToolset.Extensions
                         case "Variable":
                         case "Condition":
                         case "After":
-                            ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
+                            this.ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "Guid":
                             guid = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib);
@@ -512,8 +511,7 @@ namespace WixToolset.Extensions
                         break;
                 }
 
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixComponentSearch");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixComponentSearch", id);
                 row[1] = guid;
                 row[2] = productCode;
                 row[3] = (int)attributes;
@@ -671,7 +669,7 @@ namespace WixToolset.Extensions
 
             int registryRoot = 2; // MsiInterop.MsidbRegistryRootLocalMachine 
             string eventSourceKey = String.Format(@"SYSTEM\CurrentControlSet\Services\EventLog\{0}\{1}", logName, sourceName);
-            string id = this.Core.CreateRegistryRow(sourceLineNumbers, registryRoot, eventSourceKey, "EventMessageFile", String.Concat("#%", eventMessageFile), componentId);
+            Identifier id = this.Core.CreateRegistryRow(sourceLineNumbers, registryRoot, eventSourceKey, "EventMessageFile", String.Concat("#%", eventMessageFile), componentId);
 
             if (null != categoryMessageFile)
             {
@@ -693,7 +691,7 @@ namespace WixToolset.Extensions
                 this.Core.CreateRegistryRow(sourceLineNumbers, registryRoot, eventSourceKey, "TypesSupported", String.Concat("#", typesSupported), componentId);
             }
 
-            return new ComponentKeyPath() { Id = id, Explicit = isKeyPath, Type = ComponentKeyPathType.Registry };
+            return new ComponentKeyPath() { Id = id.Id, Explicit = isKeyPath, Type = ComponentKeyPathType.Registry };
         }
 
         /// <summary>
@@ -707,7 +705,7 @@ namespace WixToolset.Extensions
             string description = null;
             string target = null;
             string property = null;
-            string id = null;
+            Identifier id = null;
             int attributes = 2; // default to CLOSEAPP_ATTRIBUTE_REBOOTPROMPT enabled
             int sequence = CompilerConstants.IntegerNotSet;
             int terminateExitCode = CompilerConstants.IntegerNotSet;
@@ -720,7 +718,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Description":
                             description = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -850,8 +848,7 @@ namespace WixToolset.Extensions
 
             if (!this.Core.EncounteredError)
             {
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixCloseApplication");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixCloseApplication", id);
                 row[1] = target;
                 row[2] = description;
                 row[3] = condition;
@@ -879,7 +876,7 @@ namespace WixToolset.Extensions
         private void ParseDirectorySearchElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string variable = null;
             string condition = null;
             string after = null;
@@ -896,7 +893,7 @@ namespace WixToolset.Extensions
                         case "Variable":
                         case "Condition":
                         case "After":
-                            ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
+                            this.ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "Path":
                             path = this.Core.GetAttributeLongFilename(sourceLineNumbers, attrib, false, true);
@@ -955,7 +952,7 @@ namespace WixToolset.Extensions
                         break;
                 }
 
-                CreateWixFileSearchRow(sourceLineNumbers, id, path, attributes);
+                this.CreateWixFileSearchRow(sourceLineNumbers, id, path, attributes);
             }
         }
 
@@ -999,7 +996,7 @@ namespace WixToolset.Extensions
         private void ParseFileSearchElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string variable = null;
             string condition = null;
             string after = null;
@@ -1016,7 +1013,7 @@ namespace WixToolset.Extensions
                         case "Variable":
                         case "Condition":
                         case "After":
-                            ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
+                            this.ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "Path":
                             path = this.Core.GetAttributeLongFilename(sourceLineNumbers, attrib, false, true);
@@ -1080,7 +1077,7 @@ namespace WixToolset.Extensions
                         break;
                 }
 
-                CreateWixFileSearchRow(sourceLineNumbers, id, path, attributes);
+                this.CreateWixFileSearchRow(sourceLineNumbers, id, path, attributes);
             }
         }
 
@@ -1091,10 +1088,9 @@ namespace WixToolset.Extensions
         /// <param name="id">Identifier of the search (key into the WixSearch table)</param>
         /// <param name="path">File/directory path to search for.</param>
         /// <param name="attributes"></param>
-        private void CreateWixFileSearchRow(SourceLineNumber sourceLineNumbers, string id, string path, WixFileSearchAttributes attributes)
+        private void CreateWixFileSearchRow(SourceLineNumber sourceLineNumbers, Identifier id, string path, WixFileSearchAttributes attributes)
         {
-            Row row = this.Core.CreateRow(sourceLineNumbers, "WixFileSearch");
-            row[0] = id;
+            Row row = this.Core.CreateRow(sourceLineNumbers, "WixFileSearch", id);
             row[1] = path;
             //row[2] = minVersion;
             //row[3] = maxVersion;
@@ -1113,10 +1109,9 @@ namespace WixToolset.Extensions
         /// <param name="id">Identifier of the search.</param>
         /// <param name="variable">The Burn variable to store the result into.</param>
         /// <param name="condition">A condition to test before evaluating the search.</param>
-        private void CreateWixSearchRow(SourceLineNumber sourceLineNumbers, string id, string variable, string condition)
+        private void CreateWixSearchRow(SourceLineNumber sourceLineNumbers, Identifier id, string variable, string condition)
         {
-            Row row = this.Core.CreateRow(sourceLineNumbers, "WixSearch");
-            row[0] = id;
+            Row row = this.Core.CreateRow(sourceLineNumbers, "WixSearch", id);
             row[1] = variable;
             row[2] = condition;
         }
@@ -1128,10 +1123,9 @@ namespace WixToolset.Extensions
         /// <param name="id">Identifier of the search (key into the WixSearch table)</param>
         /// <param name="parentId">Identifier of the search that comes before (key into the WixSearch table)</param>
         /// <param name="attributes">Further details about the relation between id and parentId.</param>
-        private void CreateWixSearchRelationRow(SourceLineNumber sourceLineNumbers, string id, string parentId, int attributes)
+        private void CreateWixSearchRelationRow(SourceLineNumber sourceLineNumbers, Identifier id, string parentId, int attributes)
         {
-            Row row = this.Core.CreateRow(sourceLineNumbers, "WixSearchRelation");
-            row[0] = id;
+            Row row = this.Core.CreateRow(sourceLineNumbers, "WixSearchRelation", id);
             row[1] = parentId;
             row[2] = attributes;
         }
@@ -2513,7 +2507,7 @@ namespace WixToolset.Extensions
         private void ParseProductSearchElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string variable = null;
             string condition = null;
             string after = null;
@@ -2532,7 +2526,7 @@ namespace WixToolset.Extensions
                         case "Variable":
                         case "Condition":
                         case "After":
-                            ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
+                            this.ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "ProductCode":
                             productCode = this.Core.GetAttributeGuidValue(sourceLineNumbers, attrib, false);
@@ -2632,7 +2626,7 @@ namespace WixToolset.Extensions
         private void ParseRegistrySearchElement(XElement node)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string variable = null;
             string condition = null;
             string after = null;
@@ -2654,7 +2648,7 @@ namespace WixToolset.Extensions
                         case "Variable":
                         case "Condition":
                         case "After":
-                            ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
+                            this.ParseCommonSearchAttributes(sourceLineNumbers, attrib, ref id, ref variable, ref condition, ref after);
                             break;
                         case "Root":
                             root = this.Core.GetAttributeMsidbRegistryRootValue(sourceLineNumbers, attrib, false);
@@ -2775,8 +2769,7 @@ namespace WixToolset.Extensions
                     this.CreateWixSearchRelationRow(sourceLineNumbers, id, after, 2);
                 }
 
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRegistrySearch");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRegistrySearch", id);
                 row[1] = root;
                 row[2] = key;
                 row[3] = value;
@@ -2792,7 +2785,7 @@ namespace WixToolset.Extensions
         private void ParseRemoveFolderExElement(XElement node, string componentId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             int on = (int)WixRemoveFolderExOn.Uninstall;
             string property = null;
 
@@ -2803,7 +2796,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "On":
                             string onValue = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2850,7 +2843,7 @@ namespace WixToolset.Extensions
                 this.Core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Property"));
             }
 
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 id = this.Core.CreateIdentifier("wrf", componentId, property, on.ToString(CultureInfo.InvariantCulture.NumberFormat));
             }
@@ -2859,8 +2852,7 @@ namespace WixToolset.Extensions
 
             if (!this.Core.EncounteredError)
             {
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRemoveFolderEx");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRemoveFolderEx", id);
                 row[1] = componentId;
                 row[2] = property;
                 row[3] = on;
@@ -2878,7 +2870,7 @@ namespace WixToolset.Extensions
         private void ParseRestartResourceElement(XElement node, string componentId)
         {
             SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
-            string id = null;
+            Identifier id = null;
             string resource = null;
             int attributes = CompilerConstants.IntegerNotSet;
 
@@ -2889,7 +2881,7 @@ namespace WixToolset.Extensions
                     switch (attrib.Name.LocalName)
                     {
                         case "Id":
-                            id = this.Core.GetAttributeValue(sourceLineNumbers, attrib);
+                            id = this.Core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
 
                         case "Path":
@@ -2919,7 +2911,7 @@ namespace WixToolset.Extensions
             }
 
             // Validate the attribute.
-            if (String.IsNullOrEmpty(id))
+            if (null == id)
             {
                 id = this.Core.CreateIdentifier("wrr", componentId, resource, attributes.ToString());
             }
@@ -2945,8 +2937,7 @@ namespace WixToolset.Extensions
                     this.Core.CreateSimpleReference(sourceLineNumbers, "CustomAction", "WixRegisterRestartResources");
                 }
 
-                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRestartResource");
-                row[0] = id;
+                Row row = this.Core.CreateRow(sourceLineNumbers, "WixRestartResource", id);
                 row[1] = componentId;
                 row[2] = resource;
                 row[3] = attributes;

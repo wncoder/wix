@@ -14,6 +14,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>WixToolset.Data</RootNamespace>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="ColumnDefinition.cs" />
@@ -45,6 +46,7 @@
     <Compile Include="Pdb.cs" />
     <Compile Include="Platform.cs" />
     <Compile Include="Row.cs" />
+    <Compile Include="AccessModifier.cs" />
     <Compile Include="RowIndexedList.cs" />
     <Compile Include="RowDictionary.cs" />
     <Compile Include="RowOperation.cs" />
@@ -100,6 +102,7 @@
     <Compile Include="YesNoDefaultType.cs" />
     <Compile Include="YesNoType.cs" />
   </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="WixDataStrings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -107,6 +110,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+
   <ItemGroup>
     <EmbeddedFlattenedResource Include="Data\actions.xml">
       <LogicalName>$(RootNamespace).Data.actions.xml</LogicalName>
@@ -115,17 +119,20 @@
       <LogicalName>$(RootNamespace).Data.tables.xml</LogicalName>
     </EmbeddedFlattenedResource>
   </ItemGroup>
+
   <ItemGroup>
     <MsgGenSource Include="Data\messages.xml">
       <ResourcesLogicalName>$(RootNamespace).Data.messages.resources</ResourcesLogicalName>
       <SubType>Designer</SubType>
     </MsgGenSource>
   </ItemGroup>
+
   <ItemGroup>
     <XsdGenSource Include="Xsd\wix.xsd">
       <Namespace>WixToolset.Data.Serialize</Namespace>
     </XsdGenSource>
   </ItemGroup>
+
   <ItemGroup>
     <None Include="Data\Xsd\actions.xsd" />
     <None Include="Data\Xsd\libraries.xsd" />
@@ -135,10 +142,12 @@
     <None Include="Data\Xsd\tables.xsd" />
     <None Include="Xsd\wixloc.xsd" />
   </ItemGroup>
+
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
+
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), wix.proj))\tools\WixBuild.targets" />
 </Project>

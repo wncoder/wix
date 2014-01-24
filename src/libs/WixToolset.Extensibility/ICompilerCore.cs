@@ -46,14 +46,14 @@ namespace WixToolset.Extensibility
         /// <param name="prefix">Three letter or less prefix for generated row identifier.</param>
         /// <param name="args">Information to hash.</param>
         /// <returns>The new identifier.</returns>
-        string CreateIdentifier(string prefix, params string[] args);
+        Identifier CreateIdentifier(string prefix, params string[] args);
 
         /// <summary>
         /// Create an identifier based on passed file name
         /// </summary>
         /// <param name="name">File name to generate identifer from</param>
         /// <returns></returns>
-        string CreateIdentifierFromFilename(string filename);
+        Identifier CreateIdentifierFromFilename(string filename);
 
         /// <summary>
         /// Convert a bit array into an int value.
@@ -67,8 +67,9 @@ namespace WixToolset.Extensibility
         /// </summary>
         /// <param name="sourceLineNumbers">Source and line number of current row.</param>
         /// <param name="tableName">Name of table to create row in.</param>
+        /// <param name="identifier">Optional identifier for the row.</param>
         /// <returns>New row.</returns>
-        Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName);
+        Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Identifier identifier = null);
 
         /// <summary>
         /// Creates a Registry row in the active section.
@@ -80,7 +81,7 @@ namespace WixToolset.Extensibility
         /// <param name="value">The registry entry value.</param>
         /// <param name="componentId">The component which will control installation/uninstallation of the registry entry.</param>
         /// <param name="escapeLeadingHash">If true, "escape" leading '#' characters so the value is written as a REG_SZ.</param>
-        string CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId, bool escapeLeadingHash = false);
+        Identifier CreateRegistryRow(SourceLineNumber sourceLineNumbers, int root, string key, string name, string value, string componentId, bool escapeLeadingHash = false);
 
         /// <summary>
         /// Creates a short file/directory name using an identifier and long file/directory name as input.
@@ -161,6 +162,14 @@ namespace WixToolset.Extensibility
         /// <param name="canBeEmpty">If true, no error is raised on empty value. If false, an error is raised.</param>
         /// <returns>The attribute's guid value or a special value if an error occurred.</returns>
         string GetAttributeGuidValue(SourceLineNumber sourceLineNumbers, XAttribute attribute, bool generatable = false, bool canBeEmpty = false);
+
+        /// <summary>
+        /// Get an identifier attribute value and displays an error for an illegal identifier value.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
+        /// <param name="attribute">The attribute containing the value to get.</param>
+        /// <returns>The attribute's identifier value or a special value if an error occurred.</returns>
+        Identifier GetAttributeIdentifier(SourceLineNumber sourceLineNumbers, XAttribute attribute);
 
         /// <summary>
         /// Get an identifier attribute value and displays an error for an illegal identifier value.

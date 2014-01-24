@@ -59,4 +59,7 @@
       <Visible>false</Visible>
     </Compile>
   </ItemGroup>
+  <ItemGroup>
+    <CodeAnalysisDictionary Include="$(WixRoot)tools\CustomDictionary.xml" />
+  </ItemGroup>
 </Project>
