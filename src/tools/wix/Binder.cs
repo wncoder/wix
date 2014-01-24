@@ -544,7 +544,7 @@ namespace WixToolset
                         {
                             try
                             {
-                                db.ImportTable(output.Codepage, this.core, importTable, baseDirectory, keepAddedColumns);
+                                db.ImportTable(output.Codepage, importTable, baseDirectory, keepAddedColumns);
                             }
                             catch (WixInvalidIdtException)
                             {
@@ -6761,7 +6761,7 @@ namespace WixToolset
             // try to import the table into the MSI
             try
             {
-                db.Import(Path.GetDirectoryName(idtPath), Path.GetFileName(idtPath));
+                db.Import(idtPath);
             }
             catch (WixInvalidIdtException)
             {
