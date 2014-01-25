@@ -18,7 +18,8 @@ namespace WixToolset.Data
     /// </summary>
     public sealed class Symbol
     {
-        private HashSet<Symbol> duplicates;
+        private HashSet<Symbol> possibleConflictSymbols;
+        private HashSet<Symbol> redundantSymbols;
 
         /// <summary>
         /// Creates a symbol for a row.
@@ -55,22 +56,41 @@ namespace WixToolset.Data
         public Section Section { get { return this.Row.Section; } }
 
         /// <summary>
-        /// Gets any duplicates of this symbol when loaded or null if there are no duplicates.
+        /// Gets any duplicates of this symbol that are possible conflicts.
         /// </summary>
-        public IEnumerable<Symbol> Duplicates { get { return this.duplicates ?? Enumerable.Empty<Symbol>(); } }
+        public IEnumerable<Symbol> PossiblyConflictingSymbols { get { return this.possibleConflictSymbols ?? Enumerable.Empty<Symbol>(); } }
 
         /// <summary>
-        /// Adds a duplicate symbol.
+        /// Gets any duplicates of this symbol that are redundant.
         /// </summary>
-        /// <param name="symbol">Symbol that is duplicative of this symbol.</param>
-        public void AddDuplicate(Symbol symbol)
+        public IEnumerable<Symbol> RedundantSymbols { get { return this.redundantSymbols ?? Enumerable.Empty<Symbol>(); } }
+
+        /// <summary>
+        /// Adds a duplicate symbol that is a possible conflict.
+        /// </summary>
+        /// <param name="symbol">Symbol that is a possible conflict of this symbol.</param>
+        public void AddPossibleConflict(Symbol symbol)
         {
-            if (null == this.duplicates)
+            if (null == this.possibleConflictSymbols)
             {
-                this.duplicates = new HashSet<Symbol>();
+                this.possibleConflictSymbols = new HashSet<Symbol>();
             }
 
-            this.duplicates.Add(symbol);
+            this.possibleConflictSymbols.Add(symbol);
+        }
+
+        /// <summary>
+        /// Adds a duplicate symbol that is redundant.
+        /// </summary>
+        /// <param name="symbol">Symbol that is redundant of this symbol.</param>
+        public void AddRedundant(Symbol symbol)
+        {
+            if (null == this.redundantSymbols)
+            {
+                this.redundantSymbols = new HashSet<Symbol>();
+            }
+
+            this.redundantSymbols.Add(symbol);
         }
     }
 }

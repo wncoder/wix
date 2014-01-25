@@ -992,8 +992,13 @@
         </Message>
         <Message Id="DuplicateSymbol" Number="91">
             <Instance>
-                Duplicate symbol '{0}' found. This typically means that an Id is duplicated. Check to make sure all your identifiers of a given type (File, Component, Feature) are unique.
+                Duplicate symbol '{0}' found. This typically means that an Id is duplicated. Access modifiers (internal, protected, private) cannot prevent these conflicts. Ensure all your identifiers of a given type (File, Component, Feature) are unique.
                 <Parameter Type="System.String" Name="symbolName" />
+            </Instance>
+            <Instance>
+                Duplicate symbol '{0}' referenced by {1}. This typically means that an Id is duplicated. Ensure all your identifiers of a given type (File, Component, Feature) are unique or use an access modifier to scope the identfier.
+                <Parameter Type="System.String" Name="symbolName" />
+                <Parameter Type="System.String" Name="referencingSourceLineNumber" />
             </Instance>
         </Message>
         <Message Id="DuplicateSymbol2" Number="92">
@@ -1007,10 +1012,13 @@
         </Message>
         <Message Id="UnresolvedReference" Number="94">
             <Instance>
-                Unresolved reference to symbol '{2}' in section '{0}:{1}'.
-                <Parameter Type="System.String" Name="sectionType" />
-                <Parameter Type="System.String" Name="sectionId" />
-                <Parameter Type="System.String" Name="referencedSymbol" />
+                The identifier '{0}' could not be found. Ensure you have typed the reference correctly and that all the necessary inputs are provided to the linker.
+                <Parameter Type="System.String" Name="symbolName" />
+            </Instance>
+            <Instance>
+                The identifier '{0}' is inaccessible due to its protection level.
+                <Parameter Type="System.String" Name="symbolName" />
+                <Parameter Type="WixToolset.Data.AccessModifier" Name="accessModifier" />
             </Instance>
         </Message>
         <Message Id="MultiplePrimaryReferences" Number="95">
@@ -3078,23 +3086,6 @@
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />
-            </Instance>
-        </Message>
-        <Message Id="IdenticalRowWarning" Number="1045">
-            <Instance>
-                The row with symbol: '{0}' is defined identically in another section.  See the next message for the identical row.
-                <Parameter Type="System.String" Name="symbolName" />
-            </Instance>
-        </Message>
-        <Message Id="IdenticalRowWarning2" Number="1046">
-            <Instance>Location of row related to previous error.</Instance>
-        </Message>
-        <Message Id="UnresolvedReferenceWarning" Number="1047">
-            <Instance>
-                Unresolved reference to symbol '{2}' in section '{0}:{1}'.
-                <Parameter Type="System.String" Name="sectionType" />
-                <Parameter Type="System.String" Name="sectionId" />
-                <Parameter Type="System.String" Name="referencedSymbol" />
             </Instance>
         </Message>
         <Message Id="PossiblyIncorrectTypelibVersion" Number="1048">

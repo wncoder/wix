@@ -56,7 +56,7 @@
     <Compile Include="IfDefEventHandler.cs" />
     <Compile Include="Inscriber.cs" />
     <Compile Include="InspectorCore.cs" />
-    <Compile Include="Link\ReportDuplicateResolvedSymbolErrorsCommand.cs" />
+    <Compile Include="Link\ReportConflictingSymbolsCommand.cs" />
     <Compile Include="Localizer.cs" />
     <Compile Include="Patch.cs" />
     <Compile Include="PatchAPI\PatchInterop.cs" />

@@ -218,18 +218,23 @@ namespace WixToolset
 
                 // Resolve the symbol references to find the set of sections we care about for linking.
                 // Of course, we start with the entry section (that's how it got its name after all).
-                //output.Sections.AddRange(output.EntrySection.ResolveReferences(output.Type, allSymbols, referencedSymbols, unresolvedReferences, this));
                 ResolveReferencesCommand resolve = new ResolveReferencesCommand(output.EntrySection, allSymbols);
                 resolve.BuildingMergeModule = (OutputType.Module == output.Type);
 
                 resolve.Execute();
 
+                if (Messaging.Instance.EncounteredError)
+                {
+                    return null;
+                }
+
+                // Add the resolved sections to the output then flatten the complex
+                // references that particpate in groups.
                 foreach (Section section in resolve.ResolvedSections)
                 {
                     output.Sections.Add(section);
                 }
 
-                // Flattening the complex references that participate in groups.
                 this.FlattenSectionsComplexReferences(output.Sections);
 
                 if (Messaging.Instance.EncounteredError)
@@ -243,11 +248,6 @@ namespace WixToolset
                 ConnectToFeatureCollection featuresToFeatures = new ConnectToFeatureCollection();
                 ConnectToFeatureCollection modulesToFeatures = new ConnectToFeatureCollection();
                 this.ProcessComplexReferences(output, output.Sections, referencedComponents, componentsToFeatures, featuresToFeatures, modulesToFeatures);
-
-                foreach (var unresolvedReference in resolve.UnresolvedReferences)
-                {
-                    this.OnMessage(WixErrors.UnresolvedReference(unresolvedReference.SourceLineNumbers, unresolvedReference.Section.Type.ToString(), unresolvedReference.Section.Id, unresolvedReference.SymbolicName));
-                }
 
                 if (Messaging.Instance.EncounteredError)
                 {
@@ -264,18 +264,13 @@ namespace WixToolset
                 }
 
                 // Report duplicates that would ultimately end up being primary key collisions.
-                ReportDuplicateResolvedSymbolErrorsCommand reportDupes = new ReportDuplicateResolvedSymbolErrorsCommand(find.SymbolsWithDuplicates, resolve.ResolvedSections);
+                ReportConflictingSymbolsCommand reportDupes = new ReportConflictingSymbolsCommand(find.PossiblyConflictingSymbols, resolve.ResolvedSections);
                 reportDupes.Execute();
 
                 if (Messaging.Instance.EncounteredError)
                 {
                     return null;
                 }
-
-                //if (null != this.UnreferencedSymbolsFile)
-                //{
-                //    sections.GetOrphanedSymbols(referencedSymbols, this).OutputSymbols(this.UnreferencedSymbolsFile);
-                //}
 
                 // resolve the feature to feature connects
                 this.ResolveFeatureToFeatureConnects(featuresToFeatures, allSymbols);
@@ -485,10 +480,6 @@ namespace WixToolset
                                 copyRows = true;
                                 break;
 
-                            case "WixFragment":
-                                copyRows = true;
-                                break;
-
                             case "WixGroup":
                                 copyRows = true;
                                 break;
@@ -550,30 +541,6 @@ namespace WixToolset
                         {
                             Table outputTable = this.activeOutput.EnsureTable(this.tableDefinitions[table.Name]);
                             this.CopyTableRowsToOutputTable(table, outputTable, sectionId);
-                        }
-                    }
-                }
-
-                // Verify that there were no duplicate fragment Id's.
-                Table wixFragmentTable = this.activeOutput.Tables["WixFragment"];
-                Dictionary<string, SourceLineNumber> fragmentIdIndex = new Dictionary<string, SourceLineNumber>();
-                if (null != wixFragmentTable)
-                {
-                    foreach (Row row in wixFragmentTable.Rows)
-                    {
-                        string fragmentId = row.Fields[0].Data.ToString();
-                        SourceLineNumber duplicateLine = null;
-                        if (!fragmentIdIndex.TryGetValue(fragmentId, out duplicateLine))
-                        {
-                            fragmentIdIndex.Add(fragmentId, row.SourceLineNumbers);
-                        }
-                        else
-                        {
-                            this.OnMessage(WixErrors.DuplicateSymbol(row.SourceLineNumbers, fragmentId));
-                            if (null != duplicateLine)
-                            {
-                                this.OnMessage(WixErrors.DuplicateSymbol2(duplicateLine));
-                            }
                         }
                     }
                 }

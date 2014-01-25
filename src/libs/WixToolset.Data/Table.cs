@@ -311,29 +311,35 @@ namespace WixToolset.Data
         }
 
         /// <summary>
-        /// Returns the table in a format usable in IDT files.
+        /// Writes the table in IDT format to the provided stream.
         /// </summary>
+        /// <param name="writer">Stream to write the table to.</param>
         /// <param name="keepAddedColumns">Whether to keep columns added in a transform.</param>
-        /// <returns>null if OutputTable is unreal, or string with tab delimited field values otherwise</returns>
-        public void ToIdtDefinition(StreamWriter writer, IMessageHandler messageHandler, bool keepAddedColumns)
+        public void ToIdtDefinition(StreamWriter writer, bool keepAddedColumns)
         {
             if (this.Definition.Unreal)
             {
                 return;
             }
 
-            // tack on the table header, and flush before we start writing bytes directly to the stream
+            // Tack on the table header, and flush before we start writing bytes directly to the stream.
             writer.Write(this.Definition.ToIdtDefinition(keepAddedColumns));
             writer.Flush();
 
             using (NonClosingStreamWrapper wrapper = new NonClosingStreamWrapper(writer.BaseStream))
             using (BufferedStream buffStream = new BufferedStream(wrapper))
             {
-                // Create a new encoding that replaces characters with question marks, and doesn't throw, used in case of errors
+                // Create an encoding that replaces characters with question marks, and doesn't throw. We'll 
+                // use this in case of errors
                 Encoding convertEncoding = Encoding.GetEncoding(writer.Encoding.CodePage);
 
                 foreach (Row row in this.Rows)
                 {
+                    if (row.Redundant)
+                    {
+                        continue;
+                    }
+
                     string rowString = row.ToIdtDefinition(keepAddedColumns);
                     byte[] rowBytes;
 
@@ -344,15 +350,13 @@ namespace WixToolset.Data
                     }
                     catch (EncoderFallbackException)
                     {
-                        rowBytes = convertEncoding.GetBytes(rowString);
+                        Messaging.Instance.OnMessage(WixDataErrors.InvalidStringForCodepage(row.SourceLineNumbers, Convert.ToString(writer.Encoding.WindowsCodePage, CultureInfo.InvariantCulture)));
 
-                        messageHandler.OnMessage(WixDataErrors.InvalidStringForCodepage(row.SourceLineNumbers, Convert.ToString(writer.Encoding.WindowsCodePage, CultureInfo.InvariantCulture)));
+                        rowBytes = convertEncoding.GetBytes(rowString);
                     }
 
                     buffStream.Write(rowBytes, 0, rowBytes.Length);
                 }
-
-                buffStream.Flush();
             }
         }
 

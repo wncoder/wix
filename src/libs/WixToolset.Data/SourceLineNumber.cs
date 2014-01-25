@@ -199,5 +199,14 @@ namespace WixToolset.Data
         {
             return this.GetEncoded().GetHashCode();
         }
+
+        /// <summary>
+        /// Shows a string representation of a source line number.
+        /// </summary>
+        /// <returns>String representation of a source line number.</returns>
+        public override string ToString()
+        {
+            return this.LineNumber.HasValue && !String.IsNullOrEmpty(this.FileName) ? String.Concat(this.FileName, "(", this.LineNumber, ")") : this.FileName ?? String.Empty;
+        }
     }
 }
