@@ -1,3 +1,5 @@
+* WIXBUG:3883 - Retry on IIS ERROR_TRANSACTIONAL_CONFLICT too
+
 ## WixBuild: Version 3.9.120.0
 
 * BobArnson: WIXBUG:4271 - Warn when using a RemotePayload package that isn't explicitly set @Compressed="no".
