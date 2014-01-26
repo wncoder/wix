@@ -3803,6 +3803,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 row[10] = package.RollbackLogPathVariable;
                 row[11] = (PackagingType.Embedded == package.PackagePayload.Packaging) ? "yes" : "no";
                 row[12] = package.DisplayInternalUI ? "yes" : "no";
+                row[13] = package.ProductCode;
+                row[14] = package.UpgradeCode;
+                row[15] = package.Version;
 
                 Table wixPackageFeatureInfoTable = bundle.EnsureTable(this.core.TableDefinitions["WixPackageFeatureInfo"]);
 
