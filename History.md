@@ -1,3 +1,5 @@
+* SeanHall: Add WixToolset.Data.dll and WixToolset.Extensibility.dll to Toolset.wxs.
+
 ## WixBuild: Version 4.0.1320.0
 
 * RobMen: Merge recent changes through WiX v3.9.120.0
