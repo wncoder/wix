@@ -1,3 +1,5 @@
+* SeanHall: WIXFEATURE:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
+
 * WIXBUG:3883 - Retry on IIS ERROR_TRANSACTIONAL_CONFLICT too
 
 ## WixBuild: Version 3.9.120.0
