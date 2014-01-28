@@ -72,6 +72,15 @@ namespace WixToolset.Extensibility
         Row CreateRow(SourceLineNumber sourceLineNumbers, string tableName, Identifier identifier = null);
 
         /// <summary>
+        /// Creates directories using the inline directory syntax.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information.</param>
+        /// <param name="attribute">The attribute to parse.</param>
+        /// <param name="parentId">Optional identifier of parent directory.</param>
+        /// <returns>Identifier of the leaf directory created.</returns>
+        string CreateDirectoryReferenceFromInlineSyntax(SourceLineNumber sourceLineNumbers, XAttribute attribute, string parentId);
+
+        /// <summary>
         /// Creates a Registry row in the active section.
         /// </summary>
         /// <param name="sourceLineNumbers">Source and line number of the current row.</param>

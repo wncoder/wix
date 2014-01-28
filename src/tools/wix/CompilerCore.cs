@@ -26,7 +26,7 @@ namespace WixToolset
     using WixToolset.Extensibility;
     using Wix = WixToolset.Data.Serialize;
 
-    public enum ValueListKind
+    internal enum ValueListKind
     {
         /// <summary>
         /// A list of values with nothing before the final value.
@@ -508,6 +508,57 @@ namespace WixToolset
             }
 
             return row;
+        }
+
+        /// <summary>
+        /// Creates directories using the inline directory syntax.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information.</param>
+        /// <param name="attribute">The attribute to parse.</param>
+        /// <param name="parentId">Optional identifier of parent directory.</param>
+        /// <returns>Identifier of the leaf directory created.</returns>
+        public string CreateDirectoryReferenceFromInlineSyntax(SourceLineNumber sourceLineNumbers, XAttribute attribute, string parentId)
+        {
+            string id = null;
+            string[] inlineSyntax = this.GetAttributeInlineDirectorySyntax(sourceLineNumbers, attribute, true);
+
+            if (null != inlineSyntax)
+            {
+                // Special case the single entry in the inline syntax since it is the most common case
+                // and needs no extra processing. It's just a reference to an existing directory.
+                if (1 == inlineSyntax.Length)
+                {
+                    id = inlineSyntax[0];
+                    this.CreateSimpleReference(sourceLineNumbers, "Directory", id);
+                }
+                else // start creating rows for the entries in the inline syntax
+                {
+                    id = parentId;
+
+                    int pathStartsAt = 0;
+                    if (inlineSyntax[0].EndsWith(":"))
+                    {
+                        // TODO: should overriding the parent identifier with a specific id be an error or a warning or just let it slide?
+                        //if (null != parentId)
+                        //{
+                        //    this.core.OnMessage(WixErrors.Xxx(sourceLineNumbers));
+                        //}
+
+                        id = inlineSyntax[0].TrimEnd(':');
+                        this.CreateSimpleReference(sourceLineNumbers, "Directory", id);
+
+                        pathStartsAt = 1;
+                    }
+
+                    for (int i = pathStartsAt; i < inlineSyntax.Length; ++i)
+                    {
+                        Identifier inlineId = this.CreateDirectoryRow(sourceLineNumbers, null, id, inlineSyntax[i]);
+                        id = inlineId.Id;
+                    }
+                }
+            }
+
+            return id;
         }
 
         /// <summary>
@@ -1474,11 +1525,20 @@ namespace WixToolset
         }
 
         /// <summary>
+        /// Sends a message to the message delegate if there is one.
+        /// </summary>
+        /// <param name="mea">Message event arguments.</param>
+        public void OnMessage(MessageEventArgs e)
+        {
+            Messaging.Instance.OnMessage(e);
+        }
+
+        /// <summary>
         /// Verifies that the calling assembly version is equal to or newer than the given <paramref name="requiredVersion"/>.
         /// </summary>
         /// <param name="sourceLineNumbers">Source line information about the owner element.</param>
         /// <param name="requiredVersion">The version required of the calling assembly.</param>
-        public void VerifyRequiredVersion(SourceLineNumber sourceLineNumbers, string requiredVersion)
+        internal void VerifyRequiredVersion(SourceLineNumber sourceLineNumbers, string requiredVersion)
         {
             // an null or empty string means any version will work
             if (!string.IsNullOrEmpty(requiredVersion))
@@ -1502,15 +1562,6 @@ namespace WixToolset
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Sends a message to the message delegate if there is one.
-        /// </summary>
-        /// <param name="mea">Message event arguments.</param>
-        public void OnMessage(MessageEventArgs e)
-        {
-            Messaging.Instance.OnMessage(e);
         }
 
         /// <summary>
@@ -1579,6 +1630,133 @@ namespace WixToolset
         {
             this.CreateWixComplexReferenceRow(sourceLineNumbers, parentType, parentId, parentLanguage, childType, childId, isPrimary);
             this.CreateWixGroupRow(sourceLineNumbers, parentType, parentId, childType, childId);
+        }
+
+        /// <summary>
+        /// Creates a directory row from a name.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information.</param>
+        /// <param name="id">Optional identifier for the new row.</param>
+        /// <param name="parentId">Optional identifier for the parent row.</param>
+        /// <param name="name">Long name of the directory.</param>
+        /// <param name="shortName">Optional short name of the directory.</param>
+        /// <param name="sourceName">Optional source name for the directory.</param>
+        /// <param name="shortSourceName">Optional short source name for the directory.</param>
+        /// <returns>Identifier for the newly created row.</returns>
+        internal Identifier CreateDirectoryRow(SourceLineNumber sourceLineNumbers, Identifier id, string parentId, string name, string shortName = null, string sourceName = null, string shortSourceName = null)
+        {
+            string defaultDir = null;
+
+            if (name.Equals("SourceDir") || this.IsValidShortFilename(name, false))
+            {
+                defaultDir = name;
+            }
+            else
+            {
+                if (String.IsNullOrEmpty(shortName))
+                {
+                    shortName = this.CreateShortName(name, false, false, "Directory", parentId);
+                }
+
+                defaultDir = String.Concat(shortName, "|", name);
+            }
+
+            if (!String.IsNullOrEmpty(sourceName))
+            {
+                if (this.IsValidShortFilename(sourceName, false))
+                {
+                    defaultDir = String.Concat(defaultDir, ":", sourceName);
+                }
+                else
+                {
+                    if (String.IsNullOrEmpty(shortSourceName))
+                    {
+                        shortSourceName = this.CreateShortName(sourceName, false, false, "Directory", parentId);
+                    }
+
+                    defaultDir = String.Concat(defaultDir, ":", shortSourceName, "|", sourceName);
+                }
+            }
+
+            if (null == id)
+            {
+                id = this.CreateIdentifier("dir", parentId, name, shortName, sourceName, shortSourceName);
+            }
+
+            Row row = this.CreateRow(sourceLineNumbers, "Directory", id);
+            row[1] = parentId;
+            row[2] = defaultDir;
+            return id;
+        }
+
+        /// <summary>
+        /// Gets the attribute value as inline directory syntax.
+        /// </summary>
+        /// <param name="sourceLineNumbers">Source line information.</param>
+        /// <param name="attribute">Attribute containing the value to get.</param>
+        /// <param name="resultUsedToCreateReference">Flag indicates whether the inline directory syntax should be processed to create a directory row or to create a directory reference.</param>
+        /// <returns>Inline directory syntax split into array of strings or null if the syntax did not parse.</returns>
+        internal string[] GetAttributeInlineDirectorySyntax(SourceLineNumber sourceLineNumbers, XAttribute attribute, bool resultUsedToCreateReference = false)
+        {
+            string[] result = null;
+            string value = this.GetAttributeValue(sourceLineNumbers, attribute);
+
+            if (!String.IsNullOrEmpty(value))
+            {
+                int pathStartsAt = 0;
+                result = value.Split(new char[] { '\\'}, StringSplitOptions.RemoveEmptyEntries);
+                if (result[0].EndsWith(":", StringComparison.Ordinal))
+                {
+                    string id = result[0].TrimEnd(':');
+                    if (1 == result.Length)
+                    {
+                        this.OnMessage(WixErrors.InlineDirectorySyntaxRequiresPath(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value, id));
+                        return null;
+                    }
+                    else if (!this.IsValidIdentifier(id))
+                    {
+                        this.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value, id));
+                        return null;
+                    }
+
+                    pathStartsAt = 1;
+                }
+                else if (resultUsedToCreateReference && 1 == result.Length)
+                {
+                    if (value.EndsWith("\\"))
+                    {
+                        if (!this.IsValidLongFilename(result[0]))
+                        {
+                            this.OnMessage(WixErrors.IllegalLongFilename(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value, result[0]));
+                            return null;
+                        }
+                    }
+                    else if (!this.IsValidIdentifier(result[0]))
+                    {
+                        this.OnMessage(WixErrors.IllegalIdentifier(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value, result[0]));
+                        return null;
+                    }
+
+                    return result; // return early to avoid additional checks below.
+                }
+
+                // Check each part of the relative path to ensure that it is a valid directory name.
+                for (int i = pathStartsAt; i < result.Length; ++i)
+                {
+                    if (!this.IsValidLongFilename(result[i]))
+                    {
+                        this.OnMessage(WixErrors.IllegalLongFilename(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value, result[i]));
+                        return null;
+                    }
+                }
+
+                if (1 < result.Length && !value.EndsWith("\\"))
+                {
+                    this.OnMessage(WixWarnings.BackslashTerminateInlineDirectorySyntax(sourceLineNumbers, attribute.Parent.Name.LocalName, attribute.Name.LocalName, value));
+                }
+            }
+
+            return result;
         }
 
         /// <summary>

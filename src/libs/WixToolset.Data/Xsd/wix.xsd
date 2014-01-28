@@ -7921,57 +7921,47 @@
           <xs:documentation>Used to set the file system source for this directory's child elements. For more information, see <html:a href="~/howtos/general/specifying_source_files.html">Specifying source files</html:a>.</xs:documentation>
         </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="LongName" type="LongFileNameType">
-        <xs:annotation>
-          <xs:appinfo>
-            <xse:deprecated ref="Name" />
-          </xs:appinfo>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="LongSource" type="LongFileNameType">
-        <xs:annotation>
-          <xs:appinfo>
-            <xse:deprecated ref="SourceName" />
-          </xs:appinfo>
-        </xs:annotation>
-      </xs:attribute>
-      <xs:attribute name="Name" type="LongFileNameType">
+      <xs:attribute name="Name" type="xs:string">
         <xs:annotation>
           <xs:documentation>
-                        The name of the directory.
+            The name of the directory.
 
-                        Do not specify this attribute (or the LongName attribute) if this directory represents
-                        the same directory as the parent (see the Windows Installer SDK's
-                        <html:a href="http://msdn.microsoft.com/library/Aa368295.aspx" target="_blank">Directory table</html:a>
-                        topic for more information about the "." operator).
+            Do not specify this attribute if this directory represents
+            the same directory as the parent (see the Windows Installer SDK's
+            <html:a href="http://msdn.microsoft.com/library/Aa368295.aspx" target="_blank">Directory table</html:a>
+            topic for more information about the "." operator).
 
-                        In prior versions of the WiX toolset, this attribute specified the short directory name.
-                        This attribute's value may now be either a short or long directory name.
-                        If a short directory name is specified, the ShortName attribute may not be specified.
-                        If a long directory name is specified, the LongName attribute may not be specified.
-                        Also, if this value is a long directory name, the ShortName attribute may be omitted to
-                        allow WiX to attempt to generate a unique short directory name.
-                        However, if this name collides with another directory or you wish to manually specify
-                        the short directory name, then the ShortName attribute may be specified.
-                    </xs:documentation>
+            This attribute's value may either a short or long directory name. If a short directory
+            name is specified, the ShortName attribute may not be specified. If this value is a long
+            directory name, the ShortName attribute may be omitted to
+            allow WiX to attempt to generate a unique short directory name.
+            However, if this name collides with another directory or you wish to manually specify
+            the short directory name, then the ShortName attribute may be specified.
+
+            This Name attribute may also define multiple directories using the inline directory syntax.
+            For example, "ProgramFilesFolder:\My Company\My Product\bin" would create a reference to a
+            Directory element with Id="ProgramFilesFolder" then create directories named "My Company" then
+            "My Product" then "bin" nested beneath each other. This syntax is a shortcut to defining
+            each directory in an individual Directory element.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="ShortName" type="ShortFileNameType">
         <xs:annotation>
           <xs:documentation>
-                        The short name of the directory in 8.3 format.
-                        This attribute should only be set if there is a conflict between generated short directory names
-                        or the user wants to manually specify the short directory name.
-                    </xs:documentation>
+            The short name of the directory in 8.3 format.
+            This attribute should only be set if there is a conflict between generated short directory names
+            or the user wants to manually specify the short directory name.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="ShortSourceName" type="ShortFileNameType">
         <xs:annotation>
           <xs:documentation>
-                        The short name of the directory on the source media in 8.3 format.
-                        This attribute should only be set if there is a conflict between generated short directory names
-                        or the user wants to manually specify the short source directory name.
-                    </xs:documentation>
+            The short name of the directory on the source media in 8.3 format.
+            This attribute should only be set if there is a conflict between generated short directory names
+            or the user wants to manually specify the short source directory name.
+          </xs:documentation>
         </xs:annotation>
       </xs:attribute>
       <xs:attribute name="SourceName" type="LongFileNameType">

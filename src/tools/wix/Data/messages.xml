@@ -146,21 +146,28 @@
         </Message>
         <Message Id="IllegalIdentifier" Number="14">
             <Instance>
-                The {0}/@{1} attribute's value, '{2}', is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
+                The {0} element's value, '{1}', is not a legal identifier. Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.). Every identifier must begin with either a letter or an underscore.
                 <Parameter Type="System.String" Name="elementName" />
-                <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />
             </Instance>
             <Instance>
-                The {0}/@{1} attribute's value is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
+                The {0}/@{1} attribute's value is not a legal identifier. Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.). Every identifier must begin with either a letter or an underscore.
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.Int32" Name="disambiguator" />
             </Instance>
             <Instance>
-                The {0} element's value, '{1}', is not a legal identifier.  Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.).  Every identifier must begin with either a letter or an underscore.
+                The {0}/@{1} attribute's value, '{2}', is not a legal identifier. Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.). Every identifier must begin with either a letter or an underscore.
                 <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />
+            </Instance>
+            <Instance>
+                The {0}/@{1} attribute's value '{2}' contains an illegal identifier '{3}'. Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or periods (.). Every identifier must begin with either a letter or an underscore.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="value" />
+                <Parameter Type="System.String" Name="identifier" />
             </Instance>
         </Message>
         <Message Id="IllegalYesNoValue" Number="15">
@@ -388,10 +395,17 @@
         </Message>
         <Message Id="IllegalLongFilename" Number="27">
             <Instance>
-                The {0}/@{1} attribute's value, '{2}', is not a valid long name because it contains illegal characters.  Legal long names contain no more than 260 characters and must contain at least one non-period character.  Any character except for the follow may be used: \ ? | &gt; &lt; : / * ".
+                The {0}/@{1} attribute's value, '{2}', is not a valid filename because it contains illegal characters. Legal filenames contain no more than 260 characters and must contain at least one non-period character. Any character except for the follow may be used: \ ? | &gt; &lt; : / * ".
                 <Parameter Type="System.String" Name="elementName" />
                 <Parameter Type="System.String" Name="attributeName" />
                 <Parameter Type="System.String" Name="value" />
+            </Instance>
+            <Instance>
+                The {0}/@{1} attribute's value '{2}' contains a invalid filename '{3}'. Legal filenames contain no more than 260 characters and must contain at least one non-period character. Any character except for the follow may be used: \ ? | &gt; &lt; : / * ".
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="value" />
+                <Parameter Type="System.String" Name="filename" />
             </Instance>
         </Message>
         <Message Id="TableNameTooLong" Number="28">
@@ -2932,6 +2946,15 @@
           The RemotePayload element can only be used for ExePackages.
         </Instance>
       </Message>
+      <Message Id="InlineDirectorySyntaxRequiresPath" Number="384">
+        <Instance>
+          The {0}/@{1} attribute's value '{2}' only specifies a directory reference. The inline directory syntax requires that at least one directory be specified in addition to the value. For example, use '{3}:\foo\' to add a 'foo' directory.
+          <Parameter Type="System.String" Name="elementName" />
+          <Parameter Type="System.String" Name="attributeName" />
+          <Parameter Type="System.String" Name="value" />
+          <Parameter Type="System.String" Name="identifier" />
+        </Instance>
+      </Message>
     </Class>
 
     <Class Name="WixWarnings" ContainerName="WixWarningEventArgs" BaseContainerName="MessageEventArgs" Level="Warning">
@@ -3716,6 +3739,12 @@
             <Instance>
                 The {0}/@Compressed attribute must have value 'no' when a RemotePayload child element is present. RemotePayload indicates that a package will always be downloaded and cannot be compressed into a bundle. To eliminate this warning, explicitly set the {0}/@Compressed attribute to 'no'.
                 <Parameter Type="System.String" Name="elementName" />
+        <Message Id="BackslashTerminateInlineDirectorySyntax" Number="1145">
+            <Instance>
+                Backslash terminate the {0}/@{1} attribute's inline directory value '{2}'. A backslash ensures a directory name will not be mistaken for a directory reference.
+                <Parameter Type="System.String" Name="elementName" />
+                <Parameter Type="System.String" Name="attributeName" />
+                <Parameter Type="System.String" Name="value" />
             </Instance>
         </Message>
     </Class>
