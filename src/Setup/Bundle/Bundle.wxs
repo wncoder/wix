@@ -45,15 +45,18 @@
             <PackageGroupRef Id='NetFx40Web' />
 
             <MsiPackage Id='Wix' Vital='yes' Name='data\core.msi' SourceFile='data\core.msi'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
                         >
                 <MsiProperty Name='INSTALLFOLDER' Value='[InstallFolder]' />
             </MsiPackage>
 
             <MsiPackage Id='Wix64' Vital='yes' Name='data\wix64.msi' SourceFile='data\wix64.msi'
-                         
-                        InstallCondition='VersionNT64' />
+                        InstallCondition='VersionNT64'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
+                        />
 
             <MsiPackage Vital='yes' Name='data\msdk.msi' SourceFile='data\msdk.msi'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
                         >
                 <MsiProperty Name='INSTALLFOLDER' Value='[InstallFolder]' />
             </MsiPackage>
@@ -75,6 +78,7 @@
             <?ifdef VS2010SdkAvailable ?>
             <MsiPackage Vital='yes' Name='data\nsdk2010.msi' SourceFile='data\nsdk2010.msi'
                         InstallCondition='VS2010InstallFolder'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
                         >
                 <MsiProperty Name='INSTALLFOLDER' Value='[InstallFolder]' />
             </MsiPackage>
@@ -83,6 +87,7 @@
             <?ifdef VS2012SdkAvailable ?>
             <MsiPackage Vital='yes' Name='data\nsdk2012.msi' SourceFile='data\nsdk2012.msi'
                         InstallCondition='VS2012InstallFolder'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
                         >
                 <MsiProperty Name='INSTALLFOLDER' Value='[InstallFolder]' />
             </MsiPackage>
@@ -91,6 +96,7 @@
             <?ifdef VS2013SdkAvailable ?>
             <MsiPackage Vital='yes' Name='data\nsdk2013.msi' SourceFile='data\nsdk2013.msi'
                         InstallCondition='VS2013InstallFolder'
+                        DownloadUrl='http://wixtoolset.org/releases/$(var.WixVersion)/{2}'
                         >
                 <MsiProperty Name='INSTALLFOLDER' Value='[InstallFolder]' />
             </MsiPackage>

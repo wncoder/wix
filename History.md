@@ -1,3 +1,5 @@
+* RobMen: WIXBUG:4222 - put DownloadUrls back in the bundle so installs work again.
+
 * SeanHall: Add WixToolset.Data.dll and WixToolset.Extensibility.dll to Toolset.wxs.
 
 ## WixBuild: Version 4.0.1320.0
