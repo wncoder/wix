@@ -548,8 +548,9 @@ extern "C" HRESULT MsiEngineDetectPackage(
             // not detect-only then it's easy; we're clearly doing a major upgrade.
             if (pRelatedMsi->fOnlyDetect)
             {
-                //if we've already detected a major upgrade, then we shouldn't assume this is a downgrade
-                if(BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE == operation)
+                // If we've already detected a major upgrade that trumps any guesses that the detect is a downgrade
+                // or even something else.
+                if (BOOTSTRAPPER_RELATED_OPERATION_MAJOR_UPGRADE == operation)
                 {
                     relatedMsiOperation = BOOTSTRAPPER_RELATED_OPERATION_NONE;
                 }
