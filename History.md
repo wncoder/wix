@@ -1,3 +1,5 @@
+* RobMen: WIXFEAT:4234 - Remove ClickThrough.
+
 * SeanHall: WIXFEAT:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
 
 * WIXBUG:3883 - Retry on IIS ERROR_TRANSACTIONAL_CONFLICT too
