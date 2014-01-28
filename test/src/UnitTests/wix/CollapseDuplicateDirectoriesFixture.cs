@@ -49,7 +49,7 @@ namespace WixTest.WixUnitTest
         [Fact]
         public void DuplicateNonPrivateDirectoryErrors()
         {
-            XDocument doc = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='DuplicatePrivateDirectoriesCollapse' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='ChildDirectory1'/><DirectoryRef Id='ChildDirectory2'/></Product>" +
+            XDocument doc = XDocument.Parse("<Wix xmlns='http://wixtoolset.org/schemas/v4/wxs'><Product Id='*' Language='1033' Manufacturer='WixTests' Name='DuplicateNonPrivateDirectoryErrors' Version='1.0.0' UpgradeCode='12345678-1234-1234-1234-1234567890AB'><DirectoryRef Id='ChildDirectory1'/><DirectoryRef Id='ChildDirectory2'/></Product>" +
                                             "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='private DupeDirectory' Name='dupe'><Directory Id='ChildDirectory1' Name='child1'/></Directory></DirectoryRef></Fragment>" +
                                             "<Fragment><DirectoryRef Id='TARGETDIR'><Directory Id='protected DupeDirectory' Name='dupe'><Directory Id='ChildDirectory2' Name='child2'/></Directory></DirectoryRef></Fragment>" +
                                             "<Fragment><Directory Id='TARGETDIR' Name='SourceDir' /></Fragment></Wix>");
