@@ -1,8 +1,8 @@
-* SeanHall: WIXFEATURE:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
+* SeanHall: WIXFEAT:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
 
 * WIXBUG:3883 - Retry on IIS ERROR_TRANSACTIONAL_CONFLICT too
 
-* SeanHall: WIXFEATURE:4292 - Don't assume downgrade if already detected major upgrade.
+* SeanHall: WIXFEAT:4292 - Don't assume downgrade if already detected major upgrade.
 
 ## WixBuild: Version 3.9.120.0
 
@@ -18,11 +18,11 @@
 
 * rjvdboon: WIXBUG:4089 - Remove SimpleTypes from help table of contents.
 
-* jchoover: FEAT#4194 - Move DownloadUrl functionality from engine to dutil.
+* jchoover: WIXFEAT:4194 - Move DownloadUrl functionality from engine to dutil.
 
-* jhennessey: WIXFEATURE:3169 - Add support for upgrade code-based product search.
+* jhennessey: WIXFEAT:3169 - Add support for upgrade code-based product search.
 
-* jchoover: FEAT#4193 - Added searching for bundles via upgrade code and querying bundle properties via provider code.
+* jchoover: WIXFEAT:4193 - Added searching for bundles via upgrade code and querying bundle properties via provider code.
 
 ## WixBuild: Version 3.9.10.0
 
