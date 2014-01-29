@@ -1,3 +1,5 @@
+* RobMen: WIXBUG:4228 - send TRUE to WM_ENDSESSION to correctly inform applications to close.
+
 * RobMen: WIXFEAT:4234 - Remove ClickThrough.
 
 * SeanHall: WIXFEAT:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
