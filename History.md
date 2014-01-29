@@ -1,3 +1,5 @@
+* RobMEN: WIXBUG:4285 - Fix typo in documentation.
+
 * RobMen: WIXFEAT:4234 - Remove ClickThrough.
 
 * SeanHall: WIXFEAT:4292 - Add ProductCode, UpgradeCode, and Version to BootstrapperApplicationData.xml.
