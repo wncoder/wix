@@ -1,4 +1,6 @@
-* RobMEN: WIXBUG:4285 - Fix typo in documentation.
+* RobMen: WIXBUG:4228 - send TRUE to WM_ENDSESSION to correctly inform applications to close.
+
+* RobMen: WIXBUG:4285 - Fix typo in documentation.
 
 * RobMen: WIXFEAT:4234 - Remove ClickThrough.
 
