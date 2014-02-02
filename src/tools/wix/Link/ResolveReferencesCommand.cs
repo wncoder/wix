@@ -172,7 +172,7 @@ namespace WixToolset.Link
                 case AccessModifier.Public:
                     return true;
                 case AccessModifier.Internal:
-                    return null != symbol.Row.Section.LibraryId && symbol.Row.Section.LibraryId.Equals(referencingSection.LibraryId);
+                    return symbol.Row.Section.IntermediateId.Equals(referencingSection.IntermediateId) || (null != symbol.Row.Section.LibraryId && symbol.Row.Section.LibraryId.Equals(referencingSection.LibraryId));
                 case AccessModifier.Protected:
                     return symbol.Row.Section.IntermediateId.Equals(referencingSection.IntermediateId);
                 case AccessModifier.Private:

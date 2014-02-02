@@ -2139,12 +2139,7 @@ namespace WixToolset
                             }
                             break;
                         case "Directory":
-                            if (null != directoryId)
-                            {
-                                this.core.OnMessage(WixErrors.IllegalAttributeWhenNested(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, "Directory"));
-                            }
-                            directoryId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directoryId);
+                            directoryId = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, directoryId);
                             break;
                         case "DiskId":
                             diskId = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 1, short.MaxValue);
@@ -2591,8 +2586,9 @@ namespace WixToolset
                             id = this.core.GetAttributeIdentifier(sourceLineNumbers, attrib);
                             break;
                         case "Directory":
-                            directoryId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directoryId);
+                            // If the inline syntax is invalid it returns null. Use a static error identifier so the null
+                            // directory identifier here doesn't trickle down false errors into child elements.
+                            directoryId = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null) ?? "ErrorParsingInlineSyntax";
                             break;
                         case "Source":
                             source = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -2901,8 +2897,7 @@ namespace WixToolset
                     switch (attrib.Name.LocalName)
                     {
                         case "Directory":
-                            directoryId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directoryId);
+                            directoryId = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, directoryId);
                             break;
                         default:
                             this.core.UnexpectedAttribute(node, attrib);
@@ -2985,8 +2980,7 @@ namespace WixToolset
                             delete = YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib);
                             break;
                         case "DestinationDirectory":
-                            destinationDirectory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", destinationDirectory);
+                            destinationDirectory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             break;
                         case "DestinationLongName":
                             destinationLongName = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
@@ -3010,8 +3004,7 @@ namespace WixToolset
                             this.core.CreateSimpleReference(sourceLineNumbers, "File", fileId);
                             break;
                         case "SourceDirectory":
-                            sourceDirectory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", sourceDirectory);
+                            sourceDirectory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             break;
                         case "SourceName":
                             sourceName = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -3225,9 +3218,8 @@ namespace WixToolset
                             {
                                 this.core.OnMessage(WixErrors.CustomActionMultipleSources(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, "BinaryKey", "Directory", "FileKey", "Property", "Script"));
                             }
-                            source = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
+                            source = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             sourceBits = MsiInterop.MsidbCustomActionTypeDirectory;
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", source); // add a reference to the appropriate Directory
                             break;
                         case "DllEntry":
                             if (null != target)
@@ -4132,12 +4124,12 @@ namespace WixToolset
             Identifier id = null;
             string componentGuidGenerationSeed = null;
             bool fileSourceAttribSet = false;
-            string longName = null;
-            string longSourceName = null;
-            string name = null;
+            bool nameHasValue = false;
+            string name = "."; // default to parent directory.
+            string[] inlineSyntax = null;
             string shortName = null;
-            string shortSourceName = null;
             string sourceName = null;
+            string shortSourceName = null;
             string defaultDir = null;
             string symbols = null;
 
@@ -4157,35 +4149,18 @@ namespace WixToolset
                             diskId = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 1, short.MaxValue);
                             break;
                         case "FileSource":
-                        case "src":
-                            if (fileSourceAttribSet)
-                            {
-                                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "FileSource", "src"));
-                            }
-
-                            if ("src" == attrib.Name.LocalName)
-                            {
-                                this.core.OnMessage(WixWarnings.DeprecatedAttribute(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, "FileSource"));
-                            }
                             fileSource = this.core.GetAttributeValue(sourceLineNumbers, attrib);
                             fileSourceAttribSet = true;
                             break;
-                        case "LongName":
-                            longName = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
-                            this.core.OnMessage(WixWarnings.DeprecatedLongNameAttribute(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, "Name", "ShortName"));
-                            break;
-                        case "LongSource":
-                            longSourceName = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
-                            this.core.OnMessage(WixWarnings.DeprecatedLongNameAttribute(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, "SourceName", "ShortSourceName"));
-                            break;
                         case "Name":
-                            if ("." != attrib.Value) // treat "." as a null value and add it back as "." later
+                            nameHasValue = true;
+                            if (attrib.Value.Equals("."))
                             {
-                                name = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, false);
-                                if ("PUT-APPLICATION-DIRECTORY-HERE" == name)
-                                {
-                                    this.core.OnMessage(WixWarnings.PlaceholderValue(sourceLineNumbers, node.Name.LocalName, attrib.Name.LocalName, name));
-                                }
+                                name = attrib.Value;
+                            }
+                            else
+                            {
+                                inlineSyntax = this.core.GetAttributeInlineDirectorySyntax(sourceLineNumbers, attrib);
                             }
                             break;
                         case "ShortName":
@@ -4215,161 +4190,135 @@ namespace WixToolset
                 }
             }
 
-            if (null == id)
+            // Create the directory rows for the inline.
+            if (null != inlineSyntax)
             {
-                this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "Id"));
-                id = Identifier.Invalid;
+                // Special case the single entry in the inline syntax since it is the most common case
+                // and needs no extra processing. It's just the name of the directory.
+                if (1 == inlineSyntax.Length)
+                {
+                    name = inlineSyntax[0];
+                }
+                else
+                {
+                    int pathStartsAt = 0;
+                    if (inlineSyntax[0].EndsWith(":"))
+                    {
+                        parentId = inlineSyntax[0].TrimEnd(':');
+                        this.core.CreateSimpleReference(sourceLineNumbers, "Directory", parentId);
+
+                        pathStartsAt = 1;
+                    }
+
+                    for (int i = pathStartsAt; i < inlineSyntax.Length - 1; ++i)
+                    {
+                        Identifier inlineId = this.core.CreateDirectoryRow(sourceLineNumbers, null, parentId, inlineSyntax[i]);
+                        parentId = inlineId.Id;
+                    }
+
+                    name = inlineSyntax[inlineSyntax.Length - 1];
+                }
+            }
+
+            if (!nameHasValue)
+            {
+                if (!String.IsNullOrEmpty(shortName))
+                {
+                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name.LocalName, "ShortName", "Name"));
+                }
+
+                if (null == parentId)
+                {
+                    this.core.OnMessage(WixErrors.DirectoryRootWithoutName(sourceLineNumbers, node.Name.LocalName, "Name"));
+                }
+            }
+            else if (!String.IsNullOrEmpty(name))
+            {
+                if (String.IsNullOrEmpty(shortName))
+                {
+                    if (!name.Equals(".") && !name.Equals("SourceDir") && !this.core.IsValidShortFilename(name, false))
+                    {
+                        shortName = this.core.CreateShortName(name, false, false, "Directory", parentId);
+                    }
+                }
+                else if (name.Equals("."))
+                {
+                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "ShortName", "Name", name));
+                }
+                else if (name.Equals(shortName))
+                {
+                    this.core.OnMessage(WixWarnings.DirectoryRedundantNames(sourceLineNumbers, node.Name.LocalName, "Name", "ShortName", name));
+                }
+            }
+
+            if (String.IsNullOrEmpty(sourceName))
+            {
+                if (!String.IsNullOrEmpty(shortSourceName))
+                {
+                    this.core.OnMessage(WixErrors.IllegalAttributeWithoutOtherAttributes(sourceLineNumbers, node.Name.LocalName, "ShortSourceName", "SourceName"));
+                }
             }
             else
             {
-                if (null == parentId &&  !id.Id.Equals("TARGETDIR"))
+                if (String.IsNullOrEmpty(shortSourceName))
                 {
-                    this.core.OnMessage(WixErrors.IllegalRootDirectory(sourceLineNumbers, id.Id));
+                    if (!sourceName.Equals(".") && !this.core.IsValidShortFilename(sourceName, false))
+                    {
+                        shortSourceName = this.core.CreateShortName(sourceName, false, false, "Directory", parentId);
+                    }
+                }
+                else if (sourceName.Equals("."))
+                {
+                    this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "ShortSourceName", "SourceName", sourceName));
+                }
+                else if (sourceName.Equals(shortSourceName))
+                {
+                    this.core.OnMessage(WixWarnings.DirectoryRedundantNames(sourceLineNumbers, node.Name.LocalName, "SourceName", "ShortSourceName", sourceName));
                 }
             }
 
-            // the ShortName and LongName attributes should not both be specified because LongName is only for
-            // the old deprecated method of specifying a file name whereas ShortName is specifically for the new method
-            if (null != shortName && null != longName)
+            // Update the file source path appropriately.
+            if (fileSourceAttribSet)
             {
-                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "ShortName", "LongName"));
-            }
-
-            if (null != shortSourceName && null != longSourceName)
-            {
-                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "ShortSourceName", "LongSource"));
-            }
-
-            // Cannot have Name and LongName in Wix 3
-            if (null != name && null != longName)
-            {
-                this.core.OnMessage(WixErrors.IllegalAttributeWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "Name", "LongName"));
-            }
-
-            if (!String.IsNullOrEmpty(name) && String.Empty != longName)
-            {
-                if ("SourceDir" == name || this.core.IsValidShortFilename(name, false))
+                if (!fileSource.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
                 {
-                    if (null == shortName)
-                    {
-                        shortName = name;
-                    }
-                }
-                else
-                {
-                    // generate a short directory name
-                    if (null == shortName)
-                    {
-                        shortName = this.core.CreateShortName(name, false, false, node.Name.LocalName, parentId);
-                    }
-                    else
-                    {
-                        // generate a short directory name
-                        if (null == shortName)
-                        {
-                            shortName = this.core.CreateShortName(name, false, false, node.Name.LocalName, parentId);
-                        }
-                    }
+                    fileSource = String.Concat(fileSource, Path.DirectorySeparatorChar);
                 }
             }
-
-            if (null == shortName && null == parentId)
+            else // add the appropriate part of this directory element to the file source.
             {
-                this.core.OnMessage(WixErrors.DirectoryRootWithoutName(sourceLineNumbers, node.Name.LocalName, "Name"));
-            }
-
-            if (String.Empty != sourceName && String.Empty != longSourceName)
-            {
-                if (null == sourceName && null != longSourceName)
-                {
-                    this.core.OnMessage(WixErrors.ExpectedAttribute(sourceLineNumbers, node.Name.LocalName, "SourceName", "LongSource"));
-                }
-                else if ("." == sourceName && null != longSourceName) // long source name cannot be specified with source name of "."
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "LongSourceName", longSourceName, "SourceName", sourceName));
-                }
-                else if (null != sourceName)
-                {
-                    if (sourceName == longSourceName) // SourceName and LongSource are identical
-                    {
-                        this.core.OnMessage(WixWarnings.DirectoryRedundantNames(sourceLineNumbers, node.Name.LocalName, "SourceName", "LongSource", sourceName));
-                    }
-                    else if (this.core.IsValidShortFilename(sourceName, false) || "." == sourceName)
-                    {
-                        if (null == shortSourceName)
-                        {
-                            shortSourceName = sourceName;
-                        }
-                        else
-                        {
-                            this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "SourceName", sourceName, "ShortSourceName"));
-                        }
-                    }
-                    else
-                    {
-                        if (null == longSourceName)
-                        {
-                            longSourceName = sourceName;
-
-                            // generate a short source directory name
-                            if (null == shortSourceName)
-                            {
-                                shortSourceName = this.core.CreateShortName(sourceName, false, false, node.Name.LocalName, parentId);
-                            }
-                        }
-                        else
-                        {
-                            this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "SourceName", sourceName, "LongSourceName"));
-                        }
-                    }
-                }
-            }
-
-            if (String.Empty != shortName && String.Empty != longName &&
-                String.Empty != shortSourceName && String.Empty != longSourceName &&
-                shortName == shortSourceName && longName == longSourceName && (null != shortName || null != longName)) // source and target are identical
-            {
-                this.core.OnMessage(WixWarnings.DirectoryRedundantNames(sourceLineNumbers, node.Name.LocalName, "SourceName", "LongSource"));
-            }
-
-            if (fileSourceAttribSet && !fileSource.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
-            {
-                fileSource = String.Concat(fileSource, Path.DirectorySeparatorChar);
-            }
-
-            // track the src path
-            if (!fileSourceAttribSet)
-            {
+                string append = null;
                 if (this.useShortFileNames)
                 {
-                    if (null != sourceName)
-                    {
-                        fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, shortSourceName, Path.DirectorySeparatorChar);
-                    }
-                    else if (null != name)
-                    {
-                        fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, shortName, Path.DirectorySeparatorChar);
-                    }
+                    append = !String.IsNullOrEmpty(shortSourceName) ? shortSourceName : shortName;
                 }
-                else if (null != longSourceName)
+
+                if (String.IsNullOrEmpty(append))
                 {
-                    fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, longSourceName, Path.DirectorySeparatorChar);
+                    append = !String.IsNullOrEmpty(sourceName) ? sourceName : name;
                 }
-                else
+
+                if (!String.IsNullOrEmpty(append))
                 {
-                    if (null != sourceName)
-                    {
-                        fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, shortSourceName, Path.DirectorySeparatorChar);
-                    }
-                    else if (null != longName)
-                    {
-                        fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, longName, Path.DirectorySeparatorChar);
-                    }
-                    else if (null != name)
-                    {
-                        fileSource = String.Format(CultureInfo.InvariantCulture, "{0}{1}{2}", fileSource, name, Path.DirectorySeparatorChar);
-                    }
+                    fileSource = String.Concat(fileSource, append, Path.DirectorySeparatorChar);
                 }
+            }
+
+            if (null == id)
+            {
+                id = this.core.CreateIdentifier("dir", parentId, name, shortName, sourceName, shortSourceName);
+            }
+
+            // Calculate the DefaultDir for the directory row.
+            defaultDir = String.IsNullOrEmpty(shortName) ? name : String.Concat(shortName, "|", name);
+            if (!String.IsNullOrEmpty(sourceName))
+            {
+                defaultDir = String.Concat(defaultDir, ":", String.IsNullOrEmpty(shortSourceName) ? sourceName : String.Concat(shortSourceName, "|", sourceName));
+            }
+
+            if ("TARGETDIR".Equals(id.Id) && !"SourceDir".Equals(defaultDir))
+            {
+                this.core.OnMessage(WixErrors.IllegalTargetDirDefaultDir(sourceLineNumbers, defaultDir));
             }
 
             foreach (XElement child in node.Elements())
@@ -4406,30 +4355,6 @@ namespace WixToolset
                 {
                     this.core.ParseExtensionElement(node, child);
                 }
-            }
-
-            // put back the "." if short name wasn't specified
-            if (null == shortName)
-            {
-                // the Name and SourceName cannot both be "."
-                if ("." == sourceName)
-                {
-                    this.core.OnMessage(WixErrors.IllegalAttributeValueWithOtherAttribute(sourceLineNumbers, node.Name.LocalName, "SourceName", sourceName, "Name", "."));
-                }
-
-                shortName = ".";
-            }
-
-            // build the DefaultDir column
-            defaultDir = GetMsiFilenameValue(shortName, name);
-            if (null != shortSourceName)
-            {
-                defaultDir = String.Concat(defaultDir, ":", GetMsiFilenameValue(shortSourceName, longSourceName));
-            }
-
-            if ("TARGETDIR".Equals(id.Id) && !"SourceDir".Equals(defaultDir))
-            {
-                this.core.OnMessage(WixErrors.IllegalTargetDirDefaultDir(sourceLineNumbers, defaultDir));
             }
 
             if (!this.core.EncounteredError)
@@ -4883,8 +4808,7 @@ namespace WixToolset
                             }
                             break;
                         case "ConfigurableDirectory":
-                            configurableDirectory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", configurableDirectory);
+                            configurableDirectory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             break;
                         case "Description":
                             description = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -13279,8 +13203,7 @@ namespace WixToolset
                             id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "Directory":
-                            directory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directory);
+                            directory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, parentDirectory);
                             break;
                         case "LongName":
                             longName = this.core.GetAttributeLongFilename(sourceLineNumbers, attrib, true);
@@ -13431,8 +13354,7 @@ namespace WixToolset
                             id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "Directory":
-                            directory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directory);
+                            directory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, parentDirectory);
                             break;
                         case "On":
                             Wix.InstallUninstallType onValue = this.core.GetAttributeInstallUninstallValue(sourceLineNumbers, attrib);
@@ -13529,8 +13451,7 @@ namespace WixToolset
                             id = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
                             break;
                         case "Directory":
-                            directoryId = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directoryId);
+                            directoryId = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, directoryId);
                             break;
                         case "RunFromSource":
                             runFromSource = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, int.MaxValue);
@@ -15182,8 +15103,7 @@ namespace WixToolset
                             descriptionResourceId = this.core.GetAttributeIntegerValue(sourceLineNumbers, attrib, 0, short.MaxValue);
                             break;
                         case "Directory":
-                            directory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", directory);
+                            directory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             break;
                         case "DisplayResourceDll":
                             displayResourceDll = this.core.GetAttributeValue(sourceLineNumbers, attrib);
@@ -15557,8 +15477,7 @@ namespace WixToolset
                             }
                             break;
                         case "HelpDirectory":
-                            helpDirectory = this.core.GetAttributeIdentifierValue(sourceLineNumbers, attrib);
-                            this.core.CreateSimpleReference(sourceLineNumbers, "Directory", helpDirectory);
+                            helpDirectory = this.core.CreateDirectoryReferenceFromInlineSyntax(sourceLineNumbers, attrib, null);
                             break;
                         case "Hidden":
                             if (YesNoType.Yes == this.core.GetAttributeYesNoValue(sourceLineNumbers, attrib))
