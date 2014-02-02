@@ -17,7 +17,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ClickThrough.wxs" />
     <Compile Include="CoreMsi.wxs" />
     <Compile Include="Doc.wxs" />
     <Compile Include="Extensions.wxs" />

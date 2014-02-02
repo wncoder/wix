@@ -1,3 +1,5 @@
+* RobMen: Merge recent changes through WiX v3.9.202.0
+
 * RobMen: WIXBUG:4222 - put DownloadUrls back in the bundle so installs work again.
 
 * SeanHall: Add WixToolset.Data.dll and WixToolset.Extensibility.dll to Toolset.wxs.
@@ -15,8 +17,6 @@
 * MikeGC: Fix a few bugs in Settings Browser (UI issue, and tolerate more remote database errors such as remote databases on USB drives being unplugged)
 
 * RobMen: Merge recent changes through WiX v3.9.16.0
-
-## WixBuild: Version 4.0.1210.0
 
 * MikeGC: Preserve scroll position on Settings Browser ListView refresh.
 

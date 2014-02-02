@@ -39,6 +39,9 @@ typedef struct _BAL_INFO_PACKAGE
     BOOL fPermanent;
     BOOL fVital;
     BOOL fDisplayInternalUI;
+    LPWSTR sczProductCode;
+    LPWSTR sczUpgradeCode;
+    LPWSTR sczVersion;
 } BAL_INFO_PACKAGE;
 
 

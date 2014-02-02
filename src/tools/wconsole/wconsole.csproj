@@ -16,8 +16,6 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyDefaultClickThroughConsoleAttribute.cs" />
-    <Compile Include="ClickThroughConsoleExtension.cs" />
     <Compile Include="CommandLineResponseFile.cs" />
     <Compile Include="CommandLineOption.cs" />
     <Compile Include="AssemblyInfo.cs" />
