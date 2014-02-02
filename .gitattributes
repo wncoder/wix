@@ -21,10 +21,15 @@
 *.lib binary
 *.exe binary
 
+*.pfx binary
+*.cer binary
+
 *.chm binary
 
 *.cub binary
 *.msi binary
+*.msp binary
+*.mst binary
 
 *.bmp binary
 *.ico binary
