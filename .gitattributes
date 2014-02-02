@@ -21,8 +21,9 @@
 *.lib binary
 *.exe binary
 
-*.pfx binary
 *.cer binary
+*.pfx binary
+*.snk binary
 
 *.chm binary
 
