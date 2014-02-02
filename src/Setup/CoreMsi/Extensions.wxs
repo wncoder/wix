@@ -58,9 +58,11 @@
                 <File Source="WixPSExtension.dll" />
             </Component>
 
+            <?ifdef var.SqlCESdkInstallPath ?>
             <Component>
                 <File Source="WixSettingsEngineExtension.dll" />
             </Component>
+            <?endif?>
 
             <Component>
                 <File Source="WixSqlExtension.dll" />
