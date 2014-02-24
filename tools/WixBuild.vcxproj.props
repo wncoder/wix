@@ -9,12 +9,17 @@
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
 
+  <PropertyGroup Condition=" $(StaticAnalysisEnabled) and $(VS2013Available) ">
+    <PlatformToolset Condition="$(VS2013Available)">v120</PlatformToolset>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+  </PropertyGroup>
+
   <PropertyGroup>
     <!-- If available and we're not explicitly setting the toolset, use VS2013; otherwise fall back to VS2012 then VS2010. -->
     <PlatformToolset Condition=" '$(PlatformToolset)'=='' and $(VS2013Available) ">v120_xp</PlatformToolset>
     <PlatformToolset Condition=" '$(PlatformToolset)'=='' and $(VS2012Available) ">v110_xp</PlatformToolset>
     <ProjectSubSystem Condition=" '$(ProjectSubSystem)'=='' ">Windows</ProjectSubSystem>
-    <RunCodeAnalysis Condition=" '$(Configuration)'=='Release' ">true</RunCodeAnalysis>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
