@@ -3265,7 +3265,7 @@ namespace WixToolset
                 foreach (WixCatalogRow catalogRow in catalogTable.Rows)
                 {
                     // Each catalog is also a payload
-                    string payloadId = Common.GenerateIdentifier("pay", true, catalogRow.SourceFile);
+                    string payloadId = Common.GenerateIdentifier("pay", catalogRow.SourceFile);
                     string catalogFile = this.ResolveFile(catalogRow.SourceFile, "Catalog", catalogRow.SourceLineNumbers, BindStage.Normal);
                     PayloadInfoRow payloadInfo = PayloadInfoRow.Create(catalogRow.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, burnUXContainer.Id, PackagingType.Embedded);
 

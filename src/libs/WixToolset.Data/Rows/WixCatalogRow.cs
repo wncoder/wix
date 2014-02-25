@@ -11,7 +11,7 @@
 // </summary>
 //-------------------------------------------------------------------------------------------------
 
-namespace Microsoft.Tools.WindowsInstallerXml
+namespace WixToolset.Data.Rows
 {
     using System;
     using System.IO;
@@ -19,14 +19,14 @@ namespace Microsoft.Tools.WindowsInstallerXml
     /// <summary>
     /// Specialization of a row for the WixCatalog table.
     /// </summary>
-    internal class WixCatalogRow : Row
+    public sealed class WixCatalogRow : Row
     {
         /// <summary>
         /// Creates a Catalog row that does not belong to a table.
         /// </summary>
         /// <param name="sourceLineNumbers">Original source lines for this row.</param>
         /// <param name="tableDef">TableDefinition this Catalog row belongs to and should get its column definitions from.</param>
-        public WixCatalogRow(SourceLineNumberCollection sourceLineNumbers, TableDefinition tableDef) :
+        public WixCatalogRow(SourceLineNumber sourceLineNumbers, TableDefinition tableDef) :
             base(sourceLineNumbers, tableDef)
         {
         }
@@ -36,7 +36,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
         /// </summary>
         /// <param name="sourceLineNumbers">Original source lines for this row.</param>
         /// <param name="table">Table this Catalog row belongs to and should get its column definitions from.</param>
-        public WixCatalogRow(SourceLineNumberCollection sourceLineNumbers, Table table)
+        public WixCatalogRow(SourceLineNumber sourceLineNumbers, Table table)
             : base(sourceLineNumbers, table)
         {
         }

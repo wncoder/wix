@@ -16,6 +16,7 @@ namespace WixToolset
     using System;
     using System.Xml;
     using WixToolset.Data;
+    using WixToolset.Data.Rows;
 
     /// <summary>
     /// Utility class for Burn variable information.
