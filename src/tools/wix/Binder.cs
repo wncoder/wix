@@ -3116,27 +3116,27 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Ensure that the bundle has our well-known persisted values.
             Table variableTable = bundle.EnsureTable(this.core.TableDefinitions["Variable"]);
-            Row wellKnownVariable = variableTable.CreateRow(null);
-            wellKnownVariable[0] = Binder.BURN_BUNDLE_NAME;
-            wellKnownVariable[3] = 0;
-            wellKnownVariable[4] = 1;
+            VariableRow bundleNameWellKnownVariable = (VariableRow)variableTable.CreateRow(null);
+            bundleNameWellKnownVariable.Id = Binder.BURN_BUNDLE_NAME;
+            bundleNameWellKnownVariable.Hidden = false;
+            bundleNameWellKnownVariable.Persisted = true;
 
-            wellKnownVariable = variableTable.CreateRow(null);
-            wellKnownVariable[0] = Binder.BURN_BUNDLE_ORIGINAL_SOURCE;
-            wellKnownVariable[3] = 0;
-            wellKnownVariable[4] = 1;
+            VariableRow bundleOriginalSourceWellKnownVariable = (VariableRow)variableTable.CreateRow(null);
+            bundleOriginalSourceWellKnownVariable.Id = Binder.BURN_BUNDLE_ORIGINAL_SOURCE;
+            bundleOriginalSourceWellKnownVariable.Hidden = false;
+            bundleOriginalSourceWellKnownVariable.Persisted = true;
 
-            wellKnownVariable = variableTable.CreateRow(null);
-            wellKnownVariable[0] = Binder.BURN_BUNDLE_LAST_USED_SOURCE;
-            wellKnownVariable[3] = 0;
-            wellKnownVariable[4] = 1;
+            VariableRow bundleLastUsedSourceWellKnownVariable = (VariableRow)variableTable.CreateRow(null);
+            bundleLastUsedSourceWellKnownVariable.Id = Binder.BURN_BUNDLE_LAST_USED_SOURCE;
+            bundleLastUsedSourceWellKnownVariable.Hidden = false;
+            bundleLastUsedSourceWellKnownVariable.Persisted = true;
 
             // To make lookups easier, we load the variable table bottom-up, so
             // that we can index by ID.
             List<VariableInfo> allVariables = new List<VariableInfo>(variableTable.Rows.Count);
-            foreach (Row row in variableTable.Rows)
+            foreach (VariableRow variableRow in variableTable.Rows)
             {
-                allVariables.Add(new VariableInfo(row));
+                allVariables.Add(new VariableInfo(variableRow));
             }
 
             // TODO: Although the WixSearch tables are defined in the Util extension,
@@ -3271,7 +3271,6 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             Dictionary<string, ContainerInfo> containers = new Dictionary<string, ContainerInfo>();
             Dictionary<string, bool> payloadsAddedToContainers = new Dictionary<string, bool>();
-            List<PayloadInfoRow> payloadsInDefaultAttachedContainer = new List<PayloadInfoRow>();
 
             // Create the list of containers.
             Table containerTable = bundle.Tables["Container"];
@@ -3285,8 +3284,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
             }
 
             // Create the default attached container for payloads that need to be attached but don't have an explicit container.
-            containers.Add("WixAttachedContainer", new ContainerInfo("WixAttachedContainer", "bundle-attached.cab", "attached", null, this.FileManager));
-            containers["WixAttachedContainer"].Payloads = payloadsInDefaultAttachedContainer;
+            ContainerInfo defaultAttachedContainer = new ContainerInfo("WixAttachedContainer", "bundle-attached.cab", "attached", null, this.FileManager);
+            containers.Add(defaultAttachedContainer.Id, defaultAttachedContainer);
 
             // Create lists of which payloads go in each container or are layout only.
             foreach (Row row in wixGroupTable.Rows)
@@ -3315,9 +3314,9 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 }
             }
 
-            ContainerInfo containerInfo;
-            containers.TryGetValue(Compiler.BurnUXContainerId, out containerInfo);
-            List<PayloadInfoRow> uxPayloads = null == containerInfo ? null : containerInfo.Payloads;
+            ContainerInfo burnUXContainer;
+            containers.TryGetValue(Compiler.BurnUXContainerId, out burnUXContainer);
+            List<PayloadInfoRow> uxPayloads = null == burnUXContainer ? null : burnUXContainer.Payloads;
 
             // If we didn't get any UX payloads, it's an error!
             if (null == uxPayloads || 0 == uxPayloads.Count)
@@ -3330,20 +3329,20 @@ namespace Microsoft.Tools.WindowsInstallerXml
             Table catalogTable = bundle.Tables["WixCatalog"];
             if (null != catalogTable)
             {
-                foreach (Row row in catalogTable.Rows)
+                foreach (WixCatalogRow catalogRow in catalogTable.Rows)
                 {
                     // Each catalog is also a payload
-                    string payloadId = Common.GenerateIdentifier("pay", true, (string)row[1]);
-                    string catalogFile = this.FileManager.ResolveFile((string)row[1], "Catalog", row.SourceLineNumbers, BindStage.Normal);
-                    PayloadInfoRow payloadInfo = PayloadInfoRow.Create(row.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
+                    string payloadId = Common.GenerateIdentifier("pay", true, catalogRow.SourceFile);
+                    string catalogFile = this.FileManager.ResolveFile(catalogRow.SourceFile, "Catalog", catalogRow.SourceLineNumbers, BindStage.Normal);
+                    PayloadInfoRow payloadInfo = PayloadInfoRow.Create(catalogRow.SourceLineNumbers, bundle, payloadId, Path.GetFileName(catalogFile), catalogFile, true, false, null, burnUXContainer.Id, PackagingType.Embedded);
 
                     // Add the payload to the UX container
                     allPayloads.Add(payloadInfo.Id, payloadInfo);
-                    containers[Compiler.BurnUXContainerId].Payloads.Add(payloadInfo);
+                    burnUXContainer.Payloads.Add(payloadInfo);
                     payloadsAddedToContainers.Add(payloadInfo.Id, true);
 
                     // Create the catalog info
-                    CatalogInfo catalog = new CatalogInfo(row, payloadId);
+                    CatalogInfo catalog = new CatalogInfo(catalogRow, payloadId);
                     catalogs.Add(catalog.Id, catalog);
                 }
             }
@@ -3392,8 +3391,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                     PayloadInfoRow payload = allPayloads[payloadName];
                     if (PackagingType.Embedded == payload.Packaging)
                     {
-                        payload.Container = containers["WixAttachedContainer"].Id;
-                        payloadsInDefaultAttachedContainer.Add(payload);
+                        payload.Container = defaultAttachedContainer.Id;
+                        defaultAttachedContainer.Payloads.Add(payload);
                     }
                     else if (!String.IsNullOrEmpty(payload.FullFileName))
                     {
@@ -3691,7 +3690,7 @@ namespace Microsoft.Tools.WindowsInstallerXml
 
             // Add the bootstrapper application manifest to the set of UX payloads.
             PayloadInfoRow baManifestPayload = PayloadInfoRow.Create(null /*TODO*/, bundle, Common.GenerateIdentifier("ux", true, "BootstrapperApplicationData.xml"),
-                "BootstrapperApplicationData.xml", baManifestPath, false, true, null, containers[Compiler.BurnUXContainerId].Id, PackagingType.Embedded);
+                "BootstrapperApplicationData.xml", baManifestPath, false, true, null, burnUXContainer.Id, PackagingType.Embedded);
             baManifestPayload.EmbeddedId = string.Format(CultureInfo.InvariantCulture, BurnCommon.BurnUXContainerEmbeddedIdFormat, uxPayloads.Count);
             uxPayloads.Add(baManifestPayload);
 
@@ -3716,9 +3715,8 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 writer.InitializeBundleSectionData(burnStubFile.Length, bundleInfo.BundleId);
 
                 // Always create UX container and attach it first
-                ContainerInfo uxContainer = containers[Compiler.BurnUXContainerId];
-                this.CreateContainer(uxContainer, manifestPath);
-                writer.AppendContainer(uxContainer.TempPath, BurnWriter.Container.UX);
+                this.CreateContainer(burnUXContainer, manifestPath);
+                writer.AppendContainer(burnUXContainer.TempPath, BurnWriter.Container.UX);
 
                 // Now append all other attached containers
                 foreach (ContainerInfo container in containers.Values)
@@ -3925,13 +3923,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     foreach (WixBundlePatchTargetCodeRow row in rows)
                     {
-                        Row slipstreaMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
-                        slipstreaMspRow[0] = msi.Id;
-                        slipstreaMspRow[1] = row.MspPackageId;
+                        Row slipstreamMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
+                        slipstreamMspRow[0] = msi.Id;
+                        slipstreamMspRow[1] = row.MspPackageId;
 
-                        if (slipstreamMspRows.TryAdd(slipstreaMspRow))
+                        if (slipstreamMspRows.TryAdd(slipstreamMspRow))
                         {
-                            slipstreamMspTable.Rows.Add(slipstreaMspRow);
+                            slipstreamMspTable.Rows.Add(slipstreamMspRow);
                         }
                     }
 
@@ -3942,13 +3940,13 @@ namespace Microsoft.Tools.WindowsInstallerXml
                 {
                     foreach (WixBundlePatchTargetCodeRow row in rows)
                     {
-                        Row slipstreaMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
-                        slipstreaMspRow[0] = msi.Id;
-                        slipstreaMspRow[1] = row.MspPackageId;
+                        Row slipstreamMspRow = slipstreamMspTable.CreateRow(row.SourceLineNumbers, false);
+                        slipstreamMspRow[0] = msi.Id;
+                        slipstreamMspRow[1] = row.MspPackageId;
 
-                        if (slipstreamMspRows.TryAdd(slipstreaMspRow))
+                        if (slipstreamMspRows.TryAdd(slipstreamMspRow))
                         {
-                            slipstreamMspTable.Rows.Add(slipstreaMspRow);
+                            slipstreamMspTable.Rows.Add(slipstreamMspRow);
                         }
                     }
 
