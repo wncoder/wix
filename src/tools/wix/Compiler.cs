@@ -18455,9 +18455,7 @@ namespace WixToolset
             // Create catalog row
             if (!this.core.EncounteredError)
             {
-                Row row = this.core.CreateRow(sourceLineNumbers, "WixCatalog");
-                row[0] = id;
-                row[1] = sourceFile;
+                this.core.CreateWixCatalogRow(sourceLineNumbers, id, sourceFile);
             }
         }
 
@@ -20473,7 +20471,7 @@ namespace WixToolset
                     }
                     else
                     {
-                        // Sadly, Version doesn't have a TryParse() method, so we have to try/catch to see if it parses.
+                        // Sadly, Version doesn't have a TryParse() method until .NET 4, so we have to try/catch to see if it parses.
                         try
                         {
                             Version version = new Version(value.Substring(1));

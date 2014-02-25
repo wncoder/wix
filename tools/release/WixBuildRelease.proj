@@ -12,7 +12,7 @@
   <Import Project="..\WixBuild.Version.targets" />
   <Import Project="..\Nuget.targets" />
 
-  <UsingTask AssemblyFile="$(MSBuildCommunityTasksPath)MSBuild.Community.Tasks.dll" TaskName="FtpUpload" />
+  <UsingTask AssemblyFile="$(AzureStorageBuildTasksPath)FireGiant.BuildTasks.AzureStorage.dll" TaskName="UploadBlobs" />
 
   <!--
   ================================================================================================
@@ -112,6 +112,24 @@
 
   <!--
   ================================================================================================
+  CalculateUploadBlobs
+
+    Calculates the UploadBlob items from the released files.
+
+  ================================================================================================
+  -->
+  <Target Name="CalculateUploadBlobs"
+          DependsOnTargets="GetReleasedFiles">
+    <ItemGroup>
+      <UploadBlob Include="@(ReleasedFiles)">
+        <Container>%(Container)</Container>
+        <BlobName>%(RelativeUploadFolder)%(Filename)%(Extension)</BlobName>
+      </UploadBlob>
+    </ItemGroup>
+  </Target>
+
+  <!--
+  ================================================================================================
   UploadFiles
 
     Uploads the released files from a project's build.
@@ -120,16 +138,20 @@
   -->
   <Target Name="UploadFiles"
           Condition=" $(SkipUploadFiles)=='' "
-          DependsOnTargets="GetReleasedFiles">
+          DependsOnTargets="GetReleasedFiles;CalculateUploadBlobs">
 
-    <FtpUpload RemoteUri="$(ReleaseFtpUrl)"
-               Username="$(ReleaseUsername)"
-               Password="$(ReleasePassword)"
-               LocalFiles="@(ReleasedFiles)"
-               RemoteFiles="@(ReleasedFiles->'%(RelativeUploadFolder)%(Filename)%(Extension)')" />
+    <Message Importance="Normal" Text="Uploading: @(UploadBlob) to: %(Container) at: %(BlobName)." />
 
-    <!--<Exec Command="$(CurlExe) -ftp-create-dirs -silent -show-error -C - -T %(ReleasedFiles.Identity) -u $(ReleaseUsername):$(ReleasePassword) $(ReleaseFtpUrl)%(RelativeUploadFolder)"
-           WorkingDirectory="$(ProjectFolder)" />-->
+    <UploadBlobs StorageAccount="$(StorageAccount)"
+                 StorageAuthentication="$(StorageAuthentication)"
+                 StorageEmulator="$(StorageUseEmulator)"
+                 Container="%(Container)"
+                 Public="true"
+                 Blobs="@(UploadBlob)">
+      <Output TaskParameter="Uploaded" ItemName="UploadedBlob" />
+    </UploadBlobs>
+
+    <Message Importance="Normal" Text="Upload complete." />
   </Target>
 
   <!--

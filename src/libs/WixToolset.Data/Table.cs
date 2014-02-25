@@ -114,6 +114,18 @@ namespace WixToolset.Data
                 case "WixAction":
                     row = new WixActionRow(sourceLineNumbers, this);
                     break;
+                case "WixBundle":
+                    row = new WixBundleRow(sourceLineNumbers, this);
+                    break;
+                case "WixBundlePatchTargetCode":
+                    row = new WixBundlePatchTargetCodeRow(sourceLineNumbers, this);
+                    break;
+                case "WixBundleUpdate":
+                    row = new WixBundleUpdateRow(sourceLineNumbers, this);
+                    break;
+                case "WixCatalog":
+                    row = new WixCatalogRow(sourceLineNumbers, this);
+                    break;
                 case "WixComplexReference":
                     row = new WixComplexReferenceRow(sourceLineNumbers, this);
                     break;
@@ -132,20 +144,11 @@ namespace WixToolset.Data
                 case "WixProperty":
                     row = new WixPropertyRow(sourceLineNumbers, this);
                     break;
-                case "WixBundle":
-                    row = new WixBundleRow(sourceLineNumbers, this);
-                    break;
-                case "WixBundlePatchTargetCode":
-                    row = new WixBundlePatchTargetCodeRow(sourceLineNumbers, this);
-                    break;
-                case "WixBundleUpdate":
-                    row = new WixBundleUpdateRow(sourceLineNumbers, this);
+                case "WixSimpleReference":
+                    row = new WixSimpleReferenceRow(sourceLineNumbers, this);
                     break;
                 case "WixUpdateRegistration":
                     row = new WixUpdateRegistrationRow(sourceLineNumbers, this);
-                    break;
-                case "WixSimpleReference":
-                    row = new WixSimpleReferenceRow(sourceLineNumbers, this);
                     break;
                 case "WixVariable":
                     row = new WixVariableRow(sourceLineNumbers, this);

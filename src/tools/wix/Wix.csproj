@@ -119,6 +119,7 @@
     </Compile>
     <Compile Include="WixVariableResolver.cs" />
     <Compile Include="CatalogInfo.cs" />
+    <Compile Include="WixCatalogRow.cs" />
     <Compile Include="ChainInfo.cs" />
     <Compile Include="ChainPackageInfo.cs" />
     <Compile Include="ContainerInfo.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="ResolvedDirectory.cs" />
     <Compile Include="RollbackBoundaryInfo.cs" />
     <Compile Include="VariableInfo.cs" />
+    <Compile Include="VariableRow.cs" />
     <Compile Include="WixComponentSearchInfo.cs" />
     <Compile Include="WixFileSearchInfo.cs" />
     <Compile Include="WixProductSearchInfo.cs" />

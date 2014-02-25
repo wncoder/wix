@@ -1091,11 +1091,11 @@ static HRESULT MsiProductSearch(
         {
             // set this here so we have a way of knowing that we don't need to bother
             // querying for the product information below
-            hr = ERROR_UNKNOWN_PRODUCT;
+            hr = HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT);
         }
     }
 
-    if (ERROR_UNKNOWN_PRODUCT != hr)
+    if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PRODUCT) != hr)
     {
         hr = WiuGetProductInfo(sczGuid, wzProperty, &value.sczValue);
         if (HRESULT_FROM_WIN32(ERROR_UNKNOWN_PROPERTY) == hr)

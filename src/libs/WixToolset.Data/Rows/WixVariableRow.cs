@@ -25,7 +25,7 @@ namespace WixToolset.Data.Rows
         /// Creates a WixVariable row that does not belong to a table.
         /// </summary>
         /// <param name="sourceLineNumbers">Original source lines for this row.</param>
-        /// <param name="tableDef">TableDefinition this Media row belongs to and should get its column definitions from.</param>
+        /// <param name="tableDef">TableDefinition this WixVariable row belongs to and should get its column definitions from.</param>
         public WixVariableRow(SourceLineNumber sourceLineNumbers, TableDefinition tableDef) :
             base(sourceLineNumbers, tableDef)
         {
@@ -35,7 +35,7 @@ namespace WixToolset.Data.Rows
         /// Creates a WixVariable row that belongs to a table.
         /// </summary>
         /// <param name="sourceLineNumbers">Original source lines for this row.</param>
-        /// <param name="table">Table this Media row belongs to and should get its column definitions from.</param>
+        /// <param name="table">Table this WixVariable row belongs to and should get its column definitions from.</param>
         public WixVariableRow(SourceLineNumber sourceLineNumbers, Table table) : base(sourceLineNumbers, table)
         {
         }
