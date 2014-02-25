@@ -203,10 +203,10 @@ HRESULT DAPI BundleEnumRelatedBundle(
 
                 for (DWORD i = 0; i < cBundleUpgradeCodes; i++)
                 {
-                    LPWSTR wzUpgradeCode = rgsczBundleUpgradeCodes[i];
-                    if (wzUpgradeCode && *wzUpgradeCode)
+                    LPWSTR wzBundleUpgradeCode = rgsczBundleUpgradeCodes[i];
+                    if (wzBundleUpgradeCode && *wzBundleUpgradeCode)
                     {
-                        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, wzUpgradeCode, -1, wzUpgradeCode, -1))
+                        if (CSTR_EQUAL == ::CompareStringW(LOCALE_INVARIANT, NORM_IGNORECASE, wzBundleUpgradeCode, -1, wzUpgradeCode, -1))
                         {
                             *pdwStartIndex = dwIndex;
                             fUpgradeCodeFound = TRUE;
