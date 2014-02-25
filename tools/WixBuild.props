@@ -245,6 +245,10 @@
     <RunCodeAnalysis Condition=" '$(FxCopEnabled)' == 'true' and ( '$(BuildingInsideVisualStudio)' == 'true' or '$(FXCOPDIR)' != '' )">true</RunCodeAnalysis>
   </PropertyGroup>
 
+  <!-- Default StaticAnalysis to off. -->
+  <PropertyGroup>
+    <StaticAnalysisEnabled Condition=" '$(StaticAnalysisEnabled)'=='' ">false</StaticAnalysisEnabled>
+  </PropertyGroup>
 
   <!-- Include the version handling. -->
   <Import Project="WixBuild.Version.targets" />
