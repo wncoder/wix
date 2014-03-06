@@ -27,8 +27,8 @@ static HRESULT ValueWriteHelp(
 
 
 HRESULT ValueCompare(
-    __in CONFIG_VALUE *pcvValue1,
-    __in CONFIG_VALUE *pcvValue2,
+    __in const CONFIG_VALUE *pcvValue1,
+    __in const CONFIG_VALUE *pcvValue2,
     __out BOOL *pfResult
     )
 {
@@ -62,7 +62,7 @@ HRESULT ValueCompare(
         break;
     default:
         hr = E_INVALIDARG;
-        ExitOnFailure1(hr, "Invalid value type encountered on both left and right: %d", pcvValue1->cvType);
+        ExitOnFailure1(hr, "Invalid value type compared (both left and right): %d", pcvValue1->cvType);
         break;
     }
 
@@ -373,6 +373,7 @@ HRESULT ValueWrite(
     }
     ExitOnFailure2(hr, "Failed to find value for AppID: %u, Value named: %ls", dwAppID, wzName);
 
+    ::GetSystemTime(&stNow);
     if (NULL != sceRow)
     {
         hr = ValueRead(pcdb, sceRow, &cvExistingValue);
@@ -391,13 +392,19 @@ HRESULT ValueWrite(
             }
         }
 
-        ::GetSystemTime(&stNow);
-        // If someone tried to write a value that is not newer into the database, error out, as this can cause weird sync behavior
+        // If current value in database is newer than current time, error out, as this can cause weird sync behavior
         if (0 >= UtilCompareSystemTimes(&stNow, &cvExistingValue.stWhen))
         {
             hr = HRESULT_FROM_WIN32(ERROR_TIME_SKEW);
-            ExitOnFailure2(hr, "Newer or same time value exists - cannot write an older value to value named %ls, appID %u! Please ensure all syncing desktop machines are set to use internet time.", wzName, dwAppID);
+            ExitOnFailure2(hr, "Found already-existing future value named %ls, appID %u! Please ensure all syncing desktop machines are set to use internet time.", wzName, dwAppID);
         }
+    }
+
+    // If value's new timestamp is newer than current time, error out
+    if (0 > UtilCompareSystemTimes(&stNow, &pcvValue->stWhen))
+    {
+        hr = HRESULT_FROM_WIN32(ERROR_TIME_SKEW);
+        ExitOnFailure2(hr, "Cannot write a new value from the future named %ls, appID %u! Please ensure all syncing desktop machines are set to use internet time.", wzName, dwAppID);
     }
 
     hr = SceBeginTransaction(pcdb->psceDb);
@@ -595,10 +602,10 @@ HRESULT ValueMatch(
         // If timestamps are the same, only bother writing a new history entry if the sources differ
         else if (CSTR_EQUAL != ::CompareStringW(LOCALE_INVARIANT, 0, cvValue1.sczBy, -1, cvValue2.sczBy, -2))
         {
-            // Write newest timestamp which will supersede both old values with a common source
+            // Write slightly newer timestamp which will supersede both old values with a common source
             if (pcdb1->fRemote)
             {
-                ::GetSystemTime(&cvValue1.stWhen);
+                UtilAddToSystemTime(5, &cvValue1.stWhen);
 
                 hr = ValueWrite(pcdb1, pcdb1->dwAppID, sczName, &cvValue1, FALSE);
                 ExitOnFailure(hr, "Failed to set value in value history table while matching value (1 remote)");
@@ -608,7 +615,7 @@ HRESULT ValueMatch(
             }
             else
             {
-                ::GetSystemTime(&cvValue2.stWhen);
+                UtilAddToSystemTime(5, &cvValue2.stWhen);
 
                 hr = ValueWrite(pcdb1, pcdb1->dwAppID, sczName, &cvValue2, FALSE);
                 ExitOnFailure(hr, "Failed to set value in value history table while matching value (1 remote)");

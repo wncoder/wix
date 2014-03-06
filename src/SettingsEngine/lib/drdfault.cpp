@@ -89,7 +89,7 @@ HRESULT DirDefaultReadFile(
 
         if (0 > iTimestampCompare)
         {
-            // We've found a value OLDER than our current value. Since Cfg Db expects values to always be getting newer, refresh the file's timestamp
+            // The value on disk is OLDER than our current database value. Since Cfg Db expects values to always be getting newer, refresh the file's timestamp
             fRefreshTimestamp = TRUE;
         }
     }
@@ -144,7 +144,11 @@ HRESULT DirDefaultWriteFile(
     FILETIME ftCfg = { };
     BYTE *pbBuffer = NULL;
     DWORD cbBuffer = 0;
+    int iTimestampCompare = 0;
     BOOL fRet = FALSE;
+    BOOL fFileExists = FALSE;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hFileDelete = INVALID_HANDLE_VALUE; // A separate handle specifically for opening the file for "delete on close" behavior
 
     *pfHandled = FALSE;
 
@@ -156,40 +160,63 @@ HRESULT DirDefaultWriteFile(
     }
     if (E_NOTFOUND == hr)
     {
+        // This means it was a detected directory that we were unable to detect, so this is the appropriate handler for the value, but there is no action that can be done
         *pfHandled = TRUE;
         ExitFunction1(hr = S_OK);
     }
     ExitOnFailure1(hr, "Failed to get path to write for legacy file: %ls", wzName);
-    
+
     *pfHandled = TRUE;
 
-    if (VALUE_BLOB != pcvValue->cvType)
+    // If it's not a valid cfg type for a file, or the file doesn't exist and we're intending to delete it, just exit with no error
+    // This doesn't need to be transactional because if a new file was written right after this, autosync will pick it up
+    if ((VALUE_BLOB != pcvValue->cvType && VALUE_DELETED != pcvValue->cvType) || (!FileExistsEx(sczPath, NULL) && VALUE_DELETED == pcvValue->cvType))
     {
-        hr = FileEnsureDelete(sczPath);
-        if (E_ACCESSDENIED == hr)
-        {
-            hr = S_OK;
-        }
-        ExitOnFailure1(hr, "Failed to delete file: %ls", sczPath);
-
-        // Delete the virtual store file as well
-        hr = UtilConvertToVirtualStorePath(sczPath, &sczVirtualStorePath);
-        ExitOnFailure1(hr, "Failed to convert to virtualstore path: %ls", sczPath);
-
-        hr = FileEnsureDelete(sczVirtualStorePath);
-        ExitOnFailure1(hr, "Falied to delete virtual store path: %ls", sczVirtualStorePath);
-        
         ExitFunction1(hr = S_OK);
     }
 
-    hr = FileGetTime(sczPath, NULL, NULL, &ftDisk);
-    if (E_FILENOTFOUND == hr || E_PATHNOTFOUND == hr)
+    if (VALUE_BLOB == pcvValue->cvType)
     {
-        hr = S_OK;
+        hr = PathGetDirectory(sczPath, &sczDir);
+        ExitOnFailure1(hr, "Failed to get directory of file: %ls", sczPath);
+
+        hr = DirEnsureExists(sczDir, NULL);
+        if (E_ACCESSDENIED == hr)
+        {
+            hr = UtilConvertToVirtualStorePath(sczDir, &sczVirtualStorePath);
+            ExitOnFailure1(hr, "Failed to convert directory path to virtualstore path: %ls", sczDir);
+
+            hr = DirEnsureExists(sczVirtualStorePath, NULL);
+        }
+        ExitOnFailure1(hr, "Failed to ensure directory exists: %ls", sczDir);
     }
-    else
+
+    // Very important - this file handle makes our action against the file transactional in the sense that some other program
+    // cannot write data to it while we're operating on it (because if we allowed that, we might permanently overwrite user data before we had a chance to read it)
+    // We must use FILE_SHARE_DELETE because we actually use a second delete-on-close handle to delete the file within this function if we need to
+    // we MUST release the hFile handle AFTER the hFileDelete handle to ensure it's deleted transactionally
+    // This does carry with it a slight risk that an app could read the file while we're writing it or be denied permission to write to it
+    // but this is brief, and it is not expected that we should need to write data to the local machine from another machine for an app while the app is writing data locally
+    hFile = ::CreateFileW(sczPath, GENERIC_WRITE, FILE_SHARE_DELETE, NULL, OPEN_ALWAYS, 0, NULL);
+    if (INVALID_HANDLE_VALUE == hFile && ERROR_ACCESS_DENIED == ::GetLastError())
     {
-        // If the file exists, check if it has the same timestamp - if it does, don't write it
+        hr = UtilConvertToVirtualStorePath(sczPath, &sczVirtualStorePath);
+        ExitOnFailure1(hr, "Failed to convert file path to virtualstore path: %ls", sczPath);
+
+        // Switch path for the rest of the file to the virtualstore path
+        ReleaseStr(sczPath);
+        sczPath = sczVirtualStorePath;
+        ReleaseNullStr(sczVirtualStorePath);
+
+        hFile = ::CreateFileW(sczPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+    }
+    ExitOnInvalidHandleWithLastError1(hFile, hr, "Failed to open file for write: %ls", sczPath);
+    fFileExists = ::GetLastError() == ERROR_ALREADY_EXISTS;
+
+    if (fFileExists)
+    {
+        // If the file exists, check if it has the same timestamp - if it does, don't write it, or if it has newer timestamp, break out so we can re-do the whole sync
+        hr = FileGetTime(sczPath, NULL, NULL, &ftDisk);
         ExitOnFailure1(hr, "Failed to get time of file: %ls", sczPath);
 
         fRet = ::FileTimeToSystemTime(&ftDisk, &stDisk);
@@ -198,17 +225,39 @@ HRESULT DirDefaultWriteFile(
             ExitWithLastError(hr, "Failed to convert disk file time to system time");
         }
 
-        if (0 == UtilCompareSystemTimes(&stDisk, &pcvValue->stWhen))
+        iTimestampCompare = UtilCompareSystemTimes(&stDisk, &pcvValue->stWhen);
+        if (0 == iTimestampCompare)
         {
             // Modified time on disk matches what's in the cfg database - so no need to write the file out to disk again
             ExitFunction1(hr = S_OK);
         }
+        else if (0 < iTimestampCompare)
+        {
+            // File changed during sync - abort with a retryable error code.
+            hr = HRESULT_FROM_WIN32(ERROR_TIME_SKEW);
+            ExitOnFailure1(hr, "Found newer file on disk at path %ls while trying to write file from DB, file must have changed during sync, aborting", sczPath);
+        }
+
+        fRet = ::SetEndOfFile(hFile);
+        if (!fRet)
+        {
+            ExitWithLastError1(hr, "Failed to truncate file %ls", sczPath);
+        }
+    }
+
+    // Delete if appropriate
+    if (VALUE_DELETED == pcvValue->cvType)
+    {
+        hFileDelete = ::CreateFileW(sczPath, 0, FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        ExitOnInvalidHandleWithLastError1(hFile, hr, "Failed to mark file for deletion: %ls", sczPath);
+
+        ExitFunction1(hr = S_OK);
     }
 
     if (CFG_BLOB_DB_STREAM != pcvValue->blob.cbType)
     {
         hr = E_INVALIDARG;
-        ExitOnFailure1(hr, "Unexpected blob value type while writing file: %d", pcvValue->blob.cbType);
+        ExitOnFailure2(hr, "Unexpected blob value type %d while writing file %ls", pcvValue->blob.cbType, sczPath);
     }
 
     hr = StreamRead(pcvValue->blob.dbstream.pcdb, pcvValue->blob.dbstream.dwContentID, NULL, &pbBuffer, &cbBuffer);
@@ -220,40 +269,19 @@ HRESULT DirDefaultWriteFile(
         ExitWithLastError(hr, "Failed to convert cfg system time to file time");
     }
 
-    hr = PathGetDirectory(sczPath, &sczDir);
-    ExitOnFailure1(hr, "Failed to get directory of file: %ls", sczPath);
+    hr = FileWriteHandle(hFile, pbBuffer, cbBuffer);
+    ExitOnFailure1(hr, "Failed to write content to file: %ls", sczPath);
 
-    hr = DirEnsureExists(sczDir, NULL);
-    if (E_ACCESSDENIED == hr)
-    {
-        hr = UtilConvertToVirtualStorePath(sczDir, &sczVirtualStorePath);
-        ExitOnFailure1(hr, "Failed to convert to virtualstore path: %ls", sczDir);
+    // Important: release file handles before setting time, or it won't be guaranteed to take effect
+    ReleaseFile(hFileDelete); // must be before releasing hFile, to ensure it's deleted as part of a transaction
+    ReleaseFile(hFile);
 
-        hr = DirEnsureExists(sczVirtualStorePath, NULL);
-    }
-    ExitOnFailure1(hr, "Failed to ensure directory exists: %ls", sczDir);
-
-    hr = FileWrite(sczPath, 0, pbBuffer, cbBuffer, NULL);
-    if (E_ACCESSDENIED == hr)
-    {
-        hr = UtilConvertToVirtualStorePath(sczPath, &sczVirtualStorePath);
-        ExitOnFailure1(hr, "Failed to convert to virtualstore path: %ls", sczPath);
-        
-        hr = FileWrite(sczVirtualStorePath, 0, pbBuffer, cbBuffer, NULL);
-        ExitOnFailure1(hr, "Failed to write virtualstore content to file: %ls", sczPath);
-
-        hr = FileSetTime(sczVirtualStorePath, NULL, NULL, &ftCfg);
-        ExitOnFailure1(hr, "Failed to set virtualstore timestamp on file: %ls", sczPath);
-    }
-    else
-    {
-        ExitOnFailure1(hr, "Failed to write content to file: %ls", sczPath);
-
-        hr = FileSetTime(sczPath, NULL, NULL, &ftCfg);
-        ExitOnFailure1(hr, "Failed to set timestamp on file: %ls", sczPath);
-    }
+    hr = FileSetTime(sczPath, NULL, NULL, &ftCfg);
+    ExitOnFailure1(hr, "Failed to set timestamp on file: %ls", sczPath);
 
 LExit:
+    ReleaseFile(hFileDelete); // must be before releasing hFile, to ensure it's deleted as part of a transaction
+    ReleaseFile(hFile);
     ReleaseMem(pbBuffer);
     ReleaseStr(sczDir);
     ReleaseStr(sczPath);

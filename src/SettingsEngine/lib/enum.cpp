@@ -533,28 +533,27 @@ LExit:
 HRESULT EnumFindValueInHistory(
     __in const CFG_ENUMERATION *pceSearchEnum,
     __in DWORD dwCount,
-    __in const CFG_ENUMERATION *pceEnum,
-    __in DWORD dwIndex,
+    __in const CONFIG_VALUE *pValue,
     __out_opt DWORD *pdwIndex
     )
 {
     HRESULT hr = S_OK;
     BOOL fResult;
 
-    if (ENUMERATION_VALUE_HISTORY != pceSearchEnum->enumType || ENUMERATION_VALUE_HISTORY != pceEnum->enumType)
+    if (ENUMERATION_VALUE_HISTORY != pceSearchEnum->enumType)
     {
         hr = E_INVALIDARG;
-        ExitOnFailure(hr, "EnumFindValueInHistory() requires both enumerations to be of type ENUMERATION_VALUE_HISTORY");
+        ExitOnFailure(hr, "EnumFindValueInHistory() requires an enumerations of type ENUMERATION_VALUE_HISTORY");
     }
 
     for (DWORD i = 0; i < dwCount; ++i)
     {
-        if (0 == UtilCompareSystemTimes(&pceSearchEnum->valueHistory.rgcValues[i].stWhen, &pceEnum->valueHistory.rgcValues[dwIndex].stWhen) &&
-            0 == lstrcmpW(pceSearchEnum->valueHistory.rgcValues[i].sczBy, pceEnum->valueHistory.rgcValues[dwIndex].sczBy))
+        if (0 == UtilCompareSystemTimes(&pceSearchEnum->valueHistory.rgcValues[i].stWhen, &pValue->stWhen) &&
+            0 == lstrcmpW(pceSearchEnum->valueHistory.rgcValues[i].sczBy, pValue->sczBy))
         {
             fResult = FALSE;
             // The two values have the same 'when' and 'by', so let's verify they have the same value
-            hr = ValueCompare(&pceSearchEnum->valueHistory.rgcValues[i], &pceEnum->valueHistory.rgcValues[dwIndex], &fResult);
+            hr = ValueCompare(&pceSearchEnum->valueHistory.rgcValues[i], pValue, &fResult);
             ExitOnFailure(hr, "Failed to compare two values from history enums");
 
             if (fResult)

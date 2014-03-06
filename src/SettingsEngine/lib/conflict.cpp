@@ -54,7 +54,8 @@ HRESULT ConflictResolve(
                     continue;
                 }
 
-                ::GetSystemTime(&pEnum->valueHistory.rgcValues[i].stWhen);
+                pEnum->valueHistory.rgcValues[i].stWhen = stValue;
+                UtilAddToSystemTime(5, &pEnum->valueHistory.rgcValues[i].stWhen);
             }
 
             // TODO: In some cases this is writing to the main value when it's about to be overwritten again. Optimize?
@@ -86,7 +87,8 @@ HRESULT ConflictResolve(
                     continue;
                 }
 
-                ::GetSystemTime(&pEnum->valueHistory.rgcValues[i].stWhen);
+                pEnum->valueHistory.rgcValues[i].stWhen = stValue;
+                UtilAddToSystemTime(5, &pEnum->valueHistory.rgcValues[i].stWhen);
             }
 
             // TODO: In some cases this is writing to the main value when it's about to be overwritten again. Optimize?
@@ -120,12 +122,18 @@ HRESULT ConflictGetList(
     *pdwOutCount1 = 0;
     *pdwOutCount2 = 0;
 
+    if (ENUMERATION_VALUE_HISTORY != pcesInEnum1->enumType || ENUMERATION_VALUE_HISTORY != pcesInEnum2->enumType)
+    {
+        hr = E_INVALIDARG;
+        ExitOnFailure(hr, "ConflictGetList() requires both enumerations to be of type ENUMERATION_VALUE_HISTORY");
+     }
+
     // we subtract 1 because it's a 0-based array, and 1 more because we already checked the last index of the array
     // when we checked for subsumation
     dwStartCopyIndex = 0;
     for (i = dwCount1 - 2; i != DWORD_MAX; --i)
     {
-        hr = EnumFindValueInHistory(pcesInEnum2, dwCount2, pcesInEnum1, i, &dwFoundIndex);
+        hr = EnumFindValueInHistory(pcesInEnum2, dwCount2, pcesInEnum1->valueHistory.rgcValues + i, &dwFoundIndex);
         if (E_NOTFOUND == hr)
         {
             hr = S_OK;
@@ -146,7 +154,7 @@ HRESULT ConflictGetList(
     dwStartCopyIndex = 0;
     for (i = dwCount2 - 2; i != DWORD_MAX; --i)
     {
-        hr = EnumFindValueInHistory(pcesInEnum1, dwCount1, pcesInEnum2, i, &dwFoundIndex);
+        hr = EnumFindValueInHistory(pcesInEnum1, dwCount1, pcesInEnum2->valueHistory.rgcValues + i, &dwFoundIndex);
         if (E_NOTFOUND == hr)
         {
             hr = S_OK;

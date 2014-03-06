@@ -206,6 +206,34 @@ int UtilCompareSystemTimes(
     }
 }
 
+HRESULT UtilAddToSystemTime(
+    __in DWORD dwMilliseconds,
+    __inout SYSTEMTIME *pst
+    )
+{
+    HRESULT hr = S_OK;
+    FILETIME ft = { };
+
+    if (!::SystemTimeToFileTime(pst, &ft))
+    {
+        ExitWithLastError(hr, "Failed to convert system time to file time");
+    }
+
+    DWORD64 ul;
+    C_ASSERT(sizeof(ul) == sizeof(ft));
+    memcpy(&ul, &ft, sizeof(ul));
+    ul += dwMilliseconds * 10000;
+    memcpy(&ft, &ul, sizeof(ft));
+
+    if (!FileTimeToSystemTime(&ft, pst))
+    {
+        ExitWithLastError(hr, "Failed to convert file time to system time");
+    }
+
+LExit:
+    return hr;
+}
+
 // Static functions
 static HRESULT IsProductInDictAndAddToDict(
     __in STRINGDICT_HANDLE shDictProductsSeen,

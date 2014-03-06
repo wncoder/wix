@@ -29,11 +29,12 @@ HRESULT HandleLock(
         ExitFunction1(hr = S_OK);
     }
 
+    // This should only be set to TRUE if the database was successfully completely synced with local upon unlock
+    pcdb->fUpdateLastModified = FALSE;
+
     // Connect to database, if it's a remote database
     if (pcdb->fRemote)
     {
-        // By default, we'll update the cached FILETIME on db disconnect. This bool can be overridden when necessary.
-        pcdb->fUpdateLastModified = TRUE;
         hr = SceEnsureDatabase(pcdb->sczDbPath, wzSqlCeDllPath, L"CfgRemote", 1, &pcdb->dsSceDb, &pcdb->psceDb);
         ExitOnFailure1(hr, "Failed to ensure SQL CE database at %ls exists", pcdb->sczDbPath);
 
@@ -75,7 +76,7 @@ void HandleUnlock(
 
     Assert(0 < pcdb->dwLockRefCount);
 
-    // Disconnect from database, if it's a remote database
+    // Disconnect from database, if it's a connected remote database
     if (pcdb->fRemote && NULL != pcdb->psceDb)
     {
         if (SceDatabaseChanged(pcdb->psceDb))
@@ -83,7 +84,7 @@ void HandleUnlock(
             hr = FileGetTime(pcdb->sczDbChangesPath, NULL, NULL, &ftOriginalLastModified);
             ExitOnFailure1(hr, "Failed to get file time of remote db changes path: %ls", pcdb->sczDbChangesPath);
 
-            // Check if timestamp is recognized by filesystem as new. If not, keep trying again and sleeping until it is.
+            // Check if our updated timestamp will be recognized by filesystem as new. If not, keep trying again and sleeping until it is.
             // Last written timestamp granularity can vary by filesystem
             do
             {
@@ -117,6 +118,8 @@ void HandleUnlock(
         pcdb->psceDb = NULL;
     }
 
+    pcdb->fUpdateLastModified = FALSE;
+
 LExit:
     --pcdb->dwLockRefCount;
     ::LeaveCriticalSection(&pcdb->cs);
@@ -133,7 +136,7 @@ HRESULT HandleEnsureSummaryDataTable(
     RPC_STATUS rs = RPC_S_OK;
     BOOL fEmpty = FALSE;
     UUID guid = { };
-    DWORD_PTR cchGuid = 39;
+    const DWORD_PTR cchGuid = 39;
     SCE_ROW_HANDLE sceRow = NULL;
 
     hr = SceGetFirstRow(pcdb->psceDb, SUMMARY_DATA_TABLE, &sceRow);
