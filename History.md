@@ -1,3 +1,5 @@
+* MikeGC: Add/tweak a few UDM manifests for settings engine
+
 * RobMen: Merge recent changes through WiX v3.9.202.0
 
 * RobMen: WIXBUG:4222 - put DownloadUrls back in the bundle so installs work again.
