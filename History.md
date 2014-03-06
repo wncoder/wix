@@ -1,3 +1,7 @@
+* MikeGC: Minor UI tweaks / bugfixes in settings browser (tray popup behavior, listview item selection, and refreshing value history listview when appropriate)
+
+* MikeGC: Display proper state of unreachable remote databases on startup of settings browser
+
 ## WixBuild: Version 4.0.1320.0
 
 * RobMen: Merge recent changes through WiX v3.9.120.0

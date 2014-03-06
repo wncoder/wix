@@ -94,7 +94,30 @@ HRESULT TrayShowBalloon(
         ExitWithLastError(hr, "Failed to notify tray icon to show balloon");
     }
 
-    s_fInitialized = TRUE;
+LExit:
+    return hr;
+}
+
+HRESULT TrayHideBalloon()
+{
+    HRESULT hr = S_OK;
+    NOTIFYICONDATAW notifyIconData = { };
+
+    notifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
+    notifyIconData.uID = 1;
+    notifyIconData.uFlags = NIF_INFO | NIF_MESSAGE;
+    notifyIconData.szInfo[0] = L'\0';
+    notifyIconData.szInfoTitle[0] = L'\0';
+    notifyIconData.dwInfoFlags = 0;
+    notifyIconData.uCallbackMessage = WM_BROWSE_TRAY_ICON_MESSAGE;
+    notifyIconData.hWnd = s_hwndMainApp;
+    notifyIconData.uTimeout = 30000;
+
+    BOOL fRet = ::Shell_NotifyIconW(NIM_MODIFY, &notifyIconData);
+    if (!fRet)
+    {
+        ExitWithLastError(hr, "Failed to notify tray icon to hide balloon");
+    }
 
 LExit:
     return hr;

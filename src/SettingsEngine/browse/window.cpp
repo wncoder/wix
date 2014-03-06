@@ -1500,10 +1500,15 @@ LRESULT CALLBACK BrowseWindow::WndProc(
 
         ::EnterCriticalSection(&UXDATABASE(dwIndex).cs);
         fCsEntered = TRUE;
-        if (NULL != UXDATABASE(dwIndex).pcplConflictProductList)
+        if (SUCCEEDED(UXDATABASE(dwIndex).hrSyncResult) && NULL != UXDATABASE(dwIndex).pcplConflictProductList)
         {
             hr = TrayShowBalloon(L"Sync Conflicts", L"Sync conflicts occurred. Click here to open main browser window, and resolve them.", NIIF_WARNING);
             ExitOnFailure(hr, "Failed to show tray message");
+        }
+        else
+        {
+            hr = TrayHideBalloon();
+            ExitOnFailure(hr, "Failed to hide tray message");
         }
 
         hr = pUX->RefreshSingleDatabaseConflictList(dwIndex);
@@ -1528,6 +1533,9 @@ LRESULT CALLBACK BrowseWindow::WndProc(
 
         hr = pUX->EnumerateValues(dwIndex);
         ExitOnFailure1(hr, "Failed to enumerate values in remote database index:%u", dwIndex);
+
+        hr = pUX->EnumerateValueHistory(dwIndex);
+        ExitOnFailure1(hr, "Failed to enumerate value history in remote database index:%u", dwIndex);
 
         ExitFunction();
 

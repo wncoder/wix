@@ -27,6 +27,7 @@ HRESULT TrayShowBalloon(
     __in LPCWSTR wzMessage,
     __in DWORD dwInfoFlags
     );
+HRESULT TrayHideBalloon();
 
 #ifdef __cplusplus
 }
