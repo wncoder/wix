@@ -1,3 +1,5 @@
+* MikeGC: In Settings Browser, display times in local time (instead of GMT), and in a more UI friendly format than RFC 3339
+
 * MikeGC: Minor UI tweaks / bugfixes in settings browser (tray popup behavior, listview item selection, and refreshing value history listview when appropriate)
 
 * MikeGC: Display proper state of unreachable remote databases on startup of settings browser

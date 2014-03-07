@@ -349,6 +349,8 @@ HRESULT UISetListViewToValueEnum(
 
     DWORD i;
     SYSTEMTIME st = { };
+    SYSTEMTIME stLocal = { };
+    TIME_ZONE_INFORMATION tzi = { };
     DWORD dwCount = 0;
     DWORD dwValue = 0;
     DWORD dwListViewRowCount = 0;
@@ -373,6 +375,11 @@ HRESULT UISetListViewToValueEnum(
         ExitOnFailure(hr, "Failed to set 'no values' text in value listview");
 
         ExitFunction1(hr = S_OK);
+    }
+
+    if (!GetTimeZoneInformation(&tzi))
+    {
+        ExitWithLastError(hr, "Failed to get time zone information");
     }
 
     UIListViewTrimSize(hwnd, dwCount);
@@ -447,7 +454,12 @@ HRESULT UISetListViewToValueEnum(
         hr = CfgEnumReadSystemTime(cehValues, i, ENUM_DATA_WHEN, &st);
         ExitOnFailure(hr, "Failed to read when string from value history enumeration");
 
-        hr = TimeSystemDateTime(&sczText, &st, TRUE);
+        if (!SystemTimeToTzSpecificLocalTime(&tzi, &st, &stLocal))
+        {
+            ExitWithLastError(hr, "Failed to convert systemtime to local time");
+        }
+
+        hr = TimeSystemToDateTimeString(&sczText, &stLocal, LOCALE_USER_DEFAULT);
         ExitOnFailure(hr, "Failed to convert value 'when' time to text");
 
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 3, sczText);
@@ -481,6 +493,8 @@ HRESULT UISetListViewToValueHistoryEnum(
     LPCWSTR wzText = NULL;
     LPWSTR sczText = NULL;
     SYSTEMTIME st = { };
+    SYSTEMTIME stLocal = { };
+    TIME_ZONE_INFORMATION tzi = { };
     CONFIG_VALUETYPE cvType = VALUE_INVALID;
 
     dwListViewRowCount = ListView_GetItemCount(hwnd);
@@ -497,6 +511,11 @@ HRESULT UISetListViewToValueHistoryEnum(
         ExitOnFailure(hr, "Failed to set 'no value history' text in value history listview");
 
         ExitFunction1(hr = S_OK);
+    }
+
+    if (!GetTimeZoneInformation(&tzi))
+    {
+        ExitWithLastError(hr, "Failed to get time zone information");
     }
 
     UIListViewTrimSize(hwnd, dwCount);
@@ -574,7 +593,12 @@ HRESULT UISetListViewToValueHistoryEnum(
         hr = CfgEnumReadSystemTime(cehValueHistory, i, ENUM_DATA_WHEN, &st);
         ExitOnFailure(hr, "Failed to read when string from value history enumeration");
 
-        hr = TimeSystemDateTime(&sczText, &st, TRUE);
+        if (!SystemTimeToTzSpecificLocalTime(&tzi, &st, &stLocal))
+        {
+            ExitWithLastError(hr, "Failed to convert systemtime to local time");
+        }
+
+        hr = TimeSystemToDateTimeString(&sczText, &stLocal, LOCALE_USER_DEFAULT);
         ExitOnFailure(hr, "Failed to convert value history time to text");
 
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 3, sczText);

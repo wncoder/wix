@@ -40,10 +40,10 @@
 
     <!-- Value display / buttons -->
     <ListView Name="ValueListView" TabStop="yes" X="10" Y="70" Width="-210" Height="-10" FontId="0" HexStyle="00000009" HexExtendedStyle="00000021">
-      <Column Width="280" Expands="yes">#(loc.ValueNameColumn)</Column>
+      <Column Width="260" Expands="yes">#(loc.ValueNameColumn)</Column>
       <Column Width="60">#(loc.ValueTypeColumn)</Column>
       <Column Width="120" Expands="yes">#(loc.ValueColumn)</Column>
-      <Column Width="130">#(loc.WhenColumn)</Column>
+      <Column Width="150">#(loc.WhenColumn)</Column>
     </ListView>
     <Button Name="SingleProductBackButton" X="-20" Y="50" Width="150" Height="20" FontId="0" TabStop="yes">#(loc.BackButton)</Button>
     <Button Name="NewValueButton" X="-20" Y="75" Width="150" Height="20" FontId="0" TabStop="yes">#(loc.NewValueButton)</Button>
