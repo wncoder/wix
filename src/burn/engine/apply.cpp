@@ -188,6 +188,7 @@ static HRESULT ExecuteMsuPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __in BOOL fStopWusaService,
     __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -1604,6 +1605,7 @@ static HRESULT DoExecuteAction(
     HANDLE rghWait[2] = { };
     BOOTSTRAPPER_APPLY_RESTART restart = BOOTSTRAPPER_APPLY_RESTART_NONE;
     BOOL fRetry = FALSE;
+    BOOL fStopWusaService = FALSE;
 
     pContext->fRollback = FALSE;
 
@@ -1658,7 +1660,8 @@ static HRESULT DoExecuteAction(
             break;
 
         case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
-            hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, &fRetry, pfSuspend, &restart);
+            hr = ExecuteMsuPackage(pEngineState, pExecuteAction, pContext, FALSE, fStopWusaService, &fRetry, pfSuspend, &restart);
+            fStopWusaService = fRetry;
             ExitOnFailure(hr, "Failed to execute MSU package.");
             break;
 
@@ -1768,7 +1771,7 @@ static HRESULT DoRollbackActions(
                 break;
 
             case BURN_EXECUTE_ACTION_TYPE_MSU_PACKAGE:
-                hr = ExecuteMsuPackage(pEngineState, pRollbackAction, pContext, TRUE, &fRetryIgnored, &fSuspendIgnored, &restart);
+                hr = ExecuteMsuPackage(pEngineState, pRollbackAction, pContext, TRUE, FALSE, &fRetryIgnored, &fSuspendIgnored, &restart);
                 TraceError(hr, "Failed to rollback MSU package.");
                 hr = S_OK;
                 break;
@@ -1997,6 +2000,7 @@ static HRESULT ExecuteMsuPackage(
     __in BURN_EXECUTE_ACTION* pExecuteAction,
     __in BURN_EXECUTE_CONTEXT* pContext,
     __in BOOL fRollback,
+    __in BOOL fStopWusaService,
     __out BOOL* pfRetry,
     __out BOOL* pfSuspend,
     __out BOOTSTRAPPER_APPLY_RESTART* pRestart
@@ -2031,7 +2035,7 @@ static HRESULT ExecuteMsuPackage(
     // execute package
     if (pExecuteAction->msuPackage.pPackage->fPerMachine)
     {
-        hrExecute = ElevationExecuteMsuPackage(pEngineState->companionConnection.hPipe, pExecuteAction, fRollback, GenericExecuteMessageHandler, pContext, pRestart);
+        hrExecute = ElevationExecuteMsuPackage(pEngineState->companionConnection.hPipe, pExecuteAction, fRollback, fStopWusaService, GenericExecuteMessageHandler, pContext, pRestart);
         ExitOnFailure(hrExecute, "Failed to configure per-machine MSU package.");
     }
     else
