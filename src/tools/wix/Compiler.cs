@@ -9936,6 +9936,9 @@ namespace WixToolset
                 {
                     switch (child.Name.LocalName)
                     {
+                        case "All":
+                            this.ParseAllElement(child);
+                            break;
                         case "BinaryRef":
                             this.ParsePatchChildRefElement(child, "Binary");
                             break;
@@ -9987,6 +9990,38 @@ namespace WixToolset
                 {
                     this.core.CreateComplexReference(sourceLineNumbers, parentType, parentId, null, ComplexReferenceChildType.PatchFamily, id, ComplexReferenceParentType.Patch == parentType);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Parses the All element under a PatchFamily.
+        /// </summary>
+        /// <param name="node">The element to parse.</param>
+        private void ParseAllElement(XElement node)
+        {
+            SourceLineNumber sourceLineNumbers = Preprocessor.GetSourceLineNumbers(node);
+
+            // find unexpected attributes
+            foreach (XAttribute attrib in node.Attributes())
+            {
+                if (String.IsNullOrEmpty(attrib.Name.NamespaceName) || CompilerCore.WixNamespace == attrib.Name.Namespace)
+                {
+                    this.core.UnexpectedAttribute(node, attrib);
+                }
+                else
+                {
+                    this.core.ParseExtensionAttribute(node, attrib);
+                }
+            }
+
+            this.core.ParseForExtensionElements(node);
+
+            // Always warn when using the All element.
+            this.core.OnMessage(WixWarnings.AllChangesIncludedInPatch(sourceLineNumbers));
+
+            if (!this.core.EncounteredError)
+            {
+                this.core.CreatePatchFamilyChildReference(sourceLineNumbers, "*", "*");
             }
         }
 
@@ -19752,6 +19787,12 @@ namespace WixToolset
             if (null == downloadUrl && null != remotePayload)
             {
                 this.core.OnMessage(WixErrors.ExpectedAttributeWithElement(sourceLineNumbers, node.Name.LocalName, "DownloadUrl", "RemotePayload"));
+            }
+
+            if (YesNoDefaultType.No != compressed && null != remotePayload)
+            {
+                compressed = YesNoDefaultType.No;
+                this.core.OnMessage(WixWarnings.RemotePayloadsMustNotAlsoBeCompressed(sourceLineNumbers, node.Name.LocalName));
             }
 
             if (null == id)

@@ -3741,7 +3741,12 @@
                 <Parameter Type="System.String" Name="elementName" />
             </Instance>
         </Message>
-        <Message Id="BackslashTerminateInlineDirectorySyntax" Number="1145">
+        <Message Id="AllChangesIncludedInPatch" Number="1145">
+            <Instance>
+                All changes between the baseline and upgraded packages will be included in the patch except for any change to the ProductCode. The 'All' element is supported primarily for testing purposes and negates the benefits of patch families.
+            </Instance>
+        </Message>
+        <Message Id="BackslashTerminateInlineDirectorySyntax" Number="1146">
             <Instance>
                 Backslash terminate the {0}/@{1} attribute's inline directory value '{2}'. A backslash ensures a directory name will not be mistaken for a directory reference.
                 <Parameter Type="System.String" Name="elementName" />
