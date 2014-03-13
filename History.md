@@ -1,3 +1,5 @@
+* MikeGC: Add/tweak a few UDM manifests for settings engine
+
 * MikeGC: In Settings Browser, display times in local time (instead of GMT), and in a more UI friendly format than RFC 3339
 
 * MikeGC: Minor UI tweaks / bugfixes in settings browser (tray popup behavior, listview item selection, and refreshing value history listview when appropriate)
