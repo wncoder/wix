@@ -3733,6 +3733,11 @@
                 <Parameter Type="System.String" Name="elementName" />
             </Instance>
         </Message>
+        <Message Id="AllChangesIncludedInPatch" Number="1145">
+            <Instance>
+                All changes between the baseline and upgraded packages will be included in the patch except for any change to the ProductCode. The 'All' element is supported primarily for testing purposes and negates the benefits of patch families.
+            </Instance>
+        </Message>
     </Class>
 
     <Class Name="WixVerboses" ContainerName="WixVerboseEventArgs" BaseContainerName="MessageEventArgs" Level="Information">
