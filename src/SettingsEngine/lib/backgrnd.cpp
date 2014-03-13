@@ -19,7 +19,7 @@ const DWORD REGKEY_SILENCE_PERIOD = 500;
 const DWORD DIRECTORY_SILENCE_PERIOD = 500;
 const DWORD ARP_SILENCE_PERIOD = 500;
 const DWORD REMOTEDB_SILENCE_PERIOD = 500;
-const DWORD REMOTEDB_BUSY_RETRY_PERIOD = 200;
+const DWORD REMOTEDB_BUSY_RETRY_PERIOD = 500;
 
 const DWORD NUM_RETRIES = 60;
 const DWORD RETRY_INTERVAL_IN_MS = 1000;
@@ -343,11 +343,7 @@ HRESULT BackgroundMarkRemoteChanged(
     HRESULT hr = S_OK;
     LPWSTR sczDirectory = NULL;
 
-    if (pcdbRemote->fNetwork)
-    {
-        pcdbRemote->fUpdateLastModified = FALSE;
-    }
-    else if (pcdbRemote->pcdbLocal->hBackgroundThread)
+    if (pcdbRemote->pcdbLocal->hBackgroundThread)
     {
         hr = StrAllocString(&sczDirectory, pcdbRemote->sczDbDir, 0);
         ExitOnFailure(hr, "Failed to allocate copy of directory string");
@@ -1654,7 +1650,8 @@ static HRESULT SyncRemotes(
         if (DWORD_MAX != dwFirstSyncedIndex)
         {
             hr = SyncRemote(pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex], fCheckDbTimestamp, &fChanges);
-            if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
+            // Unfortunately SQL CE just returns E_FAIL if db is busy
+            if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr || HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr)
             {
                 LogErrorString(hr, "Failed to sync remote DB at %ls, it may be busy. Will retry.", pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex]->sczDbDir);
                 fRetry = TRUE;
@@ -1663,10 +1660,15 @@ static HRESULT SyncRemotes(
             // This may mean network connection with server or removable drive was lost temporarily. MonUtil will tell us when to retry.
             else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_INVALID_DRIVE) == hr)
             {
-                LogErrorString(hr, "Failed to sync remote DB at %ls with error 0x%X, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex]->sczDbDir, hr);
+                LogErrorString(hr, "Failed to sync remote DB at %ls, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[dwFirstSyncedIndex]->sczDbDir);
                 hr = S_OK;
             }
             ExitOnFailure(hr, "Failed to sync first remote");
+        }
+        else
+        {
+            LogErrorString(HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "Unable to sync remote at directory because it was not found in remote database list: %ls", wzFrom);
+            return S_OK;
         }
     }
 
@@ -1677,7 +1679,8 @@ static HRESULT SyncRemotes(
             if (pcdb->rgpcdbOpenDatabases[i]->fSyncByDefault && i != dwFirstSyncedIndex)
             {
                 hr = SyncRemote(pcdb->rgpcdbOpenDatabases[i], FALSE, NULL);
-                if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr) // Unfortunately SQL CE just returns E_FAIL if db is busy
+                // Unfortunately SQL CE just returns E_FAIL if db is busy
+                if (E_FAIL == hr || HRESULT_FROM_WIN32(ERROR_SEM_TIMEOUT) == hr || HRESULT_FROM_WIN32(ERROR_TIME_SKEW) == hr || HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION) == hr)
                 {
                     LogErrorString(hr, "Failed to sync remote DB at %ls, it may be busy. Will retry.", pcdb->rgpcdbOpenDatabases[i]->sczDbDir);
                     fRetry = TRUE;
@@ -1687,7 +1690,7 @@ static HRESULT SyncRemotes(
                 // This may mean network connection with server or removable drive was lost temporarily. MonUtil will tell us when to retry.
                 else if (HRESULT_FROM_WIN32(ERROR_BAD_NETPATH) == hr || HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME) == hr || HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) == hr || HRESULT_FROM_WIN32(ERROR_INVALID_DRIVE) == hr)
                 {
-                    LogErrorString(hr, "Failed to sync remote DB at %ls with error 0x%X, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[i]->sczDbDir, hr);
+                    LogErrorString(hr, "Failed to sync remote DB at %ls, the network connection may be down, or the server may be down.", pcdb->rgpcdbOpenDatabases[i]->sczDbDir);
                     hr = S_OK;
                 }
                 ExitOnFailure(hr, "Failed to sync another remote");
@@ -1736,6 +1739,11 @@ static HRESULT SyncRemote(
     FILETIME ftLastModified = { };
     BOOL fLocked = FALSE;
 
+    if (NULL != pfChanged)
+    {
+        *pfChanged = FALSE;
+    }
+
     if (fCheckDbTimestamp)
     {
         hr = FileGetTime(pcdb->sczDbChangesPath, NULL, NULL, &ftLastModified);
@@ -1781,6 +1789,12 @@ LExit:
     }
     if (fLocked)
     {
+        if (SUCCEEDED(hr))
+        {
+            // We can't fully rely on HandleUnlock's "did database change?" check because a sync can succeed partially, but fail on some other product
+            // in that case, we need to avoid updating our last modified timestamp so we will sync the database again and pickup the rest of those changes.
+            pcdb->fUpdateLastModified = TRUE;
+        }
         HandleUnlock(pcdb);
     }
     CfgReleaseConflictProductArray(rgProductConflicts, cProductConflicts);

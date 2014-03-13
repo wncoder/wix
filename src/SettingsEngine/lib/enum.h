@@ -89,8 +89,7 @@ HRESULT EnumDatabaseList(
 HRESULT EnumFindValueInHistory(
     __in const CFG_ENUMERATION *pceSearchEnum,
     __in DWORD dwCount,
-    __in const CFG_ENUMERATION *pceEnum,
-    __in DWORD dwIndex,
+    __in const CONFIG_VALUE *pValue,
     __out_opt DWORD *pdwIndex
     );
 HRESULT EnumValues(

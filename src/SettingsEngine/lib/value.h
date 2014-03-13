@@ -84,8 +84,8 @@ struct CONFIG_VALUE
 
 // Compares two values for equality. Ignores source of the value ('when' and 'by')
 HRESULT ValueCompare(
-    __in CONFIG_VALUE *pcvValue1,
-    __in CONFIG_VALUE *pcvValue2,
+    __in const CONFIG_VALUE *pcvValue1,
+    __in const CONFIG_VALUE *pcvValue2,
     __out BOOL *pfResult
     );
 HRESULT ValueCopy(

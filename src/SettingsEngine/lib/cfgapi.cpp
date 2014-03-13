@@ -191,6 +191,8 @@ extern "C" HRESULT CFGAPI CfgResumeBackgroundThread(
         ExitWithLastError(hr, "Failed to set background thread wait on startup event while shutting down cfg api");
     }
 
+    pcdb->fBackgroundThreadWaitOnStartupTriggered = TRUE;
+
 LExit:
     return hr;
 }
@@ -1295,7 +1297,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadDataType(
             ExitOnFailure2(hr, "Unsupported request for datatype. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     default:
@@ -1396,7 +1398,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadString(
             ExitOnFailure2(hr, "Unsupported request for string. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     case ENUMERATION_DATABASE_LIST:
@@ -1495,7 +1497,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadDword(
             ExitOnFailure2(hr, "Unsupported request for dword. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     default:
@@ -1557,7 +1559,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadQword(
             ExitOnFailure2(hr, "Unsupported request for qword. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     default:
@@ -1633,7 +1635,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadBool(
             ExitOnFailure2(hr, "Unsupported request for bool. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     case ENUMERATION_DATABASE_LIST:
@@ -1757,7 +1759,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadSystemTime(
             ExitOnFailure2(hr, "Unsupported request for systemtime. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     case ENUMERATION_VALUE_HISTORY:
@@ -1772,7 +1774,7 @@ extern "C" HRESULT CFGAPI CfgEnumReadSystemTime(
             ExitOnFailure2(hr, "Unsupported request for systemtime. Enumeration type: %d, request type: %d", pcesEnum->enumType, cedData);
             break;
         }
-        
+
         break;
 
     default:
@@ -1902,6 +1904,10 @@ extern "C" HRESULT CfgSync(
 LExit:
     if (fLocked)
     {
+        if (SUCCEEDED(hr))
+        {
+            pcdb->fUpdateLastModified = TRUE;
+        }
         HandleUnlock(pcdb);
     }
     if (fLockedLocal)

@@ -121,7 +121,7 @@ HRESULT ProductFindRow(
     hr = SceRunQueryExact(&sqhHandle, pSceRow);
     if (E_NOTFOUND == hr)
     {
-        // Don't pollute our trace log with unnecessary messages
+        // Don't pollute our log with unnecessary messages
         ExitFunction();
     }
     ExitOnFailure1(hr, "Failed to find product: %ls", wzProductName);
@@ -147,6 +147,7 @@ HRESULT ProductSyncValues(
     SCE_QUERY_RESULTS_HANDLE sqrhResults = NULL;
     SCE_ROW_HANDLE sceRow = NULL;
     DWORD dwFoundIndex = 0;
+    DWORD dwSubsumeIndex = 0;
     BOOL fSame = FALSE;
     BOOL fFirstIsLocal = (NULL == pcdb1->pcdbLocal);
 
@@ -233,7 +234,7 @@ HRESULT ProductSyncValues(
             {
                 for (DWORD i = 0; i < dwCfgCount1; ++i)
                 {
-                    hr = EnumWriteValue(pcdb2, sczName, static_cast<const CFG_ENUMERATION *>(valueHistory1), i);
+                    hr = EnumWriteValue(pcdb2, sczName, valueHistory1, i);
                     ExitOnFailure2(hr, "Failed to write value %ls index %u", sczName, i);
                 }
             }
@@ -244,52 +245,76 @@ HRESULT ProductSyncValues(
         // Don't write anything to db2 if it's local and we're told not to
         if (fFirstIsLocal || fAllowLocalToReceiveData)
         {
-            // Check if the last history entry for database 2 exists in the database 1 - if it does, database 2's changes are subsumed
-            hr = EnumFindValueInHistory(static_cast<const CFG_ENUMERATION *>(valueHistory1), dwCfgCount1, static_cast<const CFG_ENUMERATION *>(valueHistory2), dwCfgCount2 - 1, &dwFoundIndex);
-            if (S_OK == hr)
+            // We first check the latest value. However, if the previous value is identical (same type & value, just different source), check for subsumation of that too.
+            // This reduces unnecessary conflicts in rare corner case scenarios.
+            dwSubsumeIndex = dwCfgCount2;
+            do
             {
-                // Database 2 is subsumed - pipe over all the newest history entries
-                for (DWORD i = dwFoundIndex + 1; i < dwCfgCount1; ++i)
+                --dwSubsumeIndex;
+
+                // Check if the last history entry for database 2 exists in the database 1 - if it does, database 2's changes are subsumed
+                hr = EnumFindValueInHistory(valueHistory1, dwCfgCount1, valueHistory2->valueHistory.rgcValues + dwSubsumeIndex, &dwFoundIndex);
+                if (S_OK == hr)
                 {
-                    hr = EnumWriteValue(pcdb2, sczName, static_cast<CFG_ENUMERATION *>(valueHistory1), i);
-                    ExitOnFailure(hr, "Failed to set value from history enum while piping over database 1 history values");
+                    // Database 2 is subsumed - pipe over all the newest history entries
+                    for (DWORD i = dwFoundIndex + 1; i < dwCfgCount1; ++i)
+                    {
+                        hr = EnumWriteValue(pcdb2, sczName, valueHistory1, i);
+                        ExitOnFailure(hr, "Failed to set value from history enum while piping over database 1 history values");
+                    }
+
+                    goto Skip;
+                }
+                else if (E_NOTFOUND == hr)
+                {
+                    hr = S_OK;
+                }
+                else
+                {
+                    ExitOnFailure(hr, "Failed to check if db2's value history is subsumed by db1's value history");
                 }
 
-                goto Skip;
+                hr = ValueCompare(valueHistory2->valueHistory.rgcValues + dwSubsumeIndex, valueHistory2->valueHistory.rgcValues + dwSubsumeIndex - 1, &fSame);
+                ExitOnFailure(hr, "Failed to check if value and previous value in database 2 are equivalent");
             }
-            else if (E_NOTFOUND == hr)
-            {
-                hr = S_OK;
-            }
-            else
-            {
-                ExitOnFailure(hr, "Failed to check if db2's value history is subsumed by db1's value history");
-            }
+            while (0 < dwSubsumeIndex && fSame);
         }
 
         // Don't write anything to db1 if it's local and we're told not to
         if (!fFirstIsLocal || fAllowLocalToReceiveData)
         {
-            hr = EnumFindValueInHistory(static_cast<const CFG_ENUMERATION *>(valueHistory2), dwCfgCount2, static_cast<const CFG_ENUMERATION *>(valueHistory1), dwCfgCount1 - 1, &dwFoundIndex);
-            if (S_OK == hr)
+            // We first check the latest value. However, if the previous value is identical (same type & value, just different source), check for subsumation of that too.
+            // This reduces unnecessary conflicts in rare corner case scenarios.
+            dwSubsumeIndex = dwCfgCount1;
+            do
             {
-                // Database 1 is subsumed - pipe over all the newest history entries
-                for (DWORD i = dwFoundIndex + 1; i < dwCfgCount2; ++i)
+                --dwSubsumeIndex;
+
+                hr = EnumFindValueInHistory(valueHistory2, dwCfgCount2, valueHistory1->valueHistory.rgcValues + dwSubsumeIndex, &dwFoundIndex);
+                if (S_OK == hr)
                 {
-                    hr = EnumWriteValue(pcdb1, sczName, static_cast<const CFG_ENUMERATION *>(valueHistory2), i);
-                    ExitOnFailure(hr, "Failed to set value from history enum while piping over database 2 history values");
+                    // Database 1 is subsumed - pipe over all the newest history entries
+                    for (DWORD i = dwFoundIndex + 1; i < dwCfgCount2; ++i)
+                    {
+                        hr = EnumWriteValue(pcdb1, sczName, valueHistory2, i);
+                        ExitOnFailure(hr, "Failed to set value from history enum while piping over database 2 history values");
+                    }
+
+                    goto Skip;
+                }
+                else if (E_NOTFOUND == hr)
+                {
+                    hr = S_OK;
+                }
+                else
+                {
+                    ExitOnFailure(hr, "Failed to check if db1's value history is subsumed by db2's value history");
                 }
 
-                goto Skip;
+                hr = ValueCompare(valueHistory1->valueHistory.rgcValues + dwSubsumeIndex, valueHistory1->valueHistory.rgcValues + dwSubsumeIndex - 1, &fSame);
+                ExitOnFailure(hr, "Failed to check if value and previous value in database 1 are equivalent");
             }
-            else if (E_NOTFOUND == hr)
-            {
-                hr = S_OK;
-            }
-            else
-            {
-                ExitOnFailure(hr, "Failed to check if db1's value history is subsumed by db2's value history");
-            }
+            while (0 < dwSubsumeIndex && fSame);
         }
 
         // OK, we have a conflict. Report it.
@@ -403,7 +428,7 @@ HRESULT ProductEnsureCreated(
 
         hr = SceCommitTransaction(pcdb->psceDb);
         ExitOnFailure(hr, "Failed to commit transaction");
-        fInSceTransaction = FALSE;    
+        fInSceTransaction = FALSE;
     }
     else
     {

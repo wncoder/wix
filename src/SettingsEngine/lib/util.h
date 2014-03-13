@@ -44,6 +44,10 @@ int UtilCompareSystemTimes(
     __in const SYSTEMTIME *pst1,
     __in const SYSTEMTIME *pst2
     );
+HRESULT UtilAddToSystemTime(
+    __in DWORD dwMilliseconds,
+    __inout SYSTEMTIME *pst
+    );
 HRESULT UtilTestWriteAccess(
     __in HANDLE hToken,
     __in_z LPCWSTR wzPath

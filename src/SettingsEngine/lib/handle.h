@@ -29,7 +29,8 @@ struct CFGDB_STRUCT
     DWORD dwLockRefCount;
 
     BOOL fRemote;
-    // This bool controls whether ftLastModified is updated upon remote database unlock
+    // This bool controls whether ftLastModified is updated upon remote database unlock. This tracks last sync time, so should only be updated
+    // if the remote will be fully synced with local upon unlock
     BOOL fUpdateLastModified;
     // For databases that release during unlock (such as remote databases), tracks the last write time
     FILETIME ftLastModified;

@@ -81,7 +81,7 @@ HRESULT DatabaseListFind(
     hr = SceRunQueryExact(&sqhHandle, pSceRow);
     if (E_NOTFOUND == hr)
     {
-        // Don't pollute our trace log with unnecessary messages
+        // Don't pollute our log with unnecessary messages
         ExitFunction();
     }
     ExitOnFailure1(hr, "Failed to query for database '%ls' in database list", wzFriendlyName);

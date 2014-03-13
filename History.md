@@ -1,3 +1,9 @@
+* MikeGC: Fix bug in settings engine where in extended retry periods autosync could accidentally give up on a sync attempt
+
+* MikeGC: Fix bug in settings engine to make file writes more transactional to eliminate chance of losing (or deleting) any changes on the machine while syncing, and allow retry on sharing violation (if we try to write when an app is writing)
+
+* MikeGC: Improve settings engine behavior related to conflicts (completely eliminates a few unnecessary conflicts that can occur in certain situations)
+
 * RobMen: Merge recent changes through WiX v3.9.202.0
 
 * RobMen: WIXBUG:4222 - put DownloadUrls back in the bundle so installs work again.
