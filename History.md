@@ -1,3 +1,5 @@
+* SeanHall: WIXBUG:3643 - Incorrect operation for detect-only package
+
 * MikeGC: Add/tweak a few UDM manifests for settings engine
 
 * MikeGC: In Settings Browser, display times in local time (instead of GMT), and in a more UI friendly format than RFC 3339

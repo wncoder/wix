@@ -684,8 +684,7 @@ namespace WixToolset
                                     }
 
                                     int attributes = record.GetInteger(5);
-                                    // when an Upgrade row has an upgrade code different than this package's upgrade code, don't count it as a possible downgrade to this package
-                                    related.OnlyDetect = ((attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect) && this.UpgradeCode.Equals(related.Id, StringComparison.OrdinalIgnoreCase);
+                                    related.OnlyDetect = (attributes & MsiInterop.MsidbUpgradeAttributesOnlyDetect) == MsiInterop.MsidbUpgradeAttributesOnlyDetect;
                                     related.MinInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMinInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMinInclusive;
                                     related.MaxInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive) == MsiInterop.MsidbUpgradeAttributesVersionMaxInclusive;
                                     related.LangInclusive = (attributes & MsiInterop.MsidbUpgradeAttributesLanguagesExclusive) == 0;

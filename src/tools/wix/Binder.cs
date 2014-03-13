@@ -4322,6 +4322,10 @@ namespace WixToolset
                         writer.WriteAttributeString("Language", package.Language);
                         writer.WriteAttributeString("Version", package.Version);
                         writer.WriteAttributeString("DisplayInternalUI", package.DisplayInternalUI ? "yes" : "no");
+                        if (!String.IsNullOrEmpty(package.UpgradeCode))
+                        {
+                            writer.WriteAttributeString("UpgradeCode", package.UpgradeCode);
+                        }
                     }
                     else if (Compiler.ChainPackageType.Msp == package.ChainPackageType)
                     {
