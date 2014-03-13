@@ -29,6 +29,9 @@ HRESULT UIGetSingleSelectedItemFromListView(
     __out_opt DWORD *pdwIndex,
     __out_opt DWORD *pdwParam
     );
+void UIClearSelectionFromListView(
+    __in HWND hwnd
+    );
 HRESULT UISetListViewText(
     __in HWND hwnd,
     __in_z LPCWSTR sczText

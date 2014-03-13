@@ -19,6 +19,9 @@ HWND hwnd = NULL;
 CFGDB_HANDLE cdbLocal = NULL;
 DWORD dwLocalDatabaseIndex = 0;
 BOOL fCfgInitialized = FALSE;
+// Used to track when auto sync has finished starting up. This is to avoid us unnecessarily (and repeatedly) refreshing products while it's starting up.
+// If background thread reports a success message before this is set to true, we don't do anything.
+// If background thread reports a failure, we still report it to UI.
 BOOL fCfgAutoSyncRunning = FALSE;
 BOOL fCfgRedetectingProducts = FALSE;
 BOOL fCfgAdminInitialized = FALSE;
@@ -720,7 +723,7 @@ BOOL ProcessMessage(
                 }
             }
         }
-        else if (fCfgAutoSyncRunning && !fCfgRedetectingProducts && BACKGROUND_STATUS_SYNC_PRODUCT_FINISHED == pBackgroundStatusCallback->type)
+        else if ((fCfgAutoSyncRunning || FAILED(pBackgroundStatusCallback->hrStatus)) && !fCfgRedetectingProducts && BACKGROUND_STATUS_SYNC_PRODUCT_FINISHED == pBackgroundStatusCallback->type)
         {
             // Synced something in the local DB
             if (!::PostMessageW(hwnd, WM_BROWSE_SYNC_FINISHED, static_cast<WPARAM>(pBackgroundStatusCallback->hrStatus), static_cast<LPARAM>(dwLocalDatabaseIndex)))
@@ -728,7 +731,7 @@ BOOL ProcessMessage(
                 ExitWithLastError(hr, "Failed to send WM_BROWSE_SYNC_FINISHED message");
             }
         }
-        else if (fCfgAutoSyncRunning && (BACKGROUND_STATUS_SYNC_REMOTE_FINISHED == pBackgroundStatusCallback->type))
+        else if ((fCfgAutoSyncRunning || FAILED(pBackgroundStatusCallback->hrStatus)) && (BACKGROUND_STATUS_SYNC_REMOTE_FINISHED == pBackgroundStatusCallback->type))
         {
             // When remote finishes, notify UI which database changed
             dwTemp = FindRemoteDatabaseByPath(pBackgroundStatusCallback->sczString1);

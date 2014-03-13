@@ -1,3 +1,9 @@
+* MikeGC: In Settings Browser, display times in local time (instead of GMT), and in a more UI friendly format than RFC 3339
+
+* MikeGC: Minor UI tweaks / bugfixes in settings browser (tray popup behavior, listview item selection, and refreshing value history listview when appropriate)
+
+* MikeGC: Display proper state of unreachable remote databases on startup of settings browser
+
 * MikeGC: Fix bug in settings engine where in extended retry periods autosync could accidentally give up on a sync attempt
 
 * MikeGC: Fix bug in settings engine to make file writes more transactional to eliminate chance of losing (or deleting) any changes on the machine while syncing, and allow retry on sharing violation (if we try to write when an app is writing)

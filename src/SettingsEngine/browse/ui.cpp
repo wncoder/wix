@@ -46,7 +46,6 @@ LPCWSTR UIGetResolutionText(
     }
 }
 
-
 LPWSTR UIGetTypeDisplayName(
     __in CONFIG_VALUETYPE cvType
     )
@@ -132,6 +131,28 @@ HRESULT UIGetSingleSelectedItemFromListView(
 
 LExit:
     return hr;
+}
+
+void UIClearSelectionFromListView(
+    __in HWND hwnd
+    )
+{
+    DWORD dwValueCount;
+    LVITEM lvItem = { };
+
+    lvItem.mask = LVIF_PARAM;
+
+    // Docs don't indicate any way for it to return failure
+    dwValueCount = ::SendMessageW(hwnd, LVM_GETITEMCOUNT, 0, 0);
+
+    for (DWORD i = 0; i < dwValueCount; ++i)
+    {
+        // If it's selected, unselect it
+        if (::SendMessageW(hwnd, LVM_GETITEMSTATE, i, LVIS_SELECTED))
+        {
+            ListView_SetItemState(hwnd, i, 0, LVIS_SELECTED);
+        }
+    }
 }
 
 HRESULT UISetListViewText(
@@ -328,6 +349,8 @@ HRESULT UISetListViewToValueEnum(
 
     DWORD i;
     SYSTEMTIME st = { };
+    SYSTEMTIME stLocal = { };
+    TIME_ZONE_INFORMATION tzi = { };
     DWORD dwCount = 0;
     DWORD dwValue = 0;
     DWORD dwListViewRowCount = 0;
@@ -352,6 +375,11 @@ HRESULT UISetListViewToValueEnum(
         ExitOnFailure(hr, "Failed to set 'no values' text in value listview");
 
         ExitFunction1(hr = S_OK);
+    }
+
+    if (!GetTimeZoneInformation(&tzi))
+    {
+        ExitWithLastError(hr, "Failed to get time zone information");
     }
 
     UIListViewTrimSize(hwnd, dwCount);
@@ -426,7 +454,12 @@ HRESULT UISetListViewToValueEnum(
         hr = CfgEnumReadSystemTime(cehValues, i, ENUM_DATA_WHEN, &st);
         ExitOnFailure(hr, "Failed to read when string from value history enumeration");
 
-        hr = TimeSystemDateTime(&sczText, &st, TRUE);
+        if (!SystemTimeToTzSpecificLocalTime(&tzi, &st, &stLocal))
+        {
+            ExitWithLastError(hr, "Failed to convert systemtime to local time");
+        }
+
+        hr = TimeSystemToDateTimeString(&sczText, &stLocal, LOCALE_USER_DEFAULT);
         ExitOnFailure(hr, "Failed to convert value 'when' time to text");
 
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 3, sczText);
@@ -460,6 +493,8 @@ HRESULT UISetListViewToValueHistoryEnum(
     LPCWSTR wzText = NULL;
     LPWSTR sczText = NULL;
     SYSTEMTIME st = { };
+    SYSTEMTIME stLocal = { };
+    TIME_ZONE_INFORMATION tzi = { };
     CONFIG_VALUETYPE cvType = VALUE_INVALID;
 
     dwListViewRowCount = ListView_GetItemCount(hwnd);
@@ -476,6 +511,11 @@ HRESULT UISetListViewToValueHistoryEnum(
         ExitOnFailure(hr, "Failed to set 'no value history' text in value history listview");
 
         ExitFunction1(hr = S_OK);
+    }
+
+    if (!GetTimeZoneInformation(&tzi))
+    {
+        ExitWithLastError(hr, "Failed to get time zone information");
     }
 
     UIListViewTrimSize(hwnd, dwCount);
@@ -553,7 +593,12 @@ HRESULT UISetListViewToValueHistoryEnum(
         hr = CfgEnumReadSystemTime(cehValueHistory, i, ENUM_DATA_WHEN, &st);
         ExitOnFailure(hr, "Failed to read when string from value history enumeration");
 
-        hr = TimeSystemDateTime(&sczText, &st, TRUE);
+        if (!SystemTimeToTzSpecificLocalTime(&tzi, &st, &stLocal))
+        {
+            ExitWithLastError(hr, "Failed to convert systemtime to local time");
+        }
+
+        hr = TimeSystemToDateTimeString(&sczText, &stLocal, LOCALE_USER_DEFAULT);
         ExitOnFailure(hr, "Failed to convert value history time to text");
 
         hr = UIListViewSetItemText(hwnd, dwInsertIndex, 3, sczText);
@@ -1001,28 +1046,11 @@ static HRESULT ListViewSort(
     __in HWND hwnd
     )
 {
-    HRESULT hr = S_OK;
-    BOOL fRestoreSelection = TRUE;
-    DWORD dwSelectedIndex = DWORD_MAX;
-
-    hr = UIGetSingleSelectedItemFromListView(hwnd, &dwSelectedIndex, NULL);
-    if (E_NOTFOUND == hr)
-    {
-        hr = S_OK;
-        fRestoreSelection = FALSE;
-    }
-    ExitOnFailure(hr, "Failed to get selected item from listview");
+    UIClearSelectionFromListView(hwnd);
 
     ListView_SortItemsEx(hwnd, ListViewItemCompare, reinterpret_cast<LPARAM>(hwnd));
 
-    // Restore the user's selection from before the sort, purely based on index
-    if (fRestoreSelection)
-    {
-        ListView_SetItemState(hwnd, dwSelectedIndex, LVIS_SELECTED, LVIS_SELECTED);
-    }
-
-LExit:
-    return hr;
+    return S_OK;
 }
 
 static int CALLBACK ListViewItemCompare(
