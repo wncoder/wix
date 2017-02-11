@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--Defines a component that is shared across several tests-->
-<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <File DiskId="1" KeyPath="no" Source="$(env.WIX_Root)\test\data\SharedData\Files\TestBinaries\bin\Assembly1_Target40Client.dll" />
-</Include>
