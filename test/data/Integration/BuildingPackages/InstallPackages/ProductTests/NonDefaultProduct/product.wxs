@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Codepage="1252" Name="!@#$%^*()_+-=" Language="1040" Version="255.255.65535.99999" Manufacturer="{}[]\|;:,./?`~  " UpgradeCode="{E186D51B-29BA-426f-881F-1EC3ACDA4282}">
-    <Package InstallerVersion="200" />
-    <Media Id="1" />
-  </Product>
-</Wix>

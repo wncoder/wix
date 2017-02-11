@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <!--The Product/@Name attribute contains tabs-->
-  <Product Id="*" Name="    " Language="1033" Version="0.0.0.0" Manufacturer="Microsoft" UpgradeCode="{B6321235-E6E2-47ed-AB00-5DC6E85AECDF}">
-    <Package InstallerVersion="200" />
-    <Media Id="1" />
-  </Product>
-</Wix>

@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<Include xmlns="http://schemas.microsoft.com/wix/2006/wi">
-     <Property Id="MyProperty3" Value="baz"/>
-</Include>
-
-
-

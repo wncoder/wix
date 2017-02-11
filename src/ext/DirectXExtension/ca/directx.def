@@ -1,6 +1,0 @@
-; directx.def : declares the module parameters for directx.dll
-
-LIBRARY      "directx"
-
-EXPORTS
-	WixQueryDirectXCaps
