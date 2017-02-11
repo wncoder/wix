@@ -1,4 +1,0 @@
-syntax: regexp
-^.*\.snt
-^.*\.feed
-^external
